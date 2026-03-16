@@ -1,0 +1,136 @@
+/* ========================================================================== 
+   HEADER BASE (Mặc định cho PC >= 1024px)
+   ========================================================================== */
+.admin-header {
+    background: #111317;
+    color: #ffffff;
+    padding: 0 40px;
+    height: 72px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    border-bottom: 2px solid rgba(255, 77, 77, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.admin-header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.hamburger-btn {
+    display: none; 
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 6px;
+    font-size: 1.5rem;
+    line-height: 0;
+}
+
+.admin-logo a {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #ff4d4d;
+    text-decoration: none;
+    letter-spacing: 2px;
+}
+
+.admin-info {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.admin-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.btn-admin-logout {
+    background: linear-gradient(135deg, #ff4d4d 0%, #d63031 100%);
+    border: none;
+    color: white;
+    padding: 8px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s ease;
+}
+
+/* ========================================================================== 
+   1. VÙNG TABLET (Từ 740px đến 1023px) - PHIÊN BẢN SIÊU TO
+   👉 Bơm kích thước để xứng tầm với cái Form khổng lồ
+   ========================================================================== */
+@media screen and (min-width: 740px) and (max-width: 1023px) {
+    .admin-header {
+        padding: 0 30px;
+        height: 85px; /* Tăng chiều cao đáng kể */
+    }
+
+    /* ✅ Nút Hamburger to rõ cho iPad */
+    .hamburger-btn {
+        display: block; 
+        font-size: 2.2rem; 
+        padding: 10px;
+    }
+
+    .admin-logo a {
+        font-size: 1.7rem; /* Logo to ra */
+    }
+
+    .admin-info {
+        gap: 25px;
+    }
+
+    .admin-name {
+        font-size: 1.1rem; /* Tên admin to rõ */
+        font-weight: 600;
+    }
+
+    .btn-admin-logout {
+        padding: 12px 24px;
+        font-size: 1rem;
+        border-radius: 10px;
+    }
+}
+
+/* ========================================================================== 
+   2. VÙNG MOBILE (Dưới 740px)
+   👉 Giữ gọn gàng để không bị tràn màn hình điện thoại
+   ========================================================================== */
+@media screen and (max-width: 739px) {
+    .admin-header {
+        padding: 0 15px;
+        height: 60px; 
+    }
+
+    .hamburger-btn {
+        display: block;
+        font-size: 1.6rem;
+    }
+
+    .admin-logo a {
+        font-size: 1.2rem;
+        letter-spacing: 1px;
+    }
+
+    .admin-name {
+        display: none; /* Mobile hẹp nên ẩn tên cho thoáng */
+    }
+
+    .admin-info {
+        gap: 10px;
+    }
+
+    .btn-admin-logout {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        border-radius: 6px;
+    }
+}

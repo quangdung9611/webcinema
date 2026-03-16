@@ -1,0 +1,238 @@
+/* Import font từ Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+:root {
+    --primary-color: #ff2c1f; /* Màu đỏ rạp phim đặc trưng */
+    --secondary-color: #0c0c0c;
+    --accent-color: #ff9f1c;
+    --text-light: #ffffff;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    /* Gradient nền theo vibe điện ảnh */
+    background: radial-gradient(circle at top right, #2c0b0e, #0c0c0c);
+    font-family: 'Poppins', sans-serif;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Hiệu ứng trang trí nền */
+.auth-container::before {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: var(--primary-color);
+    filter: blur(150px);
+    border-radius: 50%;
+    top: -100px;
+    left: -100px;
+    opacity: 0.3;
+}
+
+/* Thẻ Card phong cách Glassmorphism */
+.auth-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid var(--glass-border);
+    padding: 3rem;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    z-index: 1;
+    transition: transform 0.3s ease;
+}
+
+.auth-card:hover {
+    transform: translateY(-5px);
+}
+
+.auth-card h2 {
+    color: var(--text-light);
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.auth-subtitle {
+    color: #aaa;
+    margin-bottom: 2.5rem;
+    font-size: 1rem;
+    font-weight: 300;
+}
+
+/* Form Group */
+.form-group {
+    margin-bottom: 1.8rem;
+    text-align: left;
+    position: relative;
+}
+
+.form-group label {
+    display: block;
+    color: #ddd;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    margin-left: 5px;
+    font-weight: 500;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    color: black;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.auth-input:focus {
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 15px rgba(255, 44, 31, 0.2);
+}
+
+/* Nút bấm Cinema Style */
+.btn-user {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(45deg, var(--primary-color), #b31d14);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+    box-shadow: 0 10px 20px rgba(255, 44, 31, 0.3);
+}
+
+.btn-user:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 15px 25px rgba(255, 44, 31, 0.4);
+}
+
+.btn-user:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #555;
+}
+
+/* Footer & Link */
+.auth-footer {
+    margin-top: 2rem;
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-decoration: none;
+    margin-left: 5px;
+    transition: color 0.3s ease;
+}
+
+.btn-link:hover {
+    color: var(--accent-color);
+    text-decoration: underline;
+}
+/* Thông báo lỗi đỏ rực rỡ */
+.error-message {
+    background: rgba(255, 44, 31, 0.1);
+    color: #ff2c1f;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 44, 31, 0.2);
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    animation: shake 0.4s ease-in-out;
+}
+
+/* Hiệu ứng rung khi có lỗi */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Spinner xoay xoay khi đang loading */
+.loader {
+    width: 20px;
+    height: 20px;
+    border: 3px solid #ffffff;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+/* --- RESPONSIVE BREAKPOINTS --- */
+
+/* Desktop / Tablet ngang (1024px) */
+@media (max-width: 1024px) {
+    .auth-card {
+        max-width: 400px;
+        padding: 2.5rem;
+    }
+}
+
+/* Tablet dọc (768px) */
+@media (max-width: 768px) {
+    .auth-card {
+        max-width: 380px;
+        padding: 2rem;
+    }
+    .auth-card h2 {
+        font-size: 1.8rem;
+    }
+}
+
+/* Mobile (480px) */
+@media (max-width: 480px) {
+    .auth-container {
+        padding: 15px;
+        background: #0c0c0c; /* Bỏ bớt gradient nặng để mượt hơn trên mobile */
+    }
+    .auth-card {
+        padding: 1.5rem;
+        border-radius: 16px;
+        border: none;
+        background: transparent; /* Mobile thường tối giản để dễ nhìn */
+        box-shadow: none;
+    }
+    .btn-user {
+        padding: 12px;
+        font-size: 1rem;
+    }
+    .auth-input {
+        font-size: 16px; /* Chống auto-zoom trên iPhone */
+    }
+}

@@ -1,0 +1,257 @@
+.update-user-wrapper {
+    background-color: #ffffff;
+    max-width: 700px; /* Tăng nhẹ chiều rộng để Grid thoáng hơn */
+    margin: 30px auto;
+    padding: 40px;
+    border-radius: 15px;
+    border-top: 6px solid #f39c12; /* Màu cam Edit */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.update-user-wrapper h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+    text-align: center;
+    font-weight: 800;
+}
+
+.update-subtitle {
+    text-align: center;
+    color: #95a5a6;
+    margin-bottom: 35px;
+    font-size: 0.95rem;
+}
+
+/* --- Grid Hệ Thống --- */
+.update-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Chia đôi form */
+    gap: 20px 25px; /* Khoảng cách giữa các ô */
+}
+
+.update-field {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Class này giúp ô Email, Địa chỉ, Mật khẩu chiếm trọn chiều ngang */
+.full-width {
+    grid-column: span 2;
+}
+
+.update-field label {
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #34495e;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Style chung cho Input, Select và Textarea */
+.update-field input, 
+.update-field select, 
+.update-field textarea {
+    padding: 13px 15px;
+    border: 1px solid #dcdde1;
+    border-radius: 8px;
+    background-color: #fcfcfc;
+    font-size: 0.95rem;
+    color: #2c3e50;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    font-family: inherit;
+}
+
+/* Riêng cho ô Địa chỉ */
+.update-field textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+/* Hiệu ứng khi nhấn vào ô nhập liệu */
+.update-field input:focus, 
+.update-field select:focus, 
+.update-field textarea:focus {
+    background-color: #fff;
+    border-color: #f39c12;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(243, 156, 18, 0.15);
+    transform: translateY(-1px);
+}
+
+/* Style cho dropdown Role */
+.update-field select {
+    cursor: pointer;
+    appearance: none; /* Xóa icon mặc định để custom nhẹ */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%237f8c8d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.error-msg {
+    color: #e74c3c;
+    font-size: 0.8rem;
+    margin-top: 6px;
+    font-weight: 500;
+}
+
+/* --- Nút Bấm --- */
+.update-actions {
+    margin-top: 40px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 25px;
+}
+
+.btn-submit-update {
+    background-color: #f39c12;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-submit-update:hover {
+    background-color: #e67e22;
+    box-shadow: 0 5px 15px rgba(230, 126, 34, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-go-back {
+    background-color: #f1f2f6;
+    color: #7f8c8d;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-go-back:hover {
+    background-color: #dfe4ea;
+    color: #2f3542;
+}
+/* ==========================================================================
+    PHẦN BỔ SUNG: RESPONSIVE CHO UPDATE USER (GRID SYSTEM)
+    ========================================================================== */
+
+/* --- 1. VÙNG TABLET (Từ 740px đến 1023px) --- 
+   👉 Tăng kích thước font và padding để chữ không bị lọt thỏm so với Mobile
+*/
+@media screen and (min-width: 740px) and (max-width: 1023px) {
+    .update-user-wrapper {
+        max-width: 85%; /* Nới rộng form ra vì Tablet màn hình to hơn Mobile */
+        padding: 45px 35px;
+        margin: 25px auto;
+    }
+
+    .update-user-wrapper h2 {
+        font-size: 1.7rem; /* Tiêu đề to rõ */
+    }
+
+    .update-subtitle {
+        font-size: 1rem; /* Subtitle to hơn Mobile một chút */
+        margin-bottom: 30px;
+    }
+
+    .update-form-grid {
+        gap: 20px 30px; /* Khoảng cách giữa các ô rộng rãi */
+    }
+
+    .update-field label {
+        font-size: 0.95rem; /* Tăng size nhãn để dễ đọc */
+        margin-bottom: 10px;
+    }
+
+    .update-field input, 
+    .update-field select, 
+    .update-field textarea {
+        padding: 15px 18px; /* Ô nhập liệu "mập" hơn, dễ chạm tay */
+        font-size: 1.05rem;  /* Chữ to rõ, không bị lí nhí */
+    }
+
+    .btn-submit-update, 
+    .btn-go-back {
+        padding: 14px 35px;
+        font-size: 1.1rem; /* Nút bấm to, uy tín */
+    }
+}
+
+/* --- 2. VÙNG MOBILE (Dưới 740px) --- 
+   👉 Giữ nguyên logic 1 cột, nhưng kích thước tinh chỉnh cho màn hình hẹp
+*/
+@media screen and (max-width: 739px) {
+    .update-user-wrapper {
+        width: 95%;
+        padding: 25px 15px;
+        margin: 15px auto;
+        border-top-width: 4px;
+    }
+
+    .update-user-wrapper h2 {
+        font-size: 1.4rem;
+    }
+
+    .update-subtitle {
+        margin-bottom: 25px;
+        font-size: 0.85rem;
+    }
+
+    /* Chuyển Grid từ 2 cột về 1 cột dọc */
+    .update-form-grid {
+        grid-template-columns: 1fr; 
+        gap: 15px;
+    }
+
+    .full-width {
+        grid-column: span 1;
+    }
+
+    .update-field label {
+        font-size: 0.85rem;
+    }
+
+    .update-field input, 
+    .update-field select, 
+    .update-field textarea {
+        padding: 12px;
+        font-size: 16px; /* Chống auto-zoom trên iOS */
+    }
+
+    .update-actions {
+        flex-direction: column-reverse;
+        margin-top: 30px;
+        padding-top: 20px;
+        gap: 10px;
+    }
+
+    .btn-submit-update, 
+    .btn-go-back {
+        width: 100%;
+        padding: 13px;
+        justify-content: center;
+        display: flex;
+        font-size: 1rem;
+    }
+}
+
+/* Tinh chỉnh cho điện thoại cực nhỏ (iPhone SE, etc.) */
+@media screen and (max-width: 400px) {
+    .update-user-wrapper {
+        padding: 20px 10px;
+    }
+    
+    .update-user-wrapper h2 {
+        font-size: 1.25rem;
+    }
+}

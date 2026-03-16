@@ -1,0 +1,314 @@
+/* ========================================================================== 
+   CONTAINER & HEADER
+   ========================================================================== */
+
+.user-list-container {
+    background-color: #ffffff;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    margin: 10px;
+
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+
+    overflow-x: auto;
+    overflow-y: visible;
+
+    -webkit-overflow-scrolling: touch; /* 🔥 scroll mượt mobile */
+}
+
+/* Scrollbar */
+.user-list-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.user-list-container::-webkit-scrollbar-track {
+    background: #f1f3f5;
+}
+
+.user-list-container::-webkit-scrollbar-thumb {
+    background: #ced4da;
+    border-radius: 10px;
+}
+
+.user-list-container::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
+
+
+/* ========================================================================== 
+   HEADER
+   ========================================================================== */
+
+.user-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f1f3f5;
+    padding-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.user-list-header h2 {
+    display: flex;
+    align-items: center;
+    font-size: 1.3rem;
+    color: #2d3436;
+    margin: 0;
+    font-weight: 700;
+}
+
+.header-icon {
+    margin-right: 12px;
+    color: #0984e3;
+}
+
+
+/* ========================================================================== 
+   BUTTON
+   ========================================================================== */
+
+.btn-add-user {
+    background-color: #00b894;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-add-user:hover {
+    background-color: #00a082;
+    transform: translateY(-1px);
+}
+
+
+/* ========================================================================== 
+   TABLE
+   ========================================================================== */
+
+.admin-table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    margin-top: 5px;
+
+    font-size: 1rem; /* 🔥 cố định chữ mọi màn hình */
+}
+
+.admin-table th,
+.admin-table td {
+    white-space: nowrap;
+}
+
+.admin-table th {
+    background-color: #f8f9fa;
+    color: #636e72;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.admin-table td {
+    padding: 10px 16px;
+    vertical-align: middle;
+    color: #2d3436;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+
+/* ========================================================================== 
+   ACTION BUTTONS
+   ========================================================================== */
+
+.th-actions {
+    width: 130px;
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-edit,
+.btn-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.btn-edit {
+    background-color: #0984e3;
+    color: white;
+}
+
+.btn-delete {
+    background-color: #ff7675;
+    color: white;
+}
+
+.btn-edit:hover,
+.btn-delete:hover {
+    transform: scale(1.1);
+    filter: brightness(0.9);
+}
+
+
+/* ========================================================================== 
+   BADGE & OTHER
+   ========================================================================== */
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: inline-block;
+}
+
+.status-badge.used {
+    background-color: #e3fcef;
+    color: #00b894;
+}
+
+.status-badge.pending {
+    background-color: #fff4e5;
+    color: #ff9f43;
+}
+
+.ticket-code {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+}
+
+.movie-poster-img {
+    width: 70px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================================================== 
+    RESPONSIVE - CHỈNH SỬA THEO MỐC MỚI (740px & 1024px)
+   ========================================================================== */
+
+/* 1. VÙNG TABLET (740px - 1023px) - 👉 SIÊU TO CHO DỄ NHÌN */
+@media screen and (min-width: 740px) and (max-width: 1023px) {
+    .user-list-container {
+        padding: 25px 30px; /* Nới rộng container */
+        margin: 15px;
+    }
+
+    .user-list-header h2 {
+        font-size: 1.6rem; /* Tiêu đề trang to rõ */
+    }
+
+    .btn-add-user {
+        padding: 12px 20px;
+        font-size: 1.1rem; /* Nút thêm mới to ra */
+    }
+
+    /* 🔥 Chữ trong bảng to lên rõ rệt */
+    .admin-table {
+        font-size: 1.2rem; 
+    }
+
+    .admin-table th {
+        padding: 16px 20px;
+        font-size: 1.2rem; /* Tiêu đề cột cũng to lên */
+    }
+
+    .admin-table td {
+        padding: 15px 20px; /* Hàng bảng cao hơn cho dễ nhìn */
+    }
+
+    /* Badge trạng thái to lên */
+    .status-badge {
+        padding: 6px 12px;
+        font-size: 1.2rem;
+    }
+
+    /* Ảnh poster to hơn cho iPad */
+    .movie-poster-img {
+        width: 80px;
+        height: 110px;
+    }
+
+    /* 🔥 Nút Sửa/Xóa to ra để ngón tay dễ chạm, không bấm nhầm */
+    .btn-edit,
+    .btn-delete {
+        width: 42px;
+        height: 42px;
+        font-size: 1.2rem;
+        border-radius: 8px;
+    }
+
+    .action-buttons {
+        gap: 15px; /* Khoảng cách nút xa nhau ra tí */
+    }
+}
+
+/* 2. VÙNG MOBILE (Dưới 740px) - 👉 GỌN GÀNG TỐI ƯU */
+@media screen and (max-width: 739px) {
+    .user-list-container {
+        padding: 12px;
+        margin: 5px;
+        border-radius: 8px;
+    }
+
+    .user-list-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .user-list-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .btn-add-user {
+        width: 100%;
+        justify-content: center;
+        padding: 10px;
+        font-size: 1rem;
+    }
+
+    .admin-table {
+        font-size: 0.9rem;
+    }
+
+    .movie-poster-img {
+        width: 50px;
+        height: 70px;
+    }
+
+    .user-list-container::-webkit-scrollbar {
+        height: 5px;
+    }
+}

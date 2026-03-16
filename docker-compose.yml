@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: dung-db-server
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: cinema_shop
+    ports:
+      - "3306:3306"
+    volumes:
+      - cinema_db_data:/var/lib/mysql # Chuyển sang Named Volume
+      - ./cinema_shop.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -proot || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend_server
+    container_name: dung-backend-server
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend_server:/app
+      - /app/node_modules
+      # [QUAN TRỌNG] Gắn 1 Volume duy nhất cho folder gốc uploads
+      - cinema_uploads:/app/uploads 
+    environment:
+      TOKEN_NAME: usertoken
+      NODE_ENV: production # Đổi sang production cho chuyên nghiệp
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: cinema_shop
+      DB_PORT: 3306
+    command: npm run dev 
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend_client
+    container_name: dung-frontend-client
+    restart: always
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend_client:/app
+      - /app/node_modules
+    environment:
+      VITE_USER_TOKEN_NAME: usertoken
+      VITE_API_URL: https://quangdungcinema.id.vn # Tên miền mới của ông
+      CHOKIDAR_USEPOLLING: "true"
+    command: npm run dev -- --host
+    depends_on:
+      - backend
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: dung-phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=db
+      - MYSQL_ROOT_PASSWORD=root
+    depends_on:
+      db:
+        condition: service_healthy
+
+# Khai báo Named Volumes để Railway giữ lại dữ liệu vĩnh viễn
+volumes:
+  cinema_db_data:
+  cinema_uploads:

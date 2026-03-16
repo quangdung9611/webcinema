@@ -1,0 +1,203 @@
+/* Container tổng thể */
+.movie-actor-wrapper {
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    margin-top: 20px;
+    position: relative; /* Bổ sung để các phần tử con căn chỉnh chuẩn */
+}
+
+.column-header {
+    font-size: 22px;
+    color: #1a202c;
+    margin-bottom: 25px;
+    font-weight: 700;
+    border-left: 5px solid #e53e3e; 
+    padding-left: 15px;
+}
+
+/* Table Style */
+.assignment-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 12px;
+}
+
+.assignment-table th {
+    padding: 12px 15px;
+    color: #718096;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #edf2f7;
+    text-align: left;
+}
+
+/* Poster và thông tin phim */
+.movie-info-cell {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.table-poster {
+    width: 50px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.title-text {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 14px;
+}
+
+/* CUSTOM SELECT CONTAINER */
+.custom-select-container {
+    position: relative;
+    width: 100%;
+    min-width: 250px;
+}
+
+/* Ô hiển thị chính */
+.select-box {
+    padding: 12px 16px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #4a5568;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.select-box:hover {
+    border-color: #3182ce;
+    background: #f7fafc;
+}
+
+/* Hiệu ứng mũi tên xoay */
+.arrow {
+    font-size: 10px;
+    transition: transform 0.3s;
+    color: #a0aec0;
+}
+.arrow.up { transform: rotate(180deg); color: #3182ce; }
+
+/* DROPDOWN LIST */
+.dropdown-list {
+    position: absolute;
+    top: calc(100% + 8px); 
+    left: 0;
+    right: 0;
+    z-index: 999; /* Đảm bảo luôn nằm trên các hàng khác */
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    padding: 12px;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Ô Search bên trong dropdown */
+.search-input {
+    width: 100%;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    border: 1px solid #edf2f7;
+    border-radius: 8px;
+    outline: none;
+    background: #f8fafc;
+    font-size: 13px;
+    box-sizing: border-box; /* Quan trọng: để padding không làm tràn ô input */
+}
+
+/* Danh sách Option - Fix 5 dòng */
+.options-list {
+    /* Mỗi dòng .option-item cao 40px, 5 dòng là 200px */
+    max-height: 200px; 
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Tùy chỉnh thanh cuộn xịn */
+.options-list::-webkit-scrollbar { width: 6px; }
+.options-list::-webkit-scrollbar-track { background: #f7fafc; }
+.options-list::-webkit-scrollbar-thumb { 
+    background: #cbd5e0; 
+    border-radius: 10px; 
+}
+.options-list::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+
+.option-item {
+    height: 40px; /* Chiều cao cố định để tính scroll cho chuẩn */
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-size: 13px;
+    border-radius: 6px;
+    transition: 0.2s;
+    margin-bottom: 2px;
+    white-space: nowrap; /* Không cho tên diễn viên xuống dòng */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Tên dài quá thì hiện dấu ... */
+    color: #2d3748;
+}
+
+.option-item:hover {
+    background: #edf2f7;
+}
+
+.option-item.selected {
+    background: #ebf8ff;
+    color: #2b6cb0;
+    font-weight: 600;
+}
+
+.option-item input[type="checkbox"] {
+    accent-color: #3182ce;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Nút Lưu */
+.btn-save-row {
+    background: #48bb78;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(72, 187, 120, 0.2);
+}
+
+.btn-save-row:hover {
+    background: #38a169;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(72, 187, 120, 0.3);
+}
+
+.text-center { text-align: center; }
+
+/* Trạng thái khi mở Dropdown để hàng đó nổi bật hơn (tùy chọn) */
+.assignment-table tr:has(.dropdown-list) {
+    background-color: #fcfcfc;
+}

@@ -1,0 +1,231 @@
+:root {
+    --galaxy-blue: #034da2;
+    --text-gray: #666;
+    --text-black: #333;
+    --border-light: #eee;
+    --bg-gray: #fdfdfd;
+}
+
+.review-page-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 15px;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-gray);
+}
+
+.review-content-flex {
+    display: flex;
+    gap: 30px;
+}
+
+/* CỘT TRÁI */
+.main-review-col {
+    flex: 0 0 72%;
+}
+
+.review-header-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.blue-vertical-line {
+    display: inline-block;
+    width: 4px;
+    height: 24px;
+    background-color: var(--galaxy-blue);
+    border-radius: 2px;
+}
+
+.review-main-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-black);
+    margin: 0;
+}
+
+/* Thanh Filter */
+.review-filters-bar {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 15px;
+}
+
+.review-select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--text-gray);
+    outline: none;
+    min-width: 120px;
+}
+
+/* Danh sách Review Card */
+.review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.review-card-item {
+    display: flex;
+    gap: 20px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.review-img-link {
+    flex: 0 0 280px;
+    height: 160px;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.review-img-link img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.review-card-item:hover img {
+    transform: scale(1.05);
+}
+
+.review-info-right {
+    flex: 1;
+}
+
+.review-title-link {
+    text-decoration: none;
+}
+
+.review-title-link h3 {
+    font-size: 18px;
+    color: var(--text-black);
+    margin: 0 0 10px 0;
+    line-height: 1.4;
+    transition: color 0.2s;
+}
+
+.review-title-link h3:hover {
+    color: var(--galaxy-blue);
+}
+
+.review-meta-stats {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 12px;
+}
+
+.btn-like-fb {
+    background-color: #1877f2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.view-stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #999;
+}
+
+.review-excerpt {
+    font-size: 14px;
+    color: var(--text-gray);
+    line-height: 1.6;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* CỘT PHẢI (SIDEBAR) */
+.review-sidebar {
+    flex: 1;
+}
+
+.sidebar-section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.sidebar-label {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.featured-movie-card {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.featured-poster-wrapper {
+    position: relative;
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.featured-poster-wrapper img {
+    width: 100%;
+    display: block;
+}
+
+.rating-overlay {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.featured-movie-name {
+    margin-top: 15px;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-black);
+}
+
+/* Responsive cho điện thoại */
+@media (max-width: 768px) {
+    .review-content-flex {
+        flex-direction: column;
+    }
+    .review-card-item {
+        flex-direction: column;
+    }
+    .review-img-link {
+        flex: 0 0 auto;
+        width: 100%;
+        height: 200px;
+    }
+}

@@ -1,0 +1,158 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* =======================================================
+   SIDEBAR BASE (PC >= 1024px)
+   ======================================================= */
+.admin-sidebar {
+    width: 260px;
+    background-color: #1a1d21;
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    z-index: 1200;
+    position: sticky;
+    top: 0;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+}
+
+.sidebar-title {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #3498db;
+}
+
+.sidebar-close-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: none; 
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 10px 0;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 25px;
+    color: #bdc3c7;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.sidebar-link:hover {
+    background-color: #2c3e50;
+    color: #ffffff;
+}
+
+.sidebar-link.active {
+    background-color: #3498db;
+    color: #ffffff;
+    border-right: 5px solid #ffffff;
+}
+
+/* =======================================================
+   1. VÙNG TABLET (740px - 1023px)
+   👉 Tăng kích thước để không bị nhỏ hơn Mobile
+   ======================================================= */
+@media screen and (min-width: 740px) and (max-width: 1023px) {
+    .admin-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 320px; /* Tablet nới rộng sidebar ra cho thoáng */
+        transform: translateX(-100%);
+        box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+    }
+
+    .admin-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .sidebar-close-btn {
+        display: block;
+        font-size: 1.5rem; /* Nút X to rõ cho Tablet */
+    }
+
+    .sidebar-title {
+        font-size: 1.5rem; /* Tiêu đề to hơn PC và Mobile */
+    }
+
+    .sidebar-link {
+        padding: 18px 30px; /* Tăng khoảng cách chạm */
+        font-size: 1.15rem;   /* Chữ to rõ để dễ đọc trên iPad */
+    }
+
+    .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(2px);
+        z-index: 1100;
+    }
+}
+
+/* =======================================================
+   2. VÙNG MOBILE (Dưới 740px)
+   👉 Thu nhỏ lại để vừa màn hình điện thoại
+   ======================================================= */
+@media screen and (max-width: 739px) {
+    .admin-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 80%; 
+        transform: translateX(-100%);
+        box-shadow: 4px 0 20px rgba(0,0,0,0.4);
+    }
+
+    .admin-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .sidebar-close-btn {
+        display: block;
+    }
+
+    .sidebar-title {
+        font-size: 1.1rem;
+    }
+
+    .sidebar-link {
+        padding: 15px 20px;
+        font-size: 1rem; /* Mobile để 1rem là vừa xinh */
+    }
+
+    .sidebar-header {
+        padding: 15px;
+    }
+
+    .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(2px);
+        z-index: 1100;
+    }
+}

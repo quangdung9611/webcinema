@@ -1,0 +1,184 @@
+/* ============================================================
+   USER FOOTER - 4 CỘT DESKTOP | 2 CỘT MOBILE (<=767px)
+============================================================ */
+
+.user-footer {
+    background: #050505;
+    color: #ffffff;
+    border-top: 1px solid #222;
+  padding: 30px 0 20px 0;
+}
+
+/* ================= CONTAINER ================= */
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+}
+
+/* ================= LOGO ================= */
+
+.footer-logo {
+    font-size: 2rem;
+    font-weight: 900;
+    margin-bottom: 15px;
+    line-height: 1.2;
+    color: #fff;
+    text-decoration: none;
+    display: block;
+}
+
+.footer-logo span {
+    color: #f1c40f;
+}
+
+/* ================= ABOUT ================= */
+
+.about p {
+    color: #aaa;
+    line-height: 1.7;
+    font-size: 0.8rem;
+    max-width: 380px;
+}
+
+/* ================= TITLES ================= */
+
+.footer-section h3 {
+    margin-bottom: 22px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ================= LINKS ================= */
+
+.links ul,
+.support ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.links li,
+.support li {
+    margin-bottom: 12px;
+}
+
+.links a,
+.support a {
+    color: #bbb;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.links a:hover,
+.support a:hover {
+    color: #f1c40f;
+    padding-left: 6px;
+}
+
+/* ================= CONTACT ================= */
+
+.contact p {
+    color: #bbb;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+
+.contact svg {
+    color: #f1c40f;
+}
+
+/* ================= SOCIAL ================= */
+
+.social-links {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+}
+
+.social-links a {
+    color: #fff;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+.social-links a:hover {
+    color: #f1c40f;
+    transform: scale(1.15);
+}
+
+/* ================= BOTTOM ================= */
+
+.footer-bottom {
+    margin-top: 60px;
+    padding-top: 25px;
+    border-top: 1px solid #222;
+    text-align: center;
+}
+
+.footer-bottom p {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+/* ============================================================
+   RESPONSIVE DUY NHẤT: <= 767px
+============================================================ */
+/* ============================================================
+   RESPONSIVE TỐI ƯU: TRỊ LỖI ZOOM 100%
+============================================================ */
+
+@media (max-width: 767px) {
+  .footer-container {
+        /* SỬA TẠI ĐÂY: Dùng 1 cột để nội dung thoải mái khi zoom 100% */
+      grid-template-columns: repeat(2, 1fr);
+        gap: 40px; /* Tăng gap một chút để các phần không dính nhau */
+        text-align: center;
+    }
+
+    /* Nếu Dũng vẫn muốn 2 cột cho máy tính bảng/điện thoại nằm ngang, 
+       hãy dùng thêm một mốc nữa ở khoảng 480px */
+
+
+/* Mẹo nhỏ: Thêm cái này để chữ không bao giờ "vượt biên" */
+.user-footer * {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+    /* Chống tràn chữ khi zoom to 100% */
+    .about p {
+        max-width: 100%;
+        margin: 0 auto;
+        font-size: 0.8rem; /* Giảm nhẹ font để zoom 100% không bị quá khổ */
+    }
+
+    .footer-logo {
+        font-size: 1.2rem;
+    }
+
+    .contact p {
+        justify-content: center;
+      
+    }
+
+    .social-links {
+        justify-content: center;
+    }
+
+    .footer-bottom {
+        margin-top: 40px;
+    }
+}

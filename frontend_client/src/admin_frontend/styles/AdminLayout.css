@@ -1,0 +1,60 @@
+/* ================= ADMIN LAYOUT ================= */
+
+.admin-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    background-color: #f8f9fa; /* Nền chung cho toàn bộ trang admin */
+}
+
+/* Phần bên phải (Header + Content) */
+.admin-right-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Quan trọng: tránh vỡ layout khi nội dung bên trong quá rộng */
+    transition: all 0.3s ease;
+}
+
+/* Nội dung chính */
+.admin-main-content {
+    padding: 30px;
+    flex: 1;
+    /* Scroll mượt */
+    overflow-y: auto;
+    overflow-x: hidden; /* Hạn chế scroll ngang ở layout chính, để component tự xử lý */
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ========================================================================== 
+   CHIA LẠI THEO LOGIC MỚI: Dưới 1024px là Sidebar biến mất
+   ========================================================================== */
+
+/* 1. KHI VÀO VÙNG TABLET & MOBILE (< 1024px) */
+@media screen and (max-width: 1023px) {
+    .admin-main-content {
+        padding: 20px; /* Tablet & Mobile thu hẹp padding cho thoáng */
+    }
+
+    /* Đảm bảo phần bên phải luôn rộng 100% vì Sidebar đã là position: fixed (ẩn trượt) */
+    .admin-right-side {
+        width: 100%;
+    }
+}
+
+/* 2. TINH CHỈNH RIÊNG CHO MOBILE THUẦN TÚY (Dưới 740px) */
+@media screen and (max-width: 739px) {
+    .admin-main-content {
+        padding: 15px; /* Mobile hẹp nhất nên padding tối thiểu */
+    }
+
+    /* Mobile giảm font nhẹ để hiển thị được nhiều nội dung hơn */
+    body {
+        font-size: 14px;
+    }
+    
+    /* Tránh việc cuộn ngang cả trang trên điện thoại */
+    .admin-container {
+        overflow-x: hidden;
+    }
+}

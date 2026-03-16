@@ -1,0 +1,295 @@
+/* =========================================
+   1. CONFIGURATION (BIẾN TỔNG)
+   ========================================= */
+:root {
+  /* Màu sắc chủ đạo */
+  --clr-primary: #ff4d4d;
+  --clr-success: #2ecc71;
+  --clr-bg-dark: #121212;
+  --clr-card: #1a1a1a;
+  --clr-ticket: #ffffff;
+  
+  /* Màu chữ */
+  --clr-text-main: #ffffff;
+  --clr-text-muted: #aaaaaa;
+  --clr-text-dark: #333333;
+  
+  /* Thông số nút bấm */
+  --btn-padding: 20px;
+  --btn-font-size: 18px;
+  --btn-radius: 12px;
+
+  /* Hiệu ứng */
+  --transition: all 0.3s ease;
+  --shadow-card: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* =========================================
+   2. TRANG TỔNG (LAYOUT)
+   ========================================= */
+.success-page-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+  background-color: var(--clr-bg-dark);
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+.success-card {
+  width: 100%;
+  max-width: 650px;
+  padding: 40px;
+  background-color: var(--clr-card);
+  border-radius: 24px;
+  box-shadow: var(--shadow-card);
+  text-align: center;
+  color: var(--clr-text-main);
+}
+
+/* =========================================
+   3. PHẦN ĐẦU (HEADER & TICK V)
+   ========================================= */
+.check-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 24px;
+  background-color: var(--clr-success);
+  border-radius: 50%;
+  font-size: 50px;
+  color: white;
+  box-shadow: 0 0 30px rgba(46, 204, 113, 0.4);
+  animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bounceIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success-header h2 {
+  font-size: 30px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.success-header p {
+  color: var(--clr-text-muted);
+  margin-bottom: 35px;
+}
+
+/* =========================================
+   4. CHIẾC VÉ (TICKET COMPONENT)
+   ========================================= */
+.ticket-visual {
+  display: flex;
+  margin-bottom: 40px;
+  background-color: var(--clr-ticket);
+  color: var(--clr-text-dark);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+}
+
+/* Bên trái: Ảnh & Thông tin */
+.ticket-left {
+  flex: 1.8;
+  padding: 25px;
+  display: flex;
+  gap: 20px;
+}
+
+.movie-poster-mini img {
+  width: 110px;
+  height: 160px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.ticket-movie-title {
+  margin: 0 0 12px;
+  color: var(--clr-primary);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+/* Lưới chi tiết vé */
+.ticket-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.detail-item .label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+}
+
+.detail-item .value {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.seat-highlight {
+  color: var(--clr-primary) !important;
+  font-size: 16px !important;
+}
+
+/* Đường cắt vé (Divider) */
+.ticket-divider {
+  position: relative;
+  width: 30px;
+  background-color: var(--clr-ticket);
+}
+
+.dashed-line {
+  height: 80%;
+  margin: 10% auto;
+  border-left: 2px dashed #ddd;
+}
+
+.arc-top,
+.arc-bottom {
+  position: absolute;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  background-color: var(--clr-card);
+  border-radius: 50%;
+  transform: translateX(-50%);
+}
+
+.arc-top {
+  top: -15px;
+}
+
+.arc-bottom {
+  bottom: -15px;
+}
+
+/* Bên phải: PIN & QR */
+.ticket-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: #fcfcfc;
+  border-left: 1px solid #eeeeee;
+}
+
+.pin-label {
+  font-size: 11px;
+  color: #999;
+  font-weight: 600;
+}
+
+.pin-number {
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--clr-success);
+  letter-spacing: 2px;
+  margin: 4px 0;
+}
+
+/* =========================================
+   5. CÁC NÚT BẤM (ACTION BUTTONS)
+   ========================================= */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+/* Nút Về Trang Chủ */
+.btn-home {
+  width: 100%;
+  padding: var(--btn-padding);
+  font-size: var(--btn-font-size);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: white;
+  background-color: var(--clr-primary);
+  border: none;
+  border-radius: var(--btn-radius);
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 6px 20px rgba(255, 77, 77, 0.3);
+}
+
+.btn-home:hover {
+  background-color: #e63939;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(255, 77, 77, 0.4);
+}
+
+/* Nút In Vé Cứng */
+.btn-print {
+  width: 100%;
+  padding: var(--btn-padding);
+  font-size: var(--btn-font-size);
+  font-weight: 800;
+  text-transform: uppercase;
+  color: white;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: var(--btn-radius);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-print:hover {
+  background-color: #383838;
+  transform: translateY(-3px);
+}
+
+/* =========================================
+   6. CẤU HÌNH KHI IN (PRINT)
+   ========================================= */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .ticket-visual,
+  .ticket-visual * {
+    visibility: visible;
+  }
+
+  .ticket-visual {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    border: 1px solid #ddd;
+    box-shadow: none !important;
+  }
+
+  .arc-top,
+  .arc-bottom {
+    display: none;
+  }
+
+  .ticket-right {
+    border-left: 1px dashed #ccc !important;
+  }
+}

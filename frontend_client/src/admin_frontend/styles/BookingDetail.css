@@ -1,0 +1,255 @@
+/* Container bọc ngoài cùng */
+.booking-detail-wrapper {
+    background-color: #f1f5f9;
+    min-height: 100vh;
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Khung nội dung chính max 800px */
+.booking-detail-container {
+    width: 100%;
+    max-width: 800px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    overflow: hidden;
+    padding: 30px;
+}
+
+/* Header & Title */
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.detail-title-section {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 2px dashed #e2e8f0;
+    padding-bottom: 20px;
+}
+
+/* Các phần nội dung dọc */
+.detail-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    color: #475569;
+    margin-bottom: 15px;
+}
+
+.section-body p {
+    margin: 8px 0;
+    color: #1e293b;
+}
+
+/* Highlight thông tin */
+.movie-name-highlight {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.time-highlight {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+/* Ghế ngồi kiểu badge */
+.seat-list-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.seat-badge {
+    background: #eff6ff;
+    color: #1e40af;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #bfdbfe;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Dịch vụ bắp nước */
+.food-item-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+
+/* Phần tổng tiền cuối cùng */
+.total-card-final {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+    border: none;
+}
+
+.footer-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.main-total {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #e2e8f0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.amount-highlight {
+    color: #10b981;
+}
+
+.memo-text {
+    font-family: monospace;
+    font-weight: 600;
+    color: #64748b;
+}
+
+/* Status colors */
+.status-tag {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+.status-tag.completed{ 
+    background: #dcfce7; 
+    color: #15803d; 
+}
+.status-tag.cancelled { 
+    background: #fee2e2; 
+    color: #b91c1c; 
+}
+
+/* =========================
+   RESPONSIVE - 1024px
+========================= */
+@media (max-width: 1024px) {
+
+    .booking-detail-container {
+        max-width: 720px;
+        padding: 25px;
+    }
+
+    .detail-title-section {
+        padding-bottom: 15px;
+    }
+
+    .main-total {
+        font-size: 1.3rem;
+    }
+
+}
+
+
+/* =========================
+   RESPONSIVE - 768px
+========================= */
+@media (max-width: 768px) {
+
+    .booking-detail-wrapper {
+        padding: 30px 15px;
+    }
+
+    .booking-detail-container {
+        max-width: 100%;
+        border-radius: 12px;
+        padding: 20px;
+    }
+
+    .detail-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .detail-title-section {
+        text-align: left;
+    }
+
+    .section-title {
+        font-size: 1rem;
+    }
+
+    .movie-name-highlight {
+        font-size: 1.15rem;
+    }
+
+    .footer-row {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .main-total {
+        font-size: 1.25rem;
+    }
+
+}
+
+
+/* =========================
+   RESPONSIVE - 480px
+========================= */
+@media (max-width: 480px) {
+
+    .booking-detail-wrapper {
+        padding: 20px 10px;
+    }
+
+    .booking-detail-container {
+        padding: 16px;
+        border-radius: 10px;
+    }
+
+    .section-title {
+        font-size: 0.95rem;
+        gap: 6px;
+    }
+
+    .section-body p {
+        font-size: 0.9rem;
+    }
+
+    .movie-name-highlight {
+        font-size: 1rem;
+    }
+
+    .seat-badge {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+    }
+
+    .food-item-line {
+        flex-direction: column;
+        gap: 4px;
+        font-size: 0.9rem;
+    }
+
+    .main-total {
+        font-size: 1.1rem;
+    }
+
+    .status-tag {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+    }
+
+}

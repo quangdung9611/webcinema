@@ -1,0 +1,183 @@
+/* Container bao phủ toàn màn hình */
+.admin-login-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+}
+
+/* Thẻ card chứa form đăng nhập */
+.admin-card {
+    background: #1f2937; /* Màu xám đậm chuẩn Admin */
+    color: #ffffff;
+    padding: 40px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border-top: 4px solid #ef4444; /* Đường viền đỏ phía trên tạo điểm nhấn */
+}
+
+.admin-card h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 24px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #f3f4f6;
+}
+
+/* Các nhóm nhập liệu */
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #9ca3af;
+    text-align: left;
+}
+
+/* Input dành riêng cho Admin */
+.admin-input {
+    width: 100%;
+    padding: 12px 15px;
+    background: #374151;
+    border: 1px solid #4b5563;
+    border-radius: 6px;
+    color: black;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    box-sizing: border-box; /* Giúp input không bị tràn khỏi card */
+}
+
+.admin-input:focus {
+    outline: none;
+    border-color: #ef4444;
+    background: #4b5563;
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.4);
+}
+
+/* Nút bấm Đăng nhập */
+.btn-admin {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    background-color: #ef4444; /* Màu đỏ mạnh mẽ */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background 0.3s ease;
+}
+
+.btn-admin:hover {
+    background-color: #dc2626;
+}
+
+.btn-admin:disabled {
+    background-color: #991b1b;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+/* Chữ báo lỗi dưới input admin */
+.admin-error-text {
+    color: #ff4d4d;
+    font-size: 0.8rem;
+    margin-top: 6px;
+    display: block;
+    font-style: italic;
+    animation: slideIn 0.3s ease;
+}
+
+/* Viền đỏ khi input admin có lỗi */
+.admin-input.input-error {
+    border: 1px solid #ff4d4d !important;
+    background: rgba(255, 77, 77, 0.05) !important;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-3px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Giữ form không bị nhảy khi lỗi hiện ra */
+.form-group {
+    margin-bottom: 1.5rem;
+    min-height: 90px;
+}
+/* Hiệu ứng Responsive cho màn hình nhỏ */
+/* --- HIỆU ỨNG RESPONSIVE CHI TIẾT --- */
+
+/* 1. Cho Máy tính bảng (Tablet) - Dưới 768px */
+@media (max-width: 768px) {
+    .admin-card {
+        max-width: 340px; /* Thu nhỏ card lại một chút */
+        padding: 30px;
+    }
+    
+    .admin-card h2 {
+        font-size: 20px; /* Chữ nhỏ lại để không bị xuống dòng */
+    }
+}
+
+/* 2. Cho Điện thoại di động (Mobile) - Dưới 480px */
+@media (max-width: 480px) {
+    .admin-login-page {
+        padding: 15px; /* Thêm khoảng cách với rìa màn hình */
+        background: #1a1a2e; /* Đơn giản hóa background để mượt hơn trên mobile */
+    }
+
+    .admin-card {
+        padding: 25px 20px;
+        border-radius: 8px; /* Bo góc ít hơn cho hợp màn hình nhỏ */
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .admin-card h2 {
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+
+    .admin-input {
+        padding: 10px; /* Input nhỏ lại một chút cho dễ bấm */
+        font-size: 14px;
+    }
+
+    .btn-admin {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .admin-subtitle {
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+}
+
+/* 3. Cho màn hình cực nhỏ hoặc xoay ngang (Small Mobile) - Dưới 350px */
+@media (max-width: 350px) {
+    .admin-card {
+        padding: 15px;
+    }
+    
+    .admin-card h2 {
+        font-size: 16px;
+    }
+}
+
+/* --- TỐI ƯU TRẢI NGHIỆM CẢM ỨNG --- */
+@media (pointer: coarse) {
+    .btn-admin, .admin-input {
+        min-height: 48px; /* Kích thước chuẩn để dễ chạm bằng ngón tay */
+    }
+}

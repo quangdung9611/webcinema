@@ -1,0 +1,304 @@
+/* =========================================
+   1. TỔNG THỂ & LAYOUT CHÍNH
+   ========================================= */
+.actor-profile-page {
+  background-color: #000000;
+  color: #ffffff;
+  min-height: 100vh;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  font-family: 'Inter', sans-serif;
+}
+
+.detail-content-flex {
+  display: flex;
+  gap: 35px;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.main-detail-col {
+  flex: 7.5; /* Ưu tiên diện tích cho nghệ sĩ */
+}
+
+.sidebar-col {
+  flex: 2.5; /* Thu hẹp sidebar */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* =========================================
+   2. HEADER NGHỆ SĨ (AVATAR & INFO)
+   ========================================= */
+.actor-header {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 40px;
+  background-color: #0a0a0a;
+  padding: 30px;
+  border-radius: 20px;
+  border: 1px solid #1a1a1a;
+}
+
+.actor-avatar-wrapper {
+  width: 150px;
+  height: 150px;
+  flex-shrink: 0;
+}
+
+.actor-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid #03599d;
+}
+
+.actor-name-title {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: #ffffff;
+}
+
+.badge-item {
+  display: inline-block;
+  margin-right: 15px;
+  font-size: 14px;
+  color: #999;
+}
+
+.badge-item i {
+  margin-right: 5px;
+  color: #03599d;
+}
+
+/* =========================================
+   3. PHẦN TIỂU SỬ
+   ========================================= */
+.section-divider {
+  border-left: 4px solid #03599d;
+  padding-left: 15px;
+  margin-bottom: 20px;
+}
+
+.section-divider h3 {
+  font-size: 22px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.description-text {
+  background-color: #0a0a0a;
+  padding: 25px;
+  border-radius: 12px;
+  line-height: 1.7;
+  color: #ccc;
+  border: 1px solid #111;
+}
+
+/* =========================================
+   4. GRID PHIM THAM GIA (CỘT TRÁI)
+   ========================================= */
+.actor-movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.actor-movie-card {
+  background-color: #0a0a0a;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #1a1a1a;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.actor-movie-card:hover {
+  transform: translateY(-8px);
+  border-color: #03599d;
+}
+
+.actor-movie-poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+}
+
+.actor-movie-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.actor-movie-info {
+  padding: 10px;
+  text-align: center;
+}
+
+.actor-movie-info h4 {
+  margin: 0;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================================
+   5. SIDEBAR PHIM ĐANG CHIẾU (ĐÃ THU NHỎ)
+   ========================================= */
+.sidebar-title-v2 {
+   
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.blue-line {
+  color: #03599d;
+  font-weight: 900;
+  margin-right: 10px;
+}
+
+.sidebar-movie-item-vertical {
+  margin-bottom: 25px;
+  cursor: pointer;
+  /* ÉP KÍCH THƯỚC NHỎ LẠI */
+  width: 300px; 
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sidebar-poster-vertical {
+  width: 100%;
+  height: 400px; /* Chiều cao ngắn lại cho cân đối */
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #222;
+}
+
+.sidebar-poster-vertical img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sidebar-movie-name {
+  margin-top: 8px;
+  font-size: 13px;
+  text-align: center;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Overlay nhỏ nhắn */
+.movie-meta-overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rating-tag {
+  background: rgba(0, 0, 0, 0.85);
+  color: #ffc107;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.age-limit-tag {
+  background: #e91e63;
+  color: #fff;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+/* =========================================
+   6. RESPONSIVE BREAKPOINTS
+   ========================================= */
+
+/* --- Tablet & Laptop nhỏ (1024px) --- */
+@media (max-width: 1024px) {
+  .detail-content-flex {
+    gap: 10px;
+  }
+
+  .sidebar-col {
+    flex: 3;
+  }
+}
+
+/* --- Mobile Lớn (768px) --- */
+@media (max-width: 768px) {
+  .detail-content-flex {
+    flex-direction: column;
+  }
+
+  .main-detail-col, 
+  .sidebar-col {
+    width: 100%;
+  }
+
+  /* Sidebar khi nhảy xuống dưới sẽ dàn hàng ngang */
+  .sidebar-movie-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+  }
+
+  .sidebar-movie-item-vertical {
+    width: 100%;
+  }
+
+  .sidebar-poster-vertical {
+    height: 200px;
+  }
+}
+
+/* --- Mobile Nhỏ (480px) --- */
+@media (max-width: 480px) {
+  .actor-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .actor-avatar-wrapper {
+    width: 120px;
+    height: 120px;
+  }
+
+  .actor-name-title {
+    font-size: 24px;
+  }
+
+  .actor-movie-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sidebar-movie-list {
+    grid-template-columns: repeat(3, 1fr); /* 3 cột siêu nhỏ */
+  }
+
+  .sidebar-poster-vertical {
+    height: 150px;
+  }
+
+  .sidebar-movie-name {
+    font-size: 11px;
+  }
+}

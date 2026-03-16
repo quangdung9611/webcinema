@@ -1,0 +1,60 @@
+/* ============================================================
+   USER LAYOUT - FIX ZOOM & SCROLL VERSION
+============================================================ */
+
+.user-site-container {
+    display: flex;
+    flex-direction: column;
+    /* Đảm bảo trang luôn đủ cao nhưng cho phép nở dài ra */
+    min-height: 100vh; 
+    width: 100%;
+    background-color: #0a0a0a;
+    /* Quan trọng: Cho phép trình duyệt quản lý cuộn dọc */
+    overflow-y: visible; 
+}
+
+/* ================= HEADER ================= */
+.user-header-section {
+    flex-shrink: 0; /* KHÔNG cho phép Header bị bóp nghẹt khi zoom */
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    /* Đảm bảo header có nền để không bị nội dung bên dưới hiện xuyên qua khi cuộn */
+    background-color: #0a0a0a; 
+}
+
+/* ================= MAIN - TỐI ƯU CHIỀU CAO ================= */
+.user-main-content {
+    /* flex: 1 0 auto; giữ nguyên để đẩy footer xuống đáy */
+    flex: 1 0 auto; 
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+
+    /* NHÍCH LÊN: Xóa bỏ hoàn toàn padding bottom */
+    padding-bottom: 0; 
+    
+    /* NHÍCH LÊN: Nếu các Section bên trong có margin, 
+       đoạn này sẽ ép chúng sát lại với nhau */
+    gap: 0; 
+    
+    /* Ngăn chặn việc tự tạo ra khoảng trống thừa khi zoom */
+    justify-content: flex-start; 
+}
+
+/* Ép các phần tử con trực tiếp bên trong (như banner, movie-grid) 
+   không được tự ý tạo khoảng cách quá lớn */
+.user-main-content > div {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 10px; 
+    padding-bottom: 10px;
+}
+
+/* ================= FOOTER ================= */
+.user-footer-section {
+    flex-shrink: 0; /* Giữ Footer ổn định */
+    width: 100%;
+    margin-top: auto; /* Luôn nằm dưới cùng kể cả khi trang ít nội dung */
+}

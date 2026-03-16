@@ -1,0 +1,26 @@
+# Dependency directories
+node_modules/
+backend_server/node_modules/
+frontend_client/node_modules/
+
+# Local env files (Bảo mật usertoken và mật khẩu DB)
+.env
+.env.local
+.env.*.local
+
+# Database data (Không đẩy dữ liệu MySQL nặng nề lên GitHub)
+db_data/
+
+# Log files
+*.log
+npm-debug.log*
+
+# Editor & System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+dist-ssr/

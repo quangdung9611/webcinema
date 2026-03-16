@@ -1,0 +1,325 @@
+/* ==========================================
+   1. TỔNG THỂ LAYOUT
+   ========================================== */
+.genre-page-bg {
+    background-color: #ffffff; /* Nền trắng cho trang danh sách giống Galaxy */
+    min-height: 100vh;
+    padding: 30px 0;
+}
+
+.genre-content-flex {
+    display: flex;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 30px;
+    padding: 0 15px;
+}
+
+/* Cột chính (8/12) */
+.main-genre-col {
+    flex: 8;
+    min-width: 0;
+}
+
+/* Sidebar (4/12) */
+.sidebar-col {
+    flex: 4;
+    min-width: 300px;
+}
+
+/* ==========================================
+   2. HEADER & BỘ LỌC (FILTERS)
+   ========================================== */
+.section-header-galaxy {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.blue-line {
+    width: 4px;
+    height: 28px;
+    background: #03599d;
+    border-radius: 2px;
+}
+
+.section-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.genre-filters-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 35px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.filter-select {
+    padding: 8px 15px;
+    border: 1px solid #dddddd;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #444;
+    background-color: #fff;
+    min-width: 140px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-select:focus {
+    color: black;
+    border-color: #03599d;
+    outline: none;
+}
+.movie-release-info {
+    margin-top: 12px;
+    font-size: 13px;
+    font-style: italic;
+    color: #888;
+}
+
+/* Hiệu ứng loading cho chuyên nghiệp */
+.loading {
+    text-align: center;
+    padding: 100px;
+    font-size: 18px;
+    color: #03599d;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+/* ==========================================
+   3. DANH SÁCH PHIM (CARD NGANG)
+   ========================================== */
+.movie-genre-list {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.movie-card-horizontal {
+    display: flex;
+    gap: 20px;
+    padding-bottom: 30px;
+    border-bottom: 1px dashed #e0e0e0;
+    transition: transform 0.3s ease;
+}
+
+.movie-img-box {
+    flex: 0 0 200px; /* Độ rộng cố định cho poster */
+    height: 300px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.movie-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.movie-card-horizontal:hover .movie-img-box img {
+    transform: scale(1.05);
+}
+
+.movie-content-info {
+    flex: 1;
+}
+
+.movie-name-link {
+    text-decoration: none;
+}
+
+.movie-content-info h3 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: color 0.2s;
+}
+
+.movie-name-link:hover h3 {
+    color: #03599d;
+}
+
+.movie-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.btn-fb-like {
+    background: #1877f2;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.view-count {
+    font-size: 13px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.movie-summary-text {
+    font-size: 15px;
+    color: #666;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* Giới hạn 4 dòng mô tả */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-align: justify;
+}
+
+/* ==========================================
+   4. SIDEBAR (MUA VÉ & DANH SÁCH PHỤ)
+   ========================================== */
+.quick-buy-box {
+    background: #ffffff;
+    border: 1px solid #03599d;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 40px;
+    box-shadow: 0 5px 15px rgba(3, 89, 157, 0.1);
+}
+
+.quick-buy-header {
+    background: #03599d;
+    color: #fff;
+    padding: 12px;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 16px;
+}
+
+.quick-buy-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.quick-buy-body select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+}
+
+.sidebar-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 20px;
+    padding-left: 12px;
+    border-left: 4px solid #f1c40f;
+}
+
+.sidebar-movie-list {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.simple-movie-item {
+    cursor: pointer;
+}
+
+.simple-poster {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9; /* Ảnh ngang cho sidebar xịn hơn */
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.simple-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* .age-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 800;
+    font-size: 12px;
+} */
+
+.simple-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+.view-more-btn {
+    width: 100%;
+    margin-top: 25px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid #03599d;
+    color: #03599d;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.view-more-btn:hover {
+    background: #03599d;
+    color: #fff;
+}
+
+/* ==========================================
+   5. RESPONSIVE
+   ========================================== */
+@media (max-width: 992px) {
+    .genre-content-flex {
+        flex-direction: column;
+    }
+    .sidebar-col {
+        width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    .movie-card-horizontal {
+        flex-direction: column;
+    }
+    .movie-img-box {
+        flex: none;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 2/3;
+    }
+}

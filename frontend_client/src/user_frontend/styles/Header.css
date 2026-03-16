@@ -1,0 +1,220 @@
+/* =========================================================
+   HEADER - CINEMA STAR (CLICK-ONLY OPTIMIZED)
+   ========================================================= */
+
+/* --- LAYOUT & LOGO --- */
+.user-navbar {
+    background-color: rgba(10, 10, 10, 0.98);
+    height: 70px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.nav-container {
+    width: 100%;
+    padding: 0 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.logo {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+    letter-spacing: 1px;
+}
+
+.logo span { color: #f1c40f; }
+
+/* --- HAMBURGER --- */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.hamburger .bar {
+    width: 25px; height: 3px;
+    background-color: #ffffff;
+    border-radius: 2px;
+    transition: 0.4s;
+}
+
+/* --- NAV LINKS CORE --- */
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 25px;
+    margin: 0; padding: 0;
+}
+
+.nav-links > li { position: relative; }
+
+.nav-links > li > a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    padding: 25px 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: 0.3s;
+}
+
+/* Màu khi menu đang được click mở hoặc hover link */
+.nav-links > li:hover > a,
+.has-dropdown.mobile-active > a {
+    color: #f1c40f;
+}
+
+.icon-down { transition: transform 0.3s ease; }
+
+/* =========================================================
+   SUB MENU - CHỈ HIỆN KHI CLICK (Dùng .mobile-active)
+   ========================================================= */
+.sub-menu {
+    list-style: none;
+    padding: 10px 0;
+    background: #fff;
+    z-index: 999;
+    display: none; /* MẶC ĐỊNH ẨN TOÀN BỘ (Cả PC & Mobile) */
+}
+
+/* HIỆU ỨNG HIỂN THỊ KHI CÓ CLASS .mobile-active */
+.has-dropdown.mobile-active > .sub-menu {
+    display: block !important;
+    animation: slideDown 0.3s ease-out;
+}
+
+.has-dropdown.mobile-active .icon-down {
+    transform: rotate(180deg);
+}
+
+/* Style cho các link bên trong sub-menu */
+.sub-menu li a {
+    color: #333 !important;
+    padding: 12px 20px;
+    display: block;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.sub-menu li a:hover {
+    background: #f8f8f8;
+    color: #f1c40f !important;
+}
+
+/* =========================================================
+   XỬ LÝ RIÊNG CHO DESKTOP (PC)
+   ========================================================= */
+@media (min-width: 769px) {
+    .sub-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 220px;
+        border-radius: 4px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+}
+
+/* =========================================================
+   XỬ LÝ RIÊNG CHO MOBILE
+   ========================================================= */
+@media (max-width: 768px) {
+    .hamburger { display: flex; }
+
+    .nav-links {
+        position: fixed;
+        top: 70px;
+        left: -100%;
+        width: 280px;
+        height: calc(100vh - 70px);
+        background: #0d0d0d;
+        flex-direction: column;
+        transition: 0.4s;
+        overflow-y: auto;
+    }
+
+    .nav-links.active { left: 0; }
+
+    .nav-links > li > a {
+        padding: 15px 20px;
+        border-bottom: 1px solid #1a1a1a;
+        justify-content: space-between;
+    }
+
+    .sub-menu {
+        position: static;
+        background: #151515;
+        width: 100%;
+    }
+
+    .sub-menu li a {
+        color: #aaa !important;
+        padding-left: 40px !important;
+        border-bottom: 1px solid #222;
+    }
+}
+
+/* --- TÀI KHOẢN (USER MENU) --- */
+.user-menu { position: relative; }
+.account-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #f1c40f;
+    cursor: pointer;
+    padding: 8px 15px;
+    background: #222;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.dropdown-content {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: #fff;
+    min-width: 200px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: none;
+    padding: 10px 0;
+}
+
+.dropdown-content.show { display: block; }
+
+.dropdown-item {
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #333;
+    cursor: pointer;
+}
+
+.dropdown-item:hover { background: #f8f8f8; color: #f1c40f; }
+.dropdown-divider { height: 1px; background: #eee; margin: 8px 0; }
+
+/* --- ANIMATION --- */
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

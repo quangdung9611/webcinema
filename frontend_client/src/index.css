@@ -1,0 +1,98 @@
+/* ==========================================
+   1. GLOBAL RESET & FIX SCROLL
+   ========================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    width: 100%;
+    /* Quan trọng: Để 100% để Flexbox của body nhận diện được chiều cao */
+    height: 100%; 
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
+body {
+    width: 100%;
+    /* Ép body luôn cao ít nhất bằng màn hình */
+    min-height: 100vh;
+    height: auto !important;
+    background-color: #000;
+    color: #fff;
+    line-height: 1.6;
+    font-family: 'Inter', sans-serif;
+    
+    /* Biến body thành cái khung Flexbox để đẩy Footer */
+    display: flex;
+    flex-direction: column;
+    
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+#root, .app-wrapper {
+    /* Đảm bảo React bọc ngoài cũng đi theo luồng Flexbox */
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Chiếm toàn bộ không gian còn lại */
+    width: 100%;
+}
+
+/* ==========================================
+   2. FOOTER NHÍCH LÊN (STICKY FOOTER STYLE)
+   ========================================== */
+/* Giả sử bạn có thẻ <main> hoặc div bọc nội dung giữa Header và Footer */
+main, .main-content {
+    flex: 1 0 auto; /* Nó sẽ tự nở ra để đẩy Footer xuống đáy hoặc nhích Footer lên */
+}
+
+footer {
+    flex-shrink: 0; /* Không cho Footer bị méo */
+    margin-top: auto; /* Phép màu: Tự động nhích lên dựa trên nội dung phía trên */
+    padding: 60px 0; /* Tăng padding để Footer nhìn cao và thoáng hơn */
+    background-color: #0a0a0a;
+    border-top: 1px solid #222;
+}
+
+/* ==========================================
+   3. TYPOGRAPHY & MEDIA
+   ========================================== */
+h1, h2, h3, h4, .hero-title, .movie-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+img, video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; }
+
+/* ==========================================
+   4. CONTAINER & NOT FOUND
+   ========================================== */
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.not-found-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background-color: #0a0a0a;
+}

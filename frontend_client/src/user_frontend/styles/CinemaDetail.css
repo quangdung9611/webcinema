@@ -1,0 +1,300 @@
+/* ==========================================================================
+   1. BIẾN VÀ THIẾT LẬP CHUNG (DARK THEME)
+   ========================================================================== */
+:root {
+    --primary-color: #03599d;
+    --accent-color: #f1c40f;
+    --bg-dark-deep: #000000;
+    --bg-dark-card: #0a0a0a;
+    --bg-dark-item: #151515;
+    --text-bright: #ffffff;
+    --text-gray: #aaaaaa;
+    --border-soft: #222222;
+}
+
+.cinema-detail-wrapper {
+    background-color: var(--bg-dark-deep);
+    color: var(--text-bright);
+    min-height: 100vh;
+    padding-bottom: 50px;
+    font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ==========================================================================
+   2. HEADER THÔNG TIN RẠP
+   ========================================================================== */
+.cinema-top-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-dark-deep);
+    padding: 40px 10%;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.c-name {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-bright);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.c-address, 
+.c-hotline {
+    font-size: 14px;
+    color: var(--text-gray);
+    margin: 6px 0;
+}
+
+.info-right {
+    display: flex;
+    gap: 15px;
+}
+
+.select-box {
+    padding: 12px;
+    background: var(--bg-dark-card);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    color: var(--text-bright);
+    min-width: 180px;
+    outline: none;
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   3. THANH CHỌN NGÀY (DATE STRIP) - FIX FLEX-WRAP
+   ========================================================================== */
+.date-picker-strip {
+    display: flex;
+    flex-wrap: wrap; /* Tự động xuống hàng nếu màn hình nhỏ */
+    gap: 10px;
+    margin-bottom: 40px;
+    padding: 10px 0;
+}
+
+.date-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 0 1 100px; /* Độ rộng linh hoạt */
+    height: 75px;
+    background: var(--bg-dark-item);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.date-item .day-text {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-gray);
+    margin-bottom: 4px;
+}
+
+.date-item .date-text {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-bright);
+}
+
+.date-item.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 5px 15px rgba(3, 89, 157, 0.4);
+    transform: translateY(-3px);
+}
+
+.date-item.active .day-text, 
+.date-item.active .date-text { 
+    color: #ffffff; 
+}
+
+.date-item:hover:not(.active) {
+    border-color: var(--accent-color);
+}
+
+/* ==========================================================================
+   4. GRID PHIM VÀ CARD
+   ========================================================================== */
+.cinema-main-content {
+    max-width: 1250px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.movie-grid-container {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); 
+    gap: 25px;
+    row-gap: 40px;
+}
+
+.movie-grid-card {
+    cursor: pointer;
+}
+
+.poster-wrapper {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    border-radius: 12px;
+    border: 1px solid var(--border-soft);
+    overflow: hidden;
+}
+
+.poster-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.movie-grid-card:hover img {
+    transform: scale(1.08);
+}
+
+.movie-grid-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-bright);
+    line-height: 1.4;
+    margin-top: 15px;
+    text-align: left;
+}
+
+.rating-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--accent-color);
+    backdrop-filter: blur(5px);
+}
+
+/* ==========================================================================
+   5. PANEL SUẤT CHIẾU (FIX FLEX-WRAP)
+   ========================================================================== */
+.showtime-dropdown-panel {
+    grid-column: 1 / -1; 
+    background: var(--bg-dark-card);
+    border: 1px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 30px;
+    margin: 10px 0;
+    animation: slideDown 0.4s ease forwards;
+}
+
+.panel-title {
+    font-size: 18px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+.showtime-slots {
+    display: flex;
+    flex-wrap: wrap; /* Suất chiếu tự nhảy dòng */
+    gap: 15px;
+}
+
+.showtime-slots button {
+    padding: 12px 25px;
+    background: var(--bg-dark-item);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    color: var(--text-bright);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.showtime-slots button:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #000000;
+    transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   6. RESPONSIVE (TỐI ƯU MƯỢT MÀ)
+   ========================================================================== */
+
+/* Laptop nhỏ / Tablet Ngang (Max 1024px) */
+@media (max-width: 1024px) {
+    .movie-grid-container {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    .cinema-top-info {
+        padding: 30px 5%;
+    }
+}
+
+/* Tablet Dọc (Max 768px) */
+@media (max-width: 768px) {
+    .cinema-top-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 25px;
+    }
+
+    .info-right {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .movie-grid-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .c-name {
+        font-size: 24px;
+    }
+
+    .date-item {
+        flex: 1 1 calc(25% - 10px); /* 4 ô mỗi hàng trên tablet */
+        min-width: 80px;
+    }
+}
+
+/* Mobile Dọc (Max 480px) */
+@media (max-width: 480px) {
+    .movie-grid-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .date-item {
+        flex: 1 1 calc(33.33% - 10px); /* 3 ô mỗi hàng trên mobile */
+    }
+
+    .showtime-slots button {
+        flex: 1 1 calc(50% - 15px); /* Suất chiếu chia đôi cho dễ bấm */
+        padding: 12px 10px;
+        text-align: center;
+    }
+
+    .select-box {
+        min-width: 140px;
+    }
+}
+
+/* ==========================================================================
+   7. ANIMATIONS
+   ========================================================================== */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -1,0 +1,244 @@
+:root {
+  --momo-pink: #ae2070;
+  --momo-pink-light: #fff0f6;
+  --text-main: #333333;
+  --text-secondary: #727272;
+  --white: #ffffff;
+  --bg-body: #f4f4f4;
+}
+
+/* 1. Cấu trúc tổng thể trang */
+.momo-checkout-page {
+  background-color: var(--bg-body);
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding-bottom: 40px;
+}
+
+/* 2. Thanh điều hướng (Navigation Bar) */
+.momo-nav-bar {
+  background: var(--white);
+  padding: 12px 0;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 30px;
+}
+
+.nav-content {
+  max-width: 950px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+}
+
+.nav-content img {
+  width: 35px;
+}
+
+.nav-content span {
+  font-weight: 600;
+  color: #444;
+  font-size: 15px;
+}
+
+/* 3. Khung nội dung chính (Card Container) */
+.momo-checkout-container {
+  max-width: 950px;
+  margin: 0 auto;
+  display: flex;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* 4. Cột trái: Thông tin đơn hàng */
+.momo-order-details {
+  flex: 1;
+  padding: 40px;
+  border-right: 1px dashed #e0e0e0;
+}
+
+.section-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 30px;
+  text-transform: uppercase;
+}
+
+.info-group {
+  margin-bottom: 24px;
+}
+
+.info-group label {
+  display: block;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.order-value {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.order-value.amount {
+  font-size: 26px;
+  color: var(--momo-pink);
+  font-weight: 700;
+}
+
+.vendor-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.vendor-info img {
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+}
+
+/* 5. Hộp thời gian hết hạn */
+.momo-expiry-box {
+  margin-top: 50px;
+  background: var(--momo-pink-light);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.momo-expiry-box p {
+  color: var(--momo-pink);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.expiry-timer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--momo-pink);
+}
+
+/* 6. Cột phải: Vùng quét mã QR */
+.momo-qr-section {
+  flex: 1.2;
+  background: var(--momo-pink);
+  padding: 50px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-card {
+  background: var(--white);
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 300px;
+  transition: transform 0.3s ease;
+  position: relative;
+}
+
+.qr-card:hover {
+  transform: scale(1.02);
+}
+
+/* 7. Hiệu ứng quét QR (Scanner Animation) */
+.qr-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  padding: 10px;
+  background: #fff;
+}
+
+.qr-wrapper img {
+  width: 100%;
+  display: block;
+  animation: qr-pulse 2s infinite ease-in-out;
+}
+
+.scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--momo-pink);
+  box-shadow: 0 0 15px 2px var(--momo-pink);
+  z-index: 10;
+  animation: scan-move 2.5s infinite ease-in-out;
+}
+
+/* 8. Các Keyframes cho Animation */
+@keyframes scan-move {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  10%, 90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes qr-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+    opacity: 0.95;
+  }
+}
+
+/* 9. Chỉ dẫn và trợ giúp */
+.qr-instruction {
+  margin-top: 30px;
+  color: var(--white);
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+  max-width: 280px;
+}
+
+.help-text {
+  margin-top: 25px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.help-text a {
+  color: #ffeb3b;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* 10. Tương thích di động (Responsive) */
+@media (max-width: 768px) {
+  .momo-checkout-container {
+    flex-direction: column;
+    margin: 15px;
+  }
+  .momo-order-details {
+    border-right: none;
+    border-bottom: 1px dashed #ddd;
+  }
+}

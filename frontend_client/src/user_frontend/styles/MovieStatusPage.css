@@ -1,0 +1,221 @@
+/* ============================================================
+   MOVIE STATUS PAGE - CLEAN MODERN VERSION
+============================================================ */
+
+.movie-client-page {
+    background: #0a0a0a;
+    min-height: auto;
+    padding: 50px 16px 80px;
+    color: #fff;
+}
+
+/* ================= CONTAINER ================= */
+
+.status-header-simple,
+.movie-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ================= HEADER ================= */
+
+.status-header-simple {
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.status-header-simple h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* ================= GRID ================= */
+
+.movie-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px 22px;
+}
+
+/* ================= MOVIE ITEM ================= */
+
+.movie-item {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ================= POSTER ================= */
+
+.movie-item__poster-container {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #1a1a1a;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.movie-item__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.movie-item:hover .movie-item__img {
+    transform: scale(1.08);
+}
+
+/* ================= OVERLAY ================= */
+
+.card-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: 0.3s ease;
+    z-index: 2;
+}
+
+/* Hover desktop */
+.movie-item__poster-container:hover .card-overlay {
+    opacity: 1;
+}
+
+/* ================= BUTTON ================= */
+
+.btn-detail {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    background: #f1c40f;
+    color: #000;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.btn-detail:hover {
+    background: #ffd84d;
+    transform: scale(1.05);
+}
+
+/* ================= AGE TAG ================= */
+
+.movie-item__age-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #e74c3c;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 5px;
+    z-index: 3;
+}
+
+/* ================= FALLBACK ================= */
+
+.movie-item__fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #1a1a1a;
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.fallback-icon {
+    font-size: 1.6rem;
+    margin-bottom: 6px;
+}
+
+/* ================= INFO ================= */
+
+.movie-item__info {
+    margin-top: 14px;
+}
+
+.movie-item__title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 6px;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.movie-item__meta {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* ================= EMPTY ================= */
+
+.empty-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 0;
+    color: #777;
+}
+
+/* ================= LOADING ================= */
+
+.loading-state {
+    min-height: 60vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+    color: #aaa;
+}
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+
+@media (max-width: 767px) {
+
+    .movie-client-page {
+        padding: 35px 12px 60px;
+    }
+
+    .movie-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px 14px;
+    }
+
+    .movie-item__poster-container {
+        border-radius: 8px;
+        aspect-ratio: 2 / 2.9;
+    }
+
+    .movie-item__title {
+        font-size: 0.9rem;
+    }
+
+    .movie-item__meta {
+        font-size: 0.75rem;
+    }
+
+    /* Mobile: hiện overlay luôn */
+    .card-overlay {
+        opacity: 1;
+        background: rgba(0, 0, 0, 0.4);
+    }
+}

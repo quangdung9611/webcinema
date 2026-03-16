@@ -1,0 +1,443 @@
+/* =========================================
+   1. KHUNG CHÍNH (LAYOUT)
+   ========================================= */
+.payment-page {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6; 
+}
+
+.payment-header {
+    text-align: center;
+    padding: 30px 0;
+}
+
+.payment-header h2 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #222;
+    letter-spacing: 1px;
+    position: relative;
+    display: inline-block;
+}
+
+.payment-header h2::after {
+    content: '';
+    display: block;
+    width: 50px;
+    height: 4px;
+    background: #ffc107;
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+.booking-content {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+/* =========================================
+   2. PHẦN BÊN TRÁI (FORM TRẮNG)
+   ========================================= */
+.seat-map-section {
+    flex: 1.6;
+}
+
+.customer-info-form {
+    background: #ffffff; /* NỀN TRẮNG */
+    padding: 35px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); /* Đổ bóng mịn */
+    border: 1px solid #eee;
+}
+
+.form-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+}
+
+.title-border {
+    margin-top: 40px;
+    padding-top: 25px;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* Input Styles */
+.input-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.payment-input {
+    flex: 1;
+    padding: 14px 16px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 15px;
+    background: #fafafa;
+    transition: all 0.3s ease;
+    color: #333;
+}
+
+.payment-input:focus {
+    outline: none;
+    border-color: #ffc107;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.1);
+}
+
+.input-full {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.email-highlight {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* Payment Method Selection */
+.method-label {
+    display: flex;
+    align-items: center;
+    padding: 18px;
+    border: 2px solid #f0f0f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+    background: #fff;
+}
+
+.method-label:hover {
+    border-color: #ffc107;
+}
+
+.method-label.active {
+    border-color: #ffc107;
+    background: #fffdf5;
+}
+
+.method-label input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 15px;
+    accent-color: #ffc107;
+}
+
+.method-label span {
+    font-weight: 600;
+    color: #444;
+}
+
+/* =========================================
+   3. SIDEBAR BÊN PHẢI (SUMMARY)
+   ========================================= */
+.booking-info-sidebar {
+    flex: 1;
+    background: #ffffff; /* NỀN TRẮNG */
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+    position: sticky;
+    top: 20px;
+}
+
+.movie-mini-info {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.movie-mini-info img {
+    width: 90px;
+    height: 130px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.movie-mini-info h4 {
+    margin: 5px 0;
+    font-size: 18px;
+    color: #222;
+    line-height: 1.3;
+}
+
+.type-tag {
+    display: inline-block;
+    background: #f1f1f1;
+    color: #666;
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.detail-list {
+    margin-bottom: 20px;
+}
+
+.detail-list p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.detail-list strong {
+    color: #222;
+}
+
+/* Price Breakdown */
+.price-breakdown {
+    border-top: 1px dashed #ddd;
+    padding-top: 20px;
+    margin-top: 20px;
+}
+
+.breakdown-title {
+    font-size: 12px;
+    color: #999;
+    font-weight: 700;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.price-row-custom {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #444;
+}
+
+.total-amount {
+    border-top: 2px solid #f0f0f0;
+    margin-top: 20px;
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.total-amount span {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.price-num {
+    color: #e67e22;
+    font-size: 24px !important;
+    font-weight: 800 !important;
+}
+
+/* =========================================
+   4. NÚT BẤM (BUTTONS)
+   ========================================= */
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn-back-detail {
+    flex: 1;
+    padding: 14px;
+    background: #f5f5f5;
+    color: #777;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-back-detail:hover {
+    background: #e8e8e8;
+    color: #333;
+}
+
+.btn-go-next {
+    flex: 2;
+    padding: 14px;
+    background: #ffc107;
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+    text-transform: uppercase;
+}
+
+.btn-go-next:hover {
+    background: #ffca2c;
+    box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
+    transform: translateY(-2px);
+}
+
+/* ================= 1024px ================= */
+@media (max-width: 1024px) {
+
+    .payment-page {
+        max-width: 95%;
+        margin: 30px auto;
+    }
+
+    .booking-content {
+        gap: 20px;
+    }
+
+    .seat-map-section {
+        flex: 1.4;
+    }
+
+    .booking-info-sidebar {
+        flex: 1;
+        padding: 20px;
+    }
+
+    .movie-mini-info img {
+        width: 80px;
+        height: 115px;
+    }
+
+    .price-num {
+        font-size: 22px !important;
+    }
+
+    .btn-go-next {
+        font-size: 14px;
+    }
+}
+/* ================= 768px ================= */
+@media (max-width: 768px) {
+
+    .booking-content {
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .customer-info-form {
+        padding: 25px;
+    }
+
+    .input-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .booking-info-sidebar {
+        width: 100%;
+        position: static;
+        padding: 20px;
+    }
+
+    .movie-mini-info {
+        gap: 12px;
+    }
+
+    .movie-mini-info img {
+        width: 75px;
+        height: 105px;
+    }
+
+    .movie-mini-info h4 {
+        font-size: 16px;
+    }
+
+    .price-num {
+        font-size: 20px !important;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn-back-detail,
+    .btn-go-next {
+        width: 100%;
+    }
+}
+/* ================= 480px ================= */
+@media (max-width: 480px) {
+
+    .payment-page {
+        padding: 0 12px;
+        margin: 20px auto;
+    }
+
+    .customer-info-form {
+        padding: 18px;
+        border-radius: 12px;
+    }
+
+    .form-title {
+        font-size: 16px;
+        margin-bottom: 18px;
+    }
+
+    .payment-input {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .method-label {
+        padding: 14px;
+    }
+
+    .method-label span {
+        font-size: 14px;
+    }
+
+    .booking-info-sidebar {
+        padding: 18px;
+        border-radius: 12px;
+    }
+
+    .movie-mini-info {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .movie-mini-info img {
+        width: 100px;
+        height: 140px;
+    }
+
+    .movie-mini-info h4 {
+        font-size: 15px;
+    }
+
+    .detail-list p {
+        font-size: 13px;
+    }
+
+    .total-amount span {
+        font-size: 15px;
+    }
+
+    .price-num {
+        font-size: 18px !important;
+    }
+
+    .btn-go-next {
+        padding: 12px;
+        font-size: 13px;
+    }
+
+    .btn-back-detail {
+        padding: 12px;
+        font-size: 13px;
+    }
+}
