@@ -11,6 +11,7 @@
     "start": "serve -s dist -l 5173"
   },
   "dependencies": {
+    "vite": "^5.0.0",
     "axios": "^1.13.2",
     "lucide-react": "^0.563.0",
     "qrcode.react": "^4.2.0",
@@ -31,8 +32,6 @@
     "globals": "^16.5.0",
     "terser": "^5.46.0",
     "vite": "^5.0.0"
-  },
-  "overrides": {
-   "vite": "^5.0.0"
   }
+ 
 }
