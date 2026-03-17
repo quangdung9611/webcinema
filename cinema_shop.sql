@@ -28,7 +28,7 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `actors` (
-  `actor_id` int NOT NULL AUTO_INCREMENT,
+  `actor_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `gender` enum('Nam','Nữ','Khác') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Nam',
   `nationality` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Việt Nam',
@@ -55,7 +55,7 @@ INSERT INTO `actors` (`actor_id`, `name`, `gender`, `nationality`, `avatar`, `bi
 --
 
 CREATE TABLE `bookings` (
-  `booking_id` int NOT NULL AUTO_INCREMENT,
+  `booking_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `user_id` int DEFAULT NULL,
   `showtime_id` int DEFAULT NULL,
   `coupon_id` int DEFAULT NULL,
@@ -80,7 +80,7 @@ INSERT INTO `bookings` (`booking_id`, `user_id`, `showtime_id`, `coupon_id`, `bo
 --
 
 CREATE TABLE `booking_details` (
-  `booking_detail_id` int NOT NULL AUTO_INCREMENT,
+  `booking_detail_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `product_id` int DEFAULT NULL,
   `booking_id` int DEFAULT NULL,
   `item_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -105,7 +105,7 @@ INSERT INTO `booking_details` (`booking_detail_id`, `product_id`, `booking_id`, 
 --
 
 CREATE TABLE `cinemas` (
-  `cinema_id` int NOT NULL AUTO_INCREMENT,
+  `cinema_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `cinema_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -127,7 +127,7 @@ INSERT INTO `cinemas` (`cinema_id`, `cinema_name`, `slug`, `address`, `city`) VA
 --
 
 CREATE TABLE `coupons` (
-  `coupon_id` int NOT NULL AUTO_INCREMENT,
+  `coupon_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `coupon_code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `discount_value` decimal(16,0) DEFAULT NULL,
   `expiry_date` date DEFAULT NULL
@@ -148,7 +148,7 @@ INSERT INTO `coupons` (`coupon_id`, `coupon_code`, `discount_value`, `expiry_dat
 --
 
 CREATE TABLE `genres` (
-  `genre_id` int NOT NULL AUTO_INCREMENT,
+  `genre_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `genre_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `slug` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -172,7 +172,7 @@ INSERT INTO `genres` (`genre_id`, `genre_name`, `slug`) VALUES
 --
 
 CREATE TABLE `movies` (
-  `movie_id` int NOT NULL AUTO_INCREMENT,
+  `movie_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -203,7 +203,7 @@ INSERT INTO `movies` (`movie_id`, `title`, `slug`, `description`, `director`, `d
 --
 
 CREATE TABLE `movie_actors` (
-  `movie_actor_id` int NOT NULL AUTO_INCREMENT,
+  `movie_actor_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `movie_id` int NOT NULL,
   `actor_id` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -225,7 +225,7 @@ INSERT INTO `movie_actors` (`movie_actor_id`, `movie_id`, `actor_id`) VALUES
 --
 
 CREATE TABLE `movie_genres` (
-  `movie_genre_id` int NOT NULL AUTO_INCREMENT,
+  `movie_genre_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `movie_id` int NOT NULL,
   `genre_id` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -250,7 +250,7 @@ INSERT INTO `movie_genres` (`movie_genre_id`, `movie_id`, `genre_id`) VALUES
 --
 
 CREATE TABLE `news` (
-  `news_id` int NOT NULL AUTO_INCREMENT,
+  `news_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -275,7 +275,7 @@ INSERT INTO `news` (`news_id`, `title`, `slug`, `content`, `image_url`, `views`,
 --
 
 CREATE TABLE `product_menu` (
-  `product_id` int NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `product_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `price` decimal(16,0) DEFAULT NULL,
   `food_image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
@@ -297,7 +297,7 @@ INSERT INTO `product_menu` (`product_id`, `product_name`, `price`, `food_image`)
 --
 
 CREATE TABLE `reviews` (
-  `review_id` int NOT NULL AUTO_INCREMENT,
+  `review_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `movie_id` int DEFAULT NULL,
   `user_id` int DEFAULT NULL,
   `rating_score` tinyint DEFAULT NULL,
@@ -322,7 +322,7 @@ INSERT INTO `reviews` (`review_id`, `movie_id`, `user_id`, `rating_score`, `comm
 --
 
 CREATE TABLE `rooms` (
-  `room_id` int NOT NULL AUTO_INCREMENT,
+  `room_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `cinema_id` int DEFAULT NULL,
   `room_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `room_type` enum('2D','3D','IMAX') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '2D',
@@ -346,7 +346,7 @@ INSERT INTO `rooms` (`room_id`, `cinema_id`, `room_name`, `room_type`, `total_se
 --
 
 CREATE TABLE `seats` (
-  `seat_id` int NOT NULL AUTO_INCREMENT,
+  `seat_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `room_id` int DEFAULT NULL,
   `cinema_id` int DEFAULT NULL,
   `seat_row` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -484,7 +484,7 @@ INSERT INTO `seats` (`seat_id`, `room_id`, `cinema_id`, `seat_row`, `seat_number
 --
 
 CREATE TABLE `showtimes` (
-  `showtime_id` int NOT NULL AUTO_INCREMENT,
+  `showtime_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `movie_id` int DEFAULT NULL,
   `room_id` int DEFAULT NULL,
   `cinema_id` int NOT NULL,
@@ -509,7 +509,7 @@ INSERT INTO `showtimes` (`showtime_id`, `movie_id`, `room_id`, `cinema_id`, `sta
 --
 
 CREATE TABLE `tickets` (
-  `ticket_id` int NOT NULL AUTO_INCREMENT,
+  `ticket_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `booking_id` int DEFAULT NULL,
   `showtime_id` int DEFAULT NULL,
   `seat_id` int NOT NULL,
@@ -535,7 +535,7 @@ INSERT INTO `tickets` (`ticket_id`, `booking_id`, `showtime_id`, `seat_id`, `tic
 --
 
 CREATE TABLE `users` (
-  `user_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `full_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `phone` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
