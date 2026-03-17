@@ -28,10 +28,18 @@ const couponRoutes = require('./Routers/CouponRouter');
 const movieGenreRoutes = require('./Routers/MovieGenreRouter');
 const movieActorRoutes = require('./Routers/MovieActorRouter');
 const newsRoutes = require('./Routers/NewRouter');
-// MIDDLEWARES
+
+// ===========================================================
+// 1. SỬA CORS: Cho phép cả máy nhà và link sau này trên mạng
+// ===========================================================
 app.use(cors({
-  origin: 'http://localhost:5173', 
-  credentials: true                
+  origin: [
+    'http://localhost:5173', 
+    'http://localhost:3000',
+    /\.vercel\.app$/, // Cho phép link frontend trên Vercel
+    /\.onrender\.com$/ // Cho phép các link trên Render
+  ], 
+  credentials: true 
 }));
 
 app.use(cookieParser()); 
@@ -40,25 +48,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ===========================================================
-// ROUTES - PHẦN SỬA CHÍNH CỦA DŨNG
-// ===========================================================
-
+// ROUTES
 app.get('/api', (req, res) => {
-  res.send('Kết nối thành công');
+  res.send('Kết nối Backend Cinema thành công!');
 });
 
-/**
- * 1. CỔNG DÀNH CHO ADMIN (URL bắt đầu bằng /admin)
- * Khi Frontend Admin gọi các link này, admintoken sẽ được gửi đi
- */
-app.use('/admin/api/auth', authRoutes);  // Dùng cho login admin, getMe admin...
-app.use('/admin/api/manage', adminRouter); // Dùng cho các chức năng quản trị khác
+app.use('/admin/api/auth', authRoutes);
+app.use('/admin/api/manage', adminRouter);
 
-/**
- * 2. CỔNG DÀNH CHO USER CLIENT & CHỨC NĂNG CHUNG (Link cũ)
- * Các route này sẽ nhận usertoken
- */
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/genres', genreRoutes);
@@ -78,16 +75,17 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/movie-genres', movieGenreRoutes);
 app.use('/api/movie-actors', movieActorRoutes);
-app.use('/api/news',newsRoutes);
+app.use('/api/news', newsRoutes);
+
 // ===========================================================
-// CHẠY SERVER
+// 2. SỬA PORT: Render sẽ tự cấp cổng (PORT), nếu không có thì lấy 5000
 // ===========================================================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
+  console.log(`🚀 Server đang chạy tại port: ${PORT}`);
   db.getConnection()
     .then(conn => {
-      console.log("✅ Database 'cinema_shop' đã kết nối!");
+      console.log("✅ Database 'cinema_shop' đã kết nối thành công qua Aiven!");
       conn.release();
     })
     .catch(err => console.log("❌ Lỗi kết nối DB:", err.message));
