@@ -23,8 +23,8 @@ const CinemaGenre = () => {
                 
                 // GỌI TẤT CẢ API TỪ BACKEND
                 const [resMovies, resGenres] = await Promise.all([
-                    axios.get('http://localhost:5000/api/movies'),
-                    axios.get('http://localhost:5000/api/genres')
+                    axios.get('https://webcinema-zb8z.onrender.com/api/movies'),
+                    axios.get('https://webcinema-zb8z.onrender.com/api/genres')
                 ]);
 
                 // 1. Lưu danh sách phim chính
@@ -102,7 +102,7 @@ const CinemaGenre = () => {
                             <div key={movie.movie_id} className="movie-card-horizontal">
                                 <Link to={`/movies/detail/${movie.slug}`} className="movie-img-box">
                                     <img 
-                                        src={`http://localhost:5000/uploads/posters/${movie.poster_url}`} 
+                                        src={`https://webcinema-zb8z.onrender.com/uploads/posters/${movie.poster_url}`} 
                                         alt={movie.title} 
                                     />
                                 </Link>
@@ -140,7 +140,7 @@ const CinemaGenre = () => {
                             <div key={m.movie_id} className="simple-movie-item" onClick={() => navigate(`/movies/detail/${m.slug}`)}>
                                 <div className="simple-poster">
                                     <img 
-                                        src={`http://localhost:5000/uploads/posters/${m.poster_url}`} 
+                                        src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} 
                                         alt={m.title} 
                                     />
                                     <div className="age-badge">C{m.age_rating}</div>

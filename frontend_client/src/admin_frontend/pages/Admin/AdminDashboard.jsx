@@ -20,7 +20,7 @@ const AdminDashboard = () => {
     const fetchDashboardData = async (start = startDate, end = endDate) => {
         setLoading(true);
         try {
-            const resStats = await axios.get('http://localhost:5000/admin/api/manage/stats');
+            const resStats = await axios.get('https://webcinema-zb8z.onrender.com/admin/api/manage/stats');
             if (resStats.data.success) {
                 setStats({
                     movies: resStats.data.movies,
@@ -30,7 +30,7 @@ const AdminDashboard = () => {
                 });
             }
 
-            const resChart = await axios.get(`http://localhost:5000/admin/api/manage/revenue-chart?startDate=${start}&endDate=${end}`);
+            const resChart = await axios.get(`https://webcinema-zb8z.onrender.com/admin/api/manage/revenue-chart?startDate=${start}&endDate=${end}`);
             if (resChart.data.success) {
                 setChartData({
                     daily: resChart.data.dailyData,

@@ -59,7 +59,7 @@ const ConfirmSuccess = () => {
     } = ticketData;
 
     const posterUrl = moviePoster 
-        ? (moviePoster.startsWith('http') ? moviePoster : `http://localhost:5000/uploads/posters/${moviePoster}`)
+        ? (moviePoster.startsWith('http') ? moviePoster : `https://webcinema-zb8z.onrender.com/uploads/posters/${moviePoster}`)
         : null;
 
     return (

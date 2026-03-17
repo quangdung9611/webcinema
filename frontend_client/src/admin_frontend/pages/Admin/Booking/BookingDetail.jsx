@@ -43,7 +43,7 @@ const BookingDetail = () => {
     const fetchDetail = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`http://localhost:5000/api/bookings/detail/${id}`);
+            const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/bookings/detail/${id}`);
             setData(res.data);
         } catch (err) {
             showModal('error', 'Lỗi hệ thống', 'Không thể tải thông tin đơn hàng này.', () => navigate(-1));

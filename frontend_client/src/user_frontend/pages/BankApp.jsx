@@ -46,7 +46,7 @@ const BankApp = () => {
             hasSentOtp.current = true;
 
             try {
-                await axios.post('http://localhost:5000/api/bank/send-otp', {
+                await axios.post('https://webcinema-zb8z.onrender.com/api/bank/send-otp', {
                     email: customerEmail,
                     bookingId: bookingId
                 });
@@ -79,7 +79,7 @@ const BankApp = () => {
 
         setLoading(true);
         try {
-            const res = await axios.post('http://localhost:5000/api/bank/verify-otp', {
+            const res = await axios.post('https://webcinema-zb8z.onrender.com/api/bank/verify-otp', {
                 email: customerEmail,
                 otp: otp,
                 bookingId: bookingId
@@ -117,7 +117,7 @@ const BankApp = () => {
                     <div className="info-group">
                         <label>Đơn vị</label>
                         <div className="vendor-info">
-                            <img src="http://localhost:5000/uploads/Bank/galaxy_logo.jpg" alt="Galaxy" />
+                            <img src="https://webcinema-zb8z.onrender.com/uploads/Bank/galaxy_logo.jpg" alt="Galaxy" />
                             <span>Galaxy Cinema</span>
                         </div>
                     </div>
@@ -143,7 +143,7 @@ const BankApp = () => {
                         {/* THÊM PHẦN QR VÀO ĐÂY */}
                     <div className="bank-qr-mini-wrapper">
                         <img 
-                            src={`http://localhost:5000/uploads/Bank/Qr_nganhang.jpg`} 
+                            src={`https://webcinema-zb8z.onrender.com/uploads/Bank/Qr_nganhang.jpg`} 
                             alt="Bank QR" 
                             className="bank-qr-mini"
                         />

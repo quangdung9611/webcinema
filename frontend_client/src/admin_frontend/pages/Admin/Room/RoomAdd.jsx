@@ -28,7 +28,7 @@ const RoomAdd = () => {
     useEffect(() => {
         const fetchCinemas = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/cinemas');
+                const res = await axios.get('https://webcinema-zb8z.onrender.com/api/cinemas');
                 setCinemas(res.data);
             } catch (err) {
                 console.error("Không thể tải danh sách rạp");
@@ -66,7 +66,7 @@ const RoomAdd = () => {
         if (!validateForm()) return;
 
         try {
-            await axios.post('http://localhost:5000/api/rooms/add', formData);
+            await axios.post('https://webcinema-zb8z.onrender.com/api/rooms/add', formData);
             
             setModal({
                 show: true,

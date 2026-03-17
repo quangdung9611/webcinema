@@ -46,7 +46,7 @@ const CinemaUpdate = () => {
         if (cinema_id) {
             const fetchCinema = async () => {
                 try {
-                    const res = await axios.get(`http://localhost:5000/api/cinemas/${cinema_id}`);
+                    const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/cinemas/${cinema_id}`);
                     const cinema = res.data;
                     
                     if (cinema) {
@@ -99,7 +99,7 @@ const CinemaUpdate = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`http://localhost:5000/api/cinemas/update/${cinema_id}`, formData);
+            await axios.put(`https://webcinema-zb8z.onrender.com/api/cinemas/update/${cinema_id}`, formData);
             
             showNotice(
                 'success',

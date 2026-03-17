@@ -38,7 +38,7 @@ const CinemaAdd = () => {
 
         try {
             const token = sessionStorage.getItem('usertoken');
-            await axios.post('http://localhost:5000/api/cinemas/add', formData, {
+            await axios.post('https://webcinema-zb8z.onrender.com/api/cinemas/add', formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             

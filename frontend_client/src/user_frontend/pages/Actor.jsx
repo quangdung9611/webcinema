@@ -14,10 +14,10 @@ const Actor = () => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const resActors = await axios.get('http://localhost:5000/api/actors');
+                const resActors = await axios.get('https://webcinema-zb8z.onrender.com/api/actors');
                 setActors(resActors.data);
 
-                const resMovies = await axios.get(`http://localhost:5000/api/movies`);
+                const resMovies = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies`);
                 setRelatedMovies(resMovies.data.slice(0, 3));
                 
                 setLoading(false);
@@ -59,7 +59,7 @@ const Actor = () => {
                             <div key={actor.actor_id} className="actor-card-horizontal">
                                 <Link to={`/actor/${actor.slug}`} className="actor-img-box">
                                     <img 
-                                        src={`http://localhost:5000/uploads/actors/${actor.avatar}`} 
+                                        src={`https://webcinema-zb8z.onrender.com/uploads/actors/${actor.avatar}`} 
                                         alt={actor.name} 
                                     />
                                 </Link>
@@ -94,7 +94,7 @@ const Actor = () => {
                             <div key={index} className="simple-movie-item" onClick={() => navigate(`/movies/detail/${m.slug}`)}>
                                 <div className="simple-poster">
                                     <img 
-                                        src={`http://localhost:5000/uploads/posters/${m.poster_url}`} 
+                                        src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} 
                                         alt={m.title} 
                                     />
                                 </div>

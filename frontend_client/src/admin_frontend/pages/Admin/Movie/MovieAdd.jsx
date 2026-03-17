@@ -7,7 +7,7 @@ import '../../../styles/UserForm.css';
 import Modal from '../../../components/Modal';
 
 // Khai báo địa chỉ server để lấy hình
-const IMAGE_BASE_URL = "http://localhost:5000/uploads/posters/";
+const IMAGE_BASE_URL = "https://webcinema-zb8z.onrender.com/uploads/posters/";
 
 // --- HELPERS ---
 const generateSlug = (str) => {
@@ -97,7 +97,7 @@ const MovieAdd = () => {
         submitData.append('posters', poster);
 
         try {
-            await axios.post('http://localhost:5000/api/movies/add', submitData);
+            await axios.post('https://webcinema-zb8z.onrender.com/api/movies/add', submitData);
             setModal({
                 show: true,
                 type: 'success',

@@ -9,7 +9,7 @@ const seatController = require('../Controllers/SeatController');
 /**
  * Lấy sơ đồ ghế theo Suất chiếu
  * Logic mới: Chỉ hiển thị Available hoặc Booked (đã thanh toán)
- * GET: http://localhost:5000/api/seats/showtime/:showtimeId
+ * GET: https://webcinema-zb8z.onrender.com/api/seats/showtime/:showtimeId
  */
 router.get('/showtime/:showtimeId', seatController.getSeatMapByShowtime);
 

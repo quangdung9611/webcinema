@@ -28,9 +28,9 @@ const MovieGenreList = () => {
         const fetchInitialData = async () => {
             try {
                 const [resMovies, resGenres, resAssignments] = await Promise.all([
-                    axios.get('http://localhost:5000/api/movies'),
-                    axios.get('http://localhost:5000/api/genres'),
-                    axios.get('http://localhost:5000/api/movie-genres/all-assignments')
+                    axios.get('https://webcinema-zb8z.onrender.com/api/movies'),
+                    axios.get('https://webcinema-zb8z.onrender.com/api/genres'),
+                    axios.get('https://webcinema-zb8z.onrender.com/api/movie-genres/all-assignments')
                 ]);
                 
                 setMovies(resMovies.data);
@@ -77,7 +77,7 @@ const MovieGenreList = () => {
 
     const handleSaveRow = async (movie) => {
         try {
-            await axios.post('http://localhost:5000/api/movie-genres/update', {
+            await axios.post('https://webcinema-zb8z.onrender.com/api/movie-genres/update', {
                 movie_id: movie.movie_id,
                 genre_ids: movieGenreMap[movie.movie_id] || []
             });
@@ -113,7 +113,7 @@ const MovieGenreList = () => {
                                 <td className="movie-info-cell">
                                     <div className="movie-item-content">
                                         <img 
-                                            src={`http://localhost:5000/uploads/posters/${m.poster_url}`} 
+                                            src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} 
                                             alt={m.title} 
                                             className="table-poster"
                                         />

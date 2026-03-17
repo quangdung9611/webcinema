@@ -36,6 +36,7 @@ app.use(cors({
   origin: [
     'http://localhost:5173', 
     'http://localhost:3000',
+    'https://quangdungcinema.id.vn',
     /\.vercel\.app$/, // Cho phép link frontend trên Vercel
     /\.onrender\.com$/ // Cho phép các link trên Render
   ], 

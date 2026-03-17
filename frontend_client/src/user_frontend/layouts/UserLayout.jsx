@@ -12,7 +12,7 @@ const UserLayout = () => {
         try {
             // [CẬP NHẬT]: Gọi API /me và dùng withCredentials để tự động gửi Cookie
             // Không cần lấy token từ sessionStorage và không cần gắn Header Authorization thủ công nữa
-            const res = await axios.get('http://localhost:5000/api/auth/me', {
+            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/auth/me', {
                 withCredentials: true 
             });
             

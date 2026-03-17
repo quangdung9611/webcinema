@@ -46,7 +46,7 @@ const NewsList = () => {
         setLoading(true);
         try {
             // Sử dụng API news mà chúng ta đã viết
-            const res = await axios.get('http://localhost:5000/api/news');
+            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/news');
             setNews(res.data);
         } catch (err) {
             showModal('error', 'Lỗi', 'Không thể tải danh sách tin tức!');
@@ -64,7 +64,7 @@ const NewsList = () => {
             `Bạn có chắc muốn xóa bài viết: "${title}"? Hành động này không thể hoàn tác.`,
             async () => {
                 try {
-                    await axios.delete(`http://localhost:5000/api/news/${news_id}`);
+                    await axios.delete(`https://webcinema-zb8z.onrender.com/api/news/${news_id}`);
                     setNews(news.filter(n => n.news_id !== news_id));
                     showModal('success', 'Thành công', 'Đã xóa bài viết khỏi danh sách!');
                 } catch (err) {
@@ -121,7 +121,7 @@ const NewsList = () => {
                                     <td className="td-poster">
                                         <img 
                                             // Tương tự MovieList, dùng chung folder uploads
-                                            src={`http://localhost:5000/uploads/news/${n.image_url}`}
+                                            src={`https://webcinema-zb8z.onrender.com/uploads/news/${n.image_url}`}
                                             alt={n.title}
                                             className="movie-poster-img"
                                             style={{ objectFit: 'cover' }}

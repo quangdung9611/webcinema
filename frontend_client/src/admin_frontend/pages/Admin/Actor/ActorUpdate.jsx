@@ -40,7 +40,7 @@ const ActorUpdate = () => {
         const fetchActor = async () => {
             try {
                 // Sử dụng đúng route lấy chi tiết theo ID
-                const res = await axios.get(`http://localhost:5000/api/actors/id/${id}`);
+                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/actors/id/${id}`);
                 const actor = res.data;
 
                 setFormData({
@@ -104,7 +104,7 @@ const ActorUpdate = () => {
         // ------------------------------------------
 
         try {
-            await axios.put(`http://localhost:5000/api/actors/update/${id}`, data, {
+            await axios.put(`https://webcinema-zb8z.onrender.com/api/actors/update/${id}`, data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             
@@ -161,7 +161,7 @@ const ActorUpdate = () => {
                         <label>Ảnh đại diện (Avatar)</label>
                         <div className="avatar-update-section" style={{ display: 'flex', gap: '20px', alignItems: 'center', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
                             <img 
-                                src={preview ? preview : `http://localhost:5000/uploads/actors/${oldAvatar}`} 
+                                src={preview ? preview : `https://webcinema-zb8z.onrender.com/uploads/actors/${oldAvatar}`} 
                                 alt="Avatar" 
                                 style={{ 
                                     width: '100px', 

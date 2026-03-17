@@ -7,7 +7,7 @@ import '../../../styles/UserForm.css';
 import Modal from '../../../components/Modal';
 
 // Khai báo địa chỉ server để lấy hình cho diễn viên
-const IMAGE_BASE_URL = "http://localhost:5000/uploads/actors/";
+const IMAGE_BASE_URL = "https://webcinema-zb8z.onrender.com/uploads/actors/";
 
 // --- HELPERS ---
 const generateSlug = (str) => {
@@ -89,7 +89,7 @@ const ActorAdd = () => {
         submitData.append('avatar', avatar);
 
         try {
-            await axios.post('http://localhost:5000/api/actors/add', submitData);
+            await axios.post('https://webcinema-zb8z.onrender.com/api/actors/add', submitData);
             setModal({
                 show: true,
                 type: 'success',

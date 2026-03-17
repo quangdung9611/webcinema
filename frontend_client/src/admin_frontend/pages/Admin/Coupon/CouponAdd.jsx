@@ -74,7 +74,7 @@ const CouponAdd = () => {
 
         try {
             // Gửi dữ liệu lên API đã tạo ở CouponController
-            await axios.post('http://localhost:5000/api/coupons/create', formData);
+            await axios.post('https://webcinema-zb8z.onrender.com/api/coupons/create', formData);
             
             // HIỆN MODAL THÀNH CÔNG
             setModal({

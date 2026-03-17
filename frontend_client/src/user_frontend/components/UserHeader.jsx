@@ -38,7 +38,7 @@ const UserHeader = () => {
 
     const fetchCinemas = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/cinemas');
+            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/cinemas');
             setCinemas(res.data);
         } catch (err) { console.error(err); }
     };
@@ -50,7 +50,7 @@ const UserHeader = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.post('http://localhost:5000/api/auth/logout', {}, { withCredentials: true });
+            await axios.post('https://webcinema-zb8z.onrender.com/api/auth/logout', {}, { withCredentials: true });
             setUser(null); // Xóa user trong kho chung
             setShowDropdown(false);
             // Báo hiệu cho các component khác nếu cần, hoặc đơn giản là navigate

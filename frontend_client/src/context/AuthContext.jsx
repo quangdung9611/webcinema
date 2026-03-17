@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = useCallback(async () => {
         try {
             // Đảm bảo luôn có withCredentials
-            const res = await axios.get('http://localhost:5000/api/auth/me', { 
+           const res = await axios.get('https://webcinema-zb8z.onrender.com/api/auth/me', { 
                 withCredentials: true 
             });
             

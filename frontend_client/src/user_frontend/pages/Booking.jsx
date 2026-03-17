@@ -29,7 +29,7 @@ const Booking = () => {
     const fetchShowtimeDetail = useCallback(async () => {
         if (!showtimeId) return;
         try {
-           const res = await axios.get(`http://localhost:5000/api/showtimes/detail/${showtimeId}`);
+           const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/showtimes/detail/${showtimeId}`);
             setShowtimeDetail(res.data);
         } catch (err) {
             console.error("Lỗi tải chi tiết suất chiếu:", err);
@@ -41,7 +41,7 @@ const Booking = () => {
         if (!showtimeId) return;
         try {
             setLoading(true);
-            const res = await axios.get(`http://localhost:5000/api/seats/showtime/${showtimeId}`);
+            const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/seats/showtime/${showtimeId}`);
             setSeats(res.data);
 
             const savedSeats = sessionStorage.getItem('selectedSeats');
@@ -232,7 +232,7 @@ const Booking = () => {
                             )}
 
                             <div className="movie-info-summary">
-                                <img src={`http://localhost:5000/uploads/posters/${showtimeDetail?.poster_url || movie?.poster_url}`} alt="" className="summary-poster" />
+                                <img src={`https://webcinema-zb8z.onrender.com/uploads/posters/${showtimeDetail?.poster_url || movie?.poster_url}`} alt="" className="summary-poster" />
                                 <div className="summary-meta-data">
                                     <h4 className="movie-title-text">{showtimeDetail?.title || movie?.title}</h4>
                                     <p className="movie-sub-desc">

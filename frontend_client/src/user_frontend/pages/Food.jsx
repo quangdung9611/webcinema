@@ -28,7 +28,7 @@ const Food = () => {
             navigate('/');
         }
 
-        axios.get('http://localhost:5000/api/foods')
+        axios.get('https://webcinema-zb8z.onrender.com/api/foods')
             .then(res => setFoods(res.data))
             .catch(err => console.error("Lỗi lấy bắp nước:", err));
     }, [selectedSeats, navigate]);
@@ -94,7 +94,7 @@ const Food = () => {
                             {foods.map(item => (
                                 <div key={item.product_id} className="food-card-custom" style={{display: 'flex', border: '1px solid #eee', borderRadius: '12px', padding: '15px', gap: '15px'}}>
                                     <img 
-                                        src={`http://localhost:5000/uploads/foods/${item.food_image}`} 
+                                        src={`https://webcinema-zb8z.onrender.com/uploads/foods/${item.food_image}`} 
                                         alt={item.product_name} 
                                         style={{width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px'}}
                                     />
@@ -124,7 +124,7 @@ const Food = () => {
                             )}
 
                             <div className="movie-info-summary">
-                                <img src={`http://localhost:5000/uploads/posters/${showtimeDetail?.poster_url || movie?.poster_url}`} alt="" className="summary-poster" />
+                                <img src={`https://webcinema-zb8z.onrender.com/uploads/posters/${showtimeDetail?.poster_url || movie?.poster_url}`} alt="" className="summary-poster" />
                                 <div className="summary-meta-data">
                                     <h4 className="movie-title-text">{showtimeDetail?.title || movie?.title}</h4>
                                     <p className="movie-sub-desc">

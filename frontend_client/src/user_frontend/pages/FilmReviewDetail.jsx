@@ -14,7 +14,7 @@ const FilmReviewDetail = () => {
             try {
                 setLoading(true);
                 // Gọi API lấy chi tiết bài viết dựa trên slug từ URL
-                const res = await axios.get(`http://localhost:5000/api/news/${slug}`);
+                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/news/${slug}`);
                 setItem(res.data);
                 setLoading(false);
             } catch (error) {
@@ -67,7 +67,7 @@ const FilmReviewDetail = () => {
                 {/* Ảnh đại diện bài viết */}
                 <div className="review-banner">
                     <img 
-                        src={`http://localhost:5000/uploads/news/${item.image_url}`} 
+                        src={`https://webcinema-zb8z.onrender.com/uploads/news/${item.image_url}`} 
                         alt={item.title} 
                         onError={(e) => { e.target.src = 'https://via.placeholder.com/800x450?text=Cinema+Star+Review'; }}
                     />

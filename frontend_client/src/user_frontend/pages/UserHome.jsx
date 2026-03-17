@@ -16,19 +16,19 @@ const UserHome = () => {
   
   // 1. DỮ LIỆU BANNER
   const banners = ['banner1.jpg', 'banner2.jpg', 'banner3.jpg', 'banner4.jpg'];
-  const bannerBaseUrl = "http://localhost:5000/uploads/banners/";
+  const bannerBaseUrl = "https://webcinema-zb8z.onrender.com/uploads/banners/";
 
   // 2. QUẢN LÝ DỮ LIỆU PHIM TỪ API
   const [groupedMovies, setGroupedMovies] = useState({ "Đang chiếu": [], "Sắp chiếu": [] });
   const [filterStatus, setFilterStatus] = useState('Đang chiếu');
   const [loading, setLoading] = useState(true);
-  const movieBaseUrl = "http://localhost:5000/uploads/posters/"; 
+  const movieBaseUrl = "https://webcinema-zb8z.onrender.com/uploads/posters/"; 
 
   useEffect(() => {
     const fetchMovies = async () => {
       setLoading(true);
       try {
-        const response = await axios.get('http://localhost:5000/api/movies/status-group');
+        const response = await axios.get('https://webcinema-zb8z.onrender.com/api/movies/status-group');
         setGroupedMovies(response.data);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu status-group:", error);

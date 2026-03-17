@@ -36,7 +36,7 @@ const CinemaDetail = () => {
         const fetchCinemaData = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get(`http://localhost:5000/api/cinemas/${slug}`);
+                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/cinemas/${slug}`);
                 setData(res.data);
             } catch (err) {
                 console.error("Lỗi:", err);
@@ -116,7 +116,7 @@ const CinemaDetail = () => {
                             >
                                 <div className="poster-wrapper">
                                     <img 
-                                        src={`http://localhost:5000/uploads/posters/${movie.poster_url}`} 
+                                        src={`https://webcinema-zb8z.onrender.com/uploads/posters/${movie.poster_url}`} 
                                         alt={movie.title} 
                                     />
                                     {selectedMovieId === movie.movie_id && (

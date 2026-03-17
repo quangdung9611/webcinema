@@ -44,7 +44,7 @@ const MovieUpdate = () => {
     useEffect(() => {
         const fetchMovie = async () => {
             try {
-                const res = await axios.get(`http://localhost:5000/api/movies/detail/${id}`);
+                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies/detail/${id}`);
                 const movie = res.data;
 
                 setFormData({
@@ -100,7 +100,7 @@ const MovieUpdate = () => {
         }
 
         try {
-            await axios.put(`http://localhost:5000/api/movies/update/${id}`, data, {
+            await axios.put(`https://webcinema-zb8z.onrender.com/api/movies/update/${id}`, data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             
@@ -183,7 +183,7 @@ const MovieUpdate = () => {
                         <label>Ảnh Poster</label>
                         <div className="poster-update-section" style={{ display: 'flex', gap: '20px', alignItems: 'center', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
                             <img 
-                                src={preview ? preview : `http://localhost:5000/uploads/posters/${oldPoster}`} 
+                                src={preview ? preview : `https://webcinema-zb8z.onrender.com/uploads/posters/${oldPoster}`} 
                                 alt="Poster" 
                                 style={{ width: '100px', height: '140px', objectFit: 'cover', borderRadius: '4px', border: '2px solid #fff', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
                                 onError={(e) => e.target.src = 'https://via.placeholder.com/100x140?text=No+Image'} 

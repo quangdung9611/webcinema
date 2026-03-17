@@ -43,7 +43,7 @@ const ShowTimeList = () => {
         setLoading(true);
         try {
             // Gọi endpoint GET /api/showtimes để lấy toàn bộ danh sách kèm JOIN thông tin
-            const res = await axios.get('http://localhost:5000/api/showtimes');
+            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/showtimes');
             setShowtimes(res.data);
         } catch (err) {
             showModal('error', 'LỖI HỆ THỐNG', 'Không thể kết nối đến máy chủ để tải lịch chiếu.');
@@ -64,7 +64,7 @@ const ShowTimeList = () => {
             `Bạn có chắc muốn xóa suất chiếu phim "${movie_title}" (ID: #${showtime_id})? Hệ thống sẽ không cho phép xóa nếu đã có người mua vé.`,
             async () => {
                 try {
-                    await axios.delete(`http://localhost:5000/api/showtimes/${showtime_id}`);
+                    await axios.delete(`https://webcinema-zb8z.onrender.com/api/showtimes/${showtime_id}`);
                     setShowtimes(showtimes.filter(s => s.showtime_id !== showtime_id));
                     showModal('success', 'THÀNH CÔNG', 'Đã gỡ suất chiếu khỏi hệ thống.');
                 } catch (err) {

@@ -41,7 +41,7 @@ const AdminLogin = () => {
     setLoading(true);
     try {
         // [CẬP NHẬT 1]: Gọi login qua cổng /admin/api để khớp với Path Cookie /admin
-        const res = await axios.post('http://localhost:5000/admin/api/auth/login', 
+        const res = await axios.post('https://webcinema-zb8z.onrender.com/admin/api/auth/login', 
             { 
                 email, 
                 password,
@@ -52,7 +52,7 @@ const AdminLogin = () => {
 
         // [CẬP NHẬT 2]: Gọi API lấy thông tin Admin cũng phải qua cổng /admin/api
         // Link đúng sẽ là: /admin/api/auth/admin/me
-        const profileRes = await axios.get('http://localhost:5000/admin/api/auth/admin/me', {
+        const profileRes = await axios.get('https://webcinema-zb8z.onrender.com/admin/api/auth/admin/me', {
             withCredentials: true
         });
 

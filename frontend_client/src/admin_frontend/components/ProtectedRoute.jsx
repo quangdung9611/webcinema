@@ -12,7 +12,7 @@ const ProtectedRoute = ({ children }) => {
         const checkAuth = async () => {
             try {
                 // Link chuẩn khớp với server.js của ông
-                const apiUrl = 'http://localhost:5000/admin/api/auth/admin/me';
+                const apiUrl = 'https://webcinema-zb8z.onrender.com/admin/api/auth/admin/me';
                 
                 const response = await axios.get(apiUrl, {
                     withCredentials: true 
@@ -33,7 +33,7 @@ const ProtectedRoute = ({ children }) => {
                     console.warn("⚠️ Đang thử xác thực lại...");
                     setTimeout(async () => {
                         try {
-                            const retryRes = await axios.get('http://localhost:5000/admin/api/auth/admin/me', { withCredentials: true });
+                            const retryRes = await axios.get('https://webcinema-zb8z.onrender.com/admin/api/auth/admin/me', { withCredentials: true });
                             if (isMounted && retryRes.data.user?.role === 'admin') {
                                 setIsAuthorized(true);
                                 return;

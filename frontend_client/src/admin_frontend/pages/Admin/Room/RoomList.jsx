@@ -36,7 +36,7 @@ const RoomList = () => {
     const fetchRooms = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/rooms');
+            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/rooms');
             setRooms(res.data);
         } catch (err) {
             showModal('error', 'Lỗi', 'Không thể tải danh sách phòng chiếu.');
@@ -56,7 +56,7 @@ const RoomList = () => {
             `Quang Dũng có chắc chắn muốn xóa phòng "${room_name}" (ID: #${room_id})? Hành động này không thể hoàn tác.`,
             async () => {
                 try {
-                    await axios.delete(`http://localhost:5000/api/rooms/delete/${room_id}`);
+                    await axios.delete(`https://webcinema-zb8z.onrender.com/api/rooms/delete/${room_id}`);
                     setRooms(rooms.filter(r => r.room_id !== room_id)); 
                     showModal('success', 'Thành công', 'Đã xóa phòng chiếu thành công!');
                 } catch (err) {

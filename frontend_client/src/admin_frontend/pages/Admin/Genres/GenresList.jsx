@@ -36,7 +36,7 @@ const GenresList = () => {
     const fetchGenres = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/genres');
+            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/genres');
             setGenres(res.data);
         } catch (err) {
             openModal('error', 'Lỗi hệ thống', 'Không thể tải danh sách thể loại.');
@@ -56,7 +56,7 @@ const GenresList = () => {
             `Quang Dũng có chắc chắn muốn xóa thể loại "${genre_name}" không?`,
             async () => {
                 try {
-                    await axios.delete(`http://localhost:5000/api/genres/delete/${genre_id}`);
+                    await axios.delete(`https://webcinema-zb8z.onrender.com/api/genres/delete/${genre_id}`);
                     setGenres(genres.filter(g => g.genre_id !== genre_id)); 
                     openModal('success', 'Thành công', 'Đã xóa thể loại thành công!');
                 } catch (err) {

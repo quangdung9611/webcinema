@@ -45,7 +45,7 @@ const UserLogin = () => {
         setLoading(true);
         try {
             // [CẬP NHẬT]: Backend sẽ tự động trả về Set-Cookie 'usertoken'
-            await axios.post('http://localhost:5000/api/auth/login', {
+            await axios.post('https://webcinema-zb8z.onrender.com/api/auth/login', {
                 ...formData,
                 role_input: 'customer'
             }, { withCredentials: true });

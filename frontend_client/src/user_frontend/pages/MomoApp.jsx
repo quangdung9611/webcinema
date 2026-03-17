@@ -27,7 +27,7 @@ const MomoApp = () => {
             
             try {
                 // Gọi API cập nhật trạng thái đã thanh toán (Dùng endpoint mới của ông)
-                await axios.post('http://localhost:5000/api/momo/confirm-fast', {
+                await axios.post('https://webcinema-zb8z.onrender.com/api/momo/confirm-fast', {
                     bookingId: bookingId
                 });
                 console.log("Xác nhận thanh toán thành công qua API");
@@ -50,7 +50,7 @@ const MomoApp = () => {
         <div className="momo-checkout-page">
             <nav className="momo-nav-bar">
                 <div className="nav-content">
-                    <img src="http://localhost:5000/uploads/Bank/momo_logo.jpg" alt="MoMo Logo" />
+                    <img src="https://webcinema-zb8z.onrender.com/uploads/Bank/momo_logo.jpg" alt="MoMo Logo" />
                     <span>Cổng thanh toán MoMo</span>
                 </div>
             </nav>
@@ -62,7 +62,7 @@ const MomoApp = () => {
                     <div className="info-group">
                         <label>Nhà cung cấp</label>
                         <div className="vendor-info">
-                            <img src="http://localhost:5000/uploads/Bank/galaxy_logo.jpg" alt="Galaxy" />
+                            <img src="https://webcinema-zb8z.onrender.com/uploads/Bank/galaxy_logo.jpg" alt="Galaxy" />
                             <span>Galaxy Cinema</span>
                         </div>
                     </div>

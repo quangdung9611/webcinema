@@ -17,8 +17,8 @@ const FilmReview = () => {
             try {
                 setLoading(true);
                 const [resNews, resMovies] = await Promise.all([
-                    axios.get('http://localhost:5000/api/news'),
-                    axios.get('http://localhost:5000/api/movies')
+                    axios.get('https://webcinema-zb8z.onrender.com/api/news'),
+                    axios.get('https://webcinema-zb8z.onrender.com/api/movies')
                 ]);
 
                 setNews(resNews.data);
@@ -71,7 +71,7 @@ const FilmReview = () => {
                             <div key={item.news_id} className="movie-card-horizontal">
                                 <Link to={`/film-review/${item.slug}`} className="movie-img-box">
                                     <img 
-                                        src={`http://localhost:5000/uploads/news/${item.image_url}`} 
+                                        src={`https://webcinema-zb8z.onrender.com/uploads/news/${item.image_url}`} 
                                         alt={item.title} 
                                     />
                                 </Link>
@@ -109,7 +109,7 @@ const FilmReview = () => {
                             <div key={m.movie_id} className="simple-movie-item" onClick={() => navigate(`/movies/detail/${m.slug}`)}>
                                 <div className="simple-poster">
                                     <img 
-                                        src={`http://localhost:5000/uploads/posters/${m.poster_url}`} 
+                                        src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} 
                                         alt={m.title} 
                                     />
                                     <div className="age-badge">C{m.age_rating}</div>

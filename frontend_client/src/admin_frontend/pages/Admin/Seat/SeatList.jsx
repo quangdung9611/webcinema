@@ -32,7 +32,7 @@ const SeatList = () => {
     useEffect(() => {
         const fetchCinemas = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/cinemas');
+                const res = await axios.get('https://webcinema-zb8z.onrender.com/api/cinemas');
                 setCinemas(res.data);
             } catch (err) { console.error("Lỗi lấy rạp:", err); }
         };
@@ -43,7 +43,7 @@ const SeatList = () => {
         const fetchRooms = async () => {
             if (selectedCinema) {
                 try {
-                    const res = await axios.get(`http://localhost:5000/api/rooms/cinema/${selectedCinema}`);
+                    const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/rooms/cinema/${selectedCinema}`);
                     setRooms(res.data);
                     setSelectedRoom(''); 
                     setSeats([]);        
@@ -58,7 +58,7 @@ const SeatList = () => {
             setLoading(true);
             try {
                 // API này giờ đã có JOIN lấy customer_name từ Backend
-                const res = await axios.get(`http://localhost:5000/api/seats/room/${selectedRoom}`);
+                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/seats/room/${selectedRoom}`);
                 setSeats(res.data);
             } catch (err) { console.error("Lỗi lấy ghế:", err); } 
             finally { setLoading(false); }
@@ -82,18 +82,18 @@ const SeatList = () => {
             if (modal.type === 'maintenance') {
                 const seat = modal.data;
                 // Chỉ gọi API Toggle bảo trì
-                await axios.put('http://localhost:5000/api/seats/toggle-active', {
+                await axios.put('https://webcinema-zb8z.onrender.com/api/seats/toggle-active', {
                     seatId: seat.seat_id,
                     isActive: seat.is_active ? 0 : 1
                 });
             } else if (modal.type === 'init') {
-                await axios.post('http://localhost:5000/api/seats/init', {
+                await axios.post('https://webcinema-zb8z.onrender.com/api/seats/init', {
                     roomId: selectedRoom,
                     roomType: rType,
                     cinemaId: selectedCinema 
                 });
             } else if (modal.type === 'delete') {
-                await axios.delete(`http://localhost:5000/api/seats/room/${selectedRoom}`);
+                await axios.delete(`https://webcinema-zb8z.onrender.com/api/seats/room/${selectedRoom}`);
                 setSeats([]);
             }
 

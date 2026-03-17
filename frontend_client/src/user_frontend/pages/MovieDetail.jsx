@@ -36,9 +36,9 @@ const MovieDetail = () => {
             if (!slug || slug === 'undefined') return;
             try {
                 setLoading(true);
-                const resMovie = await axios.get(`http://localhost:5000/api/movies/${slug}`);
+                const resMovie = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies/${slug}`);
                 setMovie(resMovie.data);
-                const resRelated = await axios.get(`http://localhost:5000/api/movies`);
+                const resRelated = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies`);
                 setRelatedMovies(resRelated.data.filter(m => m.slug !== slug).slice(0, 5));
                 setLoading(false);
             } catch (error) {
@@ -67,13 +67,13 @@ const MovieDetail = () => {
         }
         try {
             // 3. Sử dụng withCredentials thay vì gửi token thủ công qua header nếu Backend dùng Cookie
-            await axios.post(`http://localhost:5000/api/reviews`, {
+            await axios.post(`https://webcinema-zb8z.onrender.com/api/reviews`, {
                 movie_id: movie.movie_id,
                 rating: userRating,
                 comment: reviewComment 
             }, { withCredentials: true });
 
-            const response = await axios.get(`http://localhost:5000/api/movies/${slug}`);
+            const response = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies/${slug}`);
             setMovie(response.data);
             setModalConfig({
                 show: true, type: 'success', title: 'Gửi thành công!',
@@ -205,7 +205,7 @@ const MovieDetail = () => {
                 <div className="main-detail-col">
                     <div className="movie-top-info">
                         <div className="poster-frame">
-                            <img src={`http://localhost:5000/uploads/posters/${movie.poster_url}`} alt={movie.title} />
+                            <img src={`https://webcinema-zb8z.onrender.com/uploads/posters/${movie.poster_url}`} alt={movie.title} />
                         </div>
                         <div className="text-frame">
                             <h1>{movie.title}</h1>
@@ -302,7 +302,7 @@ const MovieDetail = () => {
                         {relatedMovies.map((m, index) => (
                             <div key={index} className="simple-movie-item" onClick={() => navigate(`/movies/detail/${m.slug}`)}>
                                 <div className="simple-poster">
-                                    <img src={`http://localhost:5000/uploads/posters/${m.poster_url}`} alt={m.title} />
+                                    <img src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} alt={m.title} />
                                 </div>
                                 <div className="simple-title">{m.title}</div>
                             </div>

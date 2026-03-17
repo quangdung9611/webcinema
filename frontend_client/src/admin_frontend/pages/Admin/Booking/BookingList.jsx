@@ -40,7 +40,7 @@ const BookingList = () => {
     const fetchBookings = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/bookings');
+            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/bookings');
             setBookings(res.data.data);
         } catch (err) {
             showModal('error', 'Lỗi', 'Không thể tải danh sách hóa đơn.');
@@ -74,7 +74,7 @@ const BookingList = () => {
             `Quang Dũng muốn chuyển đơn hàng #${booking_id} sang trạng thái "${nextStatus}"?`,
             async () => {
                 try {
-                    await axios.put(`http://localhost:5000/api/bookings/update/${booking_id}/status`, { status: nextStatus });
+                    await axios.put(`https://webcinema-zb8z.onrender.com/api/bookings/update/${booking_id}/status`, { status: nextStatus });
                     fetchBookings(); 
                     showModal('success', 'Thành công', 'Đã cập nhật trạng thái đơn hàng!');
                 } catch (err) {
@@ -91,7 +91,7 @@ const BookingList = () => {
             `Quang Dũng có chắc muốn xóa hóa đơn "${memo}"?`,
             async () => {
                 try {
-                    await axios.delete(`http://localhost:5000/api/bookings/delete/${booking_id}`);
+                    await axios.delete(`https://webcinema-zb8z.onrender.com/api/bookings/delete/${booking_id}`);
                     setBookings(bookings.filter(b => b.booking_id !== booking_id));
                     showModal('success', 'Thành công', 'Đã xóa hóa đơn thành công!');
                 } catch (err) {
