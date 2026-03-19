@@ -62,7 +62,7 @@ app.get('/api', (req, res) => {
 });
 
 // Luồng quản trị Admin
-app.use('/admin/api/auth', authRoutes);
+app.use('/api/admin/auth', authRoutes); // Luồng quản trị Admin
 app.use('/admin/api/manage', adminRouter);
 
 // Luồng người dùng User
