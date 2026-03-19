@@ -87,14 +87,30 @@ app.use('/api/movie-actors', movieActorRoutes);
 app.use('/api/news', newsRoutes);
 
 // ===========================================================
-// 3. KHỞI CHẠY SERVER
+// 3. KHỞI CHẠY SERVER & TỰ PING (Mỗi 5 phút)
 // ===========================================================
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server đang chạy tại port: ${PORT}`);
+
+// Render sẽ tự động điền vào process.env.PORT
+// Nếu chạy ở máy nhà (không có biến PORT) thì nó mới lấy 5000 để Dũng test
+const PORT = process.env.PORT || 5000; 
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server đang chạy tại cổng: ${PORT}`);
+  
+  // Tự gõ cửa sau mỗi 5 phút (300,000 ms)
+  setInterval(async () => {
+    try {
+      // Dùng link thật của Dũng trên Render
+      await axios.get(`https://webcinema-zb8z.onrender.com/api?t=${Date.now()}`);
+      console.log('🔔 [Keep-Alive]: Đã tự nhấn chuông để giữ Server thức!');
+    } catch (err) {
+      console.log('⚠️ [Keep-Alive]: Tự ping thất bại (có thể do server đang khởi động).');
+    }
+  }, 300000); 
+
   db.getConnection()
     .then(conn => {
-      console.log("✅ Database 'cinema_shop' đã kết nối thành công qua Aiven!");
+      console.log("✅ Database 'cinema_shop' kết nối thành công!");
       conn.release();
     })
     .catch(err => console.log("❌ Lỗi kết nối DB:", err.message));
