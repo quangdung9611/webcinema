@@ -34,7 +34,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     };
 
     // Nếu chưa có user thì không hiện Header để tránh lỗi hiển thị
-    if (!user) return null;
+    // if (!user) return null;
 
     return (
         <header className="admin-header">
