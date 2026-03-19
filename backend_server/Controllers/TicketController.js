@@ -4,18 +4,22 @@ const QRCode = require('qrcode');
 /**
  * --- HÀM 1: TẠO VÉ ---
  * Chạy sau khi thanh toán thành công.
- * Đã sửa: TicketCode duy nhất và logic Bulk Insert chuẩn.
+ * Đã cập nhật: Thêm room_id và cinema_id từ showtimes.
  */
 const createTickets = async (bookingId) => {
     try {
-        // 1. Lấy showtime_id từ đơn hàng
+        // 1. Lấy thông tin suất chiếu (bao gồm room_id và cinema_id) từ đơn hàng
         const [bookingInfo] = await db.query(
-            "SELECT showtime_id FROM bookings WHERE booking_id = ?", 
+            `SELECT b.showtime_id, s.room_id, s.cinema_id 
+             FROM bookings b
+             JOIN showtimes s ON b.showtime_id = s.showtime_id
+             WHERE b.booking_id = ?`, 
             [bookingId]
         );
 
         if (bookingInfo.length === 0) return { success: false };
-        const showtimeId = bookingInfo[0].showtime_id;
+        
+        const { showtime_id, room_id, cinema_id } = bookingInfo[0];
 
         // 2. Lấy danh sách ghế từ chi tiết đơn hàng
         const [details] = await db.query(
@@ -23,23 +27,24 @@ const createTickets = async (bookingId) => {
             [bookingId]
         );
 
-        // 3. Chuẩn bị dữ liệu để insert hàng loạt
-        const ticketsData = details.map((item, index) => [
+        // 3. Chuẩn bị dữ liệu Bulk Insert (Thêm 2 cột mới vào mảng)
+        const ticketsData = details.map((item) => [
             bookingId, 
-            showtimeId, 
+            showtime_id, 
+            room_id,    // Cột mới
+            cinema_id,  // Cột mới
             item.seat_id, 
-            // Mã vé: TIC + ID đơn hàng + ID ghế + số ngẫu nhiên để không bao giờ trùng
             `TIC${bookingId}${item.seat_id}${Math.floor(Math.random() * 100)}`, 
             item.price, 
-            'Booked', // Trạng thái ghế
-            'Valid'   // Trạng thái vé
+            'Booked', 
+            'Valid'
         ]);
 
-        // 4. Thực hiện chèn vào database
+        // 4. Thực thi INSERT
         if (ticketsData.length > 0) {
             const sql = `
                 INSERT INTO tickets 
-                (booking_id, showtime_id, seat_id, ticket_code, price, seat_status, ticket_status) 
+                (booking_id, showtime_id, room_id, cinema_id, seat_id, ticket_code, price, seat_status, ticket_status) 
                 VALUES ?
             `;
             await db.query(sql, [ticketsData]);

@@ -1,13 +1,12 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.3
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: db
--- Generation Time: Mar 17, 2026 at 02:42 AM
--- Server version: 8.0.45
--- PHP Version: 8.3.30
+-- Host: 127.0.0.1
+-- Generation Time: Mar 18, 2026 at 11:03 AM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
 
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
@@ -20,6 +19,8 @@ SET time_zone = "+00:00";
 --
 -- Database: `cinema_shop`
 --
+CREATE DATABASE IF NOT EXISTS `cinema_shop` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE cinema_shop;
 
 -- --------------------------------------------------------
 
@@ -27,17 +28,22 @@ SET time_zone = "+00:00";
 -- Table structure for table `actors`
 --
 
-CREATE TABLE `actors` (
-  `actor_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `gender` enum('Nam','Nữ','Khác') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Nam',
-  `nationality` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Việt Nam',
-  `avatar` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `biography` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+DROP TABLE IF EXISTS `actors`;
+CREATE TABLE IF NOT EXISTS `actors` (
+  `actor_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `name` varchar(255) NOT NULL,
+  `gender` enum('Nam','Nữ','Khác') DEFAULT 'Nam',
+  `nationality` varchar(100) DEFAULT 'Việt Nam',
+  `avatar` varchar(500) DEFAULT NULL,
+  `biography` text DEFAULT NULL,
   `birthday` date DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `slug` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`actor_id`),
+  UNIQUE KEY `slug` (`slug`),
+  KEY `idx_actor_name` (`name`),
+  KEY `idx_actor_gender` (`gender`)
+) ;
 
 --
 -- Dumping data for table `actors`
@@ -54,16 +60,25 @@ INSERT INTO `actors` (`actor_id`, `name`, `gender`, `nationality`, `avatar`, `bi
 -- Table structure for table `bookings`
 --
 
-CREATE TABLE `bookings` (
-  `booking_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `user_id` int DEFAULT NULL,
-  `showtime_id` int DEFAULT NULL,
-  `coupon_id` int DEFAULT NULL,
-  `booking_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+DROP TABLE IF EXISTS `bookings`;
+CREATE TABLE IF NOT EXISTS `bookings` (
+  `booking_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY PRIMARY KEY,
+  `user_id` int(11) DEFAULT NULL,
+  `showtime_id` int(11) DEFAULT NULL,
+  `coupon_id` int(11) DEFAULT NULL,
+  `booking_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `total_amount` decimal(16,0) DEFAULT NULL,
-  `status` enum('Pending','Completed','Cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',
-  `memo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `status` enum('Pending','Completed','Cancelled') DEFAULT 'Pending',
+  `memo` varchar(255) DEFAULT NULL,
+  
+  UNIQUE KEY `memo` (`memo`),
+  KEY `showtime_id` (`showtime_id`),
+  KEY `coupon_id` (`coupon_id`),
+  KEY `idx_bookings_user_date` (`user_id`,`booking_date`),
+  KEY `idx_bookings_user_status` (`user_id`,`status`),
+  KEY `idx_bookings_status` (`status`),
+  KEY `idx_bookings_history` (`user_id`,`status`,`booking_date`)
+) ;
 
 --
 -- Dumping data for table `bookings`
@@ -79,16 +94,21 @@ INSERT INTO `bookings` (`booking_id`, `user_id`, `showtime_id`, `coupon_id`, `bo
 -- Table structure for table `booking_details`
 --
 
-CREATE TABLE `booking_details` (
-  `booking_detail_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `product_id` int DEFAULT NULL,
-  `booking_id` int DEFAULT NULL,
-  `item_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `quantity` int DEFAULT '1',
+DROP TABLE IF EXISTS `booking_details`;
+CREATE TABLE IF NOT EXISTS `booking_details` (
+  `booking_detail_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `product_id` int(11) DEFAULT NULL,
+  `booking_id` int(11) DEFAULT NULL,
+  `item_name` varchar(100) DEFAULT NULL,
+  `quantity` int(11) DEFAULT 1,
   `price` decimal(16,0) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `seat_id` int DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `seat_id` int(11) DEFAULT NULL,
+  
+  KEY `booking_id` (`booking_id`),
+  KEY `idx_bd_product` (`product_id`),
+  KEY `fk_booking_details_seats` (`seat_id`)
+) ;
 
 --
 -- Dumping data for table `booking_details`
@@ -104,13 +124,17 @@ INSERT INTO `booking_details` (`booking_detail_id`, `product_id`, `booking_id`, 
 -- Table structure for table `cinemas`
 --
 
-CREATE TABLE `cinemas` (
-  `cinema_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `cinema_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `city` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS `cinemas`;
+CREATE TABLE IF NOT EXISTS `cinemas` (
+  `cinema_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `cinema_name` varchar(100) NOT NULL,
+  `slug` varchar(255) DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `city` varchar(50) DEFAULT NULL,
+ 
+  UNIQUE KEY `slug` (`slug`),
+  KEY `idx_cinemas_city` (`city`)
+) ;
 
 --
 -- Dumping data for table `cinemas`
@@ -126,12 +150,16 @@ INSERT INTO `cinemas` (`cinema_id`, `cinema_name`, `slug`, `address`, `city`) VA
 -- Table structure for table `coupons`
 --
 
-CREATE TABLE `coupons` (
-  `coupon_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `coupon_code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+DROP TABLE IF EXISTS `coupons`;
+CREATE TABLE IF NOT EXISTS `coupons` (
+  `coupon_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `coupon_code` varchar(20) NOT NULL,
   `discount_value` decimal(16,0) DEFAULT NULL,
-  `expiry_date` date DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `expiry_date` date DEFAULT NULL,
+  
+  UNIQUE KEY `coupon_code` (`coupon_code`),
+  KEY `idx_coupon_lookup` (`coupon_code`,`expiry_date`)
+) ;
 
 --
 -- Dumping data for table `coupons`
@@ -147,11 +175,15 @@ INSERT INTO `coupons` (`coupon_id`, `coupon_code`, `discount_value`, `expiry_dat
 -- Table structure for table `genres`
 --
 
-CREATE TABLE `genres` (
-  `genre_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `genre_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `slug` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS `genres`;
+CREATE TABLE IF NOT EXISTS `genres` (
+  `genre_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `genre_name` varchar(100) NOT NULL,
+  `slug` varchar(100) NOT NULL,
+  
+  UNIQUE KEY `slug` (`slug`),
+  KEY `idx_genres_slug` (`slug`)
+) ;
 
 --
 -- Dumping data for table `genres`
@@ -171,20 +203,27 @@ INSERT INTO `genres` (`genre_id`, `genre_name`, `slug`) VALUES
 -- Table structure for table `movies`
 --
 
-CREATE TABLE `movies` (
-  `movie_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `director` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `duration` int DEFAULT NULL,
-  `age_rating` int DEFAULT '0',
-  `poster_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `trailer_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+DROP TABLE IF EXISTS `movies`;
+CREATE TABLE IF NOT EXISTS `movies` (
+  `movie_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `title` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `director` varchar(255) DEFAULT NULL,
+  `duration` int(11) DEFAULT NULL,
+  `age_rating` int(11) DEFAULT 0,
+  `poster_url` varchar(500) DEFAULT NULL,
+  `trailer_url` varchar(500) DEFAULT NULL,
   `release_date` date DEFAULT NULL,
-  `status` enum('Đang chiếu','Sắp chiếu','Ngừng chiếu') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Sắp chiếu',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `status` enum('Đang chiếu','Sắp chiếu','Ngừng chiếu') DEFAULT 'Sắp chiếu',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  
+  UNIQUE KEY `slug` (`slug`),
+  KEY `idx_movies_title` (`title`),
+  KEY `idx_movies_status_date` (`status`,`release_date`),
+  KEY `idx_movies_slug_lookup` (`slug`),
+  KEY `idx_movies_listing` (`status`,`release_date`)
+) ;
 
 --
 -- Dumping data for table `movies`
@@ -202,11 +241,15 @@ INSERT INTO `movies` (`movie_id`, `title`, `slug`, `description`, `director`, `d
 -- Table structure for table `movie_actors`
 --
 
-CREATE TABLE `movie_actors` (
-  `movie_actor_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `movie_id` int NOT NULL,
-  `actor_id` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS `movie_actors`;
+CREATE TABLE IF NOT EXISTS `movie_actors` (
+  `movie_actor_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `movie_id` int(11) NOT NULL,
+  `actor_id` int(11) NOT NULL,
+  
+  UNIQUE KEY `uk_movie_actor` (`movie_id`,`actor_id`),
+  KEY `fk_ma_actor_v2` (`actor_id`)
+) ;
 
 --
 -- Dumping data for table `movie_actors`
@@ -224,11 +267,15 @@ INSERT INTO `movie_actors` (`movie_actor_id`, `movie_id`, `actor_id`) VALUES
 -- Table structure for table `movie_genres`
 --
 
-CREATE TABLE `movie_genres` (
-  `movie_genre_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `movie_id` int NOT NULL,
-  `genre_id` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS `movie_genres`;
+CREATE TABLE IF NOT EXISTS `movie_genres` (
+  `movie_genre_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `movie_id` int(11) NOT NULL,
+  `genre_id` int(11) NOT NULL,
+  
+  UNIQUE KEY `uk_movie_genre` (`movie_id`,`genre_id`),
+  KEY `fk_mg_genre_v2` (`genre_id`)
+) ;
 
 --
 -- Dumping data for table `movie_genres`
@@ -249,15 +296,20 @@ INSERT INTO `movie_genres` (`movie_genre_id`, `movie_id`, `genre_id`) VALUES
 -- Table structure for table `news`
 --
 
-CREATE TABLE `news` (
-  `news_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `image_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `views` int DEFAULT '0',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS `news`;
+CREATE TABLE IF NOT EXISTS `news` (
+  `news_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `title` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `content` text DEFAULT NULL,
+  `image_url` varchar(500) DEFAULT NULL,
+  `views` int(11) DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+ 
+  UNIQUE KEY `slug` (`slug`),
+  KEY `idx_news_slug` (`slug`),
+  KEY `idx_news_date` (`created_at`)
+) ;
 
 --
 -- Dumping data for table `news`
@@ -274,12 +326,14 @@ INSERT INTO `news` (`news_id`, `title`, `slug`, `content`, `image_url`, `views`,
 -- Table structure for table `product_menu`
 --
 
-CREATE TABLE `product_menu` (
-  `product_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `product_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+DROP TABLE IF EXISTS `product_menu`;
+CREATE TABLE IF NOT EXISTS `product_menu` (
+  `product_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `product_name` varchar(100) NOT NULL,
   `price` decimal(16,0) DEFAULT NULL,
-  `food_image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `food_image` varchar(255) DEFAULT NULL,
+    KEY `idx_product_name` (`product_name`)
+) ;
 
 --
 -- Dumping data for table `product_menu`
@@ -296,14 +350,18 @@ INSERT INTO `product_menu` (`product_id`, `product_name`, `price`, `food_image`)
 -- Table structure for table `reviews`
 --
 
-CREATE TABLE `reviews` (
-  `review_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `movie_id` int DEFAULT NULL,
-  `user_id` int DEFAULT NULL,
-  `rating_score` tinyint DEFAULT NULL,
-  `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS `reviews`;
+CREATE TABLE IF NOT EXISTS `reviews` (
+  `review_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `movie_id` int(11) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `rating_score` tinyint(4) DEFAULT NULL,
+  `comment` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+ 
+  KEY `movie_id` (`movie_id`),
+  KEY `user_id` (`user_id`)
+) ;
 
 --
 -- Dumping data for table `reviews`
@@ -321,13 +379,18 @@ INSERT INTO `reviews` (`review_id`, `movie_id`, `user_id`, `rating_score`, `comm
 -- Table structure for table `rooms`
 --
 
-CREATE TABLE `rooms` (
-  `room_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `cinema_id` int DEFAULT NULL,
-  `room_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `room_type` enum('2D','3D','IMAX') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '2D',
-  `total_seats` int DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS `rooms`;
+CREATE TABLE IF NOT EXISTS `rooms` (
+  `room_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `cinema_id` int(11) DEFAULT NULL,
+  `room_name` varchar(50) DEFAULT NULL,
+  `room_type` enum('2D','3D','IMAX') DEFAULT '2D',
+  `total_seats` int(11) DEFAULT 0,
+  
+  KEY `cinema_id` (`cinema_id`),
+  KEY `idx_rooms_cinema` (`cinema_id`),
+  KEY `idx_rooms_cinema_id` (`cinema_id`)
+) ;
 
 --
 -- Dumping data for table `rooms`
@@ -345,16 +408,22 @@ INSERT INTO `rooms` (`room_id`, `cinema_id`, `room_name`, `room_type`, `total_se
 -- Table structure for table `seats`
 --
 
-CREATE TABLE `seats` (
-  `seat_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `room_id` int DEFAULT NULL,
-  `cinema_id` int DEFAULT NULL,
-  `seat_row` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `seat_number` int DEFAULT NULL,
-  `seat_type` enum('Standard','VIP','Couple') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Standard',
+DROP TABLE IF EXISTS `seats`;
+CREATE TABLE IF NOT EXISTS `seats` (
+  `seat_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `room_id` int(11) DEFAULT NULL,
+  `cinema_id` int(11) DEFAULT NULL,
+  `seat_row` char(1) DEFAULT NULL,
+  `seat_number` int(11) DEFAULT NULL,
+  `seat_type` enum('Standard','VIP','Couple') DEFAULT 'Standard',
   `price` decimal(16,0) DEFAULT NULL,
-  `is_active` tinyint(1) DEFAULT '1'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `is_active` tinyint(1) DEFAULT 1,
+ 
+  KEY `room_id` (`room_id`),
+  KEY `idx_seats_room_id` (`room_id`),
+  KEY `idx_room_layout` (`room_id`,`seat_row`,`seat_number`),
+  KEY `idx_seats_cinema_room` (`cinema_id`,`room_id`)
+) ;
 
 --
 -- Dumping data for table `seats`
@@ -483,13 +552,19 @@ INSERT INTO `seats` (`seat_id`, `room_id`, `cinema_id`, `seat_row`, `seat_number
 -- Table structure for table `showtimes`
 --
 
-CREATE TABLE `showtimes` (
-  `showtime_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `movie_id` int DEFAULT NULL,
-  `room_id` int DEFAULT NULL,
-  `cinema_id` int NOT NULL,
-  `start_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS `showtimes`;
+CREATE TABLE IF NOT EXISTS `showtimes` (
+  `showtime_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `movie_id` int(11) DEFAULT NULL,
+  `room_id` int(11) DEFAULT NULL,
+  `cinema_id` int(11) NOT NULL,
+  `start_time` timestamp NOT NULL DEFAULT current_timestamp(),
+ 
+  KEY `room_id` (`room_id`),
+  KEY `idx_showtimes_movie_time` (`movie_id`,`start_time`),
+  KEY `idx_cinema` (`cinema_id`),
+  KEY `idx_showtimes_query` (`movie_id`,`cinema_id`,`start_time`)
+) ;
 
 --
 -- Dumping data for table `showtimes`
@@ -508,25 +583,36 @@ INSERT INTO `showtimes` (`showtime_id`, `movie_id`, `room_id`, `cinema_id`, `sta
 -- Table structure for table `tickets`
 --
 
-CREATE TABLE `tickets` (
-  `ticket_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `booking_id` int DEFAULT NULL,
-  `showtime_id` int DEFAULT NULL,
-  `seat_id` int NOT NULL,
-  `ticket_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+DROP TABLE IF EXISTS `tickets`;
+CREATE TABLE IF NOT EXISTS `tickets` (
+  `ticket_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `booking_id` int(11) DEFAULT NULL,
+  `showtime_id` int(11) DEFAULT NULL,
+  `room_id` int(11) DEFAULT NULL,
+  `cinema_id` int(11) DEFAULT NULL,
+  `seat_id` int(11) NOT NULL,
+  `ticket_code` varchar(50) NOT NULL,
   `price` decimal(16,0) DEFAULT NULL,
-  `seat_status` enum('Available','Booked','Reserved','Maintenance') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Available',
-  `ticket_status` enum('Valid','Used','Cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Valid',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `seat_status` enum('Available','Booked','Reserved','Maintenance') DEFAULT 'Available',
+  `ticket_status` enum('Valid','Used','Cancelled') DEFAULT 'Valid',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  
+  UNIQUE KEY `ticket_code` (`ticket_code`),
+  UNIQUE KEY `uk_showtime_cinema_room_seat` (`showtime_id`,`cinema_id`,`room_id`,`seat_id`),
+  KEY `idx_tk_booking` (`booking_id`),
+  KEY `idx_tk_seat` (`seat_id`),
+  KEY `fk_tickets_showtime_new` (`showtime_id`),
+  KEY `idx_tickets_seat_status` (`seat_status`),
+  KEY `idx_tickets_performance` (`showtime_id`,`seat_status`)
+) ;
 
 --
 -- Dumping data for table `tickets`
 --
 
-INSERT INTO `tickets` (`ticket_id`, `booking_id`, `showtime_id`, `seat_id`, `ticket_code`, `price`, `seat_status`, `ticket_status`, `created_at`, `updated_at`) VALUES
-(2, 2, 7, 30, 'TIC-1773373481376-30', 80000, 'Booked', 'Valid', '2026-03-13 03:44:41', '2026-03-13 03:44:46');
+INSERT INTO `tickets` (`ticket_id`, `booking_id`, `showtime_id`, `room_id`, `cinema_id`, `seat_id`, `ticket_code`, `price`, `seat_status`, `ticket_status`, `created_at`, `updated_at`) VALUES
+(2, 2, 7, NULL, NULL, 30, 'TIC-1773373481376-30', 80000, 'Booked', 'Valid', '2026-03-13 03:44:41', '2026-03-13 03:44:46');
 
 -- --------------------------------------------------------
 
@@ -534,17 +620,23 @@ INSERT INTO `tickets` (`ticket_id`, `booking_id`, `showtime_id`, `seat_id`, `tic
 -- Table structure for table `users`
 --
 
-CREATE TABLE `users` (
-  `user_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `full_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `phone` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `role` enum('admin','customer') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'customer',
-  `points` int DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE IF NOT EXISTS `users` (
+  `user_id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `username` varchar(50) NOT NULL,
+  `full_name` varchar(100) NOT NULL,
+  `phone` varchar(10) NOT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `email` varchar(100) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `role` enum('admin','customer') DEFAULT 'customer',
+  `points` int(11) DEFAULT 0,
+  
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `phone` (`phone`),
+  KEY `idx_users_login` (`username`,`email`)
+) ;
 
 --
 -- Dumping data for table `users`
@@ -556,272 +648,6 @@ INSERT INTO `users` (`user_id`, `username`, `full_name`, `phone`, `address`, `em
 (3, 'quangdungvip', 'Nguyễn Phạm Quang Dũng', '0070070070', 'Hà Nội', 'cokhitienphat4919@gmail.com', '$2b$10$1HU/xjtQbAddfl0FJLlAvOu6u0LgndFf8wfNPJe9E6mMZmRUeiwGq', 'customer', 500),
 (4, 'quangdungcinema', 'Nguyễn Phạm Quang Dũng', '0567465321', 'Vũng Tàu', 'dungcinema@gmail.com', '$2b$10$SxbqOwvR3eCuI0KXQv4AROfcF7onR8iTDZSxqlmA6cTEcATmc8nUm', 'admin', 0),
 (6, 'Dungvippro098', 'Nguyễn Trần Chí Tài', '0943535352', '123 Nguyễn Văn Trỗi', 'nguyennmhdunghihi@gmail.com', '$2b$10$0WDQ8OL.z5UO1xjiCoPmLuwFST9CnH2IU6QK7u0Oh1yA/RljuUXE.', 'customer', 0);
-
---
--- Indexes for dumped tables
---
-
---
--- Indexes for table `actors`
---
-ALTER TABLE `actors`
-  ADD PRIMARY KEY (`actor_id`),
-  ADD UNIQUE KEY `slug` (`slug`),
-  ADD KEY `idx_actor_name` (`name`),
-  ADD KEY `idx_actor_gender` (`gender`);
-
---
--- Indexes for table `bookings`
---
-ALTER TABLE `bookings`
-  ADD PRIMARY KEY (`booking_id`),
-  ADD UNIQUE KEY `memo` (`memo`),
-  ADD KEY `showtime_id` (`showtime_id`),
-  ADD KEY `coupon_id` (`coupon_id`),
-  ADD KEY `idx_bookings_user_date` (`user_id`,`booking_date`),
-  ADD KEY `idx_bookings_user_status` (`user_id`,`status`),
-  ADD KEY `idx_bookings_status` (`status`),
-  ADD KEY `idx_bookings_history` (`user_id`,`status`,`booking_date`);
-
---
--- Indexes for table `booking_details`
---
-ALTER TABLE `booking_details`
-  ADD PRIMARY KEY (`booking_detail_id`),
-  ADD KEY `booking_id` (`booking_id`),
-  ADD KEY `idx_bd_product` (`product_id`),
-  ADD KEY `fk_booking_details_seats` (`seat_id`);
-
---
--- Indexes for table `cinemas`
---
-ALTER TABLE `cinemas`
-  ADD PRIMARY KEY (`cinema_id`),
-  ADD UNIQUE KEY `slug` (`slug`),
-  ADD KEY `idx_cinemas_city` (`city`);
-
---
--- Indexes for table `coupons`
---
-ALTER TABLE `coupons`
-  ADD PRIMARY KEY (`coupon_id`),
-  ADD UNIQUE KEY `coupon_code` (`coupon_code`),
-  ADD KEY `idx_coupon_lookup` (`coupon_code`,`expiry_date`);
-
---
--- Indexes for table `genres`
---
-ALTER TABLE `genres`
-  ADD PRIMARY KEY (`genre_id`),
-  ADD UNIQUE KEY `slug` (`slug`),
-  ADD KEY `idx_genres_slug` (`slug`);
-
---
--- Indexes for table `movies`
---
-ALTER TABLE `movies`
-  ADD PRIMARY KEY (`movie_id`),
-  ADD UNIQUE KEY `slug` (`slug`),
-  ADD KEY `idx_movies_title` (`title`),
-  ADD KEY `idx_movies_status_date` (`status`,`release_date`),
-  ADD KEY `idx_movies_slug_lookup` (`slug`),
-  ADD KEY `idx_movies_listing` (`status`,`release_date`);
-
---
--- Indexes for table `movie_actors`
---
-ALTER TABLE `movie_actors`
-  ADD PRIMARY KEY (`movie_actor_id`),
-  ADD UNIQUE KEY `uk_movie_actor` (`movie_id`,`actor_id`),
-  ADD KEY `fk_ma_actor_v2` (`actor_id`);
-
---
--- Indexes for table `movie_genres`
---
-ALTER TABLE `movie_genres`
-  ADD PRIMARY KEY (`movie_genre_id`),
-  ADD UNIQUE KEY `uk_movie_genre` (`movie_id`,`genre_id`),
-  ADD KEY `fk_mg_genre_v2` (`genre_id`);
-
---
--- Indexes for table `news`
---
-ALTER TABLE `news`
-  ADD PRIMARY KEY (`news_id`),
-  ADD UNIQUE KEY `slug` (`slug`),
-  ADD KEY `idx_news_slug` (`slug`),
-  ADD KEY `idx_news_date` (`created_at`);
-
---
--- Indexes for table `product_menu`
---
-ALTER TABLE `product_menu`
-  ADD PRIMARY KEY (`product_id`);
-
---
--- Indexes for table `reviews`
---
-ALTER TABLE `reviews`
-  ADD PRIMARY KEY (`review_id`),
-  ADD KEY `movie_id` (`movie_id`),
-  ADD KEY `user_id` (`user_id`);
-
---
--- Indexes for table `rooms`
---
-ALTER TABLE `rooms`
-  ADD PRIMARY KEY (`room_id`),
-  ADD KEY `cinema_id` (`cinema_id`),
-  ADD KEY `idx_rooms_cinema` (`cinema_id`),
-  ADD KEY `idx_rooms_cinema_id` (`cinema_id`);
-
---
--- Indexes for table `seats`
---
-ALTER TABLE `seats`
-  ADD PRIMARY KEY (`seat_id`),
-  ADD KEY `room_id` (`room_id`),
-  ADD KEY `idx_seats_room_id` (`room_id`),
-  ADD KEY `idx_room_layout` (`room_id`,`seat_row`,`seat_number`),
-  ADD KEY `idx_seats_cinema_room` (`cinema_id`,`room_id`);
-
---
--- Indexes for table `showtimes`
---
-ALTER TABLE `showtimes`
-  ADD PRIMARY KEY (`showtime_id`),
-  ADD KEY `room_id` (`room_id`),
-  ADD KEY `idx_showtimes_movie_time` (`movie_id`,`start_time`),
-  ADD KEY `idx_cinema` (`cinema_id`),
-  ADD KEY `idx_showtimes_query` (`movie_id`,`cinema_id`,`start_time`);
-
---
--- Indexes for table `tickets`
---
-ALTER TABLE `tickets`
-  ADD PRIMARY KEY (`ticket_id`),
-  ADD UNIQUE KEY `ticket_code` (`ticket_code`),
-  ADD KEY `idx_tk_booking` (`booking_id`),
-  ADD KEY `idx_tk_seat` (`seat_id`),
-  ADD KEY `fk_tickets_showtime_new` (`showtime_id`),
-  ADD KEY `idx_tickets_seat_status` (`seat_status`),
-  ADD KEY `idx_tickets_performance` (`showtime_id`,`seat_status`);
-
---
--- Indexes for table `users`
---
-ALTER TABLE `users`
-  ADD PRIMARY KEY (`user_id`),
-  ADD UNIQUE KEY `username` (`username`),
-  ADD UNIQUE KEY `email` (`email`),
-  ADD UNIQUE KEY `phone` (`phone`),
-  ADD KEY `idx_users_login` (`username`,`email`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `actors`
---
-ALTER TABLE `actors`
-  MODIFY `actor_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT for table `bookings`
---
-ALTER TABLE `bookings`
-  MODIFY `booking_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `booking_details`
---
-ALTER TABLE `booking_details`
-  MODIFY `booking_detail_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `cinemas`
---
-ALTER TABLE `cinemas`
-  MODIFY `cinema_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `coupons`
---
-ALTER TABLE `coupons`
-  MODIFY `coupon_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `genres`
---
-ALTER TABLE `genres`
-  MODIFY `genre_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `movies`
---
-ALTER TABLE `movies`
-  MODIFY `movie_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT for table `movie_actors`
---
-ALTER TABLE `movie_actors`
-  MODIFY `movie_actor_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
-
---
--- AUTO_INCREMENT for table `movie_genres`
---
-ALTER TABLE `movie_genres`
-  MODIFY `movie_genre_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
-
---
--- AUTO_INCREMENT for table `news`
---
-ALTER TABLE `news`
-  MODIFY `news_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT for table `product_menu`
---
-ALTER TABLE `product_menu`
-  MODIFY `product_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT for table `reviews`
---
-ALTER TABLE `reviews`
-  MODIFY `review_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
-
---
--- AUTO_INCREMENT for table `rooms`
---
-ALTER TABLE `rooms`
-  MODIFY `room_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT for table `seats`
---
-ALTER TABLE `seats`
-  MODIFY `seat_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
-
---
--- AUTO_INCREMENT for table `showtimes`
---
-ALTER TABLE `showtimes`
-  MODIFY `showtime_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `tickets`
---
-ALTER TABLE `tickets`
-  MODIFY `ticket_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `users`
---
-ALTER TABLE `users`
-  MODIFY `user_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables
@@ -897,6 +723,7 @@ DELIMITER $$
 --
 -- Events
 --
+DROP EVENT IF EXISTS `auto_cleanup_tickets`$$
 CREATE DEFINER=`root`@`%` EVENT `auto_cleanup_tickets` ON SCHEDULE EVERY 1 MINUTE STARTS '2026-03-10 09:09:55' ON COMPLETION NOT PRESERVE ENABLE DO BEGIN
     -- Nhả ghế: Xóa các vé đang giữ chỗ (Reserved) quá 10 phút
     DELETE FROM tickets 
