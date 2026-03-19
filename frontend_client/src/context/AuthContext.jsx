@@ -9,32 +9,32 @@ export const AuthProvider = ({ children }) => {
 
     const checkAuth = useCallback(async () => {
         try {
-            // 1. TỰ ĐỘNG NHẬN DIỆN LÀN ĐƯỜNG (Admin hay User)
-            // Nếu URL bắt đầu bằng /admin, mình sẽ gọi đầu API dành riêng cho Admin
+            // 1. NHẬN DIỆN LÀN ĐƯỜNG
             const isAdminPage = window.location.pathname.startsWith('/admin');
             
+            // Link chuẩn khớp với index.js (server) đã sửa
             const authEndpoint = isAdminPage 
                 ? 'https://webcinema-zb8z.onrender.com/api/admin/auth/me' 
                 : 'https://webcinema-zb8z.onrender.com/api/auth/me';
 
-            console.log(`[AuthCheck] Đang gọi: ${authEndpoint}`);
+            console.log(`[AuthCheck] Đang kiểm tra tại: ${isAdminPage ? 'ADMIN' : 'USER'}`);
 
             const res = await axios.get(authEndpoint, { 
                 withCredentials: true 
             });
             
-            // 2. CẬP NHẬT USER
-            // Kiểm tra cấu trúc data trả về (thường là res.data.user)
-            if (res.data && res.data.user) {
-                setUser(res.data.user);
-            } else if (res.data && res.data.full_name) {
-                setUser(res.data);
+            // 2. CẬP NHẬT USER (Bốc đúng dữ liệu từ Backend)
+            // Ưu tiên res.data.user trước, nếu không có thì lấy cả res.data
+            const userData = res.data.user || res.data;
+
+            if (userData && (userData.id || userData.role || userData.full_name)) {
+                setUser(userData);
+                console.log("✅ Đã xác thực:", userData.full_name || userData.email);
             } else {
                 setUser(null);
             }
         } catch (err) {
-            // Nếu lỗi 401/403 (chưa đăng nhập hoặc sai token) thì set user về null
-            console.warn("Auth check failed:", err.response?.data?.message || err.message);
+            console.warn("⚠️ Auth check failed:", err.response?.data?.message || err.message);
             setUser(null);
         } finally {
             setLoading(false); 
@@ -42,13 +42,15 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
+        // Chạy lần đầu khi load trang
         checkAuth();
 
         const handleAuthChange = () => {
-            console.log("🔔 Nhận sự kiện authChange - Đang cập nhật lại user...");
+            console.log("🔔 Nhận sự kiện authChange - Đang tải lại dữ liệu...");
             checkAuth();
         };
 
+        // Lắng nghe sự kiện từ trang Login
         window.addEventListener('authChange', handleAuthChange);
         
         return () => {

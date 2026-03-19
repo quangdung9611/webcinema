@@ -61,16 +61,26 @@ app.get('/api', (req, res) => {
   res.send('Kết nối Backend Cinema thành công!');
 });
 
-// Luồng quản trị Admin
-// Luồng ADMIN: Gọi từ React là /api/admin/auth/me
+/**
+ * PHÂN LUỒNG AUTHENTICATION (Đăng nhập/Profile/Logout)
+ * ---------------------------------------------------
+ * - Admin gọi: https://webcinema-zb8z.onrender.com/api/admin/auth/...
+ * - User gọi:  https://webcinema-zb8z.onrender.com/api/auth/...
+ */
 app.use('/api/admin/auth', authRoutes); 
-
-// Luồng USER: Gọi từ React là /api/auth/me
 app.use('/api/auth', authRoutes);
-app.use('/admin/api/manage', adminRouter);
 
-// Luồng người dùng User
-app.use('/api/auth', authRoutes);
+/**
+ * PHÂN LUỒNG QUẢN LÝ (Chỉ dành cho Admin)
+ * ---------------------------------------------------
+ * - Admin gọi: https://webcinema-zb8z.onrender.com/api/admin/manage/...
+ */
+app.use('/api/admin/manage', adminRouter); 
+
+/**
+ * CÁC ROUTE CHỨC NĂNG (Dùng chung hoặc User)
+ * ---------------------------------------------------
+ */
 app.use('/api/users', userRoutes);
 app.use('/api/genres', genreRoutes);
 app.use('/api/movies', movieRoutes);
@@ -90,7 +100,6 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/movie-genres', movieGenreRoutes);
 app.use('/api/movie-actors', movieActorRoutes);
 app.use('/api/news', newsRoutes);
-
 // ===========================================================
 // 3. KHỞI CHẠY SERVER & TỰ PING (Mỗi 5 phút)
 // ===========================================================
