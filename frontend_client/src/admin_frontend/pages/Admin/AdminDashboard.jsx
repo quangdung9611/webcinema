@@ -20,7 +20,11 @@ const AdminDashboard = () => {
     const fetchDashboardData = async (start = startDate, end = endDate) => {
         setLoading(true);
         try {
-            const resStats = await axios.get('https://webcinema-zb8z.onrender.com/admin/api/manage/stats');
+            // [CẬP NHẬT 1]: Sửa link thành /api/admin và thêm withCredentials
+            const resStats = await axios.get('https://webcinema-zb8z.onrender.com/api/admin/manage/stats', {
+                withCredentials: true 
+            });
+            
             if (resStats.data.success) {
                 setStats({
                     movies: resStats.data.movies,
@@ -30,7 +34,11 @@ const AdminDashboard = () => {
                 });
             }
 
-            const resChart = await axios.get(`https://webcinema-zb8z.onrender.com/admin/api/manage/revenue-chart?startDate=${start}&endDate=${end}`);
+            // [CẬP NHẬT 2]: Sửa link biểu đồ và thêm withCredentials
+            const resChart = await axios.get(`https://webcinema-zb8z.onrender.com/api/admin/manage/revenue-chart?startDate=${start}&endDate=${end}`, {
+                withCredentials: true
+            });
+            
             if (resChart.data.success) {
                 setChartData({
                     daily: resChart.data.dailyData,
@@ -39,7 +47,8 @@ const AdminDashboard = () => {
                 });
             }
         } catch (error) {
-            console.error("Lỗi kết nối API:", error);
+            console.error("Lỗi kết nối API Dashboard:", error);
+            // Nếu lỗi 401 thì thường là token hết hạn, Dũng có thể cân nhắc chuyển hướng về login
         } finally {
             setLoading(false);
         }
@@ -61,7 +70,8 @@ const AdminDashboard = () => {
                 <h1>Bảng điều khiển Admin</h1>
                 <p>Chào mừng <strong>Quang Dũng</strong>! Hệ thống đang vận hành ổn định.</p>
             </div>
-                <div className="dashboard-stats-grid">
+            
+            <div className="dashboard-stats-grid">
                 <div className="stat-card-new card-blue">
                     <div className="stat-data"><span>Tổng số phim</span><h2>{stats.movies}</h2></div>
                     <div className="stat-icon"><Film size={28} /></div>
@@ -100,12 +110,11 @@ const AdminDashboard = () => {
                 </div>
             </div>
             
-
             <div className="dashboard-charts-container">
                 <div className="chart-box">
                     <h3>Doanh thu theo thời gian</h3>
                     <div className="chart-wrapper">
-                        <ResponsiveContainer>
+                        <ResponsiveContainer width="100%" height={300}>
                             <LineChart data={chartData.daily}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="date" />
@@ -120,7 +129,7 @@ const AdminDashboard = () => {
                 <div className="chart-box">
                     <h3>Tỷ trọng doanh thu phim</h3>
                     <div className="chart-wrapper">
-                        <ResponsiveContainer>
+                        <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie data={chartData.movies} cx="50%" cy="50%" labelLine={false} label={({ percent }) => `${(percent * 100).toFixed(0)}%`} outerRadius={80} dataKey="value">
                                     {chartData.movies.map((entry, index) => (
@@ -137,7 +146,7 @@ const AdminDashboard = () => {
                 <div className="chart-box full-width">
                     <h3>Chi tiết số lượng vé bán ra theo phim</h3>
                     <div className="chart-wrapper taller">
-                        <ResponsiveContainer>
+                        <ResponsiveContainer width="100%" height={400}>
                             <BarChart data={chartData.tickets}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="movieName" />
