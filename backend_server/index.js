@@ -30,8 +30,15 @@ const movieActorRoutes = require('./Routers/MovieActorRouter');
 const newsRoutes = require('./Routers/NewRouter');
 
 // ===========================================================
-// 1. CẤU HÌNH CORS ĐÃ DỌN DẸP
+// 1. CẤU HÌNH HỆ THỐNG & CORS
 // ===========================================================
+
+// BẮT BUỘC: Để Render nhận diện HTTPS khi gửi Cookie Secure xuyên domain
+app.set('trust proxy', 1); 
+
+// Cho cookieParser lên đầu để các request luôn bóc tách được cookie
+app.use(cookieParser()); 
+
 app.use(cors({
   origin: [
     'https://quangdungcinema.id.vn',       // Frontend của Dũng
@@ -42,20 +49,22 @@ app.use(cors({
   credentials: true 
 }));
 
-app.use(cookieParser()); 
-
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ROUTES
+// ===========================================================
+// 2. ROUTES
+// ===========================================================
 app.get('/api', (req, res) => {
   res.send('Kết nối Backend Cinema thành công!');
 });
 
+// Luồng quản trị Admin
 app.use('/admin/api/auth', authRoutes);
 app.use('/admin/api/manage', adminRouter);
 
+// Luồng người dùng User
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/genres', genreRoutes);
@@ -78,7 +87,7 @@ app.use('/api/movie-actors', movieActorRoutes);
 app.use('/api/news', newsRoutes);
 
 // ===========================================================
-// 2. SỬA PORT: Render sẽ tự cấp cổng (PORT), nếu không có thì lấy 5000
+// 3. KHỞI CHẠY SERVER
 // ===========================================================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
