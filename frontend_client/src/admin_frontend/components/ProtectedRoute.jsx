@@ -4,68 +4,55 @@ import axios from 'axios';
 
 const ProtectedRoute = ({ children }) => {
     const [isAuthorized, setIsAuthorized] = useState(null);
-    const location = useLocation(); // Theo dõi vị trí trang để tránh check loop
+    const location = useLocation();
 
     useEffect(() => {
         let isMounted = true;
 
         const checkAuth = async () => {
             try {
-                // Link chuẩn khớp với server.js của ông
-                const apiUrl = 'https://webcinema-zb8z.onrender.com/admin/api/auth/admin/me';
+                // ✅ SỬA LẠI ĐÚNG LINK MÀ DŨNG VỪA TEST THÀNH CÔNG
+                const apiUrl = 'https://webcinema-zb8z.onrender.com/api/admin/auth/me';
                 
                 const response = await axios.get(apiUrl, {
                     withCredentials: true 
                 });
                 
                 if (isMounted) {
-                    const user = response.data.user;
-                    if (user && user.role === 'admin') {
+                    // Kiểm tra xem backend trả về user và role có đúng là admin không
+                    const userData = response.data.user || response.data;
+                    if (userData && userData.role === 'admin') {
                         setIsAuthorized(true);
                     } else {
                         setIsAuthorized(false);
                     }
                 }
             } catch (error) {
-                // MẸO: Nếu vừa đăng nhập xong mà lỗi 401, có thể cookie chưa kịp nạp
-                // Thử lại 1 lần duy nhất sau 500ms
-                if (error.response?.status === 401) {
-                    console.warn("⚠️ Đang thử xác thực lại...");
-                    setTimeout(async () => {
-                        try {
-                            const retryRes = await axios.get('https://webcinema-zb8z.onrender.com/admin/api/auth/admin/me', { withCredentials: true });
-                            if (isMounted && retryRes.data.user?.role === 'admin') {
-                                setIsAuthorized(true);
-                                return;
-                            }
-                        } catch (e) {
-                            if (isMounted) setIsAuthorized(false);
-                        }
-                    }, 500);
-                } else {
-                    if (isMounted) setIsAuthorized(false);
-                }
+                console.error("❌ Lỗi bảo mật Admin:", error.response?.data?.message || error.message);
+                if (isMounted) setIsAuthorized(false);
             }
         };
 
         checkAuth();
         return () => { isMounted = false; };
-    }, [location.pathname]); // Re-check mỗi khi đổi trang cho chắc
+    }, [location.pathname]);
 
-    // --- RENDER LOGIC ---
+    // Đang chờ kiểm tra
     if (isAuthorized === null) {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0a0a0a', color: '#ff4d4d' }}>
-                <div style={{ fontSize: '3rem' }}>🛡️</div>
-                <div>ĐANG XÁC THỰC QUYỀN ADMIN...</div>
+                <div className="spinner">🛡️</div>
+                <div style={{ marginTop: '10px' }}>ĐANG XÁC THỰC QUYỀN ADMIN...</div>
             </div>
         );
     }
 
+    // Nếu không phải admin hoặc chưa đăng nhập -> Đá về trang login
     if (!isAuthorized) {
         return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
 
+    // Nếu là Admin -> Cho phép xem trang (children)
     return children;
 };
 

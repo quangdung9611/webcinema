@@ -7,41 +7,50 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Dùng useCallback để hàm không bị khởi tạo lại vô ích
     const checkAuth = useCallback(async () => {
         try {
-            // Đảm bảo luôn có withCredentials
-           const res = await axios.get('https://webcinema-zb8z.onrender.com/api/auth/me', { 
+            // 1. TỰ ĐỘNG NHẬN DIỆN LÀN ĐƯỜNG (Admin hay User)
+            // Nếu URL bắt đầu bằng /admin, mình sẽ gọi đầu API dành riêng cho Admin
+            const isAdminPage = window.location.pathname.startsWith('/admin');
+            
+            const authEndpoint = isAdminPage 
+                ? 'https://webcinema-zb8z.onrender.com/api/admin/auth/me' 
+                : 'https://webcinema-zb8z.onrender.com/api/auth/me';
+
+            console.log(`[AuthCheck] Đang gọi: ${authEndpoint}`);
+
+            const res = await axios.get(authEndpoint, { 
                 withCredentials: true 
             });
             
-            // Cập nhật user từ response
-            if (res.data && (res.data.user || res.data.full_name)) {
-                setUser(res.data.user || res.data);
+            // 2. CẬP NHẬT USER
+            // Kiểm tra cấu trúc data trả về (thường là res.data.user)
+            if (res.data && res.data.user) {
+                setUser(res.data.user);
+            } else if (res.data && res.data.full_name) {
+                setUser(res.data);
             } else {
                 setUser(null);
             }
         } catch (err) {
-            console.error("Auth check failed:", err.message);
+            // Nếu lỗi 401/403 (chưa đăng nhập hoặc sai token) thì set user về null
+            console.warn("Auth check failed:", err.response?.data?.message || err.message);
             setUser(null);
         } finally {
-            // QUAN TRỌNG: Luôn tắt loading bất kể thành công hay thất bại
             setLoading(false); 
         }
     }, []);
 
     useEffect(() => {
-        // Chạy kiểm tra lần đầu khi load app
         checkAuth();
 
-        // Lắng nghe sự kiện authChange từ UserLogin/Header để cập nhật ngay lập tức
         const handleAuthChange = () => {
+            console.log("🔔 Nhận sự kiện authChange - Đang cập nhật lại user...");
             checkAuth();
         };
 
         window.addEventListener('authChange', handleAuthChange);
         
-        // Dọn dẹp event khi unmount
         return () => {
             window.removeEventListener('authChange', handleAuthChange);
         };
