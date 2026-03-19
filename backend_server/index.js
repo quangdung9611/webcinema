@@ -62,7 +62,11 @@ app.get('/api', (req, res) => {
 });
 
 // Luồng quản trị Admin
-app.use('/api/admin/auth', authRoutes); // Luồng quản trị Admin
+// Luồng ADMIN: Gọi từ React là /api/admin/auth/me
+app.use('/api/admin/auth', authRoutes); 
+
+// Luồng USER: Gọi từ React là /api/auth/me
+app.use('/api/auth', authRoutes);
 app.use('/admin/api/manage', adminRouter);
 
 // Luồng người dùng User
