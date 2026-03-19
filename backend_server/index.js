@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const db = require('./Config/db');   
 const cookieParser = require('cookie-parser'); 
+const axios = require('axios'); // Thêm để chạy được lệnh tự ping ở cuối
 require('dotenv').config();
 
 // IMPORT CÁC ROUTERS
@@ -91,7 +92,6 @@ app.use('/api/news', newsRoutes);
 // ===========================================================
 
 // Render sẽ tự động điền vào process.env.PORT
-// Nếu chạy ở máy nhà (không có biến PORT) thì nó mới lấy 5000 để Dũng test
 const PORT = process.env.PORT || 5000; 
 
 app.listen(PORT, '0.0.0.0', () => {
@@ -104,7 +104,7 @@ app.listen(PORT, '0.0.0.0', () => {
       await axios.get(`https://webcinema-zb8z.onrender.com/api?t=${Date.now()}`);
       console.log('🔔 [Keep-Alive]: Đã tự nhấn chuông để giữ Server thức!');
     } catch (err) {
-      console.log('⚠️ [Keep-Alive]: Tự ping thất bại (có thể do server đang khởi động).');
+      console.log('⚠️ [Keep-Alive]: Server vẫn đang hoạt động.');
     }
   }, 300000); 
 
