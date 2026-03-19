@@ -34,53 +34,59 @@ const AdminLogin = () => {
         return Object.keys(tempErrors).length === 0;
     };
 
-   const handleAdminLogin = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+    const handleAdminLogin = async (e) => {
+        e.preventDefault();
+        if (!validate()) return;
 
-    setLoading(true);
-    try {
-        // [CẬP NHẬT 1]: Gọi login qua cổng /admin/api để khớp với Path Cookie /admin
-        const res = await axios.post('https://webcinema-zb8z.onrender.com/admin/api/auth/login', 
-            { 
-                email, 
-                password,
-                role_input: 'admin' 
-            },
-            { withCredentials: true } 
-        );
+        setLoading(true);
+        try {
+            // [CẬP NHẬT 1]: Gọi login qua cổng /api/admin để khớp với server.js mới
+            const res = await axios.post('https://webcinema-zb8z.onrender.com/api/admin/auth/login', 
+                { 
+                    email, 
+                    password,
+                    role_input: 'admin' 
+                },
+                { withCredentials: true } 
+            );
 
-        // [CẬP NHẬT 2]: Gọi API lấy thông tin Admin cũng phải qua cổng /admin/api
-        // Link đúng sẽ là: /admin/api/auth/admin/me
-        const profileRes = await axios.get('https://webcinema-zb8z.onrender.com/admin/api/auth/admin/me', {
-            withCredentials: true
-        });
+            // [CẬP NHẬT 2]: Lấy thông tin Admin qua cổng chuẩn đã test thành công
+            const profileRes = await axios.get('https://webcinema-zb8z.onrender.com/api/admin/auth/me', {
+                withCredentials: true
+            });
 
-        const adminData = profileRes.data.user;
+            const adminData = profileRes.data.user || profileRes.data;
 
-        setModalConfig({
-            show: true,
-            type: 'success',
-            title: 'XÁC THỰC THÀNH CÔNG',
-            message: `Chào mừng Quản trị viên: ${adminData.full_name || adminData.username}.`,
-            onConfirm: () => navigate('/admin/dashboard')
-        });
+            // [CẬP NHẬT 3]: Bắn sự kiện để AuthContext và Header cập nhật lại thông tin Dũng
+            window.dispatchEvent(new Event('authChange'));
 
-        // Tự động chuyển hướng sau 1.5s
-        setTimeout(() => navigate('/admin/dashboard'), 1500);
+            setModalConfig({
+                show: true,
+                type: 'success',
+                title: 'XÁC THỰC THÀNH CÔNG',
+                message: `Chào mừng Quản trị viên: ${adminData.full_name || adminData.username || 'Quang Dũng'}.`,
+                onConfirm: () => {
+                    setModalConfig({ ...modalConfig, show: false });
+                    navigate('/admin/dashboard');
+                }
+            });
 
-    } catch (err) {
-        setModalConfig({
-            show: true,
-            type: 'error',
-            title: 'TRUY CẬP BỊ TỪ CHỐI',
-            message: err.response?.data?.message || "Lỗi hệ thống hoặc sai tài khoản!",
-            onConfirm: () => setModalConfig({ ...modalConfig, show: false })
-        });
-    } finally {
-        setLoading(false);
-    }
-};
+            // Tự động chuyển hướng sau 1.5s nếu người dùng không bấm xác nhận
+            setTimeout(() => navigate('/admin/dashboard'), 1500);
+
+        } catch (err) {
+            console.error("Login Error:", err);
+            setModalConfig({
+                show: true,
+                type: 'error',
+                title: 'TRUY CẬP BỊ TỪ CHỐI',
+                message: err.response?.data?.message || "Lỗi hệ thống hoặc sai tài khoản quản trị!",
+                onConfirm: () => setModalConfig({ ...modalConfig, show: false })
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="admin-login-page">
