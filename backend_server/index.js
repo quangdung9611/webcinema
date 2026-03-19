@@ -30,15 +30,14 @@ const movieActorRoutes = require('./Routers/MovieActorRouter');
 const newsRoutes = require('./Routers/NewRouter');
 
 // ===========================================================
-// 1. SỬA CORS: Cho phép cả máy nhà và link sau này trên mạng
+// 1. CẤU HÌNH CORS ĐÃ DỌN DẸP
 // ===========================================================
 app.use(cors({
   origin: [
-    'http://localhost:5173', 
-    'http://localhost:3000',
-    'https://quangdungcinema.id.vn',
-    /\.vercel\.app$/, // Cho phép link frontend trên Vercel
-    /\.onrender\.com$/ // Cho phép các link trên Render
+    'https://quangdungcinema.id.vn',       // Frontend của Dũng
+    'https://webcinema-zb8z.onrender.com', // Link Backend trên Render
+    /\.vercel\.app$/,                      // Phòng hờ nếu bạn test trên Vercel
+    /\.onrender\.com$/                     // Cho phép các sub-domain của Render
   ], 
   credentials: true 
 }));
