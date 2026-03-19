@@ -12,7 +12,7 @@ const AdminHeader = ({ toggleSidebar }) => {
         const fetchAdminProfile = async () => {
             try {
                 // [SỬA TẠI ĐÂY]: Phải gọi đúng cổng /admin/api mới có admintoken
-                const response = await axios.get('https://webcinema-zb8z.onrender.com/admin/api/auth/admin/me', {
+                const response = await axios.get('https://webcinema-zb8z.onrender.com/api/auth/admin/me', {
                     withCredentials: true // Luôn phải có cái này khi dùng Cookie
                 });
 
@@ -36,7 +36,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     const handleLogout = async () => {
         try {
             // [SỬA TẠI ĐÂY]: Logout cũng phải gọi cổng Admin để xóa đúng Cookie Path
-            await axios.post('https://webcinema-zb8z.onrender.com/admin/api/auth/admin/logout', {}, {
+            await axios.post('https://webcinema-zb8z.onrender.com/api/auth/admin/logout', {}, {
                 withCredentials: true
             });
             
