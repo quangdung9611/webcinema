@@ -61,7 +61,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. XỬ LÝ ĐĂNG NHẬP (Lập trường: Chia vùng Path & Xóa chéo)
+// 2. XỬ LÝ ĐĂNG NHẬP (Đã sửa lỗi SameSite & Secure cho Render)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -75,7 +75,6 @@ exports.login = async (req, res) => {
 
         const user = users[0];
 
-        // Chặn đăng nhập sai vùng (Admin không được vào trang login User và ngược lại)
         if (role_input && user.role !== role_input) {
             return res.status(403).json({ 
                 message: `Tài khoản này không có quyền truy cập trang ${role_input === 'admin' ? 'Quản trị' : 'Người dùng'}` 
@@ -94,29 +93,26 @@ exports.login = async (req, res) => {
         );
         
         const isAdmin = user.role === 'admin';
+
+        // Cấu hình Cookie chuẩn để chạy xuyên Domain (Cross-site)
+        const cookieOptions = {
+            httpOnly: true,
+            secure: true,      // Bắt buộc true vì dùng HTTPS trên Render
+            sameSite: 'none',  // Bắt buộc none để gửi cookie từ Render sang .id.vn
+            path: '/',         // Để '/' đồng nhất để tránh lỗi không tìm thấy token
+            maxAge: 24 * 60 * 60 * 1000 
+        };
         
         if (isAdmin) {
-            // 1. Cấp admintoken: Chỉ sống ở vùng /admin
-            res.cookie('admintoken', token, {
-                httpOnly: true,
-                secure: false, // Để false vì chạy localhost HTTP
-                sameSite: 'Lax',
-                path: '/admin', // <--- Chỉ hiện F12 khi ở trang /admin
-                maxAge: 24 * 60 * 60 * 1000 
-            });
-            // 2. Xóa sạch dấu vết usertoken ở path /
-            // res.clearCookie('usertoken', { path: '/' });
+            // Cấp admintoken
+            res.cookie('admintoken', token, cookieOptions);
+            // Xóa dấu vết usertoken nếu có
+            res.clearCookie('usertoken', cookieOptions);
         } else {
-            // 1. Cấp usertoken: Sống ở toàn bộ web (path /)
-            res.cookie('usertoken', token, {
-                httpOnly: true,
-                secure: false,
-                sameSite: 'Lax',
-                path: '/', 
-                maxAge: 24 * 60 * 60 * 1000 
-            });
-            // 2. Xóa sạch dấu vết admintoken ở path /admin
-            // res.clearCookie('admintoken', { path: '/admin' });
+            // Cấp usertoken
+            res.cookie('usertoken', token, cookieOptions);
+            // Xóa dấu vết admintoken nếu có
+            res.clearCookie('admintoken', cookieOptions);
         }
 
         const roleKey = isAdmin ? 'admin' : 'customer';
@@ -143,7 +139,6 @@ exports.login = async (req, res) => {
 // -----------------------------------------------------------
 exports.getMe = async (req, res) => {
     try {
-        // req.user được gán từ Middleware xác thực (ông phải dùng admintoken hoặc usertoken ở đó)
         const userId = req.user ? req.user.id : null;
 
         if (!userId) {
@@ -171,8 +166,15 @@ exports.getMe = async (req, res) => {
 // 4. XỬ LÝ ĐĂNG XUẤT
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
-    // Phải xóa đúng "hộ khẩu" (path) lúc đăng ký thì trình duyệt mới chịu nhả
-    res.clearCookie('usertoken', { path: '/' });
-    res.clearCookie('admintoken', { path: '/admin' });
+    // Khi xóa cookie cũng phải truyền đúng options giống như lúc set
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        path: '/'
+    };
+
+    res.clearCookie('usertoken', cookieOptions);
+    res.clearCookie('admintoken', cookieOptions);
     res.json({ message: "Đã đăng xuất hệ thống" });
 };
