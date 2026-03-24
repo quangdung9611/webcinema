@@ -52,9 +52,11 @@ const corsOptions = {
     'https://webcinema-zb8z.onrender.com', // Link Backend trên Render
     /\.vercel\.app$/,                      // Phòng hờ nếu bạn test trên Vercel
     /\.onrender\.com$/,                    // Cho phép các sub-domain của Render
-    'http://localhost:3000'                // Thêm để test local
+    'http://localhost:3000',               // Thêm để test local
+    'http://localhost:5173'                // Thêm cổng mặc định của Vite
   ], 
-  credentials: true 
+  credentials: true,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
 };
 
 app.use(cors(corsOptions));
@@ -63,27 +65,56 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --- KHỞI TẠO SOCKET.IO ---
+// --- KHỞI TẠO SOCKET.IO & BỘ NHỚ TẠM ---
 const io = new Server(server, {
-  cors: corsOptions
+  cors: corsOptions,
+  transports: ['websocket', 'polling'] // Tối ưu kết nối nhanh cho Render
 });
+
+// Biến này để "ghi sổ" những ghế đang bị giữ tạm thời trên RAM server
+let holdingSeats = []; 
 
 io.on('connection', (socket) => {
   console.log('⚡ Có người vừa kết nối Socket:', socket.id);
 
+  // Gửi danh sách ghế đang bị giữ cho người mới vào (như điện thoại của Dũng)
+  socket.emit('server-gui-danh-sach-dang-giu', holdingSeats);
+
   // Khi có người nhấn chọn ghế (Real-time khóa ghế)
   socket.on('client-chon-ghe', (data) => {
-    // Gửi tín hiệu khóa ghế cho tất cả mọi người khác
-    socket.broadcast.emit('server-khoa-ghe', data);
+    // KIỂM TRA TRÙNG: Nếu ghế chưa có ai giữ thì mới cho giữ
+    const isAlreadyHeld = holdingSeats.some(s => s.seatId === data.seatId && s.showtimeId === data.showtimeId);
+    
+    if (!isAlreadyHeld) {
+      holdingSeats.push({ ...data, socketId: socket.id });
+      // Gửi tín hiệu khóa ghế cho tất cả mọi người khác
+      socket.broadcast.emit('server-khoa-ghe', data);
+    }
   });
 
   // Khi có người bỏ chọn ghế (Real-time mở khóa)
   socket.on('client-huy-chon-ghe', (data) => {
+    // Xóa khỏi sổ ghi chép
+    holdingSeats = holdingSeats.filter(s => 
+      !(s.seatId === data.seatId && s.showtimeId === data.showtimeId)
+    );
     socket.broadcast.emit('server-mo-khoa-ghe', data);
   });
 
   socket.on('disconnect', () => {
-    console.log('❌ Một người dùng đã ngắt kết nối');
+    console.log('❌ Một người dùng đã ngắt kết nối:', socket.id);
+    
+    // Tự động giải phóng ghế: Nếu máy tính thoát, báo cho điện thoại mở khóa ghế đó ra
+    const seatsToRelease = holdingSeats.filter(s => s.socketId === socket.id);
+    seatsToRelease.forEach(s => {
+      socket.broadcast.emit('server-mo-khoa-ghe', { 
+        seatId: s.seatId, 
+        showtimeId: s.showtimeId 
+      });
+    });
+
+    // Cập nhật lại sổ, xóa dữ liệu của người vừa ngắt kết nối
+    holdingSeats = holdingSeats.filter(s => s.socketId !== socket.id);
   });
 });
 
@@ -94,26 +125,9 @@ app.get('/api', (req, res) => {
   res.send('Kết nối Backend Cinema thành công!');
 });
 
-/**
- * PHÂN LUỒNG AUTHENTICATION (Đăng nhập/Profile/Logout)
- * ---------------------------------------------------
- * - Admin gọi: https://webcinema-zb8z.onrender.com/api/admin/auth/...
- * - User gọi:  https://webcinema-zb8z.onrender.com/api/auth/...
- */
 app.use('/api/admin/auth', authRoutes); 
 app.use('/api/auth', authRoutes);
-
-/**
- * PHÂN LUỒNG QUẢN LÝ (Chỉ dành cho Admin)
- * ---------------------------------------------------
- * - Admin gọi: https://webcinema-zb8z.onrender.com/api/admin/manage/...
- */
 app.use('/api/admin/manage', adminRouter); 
-
-/**
- * CÁC ROUTE CHỨC NĂNG (Dùng chung hoặc User)
- * ---------------------------------------------------
- */
 app.use('/api/users', userRoutes);
 app.use('/api/genres', genreRoutes);
 app.use('/api/movies', movieRoutes);
@@ -138,21 +152,18 @@ app.use('/api/news', newsRoutes);
 // 3. KHỞI CHẠY SERVER & TỰ PING (Mỗi 5 phút)
 // ===========================================================
 
-// Render sẽ tự động điền vào process.env.PORT
 const PORT = process.env.PORT || 5000; 
 
-// THAY ĐỔI: Chuyển sang dùng server.listen để Socket.io hoạt động
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server đang chạy tại cổng: ${PORT}`);
   
-  // Tự gõ cửa sau mỗi 5 phút (300,000 ms)
   setInterval(async () => {
     try {
-      // Dùng link thật của Dũng trên Render
+      // Dũng nhớ dán đúng link backend của ông vào đây nhé
       await axios.get(`https://webcinema-zb8z.onrender.com/api?t=${Date.now()}`);
       console.log('🔔 [Keep-Alive]: Đã tự nhấn chuông để giữ Server thức!');
     } catch (err) {
-      console.log('⚠️ [Keep-Alive]: Server vẫn đang hoạt động.');
+      console.log('⚠️ [Keep-Alive]: Đang cố giữ server hoạt động...');
     }
   }, 300000); 
 

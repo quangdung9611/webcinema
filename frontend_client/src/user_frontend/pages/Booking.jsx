@@ -15,7 +15,6 @@ const Booking = () => {
 
     // --- KHỞI TẠO SOCKET ---
     const socket = useMemo(() => io("https://webcinema-zb8z.onrender.com", {
-        path: "/socket.io/",
         withCredentials: true,
         transports: ["websocket", "polling"]
     }), []);
@@ -41,10 +40,21 @@ const Booking = () => {
             console.log("⚡ Đã kết nối Socket ID:", socket.id);
         });
 
+        // MỚI: Lấy danh sách ghế đang bị giữ từ server khi vừa vào
+        socket.on('server-gui-danh-sach-dang-giu', (holdingList) => {
+            setSeats(prevSeats => prevSeats.map(seat => {
+                const isHeld = holdingList.some(h => 
+                    Number(h.seatId) === Number(seat.seat_id) && 
+                    Number(h.showtimeId) === Number(showtimeId)
+                );
+                return isHeld ? { ...seat, is_locked_by_user: true } : seat;
+            }));
+        });
+
         socket.on('server-khoa-ghe', (data) => {
             if (Number(data.showtimeId) === Number(showtimeId)) {
                 setSeats(prevSeats => prevSeats.map(seat => 
-                    seat.seat_id === data.seatId ? { ...seat, is_locked_by_user: true } : seat
+                    Number(seat.seat_id) === Number(data.seatId) ? { ...seat, is_locked_by_user: true } : seat
                 ));
             }
         });
@@ -52,13 +62,14 @@ const Booking = () => {
         socket.on('server-mo-khoa-ghe', (data) => {
             if (Number(data.showtimeId) === Number(showtimeId)) {
                 setSeats(prevSeats => prevSeats.map(seat => 
-                    seat.seat_id === data.seatId ? { ...seat, is_locked_by_user: false } : seat
+                    Number(seat.seat_id) === Number(data.seatId) ? { ...seat, is_locked_by_user: false } : seat
                 ));
             }
         });
 
         return () => {
             socket.off('connect');
+            socket.off('server-gui-danh-sach-dang-giu');
             socket.off('server-khoa-ghe');
             socket.off('server-mo-khoa-ghe');
         };
@@ -79,24 +90,25 @@ const Booking = () => {
         if (!showtimeId) return;
         try {
             setLoading(true);
-            // Gọi API lấy sơ đồ ghế theo suất chiếu (Showtime)
             const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/seats/showtime/${showtimeId}`);
-            setSeats(res.data);
-
+            
             // Logic khôi phục session cũ
             const savedSeats = sessionStorage.getItem('selectedSeats');
             const savedShowtime = sessionStorage.getItem('currentShowtimeId');
-            
+            let initialSeats = res.data;
+
             if (savedSeats && savedShowtime === showtimeId.toString()) {
                 const parsedSeats = JSON.parse(savedSeats);
                 setSelectedSeats(parsedSeats);
                 if (sessionStorage.getItem('holdExpiresAt')) {
                     setIsTimerActive(true);
                 }
+                // Thông báo cho server là tôi vẫn đang giữ những ghế này
                 parsedSeats.forEach(s => {
                     socket.emit('client-chon-ghe', { seatId: s.seat_id, showtimeId });
                 });
             }
+            setSeats(initialSeats);
         } catch (err) {
             console.error("Lỗi tải dữ liệu ghế:", err);
             setSeats([]);
@@ -136,6 +148,7 @@ const Booking = () => {
     };
 
     const handleSeatClick = (seat) => {
+        // Nếu ghế đã bán, bảo trì, hoặc bị người khác khóa real-time thì không cho bấm
         if (seat.seat_status === 'Booked' || Number(seat.is_active) === 0 || seat.is_locked_by_user) return;
         
         const isSelected = selectedSeats.find(s => s.seat_id === seat.seat_id);
