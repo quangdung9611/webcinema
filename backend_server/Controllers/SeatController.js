@@ -78,46 +78,42 @@ exports.initRoomSeats = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
 /**
- * 2. LẤY SƠ ĐỒ GHẾ THEO SUẤT CHIẾU (DÀNH CHO KHÁCH)
- * Đã bổ sung logic check s.is_active = 0 để hiện trạng thái 'Maintenance'
+ * 3. CÁC HÀM QUẢN TRỊ (ADMIN)
  */
-exports.getSeatMapByShowtime = async (req, res) => {
+exports.deleteSeatsexports.getSeatMapByShowtime = async (req, res) => {
     const { showtimeId } = req.params;
     
     try {
+        // 1. Lấy room_id từ suất chiếu
         const [showtimeRows] = await db.query("SELECT room_id FROM showtimes WHERE showtime_id = ?", [showtimeId]);
         if (showtimeRows.length === 0) return res.status(404).json({ error: "Không tìm thấy suất chiếu!" });
         
         const roomId = showtimeRows[0].room_id;
 
-        // CẬP NHẬT CASE WHEN: Ưu tiên check is_active trước khi check đặt vé
+        // 2. Lấy TOÀN BỘ ghế của phòng và check trạng thái đặt vé
+        // Lưu ý: Đã đổi 'Success' thành 'Completed' cho khớp file SQL của Dũng
         const sql = `
             SELECT s.*, 
             CASE 
                 WHEN s.is_active = 0 THEN 'Maintenance'
-                WHEN t.ticket_id IS NOT NULL THEN 'Booked'
+                WHEN t.ticket_id IS NOT NULL AND b.status = 'Completed' THEN 'Booked'
                 ELSE 'Available'
             END as seat_status
             FROM seats s
             LEFT JOIN tickets t ON s.seat_id = t.seat_id AND t.showtime_id = ?
             LEFT JOIN bookings b ON t.booking_id = b.booking_id
             WHERE s.room_id = ? 
-            AND (b.status IN ('Completed', 'Confirmed', 'Success') OR t.ticket_id IS NULL)
             ORDER BY s.seat_row ASC, s.seat_number ASC
-        `.replace(/\s+/g, ' ').trim();
+        `;
 
         const [results] = await db.query(sql, [showtimeId, roomId]);
         res.status(200).json(results);
     } catch (err) {
         res.status(500).json({ error: "Lỗi tải sơ đồ ghế: " + err.message });
     }
-};
-
-/**
- * 3. CÁC HÀM QUẢN TRỊ (ADMIN)
- */
-exports.deleteSeatsByRoom = async (req, res) => {
+};ByRoom = async (req, res) => {
     const { roomId } = req.params;
     try {
         await db.query("DELETE FROM seats WHERE room_id = ?", [roomId]);
