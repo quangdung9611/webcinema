@@ -131,7 +131,7 @@ const CouponList = () => {
                                     <td>
                                         <div className="action-buttons">
                                             <button 
-                                                className="btn-edit"
+                                                className="btn-action-edit"
                                                 onClick={() => navigate(`/admin/coupons/update/${c.coupon_id}`)}
                                                 title="Sửa"
                                             >

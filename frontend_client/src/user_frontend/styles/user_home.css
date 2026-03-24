@@ -165,11 +165,50 @@
     border: none;
     text-transform: uppercase;
 }
+/* ============================================================
+   TÙY CHỈNH SWIPER CAROUSEL (BANNER)
+   ============================================================ */
 
+/* 1. Ẩn 2 dấu mũi tên điều hướng */
+.banner-swiper .swiper-button-next,
+.banner-swiper .swiper-button-prev {
+  display: none !important;
+}
+
+/* 2. Cấu hình khu vực chứa các chấm tròn (Pagination) */
+.banner-swiper .swiper-pagination {
+  bottom: 10px !important; /* Khoảng cách từ đáy ảnh lên */
+}
+
+/* 3. Tùy chỉnh các chấm tròn mặc định */
+.banner-swiper .swiper-pagination-bullet {
+  width: 12px !important;  /* Tăng chiều rộng */
+  height: 12px !important; /* Tăng chiều cao */
+  background: #ffffff !important; 
+  opacity: 0.5;            /* Độ mờ khi chưa chọn */
+  transition: var(--transition);
+  margin: 0 6px !important;
+}
+
+/* 4. Tùy chỉnh chấm tròn khi ĐANG ĐƯỢC CHỌN (Active) */
+.banner-swiper .swiper-pagination-bullet-active {
+  width: 30px !important;  /* Hiệu ứng thanh dài (Capsule) cho chấm active */
+  border-radius: 6px !important;
+  background: var(--primary) !important; /* Màu vàng thương hiệu */
+  opacity: 1 !important;
+  transform: scale(1.1);
+}
 /* --- 4. RESPONSIVE --- */
-/* --- 4. RESPONSIVE --- */
+
 @media (max-width: 767px) {
-
+    .banner-swiper .swiper-pagination-bullet {
+    width: 8px !important;
+    height: 8px !important;
+  }
+  
+  .banner-swiper .swiper-pagination-bullet-active {
+    width: 20px !important;
+  }
     /* Tổng thể */
     .user-home {
         padding: 35px 0;

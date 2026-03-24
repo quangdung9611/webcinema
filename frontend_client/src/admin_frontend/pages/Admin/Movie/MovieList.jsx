@@ -211,7 +211,7 @@ const MovieList = () => {
                                     <td>
                                         <div className="action-buttons">
                                             <button 
-                                                className="btn-edit"
+                                                className="btn-action-edit"
                                                 onClick={() => navigate(`/admin/movies/update/${m.movie_id}`)}
                                                 title="Sửa phim"
                                             >

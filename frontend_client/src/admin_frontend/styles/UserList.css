@@ -1,5 +1,5 @@
 /* ========================================================================== 
-   CONTAINER & HEADER
+   1. CONTAINER & SCROLLBAR
    ========================================================================== */
 
 .user-list-container {
@@ -8,18 +8,14 @@
     border-radius: 12px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     margin: 10px;
-
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-
     overflow-x: auto;
     overflow-y: visible;
-
-    -webkit-overflow-scrolling: touch; /* 🔥 scroll mượt mobile */
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Scrollbar */
 .user-list-container::-webkit-scrollbar {
     height: 8px;
 }
@@ -37,9 +33,8 @@
     background: #adb5bd;
 }
 
-
 /* ========================================================================== 
-   HEADER
+   2. HEADER SECTION
    ========================================================================== */
 
 .user-list-header {
@@ -67,11 +62,6 @@
     color: #0984e3;
 }
 
-
-/* ========================================================================== 
-   BUTTON
-   ========================================================================== */
-
 .btn-add-user {
     background-color: #00b894;
     color: white;
@@ -92,9 +82,8 @@
     transform: translateY(-1px);
 }
 
-
 /* ========================================================================== 
-   TABLE
+   3. TABLE CORE STYLES
    ========================================================================== */
 
 .admin-table {
@@ -102,8 +91,7 @@
     min-width: 100%;
     border-collapse: collapse;
     margin-top: 5px;
-
-    font-size: 1rem; /* 🔥 cố định chữ mọi màn hình */
+    font-size: 1rem;
 }
 
 .admin-table th,
@@ -126,11 +114,11 @@
     vertical-align: middle;
     color: #2d3436;
     border-bottom: 1px solid #f1f3f5;
+    position: relative;
 }
 
-
 /* ========================================================================== 
-   ACTION BUTTONS
+   4. ACTION BUTTONS (DỨT ĐIỂM LỖI BAY NÚT)
    ========================================================================== */
 
 .th-actions {
@@ -147,9 +135,14 @@
     align-items: center;
 }
 
-.btn-edit,
-.btn-delete {
-    display: flex;
+/* Dùng Selector lồng để ép vị trí nút đứng yên */
+.admin-table td .btn-action-edit,
+.admin-table td .btn-delete {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    transform: none !important;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     width: 32px;
@@ -162,25 +155,24 @@
     flex-shrink: 0;
 }
 
-.btn-edit {
-    background-color: #0984e3;
-    color: white;
+.admin-table td .btn-action-edit {
+    background-color: #0984e3 !important;
+    color: white !important;
 }
 
-.btn-delete {
-    background-color: #ff7675;
-    color: white;
+.admin-table td .btn-delete {
+    background-color: #ff7675 !important;
+    color: white !important;
 }
 
-.btn-edit:hover,
-.btn-delete:hover {
-    transform: scale(1.1);
+.admin-table td .btn-action-edit:hover,
+.admin-table td .btn-delete:hover {
+    transform: scale(1.1) !important;
     filter: brightness(0.9);
 }
 
-
 /* ========================================================================== 
-   BADGE & OTHER
+   5. UI ELEMENTS (BADGE, IMAGES...)
    ========================================================================== */
 
 .status-badge {
@@ -201,11 +193,6 @@
     color: #ff9f43;
 }
 
-.ticket-code {
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-}
-
 .movie-poster-img {
     width: 70px;
     height: 90px;
@@ -215,66 +202,54 @@
 }
 
 /* ========================================================================== 
-    RESPONSIVE - CHỈNH SỬA THEO MỐC MỚI (740px & 1024px)
+   6. RESPONSIVE: TABLET (740px - 1023px)
    ========================================================================== */
 
-/* 1. VÙNG TABLET (740px - 1023px) - 👉 SIÊU TO CHO DỄ NHÌN */
 @media screen and (min-width: 740px) and (max-width: 1023px) {
     .user-list-container {
-        padding: 25px 30px; /* Nới rộng container */
+        padding: 25px 30px;
         margin: 15px;
     }
 
     .user-list-header h2 {
-        font-size: 1.6rem; /* Tiêu đề trang to rõ */
+        font-size: 1.6rem;
     }
 
     .btn-add-user {
         padding: 12px 20px;
-        font-size: 1.1rem; /* Nút thêm mới to ra */
+        font-size: 1.1rem;
     }
 
-    /* 🔥 Chữ trong bảng to lên rõ rệt */
     .admin-table {
-        font-size: 1.2rem; 
+        font-size: 1.2rem;
     }
 
     .admin-table th {
         padding: 16px 20px;
-        font-size: 1.2rem; /* Tiêu đề cột cũng to lên */
+        font-size: 1.2rem;
     }
 
     .admin-table td {
-        padding: 15px 20px; /* Hàng bảng cao hơn cho dễ nhìn */
+        padding: 15px 20px;
     }
 
-    /* Badge trạng thái to lên */
     .status-badge {
         padding: 6px 12px;
         font-size: 1.2rem;
     }
 
-    /* Ảnh poster to hơn cho iPad */
-    .movie-poster-img {
-        width: 80px;
-        height: 110px;
-    }
-
-    /* 🔥 Nút Sửa/Xóa to ra để ngón tay dễ chạm, không bấm nhầm */
-    .btn-edit,
-    .btn-delete {
-        width: 42px;
-        height: 42px;
-        font-size: 1.2rem;
-        border-radius: 8px;
-    }
-
-    .action-buttons {
-        gap: 15px; /* Khoảng cách nút xa nhau ra tí */
+    /* Nút to hơn cho thao tác chạm trên Tablet */
+    .admin-table td .btn-action-edit,
+    .admin-table td .btn-delete {
+        width: 42px !important;
+        height: 42px !important;
     }
 }
 
-/* 2. VÙNG MOBILE (Dưới 740px) - 👉 GỌN GÀNG TỐI ƯU */
+/* ========================================================================== 
+   7. RESPONSIVE: MOBILE (Dưới 740px)
+   ========================================================================== */
+
 @media screen and (max-width: 739px) {
     .user-list-container {
         padding: 12px;
@@ -295,20 +270,5 @@
     .btn-add-user {
         width: 100%;
         justify-content: center;
-        padding: 10px;
-        font-size: 1rem;
-    }
-
-    .admin-table {
-        font-size: 0.9rem;
-    }
-
-    .movie-poster-img {
-        width: 50px;
-        height: 70px;
-    }
-
-    .user-list-container::-webkit-scrollbar {
-        height: 5px;
     }
 }

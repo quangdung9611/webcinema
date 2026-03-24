@@ -134,51 +134,66 @@
 }
 
 /* ============================================================
-   RESPONSIVE DUY NHẤT: <= 767px
-============================================================ */
-/* ============================================================
-   RESPONSIVE TỐI ƯU: TRỊ LỖI ZOOM 100%
+   FOOTER RESPONSIVE: CHỐT 2 HÀNG - 2 CỘT TẠI 992PX
 ============================================================ */
 
-@media (max-width: 767px) {
-  .footer-container {
-        /* SỬA TẠI ĐÂY: Dùng 1 cột để nội dung thoải mái khi zoom 100% */
-      grid-template-columns: repeat(2, 1fr);
-        gap: 40px; /* Tăng gap một chút để các phần không dính nhau */
+@media (max-width: 992px) {
+    .footer-container {
+        /* Chia chính xác 2 cột đều nhau */
+        display: grid;
+        grid-template-columns: 1fr 1fr; 
+        gap: 40px 30px;
         text-align: center;
     }
 
-    /* Nếu Dũng vẫn muốn 2 cột cho máy tính bảng/điện thoại nằm ngang, 
-       hãy dùng thêm một mốc nữa ở khoảng 480px */
-
-
-/* Mẹo nhỏ: Thêm cái này để chữ không bao giờ "vượt biên" */
-.user-footer * {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
-    /* Chống tràn chữ khi zoom to 100% */
-    .about p {
-        max-width: 100%;
-        margin: 0 auto;
-        font-size: 0.8rem; /* Giảm nhẹ font để zoom 100% không bị quá khổ */
+    /* Cột 1 (About) và Cột 2 (Dịch vụ) nằm hàng 1 */
+    /* Cột 3 (Liên hệ) và Cột 4 (Hỗ trợ) nằm hàng 2 */
+    .footer-section {
+        grid-column: span 1; /* Đảm bảo mỗi thằng chỉ chiếm 1 cột */
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Căn giữa nội dung bên trong flex */
     }
 
     .footer-logo {
-        font-size: 1.2rem;
+        font-size: 1.6rem;
+        margin-bottom: 10px;
     }
 
+    .about p {
+        font-size: 0.85rem;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    /* Căn giữa danh sách link */
+    .links ul, .support ul {
+        text-align: center;
+        padding: 0;
+    }
+
+    /* Căn giữa các dòng liên hệ */
     .contact p {
+        width: 100%;
         justify-content: center;
-      
+        font-size: 0.9rem;
     }
 
     .social-links {
         justify-content: center;
+        width: 100%;
     }
 
-    .footer-bottom {
-        margin-top: 40px;
+    .footer-section h3 {
+        margin-top: 10px;
+        color: #f1c40f;
+    }
+}
+
+/* Khi màn hình quá nhỏ thì mới về 1 cột dọc */
+@media (max-width: 576px) {
+    .footer-container {
+        grid-template-columns: 1fr;
+        gap: 30px;
     }
 }

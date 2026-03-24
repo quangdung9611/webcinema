@@ -162,3 +162,83 @@ exports.deleteUser = async (req, res) => {
         res.status(500).json({ error: "Không thể xóa (Người dùng có dữ liệu liên quan)" });
     }
 };
+// Lấy thông tin cá nhân dựa trên user_id từ Token
+exports.getUserProfile = async (req, res) => {
+    // Lưu ý: user_id này lấy từ middleware xác thực (req.user)
+    const userId = req.user.user_id; 
+
+    try {
+        const [rows] = await db.query(
+            'SELECT user_id, username, full_name, email, phone, address, role, points FROM users WHERE user_id = ?',
+            [userId]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: "Không tìm thấy người dùng" });
+        }
+
+        res.status(200).json(rows[0]);
+    } catch (error) {
+        console.error("Get Profile Error:", error);
+        res.status(500).json({ error: "Lỗi hệ thống khi lấy thông tin cá nhân" });
+    }
+};
+// Người dùng tự cập nhật thông tin
+// Người dùng tự cập nhật thông tin
+exports.updateUserProfile = async (req, res) => {
+    // SỬA DÒNG NÀY: Lấy cả user_id hoặc id từ token để tránh bị undefined
+    const userId = req.user.user_id ;
+    const { full_name, phone, email, address, oldPassword, newPassword } = req.body;
+
+    try {
+        // 1. Kiểm tra validation cơ bản
+        const validationError = validateUserData({ full_name, phone, email, address, password: newPassword }, true);
+        if (validationError) return res.status(400).json(validationError);
+
+        // 2. Xử lý đổi mật khẩu
+        let hashedPassword = null;
+        if (newPassword && newPassword.trim() !== "") {
+            if (!oldPassword) {
+                return res.status(400).json({ field: 'oldPassword', error: "Vui lòng nhập mật khẩu cũ để đổi mật khẩu mới" });
+            }
+
+            // Lấy user từ DB - Lưu ý cách destructuring [rows]
+            const [rows] = await db.query('SELECT password FROM users WHERE user_id = ?', [userId]);
+            
+            if (rows.length === 0) {
+                return res.status(404).json({ error: "Người dùng không tồn tại" });
+            }
+
+            // So sánh mật khẩu cũ
+            const isMatch = await bcrypt.compare(oldPassword, rows[0].password);
+            if (!isMatch) {
+                return res.status(400).json({ field: 'oldPassword', error: "Mật khẩu cũ không chính xác" });
+            }
+            
+            hashedPassword = await bcrypt.hash(newPassword, 10);
+        }
+
+        // 3. Xây dựng câu lệnh SQL cập nhật động
+        let fields = ["full_name = ?", "phone = ?", "email = ?", "address = ?"];
+        let params = [full_name, phone, email, address];
+
+        if (hashedPassword) {
+            fields.push("password = ?");
+            params.push(hashedPassword);
+        }
+
+        params.push(userId);
+        const sql = `UPDATE users SET ${fields.join(", ")} WHERE user_id = ?`;
+
+        await db.query(sql, params);
+        res.status(200).json({ message: "Cập nhật trang cá nhân thành công!" });
+
+    } catch (err) {
+        console.error("Update Profile Error:", err);
+        if (err.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ error: "Email hoặc Số điện thoại đã tồn tại" });
+        }
+        // Trả về lỗi chi tiết hơn để dễ debug
+        res.status(500).json({ error: "Lỗi máy chủ: " + err.message });
+    }
+};

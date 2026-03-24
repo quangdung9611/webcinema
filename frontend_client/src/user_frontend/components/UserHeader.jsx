@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../../context/AuthContext'; // 1. Import AuthContext
+import { useAuth } from '../../context/AuthContext';
 import { 
     ChevronDown, 
     UserCircle, 
@@ -14,7 +14,7 @@ import '../styles/Header.css';
 
 const UserHeader = () => {
     const navigate = useNavigate();
-    const { user, setUser, checkAuth } = useAuth(); // 2. Lấy user và hàm check từ Context
+    const { user, setUser } = useAuth(); 
     const [showDropdown, setShowDropdown] = useState(false);
     const [cinemas, setCinemas] = useState([]);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,7 +22,7 @@ const UserHeader = () => {
     const dropdownRef = useRef(null);
     const navRef = useRef(null);
 
-    // Xử lý click ngoài để đóng tất cả menu
+    // Đóng tất cả menu khi click ra ngoài vùng hiển thị
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -40,23 +40,26 @@ const UserHeader = () => {
         try {
             const res = await axios.get('https://webcinema-zb8z.onrender.com/api/cinemas');
             setCinemas(res.data);
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error("Lỗi lấy dữ liệu rạp:", err); 
+        }
     };
 
     useEffect(() => {
         fetchCinemas();
-        // Không cần fetchUserData ở đây nữa vì AuthContext đã lo khi App load
     }, []);
 
     const handleLogout = async () => {
         try {
             await axios.post('https://webcinema-zb8z.onrender.com/api/auth/logout', {}, { withCredentials: true });
-            setUser(null); // Xóa user trong kho chung
+            setUser(null);
+            // Xóa token khỏi sessionStorage nếu bạn đang lưu ở đó
+            sessionStorage.removeItem('usertoken');
             setShowDropdown(false);
-            // Báo hiệu cho các component khác nếu cần, hoặc đơn giản là navigate
             navigate('/');
         } catch (err) {
             setUser(null);
+            sessionStorage.removeItem('usertoken');
         }
     };
 
@@ -74,7 +77,11 @@ const UserHeader = () => {
     return (
         <nav className="user-navbar">
             <div className="nav-container">
-                <button className={`hamburger ${isMenuOpen ? 'active' : ''}`} onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                {/* Nút Hamburger cho Mobile */}
+                <button 
+                    className={`hamburger ${isMenuOpen ? 'active' : ''}`} 
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
                     <span className="bar"></span>
                     <span className="bar"></span>
                     <span className="bar"></span>
@@ -84,9 +91,13 @@ const UserHeader = () => {
                     CINEMA<span>STAR</span>
                 </div>
                 
+                {/* Lớp phủ khi mở menu mobile */}
+                {isMenuOpen && <div className="menu-overlay" onClick={closeMobileMenu}></div>}
+
                 <ul ref={navRef} className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
                     <li><Link to="/" onClick={closeMobileMenu}>Trang chủ</Link></li>
                     
+                    {/* Menu Phim */}
                     <li className={`has-dropdown ${activeSubMenu === 'phim' ? 'mobile-active' : ''}`}>
                         <Link to="#" onClick={(e) => toggleSubMenu('phim', e)}>
                             Phim <ChevronDown size={14} className="icon-down" />
@@ -97,6 +108,7 @@ const UserHeader = () => {
                         </ul>
                     </li>
 
+                    {/* Menu Rạp */}
                     <li className={`has-dropdown ${activeSubMenu === 'rap' ? 'mobile-active' : ''}`}>
                         <Link to="#" onClick={(e) => toggleSubMenu('rap', e)}>
                             Rạp <ChevronDown size={14} className="icon-down" />
@@ -110,6 +122,7 @@ const UserHeader = () => {
                         </ul>
                     </li>
 
+                    {/* Góc điện ảnh */}
                     <li className={`has-dropdown ${activeSubMenu === 'goc' ? 'mobile-active' : ''}`}>
                         <Link to="#" onClick={(e) => toggleSubMenu('goc', e)}>
                             Góc Điện Ảnh <ChevronDown size={14} className="icon-down" />
@@ -124,11 +137,11 @@ const UserHeader = () => {
                     <li><Link to="/promotion" onClick={closeMobileMenu}>Khuyến mãi</Link></li>
                 </ul>
 
+                {/* Tài khoản Dropdown */}
                 <div className="user-menu" ref={dropdownRef}>
                     <div className="account-trigger" onClick={() => setShowDropdown(!showDropdown)}>
-                        <UserCircle size={24} strokeWidth={2} className="user-icon" />
-                        {/* Hiển thị tên từ Context */}
-                        <span>{user ? (user.username || user.full_name) : "Tài khoản"}</span>
+                        <UserCircle size={22} className="user-icon" />
+                        <span className="username-display">{user ? (user.username || user.full_name) : "Tài khoản"}</span>
                         <ChevronDown size={14} className={showDropdown ? 'rotate' : ''} />
                     </div>
 

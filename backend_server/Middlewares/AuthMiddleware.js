@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 // Dũng nhớ kiểm tra trên Render xem biến môi trường là SECRET_KEY hay JWT_SECRET nhé
 const SECRET_KEY = process.env.SECRET_KEY || process.env.JWT_SECRET || 'your_secret_key';
 
-const authMiddleware = (req, res, next) => {
+const AuthMiddleware = (req, res, next) => {
     // 1. Kiểm tra xem Request đang gọi vào luồng Admin hay User
     // Mình check xem trong URL có chứa cụm '/api/admin' không
     const isAdminPath = req.originalUrl.includes('/api/admin');
@@ -50,5 +50,4 @@ const authMiddleware = (req, res, next) => {
         return res.status(401).json({ message: "Phiên đăng nhập không hợp lệ hoặc đã hết hạn!" });
     }
 };
-
-module.exports = authMiddleware;
+module.exports = AuthMiddleware;

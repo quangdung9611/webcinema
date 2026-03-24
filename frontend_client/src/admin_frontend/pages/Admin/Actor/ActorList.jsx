@@ -143,7 +143,7 @@ const ActorList = () => {
                                     <td>
                                         <div className="action-buttons">
                                             <button 
-                                                className="btn-edit"
+                                                className="btn-action-edit"
                                                 onClick={() => navigate(`/admin/actors/update/${a.actor_id}`)}
                                                 title="Sửa diễn viên"
                                             >

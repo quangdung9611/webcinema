@@ -163,7 +163,7 @@ const ShowTimeList = () => {
                                             <td>
                                                 <div className="action-buttons">
                                                     <button 
-                                                        className="btn-edit"
+                                                        className="btn-action-edit"
                                                         onClick={() => navigate(`/admin/showtimes/update/${s.showtime_id}`)}
                                                         title="Chỉnh sửa suất chiếu"
                                                     >

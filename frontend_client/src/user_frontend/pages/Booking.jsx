@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react'; // 1. Thêm useMemo
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Modal from '../../admin_frontend/components/Modal';
 import CountdownTimer from './CountdownTimer'; 
 import '../styles/Booking.css';
+import { io } from "socket.io-client";
 
 const Booking = () => {
     const location = useLocation();
@@ -11,6 +12,14 @@ const Booking = () => {
     
     const { movie, cinemaName, slot, selectedDate } = location.state || {};
     const showtimeId = slot?.showtime_id || slot?.id;
+
+    // --- 2. KHỞI TẠO SOCKET VỚI PATH CHUẨN ---
+    // Dùng useMemo để socket chỉ khởi tạo DUY NHẤT một lần
+    const socket = useMemo(() => io("https://webcinema-zb8z.onrender.com", {
+        path: "/socket.io/", // BẮT BUỘC có dòng này để hết lỗi 404
+        withCredentials: true,
+        transports: ["websocket", "polling"] // Ưu tiên websocket
+    }), []);
 
     const [seats, setSeats] = useState([]); 
     const [selectedSeats, setSelectedSeats] = useState([]); 
@@ -25,7 +34,39 @@ const Booking = () => {
 
     const closeModal = () => setModalConfig(prev => ({ ...prev, show: false }));
 
-    // 1. Fetch thông tin phòng và phim
+    // --- 3. EFFECT LẮNG NGHE REAL-TIME ---
+    useEffect(() => {
+        if (!showtimeId) return;
+
+        // Log để kiểm tra kết nối (Dũng có thể xóa sau khi chạy ok)
+        socket.on("connect", () => {
+            console.log("⚡ Đã kết nối Socket thành công với ID:", socket.id);
+        });
+
+        socket.on('server-khoa-ghe', (data) => {
+            if (Number(data.showtimeId) === Number(showtimeId)) {
+                setSeats(prevSeats => prevSeats.map(seat => 
+                    seat.seat_id === data.seatId ? { ...seat, is_locked_by_user: true } : seat
+                ));
+            }
+        });
+
+        socket.on('server-mo-khoa-ghe', (data) => {
+            if (Number(data.showtimeId) === Number(showtimeId)) {
+                setSeats(prevSeats => prevSeats.map(seat => 
+                    seat.seat_id === data.seatId ? { ...seat, is_locked_by_user: false } : seat
+                ));
+            }
+        });
+
+        // Cleanup: Ngắt lắng nghe khi rời khỏi trang
+        return () => {
+            socket.off('connect');
+            socket.off('server-khoa-ghe');
+            socket.off('server-mo-khoa-ghe');
+        };
+    }, [showtimeId, socket]);
+
     const fetchShowtimeDetail = useCallback(async () => {
         if (!showtimeId) return;
         try {
@@ -36,7 +77,6 @@ const Booking = () => {
         }
     }, [showtimeId]);
 
-    // 2. Fetch sơ đồ ghế và khôi phục session nếu có
     const fetchSeats = useCallback(async () => {
         if (!showtimeId) return;
         try {
@@ -47,19 +87,23 @@ const Booking = () => {
             const savedSeats = sessionStorage.getItem('selectedSeats');
             const savedShowtime = sessionStorage.getItem('currentShowtimeId');
             
-            // Nếu đúng suất chiếu đang chọn thì mới khôi phục ghế
             if (savedSeats && savedShowtime === showtimeId.toString()) {
-                setSelectedSeats(JSON.parse(savedSeats));
+                const parsedSeats = JSON.parse(savedSeats);
+                setSelectedSeats(parsedSeats);
                 if (sessionStorage.getItem('holdExpiresAt')) {
                     setIsTimerActive(true);
                 }
+                // Báo cho người khác biết mình đang chọn lại ghế từ session
+                parsedSeats.forEach(s => {
+                    socket.emit('client-chon-ghe', { seatId: s.seat_id, showtimeId });
+                });
             }
         } catch (err) {
             console.error("Lỗi tải ghế:", err);
         } finally {
             setLoading(false);
         }
-    }, [showtimeId]);
+    }, [showtimeId, socket]);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -71,8 +115,11 @@ const Booking = () => {
         fetchSeats();
     }, [fetchSeats, fetchShowtimeDetail, movie, slot, navigate]);
 
-    // Hàm dọn dẹp quan trọng để dừng Timer
     const clearBookingSession = () => {
+        selectedSeats.forEach(s => {
+            socket.emit('client-huy-chon-ghe', { seatId: s.seat_id, showtimeId });
+        });
+        
         sessionStorage.removeItem('selectedSeats');
         sessionStorage.removeItem('holdExpiresAt');
         sessionStorage.removeItem('currentShowtimeId');
@@ -90,15 +137,14 @@ const Booking = () => {
     };
 
     const handleSeatClick = (seat) => {
-        // CẬP NHẬT: Chặn click nếu ghế đã đặt HOẶC is_active = 0 (bảo trì)
-        if (seat.seat_status === 'Booked' || Number(seat.is_active) === 0) return;
+        if (seat.seat_status === 'Booked' || Number(seat.is_active) === 0 || seat.is_locked_by_user) return;
         
         const isSelected = selectedSeats.find(s => s.seat_id === seat.seat_id);
         let updatedSeats = [];
 
         if (isSelected) {
             updatedSeats = selectedSeats.filter(s => s.seat_id !== seat.seat_id);
-            // Nếu bỏ chọn hết ghế thì hủy luôn Timer
+            socket.emit('client-huy-chon-ghe', { seatId: seat.seat_id, showtimeId });
             if (updatedSeats.length === 0) clearBookingSession();
         } else {
             if (selectedSeats.length >= 8) {
@@ -106,8 +152,8 @@ const Booking = () => {
                 return;
             }
             updatedSeats = [...selectedSeats, seat];
+            socket.emit('client-chon-ghe', { seatId: seat.seat_id, showtimeId });
             
-            // Nếu là ghế đầu tiên được chọn, bắt đầu đếm ngược 10 phút
             if (selectedSeats.length === 0) {
                 const expiresAt = Date.now() + 10 * 60 * 1000;
                 sessionStorage.setItem('holdExpiresAt', expiresAt.toString());
@@ -121,8 +167,6 @@ const Booking = () => {
 
     const handleContinue = () => {
         if (selectedSeats.length === 0) return;
-
-        // Đóng gói dữ liệu chuẩn để sang Payment dùng được roomName luôn
         const bookingData = { 
             ...location.state, 
             showtimeDetail, 
@@ -151,7 +195,9 @@ const Booking = () => {
         <div className="booking-page-full-wrapper">
             <Modal {...modalConfig} onConfirm={modalConfig.onConfirm} onCancel={modalConfig.onCancel} />
             
+            {/* Các phần UI render bên dưới giữ nguyên... */}
             <div className="stepper-bar-full">
+                {/* Giữ nguyên như cũ của Dũng */}
                 <div className="stepper-content">
                     <div className="step-item done">01 CHỌN SUẤT</div>
                     <div className="step-item active">02 CHỌN GHẾ</div>
@@ -162,11 +208,8 @@ const Booking = () => {
 
             <div className="booking-main-layout">
                 <div className="booking-grid-container">
-                    
                     <div className="left-section-seatmap">
                         <div className="seat-selection-card">
-                            
-
                             <div className="seats-layout-engine">
                                 {Object.keys(groupedSeats).sort().reverse().map(row => (
                                     <div key={row} className="seat-row">
@@ -175,21 +218,23 @@ const Booking = () => {
                                             {groupedSeats[row].map(seat => {
                                                 const isSelected = selectedSeats.some(s => s.seat_id === seat.seat_id);
                                                 const isBooked = seat.seat_status === 'Booked';
-                                                // THÊM BIẾN: Kiểm tra bảo trì qua is_active
                                                 const isMaintenance = Number(seat.is_active) === 0;
+                                                const isLockedRealtime = seat.is_locked_by_user; 
                                                 const isCouple = seat.seat_type.toLowerCase() === 'couple';
 
                                                 return (
                                                     <div 
                                                         key={seat.seat_id}
-                                                        // CẬP NHẬT: Thêm class 'maintenance' vào className
-                                                        className={`seat-unit ${seat.seat_type.toLowerCase()} ${isSelected ? 'selected' : ''} ${isBooked ? 'booked' : ''} ${isMaintenance ? 'maintenance' : ''}`}
+                                                        className={`seat-unit ${seat.seat_type.toLowerCase()} 
+                                                            ${isSelected ? 'selected' : ''} 
+                                                            ${isBooked ? 'booked' : ''} 
+                                                            ${isMaintenance ? 'maintenance' : ''} 
+                                                            ${isLockedRealtime ? 'locked-realtime' : ''}`}
                                                         onClick={() => handleSeatClick(seat)}
                                                     >
                                                         {isBooked ? (
                                                             <span className="booked-icon">X</span>
-                                                        ) : isMaintenance ? (
-                                                            // HIỂN THỊ: Icon X cho ghế bảo trì
+                                                        ) : (isMaintenance || isLockedRealtime) ? (
                                                             <span className="maintenance-icon">X</span>
                                                         ) : (
                                                             isCouple ? (
@@ -212,8 +257,7 @@ const Booking = () => {
                             </div>
                             <div className="seat-legend-area">
                                 <div className="legend-item"><span className="legend-box status-booked">X</span> Đã bán</div>
-                                {/* THÊM CHÚ THÍCH BẢO TRÌ */}
-                                <div className="legend-item"><span className="legend-box status-maintenance">X</span> Bảo trì</div>
+                                <div className="legend-item"><span className="legend-box status-maintenance">X</span> Bảo trì/Đang giữ</div>
                                 <div className="legend-item"><span className="legend-box status-selected"></span> Đang chọn</div>
                                 <div className="legend-item"><span className="legend-box type-vip"></span> VIP</div>
                                 <div className="legend-item"><span className="legend-box type-standard"></span> Thường</div>
@@ -224,7 +268,6 @@ const Booking = () => {
 
                     <aside className="right-section-sidebar">
                         <div className="sidebar-sticky-content">
-                            {/* FIX: Chỉ hiện Timer khi có chọn ghế để tránh chạy lung tung */}
                             {isTimerActive && selectedSeats.length > 0 && (
                                 <div className="timer-display-box">
                                     <CountdownTimer onExpire={handleTimeExpire} />

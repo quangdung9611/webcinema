@@ -7,6 +7,11 @@ const cookieParser = require('cookie-parser');
 const axios = require('axios'); // Thêm để chạy được lệnh tự ping ở cuối
 require('dotenv').config();
 
+// --- THÊM SOCKET.IO TẠI ĐÂY ---
+const http = require('http');
+const { Server } = require("socket.io");
+const server = http.createServer(app); 
+
 // IMPORT CÁC ROUTERS
 const authRoutes = require('./Routers/AuthRouter');
 const userRoutes = require('./Routers/UserRouter');
@@ -40,19 +45,47 @@ app.set('trust proxy', 1);
 // Cho cookieParser lên đầu để các request luôn bóc tách được cookie
 app.use(cookieParser()); 
 
-app.use(cors({
+// Gom cấu hình CORS để dùng chung cho cả Express và Socket
+const corsOptions = {
   origin: [
     'https://quangdungcinema.id.vn',       // Frontend của Dũng
     'https://webcinema-zb8z.onrender.com', // Link Backend trên Render
     /\.vercel\.app$/,                      // Phòng hờ nếu bạn test trên Vercel
-    /\.onrender\.com$/                     // Cho phép các sub-domain của Render
+    /\.onrender\.com$/,                    // Cho phép các sub-domain của Render
+    'http://localhost:3000'                // Thêm để test local
   ], 
   credentials: true 
-}));
+};
+
+app.use(cors(corsOptions));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// --- KHỞI TẠO SOCKET.IO ---
+const io = new Server(server, {
+  cors: corsOptions
+});
+
+io.on('connection', (socket) => {
+  console.log('⚡ Có người vừa kết nối Socket:', socket.id);
+
+  // Khi có người nhấn chọn ghế (Real-time khóa ghế)
+  socket.on('client-chon-ghe', (data) => {
+    // Gửi tín hiệu khóa ghế cho tất cả mọi người khác
+    socket.broadcast.emit('server-khoa-ghe', data);
+  });
+
+  // Khi có người bỏ chọn ghế (Real-time mở khóa)
+  socket.on('client-huy-chon-ghe', (data) => {
+    socket.broadcast.emit('server-mo-khoa-ghe', data);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('❌ Một người dùng đã ngắt kết nối');
+  });
+});
 
 // ===========================================================
 // 2. ROUTES
@@ -100,6 +133,7 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/movie-genres', movieGenreRoutes);
 app.use('/api/movie-actors', movieActorRoutes);
 app.use('/api/news', newsRoutes);
+
 // ===========================================================
 // 3. KHỞI CHẠY SERVER & TỰ PING (Mỗi 5 phút)
 // ===========================================================
@@ -107,7 +141,8 @@ app.use('/api/news', newsRoutes);
 // Render sẽ tự động điền vào process.env.PORT
 const PORT = process.env.PORT || 5000; 
 
-app.listen(PORT, '0.0.0.0', () => {
+// THAY ĐỔI: Chuyển sang dùng server.listen để Socket.io hoạt động
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server đang chạy tại cổng: ${PORT}`);
   
   // Tự gõ cửa sau mỗi 5 phút (300,000 ms)
@@ -128,3 +163,5 @@ app.listen(PORT, '0.0.0.0', () => {
     })
     .catch(err => console.log("❌ Lỗi kết nối DB:", err.message));
 });
+
+module.exports = app;

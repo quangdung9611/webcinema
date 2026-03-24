@@ -118,9 +118,10 @@ const UserList = () => {
                                     <td>
                                         <div className="action-buttons">
                                             <button 
-                                                className="btn-edit"
+                                               className="btn-action-edit"
                                                 onClick={() => navigate(`/admin/users/update/${u.user_id}`)}
                                                 title="Sửa"
+                                                
                                             >
                                                 <Edit size={16} />
                                             </button>

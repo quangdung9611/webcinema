@@ -23,7 +23,7 @@ const createSlug = (title) => {
  * Validate dữ liệu đầu vào
  */
 const validateMovieData = (data, file, isUpdate = false) => {
-    const { title, duration, release_date } = data;
+    const { title, duration, release_date, status } = data; // Thêm status để check
 
     if (!title || title.trim().length < 2) 
         return "Tiêu đề phim phải từ 2 ký tự trở lên.";
@@ -33,6 +33,15 @@ const validateMovieData = (data, file, isUpdate = false) => {
 
     if (!release_date) 
         return "Vui lòng chọn ngày phát hành.";
+
+    // --- BỔ SUNG LOGIC NGÀY THÁNG ---
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); 
+    if (status === "Sắp chiếu" && new Date(release_date) < now) {
+        console.log("⚠️ [Validation Failed] Thử thêm phim 'Sắp chiếu' với ngày quá khứ.");
+        return "Phim 'Sắp chiếu' thì ngày phát hành không được ở quá khứ.";
+    }
+    // --------------------------------
 
     // Khi thêm mới (!isUpdate) thì bắt buộc có file
     if (!isUpdate && !file) 
@@ -101,17 +110,24 @@ exports.getMovieBySlug = async (req, res) => {
             WHERE ma.movie_id = ?
         `, [movie.movie_id]);
 
-        // 4. Lấy lịch chiếu (Giữ nguyên)
-        const [showtimes] = await db.query(`
-            SELECT 
-                s.showtime_id, s.start_time, r.room_name, r.room_type, 
-                c.cinema_name, c.address
-            FROM showtimes s
-            JOIN rooms r ON s.room_id = r.room_id
-            JOIN cinemas c ON r.cinema_id = c.cinema_id
-            WHERE s.movie_id = ?
-            ORDER BY s.start_time ASC
-        `, [movie.movie_id]);
+        // 4. Lấy lịch chiếu (Giữ nguyên - NHƯNG CẬP NHẬT LOGIC AND s.start_time >= NOW())
+        let showtimes = [];
+        // Chỉ lấy suất chiếu nếu phim Đang chiếu, nếu Sắp chiếu thì để mảng rỗng
+        if (movie.status === "Đang chiếu") {
+            const [rows] = await db.query(`
+                SELECT 
+                    s.showtime_id, s.start_time, r.room_name, r.room_type, 
+                    c.cinema_name, c.address
+                FROM showtimes s
+                JOIN rooms r ON s.room_id = r.room_id
+                JOIN cinemas c ON r.cinema_id = c.cinema_id
+                WHERE s.movie_id = ? AND s.start_time >= NOW()
+                ORDER BY s.start_time ASC
+            `, [movie.movie_id]);
+            showtimes = rows;
+        } else {
+            console.log(`ℹ️ [Info] Phim "${movie.title}" ẩn suất chiếu vì đang ở trạng thái: ${movie.status}`);
+        }
 
         // Gộp dữ liệu trả về: Bây giờ sẽ có movie.genres thay vì movie.genre_name
         movie.genres = genres; 
@@ -174,6 +190,7 @@ exports.addMovie = async (req, res) => {
         );
 
         await connection.commit();
+        console.log(`✅ [Success] Admin Dũng đã thêm phim mới thành công: ${title}`);
         res.status(201).json({ message: "Thêm phim thành công!" });
     } catch (error) {
         await connection.rollback();
@@ -218,6 +235,7 @@ exports.updateMovie = async (req, res) => {
         );
 
         await connection.commit();
+        console.log(`✅ [Success] Đã cập nhật phim ID: ${id}`);
         res.status(200).json({ message: "Cập nhật thành công!" });
     } catch (error) {
         await connection.rollback();

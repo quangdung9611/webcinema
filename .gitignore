@@ -24,3 +24,5 @@ Thumbs.db
 # Build outputs
 dist/
 dist-ssr/
+.vercel
+.env*.local

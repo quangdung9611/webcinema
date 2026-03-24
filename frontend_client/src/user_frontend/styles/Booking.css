@@ -398,3 +398,47 @@
   width: 100%;
   font-size: 14px;
 }
+/* =========================================
+   REAL-TIME SOCKET.IO STYLE (QUANG DŨNG)
+   ========================================= */
+
+/* 1. Style cho ghế đang bị người khác chọn (Real-time) */
+.seat-unit.locked-realtime {
+    background-color: #555 !important; /* Màu xám đậm hơn một chút */
+    border: 1.5px solid #888 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    position: relative;
+    pointer-events: none; /* Chặn hoàn toàn click */
+}
+
+/* 2. Thêm hiệu ứng gạch chéo mờ cho ghế đang giữ */
+.seat-unit.locked-realtime::before,
+.seat-unit.locked-realtime::after {
+    content: '';
+    position: absolute;
+    width: 1px;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+.seat-unit.locked-realtime::before { transform: rotate(45deg); }
+.seat-unit.locked-realtime::after { transform: rotate(-45deg); }
+
+/* 3. Hiệu ứng rung nhẹ khi người dùng cố tình click vào ghế đã bị khóa */
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    50% { transform: translateX(2px); }
+    75% { transform: translateX(-2px); }
+    100% { transform: translateX(0); }
+}
+
+.seat-unit.locked-realtime:active {
+    animation: shake 0.2s ease-in-out;
+}
+
+/* 4. Tinh chỉnh lại Legend (Chú thích) cho đồng bộ */
+.legend-box.status-maintenance {
+    background-color: #444;
+    border: 1px dashed #ff4d4f;
+}

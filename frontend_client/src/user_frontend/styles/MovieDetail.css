@@ -24,10 +24,10 @@
 }
 
 /* Sidebar (2.5) */
-.sidebar-col {
+/* .sidebar-col {
     flex: 2.5;
     min-width: 280px;
-}
+} */
 
 /* ==========================================
    2. HEADER: POSTER & THÔNG TIN CHUNG
@@ -198,7 +198,14 @@
 /* ==========================================
    4. SIDEBAR (PHIM ĐANG CHIẾU)
    ========================================== */
+/* .sidebar-col {
+    flex: 2.5;
+    min-width: 280px;
+ 
+    margin-top: -10px; 
+} */
 .sidebar-title {
+    color: #fff !important;
     border-left: 4px solid #f1c40f;
     padding-left: 15px;
     margin-bottom: 30px;
@@ -372,107 +379,93 @@
     padding-bottom: 15px;
 }
 /* ==========================================
-   5. RESPONSIVE (TỐI ƯU 3 MỐC)
+   5. RESPONSIVE TỐI ƯU (ẨN SIDEBAR TỪ 992PX)
    ========================================== */
 
-/* Tablet & Laptop nhỏ (Max 1024px) */
-@media (max-width: 1024px) {
-    .movie-top-info {
-        grid-template-columns: minmax(160px, 240px) 1fr;
-        gap: 25px;
-    }
+/* Laptop nhỏ (Dưới 1200px) */
+@media (max-width: 1200px) {
     .detail-content-flex {
-        gap: 30px;
-    }
-    .text-frame h1 {
-        font-size: 28px;
-    }
-}
-
-/* Phablet & Mobile ngang (Max 768px) */
-@media (max-width: 768px) {
-    .detail-content-flex {
-        flex-direction: column;
-    }
-
-    .main-detail-col {
-        order: 1;
-        width: 100%;
-    }
-
-    .sidebar-col {
-        order: 2;
-        width: 100%;
-        margin-top: 50px;
-        padding-top: 40px;
-        border-top: 1px solid #222;
-    }
-
-    .movie-top-info {
-        /* Đã sửa: Chuyển về 1 cột trung tâm */
-        grid-template-columns: 1fr;
-        justify-items: center;
-        text-align: center;
-    }
-
-    .poster-frame {
-        max-width: 280px; 
-        margin: 0 auto;
-    }
-
-    .meta-row, 
-    .rating-row {
-        justify-content: center;
-    }
-
-    .sidebar-movie-list {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
         gap: 20px;
     }
-    
-    .date-picker-tabs button {
-        flex: 1 1 calc(25% - 12px);
+    .movie-top-info {
+        grid-template-columns: 240px 1fr;
     }
 }
 
-/* Mobile dọc (Max 480px) */
-@media (max-width: 480px) {
-    .movie-detail-page {
-        padding: 20px 0;
+/* ==========================================
+   FIX CHUẨN: LAYOUT DESKTOP (KHÔNG SIDEBAR) TẠI 992PX
+   ========================================== */
+
+@media (max-width: 992px) {
+    /* 1. CHO SIDEBAR "BAY MÀU" LUÔN */
+    .sidebar-col {
+        display: none !important;
+    }
+
+    /* 2. CỘT CHÍNH TRÀN 100% NHƯNG GIỮ FLEX/GRID BÊN TRONG */
+    .main-detail-col {
+        flex: 1;
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+    }
+
+    /* 3. GIỮ NGUYÊN BỐ CỤC NGANG (POSTER | TEXT) */
+    .movie-top-info {
+        display: grid;
+        /* Giữ 2 cột: Poster cố định khoảng 250px, Text chiếm phần còn lại */
+        grid-template-columns: 250px 1fr; 
+        gap: 30px;
+        text-align: left; /* Tuyệt đối không căn giữa */
+        align-items: start;
     }
 
     .poster-frame {
-        /* Dùng % để ảnh tự bóp khi màn hình siêu nhỏ (189px) */
-        width: 70%;
-        max-width: none; 
-        min-width: 140px;
+        width: 100%;
+        max-width: 250px; /* Khống chế kích thước poster cho cân đối */
+    }
+
+    .poster-frame img {
+        width: 100%;
+        height: auto;
+        border-radius: 10px;
+    }
+
+    /* 4. THÔNG TIN PHIM CĂN TRÁI Y CHANG DESKTOP */
+    .text-frame {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
 
     .text-frame h1 {
-        font-size: 24px;
+        font-size: 1.8rem; /* Chỉnh size chữ vừa phải */
+        margin: 0 0 10px 0;
     }
 
-    .date-picker-tabs button {
-        flex: 1 1 calc(33.33% - 12px);
+    .meta-row, .rating-row, .actor-list {
+        display: flex;
+        justify-content: flex-start; /* Giữ căn trái */
+        flex-wrap: wrap;
+        gap: 15px;
     }
 
-    .time-item {
-        flex: 1 1 calc(50% - 15px);
+    /* 5. PHẦN NỘI DUNG & LỊCH CHIẾU BÊN DƯỚI */
+    .description-text {
+        text-align: justify; /* Cho văn bản đều 2 bên nhìn chuyên nghiệp */
+    }
+}
+
+/* CHỈ KHI MÀN HÌNH QUÁ NHỎ (DƯỚI 600PX) MỚI NÊN XẾP DỌC */
+@media (max-width: 576px) {
+    .movie-top-info {
+        grid-template-columns: 1fr;
         text-align: center;
     }
-
-    .sidebar-movie-list {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Fix mốc siêu nhỏ của Dũng */
-@media (max-width: 320px) {
     .poster-frame {
-        width: 85%;
+        margin: 0 auto;
     }
-    .text-frame h1 {
-        font-size: 20px;
+    .meta-row, .rating-row, .actor-list {
+        justify-content: center;
     }
 }

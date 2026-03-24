@@ -114,7 +114,7 @@ const GenresList = () => {
                                     <td>
                                         <div className="action-buttons">
                                             <button 
-                                                className="btn-edit"
+                                                className="btn-action-edit"
                                                 onClick={() => navigate(`/admin/genres/update/${g.genre_id}`)}
                                                 title="Sửa"
                                             >

@@ -133,7 +133,7 @@ const CinemaList = () => {
                                     <td>
                                         <div className="action-buttons">
                                             <button 
-                                                className="btn-edit"
+                                                className="btn-action-edit"
                                                 onClick={() => navigate(`/admin/cinemas/update/${c.cinema_id}`)}
                                                 title="Sửa rạp"
                                             >

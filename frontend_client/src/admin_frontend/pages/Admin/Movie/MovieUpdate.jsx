@@ -88,31 +88,46 @@ const MovieUpdate = () => {
 
     // 4. SUBMIT: CẬP NHẬT
     const handleSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        const data = new FormData();
-        // Append các thông tin text (bao gồm cả trailer_url)
-        Object.entries(formData).forEach(([key, value]) => data.append(key, value));
+    // --- LOGIC KIỂM TRA NGÀY THÁNG TỐI ƯU ---
+    const selectedDate = new Date(formData.release_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
+
+    // CHỈ chặn ngày quá khứ NẾU trạng thái là "Sắp chiếu"
+    if (formData.status === "Sắp chiếu" && selectedDate < today) {
+        handleShowModal(
+            'error', 
+            'NGÀY KHÔNG HỢP LỆ', 
+            'Phim "Sắp chiếu" thì ngày phát hành không được là ngày trong quá khứ .'
+        );
+        return; 
+    }
+
+    // Nếu là "Đang chiếu", chúng ta chấp nhận cả ngày quá khứ và hôm nay.
+    // (Vì phim có thể đã chiếu từ tuần trước rồi)
+    // ------------------------------------------
+
+    const data = new FormData();
+    Object.entries(formData).forEach(([key, value]) => data.append(key, value));
+    
+    if (newPoster) {
+        data.append('posters', newPoster);
+    }
+
+    try {
+        await axios.put(`https://webcinema-zb8z.onrender.com/api/movies/update/${id}`, data, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
         
-        // Nếu có chọn ảnh mới thì append vào với key là 'posters'
-        if (newPoster) {
-            data.append('posters', newPoster);
-        }
-
-        try {
-            await axios.put(`https://webcinema-zb8z.onrender.com/api/movies/update/${id}`, data, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            
-            handleShowModal('success', 'THÀNH CÔNG', `Quang Dũng đã cập nhật phim "${formData.title}" thành công!`, () => {
-                navigate('/admin/movies');
-            });
-        } catch (err) {
-            console.error("Lỗi cập nhật:", err.response?.data);
-            handleShowModal('error', 'THẤT BẠI', err.response?.data?.error || 'Lỗi hệ thống.');
-        }
-    };
-
+        handleShowModal('success', 'THÀNH CÔNG', `Đã cập nhật phim "${formData.title}" thành công!`, () => {
+            navigate('/admin/movies');
+        });
+    } catch (err) {
+        handleShowModal('error', 'THẤT BẠI', err.response?.data?.error || 'Lỗi hệ thống.');
+    }
+};
     return (
         <div className="update-user-wrapper">
             <Modal {...modal} />

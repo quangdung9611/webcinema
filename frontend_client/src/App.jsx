@@ -28,6 +28,7 @@ import CinemaDetail from './user_frontend/pages/CinemaDetail';
 import CinemaGenre from './user_frontend/pages/CinemaGenre';
 import FilmReview from './user_frontend/pages/FilmReview';
 import FilmReviewDetail from './user_frontend/pages/FilmReviewDetail';
+import Profile from './user_frontend/pages/Profile';
 // --- PAGES ADMIN ---
 import AdminLogin from './admin_frontend/pages/Auth/AdminLogin';
 import AdminDashboard from './admin_frontend/pages/Admin/AdminDashboard';
@@ -106,6 +107,7 @@ function App() {
                         <Route path="confirm-success" element={<ConfirmSuccess />} />
                         <Route path="login" element={<UserLogin />} />
                         <Route path="register" element={<UserRegister />} />
+                        <Route path="profile" element={<Profile />} />
                     </Route>
 
                     {/* --- ADMIN ROUTES --- */}

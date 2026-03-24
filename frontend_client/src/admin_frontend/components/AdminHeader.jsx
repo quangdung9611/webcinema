@@ -11,7 +11,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     useEffect(() => {
         const fetchAdminProfile = async () => {
             try {
-                // ✅ SỬA 1: Đảo admin lên trước auth để không bị lỗi 404
+                // ✅ Giữ nguyên link API của Dũng
                 const response = await axios.get('https://webcinema-zb8z.onrender.com/api/admin/auth/me', {
                     withCredentials: true 
                 });
@@ -34,13 +34,11 @@ const AdminHeader = ({ toggleSidebar }) => {
 
     const handleLogout = async () => {
         try {
-            // ✅ SỬA 2: Đảo link logout cho đúng chuẩn Server
             await axios.post('https://webcinema-zb8z.onrender.com/api/admin/auth/logout', {}, {
                 withCredentials: true
             });
             
             sessionStorage.clear(); 
-            // Bắn tin hiệu cho AuthContext (nếu có dùng) cũng được cập nhật luôn
             window.dispatchEvent(new Event('authChange'));
             navigate('/admin/login');
         } catch (error) {
@@ -49,32 +47,29 @@ const AdminHeader = ({ toggleSidebar }) => {
         }
     };
 
-    // ✅ SỬA 3: Không dùng "if (!adminData) return null" nữa 
-    // để tránh việc Header bị biến mất khi đang load.
     return (
-        <header className="admin-header">
-            <div className="admin-header-left">
+        <header className="admin-header-main"> {/* Đổi class tổng */}
+            <div className="admin-header-wrapper-left"> {/* Đổi class cụm trái */}
                 <button 
-                    className="hamburger-btn"
+                    className="admin-hamburger-trigger" /* Đổi class nút menu */
                     onClick={toggleSidebar}
                     aria-label="Toggle Sidebar"
                 >
                     <Menu size={24} />
                 </button>
 
-                <div className="admin-logo">
+                <div className="admin-brand-logo"> {/* Đổi class logo */}
                     <Link to="/admin">ADMIN PANEL</Link>
                 </div>
             </div>
 
-            <div className="admin-info">
-                <span className="admin-name">
-                    {/* Nếu có data thì hiện tên, chưa có thì hiện tạm tên ông */}
+            <div className="admin-header-profile-section"> {/* Đổi class cụm phải - CỰC QUAN TRỌNG */}
+                <span className="admin-header-welcome-text"> {/* Đổi class text chào */}
                     Xin chào <strong>{adminData?.full_name || adminData?.username || "Quang Dũng"}</strong>
                 </span>
 
                 <button 
-                    className="btn-admin-logout" 
+                    className="btn-header-auth-logout" /* Đổi class nút logout để không bị đè CSS */
                     onClick={handleLogout}
                 >
                     Đăng xuất

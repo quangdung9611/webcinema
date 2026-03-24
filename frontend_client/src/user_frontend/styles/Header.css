@@ -1,220 +1,313 @@
-/* =========================================================
-   HEADER - CINEMA STAR (CLICK-ONLY OPTIMIZED)
-   ========================================================= */
+/* ============================================================
+   VARIABLES
+   ============================================================ */
+:root {
+  --primary: #f1c40f;
+  --bg-dark: #0a0a0a;
+  --bg-light: #1a1a1a;
+  --text-white: #ffffff;
+  --text-gray: #bbb;
+  --border-color: #222;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow: 0 10px 35px rgba(0, 0, 0, 0.5);
+}
 
-/* --- LAYOUT & LOGO --- */
+/* ============================================================
+   BASE NAVBAR
+   ============================================================ */
 .user-navbar {
-    background-color: rgba(10, 10, 10, 0.98);
-    height: 70px;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid #333;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 70px;
+  background: var(--bg-dark);
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .nav-container {
-    width: 100%;
-    padding: 0 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
+/* ============================================================
+   LOGO
+   ============================================================ */
 .logo {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: #fff;
-    cursor: pointer;
-    letter-spacing: 1px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-white);
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  user-select: none;
 }
 
-.logo span { color: #f1c40f; }
-
-/* --- HAMBURGER --- */
-.hamburger {
-    display: none;
-    flex-direction: column;
-    gap: 5px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 5px;
+.logo span {
+  color: var(--primary);
 }
 
-.hamburger .bar {
-    width: 25px; height: 3px;
-    background-color: #ffffff;
-    border-radius: 2px;
-    transition: 0.4s;
+/* ============================================================
+   USER MENU & DROPDOWN
+   ============================================================ */
+.user-menu {
+  position: relative;
 }
 
-/* --- NAV LINKS CORE --- */
-.nav-links {
-    display: flex;
-    list-style: none;
-    gap: 25px;
-    margin: 0; padding: 0;
-}
-
-.nav-links > li { position: relative; }
-
-.nav-links > li > a {
-    color: #fff;
-    text-decoration: none;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    padding: 25px 0;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: 0.3s;
-}
-
-/* Màu khi menu đang được click mở hoặc hover link */
-.nav-links > li:hover > a,
-.has-dropdown.mobile-active > a {
-    color: #f1c40f;
-}
-
-.icon-down { transition: transform 0.3s ease; }
-
-/* =========================================================
-   SUB MENU - CHỈ HIỆN KHI CLICK (Dùng .mobile-active)
-   ========================================================= */
-.sub-menu {
-    list-style: none;
-    padding: 10px 0;
-    background: #fff;
-    z-index: 999;
-    display: none; /* MẶC ĐỊNH ẨN TOÀN BỘ (Cả PC & Mobile) */
-}
-
-/* HIỆU ỨNG HIỂN THỊ KHI CÓ CLASS .mobile-active */
-.has-dropdown.mobile-active > .sub-menu {
-    display: block !important;
-    animation: slideDown 0.3s ease-out;
-}
-
-.has-dropdown.mobile-active .icon-down {
-    transform: rotate(180deg);
-}
-
-/* Style cho các link bên trong sub-menu */
-.sub-menu li a {
-    color: #333 !important;
-    padding: 12px 20px;
-    display: block;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: 0.2s;
-}
-
-.sub-menu li a:hover {
-    background: #f8f8f8;
-    color: #f1c40f !important;
-}
-
-/* =========================================================
-   XỬ LÝ RIÊNG CHO DESKTOP (PC)
-   ========================================================= */
-@media (min-width: 769px) {
-    .sub-menu {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        min-width: 220px;
-        border-radius: 4px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-}
-
-/* =========================================================
-   XỬ LÝ RIÊNG CHO MOBILE
-   ========================================================= */
-@media (max-width: 768px) {
-    .hamburger { display: flex; }
-
-    .nav-links {
-        position: fixed;
-        top: 70px;
-        left: -100%;
-        width: 280px;
-        height: calc(100vh - 70px);
-        background: #0d0d0d;
-        flex-direction: column;
-        transition: 0.4s;
-        overflow-y: auto;
-    }
-
-    .nav-links.active { left: 0; }
-
-    .nav-links > li > a {
-        padding: 15px 20px;
-        border-bottom: 1px solid #1a1a1a;
-        justify-content: space-between;
-    }
-
-    .sub-menu {
-        position: static;
-        background: #151515;
-        width: 100%;
-    }
-
-    .sub-menu li a {
-        color: #aaa !important;
-        padding-left: 40px !important;
-        border-bottom: 1px solid #222;
-    }
-}
-
-/* --- TÀI KHOẢN (USER MENU) --- */
-.user-menu { position: relative; }
 .account-trigger {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #f1c40f;
-    cursor: pointer;
-    padding: 8px 15px;
-    background: #222;
-    border-radius: 20px;
-    font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  color: var(--primary);
+  background: rgba(241, 196, 15, 0.05);
+  border: 1px solid transparent;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.account-trigger:hover {
+  background: rgba(241, 196, 15, 0.1);
+  border-color: rgba(241, 196, 15, 0.3);
+}
+
+.rotate {
+  transform: rotate(180deg);
 }
 
 .dropdown-content {
-    position: absolute;
-    top: calc(100% + 10px);
-    right: 0;
-    background: #fff;
-    min-width: 200px;
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    display: none;
-    padding: 10px 0;
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 1100;
+  min-width: 220px;
+  padding: 8px 0;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  transform-origin: top right;
+  animation: dropdownAnim 0.3s ease;
 }
 
-.dropdown-content.show { display: block; }
+.dropdown-user-info {
+  padding: 12px 20px;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.dropdown-divider {
+  height: 1px;
+  margin: 4px 0;
+  background: #eee;
+}
 
 .dropdown-item {
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #333;
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  color: #444;
+  cursor: pointer;
+  transition: var(--transition);
 }
 
-.dropdown-item:hover { background: #f8f8f8; color: #f1c40f; }
-.dropdown-divider { height: 1px; background: #eee; margin: 8px 0; }
+.dropdown-item:hover {
+  padding-left: 25px;
+  color: var(--primary);
+  background: #f9f9f9;
+}
 
-/* --- ANIMATION --- */
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* ============================================================
+    DESKTOP NAVIGATION (Từ 993px trở lên)
+   ============================================================ */
+@media (min-width: 993px) {
+  .hamburger,
+  .menu-overlay {
+    display: none;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 5px; /* Giảm gap một chút để menu không tràn */
+    list-style: none;
+  }
+
+  .nav-links > li {
+    position: relative;
+  }
+
+  .nav-links > li > a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 25px 12px; /* Giảm padding một chút để menu gọn hơn */
+    font-size: 0.82rem; /* Giảm nhẹ font size để vừa các màn hình laptop nhỏ */
+    font-weight: 500;
+    text-transform: uppercase;
+    color: var(--text-white);
+    text-decoration: none;
+    transition: var(--transition);
+    white-space: nowrap; /* Quan trọng: Không cho chữ rớt xuống dòng */
+  }
+
+  .nav-links > li:hover > a {
+    color: var(--primary);
+  }
+
+  /* Submenu Desktop */
+  .sub-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    display: none;
+    min-width: 200px;
+    padding: 10px 0;
+    background: #ffffff;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.2s ease;
+  }
+
+  .has-dropdown:hover .sub-menu {
+    display: block;
+  }
+
+  .has-dropdown:hover .icon-down {
+    transform: rotate(180deg);
+    color: var(--primary);
+  }
+
+  .sub-menu li a {
+    display: block;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    color: #333 !important;
+    text-decoration: none;
+    transition: var(--transition);
+  }
+
+  .sub-menu li a:hover {
+    padding-left: 25px;
+    color: var(--primary) !important;
+    background: #f5f5f5;
+  }
+}
+
+/* ============================================================
+    MOBILE & TABLET NAVIGATION (Dưới 992px)
+   ============================================================ */
+@media (max-width: 992px) {
+  .logo {
+    font-size: 1.3rem;
+  }
+
+  .username-display {
+    display: none; /* Ẩn tên user trên mobile/tablet để đỡ chật */
+  }
+
+  /* Hiện Hamburger tại mốc 992px */
+  .hamburger {
+    order: -1;
+    display: flex !important;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 1010;
+  }
+
+  .hamburger .bar {
+    width: 24px;
+    height: 2px;
+    background-color: var(--text-white);
+    border-radius: 2px;
+    transition: var(--transition);
+  }
+
+  /* Animation Hamburger */
+  .hamburger.active .bar:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+    background-color: var(--primary);
+  }
+
+  .hamburger.active .bar:nth-child(2) {
+    opacity: 0;
+  }
+
+  .hamburger.active .bar:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+    background-color: var(--primary);
+  }
+
+  /* Menu Drawer Mobile */
+  .menu-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 998;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    /* Mặc định overlay chỉ hiện khi có menu-overlay trong DOM */
+  }
+
+  .nav-links {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    z-index: 999;
+    width: 280px;
+    height: 100vh;
+    padding: 80px 0 30px;
+    overflow-y: auto;
+    background: var(--bg-dark);
+    list-style: none;
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: block; /* Đảm bảo cấu trúc block để đẩy ra vào */
+  }
+
+  .nav-links.active {
+    left: 0;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+  }
+
+  .nav-links li a {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 25px;
+    font-size: 1rem;
+    color: var(--text-white);
+    text-decoration: none;
+    border-bottom: 1px solid #1a1a1a;
+  }
+
+  /* Accordion Submenu Mobile */
+  .sub-menu {
+    max-height: 0;
+    overflow: hidden;
+    background: #151515;
+    transition: max-height 0.3s ease;
+    /* Gỡ bỏ các style cũ của desktop */
+    position: static; 
+    width: 100%;
+    box-shadow: none;
+    display: block; 
+  }
+
+  .has-dropdown.mobile-active .sub-menu {
+    max-height: 800px; /* Tăng max-height để chứa hết danh sách rạp */
+  }
+
+  .sub-menu li a {
+    padding-left: 45px;
+    font-size: 0.9rem;
+    color: var(--text-gray) !important;
+  }
 }

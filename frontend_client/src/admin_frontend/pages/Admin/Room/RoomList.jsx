@@ -139,7 +139,7 @@ const RoomList = () => {
                                     <td>
                                         <div className="action-buttons">
                                             <button 
-                                                className="btn-edit"
+                                                className="btn-action-edit"
                                                 onClick={() => navigate(`/admin/rooms/update/${r.room_id}`)}
                                                 title="Sửa"
                                             >

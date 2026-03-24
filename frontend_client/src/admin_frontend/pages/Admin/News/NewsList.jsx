@@ -148,7 +148,7 @@ const NewsList = () => {
                                     <td>
                                         <div className="action-buttons">
                                             <button 
-                                                className="btn-edit"
+                                                className="btn-action-edit"
                                                 onClick={() => navigate(`/admin/news/update/${n.news_id}`)}
                                                 title="Sửa bài viết"
                                             >
