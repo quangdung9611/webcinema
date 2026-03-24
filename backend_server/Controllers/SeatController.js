@@ -75,31 +75,27 @@ exports.initRoomSeats = async (req, res) => {
     }
 };
 
-/**
- * ============================================================
- * 2. API DÀNH CHO KHÁCH HÀNG (TRANG ĐẶT VÉ)
- * Lấy sơ đồ ghế kèm trạng thái Đã đặt/Trống theo Suất chiếu
- * ============================================================
- */
 exports.getSeatMapByShowtime = async (req, res) => {
     const { showtimeId } = req.params;
 
-    console.log("=== [DEBUG] BẮT ĐẦU LẤY SƠ ĐỒ GHẾ ===");
-    console.log("1. ShowtimeId nhận từ Frontend:", showtimeId);
-
     try {
-        // 1. Tìm room_id từ suất chiếu
-        const [showtimeRows] = await db.query("SELECT room_id FROM showtimes WHERE showtime_id = ?", [showtimeId]);
-        
+        // 1. Tìm xem suất chiếu này thuộc phòng nào
+        const [showtimeRows] = await db.query(
+            "SELECT showtime_id, room_id FROM showtimes WHERE showtime_id = ?", 
+            [showtimeId]
+        );
+
+        console.log("--- CHECK DATA ---");
+        console.log("Dữ liệu showtime tìm được:", showtimeRows);
+
         if (showtimeRows.length === 0) {
-            console.error("❌ LỖI: Không tìm thấy Suất chiếu nào có ID =", showtimeId);
-            return res.status(404).json({ error: "Không tìm thấy suất chiếu!" });
+            return res.status(404).json({ error: "Không tìm thấy suất chiếu ID: " + showtimeId });
         }
 
-        const roomId = showtimeRows[0].room_id;
-        console.log("2. Suất chiếu hợp lệ. Thuộc về RoomId:", roomId);
+        const roomIdFromShowtime = showtimeRows[0].room_id;
+        console.log("Suất chiếu này yêu cầu lấy ghế của Room ID:", roomIdFromShowtime);
 
-        // 2. Lấy TOÀN BỘ ghế của phòng và check trạng thái đặt vé
+        // 2. Truy vấn lấy ghế (Dùng LEFT JOIN như cũ của Dũng)
         const sql = `
             SELECT s.*, 
             CASE 
@@ -114,25 +110,16 @@ exports.getSeatMapByShowtime = async (req, res) => {
             ORDER BY s.seat_row ASC, s.seat_number ASC
         `;
 
-        console.log("3. Đang thực thi Query SQL với Params:", [showtimeId, roomId]);
+        const [results] = await db.query(sql, [showtimeId, roomIdFromShowtime]);
         
-        const [results] = await db.query(sql, [showtimeId, roomId]);
-
-        console.log("4. Kết quả từ Database:");
-        console.log("- Số lượng hàng (rows) trả về:", results.length);
+        console.log("Số lượng ghế tìm thấy cho phòng này:", results.length);
         
-        if (results.length > 0) {
-            console.log("- Dữ liệu mẫu ghế đầu tiên:", results[0]);
-        } else {
-            console.warn("⚠️ CẢNH BÁO: Query thành công nhưng mảng trả về RỖNG []. Kiểm tra lại bảng 'seats' xem đã có ghế cho roomId này chưa!");
-        }
-
-        console.log("=== [DEBUG] KẾT THÚC ===");
+        // Trả về dữ liệu cho Frontend
         res.status(200).json(results);
 
     } catch (err) {
-        console.error("❌ LỖI HỆ THỐNG:", err.message);
-        res.status(500).json({ error: "Lỗi tải sơ đồ ghế khách: " + err.message });
+        console.error("Lỗi Controller:", err);
+        res.status(500).json({ error: "Lỗi hệ thống: " + err.message });
     }
 };
 /**
