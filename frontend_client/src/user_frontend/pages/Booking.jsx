@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'; // 1. Thêm useMemo
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Modal from '../../admin_frontend/components/Modal';
@@ -13,12 +13,11 @@ const Booking = () => {
     const { movie, cinemaName, slot, selectedDate } = location.state || {};
     const showtimeId = slot?.showtime_id || slot?.id;
 
-    // --- 2. KHỞI TẠO SOCKET VỚI PATH CHUẨN ---
-    // Dùng useMemo để socket chỉ khởi tạo DUY NHẤT một lần
+    // --- KHỞI TẠO SOCKET ---
     const socket = useMemo(() => io("https://webcinema-zb8z.onrender.com", {
-        path: "/socket.io/", // BẮT BUỘC có dòng này để hết lỗi 404
+        path: "/socket.io/",
         withCredentials: true,
-        transports: ["websocket", "polling"] // Ưu tiên websocket
+        transports: ["websocket", "polling"]
     }), []);
 
     const [seats, setSeats] = useState([]); 
@@ -34,13 +33,12 @@ const Booking = () => {
 
     const closeModal = () => setModalConfig(prev => ({ ...prev, show: false }));
 
-    // --- 3. EFFECT LẮNG NGHE REAL-TIME ---
+    // --- EFFECT LẮNG NGHE REAL-TIME ---
     useEffect(() => {
         if (!showtimeId) return;
 
-        // Log để kiểm tra kết nối (Dũng có thể xóa sau khi chạy ok)
         socket.on("connect", () => {
-            console.log("⚡ Đã kết nối Socket thành công với ID:", socket.id);
+            console.log("⚡ Đã kết nối Socket ID:", socket.id);
         });
 
         socket.on('server-khoa-ghe', (data) => {
@@ -59,7 +57,6 @@ const Booking = () => {
             }
         });
 
-        // Cleanup: Ngắt lắng nghe khi rời khỏi trang
         return () => {
             socket.off('connect');
             socket.off('server-khoa-ghe');
@@ -77,13 +74,16 @@ const Booking = () => {
         }
     }, [showtimeId]);
 
+    // --- CẬP NHẬT API HIỂN THỊ SƠ ĐỒ GHẾ ---
     const fetchSeats = useCallback(async () => {
         if (!showtimeId) return;
         try {
             setLoading(true);
+            // Gọi API lấy sơ đồ ghế theo suất chiếu (Showtime)
             const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/seats/showtime/${showtimeId}`);
             setSeats(res.data);
 
+            // Logic khôi phục session cũ
             const savedSeats = sessionStorage.getItem('selectedSeats');
             const savedShowtime = sessionStorage.getItem('currentShowtimeId');
             
@@ -93,13 +93,13 @@ const Booking = () => {
                 if (sessionStorage.getItem('holdExpiresAt')) {
                     setIsTimerActive(true);
                 }
-                // Báo cho người khác biết mình đang chọn lại ghế từ session
                 parsedSeats.forEach(s => {
                     socket.emit('client-chon-ghe', { seatId: s.seat_id, showtimeId });
                 });
             }
         } catch (err) {
-            console.error("Lỗi tải ghế:", err);
+            console.error("Lỗi tải dữ liệu ghế:", err);
+            setSeats([]);
         } finally {
             setLoading(false);
         }
@@ -119,7 +119,6 @@ const Booking = () => {
         selectedSeats.forEach(s => {
             socket.emit('client-huy-chon-ghe', { seatId: s.seat_id, showtimeId });
         });
-        
         sessionStorage.removeItem('selectedSeats');
         sessionStorage.removeItem('holdExpiresAt');
         sessionStorage.removeItem('currentShowtimeId');
@@ -195,9 +194,7 @@ const Booking = () => {
         <div className="booking-page-full-wrapper">
             <Modal {...modalConfig} onConfirm={modalConfig.onConfirm} onCancel={modalConfig.onCancel} />
             
-            {/* Các phần UI render bên dưới giữ nguyên... */}
             <div className="stepper-bar-full">
-                {/* Giữ nguyên như cũ của Dũng */}
                 <div className="stepper-content">
                     <div className="step-item done">01 CHỌN SUẤT</div>
                     <div className="step-item active">02 CHỌN GHẾ</div>
