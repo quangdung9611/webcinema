@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react'; 
+import axios from 'axios'; // THÊM MỚI: Để gọi lệnh chốt đơn
 import '../styles/ConfirmSuccess.css';
 
 const ConfirmSuccess = () => {
@@ -8,7 +9,7 @@ const ConfirmSuccess = () => {
     const navigate = useNavigate();
     const [printTime, setPrintTime] = useState('');
 
-    // --- CƠ CHẾ GIỮ DATA THÔNG MINH ---
+    // --- CƠ CHẾ GIỮ DATA THÔNG MINH (Giữ nguyên của ông) ---
     const [ticketData] = useState(() => {
         const navState = location.state;
         const incomingData = navState?.data || navState;
@@ -22,6 +23,36 @@ const ConfirmSuccess = () => {
         return savedData ? JSON.parse(savedData) : null;
     });
 
+    // --- LOGIC CHỐT ĐƠN TỰ ĐỘNG (Để fix lỗi Pending và Khóa ghế) ---
+    useEffect(() => {
+        const confirmBookingOnServer = async () => {
+            // Lấy ID đơn hàng (ưu tiên orderId từ ticketData)
+            const bID = ticketData?.orderId || ticketData?.bookingId;
+
+            if (bID) {
+                try {
+                    console.log(`>>> [DŨNG CINEMA] Đang kích hoạt chốt đơn #${bID}...`);
+                    
+                    // Gọi API complete mà ông đã thêm vào Route
+                    const response = await axios.post('https://webcinema-zb8z.onrender.com/api/payment/complete', {
+                        bookingId: bID
+                    });
+
+                    if (response.data.success) {
+                        console.log("✅ [DŨNG CINEMA] Chốt đơn thành công! Ghế đã được khóa màu đỏ.");
+                    }
+                } catch (err) {
+                    console.error("❌ [DŨNG CINEMA] Lỗi khi gọi API chốt đơn:", err.message);
+                }
+            }
+        };
+
+        if (ticketData && ticketData.orderId) {
+            confirmBookingOnServer();
+        }
+    }, [ticketData]);
+
+    // --- HIỂN THỊ THỜI GIAN IN VÉ ---
     useEffect(() => {
         const now = new Date();
         const formattedDate = now.toLocaleDateString('vi-VN') + ' ' + now.toLocaleTimeString('vi-VN');
@@ -29,7 +60,6 @@ const ConfirmSuccess = () => {
         
         if (ticketData) {
             console.log("Dữ liệu hiển thị:", ticketData);
-            // ĐÃ XÓA dòng removeItem ở đây để ông F5 thoải mái không bị mất vé
         }
     }, [ticketData]);
 
@@ -80,7 +110,6 @@ const ConfirmSuccess = () => {
                             <div className="ticket-detail-grid">
                                 <div className="detail-item">
                                     <span className="label">RẠP</span>
-                                    {/* Thêm fallback để tránh hiện chữ NULL */}
                                     <span className="value">{cinemaName || ticketData.cinema_name || 'Cinema Star'}</span> 
                                 </div>
                                 <div className="detail-item">
