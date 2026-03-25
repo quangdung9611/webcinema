@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 
-// 1. Cấu hình gửi Email
+// 1. Cấu hình gửi Email (Giữ nguyên của Dũng)
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 let otpStorage = {}; 
 
 /**
- * Hàm hỗ trợ gửi vé điện tử kèm ảnh Poster nhúng trực tiếp (CID)
+ * Hàm hỗ trợ gửi vé điện tử
  */
 const sendTicketEmail = async (customerEmail, ticketData) => {
     const { 
@@ -93,119 +93,122 @@ const BankAppController = {
     },
 
     verifyOTP: async (req, res) => {
-    const { email, otp, bookingId } = req.body;
-    const record = otpStorage[email];
+        const { email, otp, bookingId } = req.body;
+        const record = otpStorage[email];
 
-    if (!record || record.otp != otp) {
-        return res.status(400).json({ success: false, message: "Mã OTP không đúng!" });
-    }
-
-    const connection = await db.getConnection();
-    try {
-        const [checkStatus] = await connection.query("SELECT status FROM bookings WHERE booking_id = ?", [bookingId]);
-        if (checkStatus[0] && checkStatus[0].status === 'Completed') {
-            return res.status(400).json({ success: false, message: "Giao dịch này đã được thanh toán hoàn tất!" });
+        if (!record || record.otp != otp) {
+            return res.status(400).json({ success: false, message: "Mã OTP không đúng!" });
         }
 
-        await connection.beginTransaction();
+        const connection = await db.getConnection();
+        try {
+            const [checkStatus] = await connection.query("SELECT status FROM bookings WHERE booking_id = ?", [bookingId]);
+            if (checkStatus[0] && checkStatus[0].status === 'Completed') {
+                return res.status(400).json({ success: false, message: "Giao dịch này đã được thanh toán hoàn tất!" });
+            }
 
-        // 1. Cập nhật trạng thái thanh toán
-        await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
+            await connection.beginTransaction();
 
-        // 2. Cập nhật trạng thái vé
-        await connection.execute(
-            `UPDATE tickets 
-             SET seat_status = 'Booked', 
-                 ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'),
-                 updated_at = NOW()
-             WHERE booking_id = ? AND seat_status = 'Reserved'`, 
-            [bookingId]
-        );
+            // 1. Cập nhật trạng thái thanh toán
+            await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
 
-        // 3. LẤY THÔNG TIN TỔNG HỢP (SQL này đã gộp ghế chuẩn)
-        const [orderRows] = await connection.query(`
-            SELECT 
-                b.booking_id, 
-                u.full_name, 
-                u.email,
-                m.title AS movieTitle, 
-                m.poster_url AS moviePoster, 
-                c.cinema_name AS cinemaName,
-                r.room_name AS roomName,
-                s.start_time,
-                GROUP_CONCAT(DISTINCT bd.item_name SEPARATOR ', ') AS seatLabel
-            FROM bookings b
-            JOIN users u ON b.user_id = u.user_id
-            JOIN showtimes s ON b.showtime_id = s.showtime_id
-            JOIN movies m ON s.movie_id = m.movie_id
-            JOIN cinemas c ON s.cinema_id = c.cinema_id 
-            JOIN rooms r ON s.room_id = r.room_id
-            JOIN booking_details bd ON b.booking_id = bd.booking_id
-            WHERE b.booking_id = ?
-            GROUP BY b.booking_id
-        `, [bookingId]);
+            // 2. Cập nhật trạng thái vé
+            await connection.execute(
+                `UPDATE tickets 
+                 SET seat_status = 'Booked', 
+                     ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'),
+                     updated_at = NOW()
+                 WHERE booking_id = ? AND seat_status = 'Reserved'`, 
+                [bookingId]
+            );
 
-        const order = orderRows[0];
+            // 3. SỬA TẠI ĐÂY: Dùng LEFT JOIN và lấy rạp/phòng từ bảng showtimes để fix lỗi NULL
+            const [orderRows] = await connection.query(`
+                SELECT 
+                    b.booking_id, 
+                    u.full_name, 
+                    u.email,
+                    m.title AS movieTitle, 
+                    m.poster_url AS moviePoster, 
+                    c.cinema_name AS cinemaName,
+                    r.room_name AS roomName,
+                    s.start_time,
+                    GROUP_CONCAT(DISTINCT bd.item_name SEPARATOR ', ') AS seatLabel
+                FROM bookings b
+                LEFT JOIN users u ON b.user_id = u.user_id
+                LEFT JOIN showtimes s ON b.showtime_id = s.showtime_id
+                LEFT JOIN movies m ON s.movie_id = m.movie_id
+                LEFT JOIN cinemas c ON s.cinema_id = c.cinema_id 
+                LEFT JOIN rooms r ON s.room_id = r.room_id
+                LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
+                WHERE b.booking_id = ?
+                GROUP BY b.booking_id
+            `, [bookingId]);
 
-        // 4. Lấy chi tiết đồ ăn (để hiển thị danh sách ở Frontend)
-        const [foodRows] = await connection.query(
-            "SELECT item_name, quantity, product_id FROM booking_details WHERE booking_id = ? AND product_id IS NOT NULL", 
-            [bookingId]
-        );
+            const order = orderRows[0];
 
-        // Tạo chuỗi đồ ăn cho Email
-        const foodLabelForEmail = foodRows
-            .map(d => `${d.item_name} (x${d.quantity})`)
-            .join(', ');
+            if (!order) {
+                throw new Error("Không tìm thấy thông tin vé sau khi cập nhật!");
+            }
 
-        const fullDate = new Date(order.start_time);
-        const formattedTime = fullDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        const formattedDate = fullDate.toLocaleDateString('vi-VN');
+            // 4. Lấy chi tiết đồ ăn
+            const [foodRows] = await connection.query(
+                "SELECT item_name, quantity, product_id FROM booking_details WHERE booking_id = ? AND product_id IS NOT NULL", 
+                [bookingId]
+            );
 
-        // 5. GỬI VÉ QUA EMAIL
-        await sendTicketEmail(email, {
-            bookingId: order.booking_id,
-            customerName: order.full_name,
-            movieTitle: order.movieTitle,
-            moviePoster: order.moviePoster,
-            cinemaName: order.cinemaName,
-            startTime: formattedTime,
-            selectedDate: formattedDate,
-            seatLabel: order.seatLabel, // Chuỗi B1, B2 từ GROUP_CONCAT
-            selectedFoods: foodLabelForEmail || 'Không có'
-        });
+            const foodLabelForEmail = foodRows
+                .map(d => `${d.item_name} (x${d.quantity})`)
+                .join(', ');
 
-        await connection.commit();
-        delete otpStorage[email];
-        
-        // 6. TRẢ DỮ LIỆU VỀ FRONTEND (Dùng đúng tên cột từ SQL)
-        res.json({ 
-            success: true, 
-            message: "Thanh toán thành công!",
-            data: {
-                orderId: order.booking_id,
+            const fullDate = new Date(order.start_time);
+            const formattedTime = fullDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            const formattedDate = fullDate.toLocaleDateString('vi-VN');
+
+            // 5. Gửi vé Email (Giữ nguyên)
+            await sendTicketEmail(email, {
+                bookingId: order.booking_id,
                 customerName: order.full_name,
-                customerEmail: email,
                 movieTitle: order.movieTitle,
                 moviePoster: order.moviePoster,
-                cinemaName: order.cinemaName,   // Sẽ không còn bị "đang cập nhật"
-                roomName: order.roomName,
-                seatDisplay: order.seatLabel,   // Hiện chuỗi "B1, B2" chuẩn
+                cinemaName: order.cinemaName,
                 startTime: formattedTime,
                 selectedDate: formattedDate,
-                selectedFoods: foodRows,        // Array để Frontend map()
-                ticketPIN: Math.floor(1000 + Math.random() * 9000)
-            }
-        });
+                seatLabel: order.seatLabel,
+                selectedFoods: foodLabelForEmail || 'Không có'
+            });
 
-    } catch (error) {
-        if (connection) await connection.rollback();
-        console.error("Lỗi Verify OTP:", error);
-        res.status(500).json({ success: false, message: error.message });
-    } finally {
-        if (connection) connection.release();
+            await connection.commit();
+            delete otpStorage[email];
+            
+            // 6. Trả dữ liệu chuẩn về Frontend
+            res.json({ 
+                success: true, 
+                message: "Thanh toán thành công!",
+                data: {
+                    orderId: order.booking_id,
+                    customerName: order.full_name,
+                    customerEmail: email,
+                    movieTitle: order.movieTitle,
+                    moviePoster: order.moviePoster,
+                    cinemaName: order.cinemaName,   
+                    roomName: order.roomName,
+                    seatDisplay: order.seatLabel,   
+                    startTime: formattedTime,
+                    selectedDate: formattedDate,
+                    selectedFoods: foodRows,        
+                    ticketPIN: Math.floor(1000 + Math.random() * 9000)
+                }
+            });
+
+        } catch (error) {
+            if (connection) await connection.rollback();
+            console.error("Lỗi Verify OTP:", error);
+            res.status(500).json({ success: false, message: error.message });
+        } finally {
+            if (connection) connection.release();
+        }
     }
-}
 };
 
 module.exports = {
