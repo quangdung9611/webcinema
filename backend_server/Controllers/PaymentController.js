@@ -1,8 +1,7 @@
 const db = require('../Config/db');
 
 const PaymentController = {
-    // 1. Giai đoạn 1: Khi khách chọn ghế xong và nhấn "Tiếp tục" (sang trang bắp nước/thanh toán)
-    // Dũng nên đặt tên hàm là processReservation hoặc đặt trong luồng tạo đơn tạm
+    // 1. Giai đoạn 1: Khi khách chọn ghế xong và nhấn "Tiếp tục"
     processOrder: async (req, res) => {
         const { 
             userId, showtimeId, totalAmount, couponId, 
@@ -15,6 +14,15 @@ const PaymentController = {
         await connection.beginTransaction();
 
         try {
+            // --- ĐOẠN THÊM MỚI: LẤY ROOM VÀ CINEMA ĐỂ KHÔNG BỊ NULL ---
+            const [showtimeRows] = await connection.execute(
+                'SELECT room_id, cinema_id FROM showtimes WHERE showtime_id = ?',
+                [showtimeId]
+            );
+            const room_id = showtimeRows.length > 0 ? showtimeRows[0].room_id : null;
+            const cinema_id = showtimeRows.length > 0 ? showtimeRows[0].cinema_id : null;
+            // -------------------------------------------------------
+
             const memo = `DUNG${Date.now()}`;
 
             // Tạo đơn hàng ở trạng thái 'Pending'
@@ -33,13 +41,12 @@ const PaymentController = {
                         [bookingId, seat.seat_id, seat.price, `Ghế ${seat.seat_row}${seat.seat_number}`, 1]
                     );
 
-                    // QUAN TRỌNG: INSERT vào bảng tickets để khóa ghế trong 5 phút
-                    // created_at sẽ tự động lấy NOW(), con Robot MySQL sẽ căn cứ vào đây để xóa sau 5 phút
+                    // QUAN TRỌNG: Đã thêm room_id và cinema_id vào đây để fix lỗi NULL
                     const tempTicketCode = `WAIT-${Date.now()}-${seat.seat_id}`;
                     await connection.execute(
-                        `INSERT INTO tickets (booking_id, showtime_id, seat_id, ticket_code, price, seat_status, ticket_status) 
-                         VALUES (?, ?, ?, ?, ?, 'Reserved', 'Valid')`,
-                        [bookingId, showtimeId, seat.seat_id, tempTicketCode, seat.price]
+                        `INSERT INTO tickets (booking_id, showtime_id, room_id, cinema_id, seat_id, ticket_code, price, seat_status, ticket_status) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, 'Reserved', 'Valid')`,
+                        [bookingId, showtimeId, room_id, cinema_id, seat.seat_id, tempTicketCode, seat.price]
                     );
                 }
             }
@@ -71,9 +78,9 @@ const PaymentController = {
         }
     },
 
-    // 2. Giai đoạn 2: Khi khách thanh toán thành công (Dùng cho API Callback/IPN từ ngân hàng)
+    // 2. Giai đoạn 2: Khi khách thanh toán thành công
     completePayment: async (req, res) => {
-        const { bookingId } = req.body; // Hoặc lấy từ webhook ngân hàng
+        const { bookingId } = req.body; 
         const connection = await db.getConnection();
         await connection.beginTransaction();
 
@@ -82,7 +89,6 @@ const PaymentController = {
             await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
 
             // CHỐT VÉ: Chuyển từ Reserved sang Booked
-            // Khi chuyển sang Booked, Robot MySQL sẽ không bao giờ xóa dòng này nữa
             await connection.execute(
                 `UPDATE tickets 
                  SET seat_status = 'Booked', 
