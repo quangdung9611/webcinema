@@ -13,7 +13,6 @@ const Booking = () => {
     const { movie, cinemaName, slot, selectedDate } = location.state || {};
     const showtimeId = slot?.showtime_id || slot?.id;
 
-    // --- KHỞI TẠO SOCKET ---
     const socket = useMemo(() => io("https://webcinema-zb8z.onrender.com", {
         withCredentials: true,
         transports: ["websocket", "polling"]
@@ -32,7 +31,7 @@ const Booking = () => {
 
     const closeModal = () => setModalConfig(prev => ({ ...prev, show: false }));
 
-    // --- EFFECT LẮNG NGHE REAL-TIME ---
+    // --- EFFECT LẮNG NGHE REAL-TIME (ĐÃ SỬA CHỐNG PHÂN THÂN GHẾ) ---
     useEffect(() => {
         if (!showtimeId) return;
 
@@ -46,14 +45,17 @@ const Booking = () => {
                     Number(h.seatId) === Number(seat.seat_id) && 
                     Number(h.showtimeId) === Number(showtimeId)
                 );
-                return isHeld ? { ...seat, is_locked_by_user: true } : seat;
+                return { ...seat, is_locked_by_user: isHeld };
             }));
         });
 
         socket.on('server-khoa-ghe', (data) => {
+            // Kiểm tra đúng suất chiếu và ép kiểu ID về Number để so sánh chuẩn
             if (Number(data.showtimeId) === Number(showtimeId)) {
                 setSeats(prevSeats => prevSeats.map(seat => 
-                    Number(seat.seat_id) === Number(data.seatId) ? { ...seat, is_locked_by_user: true } : seat
+                    Number(seat.seat_id) === Number(data.seatId) 
+                    ? { ...seat, is_locked_by_user: true } 
+                    : seat
                 ));
             }
         });
@@ -61,7 +63,9 @@ const Booking = () => {
         socket.on('server-mo-khoa-ghe', (data) => {
             if (Number(data.showtimeId) === Number(showtimeId)) {
                 setSeats(prevSeats => prevSeats.map(seat => 
-                    Number(seat.seat_id) === Number(data.seatId) ? { ...seat, is_locked_by_user: false } : seat
+                    Number(seat.seat_id) === Number(data.seatId) 
+                    ? { ...seat, is_locked_by_user: false } 
+                    : seat
                 ));
             }
         });
@@ -92,6 +96,8 @@ const Booking = () => {
             
             const savedSeats = sessionStorage.getItem('selectedSeats');
             const savedShowtime = sessionStorage.getItem('currentShowtimeId');
+            
+            // ĐẢM BẢO initialSeats là mảng sạch từ DB
             let initialSeats = res.data;
 
             if (savedSeats && savedShowtime === showtimeId.toString()) {
@@ -161,7 +167,7 @@ const Booking = () => {
             updatedSeats = [...selectedSeats, seat];
             socket.emit('client-chon-ghe', { seatId: seat.seat_id, showtimeId });
             
-            if (selectedSeats.length === 0) {
+            if (selectedSeats.length === 1) { // Chỉ kích hoạt timer ở ghế đầu tiên
                 const expiresAt = Date.now() + 10 * 60 * 1000;
                 sessionStorage.setItem('holdExpiresAt', expiresAt.toString());
                 sessionStorage.setItem('currentShowtimeId', showtimeId.toString());
@@ -189,12 +195,14 @@ const Booking = () => {
         });
     };
 
-    const groupedSeats = seats.reduce((acc, seat) => {
-        const row = seat.seat_row;
-        if (!acc[row]) acc[row] = [];
-        acc[row].push(seat);
-        return acc;
-    }, {});
+    const groupedSeats = useMemo(() => {
+        return seats.reduce((acc, seat) => {
+            const row = seat.seat_row;
+            if (!acc[row]) acc[row] = [];
+            acc[row].push(seat);
+            return acc;
+        }, {});
+    }, [seats]);
 
     if (loading) return <div className="loading-screen">Đang tải sơ đồ ghế...</div>;
 
@@ -226,7 +234,6 @@ const Booking = () => {
                                                 const isMaintenance = Number(seat.is_active) === 0;
                                                 const isLockedRealtime = seat.is_locked_by_user; 
 
-                                                // LOGIC GỘP TRẠNG THÁI ĐANG CHỌN
                                                 const isCurrentlySelected = isSelected || isLockedRealtime;
 
                                                 return (
@@ -243,7 +250,6 @@ const Booking = () => {
                                                         ) : isMaintenance ? (
                                                             <span className="maintenance-icon">X</span>
                                                         ) : (
-                                                            /* SỬA TẠI ĐÂY: Chỉ hiện đúng số ghế từ DB, không tự cộng 1 cho ghế đôi */
                                                             seat.seat_number
                                                         )}
                                                     </div>
