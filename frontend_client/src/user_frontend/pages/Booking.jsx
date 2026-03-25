@@ -40,7 +40,6 @@ const Booking = () => {
             console.log("⚡ Đã kết nối Socket ID:", socket.id);
         });
 
-        // MỚI: Lấy danh sách ghế đang bị giữ từ server khi vừa vào
         socket.on('server-gui-danh-sach-dang-giu', (holdingList) => {
             setSeats(prevSeats => prevSeats.map(seat => {
                 const isHeld = holdingList.some(h => 
@@ -85,14 +84,12 @@ const Booking = () => {
         }
     }, [showtimeId]);
 
-    // --- CẬP NHẬT API HIỂN THỊ SƠ ĐỒ GHẾ ---
     const fetchSeats = useCallback(async () => {
         if (!showtimeId) return;
         try {
             setLoading(true);
             const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/seats/showtime/${showtimeId}`);
             
-            // Logic khôi phục session cũ
             const savedSeats = sessionStorage.getItem('selectedSeats');
             const savedShowtime = sessionStorage.getItem('currentShowtimeId');
             let initialSeats = res.data;
@@ -103,7 +100,6 @@ const Booking = () => {
                 if (sessionStorage.getItem('holdExpiresAt')) {
                     setIsTimerActive(true);
                 }
-                // Thông báo cho server là tôi vẫn đang giữ những ghế này
                 parsedSeats.forEach(s => {
                     socket.emit('client-chon-ghe', { seatId: s.seat_id, showtimeId });
                 });
@@ -148,7 +144,6 @@ const Booking = () => {
     };
 
     const handleSeatClick = (seat) => {
-        // Nếu ghế đã bán, bảo trì, hoặc bị người khác khóa real-time thì không cho bấm
         if (seat.seat_status === 'Booked' || Number(seat.is_active) === 0 || seat.is_locked_by_user) return;
         
         const isSelected = selectedSeats.find(s => s.seat_id === seat.seat_id);
@@ -230,29 +225,26 @@ const Booking = () => {
                                                 const isBooked = seat.seat_status === 'Booked';
                                                 const isMaintenance = Number(seat.is_active) === 0;
                                                 const isLockedRealtime = seat.is_locked_by_user; 
-                                                const isCouple = seat.seat_type.toLowerCase() === 'couple';
+
+                                                // LOGIC GỘP TRẠNG THÁI ĐANG CHỌN
+                                                const isCurrentlySelected = isSelected || isLockedRealtime;
 
                                                 return (
                                                     <div 
                                                         key={seat.seat_id}
                                                         className={`seat-unit ${seat.seat_type.toLowerCase()} 
-                                                            ${isSelected ? 'selected' : ''} 
+                                                            ${isCurrentlySelected ? 'selected' : ''} 
                                                             ${isBooked ? 'booked' : ''} 
-                                                            ${isMaintenance ? 'maintenance' : ''} 
-                                                            ${isLockedRealtime ? 'locked-realtime' : ''}`}
+                                                            ${isMaintenance ? 'maintenance' : ''}`}
                                                         onClick={() => handleSeatClick(seat)}
                                                     >
                                                         {isBooked ? (
                                                             <span className="booked-icon">X</span>
-                                                        ) : (isMaintenance || isLockedRealtime) ? (
+                                                        ) : isMaintenance ? (
                                                             <span className="maintenance-icon">X</span>
                                                         ) : (
-                                                            isCouple ? (
-                                                                <div className="couple-numbers">
-                                                                    <span>{seat.seat_number}</span>
-                                                                    <span>{Number(seat.seat_number) + 1}</span>
-                                                                </div>
-                                                            ) : (seat.seat_number)
+                                                            /* SỬA TẠI ĐÂY: Chỉ hiện đúng số ghế từ DB, không tự cộng 1 cho ghế đôi */
+                                                            seat.seat_number
                                                         )}
                                                     </div>
                                                 );
@@ -267,8 +259,8 @@ const Booking = () => {
                             </div>
                             <div className="seat-legend-area">
                                 <div className="legend-item"><span className="legend-box status-booked">X</span> Đã bán</div>
-                                <div className="legend-item"><span className="legend-box status-maintenance">X</span> Bảo trì/Đang giữ</div>
                                 <div className="legend-item"><span className="legend-box status-selected"></span> Đang chọn</div>
+                                <div className="legend-item"><span className="legend-box status-maintenance">X</span> Bảo trì</div>
                                 <div className="legend-item"><span className="legend-box type-vip"></span> VIP</div>
                                 <div className="legend-item"><span className="legend-box type-standard"></span> Thường</div>
                                 <div className="legend-item"><span className="legend-box type-couple"></span> Ghế đôi</div>
@@ -304,11 +296,7 @@ const Booking = () => {
                                     <span>Ghế: </span>
                                     <strong className="highlight-orange">
                                         {selectedSeats.length > 0 
-                                            ? selectedSeats.flatMap(s => 
-                                                s.seat_type.toLowerCase() === 'couple' 
-                                                ? [`${s.seat_row}${s.seat_number}`, `${s.seat_row}${Number(s.seat_number) + 1}`] 
-                                                : [`${s.seat_row}${s.seat_number}`]
-                                            ).join(', ')
+                                            ? selectedSeats.map(s => `${s.seat_row}${s.seat_number}`).join(', ')
                                             : 'Chưa chọn'}
                                     </strong>
                                 </div>

@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const db = require('./Config/db');   
 const cookieParser = require('cookie-parser'); 
-const axios = require('axios'); // Thêm để chạy được lệnh tự ping ở cuối
+const axios = require('axios'); 
 require('dotenv').config();
 
 // --- THÊM SOCKET.IO TẠI ĐÂY ---
@@ -39,28 +39,23 @@ const newsRoutes = require('./Routers/NewRouter');
 // 1. CẤU HÌNH HỆ THỐNG & CORS
 // ===========================================================
 
-// BẮT BUỘC: Để Render nhận diện HTTPS khi gửi Cookie Secure xuyên domain
 app.set('trust proxy', 1); 
-
-// Cho cookieParser lên đầu để các request luôn bóc tách được cookie
 app.use(cookieParser()); 
 
-// Gom cấu hình CORS để dùng chung cho cả Express và Socket
 const corsOptions = {
   origin: [
-    'https://quangdungcinema.id.vn',       // Frontend của Dũng
-    'https://webcinema-zb8z.onrender.com', // Link Backend trên Render
-    /\.vercel\.app$/,                      // Phòng hờ nếu bạn test trên Vercel
-    /\.onrender\.com$/,                    // Cho phép các sub-domain của Render
-    'http://localhost:3000',               // Thêm để test local
-    'http://localhost:5173'                // Thêm cổng mặc định của Vite
+    'https://quangdungcinema.id.vn',       
+    'https://webcinema-zb8z.onrender.com', 
+    /\.vercel\.app$/,                      
+    /\.onrender\.com$/,                    
+    'http://localhost:3000',               
+    'http://localhost:5173'                
   ], 
   credentials: true,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
 };
 
 app.use(cors(corsOptions));
-
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -68,35 +63,36 @@ app.use(express.urlencoded({ extended: true }));
 // --- KHỞI TẠO SOCKET.IO & BỘ NHỚ TẠM ---
 const io = new Server(server, {
   cors: corsOptions,
-  transports: ['websocket', 'polling'] // Tối ưu kết nối nhanh cho Render
+  transports: ['websocket', 'polling'] 
 });
 
-// Biến này để "ghi sổ" những ghế đang bị giữ tạm thời trên RAM server
 let holdingSeats = []; 
 
 io.on('connection', (socket) => {
   console.log('⚡ Có người vừa kết nối Socket:', socket.id);
 
-  // Gửi danh sách ghế đang bị giữ cho người mới vào (như điện thoại của Dũng)
+  // Gửi danh sách cho người mới vào
   socket.emit('server-gui-danh-sach-dang-giu', holdingSeats);
 
-  // Khi có người nhấn chọn ghế (Real-time khóa ghế)
+  // Khi có người nhấn chọn ghế
   socket.on('client-chon-ghe', (data) => {
-    // KIỂM TRA TRÙNG: Nếu ghế chưa có ai giữ thì mới cho giữ
-    const isAlreadyHeld = holdingSeats.some(s => s.seatId === data.seatId && s.showtimeId === data.showtimeId);
+    // KIỂM TRA TRÙNG: Chỉ cho phép lưu 1 ghế duy nhất trong mảng
+    const isAlreadyHeld = holdingSeats.find(s => 
+        Number(s.seatId) === Number(data.seatId) && 
+        Number(s.showtimeId) === Number(data.showtimeId)
+    );
     
     if (!isAlreadyHeld) {
       holdingSeats.push({ ...data, socketId: socket.id });
-      // Gửi tín hiệu khóa ghế cho tất cả mọi người khác
+      // Gửi tín hiệu khóa ghế cho tất cả
       socket.broadcast.emit('server-khoa-ghe', data);
     }
   });
 
-  // Khi có người bỏ chọn ghế (Real-time mở khóa)
+  // Khi có người bỏ chọn ghế
   socket.on('client-huy-chon-ghe', (data) => {
-    // Xóa khỏi sổ ghi chép
     holdingSeats = holdingSeats.filter(s => 
-      !(s.seatId === data.seatId && s.showtimeId === data.showtimeId)
+      !(Number(s.seatId) === Number(data.seatId) && Number(s.showtimeId) === Number(data.showtimeId))
     );
     socket.broadcast.emit('server-mo-khoa-ghe', data);
   });
@@ -104,7 +100,6 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('❌ Một người dùng đã ngắt kết nối:', socket.id);
     
-    // Tự động giải phóng ghế: Nếu máy tính thoát, báo cho điện thoại mở khóa ghế đó ra
     const seatsToRelease = holdingSeats.filter(s => s.socketId === socket.id);
     seatsToRelease.forEach(s => {
       socket.broadcast.emit('server-mo-khoa-ghe', { 
@@ -113,7 +108,6 @@ io.on('connection', (socket) => {
       });
     });
 
-    // Cập nhật lại sổ, xóa dữ liệu của người vừa ngắt kết nối
     holdingSeats = holdingSeats.filter(s => s.socketId !== socket.id);
   });
 });
@@ -149,7 +143,7 @@ app.use('/api/movie-actors', movieActorRoutes);
 app.use('/api/news', newsRoutes);
 
 // ===========================================================
-// 3. KHỞI CHẠY SERVER & TỰ PING (Mỗi 5 phút)
+// 3. KHỞI CHẠY SERVER & TỰ PING
 // ===========================================================
 
 const PORT = process.env.PORT || 5000; 
@@ -159,9 +153,8 @@ server.listen(PORT, '0.0.0.0', () => {
   
   setInterval(async () => {
     try {
-      // Dũng nhớ dán đúng link backend của ông vào đây nhé
       await axios.get(`https://webcinema-zb8z.onrender.com/api?t=${Date.now()}`);
-      console.log('🔔 [Keep-Alive]: Đã tự nhấn chuông để giữ Server thức!');
+      console.log('🔔 [Keep-Alive]: Đã tự nhấn chuông!');
     } catch (err) {
       console.log('⚠️ [Keep-Alive]: Đang cố giữ server hoạt động...');
     }
