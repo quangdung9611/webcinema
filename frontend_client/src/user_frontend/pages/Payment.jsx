@@ -107,7 +107,6 @@ const Payment = () => {
 
         setIsProcessing(true);
         try {
-            
             const postData = {
                 userId: userInfo.user_id,
                 showtimeId: showtimeId,
@@ -127,14 +126,9 @@ const Payment = () => {
             const response = await axios.post('https://webcinema-zb8z.onrender.com/api/payment/process', postData);
 
             if (response.data.success) {
-                // === DŨNG THÊM DÒNG NÀY VÀO ĐÚNG VỊ TRÍ NÀY ===
-            // Xóa session ngay lập tức trước khi navigate
-            sessionStorage.removeItem('holdExpiresAt');
-            sessionStorage.removeItem('selectedSeats');
-            sessionStorage.removeItem('currentShowtimeId');
-            setIsTimerActive(false); // Tắt state hiển thị timer
-            // ===========================================
+                // TẠO STATE CUỐI CÙNG ĐỂ CHUYỂN TRANG VÀ LƯU SESSION
                 const finalState = { 
+                    orderId: response.data.bookingId, // Thêm orderId để trang confirm-success nhận diện được
                     bookingId: response.data.bookingId,
                     totalAmount: grandTotal,
                     customerName: userInfo.full_name,
@@ -142,13 +136,21 @@ const Payment = () => {
                     movieTitle: movie?.title,
                     moviePoster: movie?.poster_url, 
                     cinemaName: cinemaName,
-                    // Lấy room_name từ showtimeDetail đã có sẵn trong state của Payment
                     roomName: showtimeDetail?.room_name || 'Phòng 01',
                     startTime: slot?.start_time,
                     selectedDate: selectedDate,
                     seatDisplay: selectedSeats.flatMap(s => s.seat_type === 'Couple' ? [`${s.seat_row}${s.seat_number}`, `${s.seat_row}${Number(s.seat_number)+1}`] : [`${s.seat_row}${s.seat_number}`]).join(', '),
                     selectedFoods,
                 };
+
+                // LƯU VÀO SESSIONSTORAGE ĐỂ CHỐNG MẤT DỮ LIỆU KHI REDIRECT
+                sessionStorage.setItem('lastSuccessTicket', JSON.stringify(finalState));
+
+                // Dọn dẹp session giữ ghế cũ
+                sessionStorage.removeItem('holdExpiresAt');
+                sessionStorage.removeItem('selectedSeats');
+                sessionStorage.removeItem('currentShowtimeId');
+                setIsTimerActive(false); 
 
                 if (paymentMethod === 'bank') {
                     await axios.post('https://webcinema-zb8z.onrender.com/api/bank/send-otp', { email: userInfo.email, bookingId: response.data.bookingId });
@@ -158,6 +160,7 @@ const Payment = () => {
                 }
             }
         } catch (err) {
+            console.error("Lỗi xử lý thanh toán:", err);
             showNotice('error', 'LỖI', 'Không thể xử lý thanh toán lúc này.');
         } finally {
             setIsProcessing(false);
@@ -175,7 +178,6 @@ const Payment = () => {
                 onCancel={() => setModal({...modal, show: false})}
             />
 
-            {/* 1. STEPPER BAR ĐỒNG BỘ */}
             <div className="stepper-bar-full">
                 <div className="stepper-content">
                     <div className="step-item done">01 CHỌN GHẾ</div>
@@ -187,10 +189,8 @@ const Payment = () => {
             <main className="booking-main-layout">
                 <div className="booking-grid-container">
                     
-                    {/* 2. KHU VỰC THÔNG TIN & THANH TOÁN (BÊN TRÁI) */}
                     <div className="payment-main-section" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         
-                        {/* Nhập Coupon */}
                         <section className="seat-selection-card" style={{ padding: '30px' }}>
                             <h3 className="section-title" style={{ color: 'var(--secondary-blue)', marginBottom: '20px' }}>MÃ GIẢM GIÁ</h3>
                             <div className="coupon-group" style={{ display: 'flex', gap: '10px', width: '100%' }}>
@@ -206,7 +206,6 @@ const Payment = () => {
                             </div>
                         </section>
 
-                        {/* Thông tin khách hàng */}
                         <section className="seat-selection-card" style={{ padding: '30px', alignItems: 'flex-start' }}>
                             <h3 className="section-title" style={{ color: 'var(--secondary-blue)', marginBottom: '20px' }}>THÔNG TIN NHẬN VÉ</h3>
                             <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', width: '100%' }}>
@@ -225,7 +224,6 @@ const Payment = () => {
                             </div>
                         </section>
 
-                        {/* Hình thức thanh toán */}
                         <section className="seat-selection-card" style={{ padding: '30px', alignItems: 'flex-start' }}>
                             <h3 className="section-title" style={{ color: 'var(--secondary-blue)', marginBottom: '20px' }}>HÌNH THỨC THANH TOÁN</h3>
                             <div className="payment-methods-list" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -247,7 +245,6 @@ const Payment = () => {
                         </section>
                     </div>
 
-                    {/* 3. SIDEBAR (BÊN PHẢI) - ĐỒNG BỘ 100% */}
                     <aside className="right-section-sidebar">
                         <div className="sidebar-sticky-content">
                             {isTimerActive && (

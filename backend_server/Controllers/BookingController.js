@@ -88,26 +88,40 @@ const bookingController = {
         const { status } = req.body; // 'Pending', 'Completed', 'Cancelled'
         
         try {
-            // Cập nhật trạng thái Booking
+            // 1. Cập nhật trạng thái chính trong bảng bookings
             await db.execute(
                 `UPDATE bookings SET status = ? WHERE booking_id = ?`,
                 [status, id]
             );
 
-            // LOGIC NÂNG CAO: Nếu trạng thái là 'Cancelled', tự động đổi trạng thái vé (nếu có bảng tickets)
-            if (status.toLowerCase() === 'cancelled') {
+            // 2. LOGIC CẬP NHẬT CHI TIẾT VÉ (Bảng tickets)
+            const upperStatus = status.toUpperCase();
+
+            if (upperStatus === 'COMPLETED') {
+                // Khi thanh toán xong -> Đổi Reserved thành Booked để KHÓA GHẾ
+                await db.execute(
+                    `UPDATE tickets SET status = 'Booked' WHERE booking_id = ?`,
+                    [id]
+                );
+                console.log(`Đã khóa ghế thành công cho đơn hàng #${id}`);
+                
+            } else if (upperStatus === 'CANCELLED') {
+                // Khi hủy đơn -> Giải phóng ghế
                 await db.execute(
                     `UPDATE tickets SET status = 'Cancelled' WHERE booking_id = ?`,
                     [id]
                 );
             }
 
-            res.status(200).json({ success: true, message: `Đã cập nhật trạng thái sang ${status}` });
+            res.status(200).json({ 
+                success: true, 
+                message: `Hệ thống đã cập nhật đơn hàng #${id} sang ${status}` 
+            });
         } catch (error) {
+            console.error("Lỗi updateBookingStatus:", error);
             res.status(500).json({ success: false, message: "Lỗi cập nhật trạng thái" });
         }
     },
-
     // 4. Xóa vĩnh viễn đơn hàng
     deleteBooking: async (req, res) => {
         const { id } = req.params;

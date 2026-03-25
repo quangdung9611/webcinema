@@ -10,17 +10,14 @@ const ConfirmSuccess = () => {
 
     // --- CƠ CHẾ GIỮ DATA THÔNG MINH ---
     const [ticketData] = useState(() => {
-        // Ưu tiên 1: Dữ liệu mới từ điều hướng (state)
         const navState = location.state;
         const incomingData = navState?.data || navState;
         
         if (incomingData && incomingData.orderId) {
-            // Lưu vào sessionStorage để dự phòng trường hợp trang đang load mà bị gián đoạn
             sessionStorage.setItem('lastSuccessTicket', JSON.stringify(incomingData));
             return incomingData;
         }
 
-        // Ưu tiên 2: Lấy lại từ sessionStorage nếu lỡ tay F5
         const savedData = sessionStorage.getItem('lastSuccessTicket');
         return savedData ? JSON.parse(savedData) : null;
     });
@@ -32,10 +29,7 @@ const ConfirmSuccess = () => {
         
         if (ticketData) {
             console.log("Dữ liệu hiển thị:", ticketData);
-
-            // SỬA TẠI ĐÂY: Xóa sạch dữ liệu trong Session Storage ngay sau khi nạp vào State
-            // Giúp tab Application -> Session Storage sạch sẽ cho lần đặt vé sau
-            sessionStorage.removeItem('lastSuccessTicket');
+            // ĐÃ XÓA dòng removeItem ở đây để ông F5 thoải mái không bị mất vé
         }
     }, [ticketData]);
 
@@ -82,15 +76,16 @@ const ConfirmSuccess = () => {
                             )}
                         </div>
                         <div className="ticket-info">
-                            <h4 className="ticket-movie-title">{movieTitle}</h4>
+                            <h4 className="ticket-movie-title">{movieTitle || 'Phim chưa xác định'}</h4>
                             <div className="ticket-detail-grid">
                                 <div className="detail-item">
                                     <span className="label">RẠP</span>
-                                    <span className="value">{cinemaName || 'Thông tin rạp đang cập nhật'}</span> 
+                                    {/* Thêm fallback để tránh hiện chữ NULL */}
+                                    <span className="value">{cinemaName || ticketData.cinema_name || 'Cinema Star'}</span> 
                                 </div>
                                 <div className="detail-item">
                                     <span className="label">PHÒNG</span>
-                                    <span className="value">{roomName || 'Đang cập nhật'}</span>
+                                    <span className="value">{roomName || ticketData.room_name || 'Standard'}</span>
                                 </div>
                                 <div className="detail-item"><span className="label">NGÀY</span><span className="value">{selectedDate}</span></div>
                                 <div className="detail-item"><span className="label">SUẤT</span><span className="value">{startTime}</span></div>
@@ -98,7 +93,7 @@ const ConfirmSuccess = () => {
                                 <div className="detail-item full-width">
                                     <span className="label">GHẾ</span>
                                     <span className="value seat-highlight">
-                                        {seatDisplay || 'Chưa chọn ghế'}
+                                        {seatDisplay || 'Đang cập nhật'}
                                     </span>
                                 </div>
                                 
