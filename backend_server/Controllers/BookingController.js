@@ -82,44 +82,52 @@ const bookingController = {
         }
     },
 
-    // 3. Cập nhật trạng thái (Duyệt đơn / Hủy đơn)
+    // 3. Cập nhật trạng thái (Duyệt đơn / Hủy đơn) - BẢN FIX CHUẨN TÊN CỘT
     updateBookingStatus: async (req, res) => {
         const { id } = req.params;
         const { status } = req.body; // 'Pending', 'Completed', 'Cancelled'
         
+        const connection = await db.getConnection();
+        await connection.beginTransaction();
+
         try {
-            // 1. Cập nhật trạng thái chính trong bảng bookings
-            await db.execute(
+            // 1. Cập nhật bảng bookings -> Dùng cột 'status'
+            await connection.execute(
                 `UPDATE bookings SET status = ? WHERE booking_id = ?`,
                 [status, id]
             );
 
-            // 2. LOGIC CẬP NHẬT CHI TIẾT VÉ (Bảng tickets)
+            // 2. Cập nhật bảng tickets -> Dùng cột 'seat_status'
             const upperStatus = status.toUpperCase();
 
             if (upperStatus === 'COMPLETED') {
-                // Khi thanh toán xong -> Đổi Reserved thành Booked để KHÓA GHẾ
-                await db.execute(
-                    `UPDATE tickets SET status = 'Booked' WHERE booking_id = ?`,
+                // Khi duyệt thành công -> Chuyển ghế sang 'Booked' (màu đỏ)
+                await connection.execute(
+                    `UPDATE tickets SET seat_status = 'Booked' WHERE booking_id = ?`,
                     [id]
                 );
-                console.log(`Đã khóa ghế thành công cho đơn hàng #${id}`);
+                console.log(`✅ [DŨNG] Booking status -> Completed | Seat status -> Booked (#${id})`);
                 
             } else if (upperStatus === 'CANCELLED') {
-                // Khi hủy đơn -> Giải phóng ghế
-                await db.execute(
-                    `UPDATE tickets SET status = 'Cancelled' WHERE booking_id = ?`,
+                // Khi hủy đơn -> Chuyển ghế sang 'Cancelled' (giải phóng ghế)
+                await connection.execute(
+                    `UPDATE tickets SET seat_status = 'Cancelled' WHERE booking_id = ?`,
                     [id]
                 );
+                console.log(`❌ [DŨNG] Booking status -> Cancelled | Seat status -> Cancelled (#${id})`);
             }
 
+            await connection.commit();
             res.status(200).json({ 
                 success: true, 
                 message: `Hệ thống đã cập nhật đơn hàng #${id} sang ${status}` 
             });
         } catch (error) {
+            await connection.rollback();
             console.error("Lỗi updateBookingStatus:", error);
             res.status(500).json({ success: false, message: "Lỗi cập nhật trạng thái" });
+        } finally {
+            connection.release();
         }
     },
     // 4. Xóa vĩnh viễn đơn hàng
