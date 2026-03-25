@@ -31,26 +31,24 @@ const Booking = () => {
 
     const closeModal = () => setModalConfig(prev => ({ ...prev, show: false }));
 
-    // --- EFFECT LẮNG NGHE REAL-TIME (ĐÃ SỬA CHỐNG PHÂN THÂN GHẾ) ---
+    // --- EFFECT LẮNG NGHE REAL-TIME ---
     useEffect(() => {
         if (!showtimeId) return;
 
-        socket.on("connect", () => {
-            console.log("⚡ Đã kết nối Socket ID:", socket.id);
-        });
-
         socket.on('server-gui-danh-sach-dang-giu', (holdingList) => {
-            setSeats(prevSeats => prevSeats.map(seat => {
-                const isHeld = holdingList.some(h => 
-                    Number(h.seatId) === Number(seat.seat_id) && 
-                    Number(h.showtimeId) === Number(showtimeId)
-                );
-                return { ...seat, is_locked_by_user: isHeld };
-            }));
+            setSeats(prevSeats => {
+                if (prevSeats.length === 0) return prevSeats;
+                return prevSeats.map(seat => {
+                    const isHeld = holdingList.some(h => 
+                        Number(h.seatId) === Number(seat.seat_id) && 
+                        Number(h.showtimeId) === Number(showtimeId)
+                    );
+                    return { ...seat, is_locked_by_user: isHeld };
+                });
+            });
         });
 
         socket.on('server-khoa-ghe', (data) => {
-            // Kiểm tra đúng suất chiếu và ép kiểu ID về Number để so sánh chuẩn
             if (Number(data.showtimeId) === Number(showtimeId)) {
                 setSeats(prevSeats => prevSeats.map(seat => 
                     Number(seat.seat_id) === Number(data.seatId) 
@@ -71,7 +69,6 @@ const Booking = () => {
         });
 
         return () => {
-            socket.off('connect');
             socket.off('server-gui-danh-sach-dang-giu');
             socket.off('server-khoa-ghe');
             socket.off('server-mo-khoa-ghe');
@@ -94,12 +91,10 @@ const Booking = () => {
             setLoading(true);
             const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/seats/showtime/${showtimeId}`);
             
+            let initialSeats = res.data;
             const savedSeats = sessionStorage.getItem('selectedSeats');
             const savedShowtime = sessionStorage.getItem('currentShowtimeId');
             
-            // ĐẢM BẢO initialSeats là mảng sạch từ DB
-            let initialSeats = res.data;
-
             if (savedSeats && savedShowtime === showtimeId.toString()) {
                 const parsedSeats = JSON.parse(savedSeats);
                 setSelectedSeats(parsedSeats);
@@ -167,7 +162,7 @@ const Booking = () => {
             updatedSeats = [...selectedSeats, seat];
             socket.emit('client-chon-ghe', { seatId: seat.seat_id, showtimeId });
             
-            if (selectedSeats.length === 1) { // Chỉ kích hoạt timer ở ghế đầu tiên
+            if (selectedSeats.length === 0) { // Sửa logic: ghế đầu tiên mới bật timer
                 const expiresAt = Date.now() + 10 * 60 * 1000;
                 sessionStorage.setItem('holdExpiresAt', expiresAt.toString());
                 sessionStorage.setItem('currentShowtimeId', showtimeId.toString());
@@ -195,11 +190,15 @@ const Booking = () => {
         });
     };
 
+    // --- LOGIC QUAN TRỌNG: Lọc trùng lặp để đồng bộ với Admin ---
     const groupedSeats = useMemo(() => {
-        return seats.reduce((acc, seat) => {
+        const uniqueSeats = Array.from(new Map(seats.map(s => [s.seat_id, s])).values());
+        
+        return uniqueSeats.reduce((acc, seat) => {
             const row = seat.seat_row;
             if (!acc[row]) acc[row] = [];
             acc[row].push(seat);
+            acc[row].sort((a, b) => Number(a.seat_number) - Number(b.seat_number));
             return acc;
         }, {});
     }, [seats]);
@@ -234,24 +233,17 @@ const Booking = () => {
                                                 const isMaintenance = Number(seat.is_active) === 0;
                                                 const isLockedRealtime = seat.is_locked_by_user; 
 
-                                                const isCurrentlySelected = isSelected || isLockedRealtime;
-
                                                 return (
                                                     <div 
                                                         key={seat.seat_id}
                                                         className={`seat-unit ${seat.seat_type.toLowerCase()} 
-                                                            ${isCurrentlySelected ? 'selected' : ''} 
+                                                            ${isSelected || isLockedRealtime ? 'selected' : ''} 
                                                             ${isBooked ? 'booked' : ''} 
                                                             ${isMaintenance ? 'maintenance' : ''}`}
                                                         onClick={() => handleSeatClick(seat)}
                                                     >
-                                                        {isBooked ? (
-                                                            <span className="booked-icon">X</span>
-                                                        ) : isMaintenance ? (
-                                                            <span className="maintenance-icon">X</span>
-                                                        ) : (
-                                                            seat.seat_number
-                                                        )}
+                                                        {isBooked ? <span className="booked-icon">X</span> : 
+                                                         isMaintenance ? <span className="maintenance-icon">X</span> : seat.seat_number}
                                                     </div>
                                                 );
                                             })}

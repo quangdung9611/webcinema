@@ -69,47 +69,38 @@ const io = new Server(server, {
 let holdingSeats = []; 
 
 io.on('connection', (socket) => {
-  console.log('⚡ Có người vừa kết nối Socket:', socket.id);
+    console.log('⚡ Có người vừa kết nối Socket:', socket.id);
 
-  // Gửi danh sách cho người mới vào
-  socket.emit('server-gui-danh-sach-dang-giu', holdingSeats);
+    socket.emit('server-gui-danh-sach-dang-giu', holdingSeats);
 
-  // Khi có người nhấn chọn ghế
-  socket.on('client-chon-ghe', (data) => {
-    // KIỂM TRA TRÙNG: Chỉ cho phép lưu 1 ghế duy nhất trong mảng
-    const isAlreadyHeld = holdingSeats.find(s => 
-        Number(s.seatId) === Number(data.seatId) && 
-        Number(s.showtimeId) === Number(data.showtimeId)
-    );
-    
-    if (!isAlreadyHeld) {
-      holdingSeats.push({ ...data, socketId: socket.id });
-      // Gửi tín hiệu khóa ghế cho tất cả
-      socket.broadcast.emit('server-khoa-ghe', data);
-    }
-  });
-
-  // Khi có người bỏ chọn ghế
-  socket.on('client-huy-chon-ghe', (data) => {
-    holdingSeats = holdingSeats.filter(s => 
-      !(Number(s.seatId) === Number(data.seatId) && Number(s.showtimeId) === Number(data.showtimeId))
-    );
-    socket.broadcast.emit('server-mo-khoa-ghe', data);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('❌ Một người dùng đã ngắt kết nối:', socket.id);
-    
-    const seatsToRelease = holdingSeats.filter(s => s.socketId === socket.id);
-    seatsToRelease.forEach(s => {
-      socket.broadcast.emit('server-mo-khoa-ghe', { 
-        seatId: s.seatId, 
-        showtimeId: s.showtimeId 
-      });
+    socket.on('client-chon-ghe', (data) => {
+        // --- LOGIC TỐI ƯU: Xóa bỏ mọi record cũ của ghế này trước khi thêm mới ---
+        holdingSeats = holdingSeats.filter(s => 
+            !(Number(s.seatId) === Number(data.seatId) && Number(s.showtimeId) === Number(data.showtimeId))
+        );
+        
+        holdingSeats.push({ ...data, socketId: socket.id });
+        socket.broadcast.emit('server-khoa-ghe', data);
     });
 
-    holdingSeats = holdingSeats.filter(s => s.socketId !== socket.id);
-  });
+    socket.on('client-huy-chon-ghe', (data) => {
+        holdingSeats = holdingSeats.filter(s => 
+            !(Number(s.seatId) === Number(data.seatId) && Number(s.showtimeId) === Number(data.showtimeId))
+        );
+        socket.broadcast.emit('server-mo-khoa-ghe', data);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('❌ Một người dùng đã ngắt kết nối:', socket.id);
+        const seatsToRelease = holdingSeats.filter(s => s.socketId === socket.id);
+        seatsToRelease.forEach(s => {
+            socket.broadcast.emit('server-mo-khoa-ghe', { 
+                seatId: s.seatId, 
+                showtimeId: s.showtimeId 
+            });
+        });
+        holdingSeats = holdingSeats.filter(s => s.socketId !== socket.id);
+    });
 });
 
 // ===========================================================
