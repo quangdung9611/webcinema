@@ -13,35 +13,37 @@ const MomoApp = () => {
 
     const [isConfirming, setIsConfirming] = useState(false);
 
-    // Thông tin hiển thị
+    // Thông tin hiển thị của Dũng
     const myMomoPhone = "0909489611";
     const myName = "NGUYEN PHAM QUANG DUNG";
     
     // Link VietQR chuẩn
     const qrImageUrl = `https://img.vietqr.io/image/momo-${myMomoPhone}-compact.jpg?amount=${totalAmount || 85000}&addInfo=DungCinema%20${bookingId || '2F5B7196'}&accountName=${encodeURIComponent(myName)}`;
 
-    // LOGIC CHÍNH: Tự động xác nhận thành công sau 5 giây (Đã chỉnh từ 10s xuống 5s)
+    // LOGIC CHÍNH: Giả lập xác nhận thanh toán
     useEffect(() => {
-        const autoConfirm = setTimeout(async () => {
-            setIsConfirming(true); // Hiển thị trạng thái "Đang kiểm tra" ngay lập tức
+        // Hẹn giờ đúng 5 giây bắt đầu chạy trình xác nhận
+        const autoConfirm = setTimeout(() => {
+            setIsConfirming(true); // Hiển thị loader "Đang kiểm tra"
             
-            try {
-                // Gọi API cập nhật trạng thái đã thanh toán (Dùng endpoint mới của ông)
-                await axios.post('https://webcinema-zb8z.onrender.com/api/momo/confirm-fast', {
-                    bookingId: bookingId
-                });
+            // 1. Gọi API cập nhật DB (Chạy ngầm, không dùng await để tránh đứng trang nếu API lỗi)
+            axios.post('https://webcinema-zb8z.onrender.com/api/momo/confirm-fast', {
+                bookingId: bookingId
+            }).then(() => {
                 console.log("Xác nhận thanh toán thành công qua API");
-            } catch (error) {
-                // Nếu lỗi API (do server chưa bật hoặc lỗi DB), vẫn cho đi tiếp để Demo không bị đứng
-                console.error("Lỗi xác thực Backend nhưng vẫn chuyển trang để demo:", error);
-            }
+            }).catch(error => {
+                console.error("Lỗi xác thực Backend nhưng vẫn cho đi tiếp để demo:", error);
+            });
             
-            // Chờ thêm 1.5 giây sau khi hiện loader để tạo cảm giác hệ thống đang "xử lý" thật
+            // 2. Sau khi hiện loader 1.5 giây, chắc chắn chuyển trang Success
             setTimeout(() => {
-                navigate('/confirm-success', { state: { ...ticketData } });
+                navigate('/confirm-success', { 
+                    state: { ...ticketData },
+                    replace: true // Không cho user quay lại trang QR khi đã xong
+                });
             }, 1500);
 
-        }, 5000); // 5000ms = 5 giây đúng ý ông nhé
+        }, 5000); // 5 giây đúng ý Dũng nhé
 
         return () => clearTimeout(autoConfirm);
     }, [bookingId, navigate, ticketData]);
@@ -84,7 +86,6 @@ const MomoApp = () => {
                         </p>
                     </div>
 
-                    {/* Giữ nguyên box trạng thái thay cho bộ đếm ngược */}
                     <div className="momo-status-box">
                         <p className="status-text">Đang chờ quét mã...</p>
                     </div>

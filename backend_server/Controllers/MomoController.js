@@ -37,7 +37,7 @@ const MomoController = {
         }
     },
 
-    // 2. XÁC NHẬN THANH TOÁN & GỬI EMAIL (Đã đồng bộ logic BankApp)
+    // 2. XÁC NHẬN THANH TOÁN & GỬI EMAIL (Đã cập nhật thêm room_id và cinema_id)
     confirmMomoFast: async (req, res) => {
         const { bookingId } = req.body;
         console.log(`>>> [DŨNG CINEMA] Đang xử lý chốt đơn MoMo #${bookingId}...`);
@@ -54,17 +54,20 @@ const MomoController = {
             // --- BƯỚC 1: CẬP NHẬT TRẠNG THÁI ---
             await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
 
-            // --- BƯỚC 2: CHỐT GHẾ ---
+            // --- BƯỚC 2: CHỐT GHẾ (Cập nhật thêm room_id và cinema_id từ bảng showtimes) ---
             await connection.execute(
-                `UPDATE tickets 
-                 SET seat_status = 'Booked', 
-                     ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'),
-                     updated_at = NOW()
-                 WHERE booking_id = ? AND seat_status = 'Reserved'`, 
+                `UPDATE tickets t
+                 JOIN showtimes s ON t.showtime_id = s.showtime_id
+                 SET t.seat_status = 'Booked', 
+                     t.ticket_code = REPLACE(t.ticket_code, 'WAIT-', 'TIC-'),
+                     t.cinema_id = s.cinema_id,
+                     t.room_id = s.room_id,
+                     t.updated_at = NOW()
+                 WHERE t.booking_id = ? AND t.seat_status = 'Reserved'`, 
                 [bookingId]
             );
 
-            // --- BƯỚC 3: LẤY DỮ LIỆU TỔNG HỢP (Đồng bộ với BankApp) ---
+            // --- BƯỚC 3: LẤY DỮ LIỆU TỔNG HỢP ---
             const [orderRows] = await connection.query(`
                 SELECT 
                     b.booking_id, 
@@ -82,7 +85,7 @@ const MomoController = {
                 JOIN movies m ON s.movie_id = m.movie_id
                 JOIN cinemas c ON s.cinema_id = c.cinema_id
                 JOIN rooms r ON s.room_id = r.room_id
-                JOIN booking_details bd ON b.booking_id = bd.booking_id
+                LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
                 WHERE b.booking_id = ?
                 GROUP BY b.booking_id`, [bookingId]);
 
@@ -112,7 +115,7 @@ const MomoController = {
                 roomName: order.roomName,
                 startTime: formattedTime,
                 selectedDate: formattedDate,
-                seatLabel: order.seatLabel, // Chuỗi "B1, B2" từ SQL
+                seatLabel: order.seatLabel || 'N/A', 
                 selectedFoods: foodLabelForEmail || 'Không có'
             };
 
@@ -136,7 +139,7 @@ const MomoController = {
                     seatDisplay: order.seatLabel,
                     startTime: formattedTime,
                     selectedDate: formattedDate,
-                    selectedFoods: foodRows, // Trả về mảng để React map()
+                    selectedFoods: foodRows, 
                     ticketPIN: Math.floor(1000 + Math.random() * 9000)
                 }
             });
