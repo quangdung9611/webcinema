@@ -1,22 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay, EffectCoverflow } from 'swiper/modules';
 import { useNavigate } from 'react-router-dom'; 
 import axios from 'axios';
 
-// Import Swiper styles
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import 'swiper/css/effect-coverflow';
+// Giữ nguyên CSS của bạn
 import '../styles/user_home.css';
 
 const UserHome = () => {
   const navigate = useNavigate();
   
-  // 1. DỮ LIỆU BANNER
+  // 1. DỮ LIỆU BANNER & LOGIC CHUYỂN SLIDE
   const banners = ['banner1.jpg', 'banner2.jpg', 'banner3.jpg', 'banner4.jpg'];
+  
+  // Đường dẫn folder ảnh ngang (PC)
   const bannerBaseUrl = "https://webcinema-zb8z.onrender.com/uploads/banners/";
+  // Đường dẫn folder ảnh dọc (Mobile)
+  const bannerDocUrl = "https://webcinema-zb8z.onrender.com/uploads/banner_doc/";
+  
+  const [currentBanner, setCurrentBanner] = useState(0);
+
+  // Tự động chuyển banner mỗi 3 giây
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % banners.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [banners.length]);
 
   // 2. QUẢN LÝ DỮ LIỆU PHIM TỪ API
   const [groupedMovies, setGroupedMovies] = useState({ "Đang chiếu": [], "Sắp chiếu": [] });
@@ -43,44 +51,46 @@ const UserHome = () => {
 
   return (
     <div className="user-home">
-      {/* 1. PHẦN CAROUSEL - GIỮ NGUYÊN HIỆU ỨNG GỐC */}
+      {/* 1. PHẦN BANNER - RESPONSIVE TỰ ĐỘNG TẠI 992PX */}
       <div className="carousel-wrapper">
-        <Swiper
-          modules={[Navigation, Pagination, Autoplay, EffectCoverflow]}
-          effect={'coverflow'}
-          grabCursor={true}
-          centeredSlides={true}
-          slidesPerView={'auto'}
-          coverflowEffect={{
-            rotate: 50,
-            stretch: 0,
-            depth: 100,
-            modifier: 1,
-            slideShadows: true,
-          }}
-          autoplay={{ delay: 3000, disableOnInteraction: false }}
-          pagination={{ clickable: true }}
-          navigation={true}
-          loop={true}
-          className="banner-swiper"
-        >
+        <div className="banner-slide-simple">
           {banners.map((imgName, index) => (
-            <SwiperSlide key={index} className="banner-slide">
+            <picture 
+              key={index} 
+              style={{ display: index === currentBanner ? 'block' : 'none' }}
+            >
+              {/* Nếu màn hình < 992px: Lấy hình từ folder banner_doc */}
+              <source 
+                media="(max-width: 991px)" 
+                srcSet={`${bannerDocUrl}${imgName}`} 
+              />
+              
+              {/* Mặc định (> 992px): Lấy hình từ folder banners gốc */}
               <img 
                 src={`${bannerBaseUrl}${imgName}`} 
                 alt={`Promotion ${index + 1}`} 
-                className="banner-img"
+                className={`banner-img ${index === currentBanner ? 'active' : ''}`}
               />
-            </SwiperSlide>
+            </picture>
           ))}
-        </Swiper>
+          
+          {/* Các dấu chấm chỉ số (Pagination) tự chế */}
+          <div className="banner-dots">
+            {banners.map((_, index) => (
+              <span 
+                key={index} 
+                className={`dot ${index === currentBanner ? 'active' : ''}`}
+                onClick={() => setCurrentBanner(index)}
+              ></span>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* 2. DANH SÁCH PHIM */}
       <div className="movie-container">
         <div className="movie-tabs">
           <div className="tab-left">
-         
              <button 
                className={`tab-btn ${filterStatus === 'Đang chiếu' ? 'active' : ''}`}
                onClick={() => setFilterStatus('Đang chiếu')}
@@ -117,9 +127,9 @@ const UserHome = () => {
                     <img 
                         src={`${movieBaseUrl}${movie.poster_url}`} 
                         alt={movie.title}
+                        className="poster-img"
                     />
                     
-                    {/* HIỂN THỊ ĐỘ TUỔI (T13, T16, T18...) */}
                     <div className={`age-badge age-${movie.age_rating}`}>
                       T{movie.age_rating}
                     </div>

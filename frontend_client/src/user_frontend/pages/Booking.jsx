@@ -162,7 +162,7 @@ const Booking = () => {
             updatedSeats = [...selectedSeats, seat];
             socket.emit('client-chon-ghe', { seatId: seat.seat_id, showtimeId });
             
-            if (selectedSeats.length === 0) { // Sửa logic: ghế đầu tiên mới bật timer
+            if (selectedSeats.length === 0) {
                 const expiresAt = Date.now() + 10 * 60 * 1000;
                 sessionStorage.setItem('holdExpiresAt', expiresAt.toString());
                 sessionStorage.setItem('currentShowtimeId', showtimeId.toString());
@@ -173,24 +173,28 @@ const Booking = () => {
         sessionStorage.setItem('selectedSeats', JSON.stringify(updatedSeats));
     };
 
+    // --- LOGIC ĐIỀU HƯỚNG ĐỒNG BỘ ---
     const handleContinue = () => {
         if (selectedSeats.length === 0) return;
+        
+        // 1. Gom tất cả state hiện tại vào 1 object để mang đi xuyên suốt
         const bookingData = { 
             ...location.state, 
             showtimeDetail, 
             selectedSeats, 
-            totalTicketPrice: selectedSeats.reduce((sum, s) => sum + Number(s.price), 0) 
+            totalTicketPrice: selectedSeats.reduce((sum, s) => sum + Number(s.price), 0),
+            // Khởi tạo sẵn bắp nước rỗng để các file sau không bị undefined
+            selectedFoods: [], 
+            totalFoodPrice: 0 
         };
         
-        setModalConfig({
-            show: true, type: 'confirm', title: 'BẮP NƯỚC',
-            message: 'Bạn có muốn đặt thêm bắp nước không?',
-            onConfirm: () => navigate('/foods', { state: bookingData }),
-            onCancel: () => navigate('/payment', { state: bookingData })
-        });
+        // 2. Lưu tạm vào sessionStorage để đề phòng khách F5 ở trang sau
+        sessionStorage.setItem('booking_temp', JSON.stringify(bookingData));
+        
+        // 3. THÊM DÒNG NÀY: Chuyển thẳng sang trang chọn đồ ăn
+        navigate('/foods', { state: bookingData });
     };
 
-    // --- LOGIC QUAN TRỌNG: Lọc trùng lặp để đồng bộ với Admin ---
     const groupedSeats = useMemo(() => {
         const uniqueSeats = Array.from(new Map(seats.map(s => [s.seat_id, s])).values());
         
@@ -209,12 +213,13 @@ const Booking = () => {
         <div className="booking-page-full-wrapper">
             <Modal {...modalConfig} onConfirm={modalConfig.onConfirm} onCancel={modalConfig.onCancel} />
             
+            {/* Cập nhật Stepper: 01 đang Active, còn lại là chưa tới */}
             <div className="stepper-bar-full">
                 <div className="stepper-content">
-                    <div className="step-item done">01 CHỌN SUẤT</div>
-                    <div className="step-item active">02 CHỌN GHẾ</div>
-                    <div className="step-item">03 BẮP NƯỚC</div>
-                    <div className="step-item">04 THANH TOÁN</div>
+                    <div className="step-item active">01 CHỌN GHẾ</div>
+                    <div className="step-item">02 CHỌN THỨC ĂN</div>
+                    <div className="step-item">03 THANH TOÁN</div>
+                    <div className="step-item">04 XÁC NHẬN</div>
                 </div>
             </div>
 
