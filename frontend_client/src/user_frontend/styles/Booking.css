@@ -305,8 +305,14 @@
   text-transform: uppercase;
 }
 
-.btn-confirm-booking:hover:not(:disabled) { background: #d95f1a; transform: translateY(-2px); }
-.btn-confirm-booking:disabled { background: #ccc; cursor: not-allowed; }
+.btn-confirm-booking:hover:not(:disabled) { 
+  background: #d95f1a; 
+  transform: translateY(-2px); 
+}
+.btn-confirm-booking:disabled {
+  background: #ccc;
+  cursor: not-allowed; 
+}
 
 /* Nút Quay Lại */
 .btn-go-back {
@@ -357,59 +363,131 @@
   }
 }
 
-/* --- MOBILE (Dưới 576px) --- */
+/* --- MOBILE (Dưới 576px) - BẢN FIX CĂN GIỮA & GIÃN ĐỀU --- */
 @media (max-width: 576px) {
   :root {
     --seat-height: 24px;
     --seat-width-std: 24px;
     --seat-width-couple: 50px;
   }
+  .stepper-bar-full {
+    padding: 10px 0; /* Thu hẹp chiều cao thanh */
+  }
+
+  .stepper-content {
+    justify-content: flex-start; /* Để các mục bắt đầu từ bên trái */
+    overflow-x: auto; /* Cho phép vuốt ngang nếu quá dài */
+    padding: 0 15px;
+    scrollbar-width: none; /* Ẩn thanh cuộn trên Firefox */
+    -ms-overflow-style: none; /* Ẩn thanh cuộn trên IE/Edge */
+  }
+
+  .stepper-content::-webkit-scrollbar {
+    display: none; /* Ẩn thanh cuộn trên Chrome/Safari để nhìn cho mượt */
+  }
+
+  .step-item {
+    padding: 0 15px; /* Giảm khoảng cách giữa các mục */
+    font-size: 12px; /* Hạ size chữ xuống một chút */
+    flex-shrink: 0; /* Không cho chữ bị bóp méo */
+  }
+
+  .step-item.active::after {
+    bottom: -11px; /* Chỉnh lại gạch chân cho khớp với padding mới */
+  }
+  /* 1. Căn giữa toàn bộ card chọn ghế */
+  .booking-main-layout {
+    padding: 0 10px; /* Thêm padding nhẹ 2 bên ngoài cùng */
+    margin: 15px auto;
+  }
 
   .seat-selection-card {
     padding: 30px 10px;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Đảm bảo con bên trong luôn ở giữa */
+  }
+
+  /* 2. Sửa sơ đồ ghế: Giãn đều (Space-between) để không bị lệch */
+  .seats-layout-engine {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
   }
 
   .seat-row {
-    gap: 8px;
+    width: 100%;
+    max-width: 350px; /* Khống chế chiều ngang tối đa của sơ đồ */
+    justify-content: space-between; /* Giãn đều các thành phần ra 2 biên */
+    gap: 0; /* Bỏ gap để space-between làm việc chính xác hơn */
+    margin-bottom: 8px;
   }
 
   .row-cells-group {
-    gap: 4px;
+    display: flex;
+    justify-content: center;
+    gap: 4px; /* Khoảng cách giữa các ghế trong cụm */
   }
 
+  /* 3. Chỉnh lại nhãn hàng ghế (A, B, C...) */
   .side-label {
     width: 20px;
     font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .screen-line {
-    font-size: 10px;
-    letter-spacing: 5px;
+  /* 4. Cân đối lại phần Thông tin phim & Sidebar */
+  .sidebar-sticky-content {
+    padding: 20px 15px;
+    margin: 0 10px; /* Tạo khoảng cách với mép màn hình */
+  }
+
+  .movie-info-summary {
+    display: flex;
+    flex-direction: row; /* Giữ ảnh và chữ nằm ngang */
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .summary-poster {
+    width: 70px; /* Thu nhỏ poster một chút trên mobile */
+    height: 100px;
   }
 
   .movie-title-text {
     font-size: 16px;
+    line-height: 1.3;
+  }
+
+  /* 5. Giãn đều dòng Tạm tính và Giá tiền */
+  .payment-footer-section > div:nth-child(2) { 
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
   }
 
   .total-value {
     font-size: 22px;
   }
 
-  .btn-confirm-booking {
-    font-size: 16px;
-    padding: 12px;
-  }
-  
-  .btn-go-back {
-    font-size: 14px;
-    padding: 10px;
-  }
-
+  /* 6. Chú thích ghế (Legend) chia lưới cho đều */
   .seat-legend-area {
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Chia 2 cột đều nhau */
+    gap: 12px;
+    padding: 20px 5px;
   }
 
   .legend-item {
     font-size: 11px;
+    justify-content: flex-start;
   }
 }

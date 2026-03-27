@@ -2,24 +2,20 @@
    1. CONFIGURATION (BIẾN TỔNG)
    ========================================= */
 :root {
-  /* Màu sắc chủ đạo */
   --clr-primary: #ff4d4d;
   --clr-success: #2ecc71;
   --clr-bg-dark: #121212;
   --clr-card: #1a1a1a;
   --clr-ticket: #ffffff;
   
-  /* Màu chữ */
   --clr-text-main: #ffffff;
   --clr-text-muted: #aaaaaa;
   --clr-text-dark: #333333;
   
-  /* Thông số nút bấm */
   --btn-padding: 20px;
   --btn-font-size: 18px;
   --btn-radius: 12px;
 
-  /* Hiệu ứng */
   --transition: all 0.3s ease;
   --shadow-card: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
@@ -29,16 +25,24 @@
    ========================================= */
 .success-page-wrapper {
   display: flex;
-  justify-content: center;
+  flex-direction: column; /* Để Stepper ở trên, Card ở dưới */
   align-items: center;
   min-height: 100vh;
-  padding: 40px 20px;
   background-color: var(--clr-bg-dark);
   font-family: 'Segoe UI', Tahoma, sans-serif;
 }
 
-.success-card {
+/* Fix Stepper nằm trên cùng */
+.success-page-wrapper .stepper-bar-full {
   width: 100%;
+  background: white;
+  padding: 15px 0;
+  border-bottom: 1px solid #333;
+  margin-bottom: 40px;
+}
+
+.success-card {
+  width: 90%;
   max-width: 650px;
   padding: 40px;
   background-color: var(--clr-card);
@@ -46,10 +50,11 @@
   box-shadow: var(--shadow-card);
   text-align: center;
   color: var(--clr-text-main);
+  margin-bottom: 50px;
 }
 
 /* =========================================
-   3. PHẦN ĐẦU (HEADER & TICK V)
+   3. PHẦN ĐẦU (HEADER)
    ========================================= */
 .check-circle {
   display: flex;
@@ -67,14 +72,8 @@
 }
 
 @keyframes bounceIn {
-  from {
-    transform: scale(0);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 .success-header h2 {
@@ -82,11 +81,6 @@
   font-weight: 800;
   margin-bottom: 8px;
   letter-spacing: 1px;
-}
-
-.success-header p {
-  color: var(--clr-text-muted);
-  margin-bottom: 35px;
 }
 
 /* =========================================
@@ -103,7 +97,6 @@
   text-align: left;
 }
 
-/* Bên trái: Ảnh & Thông tin */
 .ticket-left {
   flex: 1.8;
   padding: 25px;
@@ -126,32 +119,12 @@
   line-height: 1.2;
 }
 
-/* Lưới chi tiết vé */
 .ticket-detail-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
 
-.detail-item .label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: #888;
-  text-transform: uppercase;
-}
-
-.detail-item .value {
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.seat-highlight {
-  color: var(--clr-primary) !important;
-  font-size: 16px !important;
-}
-
-/* Đường cắt vé (Divider) */
 .ticket-divider {
   position: relative;
   width: 30px;
@@ -164,26 +137,18 @@
   border-left: 2px dashed #ddd;
 }
 
-.arc-top,
-.arc-bottom {
+.arc-top, .arc-bottom {
   position: absolute;
   left: 50%;
   width: 30px;
   height: 30px;
-  background-color: var(--clr-card);
+  background-color: var(--clr-card); /* Để tạo lỗ hổng */
   border-radius: 50%;
   transform: translateX(-50%);
 }
+.arc-top { top: -15px; }
+.arc-bottom { bottom: -15px; }
 
-.arc-top {
-  top: -15px;
-}
-
-.arc-bottom {
-  bottom: -15px;
-}
-
-/* Bên phải: PIN & QR */
 .ticket-right {
   flex: 1;
   display: flex;
@@ -195,101 +160,91 @@
   border-left: 1px solid #eeeeee;
 }
 
-.pin-label {
-  font-size: 11px;
-  color: #999;
-  font-weight: 600;
-}
-
-.pin-number {
-  font-size: 34px;
-  font-weight: 900;
-  color: var(--clr-success);
-  letter-spacing: 2px;
-  margin: 4px 0;
-}
-
 /* =========================================
-   5. CÁC NÚT BẤM (ACTION BUTTONS)
+   5. RESPONSIVE (BREAKPOINTS)
    ========================================= */
-.action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
+
+/* Tablet & Laptop nhỏ (< 992px) */
+@media (max-width: 992px) {
+  .success-card {
+    max-width: 600px;
+    padding: 30px;
+  }
+  .ticket-movie-title {
+    font-size: 18px;
+  }
 }
 
-/* Nút Về Trang Chủ */
-.btn-home {
-  width: 100%;
-  padding: var(--btn-padding);
-  font-size: var(--btn-font-size);
-  font-weight: 800;
-  text-transform: uppercase;
-  color: white;
-  background-color: var(--clr-primary);
-  border: none;
-  border-radius: var(--btn-radius);
-  cursor: pointer;
-  transition: var(--transition);
-  box-shadow: 0 6px 20px rgba(255, 77, 77, 0.3);
-}
+/* Mobile (< 576px) */
+@media (max-width: 576px) {
+  .success-card {
+    padding: 20px 15px;
+    width: 95%;
+  }
 
-.btn-home:hover {
-  background-color: #e63939;
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(255, 77, 77, 0.4);
-}
+  .check-circle {
+    width: 70px;
+    height: 70px;
+    font-size: 35px;
+  }
 
-/* Nút In Vé Cứng */
-.btn-print {
-  width: 100%;
-  padding: var(--btn-padding);
-  font-size: var(--btn-font-size);
-  font-weight: 800;
-  text-transform: uppercase;
-  color: white;
-  background-color: #2a2a2a;
-  border: 1px solid #444;
-  border-radius: var(--btn-radius);
-  cursor: pointer;
-  transition: var(--transition);
-}
+  .success-header h2 {
+    font-size: 22px;
+  }
 
-.btn-print:hover {
-  background-color: #383838;
-  transform: translateY(-3px);
+  .ticket-visual {
+    flex-direction: column; /* Chuyển vé thành chiều dọc */
+  }
+
+  .ticket-left {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .ticket-detail-grid {
+    grid-template-columns: 1fr; /* Thông tin thành 1 cột */
+    text-align: center;
+  }
+
+  .ticket-divider {
+    width: 100%;
+    height: 20px;
+  }
+
+  .dashed-line {
+    width: 80%;
+    height: 0;
+    margin: 10px auto;
+    border-top: 2px dashed #ddd;
+    border-left: none;
+  }
+
+  .arc-top, .arc-bottom {
+    top: 50%;
+    transform: translateY(-50%);
+    left: auto;
+  }
+  .arc-top { left: -15px; }
+  .arc-bottom { right: -15px; }
+
+  .action-buttons {
+    flex-direction: column;
+  }
 }
 
 /* =========================================
    6. CẤU HÌNH KHI IN (PRINT)
    ========================================= */
 @media print {
-  body * {
-    visibility: hidden;
-  }
-
-  .ticket-visual,
-  .ticket-visual * {
-    visibility: visible;
-  }
-
+  body * { visibility: hidden; }
+  .ticket-visual, .ticket-visual * { visibility: visible; }
   .ticket-visual {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    margin: 0;
     border: 1px solid #ddd;
-    box-shadow: none !important;
   }
-
-  .arc-top,
-  .arc-bottom {
-    display: none;
-  }
-
-  .ticket-right {
-    border-left: 1px dashed #ccc !important;
-  }
+  .arc-top, .arc-bottom { display: none; }
 }

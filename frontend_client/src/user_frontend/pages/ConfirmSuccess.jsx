@@ -25,31 +25,47 @@ const ConfirmSuccess = () => {
         return savedData ? JSON.parse(savedData) : null;
     });
 
-    // --- LOGIC CHỐT ĐƠN TỰ ĐỘNG ---
-    useEffect(() => {
-        const confirmBookingOnServer = async () => {
-            const bID = ticketData?.orderId || ticketData?.bookingId;
+   // --- LOGIC CHỐT ĐƠN TỰ ĐỘNG & CẬP NHẬT ĐIỂM ---
+useEffect(() => {
+    const confirmBookingOnServer = async () => {
+        const bID = ticketData?.orderId || ticketData?.bookingId;
 
-            if (bID && !hasConfirmed.current) {
-                hasConfirmed.current = true; // Đánh dấu đã gọi
-                try {
-                    console.log(`>>> [CINEMA STAR] Đang xác thực đơn hàng #${bID}...`);
-                    
-                    const response = await axios.post('https://webcinema-zb8z.onrender.com/api/payment/complete', {
-                        bookingId: bID
+        if (bID && !hasConfirmed.current) {
+            hasConfirmed.current = true;
+            try {
+                console.log(`>>> [CINEMA STAR] Đang xác thực đơn hàng #${bID}...`);
+                
+                // 1. Gọi API hoàn tất thanh toán
+                const response = await axios.post('https://webcinema-zb8z.onrender.com/api/payment/complete', 
+                { bookingId: bID },
+                { withCredentials: true } // Quan trọng: Để gửi Cookie usertoken đi
+                );
+
+                if (response.data.success) {
+                    console.log("✅ [CINEMA STAR] Thanh toán thành công!");
+
+                    // 2. Gọi API /api/auth/me để lấy Profile mới nhất (đã cộng điểm)
+                    const userRes = await axios.get('https://webcinema-zb8z.onrender.com/api/auth/me', {
+                        withCredentials: true 
                     });
 
-                    if (response.data.success) {
-                        console.log("✅ [CINEMA STAR] Đơn hàng đã được xác nhận thành công!");
+                    if (userRes.data.success) {
+                        // Lưu thông tin user mới vào localStorage để Header cập nhật số điểm
+                        localStorage.setItem('user', JSON.stringify(userRes.data.user));
+                        
+                        // Kích hoạt sự kiện để các linh kiện khác (Header, Profile) tự động load lại
+                        window.dispatchEvent(new Event("storage"));
+                        console.log("✨ [CINEMA STAR] Điểm thưởng mới đã sẵn sàng!");
                     }
-                } catch (err) {
-                    console.error("❌ [CINEMA STAR] Lỗi xác nhận đơn:", err.response?.data?.message || err.message);
                 }
+            } catch (err) {
+                console.error("❌ [CINEMA STAR] Lỗi:", err.response?.data?.message || err.message);
             }
-        };
+        }
+    };
 
-        confirmBookingOnServer();
-    }, [ticketData]);
+    confirmBookingOnServer();
+}, [ticketData]);
 
     // --- HIỂN THỊ THỜI GIAN ---
     useEffect(() => {

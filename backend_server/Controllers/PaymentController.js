@@ -12,7 +12,6 @@ const PaymentController = {
         await connection.beginTransaction();
 
         try {
-            // Lấy room_id và cinema_id để tránh bị NULL (Giữ nguyên logic tốt của ông)
             const [showtimeRows] = await connection.execute(
                 'SELECT room_id, cinema_id FROM showtimes WHERE showtime_id = ?',
                 [showtimeId]
@@ -22,14 +21,12 @@ const PaymentController = {
 
             const memo = `DUNG${Date.now()}`;
 
-            // Tạo đơn hàng ở trạng thái 'Pending'
             const [bookingResult] = await connection.execute(
                 'INSERT INTO bookings (user_id, showtime_id, total_amount, coupon_id, status, booking_date, memo) VALUES (?, ?, ?, ?, ?, NOW(), ?)',
                 [userId, showtimeId, totalAmount, couponId || null, 'Pending', memo]
             );
             const bookingId = bookingResult.insertId;
 
-            // Xử lý lưu ghế vào bảng tickets với status ban đầu là 'Reserved'
             if (selectedSeats && selectedSeats.length > 0) {
                 for (let seat of selectedSeats) {
                     await connection.execute(
@@ -46,7 +43,6 @@ const PaymentController = {
                 }
             }
 
-            // Lưu bắp nước (nếu có)
             if (selectedFoods && selectedFoods.length > 0) {
                 for (let food of selectedFoods) {
                     await connection.execute(
@@ -75,7 +71,7 @@ const PaymentController = {
         }
     },
 
-    // 2. Giai đoạn 2: Khi khách thanh toán thành công (QUAN TRỌNG NHẤT)
+    // 2. Giai đoạn 2: Khi khách thanh toán thành công (ĐÃ BỔ SUNG CỘNG ĐIỂM)
     completePayment: async (req, res) => {
         const { bookingId } = req.body; 
         
@@ -89,14 +85,24 @@ const PaymentController = {
         await connection.beginTransaction();
 
         try {
-            // Cập nhật trạng thái đơn hàng (Bảng bookings)
+            // --- BƯỚC MỚI: Lấy thông tin cũ để kiểm tra trước khi update ---
+            const [currentBooking] = await connection.execute(
+                `SELECT user_id, status FROM bookings WHERE booking_id = ?`,
+                [bookingId]
+            );
+
+            if (currentBooking.length === 0) {
+                throw new Error("Không tìm thấy đơn hàng!");
+            }
+
+            const { user_id, status: oldStatus } = currentBooking[0];
+
+            // --- GIỮ NGUYÊN CODE CŨ CỦA ÔNG ---
             const [updateBooking] = await connection.execute(
                 "UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", 
                 [bookingId]
             );
 
-            // Cập nhật trạng thái ghế từ Reserved sang Booked (Bảng tickets)
-            // Đồng thời đổi mã vé từ WAIT- sang TIC- cho chuyên nghiệp
             const [updateTickets] = await connection.execute(
                 `UPDATE tickets 
                  SET seat_status = 'Booked', 
@@ -110,12 +116,51 @@ const PaymentController = {
                 throw new Error("Không tìm thấy đơn hàng để cập nhật!");
             }
 
+            // --- BỔ SUNG: LOGIC CỘNG ĐIỂM CHI TIẾT ---
+            // Chỉ cộng điểm nếu trạng thái cũ chưa phải là 'Completed' (tránh cộng trùng)
+            if (String(oldStatus).toLowerCase() !== 'completed') {
+                const [details] = await connection.execute(
+                    `SELECT bd.price, bd.quantity, s.seat_type 
+                     FROM booking_details bd
+                     LEFT JOIN seats s ON bd.seat_id = s.seat_id
+                     WHERE bd.booking_id = ?`,
+                    [bookingId]
+                );
+
+                let totalEarnedPoints = 0;
+
+                details.forEach(item => {
+                    const itemTotal = Number(item.price) * Number(item.quantity);
+                    
+                    if (item.seat_type) {
+                        // Tính điểm cho VÉ (VIP 10%, Đôi 7%, Thường 5%)
+                        const type = String(item.seat_type).toUpperCase();
+                        let rate = 0.05; 
+                        if (type === 'VIP') rate = 0.10;
+                        else if (type === 'DOUBLE' || type === 'SWEETBOX') rate = 0.07;
+                        
+                        totalEarnedPoints += Math.floor(itemTotal * rate);
+                    } else {
+                        // Tính điểm cho BẮP NƯỚC (3%)
+                        totalEarnedPoints += Math.floor(itemTotal * 0.03);
+                    }
+                });
+
+                if (totalEarnedPoints > 0) {
+                    await connection.execute(
+                        `UPDATE users SET points = points + ? WHERE user_id = ?`,
+                        [totalEarnedPoints, user_id]
+                    );
+                    console.log(`✨ [DŨNG] Thanh toán xong! Đã tích ${totalEarnedPoints} điểm cho User #${user_id}`);
+                }
+            }
+
             await connection.commit();
             console.log(`✅ [DŨNG CINEMA] Chốt đơn #${bookingId} THÀNH CÔNG. Ghế đã được khóa.`);
             
             res.json({ 
                 success: true, 
-                message: "Thanh toán thành công, vé đã được chốt và ghế đã được khóa!" 
+                message: "Thanh toán thành công, vé đã được chốt và bạn đã nhận được điểm thưởng!" 
             });
         } catch (error) {
             await connection.rollback();

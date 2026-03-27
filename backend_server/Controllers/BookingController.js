@@ -82,16 +82,15 @@ const bookingController = {
         }
     },
 
-    // 3. Cập nhật trạng thái (Duyệt đơn / Hủy đơn) - BẢN FIX CHUẨN TÊN CỘT
+    // 3. Cập nhật trạng thái (Duyệt đơn / Hủy đơn) - BẢN FIX CHUẨN TỪ GEMINI
     updateBookingStatus: async (req, res) => {
         const { id } = req.params;
-        const { status } = req.body; // 'Pending', 'Completed', 'Cancelled'
+        const { status } = req.body; 
         
         const connection = await db.getConnection();
         await connection.beginTransaction();
 
         try {
-            // Lấy thông tin user_id và số tiền trước khi update để tính điểm [BỔ SUNG]
             const [currentBooking] = await connection.execute(
                 `SELECT user_id, total_amount, status FROM bookings WHERE booking_id = ?`,
                 [id]
@@ -101,15 +100,16 @@ const bookingController = {
                 throw new Error("Không tìm thấy đơn hàng");
             }
 
-            const { user_id, total_amount, status: oldStatus } = currentBooking[0];
+            const { user_id, status: oldStatus } = currentBooking[0];
 
-            // 1. Cập nhật bảng bookings
+            // 1. Cập nhật bảng bookings (Dùng status từ body gửi lên)
             await connection.execute(
                 `UPDATE bookings SET status = ? WHERE booking_id = ?`,
                 [status, id]
             );
 
-            const upperStatus = status.toUpperCase();
+            const upperStatus = String(status).toUpperCase();
+            const lowerOldStatus = String(oldStatus).toLowerCase();
 
             if (upperStatus === 'COMPLETED') {
                 // Khi duyệt thành công -> Chuyển ghế sang 'Booked'
@@ -118,26 +118,56 @@ const bookingController = {
                     [id]
                 );
 
-                // [BỔ SUNG LOGIC CỘNG ĐIỂM]
-                // Chỉ cộng điểm nếu trạng thái cũ chưa phải là Completed (tránh cộng điểm 2 lần)
-                if (oldStatus !== 'Completed') {
-                    const earnedPoints = Math.floor(total_amount * 0.05); // Tích 5%
-                    await connection.execute(
-                        `UPDATE users SET points = points + ? WHERE user_id = ?`,
-                        [earnedPoints, user_id]
+                // CHỈ CỘNG ĐIỂM NẾU TRƯỚC ĐÓ ĐƠN HÀNG CHƯA PHẢI LÀ COMPLETED
+                if (lowerOldStatus !== 'completed') {
+                    const [details] = await connection.execute(
+                        `SELECT bd.price, bd.quantity, s.seat_type 
+                        FROM booking_details bd
+                        LEFT JOIN seats s ON bd.seat_id = s.seat_id
+                        WHERE bd.booking_id = ?`,
+                        [id]
                     );
-                    console.log(`✨ [DŨNG] Đã cộng ${earnedPoints} điểm cho User ID: ${user_id}`);
+
+                    let totalEarnedPoints = 0;
+
+                    details.forEach(item => {
+                        // Ép kiểu số để tính toán cho chuẩn
+                        const price = Number(item.price);
+                        const quantity = Number(item.quantity);
+                        const itemTotal = price * quantity;
+                        
+                        if (item.seat_type) {
+                            const type = String(item.seat_type).toUpperCase();
+                            let rate = 0.05; // Mặc định Thường 5%
+
+                            if (type === 'VIP') {
+                                rate = 0.10; // VIP 10%
+                            } else if (type === 'DOUBLE' || type === 'SWEETBOX') {
+                                rate = 0.07; // Ghế đôi 7%
+                            }
+                            totalEarnedPoints += Math.floor(itemTotal * rate);
+                        } else {
+                            // Tính điểm cho BẮP NƯỚC (3%)
+                            totalEarnedPoints += Math.floor(itemTotal * 0.03);
+                        }
+                    });
+
+                    // Cập nhật tổng điểm tích lũy vào bảng users
+                    if (totalEarnedPoints > 0) {
+                        await connection.execute(
+                            `UPDATE users SET points = points + ? WHERE user_id = ?`,
+                            [totalEarnedPoints, user_id]
+                        );
+                        console.log(`✨ [DŨNG] Admin duyệt đơn: Đã cộng ${totalEarnedPoints} điểm`);
+                    }
                 }
                 
-                console.log(`✅ [DŨNG] Booking status -> Completed | Seat status -> Booked (#${id})`);
-                
             } else if (upperStatus === 'CANCELLED') {
-                // Khi hủy đơn -> Chuyển ghế sang 'Cancelled' (giải phóng ghế)
                 await connection.execute(
                     `UPDATE tickets SET seat_status = 'Cancelled' WHERE booking_id = ?`,
                     [id]
                 );
-                console.log(`❌ [DŨNG] Booking status -> Cancelled | Seat status -> Cancelled (#${id})`);
+                console.log(`❌ [DŨNG] Admin hủy đơn: #${id}`);
             }
 
             await connection.commit();
