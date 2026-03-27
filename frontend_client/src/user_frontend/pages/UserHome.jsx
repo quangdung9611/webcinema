@@ -61,11 +61,11 @@ const UserHome = () => {
             >
               {/* Nếu màn hình < 992px: Lấy hình từ folder banner_doc */}
               <source 
-                media="(max-width: 991px)" 
+                media="(max-width: 767px)" 
                 srcSet={`${bannerDocUrl}${imgName}`} 
               />
               
-              {/* Mặc định (> 992px): Lấy hình từ folder banners gốc */}
+              {/* Mặc định (> 768px): Lấy hình từ folder banners gốc */}
               <img 
                 src={`${bannerBaseUrl}${imgName}`} 
                 alt={`Promotion ${index + 1}`} 

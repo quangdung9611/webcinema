@@ -214,36 +214,42 @@
     font-size: 0.85rem;
 }
 
-/* --- 4. RESPONSIVE --- */
+/* --- 4. RESPONSIVE (CHỈ DÙNG MỘT MỐC 767PX) --- */
 
-/* Mốc 992px: Đổi Banner sang hình vuông 1300x1300 */
-@media (max-width: 991px) {
+@media (max-width: 767px) {
+    /* 1. Sửa Banner: Chuyển sang tỉ lệ hình 1350x900 */
     .banner-slide-simple {
-        aspect-ratio: 1 / 1 !important; /* Khớp với hình 1300x1300 */
+        /* 1350/900 = 1.5 */
+        aspect-ratio: 1.5 / 1 !important; 
+        border-radius: 0; /* Tràn viền phẳng cho chuyên nghiệp */
     }
 
+    .carousel-wrapper {
+        padding: 0; 
+    }
+
+    .banner-img {
+        object-fit: cover !important;
+        object-position: center;
+    }
+
+    /* 2. Sửa các chấm tròn Pagination cho nhỏ lại */
     .dot {
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
     }
     
     .dot.active {
-        width: 25px;
+        width: 20px;
     }
 
+    /* 3. Sửa Grid phim: 2 cột chuẩn Mobile */
     .movie-grid {
-        grid-template-columns: repeat(3, 1fr); /* Tablet 3 cột */
-        gap: 15px;
-    }
-}
-
-/* Mốc Mobile chuẩn */
-@media (max-width: 767px) {
-    .movie-grid {
-        grid-template-columns: repeat(2, 1fr); /* Mobile 2 cột */
+        grid-template-columns: repeat(2, 1fr); 
         gap: 12px;
     }
 
+    /* 4. Sửa Container và Font chữ */
     .movie-container {
         padding: 25px 15px;
     }
@@ -251,10 +257,16 @@
     .movie-name {
         font-size: 0.85rem;
         height: 2.4rem;
+        line-height: 1.2;
     }
 
     .btn-book {
         padding: 8px 16px;
         font-size: 0.75rem;
+    }
+
+    /* Đẩy sát nội dung lên trên để banner không bị hở với Header */
+    .user-home {
+        padding: 0 0 30px 0;
     }
 }

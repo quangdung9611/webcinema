@@ -4,35 +4,28 @@ import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import Modal from '../../admin_frontend/components/Modal';
 import '../styles/Profile.css';
-import { User, ClipboardList, Bell, Pencil, ShieldCheck, Star } from 'lucide-react';
+import { User, ClipboardList, Bell, Pencil, ShieldCheck, Star, Info, ChevronRight, Camera } from 'lucide-react';
 
 const Profile = () => {
     const { user, checkAuth } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     
-    // 1. Khởi tạo state với đầy đủ các trường để React quản lý tốt hơn
     const [formData, setFormData] = useState({ 
-        full_name: '', 
-        email: '', 
-        phone: '', 
-        address: '', 
-        username: '', 
-        points: 0 
+        full_name: '', email: '', phone: '', address: '', username: '', points: 0 
     });
     
     const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
     const [modal, setModal] = useState({ show: false, type: '', title: '', message: '' });
     const [activeTab, setActiveTab] = useState('profile');
 
-    // 2. Sửa lại useEffect để ép dữ liệu từ Backend vào Form (kể cả khi address bị null)
     useEffect(() => {
         if (user) {
             setFormData({
                 full_name: user.full_name || '',
                 email: user.email || '',
                 phone: user.phone || '',
-                address: user.address || '', // Đảm bảo lấy được địa chỉ từ Backend
+                address: user.address || '',
                 username: user.username || '',
                 points: user.points || 0
             });
@@ -47,13 +40,11 @@ const Profile = () => {
         if (passwordData.newPassword && passwordData.newPassword !== passwordData.confirmPassword) {
             return setModal({ show: true, type: 'error', title: 'Lỗi', message: 'Mật khẩu xác nhận không khớp!' });
         }
-
         setLoading(true);
         try {
             await axios.put('https://webcinema-zb8z.onrender.com/api/users/profile/update', 
                 { ...formData, ...passwordData }, { withCredentials: true });
-            
-            setModal({ show: true, type: 'success', title: 'Thành công', message: 'Hồ sơ của bạn đã được cập nhật mượt mà!' });
+            setModal({ show: true, type: 'success', title: 'Thành công', message: 'Hồ sơ đã được cập nhật!' });
             setIsEditing(false);
             setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
             await checkAuth(); 
@@ -67,129 +58,125 @@ const Profile = () => {
     if (!user) return <div className="loader">Đang tải...</div>;
 
     return (
-        <div className="shopee-profile-layout">
+        <div className="galaxy-profile-wrapper">
             <div className="container">
-                <div className="profile-grid">
-                    <div className="shopee-sidebar">
-                        <div className="user-brief">
-                            <div className="avatar-small">{formData.full_name?.charAt(0).toUpperCase()}</div>
-                            <div className="user-info">
-                                <span className="username-display">{formData.username}</span>
-                                <div className="edit-text" onClick={() => {setActiveTab('profile'); setIsEditing(true);}} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <Pencil size={12} /> Sửa hồ sơ
+                <div className="profile-layout-grid">
+                    {/* SIDEBAR BÊN TRÁI - GALAXY STYLE */}
+                    <aside className="galaxy-sidebar">
+                        <div className="user-card-top">
+                            <div className="avatar-wrapper">
+                                <div className="avatar-main">{formData.full_name?.charAt(0).toUpperCase()}</div>
+                                <div className="camera-icon"><Camera size={14} /></div>
+                            </div>
+                            <div className="user-titles">
+                                <h3>{formData.full_name}</h3>
+                                <div className="star-badge">
+                                    <Star size={14} fill="#f37021" color="#f37021" />
+                                    <span>0 Stars</span>
                                 </div>
                             </div>
                         </div>
-                        
-                        <nav className="sidebar-nav">
-                            <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                                <User size={18} color={activeTab === 'profile' ? '#ee4d2d' : '#555'} /> Tài khoản của tôi
+
+                        <div className="spending-summary">
+                            <div className="spending-header">
+                                <span>Tổng chi tiêu 2026</span>
+                                <Info size={14} />
                             </div>
-                            <div className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                                <ClipboardList size={18} color={activeTab === 'orders' ? '#ee4d2d' : '#555'} /> Đơn mua
+                            <div className="spending-value">{Number(formData.points).toLocaleString()} đ</div>
+                        </div>
+
+                        {/* Thanh tiến trình Stars */}
+                        <div className="star-progress-container">
+                            <div className="progress-bar-track">
+                                <div className="progress-fill" style={{width: '5%'}}></div>
+                                <div className="dot d-0 active"></div>
+                                <div className="dot d-2"></div>
+                                <div className="dot d-4"></div>
                             </div>
-                            <div className="nav-item" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                                <Bell size={18} color="#555" /> Thông báo
+                            <div className="progress-labels">
+                                <span>0 đ</span>
+                                <span>2.000.000 đ</span>
+                                <span>4.000.000 đ</span>
                             </div>
+                        </div>
+
+                        <nav className="galaxy-nav-menu">
+                            <div className="nav-link">HOTLINE hỗ trợ: 19002224 <ChevronRight size={16}/></div>
+                            <div className="nav-link">Email: hotro@galaxystudio.vn <ChevronRight size={16}/></div>
+                            <div className="nav-link">Câu hỏi thường gặp <ChevronRight size={16}/></div>
                         </nav>
-                    </div>
+                    </aside>
 
-                    <div className="shopee-main-content">
-                        {activeTab === 'profile' ? (
-                            <div className="profile-section">
-                                <div className="section-header">
-                                    <h2>Hồ sơ của tôi</h2>
-                                    <p>Quản lý thông tin hồ sơ để bảo mật tài khoản</p>
-                                    <button className={`btn-action-edit ${isEditing ? 'active' : ''}`} onClick={() => setIsEditing(!isEditing)}>
-                                        {isEditing ? 'Hủy' : 'Chỉnh sửa'}
-                                    </button>
-                                </div>
+                    {/* NỘI DUNG CHÍNH BÊN PHẢI */}
+                    <main className="galaxy-content-area">
+                        <div className="tabs-header">
+                            <button className={activeTab === 'orders' ? 'active' : ''} onClick={() => setActiveTab('orders')}>Lịch sử giao dịch</button>
+                            <button className={activeTab === 'profile' ? 'active' : ''} onClick={() => setActiveTab('profile')}>Thông tin cá nhân</button>
+                            <button>Thông báo</button>
+                            <button>Quà tặng</button>
+                        </div>
 
-                                <div className="profile-body-flex">
-                                    <form onSubmit={handleSubmit} className="form-main">
-                                        <div className="form-row-shopee">
-                                            <label>Tên đăng nhập</label>
-                                            <div className="static-text">{formData.username}</div>
-                                        </div>
-                                        <div className="form-row-shopee">
-                                            <label>Họ tên</label>
+                        <div className="tab-body">
+                            {activeTab === 'profile' ? (
+                                <form onSubmit={handleSubmit} className="galaxy-profile-form">
+                                    <div className="form-grid-2col">
+                                        <div className="input-box">
+                                            <label>Họ và tên</label>
                                             <input name="full_name" value={formData.full_name} onChange={handleInput} disabled={!isEditing} />
                                         </div>
-                                        <div className="form-row-shopee">
-                                            <label>Email</label>
-                                            <input name="email" value={formData.email} onChange={handleInput} disabled={!isEditing} />
+                                        <div className="input-box">
+                                            <label>Ngày sinh</label>
+                                            <input type="text" value="02/09/2004" disabled />
                                         </div>
-                                        <div className="form-row-shopee">
+                                        <div className="input-box">
+                                            <label>Email</label>
+                                            <div className="input-with-action">
+                                                <input name="email" value={formData.email} onChange={handleInput} disabled={!isEditing} />
+                                                {isEditing && <span className="action-link">Thay đổi</span>}
+                                            </div>
+                                        </div>
+                                        <div className="input-box">
                                             <label>Số điện thoại</label>
                                             <input name="phone" value={formData.phone} onChange={handleInput} disabled={!isEditing} />
                                         </div>
-                                        <div className="form-row-shopee">
-                                            <label>Địa chỉ</label>
-                                            {/* Thêm || "" để chắc chắn input luôn có giá trị */}
-                                            <input name="address" value={formData.address || ""} onChange={handleInput} disabled={!isEditing} placeholder="Nhập địa chỉ của bạn" />
-                                        </div>
-
-                                        {isEditing && (
-                                            <div className="password-box-shopee">
-                                                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <ShieldCheck size={20} /> Đổi mật khẩu
-                                                </h4>
-                                                <div className="form-row-shopee">
-                                                    <label>Mật khẩu cũ</label>
-                                                    <input type="password" name="oldPassword" placeholder="Nhập mật khẩu cũ" onChange={handlePass} />
-                                                </div>
-                                                <div className="forgot-pass-container">
-                                                    <Link to="/forgot-password">Quên mật khẩu?</Link>
-                                                </div>
-                                                <div className="form-row-shopee">
-                                                    <label>Mật khẩu mới</label>
-                                                    <input type="password" name="newPassword" placeholder="Mật khẩu mới" onChange={handlePass} />
-                                                </div>
-                                                <div className="form-row-shopee">
-                                                    <label>Xác nhận</label>
-                                                    <input type="password" name="confirmPassword" placeholder="Nhập lại mật khẩu" onChange={handlePass} />
-                                                </div>
-                                            </div>
-                                        )}
-                                        
-                                        {isEditing && (
-                                            <button type="submit" className="btn-save-shopee" disabled={loading}>
-                                                {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
-                                            </button>
-                                        )}
-                                    </form>
-
-                                    <div className="profile-avatar-side">
-                                        <div className="avatar-large">{formData.full_name?.charAt(0).toUpperCase()}</div>
-                                        <div className="point-display" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                            <Star size={16} fill="#f1c40f" color="#f1c40f" /> Số điểm: {formData.points}
-                                        </div>
-                                        <p className="file-info">Dung lượng file tối đa 1 MB <br/> Định dạng: .JPEG, .PNG</p>
                                     </div>
+
+                                    {isEditing && (
+                                        <div className="password-change-section">
+                                            <h4><ShieldCheck size={18}/> Đổi mật khẩu</h4>
+                                            <div className="form-grid-2col">
+                                                <input type="password" name="oldPassword" placeholder="Mật khẩu cũ" onChange={handlePass} />
+                                                <input type="password" name="newPassword" placeholder="Mật khẩu mới" onChange={handlePass} />
+                                                <input type="password" name="confirmPassword" placeholder="Xác nhận mật khẩu" onChange={handlePass} />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="form-actions">
+                                        {!isEditing ? (
+                                            <button type="button" className="btn-edit-mode" onClick={() => setIsEditing(true)}>Chỉnh sửa hồ sơ</button>
+                                        ) : (
+                                            <>
+                                                <button type="button" className="btn-cancel" onClick={() => setIsEditing(false)}>Hủy</button>
+                                                <button type="submit" className="btn-submit-galaxy" disabled={loading}>
+                                                    {loading ? 'Đang lưu...' : 'Cập nhật'}
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                </form>
+                            ) : (
+                                <div className="empty-history">
+                                    <p>Bạn chưa có giao dịch nào trong năm 2026.</p>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="order-section">
-                                <div className="section-header">
-                                    <h2>Đơn mua của bạn</h2>
-                                </div>
-                                <div className="order-card-demo">
-                                    <p>Bạn đang có 2 giao dịch trong hệ thống.</p>
-                                    <small>(Phần này bạn có thể map dữ liệu từ API bookings)</small>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    </main>
                 </div>
             </div>
 
-            <Modal 
-                show={modal.show} 
-                type={modal.type} 
-                title={modal.title} 
-                message={modal.message} 
-                onConfirm={() => setModal({ ...modal, show: false })} 
-            />
+            <Modal show={modal.show} type={modal.type} title={modal.title} message={modal.message} 
+                   onConfirm={() => setModal({ ...modal, show: false })} />
         </div>
     );
 };

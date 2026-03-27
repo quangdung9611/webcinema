@@ -1,315 +1,318 @@
-/* --- 1. Variables: Quản lý tập trung màu sắc & thông số --- */
+/* --- 1. Variables: Cinema Star Theme --- */
 :root {
-    --primary-color: #ee4d2d;       /* Cam Shopee */
-    --accent-color: #f1c40f;        /* Vàng Cinema Star */
-    --bg-light: #f5f5f5;
+    --primary-galaxy: #03599d;      /* Xanh dương đậm Cinema */
+    --accent-galaxy: #f37021;       /* Cam đặc trưng Galaxy */
+    --bg-body: #f0f2f5;
     --white: #ffffff;
-    --text-main: #333333;
-    --text-sub: #858585;
-    --border-color: #efefef;
-    --input-border: rgba(0, 0, 0, 0.14);
+    --text-dark: #333333;
+    --text-muted: #666666;
+    --border-line: #e0e0e0;
     --transition: all 0.3s ease;
 }
 
-/* --- 2. Layout Base --- */
-.shopee-profile-layout {
-    background-color: var(--bg-light);
+/* --- 2. Base Layout --- */
+.galaxy-profile-wrapper {
+    background-color: var(--bg-body);
     min-height: 100vh;
-    padding: 20px 0;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: var(--text-main);
+    padding: 30px 0;
+    font-family: 'Inter', -apple-system, sans-serif;
 }
 
-.shopee-profile-layout .container {
-    max-width: 1200px;
+.galaxy-profile-wrapper .container {
+    max-width: 1140px;
     margin: 0 auto;
+    padding: 0 15px;
 }
 
-.profile-grid {
+.profile-layout-grid {
     display: flex;
-    gap: 20px;
+    gap: 25px;
 }
 
-/* --- 3. Sidebar Block (Bên trái) --- */
-.shopee-sidebar {
-    width: 180px;
+/* --- 3. Sidebar (Cột trái) --- */
+.galaxy-sidebar {
+    width: 280px;
+    background: var(--white);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     flex-shrink: 0;
 }
 
-.user-brief {
+.user-card-top {
     display: flex;
     align-items: center;
-    padding: 15px 0;
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 15px;
-}
-
-.avatar-small {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: #ccc;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    margin-right: 12px;
-    border: 1px solid rgba(0,0,0,0.05);
-    color: var(--white);
-}
-
-.user-info .username-display {
-    font-weight: 600;
-    font-size: 14px;
-    display: block;
-    margin-bottom: 4px;
-}
-
-/* Sửa lại để icon Pencil và chữ "Sửa hồ sơ" thẳng hàng */
-.user-info .edit-text {
-    font-size: 12px;
-    color: var(--text-sub);
-    cursor: pointer;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.sidebar-nav .nav-item {
-    padding: 12px 0;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 12px; /* Khoảng cách giữa icon Lucide và chữ */
-    transition: var(--transition);
-}
-
-.sidebar-nav .nav-item:hover,
-.sidebar-nav .nav-item.active {
-    color: var(--primary-color);
-}
-
-.sidebar-nav .nav-item.active {
-    font-weight: 600;
-}
-
-/* --- 4. Main Content Block (Bên phải) --- */
-.shopee-main-content {
-    flex: 1;
-    background: var(--white);
-    padding: 20px 30px;
-    border-radius: 2px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.section-header {
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 18px;
-    margin-bottom: 30px;
-    position: relative;
-}
-
-.section-header h2 {
-    font-size: 18px;
-    font-weight: 500;
-    margin: 0 0 5px 0;
-}
-
-.section-header p {
-    font-size: 14px;
-    color: #555;
-    margin: 0;
-}
-
-.btn-action-edit {
-    position: absolute;
-    top: 0;
-    right: 0;
-    padding: 8px 15px;
-    background: transparent;
-    border: 1px solid var(--input-border);
-    border-radius: 2px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: var(--transition);
-}
-
-.btn-action-edit.active {
-    background: #f8f8f8;
-    color: var(--primary-color);
-    border-color: var(--primary-color);
-}
-
-/* --- 5. Form & Profile Body --- */
-.profile-body-flex {
-    display: flex;
-}
-
-.form-main {
-    flex: 1;
-    padding-right: 50px;
-}
-
-.form-row-shopee {
-    display: flex;
-    align-items: center;
-    margin-bottom: 25px;
-}
-
-.form-row-shopee label {
-    width: 25%;
-    text-align: right;
-    margin-right: 20px;
-    color: rgba(85, 85, 85, 0.8);
-    font-size: 14px;
-}
-
-.form-row-shopee input {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid var(--input-border);
-    border-radius: 2px;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.form-row-shopee input:focus {
-    border-color: #888;
-}
-
-.form-row-shopee input:disabled {
-    background-color: #fafafa;
-    border-color: #efefef;
-    cursor: not-allowed;
-}
-
-.static-text {
-    font-size: 14px;
-    color: var(--text-main);
-}
-
-/* Password Box */
-.password-box-shopee {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px dashed var(--border-color);
-}
-
-/* Fix lỗi calc ở đây */
-.password-box-shopee h4 {
-    margin: 0 0 20px calc(25% + 20px); 
-    color: var(--primary-color);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.forgot-pass-container {
-    margin: -15px 0 20px 25%;
-    padding-left: 20px;
-}
-
-.forgot-pass-container a {
-    font-size: 13px;
-    color: #0055aa;
-    text-decoration: none;
-}
-
-/* Save Button */
-.btn-save-shopee {
-    background: var(--primary-color);
-    color: var(--white);
-    border: none;
-    padding: 10px 30px;
-    border-radius: 2px;
-    margin-left: calc(25% + 20px);
-    cursor: pointer;
-    min-width: 70px;
-    transition: var(--transition);
-}
-
-.btn-save-shopee:hover {
-    opacity: 0.9;
-}
-
-.btn-save-shopee:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-/* --- 6. Avatar Side Section --- */
-.profile-avatar-side {
-    width: 280px;
-    border-left: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-left: 20px;
-}
-
-.avatar-large {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: #f5f5f5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    color: #bbb;
-    border: 1px solid var(--border-color);
+    gap: 15px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-line);
     margin-bottom: 20px;
 }
 
-.point-display {
-    font-weight: 600;
-    color: var(--accent-color);
-    margin-bottom: 10px;
+.avatar-main {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: #004680;
+    color: white;
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: bold;
 }
 
-.file-info {
+.user-titles h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--text-dark);
+}
+
+.star-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--accent-galaxy);
     font-size: 13px;
-    color: var(--text-sub);
-    text-align: center;
-    line-height: 1.5;
+    font-weight: 600;
 }
 
-/* --- 7. Order Section --- */
-.order-card-demo {
-    padding: 40px;
-    text-align: center;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background: #fafafa;
+.spending-summary {
+    margin-bottom: 20px;
+}
+
+.spending-header {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+}
+
+.spending-value {
+    font-size: 22px;
+    font-weight: bold;
+    color: var(--primary-galaxy);
+    margin-top: 5px;
+}
+
+/* Progress Bar */
+.star-progress-container {
+    margin-bottom: 25px;
+}
+
+.progress-bar-track {
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 10px;
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary-galaxy);
+    border-radius: 10px;
+}
+
+.dot {
+    position: absolute;
+    top: -4px;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border: 2px solid #ced4da;
+    border-radius: 50%;
+}
+
+.dot.active { border-color: var(--primary-galaxy); background: var(--primary-galaxy); }
+.d-0 { left: 0; }
+.d-2 { left: 50%; transform: translateX(-50%); }
+.d-4 { left: 100%; transform: translateX(-100%); }
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.galaxy-nav-menu .nav-link {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-top: 1px solid #f1f1f1;
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+}
+
+/* --- 4. Main Content (Cột phải) --- */
+.galaxy-content-area {
+    flex: 1;
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.tabs-header {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid var(--border-line);
+}
+
+.tabs-header button {
+    padding: 18px 25px;
+    border: none;
+    background: none;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    position: relative;
+    transition: var(--transition);
+}
+
+.tabs-header button.active {
+    color: var(--primary-galaxy);
+}
+
+.tabs-header button.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--primary-galaxy);
+}
+
+.tab-body {
+    padding: 30px;
+}
+
+/* --- 5. Form Profile --- */
+.form-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px; /* Tăng gap cho thoáng */
+}
+
+.input-box label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600; /* Đậm hơn tí cho rõ */
+    margin-bottom: 10px;
+    color: var(--text-dark);
+}
+
+/* SỬA LẠI: Tăng padding cho input hẹp */
+.input-box input, 
+.password-change-section input {
+    width: 100%;
+    padding: 14px 16px; /* Padding rộng rãi hơn */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: var(--transition);
+    box-sizing: border-box;
+}
+
+.input-box input:focus,
+.password-change-section input:focus {
+    border-color: var(--primary-galaxy);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(3, 89, 157, 0.1);
+}
+
+.input-box input:disabled {
+    background-color: #f5f5f5;
+    color: #888;
+    border-color: #ddd;
+}
+
+/* SỬA LẠI: Phần mật khẩu chuyên nghiệp hơn */
+.password-change-section {
+    margin-top: 35px;
+    padding-top: 25px;
+    border-top: 1px dashed var(--border-line);
+}
+
+.password-change-section h4 {
+    color: var(--primary-galaxy);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+}
+
+.form-actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+/* Buttons */
+.btn-edit-mode, .btn-submit-galaxy {
+    background: var(--accent-galaxy);
+    color: white;
+    border: none;
+    padding: 14px 30px; /* Tăng size nút cho cân đối với input */
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-edit-mode:hover, .btn-submit-galaxy:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-cancel {
+    background: #e9ecef;
+    border: none;
+    padding: 14px 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-submit-galaxy:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* --- 8. Responsive --- */
-@media (max-width: 768px) {
-    .profile-grid {
+@media (max-width: 992px) {
+    .profile-layout-grid {
         flex-direction: column;
     }
-    .shopee-sidebar {
+    .galaxy-sidebar {
         width: 100%;
     }
-    .profile-body-flex {
-        flex-direction: column-reverse;
+    .form-grid-2col {
+        grid-template-columns: 1fr;
     }
-    .profile-avatar-side {
+}
+
+@media (max-width: 576px) {
+    .galaxy-profile-wrapper {
+        padding: 15px 0;
+    }
+    .tab-body {
+        padding: 20px 15px;
+    }
+    .tabs-header button {
+        padding: 15px 10px;
+        font-size: 13px;
+        flex: 1;
+    }
+    .form-actions {
+        flex-direction: column;
+    }
+    .form-actions button {
         width: 100%;
-        border-left: none;
-        border-bottom: 1px solid var(--border-color);
-        padding: 0 0 20px 0;
-        margin-bottom: 20px;
-    }
-    .form-row-shopee label {
-        width: 80px;
-    }
-    .btn-save-shopee, .forgot-pass-container {
-        margin-left: 100px;
     }
 }

@@ -91,21 +91,44 @@ const bookingController = {
         await connection.beginTransaction();
 
         try {
-            // 1. Cập nhật bảng bookings -> Dùng cột 'status'
+            // Lấy thông tin user_id và số tiền trước khi update để tính điểm [BỔ SUNG]
+            const [currentBooking] = await connection.execute(
+                `SELECT user_id, total_amount, status FROM bookings WHERE booking_id = ?`,
+                [id]
+            );
+
+            if (currentBooking.length === 0) {
+                throw new Error("Không tìm thấy đơn hàng");
+            }
+
+            const { user_id, total_amount, status: oldStatus } = currentBooking[0];
+
+            // 1. Cập nhật bảng bookings
             await connection.execute(
                 `UPDATE bookings SET status = ? WHERE booking_id = ?`,
                 [status, id]
             );
 
-            // 2. Cập nhật bảng tickets -> Dùng cột 'seat_status'
             const upperStatus = status.toUpperCase();
 
             if (upperStatus === 'COMPLETED') {
-                // Khi duyệt thành công -> Chuyển ghế sang 'Booked' (màu đỏ)
+                // Khi duyệt thành công -> Chuyển ghế sang 'Booked'
                 await connection.execute(
                     `UPDATE tickets SET seat_status = 'Booked' WHERE booking_id = ?`,
                     [id]
                 );
+
+                // [BỔ SUNG LOGIC CỘNG ĐIỂM]
+                // Chỉ cộng điểm nếu trạng thái cũ chưa phải là Completed (tránh cộng điểm 2 lần)
+                if (oldStatus !== 'Completed') {
+                    const earnedPoints = Math.floor(total_amount * 0.05); // Tích 5%
+                    await connection.execute(
+                        `UPDATE users SET points = points + ? WHERE user_id = ?`,
+                        [earnedPoints, user_id]
+                    );
+                    console.log(`✨ [DŨNG] Đã cộng ${earnedPoints} điểm cho User ID: ${user_id}`);
+                }
+                
                 console.log(`✅ [DŨNG] Booking status -> Completed | Seat status -> Booked (#${id})`);
                 
             } else if (upperStatus === 'CANCELLED') {
