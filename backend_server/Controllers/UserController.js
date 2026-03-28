@@ -246,18 +246,19 @@ exports.getBookingHistory = async (req, res) => {
     const userId = req.user.user_id;
 
     const sql = `
-        SELECT 
-            b.booking_id AS bookingId,
-            m.title AS movieTitle,
-            m.poster_url AS moviePoster,
-            c.cinema_name AS cinemaName,
-            r.room_name AS roomName,
-            DATE_FORMAT(s.start_time, '%d/%m/%Y') AS selectedDate,
-            TIME_FORMAT(s.start_time, '%H:%i') AS startTime,
-            GROUP_CONCAT(bd.item_name SEPARATOR ', ') AS seatDisplay,
-            b.total_amount AS total_amount,
-            b.status,
-            b.memo AS ticketPIN
+    SELECT 
+        b.booking_id AS bookingId,
+        m.title AS movieTitle,
+        m.poster_url AS moviePoster,
+        c.cinema_name AS cinemaName,
+        r.room_name AS roomName,
+        DATE_FORMAT(b.booking_date, '%d/%m/%Y %H:%i') AS bookingDateFull, -- Ngày giờ đặt vé
+        DATE_FORMAT(s.start_time, '%d/%m/%Y') AS selectedDate,
+        TIME_FORMAT(s.start_time, '%H:%i') AS startTime,
+        GROUP_CONCAT(bd.item_name SEPARATOR ', ') AS seatDisplay, -- Danh sách ghế gộp lại
+        b.total_amount AS total_amount,
+        b.status,
+        b.memo AS ticketPIN
         FROM bookings b
         JOIN showtimes s ON b.showtime_id = s.showtime_id
         JOIN movies m ON s.movie_id = m.movie_id
@@ -268,7 +269,6 @@ exports.getBookingHistory = async (req, res) => {
         GROUP BY b.booking_id
         ORDER BY b.booking_date DESC
     `;
-
     try {
         const [rows] = await db.query(sql, [userId]);
         res.status(200).json({ bookings: rows });

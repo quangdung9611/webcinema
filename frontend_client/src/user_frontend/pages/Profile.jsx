@@ -3,9 +3,12 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import Modal from '../../admin_frontend/components/Modal';
-import { QRCodeCanvas } from 'qrcode.react'; // Bổ sung để hiện mã QR mini
+import { QRCodeCanvas } from 'qrcode.react'; 
 import '../styles/Profile.css';
-import { User, ClipboardList, Bell, Pencil, ShieldCheck, Star, Info, ChevronRight, Camera, Calendar, Clock, MapPin } from 'lucide-react';
+import { 
+    User, ClipboardList, Bell, Pencil, ShieldCheck, Star, Info, 
+    ChevronRight, Camera, Calendar, Clock, MapPin, ReceiptText, Armchair 
+} from 'lucide-react';
 
 const Profile = () => {
     const { user, checkAuth } = useAuth();
@@ -18,9 +21,8 @@ const Profile = () => {
     
     const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
     const [modal, setModal] = useState({ show: false, type: '', title: '', message: '' });
-    const [activeTab, setActiveTab] = useState('profile');
+    const [activeTab, setActiveTab] = useState('orders');
 
-    // --- PHẦN BỔ SUNG CHO LỊCH SỬ GIAO DỊCH ---
     const [bookingHistory, setBookingHistory] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
 
@@ -29,6 +31,7 @@ const Profile = () => {
             const fetchHistory = async () => {
                 setLoadingHistory(true);
                 try {
+                    // API này phải trả về thêm trường bookingDateFull như mình đã sửa ở Backend
                     const res = await axios.get('https://webcinema-zb8z.onrender.com/api/users/booking-history', { withCredentials: true });
                     setBookingHistory(res.data.bookings || []);
                 } catch (error) {
@@ -40,7 +43,6 @@ const Profile = () => {
             fetchHistory();
         }
     }, [activeTab]);
-    // ------------------------------------------
 
     useEffect(() => {
         if (user) {
@@ -84,7 +86,7 @@ const Profile = () => {
         <div className="galaxy-profile-wrapper">
             <div className="container">
                 <div className="profile-layout-grid">
-                    {/* SIDEBAR BÊN TRÁI - GIỮ NGUYÊN */}
+                    {/* SIDEBAR BÊN TRÁI */}
                     <aside className="galaxy-sidebar">
                         <div className="user-card-top">
                             <div className="avatar-wrapper">
@@ -188,7 +190,6 @@ const Profile = () => {
                                     </div>
                                 </form>
                             ) : (
-                                /* PHẦN HIỂN THỊ LỊCH SỬ GIAO DỊCH DÀNH CHO DŨNG */
                                 <div className="history-tab-content">
                                     {loadingHistory ? (
                                         <div className="loading-text">Đang tải lịch sử giao dịch...</div>
@@ -199,21 +200,41 @@ const Profile = () => {
                                                     <div className="ticket-thumb">
                                                         <img src={item.moviePoster?.startsWith('http') ? item.moviePoster : `https://webcinema-zb8z.onrender.com/uploads/posters/${item.moviePoster}`} alt="poster" />
                                                     </div>
+                                                    
                                                     <div className="ticket-main-info">
                                                         <h4 className="movie-title-history">{item.movieTitle}</h4>
+                                                        
+                                                        {/* BỔ SUNG: Ngày đặt vé (Từ trường bookingDateFull) */}
                                                         <div className="info-row">
-                                                            <span><MapPin size={14}/> {item.cinemaName}</span>
-                                                            <span style={{marginLeft: '15px'}}><Info size={14}/> {item.roomName}</span>
+                                                            <ReceiptText size={14} />
+                                                            <span>Ngày đặt: <strong>{item.bookingDateFull}</strong></span>
                                                         </div>
+
+                                                        <div className="info-row">
+                                                            <MapPin size={14}/> 
+                                                            <span>{item.cinemaName} | {item.roomName}</span>
+                                                        </div>
+
                                                         <div className="info-row highlight">
-                                                            <span><Calendar size={14}/> {item.selectedDate}</span>
-                                                            <span style={{marginLeft: '15px'}}><Clock size={14}/> {item.startTime}</span>
+                                                            <Calendar size={14}/> 
+                                                            <span>{item.selectedDate}</span>
+                                                            <Clock size={14} style={{marginLeft: '15px'}}/> 
+                                                            <span>{item.startTime}</span>
                                                         </div>
-                                                        <p className="seat-text">Ghế: <strong>{item.seatDisplay}</strong></p>
+
+                                                        {/* BỔ SUNG: Ghế ngồi (Từ trường seatDisplay đã GROUP_CONCAT) */}
+                                                        <div className="seat-text">
+                                                            <Armchair size={14} /> 
+                                                            <span> Ghế: <strong>{item.seatDisplay}</strong></span>
+                                                        </div>
+
                                                         <p className="price-text">Tổng tiền: <span>{Number(item.total_amount).toLocaleString()} đ</span></p>
                                                     </div>
+
                                                     <div className="ticket-qr-side">
-                                                        <span className="status-label paid">Đã thanh toán</span>
+                                                        <span className={`status-label ${item.status === 'Completed' ? 'paid' : 'pending'}`}>
+                                                            {item.status === 'Completed' ? 'Đã thanh toán' : 'Chờ xử lý'}
+                                                        </span>
                                                         <div className="qr-container-mini">
                                                             <QRCodeCanvas value={`TICKET-${item.bookingId}-${item.ticketPIN}`} size={70} />
                                                         </div>
@@ -225,7 +246,7 @@ const Profile = () => {
                                     ) : (
                                         <div className="empty-history">
                                             <ClipboardList size={48} color="#444" />
-                                            <p>Ông chưa có giao dịch nào trong năm 2026.</p>
+                                            <p>Dũng chưa có giao dịch nào trong năm 2026.</p>
                                             <Link to="/" className="btn-book-now">ĐẶT VÉ NGAY</Link>
                                         </div>
                                     )}

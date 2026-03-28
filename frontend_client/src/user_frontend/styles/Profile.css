@@ -283,20 +283,194 @@
     cursor: not-allowed;
     transform: none;
 }
+/* --- 9. Ticket History List --- */
+.history-tab-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
 
-/* --- 8. Responsive --- */
+.ticket-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Khung bọc chiếc vé */
+.history-ticket-item {
+    display: flex;
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--border-line);
+    overflow: hidden;
+    height: 180px; /* Cố định chiều cao để đồng bộ */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: var(--transition);
+}
+
+.history-ticket-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+/* PHẦN POSTER (Quan trọng để fix lỗi ảnh to) */
+.ticket-thumb {
+    width: 130px; /* Giới hạn chiều rộng poster */
+    min-width: 130px;
+    height: 100%;
+    background: #000;
+}
+
+.ticket-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Giữ tỉ lệ ảnh không bị méo */
+    display: block;
+}
+
+/* PHẦN THÔNG TIN Ở GIỮA */
+.ticket-main-info {
+    flex: 1;
+    padding: 15px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+}
+
+.movie-title-history {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    color: var(--primary-galaxy);
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.info-row.highlight {
+    color: var(--accent-galaxy);
+    font-weight: 600;
+}
+
+.seat-text, .price-text {
+    margin: 2px 0;
+    font-size: 14px;
+}
+
+.price-text span {
+    color: #e53935;
+    font-weight: bold;
+}
+
+/* PHẦN QR VÀ CUỐNG VÉ (Bên phải) */
+.ticket-qr-side {
+    width: 160px;
+    border-left: 2px dashed #eee; /* Đường răng cưa phân cách */
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    position: relative;
+}
+
+/* Tạo lỗ răng cưa giả trên dưới */
+.ticket-qr-side::before, .ticket-qr-side::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: var(--white); /* Trùng màu nền tab body */
+    border-radius: 50%;
+    left: -11px;
+}
+.ticket-qr-side::before { top: -10px; }
+.ticket-qr-side::after { bottom: -10px; }
+
+.status-label {
+    font-size: 11px;
+    font-weight: bold;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.status-label.paid {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+.qr-container-mini {
+    background: white;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.pin-text {
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-dark);
+}
+
+/* Trạng thái trống */
+.empty-history {
+    text-align: center;
+    padding: 50px 0;
+    color: var(--text-muted);
+}
+
+.btn-book-now {
+    display: inline-block;
+    margin-top: 15px;
+    background: var(--primary-galaxy);
+    color: white;
+    padding: 10px 25px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 600;
+}
+/* --- 7. Responsive --- */
+
+/* Tablet & Mobile ngang (Dưới 992px) */
 @media (max-width: 992px) {
     .profile-layout-grid {
         flex-direction: column;
     }
     .galaxy-sidebar {
         width: 100%;
+        box-sizing: border-box;
     }
     .form-grid-2col {
         grid-template-columns: 1fr;
     }
+    /* Chỉnh sidebar nằm ngang một chút để tiết kiệm diện tích */
+    .galaxy-nav-menu {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .galaxy-nav-menu .nav-link {
+        border: 1px solid #f1f1f1;
+        padding: 10px;
+        border-radius: 8px;
+    }
 }
 
+/* Điện thoại di động (Dưới 576px) */
 @media (max-width: 576px) {
     .galaxy-profile-wrapper {
         padding: 15px 0;
@@ -304,15 +478,44 @@
     .tab-body {
         padding: 20px 15px;
     }
+    .tabs-header {
+        overflow-x: auto; /* Cho phép cuộn tab nếu quá dài */
+    }
     .tabs-header button {
         padding: 15px 10px;
         font-size: 13px;
         flex: 1;
+        white-space: nowrap;
     }
     .form-actions {
         flex-direction: column;
     }
     .form-actions button {
         width: 100%;
+    }
+    .galaxy-nav-menu {
+        grid-template-columns: 1fr;
+    }
+
+    /* RESPONSIVE CHO CHIẾC VÉ */
+    .history-ticket-item {
+        flex-direction: column;
+        height: auto;
+    }
+    .ticket-thumb {
+        width: 100%;
+        height: 180px;
+    }
+    .ticket-main-info {
+        padding: 20px;
+    }
+    .ticket-qr-side {
+        width: 100%;
+        border-left: none;
+        border-top: 2px dashed #eee;
+        padding: 25px 0;
+    }
+    .ticket-qr-side::before, .ticket-qr-side::after {
+        display: none; /* Ẩn lỗ đục vé khi xoay dọc */
     }
 }
