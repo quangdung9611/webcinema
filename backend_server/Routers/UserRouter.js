@@ -5,34 +5,41 @@ const verifyToken = require('../Middlewares/AuthMiddleware');
 
 /**
  * ==========================================
- * NHÓM ROUTE ƯU TIÊN (SPECIFIC ROUTES)
- * Đưa những route này lên đầu để tránh bị nhầm với :user_id
+ * NHÓM ROUTE DÀNH CHO NGƯỜI DÙNG (CUSTOMER)
+ * Yêu cầu verifyToken để lấy user_id từ JWT
  * ==========================================
  */
 
 // 1. Lấy thông tin cá nhân (Profile)
 router.get('/profile', verifyToken, userController.getUserProfile);
 
-// 2. Tự cập nhật thông tin cá nhân (ĐƯA LÊN TRÊN ĐẦU)
+// 2. Tự cập nhật thông tin cá nhân (Họ tên, SĐT, Địa chỉ, Đổi mật khẩu)
 router.put('/profile/update', verifyToken, userController.updateUserProfile);
 
-// 3. Lấy danh sách tất cả user
-router.get('/', userController.getAllUsers);
+// 3. Lấy lịch sử giao dịch (MỚI BỔ SUNG)
+// Route này sẽ gọi hàm getBookingHistory ông vừa thêm vào Controller
+router.get('/booking-history', verifyToken, userController.getBookingHistory);
+
 
 /**
  * ==========================================
- * NHÓM ROUTE CÓ THAM SỐ (DYNAMIC ROUTES)
+ * NHÓM ROUTE QUẢN TRỊ (ADMIN)
+ * Quản lý danh sách người dùng trong hệ thống
  * ==========================================
  */
 
-// 4. Thêm mới user
+// 4. Lấy danh sách tất cả user (Hiển thị lên bảng Admin)
+router.get('/', userController.getAllUsers);
+
+// 5. Thêm mới user trực tiếp từ Admin
 router.post('/add', userController.createUser);
 
-// 5. Cập nhật user theo ID (Dành cho Admin)
-// Lưu ý: Route này phải nằm dưới /profile/update
+// 6. Cập nhật user theo ID (Admin sửa thông tin hoặc đổi Role user)
+// Đặt dưới /profile/update để không bị trùng lặp route
 router.put('/update/:user_id', userController.updateUser);
 
-// 6. Xóa user theo ID
+// 7. Xóa user khỏi hệ thống
 router.delete('/delete/:user_id', userController.deleteUser);
+
 
 module.exports = router;

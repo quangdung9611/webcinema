@@ -3,8 +3,9 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import Modal from '../../admin_frontend/components/Modal';
+import { QRCodeCanvas } from 'qrcode.react'; // Bổ sung để hiện mã QR mini
 import '../styles/Profile.css';
-import { User, ClipboardList, Bell, Pencil, ShieldCheck, Star, Info, ChevronRight, Camera } from 'lucide-react';
+import { User, ClipboardList, Bell, Pencil, ShieldCheck, Star, Info, ChevronRight, Camera, Calendar, Clock, MapPin } from 'lucide-react';
 
 const Profile = () => {
     const { user, checkAuth } = useAuth();
@@ -18,6 +19,28 @@ const Profile = () => {
     const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
     const [modal, setModal] = useState({ show: false, type: '', title: '', message: '' });
     const [activeTab, setActiveTab] = useState('profile');
+
+    // --- PHẦN BỔ SUNG CHO LỊCH SỬ GIAO DỊCH ---
+    const [bookingHistory, setBookingHistory] = useState([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+
+    useEffect(() => {
+        if (activeTab === 'orders') {
+            const fetchHistory = async () => {
+                setLoadingHistory(true);
+                try {
+                    const res = await axios.get('https://webcinema-zb8z.onrender.com/api/users/booking-history', { withCredentials: true });
+                    setBookingHistory(res.data.bookings || []);
+                } catch (error) {
+                    console.error("Lỗi fetch lịch sử:", error);
+                } finally {
+                    setLoadingHistory(false);
+                }
+            };
+            fetchHistory();
+        }
+    }, [activeTab]);
+    // ------------------------------------------
 
     useEffect(() => {
         if (user) {
@@ -61,7 +84,7 @@ const Profile = () => {
         <div className="galaxy-profile-wrapper">
             <div className="container">
                 <div className="profile-layout-grid">
-                    {/* SIDEBAR BÊN TRÁI - GALAXY STYLE */}
+                    {/* SIDEBAR BÊN TRÁI - GIỮ NGUYÊN */}
                     <aside className="galaxy-sidebar">
                         <div className="user-card-top">
                             <div className="avatar-wrapper">
@@ -72,7 +95,7 @@ const Profile = () => {
                                 <h3>{formData.full_name}</h3>
                                 <div className="star-badge">
                                     <Star size={14} fill="#f37021" color="#f37021" />
-                                    <span>0 Stars</span>
+                                    <span>{Math.floor(formData.points / 10000)} Stars</span>
                                 </div>
                             </div>
                         </div>
@@ -85,10 +108,9 @@ const Profile = () => {
                             <div className="spending-value">{Number(formData.points).toLocaleString()} đ</div>
                         </div>
 
-                        {/* Thanh tiến trình Stars */}
                         <div className="star-progress-container">
                             <div className="progress-bar-track">
-                                <div className="progress-fill" style={{width: '5%'}}></div>
+                                <div className="progress-fill" style={{width: `${Math.min((formData.points / 4000000) * 100, 100)}%`}}></div>
                                 <div className="dot d-0 active"></div>
                                 <div className="dot d-2"></div>
                                 <div className="dot d-4"></div>
@@ -166,8 +188,47 @@ const Profile = () => {
                                     </div>
                                 </form>
                             ) : (
-                                <div className="empty-history">
-                                    <p>Bạn chưa có giao dịch nào trong năm 2026.</p>
+                                /* PHẦN HIỂN THỊ LỊCH SỬ GIAO DỊCH DÀNH CHO DŨNG */
+                                <div className="history-tab-content">
+                                    {loadingHistory ? (
+                                        <div className="loading-text">Đang tải lịch sử giao dịch...</div>
+                                    ) : bookingHistory.length > 0 ? (
+                                        <div className="ticket-list">
+                                            {bookingHistory.map((item, index) => (
+                                                <div key={index} className="history-ticket-item">
+                                                    <div className="ticket-thumb">
+                                                        <img src={item.moviePoster?.startsWith('http') ? item.moviePoster : `https://webcinema-zb8z.onrender.com/uploads/posters/${item.moviePoster}`} alt="poster" />
+                                                    </div>
+                                                    <div className="ticket-main-info">
+                                                        <h4 className="movie-title-history">{item.movieTitle}</h4>
+                                                        <div className="info-row">
+                                                            <span><MapPin size={14}/> {item.cinemaName}</span>
+                                                            <span style={{marginLeft: '15px'}}><Info size={14}/> {item.roomName}</span>
+                                                        </div>
+                                                        <div className="info-row highlight">
+                                                            <span><Calendar size={14}/> {item.selectedDate}</span>
+                                                            <span style={{marginLeft: '15px'}}><Clock size={14}/> {item.startTime}</span>
+                                                        </div>
+                                                        <p className="seat-text">Ghế: <strong>{item.seatDisplay}</strong></p>
+                                                        <p className="price-text">Tổng tiền: <span>{Number(item.total_amount).toLocaleString()} đ</span></p>
+                                                    </div>
+                                                    <div className="ticket-qr-side">
+                                                        <span className="status-label paid">Đã thanh toán</span>
+                                                        <div className="qr-container-mini">
+                                                            <QRCodeCanvas value={`TICKET-${item.bookingId}-${item.ticketPIN}`} size={70} />
+                                                        </div>
+                                                        <span className="pin-text">PIN: {item.ticketPIN}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="empty-history">
+                                            <ClipboardList size={48} color="#444" />
+                                            <p>Ông chưa có giao dịch nào trong năm 2026.</p>
+                                            <Link to="/" className="btn-book-now">ĐẶT VÉ NGAY</Link>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -176,7 +237,7 @@ const Profile = () => {
             </div>
 
             <Modal show={modal.show} type={modal.type} title={modal.title} message={modal.message} 
-                   onConfirm={() => setModal({ ...modal, show: false })} />
+                    onConfirm={() => setModal({ ...modal, show: false })} />
         </div>
     );
 };

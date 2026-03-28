@@ -23,11 +23,6 @@
     min-width: 0;
 }
 
-/* Sidebar (2.5) */
-/* .sidebar-col {
-    flex: 2.5;
-    min-width: 280px;
-} */
 
 /* ==========================================
    2. HEADER: POSTER & THÔNG TIN CHUNG
@@ -196,30 +191,39 @@
 }
 
 /* ==========================================
-   4. SIDEBAR (PHIM ĐANG CHIẾU)
+   4. SIDEBAR (PHIM ĐANG CHIẾU) - ĐÃ CẬP NHẬT TÊN VÀ LỖI LỆCH
    ========================================== */
-/* .sidebar-col {
+.movie-sidebar-right {
     flex: 2.5;
     min-width: 280px;
- 
-    margin-top: -10px; 
-} */
-.sidebar-title {
+    /* Sửa lỗi lệch: Đảm bảo con của sidebar luôn căn trái */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; 
+}
+
+.sidebar-heading {
     color: #fff !important;
     border-left: 4px solid #f1c40f;
     padding-left: 15px;
     margin-bottom: 30px;
     font-weight: 700;
+    width: 100%; /* Đảm bảo vạch vàng luôn ở mép trái */
 }
 
 .sidebar-movie-list {
     display: flex;
     flex-direction: column;
-    gap: 35px;
+    gap: 15px;
+    width: 100%;
 }
 
 .simple-movie-item {
     cursor: pointer;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Ép poster và title thẳng hàng lề trái */
 }
 
 .simple-poster {
@@ -245,6 +249,7 @@
     font-size: 1rem;
     font-weight: 600;
     color: #fff;
+    text-align: left;
 }
 /* Trailer Section */
 .trailer-header-section {

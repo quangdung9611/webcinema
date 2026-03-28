@@ -183,42 +183,37 @@ exports.getUserProfile = async (req, res) => {
         res.status(500).json({ error: "Lỗi hệ thống khi lấy thông tin cá nhân" });
     }
 };
-// Người dùng tự cập nhật thông tin
-// Người dùng tự cập nhật thông tin
+// 6. Người dùng tự cập nhật thông tin
 exports.updateUserProfile = async (req, res) => {
-    // SỬA DÒNG NÀY: Lấy cả user_id hoặc id từ token để tránh bị undefined
-    const userId = req.user.user_id ;
+    const userId = req.user.user_id;
     const { full_name, phone, email, address, oldPassword, newPassword } = req.body;
 
     try {
-        // 1. Kiểm tra validation cơ bản
-        const validationError = validateUserData({ full_name, phone, email, address, password: newPassword }, true);
+        const validationError = validateUserData({ 
+            full_name, 
+            phone, 
+            email, 
+            address, 
+            password: newPassword 
+        }, true);
+        
         if (validationError) return res.status(400).json(validationError);
 
-        // 2. Xử lý đổi mật khẩu
         let hashedPassword = null;
         if (newPassword && newPassword.trim() !== "") {
             if (!oldPassword) {
-                return res.status(400).json({ field: 'oldPassword', error: "Vui lòng nhập mật khẩu cũ để đổi mật khẩu mới" });
+                return res.status(400).json({ field: 'oldPassword', error: "Vui lòng nhập mật khẩu cũ" });
             }
 
-            // Lấy user từ DB - Lưu ý cách destructuring [rows]
             const [rows] = await db.query('SELECT password FROM users WHERE user_id = ?', [userId]);
-            
-            if (rows.length === 0) {
-                return res.status(404).json({ error: "Người dùng không tồn tại" });
-            }
-
-            // So sánh mật khẩu cũ
             const isMatch = await bcrypt.compare(oldPassword, rows[0].password);
-            if (!isMatch) {
-                return res.status(400).json({ field: 'oldPassword', error: "Mật khẩu cũ không chính xác" });
-            }
             
+            if (!isMatch) {
+                return res.status(400).json({ field: 'oldPassword', error: "Mật khẩu cũ không đúng" });
+            }
             hashedPassword = await bcrypt.hash(newPassword, 10);
         }
 
-        // 3. Xây dựng câu lệnh SQL cập nhật động
         let fields = ["full_name = ?", "phone = ?", "email = ?", "address = ?"];
         let params = [full_name, phone, email, address];
 
@@ -229,16 +224,56 @@ exports.updateUserProfile = async (req, res) => {
 
         params.push(userId);
         const sql = `UPDATE users SET ${fields.join(", ")} WHERE user_id = ?`;
-
         await db.query(sql, params);
-        res.status(200).json({ message: "Cập nhật trang cá nhân thành công!" });
 
+        // Lấy lại dữ liệu mới nhất để trả về Frontend
+        const [updatedUser] = await db.query(
+            'SELECT user_id, username, full_name, email, phone, address, role, points FROM users WHERE user_id = ?',
+            [userId]
+        );
+
+        res.status(200).json({ 
+            message: "Cập nhật thành công!",
+            user: updatedUser[0] 
+        });
     } catch (err) {
-        console.error("Update Profile Error:", err);
-        if (err.code === 'ER_DUP_ENTRY') {
-            return res.status(400).json({ error: "Email hoặc Số điện thoại đã tồn tại" });
-        }
-        // Trả về lỗi chi tiết hơn để dễ debug
         res.status(500).json({ error: "Lỗi máy chủ: " + err.message });
+    }
+};
+
+// 7. Lấy lịch sử giao dịch (Khớp chính xác database cinema_shop)
+exports.getBookingHistory = async (req, res) => {
+    const userId = req.user.user_id;
+
+    const sql = `
+        SELECT 
+            b.booking_id AS bookingId,
+            m.title AS movieTitle,
+            m.poster_url AS moviePoster,
+            c.cinema_name AS cinemaName,
+            r.room_name AS roomName,
+            DATE_FORMAT(s.start_time, '%d/%m/%Y') AS selectedDate,
+            TIME_FORMAT(s.start_time, '%H:%i') AS startTime,
+            GROUP_CONCAT(bd.item_name SEPARATOR ', ') AS seatDisplay,
+            b.total_amount AS total_amount,
+            b.status,
+            b.memo AS ticketPIN
+        FROM bookings b
+        JOIN showtimes s ON b.showtime_id = s.showtime_id
+        JOIN movies m ON s.movie_id = m.movie_id
+        JOIN rooms r ON s.room_id = r.room_id
+        JOIN cinemas c ON s.cinema_id = c.cinema_id
+        LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
+        WHERE b.user_id = ?
+        GROUP BY b.booking_id
+        ORDER BY b.booking_date DESC
+    `;
+
+    try {
+        const [rows] = await db.query(sql, [userId]);
+        res.status(200).json({ bookings: rows });
+    } catch (error) {
+        console.error("Booking History Error:", error);
+        res.status(500).json({ error: "Lỗi khi lấy lịch sử giao dịch" });
     }
 };

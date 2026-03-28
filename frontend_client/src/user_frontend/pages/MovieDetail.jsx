@@ -296,13 +296,21 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                <div className="sidebar-col">
-                    <div className="sidebar-title">Phim Đang Chiếu</div>
+                {/* Thay đổi từ sidebar-col sang movie-sidebar-area */}
+                <div className="movie-sidebar-area">
+                    <div className="sidebar-heading">Phim Đang Chiếu</div>
                     <div className="sidebar-movie-list">
                         {relatedMovies.map((m, index) => (
-                            <div key={index} className="simple-movie-item" onClick={() => navigate(`/movies/detail/${m.slug}`)}>
+                            <div 
+                                key={index} 
+                                className="simple-movie-item" 
+                                onClick={() => navigate(`/movies/detail/${m.slug}`)}
+                            >
                                 <div className="simple-poster">
-                                    <img src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} alt={m.title} />
+                                    <img 
+                                        src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} 
+                                        alt={m.title} 
+                                    />
                                 </div>
                                 <div className="simple-title">{m.title}</div>
                             </div>
