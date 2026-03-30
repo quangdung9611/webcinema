@@ -39,7 +39,11 @@ const MovieDetail = () => {
     const fetchReviews = async (movieId) => {
         try {
             const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/reviews/${movieId}`);
-            setReviews(res.data);
+            // SẮP XẾP: Đưa bình luận mới nhất hoặc vừa cập nhật lên đầu
+            const sortedReviews = res.data.sort((a, b) => 
+                new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
+            );
+            setReviews(sortedReviews);
         } catch (error) {
             console.error("Lỗi lấy danh sách review:", error);
         }
@@ -84,7 +88,6 @@ const MovieDetail = () => {
             return;
         }
         try {
-            // SỬA: Gửi kèm user_id và bỏ withCredentials để không dùng cookie
             await axios.post(`https://webcinema-zb8z.onrender.com/api/reviews`, {
                 movie_id: movie.movie_id,
                 user_id: user.user_id, // Lấy từ AuthContext
@@ -319,29 +322,36 @@ const MovieDetail = () => {
                     <div className="section-divider"><h3>Bình luận từ cộng đồng</h3></div>
                     <div className="reviews-list-container">
                         {reviews.length > 0 ? (
-                            reviews.map((rev, index) => (
-                                <div key={index} className="review-card">
-                                    <div className="review-user-info">
-                                        <div className="user-avatar"><User size={20} /></div>
-                                        <div className="user-details">
-                                            <span className="user-name">{rev.full_name}</span>
-                                            <div className="user-rating-stars">
-                                                {[...Array(10)].map((_, i) => (
-                                                    <Star 
-                                                        key={i} size={12} 
-                                                        fill={i < rev.rating_score ? "#f5b50a" : "none"} 
-                                                        color={i < rev.rating_score ? "#f5b50a" : "#444"} 
-                                                    />
-                                                ))}
-                                                <span className="time-ago">
-                                                    {new Date(rev.created_at).toLocaleDateString('vi-VN')}
-                                                </span>
+                            reviews.map((rev, index) => {
+                                // Logic kiểm tra xem có phải là bình luận đã chỉnh sửa không
+                                const isEdited = rev.updated_at && (new Date(rev.updated_at).getTime() - new Date(rev.created_at).getTime() > 1000);
+
+                                return (
+                                    <div key={index} className="review-card">
+                                        <div className="review-user-info">
+                                            <div className="user-avatar"><User size={20} /></div>
+                                            <div className="user-details">
+                                                {/* Đã đổi sang lấy username theo yêu cầu */}
+                                                <span className="user-name">@{rev.username}</span>
+                                                <div className="user-rating-stars">
+                                                    {[...Array(10)].map((_, i) => (
+                                                        <Star 
+                                                            key={i} size={12} 
+                                                            fill={i < rev.rating_score ? "#f5b50a" : "none"} 
+                                                            color={i < rev.rating_score ? "#f5b50a" : "#444"} 
+                                                        />
+                                                    ))}
+                                                    <span className="time-ago">
+                                                        {new Date(rev.updated_at || rev.created_at).toLocaleDateString('vi-VN')}
+                                                        {isEdited && <span style={{fontSize: '11px', color: '#888', fontStyle: 'italic', marginLeft: '5px'}}>(Đã chỉnh sửa)</span>}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
+                                        <p className="review-text">{rev.comment}</p>
                                     </div>
-                                    <p className="review-text">{rev.comment}</p>
-                                </div>
-                            ))
+                                );
+                            })
                         ) : (
                             <div className="no-data">Chưa có bình luận nào cho phim này.</div>
                         )}
