@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { ThumbsUp, Eye, ChevronRight } from 'lucide-react';
-// Dùng chung file CSS với CinemaGenre để đồng bộ layout
-import '../styles/CinemaGenre.css'; 
+import '../styles/FilmReview.css'; 
 
 const FilmReview = () => {
     const navigate = useNavigate();
-    
     const [news, setNews] = useState([]);
     const [sidebarMovies, setSidebarMovies] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -22,8 +20,7 @@ const FilmReview = () => {
                 ]);
 
                 setNews(resNews.data);
-                
-                // Lấy 3 phim đang chiếu cho Sidebar
+                // Lấy 3 phim "Đang chiếu" cho Sidebar giống trang Movie Detail
                 const active = resMovies.data.filter(m => m.status === 'Đang chiếu');
                 setSidebarMovies(active.slice(0, 3)); 
                 
@@ -38,20 +35,19 @@ const FilmReview = () => {
         window.scrollTo(0, 0);
     }, []);
 
-    // Hàm xử lý cắt chuỗi và loại bỏ HTML tags
     const renderExcerpt = (item) => {
         const rawText = item.content || item.short_content || "";
         const cleanText = rawText.replace(/<[^>]*>/g, '');
-        return cleanText.length > 160 ? cleanText.substring(0, 160) + "..." : cleanText;
+        return cleanText.length > 150 ? cleanText.substring(0, 150) + "..." : cleanText;
     };
 
-    if (loading) return <div className="loading">Đang tải dữ liệu...</div>;
+    if (loading) return <div className="loading-state">Đang tải dữ liệu...</div>;
 
     return (
         <div className="genre-page-bg">
             <div className="genre-content-flex">
                 
-                {/* CỘT TRÁI: DANH SÁCH BÌNH LUẬN PHIM */}
+                {/* CỘT TRÁI: DANH SÁCH BÌNH LUẬN */}
                 <div className="main-genre-col">
                     <div className="section-header-galaxy">
                         <span className="blue-line"></span>
@@ -59,10 +55,10 @@ const FilmReview = () => {
                     </div>
                     
                     <div className="genre-filters-bar">
-                        <select className="filter-select">
+                        <select className="filter-select-custom">
                             <option value="">Tất cả bài viết</option>
-                            <option value="">Mới nhất</option>
-                            <option value="">Xem nhiều nhất</option>
+                            <option value="new">Mới nhất</option>
+                            <option value="hot">Xem nhiều nhất</option>
                         </select>
                     </div>
 
@@ -81,11 +77,11 @@ const FilmReview = () => {
                                     </Link>
                                     <div className="movie-meta-row">
                                         <button className="btn-fb-like">
-                                            <ThumbsUp size={14} strokeWidth={2.5} fill="currentColor" /> 
+                                            <ThumbsUp size={12} fill="currentColor" /> 
                                             <span>Thích</span>
                                         </button>
                                         <span className="view-count">
-                                            <Eye size={14} strokeWidth={2} /> 
+                                            <Eye size={14} /> 
                                             <span>{item.views} lượt xem</span>
                                         </span>
                                     </div>
@@ -101,7 +97,7 @@ const FilmReview = () => {
                     </div>
                 </div>
 
-                {/* CỘT PHẢI: SIDEBAR */}
+                {/* CỘT PHẢI: SIDEBAR PHIM ĐANG CHIẾU */}
                 <div className="sidebar-col">
                     <div className="sidebar-title">Phim Đang Chiếu</div>
                     <div className="sidebar-movie-list">
@@ -118,9 +114,9 @@ const FilmReview = () => {
                             </div>
                         ))}
                     </div>
-                    <button className="view-more-btn" onClick={() => navigate('/movies')}>
+                    <button className="view-more-sidebar-btn" onClick={() => navigate('/movies')}>
                         <span>Xem thêm</span>
-                        <ChevronRight size={18} strokeWidth={2.5} />
+                        <ChevronRight size={18} />
                     </button>
                 </div>
 

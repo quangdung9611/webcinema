@@ -86,9 +86,9 @@ const Actor = () => {
                     </div>
                 </div>
 
-                {/* --- SIDEBAR: PHIM ĐANG CHIẾU (TỐI GIẢN) --- */}
-                <div className="sidebar-col">
-                    <div className="sidebar-title">Phim Đang Chiếu</div>
+                {/* --- SIDEBAR: PHIM ĐANG CHIẾU (Đã đồng bộ class name) --- */}
+                <div className="movie-sidebar-area">
+                    <div className="sidebar-heading">Phim Đang Chiếu</div>
                     <div className="sidebar-movie-list">
                         {relatedMovies.map((m, index) => (
                             <div key={index} className="simple-movie-item" onClick={() => navigate(`/movies/detail/${m.slug}`)}>
@@ -98,12 +98,12 @@ const Actor = () => {
                                         alt={m.title} 
                                     />
                                 </div>
-                                {/* Tên phim nằm rời hẳn ở dưới hình */}
                                 <div className="simple-title">{m.title}</div>
                             </div>
                         ))}
                     </div>
-                    <button className="view-more-btn" onClick={() => navigate('/movies')}>
+                    {/* Giữ lại nút Xem thêm của Actor */}
+                    <button className="view-more-btn" onClick={() => navigate('/movies')} style={{marginTop: '20px'}}>
                         <span>Xem thêm</span>
                         <ChevronRight size={18} strokeWidth={2.5} />
                     </button>

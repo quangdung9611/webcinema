@@ -443,6 +443,42 @@
     text-decoration: none;
     font-weight: 600;
 }
+/* --- Bổ sung chi tiết cho Ghế và PIN (Quang Dũng check cái này) --- */
+
+/* Dòng hiển thị ghế - làm nổi bật màu cam accent */
+.seat-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-galaxy); /* Màu cam đặc trưng */
+ 
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+/* Dòng chứa mã PIN - làm kiểu font máy tính cho chuyên nghiệp */
+.pin-text {
+    margin-top: 10px;
+    font-family: 'Courier New', Courier, monospace; /* Font monospace nhìn giống vé thật */
+    font-size: 13px;
+    font-weight: bold;
+    color: #333;
+    background: #eeeeee;
+    padding: 4px 10px;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    text-align: center;
+    width: 90%; /* Để cân đối dưới QR */
+    letter-spacing: 0.5px;
+}
+
+/* Hiệu ứng khi hover vào dòng ghế */
+.info-row.highlight:hover .seat-text {
+    background: var(--accent-galaxy);
+    color: white;
+    transition: var(--transition);
+}
 /* --- 7. Responsive --- */
 
 /* Tablet & Mobile ngang (Dưới 992px) */

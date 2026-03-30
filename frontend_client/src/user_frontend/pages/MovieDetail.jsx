@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Clock, Calendar, MapPin, Star } from 'lucide-react'; 
+// Bổ sung ChevronRight và User icon cho phần bình luận
+import { Clock, Calendar, MapPin, Star, ChevronRight, User } from 'lucide-react'; 
 import Modal from '../../admin_frontend/components/Modal';
 import { useAuth } from '../../context/AuthContext';
 import '../styles/MovieDetail.css';
@@ -20,6 +21,9 @@ const MovieDetail = () => {
     const [hover, setHover] = useState(0); 
     const [reviewComment, setReviewComment] = useState(""); 
 
+    // State mới để lưu danh sách bình luận
+    const [reviews, setReviews] = useState([]);
+
     const [modalConfig, setModalConfig] = useState({
         show: false, type: '', title: '', message: null, onConfirm: null 
     });
@@ -31,6 +35,16 @@ const MovieDetail = () => {
         return (match && match[2].length === 11) ? match[2] : null;
     };
 
+    // Hàm lấy danh sách bình luận từ backend
+    const fetchReviews = async (movieId) => {
+        try {
+            const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/reviews/${movieId}`);
+            setReviews(res.data);
+        } catch (error) {
+            console.error("Lỗi lấy danh sách review:", error);
+        }
+    };
+
     useEffect(() => {
         const fetchMovieData = async () => {
             if (!slug || slug === 'undefined') return;
@@ -38,6 +52,10 @@ const MovieDetail = () => {
                 setLoading(true);
                 const resMovie = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies/${slug}`);
                 setMovie(resMovie.data);
+                
+                // Khi có dữ liệu phim, lấy luôn danh sách bình luận
+                fetchReviews(resMovie.data.movie_id);
+
                 const resRelated = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies`);
                 setRelatedMovies(resRelated.data.filter(m => m.slug !== slug).slice(0, 5));
                 setLoading(false);
@@ -66,15 +84,19 @@ const MovieDetail = () => {
             return;
         }
         try {
-            // 3. Sử dụng withCredentials thay vì gửi token thủ công qua header nếu Backend dùng Cookie
+            // SỬA: Gửi kèm user_id và bỏ withCredentials để không dùng cookie
             await axios.post(`https://webcinema-zb8z.onrender.com/api/reviews`, {
                 movie_id: movie.movie_id,
+                user_id: user.user_id, // Lấy từ AuthContext
                 rating: userRating,
                 comment: reviewComment 
-            }, { withCredentials: true });
+            });
 
+            // Sau khi gửi thành công, load lại thông tin phim (để cập nhật avg rating) và danh sách reviews
             const response = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies/${slug}`);
             setMovie(response.data);
+            fetchReviews(movie.movie_id);
+
             setModalConfig({
                 show: true, type: 'success', title: 'Gửi thành công!',
                 message: 'Cảm ơn bạn đã dành thời gian đánh giá phim nhé!',
@@ -83,14 +105,13 @@ const MovieDetail = () => {
         } catch (error) {
             setModalConfig({
                 show: true, type: 'error', title: 'Opps! Có lỗi rồi',
-                message: error.response?.status === 401 ? 'Vui lòng đăng nhập lại nha' : 'Lỗi hệ thống rồi!',
+                message: 'Gửi đánh giá thất bại, thử lại sau nhé!',
                 onConfirm: () => setModalConfig(prev => ({ ...prev, show: false }))
             });
         }
     };
 
    const openRatingModal = () => {
-        // 4. Kiểm tra user từ Context
         if (!user) {
             setModalConfig({
                 show: true, type: 'confirm', title: 'Yêu cầu đăng nhập',
@@ -109,7 +130,6 @@ const MovieDetail = () => {
     };
 
     const handleSelectShowtime = (cinemaName, slot) => {
-        // 5. Kiểm tra user từ Context
         if (!user) {
             setModalConfig({
                 show: true, type: 'confirm', title: 'Đăng nhập', message: 'Bạn đăng nhập để đặt vé nhé!',
@@ -294,9 +314,41 @@ const MovieDetail = () => {
                             ))
                         ) : (<div className="no-data">Hiện tại không còn suất chiếu nào khả dụng.</div>)}
                     </div>
+
+                    {/* --- BỔ SUNG: PHẦN HIỂN THỊ DANH SÁCH BÌNH LUẬN --- */}
+                    <div className="section-divider"><h3>Bình luận từ cộng đồng</h3></div>
+                    <div className="reviews-list-container">
+                        {reviews.length > 0 ? (
+                            reviews.map((rev, index) => (
+                                <div key={index} className="review-card">
+                                    <div className="review-user-info">
+                                        <div className="user-avatar"><User size={20} /></div>
+                                        <div className="user-details">
+                                            <span className="user-name">{rev.full_name}</span>
+                                            <div className="user-rating-stars">
+                                                {[...Array(10)].map((_, i) => (
+                                                    <Star 
+                                                        key={i} size={12} 
+                                                        fill={i < rev.rating_score ? "#f5b50a" : "none"} 
+                                                        color={i < rev.rating_score ? "#f5b50a" : "#444"} 
+                                                    />
+                                                ))}
+                                                <span className="time-ago">
+                                                    {new Date(rev.created_at).toLocaleDateString('vi-VN')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="review-text">{rev.comment}</p>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="no-data">Chưa có bình luận nào cho phim này.</div>
+                        )}
+                    </div>
                 </div>
 
-                {/* Thay đổi từ sidebar-col sang movie-sidebar-area */}
+                {/* --- SIDEBAR --- */}
                 <div className="movie-sidebar-area">
                     <div className="sidebar-heading">Phim Đang Chiếu</div>
                     <div className="sidebar-movie-list">
@@ -311,11 +363,16 @@ const MovieDetail = () => {
                                         src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} 
                                         alt={m.title} 
                                     />
+                                    <div className="age-badge">C{m.age_rating}</div>
                                 </div>
                                 <div className="simple-title">{m.title}</div>
                             </div>
                         ))}
                     </div>
+                    <button className="view-more-sidebar-btn" onClick={() => navigate('/movies')}>
+                        <span>Xem thêm</span>
+                        <ChevronRight size={18} strokeWidth={2.5} />
+                    </button>
                 </div>
             </div>
         </div>

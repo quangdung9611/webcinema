@@ -8,7 +8,6 @@ const CinemaGenre = () => {
     const navigate = useNavigate();
     const { genreSlug } = useParams();
     
-    // State quản lý dữ liệu từ CSDL
     const [movies, setMovies] = useState([]);
     const [genres, setGenres] = useState([]);
     const [sidebarMovies, setSidebarMovies] = useState([]);
@@ -20,30 +19,22 @@ const CinemaGenre = () => {
         const fetchAllData = async () => {
             try {
                 setLoading(true);
-                
-                // GỌI TẤT CẢ API TỪ BACKEND
                 const [resMovies, resGenres] = await Promise.all([
                     axios.get('https://webcinema-zb8z.onrender.com/api/movies'),
                     axios.get('https://webcinema-zb8z.onrender.com/api/genres')
                 ]);
 
-                // 1. Lưu danh sách phim chính
                 setMovies(resMovies.data);
-
-                // 2. Lưu danh sách thể loại cho filter
                 setGenres(resGenres.data);
 
-                // 3. Lấy danh sách NĂM duy nhất từ API movies (Xử lý từ dữ liệu thô của CSDL)
                 const years = [...new Set(resMovies.data.map(m => 
                     new Date(m.release_date).getFullYear()
                 ))].sort((a, b) => b - a);
                 setAvailableYears(years);
 
-                // 4. Lấy danh sách TRẠNG THÁI duy nhất từ cột status trong CSDL
                 const statuses = [...new Set(resMovies.data.map(m => m.status))];
                 setAvailableStatuses(statuses);
 
-                // 5. Sidebar: Lấy phim đang chiếu thực tế
                 const active = resMovies.data.filter(m => m.status === 'Đang chiếu');
                 setSidebarMovies(active.slice(0, 3));
                 
@@ -64,7 +55,7 @@ const CinemaGenre = () => {
         <div className="genre-page-bg">
             <div className="genre-content-flex">
                 
-                {/* CỘT TRÁI: DỮ LIỆU CHÍNH */}
+                {/* CỘT TRÁI: DANH SÁCH REVIEW */}
                 <div className="main-genre-col">
                     <div className="section-header-galaxy">
                         <span className="blue-line"></span>
@@ -72,24 +63,21 @@ const CinemaGenre = () => {
                     </div>
                     
                     <div className="genre-filters-bar">
-                        {/* Filter Thể loại lấy từ table genres */}
-                        <select className="filter-select" defaultValue={genreSlug || ""}>
+                        <select className="filter-select-custom" defaultValue={genreSlug || ""}>
                             <option value="">Tất cả thể loại</option>
                             {genres.map(g => (
                                 <option key={g.genre_id} value={g.slug}>{g.genre_name}</option>
                             ))}
                         </select>
 
-                        {/* Filter Năm lấy từ release_date của table movies */}
-                        <select className="filter-select">
+                        <select className="filter-select-custom">
                             <option value="">Tất cả năm</option>
                             {availableYears.map(year => (
                                 <option key={year} value={year}>{year}</option>
                             ))}
                         </select>
 
-                        {/* Filter Trạng thái lấy từ cột status của table movies */}
-                        <select className="filter-select">
+                        <select className="filter-select-custom">
                             <option value="">Trạng thái</option>
                             {availableStatuses.map(st => (
                                 <option key={st} value={st}>{st}</option>
@@ -132,7 +120,7 @@ const CinemaGenre = () => {
                     </div>
                 </div>
 
-                {/* CỘT PHẢI: SIDEBAR */}
+                {/* CỘT PHẢI: SIDEBAR (Đồng bộ MovieDetail) */}
                 <div className="sidebar-col">
                     <div className="sidebar-title">Phim Đang Chiếu</div>
                     <div className="sidebar-movie-list">

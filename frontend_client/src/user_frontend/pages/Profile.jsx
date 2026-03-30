@@ -225,7 +225,7 @@ const Profile = () => {
                                                         {/* BỔ SUNG: Ghế ngồi (Từ trường seatDisplay đã GROUP_CONCAT) */}
                                                         <div className="seat-text">
                                                             <Armchair size={14} /> 
-                                                            <span> Ghế: <strong>{item.seatDisplay}</strong></span>
+                                                            <span><strong>{item.seatDisplay}</strong></span>
                                                         </div>
 
                                                         <p className="price-text">Tổng tiền: <span>{Number(item.total_amount).toLocaleString()} đ</span></p>
