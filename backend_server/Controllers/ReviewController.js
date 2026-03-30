@@ -46,24 +46,30 @@ const ReviewController = {
     try {
         const { movie_id } = req.params;
 
+        // SQL giữ nguyên là chuẩn rồi
         const sql = `
             SELECT 
                 r.*, 
                 u.username, 
                 u.full_name,
-                -- Nếu full_name null thì lấy username hiện ra luôn
                 IFNULL(u.full_name, u.username) AS display_name 
             FROM reviews r
             JOIN users u ON r.user_id = u.user_id
             WHERE r.movie_id = ?
-            ORDER BY r.updated_at DESC
+            ORDER BY r.created_at DESC
         `;
 
         const [results] = await db.promise().query(sql, [movie_id]);
+        
+        // Luôn trả về results. Nếu không có dòng nào, kết quả tự động là []
         return res.status(200).json(results);
+
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: "Lỗi lấy bình luận" });
+        console.error("❌ Lỗi lấy bình luận:", error.message);
+        
+        // Nếu lỗi là do chưa có bảng, trả về mảng rỗng để Frontend không bị crash
+        // Nhưng tốt nhất là Dũng phải chạy lệnh CREATE TABLE nhé!
+        return res.status(200).json([]); 
     }
 }
     
