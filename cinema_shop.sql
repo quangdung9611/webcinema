@@ -329,6 +329,7 @@ CREATE TABLE `news` (
   `content` text,
   `image_url` varchar(500) DEFAULT NULL,
   `views` int DEFAULT '0',
+  `likes` int DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`news_id`),
   UNIQUE KEY `slug` (`slug`),
@@ -343,7 +344,7 @@ CREATE TABLE `news` (
 
 LOCK TABLES `news` WRITE;
 /*!40000 ALTER TABLE `news` DISABLE KEYS */;
-INSERT INTO `news` VALUES (1,'[Review] Thám Tử Lừng Danh Conan: Vụ Án Tại Tháp Tokyo Có Đáng Xem?','review-tham-tu-lung-danh-conan-vu-an-tai-thap-tokyo-co-dang-xem','Thám Tử Lừng Danh Conan luôn là cái tên thu hút sự chú ý của cộng đồng yêu thích anime. Trong phần phim mới nhất lấy bối cảnh tại tháp Tokyo, người xem sẽ được chứng kiến những màn đấu trí đỉnh cao giữa Conan và các thế lực bí ẩn. Nội dung phim xoay quanh một mật mã khó giải được để lại tại hiện trường vụ án mạng. Với hình ảnh trau chuốt và âm nhạc kịch tính, đây chắc chắn là tác phẩm không thể bỏ qua đối với các fan cứng của bộ truyện này.','Screenshot 2026-02-25 181816.png',159,'2026-03-15 01:34:53'),(2,'[Review] Thỏ Ơi - Một Màu Sắc Hoàn Toàn Khác Biệt Của Trấn Thành','review-phim-tho-oi-tran-thanh','Tiếp nối những thành công trước đó, đạo diễn Trấn Thành trở lại với dự án điện ảnh thứ 4 mang tên Thỏ Ơi. Bộ phim mang đến một góc nhìn mới lạ về tình cảm gia đình và những va vấp trong cuộc sống của những người trẻ. Với sự góp mặt của dàn diễn viên thực lực như Lý Hải, bộ phim không chỉ mang lại tiếng cười mà còn có những phút giây lắng đọng lấy đi nước mắt của khán giả. Đây là một bước tiến mới trong phong cách làm phim của Trấn Thành.','tho-oi.jpg',280,'2026-03-15 01:34:53'),(3,'[Tin tức] Top 5 Phim Kinh Dị Đáng Mong Chờ Nhất Năm 2026','top-5-phim-kinh-di-2026','Năm 2026 hứa hẹn sẽ là một năm bùng nổ của thể loại phim kinh dị. Đứng đầu danh sách là Thiên Đường Máu, một bộ phim tâm lý kinh dị đầy ám ảnh. Tiếp theo đó là các tác phẩm đến từ những nhà làm phim hàng đầu thế giới. Nếu bạn là một người yêu thích cảm giác mạnh và những câu chuyện bí ẩn sau vẻ đẹp hào nhoáng, hãy chuẩn bị tinh thần cho những màn hù dọa thót tim sắp tới trên màn ảnh rộng.','thien-duong-mau.jpg',95,'2026-03-15 01:34:53');
+INSERT INTO `news` VALUES (1,'[Review] Thám Tử Lừng Danh Conan: Vụ Án Tại Tháp Tokyo Có Đáng Xem?','review-tham-tu-lung-danh-conan-vu-an-tai-thap-tokyo-co-dang-xem','Thám Tử Lừng Danh Conan luôn là cái tên thu hút sự chú ý của cộng đồng yêu thích anime. Trong phần phim mới nhất lấy bối cảnh tại tháp Tokyo, người xem sẽ được chứng kiến những màn đấu trí đỉnh cao giữa Conan và các thế lực bí ẩn. Nội dung phim xoay quanh một mật mã khó giải được để lại tại hiện trường vụ án mạng. Với hình ảnh trau chuốt và âm nhạc kịch tính, đây chắc chắn là tác phẩm không thể bỏ qua đối với các fan cứng của bộ truyện này.','Screenshot 2026-02-25 181816.png',160,45,'2026-03-15 01:34:53'),(2,'[Review] Thỏ Ơi - Một Màu Sắc Hoàn Toàn Khác Biệt Của Trấn Thành','review-phim-tho-oi-tran-thanh','Tiếp nối những thành công trước đó, đạo diễn Trấn Thành trở lại với dự án điện ảnh thứ 4 mang tên Thỏ Ơi. Bộ phim mang đến một góc nhìn mới lạ về tình cảm gia đình và những va vấp trong cuộc sống của những người trẻ. Với sự góp mặt của dàn diễn viên thực lực như Lý Hải, bộ phim không chỉ mang lại tiếng cười mà còn có những phút giây lắng đọng lấy đi nước mắt của khán giả. Đây là một bước tiến mới trong phong cách làm phim của Trấn Thành.','tho-oi.jpg',280,120,'2026-03-15 01:34:53'),(3,'[Tin tức] Top 5 Phim Kinh Dị Đáng Mong Chờ Nhất Năm 2026','top-5-phim-kinh-di-2026','Năm 2026 hứa hẹn sẽ là một năm bùng nổ của thể loại phim kinh dị. Đứng đầu danh sách là Thiên Đường Máu, một bộ phim tâm lý kinh dị đầy ám ảnh. Tiếp theo đó là các tác phẩm đến từ những nhà làm phim hàng đầu thế giới. Nếu bạn là một người yêu thích cảm giác mạnh và những câu chuyện bí ẩn sau vẻ đẹp hào nhoáng, hãy chuẩn bị tinh thần cho những màn hù dọa thót tim sắp tới trên màn ảnh rộng.','thien-duong-mau.jpg',95,30,'2026-03-15 01:34:53');
 /*!40000 ALTER TABLE `news` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -586,7 +587,7 @@ LOCK TABLES `users` WRITE;
 INSERT INTO `users` VALUES (1,'admin','Quang Dũng Admin','0901234567','TP. Long Xuyên','admin@cinema.com','123456','admin',1000),(2,'khachhang1','Nguyễn Văn A','0987654321','Cần Thơ','vana@gmail.com','123456','customer',50),(3,'quangdungvip','Nguyễn Phạm Quang Dũng','0070070070','Hà Nội','cokhitienphat4919@gmail.com','$2b$10$6hBqRXZ4pwXnOCJADPkRUeFjqx2fWphnXfwkGzRPNrbMQq/yPGCKe','customer',4500),(4,'quangdungcinema','Nguyễn Phạm Quang Dũng','0567465321','Vũng Tàu','dungcinema@gmail.com','$2b$10$SxbqOwvR3eCuI0KXQv4AROfcF7onR8iTDZSxqlmA6cTEcATmc8nUm','admin',0),(6,'Dungvippro098','Nguyễn Trần Chí Tài','0943535352','123 Nguyễn Văn Trỗi','nguyennmhdunghihi@gmail.com','$2b$10$0WDQ8OL.z5UO1xjiCoPmLuwFST9CnH2IU6QK7u0Oh1yA/RljuUXE.','customer',0);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
-SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
+-- SET @@SESSION.SQL_LOG_BIN = @MYSQLDUMP_TEMP_LOG_BIN;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

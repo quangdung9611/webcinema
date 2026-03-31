@@ -25,9 +25,14 @@ router.delete('/:id', NewsController.deleteNews);
    ========================================================== */
 
 // Lấy danh sách toàn bộ tin tức
-router.get('/', NewsController.getAllNews);
+router.get('/all', NewsController.getAllNews); // Đổi nhẹ đường dẫn để tránh xung đột với /:slug
+
+// Tăng lượt thích (Bấm nút Like)
+// Route này nhận ID vì khi click Like, Frontend đã có sẵn news_id
+router.post('/like/:id', NewsController.increaseLike);
 
 // Xem chi tiết tin tức qua Slug (URL thân thiện)
+// Trong NewsController mới, hàm này đã bao gồm việc tự động tăng Views
 router.get('/:slug', NewsController.getNewsBySlug);
 
 module.exports = router;
