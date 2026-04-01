@@ -43,22 +43,35 @@ const deleteFile = (fileName) => {
    ========================================================== */
 
 const NewsController = {
-    // 1. Lấy danh sách tất cả tin tức (Dùng cho trang danh sách Review)
+    // --- DÀNH CHO USER (CLIENT) ---
+    // 1. Lấy danh sách tin tức (Cắt ngắn nội dung để tối ưu tốc độ tải)
     getAllNews: async (req, res) => {
         try {
             const query = `
                 SELECT 
                     news_id, title, slug, image_url, views, likes, created_at,
-                    IF(LENGTH(content) > 200, CONCAT(LEFT(content, 200), '...'), content) AS short_content,
-                    content
+                    IF(LENGTH(content) > 200, CONCAT(LEFT(content, 200), '...'), content) AS short_content
                 FROM news 
                 ORDER BY created_at DESC`;
             
             const [rows] = await db.query(query);
             res.status(200).json(rows);
         } catch (error) {
-            console.error("Lỗi lấy danh sách tin tức:", error);
+            console.error("Lỗi lấy danh sách tin tức (User):", error);
             res.status(500).json({ message: "Lỗi máy chủ khi lấy tin tức" });
+        }
+    },
+
+    // --- DÀNH CHO ADMIN ---
+    // 1b. Lấy toàn bộ danh sách tin tức (Giữ nguyên mọi trường dữ liệu)
+    getAllNewsAdmin: async (req, res) => {
+        try {
+            const query = `SELECT * FROM news ORDER BY created_at DESC`;
+            const [rows] = await db.query(query);
+            res.status(200).json(rows);
+        } catch (error) {
+            console.error("Lỗi lấy danh sách tin tức (Admin):", error);
+            res.status(500).json({ message: "Lỗi máy chủ khi lấy tin tức admin" });
         }
     },
 
@@ -91,7 +104,7 @@ const NewsController = {
         }
     },
 
-    // 4. Lấy chi tiết bài viết theo ID (Admin)
+    // 4. Lấy chi tiết bài viết theo ID (Admin dùng để đổ dữ liệu vào Form Edit)
     getNewsById: async (req, res) => {
         try {
             const [rows] = await db.query('SELECT * FROM news WHERE news_id = ?', [req.params.id]);
@@ -102,9 +115,9 @@ const NewsController = {
         }
     },
 
-    // 5. Thêm bài viết mới
+    // 5. Thêm bài viết mới (Đã cập nhật nhận thêm likes từ body)
     createNews: async (req, res) => {
-        const { title, content } = req.body;
+        const { title, content, likes } = req.body;
         
         if (!title || !content || !req.file) {
             if (req.file) deleteFile(req.file.originalname);
@@ -117,10 +130,10 @@ const NewsController = {
 
             const image_url = req.file.originalname;
             const slug = createSlug(title);
+            const initialLikes = likes || 0; // Nếu có nhập likes từ form thì lấy, không thì mặc định 0
 
-            // Mặc định views và likes là 0 khi tạo mới
-            const sql = 'INSERT INTO news (title, slug, content, image_url, views, likes) VALUES (?, ?, ?, ?, 0, 0)';
-            await connection.query(sql, [title.trim(), slug, content, image_url]);
+            const sql = 'INSERT INTO news (title, slug, content, image_url, views, likes) VALUES (?, ?, ?, ?, 0, ?)';
+            await connection.query(sql, [title.trim(), slug, content, image_url, initialLikes]);
 
             await connection.commit();
             res.status(201).json({ message: "Đăng bài viết thành công!" });
@@ -140,7 +153,7 @@ const NewsController = {
     // 6. Cập nhật bài viết
     updateNews: async (req, res) => {
         const { news_id } = req.params;
-        const { title, content, image_url } = req.body;
+        const { title, content, image_url, likes } = req.body;
 
         if (!title || !content) {
             if (req.file) deleteFile(req.file.originalname);
@@ -167,10 +180,10 @@ const NewsController = {
 
             const sql = `
                 UPDATE news 
-                SET title = ?, slug = ?, content = ?, image_url = ? 
+                SET title = ?, slug = ?, content = ?, image_url = ?, likes = ?
                 WHERE news_id = ?`;
             
-            await connection.query(sql, [title.trim(), createSlug(title), content, finalImage, news_id]);
+            await connection.query(sql, [title.trim(), createSlug(title), content, finalImage, likes || 0, news_id]);
 
             await connection.commit();
             res.status(200).json({ message: "Cập nhật bài viết thành công!" });

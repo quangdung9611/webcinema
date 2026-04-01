@@ -10,7 +10,8 @@ import {
     Eye, 
     Plus,
     FileText,
-    ExternalLink
+    ExternalLink,
+    Heart
 } from 'lucide-react';
 import Modal from '../../../components/Modal';
 import '../../../styles/UserList.css'; 
@@ -45,7 +46,7 @@ const NewsList = () => {
     const fetchNews = async () => {
         setLoading(true);
         try {
-            // Sử dụng API news mà chúng ta đã viết
+            // Gọi API gốc /api/news để lấy toàn bộ dữ liệu cho Admin
             const res = await axios.get('https://webcinema-zb8z.onrender.com/api/news');
             setNews(res.data);
         } catch (err) {
@@ -107,9 +108,8 @@ const NewsList = () => {
                     <thead>
                         <tr>
                             <th className="th-poster">Hình ảnh</th>
-                            {/* <th>Tiêu đề bài viết</th> */}
-                            {/* <th>Đường dẫn (Slug)</th> */}
-                            <th><Eye size={14} /> Lượt xem</th>
+                            <th>Thông tin bài viết</th>
+                            <th><Eye size={14} /> Lượt xem / <Heart size={14} /> Thích</th>
                             <th><Calendar size={14} /> Ngày đăng</th>
                             <th className="th-actions">Thao tác</th>
                         </tr>
@@ -120,31 +120,43 @@ const NewsList = () => {
                                 <tr key={n.news_id}>
                                     <td className="td-poster">
                                         <img 
-                                            // Tương tự MovieList, dùng chung folder uploads
                                             src={`https://webcinema-zb8z.onrender.com/uploads/news/${n.image_url}`}
                                             alt={n.title}
                                             className="movie-poster-img"
-                                            style={{ objectFit: 'cover' }}
+                                            style={{ objectFit: 'cover', borderRadius: '4px' }}
                                         />
                                     </td>
-                                    {/* <td>
-                                        <div className="movie-title-main" style={{ fontSize: '14px', fontWeight: '600' }}>
+                                    <td style={{ textAlign: 'left', verticalAlign: 'top', padding: '12px' }}>
+                                        <div style={{ fontWeight: 'bold', fontSize: '15px', color: '#333', marginBottom: '4px' }}>
                                             {n.title}
                                         </div>
-                                      
-                                        <div className="movie-director-sub" style={{ fontSize: '12px', color: '#666' }}>
-                                            {n.short_content}
+                                        <div style={{ fontSize: '12px', color: '#007bff', marginBottom: '6px', fontFamily: 'monospace' }}>
+                                            Slug: /{n.slug}
                                         </div>
-                                    </td> */}
-                                    {/* <td>
-                                        <code style={{ fontSize: '12px', color: '#007bff' }}>/{n.slug}</code>
-                                    </td> */}
-                                    <td>
-                                        <span className="status-badge used" style={{ backgroundColor: '#f8f9fa', color: '#333' }}>
-                                            {n.views.toLocaleString()}
-                                        </span>
+                                        <div style={{ 
+                                            fontSize: '12px', 
+                                            color: '#666', 
+                                            display: '-webkit-box', 
+                                            WebkitLineClamp: '2', 
+                                            WebkitBoxOrient: 'vertical', 
+                                            overflow: 'hidden' 
+                                        }}>
+                                            {n.content?.replace(/<[^>]*>/g, '')} {/* Loại bỏ tag HTML nếu có */}
+                                        </div>
                                     </td>
-                                    <td>{new Date(n.created_at).toLocaleDateString('vi-VN')}</td>
+                                    <td>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+                                            <span className="status-badge" style={{ backgroundColor: '#e9ecef', color: '#495057', fontSize: '11px', width: 'fit-content' }}>
+                                                <Eye size={10} /> {n.views?.toLocaleString()}
+                                            </span>
+                                            <span className="status-badge" style={{ backgroundColor: '#fff0f3', color: '#ff4d6d', fontSize: '11px', width: 'fit-content' }}>
+                                                <Heart size={10} /> {n.likes?.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td style={{ fontSize: '13px' }}>
+                                        {new Date(n.created_at).toLocaleDateString('vi-VN')}
+                                    </td>
                                     <td>
                                         <div className="action-buttons">
                                             <button 
@@ -175,7 +187,7 @@ const NewsList = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="6" className="empty-row">
+                                <td colSpan="5" className="empty-row">
                                     <FileText size={40} className="empty-icon" /><br/>
                                     Chưa có bài viết nào được đăng.
                                 </td>
