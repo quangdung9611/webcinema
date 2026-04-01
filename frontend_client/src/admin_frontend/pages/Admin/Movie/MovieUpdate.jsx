@@ -27,11 +27,12 @@ const MovieUpdate = () => {
     const [formData, setFormData] = useState({
         title: '',
         director: '',
+        nation: '', // Bổ sung trường quốc gia
         duration: '',
         age_rating: 0,
         release_date: '',
         status: 'Sắp chiếu',
-        trailer_url: '', // Bổ sung trailer_url
+        trailer_url: '', 
         description: ''
     });
 
@@ -50,11 +51,12 @@ const MovieUpdate = () => {
                 setFormData({
                     title: movie.title || '',
                     director: movie.director || '',
+                    nation: movie.nation || '', // Lấy nation từ database
                     duration: movie.duration || '',
                     age_rating: movie.age_rating || 0,
                     release_date: movie.release_date ? movie.release_date.substring(0, 10) : '',
                     status: movie.status || 'Sắp chiếu',
-                    trailer_url: movie.trailer_url || '', // Lấy trailer từ database
+                    trailer_url: movie.trailer_url || '', 
                     description: movie.description || ''
                 });
                 setOldPoster(movie.poster_url); 
@@ -88,46 +90,43 @@ const MovieUpdate = () => {
 
     // 4. SUBMIT: CẬP NHẬT
     const handleSubmit = async (e) => {
-    e.preventDefault();
+        e.preventDefault();
 
-    // --- LOGIC KIỂM TRA NGÀY THÁNG TỐI ƯU ---
-    const selectedDate = new Date(formData.release_date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); 
+        // --- LOGIC KIỂM TRA NGÀY THÁNG ---
+        const selectedDate = new Date(formData.release_date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); 
 
-    // CHỈ chặn ngày quá khứ NẾU trạng thái là "Sắp chiếu"
-    if (formData.status === "Sắp chiếu" && selectedDate < today) {
-        handleShowModal(
-            'error', 
-            'NGÀY KHÔNG HỢP LỆ', 
-            'Phim "Sắp chiếu" thì ngày phát hành không được là ngày trong quá khứ .'
-        );
-        return; 
-    }
+        if (formData.status === "Sắp chiếu" && selectedDate < today) {
+            handleShowModal(
+                'error', 
+                'NGÀY KHÔNG HỢP LỆ', 
+                'Phim "Sắp chiếu" thì ngày phát hành không được là ngày trong quá khứ.'
+            );
+            return; 
+        }
 
-    // Nếu là "Đang chiếu", chúng ta chấp nhận cả ngày quá khứ và hôm nay.
-    // (Vì phim có thể đã chiếu từ tuần trước rồi)
-    // ------------------------------------------
-
-    const data = new FormData();
-    Object.entries(formData).forEach(([key, value]) => data.append(key, value));
-    
-    if (newPoster) {
-        data.append('posters', newPoster);
-    }
-
-    try {
-        await axios.put(`https://webcinema-zb8z.onrender.com/api/movies/update/${id}`, data, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        const data = new FormData();
+        // Gửi kèm toàn bộ formData (bao gồm nation)
+        Object.entries(formData).forEach(([key, value]) => data.append(key, value));
         
-        handleShowModal('success', 'THÀNH CÔNG', `Đã cập nhật phim "${formData.title}" thành công!`, () => {
-            navigate('/admin/movies');
-        });
-    } catch (err) {
-        handleShowModal('error', 'THẤT BẠI', err.response?.data?.error || 'Lỗi hệ thống.');
-    }
-};
+        if (newPoster) {
+            data.append('posters', newPoster);
+        }
+
+        try {
+            await axios.put(`https://webcinema-zb8z.onrender.com/api/movies/update/${id}`, data, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
+            handleShowModal('success', 'THÀNH CÔNG', `Đã cập nhật phim "${formData.title}" thành công!`, () => {
+                navigate('/admin/movies');
+            });
+        } catch (err) {
+            handleShowModal('error', 'THẤT BẠI', err.response?.data?.error || 'Lỗi hệ thống.');
+        }
+    };
+
     return (
         <div className="update-user-wrapper">
             <Modal {...modal} />
@@ -153,6 +152,12 @@ const MovieUpdate = () => {
                     <div className="update-field">
                         <label>Đạo diễn</label>
                         <input name="director" value={formData.director} onChange={handleChange} />
+                    </div>
+
+                    {/* BỔ SUNG TRƯỜNG QUỐC GIA */}
+                    <div className="update-field">
+                        <label>Quốc gia</label>
+                        <input name="nation" value={formData.nation} onChange={handleChange} placeholder="VD: Mỹ, Hàn Quốc..." />
                     </div>
 
                     <div className="update-field">
@@ -184,7 +189,7 @@ const MovieUpdate = () => {
                         </select>
                     </div>
 
-                    <div className="update-field">
+                    <div className="update-field full-width">
                         <label>Link Trailer (YouTube)</label>
                         <input 
                             name="trailer_url" 

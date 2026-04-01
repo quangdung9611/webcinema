@@ -23,7 +23,7 @@ const createSlug = (title) => {
  * Validate dữ liệu đầu vào
  */
 const validateMovieData = (data, file, isUpdate = false) => {
-    const { title, duration, release_date, status } = data; // Thêm status để check
+    const { title, duration, release_date, status } = data;
 
     if (!title || title.trim().length < 2) 
         return "Tiêu đề phim phải từ 2 ký tự trở lên.";
@@ -43,7 +43,6 @@ const validateMovieData = (data, file, isUpdate = false) => {
     }
     // --------------------------------
 
-    // Khi thêm mới (!isUpdate) thì bắt buộc có file
     if (!isUpdate && !file) 
         return "Vui lòng upload ảnh poster.";
 
@@ -57,8 +56,6 @@ const deleteFile = (fileName) => {
     if (!fileName) return;
 
     const pureFileName = path.basename(fileName);
-    
-    // Đường dẫn chuẩn: Lùi 1 cấp thoát khỏi Controllers -> vào uploads -> vào posters
     const filePath = path.join(__dirname, '..', 'uploads', 'posters', pureFileName); 
 
     try {
@@ -79,7 +76,7 @@ exports.getMovieBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
 
-        // 1. Lấy thông tin phim và Đánh giá trung bình (Bỏ JOIN genres ở đây)
+        // 1. Lấy thông tin phim và Đánh giá trung bình
         const [movieRows] = await db.query(`
             SELECT 
                 m.*, 
@@ -94,7 +91,7 @@ exports.getMovieBySlug = async (req, res) => {
         const movie = movieRows[0];
         if (!movie) return res.status(404).json({ message: "Không tìm thấy phim" });
 
-        // 2. Lấy danh sách THỂ LOẠI (Mới thêm)
+        // 2. Lấy danh sách THỂ LOẠI
         const [genres] = await db.query(`
             SELECT g.genre_id, g.genre_name
             FROM genres g
@@ -102,7 +99,7 @@ exports.getMovieBySlug = async (req, res) => {
             WHERE mg.movie_id = ?
         `, [movie.movie_id]);
 
-        // 3. Lấy danh sách diễn viên (Giữ nguyên)
+        // 3. Lấy danh sách diễn viên
         const [actors] = await db.query(`
             SELECT a.actor_id, a.name, a.avatar, a.slug
             FROM actors a
@@ -110,9 +107,8 @@ exports.getMovieBySlug = async (req, res) => {
             WHERE ma.movie_id = ?
         `, [movie.movie_id]);
 
-        // 4. Lấy lịch chiếu (Giữ nguyên - NHƯNG CẬP NHẬT LOGIC AND s.start_time >= NOW())
+        // 4. Lấy lịch chiếu
         let showtimes = [];
-        // Chỉ lấy suất chiếu nếu phim Đang chiếu, nếu Sắp chiếu thì để mảng rỗng
         if (movie.status === "Đang chiếu") {
             const [rows] = await db.query(`
                 SELECT 
@@ -129,12 +125,10 @@ exports.getMovieBySlug = async (req, res) => {
             console.log(`ℹ️ [Info] Phim "${movie.title}" ẩn suất chiếu vì đang ở trạng thái: ${movie.status}`);
         }
 
-        // Gộp dữ liệu trả về: Bây giờ sẽ có movie.genres thay vì movie.genre_name
         movie.genres = genres; 
         movie.actors = actors;
         movie.showtimes = showtimes;
 
-        // Xóa trường genre_name thừa nếu nó còn sót lại từ câu query 1
         delete movie.genre_name;
 
         res.status(200).json(movie);
@@ -168,7 +162,8 @@ exports.getMovieById = async (req, res) => {
 
 // [POST] /api/movies/add
 exports.addMovie = async (req, res) => {
-    const { title, description, director, duration, age_rating, release_date, status, trailer_url } = req.body;
+    // Bổ sung nation từ req.body
+    const { title, description, director, nation, duration, age_rating, release_date, status, trailer_url } = req.body;
 
     const errorMsg = validateMovieData(req.body, req.file, false);
     if (errorMsg) {
@@ -183,10 +178,11 @@ exports.addMovie = async (req, res) => {
         const cleanDate = release_date ? release_date.substring(0, 10) : null;
         const poster_url = req.file.originalname; 
 
+        // Thêm nation vào câu query INSERT
         await connection.query(
-            `INSERT INTO movies (title, slug, description, director, duration, age_rating, poster_url, trailer_url, release_date, status) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [title.trim(), createSlug(title), description || "", director || "", duration, age_rating || 0, poster_url, trailer_url || null, cleanDate, status || "Sắp chiếu"]
+            `INSERT INTO movies (title, slug, description, director, nation, duration, age_rating, poster_url, trailer_url, release_date, status) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [title.trim(), createSlug(title), description || "", director || "", nation || null, duration, age_rating || 0, poster_url, trailer_url || null, cleanDate, status || "Sắp chiếu"]
         );
 
         await connection.commit();
@@ -204,7 +200,8 @@ exports.addMovie = async (req, res) => {
 // [PUT] /api/movies/update/:id
 exports.updateMovie = async (req, res) => {
     const { id } = req.params;
-    const { title, director, duration, age_rating, release_date, status, description, trailer_url } = req.body;
+    // Bổ sung nation từ req.body
+    const { title, director, nation, duration, age_rating, release_date, status, description, trailer_url } = req.body;
     
     const errorMsg = validateMovieData(req.body, req.file, true);
     if (errorMsg) return res.status(400).json({ error: errorMsg });
@@ -227,11 +224,12 @@ exports.updateMovie = async (req, res) => {
             poster_url = req.file.originalname;
         }
 
+        // Cập nhật nation vào câu query UPDATE
         await connection.query(
             `UPDATE movies 
-             SET title=?, slug=?, director=?, duration=?, age_rating=?, release_date=?, status=?, description=?, poster_url=?, trailer_url=? 
+             SET title=?, slug=?, director=?, nation=?, duration=?, age_rating=?, release_date=?, status=?, description=?, poster_url=?, trailer_url=? 
              WHERE movie_id=?`,
-            [title.trim(), createSlug(title), director || "", duration, age_rating || 0, cleanDate, status || "Sắp chiếu", description || "", poster_url, trailer_url || null, id]
+            [title.trim(), createSlug(title), director || "", nation || null, duration, age_rating || 0, cleanDate, status || "Sắp chiếu", description || "", poster_url, trailer_url || null, id]
         );
 
         await connection.commit();
@@ -271,9 +269,9 @@ exports.deleteMovie = async (req, res) => {
 // Lấy phim theo nhóm trạng thái (Cho Mega Menu / Trang chủ)
 exports.getMoviesByStatusGroup = async (req, res) => {
     try {
-        // QUANG DŨNG LƯU Ý: Đã thêm trailer_url vào câu lệnh SELECT bên dưới
+        // Thêm nation vào câu lệnh SELECT
         const [rows] = await db.query(
-            "SELECT movie_id, title, slug, poster_url, status, age_rating, trailer_url FROM movies WHERE status != 'Ngừng chiếu' ORDER BY release_date DESC"
+            "SELECT movie_id, title, slug, poster_url, status, age_rating, trailer_url, nation FROM movies WHERE status != 'Ngừng chiếu' ORDER BY release_date DESC"
         );
         
         const grouped = {
@@ -302,7 +300,7 @@ exports.getMoviesByStatusSlug = async (req, res) => {
             return res.status(400).json({ message: "Đường dẫn không hợp lệ" });
         }
 
-        // Dùng SELECT * để lấy hết các trường bao gồm trailer_url
+        // SELECT * đã bao gồm nation
         const [rows] = await db.query(
             "SELECT * FROM movies WHERE status = ? ORDER BY release_date DESC",
             [dbStatus]

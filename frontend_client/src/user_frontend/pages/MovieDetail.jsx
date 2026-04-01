@@ -231,7 +231,7 @@ const MovieDetail = () => {
                             <img src={`https://webcinema-zb8z.onrender.com/uploads/posters/${movie.poster_url}`} alt={movie.title} />
                         </div>
                         <div className="text-frame">
-                            <h1>{movie.title}</h1>
+                            <div className="movie-main-title">{movie.title}</div>
                             <div className="meta-row">
                                 <span><Clock size={16} strokeWidth={2.5} /> {movie.duration} Phút</span>
                                 <span><Calendar size={16} strokeWidth={2.5} /> {new Date(movie.release_date).toLocaleDateString('vi-VN')}</span>

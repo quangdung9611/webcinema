@@ -15,12 +15,12 @@ const FilmReview = () => {
             try {
                 setLoading(true);
                 const [resNews, resMovies] = await Promise.all([
-                    axios.get('https://webcinema-zb8z.onrender.com/api/news'),
+                    // Sử dụng endpoint /all để lấy đầy đủ data tin tức
+                    axios.get('https://webcinema-zb8z.onrender.com/api/news/all'),
                     axios.get('https://webcinema-zb8z.onrender.com/api/movies')
                 ]);
 
                 setNews(resNews.data);
-                // Lấy 3 phim "Đang chiếu" cho Sidebar giống trang Movie Detail
                 const active = resMovies.data.filter(m => m.status === 'Đang chiếu');
                 setSidebarMovies(active.slice(0, 3)); 
                 
@@ -34,6 +34,25 @@ const FilmReview = () => {
         fetchReviewData();
         window.scrollTo(0, 0);
     }, []);
+
+    // Hàm xử lý tăng lượt thích trực tiếp trên trang danh sách
+    const handleLike = async (e, newsId) => {
+        e.preventDefault(); // Ngăn chặn việc chuyển trang khi bấm vào nút Like
+        try {
+            await axios.post(`https://webcinema-zb8z.onrender.com/api/news/like/${newsId}`);
+            
+            // Cập nhật state cục bộ để con số nhảy ngay lập tức
+            setNews(prevNews => 
+                prevNews.map(item => 
+                    item.news_id === newsId 
+                    ? { ...item, likes: (item.likes || 0) + 1 } 
+                    : item
+                )
+            );
+        } catch (error) {
+            console.error("Lỗi khi thích bài viết:", error);
+        }
+    };
 
     const renderExcerpt = (item) => {
         const rawText = item.content || item.short_content || "";
@@ -76,13 +95,19 @@ const FilmReview = () => {
                                         <h3>{item.title}</h3>
                                     </Link>
                                     <div className="movie-meta-row">
-                                        <button className="btn-fb-like">
+                                        {/* Nút Thích lấy dữ liệu động từ database */}
+                                        <button 
+                                            className="btn-fb-like" 
+                                            onClick={(e) => handleLike(e, item.news_id)}
+                                        >
                                             <ThumbsUp size={12} fill="currentColor" /> 
-                                            <span>Thích</span>
+                                            <span>Thích ({item.likes || 0})</span>
                                         </button>
+                                        
+                                        {/* Lượt xem hiển thị con số thật từ database */}
                                         <span className="view-count">
                                             <Eye size={14} /> 
-                                            <span>{item.views} lượt xem</span>
+                                            <span>{item.views || 0} lượt xem</span>
                                         </span>
                                     </div>
                                     <p className="movie-summary-text">

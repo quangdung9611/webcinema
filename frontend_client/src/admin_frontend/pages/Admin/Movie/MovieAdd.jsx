@@ -6,9 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import '../../../styles/UserForm.css'; 
 import Modal from '../../../components/Modal';
 
-// Khai báo địa chỉ server để lấy hình
-const IMAGE_BASE_URL = "https://webcinema-zb8z.onrender.com/uploads/posters/";
-
 // --- HELPERS ---
 const generateSlug = (str) => {
     if (!str) return "";
@@ -31,6 +28,7 @@ const MovieAdd = () => {
         title: '',
         slug: '',
         director: '',
+        nation: '', // Bổ sung trường quốc gia
         duration: '',
         age_rating: '0',
         release_date: '',
@@ -68,14 +66,14 @@ const MovieAdd = () => {
         }
     };
 
-    // 3. VALIDATION (Cập nhật logic chuẩn bài)
+    // 3. VALIDATION
     const validate = () => {
         const newErrors = {};
         if (!formData.title) newErrors.title = "Vui lòng nhập tiêu đề";
         if (!formData.duration || formData.duration <= 0) newErrors.duration = "Thời lượng không hợp lệ";
         if (!formData.release_date) newErrors.release_date = "Chọn ngày phát hành";
         
-        // --- LOGIC CHẶN NGÀY THÁNG ĐỒNG BỘ VỚI BACKEND ---
+        // Logic chặn ngày tháng đồng bộ với Backend
         const selectedDate = new Date(formData.release_date);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -83,7 +81,6 @@ const MovieAdd = () => {
         if (formData.status === "Sắp chiếu" && selectedDate < today) {
             newErrors.release_date = "Phim sắp chiếu thì ngày phải ở tương lai";
         }
-        // ----------------------------------------------
 
         if (!poster) newErrors.poster = "Chưa có ảnh poster";
         if (formData.description.length < 10) newErrors.description = "Mô tả ít nhất 10 ký tự";
@@ -102,6 +99,7 @@ const MovieAdd = () => {
         if (!validate()) return;
 
         const submitData = new FormData();
+        // Append toàn bộ dữ liệu (bao gồm cả nation) vào FormData
         Object.entries(formData).forEach(([key, value]) => submitData.append(key, value));
         submitData.append('posters', poster);
 
@@ -115,11 +113,9 @@ const MovieAdd = () => {
                 onConfirm: () => navigate('/admin/movies')
             });
         } catch (err) {
-            // Hiển thị lỗi từ Backend trả về (nếu có)
             const serverError = err.response?.data?.error || "Lỗi kết nối Server";
             setErrors(prev => ({ ...prev, server: serverError }));
             
-            // Nếu lỗi liên quan đến ngày tháng từ server, báo vào ô input luôn
             if (serverError.includes("ngày")) {
                 setErrors(prev => ({ ...prev, release_date: serverError }));
             }
@@ -132,7 +128,7 @@ const MovieAdd = () => {
             
             <div className="form-header">
                 <h2>THÊM PHIM MỚI</h2>
-                <p>Quang Dũng hãy nhập thông tin chi tiết cho bộ phim bên dưới</p>
+                <p>Hãy nhập thông tin chi tiết cho bộ phim bên dưới</p>
             </div>
 
             <form onSubmit={handleSubmit} className="clean-form">
@@ -155,19 +151,27 @@ const MovieAdd = () => {
                         <label>Đạo diễn</label>
                         <input name="director" value={formData.director} onChange={handleChange} placeholder="Tên đạo diễn" />
                     </div>
+                    {/* BỔ SUNG TRƯỜNG QUỐC GIA */}
                     <div className="form-group">
-                        <label>Thời lượng (phút)</label>
-                        <input name="duration" type="number" value={formData.duration} onChange={handleChange} placeholder="Ví dụ: 120" />
-                        {errors.duration && <small className="error-msg">{errors.duration}</small>}
+                        <label>Quốc gia</label>
+                        <input name="nation" value={formData.nation} onChange={handleChange} placeholder="VD: Việt Nam, Mỹ, Hàn Quốc..." />
                     </div>
                 </div>
 
                 <div className="form-row">
                     <div className="form-group">
+                        <label>Thời lượng (phút)</label>
+                        <input name="duration" type="number" value={formData.duration} onChange={handleChange} placeholder="Ví dụ: 120" />
+                        {errors.duration && <small className="error-msg">{errors.duration}</small>}
+                    </div>
+                    <div className="form-group">
                         <label>Ngày phát hành</label>
                         <input name="release_date" type="date" value={formData.release_date} onChange={handleChange} />
                         {errors.release_date && <small className="error-msg" style={{ color: '#ff4d4f' }}>{errors.release_date}</small>}
                     </div>
+                </div>
+
+                <div className="form-row">
                     <div className="form-group">
                         <label>Giới hạn độ tuổi</label>
                         <select name="age_rating" value={formData.age_rating} onChange={handleChange}>
@@ -177,9 +181,6 @@ const MovieAdd = () => {
                             <option value="18">C18 - Trên 18 tuổi</option>
                         </select>
                     </div>
-                </div>
-
-                <div className="form-row">
                     <div className="form-group">
                         <label>Trạng thái chiếu</label>
                         <select name="status" value={formData.status} onChange={handleChange}>
@@ -188,8 +189,10 @@ const MovieAdd = () => {
                             <option value="Ngừng chiếu">Ngừng chiếu</option>
                         </select>
                     </div>
+                </div>
 
-                    <div className="form-group">
+                <div className="form-row">
+                    <div className="form-group full-width">
                         <label>Link Trailer (YouTube)</label>
                         <input 
                             name="trailer_url" 
@@ -203,65 +206,49 @@ const MovieAdd = () => {
 
                 <div className="form-row">
                     <div className="form-group full-width">
-        <label>Ảnh Poster</label>
-        
-        {/* Khu vực chọn file */}
-        <div className="file-upload-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handleFileChange} 
-                id="poster-upload"
-            />
-            
-            {/* Hiển thị hình và tên file ngay dưới nút chọn nếu có file */}
-            {poster && (
-                <div className="file-selected-info" style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '15px', 
-                    padding: '10px', 
-                    background: '#f1f1f1', 
-                    borderRadius: '5px',
-                    marginTop: '5px'
-                }}>
-                    <img 
-                        src={URL.createObjectURL(poster)} 
-                        alt="Preview" 
-                        style={{ 
-                            width: '100px', 
-                            height: '100px', 
-                            objectFit: 'cover', 
-                            borderRadius: '3px',
-                            border: '1px solid #ddd'
-                        }} 
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                            {poster.name}
-                        </span>
-                        <span style={{ fontSize: '12px', color: '#666' }}>
-                            {(poster.size / 1024).toFixed(1)} KB
-                        </span>
-                    </div>
-                </div>
-            )}
-            
-            {errors.poster && <small className="error-msg">{errors.poster}</small>}
-        </div>
-    </div>
-                    {/* <div className="form-group">
-                        <label>Xem trước Poster</label>
-                        <div className="poster-preview-wrapper" style={{ marginTop: '10px' }}>
-                            <img 
-                                src={preview ? preview : 'https://via.placeholder.com/120x170?text=No+Image'} 
-                                alt="Preview" 
-                                className="img-thumbnail" 
-                                style={{ width: '100px', height: '140px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }}
-                                onError={(e) => { e.target.src = 'https://via.placeholder.com/120x170?text=No+Image'; }}
+                        <label>Ảnh Poster</label>
+                        <div className="file-upload-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={handleFileChange} 
+                                id="poster-upload"
                             />
+                            
+                            {poster && (
+                                <div className="file-selected-info" style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '15px', 
+                                    padding: '10px', 
+                                    background: '#f1f1f1', 
+                                    borderRadius: '5px',
+                                    marginTop: '5px'
+                                }}>
+                                    <img 
+                                        src={URL.createObjectURL(poster)} 
+                                        alt="Preview" 
+                                        style={{ 
+                                            width: '100px', 
+                                            height: '100px', 
+                                            objectFit: 'cover', 
+                                            borderRadius: '3px',
+                                            border: '1px solid #ddd'
+                                        }} 
+                                    />
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                                            {poster.name}
+                                        </span>
+                                        <span style={{ fontSize: '12px', color: '#666' }}>
+                                            {(poster.size / 1024).toFixed(1)} KB
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                            {errors.poster && <small className="error-msg">{errors.poster}</small>}
                         </div>
-                    </div> */}
+                    </div>
                 </div>
 
                 <div className="form-group full-width">
