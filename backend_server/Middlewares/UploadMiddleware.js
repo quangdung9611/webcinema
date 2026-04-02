@@ -16,9 +16,9 @@ const storage = multer.diskStorage({
         else if (file.fieldname === 'actorImage') {
             dir = 'uploads/actors/';
         }
-        // Folder cho hình nền ngang (Backdrop)
-        else if (file.fieldname === 'backdrop_image') { 
-            dir = 'uploads/backdrops/'; // Tui sửa lại tên folder cho ngắn gọn nhé
+        // FIX: Đổi từ backdrop_image thành backdrop_url cho khớp với Frontend và Route
+        else if (file.fieldname === 'backdrop_url') { 
+            dir = 'uploads/backdrops/';
         }
 
         // Tạo folder nếu chưa tồn tại
@@ -29,16 +29,22 @@ const storage = multer.diskStorage({
         cb(null, dir);
     },
     filename: (req, file, cb) => {
-        // Tạo chuỗi duy nhất để tránh trùng tên file
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        // Lấy phần mở rộng (.jpg, .png...)
         const ext = path.extname(file.originalname).toLowerCase();
         
-        // Làm sạch tên file gốc (xóa khoảng trắng, ký tự đặc biệt)
+        // Lấy tên file gốc (ví dụ: "anh-conan")
         const baseName = path.basename(file.originalname, ext)
-            .replace(/\s+/g, '-')
-            .replace(/[^\w-]/g, '');
+            .normalize('NFD') // Khử dấu tiếng Việt
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[đĐ]/g, 'd')
+            .replace(/\s+/g, '-') // Thay khoảng trắng bằng gạch nối
+            .replace(/[^\w-]/g, ''); // Xóa ký tự đặc biệt
 
-        if (file.fieldname === 'backdrop_image') {
+        // Tạo chuỗi ngắn gọn để tránh trùng (Dùng Date.now() là đủ)
+        const uniqueSuffix = Date.now();
+
+        // Trả về tên file: "ten-goc-1712345678.jpg"
+        if (file.fieldname === 'backdrop_url') {
             cb(null, `${baseName}-backdrop-${uniqueSuffix}${ext}`);
         } else {
             cb(null, `${baseName}-${uniqueSuffix}${ext}`);
@@ -49,7 +55,7 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024 // Giới hạn 5MB cho mỗi file
+        fileSize: 5 * 1024 * 1024 // Giới hạn 5MB
     },
     fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png|webp/;

@@ -22,14 +22,22 @@ router.patch('/like/:id', movieController.likeMovie);
 router.patch('/view/:id', movieController.incrementViews);
 
 
-// 4. Các route Admin
-router.post('/add', upload.single('posters'), movieController.addMovie);
-router.put('/update/:id', upload.single('posters'), movieController.updateMovie);
+// 4. Các route Admin 
+// SỬA TẠI ĐÂY: Dùng upload.fields để nhận cùng lúc 2 loại ảnh khác nhau
+router.post('/add', upload.fields([
+    { name: 'posters', maxCount: 1 }, 
+    { name: 'backdrop_url', maxCount: 1 }
+]), movieController.addMovie);
+
+router.put('/update/:id', upload.fields([
+    { name: 'posters', maxCount: 1 }, 
+    { name: 'backdrop_url', maxCount: 1 }
+]), movieController.updateMovie);
+
 router.delete('/:id', movieController.deleteMovie);
 router.get('/detail/:id', movieController.getMovieById);
 
 // 5. Lấy 1 phim THEO SLUG (Dành cho trang Chi tiết)
-// PHẢI LUÔN ĐỂ CUỐI CÙNG để không bị nhận nhầm các route phía trên (như /status-group hay /view) là slug
 router.get('/:slug', movieController.getMovieBySlug);
 
 module.exports = router;
