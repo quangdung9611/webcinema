@@ -249,6 +249,21 @@ const MovieDetail = () => {
 
                             <div className="details-list">
                                 <div style={{ marginBottom: '10px' }}>
+                                        <strong>Quốc Gia:</strong> 
+                                        <div className="genre-list" style={{ display: 'inline-flex', marginLeft: '8px', gap: '5px', flexWrap: 'wrap' }}>
+                                            {/* Kiểm tra nếu có mảng genres và trong đó có chứa thông tin nation */}
+                                            {movie.genres?.some(g => g.nation) ? (
+                                                // Dùng Set để lọc các tên quốc gia trùng lặp nếu phim có nhiều thể loại cùng 1 quốc gia
+                                                [...new Set(movie.genres.map(g => g.nation))].filter(Boolean).map((nation, i) => (
+                                                    <span key={i} className="tag-btn">{nation}</span>
+                                                ))
+                                            ) : (
+                                                // Nếu không có trong mảng genres thì hiển thị field nation trực tiếp hoặc báo "Chưa xác định"
+                                                <span className="tag-btn">{movie.nation || "Chưa xác định"}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                <div style={{ marginBottom: '10px' }}>
                                     <strong>Thể loại:</strong> 
                                     <div className="genre-list" style={{ display: 'inline-flex', marginLeft: '8px', gap: '5px', flexWrap: 'wrap' }}>
                                         {movie.genres?.length > 0 ? (

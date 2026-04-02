@@ -11,8 +11,6 @@ const CinemaGenre = () => {
     const [movies, setMovies] = useState([]);
     const [genres, setGenres] = useState([]);
     const [sidebarMovies, setSidebarMovies] = useState([]);
-    const [availableYears, setAvailableYears] = useState([]);
-    const [availableStatuses, setAvailableStatuses] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -26,14 +24,6 @@ const CinemaGenre = () => {
 
                 setMovies(resMovies.data);
                 setGenres(resGenres.data);
-
-                const years = [...new Set(resMovies.data.map(m => 
-                    new Date(m.release_date).getFullYear()
-                ))].sort((a, b) => b - a);
-                setAvailableYears(years);
-
-                const statuses = [...new Set(resMovies.data.map(m => m.status))];
-                setAvailableStatuses(statuses);
 
                 const active = resMovies.data.filter(m => m.status === 'Đang chiếu');
                 setSidebarMovies(active.slice(0, 3));
@@ -49,13 +39,26 @@ const CinemaGenre = () => {
         window.scrollTo(0, 0);
     }, [genreSlug]);
 
-    // --- BỔ SUNG: HÀM XỬ LÝ CLICK THÍCH PHIM ---
+    // --- BỔ SUNG: HÀM XỬ LÝ KHI BẤM VÀO PHIM ĐỂ TĂNG VIEW ---
+    const handleMovieClick = async (e, movie) => {
+        // Ngăn chặn hành vi mặc định nếu cần
+        e.preventDefault(); 
+        try {
+            // 1. Gọi API tăng lượt xem (PATCH)
+            await axios.patch(`https://webcinema-zb8z.onrender.com/api/movies/view/${movie.movie_id}`);
+            
+            // 2. Sau đó mới chuyển sang trang chi tiết
+            navigate(`/movies/detail/${movie.slug}`);
+        } catch (error) {
+            console.error("Lỗi tăng lượt xem:", error);
+            // Nếu API lỗi vẫn cho chuyển trang để khách xem phim
+            navigate(`/movies/detail/${movie.slug}`);
+        }
+    };
+
     const handleLikeMovie = async (movieId) => {
         try {
-            // 1. Gọi API Patch mà bạn vừa tạo ở Backend
             await axios.patch(`https://webcinema-zb8z.onrender.com/api/movies/like/${movieId}`);
-
-            // 2. Cập nhật State cục bộ để khán giả thấy con số tăng lên ngay lập tức
             setMovies(prevMovies => 
                 prevMovies.map(movie => 
                     movie.movie_id === movieId 
@@ -68,20 +71,18 @@ const CinemaGenre = () => {
         }
     };
 
-    if (loading) return <div className="loading">Đang tải dữ liệu từ CSDL...</div>;
+    if (loading) return <div className="loading">Đang tải dữ liệu từ hệ thống...</div>;
 
     return (
         <div className="genre-page-bg">
             <div className="genre-content-flex">
                 
-                {/* CỘT TRÁI: DANH SÁCH REVIEW */}
                 <div className="main-genre-col">
                     <div className="section-header-galaxy">
                         <span className="blue-line"></span>
-                        <h2 className="section-title">PHIM ĐIỆN ẢNH</h2>
+                        <h2 className="section-title">DANH SÁCH PHIM</h2>
                     </div>
                     
-                    {/* ... (Phần filter giữ nguyên) ... */}
                     <div className="genre-filters-bar">
                         <select className="filter-select-custom" defaultValue={genreSlug || ""}>
                             <option value="">Tất cả thể loại</option>
@@ -89,56 +90,71 @@ const CinemaGenre = () => {
                                 <option key={g.genre_id} value={g.slug}>{g.genre_name}</option>
                             ))}
                         </select>
-                        {/* ... các select khác ... */}
                     </div>
 
                     <div className="movie-genre-list">
-                        {movies.map(movie => (
-                            <div key={movie.movie_id} className="movie-card-horizontal">
-                                <Link to={`/movies/detail/${movie.slug}`} className="movie-img-box">
-                                    <img 
-                                        src={`https://webcinema-zb8z.onrender.com/uploads/posters/${movie.poster_url}`} 
-                                        alt={movie.title} 
-                                    />
-                                </Link>
-                                <div className="movie-content-info">
-                                    <Link to={`/movies/detail/${movie.slug}`} className="movie-name-link">
-                                        <h3>{movie.title}</h3>
+                        {movies.length > 0 ? (
+                            movies.map(movie => (
+                                <div key={movie.movie_id} className="movie-card-horizontal">
+                                    {/* SỬA TẠI ĐÂY: Thêm onClick vào Link */}
+                                    <Link 
+                                        to={`/movies/detail/${movie.slug}`} 
+                                        className="movie-img-box"
+                                        onClick={(e) => handleMovieClick(e, movie)}
+                                    >
+                                        <img 
+                                            src={`https://webcinema-zb8z.onrender.com/uploads/posters/${movie.poster_url}`} 
+                                            alt={movie.title} 
+                                        />
                                     </Link>
-                                    <div className="movie-meta-row">
-                                        {/* CẬP NHẬT NÚT THÍCH */}
-                                        <button 
-                                            className="btn-fb-like" 
-                                            onClick={() => handleLikeMovie(movie.movie_id)}
+                                    <div className="movie-content-info">
+                                        {/* SỬA TẠI ĐÂY: Thêm onClick vào Link tiêu đề */}
+                                        <Link 
+                                            to={`/movies/detail/${movie.slug}`} 
+                                            className="movie-name-link"
+                                            onClick={(e) => handleMovieClick(e, movie)}
                                         >
-                                            <ThumbsUp size={14} strokeWidth={2.5} fill="currentColor" /> 
-                                            <span>Thích {movie.total_likes > 0 && movie.total_likes}</span>
-                                        </button>
+                                            <h3>{movie.title}</h3>
+                                        </Link>
+                                        <div className="movie-meta-row">
+                                            <button 
+                                                className="btn-fb-like" 
+                                                onClick={() => handleLikeMovie(movie.movie_id)}
+                                            >
+                                                <ThumbsUp size={14} strokeWidth={2.5} fill="currentColor" /> 
+                                                <span>Thích {movie.total_likes > 0 ? movie.total_likes : ""}</span>
+                                            </button>
 
-                                        <span className="view-count">
-                                            <Eye size={14} strokeWidth={2} /> 
-                                            {/* Thay vì nhân 150, giờ bạn có thể dùng trường views_count nếu đã thêm vào DB */}
-                                            <span>{movie.views_count || movie.movie_id * 150} lượt xem</span>
-                                        </span>
-                                    </div>
-                                    <p className="movie-summary-text">
-                                        {movie.description}
-                                    </p>
-                                    <div className="movie-release-date">
-                                        Khởi chiếu: {new Date(movie.release_date).toLocaleDateString('vi-VN')}
+                                            <span className="view-count">
+                                                <Eye size={14} strokeWidth={2} /> 
+                                                <span>{movie.views_count || 0} lượt xem</span>
+                                            </span>
+                                        </div>
+                                        <p className="movie-summary-text">
+                                            {movie.description || "Chưa có mô tả cho phim này."}
+                                        </p>
+                                        <div className="movie-release-date">
+                                            Khởi chiếu: {new Date(movie.release_date).toLocaleDateString('vi-VN')}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            <p className="no-data">Hiện chưa có phim nào trong mục này.</p>
+                        )}
                     </div>
                 </div>
 
-                {/* CỘT PHẢI: SIDEBAR */}
                 <div className="sidebar-col">
                     <div className="sidebar-title">Phim Đang Chiếu</div>
                     <div className="sidebar-movie-list">
                         {sidebarMovies.map((m) => (
-                            <div key={m.movie_id} className="simple-movie-item" onClick={() => navigate(`/movies/detail/${m.slug}`)}>
+                            <div 
+                                key={m.movie_id} 
+                                className="simple-movie-item" 
+                                onClick={(e) => handleMovieClick(e, m)}
+                                style={{cursor: 'pointer'}}
+                            >
                                 <div className="simple-poster">
                                     <img 
                                         src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} 
