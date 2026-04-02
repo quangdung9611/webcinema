@@ -1,5 +1,5 @@
-ALTER TABLE movies 
-ADD COLUMN total_likes INT DEFAULT 0;
+-- 1. Thêm cột views_count vào bảng movies
+ALTER TABLE movies ADD COLUMN views_count INT DEFAULT 0;
 
--- Thêm Index để Admin lọc phim hot nhanh hơn
-ALTER TABLE movies ADD INDEX idx_total_likes (total_likes);
+-- 2. Reset tất cả lượt thích và lượt xem về 0 để làm mới giao diện
+UPDATE movies SET total_likes = 0, views_count = 0;

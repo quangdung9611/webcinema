@@ -339,3 +339,25 @@ exports.likeMovie = async (req, res) => {
         res.status(500).json({ error: "Lỗi hệ thống khi thích phim" });
     }
 };
+/**
+ * [PATCH] /api/movies/view/:id
+ * Tăng lượt xem khi khách truy cập vào trang chi tiết phim
+ */
+exports.incrementViews = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [result] = await db.query(
+            "UPDATE movies SET views_count = views_count + 1 WHERE movie_id = ?", 
+            [id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Phim không tồn tại" });
+        }
+
+        res.status(200).json({ success: true, message: "Đã tăng lượt xem!" });
+    } catch (error) {
+        console.error("Lỗi incrementViews:", error);
+        res.status(500).json({ error: "Lỗi hệ thống khi cập nhật lượt xem" });
+    }
+};

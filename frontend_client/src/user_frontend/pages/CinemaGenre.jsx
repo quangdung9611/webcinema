@@ -49,6 +49,25 @@ const CinemaGenre = () => {
         window.scrollTo(0, 0);
     }, [genreSlug]);
 
+    // --- BỔ SUNG: HÀM XỬ LÝ CLICK THÍCH PHIM ---
+    const handleLikeMovie = async (movieId) => {
+        try {
+            // 1. Gọi API Patch mà bạn vừa tạo ở Backend
+            await axios.patch(`https://webcinema-zb8z.onrender.com/api/movies/like/${movieId}`);
+
+            // 2. Cập nhật State cục bộ để khán giả thấy con số tăng lên ngay lập tức
+            setMovies(prevMovies => 
+                prevMovies.map(movie => 
+                    movie.movie_id === movieId 
+                    ? { ...movie, total_likes: (movie.total_likes || 0) + 1 } 
+                    : movie
+                )
+            );
+        } catch (error) {
+            console.error("Không thể thích phim:", error);
+        }
+    };
+
     if (loading) return <div className="loading">Đang tải dữ liệu từ CSDL...</div>;
 
     return (
@@ -62,6 +81,7 @@ const CinemaGenre = () => {
                         <h2 className="section-title">PHIM ĐIỆN ẢNH</h2>
                     </div>
                     
+                    {/* ... (Phần filter giữ nguyên) ... */}
                     <div className="genre-filters-bar">
                         <select className="filter-select-custom" defaultValue={genreSlug || ""}>
                             <option value="">Tất cả thể loại</option>
@@ -69,20 +89,7 @@ const CinemaGenre = () => {
                                 <option key={g.genre_id} value={g.slug}>{g.genre_name}</option>
                             ))}
                         </select>
-
-                        <select className="filter-select-custom">
-                            <option value="">Tất cả năm</option>
-                            {availableYears.map(year => (
-                                <option key={year} value={year}>{year}</option>
-                            ))}
-                        </select>
-
-                        <select className="filter-select-custom">
-                            <option value="">Trạng thái</option>
-                            {availableStatuses.map(st => (
-                                <option key={st} value={st}>{st}</option>
-                            ))}
-                        </select>
+                        {/* ... các select khác ... */}
                     </div>
 
                     <div className="movie-genre-list">
@@ -99,13 +106,19 @@ const CinemaGenre = () => {
                                         <h3>{movie.title}</h3>
                                     </Link>
                                     <div className="movie-meta-row">
-                                        <button className="btn-fb-like">
+                                        {/* CẬP NHẬT NÚT THÍCH */}
+                                        <button 
+                                            className="btn-fb-like" 
+                                            onClick={() => handleLikeMovie(movie.movie_id)}
+                                        >
                                             <ThumbsUp size={14} strokeWidth={2.5} fill="currentColor" /> 
-                                            <span>Thích</span>
+                                            <span>Thích {movie.total_likes > 0 && movie.total_likes}</span>
                                         </button>
+
                                         <span className="view-count">
                                             <Eye size={14} strokeWidth={2} /> 
-                                            <span>{movie.movie_id * 150} lượt xem</span>
+                                            {/* Thay vì nhân 150, giờ bạn có thể dùng trường views_count nếu đã thêm vào DB */}
+                                            <span>{movie.views_count || movie.movie_id * 150} lượt xem</span>
                                         </span>
                                     </div>
                                     <p className="movie-summary-text">
@@ -120,7 +133,7 @@ const CinemaGenre = () => {
                     </div>
                 </div>
 
-                {/* CỘT PHẢI: SIDEBAR (Đồng bộ MovieDetail) */}
+                {/* CỘT PHẢI: SIDEBAR */}
                 <div className="sidebar-col">
                     <div className="sidebar-title">Phim Đang Chiếu</div>
                     <div className="sidebar-movie-list">
