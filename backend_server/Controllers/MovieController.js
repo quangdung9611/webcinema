@@ -76,7 +76,7 @@ exports.getMovieBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
 
-        // 1. Lấy thông tin phim và Đánh giá trung bình
+        // 1. Lấy thông tin phim và Đánh giá trung bình (SELECT * đã có total_likes)
         const [movieRows] = await db.query(`
             SELECT 
                 m.*, 
@@ -162,8 +162,8 @@ exports.getMovieById = async (req, res) => {
 
 // [POST] /api/movies/add
 exports.addMovie = async (req, res) => {
-    // Bổ sung nation từ req.body
-    const { title, description, director, nation, duration, age_rating, release_date, status, trailer_url } = req.body;
+    // Bổ sung nation và total_likes từ req.body
+    const { title, description, director, nation, duration, age_rating, release_date, status, trailer_url, total_likes } = req.body;
 
     const errorMsg = validateMovieData(req.body, req.file, false);
     if (errorMsg) {
@@ -178,11 +178,11 @@ exports.addMovie = async (req, res) => {
         const cleanDate = release_date ? release_date.substring(0, 10) : null;
         const poster_url = req.file.originalname; 
 
-        // Thêm nation vào câu query INSERT
+        // Thêm nation và total_likes vào câu query INSERT
         await connection.query(
-            `INSERT INTO movies (title, slug, description, director, nation, duration, age_rating, poster_url, trailer_url, release_date, status) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [title.trim(), createSlug(title), description || "", director || "", nation || null, duration, age_rating || 0, poster_url, trailer_url || null, cleanDate, status || "Sắp chiếu"]
+            `INSERT INTO movies (title, slug, description, director, nation, duration, age_rating, poster_url, trailer_url, release_date, status, total_likes) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [title.trim(), createSlug(title), description || "", director || "", nation || null, duration, age_rating || 0, poster_url, trailer_url || null, cleanDate, status || "Sắp chiếu", total_likes || 0]
         );
 
         await connection.commit();
@@ -200,8 +200,8 @@ exports.addMovie = async (req, res) => {
 // [PUT] /api/movies/update/:id
 exports.updateMovie = async (req, res) => {
     const { id } = req.params;
-    // Bổ sung nation từ req.body
-    const { title, director, nation, duration, age_rating, release_date, status, description, trailer_url } = req.body;
+    // Bổ sung nation và total_likes từ req.body
+    const { title, director, nation, duration, age_rating, release_date, status, description, trailer_url, total_likes } = req.body;
     
     const errorMsg = validateMovieData(req.body, req.file, true);
     if (errorMsg) return res.status(400).json({ error: errorMsg });
@@ -224,12 +224,12 @@ exports.updateMovie = async (req, res) => {
             poster_url = req.file.originalname;
         }
 
-        // Cập nhật nation vào câu query UPDATE
+        // Cập nhật nation và total_likes vào câu query UPDATE
         await connection.query(
             `UPDATE movies 
-             SET title=?, slug=?, director=?, nation=?, duration=?, age_rating=?, release_date=?, status=?, description=?, poster_url=?, trailer_url=? 
+             SET title=?, slug=?, director=?, nation=?, duration=?, age_rating=?, release_date=?, status=?, description=?, poster_url=?, trailer_url=?, total_likes=? 
              WHERE movie_id=?`,
-            [title.trim(), createSlug(title), director || "", nation || null, duration, age_rating || 0, cleanDate, status || "Sắp chiếu", description || "", poster_url, trailer_url || null, id]
+            [title.trim(), createSlug(title), director || "", nation || null, duration, age_rating || 0, cleanDate, status || "Sắp chiếu", description || "", poster_url, trailer_url || null, total_likes || 0, id]
         );
 
         await connection.commit();
@@ -269,9 +269,9 @@ exports.deleteMovie = async (req, res) => {
 // Lấy phim theo nhóm trạng thái (Cho Mega Menu / Trang chủ)
 exports.getMoviesByStatusGroup = async (req, res) => {
     try {
-        // Thêm nation vào câu lệnh SELECT
+        // Thêm nation và total_likes vào câu lệnh SELECT
         const [rows] = await db.query(
-            "SELECT movie_id, title, slug, poster_url, status, age_rating, trailer_url, nation FROM movies WHERE status != 'Ngừng chiếu' ORDER BY release_date DESC"
+            "SELECT movie_id, title, slug, poster_url, status, age_rating, trailer_url, nation, total_likes FROM movies WHERE status != 'Ngừng chiếu' ORDER BY release_date DESC"
         );
         
         const grouped = {
@@ -300,7 +300,7 @@ exports.getMoviesByStatusSlug = async (req, res) => {
             return res.status(400).json({ message: "Đường dẫn không hợp lệ" });
         }
 
-        // SELECT * đã bao gồm nation
+        // SELECT * đã bao gồm nation và total_likes
         const [rows] = await db.query(
             "SELECT * FROM movies WHERE status = ? ORDER BY release_date DESC",
             [dbStatus]
@@ -314,5 +314,28 @@ exports.getMoviesByStatusSlug = async (req, res) => {
     } catch (error) {
         console.error("Lỗi getMoviesByStatusSlug:", error);
         res.status(500).json({ message: "Lỗi server khi lấy danh sách phim" });
+    }
+};
+
+/**
+ * [PATCH] /api/movies/like/:id
+ * Tăng lượt thích cho phim (Dành cho cả khách vãng lai và thành viên)
+ */
+exports.likeMovie = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [result] = await db.query(
+            "UPDATE movies SET total_likes = total_likes + 1 WHERE movie_id = ?", 
+            [id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Phim không tồn tại" });
+        }
+
+        res.status(200).json({ success: true, message: "Đã tăng lượt thích!" });
+    } catch (error) {
+        console.error("Lỗi likeMovie:", error);
+        res.status(500).json({ error: "Lỗi hệ thống khi thích phim" });
     }
 };

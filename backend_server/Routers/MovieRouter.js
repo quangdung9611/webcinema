@@ -9,11 +9,14 @@ const upload = require('../Middlewares/UploadMiddleware');
 router.get('/status-group', movieController.getMoviesByStatusGroup);
 
 // 2. Lấy danh sách phim theo trang Category (Đồng bộ với localhost:5173/movies/...)
-// Sửa thành /category/ để phân biệt rõ với phim lẻ
 router.get('/category/:statusSlug', movieController.getMoviesByStatusSlug);
 
 // 3. Lấy tất cả phim (Cho trang danh sách Admin)
 router.get('/', movieController.getAllMovies);
+
+// --- BỔ SUNG: ROUTE TĂNG LƯỢT THÍCH ---
+// Route này cho phép cả khách và user bấm thích phim
+router.patch('/like/:id', movieController.likeMovie);
 
 // 4. Các route Admin
 router.post('/add', upload.single('posters'), movieController.addMovie);
@@ -22,7 +25,7 @@ router.delete('/:id', movieController.deleteMovie);
 router.get('/detail/:id', movieController.getMovieById);
 
 // 5. Lấy 1 phim THEO SLUG (Dành cho trang Chi tiết - Ví dụ: /lat-mat-7)
-// PHẢI LUÔN ĐỂ CUỐI CÙNG
+// PHẢI LUÔN ĐỂ CUỐI CÙNG để không bị nhận nhầm các route phía trên là slug
 router.get('/:slug', movieController.getMovieBySlug);
 
 module.exports = router;
