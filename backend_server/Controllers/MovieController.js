@@ -51,21 +51,22 @@ const validateMovieData = (data, files, isUpdate = false) => {
 };
 
 /**
- * Xóa file vật lý trên server
+ * Xóa file vật lý trên server (Dũng sửa tham số subFolder để xóa đúng chỗ nhé)
  */
-const deleteFile = (fileName) => {
+const deleteFile = (fileName, subFolder = 'posters') => {
     if (!fileName) return;
 
     const pureFileName = path.basename(fileName);
-    const filePath = path.join(__dirname, '..', 'uploads', 'posters', pureFileName); 
+    // Thay đổi đường dẫn linh hoạt theo folder
+    const filePath = path.join(__dirname, '..', 'uploads', subFolder, pureFileName); 
 
     try {
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
-            console.log("✅ Đã xóa file cũ thành công");
+            console.log(`✅ Đã xóa file cũ trong ${subFolder} thành công`);
         }
     } catch (err) {
-        console.error("❌ Lỗi khi xóa file vật lý:", err.message);
+        console.error(`❌ Lỗi khi xóa file trong ${subFolder}:`, err.message);
     }
 };
 
@@ -77,7 +78,7 @@ exports.getMovieBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
 
-        // 1. Lấy thông tin phim và Đánh giá trung bình (SELECT * đã có total_likes và backdrop_url)
+        // 1. Lấy thông tin phim và Đánh giá trung bình
         const [movieRows] = await db.query(`
             SELECT 
                 m.*, 
@@ -122,8 +123,6 @@ exports.getMovieBySlug = async (req, res) => {
                 ORDER BY s.start_time ASC
             `, [movie.movie_id]);
             showtimes = rows;
-        } else {
-            console.log(`ℹ️ [Info] Phim "${movie.title}" ẩn suất chiếu vì đang ở trạng thái: ${movie.status}`);
         }
 
         movie.genres = genres; 
@@ -164,12 +163,13 @@ exports.getMovieById = async (req, res) => {
 // [POST] /api/movies/add
 exports.addMovie = async (req, res) => {
     const { title, description, director, nation, duration, age_rating, release_date, status, trailer_url, total_likes } = req.body;
-    const files = req.files; // Sử dụng req.files cho upload nhiều trường ảnh
+    const files = req.files; 
 
     const errorMsg = validateMovieData(req.body, files, false);
     if (errorMsg) {
-        if (files && files['posters']) deleteFile(files['posters'][0].originalname);
-        if (files && files['backdrop_image']) deleteFile(files['backdrop_image'][0].originalname);
+        // Nếu lỗi, xóa file vừa upload dựa trên .filename (tên đã lưu trên đĩa)
+        if (files && files['posters']) deleteFile(files['posters'][0].filename, 'posters');
+        if (files && files['backdrop_image']) deleteFile(files['backdrop_image'][0].filename, 'backdrops');
         return res.status(400).json({ error: errorMsg });
     }
 
@@ -178,8 +178,10 @@ exports.addMovie = async (req, res) => {
         await connection.beginTransaction();
         
         const cleanDate = release_date ? release_date.substring(0, 10) : null;
-        const poster_url = files['posters'] ? files['posters'][0].originalname : null;
-        const backdrop_url = files['backdrop_image'] ? files['backdrop_image'][0].originalname : null;
+        
+        // ĐỔI SANG .filename ĐỂ LƯU ĐÚNG TÊN CÓ MÃ SỐ VÀO DB
+        const poster_url = files['posters'] ? files['posters'][0].filename : null;
+        const backdrop_url = files['backdrop_image'] ? files['backdrop_image'][0].filename : null;
 
         await connection.query(
             `INSERT INTO movies (title, slug, description, director, nation, duration, age_rating, poster_url, backdrop_url, trailer_url, release_date, status, total_likes) 
@@ -192,8 +194,8 @@ exports.addMovie = async (req, res) => {
         res.status(201).json({ message: "Thêm phim thành công!" });
     } catch (error) {
         await connection.rollback();
-        if (files && files['posters']) deleteFile(files['posters'][0].originalname);
-        if (files && files['backdrop_image']) deleteFile(files['backdrop_image'][0].originalname);
+        if (files && files['posters']) deleteFile(files['posters'][0].filename, 'posters');
+        if (files && files['backdrop_image']) deleteFile(files['backdrop_image'][0].filename, 'backdrops');
         res.status(500).json({ error: error.message });
     } finally {
         connection.release();
@@ -223,16 +225,16 @@ exports.updateMovie = async (req, res) => {
         let poster_url = old[0].poster_url;
         let backdrop_url = old[0].backdrop_url;
 
-        // Xử lý Poster mới nếu có
+        // Xử lý Poster mới (Lưu .filename)
         if (files && files['posters']) {
-            deleteFile(old[0].poster_url);
-            poster_url = files['posters'][0].originalname;
+            deleteFile(old[0].poster_url, 'posters');
+            poster_url = files['posters'][0].filename;
         }
 
-        // Xử lý Backdrop mới nếu có
+        // Xử lý Backdrop mới (Lưu .filename và vào folder 'backdrops')
         if (files && files['backdrop_image']) {
-            deleteFile(old[0].backdrop_url);
-            backdrop_url = files['backdrop_image'][0].originalname;
+            deleteFile(old[0].backdrop_url, 'backdrops');
+            backdrop_url = files['backdrop_image'][0].filename;
         }
 
         await connection.query(
@@ -261,8 +263,8 @@ exports.deleteMovie = async (req, res) => {
 
         const [movie] = await connection.query("SELECT poster_url, backdrop_url FROM movies WHERE movie_id = ?", [req.params.id]);
         if (movie.length > 0) {
-            deleteFile(movie[0].poster_url);
-            deleteFile(movie[0].backdrop_url); // Xóa luôn backdrop khi xóa phim
+            deleteFile(movie[0].poster_url, 'posters');
+            deleteFile(movie[0].backdrop_url, 'backdrops'); // Xóa ở folder backdrops
         }
 
         await connection.query("DELETE FROM movies WHERE movie_id = ?", [req.params.id]);
@@ -277,7 +279,7 @@ exports.deleteMovie = async (req, res) => {
     }
 };
 
-// Lấy phim theo nhóm trạng thái (Cho Mega Menu / Trang chủ)
+// Giữ nguyên các hàm phía dưới...
 exports.getMoviesByStatusGroup = async (req, res) => {
     try {
         const [rows] = await db.query(
@@ -296,7 +298,6 @@ exports.getMoviesByStatusGroup = async (req, res) => {
     }
 };
 
-// [GET] /api/movies/list/:statusSlug - Lấy danh sách phim cho trang Category
 exports.getMoviesByStatusSlug = async (req, res) => {
     try {
         const { statusSlug } = req.params;
@@ -326,10 +327,6 @@ exports.getMoviesByStatusSlug = async (req, res) => {
     }
 };
 
-/**
- * [PATCH] /api/movies/like/:id
- * Tăng lượt thích cho phim
- */
 exports.likeMovie = async (req, res) => {
     try {
         const { id } = req.params;
@@ -349,10 +346,6 @@ exports.likeMovie = async (req, res) => {
     }
 };
 
-/**
- * [PATCH] /api/movies/view/:id
- * Tăng lượt xem
- */
 exports.incrementViews = async (req, res) => {
     try {
         const { id } = req.params;
