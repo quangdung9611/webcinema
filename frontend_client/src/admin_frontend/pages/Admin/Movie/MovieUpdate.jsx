@@ -88,22 +88,24 @@ const MovieUpdate = () => {
     };
 
     const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            if (e.target.name === "poster_file") {
-                setNewPoster(file);
-                setPreview(URL.createObjectURL(file)); 
-            } else if (e.target.name === "backdrop_file") {
-                setNewBackdrop(file);
-                setBackdropPreview(URL.createObjectURL(file));
-            }
+    const file = e.target.files[0];
+    if (file) {
+        // SỬA: poster_file -> posters
+        if (e.target.name === "posters") {
+            setNewPoster(file);
+            setPreview(URL.createObjectURL(file)); 
+        } else if (e.target.name === "backdrop_url") {
+            setNewBackdrop(file);
+            setBackdropPreview(URL.createObjectURL(file));
         }
-    };
-
+    }
+};
     // 4. SUBMIT: CẬP NHẬT
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // --- ĐÃ KHÓA ĐOẠN CHECK NGÀY (COMMENT OUT) ---
+        /*
         const selectedDate = new Date(formData.release_date);
         const today = new Date();
         today.setHours(0, 0, 0, 0); 
@@ -112,14 +114,20 @@ const MovieUpdate = () => {
             handleShowModal('error', 'NGÀY KHÔNG HỢP LỆ', 'Phim "Sắp chiếu" thì ngày phát hành không được là ngày trong quá khứ.');
             return; 
         }
+        */
+        // --------------------------------------------
 
         const data = new FormData();
+        // Append các field text và tự động tạo slug mới nếu title thay đổi
         Object.entries(formData).forEach(([key, value]) => data.append(key, value));
+        data.append('slug', generateSlug(formData.title));
         
+        // Gửi Poster mới nếu có thay đổi
         if (newPoster) {
             data.append('posters', newPoster);
         }
-        // FIX 1: Đổi key thành 'backdrop_url' cho khớp với multer/backend tui vừa sửa
+
+        // FIX QUAN TRỌNG: Đổi key thành 'backdrop_url' để khớp với Multer Backend
         if (newBackdrop) {
             data.append('backdrop_url', newBackdrop);
         }
@@ -136,7 +144,6 @@ const MovieUpdate = () => {
             handleShowModal('error', 'THẤT BẠI', err.response?.data?.error || 'Lỗi hệ thống.');
         }
     };
-
     return (
         <div className="update-user-wrapper">
             <Modal {...modal} />
@@ -213,7 +220,7 @@ const MovieUpdate = () => {
                                 style={{ width: '80px', height: '110px', objectFit: 'cover', borderRadius: '4px', border: '2px solid #fff', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
                             />
                             <div className="file-input-group">
-                                <input type="file" name="poster_file" onChange={handleFileChange} accept="image/*" />
+                                <input type="file" name="posters" onChange={handleFileChange} accept="image/*" />
                                 <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#666' }}>
                                     {preview ? "Đã chọn ảnh poster mới" : "Giữ nguyên nếu không muốn thay đổi ảnh dọc"}
                                 </p>
@@ -226,13 +233,13 @@ const MovieUpdate = () => {
                         <label>Ảnh Backdrop (Ngang)</label>
                         <div className="poster-update-section" style={{ display: 'flex', gap: '20px', alignItems: 'center', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
                             <img 
-                                // FIX 2: Đổi URL từ folder /posters/ sang /backdrops/ để hiển thị đúng ảnh ngang
+                                // HIỂN THỊ: Lấy từ folder backdrops
                                 src={backdropPreview ? backdropPreview : `https://webcinema-zb8z.onrender.com/uploads/backdrops/${oldBackdrop}`} 
                                 alt="Backdrop" 
                                 style={{ width: '160px', height: '90px', objectFit: 'cover', borderRadius: '4px', border: '2px solid #fff', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
                             />
                             <div className="file-input-group">
-                                <input type="file" name="backdrop_file" onChange={handleFileChange} accept="image/*" />
+                                <input type="file" name="backdrop_url" onChange={handleFileChange} accept="image/*" />
                                 <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#666' }}>
                                     {backdropPreview ? "Đã chọn ảnh ngang mới" : "Giữ nguyên nếu không muốn thay đổi ảnh ngang"}
                                 </p>

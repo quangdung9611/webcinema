@@ -36,7 +36,9 @@ const validateMovieData = (data, files, isUpdate = false) => {
 
     const now = new Date();
     now.setHours(0, 0, 0, 0); 
-    if (status === "Sắp chiếu" && new Date(release_date) < now) {
+
+    // SỬA CHỖ NÀY: Chỉ chặn ngày quá khứ nếu là THÊM MỚI (isUpdate === false)
+    if (!isUpdate && status === "Sắp chiếu" && new Date(release_date) < now) {
         console.log("⚠️ [Validation Failed] Thử thêm phim 'Sắp chiếu' với ngày quá khứ.");
         return "Phim 'Sắp chiếu' thì ngày phát hành không được ở quá khứ.";
     }
@@ -47,7 +49,6 @@ const validateMovieData = (data, files, isUpdate = false) => {
 
     return null;
 };
-
 /**
  * Xóa file vật lý trên server
  */

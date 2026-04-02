@@ -34,7 +34,8 @@ const MovieAdd = () => {
         release_date: '',
         status: 'Sắp chiếu',
         trailer_url: '', 
-        description: ''
+        description: '',
+        total_likes: 0 // Thêm mặc định cho khớp db
     });
 
     const [poster, setPoster] = useState(null);
@@ -67,7 +68,7 @@ const MovieAdd = () => {
                 setPoster(file);
                 setPreview(URL.createObjectURL(file));
                 setErrors(prev => ({ ...prev, poster: '' }));
-            } else if (e.target.name === 'backdrop_file') { // Đổi name ở đây cho đồng bộ
+            } else if (e.target.name === 'backdrop_url') { // ĐỒNG BỘ: Dùng luôn tên backdrop_url
                 setBackdrop(file);
                 setBackdropPreview(URL.createObjectURL(file));
                 setErrors(prev => ({ ...prev, backdrop: '' }));
@@ -108,13 +109,18 @@ const MovieAdd = () => {
         if (!validate()) return;
 
         const submitData = new FormData();
-        Object.entries(formData).forEach(([key, value]) => submitData.append(key, value));
         
+        // Append các field text
+        Object.entries(formData).forEach(([key, value]) => {
+            submitData.append(key, value);
+        });
+        
+        // Append File - QUAN TRỌNG: Tên nhãn (key) phải khớp với Backend
         submitData.append('posters', poster);
-        // FIX: Đổi key thành 'backdrop_url' để khớp với Multer ở Backend
-        submitData.append('backdrop_url', backdrop);
+        submitData.append('backdrop_url', backdrop); 
 
         try {
+            // Lưu ý: Dũng kiểm tra xem link Render đã deploy code mới nhất chưa nhé
             await axios.post('https://webcinema-zb8z.onrender.com/api/movies/add', submitData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
@@ -126,6 +132,7 @@ const MovieAdd = () => {
                 onConfirm: () => navigate('/admin/movies')
             });
         } catch (err) {
+            console.error("Lỗi gửi form:", err);
             const serverError = err.response?.data?.error || "Lỗi kết nối Server";
             setErrors(prev => ({ ...prev, server: serverError }));
         }
@@ -232,8 +239,8 @@ const MovieAdd = () => {
                     <div className="form-group">
                         <label>Ảnh Backdrop (Ngang)</label>
                         <div className="file-upload-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {/* Đổi name thành backdrop_file cho đồng bộ với logic handleFileChange */}
-                            <input type="file" name="backdrop_file" accept="image/*" onChange={handleFileChange} />
+                            {/* ĐỒNG BỘ: Đổi name thành backdrop_url để Backend/Multer bắt được ngay lập tức */}
+                            <input type="file" name="backdrop_url" accept="image/*" onChange={handleFileChange} />
                             {backdrop && (
                                 <div className="file-selected-info" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '10px', background: '#f1f1f1', borderRadius: '5px' }}>
                                     <img src={backdropPreview} alt="Preview" style={{ width: '150px', height: '85px', objectFit: 'cover' }} />
