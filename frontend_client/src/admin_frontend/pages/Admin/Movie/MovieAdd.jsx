@@ -28,7 +28,7 @@ const MovieAdd = () => {
         title: '',
         slug: '',
         director: '',
-        nation: '', // Bổ sung trường quốc gia
+        nation: '', 
         duration: '',
         age_rating: '0',
         release_date: '',
@@ -39,6 +39,10 @@ const MovieAdd = () => {
 
     const [poster, setPoster] = useState(null);
     const [preview, setPreview] = useState(null); 
+    // --- BỔ SUNG STATE CHO BACKDROP ---
+    const [backdrop, setBackdrop] = useState(null);
+    const [backdropPreview, setBackdropPreview] = useState(null);
+
     const [errors, setErrors] = useState({});
     const [modal, setModal] = useState({ show: false, type: '', title: '', message: '' });
 
@@ -60,9 +64,16 @@ const MovieAdd = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setPoster(file);
-            setPreview(URL.createObjectURL(file));
-            setErrors(prev => ({ ...prev, poster: '' }));
+            // Phân biệt dựa trên name của input
+            if (e.target.name === 'posters') {
+                setPoster(file);
+                setPreview(URL.createObjectURL(file));
+                setErrors(prev => ({ ...prev, poster: '' }));
+            } else if (e.target.name === 'backdrop_image') {
+                setBackdrop(file);
+                setBackdropPreview(URL.createObjectURL(file));
+                setErrors(prev => ({ ...prev, backdrop: '' }));
+            }
         }
     };
 
@@ -73,7 +84,6 @@ const MovieAdd = () => {
         if (!formData.duration || formData.duration <= 0) newErrors.duration = "Thời lượng không hợp lệ";
         if (!formData.release_date) newErrors.release_date = "Chọn ngày phát hành";
         
-        // Logic chặn ngày tháng đồng bộ với Backend
         const selectedDate = new Date(formData.release_date);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -83,6 +93,7 @@ const MovieAdd = () => {
         }
 
         if (!poster) newErrors.poster = "Chưa có ảnh poster";
+        if (!backdrop) newErrors.backdrop = "Chưa có ảnh backdrop"; // Validate backdrop
         if (formData.description.length < 10) newErrors.description = "Mô tả ít nhất 10 ký tự";
         
         if (formData.trailer_url && !formData.trailer_url.includes('youtube.com') && !formData.trailer_url.includes('youtu.be')) {
@@ -99,9 +110,11 @@ const MovieAdd = () => {
         if (!validate()) return;
 
         const submitData = new FormData();
-        // Append toàn bộ dữ liệu (bao gồm cả nation) vào FormData
         Object.entries(formData).forEach(([key, value]) => submitData.append(key, value));
+        
         submitData.append('posters', poster);
+        // --- BỔ SUNG APPEND BACKDROP ---
+        submitData.append('backdrop_image', backdrop);
 
         try {
             await axios.post('https://webcinema-zb8z.onrender.com/api/movies/add', submitData);
@@ -115,10 +128,6 @@ const MovieAdd = () => {
         } catch (err) {
             const serverError = err.response?.data?.error || "Lỗi kết nối Server";
             setErrors(prev => ({ ...prev, server: serverError }));
-            
-            if (serverError.includes("ngày")) {
-                setErrors(prev => ({ ...prev, release_date: serverError }));
-            }
         }
     };
 
@@ -151,7 +160,6 @@ const MovieAdd = () => {
                         <label>Đạo diễn</label>
                         <input name="director" value={formData.director} onChange={handleChange} placeholder="Tên đạo diễn" />
                     </div>
-                    {/* BỔ SUNG TRƯỜNG QUỐC GIA */}
                     <div className="form-group">
                         <label>Quốc gia</label>
                         <input name="nation" value={formData.nation} onChange={handleChange} placeholder="VD: Việt Nam, Mỹ, Hàn Quốc..." />
@@ -204,49 +212,39 @@ const MovieAdd = () => {
                     </div>
                 </div>
 
+                {/* --- PHẦN HÌNH ẢNH: GIỮ NGUYÊN STYLE CỦA BẠN --- */}
                 <div className="form-row">
-                    <div className="form-group full-width">
-                        <label>Ảnh Poster</label>
+                    {/* INPUT POSTER DỌC */}
+                    <div className="form-group">
+                        <label>Ảnh Poster (Dọc)</label>
                         <div className="file-upload-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <input 
-                                type="file" 
-                                accept="image/*" 
-                                onChange={handleFileChange} 
-                                id="poster-upload"
-                            />
-                            
+                            <input type="file" name="posters" accept="image/*" onChange={handleFileChange} />
                             {poster && (
-                                <div className="file-selected-info" style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: '15px', 
-                                    padding: '10px', 
-                                    background: '#f1f1f1', 
-                                    borderRadius: '5px',
-                                    marginTop: '5px'
-                                }}>
-                                    <img 
-                                        src={URL.createObjectURL(poster)} 
-                                        alt="Preview" 
-                                        style={{ 
-                                            width: '100px', 
-                                            height: '100px', 
-                                            objectFit: 'cover', 
-                                            borderRadius: '3px',
-                                            border: '1px solid #ddd'
-                                        }} 
-                                    />
+                                <div className="file-selected-info" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '10px', background: '#f1f1f1', borderRadius: '5px' }}>
+                                    <img src={preview} alt="Preview" style={{ width: '80px', height: '100px', objectFit: 'cover' }} />
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <span style={{ fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                                            {poster.name}
-                                        </span>
-                                        <span style={{ fontSize: '12px', color: '#666' }}>
-                                            {(poster.size / 1024).toFixed(1)} KB
-                                        </span>
+                                        <span style={{ fontSize: '14px' }}>{poster.name}</span>
                                     </div>
                                 </div>
                             )}
                             {errors.poster && <small className="error-msg">{errors.poster}</small>}
+                        </div>
+                    </div>
+
+                    {/* INPUT BACKDROP NGANG */}
+                    <div className="form-group">
+                        <label>Ảnh Backdrop (Ngang)</label>
+                        <div className="file-upload-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <input type="file" name="backdrop_image" accept="image/*" onChange={handleFileChange} />
+                            {backdrop && (
+                                <div className="file-selected-info" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '10px', background: '#f1f1f1', borderRadius: '5px' }}>
+                                    <img src={backdropPreview} alt="Preview" style={{ width: '150px', height: '85px', objectFit: 'cover' }} />
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ fontSize: '14px' }}>{backdrop.name}</span>
+                                    </div>
+                                </div>
+                            )}
+                            {errors.backdrop && <small className="error-msg">{errors.backdrop}</small>}
                         </div>
                     </div>
                 </div>

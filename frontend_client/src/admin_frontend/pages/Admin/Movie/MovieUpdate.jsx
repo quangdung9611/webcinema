@@ -27,7 +27,7 @@ const MovieUpdate = () => {
     const [formData, setFormData] = useState({
         title: '',
         director: '',
-        nation: '', // Bổ sung trường quốc gia
+        nation: '', 
         duration: '',
         age_rating: 0,
         release_date: '',
@@ -37,8 +37,14 @@ const MovieUpdate = () => {
     });
 
     const [oldPoster, setOldPoster] = useState(''); 
+    const [oldBackdrop, setOldBackdrop] = useState('');
+
     const [newPoster, setNewPoster] = useState(null); 
+    const [newBackdrop, setNewBackdrop] = useState(null);
+
     const [preview, setPreview] = useState(null); 
+    const [backdropPreview, setBackdropPreview] = useState(null);
+
     const [modal, setModal] = useState({ show: false, type: '', title: '', message: '' });
 
     // 2. EFFECT: LẤY DỮ LIỆU CŨ
@@ -51,7 +57,7 @@ const MovieUpdate = () => {
                 setFormData({
                     title: movie.title || '',
                     director: movie.director || '',
-                    nation: movie.nation || '', // Lấy nation từ database
+                    nation: movie.nation || '', 
                     duration: movie.duration || '',
                     age_rating: movie.age_rating || 0,
                     release_date: movie.release_date ? movie.release_date.substring(0, 10) : '',
@@ -60,6 +66,7 @@ const MovieUpdate = () => {
                     description: movie.description || ''
                 });
                 setOldPoster(movie.poster_url); 
+                setOldBackdrop(movie.backdrop_url);
             } catch (err) {
                 handleShowModal('error', 'LỖI', 'Không thể tải thông tin phim.');
             }
@@ -83,8 +90,13 @@ const MovieUpdate = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setNewPoster(file);
-            setPreview(URL.createObjectURL(file)); 
+            if (e.target.name === "poster_file") {
+                setNewPoster(file);
+                setPreview(URL.createObjectURL(file)); 
+            } else if (e.target.name === "backdrop_file") {
+                setNewBackdrop(file);
+                setBackdropPreview(URL.createObjectURL(file));
+            }
         }
     };
 
@@ -92,26 +104,23 @@ const MovieUpdate = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // --- LOGIC KIỂM TRA NGÀY THÁNG ---
         const selectedDate = new Date(formData.release_date);
         const today = new Date();
         today.setHours(0, 0, 0, 0); 
 
         if (formData.status === "Sắp chiếu" && selectedDate < today) {
-            handleShowModal(
-                'error', 
-                'NGÀY KHÔNG HỢP LỆ', 
-                'Phim "Sắp chiếu" thì ngày phát hành không được là ngày trong quá khứ.'
-            );
+            handleShowModal('error', 'NGÀY KHÔNG HỢP LỆ', 'Phim "Sắp chiếu" thì ngày phát hành không được là ngày trong quá khứ.');
             return; 
         }
 
         const data = new FormData();
-        // Gửi kèm toàn bộ formData (bao gồm nation)
         Object.entries(formData).forEach(([key, value]) => data.append(key, value));
         
         if (newPoster) {
             data.append('posters', newPoster);
+        }
+        if (newBackdrop) {
+            data.append('backdrop_image', newBackdrop);
         }
 
         try {
@@ -154,7 +163,6 @@ const MovieUpdate = () => {
                         <input name="director" value={formData.director} onChange={handleChange} />
                     </div>
 
-                    {/* BỔ SUNG TRƯỜNG QUỐC GIA */}
                     <div className="update-field">
                         <label>Quốc gia</label>
                         <input name="nation" value={formData.nation} onChange={handleChange} placeholder="VD: Mỹ, Hàn Quốc..." />
@@ -191,27 +199,40 @@ const MovieUpdate = () => {
 
                     <div className="update-field full-width">
                         <label>Link Trailer (YouTube)</label>
-                        <input 
-                            name="trailer_url" 
-                            value={formData.trailer_url} 
-                            onChange={handleChange} 
-                            placeholder="https://www.youtube.com/watch?v=..." 
-                        />
+                        <input name="trailer_url" value={formData.trailer_url} onChange={handleChange} placeholder="https://www.youtube.com/watch?v=..." />
                     </div>
 
+                    {/* POSTER DỌC */}
                     <div className="update-field full-width">
-                        <label>Ảnh Poster</label>
+                        <label>Ảnh Poster (Dọc)</label>
                         <div className="poster-update-section" style={{ display: 'flex', gap: '20px', alignItems: 'center', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
                             <img 
                                 src={preview ? preview : `https://webcinema-zb8z.onrender.com/uploads/posters/${oldPoster}`} 
                                 alt="Poster" 
-                                style={{ width: '100px', height: '140px', objectFit: 'cover', borderRadius: '4px', border: '2px solid #fff', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
-                                onError={(e) => e.target.src = 'https://via.placeholder.com/100x140?text=No+Image'} 
+                                style={{ width: '80px', height: '110px', objectFit: 'cover', borderRadius: '4px', border: '2px solid #fff', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
                             />
                             <div className="file-input-group">
-                                <input type="file" onChange={handleFileChange} accept="image/*" />
+                                <input type="file" name="poster_file" onChange={handleFileChange} accept="image/*" />
                                 <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#666' }}>
-                                    {preview ? "Đã chọn ảnh mới" : "Giữ nguyên nếu không muốn thay đổi ảnh cũ"}
+                                    {preview ? "Đã chọn ảnh poster mới" : "Giữ nguyên nếu không muốn thay đổi ảnh dọc"}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* BACKDROP NGANG */}
+                    <div className="update-field full-width">
+                        <label>Ảnh Backdrop (Ngang)</label>
+                        <div className="poster-update-section" style={{ display: 'flex', gap: '20px', alignItems: 'center', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
+                            <img 
+                                src={backdropPreview ? backdropPreview : `https://webcinema-zb8z.onrender.com/uploads/posters/${oldBackdrop}`} 
+                                alt="Backdrop" 
+                                style={{ width: '160px', height: '90px', objectFit: 'cover', borderRadius: '4px', border: '2px solid #fff', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
+                            />
+                            <div className="file-input-group">
+                                <input type="file" name="backdrop_file" onChange={handleFileChange} accept="image/*" />
+                                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#666' }}>
+                                    {backdropPreview ? "Đã chọn ảnh ngang mới" : "Giữ nguyên nếu không muốn thay đổi ảnh ngang"}
                                 </p>
                             </div>
                         </div>
@@ -219,13 +240,7 @@ const MovieUpdate = () => {
 
                     <div className="update-field full-width">
                         <label>Mô tả nội dung</label>
-                        <textarea 
-                            name="description" 
-                            value={formData.description} 
-                            onChange={handleChange} 
-                            rows="5" 
-                            placeholder="Nhập mô tả phim..."
-                        />
+                        <textarea name="description" value={formData.description} onChange={handleChange} rows="5" placeholder="Nhập mô tả phim..." />
                     </div>
                 </div>
 

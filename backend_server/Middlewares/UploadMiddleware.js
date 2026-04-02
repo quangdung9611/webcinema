@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        let dir = 'uploads/posters/'; // Mặc định
+        let dir = 'uploads/posters/'; // Mặc định cho posters
 
         // Logic phân loại folder dựa trên fieldname
         if (file.fieldname === 'food_image') {
@@ -16,11 +16,12 @@ const storage = multer.diskStorage({
         else if (file.fieldname === 'actorImage') {
             dir = 'uploads/actors/';
         }
-        // --- THÊM PHẦN NÀY CHO HÌNH NGANG ---
+        // Folder cho hình nền ngang (Backdrop)
         else if (file.fieldname === 'backdrop_image') { 
-            dir = 'uploads/backdrop_poster/';
+            dir = 'uploads/backdrops/'; // Tui sửa lại tên folder cho ngắn gọn nhé
         }
 
+        // Tạo folder nếu chưa tồn tại
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
@@ -28,12 +29,15 @@ const storage = multer.diskStorage({
         cb(null, dir);
     },
     filename: (req, file, cb) => {
-        // Tùy chỉnh tên file để tránh trùng lặp và chuyên nghiệp hơn
+        // Tạo chuỗi duy nhất để tránh trùng tên file
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = path.extname(file.originalname).toLowerCase();
-        const baseName = path.basename(file.originalname, ext);
+        
+        // Làm sạch tên file gốc (xóa khoảng trắng, ký tự đặc biệt)
+        const baseName = path.basename(file.originalname, ext)
+            .replace(/\s+/g, '-')
+            .replace(/[^\w-]/g, '');
 
-        // Nếu là backdrop thì thêm chữ -backdrop vào tên file cho dễ quản lý
         if (file.fieldname === 'backdrop_image') {
             cb(null, `${baseName}-backdrop-${uniqueSuffix}${ext}`);
         } else {
@@ -45,7 +49,7 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB
+        fileSize: 5 * 1024 * 1024 // Giới hạn 5MB cho mỗi file
     },
     fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png|webp/;
