@@ -41,6 +41,7 @@ const validateMovieData = (data, files, isUpdate = false) => {
         return "Phim 'Sắp chiếu' thì ngày phát hành không được ở quá khứ.";
     }
 
+    // Kiểm tra upload file cho trường hợp thêm mới
     if (!isUpdate && (!files || !files['posters'])) 
         return "Vui lòng upload ảnh poster.";
 
@@ -48,10 +49,9 @@ const validateMovieData = (data, files, isUpdate = false) => {
 };
 
 /**
- * Xóa file vật lý trên server (Dũng sửa tham số subFolder để xóa đúng chỗ nhé)
+ * Xóa file vật lý trên server
  */
 const deleteFile = (fileName, subFolder = 'posters') => {
-    // FIX: Nếu fileName là null hoặc 'null' (do db của Dũng đang trống), thoát luôn để không lỗi path
     if (!fileName || fileName === 'null' || fileName === 'undefined') return;
 
     const pureFileName = path.basename(fileName);
@@ -168,9 +168,10 @@ exports.addMovie = async (req, res) => {
         await connection.beginTransaction();
         
         const cleanDate = release_date ? release_date.substring(0, 10) : null;
-        const poster_url = files['posters'] ? files['posters'][0].filename : null;
-        // Đã sửa thành backdrop_url cho khớp database của Dũng
-        const backdrop_url = files['backdrop_url'] ? files['backdrop_url'][0].filename : null;
+        
+        // Bảo vệ code bằng cách check mảng tồn tại trước khi lấy index 0
+        const poster_url = (files['posters'] && files['posters'].length > 0) ? files['posters'][0].filename : null;
+        const backdrop_url = (files['backdrop_url'] && files['backdrop_url'].length > 0) ? files['backdrop_url'][0].filename : null;
 
         await connection.query(
             `INSERT INTO movies (title, slug, description, director, nation, duration, age_rating, poster_url, backdrop_url, trailer_url, release_date, status, total_likes) 
@@ -195,7 +196,7 @@ exports.addMovie = async (req, res) => {
 exports.updateMovie = async (req, res) => {
     const { id } = req.params;
     const { title, director, nation, duration, age_rating, release_date, status, description, trailer_url, total_likes } = req.body;
-    const files = req.files || {}; // Tránh lỗi undefined khi không chọn file
+    const files = req.files || {}; 
     
     const errorMsg = validateMovieData(req.body, files, true);
     if (errorMsg) return res.status(400).json({ error: errorMsg });
@@ -220,7 +221,7 @@ exports.updateMovie = async (req, res) => {
             poster_url = files['posters'][0].filename;
         }
 
-        // Xử lý Backdrop mới (Đã đổi thành backdrop_url cho khớp db)
+        // Xử lý Backdrop mới
         if (files['backdrop_url'] && files['backdrop_url'].length > 0) {
             deleteFile(old[0].backdrop_url, 'backdrops');
             backdrop_url = files['backdrop_url'][0].filename;

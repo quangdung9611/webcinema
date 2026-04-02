@@ -4,10 +4,15 @@ const fs = require('fs');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        let dir = 'uploads/posters/'; // Mặc định cho posters
+        // 1. Mặc định ban đầu
+        let dir = 'uploads/posters/'; 
 
-        // Logic phân loại folder dựa trên fieldname
-        if (file.fieldname === 'food_image') {
+        // 2. Kiểm tra nhãn (fieldname) để chọn thư mục đích
+        if (file.fieldname === 'backdrop_url') { 
+            // Nếu là hình ngang -> vào backdrops
+            dir = 'uploads/backdrops/';
+        } 
+        else if (file.fieldname === 'food_image') {
             dir = 'uploads/foods/';
         } 
         else if (file.fieldname === 'newsImage') { 
@@ -16,12 +21,12 @@ const storage = multer.diskStorage({
         else if (file.fieldname === 'actorImage') {
             dir = 'uploads/actors/';
         }
-        // FIX: Đổi từ backdrop_image thành backdrop_url cho khớp với Frontend và Route
-        else if (file.fieldname === 'backdrop_url') { 
-            dir = 'uploads/backdrops/';
+        else {
+            // Mọi trường hợp khác hoặc field 'posters' -> vào posters
+            dir = 'uploads/posters/';
         }
 
-        // Tạo folder nếu chưa tồn tại
+        // 3. Tự động tạo folder nếu chưa có (recursive giúp tạo cả cây thư mục)
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
@@ -29,25 +34,24 @@ const storage = multer.diskStorage({
         cb(null, dir);
     },
     filename: (req, file, cb) => {
-        // Lấy phần mở rộng (.jpg, .png...)
+        // Lấy đuôi file (.jpg, .png...)
         const ext = path.extname(file.originalname).toLowerCase();
         
-        // Lấy tên file gốc (ví dụ: "anh-conan")
+        // Làm sạch tên file gốc (xóa dấu tiếng Việt, khoảng trắng)
         const baseName = path.basename(file.originalname, ext)
-            .normalize('NFD') // Khử dấu tiếng Việt
+            .normalize('NFD') 
             .replace(/[\u0300-\u036f]/g, '')
             .replace(/[đĐ]/g, 'd')
-            .replace(/\s+/g, '-') // Thay khoảng trắng bằng gạch nối
-            .replace(/[^\w-]/g, ''); // Xóa ký tự đặc biệt
+            .replace(/\s+/g, '-') 
+            .replace(/[^\w-]/g, ''); 
 
-        // Tạo chuỗi ngắn gọn để tránh trùng (Dùng Date.now() là đủ)
-        const uniqueSuffix = Date.now();
-
-        // Trả về tên file: "ten-goc-1712345678.jpg"
+        // Đặt tên theo yêu cầu của Dũng: đẹp và gọn
         if (file.fieldname === 'backdrop_url') {
-            cb(null, `${baseName}-backdrop-${uniqueSuffix}${ext}`);
+            // Kết quả: tho-oi-backdrop.jpg
+            cb(null, `${baseName}-backdrop${ext}`);
         } else {
-            cb(null, `${baseName}-${uniqueSuffix}${ext}`);
+            // Kết quả: tho-oi.jpg
+            cb(null, `${baseName}${ext}`);
         }
     }
 });
@@ -55,7 +59,7 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024 // Giới hạn 5MB
+        fileSize: 5 * 1024 * 1024 // Giới hạn 5MB cho mỗi file
     },
     fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png|webp/;
