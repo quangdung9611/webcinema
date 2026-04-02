@@ -39,7 +39,6 @@ const MovieAdd = () => {
 
     const [poster, setPoster] = useState(null);
     const [preview, setPreview] = useState(null); 
-    // --- BỔ SUNG STATE CHO BACKDROP ---
     const [backdrop, setBackdrop] = useState(null);
     const [backdropPreview, setBackdropPreview] = useState(null);
 
@@ -64,12 +63,11 @@ const MovieAdd = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Phân biệt dựa trên name của input
             if (e.target.name === 'posters') {
                 setPoster(file);
                 setPreview(URL.createObjectURL(file));
                 setErrors(prev => ({ ...prev, poster: '' }));
-            } else if (e.target.name === 'backdrop_image') {
+            } else if (e.target.name === 'backdrop_file') { // Đổi name ở đây cho đồng bộ
                 setBackdrop(file);
                 setBackdropPreview(URL.createObjectURL(file));
                 setErrors(prev => ({ ...prev, backdrop: '' }));
@@ -93,7 +91,7 @@ const MovieAdd = () => {
         }
 
         if (!poster) newErrors.poster = "Chưa có ảnh poster";
-        if (!backdrop) newErrors.backdrop = "Chưa có ảnh backdrop"; // Validate backdrop
+        if (!backdrop) newErrors.backdrop = "Chưa có ảnh backdrop"; 
         if (formData.description.length < 10) newErrors.description = "Mô tả ít nhất 10 ký tự";
         
         if (formData.trailer_url && !formData.trailer_url.includes('youtube.com') && !formData.trailer_url.includes('youtu.be')) {
@@ -113,11 +111,13 @@ const MovieAdd = () => {
         Object.entries(formData).forEach(([key, value]) => submitData.append(key, value));
         
         submitData.append('posters', poster);
-        // --- BỔ SUNG APPEND BACKDROP ---
-        submitData.append('backdrop_image', backdrop);
+        // FIX: Đổi key thành 'backdrop_url' để khớp với Multer ở Backend
+        submitData.append('backdrop_url', backdrop);
 
         try {
-            await axios.post('https://webcinema-zb8z.onrender.com/api/movies/add', submitData);
+            await axios.post('https://webcinema-zb8z.onrender.com/api/movies/add', submitData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
             setModal({
                 show: true,
                 type: 'success',
@@ -212,9 +212,7 @@ const MovieAdd = () => {
                     </div>
                 </div>
 
-                {/* --- PHẦN HÌNH ẢNH: GIỮ NGUYÊN STYLE CỦA BẠN --- */}
                 <div className="form-row">
-                    {/* INPUT POSTER DỌC */}
                     <div className="form-group">
                         <label>Ảnh Poster (Dọc)</label>
                         <div className="file-upload-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -231,11 +229,11 @@ const MovieAdd = () => {
                         </div>
                     </div>
 
-                    {/* INPUT BACKDROP NGANG */}
                     <div className="form-group">
                         <label>Ảnh Backdrop (Ngang)</label>
                         <div className="file-upload-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <input type="file" name="backdrop_image" accept="image/*" onChange={handleFileChange} />
+                            {/* Đổi name thành backdrop_file cho đồng bộ với logic handleFileChange */}
+                            <input type="file" name="backdrop_file" accept="image/*" onChange={handleFileChange} />
                             {backdrop && (
                                 <div className="file-selected-info" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '10px', background: '#f1f1f1', borderRadius: '5px' }}>
                                     <img src={backdropPreview} alt="Preview" style={{ width: '150px', height: '85px', objectFit: 'cover' }} />

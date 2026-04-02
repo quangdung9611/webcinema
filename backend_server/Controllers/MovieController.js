@@ -34,16 +34,13 @@ const validateMovieData = (data, files, isUpdate = false) => {
     if (!release_date) 
         return "Vui lòng chọn ngày phát hành.";
 
-    // --- BỔ SUNG LOGIC NGÀY THÁNG ---
     const now = new Date();
     now.setHours(0, 0, 0, 0); 
     if (status === "Sắp chiếu" && new Date(release_date) < now) {
         console.log("⚠️ [Validation Failed] Thử thêm phim 'Sắp chiếu' với ngày quá khứ.");
         return "Phim 'Sắp chiếu' thì ngày phát hành không được ở quá khứ.";
     }
-    // --------------------------------
 
-    // Kiểm tra file khi thêm mới (Dùng req.files)
     if (!isUpdate && (!files || !files['posters'])) 
         return "Vui lòng upload ảnh poster.";
 
@@ -54,10 +51,10 @@ const validateMovieData = (data, files, isUpdate = false) => {
  * Xóa file vật lý trên server (Dũng sửa tham số subFolder để xóa đúng chỗ nhé)
  */
 const deleteFile = (fileName, subFolder = 'posters') => {
-    if (!fileName) return;
+    // FIX: Nếu fileName là null hoặc 'null' (do db của Dũng đang trống), thoát luôn để không lỗi path
+    if (!fileName || fileName === 'null' || fileName === 'undefined') return;
 
     const pureFileName = path.basename(fileName);
-    // Thay đổi đường dẫn linh hoạt theo folder
     const filePath = path.join(__dirname, '..', 'uploads', subFolder, pureFileName); 
 
     try {
@@ -78,7 +75,6 @@ exports.getMovieBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
 
-        // 1. Lấy thông tin phim và Đánh giá trung bình
         const [movieRows] = await db.query(`
             SELECT 
                 m.*, 
@@ -93,7 +89,6 @@ exports.getMovieBySlug = async (req, res) => {
         const movie = movieRows[0];
         if (!movie) return res.status(404).json({ message: "Không tìm thấy phim" });
 
-        // 2. Lấy danh sách THỂ LOẠI
         const [genres] = await db.query(`
             SELECT g.genre_id, g.genre_name
             FROM genres g
@@ -101,7 +96,6 @@ exports.getMovieBySlug = async (req, res) => {
             WHERE mg.movie_id = ?
         `, [movie.movie_id]);
 
-        // 3. Lấy danh sách diễn viên
         const [actors] = await db.query(`
             SELECT a.actor_id, a.name, a.avatar, a.slug
             FROM actors a
@@ -109,7 +103,6 @@ exports.getMovieBySlug = async (req, res) => {
             WHERE ma.movie_id = ?
         `, [movie.movie_id]);
 
-        // 4. Lấy lịch chiếu
         let showtimes = [];
         if (movie.status === "Đang chiếu") {
             const [rows] = await db.query(`
@@ -138,7 +131,6 @@ exports.getMovieBySlug = async (req, res) => {
     }
 };
 
-// [GET] /api/movies
 exports.getAllMovies = async (req, res) => {
     try {
         const [rows] = await db.query("SELECT * FROM movies ORDER BY created_at DESC");
@@ -149,7 +141,6 @@ exports.getAllMovies = async (req, res) => {
     }
 };
 
-// [GET] /api/movies/:id
 exports.getMovieById = async (req, res) => {
     try {
         const [rows] = await db.query("SELECT * FROM movies WHERE movie_id = ?", [req.params.id]);
@@ -163,13 +154,12 @@ exports.getMovieById = async (req, res) => {
 // [POST] /api/movies/add
 exports.addMovie = async (req, res) => {
     const { title, description, director, nation, duration, age_rating, release_date, status, trailer_url, total_likes } = req.body;
-    const files = req.files; 
+    const files = req.files || {}; 
 
     const errorMsg = validateMovieData(req.body, files, false);
     if (errorMsg) {
-        // Nếu lỗi, xóa file vừa upload dựa trên .filename (tên đã lưu trên đĩa)
-        if (files && files['posters']) deleteFile(files['posters'][0].filename, 'posters');
-        if (files && files['backdrop_image']) deleteFile(files['backdrop_image'][0].filename, 'backdrops');
+        if (files['posters']) deleteFile(files['posters'][0].filename, 'posters');
+        if (files['backdrop_url']) deleteFile(files['backdrop_url'][0].filename, 'backdrops');
         return res.status(400).json({ error: errorMsg });
     }
 
@@ -178,10 +168,9 @@ exports.addMovie = async (req, res) => {
         await connection.beginTransaction();
         
         const cleanDate = release_date ? release_date.substring(0, 10) : null;
-        
-        // ĐỔI SANG .filename ĐỂ LƯU ĐÚNG TÊN CÓ MÃ SỐ VÀO DB
         const poster_url = files['posters'] ? files['posters'][0].filename : null;
-        const backdrop_url = files['backdrop_image'] ? files['backdrop_image'][0].filename : null;
+        // Đã sửa thành backdrop_url cho khớp database của Dũng
+        const backdrop_url = files['backdrop_url'] ? files['backdrop_url'][0].filename : null;
 
         await connection.query(
             `INSERT INTO movies (title, slug, description, director, nation, duration, age_rating, poster_url, backdrop_url, trailer_url, release_date, status, total_likes) 
@@ -194,8 +183,8 @@ exports.addMovie = async (req, res) => {
         res.status(201).json({ message: "Thêm phim thành công!" });
     } catch (error) {
         await connection.rollback();
-        if (files && files['posters']) deleteFile(files['posters'][0].filename, 'posters');
-        if (files && files['backdrop_image']) deleteFile(files['backdrop_image'][0].filename, 'backdrops');
+        if (files['posters']) deleteFile(files['posters'][0].filename, 'posters');
+        if (files['backdrop_url']) deleteFile(files['backdrop_url'][0].filename, 'backdrops');
         res.status(500).json({ error: error.message });
     } finally {
         connection.release();
@@ -206,7 +195,7 @@ exports.addMovie = async (req, res) => {
 exports.updateMovie = async (req, res) => {
     const { id } = req.params;
     const { title, director, nation, duration, age_rating, release_date, status, description, trailer_url, total_likes } = req.body;
-    const files = req.files;
+    const files = req.files || {}; // Tránh lỗi undefined khi không chọn file
     
     const errorMsg = validateMovieData(req.body, files, true);
     if (errorMsg) return res.status(400).json({ error: errorMsg });
@@ -225,16 +214,16 @@ exports.updateMovie = async (req, res) => {
         let poster_url = old[0].poster_url;
         let backdrop_url = old[0].backdrop_url;
 
-        // Xử lý Poster mới (Lưu .filename)
-        if (files && files['posters']) {
+        // Xử lý Poster mới
+        if (files['posters'] && files['posters'].length > 0) {
             deleteFile(old[0].poster_url, 'posters');
             poster_url = files['posters'][0].filename;
         }
 
-        // Xử lý Backdrop mới (Lưu .filename và vào folder 'backdrops')
-        if (files && files['backdrop_image']) {
+        // Xử lý Backdrop mới (Đã đổi thành backdrop_url cho khớp db)
+        if (files['backdrop_url'] && files['backdrop_url'].length > 0) {
             deleteFile(old[0].backdrop_url, 'backdrops');
-            backdrop_url = files['backdrop_image'][0].filename;
+            backdrop_url = files['backdrop_url'][0].filename;
         }
 
         await connection.query(
@@ -249,13 +238,13 @@ exports.updateMovie = async (req, res) => {
         res.status(200).json({ message: "Cập nhật thành công!" });
     } catch (error) {
         await connection.rollback();
+        console.error("Lỗi Update server:", error.message);
         res.status(500).json({ error: "Lỗi server: " + error.message });
     } finally {
         connection.release();
     }
 };
 
-// [DELETE] /api/movies/:id
 exports.deleteMovie = async (req, res) => {
     const connection = await db.getConnection();
     try {
@@ -264,7 +253,7 @@ exports.deleteMovie = async (req, res) => {
         const [movie] = await connection.query("SELECT poster_url, backdrop_url FROM movies WHERE movie_id = ?", [req.params.id]);
         if (movie.length > 0) {
             deleteFile(movie[0].poster_url, 'posters');
-            deleteFile(movie[0].backdrop_url, 'backdrops'); // Xóa ở folder backdrops
+            deleteFile(movie[0].backdrop_url, 'backdrops'); 
         }
 
         await connection.query("DELETE FROM movies WHERE movie_id = ?", [req.params.id]);
@@ -279,7 +268,6 @@ exports.deleteMovie = async (req, res) => {
     }
 };
 
-// Giữ nguyên các hàm phía dưới...
 exports.getMoviesByStatusGroup = async (req, res) => {
     try {
         const [rows] = await db.query(

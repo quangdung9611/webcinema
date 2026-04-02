@@ -119,8 +119,9 @@ const MovieUpdate = () => {
         if (newPoster) {
             data.append('posters', newPoster);
         }
+        // FIX 1: Đổi key thành 'backdrop_url' cho khớp với multer/backend tui vừa sửa
         if (newBackdrop) {
-            data.append('backdrop_image', newBackdrop);
+            data.append('backdrop_url', newBackdrop);
         }
 
         try {
@@ -225,7 +226,8 @@ const MovieUpdate = () => {
                         <label>Ảnh Backdrop (Ngang)</label>
                         <div className="poster-update-section" style={{ display: 'flex', gap: '20px', alignItems: 'center', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
                             <img 
-                                src={backdropPreview ? backdropPreview : `https://webcinema-zb8z.onrender.com/uploads/posters/${oldBackdrop}`} 
+                                // FIX 2: Đổi URL từ folder /posters/ sang /backdrops/ để hiển thị đúng ảnh ngang
+                                src={backdropPreview ? backdropPreview : `https://webcinema-zb8z.onrender.com/uploads/backdrops/${oldBackdrop}`} 
                                 alt="Backdrop" 
                                 style={{ width: '160px', height: '90px', objectFit: 'cover', borderRadius: '4px', border: '2px solid #fff', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
                             />
