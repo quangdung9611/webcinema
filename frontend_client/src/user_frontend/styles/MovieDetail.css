@@ -6,6 +6,7 @@
     color: #eeeeee;
     padding: 40px 0;
     min-height: 100vh;
+    font-family: 'Inter', sans-serif;
 }
 
 .detail-content-flex {
@@ -17,35 +18,29 @@
     padding: 0 20px;
 }
 
-/* Cột chính (7.5) */
 .main-detail-col {
     flex: 7.5;
     min-width: 0;
 }
 
-
 /* ==========================================
    2. HEADER: POSTER & THÔNG TIN CHUNG
    ========================================== */
-/* Thay thế cho .text-frame h1 */
 .movie-main-title {
-    font-size: clamp(18px, 5vw, 30px); /* Tự động co giãn theo màn hình */
+    font-size: clamp(18px, 5vw, 30px);
     font-weight: 800;
     color: #ffffff;
     margin-bottom: 18px;
     text-transform: uppercase;
     line-height: 1.2;
     letter-spacing: 0.5px;
-    
-    /* Hiệu ứng đổ bóng nhẹ để nổi bật trên nền tối */
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    
-    /* Đảm bảo không bị vỡ layout khi tên phim quá dài */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
 .movie-top-info {
     display: grid;
     grid-template-columns: minmax(180px, 300px) 1fr;
@@ -73,14 +68,6 @@
     min-width: 0;
 }
 
-.text-frame h1 {
-    font-size: clamp(20px, 5vw, 36px);
-    font-weight: 800;
-    color: #ffffff;
-    margin-bottom: 15px;
-    text-transform: uppercase;
-}
-
 .meta-row {
     display: flex;
     flex-wrap: wrap;
@@ -89,13 +76,37 @@
     margin-bottom: 20px;
 }
 
+.meta-row span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .rating-row {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 25px;
-    font-size: 20px;
+    font-size: 18px;
     color: #f1c40f;
+    cursor: pointer;
+}
+
+.rating-score {
+    font-size: 22px;
+    font-weight: 800;
+    color: #f5b50a;
+}
+
+.rating-count {
+    font-size: 14px;
+    color: #888;
+}
+
+.rating-link {
+    color: #4da3ff;
+    text-decoration: underline;
+    font-weight: 600;
 }
 
 .tag-btn {
@@ -105,6 +116,12 @@
     border-radius: 4px;
     color: #fff;
     font-size: 14px;
+    transition: 0.2s;
+}
+
+.tag-btn:hover {
+    background: #222;
+    border-color: #03599d;
 }
 
 /* ==========================================
@@ -119,6 +136,7 @@
 .section-divider h3 {
     font-size: 20px;
     text-transform: uppercase;
+    color: #fff;
 }
 
 .description-text {
@@ -130,7 +148,7 @@
 /* --- DATE PICKER --- */
 .date-picker-tabs {
     display: flex;
-    flex-wrap: wrap; 
+    overflow-x: auto;
     gap: 12px;
     background: #0a0a0a;
     padding: 15px;
@@ -139,12 +157,21 @@
     border: 1px solid #222;
 }
 
+.date-picker-tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.date-picker-tabs::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 10px;
+}
+
 .date-picker-tabs button {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    flex: 1 1 100px;
+    min-width: 100px;
     height: 75px;
     background: #151515;
     border: 1px solid #333;
@@ -155,8 +182,6 @@
 
 .date-picker-tabs button strong {
     font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
     color: #666;
     margin-bottom: 4px;
 }
@@ -179,10 +204,47 @@
 }
 
 /* --- SUẤT CHIẾU --- */
+.showtime-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.cinema-group {
+    background: #0d0d0d;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #222;
+}
+
+.cinema-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #4da3ff;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #222;
+    padding-bottom: 15px;
+}
+
+.format-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.format-label {
+    font-size: 13px;
+    color: #666;
+    font-weight: 600;
+}
+
 .time-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 12px;
 }
 
 .time-item {
@@ -204,91 +266,111 @@
 }
 
 /* ==========================================
-   4. SIDEBAR (PHIM ĐANG CHIẾU)
+   4. SIDEBAR (PHIM ĐANG CHIẾU) - TỐI GIẢN
    ========================================== */
-.movie-sidebar-right {
+.cinemastar-sidebar-container {
     flex: 2.5;
     min-width: 280px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start; 
+    gap: 25px;
 }
 
-.sidebar-heading {
-    color :black !important;
-    border-left: 4px solid #f1c40f;
-    padding-left: 15px;
-    margin-bottom: 30px;
+.cinemastar-sidebar-title {
+    position: relative;
+    padding-bottom: 12px;
+}
+
+.cinemastar-sidebar-title span {
+    font-size: 19px;
     font-weight: 700;
-    width: 100%;
+    color: #ffffff;
+    text-transform: uppercase;
 }
 
-.sidebar-movie-list {
+.title-underline {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background: #03599d;
+    border-radius: 2px;
+}
+
+.cinemastar-list-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    width: 100%;
+    gap: 20px;
 }
 
-.simple-movie-item {
+.cinemastar-backdrop-item {
     cursor: pointer;
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
 }
 
-.simple-poster {
+.backdrop-img-box {
+    position: relative;
     width: 100%;
-    aspect-ratio: 2/3;
-    border-radius: 8px;
+    aspect-ratio: 4 / 3; /* Khớp với ảnh 1000x750 của Dũng */
     overflow: hidden;
-    margin-bottom: 12px;
+    border-radius: 8px; /* Bo góc nhẹ cho hình ảnh */
+    margin-bottom: 10px;
 }
 
-.simple-poster img {
+.backdrop-img-box img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    transition: 0.4s ease;
+    object-fit: contain;
+    transition: transform 0.4s ease;
 }
 
-.simple-movie-item:hover img {
+.cinemastar-backdrop-item:hover img {
     transform: scale(1.05);
 }
 
-.simple-title {
-    font-size: 1rem;
+.backdrop-movie-name {
+    font-size: 15px;
     font-weight: 600;
-    color: #fff;
-    text-align: left;
+    color: #ffffff;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Cho phép tên phim hiện 2 dòng nếu quá dài */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.2s;
 }
 
-.view-more-sidebar-btn {
+.cinemastar-backdrop-item:hover .backdrop-movie-name {
+    color: #4da3ff; /* Đổi màu tên phim khi hover */
+}
+
+/* Ẩn các phần không cần thiết */
+.backdrop-movie-meta, 
+.backdrop-age-badge, 
+.backdrop-overlay {
+    display: none;
+}
+
+.cinemastar-viewall-btn {
     width: 100%;
-    margin-top: 25px;
     padding: 10px;
-    background: #ffffff;
-    border: 1px solid #dddddd;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: #666666;
-    font-size: 14px;
-    font-weight: 600;
+    background: transparent;
+    border: 1px solid #333;
+    color: #888;
+    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    font-size: 14px;
+    transition: 0.3s;
 }
 
-.view-more-sidebar-btn:hover {
-    background: #f8f9fa;
+.cinemastar-viewall-btn:hover {
+    color: #fff;
     border-color: #03599d;
-    color: #03599d;
 }
-
-/* --- TRAILER & RATING --- */
+/* ==========================================
+   5. TRAILER & BÌNH LUẬN (REVIEWS)
+   ========================================== */
 .trailer-header-section {
     margin-bottom: 30px;
     width: 100%;
@@ -297,124 +379,18 @@
 .trailer-aspect-ratio {
     position: relative;
     padding-bottom: 45%; 
-    height: 0;
-    overflow: hidden;
     background-color: #000;
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    overflow: hidden;
 }
 
 .trailer-iframe {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
 }
 
-.rating-score {
-    font-size: 20px;
-    margin-left: 8px;
-}
-
-.rating-count {
-    font-size: 14px;
-    color: #888;
-    margin-left: 10px;
-}
-
-.rating-link {
-    color: #03599d;
-    text-decoration: underline;
-}
-
-/* --- ACTORS --- */
-.actor-section {
-    margin-top: 15px;
-}
-
-.actor-label {
-    color: #ccc;
-    display: block;
-    margin-bottom: 8px;
-}
-
-.actor-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-/* --- MODAL RATING --- */
-.star-rating-container {
-    text-align: center;
-}
-
-.star-rating-hint {
-    margin-bottom: 15px;
-    color: #ccc;
-}
-
-.star-list {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-}
-
-.star-icon {
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.review-textarea {
-    width: 100%;
-    height: 100px;
-    margin-top: 15px;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #333;
-    background-color: #1a1a1a;
-    color: #fff;
-    resize: none;
-}
-
-/* --- CINEMA GROUPS --- */
-.showtime-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-    margin-top: 20px;
-}
-
-.cinema-group {
-    background: #0d0d0d;
-    padding: 25px;
-    border-radius: 12px;
-    border: 1px solid #222;
-    transition: border-color 0.3s ease;
-}
-
-.cinema-group:hover {
-    border-color: #03599d;
-}
-
-.cinema-name {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 18px;
-    font-weight: 700;
-    color: #4da3ff;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #222;
-    padding-bottom: 15px;
-}
-
-/* ==========================================
-   5. PHẦN BÌNH LUẬN (REVIEWS) - MỚI
-   ========================================== */
 .reviews-list-container {
-    margin-top: 25px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -425,12 +401,6 @@
     padding: 20px;
     border-radius: 12px;
     border: 1px solid #222;
-    transition: all 0.3s ease;
-}
-
-.review-card:hover {
-    border-color: #333;
-    transform: translateX(5px);
 }
 
 .review-user-info {
@@ -442,111 +412,51 @@
 
 .user-avatar {
     background: #1a1a1a;
-    width: 45px;
-    height: 45px;
+    width: 45px; height: 45px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #333;
+    display: flex; align-items: center; justify-content: center;
     color: #f1c40f;
-}
-
-.user-details {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.user-name {
-    font-weight: 700;
-    color: #ffffff;
-    font-size: 15px;
-}
-
-.user-rating-stars {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.time-ago {
-    font-size: 12px;
-    color: #666;
-    margin-left: 10px;
-    font-weight: 400;
+    border: 1px solid #333;
 }
 
 .review-text {
     line-height: 1.6;
     color: #bbb;
-    font-size: 14px;
-    margin: 0;
     padding-left: 60px;
+}
+
+/* Star Rating in Modal */
+.star-rating-container { text-align: center; }
+.star-list { display: flex; justify-content: center; gap: 8px; margin: 15px 0; }
+.star-icon { cursor: pointer; transition: 0.2s; }
+.review-textarea {
+    width: 100%; height: 100px;
+    padding: 12px; border-radius: 8px;
+    background: #1a1a1a; color: #fff; border: 1px solid #333;
 }
 
 /* ==========================================
    6. RESPONSIVE
    ========================================== */
-@media (max-width: 1200px) {
-    .detail-content-flex {
-        gap: 20px;
-    }
-    .movie-top-info {
-        grid-template-columns: 240px 1fr;
-    }
-}
-
 @media (max-width: 992px) {
-    .movie-sidebar-area {
+    .cinemastar-sidebar-container {
         display: none !important;
     }
-
     .main-detail-col {
         flex: 1;
         width: 100%;
-        max-width: 100%;
-        padding: 0;
     }
-
     .movie-top-info {
-        display: grid;
-        grid-template-columns: 250px 1fr; 
-        gap: 30px;
-        text-align: left;
-        align-items: start;
-    }
-
-    .poster-frame {
-        max-width: 250px;
-    }
-
-    .text-frame h1 {
-        font-size: 1.8rem;
-    }
-
-    .meta-row, .rating-row, .actor-list {
-        justify-content: flex-start;
+        grid-template-columns: 250px 1fr;
     }
 }
 
 @media (max-width: 576px) {
-    .movie-main-title {
-        text-align: center;
-        margin-top: 15px;
-    }
     .movie-top-info {
         grid-template-columns: 1fr;
         text-align: center;
     }
-    .poster-frame {
-        margin: 0 auto;
-    }
-    .meta-row, .rating-row, .actor-list {
-        justify-content: center;
-    }
-    .review-text {
-        padding-left: 0;
-        margin-top: 10px;
-    }
+    .poster-frame { margin: 0 auto; }
+    .meta-row, .rating-row { justify-content: center; }
+    .review-text { padding-left: 0; }
 }

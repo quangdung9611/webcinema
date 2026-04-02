@@ -26,6 +26,9 @@ const MovieDetail = () => {
         show: false, type: '', title: '', message: null, onConfirm: null 
     });
 
+    const API_BASE_URL = "https://webcinema-zb8z.onrender.com/api";
+    const IMAGE_BASE_URL = "https://webcinema-zb8z.onrender.com/uploads";
+
     const getYoutubeID = (url) => {
         if (!url) return null;
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -33,10 +36,9 @@ const MovieDetail = () => {
         return (match && match[2].length === 11) ? match[2] : null;
     };
 
-    // Dùng useCallback để tránh re-render không cần thiết
     const fetchReviews = useCallback(async (movieId) => {
         try {
-            const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/reviews/${movieId}`);
+            const res = await axios.get(`${API_BASE_URL}/reviews/${movieId}`);
             const sortedReviews = res.data.sort((a, b) => 
                 new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
             );
@@ -51,7 +53,7 @@ const MovieDetail = () => {
             if (!slug || slug === 'undefined') return;
             try {
                 setLoading(true);
-                const resMovie = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies/${slug}`);
+                const resMovie = await axios.get(`${API_BASE_URL}/movies/${slug}`);
                 const movieData = resMovie.data;
                 setMovie(movieData);
                 
@@ -59,11 +61,12 @@ const MovieDetail = () => {
                     fetchReviews(movieData.movie_id);
                 }
 
-                const resRelated = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies`);
-                // Lọc bỏ phim hiện tại và giới hạn 5 phim
-                setRelatedMovies(resRelated.data.filter(m => m.slug !== slug).slice(0, 5));
+                const resRelated = await axios.get(`${API_BASE_URL}/movies`);
+                const filtered = resRelated.data.filter(m => m.slug !== slug && m.backdrop_url);
+                setRelatedMovies(filtered.slice(0, 6));
+
             } catch (error) {
-                console.error("Lỗi gọi API:", error);
+                console.error("Lỗi gọi API chi tiết phim:", error);
             } finally {
                 setLoading(false);
             }
@@ -72,9 +75,7 @@ const MovieDetail = () => {
         window.scrollTo(0, 0);
     }, [slug, fetchReviews]);
 
-    const closeModal = () => {
-        setModalConfig(prev => ({ ...prev, show: false }));
-    };
+    const closeModal = () => setModalConfig(prev => ({ ...prev, show: false }));
 
     const handleSendReview = async () => {
         if (userRating === 0) {
@@ -84,19 +85,17 @@ const MovieDetail = () => {
             return;
         }
         try {
-            await axios.post(`https://webcinema-zb8z.onrender.com/api/reviews`, {
+            await axios.post(`${API_BASE_URL}/reviews`, {
                 movie_id: movie.movie_id,
                 user_id: user.user_id,
                 rating: userRating,
                 comment: reviewComment 
             });
 
-            // Reset form
             setUserRating(0);
             setReviewComment("");
-
-            // Cập nhật lại thông tin phim và bình luận mới nhất
-            const response = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies/${slug}`);
+            
+            const response = await axios.get(`${API_BASE_URL}/movies/${slug}`);
             setMovie(response.data);
             fetchReviews(movie.movie_id);
 
@@ -180,10 +179,8 @@ const MovieDetail = () => {
     if (!movie) return <div className="error">Không tìm thấy phim.</div>;
 
     const videoId = getYoutubeID(movie.trailer_url);
-
     const groupedShowtimes = movie.showtimes ? movie.showtimes.reduce((acc, current) => {
         const showDateStr = new Date(current.start_time).toISOString().split('T')[0];
-        // Lọc theo ngày đã chọn và chỉ hiện suất chưa diễn ra
         if (showDateStr !== selectedDate || new Date(current.start_time) <= new Date()) return acc;
         if (!acc[current.cinema_name]) acc[current.cinema_name] = [];
         acc[current.cinema_name].push(current);
@@ -228,7 +225,7 @@ const MovieDetail = () => {
                 <div className="main-detail-col">
                     <div className="movie-top-info">
                         <div className="poster-frame">
-                            <img src={`https://webcinema-zb8z.onrender.com/uploads/posters/${movie.poster_url}`} alt={movie.title} />
+                            <img src={`${IMAGE_BASE_URL}/posters/${movie.poster_url}`} alt={movie.title} />
                         </div>
                         <div className="text-frame">
                             <div className="movie-main-title">{movie.title}</div>
@@ -249,49 +246,34 @@ const MovieDetail = () => {
 
                             <div className="details-list">
                                 <div style={{ marginBottom: '10px' }}>
-                                        <strong>Quốc Gia:</strong> 
-                                        <div className="genre-list" style={{ display: 'inline-flex', marginLeft: '8px', gap: '5px', flexWrap: 'wrap' }}>
-                                            {/* Kiểm tra nếu có mảng genres và trong đó có chứa thông tin nation */}
-                                            {movie.genres?.some(g => g.nation) ? (
-                                                // Dùng Set để lọc các tên quốc gia trùng lặp nếu phim có nhiều thể loại cùng 1 quốc gia
-                                                [...new Set(movie.genres.map(g => g.nation))].filter(Boolean).map((nation, i) => (
-                                                    <span key={i} className="tag-btn">{nation}</span>
-                                                ))
-                                            ) : (
-                                                // Nếu không có trong mảng genres thì hiển thị field nation trực tiếp hoặc báo "Chưa xác định"
-                                                <span className="tag-btn">{movie.nation || "Chưa xác định"}</span>
-                                            )}
-                                        </div>
+                                    <strong>Quốc Gia:</strong> 
+                                    <div className="genre-list" style={{ display: 'inline-flex', marginLeft: '8px', gap: '5px', flexWrap: 'wrap' }}>
+                                        {[...new Set(movie.genres?.map(g => g.nation))].filter(Boolean).map((nation, i) => (
+                                            <span key={i} className="tag-btn">{nation}</span>
+                                        ))}
                                     </div>
+                                </div>
                                 <div style={{ marginBottom: '10px' }}>
                                     <strong>Thể loại:</strong> 
                                     <div className="genre-list" style={{ display: 'inline-flex', marginLeft: '8px', gap: '5px', flexWrap: 'wrap' }}>
-                                        {movie.genres?.length > 0 ? (
-                                            movie.genres.map((g, i) => (
-                                                <span key={i} className="tag-btn">{g.genre_name}</span>
-                                            ))
-                                        ) : (
-                                            <span className="tag-btn">{movie.genre_name || "Chưa xác định"}</span>
-                                        )}
+                                        {movie.genres?.map((g, i) => (
+                                            <span key={i} className="tag-btn">{g.genre_name}</span>
+                                        ))}
                                     </div>
                                 </div>
                                 <div className="actor-section">
                                     <strong>Diễn viên:</strong>
                                     <div className="genre-list" style={{ display: 'inline-flex', marginLeft: '8px', gap: '5px', flexWrap: 'wrap' }}>
-                                        {movie.actors?.length > 0 ? (
-                                            movie.actors.map((actor, i) => (
-                                                <span 
-                                                    key={i} 
-                                                    className="tag-btn" 
-                                                    style={{ cursor: 'pointer' }} 
-                                                    onClick={() => navigate(`/actor/${actor.slug || actor.actor_id}`)}
-                                                >
-                                                    {actor.name}
-                                                </span>
-                                            ))
-                                        ) : (
-                                            <span className="tag-btn">Đang cập nhật...</span>
-                                        )}
+                                        {movie.actors?.map((actor, i) => (
+                                            <span 
+                                                key={i} 
+                                                className="tag-btn" 
+                                                style={{ cursor: 'pointer' }} 
+                                                onClick={() => navigate(`/actor/${actor.slug || actor.actor_id}`)}
+                                            >
+                                                {actor.name}
+                                            </span>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -330,7 +312,7 @@ const MovieDetail = () => {
                                     </div>
                                 </div>
                             ))
-                        ) : (<div className="no-data">Hiện tại không còn suất chiếu nào khả dụng.</div>)}
+                        ) : (<div className="no-data">Hiện tại không còn suất chiếu nào khả dụng cho ngày này.</div>)}
                     </div>
 
                     <div className="section-divider"><h3>Bình luận từ cộng đồng</h3></div>
@@ -369,29 +351,31 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                <div className="movie-sidebar-area">
-                    <div className="sidebar-heading">Phim Đang Chiếu</div>
-                    <div className="sidebar-movie-list">
+                <div className="cinemastar-sidebar-container">
+                    <div className="cinemastar-sidebar-title">
+                        <span>Phim Đang Chiếu</span>
+                        <div className="title-underline"></div>
+                    </div>
+                    <div className="cinemastar-list-wrapper">
                         {relatedMovies.map((m, index) => (
                             <div 
                                 key={index} 
-                                className="simple-movie-item" 
+                                className="cinemastar-backdrop-item" 
                                 onClick={() => navigate(`/movies/detail/${m.slug}`)}
                             >
-                                <div className="simple-poster">
+                                <div className="backdrop-img-box">
                                     <img 
-                                        src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} 
+                                        src={`${IMAGE_BASE_URL}/backdrops/${m.backdrop_url}`} 
                                         alt={m.title} 
                                     />
-                                    <div className="age-badge">C{m.age_rating}</div>
                                 </div>
-                                <div className="simple-title">{m.title}</div>
+                                <div className="backdrop-movie-name">{m.title}</div>
                             </div>
                         ))}
                     </div>
-                    <button className="view-more-sidebar-btn" onClick={() => navigate('/movies')}>
-                        <span>Xem thêm</span>
-                        <ChevronRight size={18} strokeWidth={2.5} />
+                    <button className="cinemastar-viewall-btn" onClick={() => navigate('/movies')}>
+                        Xem tất cả phim
+                        <ChevronRight size={18} />
                     </button>
                 </div>
             </div>
