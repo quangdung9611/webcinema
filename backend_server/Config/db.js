@@ -9,27 +9,36 @@ const pool = mysql.createPool({
     port: process.env.DB_PORT || 26990,
 
     waitForConnections: true,
-    connectionLimit: 5, // Hạ xuống 5 để nhẹ cho Render bản Free
+    connectionLimit: 5,
     queueLimit: 0,
+    
+    // 1. Giúp Node.js hiểu múi giờ khi gửi/nhận dữ liệu
     timezone: '+07:00', 
     dateStrings: true,
     
-    // --- CẤU HÌNH "BẤT TỬ" CHO RENDER & AIVEN ---
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000,
-
-    // Khống chế thời gian chờ, không cho web "quay vòng vòng" quá lâu
-    connectTimeout: 10000, // Đợi tối đa 10s để kết nối
-    acquireTimeout: 10000, // Đợi tối đa 10s để lấy kết nối từ pool
+    connectTimeout: 10000, 
+    acquireTimeout: 10000, 
     
     ssl: {
-        rejectUnauthorized: false // Bắt buộc để Aiven không chặn
+        rejectUnauthorized: false 
     }
 });
 
-// Thêm đoạn check lỗi này để App không bị văng (Crash) khi DB mất kết nối
+// 2. ĐOẠN QUAN TRỌNG NHẤT: Ép MySQL Server dùng giờ VN ngay khi vừa kết nối
+pool.on('connection', (connection) => {
+    connection.query("SET time_zone = '+07:00'", (err) => {
+        if (err) {
+            console.error('❌ Lỗi SET time_zone:', err.message);
+        } else {
+            console.log('🕒 Database đã đồng bộ múi giờ Việt Nam (+07:00)');
+        }
+    });
+});
+
 pool.on('error', (err) => {
-    console.error('🔥 [Database Error]: Kết nối bị ngắt đột ngột!', err.message);
+    console.error('🔥 [Database Error]:', err.message);
     if (err.code === 'PROTOCOL_CONNECTION_LOST') {
         console.log('📡 Đang nỗ lực kết nối lại...');
     }
