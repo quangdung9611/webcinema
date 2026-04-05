@@ -1,0 +1,109 @@
+/* ==========================================
+   SIDEBAR (PHIM ĐANG CHIẾU) - DÙNG CHUNG
+   ========================================== */
+
+.cinemastar-sidebar-container {
+    flex: 2.5;
+    min-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.cinemastar-sidebar-title {
+    position: relative;
+    padding-bottom: 12px;
+}
+
+.cinemastar-sidebar-title span {
+    font-size: 19px;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+}
+
+.title-underline {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background: #03599d;
+    border-radius: 2px;
+}
+
+.cinemastar-list-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.cinemastar-backdrop-item {
+    cursor: pointer;
+    width: 100%;
+}
+
+.backdrop-img-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3; /* Khớp với ảnh 1000x750 của Dũng */
+    overflow: hidden;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.backdrop-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Để ảnh lấp đầy khung mà không bị hở */
+    transition: transform 0.4s ease;
+}
+
+.cinemastar-backdrop-item:hover img {
+    transform: scale(1.05);
+}
+
+.backdrop-movie-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; 
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.2s;
+}
+
+.cinemastar-backdrop-item:hover .backdrop-movie-name {
+    color: #4da3ff;
+}
+
+.cinemastar-viewall-btn {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid #333;
+    color: #888;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.cinemastar-viewall-btn:hover {
+    color: #fff;
+    border-color: #03599d;
+    background-color: rgba(3, 89, 157, 0.1);
+}
+
+/* Responsive cho Sidebar khi ở màn hình nhỏ */
+@media (max-width: 992px) {
+    .cinemastar-sidebar-container {
+        display: none !important;
+    }
+}

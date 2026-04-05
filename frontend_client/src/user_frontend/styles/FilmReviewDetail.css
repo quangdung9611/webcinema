@@ -1,52 +1,66 @@
-/* --- VARIABLES --- */
+/* ==========================================
+   FILM REVIEW DETAIL - LIGHT CONTENT EDIT
+   Bố cục chuẩn: 7.5 - 2.5
+   ========================================== */
+
 :root {
-    --galaxy-blue: #034ea2;
-    --star-yellow: #ffc107;
-    --fb-blue: #1877f2;
-    --bg-page: #f9f9f9;
-    --text-dark: #1a1a1a;
-    --text-light: #777;
-    --white: #ffffff;
+    --bg-page: #000000;
+    --bg-card-light: #ffffff; /* Đổi nền card sang trắng để hiện chữ đen */
+    --text-dark-content: #1a1a1a; /* Chữ nội dung màu đen */
+    --text-muted: #666666;
+    --primary-cyan: #00d2ff;
+    --accent-red: #e71a0f;
+    --border-subtle: #eeeeee;
 }
 
-/* --- LAYOUT --- */
 .review-detail-page {
-    background-color: var(--bg-page);
-    padding: 30px 0;
+    background: radial-gradient(circle at top, #1a1a1a 0%, #000000 100%);
+    padding: 40px 0;
     min-height: 100vh;
 }
 
-.review-detail-container {
-    max-width: 1200px;
+.review-detail-container-flex {
+    max-width: 1300px;
     margin: 0 auto;
     display: flex;
     gap: 30px;
     padding: 0 15px;
 }
 
-/* --- CỘT TRÁI --- */
-.review-main-content {
-    flex: 1;
-    background: var(--white);
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+/* --- CỘT TRÁI (7.5) --- */
+.main-review-col {
+    flex: 7.5;
+    min-width: 0;
+}
+
+.review-glass-card {
+    background: var(--bg-card-light);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    /* Bỏ backdrop-filter vì nền đã là màu đặc */
 }
 
 .back-to-list-btn {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    color: var(--galaxy-blue);
+    gap: 8px;
+    color: #034ea2; /* Dùng màu xanh đậm cho dễ nhìn trên nền trắng */
     text-decoration: none;
     font-weight: 600;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    transition: 0.3s ease;
+}
+
+.back-to-list-btn:hover {
+    transform: translateX(-5px);
+    color: var(--primary-cyan);
 }
 
 .review-title-galaxy {
     font-size: 32px;
-    font-weight: 700;
-    color: var(--text-dark);
+    font-weight: 800;
+    color: #000000; /* Tiêu đề màu đen */
     margin-bottom: 20px;
     line-height: 1.3;
 }
@@ -56,172 +70,88 @@
     justify-content: space-between;
     align-items: center;
     padding: 15px 0;
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 25px;
+    border-top: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 30px;
 }
 
-.meta-left-group { display: flex; gap: 20px; }
+.meta-left-group {
+    display: flex;
+    gap: 20px;
+}
 
 .meta-info-item {
     display: flex;
     align-items: center;
     gap: 6px;
-    color: var(--text-light);
+    color: var(--text-muted);
     font-size: 13px;
 }
 
 .like-action-btn {
-    background: var(--fb-blue);
-    color: var(--white);
+    background: linear-gradient(45deg, #1877f2, var(--primary-cyan));
+    color: #fff;
     border: none;
-    padding: 6px 14px;
-    border-radius: 4px;
+    padding: 8px 18px;
+    border-radius: 50px;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 700;
+    transition: 0.3s;
+}
+
+.review-featured-img {
+    margin-bottom: 35px;
 }
 
 .review-featured-img img {
     width: 100%;
-    border-radius: 8px;
-    margin-bottom: 30px;
+    border-radius: 12px;
 }
 
+/* --- NỘI DUNG CHỮ ĐEN Ở ĐÂY --- */
 .review-article-body {
-    font-size: 17px;
+    font-size: 18px;
     line-height: 1.8;
-    color: #333;
+    color: var(--text-dark-content); /* Chữ đen chuẩn */
+}
+
+.review-article-body p {
+    margin-bottom: 20px;
 }
 
 .review-article-body img {
     max-width: 100%;
     height: auto !important;
-    border-radius: 6px;
-    margin: 20px 0;
-}
-
-/* --- SIDEBAR (Bê nguyên từ Film Review) --- */
-.review-sidebar {
-    width: 300px;
-    flex-shrink: 0;
-}
-
-.sidebar-sticky {
-    position: sticky;
-    top: 100px;
-}
-
-.sidebar-heading {
-    color :black !important;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 10px;
-}
-
-/* .yellow-bar {
-    width: 4px;
-    height: 24px;
-    background-color: var(--star-yellow);
-} */
-
-.sidebar-heading h3 {
-    font-size: 18px;
-    font-weight: 700;
-    margin: 0;
-    text-transform: uppercase;
-}
-
-.sidebar-movie-item {
-    margin-bottom: 25px;
-    cursor: pointer;
-}
-
-.sidebar-movie-poster {
-    position: relative;
     border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin: 25px 0;
 }
 
-.sidebar-movie-poster img {
-    width: 100%;
-    height: 380px; /* Chỉnh lại độ cao giống ảnh bạn chụp */
-    object-fit: cover;
-    display: block;
-}
-
-.age-tag {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background: #e71a0f;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.sidebar-movie-title {
-    font-size: 15px;
-    font-weight: 700;
-    margin: 10px 0;
-    color: var(--text-dark);
-}
-
-.btn-buy-ticket-sidebar {
-    width: 100%;
-    background-color: var(--galaxy-blue);
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 4px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.sidebar-more-btn {
-    width: 100%;
-    margin-top: 10px;
-    background: transparent;
-    border: 1px solid var(--galaxy-blue);
-    color: var(--galaxy-blue);
-    padding: 10px;
-    border-radius: 4px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
+/* --- CỘT PHẢI (2.5) --- */
+.sidebar-review-col {
+    flex: 2.5;
+    min-width: 300px;
 }
 
 /* --- RESPONSIVE --- */
-
-/* Ẩn sidebar ở màn hình Tablet (992px) */
 @media (max-width: 992px) {
-    .review-sidebar {
+    .sidebar-review-col {
         display: none;
     }
-    .review-main-content {
-        max-width: 800px;
-        margin: 0 auto;
+    .main-review-col {
+        flex: 1;
     }
 }
 
-/* Clean code cho Mobile (576px) */
 @media (max-width: 576px) {
-    .review-detail-page { padding: 15px 0; }
-    .review-main-content { padding: 20px 15px; border-radius: 0; }
-    .review-title-galaxy { font-size: 24px; }
-    .review-meta-bar { flex-direction: column; align-items: flex-start; gap: 15px; }
-    .meta-left-group { flex-direction: column; gap: 8px; }
-    .like-action-btn { width: 100%; justify-content: center; }
+    .review-glass-card {
+        padding: 20px;
+        border-radius: 0;
+    }
+    .review-title-galaxy {
+        font-size: 24px;
+    }
 }

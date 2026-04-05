@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 
+// --- IMPORT THƯ VIỆN MỚI ---
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
+
 import '../../../styles/UserUpdate.css'; 
 import Modal from '../../../components/Modal';
 
@@ -33,6 +37,17 @@ const NewsUpdate = () => {
     const [newImage, setNewImage] = useState(null); 
     const [preview, setPreview] = useState(null); 
     const [modal, setModal] = useState({ show: false, type: '', title: '', message: '' });
+
+    // --- CẤU HÌNH TOOLBAR CHO QUILL ---
+    const modules = {
+        toolbar: [
+            [{ 'header': [1, 2, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['link', 'image'],
+            ['clean']
+        ],
+    };
 
     // 2. EFFECT: LẤY DỮ LIỆU CŨ TỪ API DETAIL
     useEffect(() => {
@@ -67,6 +82,11 @@ const NewsUpdate = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // --- HÀM XỬ LÝ RIÊNG CHO QUILL ---
+    const handleQuillChange = (value) => {
+        setFormData(prev => ({ ...prev, content: value }));
+    };
+
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -80,17 +100,13 @@ const NewsUpdate = () => {
         e.preventDefault();
 
         const data = new FormData();
-        
-        // NÊN: Append các trường text trước để Multer xử lý req.body tốt hơn
         data.append('title', formData.title);
         data.append('slug', generateSlug(formData.title)); 
         data.append('content', formData.content);
         
         if (newImage) {
-            // Tên key 'newsImage' phải khớp với upload.single('newsImage') ở Backend
             data.append('newsImage', newImage); 
         } else {
-            // Nếu không có ảnh mới, gửi lại tên ảnh cũ để Backend giữ nguyên
             data.append('image_url', oldImage); 
         }
 
@@ -137,7 +153,6 @@ const NewsUpdate = () => {
                                 src={preview ? preview : `https://webcinema-zb8z.onrender.com/uploads/news/${oldImage}`} 
                                 alt="News" 
                                 style={{ width: '180px', height: '110px', objectFit: 'cover', borderRadius: '4px', border: '2px solid #fff', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
-                                // Đã loại bỏ onError theo yêu cầu
                             />
                             <div className="file-input-group">
                                 <input type="file" onChange={handleFileChange} accept="image/*" />
@@ -148,20 +163,23 @@ const NewsUpdate = () => {
                         </div>
                     </div>
 
-                    <div className="update-field full-width">
+                    <div className="update-field full-width" style={{ marginBottom: '50px' }}>
                         <label>Nội dung chi tiết bài viết</label>
-                        <textarea 
-                            name="content" 
-                            value={formData.content} 
-                            onChange={handleChange} 
-                            rows="12" 
-                            placeholder="Nhập nội dung bài viết..."
-                            required
-                        />
+                        {/* --- THAY THẾ TEXTAREA BẰNG REACT QUILL --- */}
+                        <div style={{ background: 'white', color: 'black' }}>
+                            <ReactQuill 
+                                theme="snow"
+                                value={formData.content} 
+                                onChange={handleQuillChange} 
+                                modules={modules}
+                                placeholder="Nhập nội dung bài viết..."
+                                style={{ height: '300px' }}
+                            />
+                        </div>
                     </div>
                 </div>
 
-                <div className="update-actions">
+                <div className="update-actions" style={{ marginTop: '20px' }}>
                     <button type="submit" className="btn-submit-update">LƯU THAY ĐỔI</button>
                     <button type="button" className="btn-go-back" onClick={() => navigate('/admin/news')}>HỦY BỎ</button>
                 </div>

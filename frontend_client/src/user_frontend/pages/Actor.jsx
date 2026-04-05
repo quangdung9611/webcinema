@@ -1,42 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
-import { ThumbsUp, Eye, ChevronRight } from 'lucide-react'; 
+import { ThumbsUp, Eye } from 'lucide-react'; 
+import MovieSidebar from '../components/MovieSidebar'; 
 import '../styles/Actor.css';
 
 const Actor = () => {
     const navigate = useNavigate();
-    const [actors, setActors] = useState([]);
-    const [relatedMovies, setRelatedMovies] = useState([]);
+    
+    const [actors, setActors] = useState([]);      // Danh sách diễn viên
+    const [allMovies, setAllMovies] = useState([]); // Tất cả phim để truyền vào Sidebar
     const [loading, setLoading] = useState(true);
 
+    const IMAGE_BASE_URL = 'https://webcinema-zb8z.onrender.com/uploads';
+
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchAllData = async () => {
             try {
                 setLoading(true);
-                const resActors = await axios.get('https://webcinema-zb8z.onrender.com/api/actors');
-                setActors(resActors.data);
+                // Gọi song song cả Actors và Movies giống CinemaGenre gọi Movies/Genres
+                const [resActors, resMovies] = await Promise.all([
+                    axios.get('https://webcinema-zb8z.onrender.com/api/actors'),
+                    axios.get('https://webcinema-zb8z.onrender.com/api/movies')
+                ]);
 
-                const resMovies = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies`);
-                setRelatedMovies(resMovies.data.slice(0, 3));
+                setActors(resActors.data);
+                setAllMovies(resMovies.data);
                 
                 setLoading(false);
             } catch (error) {
-                console.error("Lỗi gọi API:", error);
+                console.error("Lỗi kết nối API:", error);
                 setLoading(false);
             }
         };
-        fetchData();
+
+        fetchAllData();
         window.scrollTo(0, 0);
     }, []);
 
-    if (loading) return <div className="loading">Đang tải dữ liệu...</div>;
+    if (loading) return <div className="loading">Đang tải dữ liệu từ hệ thống...</div>;
 
     return (
         <div className="actor-page-bg">
             <div className="actor-content-flex">
                 
-                {/* CỘT TRÁI: DANH SÁCH DIỄN VIÊN */}
+                {/* CỘT TRÁI: MAIN CONTENT (7.5) */}
                 <div className="main-actor-col">
                     <div className="section-header-galaxy">
                         <span className="blue-line"></span>
@@ -44,69 +52,69 @@ const Actor = () => {
                     </div>
                     
                     <div className="actor-filters-bar">
-                        <select className="filter-select">
-                            <option value="">Quốc Gia</option>
-                            <option>Việt Nam</option>
-                            <option>Mỹ</option>
-                        </select>
-                        <select className="filter-select">
-                            <option value="">Xem Nhiều Nhất</option>
+                        <select className="filter-select-custom">
+                            <option value="">Tất cả quốc gia</option>
+                            <option value="vn">Việt Nam</option>
+                            <option value="us">Mỹ</option>
+                            <option value="kr">Hàn Quốc</option>
                         </select>
                     </div>
 
                     <div className="actor-list">
-                        {actors.map(actor => (
-                            <div key={actor.actor_id} className="actor-card-horizontal">
-                                <Link to={`/actor/${actor.slug}`} className="actor-img-box">
-                                    <img 
-                                        src={`https://webcinema-zb8z.onrender.com/uploads/actors/${actor.avatar}`} 
-                                        alt={actor.name} 
-                                    />
-                                </Link>
-                                <div className="actor-content-info">
-                                    <Link to={`/actor/${actor.slug}`} className="actor-name-link">
-                                        <h3>{actor.name}</h3>
+                        {actors.length > 0 ? (
+                            actors.map(actor => (
+                                <div key={actor.actor_id} className="actor-card-horizontal">
+                                    <Link 
+                                        to={`/actor/${actor.slug}`} 
+                                        className="actor-img-box"
+                                    >
+                                        <img 
+                                            src={`${IMAGE_BASE_URL}/actors/${actor.avatar}`} 
+                                            alt={actor.name} 
+                                        />
                                     </Link>
-                                    <div className="actor-meta-row">
-                                        <button className="btn-fb-like">
-                                            <ThumbsUp size={14} strokeWidth={2.5} fill="currentColor" /> 
-                                            <span>Thích</span>
-                                        </button>
-                                        <span className="view-count">
-                                            <Eye size={14} strokeWidth={2} /> 
-                                            <span>{Math.floor(Math.random() * 5000)} lượt xem</span>
-                                        </span>
+
+                                    <div className="actor-content-info">
+                                        <Link 
+                                            to={`/actor/${actor.slug}`} 
+                                            className="actor-name-link"
+                                        >
+                                            <h3>{actor.name}</h3>
+                                        </Link>
+
+                                        <div className="actor-meta-row">
+                                            <button className="btn-fb-like">
+                                                <ThumbsUp size={14} strokeWidth={2.5} fill="currentColor" /> 
+                                                <span>Thích</span>
+                                            </button>
+
+                                            <span className="view-count">
+                                                <Eye size={14} strokeWidth={2} /> 
+                                                <span>{Math.floor(Math.random() * 5000)} lượt xem</span>
+                                            </span>
+                                        </div>
+
+                                        <p className="actor-biography-text">
+                                            {actor.biography 
+                                                ? actor.biography.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ') 
+                                                : "Thông tin tiểu sử đang được cập nhật..."}
+                                        </p>
                                     </div>
-                                    <p className="actor-biography-text">
-                                        {actor.biography || "Thông tin tiểu sử đang được cập nhật..."}
-                                    </p>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            <p className="no-data">Hiện chưa có dữ liệu diễn viên.</p>
+                        )}
                     </div>
                 </div>
 
-                {/* --- SIDEBAR: PHIM ĐANG CHIẾU (Đã đồng bộ class name) --- */}
-                <div className="movie-sidebar-area">
-                    <div className="sidebar-heading">Phim Đang Chiếu</div>
-                    <div className="sidebar-movie-list">
-                        {relatedMovies.map((m, index) => (
-                            <div key={index} className="simple-movie-item" onClick={() => navigate(`/movies/detail/${m.slug}`)}>
-                                <div className="simple-poster">
-                                    <img 
-                                        src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} 
-                                        alt={m.title} 
-                                    />
-                                </div>
-                                <div className="simple-title">{m.title}</div>
-                            </div>
-                        ))}
-                    </div>
-                    {/* Giữ lại nút Xem thêm của Actor */}
-                    <button className="view-more-btn" onClick={() => navigate('/movies')} style={{marginTop: '20px'}}>
-                        <span>Xem thêm</span>
-                        <ChevronRight size={18} strokeWidth={2.5} />
-                    </button>
+                {/* CỘT PHẢI: SIDEBAR (2.5) */}
+                <div className="sidebar-col">
+                    <MovieSidebar 
+                        IMAGE_BASE_URL={IMAGE_BASE_URL}
+                        title="Phim Đang Chiếu"
+                        relatedMovies={allMovies.slice(0, 6)} // Lấy 6 phim đầu tiên hiện lên Sidebar
+                    />
                 </div>
 
             </div>

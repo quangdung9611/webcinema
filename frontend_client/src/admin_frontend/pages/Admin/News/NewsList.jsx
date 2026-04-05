@@ -46,7 +46,6 @@ const NewsList = () => {
     const fetchNews = async () => {
         setLoading(true);
         try {
-            // Gọi API gốc /api/news để lấy toàn bộ dữ liệu cho Admin
             const res = await axios.get('https://webcinema-zb8z.onrender.com/api/news');
             setNews(res.data);
         } catch (err) {
@@ -108,7 +107,7 @@ const NewsList = () => {
                     <thead>
                         <tr>
                             <th className="th-poster">Hình ảnh</th>
-                            <th>Thông tin bài viết</th>
+                            <th>Tiêu đề bài viết</th>
                             <th><Eye size={14} /> Lượt xem / <Heart size={14} /> Thích</th>
                             <th><Calendar size={14} /> Ngày đăng</th>
                             <th className="th-actions">Thao tác</th>
@@ -126,23 +125,9 @@ const NewsList = () => {
                                             style={{ objectFit: 'cover', borderRadius: '4px' }}
                                         />
                                     </td>
-                                    <td style={{ textAlign: 'left', verticalAlign: 'top', padding: '12px' }}>
-                                        <div style={{ fontWeight: 'bold', fontSize: '15px', color: '#333', marginBottom: '4px' }}>
-                                            {n.title}
-                                        </div>
-                                        <div style={{ fontSize: '12px', color: '#007bff', marginBottom: '6px', fontFamily: 'monospace' }}>
-                                            Slug: /{n.slug}
-                                        </div>
-                                        <div style={{ 
-                                            fontSize: '12px', 
-                                            color: '#666', 
-                                            display: '-webkit-box', 
-                                            WebkitLineClamp: '2', 
-                                            WebkitBoxOrient: 'vertical', 
-                                            overflow: 'hidden' 
-                                        }}>
-                                            {n.content?.replace(/<[^>]*>/g, '')} {/* Loại bỏ tag HTML nếu có */}
-                                        </div>
+                                    {/* CHỈ HIỂN THỊ TIÊU ĐỀ TẠI ĐÂY */}
+                                    <td style={{ textAlign: 'left', fontWeight: 'bold', fontSize: '15px', color: '#333' }}>
+                                        {n.title}
                                     </td>
                                     <td>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>

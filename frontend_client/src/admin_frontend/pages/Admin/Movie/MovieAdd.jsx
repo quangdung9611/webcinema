@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+// --- SỬA DÒNG NÀY ---
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
+
 // Import tài nguyên
 import '../../../styles/UserForm.css'; 
 import Modal from '../../../components/Modal';
@@ -20,6 +24,18 @@ const generateSlug = (str) => {
         .trim();
 };
 
+// 2. CẤU HÌNH TOOLBAR (Modules) cho React Quill
+const modules = {
+    toolbar: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],        
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],     
+        [{ 'align': [] }], // Nút căn lề (Trái, Giữa, Phải, Đều)
+        ['link', 'image'],
+        ['clean']                                         
+    ],
+};
+
 const MovieAdd = () => {
     const navigate = useNavigate();
 
@@ -34,8 +50,8 @@ const MovieAdd = () => {
         release_date: '',
         status: 'Sắp chiếu',
         trailer_url: '', 
-        description: '',
-        total_likes: 0 // Thêm mặc định cho khớp db
+        description: '', // Nội dung HTML từ Quill sẽ lưu ở đây
+        total_likes: 0 
     });
 
     const [poster, setPoster] = useState(null);
@@ -61,6 +77,13 @@ const MovieAdd = () => {
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     };
 
+    // 3. XỬ LÝ RIÊNG CHO REACT QUILL
+    // Quill trả về content (chuỗi HTML) trực tiếp, không phải e.target.value
+    const handleEditorChange = (content) => {
+        setFormData(prev => ({ ...prev, description: content }));
+        if (errors.description) setErrors(prev => ({ ...prev, description: '' }));
+    };
+
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -68,7 +91,7 @@ const MovieAdd = () => {
                 setPoster(file);
                 setPreview(URL.createObjectURL(file));
                 setErrors(prev => ({ ...prev, poster: '' }));
-            } else if (e.target.name === 'backdrop_url') { // ĐỒNG BỘ: Dùng luôn tên backdrop_url
+            } else if (e.target.name === 'backdrop_url') {
                 setBackdrop(file);
                 setBackdropPreview(URL.createObjectURL(file));
                 setErrors(prev => ({ ...prev, backdrop: '' }));
@@ -76,7 +99,7 @@ const MovieAdd = () => {
         }
     };
 
-    // 3. VALIDATION
+    // 4. VALIDATION
     const validate = () => {
         const newErrors = {};
         if (!formData.title) newErrors.title = "Vui lòng nhập tiêu đề";
@@ -93,7 +116,10 @@ const MovieAdd = () => {
 
         if (!poster) newErrors.poster = "Chưa có ảnh poster";
         if (!backdrop) newErrors.backdrop = "Chưa có ảnh backdrop"; 
-        if (formData.description.length < 10) newErrors.description = "Mô tả ít nhất 10 ký tự";
+        
+        // Kiểm tra text thực tế (loại bỏ thẻ HTML)
+        const plainText = formData.description.replace(/<[^>]*>/g, '').trim();
+        if (plainText.length < 10) newErrors.description = "Mô tả ít nhất 10 ký tự";
         
         if (formData.trailer_url && !formData.trailer_url.includes('youtube.com') && !formData.trailer_url.includes('youtu.be')) {
             newErrors.trailer_url = "Vui lòng nhập đúng định dạng link YouTube";
@@ -103,24 +129,20 @@ const MovieAdd = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // 4. SUBMIT DỮ LIỆU
+    // 5. SUBMIT DỮ LIỆU
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validate()) return;
 
         const submitData = new FormData();
-        
-        // Append các field text
         Object.entries(formData).forEach(([key, value]) => {
             submitData.append(key, value);
         });
         
-        // Append File - QUAN TRỌNG: Tên nhãn (key) phải khớp với Backend
         submitData.append('posters', poster);
         submitData.append('backdrop_url', backdrop); 
 
         try {
-            // Lưu ý: Dũng kiểm tra xem link Render đã deploy code mới nhất chưa nhé
             await axios.post('https://webcinema-zb8z.onrender.com/api/movies/add', submitData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
@@ -144,7 +166,7 @@ const MovieAdd = () => {
             
             <div className="form-header">
                 <h2>THÊM PHIM MỚI</h2>
-                <p>Hãy nhập thông tin chi tiết cho bộ phim bên dưới</p>
+                <p>Nhập thông tin phim (Sử dụng React Quill)</p>
             </div>
 
             <form onSubmit={handleSubmit} className="clean-form">
@@ -169,7 +191,7 @@ const MovieAdd = () => {
                     </div>
                     <div className="form-group">
                         <label>Quốc gia</label>
-                        <input name="nation" value={formData.nation} onChange={handleChange} placeholder="VD: Việt Nam, Mỹ, Hàn Quốc..." />
+                        <input name="nation" value={formData.nation} onChange={handleChange} placeholder="VD: Việt Nam, Mỹ..." />
                     </div>
                 </div>
 
@@ -206,17 +228,15 @@ const MovieAdd = () => {
                     </div>
                 </div>
 
-                <div className="form-row">
-                    <div className="form-group full-width">
-                        <label>Link Trailer (YouTube)</label>
-                        <input 
-                            name="trailer_url" 
-                            value={formData.trailer_url} 
-                            onChange={handleChange} 
-                            placeholder="https://www.youtube.com/watch?v=..." 
-                        />
-                        {errors.trailer_url && <small className="error-msg">{errors.trailer_url}</small>}
-                    </div>
+                <div className="form-group full-width">
+                    <label>Link Trailer (YouTube)</label>
+                    <input 
+                        name="trailer_url" 
+                        value={formData.trailer_url} 
+                        onChange={handleChange} 
+                        placeholder="https://www.youtube.com/watch?v=..." 
+                    />
+                    {errors.trailer_url && <small className="error-msg">{errors.trailer_url}</small>}
                 </div>
 
                 <div className="form-row">
@@ -227,9 +247,7 @@ const MovieAdd = () => {
                             {poster && (
                                 <div className="file-selected-info" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '10px', background: '#f1f1f1', borderRadius: '5px' }}>
                                     <img src={preview} alt="Preview" style={{ width: '80px', height: '100px', objectFit: 'cover' }} />
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <span style={{ fontSize: '14px' }}>{poster.name}</span>
-                                    </div>
+                                    <span style={{ fontSize: '14px' }}>{poster.name}</span>
                                 </div>
                             )}
                             {errors.poster && <small className="error-msg">{errors.poster}</small>}
@@ -239,14 +257,11 @@ const MovieAdd = () => {
                     <div className="form-group">
                         <label>Ảnh Backdrop (Ngang)</label>
                         <div className="file-upload-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {/* ĐỒNG BỘ: Đổi name thành backdrop_url để Backend/Multer bắt được ngay lập tức */}
                             <input type="file" name="backdrop_url" accept="image/*" onChange={handleFileChange} />
                             {backdrop && (
                                 <div className="file-selected-info" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '10px', background: '#f1f1f1', borderRadius: '5px' }}>
                                     <img src={backdropPreview} alt="Preview" style={{ width: '150px', height: '85px', objectFit: 'cover' }} />
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <span style={{ fontSize: '14px' }}>{backdrop.name}</span>
-                                    </div>
+                                    <span style={{ fontSize: '14px' }}>{backdrop.name}</span>
                                 </div>
                             )}
                             {errors.backdrop && <small className="error-msg">{errors.backdrop}</small>}
@@ -254,10 +269,21 @@ const MovieAdd = () => {
                     </div>
                 </div>
 
-                <div className="form-group full-width">
-                    <label>Mô tả nội dung</label>
-                    <textarea name="description" value={formData.description} rows="4" onChange={handleChange} placeholder="Tóm tắt nội dung phim..."></textarea>
-                    {errors.description && <small className="error-msg">{errors.description}</small>}
+                {/* --- PHẦN REACT QUILL ĐÃ SỬA --- */}
+                <div className="form-group full-width" style={{ marginBottom: '60px' }}>
+                    <label style={{ marginBottom: '10px', display: 'block', fontWeight: 'bold' }}>Mô tả nội dung</label>
+                    <div style={{ backgroundColor: 'white', color: 'black', borderRadius: '4px' }}>
+                        <ReactQuill 
+                            theme="snow"
+                            value={formData.description} 
+                            onChange={handleEditorChange} 
+                            modules={modules}
+                            placeholder="Nhập nội dung phim..."
+                            style={{ height: '250px' }}
+                        />
+                    </div>
+                    {/* Đẩy lỗi xuống dưới khung soạn thảo */}
+                    {errors.description && <small className="error-msg" style={{ marginTop: '50px', display: 'block' }}>{errors.description}</small>}
                 </div>
 
                 {errors.server && <div className="alert-error" style={{ color: '#ff4d4f', marginBottom: '15px', fontWeight: '500' }}>{errors.server}</div>}

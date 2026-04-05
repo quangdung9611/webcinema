@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Clock, Calendar, MapPin, Star, ChevronRight, User } from 'lucide-react'; 
+import { Clock, Calendar, MapPin, Star, User } from 'lucide-react'; 
 import Modal from '../../admin_frontend/components/Modal';
+import MovieSidebar from '../components/MovieSidebar'; 
 import { useAuth } from '../../context/AuthContext';
 import '../styles/MovieDetail.css';
 
@@ -62,7 +63,7 @@ const MovieDetail = () => {
                 }
 
                 const resRelated = await axios.get(`${API_BASE_URL}/movies`);
-                const filtered = resRelated.data.filter(m => m.slug !== slug && m.backdrop_url);
+                const filtered = resRelated.data.filter(m => m.slug !== slug);
                 setRelatedMovies(filtered.slice(0, 6));
 
             } catch (error) {
@@ -248,9 +249,7 @@ const MovieDetail = () => {
                                 <div style={{ marginBottom: '10px' }}>
                                     <strong>Quốc Gia:</strong> 
                                     <div className="genre-list" style={{ display: 'inline-flex', marginLeft: '8px', gap: '5px', flexWrap: 'wrap' }}>
-                                        {[...new Set(movie.genres?.map(g => g.nation))].filter(Boolean).map((nation, i) => (
-                                            <span key={i} className="tag-btn">{nation}</span>
-                                        ))}
+                                        {movie.nation ? <span className="tag-btn">{movie.nation}</span> : <span className="tag-btn">Đang cập nhật</span>}
                                     </div>
                                 </div>
                                 <div style={{ marginBottom: '10px' }}>
@@ -261,27 +260,15 @@ const MovieDetail = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <div className="actor-section">
-                                    <strong>Diễn viên:</strong>
-                                    <div className="genre-list" style={{ display: 'inline-flex', marginLeft: '8px', gap: '5px', flexWrap: 'wrap' }}>
-                                        {movie.actors?.map((actor, i) => (
-                                            <span 
-                                                key={i} 
-                                                className="tag-btn" 
-                                                style={{ cursor: 'pointer' }} 
-                                                onClick={() => navigate(`/actor/${actor.slug || actor.actor_id}`)}
-                                            >
-                                                {actor.name}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div className="section-divider"><h3>Nội Dung Phim</h3></div>
-                    <p className="description-text">{movie.description || "Đang cập nhật nội dung..."}</p>
+                    <div 
+                        className="description-text" 
+                        dangerouslySetInnerHTML={{ __html: movie.description || "Đang cập nhật nội dung..." }}
+                    />
 
                     <div className="section-divider"><h3>Lịch Chiêu</h3></div>
                     <div className="date-picker-tabs">
@@ -322,26 +309,30 @@ const MovieDetail = () => {
                                 const isEdited = rev.updated_at && (new Date(rev.updated_at).getTime() - new Date(rev.created_at).getTime() > 1000);
                                 return (
                                     <div key={index} className="review-card">
-                                        <div className="review-user-info">
-                                            <div className="user-avatar"><User size={20} /></div>
-                                            <div className="user-details">
-                                                <span className="user-name">@{rev.username}</span>
-                                                <div className="user-rating-stars">
-                                                    {[...Array(10)].map((_, i) => (
-                                                        <Star 
-                                                            key={i} size={12} 
-                                                            fill={i < rev.rating_score ? "#f5b50a" : "none"} 
-                                                            color={i < rev.rating_score ? "#f5b50a" : "#444"} 
-                                                        />
-                                                    ))}
-                                                    <span className="time-ago">
-                                                        {new Date(rev.updated_at || rev.created_at).toLocaleDateString('vi-VN')}
-                                                        {isEdited && <span style={{fontSize: '11px', color: '#888', fontStyle: 'italic', marginLeft: '5px'}}>(Đã chỉnh sửa)</span>}
-                                                    </span>
-                                                </div>
+                                        {/* Cấu trúc mới để Avatar tròn đẹp và không bị dẹt */}
+                                        <div className="user-avatar-wrapper">
+                                            <div className="user-avatar">
+                                                <User size={24} />
                                             </div>
                                         </div>
-                                        <p className="review-text">{rev.comment}</p>
+
+                                        <div className="user-details">
+                                            <span className="user-name">@{rev.username}</span>
+                                            <div className="user-rating-stars">
+                                                {[...Array(10)].map((_, i) => (
+                                                    <Star 
+                                                        key={i} size={12} 
+                                                        fill={i < rev.rating_score ? "#f5b50a" : "none"} 
+                                                        color={i < rev.rating_score ? "#f5b50a" : "#444"} 
+                                                    />
+                                                ))}
+                                                <span className="time-ago">
+                                                    {new Date(rev.updated_at || rev.created_at).toLocaleDateString('vi-VN')}
+                                                    {isEdited && <span className="edited-label">(Đã chỉnh sửa)</span>}
+                                                </span>
+                                            </div>
+                                            <p className="review-text">{rev.comment}</p>
+                                        </div>
                                     </div>
                                 );
                             })
@@ -351,33 +342,7 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                <div className="cinemastar-sidebar-container">
-                    <div className="cinemastar-sidebar-title">
-                        <span>Phim Đang Chiếu</span>
-                        <div className="title-underline"></div>
-                    </div>
-                    <div className="cinemastar-list-wrapper">
-                        {relatedMovies.map((m, index) => (
-                            <div 
-                                key={index} 
-                                className="cinemastar-backdrop-item" 
-                                onClick={() => navigate(`/movies/detail/${m.slug}`)}
-                            >
-                                <div className="backdrop-img-box">
-                                    <img 
-                                        src={`${IMAGE_BASE_URL}/backdrops/${m.backdrop_url}`} 
-                                        alt={m.title} 
-                                    />
-                                </div>
-                                <div className="backdrop-movie-name">{m.title}</div>
-                            </div>
-                        ))}
-                    </div>
-                    <button className="cinemastar-viewall-btn" onClick={() => navigate('/movies')}>
-                        Xem tất cả phim
-                        <ChevronRight size={18} />
-                    </button>
-                </div>
+                <MovieSidebar relatedMovies={relatedMovies} IMAGE_BASE_URL={IMAGE_BASE_URL} />
             </div>
         </div>
     );

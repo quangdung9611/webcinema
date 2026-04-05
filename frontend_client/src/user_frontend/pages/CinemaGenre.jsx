@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ThumbsUp, Eye, ChevronRight } from 'lucide-react'; 
+import { ThumbsUp, Eye } from 'lucide-react'; 
+import MovieSidebar from '../components/MovieSidebar'; 
 import '../styles/CinemaGenre.css';
 
 const CinemaGenre = () => {
     const navigate = useNavigate();
     const { genreSlug } = useParams();
     
-    const [movies, setMovies] = useState([]);
+    const [movies, setMovies] = useState([]);      // Phim đã lọc theo thể loại
+    const [allMovies, setAllMovies] = useState([]); // Tất cả phim để truyền vào Sidebar
     const [genres, setGenres] = useState([]);
-    const [sidebarMovies, setSidebarMovies] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const IMAGE_BASE_URL = 'https://webcinema-zb8z.onrender.com/uploads';
 
     useEffect(() => {
         const fetchAllData = async () => {
@@ -22,12 +25,19 @@ const CinemaGenre = () => {
                     axios.get('https://webcinema-zb8z.onrender.com/api/genres')
                 ]);
 
-                setMovies(resMovies.data);
+                setAllMovies(resMovies.data);
                 setGenres(resGenres.data);
-
-                const active = resMovies.data.filter(m => m.status === 'Đang chiếu');
-                setSidebarMovies(active.slice(0, 3));
                 
+                // Lọc phim theo thể loại từ URL (genreSlug)
+                if (genreSlug) {
+                    const filtered = resMovies.data.filter(m => 
+                        m.genres?.some(g => g.slug === genreSlug)
+                    );
+                    setMovies(filtered);
+                } else {
+                    setMovies(resMovies.data);
+                }
+
                 setLoading(false);
             } catch (error) {
                 console.error("Lỗi kết nối API:", error);
@@ -39,19 +49,13 @@ const CinemaGenre = () => {
         window.scrollTo(0, 0);
     }, [genreSlug]);
 
-    // --- BỔ SUNG: HÀM XỬ LÝ KHI BẤM VÀO PHIM ĐỂ TĂNG VIEW ---
     const handleMovieClick = async (e, movie) => {
-        // Ngăn chặn hành vi mặc định nếu cần
         e.preventDefault(); 
         try {
-            // 1. Gọi API tăng lượt xem (PATCH)
             await axios.patch(`https://webcinema-zb8z.onrender.com/api/movies/view/${movie.movie_id}`);
-            
-            // 2. Sau đó mới chuyển sang trang chi tiết
             navigate(`/movies/detail/${movie.slug}`);
         } catch (error) {
             console.error("Lỗi tăng lượt xem:", error);
-            // Nếu API lỗi vẫn cho chuyển trang để khách xem phim
             navigate(`/movies/detail/${movie.slug}`);
         }
     };
@@ -80,11 +84,19 @@ const CinemaGenre = () => {
                 <div className="main-genre-col">
                     <div className="section-header-galaxy">
                         <span className="blue-line"></span>
-                        <h2 className="section-title">DANH SÁCH PHIM</h2>
+                        <h2 className="section-title">
+                            {genreSlug 
+                                ? `PHIM THEO THỂ LOẠI: ${genres.find(g => g.slug === genreSlug)?.genre_name || ""}` 
+                                : "DANH SÁCH PHIM"}
+                        </h2>
                     </div>
                     
                     <div className="genre-filters-bar">
-                        <select className="filter-select-custom" defaultValue={genreSlug || ""}>
+                        <select 
+                            className="filter-select-custom" 
+                            value={genreSlug || ""}
+                            onChange={(e) => navigate(e.target.value ? `/movies/genre/${e.target.value}` : '/movies/genre')}
+                        >
                             <option value="">Tất cả thể loại</option>
                             {genres.map(g => (
                                 <option key={g.genre_id} value={g.slug}>{g.genre_name}</option>
@@ -96,19 +108,19 @@ const CinemaGenre = () => {
                         {movies.length > 0 ? (
                             movies.map(movie => (
                                 <div key={movie.movie_id} className="movie-card-horizontal">
-                                    {/* SỬA TẠI ĐÂY: Thêm onClick vào Link */}
                                     <Link 
                                         to={`/movies/detail/${movie.slug}`} 
-                                        className="movie-img-box"
+                                        className="movie-image-container"
                                         onClick={(e) => handleMovieClick(e, movie)}
                                     >
                                         <img 
-                                            src={`https://webcinema-zb8z.onrender.com/uploads/posters/${movie.poster_url}`} 
+                                            className="movie-img-main"
+                                            src={`${IMAGE_BASE_URL}/backdrops/${movie.backdrop_url}`} 
                                             alt={movie.title} 
                                         />
                                     </Link>
+
                                     <div className="movie-content-info">
-                                        {/* SỬA TẠI ĐÂY: Thêm onClick vào Link tiêu đề */}
                                         <Link 
                                             to={`/movies/detail/${movie.slug}`} 
                                             className="movie-name-link"
@@ -116,6 +128,7 @@ const CinemaGenre = () => {
                                         >
                                             <h3>{movie.title}</h3>
                                         </Link>
+
                                         <div className="movie-meta-row">
                                             <button 
                                                 className="btn-fb-like" 
@@ -130,9 +143,11 @@ const CinemaGenre = () => {
                                                 <span>{movie.views_count || 0} lượt xem</span>
                                             </span>
                                         </div>
+
                                         <p className="movie-summary-text">
-                                            {movie.description || "Chưa có mô tả cho phim này."}
+                                            {movie.description ? movie.description.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ') : "Chưa có mô tả cho phim này."}
                                         </p>
+
                                         <div className="movie-release-date">
                                             Khởi chiếu: {new Date(movie.release_date).toLocaleDateString('vi-VN')}
                                         </div>
@@ -146,30 +161,11 @@ const CinemaGenre = () => {
                 </div>
 
                 <div className="sidebar-col">
-                    <div className="sidebar-title">Phim Đang Chiếu</div>
-                    <div className="sidebar-movie-list">
-                        {sidebarMovies.map((m) => (
-                            <div 
-                                key={m.movie_id} 
-                                className="simple-movie-item" 
-                                onClick={(e) => handleMovieClick(e, m)}
-                                style={{cursor: 'pointer'}}
-                            >
-                                <div className="simple-poster">
-                                    <img 
-                                        src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} 
-                                        alt={m.title} 
-                                    />
-                                    <div className="age-badge">C{m.age_rating}</div>
-                                </div>
-                                <div className="simple-title">{m.title}</div>
-                            </div>
-                        ))}
-                    </div>
-                    <button className="view-more-btn" onClick={() => navigate('/movies')}>
-                        <span>Xem thêm</span>
-                        <ChevronRight size={18} strokeWidth={2.5} />
-                    </button>
+                    <MovieSidebar 
+                        IMAGE_BASE_URL={IMAGE_BASE_URL}
+                        title="Phim Đang Chiếu"
+                        relatedMovies={allMovies.slice(0, 6)} // Truyền data vào đây để Sidebar có cái mà hiện
+                    />
                 </div>
 
             </div>

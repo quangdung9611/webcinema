@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 
+// 1. THAY THẾ: Sử dụng bản New để hỗ trợ React 19 và Vercel
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css'; 
+
 import '../../../styles/UserUpdate.css'; 
 import Modal from '../../../components/Modal';
 
@@ -19,6 +23,18 @@ const generateSlug = (str) => {
         .trim();
 };
 
+// Cấu hình Toolbar cho đồng bộ với trang Add
+const modules = {
+    toolbar: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],        
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],     
+        [{ 'align': [] }],
+        ['link', 'image'],
+        ['clean']                                         
+    ],
+};
+
 const MovieUpdate = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -33,18 +49,15 @@ const MovieUpdate = () => {
         release_date: '',
         status: 'Sắp chiếu',
         trailer_url: '', 
-        description: ''
+        description: '' // Nội dung HTML từ Quill
     });
 
     const [oldPoster, setOldPoster] = useState(''); 
     const [oldBackdrop, setOldBackdrop] = useState('');
-
     const [newPoster, setNewPoster] = useState(null); 
     const [newBackdrop, setNewBackdrop] = useState(null);
-
     const [preview, setPreview] = useState(null); 
     const [backdropPreview, setBackdropPreview] = useState(null);
-
     const [modal, setModal] = useState({ show: false, type: '', title: '', message: '' });
 
     // 2. EFFECT: LẤY DỮ LIỆU CŨ
@@ -87,50 +100,34 @@ const MovieUpdate = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // Handler riêng cho React Quill
+    const handleEditorChange = (content) => {
+        setFormData(prev => ({ ...prev, description: content }));
+    };
+
     const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        // SỬA: poster_file -> posters
-        if (e.target.name === "posters") {
-            setNewPoster(file);
-            setPreview(URL.createObjectURL(file)); 
-        } else if (e.target.name === "backdrop_url") {
-            setNewBackdrop(file);
-            setBackdropPreview(URL.createObjectURL(file));
+        const file = e.target.files[0];
+        if (file) {
+            if (e.target.name === "posters") {
+                setNewPoster(file);
+                setPreview(URL.createObjectURL(file)); 
+            } else if (e.target.name === "backdrop_url") {
+                setNewBackdrop(file);
+                setBackdropPreview(URL.createObjectURL(file));
+            }
         }
-    }
-};
+    };
+
     // 4. SUBMIT: CẬP NHẬT
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // --- ĐÃ KHÓA ĐOẠN CHECK NGÀY (COMMENT OUT) ---
-        /*
-        const selectedDate = new Date(formData.release_date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); 
-
-        if (formData.status === "Sắp chiếu" && selectedDate < today) {
-            handleShowModal('error', 'NGÀY KHÔNG HỢP LỆ', 'Phim "Sắp chiếu" thì ngày phát hành không được là ngày trong quá khứ.');
-            return; 
-        }
-        */
-        // --------------------------------------------
-
         const data = new FormData();
-        // Append các field text và tự động tạo slug mới nếu title thay đổi
         Object.entries(formData).forEach(([key, value]) => data.append(key, value));
         data.append('slug', generateSlug(formData.title));
         
-        // Gửi Poster mới nếu có thay đổi
-        if (newPoster) {
-            data.append('posters', newPoster);
-        }
-
-        // FIX QUAN TRỌNG: Đổi key thành 'backdrop_url' để khớp với Multer Backend
-        if (newBackdrop) {
-            data.append('backdrop_url', newBackdrop);
-        }
+        if (newPoster) data.append('posters', newPoster);
+        if (newBackdrop) data.append('backdrop_url', newBackdrop);
 
         try {
             await axios.put(`https://webcinema-zb8z.onrender.com/api/movies/update/${id}`, data, {
@@ -144,6 +141,7 @@ const MovieUpdate = () => {
             handleShowModal('error', 'THẤT BẠI', err.response?.data?.error || 'Lỗi hệ thống.');
         }
     };
+
     return (
         <div className="update-user-wrapper">
             <Modal {...modal} />
@@ -173,7 +171,7 @@ const MovieUpdate = () => {
 
                     <div className="update-field">
                         <label>Quốc gia</label>
-                        <input name="nation" value={formData.nation} onChange={handleChange} placeholder="VD: Mỹ, Hàn Quốc..." />
+                        <input name="nation" value={formData.nation} onChange={handleChange} />
                     </div>
 
                     <div className="update-field">
@@ -207,7 +205,7 @@ const MovieUpdate = () => {
 
                     <div className="update-field full-width">
                         <label>Link Trailer (YouTube)</label>
-                        <input name="trailer_url" value={formData.trailer_url} onChange={handleChange} placeholder="https://www.youtube.com/watch?v=..." />
+                        <input name="trailer_url" value={formData.trailer_url} onChange={handleChange} />
                     </div>
 
                     {/* POSTER DỌC */}
@@ -217,13 +215,10 @@ const MovieUpdate = () => {
                             <img 
                                 src={preview ? preview : `https://webcinema-zb8z.onrender.com/uploads/posters/${oldPoster}`} 
                                 alt="Poster" 
-                                style={{ width: '80px', height: '110px', objectFit: 'cover', borderRadius: '4px', border: '2px solid #fff', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
+                                style={{ width: '80px', height: '110px', objectFit: 'cover', borderRadius: '4px' }}
                             />
                             <div className="file-input-group">
                                 <input type="file" name="posters" onChange={handleFileChange} accept="image/*" />
-                                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#666' }}>
-                                    {preview ? "Đã chọn ảnh poster mới" : "Giữ nguyên nếu không muốn thay đổi ảnh dọc"}
-                                </p>
                             </div>
                         </div>
                     </div>
@@ -233,23 +228,28 @@ const MovieUpdate = () => {
                         <label>Ảnh Backdrop (Ngang)</label>
                         <div className="poster-update-section" style={{ display: 'flex', gap: '20px', alignItems: 'center', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
                             <img 
-                                // HIỂN THỊ: Lấy từ folder backdrops
                                 src={backdropPreview ? backdropPreview : `https://webcinema-zb8z.onrender.com/uploads/backdrops/${oldBackdrop}`} 
                                 alt="Backdrop" 
-                                style={{ width: '160px', height: '90px', objectFit: 'cover', borderRadius: '4px', border: '2px solid #fff', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
+                                style={{ width: '160px', height: '90px', objectFit: 'cover', borderRadius: '4px' }}
                             />
                             <div className="file-input-group">
                                 <input type="file" name="backdrop_url" onChange={handleFileChange} accept="image/*" />
-                                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#666' }}>
-                                    {backdropPreview ? "Đã chọn ảnh ngang mới" : "Giữ nguyên nếu không muốn thay đổi ảnh ngang"}
-                                </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="update-field full-width">
-                        <label>Mô tả nội dung</label>
-                        <textarea name="description" value={formData.description} onChange={handleChange} rows="5" placeholder="Nhập mô tả phim..." />
+                    {/* --- PHẦN REACT QUILL ĐÃ CẬP NHẬT --- */}
+                    <div className="update-field full-width" style={{ marginBottom: '60px' }}>
+                        <label style={{ marginBottom: '10px', display: 'block', fontWeight: 'bold' }}>Mô tả nội dung</label>
+                        <div style={{ backgroundColor: 'white', color: 'black', borderRadius: '4px' }}>
+                            <ReactQuill 
+                                theme="snow"
+                                value={formData.description} 
+                                onChange={handleEditorChange} 
+                                modules={modules}
+                                style={{ height: '250px' }}
+                            />
+                        </div>
                     </div>
                 </div>
 

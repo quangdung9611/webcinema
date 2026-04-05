@@ -17,7 +17,7 @@
     padding: 0 20px;
 }
 
-/* Cột chính (7.5) giống MovieDetail */
+/* Cột chính (7.5) */
 .main-actor-col {
     flex: 7.5;
     min-width: 0;
@@ -43,22 +43,30 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
+    margin: 0;
 }
 
-/* Bộ lọc */
+/* Bộ lọc (Custom theo style CinemaGenre) */
 .actor-filters-bar {
     display: flex;
     gap: 15px;
     margin-bottom: 30px;
 }
 
-.filter-select {
+.filter-select-custom {
     background: #1a1a1a;
     color: #fff;
     border: 1px solid #333;
-    padding: 8px 15px;
+    padding: 10px 20px;
     border-radius: 6px;
     outline: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.filter-select-custom:focus {
+    border-color: #03599d;
 }
 
 /* ==========================================
@@ -77,12 +85,13 @@
     padding: 20px;
     border-radius: 12px;
     border: 1px solid #222;
-    transition: 0.3s;
+    transition: 0.3s ease;
 }
 
 .actor-card-horizontal:hover {
     border-color: #03599d;
     background: #111;
+    transform: translateY(-2px);
 }
 
 .actor-img-box {
@@ -91,22 +100,32 @@
     flex-shrink: 0;
     border-radius: 8px;
     overflow: hidden;
+    border: 1px solid #222;
 }
 
 .actor-img-box img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: 0.5s;
+}
+
+.actor-card-horizontal:hover .actor-img-box img {
+    transform: scale(1.1);
 }
 
 .actor-content-info {
     flex: 1;
 }
 
+.actor-name-link {
+    text-decoration: none;
+}
+
 .actor-name-link h3 {
     font-size: 22px;
     color: #fff;
-    margin-bottom: 12px;
+    margin: 0 0 12px 0;
     transition: 0.3s;
 }
 
@@ -125,13 +144,19 @@
     background: #1877f2;
     color: #fff;
     border: none;
-    padding: 5px 12px;
+    padding: 6px 14px;
     border-radius: 4px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-fb-like:hover {
+    background: #166fe5;
 }
 
 .view-count {
@@ -139,12 +164,13 @@
     color: #888;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
 }
 
 .actor-biography-text {
     line-height: 1.6;
     color: #bbb;
+    font-size: 14.5px;
     display: -webkit-box;
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
@@ -152,117 +178,61 @@
 }
 
 /* ==========================================
-   3. SIDEBAR (ĐỒNG BỘ 100% VỚI MOVIE DETAIL)
+   3. CỘT SIDEBAR (2.5) - GIỐNG CINEMA GENRE
    ========================================== */
-.movie-sidebar-area {
+.sidebar-col {
     flex: 2.5;
     min-width: 280px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start; 
 }
 
-.sidebar-heading {
-    color: #fff !important;
-    border-left: 4px solid #f1c40f; /* Vạch vàng đồng bộ */
-    padding-left: 15px;
-    margin-bottom: 30px;
-    font-weight: 700;
-    text-transform: uppercase;
-    width: 100%;
-}
+/* Các class bên trong Sidebar sẽ được kế thừa từ MovieSidebar.css 
+   Hoặc nếu ông viết chung thì dùng các class dưới đây */
 
-.sidebar-movie-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 100%;
-}
-
-.simple-movie-item {
-    cursor: pointer;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.simple-poster {
-    width: 100%;
-    aspect-ratio: 2/3;
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 12px;
-    border: 1px solid #333;
-}
-
-.simple-poster img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: 0.4s ease;
-}
-
-.simple-movie-item:hover img {
-    transform: scale(1.05);
-}
-
-.simple-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #fff;
-    text-align: left;
-}
-
-.view-more-btn {
-    width: 100%;
-    margin-top: 20px;
-    padding: 10px;
-    background: transparent;
-    border: 1px solid #333;
-    color: #aaa;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: 0.3s;
-}
-
-.view-more-btn:hover {
-    background: #1a1a1a;
-    color: #fff;
-    border-color: #03599d;
+.no-data {
+    color: #888;
+    font-style: italic;
+    padding: 20px 0;
 }
 
 /* ==========================================
-   4. RESPONSIVE (ẨN SIDEBAR TẠI 992PX)
+   4. RESPONSIVE (ĐỒNG BỘ MỐC 992PX)
    ========================================== */
+@media (max-width: 1200px) {
+    .actor-content-flex {
+        gap: 25px;
+    }
+}
+
 @media (max-width: 992px) {
-    /* Ẩn sidebar đúng mốc movie detail */
-    .movie-sidebar-area {
+    /* Ẩn sidebar đúng mốc movie detail / genre */
+    .sidebar-col {
         display: none !important;
     }
 
-    /* Cột chính tràn 100% */
     .main-actor-col {
         flex: 1;
         width: 100%;
     }
-
-    .actor-card-horizontal {
-        gap: 20px;
-    }
 }
 
 @media (max-width: 768px) {
-    .actor-img-box {
-        width: 140px;
-        height: 190px;
+    .actor-card-horizontal {
+        gap: 15px;
+        padding: 15px;
     }
+
+    .actor-img-box {
+        width: 130px;
+        height: 180px;
+    }
+
     .actor-name-link h3 {
         font-size: 18px;
+    }
+
+    .actor-biography-text {
+        -webkit-line-clamp: 3;
+        font-size: 13.5px;
     }
 }
 
@@ -272,14 +242,17 @@
         align-items: center;
         text-align: center;
     }
+
     .actor-img-box {
         width: 100%;
-        max-width: 200px;
-        height: 270px;
+        max-width: 180px;
+        height: 250px;
     }
+
     .actor-meta-row {
         justify-content: center;
     }
+
     .actor-biography-text {
         -webkit-line-clamp: 3;
     }

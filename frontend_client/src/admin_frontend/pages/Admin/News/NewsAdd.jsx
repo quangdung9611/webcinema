@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+// --- IMPORT THƯ VIỆN MỚI ---
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
+
 // Import tài nguyên
 import '../../../styles/UserForm.css'; 
 import Modal from '../../../components/Modal';
@@ -36,6 +40,17 @@ const NewsAdd = () => {
     const [errors, setErrors] = useState({});
     const [modal, setModal] = useState({ show: false, type: '', title: '', message: '' });
 
+    // --- CẤU HÌNH TOOLBAR CHO QUILL (Tùy chọn) ---
+    const modules = {
+        toolbar: [
+            [{ 'header': [1, 2, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['link', 'image'],
+            ['clean']
+        ],
+    };
+
     // 2. LOGIC XỬ LÝ SỰ KIỆN
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -51,6 +66,12 @@ const NewsAdd = () => {
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     };
 
+    // --- HÀM XỬ LÝ RIÊNG CHO QUILL VÌ NÓ KHÔNG DÙNG EVENT (E) ---
+    const handleQuillChange = (value) => {
+        setFormData(prev => ({ ...prev, content: value }));
+        if (errors.content) setErrors(prev => ({ ...prev, content: '' }));
+    };
+
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -64,7 +85,10 @@ const NewsAdd = () => {
     const validate = () => {
         const newErrors = {};
         if (!formData.title) newErrors.title = "Vui lòng nhập tiêu đề bài viết";
-        if (!formData.content || formData.content.length < 20) {
+        
+        // Loại bỏ tag HTML để kiểm tra độ dài thực tế của chữ
+        const plainText = formData.content.replace(/<[^>]*>/g, '').trim();
+        if (!formData.content || plainText.length < 20) {
             newErrors.content = "Nội dung bài viết quá ngắn (ít nhất 20 ký tự)";
         }
         if (!imageFile) newErrors.image = "Vui lòng chọn hình ảnh minh họa";
@@ -161,16 +185,20 @@ const NewsAdd = () => {
                     </div>
                 </div>
 
-                <div className="form-group full-width">
+                <div className="form-group full-width" style={{ marginBottom: '50px' }}>
                     <label>Nội dung chi tiết</label>
-                    <textarea 
-                        name="content" 
-                        value={formData.content} 
-                        rows="10" 
-                        onChange={handleChange} 
-                        placeholder="Viết nội dung tin tức ở đây..."
-                    ></textarea>
-                    {errors.content && <small className="error-msg">{errors.content}</small>}
+                    {/* --- THAY THẾ TEXTAREA TẠI ĐÂY --- */}
+                    <div style={{ background: 'white', color: 'black' }}>
+                        <ReactQuill 
+                            theme="snow"
+                            value={formData.content} 
+                            onChange={handleQuillChange} 
+                            modules={modules}
+                            placeholder="Viết nội dung tin tức ở đây..."
+                            style={{ height: '250px' }}
+                        />
+                    </div>
+                    {errors.content && <small className="error-msg" style={{ display: 'block', marginTop: '45px' }}>{errors.content}</small>}
                 </div>
 
                 {errors.server && <div className="alert-error" style={{ color: 'red', marginBottom: '10px' }}>{errors.server}</div>}
