@@ -95,25 +95,18 @@ exports.getSeatMapByShowtime = async (req, res) => {
         const roomIdFromShowtime = showtimeRows[0].room_id;
         console.log("Suất chiếu này yêu cầu lấy ghế của Room ID:", roomIdFromShowtime);
 
-        // 2. Truy vấn lấy ghế (Sửa lại CASE WHEN để nhận diện cả ghế đang giữ)
+        // 2. Truy vấn lấy ghế (Dùng LEFT JOIN như cũ của Dũng)
         const sql = `
             SELECT s.*, 
             CASE 
                 WHEN s.is_active = 0 THEN 'Maintenance'
-                -- Nếu đã có vé và đơn hàng đã hoàn tất -> Chắc chắn là Booked (Màu đỏ)
                 WHEN t.ticket_id IS NOT NULL AND b.status = 'Completed' THEN 'Booked'
-                -- Nếu đã có vé nhưng đơn hàng đang chờ thanh toán (Pending) -> Trạng thái Reserved (Màu vàng/xám giữ chỗ)
-                WHEN t.ticket_id IS NOT NULL AND b.status = 'Pending' THEN 'Reserved'
                 ELSE 'Available'
             END as seat_status
             FROM seats s
-            -- Join với tickets để xem ghế đã được chọn chưa
             LEFT JOIN tickets t ON s.seat_id = t.seat_id AND t.showtime_id = ?
-            -- Join với bookings để biết trạng thái thanh toán của vé đó
             LEFT JOIN bookings b ON t.booking_id = b.booking_id
             WHERE s.room_id = ? 
-            -- Thêm GROUP BY để tránh lỗi 1 ghế hiện 2 lần nếu DB lỡ có dữ liệu rác
-            GROUP BY s.seat_id
             ORDER BY s.seat_row ASC, s.seat_number ASC
         `;
 
