@@ -19,11 +19,9 @@ const PaymentController = {
             const room_id = showtimeRows.length > 0 ? showtimeRows[0].room_id : null;
             const cinema_id = showtimeRows.length > 0 ? showtimeRows[0].cinema_id : null;
 
-            // --- FIX GIỜ VIỆT NAM (Giai đoạn giữ ghế) ---
             const currentTimeVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
             const memo = `DUNG${Date.now()}`;
 
-            // Chèn currentTimeVN vào booking_date
             const [bookingResult] = await connection.execute(
                 'INSERT INTO bookings (user_id, showtime_id, total_amount, coupon_id, status, booking_date, memo) VALUES (?, ?, ?, ?, ?, ?, ?)',
                 [userId, showtimeId, totalAmount, couponId || null, 'Pending', currentTimeVN, memo]
@@ -31,14 +29,23 @@ const PaymentController = {
             const bookingId = bookingResult.insertId;
 
             if (selectedSeats && selectedSeats.length > 0) {
-                for (let seat of selectedSeats) {
+                // --- BƯỚC FIX CỐT LÕI CỦA DŨNG ---
+                // Lọc bỏ những ghế trùng ID, chỉ giữ lại những ghế duy nhất dựa trên seat_id
+                const uniqueSeats = selectedSeats.filter((seat, index, self) =>
+                    index === self.findIndex((t) => t.seat_id === seat.seat_id)
+                );
+
+                console.log(`>>> [DŨNG] Khách chọn ${selectedSeats.length} ghế, lọc còn ${uniqueSeats.length} ghế thực tế.`);
+
+                for (let seat of uniqueSeats) {
+                    // Lưu chi tiết hóa đơn
                     await connection.execute(
                         'INSERT INTO booking_details (booking_id, seat_id, price, item_name, quantity) VALUES (?, ?, ?, ?, ?)',
                         [bookingId, seat.seat_id, seat.price, `Ghế ${seat.seat_row}${seat.seat_number}`, 1]
                     );
 
+                    // Lưu vé để khóa sơ đồ (Giữ trạng thái Reserved)
                     const tempTicketCode = `WAIT-${Date.now()}-${seat.seat_id}`;
-                    // Ở đây nếu DB có cột created_at cho tickets, ông cũng có thể truyền currentTimeVN vào
                     await connection.execute(
                         `INSERT INTO tickets (booking_id, showtime_id, room_id, cinema_id, seat_id, ticket_code, price, seat_status, ticket_status, created_at) 
                          VALUES (?, ?, ?, ?, ?, ?, ?, 'Reserved', 'Valid', ?)`,
@@ -97,8 +104,6 @@ const PaymentController = {
             }
 
             const { user_id, status: oldStatus } = currentBooking[0];
-
-            // --- FIX GIỜ VIỆT NAM (Giai đoạn chốt đơn) ---
             const updateTimeVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
             // 1. Cập nhật trạng thái Booking
@@ -107,8 +112,8 @@ const PaymentController = {
                 [bookingId]
             );
 
-            // 2. Cập nhật vé bằng updateTimeVN
-            const [updateTickets] = await connection.execute(
+            // 2. Cập nhật vé (Chuyển từ Reserved sang Booked)
+            await connection.execute(
                 `UPDATE tickets 
                  SET seat_status = 'Booked', 
                      ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'),
@@ -117,7 +122,7 @@ const PaymentController = {
                 [updateTimeVN, bookingId]
             );
 
-            // --- LOGIC CỘNG ĐIỂM --- (Giữ nguyên logic của ông)
+            // --- LOGIC CỘNG ĐIỂM ---
             if (String(oldStatus).toLowerCase() !== 'completed') {
                 const [details] = await connection.execute(
                     `SELECT bd.price, bd.quantity, s.seat_type 
