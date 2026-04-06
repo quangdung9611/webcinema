@@ -4,6 +4,7 @@ const bookingController = {
     // 1. Lấy danh sách tất cả các đơn hàng (Trang quản lý Admin)
     getAllBookings: async (req, res) => {
         try {
+            // Đảm bảo lấy ra chuỗi ngày tháng chuẩn để Frontend dễ xử lý
             const query = `
                 SELECT 
                     b.booking_id, 
@@ -23,16 +24,15 @@ const bookingController = {
             const [rows] = await db.execute(query);
             res.status(200).json({ success: true, data: rows });
         } catch (error) {
-            console.error("Error getAllBookings:", error);
+            console.error("❌ [DŨNG] Error getAllBookings:", error);
             res.status(500).json({ success: false, message: "Lỗi khi lấy danh sách đơn hàng" });
         }
     },
 
-    // 2. Xem CHI TIẾT một đơn hàng (Dành cho Modal xem Ghế & Bắp nước)
+    // 2. Xem CHI TIẾT một đơn hàng
     getBookingDetails: async (req, res) => {
         const { id } = req.params;
         try {
-            // Lấy thông tin chung (Header hóa đơn)
             const [bookingInfo] = await db.execute(`
                 SELECT 
                     b.*, 
@@ -55,7 +55,6 @@ const bookingController = {
                 return res.status(404).json({ success: false, message: "Không tìm thấy hóa đơn này" });
             }
 
-            // Lấy chi tiết các món trong hóa đơn (Line Items)
             const [items] = await db.execute(`
                 SELECT 
                     bd.booking_detail_id,
@@ -77,12 +76,12 @@ const bookingController = {
                 details: items
             });
         } catch (error) {
-            console.error("Error getBookingDetails:", error);
+            console.error("❌ [DŨNG] Error getBookingDetails:", error);
             res.status(500).json({ success: false, message: error.message });
         }
     },
 
-    // 3. Cập nhật trạng thái (Duyệt đơn / Hủy đơn) - BẢN FIX CHUẨN TỪ GEMINI
+    // 3. Cập nhật trạng thái (Duyệt đơn / Hủy đơn)
     updateBookingStatus: async (req, res) => {
         const { id } = req.params;
         const { status } = req.body; 
@@ -101,8 +100,9 @@ const bookingController = {
             }
 
             const { user_id, status: oldStatus } = currentBooking[0];
+            const updateTime = new Date(); // LẤY GIỜ VIỆT NAM TỪ NODE.JS (ĐÃ CHỈNH TZ RENDER)
 
-            // 1. Cập nhật bảng bookings (Dùng status từ body gửi lên)
+            // 1. Cập nhật bảng bookings
             await connection.execute(
                 `UPDATE bookings SET status = ? WHERE booking_id = ?`,
                 [status, id]
@@ -112,13 +112,12 @@ const bookingController = {
             const lowerOldStatus = String(oldStatus).toLowerCase();
 
             if (upperStatus === 'COMPLETED') {
-                // Khi duyệt thành công -> Chuyển ghế sang 'Booked'
+                // Duyệt thành công -> Cập nhật trạng thái vé và THỜI GIAN CẬP NHẬT
                 await connection.execute(
-                    `UPDATE tickets SET seat_status = 'Booked' WHERE booking_id = ?`,
-                    [id]
+                    `UPDATE tickets SET seat_status = 'Booked', updated_at = ? WHERE booking_id = ?`,
+                    [updateTime, id]
                 );
 
-                // CHỈ CỘNG ĐIỂM NẾU TRƯỚC ĐÓ ĐƠN HÀNG CHƯA PHẢI LÀ COMPLETED
                 if (lowerOldStatus !== 'completed') {
                     const [details] = await connection.execute(
                         `SELECT bd.price, bd.quantity, s.seat_type 
@@ -129,71 +128,57 @@ const bookingController = {
                     );
 
                     let totalEarnedPoints = 0;
-
                     details.forEach(item => {
-                        // Ép kiểu số để tính toán cho chuẩn
-                        const price = Number(item.price);
-                        const quantity = Number(item.quantity);
-                        const itemTotal = price * quantity;
-                        
+                        const itemTotal = Number(item.price) * Number(item.quantity);
                         if (item.seat_type) {
                             const type = String(item.seat_type).toUpperCase();
-                            let rate = 0.05; // Mặc định Thường 5%
-
-                            if (type === 'VIP') {
-                                rate = 0.10; // VIP 10%
-                            } else if (type === 'DOUBLE' || type === 'SWEETBOX') {
-                                rate = 0.07; // Ghế đôi 7%
-                            }
+                            let rate = 0.05; 
+                            if (type === 'VIP') rate = 0.10;
+                            else if (type === 'DOUBLE' || type === 'SWEETBOX' || type === 'COUPLE') rate = 0.07;
                             totalEarnedPoints += Math.floor(itemTotal * rate);
                         } else {
-                            // Tính điểm cho BẮP NƯỚC (3%)
                             totalEarnedPoints += Math.floor(itemTotal * 0.03);
                         }
                     });
 
-                    // Cập nhật tổng điểm tích lũy vào bảng users
                     if (totalEarnedPoints > 0) {
                         await connection.execute(
                             `UPDATE users SET points = points + ? WHERE user_id = ?`,
                             [totalEarnedPoints, user_id]
                         );
-                        console.log(`✨ [DŨNG] Admin duyệt đơn: Đã cộng ${totalEarnedPoints} điểm`);
+                        console.log(`✨ [DŨNG] Đã cộng ${totalEarnedPoints} điểm cho User #${user_id}`);
                     }
                 }
                 
             } else if (upperStatus === 'CANCELLED') {
+                // Hủy đơn -> Giải phóng ghế và ghi lại thời gian hủy
                 await connection.execute(
-                    `UPDATE tickets SET seat_status = 'Cancelled' WHERE booking_id = ?`,
-                    [id]
+                    `UPDATE tickets SET seat_status = 'Cancelled', updated_at = ? WHERE booking_id = ?`,
+                    [updateTime, id]
                 );
-                console.log(`❌ [DŨNG] Admin hủy đơn: #${id}`);
             }
 
             await connection.commit();
             res.status(200).json({ 
                 success: true, 
-                message: `Hệ thống đã cập nhật đơn hàng #${id} sang ${status}` 
+                message: `Hệ thống đã cập nhật đơn hàng #${id} lúc ${updateTime.toLocaleString()}` 
             });
         } catch (error) {
             await connection.rollback();
-            console.error("Lỗi updateBookingStatus:", error);
+            console.error("❌ [DŨNG] Lỗi updateBookingStatus:", error);
             res.status(500).json({ success: false, message: "Lỗi cập nhật trạng thái" });
         } finally {
             connection.release();
         }
     },
-    // 4. Xóa vĩnh viễn đơn hàng
+
     deleteBooking: async (req, res) => {
         const { id } = req.params;
         try {
-            // Nhờ ON DELETE CASCADE trong SQL của Dũng, nó sẽ tự xóa booking_details và tickets
             const [result] = await db.execute(`DELETE FROM bookings WHERE booking_id = ?`, [id]);
-            
             if (result.affectedRows === 0) {
                 return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng để xóa" });
             }
-
             res.status(200).json({ success: true, message: "Đã xóa hóa đơn vĩnh viễn khỏi hệ thống" });
         } catch (error) {
             res.status(500).json({ success: false, message: "Lỗi khi thực hiện lệnh xóa" });

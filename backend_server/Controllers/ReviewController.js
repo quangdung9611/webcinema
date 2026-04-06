@@ -1,12 +1,11 @@
 const db = require('../Config/db'); 
 
 const ReviewController = {
-    // Gửi bình luận: Mỗi lần gửi tạo 1 dòng mới (Lưu lịch sử)
+    // 1. Gửi bình luận: Lưu trực tiếp giờ từ Node.js để chuẩn VN
     sendReview: async (req, res) => {
         try {
             const { movie_id, user_id, rating, comment } = req.body;
 
-            // Kiểm tra dữ liệu đầu vào
             if (!movie_id || !user_id || !rating) {
                 return res.status(400).json({ 
                     success: false, 
@@ -14,14 +13,16 @@ const ReviewController = {
                 });
             }
 
-            // Dùng INSERT thuần để lưu nhiều lần. 
-            // BỎ .promise() vì file db.js của bạn đã là promise-based rồi.
+            // Lấy giờ hiện tại từ Server (đã set TZ=Asia/Ho_Chi_Minh trên Render)
+            const now = new Date();
+
             const sql = `
                 INSERT INTO reviews (movie_id, user_id, rating_score, comment, created_at, updated_at)
-                VALUES (?, ?, ?, ?, NOW(), NOW())
+                VALUES (?, ?, ?, ?, ?, ?)
             `;
 
-            await db.query(sql, [movie_id, user_id, rating, comment]);
+            // Truyền 'now' vào cả 2 cột created_at và updated_at
+            await db.query(sql, [movie_id, user_id, rating, comment, now, now]);
             
             return res.status(200).json({ 
                 success: true, 
@@ -29,8 +30,7 @@ const ReviewController = {
             });
 
         } catch (error) {
-            // Log lỗi chi tiết ra console của Render để Dũng dễ debug
-            console.error("❌ Lỗi gửi bình luận:", error.message);
+            console.error("❌ [DŨNG] Lỗi gửi bình luận:", error.message);
             return res.status(500).json({ 
                 success: false, 
                 message: "Lỗi hệ thống: " + error.message 
@@ -38,12 +38,11 @@ const ReviewController = {
         }
     },
 
-    // Lấy danh sách bình luận kèm ngày giờ định dạng Việt Nam
+    // 2. Lấy danh sách bình luận (Sắp xếp theo mới nhất)
     getReviewsByMovie: async (req, res) => {
         try {
             const { movie_id } = req.params;
 
-            // Lấy dữ liệu và định dạng ngày tháng ngay từ câu SQL
             const sql = `
                 SELECT 
                     r.review_id,
@@ -61,14 +60,13 @@ const ReviewController = {
                 ORDER BY r.created_at DESC
             `;
 
-            // BỎ .promise() ở đây luôn
+            // db.query đã là promise-based nên không cần .promise()
             const [results] = await db.query(sql, [movie_id]);
             
             return res.status(200).json(results);
 
         } catch (error) {
-            console.error("❌ Lỗi lấy bình luận:", error.message);
-            // Trả về mảng rỗng thay vì lỗi 500 để giao diện không bị trắng xóa
+            console.error("❌ [DŨNG] Lỗi lấy bình luận:", error.message);
             return res.status(200).json([]); 
         }
     }

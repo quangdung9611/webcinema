@@ -3,7 +3,6 @@ const path = require('path');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 
-// 1. Cấu hình gửi Email (Giữ nguyên của Dũng)
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -14,9 +13,6 @@ const transporter = nodemailer.createTransport({
 
 let otpStorage = {}; 
 
-/**
- * Hàm hỗ trợ gửi vé điện tử
- */
 const sendTicketEmail = async (customerEmail, ticketData) => {
     const { 
         bookingId, customerName, seatLabel, 
@@ -70,12 +66,6 @@ const BankAppController = {
         if (!email || !bookingId) {
             return res.status(400).json({ success: false, message: "Thiếu thông tin!" });
         }
-
-        const existing = otpStorage[email];
-        if (existing && (Date.now() - (existing.expires - 5 * 60 * 1000) < 60000)) {
-            return res.json({ success: true, message: "Mã OTP đã được gửi, vui lòng kiểm tra email!" });
-        }
-
         const otp = Math.floor(100000 + Math.random() * 900000);
         otpStorage[email] = { otp, bookingId, expires: Date.now() + 5 * 60 * 1000 };
 
@@ -83,8 +73,9 @@ const BankAppController = {
             await transporter.sendMail({
                 from: '"Dũng Cinema 🍿" <nguyenphamquangdung9611@gmail.com>',
                 to: email,
-                subject: `[${otp}] Mã xác thực thanh toán`,
-                html: `<h2 style="text-align:center">Mã OTP của ông là: <span style="color:red">${otp}</span></h2>`
+                subject: `[${otp}] Mã xác thực thanh toán Cinema Star`,
+                html: `<h2 style="text-align:center">Mã OTP của ông là: <span style="color:red">${otp}</span></h2>
+                       <p style="text-align:center">Mã này có hiệu lực trong 5 phút cho đơn hàng #${bookingId}</p>`
             });
             res.json({ success: true, message: "Mã OTP đã gửi!" });
         } catch (error) {
@@ -97,37 +88,37 @@ const BankAppController = {
         const record = otpStorage[email];
 
         if (!record || record.otp != otp) {
-            return res.status(400).json({ success: false, message: "Mã OTP không đúng!" });
+            return res.status(400).json({ success: false, message: "Mã OTP không đúng hoặc đã hết hạn!" });
         }
 
         const connection = await db.getConnection();
         try {
-            const [checkStatus] = await connection.query("SELECT status FROM bookings WHERE booking_id = ?", [bookingId]);
+            const [checkStatus] = await connection.query("SELECT status, user_id FROM bookings WHERE booking_id = ?", [bookingId]);
             if (checkStatus[0] && checkStatus[0].status === 'Completed') {
                 return res.status(400).json({ success: false, message: "Giao dịch này đã được thanh toán hoàn tất!" });
             }
 
             await connection.beginTransaction();
+            const now = new Date(); // Lấy giờ chuẩn VN từ Render
 
-            // 1. Cập nhật trạng thái thanh toán
+            // 1. Cập nhật trạng thái đơn hàng
             await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
 
-            // 2. Cập nhật trạng thái vé
+            // 2. Cập nhật trạng thái vé và mã vé (Dùng 'now' thay cho NOW())
             await connection.execute(
                 `UPDATE tickets 
                  SET seat_status = 'Booked', 
                      ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'),
-                     updated_at = NOW()
+                     updated_at = ?
                  WHERE booking_id = ? AND seat_status = 'Reserved'`, 
-                [bookingId]
+                [now, bookingId]
             );
 
-            // 3. SỬA TẠI ĐÂY: Dùng LEFT JOIN và lấy rạp/phòng từ bảng showtimes để fix lỗi NULL
+            // 3. Lấy thông tin đầy đủ để gửi mail và cộng điểm
             const [orderRows] = await connection.query(`
                 SELECT 
-                    b.booking_id, 
-                    u.full_name, 
-                    u.email,
+                    b.booking_id, b.user_id,
+                    u.full_name, u.email,
                     m.title AS movieTitle, 
                     m.poster_url AS moviePoster, 
                     c.cinema_name AS cinemaName,
@@ -146,26 +137,43 @@ const BankAppController = {
             `, [bookingId]);
 
             const order = orderRows[0];
+            if (!order) throw new Error("Không tìm thấy dữ liệu đơn hàng!");
 
-            if (!order) {
-                throw new Error("Không tìm thấy thông tin vé sau khi cập nhật!");
-            }
-
-            // 4. Lấy chi tiết đồ ăn
-            const [foodRows] = await connection.query(
-                "SELECT item_name, quantity, product_id FROM booking_details WHERE booking_id = ? AND product_id IS NOT NULL", 
+            // 4. LOGIC CỘNG ĐIỂM THƯỞNG (Quan trọng nè Dũng!)
+            const [details] = await connection.execute(
+                `SELECT bd.price, bd.quantity, s.seat_type 
+                 FROM booking_details bd
+                 LEFT JOIN seats s ON bd.seat_id = s.seat_id
+                 WHERE bd.booking_id = ?`,
                 [bookingId]
             );
 
-            const foodLabelForEmail = foodRows
-                .map(d => `${d.item_name} (x${d.quantity})`)
-                .join(', ');
+            let totalEarnedPoints = 0;
+            details.forEach(item => {
+                const itemTotal = Number(item.price) * Number(item.quantity);
+                if (item.seat_type) {
+                    const type = String(item.seat_type).toUpperCase();
+                    let rate = (type === 'VIP') ? 0.10 : (type === 'DOUBLE' || type === 'SWEETBOX' || type === 'COUPLE') ? 0.07 : 0.05;
+                    totalEarnedPoints += Math.floor(itemTotal * rate);
+                } else {
+                    totalEarnedPoints += Math.floor(itemTotal * 0.03); // Điểm bắp nước
+                }
+            });
 
+            if (totalEarnedPoints > 0) {
+                await connection.execute(
+                    `UPDATE users SET points = points + ? WHERE user_id = ?`,
+                    [totalEarnedPoints, order.user_id]
+                );
+                console.log(`✨ [DŨNG] Thanh toán OTP thành công: Cộng ${totalEarnedPoints} điểm cho User #${order.user_id}`);
+            }
+
+            // 5. Xử lý thời gian hiển thị Email
             const fullDate = new Date(order.start_time);
-            const formattedTime = fullDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            const formattedTime = fullDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
             const formattedDate = fullDate.toLocaleDateString('vi-VN');
 
-            // 5. Gửi vé Email (Giữ nguyên)
+            // 6. Gửi vé Email
             await sendTicketEmail(email, {
                 bookingId: order.booking_id,
                 customerName: order.full_name,
@@ -175,35 +183,22 @@ const BankAppController = {
                 startTime: formattedTime,
                 selectedDate: formattedDate,
                 seatLabel: order.seatLabel,
-                selectedFoods: foodLabelForEmail || 'Không có'
+                selectedFoods: (await connection.query("SELECT item_name, quantity FROM booking_details WHERE booking_id = ? AND product_id IS NOT NULL", [bookingId]))[0]
+                    .map(d => `${d.item_name} (x${d.quantity})`).join(', ') || 'Không có'
             });
 
             await connection.commit();
             delete otpStorage[email];
             
-            // 6. Trả dữ liệu chuẩn về Frontend
             res.json({ 
                 success: true, 
                 message: "Thanh toán thành công!",
-                data: {
-                    orderId: order.booking_id,
-                    customerName: order.full_name,
-                    customerEmail: email,
-                    movieTitle: order.movieTitle,
-                    moviePoster: order.moviePoster,
-                    cinemaName: order.cinemaName,   
-                    roomName: order.roomName,
-                    seatDisplay: order.seatLabel,   
-                    startTime: formattedTime,
-                    selectedDate: formattedDate,
-                    selectedFoods: foodRows,        
-                    ticketPIN: Math.floor(1000 + Math.random() * 9000)
-                }
+                data: { orderId: order.booking_id, ticketPIN: Math.floor(1000 + Math.random() * 9000) }
             });
 
         } catch (error) {
             if (connection) await connection.rollback();
-            console.error("Lỗi Verify OTP:", error);
+            console.error("❌ [DŨNG] Lỗi Verify OTP:", error);
             res.status(500).json({ success: false, message: error.message });
         } finally {
             if (connection) connection.release();
@@ -211,7 +206,4 @@ const BankAppController = {
     }
 };
 
-module.exports = {
-    ...BankAppController,
-    sendTicketEmail       
-};
+module.exports = { ...BankAppController, sendTicketEmail };

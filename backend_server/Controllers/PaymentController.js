@@ -19,11 +19,14 @@ const PaymentController = {
             const room_id = showtimeRows.length > 0 ? showtimeRows[0].room_id : null;
             const cinema_id = showtimeRows.length > 0 ? showtimeRows[0].cinema_id : null;
 
+            // Lấy thời gian hiện tại từ Node.js (Đã chuẩn hóa theo Asia/Ho_Chi_Minh)
+            const currentTime = new Date();
             const memo = `DUNG${Date.now()}`;
 
+            // THAY NOW() BẰNG ? VÀ TRUYỀN currentTime
             const [bookingResult] = await connection.execute(
-                'INSERT INTO bookings (user_id, showtime_id, total_amount, coupon_id, status, booking_date, memo) VALUES (?, ?, ?, ?, ?, NOW(), ?)',
-                [userId, showtimeId, totalAmount, couponId || null, 'Pending', memo]
+                'INSERT INTO bookings (user_id, showtime_id, total_amount, coupon_id, status, booking_date, memo) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [userId, showtimeId, totalAmount, couponId || null, 'Pending', currentTime, memo]
             );
             const bookingId = bookingResult.insertId;
 
@@ -53,13 +56,13 @@ const PaymentController = {
             }
 
             await connection.commit();
-            console.log(`>>> [DŨNG CINEMA] Đã tạo đơn hàng tạm thời #${bookingId}`);
+            console.log(`>>> [DŨNG CINEMA] Đã tạo đơn hàng #${bookingId} lúc ${currentTime.toLocaleString()}`);
             
             res.status(200).json({ 
                 success: true, 
                 bookingId: bookingId, 
                 memo: memo,
-                message: "Đã giữ ghế thành công, bạn có 5 phút để thanh toán!" 
+                message: "Đã giữ ghế thành công!" 
             });
 
         } catch (error) {
@@ -71,7 +74,7 @@ const PaymentController = {
         }
     },
 
-    // 2. Giai đoạn 2: Khi khách thanh toán thành công (ĐÃ BỔ SUNG CỘNG ĐIỂM)
+    // 2. Giai đoạn 2: Khi khách thanh toán thành công
     completePayment: async (req, res) => {
         const { bookingId } = req.body; 
         
@@ -79,13 +82,10 @@ const PaymentController = {
             return res.status(400).json({ success: false, message: "Thiếu bookingId rồi ông ơi!" });
         }
 
-        console.log(`>>> [DŨNG CINEMA] Đang chốt đơn hàng #${bookingId} sang trạng thái Completed...`);
-
         const connection = await db.getConnection();
         await connection.beginTransaction();
 
         try {
-            // --- BƯỚC MỚI: Lấy thông tin cũ để kiểm tra trước khi update ---
             const [currentBooking] = await connection.execute(
                 `SELECT user_id, status FROM bookings WHERE booking_id = ?`,
                 [bookingId]
@@ -96,28 +96,29 @@ const PaymentController = {
             }
 
             const { user_id, status: oldStatus } = currentBooking[0];
+            const updateTime = new Date(); // Lấy giờ chốt đơn từ Node.js
 
-            // --- GIỮ NGUYÊN CODE CŨ CỦA ÔNG ---
+            // 1. Cập nhật trạng thái Booking
             const [updateBooking] = await connection.execute(
                 "UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", 
                 [bookingId]
             );
 
+            // 2. Cập nhật vé (THAY NOW() BẰNG updateTime)
             const [updateTickets] = await connection.execute(
                 `UPDATE tickets 
                  SET seat_status = 'Booked', 
                      ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'),
-                     updated_at = NOW()
+                     updated_at = ?
                  WHERE booking_id = ? AND seat_status = 'Reserved'`,
-                [bookingId]
+                [updateTime, bookingId]
             );
 
             if (updateBooking.affectedRows === 0) {
                 throw new Error("Không tìm thấy đơn hàng để cập nhật!");
             }
 
-            // --- BỔ SUNG: LOGIC CỘNG ĐIỂM CHI TIẾT ---
-            // Chỉ cộng điểm nếu trạng thái cũ chưa phải là 'Completed' (tránh cộng trùng)
+            // --- LOGIC CỘNG ĐIỂM ---
             if (String(oldStatus).toLowerCase() !== 'completed') {
                 const [details] = await connection.execute(
                     `SELECT bd.price, bd.quantity, s.seat_type 
@@ -128,20 +129,15 @@ const PaymentController = {
                 );
 
                 let totalEarnedPoints = 0;
-
                 details.forEach(item => {
                     const itemTotal = Number(item.price) * Number(item.quantity);
-                    
                     if (item.seat_type) {
-                        // Tính điểm cho VÉ (VIP 10%, Đôi 7%, Thường 5%)
                         const type = String(item.seat_type).toUpperCase();
                         let rate = 0.05; 
                         if (type === 'VIP') rate = 0.10;
-                        else if (type === 'DOUBLE' || type === 'SWEETBOX') rate = 0.07;
-                        
+                        else if (type === 'DOUBLE' || type === 'SWEETBOX' || type === 'COUPLE') rate = 0.07;
                         totalEarnedPoints += Math.floor(itemTotal * rate);
                     } else {
-                        // Tính điểm cho BẮP NƯỚC (3%)
                         totalEarnedPoints += Math.floor(itemTotal * 0.03);
                     }
                 });
@@ -151,16 +147,14 @@ const PaymentController = {
                         `UPDATE users SET points = points + ? WHERE user_id = ?`,
                         [totalEarnedPoints, user_id]
                     );
-                    console.log(`✨ [DŨNG] Thanh toán xong! Đã tích ${totalEarnedPoints} điểm cho User #${user_id}`);
                 }
             }
-
             await connection.commit();
-            console.log(`✅ [DŨNG CINEMA] Chốt đơn #${bookingId} THÀNH CÔNG. Ghế đã được khóa.`);
+            console.log(`✅ [DŨNG CINEMA] Chốt đơn #${bookingId} THÀNH CÔNG lúc ${updateTime.toLocaleString()}`);
             
             res.json({ 
                 success: true, 
-                message: "Thanh toán thành công, vé đã được chốt và bạn đã nhận được điểm thưởng!" 
+                message: "Thanh toán thành công và đã tích điểm!" 
             });
         } catch (error) {
             await connection.rollback();

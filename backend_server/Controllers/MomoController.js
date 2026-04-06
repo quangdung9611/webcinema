@@ -1,11 +1,10 @@
 const axios = require('axios');
 const crypto = require('crypto');
 const db = require('../Config/db');
-// FIX: Import trực tiếp hàm gửi mail
 const { sendTicketEmail } = require('./BankAppController'); 
 
 const MomoController = {
-    // 1. TẠO GIAO DỊCH (Giữ nguyên logic MoMo của ông)
+    // 1. TẠO GIAO DỊCH
     createPayment: async (req, res) => {
         try {
             const { bookingId, amount } = req.body;
@@ -14,7 +13,7 @@ const MomoController = {
             const secretKey = 'f06nd13v6u1234567890abcdefghijk';
             const requestId = partnerCode + new Date().getTime();
             const orderId = bookingId;
-            const orderInfo = `Thanh toán vé Dũng Cinema #${bookingId}`;
+            const orderInfo = `Thanh toán vé Cinema Star #${bookingId}`;
             const redirectUrl = "http://localhost:5173/confirm-success"; 
             const ipnUrl = "https://your-ngrok-link.ngrok-free.app/api/momo/callback"; 
             const requestType = "payWithMethod";
@@ -32,29 +31,30 @@ const MomoController = {
             const response = await axios.post('https://test-payment.momo.vn/v2/gateway/api/create', requestBody);
             res.json(response.data); 
         } catch (error) {
-            console.error("Lỗi MoMo Create:", error.message);
+            console.error("❌ [DŨNG] Lỗi MoMo Create:", error.message);
             res.status(500).json({ message: "Không thể tạo giao dịch MoMo" });
         }
     },
 
-    // 2. XÁC NHẬN THANH TOÁN & GỬI EMAIL (Đã cập nhật thêm room_id và cinema_id)
+    // 2. XÁC NHẬN THANH TOÁN (Hàm quan trọng nhất)
     confirmMomoFast: async (req, res) => {
         const { bookingId } = req.body;
-        console.log(`>>> [DŨNG CINEMA] Đang xử lý chốt đơn MoMo #${bookingId}...`);
+        console.log(`>>> 🍿 [DŨNG CINEMA] Đang chốt đơn MoMo #${bookingId}...`);
 
         const connection = await db.getConnection();
         try {
-            const [check] = await connection.query("SELECT status FROM bookings WHERE booking_id = ?", [bookingId]);
+            const [check] = await connection.query("SELECT status, user_id FROM bookings WHERE booking_id = ?", [bookingId]);
             if (check[0] && check[0].status === 'Completed') {
-                return res.json({ success: true, message: "Đơn hàng đã được xử lý trước đó." });
+                return res.json({ success: true, message: "Đơn hàng đã hoàn tất trước đó." });
             }
 
             await connection.beginTransaction();
+            const now = new Date(); // Lấy giờ chuẩn VN từ Render
 
-            // --- BƯỚC 1: CẬP NHẬT TRẠNG THÁI ---
+            // --- BƯỚC 1: CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG ---
             await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
 
-            // --- BƯỚC 2: CHỐT GHẾ (Cập nhật thêm room_id và cinema_id từ bảng showtimes) ---
+            // --- BƯỚC 2: CHỐT GHẾ & CẬP NHẬT THỜI GIAN (Dùng 'now' thay cho NOW()) ---
             await connection.execute(
                 `UPDATE tickets t
                  JOIN showtimes s ON t.showtime_id = s.showtime_id
@@ -62,17 +62,16 @@ const MomoController = {
                      t.ticket_code = REPLACE(t.ticket_code, 'WAIT-', 'TIC-'),
                      t.cinema_id = s.cinema_id,
                      t.room_id = s.room_id,
-                     t.updated_at = NOW()
+                     t.updated_at = ?
                  WHERE t.booking_id = ? AND t.seat_status = 'Reserved'`, 
-                [bookingId]
+                [now, bookingId]
             );
 
             // --- BƯỚC 3: LẤY DỮ LIỆU TỔNG HỢP ---
             const [orderRows] = await connection.query(`
                 SELECT 
-                    b.booking_id, 
-                    u.full_name, 
-                    u.email,
+                    b.booking_id, b.user_id,
+                    u.full_name, u.email,
                     m.title AS movieTitle, 
                     m.poster_url AS moviePoster, 
                     c.cinema_name AS cinemaName,
@@ -92,51 +91,57 @@ const MomoController = {
             if (orderRows.length === 0) throw new Error("Không tìm thấy đơn hàng");
             const order = orderRows[0];
 
-            // Lấy chi tiết đồ ăn
-            const [foodRows] = await connection.query(
-                "SELECT item_name, quantity FROM booking_details WHERE booking_id = ? AND product_id IS NOT NULL", 
+            // --- BƯỚC 4: LOGIC CỘNG ĐIỂM THƯỞNG (Dũng bổ sung phần này nhé) ---
+            const [details] = await connection.execute(
+                `SELECT bd.price, bd.quantity, s.seat_type 
+                 FROM booking_details bd
+                 LEFT JOIN seats s ON bd.seat_id = s.seat_id
+                 WHERE bd.booking_id = ?`,
                 [bookingId]
             );
 
-            const foodLabelForEmail = foodRows
-                .map(d => `${d.item_name} (x${d.quantity})`)
-                .join(', ');
+            let totalEarnedPoints = 0;
+            details.forEach(item => {
+                const itemTotal = Number(item.price) * Number(item.quantity);
+                if (item.seat_type) {
+                    const type = String(item.seat_type).toUpperCase();
+                    let rate = (type === 'VIP') ? 0.10 : (type === 'DOUBLE' || type === 'SWEETBOX' || type === 'COUPLE') ? 0.07 : 0.05;
+                    totalEarnedPoints += Math.floor(itemTotal * rate);
+                } else {
+                    totalEarnedPoints += Math.floor(itemTotal * 0.03); // Điểm cho bắp nước
+                }
+            });
 
+            if (totalEarnedPoints > 0) {
+                await connection.execute(
+                    `UPDATE users SET points = points + ? WHERE user_id = ?`,
+                    [totalEarnedPoints, order.user_id]
+                );
+                console.log(`✨ [DŨNG] MoMo thành công: Đã cộng ${totalEarnedPoints} điểm cho User #${order.user_id}`);
+            }
+
+            // --- BƯỚC 5: XỬ LÝ THỜI GIAN GỬI MAIL ---
             const fullDate = new Date(order.start_time);
-            const formattedTime = fullDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            const formattedTime = fullDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
             const formattedDate = fullDate.toLocaleDateString('vi-VN');
 
-            const ticketData = {
-                bookingId: order.booking_id,
-                customerName: order.full_name,
-                movieTitle: order.movieTitle,
-                moviePoster: order.moviePoster,
-                cinemaName: order.cinemaName,
-                roomName: order.roomName,
+            // Gửi mail
+            const [foodRows] = await connection.query("SELECT item_name, quantity FROM booking_details WHERE booking_id = ? AND product_id IS NOT NULL", [bookingId]);
+            await sendTicketEmail(order.email, {
+                ...order,
                 startTime: formattedTime,
                 selectedDate: formattedDate,
-                seatLabel: order.seatLabel || 'N/A', 
-                selectedFoods: foodLabelForEmail || 'Không có'
-            };
-
-            // --- BƯỚC 4: GỬI VÉ QUA EMAIL ---
-            await sendTicketEmail(order.email, ticketData);
+                selectedFoods: foodRows.map(d => `${d.item_name} (x${d.quantity})`).join(', ') || 'Không có'
+            });
 
             await connection.commit();
 
-            // --- BƯỚC 5: TRẢ DỮ LIỆU ĐỂ FRONTEND HIỂN THỊ ---
+            // --- BƯỚC 6: TRẢ DỮ LIỆU ---
             res.json({ 
                 success: true, 
                 message: "Thanh toán MoMo hoàn tất!",
                 data: {
-                    orderId: order.booking_id,
-                    customerName: order.full_name,
-                    customerEmail: order.email,
-                    movieTitle: order.movieTitle,
-                    moviePoster: order.moviePoster,
-                    cinemaName: order.cinemaName,
-                    roomName: order.roomName,
-                    seatDisplay: order.seatLabel,
+                    ...order,
                     startTime: formattedTime,
                     selectedDate: formattedDate,
                     selectedFoods: foodRows, 
@@ -146,7 +151,7 @@ const MomoController = {
 
         } catch (error) {
             if (connection) await connection.rollback();
-            console.error("❌ Lỗi MoMo Callback:", error.message);
+            console.error("❌ [DŨNG] Lỗi MoMo Callback:", error.message);
             res.status(500).json({ success: false, message: error.message });
         } finally {
             if (connection) connection.release();
@@ -155,7 +160,7 @@ const MomoController = {
 
     callback: async (req, res) => {
         const { orderId, resultCode } = req.body;
-        if (resultCode === 0) console.log(`>>> MoMo IPN: Đơn #${orderId} đã thanh toán.`);
+        if (resultCode === 0) console.log(`>>> [DŨNG] MoMo IPN: Đơn #${orderId} thanh toán OK.`);
         return res.status(204).send(); 
     }
 };

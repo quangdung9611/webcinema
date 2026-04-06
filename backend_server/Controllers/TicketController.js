@@ -4,11 +4,10 @@ const QRCode = require('qrcode');
 /**
  * --- HÀM 1: TẠO VÉ ---
  * Chạy sau khi thanh toán thành công.
- * Đã cập nhật: Thêm room_id và cinema_id từ showtimes.
+ * Đã cập nhật: Thêm room_id, cinema_id và thời gian chuẩn VN.
  */
 const createTickets = async (bookingId) => {
     try {
-        // 1. Lấy thông tin suất chiếu (bao gồm room_id và cinema_id) từ đơn hàng
         const [bookingInfo] = await db.query(
             `SELECT b.showtime_id, s.room_id, s.cinema_id 
              FROM bookings b
@@ -21,30 +20,32 @@ const createTickets = async (bookingId) => {
         
         const { showtime_id, room_id, cinema_id } = bookingInfo[0];
 
-        // 2. Lấy danh sách ghế từ chi tiết đơn hàng
         const [details] = await db.query(
             "SELECT seat_id, price FROM booking_details WHERE booking_id = ? AND seat_id IS NOT NULL", 
             [bookingId]
         );
 
-        // 3. Chuẩn bị dữ liệu Bulk Insert (Thêm 2 cột mới vào mảng)
+        // FIX GIỜ: Lấy giờ hiện tại từ Node.js (Render đã set TZ)
+        const now = new Date();
+
         const ticketsData = details.map((item) => [
             bookingId, 
             showtime_id, 
-            room_id,    // Cột mới
-            cinema_id,  // Cột mới
+            room_id,
+            cinema_id,
             item.seat_id, 
             `TIC${bookingId}${item.seat_id}${Math.floor(Math.random() * 100)}`, 
             item.price, 
             'Booked', 
-            'Valid'
+            'Valid',
+            now, // Thêm created_at
+            now  // Thêm updated_at
         ]);
 
-        // 4. Thực thi INSERT
         if (ticketsData.length > 0) {
             const sql = `
                 INSERT INTO tickets 
-                (booking_id, showtime_id, room_id, cinema_id, seat_id, ticket_code, price, seat_status, ticket_status) 
+                (booking_id, showtime_id, room_id, cinema_id, seat_id, ticket_code, price, seat_status, ticket_status, created_at, updated_at) 
                 VALUES ?
             `;
             await db.query(sql, [ticketsData]);
@@ -80,10 +81,11 @@ const getTicketQR = async (req, res) => {
 
 /**
  * --- HÀM 3: SOÁT VÉ (CHECK-IN) ---
- * Đã sửa: Cập nhật trạng thái 'Used' đồng bộ
+ * Đã sửa: Cập nhật thời gian check-in chuẩn VN
  */
 const checkInTicket = async (req, res) => {
     const { ticketCode } = req.body;
+    const now = new Date(); // Lấy giờ lúc quét vé
 
     try {
         const sql = `
@@ -105,10 +107,10 @@ const checkInTicket = async (req, res) => {
             return res.status(400).json({ message: "Cảnh báo: Vé này đã được soát trước đó!" });
         }
 
-        // Cập nhật trạng thái vé sang đã sử dụng
+        // FIX: Cập nhật thêm cột updated_at để biết khách vào rạp lúc nào
         await db.query(
-            "UPDATE tickets SET ticket_status = 'Used', seat_status = 'Used' WHERE ticket_id = ?", 
-            [ticket.ticket_id]
+            "UPDATE tickets SET ticket_status = 'Used', seat_status = 'Used', updated_at = ? WHERE ticket_id = ?", 
+            [now, ticket.ticket_id]
         );
 
         return res.status(200).json({ 
@@ -117,7 +119,8 @@ const checkInTicket = async (req, res) => {
             info: {
                 movie: ticket.movie_title,
                 seat: `${ticket.seat_row}${ticket.seat_number}`,
-                time: ticket.start_time
+                time: ticket.start_time,
+                checkInAt: now.toLocaleTimeString('vi-VN') // Trả thêm giờ soát vé cho FE
             }
         });
     } catch (err) {
@@ -206,12 +209,11 @@ const getTicketSeatMap = async (req, res) => {
         res.status(500).json({ error: "Lỗi lấy sơ đồ soát vé: " + err.message });
     }
 };
+
 const getFilteredShowtimes = async (req, res) => {
-    // Chỉ lấy roomId từ giao diện gửi lên
     const { roomId } = req.query;
 
     try {
-        // 1. Câu SQL lấy toàn bộ, không có điều kiện thời gian (WHERE 1=1 để nối chuỗi cho dễ)
         let sql = `
             SELECT 
                 st.showtime_id, 
@@ -229,20 +231,14 @@ const getFilteredShowtimes = async (req, res) => {
 
         const params = [];
 
-        // 2. Chỉ giữ lại lọc theo roomId (nếu ông chọn phòng)
         if (roomId && roomId !== 'null' && roomId !== 'undefined') {
             sql += ` AND st.room_id = ? `;
             params.push(roomId);
         }
 
-        // 3. Sắp xếp: Tui để DESC (mới nhất lên đầu) để ông đỡ phải cuộn chuột tìm phim mới
-        // Nếu ông thích phim cũ lên đầu thì sửa lại thành ASC
         sql += ` ORDER BY st.start_time DESC `;
 
-        // 4. Thực thi
         const [results] = await db.query(sql, params);
-
-        // 5. Trả kết quả về cho FE
         res.status(200).json(results);
 
     } catch (err) {
@@ -253,6 +249,7 @@ const getFilteredShowtimes = async (req, res) => {
         });
     }
 };
+
 module.exports = { 
     createTickets, 
     getTicketQR, 
@@ -260,5 +257,5 @@ module.exports = {
     getAllTickets, 
     getTicketsByShowtime,
     getTicketSeatMap,
-   getFilteredShowtimes
+    getFilteredShowtimes
 };
