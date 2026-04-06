@@ -277,9 +277,9 @@ exports.getBookingHistory = async (req, res) => {
         res.status(500).json({ error: "Lỗi khi lấy lịch sử giao dịch" });
     }
 };
-// 8. Xóa sạch lịch sử đặt vé và Reset điểm/chi tiêu của User (Dùng cho Profile.jsx)
+// 8. Xóa sạch lịch sử đặt vé và Reset điểm của User
 exports.clearBookingHistory = async (req, res) => {
-    const userId = req.user.user_id; // Lấy từ Token middleware
+    const userId = req.user.user_id; 
     const connection = await db.getConnection();
     await connection.beginTransaction();
 
@@ -293,35 +293,33 @@ exports.clearBookingHistory = async (req, res) => {
         if (userBookings.length > 0) {
             const bookingIds = userBookings.map(b => b.booking_id);
             
-            // 2. Xóa chi tiết hóa đơn (booking_details)
+            // 2. Xóa chi tiết hóa đơn
             await connection.query('DELETE FROM booking_details WHERE booking_id IN (?)', [bookingIds]);
             
-            // 3. Xóa vé (tickets)
+            // 3. Xóa vé
             await connection.query('DELETE FROM tickets WHERE booking_id IN (?)', [bookingIds]);
             
-            // 4. Xóa chính bảng bookings
+            // 4. Xóa bảng bookings
             await connection.query('DELETE FROM bookings WHERE user_id = ?', [userId]);
         }
 
-        // --- BƯỚC QUAN TRỌNG NHẤT: RESET ĐIỂM VÀ CHI TIÊU ---
-        // Tui update cả 2 cột points và total_spent về 0 cho đúng cái hình ông gửi
+        // --- BƯỚC FIX LỖI Ở ĐÂY ---
+        // Chỉ update trường points vì database của Dũng chỉ có trường này
         await connection.query(
-            'UPDATE users SET points = 0, total_spent = 0 WHERE user_id = ?', 
+            'UPDATE users SET points = 0 WHERE user_id = ?', 
             [userId]
         );
 
         await connection.commit();
-        console.log(`>>> [DŨNG CINEMA] Đã dọn sạch lịch sử và reset điểm cho User: ${userId}`);
-
         res.status(200).json({ 
             success: true, 
-            message: "Đã xóa lịch sử và đưa điểm thưởng về 0 thành công!" 
+            message: "Đã xóa lịch sử và reset điểm thành công!" 
         });
 
     } catch (error) {
         if (connection) await connection.rollback();
-        console.error("Clear History Error:", error);
-        res.status(500).json({ error: "Lỗi hệ thống khi dọn dẹp lịch sử" });
+        console.error("Lỗi xóa lịch sử:", error);
+        res.status(500).json({ error: "Lỗi hệ thống: " + error.message });
     } finally {
         if (connection) connection.release();
     }

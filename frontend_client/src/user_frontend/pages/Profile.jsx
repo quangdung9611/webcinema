@@ -7,7 +7,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import '../styles/Profile.css';
 import { 
     User, ClipboardList, Bell, Pencil, ShieldCheck, Star, Info, 
-    ChevronRight, Camera, Calendar, Clock, MapPin, ReceiptText, Armchair 
+    ChevronRight, Camera, Calendar, Clock, MapPin, ReceiptText, Armchair, Trash2 
 } from 'lucide-react';
 
 const Profile = () => {
@@ -20,26 +20,27 @@ const Profile = () => {
     });
     
     const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
-    const [modal, setModal] = useState({ show: false, type: '', title: '', message: '' });
+    const [modal, setModal] = useState({ show: false, type: '', title: '', message: '', onConfirm: null });
     const [activeTab, setActiveTab] = useState('orders');
 
     const [bookingHistory, setBookingHistory] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
 
+    // Hàm fetch lịch sử giao dịch
+    const fetchHistory = async () => {
+        setLoadingHistory(true);
+        try {
+            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/users/booking-history', { withCredentials: true });
+            setBookingHistory(res.data.bookings || []);
+        } catch (error) {
+            console.error("Lỗi fetch lịch sử:", error);
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
+
     useEffect(() => {
         if (activeTab === 'orders') {
-            const fetchHistory = async () => {
-                setLoadingHistory(true);
-                try {
-                    // API này phải trả về thêm trường bookingDateFull như mình đã sửa ở Backend
-                    const res = await axios.get('https://webcinema-zb8z.onrender.com/api/users/booking-history', { withCredentials: true });
-                    setBookingHistory(res.data.bookings || []);
-                } catch (error) {
-                    console.error("Lỗi fetch lịch sử:", error);
-                } finally {
-                    setLoadingHistory(false);
-                }
-            };
             fetchHistory();
         }
     }, [activeTab]);
@@ -57,24 +58,73 @@ const Profile = () => {
         }
     }, [user]);
 
+   
+            // --- HÀM XỬ LÝ XÓA LỊCH SỬ (DŨNG DÙNG BẢN NÀY ĐỂ FIX TRIỆT ĐỂ) ---
+        const handleClearHistory = async () => {
+            try {
+                const res = await axios.post('https://webcinema-zb8z.onrender.com/api/users/clear-history', {}, { withCredentials: true });
+                
+                if (res.data.success) {
+                    // 1. Cập nhật giao diện cục bộ ngay lập tức
+                    setBookingHistory([]); 
+                    setFormData(prev => ({ 
+                        ...prev, 
+                        points: 0 
+                    })); 
+
+                    // 2. Thông báo thành công
+                    setModal({ 
+                        show: true, 
+                        type: 'success', 
+                        title: 'Thành công', 
+                        message: 'Đã xóa sạch lịch sử và điểm thưởng!',
+                        onConfirm: () => {
+                            setModal(prev => ({ ...prev, show: false }));
+                            // 3. Đợi đóng modal xong thì đồng bộ lại toàn bộ hệ thống từ server
+                            checkAuth(); 
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error("Lỗi xóa:", error);
+                setModal({ 
+                    show: true, 
+                    type: 'error', 
+                    title: 'Lỗi', 
+                    message: 'Không thể xóa lịch sử lúc này.',
+                    onConfirm: () => setModal(prev => ({ ...prev, show: false }))
+                });
+            }
+        };
+
+        const confirmClearHistory = () => {
+            setModal({
+                show: true,
+                type: 'warning',
+                title: 'Xác nhận xóa',
+                message: 'Dũng có chắc muốn xóa sạch lịch sử và đưa điểm về 0 không?',
+                onConfirm: () => handleClearHistory() // Bọc vào arrow function cho chắc
+            });
+        };
+
     const handleInput = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handlePass = (e) => setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (passwordData.newPassword && passwordData.newPassword !== passwordData.confirmPassword) {
-            return setModal({ show: true, type: 'error', title: 'Lỗi', message: 'Mật khẩu xác nhận không khớp!' });
+            return setModal({ show: true, type: 'error', title: 'Lỗi', message: 'Mật khẩu xác nhận không khớp!', onConfirm: () => setModal({ ...modal, show: false }) });
         }
         setLoading(true);
         try {
             await axios.put('https://webcinema-zb8z.onrender.com/api/users/profile/update', 
                 { ...formData, ...passwordData }, { withCredentials: true });
-            setModal({ show: true, type: 'success', title: 'Thành công', message: 'Hồ sơ đã được cập nhật!' });
+            setModal({ show: true, type: 'success', title: 'Thành công', message: 'Hồ sơ đã được cập nhật!', onConfirm: () => setModal({ ...modal, show: false }) });
             setIsEditing(false);
             setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
             await checkAuth(); 
         } catch (error) {
-            setModal({ show: true, type: 'error', title: 'Thất bại', message: error.response?.data?.error || 'Có lỗi xảy ra!' });
+            setModal({ show: true, type: 'error', title: 'Thất bại', message: error.response?.data?.error || 'Có lỗi xảy ra!', onConfirm: () => setModal({ ...modal, show: false }) });
         } finally {
             setLoading(false);
         }
@@ -107,6 +157,7 @@ const Profile = () => {
                                 <span>Tổng chi tiêu 2026</span>
                                 <Info size={14} />
                             </div>
+                            {/* Chỗ này sẽ tự về 0 khi xóa lịch sử nhờ setFormData ở trên */}
                             <div className="spending-value">{Number(formData.points).toLocaleString()} đ</div>
                         </div>
 
@@ -125,9 +176,8 @@ const Profile = () => {
                         </div>
 
                         <nav className="galaxy-nav-menu">
-                            <div className="nav-link">HOTLINE hỗ trợ: 19002224 <ChevronRight size={16}/></div>
+                            <div className="nav-link">HOTLINE: 19002224 <ChevronRight size={16}/></div>
                             <div className="nav-link">Email: hotro@galaxystudio.vn <ChevronRight size={16}/></div>
-                            <div className="nav-link">Câu hỏi thường gặp <ChevronRight size={16}/></div>
                         </nav>
                     </aside>
 
@@ -191,6 +241,16 @@ const Profile = () => {
                                 </form>
                             ) : (
                                 <div className="history-tab-content">
+                                    {/* NÚT XÓA LỊCH SỬ (MỚI) */}
+                                    {bookingHistory.length > 0 && (
+                                        <div className="history-action-bar" style={{ textAlign: 'right', marginBottom: '15px' }}>
+                                            <button className="btn-clear-history" onClick={confirmClearHistory} 
+                                                style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto', background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer', fontSize: '14px' }}>
+                                                <Trash2 size={16} /> Xóa lịch sử và điểm
+                                            </button>
+                                        </div>
+                                    )}
+
                                     {loadingHistory ? (
                                         <div className="loading-text">Đang tải lịch sử giao dịch...</div>
                                     ) : bookingHistory.length > 0 ? (
@@ -203,31 +263,24 @@ const Profile = () => {
                                                     
                                                     <div className="ticket-main-info">
                                                         <h4 className="movie-title-history">{item.movieTitle}</h4>
-                                                        
-                                                        {/* BỔ SUNG: Ngày đặt vé (Từ trường bookingDateFull) */}
                                                         <div className="info-row">
                                                             <ReceiptText size={14} />
                                                             <span>Ngày đặt: <strong>{item.bookingDateFull}</strong></span>
                                                         </div>
-
                                                         <div className="info-row">
                                                             <MapPin size={14}/> 
                                                             <span>{item.cinemaName} | {item.roomName}</span>
                                                         </div>
-
                                                         <div className="info-row highlight">
                                                             <Calendar size={14}/> 
                                                             <span>{item.selectedDate}</span>
                                                             <Clock size={14} style={{marginLeft: '15px'}}/> 
                                                             <span>{item.startTime}</span>
                                                         </div>
-
-                                                        {/* BỔ SUNG: Ghế ngồi (Từ trường seatDisplay đã GROUP_CONCAT) */}
                                                         <div className="seat-text">
                                                             <Armchair size={14} /> 
                                                             <span><strong>{item.seatDisplay}</strong></span>
                                                         </div>
-
                                                         <p className="price-text">Tổng tiền: <span>{Number(item.total_amount).toLocaleString()} đ</span></p>
                                                     </div>
 
@@ -257,8 +310,13 @@ const Profile = () => {
                 </div>
             </div>
 
-            <Modal show={modal.show} type={modal.type} title={modal.title} message={modal.message} 
-                    onConfirm={() => setModal({ ...modal, show: false })} />
+            <Modal 
+                show={modal.show} 
+                type={modal.type} 
+                title={modal.title} 
+                message={modal.message} 
+                onConfirm={modal.onConfirm || (() => setModal({ ...modal, show: false }))} 
+            />
         </div>
     );
 };
