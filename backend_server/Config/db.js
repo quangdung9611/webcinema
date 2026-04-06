@@ -12,9 +12,10 @@ const pool = mysql.createPool({
     connectionLimit: 5,
     queueLimit: 0,
     
-    // 1. Giúp Node.js hiểu múi giờ khi gửi/nhận dữ liệu
-    timezone: '+00:00', 
-    dateStrings: true,
+    // --- ĐOẠN NÀY LÀ CHÌA KHÓA ---
+    timezone: '+00:00', // Không cho Node.js tự ý cộng/trừ giờ
+    dateStrings: true,  // Lấy dữ liệu dạng CHUỖI, có sao bê vậy
+    // ----------------------------
     
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000,
@@ -26,16 +27,9 @@ const pool = mysql.createPool({
     }
 });
 
-// 2. ĐOẠN QUAN TRỌNG NHẤT: Ép MySQL Server dùng giờ VN ngay khi vừa kết nối
-// Ép MySQL Server dùng giờ VN ngay khi vừa kết nối
-pool.on('connection', async (connection) => {
-    try {
-        await connection.query("SET time_zone = '+07:00'");
-        console.log('🕒 Database đã đồng bộ múi giờ Việt Nam (+07:00)');
-    } catch (err) {
-        console.error('❌ Lỗi SET time_zone:', err.message);
-    }
-});
+// XÓA BỎ ĐOẠN pool.on('connection') cũ đi
+// Vì mình dùng DATETIME nên không cần ép MySQL SET time_zone nữa.
+// Cứ để nó mặc định là nó sẽ lưu đúng cái chuỗi ông gửi vào.
 
 pool.on('error', (err) => {
     console.error('🔥 [Database Error]:', err.message);
