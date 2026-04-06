@@ -12,9 +12,13 @@ const validateShowtimeData = (data) => {
         return { error: "Vui lòng chọn đầy đủ: Phim, Rạp, Phòng và Thời gian chiếu" };
     }
 
-    // start_time từ client gửi lên là chuỗi "YYYY-MM-DD HH:mm"
-    // So sánh chuỗi trực tiếp với thời gian hiện tại (định dạng sv-SE tương đồng ISO nhưng là giờ VN)
-    const now = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" }).replace('T', ' ');
+    // --- SỬA LẠI CHỖ NÀY ---
+    // Vì Render đã xóa TZ, nên new Date() là giờ quốc tế.
+    // Ta dùng toLocaleString để ép nó lấy đúng giờ Việt Nam (Asia/Ho_Chi_Minh) để so sánh với start_time
+    const now = new Date().toLocaleString("sv-SE", { 
+        timeZone: "Asia/Ho_Chi_Minh" 
+    }).replace('T', ' ').substring(0, 16); 
+    // .substring(0, 16) để lấy định dạng "YYYY-MM-DD HH:mm" khớp với start_time
     
     if (start_time < now) {
         return { field: 'start_time', error: "Dũng ơi, không thể tạo suất chiếu ở quá khứ được!" };

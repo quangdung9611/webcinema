@@ -13,7 +13,7 @@ const pool = mysql.createPool({
     queueLimit: 0,
     
     // 1. Giúp Node.js hiểu múi giờ khi gửi/nhận dữ liệu
-    timezone: '+07:00', 
+    timezone: '+00:00', 
     dateStrings: true,
     
     enableKeepAlive: true,
