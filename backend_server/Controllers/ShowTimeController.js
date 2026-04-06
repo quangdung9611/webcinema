@@ -5,7 +5,6 @@ const db = require('../Config/db');
  * HÀM HỖ TRỢ (HELPER FUNCTIONS)
  * ==========================================
  */
-
 const validateShowtimeData = (data) => {
     const { movie_id, cinema_id, room_id, start_time } = data;
 
@@ -13,7 +12,8 @@ const validateShowtimeData = (data) => {
         return { error: "Vui lòng chọn đầy đủ: Phim, Rạp, Phòng và Thời gian chiếu" };
     }
 
-    // So sánh giờ chuẩn VN
+    // start_time từ client gửi lên thường là "YYYY-MM-DD HH:mm"
+    // Vì DB và Server đã set TZ Asia/Ho_Chi_Minh, new Date() sẽ hiểu đúng giờ VN
     const selectedTime = new Date(start_time);
     const now = new Date();
     
@@ -30,13 +30,13 @@ const validateShowtimeData = (data) => {
  * ==========================================
  */
 
-// 1. Lấy tất cả suất chiếu
+// 1. Lấy tất cả suất chiếu (Dùng DATE_FORMAT để khóa giờ)
 exports.getAllShowtimes = async (req, res) => {
     try {
         const [rows] = await db.query(`
             SELECT 
                 s.showtime_id, 
-                s.start_time, 
+                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') as start_time, 
                 m.title, 
                 m.duration,
                 c.cinema_name, 
@@ -61,7 +61,11 @@ exports.getShowtimeDetail = async (req, res) => {
     try {
         const [rows] = await db.query(`
             SELECT 
-                s.*, 
+                s.showtime_id,
+                s.movie_id,
+                s.cinema_id,
+                s.room_id,
+                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') as start_time,
                 m.title, 
                 m.poster_url, 
                 m.age_rating,
@@ -93,7 +97,7 @@ exports.createShowtime = async (req, res) => {
         const validationError = validateShowtimeData(req.body);
         if (validationError) return res.status(400).json(validationError);
 
-        // Kiểm tra trùng lịch: Cùng phòng, cùng thời gian
+        // Kiểm tra trùng lịch: start_time ở đây là chuỗi nên so sánh cực chuẩn
         const [conflict] = await db.query(
             'SELECT * FROM showtimes WHERE room_id = ? AND start_time = ?',
             [room_id, start_time]
@@ -152,11 +156,33 @@ exports.updateShowtime = async (req, res) => {
     }
 };
 
-// 5. Xóa suất chiếu
+// 6. Lấy suất chiếu theo phim (Cái này quan trọng nhất để hiện lên UI người dùng)
+exports.getShowtimesByMovie = async (req, res) => {
+    try {
+        const { movieId } = req.params;
+        const [rows] = await db.query(`
+            SELECT 
+                s.showtime_id, 
+                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') as start_time, 
+                r.room_name, 
+                r.room_type,
+                c.cinema_name
+            FROM showtimes s
+            JOIN rooms r ON s.room_id = r.room_id
+            JOIN cinemas c ON s.cinema_id = c.cinema_id
+            WHERE s.movie_id = ?
+            ORDER BY s.start_time ASC
+        `, [movieId]);
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error("❌ [DŨNG] Lỗi lấy lịch theo phim:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống" });
+    }
+};
+
 exports.deleteShowtime = async (req, res) => {
     const { id } = req.params;
     try {
-        // Kiểm tra xem đã có ai mua vé suất này chưa
         const [tickets] = await db.query('SELECT * FROM tickets WHERE showtime_id = ?', [id]);
         if (tickets.length > 0) {
             return res.status(400).json({ 
@@ -170,30 +196,6 @@ exports.deleteShowtime = async (req, res) => {
         res.status(200).json({ message: "Đã xóa suất chiếu thành công" });
     } catch (err) {
         console.error("❌ [DŨNG] Lỗi xóa suất chiếu:", err.message);
-        res.status(500).json({ error: "Lỗi hệ thống" });
-    }
-};
-
-// 6. Lấy suất chiếu theo phim
-exports.getShowtimesByMovie = async (req, res) => {
-    try {
-        const { movieId } = req.params;
-        const [rows] = await db.query(`
-            SELECT 
-                s.showtime_id, 
-                s.start_time, 
-                r.room_name, 
-                r.room_type,
-                c.cinema_name
-            FROM showtimes s
-            JOIN rooms r ON s.room_id = r.room_id
-            JOIN cinemas c ON s.cinema_id = c.cinema_id
-            WHERE s.movie_id = ?
-            ORDER BY s.start_time ASC
-        `, [movieId]);
-        res.status(200).json(rows);
-    } catch (error) {
-        console.error("❌ [DŨNG] Lỗi lấy lịch theo phim:", error.message);
         res.status(500).json({ error: "Lỗi hệ thống" });
     }
 };
