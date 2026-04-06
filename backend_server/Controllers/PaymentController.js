@@ -30,7 +30,6 @@ const PaymentController = {
 
             if (selectedSeats && selectedSeats.length > 0) {
                 // --- BƯỚC FIX CỐT LÕI CỦA DŨNG ---
-                // Lọc bỏ những ghế trùng ID, chỉ giữ lại những ghế duy nhất dựa trên seat_id
                 const uniqueSeats = selectedSeats.filter((seat, index, self) =>
                     index === self.findIndex((t) => t.seat_id === seat.seat_id)
                 );
@@ -122,7 +121,18 @@ const PaymentController = {
                 [updateTimeVN, bookingId]
             );
 
-            // --- LOGIC CỘNG ĐIỂM ---
+            // --- ĐOẠN MỚI THÊM: CẬP NHẬT TỨC THÌ BẢNG SEATS ---
+            // Cập nhật trạng thái ghế trong bảng seats dựa vào booking_details của đơn hàng này
+            await connection.execute(
+                `UPDATE seats 
+                 SET seat_status = 'Booked' 
+                 WHERE seat_id IN (
+                    SELECT seat_id FROM booking_details WHERE booking_id = ? AND seat_id IS NOT NULL
+                 )`,
+                [bookingId]
+            );
+
+            // --- LOGIC CỘNG ĐIỂM (GIỮ NGUYÊN) ---
             if (String(oldStatus).toLowerCase() !== 'completed') {
                 const [details] = await connection.execute(
                     `SELECT bd.price, bd.quantity, s.seat_type 

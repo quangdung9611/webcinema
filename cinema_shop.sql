@@ -1,11 +1,9 @@
--- Thêm cho bảng users (nếu lệnh trên chưa chạy)
-ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+-- Tạm thời tắt kiểm tra khóa ngoại để xóa
+SET FOREIGN_KEY_CHECKS = 0;
 
--- Thêm cho bảng cinemas
-ALTER TABLE cinemas ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+TRUNCATE TABLE booking_details;
+TRUNCATE TABLE bookings;
+TRUNCATE TABLE tickets;
 
--- Thêm cho bảng rooms
-ALTER TABLE rooms ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
-
--- Thêm cho bảng movies (nếu chưa có)
-ALTER TABLE movies ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+-- Bật lại kiểm tra khóa ngoại
+SET FOREIGN_KEY_CHECKS = 1;
