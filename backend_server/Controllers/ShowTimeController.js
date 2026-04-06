@@ -12,12 +12,11 @@ const validateShowtimeData = (data) => {
         return { error: "Vui lòng chọn đầy đủ: Phim, Rạp, Phòng và Thời gian chiếu" };
     }
 
-    // start_time từ client gửi lên thường là "YYYY-MM-DD HH:mm"
-    // Vì DB và Server đã set TZ Asia/Ho_Chi_Minh, new Date() sẽ hiểu đúng giờ VN
-    const selectedTime = new Date(start_time);
-    const now = new Date();
+    // start_time từ client gửi lên là chuỗi "YYYY-MM-DD HH:mm"
+    // So sánh chuỗi trực tiếp với thời gian hiện tại (định dạng sv-SE tương đồng ISO nhưng là giờ VN)
+    const now = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" }).replace('T', ' ');
     
-    if (selectedTime < now) {
+    if (start_time < now) {
         return { field: 'start_time', error: "Dũng ơi, không thể tạo suất chiếu ở quá khứ được!" };
     }
 
@@ -30,7 +29,7 @@ const validateShowtimeData = (data) => {
  * ==========================================
  */
 
-// 1. Lấy tất cả suất chiếu (Dùng DATE_FORMAT để khóa giờ)
+// 1. Lấy tất cả suất chiếu (Dùng DATE_FORMAT để khóa giờ khi lấy ra)
 exports.getAllShowtimes = async (req, res) => {
     try {
         const [rows] = await db.query(`
@@ -89,7 +88,7 @@ exports.getShowtimeDetail = async (req, res) => {
     }
 };
 
-// 3. Thêm mới suất chiếu
+// 3. Thêm mới suất chiếu (Dùng STR_TO_DATE để khóa giờ khi lưu vào)
 exports.createShowtime = async (req, res) => {
     try {
         const { movie_id, cinema_id, room_id, start_time } = req.body;
@@ -97,9 +96,9 @@ exports.createShowtime = async (req, res) => {
         const validationError = validateShowtimeData(req.body);
         if (validationError) return res.status(400).json(validationError);
 
-        // Kiểm tra trùng lịch: start_time ở đây là chuỗi nên so sánh cực chuẩn
+        // Kiểm tra trùng lịch: Ép kiểu chuỗi để so sánh chính xác tuyệt đối
         const [conflict] = await db.query(
-            'SELECT * FROM showtimes WHERE room_id = ? AND start_time = ?',
+            "SELECT * FROM showtimes WHERE room_id = ? AND DATE_FORMAT(start_time, '%Y-%m-%d %H:%i') = ?",
             [room_id, start_time]
         );
 
@@ -110,7 +109,8 @@ exports.createShowtime = async (req, res) => {
             });
         }
 
-        const sql = `INSERT INTO showtimes (movie_id, cinema_id, room_id, start_time) VALUES (?, ?, ?, ?)`;
+        // Dùng STR_TO_DATE để MySQL tự bốc chuỗi String vào, né thằng Node.js tự đổi múi giờ
+        const sql = `INSERT INTO showtimes (movie_id, cinema_id, room_id, start_time) VALUES (?, ?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i'))`;
         const [result] = await db.query(sql, [movie_id, cinema_id, room_id, start_time]);
 
         res.status(201).json({ 
@@ -134,7 +134,7 @@ exports.updateShowtime = async (req, res) => {
         if (validationError) return res.status(400).json(validationError);
 
         const [conflict] = await db.query(
-            'SELECT * FROM showtimes WHERE room_id = ? AND start_time = ? AND showtime_id != ?',
+            "SELECT * FROM showtimes WHERE room_id = ? AND DATE_FORMAT(start_time, '%Y-%m-%d %H:%i') = ? AND showtime_id != ?",
             [room_id, start_time, id]
         );
 
@@ -145,7 +145,7 @@ exports.updateShowtime = async (req, res) => {
             });
         }
 
-        const sql = `UPDATE showtimes SET movie_id = ?, cinema_id = ?, room_id = ?, start_time = ? WHERE showtime_id = ?`;
+        const sql = `UPDATE showtimes SET movie_id = ?, cinema_id = ?, room_id = ?, start_time = STR_TO_DATE(?, '%Y-%m-%d %H:%i') WHERE showtime_id = ?`;
         await db.query(sql, [movie_id, cinema_id, room_id, start_time, id]);
         
         res.status(200).json({ message: "Cập nhật suất chiếu thành công!" });
@@ -156,7 +156,7 @@ exports.updateShowtime = async (req, res) => {
     }
 };
 
-// 6. Lấy suất chiếu theo phim (Cái này quan trọng nhất để hiện lên UI người dùng)
+// 6. Lấy suất chiếu theo phim
 exports.getShowtimesByMovie = async (req, res) => {
     try {
         const { movieId } = req.params;

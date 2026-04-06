@@ -16,8 +16,8 @@ const MovieDetail = () => {
     const [movie, setMovie] = useState(null);
     const [relatedMovies, setRelatedMovies] = useState([]);
     const [loading, setLoading] = useState(true);
-    // Khởi tạo ngày chọn là ngày hiện tại theo giờ VN (local)
-    const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('sv-SE')); // YYYY-MM-DD
+    // Khởi tạo ngày chọn là ngày hiện tại (YYYY-MM-DD)
+    const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('sv-SE')); 
     
     const [userRating, setUserRating] = useState(0); 
     const [hover, setHover] = useState(0); 
@@ -182,27 +182,20 @@ const MovieDetail = () => {
 
     const videoId = getYoutubeID(movie.trailer_url);
 
-    // --- LOGIC LỌC SUẤT CHIẾU ĐỒNG BỘ MÚI GIỜ ---
+    // --- LOGIC LỌC SUẤT CHIẾU (ĐÃ FIX LỆCH GIỜ) ---
     const groupedShowtimes = movie.showtimes ? movie.showtimes.reduce((acc, current) => {
-        // 1. Chuyển start_time từ DB thành đối tượng Date
         const showtimeDate = new Date(current.start_time);
-        
-        // 2. Lấy giờ hiện tại
         const now = new Date();
-
-        // 3. Định dạng ngày YYYY-MM-DD để so sánh với Tab (Dùng locale VN để chính xác)
-        const showDateStr = showtimeDate.toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
         
-        // LOG ĐỂ KIỂM TRA (Ông mở F12 lên xem nó in ra gì nhé)
-        // console.log(`Suất chiếu: ${current.start_time} | Ngày: ${showDateStr} | So với: ${selectedDate}`);
-
-        // 4. ĐIỀU KIỆN LỌC:
-        // - Phải cùng ngày được chọn
-        // - Suất chiếu phải sau thời điểm hiện tại ít nhất 10 phút (để khách kịp đặt)
+        // Lấy ngày YYYY-MM-DD từ DB để so sánh với Tab
+        const showDateStr = showtimeDate.toLocaleDateString('sv-SE');
+        
+        // 1. Chỉ lấy suất chiếu đúng ngày đang chọn
         if (showDateStr !== selectedDate) return acc;
         
-        // Nếu là ngày hôm nay, chỉ hiện các suất chưa diễn ra
-        if (showDateStr === new Date().toLocaleDateString('sv-SE') && showtimeDate <= now) {
+        // 2. Nếu là "Hôm nay", ẩn các suất đã chiếu xong (cho trễ tối đa 15p vẫn cho đặt)
+        const bufferTime = new Date(now.getTime() - 15 * 60000); 
+        if (showDateStr === new Date().toLocaleDateString('sv-SE') && showtimeDate < bufferTime) {
             return acc;
         }
 
@@ -217,7 +210,7 @@ const MovieDetail = () => {
         return {
             dayName: i === 0 ? 'Hôm nay' : ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][date.getDay()],
             displayDate: date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
-            dateString: date.toLocaleDateString('sv-SE') // Dùng định dạng chuẩn YYYY-MM-DD
+            dateString: date.toLocaleDateString('sv-SE') 
         };
     });
 
@@ -315,7 +308,8 @@ const MovieDetail = () => {
                                         <div className="time-grid">
                                             {slots.map((s, i) => (
                                                 <button key={i} className="time-item" onClick={() => handleSelectShowtime(cinemaName, s)}>
-                                                    {new Date(s.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false})}
+                                                    {/* Hiển thị giờ định dạng 24h: 21:30 */}
+                                                    {new Date(s.start_time).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', hour12: false})}
                                                 </button>
                                             ))}
                                         </div>
@@ -337,7 +331,6 @@ const MovieDetail = () => {
                                                 <User size={24} />
                                             </div>
                                         </div>
-
                                         <div className="user-details">
                                             <span className="user-name">@{rev.username}</span>
                                             <div className="user-rating-stars">
