@@ -36,7 +36,7 @@ const MomoController = {
         }
     },
 
-    // 2. XÁC NHẬN THANH TOÁN (Hàm quan trọng nhất)
+    // 2. XÁC NHẬN THANH TOÁN (Chốt đơn sau khi khách trả tiền)
     confirmMomoFast: async (req, res) => {
         const { bookingId } = req.body;
         console.log(`>>> 🍿 [DŨNG CINEMA] Đang chốt đơn MoMo #${bookingId}...`);
@@ -49,12 +49,15 @@ const MomoController = {
             }
 
             await connection.beginTransaction();
-            const now = new Date(); // Lấy giờ chuẩn VN từ Render
+            
+            // --- FIX GIỜ VIỆT NAM TẠI ĐÂY ---
+            // Bất kể Render xóa TZ hay không, dòng này vẫn lấy đúng giờ VN
+            const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
-            // --- BƯỚC 1: CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG ---
+            // 1. Cập nhật trạng thái đơn hàng
             await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
 
-            // --- BƯỚC 2: CHỐT GHẾ & CẬP NHẬT THỜI GIAN (Dùng 'now' thay cho NOW()) ---
+            // 2. Chốt ghế & Cập nhật thời gian chốt đơn (updated_at) bằng giờ VN
             await connection.execute(
                 `UPDATE tickets t
                  JOIN showtimes s ON t.showtime_id = s.showtime_id
@@ -64,10 +67,10 @@ const MomoController = {
                      t.room_id = s.room_id,
                      t.updated_at = ?
                  WHERE t.booking_id = ? AND t.seat_status = 'Reserved'`, 
-                [now, bookingId]
+                [nowVN, bookingId]
             );
 
-            // --- BƯỚC 3: LẤY DỮ LIỆU TỔNG HỢP ---
+            // 3. Lấy dữ liệu tổng hợp để gửi mail
             const [orderRows] = await connection.query(`
                 SELECT 
                     b.booking_id, b.user_id,
@@ -76,7 +79,7 @@ const MomoController = {
                     m.poster_url AS moviePoster, 
                     c.cinema_name AS cinemaName,
                     r.room_name AS roomName,
-                    s.start_time,
+                    DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') as start_time_raw,
                     GROUP_CONCAT(DISTINCT CASE WHEN bd.seat_id IS NOT NULL THEN bd.item_name END SEPARATOR ', ') AS seatLabel
                 FROM bookings b
                 JOIN users u ON b.user_id = u.user_id
@@ -91,7 +94,7 @@ const MomoController = {
             if (orderRows.length === 0) throw new Error("Không tìm thấy đơn hàng");
             const order = orderRows[0];
 
-            // --- BƯỚC 4: LOGIC CỘNG ĐIỂM THƯỞNG (Dũng bổ sung phần này nhé) ---
+            // 4. Logic cộng điểm thưởng
             const [details] = await connection.execute(
                 `SELECT bd.price, bd.quantity, s.seat_type 
                  FROM booking_details bd
@@ -103,12 +106,12 @@ const MomoController = {
             let totalEarnedPoints = 0;
             details.forEach(item => {
                 const itemTotal = Number(item.price) * Number(item.quantity);
-                if (item.seat_type) {
-                    const type = String(item.seat_type).toUpperCase();
-                    let rate = (type === 'VIP') ? 0.10 : (type === 'DOUBLE' || type === 'SWEETBOX' || type === 'COUPLE') ? 0.07 : 0.05;
+                if (item.seat_id) {
+                    const type = String(item.seat_type || 'NORMAL').toUpperCase();
+                    let rate = (type === 'VIP') ? 0.10 : (['DOUBLE', 'SWEETBOX', 'COUPLE'].includes(type)) ? 0.07 : 0.05;
                     totalEarnedPoints += Math.floor(itemTotal * rate);
                 } else {
-                    totalEarnedPoints += Math.floor(itemTotal * 0.03); // Điểm cho bắp nước
+                    totalEarnedPoints += Math.floor(itemTotal * 0.03);
                 }
             });
 
@@ -117,34 +120,45 @@ const MomoController = {
                     `UPDATE users SET points = points + ? WHERE user_id = ?`,
                     [totalEarnedPoints, order.user_id]
                 );
-                console.log(`✨ [DŨNG] MoMo thành công: Đã cộng ${totalEarnedPoints} điểm cho User #${order.user_id}`);
+                console.log(`✨ [DŨNG] MoMo thành công: Cộng ${totalEarnedPoints} điểm cho User #${order.user_id}`);
             }
 
-            // --- BƯỚC 5: XỬ LÝ THỜI GIAN GỬI MAIL ---
-            const fullDate = new Date(order.start_time);
-            const formattedTime = fullDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
-            const formattedDate = fullDate.toLocaleDateString('vi-VN');
+            // 5. Format lại thời gian chiếu phim từ database
+            const [datePart, timePart] = order.start_time_raw.split(' ');
+            const [y, m, d] = datePart.split('-');
+            const [hh, mm] = timePart.split(':');
 
-            // Gửi mail
-            const [foodRows] = await connection.query("SELECT item_name, quantity FROM booking_details WHERE booking_id = ? AND product_id IS NOT NULL", [bookingId]);
+            const formattedTime = `${hh}:${mm}`;
+            const formattedDate = `${d}/${m}/${y}`;
+
+            // Lấy danh sách bắp nước cho Mail
+            const [foodRows] = await connection.query(
+                "SELECT item_name, quantity FROM booking_details WHERE booking_id = ? AND seat_id IS NULL", 
+                [bookingId]
+            );
+            const foodString = foodRows.map(f => `${f.item_name} (x${f.quantity})`).join(', ') || 'Không có';
+
+            // Gửi mail xác nhận
             await sendTicketEmail(order.email, {
                 ...order,
                 startTime: formattedTime,
                 selectedDate: formattedDate,
-                selectedFoods: foodRows.map(d => `${d.item_name} (x${d.quantity})`).join(', ') || 'Không có'
+                selectedFoods: foodString
             });
 
             await connection.commit();
 
-            // --- BƯỚC 6: TRẢ DỮ LIỆU ---
+            // 6. Trả kết quả về Frontend
             res.json({ 
                 success: true, 
                 message: "Thanh toán MoMo hoàn tất!",
                 data: {
-                    ...order,
+                    bookingId: order.booking_id,
+                    movieTitle: order.movieTitle,
+                    cinemaName: order.cinemaName,
                     startTime: formattedTime,
                     selectedDate: formattedDate,
-                    selectedFoods: foodRows, 
+                    seatLabel: order.seatLabel,
                     ticketPIN: Math.floor(1000 + Math.random() * 9000)
                 }
             });

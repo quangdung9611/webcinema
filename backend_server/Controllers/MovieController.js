@@ -34,7 +34,8 @@ const validateMovieData = (data, files, isUpdate = false) => {
     if (!release_date) 
         return "Vui lòng chọn ngày phát hành.";
 
-    const now = new Date();
+    // ÉP GIỜ VIỆT NAM ĐỂ SO SÁNH VALIDATION
+    const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Ho_Chi_Minh"}));
     now.setHours(0, 0, 0, 0); 
 
     // SỬA CHỖ NÀY: Chỉ chặn ngày quá khứ nếu là THÊM MỚI (isUpdate === false)
@@ -106,16 +107,18 @@ exports.getMovieBySlug = async (req, res) => {
 
         let showtimes = [];
         if (movie.status === "Đang chiếu") {
+            // Ép giờ Việt Nam để so sánh suất chiếu (tránh lệch múi giờ server)
+            const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
             const [rows] = await db.query(`
                 SELECT 
                     s.showtime_id, s.start_time, r.room_name, r.room_type, 
                     c.cinema_name, c.address
                 FROM showtimes s
-                JOIN rooms r ON s.room_id = r.room_id
+                JOIN rooms r ON s.id = r.room_id
                 JOIN cinemas c ON r.cinema_id = c.cinema_id
-                WHERE s.movie_id = ? AND s.start_time >= NOW()
+                WHERE s.movie_id = ? AND s.start_time >= ?
                 ORDER BY s.start_time ASC
-            `, [movie.movie_id]);
+            `, [movie.movie_id, nowVN]);
             showtimes = rows;
         }
 
@@ -134,7 +137,8 @@ exports.getMovieBySlug = async (req, res) => {
 
 exports.getAllMovies = async (req, res) => {
     try {
-        const [rows] = await db.query("SELECT * FROM movies ORDER BY created_at DESC");
+        // Bổ sung DATE_FORMAT cho created_at để hiển thị đẹp ở Admin
+        const [rows] = await db.query("SELECT *, DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS formatted_date FROM movies ORDER BY created_at DESC");
         res.status(200).json(rows);
     } catch (error) {
         console.error("Error getAllMovies:", error);
@@ -170,18 +174,20 @@ exports.addMovie = async (req, res) => {
         
         const cleanDate = release_date ? release_date.substring(0, 10) : null;
         
-        // Bảo vệ code bằng cách check mảng tồn tại trước khi lấy index 0
         const poster_url = (files['posters'] && files['posters'].length > 0) ? files['posters'][0].filename : null;
         const backdrop_url = (files['backdrop_url'] && files['backdrop_url'].length > 0) ? files['backdrop_url'][0].filename : null;
 
+        // BỔ SUNG: Lấy ngày giờ hiện tại chuẩn Việt Nam
+        const created_at = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+
         await connection.query(
-            `INSERT INTO movies (title, slug, description, director, nation, duration, age_rating, poster_url, backdrop_url, trailer_url, release_date, status, total_likes) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [title.trim(), createSlug(title), description || "", director || "", nation || null, duration, age_rating || 0, poster_url, backdrop_url, trailer_url || null, cleanDate, status || "Sắp chiếu", total_likes || 0]
+            `INSERT INTO movies (title, slug, description, director, nation, duration, age_rating, poster_url, backdrop_url, trailer_url, release_date, status, total_likes, created_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [title.trim(), createSlug(title), description || "", director || "", nation || null, duration, age_rating || 0, poster_url, backdrop_url, trailer_url || null, cleanDate, status || "Sắp chiếu", total_likes || 0, created_at]
         );
 
         await connection.commit();
-        console.log(`✅ [Success] Admin Dũng đã thêm phim mới thành công: ${title}`);
+        console.log(`✅ [Success] Admin Dũng đã thêm phim mới thành công: ${title} vào lúc ${created_at}`);
         res.status(201).json({ message: "Thêm phim thành công!" });
     } catch (error) {
         await connection.rollback();

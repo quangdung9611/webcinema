@@ -14,7 +14,7 @@ const validateRoomData = (data) => {
     return null;
 };
 
-// 1. Lấy tất cả phòng (Bổ sung r.room_type)
+// 1. Lấy tất cả phòng (Hiển thị ngày tạo định dạng VN)
 exports.getAllRooms = async (req, res) => {
     try {
         const sql = `
@@ -22,6 +22,7 @@ exports.getAllRooms = async (req, res) => {
                 r.room_id, 
                 r.room_name, 
                 r.room_type,
+                DATE_FORMAT(r.created_at, '%d/%m/%Y %H:%i') AS formatted_date,
                 c.cinema_name, 
                 c.city 
             FROM rooms r
@@ -32,12 +33,12 @@ exports.getAllRooms = async (req, res) => {
         const [rows] = await db.query(sql);
         res.status(200).json(rows);
     } catch (error) {
-        console.error(error);
+        console.error("❌ [DŨNG] Lỗi lấy danh sách phòng:", error);
         res.status(500).json({ error: "Lỗi khi lấy danh sách phòng từ database" });
     }
 };
 
-// 2. Lấy chi tiết 1 phòng (Dùng cho trang RoomUpdate)
+// 2. Lấy chi tiết 1 phòng
 exports.getRoomById = async (req, res) => {
     const { id } = req.params;
     try {
@@ -60,14 +61,14 @@ exports.getRoomsByCinema = async (req, res) => {
     }
 };
 
-// 4. Thêm phòng mới (Bổ sung room_type)
+// 4. Thêm phòng mới (Bổ sung created_at chuẩn VN)
 exports.createRoom = async (req, res) => {
     try {
         const { room_name, cinema_id, room_type } = req.body;
         const validationError = validateRoomData(req.body);
         if (validationError) return res.status(400).json(validationError);
 
-        // Kiểm tra trùng tên phòng trong cùng một rạp
+        // Kiểm tra trùng tên phòng
         const [existing] = await db.query(
             'SELECT * FROM rooms WHERE room_name = ? AND cinema_id = ?',
             [room_name, cinema_id]
@@ -80,18 +81,25 @@ exports.createRoom = async (req, res) => {
             });
         }
 
+        // --- ÉP GIỜ VIỆT NAM ---
+        const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+
         const [result] = await db.query(
-            'INSERT INTO rooms (room_name, cinema_id, room_type) VALUES (?, ?, ?)',
-            [room_name, cinema_id, room_type]
+            'INSERT INTO rooms (room_name, cinema_id, room_type, created_at) VALUES (?, ?, ?, ?)',
+            [room_name.trim(), cinema_id, room_type, nowVN]
         );
 
-        res.status(201).json({ message: "Thêm phòng thành công", room_id: result.insertId });
+        res.status(201).json({ 
+            success: true,
+            message: "Thêm phòng thành công", 
+            room_id: result.insertId 
+        });
     } catch (err) {
         res.status(500).json({ error: "Lỗi hệ thống khi tạo phòng: " + err.message });
     }
 };
 
-// 5. Cập nhật phòng (Bổ sung room_type)
+// 5. Cập nhật phòng
 exports.updateRoom = async (req, res) => {
     const { id } = req.params;
     const { room_name, cinema_id, room_type } = req.body;

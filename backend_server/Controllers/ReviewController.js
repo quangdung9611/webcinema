@@ -1,7 +1,7 @@
 const db = require('../Config/db'); 
 
 const ReviewController = {
-    // 1. Gửi bình luận: Lưu trực tiếp giờ từ Node.js để chuẩn VN
+    // 1. Gửi bình luận: Ép giờ Việt Nam bất chấp cấu hình server
     sendReview: async (req, res) => {
         try {
             const { movie_id, user_id, rating, comment } = req.body;
@@ -13,16 +13,17 @@ const ReviewController = {
                 });
             }
 
-            // Lấy giờ hiện tại từ Server (đã set TZ=Asia/Ho_Chi_Minh trên Render)
-            const now = new Date();
+            // --- FIX GIỜ VIỆT NAM TẠI ĐÂY ---
+            // Dùng sv-SE để MySQL nhận diện đúng định dạng DATETIME
+            const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
             const sql = `
                 INSERT INTO reviews (movie_id, user_id, rating_score, comment, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?)
             `;
 
-            // Truyền 'now' vào cả 2 cột created_at và updated_at
-            await db.query(sql, [movie_id, user_id, rating, comment, now, now]);
+            // Truyền 'nowVN' vào cả created_at và updated_at
+            await db.query(sql, [movie_id, user_id, rating, comment, nowVN, nowVN]);
             
             return res.status(200).json({ 
                 success: true, 
@@ -60,7 +61,6 @@ const ReviewController = {
                 ORDER BY r.created_at DESC
             `;
 
-            // db.query đã là promise-based nên không cần .promise()
             const [results] = await db.query(sql, [movie_id]);
             
             return res.status(200).json(results);

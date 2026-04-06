@@ -4,7 +4,7 @@ const bookingController = {
     // 1. Lấy danh sách tất cả các đơn hàng (Trang quản lý Admin)
     getAllBookings: async (req, res) => {
         try {
-            // Đảm bảo lấy ra chuỗi ngày tháng chuẩn để Frontend dễ xử lý
+            // SỬA: Dùng DATE_FORMAT để ép giờ thành chuỗi ngay từ DB
             const query = `
                 SELECT 
                     b.booking_id, 
@@ -33,9 +33,10 @@ const bookingController = {
     getBookingDetails: async (req, res) => {
         const { id } = req.params;
         try {
+            // SỬA: Ép định dạng ngày tháng cho tất cả các cột thời gian
             const [bookingInfo] = await db.execute(`
                 SELECT 
-                    b.*, 
+                    b.booking_id, b.user_id, b.showtime_id, b.total_amount, b.status, b.memo,
                     DATE_FORMAT(b.booking_date, '%d/%m/%Y %H:%i') AS formatted_date,
                     u.full_name, u.phone, u.email,
                     m.title AS movie_name, 
@@ -100,7 +101,9 @@ const bookingController = {
             }
 
             const { user_id, status: oldStatus } = currentBooking[0];
-            const updateTime = new Date(); // LẤY GIỜ VIỆT NAM TỪ NODE.JS (ĐÃ CHỈNH TZ RENDER)
+
+            // --- SỬA: Lấy giờ Việt Nam chuẩn dạng chuỗi để lưu vào DB ---
+            const updateTime = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
             // 1. Cập nhật bảng bookings
             await connection.execute(
@@ -112,7 +115,7 @@ const bookingController = {
             const lowerOldStatus = String(oldStatus).toLowerCase();
 
             if (upperStatus === 'COMPLETED') {
-                // Duyệt thành công -> Cập nhật trạng thái vé và THỜI GIAN CẬP NHẬT
+                // Duyệt thành công -> Cập nhật trạng thái vé và dùng updateTime chuẩn VN
                 await connection.execute(
                     `UPDATE tickets SET seat_status = 'Booked', updated_at = ? WHERE booking_id = ?`,
                     [updateTime, id]
@@ -134,10 +137,10 @@ const bookingController = {
                             const type = String(item.seat_type).toUpperCase();
                             let rate = 0.05; 
                             if (type === 'VIP') rate = 0.10;
-                            else if (type === 'DOUBLE' || type === 'SWEETBOX' || type === 'COUPLE') rate = 0.07;
+                            else if (['DOUBLE', 'SWEETBOX', 'COUPLE'].includes(type)) rate = 0.07;
                             totalEarnedPoints += Math.floor(itemTotal * rate);
                         } else {
-                            totalEarnedPoints += Math.floor(itemTotal * 0.03);
+                            totalEarnedPoints += Math.floor(itemTotal * 0.03); // Điểm bắp nước
                         }
                     });
 
@@ -151,7 +154,7 @@ const bookingController = {
                 }
                 
             } else if (upperStatus === 'CANCELLED') {
-                // Hủy đơn -> Giải phóng ghế và ghi lại thời gian hủy
+                // Hủy đơn -> Giải phóng ghế và ghi lại thời gian hủy VN
                 await connection.execute(
                     `UPDATE tickets SET seat_status = 'Cancelled', updated_at = ? WHERE booking_id = ?`,
                     [updateTime, id]
@@ -161,7 +164,7 @@ const bookingController = {
             await connection.commit();
             res.status(200).json({ 
                 success: true, 
-                message: `Hệ thống đã cập nhật đơn hàng #${id} lúc ${updateTime.toLocaleString()}` 
+                message: `Hệ thống đã cập nhật đơn hàng #${id} thành ${status}` 
             });
         } catch (error) {
             await connection.rollback();

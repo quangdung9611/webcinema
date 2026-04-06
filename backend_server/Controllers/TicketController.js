@@ -3,8 +3,6 @@ const QRCode = require('qrcode');
 
 /**
  * --- HÀM 1: TẠO VÉ ---
- * Chạy sau khi thanh toán thành công.
- * Đã cập nhật: Thêm room_id, cinema_id và thời gian chuẩn VN.
  */
 const createTickets = async (bookingId) => {
     try {
@@ -25,8 +23,8 @@ const createTickets = async (bookingId) => {
             [bookingId]
         );
 
-        // FIX GIỜ: Lấy giờ hiện tại từ Node.js (Render đã set TZ)
-        const now = new Date();
+        // LẤY GIỜ CHUẨN VN (sv-SE format: YYYY-MM-DD HH:mm:ss)
+        const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
         const ticketsData = details.map((item) => [
             bookingId, 
@@ -38,8 +36,8 @@ const createTickets = async (bookingId) => {
             item.price, 
             'Booked', 
             'Valid',
-            now, // Thêm created_at
-            now  // Thêm updated_at
+            nowVN, // created_at chuẩn VN
+            nowVN  // updated_at chuẩn VN
         ]);
 
         if (ticketsData.length > 0) {
@@ -81,11 +79,11 @@ const getTicketQR = async (req, res) => {
 
 /**
  * --- HÀM 3: SOÁT VÉ (CHECK-IN) ---
- * Đã sửa: Cập nhật thời gian check-in chuẩn VN
  */
 const checkInTicket = async (req, res) => {
     const { ticketCode } = req.body;
-    const now = new Date(); // Lấy giờ lúc quét vé
+    // Giờ khách quét vé chuẩn VN
+    const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
     try {
         const sql = `
@@ -107,10 +105,10 @@ const checkInTicket = async (req, res) => {
             return res.status(400).json({ message: "Cảnh báo: Vé này đã được soát trước đó!" });
         }
 
-        // FIX: Cập nhật thêm cột updated_at để biết khách vào rạp lúc nào
+        // Cập nhật trạng thái và thời gian check-in chuẩn VN
         await db.query(
             "UPDATE tickets SET ticket_status = 'Used', seat_status = 'Used', updated_at = ? WHERE ticket_id = ?", 
-            [now, ticket.ticket_id]
+            [nowVN, ticket.ticket_id]
         );
 
         return res.status(200).json({ 
@@ -120,7 +118,7 @@ const checkInTicket = async (req, res) => {
                 movie: ticket.movie_title,
                 seat: `${ticket.seat_row}${ticket.seat_number}`,
                 time: ticket.start_time,
-                checkInAt: now.toLocaleTimeString('vi-VN') // Trả thêm giờ soát vé cho FE
+                checkInAt: new Date(nowVN).toLocaleTimeString('vi-VN') 
             }
         });
     } catch (err) {
@@ -129,7 +127,7 @@ const checkInTicket = async (req, res) => {
 };
 
 /**
- * --- HÀM 4: LẤY TẤT CẢ VÉ (CHO ADMIN) ---
+ * --- HÀM 4: LẤY TẤT CẢ VÉ ---
  */
 const getAllTickets = async (req, res) => {
     try {
@@ -141,7 +139,8 @@ const getAllTickets = async (req, res) => {
                 st.start_time, 
                 r.room_name, 
                 s.seat_row, 
-                s.seat_number
+                s.seat_number,
+                DATE_FORMAT(t.created_at, '%d/%m/%Y %H:%i') as created_at_vn
             FROM tickets t
             JOIN bookings b ON t.booking_id = b.booking_id
             JOIN users u ON b.user_id = u.user_id
@@ -159,7 +158,7 @@ const getAllTickets = async (req, res) => {
 };
 
 /**
- * --- HÀM 5: LẤY VÉ THEO SUẤT CHIẾU (DÙNG CHO TABLE) ---
+ * --- HÀM 5: LẤY VÉ THEO SUẤT CHIẾU ---
  */
 const getTicketsByShowtime = async (req, res) => {
     const { showtimeId } = req.params;
@@ -184,8 +183,7 @@ const getTicketsByShowtime = async (req, res) => {
 };
 
 /**
- * --- HÀM 6: LẤY SƠ ĐỒ SOÁT VÉ ---
- * Phục vụ vẽ sơ đồ ghế Visual Monitor của Quang Dũng
+ * --- HÀM 6: LẤY SƠ ĐỒ SOÁT VÉ (Visual Monitor) ---
  */
 const getTicketSeatMap = async (req, res) => {
     const { showtimeId } = req.params;
@@ -210,6 +208,9 @@ const getTicketSeatMap = async (req, res) => {
     }
 };
 
+/**
+ * --- HÀM 7: LỌC SUẤT CHIẾU ---
+ */
 const getFilteredShowtimes = async (req, res) => {
     const { roomId } = req.query;
 
@@ -230,7 +231,6 @@ const getFilteredShowtimes = async (req, res) => {
         `;
 
         const params = [];
-
         if (roomId && roomId !== 'null' && roomId !== 'undefined') {
             sql += ` AND st.room_id = ? `;
             params.push(roomId);

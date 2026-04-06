@@ -19,14 +19,14 @@ const PaymentController = {
             const room_id = showtimeRows.length > 0 ? showtimeRows[0].room_id : null;
             const cinema_id = showtimeRows.length > 0 ? showtimeRows[0].cinema_id : null;
 
-            // Lấy thời gian hiện tại từ Node.js (Đã chuẩn hóa theo Asia/Ho_Chi_Minh)
-            const currentTime = new Date();
+            // --- FIX GIỜ VIỆT NAM (Giai đoạn giữ ghế) ---
+            const currentTimeVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
             const memo = `DUNG${Date.now()}`;
 
-            // THAY NOW() BẰNG ? VÀ TRUYỀN currentTime
+            // Chèn currentTimeVN vào booking_date
             const [bookingResult] = await connection.execute(
                 'INSERT INTO bookings (user_id, showtime_id, total_amount, coupon_id, status, booking_date, memo) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [userId, showtimeId, totalAmount, couponId || null, 'Pending', currentTime, memo]
+                [userId, showtimeId, totalAmount, couponId || null, 'Pending', currentTimeVN, memo]
             );
             const bookingId = bookingResult.insertId;
 
@@ -38,10 +38,11 @@ const PaymentController = {
                     );
 
                     const tempTicketCode = `WAIT-${Date.now()}-${seat.seat_id}`;
+                    // Ở đây nếu DB có cột created_at cho tickets, ông cũng có thể truyền currentTimeVN vào
                     await connection.execute(
-                        `INSERT INTO tickets (booking_id, showtime_id, room_id, cinema_id, seat_id, ticket_code, price, seat_status, ticket_status) 
-                         VALUES (?, ?, ?, ?, ?, ?, ?, 'Reserved', 'Valid')`,
-                        [bookingId, showtimeId, room_id, cinema_id, seat.seat_id, tempTicketCode, seat.price]
+                        `INSERT INTO tickets (booking_id, showtime_id, room_id, cinema_id, seat_id, ticket_code, price, seat_status, ticket_status, created_at) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, 'Reserved', 'Valid', ?)`,
+                        [bookingId, showtimeId, room_id, cinema_id, seat.seat_id, tempTicketCode, seat.price, currentTimeVN]
                     );
                 }
             }
@@ -56,7 +57,7 @@ const PaymentController = {
             }
 
             await connection.commit();
-            console.log(`>>> [DŨNG CINEMA] Đã tạo đơn hàng #${bookingId} lúc ${currentTime.toLocaleString()}`);
+            console.log(`>>> [DŨNG CINEMA] Đã tạo đơn hàng #${bookingId} lúc ${currentTimeVN}`);
             
             res.status(200).json({ 
                 success: true, 
@@ -96,29 +97,27 @@ const PaymentController = {
             }
 
             const { user_id, status: oldStatus } = currentBooking[0];
-            const updateTime = new Date(); // Lấy giờ chốt đơn từ Node.js
+
+            // --- FIX GIỜ VIỆT NAM (Giai đoạn chốt đơn) ---
+            const updateTimeVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
             // 1. Cập nhật trạng thái Booking
-            const [updateBooking] = await connection.execute(
+            await connection.execute(
                 "UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", 
                 [bookingId]
             );
 
-            // 2. Cập nhật vé (THAY NOW() BẰNG updateTime)
+            // 2. Cập nhật vé bằng updateTimeVN
             const [updateTickets] = await connection.execute(
                 `UPDATE tickets 
                  SET seat_status = 'Booked', 
                      ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'),
                      updated_at = ?
                  WHERE booking_id = ? AND seat_status = 'Reserved'`,
-                [updateTime, bookingId]
+                [updateTimeVN, bookingId]
             );
 
-            if (updateBooking.affectedRows === 0) {
-                throw new Error("Không tìm thấy đơn hàng để cập nhật!");
-            }
-
-            // --- LOGIC CỘNG ĐIỂM ---
+            // --- LOGIC CỘNG ĐIỂM --- (Giữ nguyên logic của ông)
             if (String(oldStatus).toLowerCase() !== 'completed') {
                 const [details] = await connection.execute(
                     `SELECT bd.price, bd.quantity, s.seat_type 
@@ -149,19 +148,20 @@ const PaymentController = {
                     );
                 }
             }
+
             await connection.commit();
-            console.log(`✅ [DŨNG CINEMA] Chốt đơn #${bookingId} THÀNH CÔNG lúc ${updateTime.toLocaleString()}`);
+            console.log(`✅ [DŨNG CINEMA] Chốt đơn #${bookingId} THÀNH CÔNG lúc ${updateTimeVN}`);
             
             res.json({ 
                 success: true, 
                 message: "Thanh toán thành công và đã tích điểm!" 
             });
         } catch (error) {
-            await connection.rollback();
+            if (connection) await connection.rollback();
             console.error("❌ Lỗi khi chốt vé:", error.message);
             res.status(500).json({ success: false, message: "Lỗi hệ thống khi chốt vé." });
         } finally {
-            connection.release();
+            if (connection) connection.release();
         }
     }
 };

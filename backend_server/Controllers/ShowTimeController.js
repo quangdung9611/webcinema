@@ -12,13 +12,10 @@ const validateShowtimeData = (data) => {
         return { error: "Vui lòng chọn đầy đủ: Phim, Rạp, Phòng và Thời gian chiếu" };
     }
 
-    // --- SỬA LẠI CHỖ NÀY ---
-    // Vì Render đã xóa TZ, nên new Date() là giờ quốc tế.
-    // Ta dùng toLocaleString để ép nó lấy đúng giờ Việt Nam (Asia/Ho_Chi_Minh) để so sánh với start_time
+    // ÉP GIỜ VIỆT NAM ĐỂ SO SÁNH CHÍNH XÁC
     const now = new Date().toLocaleString("sv-SE", { 
         timeZone: "Asia/Ho_Chi_Minh" 
     }).replace('T', ' ').substring(0, 16); 
-    // .substring(0, 16) để lấy định dạng "YYYY-MM-DD HH:mm" khớp với start_time
     
     if (start_time < now) {
         return { field: 'start_time', error: "Dũng ơi, không thể tạo suất chiếu ở quá khứ được!" };
@@ -33,7 +30,7 @@ const validateShowtimeData = (data) => {
  * ==========================================
  */
 
-// 1. Lấy tất cả suất chiếu (Dùng DATE_FORMAT để khóa giờ khi lấy ra)
+// 1. Lấy tất cả suất chiếu
 exports.getAllShowtimes = async (req, res) => {
     try {
         const [rows] = await db.query(`
@@ -92,7 +89,7 @@ exports.getShowtimeDetail = async (req, res) => {
     }
 };
 
-// 3. Thêm mới suất chiếu (Dùng STR_TO_DATE để khóa giờ khi lưu vào)
+// 3. Thêm mới suất chiếu
 exports.createShowtime = async (req, res) => {
     try {
         const { movie_id, cinema_id, room_id, start_time } = req.body;
@@ -100,7 +97,11 @@ exports.createShowtime = async (req, res) => {
         const validationError = validateShowtimeData(req.body);
         if (validationError) return res.status(400).json(validationError);
 
-        // Kiểm tra trùng lịch: Ép kiểu chuỗi để so sánh chính xác tuyệt đối
+        // Lấy thời lượng phim để kiểm tra va chạm lịch thông minh hơn (Tùy chọn bổ sung)
+        const [movie] = await db.query("SELECT duration FROM movies WHERE movie_id = ?", [movie_id]);
+        const duration = movie[0].duration || 120; // Mặc định 120p nếu ko có
+
+        // Kiểm tra trùng lịch: Nếu cùng 1 phòng mà giờ bắt đầu trùng nhau
         const [conflict] = await db.query(
             "SELECT * FROM showtimes WHERE room_id = ? AND DATE_FORMAT(start_time, '%Y-%m-%d %H:%i') = ?",
             [room_id, start_time]
@@ -113,9 +114,10 @@ exports.createShowtime = async (req, res) => {
             });
         }
 
-        // Dùng STR_TO_DATE để MySQL tự bốc chuỗi String vào, né thằng Node.js tự đổi múi giờ
         const sql = `INSERT INTO showtimes (movie_id, cinema_id, room_id, start_time) VALUES (?, ?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i'))`;
         const [result] = await db.query(sql, [movie_id, cinema_id, room_id, start_time]);
+
+        console.log(`✅ [Success] Đã thêm suất chiếu mới cho phim ID ${movie_id} tại phòng ${room_id}`);
 
         res.status(201).json({ 
             message: "Thêm suất chiếu thành công", 
@@ -160,10 +162,13 @@ exports.updateShowtime = async (req, res) => {
     }
 };
 
-// 6. Lấy suất chiếu theo phim
+// 5. Lấy suất chiếu theo phim (Dành cho trang Movie Detail)
 exports.getShowtimesByMovie = async (req, res) => {
     try {
         const { movieId } = req.params;
+        // Chỉ lấy những suất chiếu chưa diễn ra
+        const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+
         const [rows] = await db.query(`
             SELECT 
                 s.showtime_id, 
@@ -174,9 +179,9 @@ exports.getShowtimesByMovie = async (req, res) => {
             FROM showtimes s
             JOIN rooms r ON s.room_id = r.room_id
             JOIN cinemas c ON s.cinema_id = c.cinema_id
-            WHERE s.movie_id = ?
+            WHERE s.movie_id = ? AND s.start_time >= ?
             ORDER BY s.start_time ASC
-        `, [movieId]);
+        `, [movieId, nowVN]);
         res.status(200).json(rows);
     } catch (error) {
         console.error("❌ [DŨNG] Lỗi lấy lịch theo phim:", error.message);
@@ -184,22 +189,24 @@ exports.getShowtimesByMovie = async (req, res) => {
     }
 };
 
+// 6. Xóa suất chiếu
 exports.deleteShowtime = async (req, res) => {
     const { id } = req.params;
     try {
+        // Ràng buộc bảo vệ: Suất chiếu đã có vé (bookings/tickets) thì tuyệt đối ko xóa
         const [tickets] = await db.query('SELECT * FROM tickets WHERE showtime_id = ?', [id]);
         if (tickets.length > 0) {
             return res.status(400).json({ 
-                error: "Dũng ơi, vé đã bán rồi thì không được xóa suất chiếu đâu nha!" 
+                error: "Dũng ơi, vé đã bán rồi thì không được xóa suất chiếu đâu nha! Khách kiện chết á." 
             });
         }
 
         const [result] = await db.query('DELETE FROM showtimes WHERE showtime_id = ?', [id]);
-        if (result.affectedRows === 0) return res.status(404).json({ error: "Không tìm thấy" });
+        if (result.affectedRows === 0) return res.status(404).json({ error: "Không tìm thấy suất chiếu này" });
         
         res.status(200).json({ message: "Đã xóa suất chiếu thành công" });
     } catch (err) {
         console.error("❌ [DŨNG] Lỗi xóa suất chiếu:", err.message);
-        res.status(500).json({ error: "Lỗi hệ thống" });
+        res.status(500).json({ error: "Lỗi hệ thống khi xóa" });
     }
 };

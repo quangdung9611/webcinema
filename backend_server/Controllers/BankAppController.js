@@ -7,26 +7,26 @@ const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'nguyenphamquangdung9611@gmail.com',
-        pass: 'gezt gsvc gpdn rqfc' 
+        pass: 'gezt gsvc gpdn rqfc' // Khuyên Dũng nên đưa cái này vào file .env nhé!
     }
 });
 
-let otpStorage = {}; 
+let otpStorage = {};
 
 const sendTicketEmail = async (customerEmail, ticketData) => {
-    const { 
-        bookingId, customerName, seatLabel, 
-        movieTitle, cinemaName, startTime, 
-        selectedDate, selectedFoods, moviePoster 
+    const {
+        bookingId, customerName, seatLabel,
+        movieTitle, cinemaName, startTime,
+        selectedDate, selectedFoods, moviePoster
     } = ticketData;
 
     const fileName = moviePoster ? path.basename(moviePoster) : null;
-    const absolutePath = fileName 
-        ? path.join(__dirname, '..', 'uploads', 'posters', fileName) 
+    const absolutePath = fileName
+        ? path.join(__dirname, '..', 'uploads', 'posters', fileName)
         : null;
 
     const fileExists = absolutePath && fs.existsSync(absolutePath);
-    
+
     const mailOptions = {
         from: '"Dũng Cinema 🍿" <nguyenphamquangdung9611@gmail.com>',
         to: customerEmail,
@@ -99,22 +99,24 @@ const BankAppController = {
             }
 
             await connection.beginTransaction();
-            const now = new Date(); // Lấy giờ chuẩn VN từ Render
+            
+            // Lấy giờ Việt Nam hiện tại dưới dạng chuỗi YYYY-MM-DD HH:mm:ss
+            const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
             // 1. Cập nhật trạng thái đơn hàng
             await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
 
-            // 2. Cập nhật trạng thái vé và mã vé (Dùng 'now' thay cho NOW())
+            // 2. Cập nhật trạng thái vé và mã vé (Sử dụng chuỗi nowVN để tránh lệch múi giờ)
             await connection.execute(
                 `UPDATE tickets 
                  SET seat_status = 'Booked', 
                      ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'),
                      updated_at = ?
                  WHERE booking_id = ? AND seat_status = 'Reserved'`, 
-                [now, bookingId]
+                [nowVN, bookingId]
             );
 
-            // 3. Lấy thông tin đầy đủ để gửi mail và cộng điểm
+            // 3. Lấy thông tin đầy đủ (Sử dụng DATE_FORMAT để lấy chuỗi giờ chuẩn từ DB)
             const [orderRows] = await connection.query(`
                 SELECT 
                     b.booking_id, b.user_id,
@@ -123,7 +125,7 @@ const BankAppController = {
                     m.poster_url AS moviePoster, 
                     c.cinema_name AS cinemaName,
                     r.room_name AS roomName,
-                    s.start_time,
+                    DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') as start_time_raw,
                     GROUP_CONCAT(DISTINCT bd.item_name SEPARATOR ', ') AS seatLabel
                 FROM bookings b
                 LEFT JOIN users u ON b.user_id = u.user_id
@@ -139,7 +141,7 @@ const BankAppController = {
             const order = orderRows[0];
             if (!order) throw new Error("Không tìm thấy dữ liệu đơn hàng!");
 
-            // 4. LOGIC CỘNG ĐIỂM THƯỞNG (Quan trọng nè Dũng!)
+            // 4. LOGIC CỘNG ĐIỂM THƯỞNG
             const [details] = await connection.execute(
                 `SELECT bd.price, bd.quantity, s.seat_type 
                  FROM booking_details bd
@@ -156,7 +158,7 @@ const BankAppController = {
                     let rate = (type === 'VIP') ? 0.10 : (type === 'DOUBLE' || type === 'SWEETBOX' || type === 'COUPLE') ? 0.07 : 0.05;
                     totalEarnedPoints += Math.floor(itemTotal * rate);
                 } else {
-                    totalEarnedPoints += Math.floor(itemTotal * 0.03); // Điểm bắp nước
+                    totalEarnedPoints += Math.floor(itemTotal * 0.03);
                 }
             });
 
@@ -168,12 +170,22 @@ const BankAppController = {
                 console.log(`✨ [DŨNG] Thanh toán OTP thành công: Cộng ${totalEarnedPoints} điểm cho User #${order.user_id}`);
             }
 
-            // 5. Xử lý thời gian hiển thị Email
-            const fullDate = new Date(order.start_time);
-            const formattedTime = fullDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
-            const formattedDate = fullDate.toLocaleDateString('vi-VN');
+            // 5. Xử lý thời gian hiển thị Email bằng cách cắt chuỗi (An toàn nhất)
+            // Chuỗi có dạng: "2026-04-06 20:00:00"
+            const [datePart, timePart] = order.start_time_raw.split(' ');
+            const [y, m, d] = datePart.split('-');
+            const [hh, mm] = timePart.split(':');
+
+            const formattedTime = `${hh}:${mm}`;
+            const formattedDate = `${d}/${m}/${y}`;
 
             // 6. Gửi vé Email
+            const [foodRows] = await connection.query(
+                "SELECT item_name, quantity FROM booking_details WHERE booking_id = ? AND seat_id IS NULL", 
+                [bookingId]
+            );
+            const foodString = foodRows.map(f => `${f.item_name} (x${f.quantity})`).join(', ') || 'Không có';
+
             await sendTicketEmail(email, {
                 bookingId: order.booking_id,
                 customerName: order.full_name,
@@ -183,8 +195,7 @@ const BankAppController = {
                 startTime: formattedTime,
                 selectedDate: formattedDate,
                 seatLabel: order.seatLabel,
-                selectedFoods: (await connection.query("SELECT item_name, quantity FROM booking_details WHERE booking_id = ? AND product_id IS NOT NULL", [bookingId]))[0]
-                    .map(d => `${d.item_name} (x${d.quantity})`).join(', ') || 'Không có'
+                selectedFoods: foodString
             });
 
             await connection.commit();
@@ -193,7 +204,7 @@ const BankAppController = {
             res.json({ 
                 success: true, 
                 message: "Thanh toán thành công!",
-                data: { orderId: order.booking_id, ticketPIN: Math.floor(1000 + Math.random() * 9000) }
+                data: { orderId: order.booking_id }
             });
 
         } catch (error) {
