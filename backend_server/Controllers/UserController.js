@@ -277,3 +277,52 @@ exports.getBookingHistory = async (req, res) => {
         res.status(500).json({ error: "Lỗi khi lấy lịch sử giao dịch" });
     }
 };
+// 8. Xóa sạch lịch sử đặt vé và Reset điểm/chi tiêu của User (Dùng cho Profile.jsx)
+exports.clearBookingHistory = async (req, res) => {
+    const userId = req.user.user_id; // Lấy từ Token middleware
+    const connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    try {
+        // 1. Tìm tất cả booking_id của user này
+        const [userBookings] = await connection.query(
+            'SELECT booking_id FROM bookings WHERE user_id = ?', 
+            [userId]
+        );
+        
+        if (userBookings.length > 0) {
+            const bookingIds = userBookings.map(b => b.booking_id);
+            
+            // 2. Xóa chi tiết hóa đơn (booking_details)
+            await connection.query('DELETE FROM booking_details WHERE booking_id IN (?)', [bookingIds]);
+            
+            // 3. Xóa vé (tickets)
+            await connection.query('DELETE FROM tickets WHERE booking_id IN (?)', [bookingIds]);
+            
+            // 4. Xóa chính bảng bookings
+            await connection.query('DELETE FROM bookings WHERE user_id = ?', [userId]);
+        }
+
+        // --- BƯỚC QUAN TRỌNG NHẤT: RESET ĐIỂM VÀ CHI TIÊU ---
+        // Tui update cả 2 cột points và total_spent về 0 cho đúng cái hình ông gửi
+        await connection.query(
+            'UPDATE users SET points = 0, total_spent = 0 WHERE user_id = ?', 
+            [userId]
+        );
+
+        await connection.commit();
+        console.log(`>>> [DŨNG CINEMA] Đã dọn sạch lịch sử và reset điểm cho User: ${userId}`);
+
+        res.status(200).json({ 
+            success: true, 
+            message: "Đã xóa lịch sử và đưa điểm thưởng về 0 thành công!" 
+        });
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("Clear History Error:", error);
+        res.status(500).json({ error: "Lỗi hệ thống khi dọn dẹp lịch sử" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
