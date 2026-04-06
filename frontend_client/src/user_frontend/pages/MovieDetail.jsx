@@ -16,7 +16,8 @@ const MovieDetail = () => {
     const [movie, setMovie] = useState(null);
     const [relatedMovies, setRelatedMovies] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    // Khởi tạo ngày chọn là ngày hiện tại theo giờ VN (local)
+    const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('sv-SE')); // YYYY-MM-DD
     
     const [userRating, setUserRating] = useState(0); 
     const [hover, setHover] = useState(0); 
@@ -180,9 +181,31 @@ const MovieDetail = () => {
     if (!movie) return <div className="error">Không tìm thấy phim.</div>;
 
     const videoId = getYoutubeID(movie.trailer_url);
+
+    // --- LOGIC LỌC SUẤT CHIẾU ĐỒNG BỘ MÚI GIỜ ---
     const groupedShowtimes = movie.showtimes ? movie.showtimes.reduce((acc, current) => {
-        const showDateStr = new Date(current.start_time).toISOString().split('T')[0];
-        if (showDateStr !== selectedDate || new Date(current.start_time) <= new Date()) return acc;
+        // 1. Chuyển start_time từ DB thành đối tượng Date
+        const showtimeDate = new Date(current.start_time);
+        
+        // 2. Lấy giờ hiện tại
+        const now = new Date();
+
+        // 3. Định dạng ngày YYYY-MM-DD để so sánh với Tab (Dùng locale VN để chính xác)
+        const showDateStr = showtimeDate.toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
+        
+        // LOG ĐỂ KIỂM TRA (Ông mở F12 lên xem nó in ra gì nhé)
+        // console.log(`Suất chiếu: ${current.start_time} | Ngày: ${showDateStr} | So với: ${selectedDate}`);
+
+        // 4. ĐIỀU KIỆN LỌC:
+        // - Phải cùng ngày được chọn
+        // - Suất chiếu phải sau thời điểm hiện tại ít nhất 10 phút (để khách kịp đặt)
+        if (showDateStr !== selectedDate) return acc;
+        
+        // Nếu là ngày hôm nay, chỉ hiện các suất chưa diễn ra
+        if (showDateStr === new Date().toLocaleDateString('sv-SE') && showtimeDate <= now) {
+            return acc;
+        }
+
         if (!acc[current.cinema_name]) acc[current.cinema_name] = [];
         acc[current.cinema_name].push(current);
         return acc;
@@ -194,7 +217,7 @@ const MovieDetail = () => {
         return {
             dayName: i === 0 ? 'Hôm nay' : ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'][date.getDay()],
             displayDate: date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
-            dateString: date.toISOString().split('T')[0]
+            dateString: date.toLocaleDateString('sv-SE') // Dùng định dạng chuẩn YYYY-MM-DD
         };
     });
 
@@ -309,7 +332,6 @@ const MovieDetail = () => {
                                 const isEdited = rev.updated_at && (new Date(rev.updated_at).getTime() - new Date(rev.created_at).getTime() > 1000);
                                 return (
                                     <div key={index} className="review-card">
-                                        {/* Cấu trúc mới để Avatar tròn đẹp và không bị dẹt */}
                                         <div className="user-avatar-wrapper">
                                             <div className="user-avatar">
                                                 <User size={24} />

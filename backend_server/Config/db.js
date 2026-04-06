@@ -27,14 +27,14 @@ const pool = mysql.createPool({
 });
 
 // 2. ĐOẠN QUAN TRỌNG NHẤT: Ép MySQL Server dùng giờ VN ngay khi vừa kết nối
-pool.on('connection', (connection) => {
-    connection.query("SET time_zone = '+07:00'", (err) => {
-        if (err) {
-            console.error('❌ Lỗi SET time_zone:', err.message);
-        } else {
-            console.log('🕒 Database đã đồng bộ múi giờ Việt Nam (+07:00)');
-        }
-    });
+// Ép MySQL Server dùng giờ VN ngay khi vừa kết nối
+pool.on('connection', async (connection) => {
+    try {
+        await connection.query("SET time_zone = '+07:00'");
+        console.log('🕒 Database đã đồng bộ múi giờ Việt Nam (+07:00)');
+    } catch (err) {
+        console.error('❌ Lỗi SET time_zone:', err.message);
+    }
 });
 
 pool.on('error', (err) => {
