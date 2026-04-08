@@ -41,7 +41,7 @@ const ConfirmSuccess = () => {
                 
                 // Thay vì gọi "complete" (yêu cầu chốt), ông nên gọi API lấy "detail" 
                 // để xem đơn hàng đã được Callback chốt chưa.
-                const response = await axios.get(`https://webcinema-zb8z.onrender.com/api/bookings/${bID}`, {
+                const response = await axios.get(`https://webcinema-zb8z.onrender.com/api/bookings/detail/${bID}`, {
                     withCredentials: true 
                 });
 

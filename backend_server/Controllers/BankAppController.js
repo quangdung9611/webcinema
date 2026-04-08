@@ -7,7 +7,7 @@ const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'nguyenphamquangdung9611@gmail.com',
-        pass: 'gezt gsvc gpdn rqfc' // Khuyên Dũng nên đưa cái này vào file .env nhé!
+        pass: 'gezt gsvc gpdn rqfc' 
     }
 });
 
@@ -100,23 +100,20 @@ const BankAppController = {
 
             await connection.beginTransaction();
             
-            // Lấy giờ Việt Nam hiện tại dưới dạng chuỗi YYYY-MM-DD HH:mm:ss
-            const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
-
             // 1. Cập nhật trạng thái đơn hàng
             await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
 
-            // 2. Cập nhật trạng thái vé và mã vé (Sử dụng chuỗi nowVN để tránh lệch múi giờ)
+            // 2. Cập nhật trạng thái vé (Dùng NOW() của MySQL cho chuẩn múi giờ server)
             await connection.execute(
                 `UPDATE tickets 
                  SET seat_status = 'Booked', 
                      ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'),
-                     updated_at = ?
+                     updated_at = NOW()
                  WHERE booking_id = ? AND seat_status = 'Reserved'`, 
-                [nowVN, bookingId]
+                [bookingId]
             );
 
-            // 3. Lấy thông tin đầy đủ (Sử dụng DATE_FORMAT để lấy chuỗi giờ chuẩn từ DB)
+            // 3. Lấy thông tin đầy đủ
             const [orderRows] = await connection.query(`
                 SELECT 
                     b.booking_id, b.user_id,
@@ -163,30 +160,32 @@ const BankAppController = {
             });
 
             if (totalEarnedPoints > 0) {
+                // Sửa thành points (có s) theo đúng db ông khẳng định
                 await connection.execute(
                     `UPDATE users SET points = points + ? WHERE user_id = ?`,
                     [totalEarnedPoints, order.user_id]
                 );
-                console.log(`✨ [DŨNG] Thanh toán OTP thành công: Cộng ${totalEarnedPoints} điểm cho User #${order.user_id}`);
             }
 
-            // 5. Xử lý thời gian hiển thị Email bằng cách cắt chuỗi (An toàn nhất)
-            // Chuỗi có dạng: "2026-04-06 20:00:00"
+            // CHỐT GIAO DỊCH DATABASE TRƯỚC
+            await connection.commit();
+            delete otpStorage[email];
+
+            // 5. Xử lý thời gian (Sau khi commit để an toàn)
             const [datePart, timePart] = order.start_time_raw.split(' ');
             const [y, m, d] = datePart.split('-');
             const [hh, mm] = timePart.split(':');
-
             const formattedTime = `${hh}:${mm}`;
             const formattedDate = `${d}/${m}/${y}`;
 
-            // 6. Gửi vé Email
+            // 6. Gửi vé Email (Gửi ngầm sau khi đã trả kết quả cho BankApp)
             const [foodRows] = await connection.query(
                 "SELECT item_name, quantity FROM booking_details WHERE booking_id = ? AND seat_id IS NULL", 
                 [bookingId]
             );
             const foodString = foodRows.map(f => `${f.item_name} (x${f.quantity})`).join(', ') || 'Không có';
 
-            await sendTicketEmail(email, {
+            sendTicketEmail(email, {
                 bookingId: order.booking_id,
                 customerName: order.full_name,
                 movieTitle: order.movieTitle,
@@ -196,11 +195,9 @@ const BankAppController = {
                 selectedDate: formattedDate,
                 seatLabel: order.seatLabel,
                 selectedFoods: foodString
-            });
+            }).catch(e => console.error("Lỗi gửi mail:", e));
 
-            await connection.commit();
-            delete otpStorage[email];
-            
+            // Trả kết quả thành công ngay lập tức
             res.json({ 
                 success: true, 
                 message: "Thanh toán thành công!",
@@ -210,7 +207,8 @@ const BankAppController = {
         } catch (error) {
             if (connection) await connection.rollback();
             console.error("❌ [DŨNG] Lỗi Verify OTP:", error);
-            res.status(500).json({ success: false, message: error.message });
+            // Trả lỗi chi tiết để Dũng dễ debug
+            res.status(500).json({ success: false, message: error.sqlMessage || error.message });
         } finally {
             if (connection) connection.release();
         }
