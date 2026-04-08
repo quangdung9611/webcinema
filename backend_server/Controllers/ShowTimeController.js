@@ -12,7 +12,7 @@ const validateShowtimeData = (data) => {
         return { error: "Vui lòng chọn đầy đủ: Phim, Rạp, Phòng và Thời gian chiếu" };
     }
 
-    // ÉP GIỜ VIỆT NAM ĐỂ SO SÁNH CHÍNH XÁC
+    // Lấy thời gian hiện tại chuẩn VN (YYYY-MM-DD HH:mm)
     const now = new Date().toLocaleString("sv-SE", { 
         timeZone: "Asia/Ho_Chi_Minh" 
     }).replace('T', ' ').substring(0, 16); 
@@ -36,7 +36,7 @@ exports.getAllShowtimes = async (req, res) => {
         const [rows] = await db.query(`
             SELECT 
                 s.showtime_id, 
-                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') as start_time, 
+                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') as start_time, 
                 m.title, 
                 m.duration,
                 c.cinema_name, 
@@ -65,7 +65,7 @@ exports.getShowtimeDetail = async (req, res) => {
                 s.movie_id,
                 s.cinema_id,
                 s.room_id,
-                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') as start_time,
+                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') as start_time,
                 m.title, 
                 m.poster_url, 
                 m.age_rating,
@@ -92,19 +92,25 @@ exports.getShowtimeDetail = async (req, res) => {
 // 3. Thêm mới suất chiếu
 exports.createShowtime = async (req, res) => {
     try {
-        const { movie_id, cinema_id, room_id, start_time } = req.body;
+        let { movie_id, cinema_id, room_id, start_time } = req.body;
 
-        const validationError = validateShowtimeData(req.body);
+        // XỬ LÝ TRIỆT ĐỂ: Bỏ chữ T và chuẩn hóa định dạng YYYY-MM-DD HH:mm
+        if (start_time && start_time.includes('T')) {
+            start_time = start_time.replace('T', ' ').substring(0, 16);
+        }
+
+        // Ép kiểu ID về số để tránh lỗi Database (nếu cần)
+        const movieIdx = Number(movie_id);
+        const cinemaIdx = Number(cinema_id);
+        const roomIdx = Number(room_id);
+
+        const validationError = validateShowtimeData({ movie_id: movieIdx, cinema_id: cinemaIdx, room_id: roomIdx, start_time });
         if (validationError) return res.status(400).json(validationError);
 
-        // Lấy thời lượng phim để kiểm tra va chạm lịch thông minh hơn (Tùy chọn bổ sung)
-        const [movie] = await db.query("SELECT duration FROM movies WHERE movie_id = ?", [movie_id]);
-        const duration = movie[0].duration || 120; // Mặc định 120p nếu ko có
-
-        // Kiểm tra trùng lịch: Nếu cùng 1 phòng mà giờ bắt đầu trùng nhau
+        // Kiểm tra trùng lịch
         const [conflict] = await db.query(
             "SELECT * FROM showtimes WHERE room_id = ? AND DATE_FORMAT(start_time, '%Y-%m-%d %H:%i') = ?",
-            [room_id, start_time]
+            [roomIdx, start_time]
         );
 
         if (conflict.length > 0) {
@@ -115,9 +121,9 @@ exports.createShowtime = async (req, res) => {
         }
 
         const sql = `INSERT INTO showtimes (movie_id, cinema_id, room_id, start_time) VALUES (?, ?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i'))`;
-        const [result] = await db.query(sql, [movie_id, cinema_id, room_id, start_time]);
+        const [result] = await db.query(sql, [movieIdx, cinemaIdx, roomIdx, start_time]);
 
-        console.log(`✅ [Success] Đã thêm suất chiếu mới cho phim ID ${movie_id} tại phòng ${room_id}`);
+        console.log(`✅ [Success] Đã thêm suất chiếu mới: ${start_time}`);
 
         res.status(201).json({ 
             message: "Thêm suất chiếu thành công", 
@@ -126,17 +132,22 @@ exports.createShowtime = async (req, res) => {
 
     } catch (err) {
         console.error("❌ [DŨNG] Lỗi tạo suất chiếu:", err.message);
-        res.status(500).json({ error: "Lỗi hệ thống" });
+        res.status(500).json({ error: "Lỗi hệ thống khi thêm suất chiếu" });
     }
 };
 
 // 4. Cập nhật suất chiếu
 exports.updateShowtime = async (req, res) => {
     const { id } = req.params;
-    const { movie_id, cinema_id, room_id, start_time } = req.body;
+    let { movie_id, cinema_id, room_id, start_time } = req.body;
 
     try {
-        const validationError = validateShowtimeData(req.body);
+        // Bỏ chữ T
+        if (start_time && start_time.includes('T')) {
+            start_time = start_time.replace('T', ' ').substring(0, 16);
+        }
+
+        const validationError = validateShowtimeData({ movie_id, cinema_id, room_id, start_time });
         if (validationError) return res.status(400).json(validationError);
 
         const [conflict] = await db.query(
@@ -158,7 +169,7 @@ exports.updateShowtime = async (req, res) => {
 
     } catch (err) {
         console.error("❌ [DŨNG] Lỗi cập nhật suất chiếu:", err.message);
-        res.status(500).json({ error: "Lỗi hệ thống" });
+        res.status(500).json({ error: "Lỗi hệ thống khi cập nhật" });
     }
 };
 

@@ -102,8 +102,15 @@ const ShowtimeAdd = () => {
         e.preventDefault();
         if (!validateForm()) return;
 
+        // XỬ LÝ DỮ LIỆU TRƯỚC KHI GỬI: Bỏ chữ T trong start_time
+        const finalData = {
+            ...formData,
+            start_time: formData.start_time.replace('T', ' ')
+        };
+
         try {
-            await axios.post('https://webcinema-zb8z.onrender.com/api/showtimes/add', formData);
+            // Gửi finalData thay vì formData gốc
+            await axios.post('https://webcinema-zb8z.onrender.com/api/showtimes/add', finalData);
             
             setModal({
                 show: true,
@@ -180,6 +187,7 @@ const ShowtimeAdd = () => {
                     <input 
                         name="start_time" 
                         type="datetime-local" 
+                        value={formData.start_time}
                         onChange={handleChange} 
                     />
                     {errors.start_time && <span className="error-text">{errors.start_time}</span>}
