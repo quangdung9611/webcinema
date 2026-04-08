@@ -61,7 +61,7 @@ const sendTicketEmail = async (customerEmail, ticketData) => {
 };
 
 const BankAppController = {
-    sendOTP: async (req, res) => {
+        sendOTP: async (req, res) => {
         const { email, bookingId } = req.body;
         if (!email || !bookingId) {
             return res.status(400).json({ success: false, message: "Thiếu thông tin!" });
@@ -69,18 +69,20 @@ const BankAppController = {
         const otp = Math.floor(100000 + Math.random() * 900000);
         otpStorage[email] = { otp, bookingId, expires: Date.now() + 5 * 60 * 1000 };
 
-        try {
-            await transporter.sendMail({
-                from: '"Dũng Cinema 🍿" <nguyenphamquangdung9611@gmail.com>',
-                to: email,
-                subject: `[${otp}] Mã xác thực thanh toán Cinema Star`,
-                html: `<h2 style="text-align:center">Mã OTP của ông là: <span style="color:red">${otp}</span></h2>
-                       <p style="text-align:center">Mã này có hiệu lực trong 5 phút cho đơn hàng #${bookingId}</p>`
-            });
-            res.json({ success: true, message: "Mã OTP đã gửi!" });
-        } catch (error) {
-            res.status(500).json({ success: false, message: "Lỗi gửi mail!" });
-        }
+        // 1. TRẢ KẾT QUẢ VỀ FRONTEND NGAY LẬP TỨC
+        res.json({ success: true, message: "Mã OTP đang được gửi, vui lòng kiểm tra mail!" });
+
+        // 2. GỬI MAIL CHẠY NGẦM (Bỏ await)
+        transporter.sendMail({
+            from: '"Dũng Cinema 🍿" <nguyenphamquangdung9611@gmail.com>',
+            to: email,
+            subject: `[${otp}] Mã xác thực thanh toán Cinema Star`,
+            html: `<h2 style="text-align:center">Mã OTP của ông là: <span style="color:red">${otp}</span></h2>
+                <p style="text-align:center">Mã này có hiệu lực trong 5 phút cho đơn hàng #${bookingId}</p>`
+        }).catch(error => {
+            console.error("❌ Lỗi gửi OTP ngầm:", error);
+            // Vì đã res.json ở trên rồi nên ở đây chỉ log lỗi thôi, không res nữa
+        });
     },
 
     verifyOTP: async (req, res) => {
