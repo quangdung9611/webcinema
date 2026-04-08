@@ -12,7 +12,7 @@ const internalUpdateBooking = async (bookingId, connection) => {
 
     // 1. Kiểm tra trạng thái hiện tại (Tránh xử lý trùng lặp)
     const [check] = await connection.query(
-        "SELECT status, user_id, total_price FROM bookings WHERE booking_id = ?", 
+        "SELECT status, user_id, total_amount FROM bookings WHERE booking_id = ?", 
         [bookingId]
     );
 
@@ -34,7 +34,7 @@ const internalUpdateBooking = async (bookingId, connection) => {
 
     // 3. Tính và cộng điểm (Dùng trường 'points' như Dũng dặn)
     // Giả định mức tích lũy 5% tổng đơn cho nhanh và nhẹ Database
-    const totalEarnedPoints = Math.floor(Number(check[0].total_price || 0) * 0.05);
+    const totalEarnedPoints = Math.floor(Number(check[0].total_amount || 0) * 0.05);
     
     if (totalEarnedPoints > 0) {
         await connection.execute(
