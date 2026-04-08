@@ -14,8 +14,13 @@ const MomoController = {
             const requestId = partnerCode + new Date().getTime();
             const orderId = bookingId;
             const orderInfo = `Thanh toán vé Cinema Star #${bookingId}`;
-            const redirectUrl = "http://localhost:5173/confirm-success"; 
-            const ipnUrl = "https://your-ngrok-link.ngrok-free.app/api/momo/callback"; 
+            
+            // Cập nhật link Frontend của Dũng
+            const redirectUrl = "https://quangdungcinema.id.vn/confirm-success"; 
+            
+            // Cập nhật link Render của Dũng (Không dùng Ngrok nữa)
+            const ipnUrl = "https://webcinema-zb8z.onrender.com/api/momo/callback"; 
+
             const requestType = "payWithMethod";
             const extraData = ""; 
 
@@ -51,7 +56,6 @@ const MomoController = {
             await connection.beginTransaction();
             
             // --- FIX GIỜ VIỆT NAM TẠI ĐÂY ---
-            // Bất kể Render xóa TZ hay không, dòng này vẫn lấy đúng giờ VN
             const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
             // 1. Cập nhật trạng thái đơn hàng
