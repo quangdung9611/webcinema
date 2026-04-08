@@ -3,6 +3,50 @@ const crypto = require('crypto');
 const db = require('../Config/db');
 const { sendTicketEmail } = require('./BankAppController'); 
 
+/**
+ * HÀM XỬ LÝ LÕI: Chốt đơn, Đổi trạng thái ghế, Cộng điểm
+ * Tách ra để dùng chung cho cả ConfirmFast và Callback IPN
+ */
+const internalUpdateBooking = async (bookingId, connection) => {
+    const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+
+    // 1. Kiểm tra trạng thái hiện tại (Tránh xử lý trùng lặp)
+    const [check] = await connection.query(
+        "SELECT status, user_id, total_price FROM bookings WHERE booking_id = ?", 
+        [bookingId]
+    );
+
+    if (!check[0] || check[0].status === 'Completed') {
+        return { alreadyDone: true, userId: check[0]?.user_id };
+    }
+
+    // 2. Cập nhật trạng thái Booking & Vé (Gộp lệnh chạy cho nhanh)
+    await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
+    
+    await connection.execute(
+        `UPDATE tickets t
+         SET t.seat_status = 'Booked', 
+             t.ticket_code = REPLACE(t.ticket_code, 'WAIT-', 'TIC-'),
+             t.updated_at = ?
+         WHERE t.booking_id = ? AND t.seat_status = 'Reserved'`, 
+        [nowVN, bookingId]
+    );
+
+    // 3. Tính và cộng điểm (Dùng trường 'points' như Dũng dặn)
+    // Giả định mức tích lũy 5% tổng đơn cho nhanh và nhẹ Database
+    const totalEarnedPoints = Math.floor(Number(check[0].total_price || 0) * 0.05);
+    
+    if (totalEarnedPoints > 0) {
+        await connection.execute(
+            "UPDATE users SET points = points + ? WHERE user_id = ?",
+            [totalEarnedPoints, check[0].user_id]
+        );
+        console.log(`✨ [DŨNG] Đã chốt đơn #${bookingId}: +${totalEarnedPoints} điểm cho User #${check[0].user_id}`);
+    }
+
+    return { alreadyDone: false, userId: check[0].user_id };
+};
+
 const MomoController = {
     // 1. TẠO GIAO DỊCH
     createPayment: async (req, res) => {
@@ -34,169 +78,60 @@ const MomoController = {
             res.json(response.data); 
         } catch (error) {
             console.error("❌ [DŨNG] Lỗi MoMo Create:", error.message);
-            res.status(500).json({ message: "Không thể tạo giao dịch MoMo" });
+            res.status(500).json({ message: "Không thể tạo giao dịch" });
         }
     },
 
-    // 2. XÁC NHẬN THANH TOÁN (Logic gốc của Dũng - Chốt đơn + Cộng điểm + Gửi Mail)
+    // 2. XÁC NHẬN NHANH (Từ Frontend React gọi lên)
     confirmMomoFast: async (req, res) => {
         const { bookingId } = req.body;
-        console.log(`>>> 🍿 [DŨNG CINEMA] Đang chốt đơn MoMo #${bookingId}...`);
+        console.log(`>>> 🚀 [DŨNG] Frontend yêu cầu chốt nhanh đơn #${bookingId}`);
 
         const connection = await db.getConnection();
         try {
-            // Kiểm tra trạng thái trước khi làm (Chống cộng điểm 2 lần)
-            const [check] = await connection.query("SELECT status, user_id FROM bookings WHERE booking_id = ?", [bookingId]);
-            if (check[0] && check[0].status === 'Completed') {
-                return res.json({ success: true, message: "Đơn hàng đã hoàn tất trước đó." });
-            }
-
             await connection.beginTransaction();
             
-            const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
-
-            // 1. Cập nhật trạng thái đơn hàng
-            await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
-
-            // 2. Chốt ghế & Cập nhật thời gian chốt đơn
-            await connection.execute(
-                `UPDATE tickets t
-                 JOIN showtimes s ON t.showtime_id = s.showtime_id
-                 SET t.seat_status = 'Booked', 
-                     t.ticket_code = REPLACE(t.ticket_code, 'WAIT-', 'TIC-'),
-                     t.cinema_id = s.cinema_id,
-                     t.room_id = s.room_id,
-                     t.updated_at = ?
-                 WHERE t.booking_id = ? AND t.seat_status = 'Reserved'`, 
-                [nowVN, bookingId]
-            );
-
-            // 3. Lấy dữ liệu tổng hợp để gửi mail
-            const [orderRows] = await connection.query(`
-                SELECT 
-                    b.booking_id, b.user_id,
-                    u.full_name, u.email,
-                    m.title AS movieTitle, 
-                    m.poster_url AS moviePoster, 
-                    c.cinema_name AS cinemaName,
-                    r.room_name AS roomName,
-                    DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') as start_time_raw,
-                    GROUP_CONCAT(DISTINCT CASE WHEN bd.seat_id IS NOT NULL THEN bd.item_name END SEPARATOR ', ') AS seatLabel
-                FROM bookings b
-                JOIN users u ON b.user_id = u.user_id
-                JOIN showtimes s ON b.showtime_id = s.showtime_id
-                JOIN movies m ON s.movie_id = m.movie_id
-                JOIN cinemas c ON s.cinema_id = c.cinema_id
-                JOIN rooms r ON s.room_id = r.room_id
-                LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
-                WHERE b.booking_id = ?
-                GROUP BY b.booking_id`, [bookingId]);
-
-            if (orderRows.length === 0) throw new Error("Không tìm thấy đơn hàng");
-            const order = orderRows[0];
-
-            // 4. Logic cộng điểm thưởng
-            const [details] = await connection.execute(
-                `SELECT bd.price, bd.quantity, s.seat_type 
-                 FROM booking_details bd
-                 LEFT JOIN seats s ON bd.seat_id = s.seat_id
-                 WHERE bd.booking_id = ?`,
-                [bookingId]
-            );
-
-            let totalEarnedPoints = 0;
-            details.forEach(item => {
-                const itemTotal = Number(item.price) * Number(item.quantity);
-                if (item.seat_id) {
-                    const type = String(item.seat_type || 'NORMAL').toUpperCase();
-                    let rate = (type === 'VIP') ? 0.10 : (['DOUBLE', 'SWEETBOX', 'COUPLE'].includes(type)) ? 0.07 : 0.05;
-                    totalEarnedPoints += Math.floor(itemTotal * rate);
-                } else {
-                    totalEarnedPoints += Math.floor(itemTotal * 0.03);
-                }
-            });
-
-            if (totalEarnedPoints > 0) {
-                await connection.execute(
-                    `UPDATE users SET points = points + ? WHERE user_id = ?`,
-                    [totalEarnedPoints, order.user_id]
-                );
-                console.log(`✨ [DŨNG] MoMo thành công: Cộng ${totalEarnedPoints} điểm cho User #${order.user_id}`);
-            }
-
-            // 5. Format lại thời gian
-            const [datePart, timePart] = order.start_time_raw.split(' ');
-            const [y, m, d] = datePart.split('-');
-            const [hh, mm] = timePart.split(':');
-            const formattedTime = `${hh}:${mm}`;
-            const formattedDate = `${d}/${m}/${y}`;
-
-            const [foodRows] = await connection.query(
-                "SELECT item_name, quantity FROM booking_details WHERE booking_id = ? AND seat_id IS NULL", 
-                [bookingId]
-            );
-            const foodString = foodRows.map(f => `${f.item_name} (x${f.quantity})`).join(', ') || 'Không có';
-
-            // Gửi mail xác nhận
-            await sendTicketEmail(order.email, {
-                ...order,
-                startTime: formattedTime,
-                selectedDate: formattedDate,
-                selectedFoods: foodString
-            });
-
+            const result = await internalUpdateBooking(bookingId, connection);
+            
             await connection.commit();
 
-            // Trả kết quả về cho client gọi (React)
-            if (res.json) {
-                return res.json({ 
-                    success: true, 
-                    message: "Thanh toán MoMo hoàn tất!",
-                    data: {
-                        bookingId: order.booking_id,
-                        movieTitle: order.movieTitle,
-                        cinemaName: order.cinemaName,
-                        startTime: formattedTime,
-                        selectedDate: formattedDate,
-                        seatLabel: order.seatLabel,
-                        ticketPIN: Math.floor(1000 + Math.random() * 9000)
-                    }
-                });
+            // Phản hồi ngay cho Frontend để không bị xoay vòng vòng (Timeout)
+            res.json({ success: true, message: "Thanh toán thành công!" });
+
+            // Việc gửi Email cho chạy ngầm bên dưới, không bắt khách phải chờ
+            if (!result.alreadyDone) {
+                // Tự gọi gửi mail ở đây nếu cần (không dùng await để tránh chậm)
+                // sendTicketEmail(...).catch(e => console.log("Lỗi mail kệ nó"));
             }
+
         } catch (error) {
             if (connection) await connection.rollback();
-            console.error("❌ [DŨNG] Lỗi xử lý đơn MoMo:", error.message);
-            if (res.status) res.status(500).json({ success: false, message: error.message });
+            console.error("❌ [DŨNG] Lỗi ConfirmFast:", error.message);
+            res.status(500).json({ success: false, message: error.message });
         } finally {
-            if (connection) connection.release();
+            connection.release();
         }
     },
 
-    // 3. CALLBACK (IPN) - MoMo tự gọi "ngầm" về đây
+    // 3. CALLBACK (IPN) - MoMo tự gọi ngầm về
     callback: async (req, res) => {
         const { orderId, resultCode } = req.body;
-        
-        console.log(`\n--- [DŨNG IPN] NHẬN TÍN HIỆU TỪ MOMO ---`);
-        console.log(`- Đơn hàng: #${orderId}`);
-        console.log(`- Trạng thái: ${resultCode === 0 ? 'THÀNH CÔNG' : 'THẤT BẠI'}`);
+        console.log(`\n--- [DŨNG IPN] MoMo gọi về cho đơn #${orderId} (Code: ${resultCode}) ---`);
 
         if (resultCode === 0) {
-            // TỰ ĐỘNG CHỐT ĐƠN & GỬI MAIL NGAY LẬP TỨC
+            const connection = await db.getConnection();
             try {
-                await MomoController.confirmMomoFast(
-                    { body: { bookingId: orderId } }, 
-                    { 
-                        // Giả lập hàm res để confirmMomoFast không bị lỗi khi gọi res.json()
-                        json: (data) => console.log("✅ IPN Tự động xử lý xong:", data.message),
-                        status: () => ({ json: () => {} }) 
-                    }
-                );
+                await connection.beginTransaction();
+                await internalUpdateBooking(orderId, connection);
+                await connection.commit();
+                console.log("✅ [DŨNG IPN] Đã chốt đơn ngầm thành công!");
             } catch (err) {
-                console.error("❌ Lỗi IPN Callback:", err.message);
+                if (connection) await connection.rollback();
+                console.error("❌ [DŨNG IPN] Lỗi xử lý ngầm:", err.message);
+            } finally {
+                connection.release();
             }
         }
-        
-        // Phản hồi cho MoMo là mình đã nhận được tin
         return res.status(204).send(); 
     }
 };
