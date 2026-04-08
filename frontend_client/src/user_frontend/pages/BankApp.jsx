@@ -71,7 +71,7 @@ const BankApp = () => {
     }, [timeLeft, navigate]);
 
     // 3. Xác thực OTP
-    const handleVerifyPayment = async () => {
+        const handleVerifyPayment = async () => {
         if (otp.length < 6) {
             openModal('confirm', 'Thông báo', 'Vui lòng nhập đủ 6 số mã OTP');
             return;
@@ -79,6 +79,7 @@ const BankApp = () => {
 
         setLoading(true);
         try {
+            // Bước 1: Xác thực mã OTP
             const res = await axios.post('https://webcinema-zb8z.onrender.com/api/bank/verify-otp', {
                 email: customerEmail,
                 otp: otp,
@@ -86,14 +87,25 @@ const BankApp = () => {
             });
 
             if (res.data.success) {
-                sessionStorage.setItem('last_booking_id', bookingId);
-                // Mở modal thông báo thành công trước khi chuyển trang
-                openModal('success', 'Thanh toán thành công', 'Cảm ơn bạn đã đặt vé!', () => {
-                    navigate('/confirm-success', { state: res.data.data });
+                // Bước 2: Gọi Route chốt đơn dành riêng cho Bank (đã bàn ở Backend)
+                // Route này sẽ sử dụng executeBankCompletion để không bị kẹt lỗi "Reserved"
+                const completeRes = await axios.post('https://webcinema-zb8z.onrender.com/api/payment/complete-bank', {
+                    bookingId: bookingId
                 });
+
+                if (completeRes.data.success) {
+                    // Xóa dữ liệu tạm để tránh lỗi logic khi đặt vé tiếp theo
+                    sessionStorage.removeItem('holdExpiresAt');
+                    sessionStorage.removeItem('selectedSeats');
+                    sessionStorage.setItem('last_booking_id', bookingId);
+                    
+                    openModal('success', 'Thanh toán thành công', 'Cảm ơn bạn đã đặt vé!', () => {
+                        navigate('/confirm-success', { state: completeRes.data.data });
+                    });
+                }
             }
         } catch (err) {
-            const errorMsg = err.response?.data?.message || "Mã OTP không chính xác!";
+            const errorMsg = err.response?.data?.message || "Giao dịch thất bại hoặc mã OTP sai!";
             openModal('error', 'Thất bại', errorMsg);
             setLoading(false);
         }

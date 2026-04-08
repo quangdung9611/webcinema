@@ -174,25 +174,42 @@ const Booking = () => {
     };
 
     // --- LOGIC ĐIỀU HƯỚNG ĐỒNG BỘ ---
-    const handleContinue = () => {
+        const handleContinue = async () => {
         if (selectedSeats.length === 0) return;
-        
-        // 1. Gom tất cả state hiện tại vào 1 object để mang đi xuyên suốt
+
+        // 1. Gom dữ liệu
         const bookingData = { 
             ...location.state, 
             showtimeDetail, 
             selectedSeats, 
             totalTicketPrice: selectedSeats.reduce((sum, s) => sum + Number(s.price), 0),
-            // Khởi tạo sẵn bắp nước rỗng để các file sau không bị undefined
             selectedFoods: [], 
             totalFoodPrice: 0 
         };
-        
-        // 2. Lưu tạm vào sessionStorage để đề phòng khách F5 ở trang sau
-        sessionStorage.setItem('booking_temp', JSON.stringify(bookingData));
-        
-        // 3. THÊM DÒNG NÀY: Chuyển thẳng sang trang chọn đồ ăn
-        navigate('/foods', { state: bookingData });
+
+        try {
+            // 2. [QUAN TRỌNG] Gọi API để giữ ghế chính thức trong DB trước khi đi tiếp
+            // Việc này giúp tránh lỗi Duplicate khi vào trang Payment nhấn 'Xác nhận'
+            await axios.post('https://webcinema-zb8z.onrender.com/api/seats/hold-multiple', {
+                showtimeId,
+                seats: selectedSeats.map(s => s.seat_id),
+                userId: JSON.parse(localStorage.getItem('user'))?.user_id // Nếu có lưu user
+            });
+
+            // 3. Lưu tạm và chuyển trang
+            sessionStorage.setItem('booking_temp', JSON.stringify(bookingData));
+            navigate('/foods', { state: bookingData });
+
+        } catch (err) {
+            console.error("Lỗi giữ ghế:", err);
+            setModalConfig({
+                show: true,
+                type: 'error',
+                title: 'THÔNG BÁO',
+                message: 'Có vẻ ghế bạn chọn vừa có người nhanh tay hơn rồi, vui lòng chọn ghế khác nhé!',
+                onConfirm: () => { closeModal(); window.location.reload(); }
+            });
+        }
     };
 
     const groupedSeats = useMemo(() => {
