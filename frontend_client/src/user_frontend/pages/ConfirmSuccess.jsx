@@ -26,34 +26,35 @@ const ConfirmSuccess = () => {
     });
 
    // --- LOGIC CHỐT ĐƠN TỰ ĐỘNG & CẬP NHẬT ĐIỂM ---
-useEffect(() => {
+    useEffect(() => {
     const confirmBookingOnServer = async () => {
         const bID = ticketData?.orderId || ticketData?.bookingId;
 
         if (bID && !hasConfirmed.current) {
             hasConfirmed.current = true;
             try {
-                console.log(`>>> [CINEMA STAR] Đang xác thực đơn hàng #${bID}...`);
+                // Đợi 1.5 giây để Server xử lý xong Callback từ MoMo trước
+                // Việc này giúp tránh xung đột (Race Condition)
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                console.log(`>>> [CINEMA STAR] Đang kiểm tra trạng thái đơn hàng #${bID}...`);
                 
-                // 1. Gọi API hoàn tất thanh toán
-                const response = await axios.post('https://webcinema-zb8z.onrender.com/api/payment/complete', 
-                { bookingId: bID },
-                { withCredentials: true } // Quan trọng: Để gửi Cookie usertoken đi
-                );
+                // Thay vì gọi "complete" (yêu cầu chốt), ông nên gọi API lấy "detail" 
+                // để xem đơn hàng đã được Callback chốt chưa.
+                const response = await axios.get(`https://webcinema-zb8z.onrender.com/api/bookings/${bID}`, {
+                    withCredentials: true 
+                });
 
                 if (response.data.success) {
-                    console.log("✅ [CINEMA STAR] Thanh toán thành công!");
+                    console.log("✅ [CINEMA STAR] Đơn hàng đã được xác nhận!");
 
-                    // 2. Gọi API /api/auth/me để lấy Profile mới nhất (đã cộng điểm)
+                    // Sau đó mới cập nhật Profile để lấy điểm thưởng mới
                     const userRes = await axios.get('https://webcinema-zb8z.onrender.com/api/auth/me', {
                         withCredentials: true 
                     });
 
                     if (userRes.data.success) {
-                        // Lưu thông tin user mới vào localStorage để Header cập nhật số điểm
                         localStorage.setItem('user', JSON.stringify(userRes.data.user));
-                        
-                        // Kích hoạt sự kiện để các linh kiện khác (Header, Profile) tự động load lại
                         window.dispatchEvent(new Event("storage"));
                         console.log("✨ [CINEMA STAR] Điểm thưởng mới đã sẵn sàng!");
                     }

@@ -15,10 +15,7 @@ const MomoController = {
             const orderId = bookingId;
             const orderInfo = `Thanh toán vé Cinema Star #${bookingId}`;
             
-            // Cập nhật link Frontend của Dũng
             const redirectUrl = "https://quangdungcinema.id.vn/confirm-success"; 
-            
-            // Cập nhật link Render của Dũng (Không dùng Ngrok nữa)
             const ipnUrl = "https://webcinema-zb8z.onrender.com/api/momo/callback"; 
 
             const requestType = "payWithMethod";
@@ -41,13 +38,14 @@ const MomoController = {
         }
     },
 
-    // 2. XÁC NHẬN THANH TOÁN (Chốt đơn sau khi khách trả tiền)
+    // 2. XÁC NHẬN THANH TOÁN (Logic gốc của Dũng - Chốt đơn + Cộng điểm + Gửi Mail)
     confirmMomoFast: async (req, res) => {
         const { bookingId } = req.body;
         console.log(`>>> 🍿 [DŨNG CINEMA] Đang chốt đơn MoMo #${bookingId}...`);
 
         const connection = await db.getConnection();
         try {
+            // Kiểm tra trạng thái trước khi làm (Chống cộng điểm 2 lần)
             const [check] = await connection.query("SELECT status, user_id FROM bookings WHERE booking_id = ?", [bookingId]);
             if (check[0] && check[0].status === 'Completed') {
                 return res.json({ success: true, message: "Đơn hàng đã hoàn tất trước đó." });
@@ -55,13 +53,12 @@ const MomoController = {
 
             await connection.beginTransaction();
             
-            // --- FIX GIỜ VIỆT NAM TẠI ĐÂY ---
             const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
             // 1. Cập nhật trạng thái đơn hàng
             await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
 
-            // 2. Chốt ghế & Cập nhật thời gian chốt đơn (updated_at) bằng giờ VN
+            // 2. Chốt ghế & Cập nhật thời gian chốt đơn
             await connection.execute(
                 `UPDATE tickets t
                  JOIN showtimes s ON t.showtime_id = s.showtime_id
@@ -127,15 +124,13 @@ const MomoController = {
                 console.log(`✨ [DŨNG] MoMo thành công: Cộng ${totalEarnedPoints} điểm cho User #${order.user_id}`);
             }
 
-            // 5. Format lại thời gian chiếu phim từ database
+            // 5. Format lại thời gian
             const [datePart, timePart] = order.start_time_raw.split(' ');
             const [y, m, d] = datePart.split('-');
             const [hh, mm] = timePart.split(':');
-
             const formattedTime = `${hh}:${mm}`;
             const formattedDate = `${d}/${m}/${y}`;
 
-            // Lấy danh sách bắp nước cho Mail
             const [foodRows] = await connection.query(
                 "SELECT item_name, quantity FROM booking_details WHERE booking_id = ? AND seat_id IS NULL", 
                 [bookingId]
@@ -152,33 +147,56 @@ const MomoController = {
 
             await connection.commit();
 
-            // 6. Trả kết quả về Frontend
-            res.json({ 
-                success: true, 
-                message: "Thanh toán MoMo hoàn tất!",
-                data: {
-                    bookingId: order.booking_id,
-                    movieTitle: order.movieTitle,
-                    cinemaName: order.cinemaName,
-                    startTime: formattedTime,
-                    selectedDate: formattedDate,
-                    seatLabel: order.seatLabel,
-                    ticketPIN: Math.floor(1000 + Math.random() * 9000)
-                }
-            });
-
+            // Trả kết quả về cho client gọi (React)
+            if (res.json) {
+                return res.json({ 
+                    success: true, 
+                    message: "Thanh toán MoMo hoàn tất!",
+                    data: {
+                        bookingId: order.booking_id,
+                        movieTitle: order.movieTitle,
+                        cinemaName: order.cinemaName,
+                        startTime: formattedTime,
+                        selectedDate: formattedDate,
+                        seatLabel: order.seatLabel,
+                        ticketPIN: Math.floor(1000 + Math.random() * 9000)
+                    }
+                });
+            }
         } catch (error) {
             if (connection) await connection.rollback();
-            console.error("❌ [DŨNG] Lỗi MoMo Callback:", error.message);
-            res.status(500).json({ success: false, message: error.message });
+            console.error("❌ [DŨNG] Lỗi xử lý đơn MoMo:", error.message);
+            if (res.status) res.status(500).json({ success: false, message: error.message });
         } finally {
             if (connection) connection.release();
         }
     },
 
+    // 3. CALLBACK (IPN) - MoMo tự gọi "ngầm" về đây
     callback: async (req, res) => {
         const { orderId, resultCode } = req.body;
-        if (resultCode === 0) console.log(`>>> [DŨNG] MoMo IPN: Đơn #${orderId} thanh toán OK.`);
+        
+        console.log(`\n--- [DŨNG IPN] NHẬN TÍN HIỆU TỪ MOMO ---`);
+        console.log(`- Đơn hàng: #${orderId}`);
+        console.log(`- Trạng thái: ${resultCode === 0 ? 'THÀNH CÔNG' : 'THẤT BẠI'}`);
+
+        if (resultCode === 0) {
+            // TỰ ĐỘNG CHỐT ĐƠN & GỬI MAIL NGAY LẬP TỨC
+            try {
+                await MomoController.confirmMomoFast(
+                    { body: { bookingId: orderId } }, 
+                    { 
+                        // Giả lập hàm res để confirmMomoFast không bị lỗi khi gọi res.json()
+                        json: (data) => console.log("✅ IPN Tự động xử lý xong:", data.message),
+                        status: () => ({ json: () => {} }) 
+                    }
+                );
+            } catch (err) {
+                console.error("❌ Lỗi IPN Callback:", err.message);
+            }
+        }
+        
+        // Phản hồi cho MoMo là mình đã nhận được tin
         return res.status(204).send(); 
     }
 };
