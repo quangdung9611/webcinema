@@ -5,13 +5,12 @@ const db = require('../Config/db');
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 // -----------------------------------------------------------
-// 1. XỬ LÝ ĐĂNG KÝ (Sắp xếp chuẩn: phone -> address -> email)
+// 1. XỬ LÝ ĐĂNG KÝ (Giữ nguyên code ban đầu)
 // -----------------------------------------------------------
 exports.register = async (req, res) => {
     const { username, full_name, phone, address, email, password, role } = req.body;
 
     try {
-        // Validation cơ bản
         if (!full_name || full_name.length < 8) {
             return res.status(400).json({ field: 'full_name', message: "Họ tên phải từ 8 ký tự trở lên" });
         }
@@ -23,7 +22,6 @@ exports.register = async (req, res) => {
             });
         }
 
-        // Kiểm tra trùng lặp
         const [existing] = await db.query(
             'SELECT username, email, phone FROM users WHERE username = ? OR email = ? OR phone = ?', 
             [username, email, phone]
@@ -37,13 +35,11 @@ exports.register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const finalRole = role || 'customer';
 
-        // THỨ TỰ CHUẨN CSDL: phone -> address -> email -> password -> role
         const sql = `INSERT INTO users (username, full_name, phone, address, email, password, role) 
                      VALUES (?, ?, ?, ?, ?, ?, ?)`;
         const params = [username, full_name, phone, address || '', email, hashedPassword, finalRole];
 
         const [result] = await db.query(sql, params);
-        
         res.status(201).json({ message: "Đăng ký thành công", userId: result.insertId });
 
     } catch (err) {
@@ -53,7 +49,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. XỬ LÝ ĐĂNG NHẬP (Trả về data theo đúng thứ tự)
+// 2. XỬ LÝ ĐĂNG NHẬP (ĐÃ SỬA: Không xóa chéo token)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -76,8 +72,14 @@ exports.login = async (req, res) => {
         const cookieOptions = { httpOnly: true, secure: true, sameSite: 'none', path: '/', maxAge: 24*60*60*1000 };
         
         const cookieName = isAdmin ? 'admintoken' : 'usertoken';
+        
+        // --- CHỖ THAY ĐỔI QUAN TRỌNG NHẤT ---
+        // Lưu token mới vào trình duyệt
         res.cookie(cookieName, token, cookieOptions);
-        res.clearCookie(isAdmin ? 'usertoken' : 'admintoken', cookieOptions);
+        
+        // MÌNH ĐÃ COMMENT DÒNG DƯỚI ĐỂ KHÔNG XÓA TOKEN CỦA BÊN KIA
+        // res.clearCookie(isAdmin ? 'usertoken' : 'admintoken', cookieOptions);
+        // -------------------------------------
 
         const roleKey = isAdmin ? 'admin' : 'customer';
         res.json({ 
@@ -87,9 +89,9 @@ exports.login = async (req, res) => {
                 user_id: user.user_id,
                 username: user.username,
                 full_name: user.full_name,
-                phone: user.phone,      // Phone trước
-                address: user.address,  // Address sau
-                email: user.email,      // Email cuối
+                phone: user.phone,
+                address: user.address,
+                email: user.email,
                 points: user.points,
                 role: user.role
             }
@@ -98,28 +100,23 @@ exports.login = async (req, res) => {
         res.status(500).json({ error: "Lỗi đăng nhập" });
     }
 };
+
 // -----------------------------------------------------------
-// 3. LẤY THÔNG TIN CÁ NHÂN
+// 3. LẤY THÔNG TIN CÁ NHÂN (Giữ nguyên)
 // -----------------------------------------------------------
 exports.getMe = async (req, res) => {
     try {
         const userId = req.user ? req.user.user_id : null;
-
-        if (!userId) {
-            return res.status(401).json({ message: "Không tìm thấy thông tin xác thực" });
-        }
+        if (!userId) return res.status(401).json({ message: "Không tìm thấy thông tin xác thực" });
 
         const [users] = await db.query(
             'SELECT user_id, username, full_name, phone, address, email, role, points FROM users WHERE user_id = ?', 
             [userId]
         );
 
-        if (users.length === 0) {
-            return res.status(404).json({ message: "Không tìm thấy người dùng" });
-        }
+        if (users.length === 0) return res.status(404).json({ message: "Không tìm thấy người dùng" });
 
         res.json({ user: users[0] }); 
-
     } catch (err) {
         console.error("GetMe Error:", err);
         res.status(500).json({ error: "Lỗi khi lấy thông tin cá nhân" });
@@ -127,10 +124,9 @@ exports.getMe = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 4. XỬ LÝ ĐĂNG XUẤT
+// 4. XỬ LÝ ĐĂNG XUẤT (Giữ nguyên)
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
-    // Khi xóa cookie cũng phải truyền đúng options giống như lúc set
     const cookieOptions = {
         httpOnly: true,
         secure: true,
