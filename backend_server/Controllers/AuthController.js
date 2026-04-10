@@ -5,7 +5,7 @@ const db = require('../Config/db');
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 // -----------------------------------------------------------
-// 1. XỬ LÝ ĐĂNG KÝ (Giữ nguyên code ban đầu)
+// 1. XỬ LÝ ĐĂNG KÝ (Giữ nguyên logic của Dũng)
 // -----------------------------------------------------------
 exports.register = async (req, res) => {
     const { username, full_name, phone, address, email, password, role } = req.body;
@@ -49,7 +49,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. XỬ LÝ ĐĂNG NHẬP (Tối ưu để hiện song song usertoken và admintoken)
+// 2. XỬ LÝ ĐĂNG NHẬP (Đã tối ưu để không bị ghi đè Cookie)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -70,18 +70,25 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET_KEY, { expiresIn: '24h' });
         
-        const cookieOptions = { httpOnly: true, secure: true, sameSite: 'none', path: '/', maxAge: 24*60*60*1000 };
+        const cookieOptions = { 
+            httpOnly: true, 
+            secure: true, 
+            sameSite: 'none', 
+            path: '/', 
+            maxAge: 24*60*60*1000 
+        };
         
-        // --- ĐOẠN QUAN TRỌNG: QUYẾT ĐỊNH TÊN COOKIE ---
-        // Nếu Dũng đang ở trang Admin (role_input là admin) thì mới cấp admintoken
-        // Còn nếu ở trang User (role_input không phải admin) thì cấp usertoken
-        // Cách này giúp acc Admin khi đăng nhập ở trang chủ vẫn có usertoken riêng
-        const cookieName = (role_input === 'admin') ? 'admintoken' : 'usertoken';
+        // --- SỬA LẠI ĐOẠN NÀY: QUYẾT ĐỊNH TÊN COOKIE DỰA TRÊN URL ---
+        // Nếu gọi qua đường dẫn có chữ '/admin' thì đặt tên admintoken
+        // Ngược lại (gọi qua cổng user) thì đặt tên usertoken
+        // Cách này giúp acc Admin khi đăng nhập ở trang chủ vẫn được cấp usertoken riêng biệt
+        const isApiAdmin = req.originalUrl.includes('/admin');
+        const cookieName = isApiAdmin ? 'admintoken' : 'usertoken';
         
-        // Lưu token vào trình duyệt
+        // Lưu token vào trình duyệt theo tên đã chọn
         res.cookie(cookieName, token, cookieOptions);
         
-        // TUYỆT ĐỐI KHÔNG XÓA TOKEN CỦA NHAU (Đã comment dòng dưới)
+        // Tuyệt đối không xóa token của nhau để dùng được song song
         // res.clearCookie(isAdmin ? 'usertoken' : 'admintoken', cookieOptions);
 
         const isAdmin = user.role === 'admin';
@@ -129,7 +136,7 @@ exports.getMe = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 4. XỬ LÝ ĐĂNG XUẤT (Giữ nguyên)
+// 4. XỬ LÝ ĐĂNG XUẤT (Giữ nguyên - Xóa cả 2 để an toàn)
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
     const cookieOptions = {
