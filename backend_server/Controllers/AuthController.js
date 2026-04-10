@@ -49,7 +49,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. XỬ LÝ ĐĂNG NHẬP (ĐÃ SỬA: Không xóa chéo token)
+// 2. XỬ LÝ ĐĂNG NHẬP (Tối ưu để hiện song song usertoken và admintoken)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -59,6 +59,8 @@ exports.login = async (req, res) => {
         if (users.length === 0) return res.status(401).json({ message: "Thông tin không chính xác" });
 
         const user = users[0];
+        
+        // Kiểm tra quyền truy cập dựa trên role_input từ Client gửi lên
         if (role_input && user.role !== role_input) {
             return res.status(403).json({ message: "Sai quyền truy cập" });
         }
@@ -68,19 +70,21 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET_KEY, { expiresIn: '24h' });
         
-        const isAdmin = user.role === 'admin';
         const cookieOptions = { httpOnly: true, secure: true, sameSite: 'none', path: '/', maxAge: 24*60*60*1000 };
         
-        const cookieName = isAdmin ? 'admintoken' : 'usertoken';
+        // --- ĐOẠN QUAN TRỌNG: QUYẾT ĐỊNH TÊN COOKIE ---
+        // Nếu Dũng đang ở trang Admin (role_input là admin) thì mới cấp admintoken
+        // Còn nếu ở trang User (role_input không phải admin) thì cấp usertoken
+        // Cách này giúp acc Admin khi đăng nhập ở trang chủ vẫn có usertoken riêng
+        const cookieName = (role_input === 'admin') ? 'admintoken' : 'usertoken';
         
-        // --- CHỖ THAY ĐỔI QUAN TRỌNG NHẤT ---
-        // Lưu token mới vào trình duyệt
+        // Lưu token vào trình duyệt
         res.cookie(cookieName, token, cookieOptions);
         
-        // MÌNH ĐÃ COMMENT DÒNG DƯỚI ĐỂ KHÔNG XÓA TOKEN CỦA BÊN KIA
+        // TUYỆT ĐỐI KHÔNG XÓA TOKEN CỦA NHAU (Đã comment dòng dưới)
         // res.clearCookie(isAdmin ? 'usertoken' : 'admintoken', cookieOptions);
-        // -------------------------------------
 
+        const isAdmin = user.role === 'admin';
         const roleKey = isAdmin ? 'admin' : 'customer';
         res.json({ 
             message: "Đăng nhập thành công", 
@@ -97,6 +101,7 @@ exports.login = async (req, res) => {
             }
         });
     } catch (err) {
+        console.error("Login Error:", err);
         res.status(500).json({ error: "Lỗi đăng nhập" });
     }
 };
