@@ -43,22 +43,28 @@ app.set('trust proxy', 1);
 app.use(cookieParser()); 
 
 const corsOptions = {
-  origin: [
-    'https://quangdungcinema.id.vn',       
-    'https://webcinema-zb8z.onrender.com', 
-    /\.vercel\.app$/,                      
-    /\.onrender\.com$/,                    
-    'http://localhost:3000',               
-    'http://localhost:5173',
-    // Bổ sung thêm biến thể có/không có dấu gạch chéo cuối để chắc cú
-    'https://quangdungcinema.id.vn/',
-    'https://webcinema-zb8z.onrender.com/'
-  ], 
-  credentials: true,
+  // Thay vì để mảng dài dòng, ông bốc đúng cái origin đang gọi tới
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://quangdungcinema.id.vn',
+      'https://www.quangdungcinema.id.vn',
+      'http://localhost:3000',
+      'http://localhost:5173'
+    ];
+    // Cho phép các request không có origin (như Postman hoặc thiết bị di động) 
+    // hoặc origin nằm trong danh sách cho phép
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS chặn truy cập từ origin này!'));
+    }
+  },
+  credentials: true, // BẮT BUỘC để nhận Cookie
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  // Bổ sung thêm allowedHeaders để tránh trình duyệt chặn các request phức tạp
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 };
+
+app.use(cors(corsOptions));
 app.use(cors(corsOptions));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
