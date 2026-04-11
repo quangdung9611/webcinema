@@ -50,15 +50,15 @@ const corsOptions = {
     /\.onrender\.com$/,                    
     'http://localhost:3000',               
     'http://localhost:5173',
-    // Bổ sung thêm biến thể có/không có dấu gạch chéo cuối để chắc cú
     'https://quangdungcinema.id.vn/',
     'https://webcinema-zb8z.onrender.com/'
   ], 
-  credentials: true,
+  credentials: true, // Quan trọng: Cho phép trình duyệt gửi usertoken và admintoken
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  // Bổ sung thêm allowedHeaders để tránh trình duyệt chặn các request phức tạp
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+  // Bổ sung allowedHeaders để Middleware bốc token chính xác hơn
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "x-auth-role"]
 };
+
 app.use(cors(corsOptions));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
@@ -66,7 +66,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // --- KHỞI TẠO SOCKET.IO & BỘ NHỚ TẠM ---
 const io = new Server(server, {
-  cors: corsOptions,
+  cors: corsOptions, // Dùng chung cấu hình CORS để socket không bị chặn credentials
   transports: ['websocket', 'polling'] 
 });
 
@@ -78,7 +78,6 @@ io.on('connection', (socket) => {
     socket.emit('server-gui-danh-sach-dang-giu', holdingSeats);
 
     socket.on('client-chon-ghe', (data) => {
-        // --- LOGIC TỐI ƯU: Xóa bỏ mọi record cũ của ghế này trước khi thêm mới ---
         holdingSeats = holdingSeats.filter(s => 
             !(Number(s.seatId) === Number(data.seatId) && Number(s.showtimeId) === Number(data.showtimeId))
         );
@@ -114,8 +113,10 @@ app.get('/api', (req, res) => {
   res.send('Kết nối Backend Cinema thành công!');
 });
 
+// THỨ TỰ ROUTE: Admin auth để trên để Middleware nhận diện path /admin chuẩn xác
 app.use('/api/admin/auth', authRoutes); 
 app.use('/api/auth', authRoutes);
+
 app.use('/api/admin/manage', adminRouter); 
 app.use('/api/users', userRoutes);
 app.use('/api/genres', genreRoutes);
@@ -146,6 +147,7 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server đang chạy tại cổng: ${PORT}`);
   
+  // Tự ping giữ server sống trên Render
   setInterval(async () => {
     try {
       await axios.get(`https://webcinema-zb8z.onrender.com/api?t=${Date.now()}`);

@@ -9,10 +9,10 @@ export const AuthProvider = ({ children }) => {
 
     const checkAuth = useCallback(async () => {
         try {
-            // 1. NHẬN DIỆN LÀN ĐƯỜNG
+            // 1. NHẬN DIỆN LÀN ĐƯỜNG (Khớp với Path Cookie)
             const isAdminPage = window.location.pathname.startsWith('/admin');
             
-            // Link chuẩn khớp với index.js (server) đã sửa
+            // Endpoint chuẩn khớp với cấu trúc Router ở Backend
             const authEndpoint = isAdminPage 
                 ? 'https://webcinema-zb8z.onrender.com/api/admin/auth/me' 
                 : 'https://webcinema-zb8z.onrender.com/api/auth/me';
@@ -23,18 +23,23 @@ export const AuthProvider = ({ children }) => {
                 withCredentials: true 
             });
             
-            // 2. CẬP NHẬT USER (Bốc đúng dữ liệu từ Backend)
-            // Ưu tiên res.data.user trước, nếu không có thì lấy cả res.data
-            const userData = res.data.user || res.data;
+            // 2. XỬ LÝ DỮ LIỆU
+            // Backend trả về { user: { ... } } nên ta bốc res.data.user
+            const userData = res.data.user;
 
-            if (userData && (userData.id || userData.role || userData.full_name)) {
+            if (userData) {
                 setUser(userData);
-                console.log("✅ Đã xác thực:", userData.full_name || userData.email);
+                console.log("✅ Xác thực thành công:", userData.full_name || userData.username);
             } else {
                 setUser(null);
             }
         } catch (err) {
-            console.warn("⚠️ Auth check failed:", err.response?.data?.message || err.message);
+            // Nếu lỗi 401 (Hết hạn/Không có token) thì set user về null
+            if (err.response && err.response.status === 401) {
+                console.warn("⚠️ Phiên đăng nhập hết hạn hoặc chưa đăng nhập.");
+            } else {
+                console.error("❌ Lỗi kiểm tra Auth:", err.message);
+            }
             setUser(null);
         } finally {
             setLoading(false); 
@@ -42,15 +47,15 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
-        // Chạy lần đầu khi load trang
+        // Chạy kiểm tra ngay khi load app
         checkAuth();
 
+        // Lắng nghe sự kiện tùy chỉnh 'authChange' (Dùng khi Login/Logout xong phát tín hiệu)
         const handleAuthChange = () => {
-            console.log("🔔 Nhận sự kiện authChange - Đang tải lại dữ liệu...");
+            console.log("🔔 Nhận tín hiệu thay đổi Auth - Đang refresh...");
             checkAuth();
         };
 
-        // Lắng nghe sự kiện từ trang Login
         window.addEventListener('authChange', handleAuthChange);
         
         return () => {
@@ -60,7 +65,10 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{ user, setUser, loading, setLoading, checkAuth }}>
-            {children}
+            {!loading && children} 
+            {/* Mẹo: !loading && children để đảm bảo App chỉ render 
+               khi đã biết chắc chắn trạng thái user (tránh bị nhảy trang)
+            */}
         </AuthContext.Provider>
     );
 };
