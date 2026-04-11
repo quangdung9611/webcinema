@@ -4,9 +4,6 @@ const db = require('../Config/db');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
-// Cấu hình Domain của Dũng
-const COOKIE_DOMAIN = '.quangdungcinema.id.vn';
-
 // -----------------------------------------------------------
 // 1. XỬ LÝ ĐĂNG KÝ
 // -----------------------------------------------------------
@@ -27,7 +24,7 @@ exports.register = async (req, res) => {
 
         const [existing] = await db.query(
             'SELECT username, email, phone FROM users WHERE username = ? OR email = ? OR phone = ?', 
-             [username, email, phone]
+            [username, email, phone]
         );
         if (existing.length > 0) {
             const user = existing[0];
@@ -72,35 +69,21 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET_KEY, { expiresIn: '24h' });
         
-        // Nhận diện loại token dựa trên URL
+        // NHẬN DIỆN LÀN ĐƯỜNG: Dựa vào URL đăng nhập để biết cấp thẻ nào
         const isApiAdmin = req.originalUrl.includes('/admin');
         const cookieName = isApiAdmin ? 'admintoken' : 'usertoken';
         
-        // Thiết lập Cookie Options với Domain của Dũng
+        // THIẾT LẬP COOKIE: 
+        // Admin chỉ sống ở /api, User sống ở /
         const cookieOptions = { 
             httpOnly: true, 
             secure: true, 
             sameSite: 'none', 
-            domain: COOKIE_DOMAIN, // Ép domain để không bị dính link render
             path: isApiAdmin ? '/api' : '/', 
             maxAge: 24 * 60 * 60 * 1000 
         };
         
-        // 1. ĐẶT COOKIE MỚI
         res.cookie(cookieName, token, cookieOptions);
-
-        // 2. XÓA TOKEN ĐỐI LẬP (Đảm bảo login Admin thì bay màu User và ngược lại)
-        if (isApiAdmin) {
-            res.clearCookie('usertoken', { 
-                httpOnly: true, secure: true, sameSite: 'none', 
-                domain: COOKIE_DOMAIN, path: '/' 
-            });
-        } else {
-            res.clearCookie('admintoken', { 
-                httpOnly: true, secure: true, sameSite: 'none', 
-                domain: COOKIE_DOMAIN, path: '/api' 
-            });
-        }
         
         const isAdmin = user.role === 'admin';
         const roleKey = isAdmin ? 'admin' : 'customer';
@@ -153,8 +136,7 @@ exports.logout = (req, res) => {
     const commonOptions = {
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
-        domain: COOKIE_DOMAIN // Phải có domain thì mới xóa triệt để được
+        sameSite: 'none'
     };
 
     // Xóa usertoken ở path /

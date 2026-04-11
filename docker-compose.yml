@@ -54,7 +54,7 @@ services:
       - /app/node_modules
     environment:
       VITE_USER_TOKEN_NAME: usertoken
-      VITE_API_URL: https://quangdungcinema.id.vn # Tên miền mới của ông
+      VITE_API_URL: https://webcinema-zb8z.onrender.com # Tên miền mới của ông
       CHOKIDAR_USEPOLLING: "true"
     command: npm run dev -- --host
     depends_on:
