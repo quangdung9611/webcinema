@@ -14,9 +14,7 @@ const authMiddleware = require('../Middlewares/AuthMiddleware');
 // Đăng ký
 router.post('/register', authController.register);
 
-// Đăng nhập 
-// Khi gọi /api/admin/auth/login -> isApiAdmin sẽ là true -> ăn path /admin
-// Khi gọi /api/auth/login -> isApiAdmin sẽ là false -> ăn path /
+// Đăng nhập (Dùng chung cho cả Admin và User)
 router.post('/login', authController.login);
 
 // ===========================================================
@@ -25,6 +23,8 @@ router.post('/login', authController.login);
 
 /**
  * Lấy thông tin cá nhân
+ * Middleware sẽ tự bốc 'admintoken' hoặc 'usertoken' tùy theo 
+ * việc bạn gọi qua đầu /admin/api/auth hay /api/auth ở server.js
  */
 router.get('/me', authMiddleware, authController.getMe);
 
@@ -32,8 +32,7 @@ router.get('/me', authMiddleware, authController.getMe);
 // 3. ĐĂNG XUẤT (Logout)
 // ===========================================================
 
-// Đăng xuất
-// Controller mới đã có clearCookie cho cả 2 path nên cực kỳ an toàn
+// Đăng xuất (Controller mới sẽ xóa sạch cả 2 loại token ở path '/')
 router.post('/logout', authMiddleware, authController.logout);
 
 module.exports = router;

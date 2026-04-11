@@ -69,19 +69,17 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET_KEY, { expiresIn: '24h' });
         
-        // NHẬN DIỆN LÀN ĐƯỜNG: Admin login qua /admin thì cấp admintoken, còn lại usertoken
+        // NHẬN DIỆN LÀN ĐƯỜNG: Dựa vào URL đăng nhập để biết cấp thẻ nào
         const isApiAdmin = req.originalUrl.includes('/admin');
         const cookieName = isApiAdmin ? 'admintoken' : 'usertoken';
         
-        // THIẾT LẬP COOKIE:
-        // - Domain: quangdungcinema.id.vn (Cố định domain của ông)
-        // - Path: Admin nhốt ở /admin, User để ở /
+        // THIẾT LẬP COOKIE: 
+        // Admin chỉ sống ở /api, User sống ở /
         const cookieOptions = { 
             httpOnly: true, 
             secure: true, 
             sameSite: 'none', 
-            domain: '.quangdungcinema.id.vn', // Dấu chấm để nhận cả sub-domain
-            path: isApiAdmin ? '/admin' : '/', 
+            path: isApiAdmin ? '/api' : '/', 
             maxAge: 24 * 60 * 60 * 1000 
         };
         
@@ -138,15 +136,14 @@ exports.logout = (req, res) => {
     const commonOptions = {
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
-        domain: '.quangdungcinema.id.vn'
+        sameSite: 'none'
     };
 
     // Xóa usertoken ở path /
     res.clearCookie('usertoken', { ...commonOptions, path: '/' });
 
-    // Xóa admintoken ở path /admin
-    res.clearCookie('admintoken', { ...commonOptions, path: '/admin' });
+    // Xóa admintoken ở path /api
+    res.clearCookie('admintoken', { ...commonOptions, path: '/api' });
 
     res.json({ message: "Đã đăng xuất hệ thống" });
 };
