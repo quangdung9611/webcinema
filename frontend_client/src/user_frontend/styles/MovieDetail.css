@@ -437,7 +437,7 @@
 }
 
 /* ==========================================
-   7. RESPONSIVE
+   7. RESPONSIVE (ĐÃ TINH CHỈNH CHO DŨNG)
    ========================================== */
 @media (max-width: 992px) {
     .cinemastar-sidebar-container { 
@@ -447,16 +447,30 @@
         flex: 1; width: 100%; 
     }
     .movie-top-info { 
-        grid-template-columns: 250px 1fr; 
+        grid-template-columns: 220px 1fr; /* Thu nhỏ bớt cột poster */
+        gap: 25px;
     }
 }
 
 @media (max-width: 768px) {
+    .movie-detail-page {
+        padding: 30px 0; /* Giảm padding cho đỡ trống */
+    }
     .movie-main-title { 
-        text-align: center; 
+        text-align: center;
+        margin-top: 15px;
     }
     .movie-top-info { 
-        gap: 25px; 
+        gap: 20px; 
+    }
+    .meta-row {
+        justify-content: center;
+        gap: 10px;
+    }
+    .description-text {
+        text-align: left; /* Mobile mà justify là chữ bị hở kẽ răng xấu lắm */
+        font-size: 14.5px;
+        padding: 0 5px;
     }
 }
 
@@ -467,18 +481,54 @@
     }
     .poster-frame { 
         margin: 0 auto; 
+        max-width: 200px; /* Poster nhỏ lại cho xinh */
     }
     .meta-row, .rating-row { 
         justify-content: center; 
+        margin-left: auto;
+        margin-right: auto;
     }
+    
+    /* Lịch chiếu cho Mobile */
+    .date-picker-tabs {
+        padding: 10px;
+        gap: 10px;
+    }
+    .date-picker-tabs button {
+        min-width: 75px; /* Nút ngày nhỏ lại */
+        height: 65px;
+    }
+    
+    .cinema-group {
+        padding: 15px; /* Giảm padding cho đỡ chiếm diện tích */
+    }
+    .time-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Nút giờ tự xếp */
+        gap: 10px;
+    }
+    .time-item {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+
     .section-divider { 
         text-align: center; 
         border-left: none; 
-        border-bottom: 2px solid #00d2ff; 
-        padding-left: 0; 
+        border-bottom: 3px solid #00d2ff; 
+        padding-left: 0;
+        margin: 30px 0 20px;
     }
-    .star-list svg { 
-        width: 20px !important; 
-        height: 20px !important; 
+    
+    /* Review cho Mobile */
+    .review-card {
+        flex-direction: column; /* Avatar lên trên, chữ xuống dưới */
+        align-items: center;
+        text-align: center;
+    }
+    .user-rating-stars {
+        justify-content: center;
+    }
+    .star-list {
+        gap: 4px;
     }
 }

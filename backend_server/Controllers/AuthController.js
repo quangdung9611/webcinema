@@ -5,7 +5,7 @@ const db = require('../Config/db');
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 // -----------------------------------------------------------
-// 1. XỬ LÝ ĐĂNG KÝ (Giữ nguyên logic của Dũng)
+// 1. XỬ LÝ ĐĂNG KÝ (Giữ nguyên logic ban đầu của Dũng)
 // -----------------------------------------------------------
 exports.register = async (req, res) => {
     const { username, full_name, phone, address, email, password, role } = req.body;
@@ -49,7 +49,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. XỬ LÝ ĐĂNG NHẬP (Đã tối ưu để không bị ghi đè Cookie)
+// 2. XỬ LÝ ĐĂNG NHẬP (Cập nhật Path để dùng song song & bảo mật)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -60,7 +60,6 @@ exports.login = async (req, res) => {
 
         const user = users[0];
         
-        // Kiểm tra quyền truy cập dựa trên role_input từ Client gửi lên
         if (role_input && user.role !== role_input) {
             return res.status(403).json({ message: "Sai quyền truy cập" });
         }
@@ -70,27 +69,23 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET_KEY, { expiresIn: '24h' });
         
+        // NHẬN DIỆN LÀN ĐƯỜNG: Dựa vào URL gọi API để quyết định loại Cookie
+        const isApiAdmin = req.originalUrl.includes('/admin');
+        const cookieName = isApiAdmin ? 'admintoken' : 'usertoken';
+        
+        // THIẾT LẬP COOKIE:
+        // - Admin: path là /api (Tàng hình trên giao diện, chỉ hiện khi gọi API)
+        // - User: path là / (Dùng cho toàn bộ website)
         const cookieOptions = { 
             httpOnly: true, 
             secure: true, 
             sameSite: 'none', 
-            path: '/', 
+            path: isApiAdmin ? '/api' : '/', 
             maxAge: 24*60*60*1000 
         };
         
-        // --- SỬA LẠI ĐOẠN NÀY: QUYẾT ĐỊNH TÊN COOKIE DỰA TRÊN URL ---
-        // Nếu gọi qua đường dẫn có chữ '/admin' thì đặt tên admintoken
-        // Ngược lại (gọi qua cổng user) thì đặt tên usertoken
-        // Cách này giúp acc Admin khi đăng nhập ở trang chủ vẫn được cấp usertoken riêng biệt
-        const isApiAdmin = req.originalUrl.includes('/admin');
-        const cookieName = isApiAdmin ? 'admintoken' : 'usertoken';
-        
-        // Lưu token vào trình duyệt theo tên đã chọn
         res.cookie(cookieName, token, cookieOptions);
         
-        // Tuyệt đối không xóa token của nhau để dùng được song song
-        // res.clearCookie(isAdmin ? 'usertoken' : 'admintoken', cookieOptions);
-
         const isAdmin = user.role === 'admin';
         const roleKey = isAdmin ? 'admin' : 'customer';
         res.json({ 
@@ -136,17 +131,20 @@ exports.getMe = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 4. XỬ LÝ ĐĂNG XUẤT (Giữ nguyên - Xóa cả 2 để an toàn)
+// 4. XỬ LÝ ĐĂNG XUẤT (Xóa đúng từng Path để không bị kẹt token)
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
-    const cookieOptions = {
+    const commonOptions = {
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
-        path: '/'
+        sameSite: 'none'
     };
 
-    res.clearCookie('usertoken', cookieOptions);
-    res.clearCookie('admintoken', cookieOptions);
+    // Xóa usertoken ở path /
+    res.clearCookie('usertoken', { ...commonOptions, path: '/' });
+
+    // Xóa admintoken ở path /api
+    res.clearCookie('admintoken', { ...commonOptions, path: '/api' });
+
     res.json({ message: "Đã đăng xuất hệ thống" });
 };
