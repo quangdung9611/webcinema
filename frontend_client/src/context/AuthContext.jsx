@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
             const isAdminPage = window.location.pathname.startsWith('/admin');
             
             // --- ĐÃ ĐỔI SANG DOMAIN THẬT ĐỂ NHẬN COOKIE ---
-            const BASE_URL = 'https://webcinema-zb8z.onrender.com'; 
+            const BASE_URL = 'https://quangdungcinema.id.vn'; 
             
             const authEndpoint = isAdminPage 
                 ? `${BASE_URL}/api/admin/auth/me` 

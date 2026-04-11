@@ -59,7 +59,7 @@ const MomoController = {
             const orderId = bookingId;
             const orderInfo = `Thanh toán vé Cinema Star #${bookingId}`;
             
-            const redirectUrl = "https://webcinema-zb8z.onrender.com/confirm-success"; 
+            const redirectUrl = "https://quangdungcinema.id.vn/confirm-success"; 
             const ipnUrl = "https://webcinema-zb8z.onrender.com/api/momo/callback"; 
 
             const requestType = "payWithMethod";
