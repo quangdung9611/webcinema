@@ -4,6 +4,9 @@ const db = require('../Config/db');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
+// --- CẤU HÌNH DOMAIN CỦA DŨNG TẠI ĐÂY ---
+const COOKIE_DOMAIN = 'quangdungcinema.id.vn';
+
 // -----------------------------------------------------------
 // 1. XỬ LÝ ĐĂNG KÝ
 // -----------------------------------------------------------
@@ -69,28 +72,24 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET_KEY, { expiresIn: '24h' });
         
-        // NHẬN DIỆN LÀN ĐƯỜNG: Dựa vào URL đăng nhập để biết cấp thẻ nào
         const isApiAdmin = req.originalUrl.includes('/admin');
         const cookieName = isApiAdmin ? 'admintoken' : 'usertoken';
         
-        // THIẾT LẬP COOKIE: 
-        // Admin chỉ sống ở /api, User sống ở /
         const cookieOptions = { 
             httpOnly: true, 
             secure: true, 
             sameSite: 'none', 
+            domain: COOKIE_DOMAIN, // Áp dụng domain để browser chấp nhận cookie
             path: isApiAdmin ? '/api' : '/', 
             maxAge: 24 * 60 * 60 * 1000 
         };
         
         res.cookie(cookieName, token, cookieOptions);
         
-        const isAdmin = user.role === 'admin';
-        const roleKey = isAdmin ? 'admin' : 'customer';
+        // Trả về object user gọn gàng để Dũng lưu localStorage ở Frontend
         res.json({ 
             message: "Đăng nhập thành công", 
-            role: user.role,
-            [roleKey]: { 
+            user: { 
                 user_id: user.user_id,
                 username: user.username,
                 full_name: user.full_name,
@@ -136,13 +135,11 @@ exports.logout = (req, res) => {
     const commonOptions = {
         httpOnly: true,
         secure: true,
-        sameSite: 'none'
+        sameSite: 'none',
+        domain: COOKIE_DOMAIN // Bắt buộc trùng domain khi login thì mới clear được
     };
 
-    // Xóa usertoken ở path /
     res.clearCookie('usertoken', { ...commonOptions, path: '/' });
-
-    // Xóa admintoken ở path /api
     res.clearCookie('admintoken', { ...commonOptions, path: '/api' });
 
     res.json({ message: "Đã đăng xuất hệ thống" });
