@@ -7,71 +7,60 @@ const BASE_URL = 'https://webcinema-zb8z.onrender.com';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true); // Trạng thái chờ xác thực
 
-    // Tách biệt hàm dọn dẹp để gọi ở nhiều nơi
-    const clearLocalAuth = useCallback(() => {
+    // Dọn dẹp state trong React
+    const clearAuth = useCallback(() => {
         setUser(null);
-        localStorage.removeItem('user');
     }, []);
 
     const checkAuth = useCallback(async () => {
+        // Mỗi khi checkAuth chạy, mình bật loading lên nếu cần
+        setLoading(true); 
         try {
-            const authEndpoint = `${BASE_URL}/api/auth/me`;
+            // Nhận diện vùng để gọi đúng endpoint (để Backend đọc đúng Path Cookie)
+            const isAdminPath = window.location.pathname.startsWith('/admin');
+            const endpoint = isAdminPath 
+                ? `${BASE_URL}/api/admin/auth/me` 
+                : `${BASE_URL}/api/auth/me`;
 
-            // BẮT BUỘC: withCredentials để gửi Cookie lên Render
-            const res = await axios.get(authEndpoint, { withCredentials: true });
+            const res = await axios.get(endpoint, { withCredentials: true });
             
-            const userData = res.data.user;
-
-            if (userData) {
-                setUser(userData);
-                localStorage.setItem('user', JSON.stringify(userData));
-                console.log("✅ Đã xác thực:", userData.username);
+            if (res.data.user) {
+                setUser(res.data.user);
+                console.log("✅ Identity verified via Cookie:", res.data.user.username);
             } else {
-                clearLocalAuth();
+                clearAuth();
             }
         } catch (err) {
-            // TÁCH BIỆT: Chỉ xóa local khi lỗi thực sự là do Token (401, 403)
-            // Nếu lỗi 500 hoặc mất mạng thì không nên xóa ngay để tránh bị logout oan
-            if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-                console.log("⚠️ Phiên làm việc hết hạn");
-                clearLocalAuth();
-            }
+            console.log("⚠️ No valid cookie or session expired");
+            clearAuth();
         } finally {
-            setLoading(false); 
+            setLoading(false); // Xong xuôi thì tắt loading
         }
-    }, [clearLocalAuth]);
+    }, [clearAuth]);
 
     useEffect(() => {
-        // 1. Khởi tạo: Đọc từ localStorage để UI mượt mà
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-            try {
-                setUser(JSON.parse(savedUser));
-            } catch (e) {
-                clearLocalAuth();
-            }
-        }
-        
-        // 2. Xác thực lại với Server ngay lập tức
+        // Lần đầu vào web, hỏi Server xem "Tui có thẻ Cookie nào không?"
         checkAuth();
 
-        // 3. Lắng nghe sự kiện thay đổi (Login/Logout từ các component khác)
+        // Nghe các sự kiện đăng nhập/đăng xuất để cập nhật lại state
         const handleAuthChange = () => checkAuth();
         window.addEventListener('authChange', handleAuthChange);
         
         return () => window.removeEventListener('authChange', handleAuthChange);
-    }, [checkAuth, clearLocalAuth]);
+    }, [checkAuth]);
 
     return (
-        <AuthContext.Provider value={{ user, setUser, loading, setLoading, checkAuth, clearLocalAuth }}>
-            {/* Hiển thị children ngay, checkAuth sẽ cập nhật trạng thái sau */}
-            {children}
-            
-            {/* Nếu muốn hiện loading khi lần đầu vào trang thì dùng: 
-                loading ? <div className="spinner">...</div> : children 
+        <AuthContext.Provider value={{ user, setUser, loading, checkAuth, clearAuth }}>
+            {/* QUAN TRỌNG: Để tránh lộ nội dung trang nhạy cảm khi chưa xác thực xong,
+               ông có thể chặn render children cho đến khi loading = false.
             */}
+            {!loading ? children : (
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>
+                    <p>Đang kiểm tra quyền truy cập...</p>
+                </div>
+            )}
         </AuthContext.Provider>
     );
 };

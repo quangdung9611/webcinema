@@ -9,14 +9,14 @@ import {
     LogOut, 
     LogIn, 
     UserPlus,
-    LayoutDashboard // Thêm icon này cho Admin
+    LayoutDashboard 
 } from 'lucide-react'; 
 import '../styles/Header.css';
 
 const UserHeader = () => {
     const navigate = useNavigate();
-    // Lấy thêm clearLocalAuth từ Context để dọn dẹp cho sạch
-    const { user, clearLocalAuth } = useAuth(); 
+    // Dùng clearAuth thay cho clearLocalAuth
+    const { user, clearAuth } = useAuth(); 
     const [showDropdown, setShowDropdown] = useState(false);
     const [cinemas, setCinemas] = useState([]);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -53,17 +53,22 @@ const UserHeader = () => {
 
     const handleLogout = async () => {
         try {
-            // Gọi API logout để Backend xóa sạch Cookie
-            await axios.post('https://webcinema-zb8z.onrender.com/api/auth/logout', {}, { withCredentials: true });
+            // Bước 1: Gọi API xóa Cookie tại Backend (xóa cả usertoken và admintoken)
+            await axios.post('https://webcinema-zb8z.onrender.com/api/auth/logout', {}, { 
+                withCredentials: true 
+            });
         } catch (err) {
             console.error("Lỗi khi logout:", err);
         } finally {
-            // Dù API lỗi hay thành công, vẫn phải xóa sạch Local để bảo mật
-            clearLocalAuth(); 
+            // Bước 2: Dọn dẹp RAM (State) - Không còn Storage nào để xóa ở đây
+            clearAuth(); 
             setShowDropdown(false);
-            navigate('/');
-            // Bắn sự kiện để các Component khác biết mà cập nhật
+            
+            // Bước 3: Bắn sự kiện đồng bộ giữa các tab
             window.dispatchEvent(new Event('authChange'));
+            
+            // Bước 4: Chuyển hướng
+            navigate('/');
         }
     };
 
@@ -153,7 +158,6 @@ const UserHeader = () => {
                                     </div>
                                     <div className="dropdown-divider"></div>
                                     
-                                    {/* Lối tắt vào Admin nếu là tài khoản Admin */}
                                     {user.role === 'admin' && (
                                         <div className="dropdown-item admin-link" onClick={() => {navigate('/admin'); setShowDropdown(false);}}>
                                             <LayoutDashboard size={18} /> <span>Trang Quản Trị</span>

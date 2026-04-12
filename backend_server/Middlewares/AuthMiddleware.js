@@ -2,27 +2,28 @@ const jwt = require('jsonwebtoken');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
-// Cấu hình phải khớp 100% với Controller để lệnh clearCookie có tác dụng
+// Cấu hình gốc (Bỏ path cứng ở đây để linh hoạt trong hàm xóa)
 const BASE_COOKIE_CONFIG = {
     httpOnly: true,
     secure: true,
-    sameSite: 'none',
-    path: '/'
+    sameSite: 'none'
 };
 
 const AuthMiddleware = (req, res, next) => {
     // 1. NHẬN DIỆN VÙNG TRUY CẬP
-    const isAdminPath = req.originalUrl.includes('/api/admin');
+    // Kiểm tra xem request có đang gọi vào các API dành cho Admin không
+    const isAdminPath = req.originalUrl.includes('/api/admin') || req.originalUrl.includes('/api/manage');
 
-    // 2. LẤY TOKEN THÔNG MINH
-    // Ưu tiên lấy admintoken trước nếu đang vào path admin, hoặc lấy bất cứ thẻ nào có sẵn
-    const token = req.cookies.admintoken || req.cookies.usertoken;
+    // 2. LẤY TOKEN BIỆT LẬP
+    // Nếu vào path admin -> CHỈ đọc admintoken
+    // Nếu vào path khác -> CHỈ đọc usertoken
+    const token = isAdminPath ? req.cookies.admintoken : req.cookies.usertoken;
 
     // 3. KIỂM TRA SỰ TỒN TẠI CỦA TOKEN
     if (!token) {
         return res.status(401).json({ 
             message: isAdminPath 
-                ? "Vui lòng đăng nhập quyền Quản trị viên!" 
+                ? "Phiên làm việc admin hết hạn, vui lòng đăng nhập lại!" 
                 : "Vui lòng đăng nhập để sử dụng tính năng này!" 
         });
     }
@@ -32,7 +33,7 @@ const AuthMiddleware = (req, res, next) => {
         const decoded = jwt.verify(token, SECRET_KEY);
         req.user = decoded; 
 
-        // 5. KIỂM TRA QUYỀN TRUY CẬP (ROLE)
+        // 5. KIỂM TRA QUYỀN TRUY CẬP (ROLE) DỰA TRÊN PATH
         if (isAdminPath && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 message: "Truy cập bị từ chối: Bạn không có quyền Quản trị!" 
@@ -46,9 +47,12 @@ const AuthMiddleware = (req, res, next) => {
         console.error("Lỗi xác thực Token:", err.message);
         
         // TÁCH BIỆT & DỨT KHOÁT: Xóa sạch dấu vết khi token sai/hết hạn
-        const clearOptions = { ...BASE_COOKIE_CONFIG, maxAge: 0 };
-        res.clearCookie('usertoken', clearOptions);
-        res.clearCookie('admintoken', clearOptions);
+        // Phải truyền đúng PATH thì trình duyệt mới chịu xóa thẻ đó
+        if (isAdminPath) {
+            res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, path: '/admin', maxAge: 0 });
+        } else {
+            res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, path: '/', maxAge: 0 });
+        }
 
         return res.status(401).json({ 
             message: "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!"

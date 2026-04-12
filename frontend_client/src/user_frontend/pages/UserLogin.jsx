@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Link, useLocation } from 'react-router-dom'; // Thêm useLocation
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext'; // Thêm import này
+import { useAuth } from '../../context/AuthContext'; 
 import '../styles/UserAuth.css';
 
 const UserLogin = () => {
@@ -16,8 +16,8 @@ const UserLogin = () => {
     const [serverError, setServerError] = useState(''); 
 
     const navigate = useNavigate();
-    const location = useLocation(); // Lấy thông tin trang trước đó (nếu có)
-    const { checkAuth } = useAuth(); // Lấy hàm checkAuth từ Context
+    const location = useLocation();
+    const { checkAuth } = useAuth(); // Lấy hàm checkAuth để ép cập nhật state ngay sau login
 
     const validate = () => {
         let tempErrors = {};
@@ -44,26 +44,27 @@ const UserLogin = () => {
 
         setLoading(true);
         try {
-            // [CẬP NHẬT]: Backend sẽ tự động trả về Set-Cookie 'usertoken'
+            // 1. Gửi request login
+            // withCredentials: true cực kỳ quan trọng để trình duyệt nhận Set-Cookie từ Server
             await axios.post('https://webcinema-zb8z.onrender.com/api/auth/login', {
                 ...formData,
-                role_input: 'customer'
+                role_input: 'customer' // Ép kiểu login là customer để nhận usertoken ở path '/'
             }, { withCredentials: true });
             
-            // KHÔNG LƯU BẤT CỨ THỨ GÌ VÀO sessionStorage NỮA
-
-            // 1. Cập nhật dữ liệu user vào Context ngay lập tức
+            // 2. ÉP CONTEXT CẬP NHẬT NGAY
+            // Vì không còn localStorage, ta phải gọi checkAuth để nó chạy API /me lấy data user vào State
             await checkAuth();
 
-            // 2. Kích hoạt sự kiện để các thành phần khác (Header) tự cập nhật
+            // 3. Thông báo cho các tab khác (nếu có)
             window.dispatchEvent(new Event('authChange'));
             
-            // 3. Điều hướng: Nếu người dùng bị bắt đăng nhập khi đang ở trang đặt vé, 
-            // sau khi xong sẽ quay lại đúng trang đó, nếu không thì về trang chủ.
+            // 4. Điều hướng
+            // replace: true để người dùng không bấm 'Back' quay lại trang login được nữa
             const from = location.state?.from || '/';
             navigate(from, { replace: true });
             
         } catch (err) {
+            console.error("Login Error:", err);
             setServerError(err.response?.data?.message || "Tài khoản hoặc mật khẩu không chính xác");
         } finally {
             setLoading(false);
@@ -93,6 +94,7 @@ const UserLogin = () => {
                             className={`auth-input ${errors.email ? 'input-error' : ''}`}
                             value={formData.email}
                             onChange={handleChange}
+                            autoComplete="email"
                         />
                         {errors.email && <span className="error-text">{errors.email}</span>}
                     </div>
@@ -106,6 +108,7 @@ const UserLogin = () => {
                             className={`auth-input ${errors.password ? 'input-error' : ''}`}
                             value={formData.password}
                             onChange={handleChange}
+                            autoComplete="current-password"
                         />
                         {errors.password && <span className="error-text">{errors.password}</span>}
                     </div>

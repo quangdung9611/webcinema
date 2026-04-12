@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../../components/Modal';
+import { useAuth } from '../../context/AuthContext'; // Import useAuth
 import '../../styles/AdminAuth.css'; 
 
 const AdminLogin = () => {
@@ -9,6 +10,9 @@ const AdminLogin = () => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
+
+    // Lấy hàm checkAuth từ Context để cập nhật trạng thái Admin ngay lập tức
+    const { checkAuth } = useAuth(); 
 
     const [modalConfig, setModalConfig] = useState({
         show: false,
@@ -40,8 +44,8 @@ const AdminLogin = () => {
 
         setLoading(true);
         try {
-            // [CẬP NHẬT 1]: Gọi login qua cổng /api/admin để khớp với server.js mới
-            const res = await axios.post('https://webcinema-zb8z.onrender.com/api/admin/auth/login', 
+            // [CẬP NHẬT 1]: Đăng nhập qua cổng Admin để nhận 'admintoken' với Path='/admin'
+            await axios.post('https://webcinema-zb8z.onrender.com/api/admin/auth/login', 
                 { 
                     email, 
                     password,
@@ -50,32 +54,29 @@ const AdminLogin = () => {
                 { withCredentials: true } 
             );
 
-            // [CẬP NHẬT 2]: Lấy thông tin Admin qua cổng chuẩn đã test thành công
-            const profileRes = await axios.get('https://webcinema-zb8z.onrender.com/api/admin/auth/me', {
-                withCredentials: true
-            });
+            // [CẬP NHẬT 2]: Thay vì gọi API /me thủ công, hãy dùng checkAuth của Context.
+            // Vì checkAuth đã được mình viết thông minh: thấy path có '/admin' nó sẽ tự gọi endpoint admin.
+            await checkAuth();
 
-            const adminData = profileRes.data.user || profileRes.data;
-
-            // [CẬP NHẬT 3]: Bắn sự kiện để AuthContext và Header cập nhật lại thông tin Dũng
+            // [CẬP NHẬT 3]: Bắn sự kiện đồng bộ
             window.dispatchEvent(new Event('authChange'));
 
             setModalConfig({
                 show: true,
                 type: 'success',
                 title: 'XÁC THỰC THÀNH CÔNG',
-                message: `Chào mừng Quản trị viên: ${adminData.full_name || adminData.username || 'Quang Dũng'}.`,
+                message: `Chào mừng Quản trị viên hệ thống.`,
                 onConfirm: () => {
                     setModalConfig({ ...modalConfig, show: false });
-                    navigate('/admin/dashboard');
+                    navigate('/admin/dashboard', { replace: true });
                 }
             });
 
-            // Tự động chuyển hướng sau 1.5s nếu người dùng không bấm xác nhận
-            setTimeout(() => navigate('/admin/dashboard'), 1500);
+            // Tự động chuyển hướng sau 1.5s
+            setTimeout(() => navigate('/admin/dashboard', { replace: true }), 1500);
 
         } catch (err) {
-            console.error("Login Error:", err);
+            console.error("Admin Login Error:", err);
             setModalConfig({
                 show: true,
                 type: 'error',
@@ -105,6 +106,7 @@ const AdminLogin = () => {
                                 setEmail(e.target.value);
                                 if (errors.email) setErrors({...errors, email: ''});
                             }}
+                            autoComplete="email"
                         />
                         {errors.email && <span className="admin-error-text">{errors.email}</span>}
                     </div>
@@ -120,6 +122,7 @@ const AdminLogin = () => {
                                 setPassword(e.target.value);
                                 if (errors.password) setErrors({...errors, password: ''});
                             }}
+                            autoComplete="current-password"
                         />
                         {errors.password && <span className="admin-error-text">{errors.password}</span>}
                     </div>
