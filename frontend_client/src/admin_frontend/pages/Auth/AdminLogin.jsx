@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../../components/Modal';
-import { useAuth } from '../../context/AuthContext'; // Import useAuth
+import { useAuth } from '../../../context/AuthContext'; // Import useAuth
 import '../../styles/AdminAuth.css'; 
 
 const AdminLogin = () => {

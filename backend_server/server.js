@@ -13,7 +13,8 @@ const { Server } = require("socket.io");
 const server = http.createServer(app); 
 
 // IMPORT CÁC ROUTERS
-const authRoutes = require('./Routers/AuthRouter');
+const authRoutes = require('./Routers/UserAuthRouter');
+const adminAuthRoutes = require('./Routers/AdminAuthRouter');
 const userRoutes = require('./Routers/UserRouter');
 const genreRoutes = require('./Routers/GenreRouter');
 const movieRoutes = require('./Routers/MovieRouter');
@@ -111,6 +112,8 @@ app.get('/api', (req, res) => {
 // Sử dụng đúng Endpoint như đã cấu hình ở Frontend
 app.use('/api/auth', authRoutes);
 
+// Cổng cho Admin
+app.use('/api/admin/auth', adminAuthRoutes);
 // Các routes còn lại giữ nguyên
 app.use('/api/admin/manage', adminRouter); 
 app.use('/api/users', userRoutes);
