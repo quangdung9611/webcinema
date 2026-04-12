@@ -55,9 +55,8 @@ exports.register = async (req, res) => {
     }
 };
 
-// -----------------------------------------------------------
-// 2. XỬ LÝ ĐĂNG NHẬP (CHIA PATH /ADMIN VÀ /)
-// -----------------------------------------------------------
+// ... (phần register và config bên trên giữ nguyên)
+
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
 
@@ -76,22 +75,36 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET_KEY, { expiresIn: '24h' });
         
-        // --- LOGIC CHIA VÙNG ĐÚNG Ý QUANG DŨNG ---
+        // --- LOGIC CHIA VÙNG & DỌN DẸP CHÉO ---
         const isAdmin = user.role === 'admin';
-        const cookieName = isAdmin ? 'admintoken' : 'usertoken';
-        const targetPath = isAdmin ? '/admin' : '/'; // Admin ở /admin, User ở /
         
-        const setOptions = { 
-            ...BASE_COOKIE_CONFIG, 
-            path: targetPath, 
-            maxAge: 24 * 60 * 60 * 1000 
-        };
+        if (isAdmin) {
+            // 1. Cấp thẻ cho Admin vào vùng /admin
+            res.cookie('admintoken', token, { 
+                ...BASE_COOKIE_CONFIG, 
+                path: '/admin', 
+                maxAge: 24 * 60 * 60 * 1000 
+            });
 
-        // Xóa sạch cookie cũ ở đúng path trước khi cấp mới
-        res.clearCookie(cookieName, { ...BASE_COOKIE_CONFIG, path: targetPath, maxAge: 0 });
-        
-        // Cấp thẻ vào đúng địa bàn
-        res.cookie(cookieName, token, setOptions);
+            // 2. QUAN TRỌNG: Đuổi sạch thẻ User ở vùng / để tránh hiện 2 cái
+            res.clearCookie('usertoken', { 
+                ...BASE_COOKIE_CONFIG, 
+                path: '/' 
+            });
+        } else {
+            // 1. Cấp thẻ cho User vào vùng /
+            res.cookie('usertoken', token, { 
+                ...BASE_COOKIE_CONFIG, 
+                path: '/', 
+                maxAge: 24 * 60 * 60 * 1000 
+            });
+
+            // 2. QUAN TRỌNG: Đuổi sạch thẻ Admin ở vùng /admin (nếu sếp muốn đổi vai làm khách)
+            res.clearCookie('admintoken', { 
+                ...BASE_COOKIE_CONFIG, 
+                path: '/admin' 
+            });
+        }
         
         const roleKey = isAdmin ? 'admin' : 'customer';
         res.json({ 
@@ -113,6 +126,8 @@ exports.login = async (req, res) => {
         res.status(500).json({ error: "Lỗi đăng nhập" });
     }
 };
+
+// ... (phần getMe và logout bên dưới giữ nguyên)
 
 // -----------------------------------------------------------
 // 3. LẤY THÔNG TIN CÁ NHÂN (GIỮ NGUYÊN CODE BAN ĐẦU)
