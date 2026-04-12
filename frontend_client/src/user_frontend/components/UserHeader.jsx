@@ -8,13 +8,15 @@ import {
     IdCard, 
     LogOut, 
     LogIn, 
-    UserPlus 
+    UserPlus,
+    LayoutDashboard // Thêm icon này cho Admin
 } from 'lucide-react'; 
 import '../styles/Header.css';
 
 const UserHeader = () => {
     const navigate = useNavigate();
-    const { user, setUser } = useAuth(); 
+    // Lấy thêm clearLocalAuth từ Context để dọn dẹp cho sạch
+    const { user, clearLocalAuth } = useAuth(); 
     const [showDropdown, setShowDropdown] = useState(false);
     const [cinemas, setCinemas] = useState([]);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,7 +24,7 @@ const UserHeader = () => {
     const dropdownRef = useRef(null);
     const navRef = useRef(null);
 
-    // Đóng tất cả menu khi click ra ngoài vùng hiển thị
+    // Đóng menu khi click ra ngoài
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -51,15 +53,17 @@ const UserHeader = () => {
 
     const handleLogout = async () => {
         try {
+            // Gọi API logout để Backend xóa sạch Cookie
             await axios.post('https://webcinema-zb8z.onrender.com/api/auth/logout', {}, { withCredentials: true });
-            setUser(null);
-            // Xóa token khỏi sessionStorage nếu bạn đang lưu ở đó
-            sessionStorage.removeItem('usertoken');
+        } catch (err) {
+            console.error("Lỗi khi logout:", err);
+        } finally {
+            // Dù API lỗi hay thành công, vẫn phải xóa sạch Local để bảo mật
+            clearLocalAuth(); 
             setShowDropdown(false);
             navigate('/');
-        } catch (err) {
-            setUser(null);
-            sessionStorage.removeItem('usertoken');
+            // Bắn sự kiện để các Component khác biết mà cập nhật
+            window.dispatchEvent(new Event('authChange'));
         }
     };
 
@@ -77,7 +81,6 @@ const UserHeader = () => {
     return (
         <nav className="user-navbar">
             <div className="nav-container">
-                {/* Nút Hamburger cho Mobile */}
                 <button 
                     className={`hamburger ${isMenuOpen ? 'active' : ''}`} 
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -91,13 +94,11 @@ const UserHeader = () => {
                     CINEMA<span>STAR</span>
                 </div>
                 
-                {/* Lớp phủ khi mở menu mobile */}
                 {isMenuOpen && <div className="menu-overlay" onClick={closeMobileMenu}></div>}
 
                 <ul ref={navRef} className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
                     <li><Link to="/" onClick={closeMobileMenu}>Trang chủ</Link></li>
                     
-                    {/* Menu Phim */}
                     <li className={`has-dropdown ${activeSubMenu === 'phim' ? 'mobile-active' : ''}`}>
                         <Link to="#" onClick={(e) => toggleSubMenu('phim', e)}>
                             Phim <ChevronDown size={14} className="icon-down" />
@@ -108,7 +109,6 @@ const UserHeader = () => {
                         </ul>
                     </li>
 
-                    {/* Menu Rạp */}
                     <li className={`has-dropdown ${activeSubMenu === 'rap' ? 'mobile-active' : ''}`}>
                         <Link to="#" onClick={(e) => toggleSubMenu('rap', e)}>
                             Rạp <ChevronDown size={14} className="icon-down" />
@@ -122,7 +122,6 @@ const UserHeader = () => {
                         </ul>
                     </li>
 
-                    {/* Góc điện ảnh */}
                     <li className={`has-dropdown ${activeSubMenu === 'goc' ? 'mobile-active' : ''}`}>
                         <Link to="#" onClick={(e) => toggleSubMenu('goc', e)}>
                             Góc Điện Ảnh <ChevronDown size={14} className="icon-down" />
@@ -137,7 +136,6 @@ const UserHeader = () => {
                     <li><Link to="/promotion" onClick={closeMobileMenu}>Khuyến mãi</Link></li>
                 </ul>
 
-                {/* Tài khoản Dropdown */}
                 <div className="user-menu" ref={dropdownRef}>
                     <div className="account-trigger" onClick={() => setShowDropdown(!showDropdown)}>
                         <UserCircle size={22} className="user-icon" />
@@ -151,12 +149,21 @@ const UserHeader = () => {
                                 <>
                                     <div className="dropdown-user-info">
                                         <p>Chào, <strong>{user.username || user.full_name}</strong></p>
+                                        {user.role === 'admin' && <span className="admin-badge">Quản trị viên</span>}
                                     </div>
                                     <div className="dropdown-divider"></div>
+                                    
+                                    {/* Lối tắt vào Admin nếu là tài khoản Admin */}
+                                    {user.role === 'admin' && (
+                                        <div className="dropdown-item admin-link" onClick={() => {navigate('/admin'); setShowDropdown(false);}}>
+                                            <LayoutDashboard size={18} /> <span>Trang Quản Trị</span>
+                                        </div>
+                                    )}
+
                                     <div className="dropdown-item" onClick={() => {navigate('/profile'); setShowDropdown(false);}}>
                                         <IdCard size={18} /> <span>Hồ sơ</span>
                                     </div>
-                                    <div className="dropdown-item" onClick={handleLogout}>
+                                    <div className="dropdown-item logout-btn" onClick={handleLogout}>
                                         <LogOut size={18} /> <span>Đăng xuất</span>
                                     </div>
                                 </>

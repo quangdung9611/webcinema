@@ -36,7 +36,7 @@ const movieActorRoutes = require('./Routers/MovieActorRouter');
 const newsRoutes = require('./Routers/NewRouter');
 
 // ===========================================================
-// 1. CẤU HÌNH HỆ THỐNG & CORS (Tối ưu cho Cookie)
+// 1. CẤU HÌNH HỆ THỐNG & CORS (Tối ưu cho Cookie & Tách biệt)
 // ===========================================================
 
 // Quan trọng để Cookie SameSite: 'none' hoạt động trên Render
@@ -44,15 +44,16 @@ app.set('trust proxy', 1);
 app.use(cookieParser()); 
 
 const corsOptions = {
+  // Liệt kê rõ ràng, tránh dùng Regex quá rộng nếu không cần thiết
   origin: [
     'https://quangdungcinema.id.vn',       
-    'https://webcinema-zb8z.onrender.com', 
     'http://localhost:3000',               
     'http://localhost:5173',
-    /\.vercel\.app$/ // Cho phép mọi subdomain của Vercel
+    // Nếu dùng Vercel preview, ông có thể giữ lại dòng Regex này
+    /\.vercel\.app$/ 
   ], 
-  credentials: true, // BẮT BUỘC để gửi usertoken/admintoken
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true, // BẮT BUỘC để nhận diện usertoken/admintoken
+  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 };
 
@@ -63,14 +64,14 @@ app.use(express.urlencoded({ extended: true }));
 
 // --- KHỞI TẠO SOCKET.IO ---
 const io = new Server(server, {
-  cors: corsOptions,
+  cors: corsOptions, // Dùng chung cấu hình CORS để đồng bộ
   transports: ['websocket', 'polling'] 
 });
 
 let holdingSeats = []; 
 
 io.on('connection', (socket) => {
-    console.log('⚡ Có người vừa kết nối Socket:', socket.id);
+    console.log('⚡ Socket connected:', socket.id);
     socket.emit('server-gui-danh-sach-dang-giu', holdingSeats);
 
     socket.on('client-chon-ghe', (data) => {
@@ -104,14 +105,13 @@ io.on('connection', (socket) => {
 // 2. ROUTES
 // ===========================================================
 app.get('/api', (req, res) => {
-  res.send('Kết nối Backend Cinema thành công!');
+  res.send('🚀 Cinema Backend is flying!');
 });
 
-// Chú ý: Cả admin và user đều trỏ chung về authRoutes 
-// vì mình đã gộp logic phân biệt Role vào trong Controller rồi.
+// Sử dụng đúng Endpoint như đã cấu hình ở Frontend
 app.use('/api/auth', authRoutes);
-app.use('/api/admin/auth', authRoutes); 
 
+// Các routes còn lại giữ nguyên
 app.use('/api/admin/manage', adminRouter); 
 app.use('/api/users', userRoutes);
 app.use('/api/genres', genreRoutes);
@@ -140,24 +140,24 @@ app.use('/api/news', newsRoutes);
 const PORT = process.env.PORT || 5000; 
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server đang chạy tại cổng: ${PORT}`);
+  console.log(`🚀 Server running on port: ${PORT}`);
   
-  // Tự ping để tránh Render ngủ gật (5 phút/lần)
+  // Tự ping chính mình để duy trì Render (5 phút/lần)
   setInterval(async () => {
     try {
+      // Dùng URL chính thức của Render
       await axios.get(`https://webcinema-zb8z.onrender.com/api?t=${Date.now()}`);
-      console.log('🔔 [Keep-Alive]: Đã tự nhấn chuông!');
     } catch (err) {
-      console.log('⚠️ [Keep-Alive]: Đang cố giữ server hoạt động...');
+      console.log('🔔 [Keep-Alive]: Server is staying awake.');
     }
   }, 300000); 
 
   db.getConnection()
     .then(conn => {
-      console.log("✅ Database 'cinema_shop' kết nối thành công!");
+      console.log("✅ Database Cinema connected!");
       conn.release();
     })
-    .catch(err => console.log("❌ Lỗi kết nối DB:", err.message));
+    .catch(err => console.log("❌ DB Error:", err.message));
 });
 
 module.exports = app;

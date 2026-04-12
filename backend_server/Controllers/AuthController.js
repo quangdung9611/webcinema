@@ -4,6 +4,14 @@ const db = require('../Config/db');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
+// --- CẤU HÌNH COOKIE CHUNG (TÁCH BIỆT RÕ RÀNG) ---
+const BASE_COOKIE_CONFIG = {
+    httpOnly: true,
+    secure: true, // Bắt buộc cho https (Render/Vercel)
+    sameSite: 'none', // Bắt buộc để gửi cookie cross-site
+    path: '/'
+};
+
 // -----------------------------------------------------------
 // 1. XỬ LÝ ĐĂNG KÝ
 // -----------------------------------------------------------
@@ -49,7 +57,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. XỬ LÝ ĐĂNG NHẬP (Đã cập nhật theo logic Role & Single Token)
+// 2. XỬ LÝ ĐĂNG NHẬP (TÁCH BIỆT LOGIC TOKEN)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -69,24 +77,27 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET_KEY, { expiresIn: '24h' });
         
-        // 1. Phân loại token dựa trên cột role trong bảng users
+        // Xác định tên thẻ sẽ cấp
         const cookieName = (user.role === 'admin') ? 'admintoken' : 'usertoken';
         
-        // 2. Cấu hình Cookie: Để path là '/' để Header bên Vercel đọc được API từ Render
-        const cookieOptions = { 
-            httpOnly: true, 
-            secure: true, 
-            sameSite: 'none', 
-            path: '/', 
+        // TÁCH BIỆT: Option cho việc CẤP MỚI
+        const setOptions = { 
+            ...BASE_COOKIE_CONFIG, 
             maxAge: 24 * 60 * 60 * 1000 
         };
+
+        // TÁCH BIỆT: Option cho việc XÓA (Max-Age = 0 để ép xóa ngay)
+        const clearOptions = { 
+            ...BASE_COOKIE_CONFIG,
+            maxAge: 0 
+        };
+
+        // Bước 1: Quét sạch cả 2 thẻ cũ để dọn đường
+        res.clearCookie('usertoken', clearOptions);
+        res.clearCookie('admintoken', clearOptions);
         
-        // 3. Xóa sạch tất cả token cũ để đảm bảo không hiện 2 token cùng lúc
-        res.clearCookie('usertoken', { ...cookieOptions });
-        res.clearCookie('admintoken', { ...cookieOptions });
-        
-        // 4. Cấp token mới đúng theo role
-        res.cookie(cookieName, token, cookieOptions);
+        // Bước 2: Cấp thẻ mới đúng vai trò sau khi đã dọn dẹp
+        res.cookie(cookieName, token, setOptions);
         
         const isAdmin = user.role === 'admin';
         const roleKey = isAdmin ? 'admin' : 'customer';
@@ -133,19 +144,17 @@ exports.getMe = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 4. XỬ LÝ ĐĂNG XUẤT (Dọn dẹp sạch cả 2 làn đường)
+// 4. XỬ LÝ ĐĂNG XUẤT (Dọn dẹp triệt để)
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
-    const commonOptions = {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        path: '/' // Đảm bảo khớp với path khi login để xóa sạch được thẻ
+    // Ép trình duyệt xóa bằng cách đặt thời gian hết hạn là 0
+    const logoutOptions = {
+        ...BASE_COOKIE_CONFIG,
+        maxAge: 0
     };
 
-    // Quét sạch cả usertoken và admintoken
-    res.clearCookie('usertoken', commonOptions);
-    res.clearCookie('admintoken', commonOptions);
+    res.clearCookie('usertoken', logoutOptions);
+    res.clearCookie('admintoken', logoutOptions);
 
-    res.json({ message: "Đã đăng xuất hệ thống" });
+    res.json({ message: "Đã đăng xuất hệ thống thành công" });
 };

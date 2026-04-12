@@ -3,60 +3,75 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-// Sử dụng biến môi trường hoặc URL Backend chính thức trên Render
 const BASE_URL = 'https://webcinema-zb8z.onrender.com'; 
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Tách biệt hàm dọn dẹp để gọi ở nhiều nơi
+    const clearLocalAuth = useCallback(() => {
+        setUser(null);
+        localStorage.removeItem('user');
+    }, []);
+
     const checkAuth = useCallback(async () => {
         try {
-            // Vì mình đã để path: '/' ở Backend, nên cả 2 endpoint đều đọc được token.
-            // Để đơn giản, mình gọi endpoint /api/auth/me chung cho cả 2.
             const authEndpoint = `${BASE_URL}/api/auth/me`;
 
+            // BẮT BUỘC: withCredentials để gửi Cookie lên Render
             const res = await axios.get(authEndpoint, { withCredentials: true });
             
-            // Backend trả về { user: { user_id, username, role, ... } }
             const userData = res.data.user;
 
             if (userData) {
                 setUser(userData);
-                // Lưu vào localStorage để các trang khác load nhanh hơn
                 localStorage.setItem('user', JSON.stringify(userData));
-                console.log("✅ Đã xác thực người dùng:", userData.username);
+                console.log("✅ Đã xác thực:", userData.username);
             } else {
-                throw new Error("Không có dữ liệu user");
+                clearLocalAuth();
             }
         } catch (err) {
-            console.log("⚠️ Chưa đăng nhập hoặc phiên làm việc hết hạn");
-            setUser(null);
-            localStorage.removeItem('user');
+            // TÁCH BIỆT: Chỉ xóa local khi lỗi thực sự là do Token (401, 403)
+            // Nếu lỗi 500 hoặc mất mạng thì không nên xóa ngay để tránh bị logout oan
+            if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+                console.log("⚠️ Phiên làm việc hết hạn");
+                clearLocalAuth();
+            }
         } finally {
             setLoading(false); 
         }
-    }, []);
+    }, [clearLocalAuth]);
 
     useEffect(() => {
-        // Ưu tiên load từ localStorage trước để UI hiện tên ngay lập tức
+        // 1. Khởi tạo: Đọc từ localStorage để UI mượt mà
         const savedUser = localStorage.getItem('user');
         if (savedUser) {
-            setUser(JSON.parse(savedUser));
+            try {
+                setUser(JSON.parse(savedUser));
+            } catch (e) {
+                clearLocalAuth();
+            }
         }
         
-        // Sau đó mới kiểm tra lại với Server để đảm bảo Token vẫn còn hạn
+        // 2. Xác thực lại với Server ngay lập tức
         checkAuth();
 
+        // 3. Lắng nghe sự kiện thay đổi (Login/Logout từ các component khác)
         const handleAuthChange = () => checkAuth();
         window.addEventListener('authChange', handleAuthChange);
+        
         return () => window.removeEventListener('authChange', handleAuthChange);
-    }, [checkAuth]);
+    }, [checkAuth, clearLocalAuth]);
 
     return (
-        <AuthContext.Provider value={{ user, setUser, loading, setLoading, checkAuth }}>
-            {/* Không chặn rendering hoàn toàn, chỉ hiển thị children khi đã kiểm tra xong */}
-            {!loading ? children : <div className="loading-spinner">Đang tải dữ liệu...</div>} 
+        <AuthContext.Provider value={{ user, setUser, loading, setLoading, checkAuth, clearLocalAuth }}>
+            {/* Hiển thị children ngay, checkAuth sẽ cập nhật trạng thái sau */}
+            {children}
+            
+            {/* Nếu muốn hiện loading khi lần đầu vào trang thì dùng: 
+                loading ? <div className="spinner">...</div> : children 
+            */}
         </AuthContext.Provider>
     );
 };
