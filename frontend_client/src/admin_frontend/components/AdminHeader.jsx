@@ -7,35 +7,32 @@ import '../styles/AdminHeader.css';
 
 const AdminHeader = ({ toggleSidebar }) => {
     const navigate = useNavigate();
-    // Lấy user và clearAuth (đã đổi tên từ clearLocalAuth) từ Context
-    const { user, clearAuth } = useAuth(); 
+    // Thêm loading từ context để tránh đá user nhầm khi đang check auth
+    const { user, loading, clearAuth } = useAuth(); 
 
     useEffect(() => {
-        // Nếu đã check xong (không còn loading) mà không có user hoặc không phải admin
-        // Lưu ý: Logic loading đã được bọc ở AuthProvider nên ở đây user null là bị đá ngay
-        if (!user || user.role !== 'admin') {
+        // Chỉ đá đi nếu đã check xong (loading = false) mà không thấy user admin
+        if (!loading && (!user || user.role !== 'admin')) {
             navigate('/admin/login');
         }
-    }, [user, navigate]);
+    }, [user, loading, navigate]);
 
     const handleLogout = async () => {
         try {
-            // 1. Gọi API logout để Backend xóa sạch Cookie (admintoken & usertoken)
-            // Backend mình đã sửa để xóa theo Path rồi nên cứ gọi là nó bay hết
-            await axios.post('https://webcinema-zb8z.onrender.com/api/auth/logout', {}, {
+            // SỬA URL: Gọi đúng cổng admin/api như mình đã cấu hình ở server.js
+            await axios.post('https://webcinema-zb8z.onrender.com/admin/api/auth/logout', {}, {
                 withCredentials: true
             });
         } catch (error) {
             console.error("Lỗi đăng xuất Admin:", error);
         } finally {
-            // 2. DỌN DẸP STATE TRONG REACT
-            // Không dùng storage nữa nên chỉ cần set user về null thông qua hàm này
-            clearAuth(); 
+            // Dọn dẹp state
+            if (clearAuth) clearAuth(); 
             
-            // 3. THÔNG BÁO CHO CÁC TAB/COMPONENT KHÁC CẬP NHẬT
+            // Thông báo cập nhật auth cho toàn hệ thống
             window.dispatchEvent(new Event('authChange'));
             
-            // 4. VỀ TRANG LOGIN
+            // Về trang login của admin
             navigate('/admin/login');
         }
     };
@@ -58,7 +55,8 @@ const AdminHeader = ({ toggleSidebar }) => {
 
             <div className="admin-header-profile-section">
                 <span className="admin-header-welcome-text">
-                    Xin chào <strong>{user?.full_name || user?.username || "Quang Dũng"}</strong>
+                    {/* Hiển thị tên Dũng nếu có user, không thì để placeholder */}
+                    Xin chào <strong>{user?.full_name || user?.username || "Admin"}</strong>
                 </span>
 
                 <button 

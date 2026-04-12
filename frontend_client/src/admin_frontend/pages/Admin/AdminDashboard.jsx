@@ -12,6 +12,7 @@ const AdminDashboard = () => {
     const [chartData, setChartData] = useState({ daily: [], movies: [], tickets: [] });
     const [loading, setLoading] = useState(true);
     
+    // Khởi tạo ngày mặc định (Có thể dùng moment hoặc date-fns để lấy ngày hiện tại)
     const [startDate, setStartDate] = useState('2026-03-07');
     const [endDate, setEndDate] = useState('2026-03-14');
 
@@ -20,8 +21,8 @@ const AdminDashboard = () => {
     const fetchDashboardData = async (start = startDate, end = endDate) => {
         setLoading(true);
         try {
-            // [CẬP NHẬT 1]: Sửa link thành /api/admin và thêm withCredentials
-            const resStats = await axios.get('https://webcinema-zb8z.onrender.com/api/admin/manage/stats', {
+            // [CẬP NHẬT 1]: Đổi prefix thành /admin/api/manage/stats
+            const resStats = await axios.get('https://webcinema-zb8z.onrender.com/admin/api/manage/stats', {
                 withCredentials: true 
             });
             
@@ -34,8 +35,8 @@ const AdminDashboard = () => {
                 });
             }
 
-            // [CẬP NHẬT 2]: Sửa link biểu đồ và thêm withCredentials
-            const resChart = await axios.get(`https://webcinema-zb8z.onrender.com/api/admin/manage/revenue-chart?startDate=${start}&endDate=${end}`, {
+            // [CẬP NHẬT 2]: Đổi prefix thành /admin/api/manage/revenue-chart
+            const resChart = await axios.get(`https://webcinema-zb8z.onrender.com/admin/api/manage/revenue-chart?startDate=${start}&endDate=${end}`, {
                 withCredentials: true
             });
             
@@ -48,7 +49,7 @@ const AdminDashboard = () => {
             }
         } catch (error) {
             console.error("Lỗi kết nối API Dashboard:", error);
-            // Nếu lỗi 401 thì thường là token hết hạn, Dũng có thể cân nhắc chuyển hướng về login
+            // Nếu trả về 401 hoặc 403, ProtectedRoute của ông sẽ tự động đá user về login
         } finally {
             setLoading(false);
         }
@@ -62,7 +63,12 @@ const AdminDashboard = () => {
         fetchDashboardData(startDate, endDate);
     };
 
-    if (loading) return <div className="loading">Đang tải dữ liệu thực...</div>;
+    if (loading) return (
+        <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh', color: '#00468f', fontWeight: 'bold' }}>
+            <RefreshCcw className="spin-icon" size={24} style={{ marginRight: '10px' }} />
+            ĐANG TẢI DỮ LIỆU THỰC TẾ...
+        </div>
+    );
 
     return (
         <div className="dashboard-content">

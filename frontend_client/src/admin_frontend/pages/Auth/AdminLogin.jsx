@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../../components/Modal';
-import { useAuth } from '../../../context/AuthContext'; // Import useAuth
+import { useAuth } from '../../../context/AuthContext'; 
 import '../../styles/AdminAuth.css'; 
 
 const AdminLogin = () => {
@@ -11,7 +11,6 @@ const AdminLogin = () => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
-    // Lấy hàm checkAuth từ Context để cập nhật trạng thái Admin ngay lập tức
     const { checkAuth } = useAuth(); 
 
     const [modalConfig, setModalConfig] = useState({
@@ -44,8 +43,9 @@ const AdminLogin = () => {
 
         setLoading(true);
         try {
-            // [CẬP NHẬT 1]: Đăng nhập qua cổng Admin để nhận 'admintoken' với Path='/admin'
-            await axios.post('https://webcinema-zb8z.onrender.com/api/admin/auth/login', 
+            // [CẬP NHẬT QUAN TRỌNG]: Đổi cổng API sang /admin/api để khớp với server.js
+            // Việc gọi đúng cổng này giúp Backend cấp admintoken vào Path='/admin' chuẩn xác
+            await axios.post('https://webcinema-zb8z.onrender.com/admin/api/auth/login', 
                 { 
                     email, 
                     password,
@@ -54,11 +54,11 @@ const AdminLogin = () => {
                 { withCredentials: true } 
             );
 
-            // [CẬP NHẬT 2]: Thay vì gọi API /me thủ công, hãy dùng checkAuth của Context.
-            // Vì checkAuth đã được mình viết thông minh: thấy path có '/admin' nó sẽ tự gọi endpoint admin.
+            // [CẬP NHẬT 2]: Thông báo cho Context cập nhật lại User ngay lập tức
+            // Vì URL lúc này đang có chữ '/admin', checkAuth sẽ tự gọi API /admin/api/auth/me
             await checkAuth();
 
-            // [CẬP NHẬT 3]: Bắn sự kiện đồng bộ
+            // [CẬP NHẬT 3]: Đồng bộ các tab khác (nếu có)
             window.dispatchEvent(new Event('authChange'));
 
             setModalConfig({
@@ -67,13 +67,15 @@ const AdminLogin = () => {
                 title: 'XÁC THỰC THÀNH CÔNG',
                 message: `Chào mừng Quản trị viên hệ thống.`,
                 onConfirm: () => {
-                    setModalConfig({ ...modalConfig, show: false });
+                    setModalConfig(prev => ({ ...prev, show: false }));
                     navigate('/admin/dashboard', { replace: true });
                 }
             });
 
-            // Tự động chuyển hướng sau 1.5s
-            setTimeout(() => navigate('/admin/dashboard', { replace: true }), 1500);
+            // Tự động chuyển hướng sau 1.5s nếu user không bấm modal
+            setTimeout(() => {
+                navigate('/admin/dashboard', { replace: true });
+            }, 1500);
 
         } catch (err) {
             console.error("Admin Login Error:", err);
@@ -82,7 +84,7 @@ const AdminLogin = () => {
                 type: 'error',
                 title: 'TRUY CẬP BỊ TỪ CHỐI',
                 message: err.response?.data?.message || "Lỗi hệ thống hoặc sai tài khoản quản trị!",
-                onConfirm: () => setModalConfig({ ...modalConfig, show: false })
+                onConfirm: () => setModalConfig(prev => ({ ...prev, show: false }))
             });
         } finally {
             setLoading(false);

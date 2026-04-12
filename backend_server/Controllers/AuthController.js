@@ -4,7 +4,7 @@ const db = require('../Config/db');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
-// --- CẤU HÌNH COOKIE CHUNG (GIỮ NGUYÊN NHƯNG BỎ PATH CỐ ĐỊNH) ---
+// --- CẤU HÌNH COOKIE CHUNG ---
 const BASE_COOKIE_CONFIG = {
     httpOnly: true,
     secure: true, // Bắt buộc cho https (Render/Vercel)
@@ -12,7 +12,7 @@ const BASE_COOKIE_CONFIG = {
 };
 
 // -----------------------------------------------------------
-// 1. XỬ LÝ ĐĂNG KÝ
+// 1. XỬ LÝ ĐĂNG KÝ (GIỮ NGUYÊN CODE BAN ĐẦU)
 // -----------------------------------------------------------
 exports.register = async (req, res) => {
     const { username, full_name, phone, address, email, password, role } = req.body;
@@ -56,7 +56,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. XỬ LÝ ĐĂNG NHẬP (TÁCH BIỆT DỨT KHOÁT THEO PATH)
+// 2. XỬ LÝ ĐĂNG NHẬP (CHIA PATH /ADMIN VÀ /)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -76,23 +76,21 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET_KEY, { expiresIn: '24h' });
         
-        // --- LOGIC BIỆT LẬP PATH TẠI ĐÂY ---
+        // --- LOGIC CHIA VÙNG ĐÚNG Ý QUANG DŨNG ---
         const isAdmin = user.role === 'admin';
         const cookieName = isAdmin ? 'admintoken' : 'usertoken';
-        const targetPath = isAdmin ? '/admin' : '/'; // Admin dùng /admin, User dùng /
+        const targetPath = isAdmin ? '/admin' : '/'; // Admin ở /admin, User ở /
         
-        // Option cho việc CẤP MỚI
         const setOptions = { 
             ...BASE_COOKIE_CONFIG, 
-            path: targetPath, // Gán path biệt lập
+            path: targetPath, 
             maxAge: 24 * 60 * 60 * 1000 
         };
 
-        // Khi login Admin, không được xóa thẻ User và ngược lại để cho phép đăng nhập song song
-        // Tui chỉ xóa thẻ cùng loại cũ nếu có thôi
+        // Xóa sạch cookie cũ ở đúng path trước khi cấp mới
         res.clearCookie(cookieName, { ...BASE_COOKIE_CONFIG, path: targetPath, maxAge: 0 });
         
-        // Cấp thẻ mới vào đúng địa bàn
+        // Cấp thẻ vào đúng địa bàn
         res.cookie(cookieName, token, setOptions);
         
         const roleKey = isAdmin ? 'admin' : 'customer';
@@ -117,7 +115,7 @@ exports.login = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 3. LẤY THÔNG TIN CÁ NHÂN
+// 3. LẤY THÔNG TIN CÁ NHÂN (GIỮ NGUYÊN CODE BAN ĐẦU)
 // -----------------------------------------------------------
 exports.getMe = async (req, res) => {
     try {
@@ -142,7 +140,7 @@ exports.getMe = async (req, res) => {
 // 4. XỬ LÝ ĐĂNG XUẤT (XÓA CHÍNH XÁC THEO PATH)
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
-    // Để đăng xuất sạch sẽ, tui ra lệnh xóa cả 2 vùng path
+    // Xóa dứt khoát theo từng vùng path đã chia
     res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, path: '/', maxAge: 0 });
     res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, path: '/admin', maxAge: 0 });
 

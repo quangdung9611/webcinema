@@ -4,28 +4,31 @@ import { useAuth } from '../../context/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
     const location = useLocation();
-    const { user, loading } = useAuth(); // Lấy trực tiếp từ Context
+    const { user, loading } = useAuth(); 
 
-    // 1. Nếu AuthContext đang bận gọi API (loading = true), hiện màn hình chờ
+    // 1. Màn hình chờ xác thực (Giữ nguyên của ông vì UI này khá ổn)
     if (loading) {
         return (
             <div style={{ 
-                display: 'flex', justifyContent: 'center', alignItems: 'center', 
-                height: '100vh', background: '#0a0a0a', color: '#ff4d4d' 
+                display: 'flex', flexDirection: 'column', // Thêm cái này để icon và chữ nằm dọc
+                justifyContent: 'center', alignItems: 'center', 
+                height: '100vh', background: '#0a0a0a', color: '#ff4d4d',
+                fontFamily: 'sans-serif'
             }}>
-                <div style={{ fontSize: '40px', marginBottom: '15px' }}>🛡️</div>
-                <div style={{ letterSpacing: '2px', fontWeight: 'bold' }}>HỆ THỐNG ĐANG XÁC THỰC...</div>
+                <div style={{ fontSize: '60px', marginBottom: '20px', animation: 'pulse 1.5s infinite' }}>🛡️</div>
+                <div style={{ letterSpacing: '2px', fontWeight: 'bold', fontSize: '14px' }}>HỆ THỐNG ĐANG XÁC THỰC QUYỀN ADMIN...</div>
             </div>
         );
     }
 
-    // 2. Nếu đã check xong mà KHÔNG có user hoặc user KHÔNG PHẢI admin
+    // 2. Kiểm tra quyền hạn
+    // Nếu không có user hoặc role không phải admin -> Đuổi về trang login admin
     if (!user || user.role !== 'admin') {
-        // Lặng lẽ đẩy về login, không cần console.error gây đỏ màn hình
+        // Lưu lại trang định vào để sau khi login xong quay lại đúng chỗ đó
         return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
 
-    // 3. Nếu mọi thứ OK -> Cho vào Dashboard
+    // 3. Đúng là Admin -> Cho phép truy cập
     return children;
 };
 

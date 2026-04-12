@@ -7,7 +7,7 @@ const cookieParser = require('cookie-parser');
 const axios = require('axios'); 
 require('dotenv').config();
 
-// --- THÊM SOCKET.IO TẠI ĐÂY ---
+// --- THÊM SOCKET.IO ---
 const http = require('http');
 const { Server } = require("socket.io");
 const server = http.createServer(app); 
@@ -37,23 +37,20 @@ const movieActorRoutes = require('./Routers/MovieActorRouter');
 const newsRoutes = require('./Routers/NewRouter');
 
 // ===========================================================
-// 1. CẤU HÌNH HỆ THỐNG & CORS (Tối ưu cho Cookie & Tách biệt)
+// 1. CẤU HÌNH HỆ THỐNG & CORS
 // ===========================================================
 
-// Quan trọng để Cookie SameSite: 'none' hoạt động trên Render
 app.set('trust proxy', 1); 
 app.use(cookieParser()); 
 
 const corsOptions = {
-  // Liệt kê rõ ràng, tránh dùng Regex quá rộng nếu không cần thiết
   origin: [
     'https://quangdungcinema.id.vn',       
     'http://localhost:3000',               
     'http://localhost:5173',
-    // Nếu dùng Vercel preview, ông có thể giữ lại dòng Regex này
     /\.vercel\.app$/ 
   ], 
-  credentials: true, // BẮT BUỘC để nhận diện usertoken/admintoken
+  credentials: true, 
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 };
@@ -65,7 +62,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // --- KHỞI TẠO SOCKET.IO ---
 const io = new Server(server, {
-  cors: corsOptions, // Dùng chung cấu hình CORS để đồng bộ
+  cors: corsOptions, 
   transports: ['websocket', 'polling'] 
 });
 
@@ -105,17 +102,14 @@ io.on('connection', (socket) => {
 // ===========================================================
 // 2. ROUTES
 // ===========================================================
+
+// --- TRANG CHỦ API ---
 app.get('/api', (req, res) => {
   res.send('🚀 Cinema Backend is flying!');
 });
 
-// Sử dụng đúng Endpoint như đã cấu hình ở Frontend
+// --- ROUTE CHO USER (Vẫn giữ /api/...) ---
 app.use('/api/auth', authRoutes);
-
-// Cổng cho Admin
-app.use('/api/admin/auth', adminAuthRoutes);
-// Các routes còn lại giữ nguyên
-app.use('/api/admin/manage', adminRouter); 
 app.use('/api/users', userRoutes);
 app.use('/api/genres', genreRoutes);
 app.use('/api/movies', movieRoutes);
@@ -136,6 +130,12 @@ app.use('/api/movie-genres', movieGenreRoutes);
 app.use('/api/movie-actors', movieActorRoutes);
 app.use('/api/news', newsRoutes);
 
+// --- ROUTE CHO ADMIN (QUAN TRỌNG: ĐỔI THÀNH /admin/api) ---
+// Thay đổi prefix từ '/api/admin/auth' -> '/admin/api/auth'
+app.use('/admin/api/auth', adminAuthRoutes);
+// Thay đổi prefix từ '/api/admin/manage' -> '/admin/api/manage'
+app.use('/admin/api/manage', adminRouter); 
+
 // ===========================================================
 // 3. KHỞI CHẠY SERVER
 // ===========================================================
@@ -145,10 +145,8 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port: ${PORT}`);
   
-  // Tự ping chính mình để duy trì Render (5 phút/lần)
   setInterval(async () => {
     try {
-      // Dùng URL chính thức của Render
       await axios.get(`https://webcinema-zb8z.onrender.com/api?t=${Date.now()}`);
     } catch (err) {
       console.log('🔔 [Keep-Alive]: Server is staying awake.');
