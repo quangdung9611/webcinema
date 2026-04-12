@@ -49,7 +49,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. XỬ LÝ ĐĂNG NHẬP
+// 2. XỬ LÝ ĐĂNG NHẬP (Đã cập nhật theo logic Role & Single Token)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -69,20 +69,23 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET_KEY, { expiresIn: '24h' });
         
-        // NHẬN DIỆN LÀN ĐƯỜNG: Dựa vào URL đăng nhập để biết cấp thẻ nào
-        const isApiAdmin = req.originalUrl.includes('/admin');
-        const cookieName = isApiAdmin ? 'admintoken' : 'usertoken';
+        // 1. Phân loại token dựa trên cột role trong bảng users
+        const cookieName = (user.role === 'admin') ? 'admintoken' : 'usertoken';
         
-        // THIẾT LẬP COOKIE: 
-        // Admin chỉ sống ở /api, User sống ở /
+        // 2. Cấu hình Cookie: Để path là '/' để Header bên Vercel đọc được API từ Render
         const cookieOptions = { 
             httpOnly: true, 
             secure: true, 
             sameSite: 'none', 
-            path: isApiAdmin ? '/api' : '/', 
+            path: '/', 
             maxAge: 24 * 60 * 60 * 1000 
         };
         
+        // 3. Xóa sạch tất cả token cũ để đảm bảo không hiện 2 token cùng lúc
+        res.clearCookie('usertoken', { ...cookieOptions });
+        res.clearCookie('admintoken', { ...cookieOptions });
+        
+        // 4. Cấp token mới đúng theo role
         res.cookie(cookieName, token, cookieOptions);
         
         const isAdmin = user.role === 'admin';
@@ -130,20 +133,19 @@ exports.getMe = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 4. XỬ LÝ ĐĂNG XUẤT
+// 4. XỬ LÝ ĐĂNG XUẤT (Dọn dẹp sạch cả 2 làn đường)
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
     const commonOptions = {
         httpOnly: true,
         secure: true,
-        sameSite: 'none'
+        sameSite: 'none',
+        path: '/' // Đảm bảo khớp với path khi login để xóa sạch được thẻ
     };
 
-    // Xóa usertoken ở path /
-    res.clearCookie('usertoken', { ...commonOptions, path: '/' });
-
-    // Xóa admintoken ở path /api
-    res.clearCookie('admintoken', { ...commonOptions, path: '/api' });
+    // Quét sạch cả usertoken và admintoken
+    res.clearCookie('usertoken', commonOptions);
+    res.clearCookie('admintoken', commonOptions);
 
     res.json({ message: "Đã đăng xuất hệ thống" });
 };

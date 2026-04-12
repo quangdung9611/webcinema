@@ -36,9 +36,10 @@ const movieActorRoutes = require('./Routers/MovieActorRouter');
 const newsRoutes = require('./Routers/NewRouter');
 
 // ===========================================================
-// 1. CẤU HÌNH HỆ THỐNG & CORS
+// 1. CẤU HÌNH HỆ THỐNG & CORS (Tối ưu cho Cookie)
 // ===========================================================
 
+// Quan trọng để Cookie SameSite: 'none' hoạt động trên Render
 app.set('trust proxy', 1); 
 app.use(cookieParser()); 
 
@@ -46,25 +47,21 @@ const corsOptions = {
   origin: [
     'https://quangdungcinema.id.vn',       
     'https://webcinema-zb8z.onrender.com', 
-    /\.vercel\.app$/,                      
-    /\.onrender\.com$/,                    
     'http://localhost:3000',               
     'http://localhost:5173',
-    // Bổ sung thêm biến thể có/không có dấu gạch chéo cuối để chắc cú
-    'https://quangdungcinema.id.vn/',
-    'https://webcinema-zb8z.onrender.com/'
+    /\.vercel\.app$/ // Cho phép mọi subdomain của Vercel
   ], 
-  credentials: true,
+  credentials: true, // BẮT BUỘC để gửi usertoken/admintoken
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  // Bổ sung thêm allowedHeaders để tránh trình duyệt chặn các request phức tạp
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 };
+
 app.use(cors(corsOptions));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --- KHỞI TẠO SOCKET.IO & BỘ NHỚ TẠM ---
+// --- KHỞI TẠO SOCKET.IO ---
 const io = new Server(server, {
   cors: corsOptions,
   transports: ['websocket', 'polling'] 
@@ -74,15 +71,12 @@ let holdingSeats = [];
 
 io.on('connection', (socket) => {
     console.log('⚡ Có người vừa kết nối Socket:', socket.id);
-
     socket.emit('server-gui-danh-sach-dang-giu', holdingSeats);
 
     socket.on('client-chon-ghe', (data) => {
-        // --- LOGIC TỐI ƯU: Xóa bỏ mọi record cũ của ghế này trước khi thêm mới ---
         holdingSeats = holdingSeats.filter(s => 
             !(Number(s.seatId) === Number(data.seatId) && Number(s.showtimeId) === Number(data.showtimeId))
         );
-        
         holdingSeats.push({ ...data, socketId: socket.id });
         socket.broadcast.emit('server-khoa-ghe', data);
     });
@@ -95,7 +89,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log('❌ Một người dùng đã ngắt kết nối:', socket.id);
         const seatsToRelease = holdingSeats.filter(s => s.socketId === socket.id);
         seatsToRelease.forEach(s => {
             socket.broadcast.emit('server-mo-khoa-ghe', { 
@@ -114,8 +107,11 @@ app.get('/api', (req, res) => {
   res.send('Kết nối Backend Cinema thành công!');
 });
 
-app.use('/api/admin/auth', authRoutes); 
+// Chú ý: Cả admin và user đều trỏ chung về authRoutes 
+// vì mình đã gộp logic phân biệt Role vào trong Controller rồi.
 app.use('/api/auth', authRoutes);
+app.use('/api/admin/auth', authRoutes); 
+
 app.use('/api/admin/manage', adminRouter); 
 app.use('/api/users', userRoutes);
 app.use('/api/genres', genreRoutes);
@@ -138,7 +134,7 @@ app.use('/api/movie-actors', movieActorRoutes);
 app.use('/api/news', newsRoutes);
 
 // ===========================================================
-// 3. KHỞI CHẠY SERVER & TỰ PING
+// 3. KHỞI CHẠY SERVER
 // ===========================================================
 
 const PORT = process.env.PORT || 5000; 
@@ -146,6 +142,7 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server đang chạy tại cổng: ${PORT}`);
   
+  // Tự ping để tránh Render ngủ gật (5 phút/lần)
   setInterval(async () => {
     try {
       await axios.get(`https://webcinema-zb8z.onrender.com/api?t=${Date.now()}`);
