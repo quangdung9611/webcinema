@@ -3,48 +3,41 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
+// Dùng URL từ env hoặc mặc định (nhớ bỏ dấu / ở cuối)
 const BASE_URL = 'https://webcinema-zb8z.onrender.com'; 
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true); // Trạng thái chờ xác thực
-
-    // Dọn dẹp state trong React
-    const clearAuth = useCallback(() => {
-        setUser(null);
-    }, []);
+    const [loading, setLoading] = useState(true);
 
     const checkAuth = useCallback(async () => {
-        // Mỗi khi checkAuth chạy, mình bật loading lên nếu cần
         setLoading(true); 
         try {
-            // Nhận diện vùng để gọi đúng endpoint (để Backend đọc đúng Path Cookie)
-            const isAdminPath = window.location.pathname.startsWith('/admin');
+            // Logic quan trọng: Tự nhận diện để gọi đúng cổng soát vé
+            const isAdminPath = window.location.pathname.includes('/admin');
             const endpoint = isAdminPath 
                 ? `${BASE_URL}/api/admin/auth/me` 
                 : `${BASE_URL}/api/auth/me`;
 
             const res = await axios.get(endpoint, { withCredentials: true });
             
-            if (res.data.user) {
+            if (res.data && res.data.user) {
                 setUser(res.data.user);
-                console.log("✅ Identity verified via Cookie:", res.data.user.username);
             } else {
-                clearAuth();
+                setUser(null);
             }
         } catch (err) {
-            console.log("⚠️ No valid cookie or session expired");
-            clearAuth();
+            // Im lặng khi chưa login, chỉ set null
+            setUser(null);
         } finally {
-            setLoading(false); // Xong xuôi thì tắt loading
+            setLoading(false);
         }
-    }, [clearAuth]);
+    }, []); // Chạy 1 lần duy nhất khi load App hoặc gọi thủ công
 
     useEffect(() => {
-        // Lần đầu vào web, hỏi Server xem "Tui có thẻ Cookie nào không?"
         checkAuth();
 
-        // Nghe các sự kiện đăng nhập/đăng xuất để cập nhật lại state
+        // Lắng nghe sự kiện login thành công từ các component khác
         const handleAuthChange = () => checkAuth();
         window.addEventListener('authChange', handleAuthChange);
         
@@ -52,15 +45,9 @@ export const AuthProvider = ({ children }) => {
     }, [checkAuth]);
 
     return (
-        <AuthContext.Provider value={{ user, setUser, loading, checkAuth, clearAuth }}>
-            {/* QUAN TRỌNG: Để tránh lộ nội dung trang nhạy cảm khi chưa xác thực xong,
-               ông có thể chặn render children cho đến khi loading = false.
-            */}
-            {!loading ? children : (
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}>
-                    <p>Đang kiểm tra quyền truy cập...</p>
-                </div>
-            )}
+        <AuthContext.Provider value={{ user, setUser, loading, checkAuth }}>
+            {/* Đảm bảo App luôn hiển thị sau khi đã check xong */}
+            {children}
         </AuthContext.Provider>
     );
 };
