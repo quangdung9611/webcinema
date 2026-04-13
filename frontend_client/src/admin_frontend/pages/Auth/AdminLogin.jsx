@@ -28,7 +28,7 @@ const AdminLogin = () => {
     useEffect(() => {
         // Nếu đã xác thực xong (authLoading = false) và biến admin có dữ liệu
         if (!authLoading && admin) {
-            navigate('/admin/dashboard', { replace: true });
+            navigate('/dashboard', { replace: true });
         }
     }, [admin, authLoading, navigate]);
 

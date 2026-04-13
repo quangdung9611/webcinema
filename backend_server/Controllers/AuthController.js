@@ -11,7 +11,7 @@ const BASE_COOKIE_CONFIG = {
     sameSite: 'none', // Cho phép cross-site
 };
 
-// Domain (GIỮ NGUYÊN - nhưng KHÔNG dùng trong cookie nữa)
+// Domain (Dùng để giới hạn phạm vi của Cookie - CÁCH B)
 const USER_DOMAIN = "quangdungcinema.id.vn";
 const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn";
 
@@ -66,7 +66,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. LOGIN (SỬA COOKIE - BỎ DOMAIN)
+// 2. LOGIN (SỬA LẠI ĐỂ TÁCH BIỆT DOMAIN THEO CÁCH B)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -93,16 +93,20 @@ exports.login = async (req, res) => {
         const isAdmin = user.role === 'admin';
 
         if (isAdmin) {
-            // 🔥 ADMIN → KHÔNG set domain (browser tự hiểu subdomain)
+            // 🔥 ADMIN → Chỉ định đích danh domain ADMIN
+            // Điều này ngăn trang User nhìn thấy admintoken
             res.cookie('admintoken', token, {
                 ...BASE_COOKIE_CONFIG,
+                domain: ADMIN_DOMAIN, 
                 path: '/',
                 maxAge: 24 * 60 * 60 * 1000
             });
         } else {
-            // 🔥 USER → KHÔNG set domain
+            // 🔥 USER → Chỉ định đích danh domain USER
+            // Điều này ngăn trang Admin nhìn thấy usertoken (nếu cần tách biệt)
             res.cookie('usertoken', token, {
                 ...BASE_COOKIE_CONFIG,
+                domain: USER_DOMAIN,
                 path: '/',
                 maxAge: 24 * 60 * 60 * 1000
             });
@@ -155,17 +159,21 @@ exports.getMe = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 4. LOGOUT (SỬA COOKIE - BỎ DOMAIN)
+// 4. LOGOUT (CẦN TRUYỀN ĐÚNG DOMAIN ĐỂ XÓA SẠCH)
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
 
+    // Xóa usertoken tại domain của user
     res.clearCookie('usertoken', {
         ...BASE_COOKIE_CONFIG,
+        domain: USER_DOMAIN,
         path: '/'
     });
 
+    // Xóa admintoken tại domain của admin
     res.clearCookie('admintoken', {
         ...BASE_COOKIE_CONFIG,
+        domain: ADMIN_DOMAIN,
         path: '/'
     });
 
