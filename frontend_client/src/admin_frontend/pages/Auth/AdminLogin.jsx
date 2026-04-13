@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Thêm useEffect vào đây
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../../components/Modal';
@@ -11,7 +11,8 @@ const AdminLogin = () => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
-    const { checkAuth } = useAuth(); 
+    // Lấy thêm biến admin và loading từ AuthContext
+    const { checkAuth, admin, loading: authLoading } = useAuth(); 
 
     const [modalConfig, setModalConfig] = useState({
         show: false,
@@ -22,6 +23,14 @@ const AdminLogin = () => {
     });
 
     const navigate = useNavigate();
+
+    // --- [CẬP NHẬT QUAN TRỌNG]: TỰ ĐỘNG VÀO DASHBOARD NẾU ĐÃ CÓ TOKEN ---
+    useEffect(() => {
+        // Nếu đã xác thực xong (authLoading = false) và biến admin có dữ liệu
+        if (!authLoading && admin) {
+            navigate('/admin/dashboard', { replace: true });
+        }
+    }, [admin, authLoading, navigate]);
 
     const validate = () => {
         let tempErrors = {};
@@ -43,22 +52,16 @@ const AdminLogin = () => {
 
         setLoading(true);
         try {
-            // [CẬP NHẬT QUAN TRỌNG]: Đổi cổng API sang /admin/api để khớp với server.js
-            // Việc gọi đúng cổng này giúp Backend cấp admintoken vào Path='/admin' chuẩn xác
+            // Gọi API Login
             await axios.post('https://webcinema-zb8z.onrender.com/admin/api/auth/login', 
-                { 
-                    email, 
-                    password,
-                    role_input: 'admin' 
-                },
+                { email, password, role_input: 'admin' },
                 { withCredentials: true } 
             );
 
-            // [CẬP NHẬT 2]: Thông báo cho Context cập nhật lại User ngay lập tức
-            // Vì URL lúc này đang có chữ '/admin', checkAuth sẽ tự gọi API /admin/api/auth/me
+            // Bắt Context cập nhật lại biến admin ngay lập tức
             await checkAuth();
 
-            // [CẬP NHẬT 3]: Đồng bộ các tab khác (nếu có)
+            // Kích hoạt event cho các tab khác
             window.dispatchEvent(new Event('authChange'));
 
             setModalConfig({
@@ -71,11 +74,6 @@ const AdminLogin = () => {
                     navigate('/admin/dashboard', { replace: true });
                 }
             });
-
-            // Tự động chuyển hướng sau 1.5s nếu user không bấm modal
-            setTimeout(() => {
-                navigate('/admin/dashboard', { replace: true });
-            }, 1500);
 
         } catch (err) {
             console.error("Admin Login Error:", err);
@@ -90,6 +88,9 @@ const AdminLogin = () => {
             setLoading(false);
         }
     };
+
+    // Nếu đang loading từ AuthContext thì hiện màn hình chờ nhẹ để tránh nháy trang Login
+    if (authLoading) return <div className="admin-login-page">Đang kiểm tra quyền hạn...</div>;
 
     return (
         <div className="admin-login-page">

@@ -13,33 +13,38 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = useCallback(async () => {
         setLoading(true); 
         try {
-            // --- 1. KIỂM TRA USER THƯỜNG ---
-            try {
-                const userRes = await axios.get(`${BASE_URL}/api/auth/me`, { withCredentials: true });
-                // Check role: Nếu lỡ lấy nhầm token admin mà role là admin thì cũng cho login user luôn
-                if (userRes.data && userRes.data.user) {
-                    setUser(userRes.data.user);
-                }
-            } catch (e) {
-                setUser(null); // Lỗi hoặc chưa login thì xóa trắng user
-            }
+            const isAdminPath = window.location.pathname.includes('/admin');
 
-            // --- 2. KIỂM TRA ADMIN (NGHIÊM NGẶT) ---
-            if (window.location.pathname.includes('/admin')) {
+            if (isAdminPath) {
+                // --- VÙNG ADMIN: CHỈ LÀM VIỆC VỚI ADMIN ---
                 try {
                     const adminRes = await axios.get(`${BASE_URL}/admin/api/auth/me`, { withCredentials: true });
                     
-                    // KIỂM TRA ROLE TRỰC TIẾP TẠI ĐÂY
                     if (adminRes.data && adminRes.data.user && adminRes.data.user.role === 'admin') {
                         setAdmin(adminRes.data.user);
                     } else {
-                        // Nếu có user nhưng role KHÔNG PHẢI admin -> Đuổi thẳng cổ
                         setAdmin(null);
-                        console.error("Cảnh báo: Phát hiện truy cập trái phép vào vùng Admin!");
                     }
                 } catch (e) {
                     setAdmin(null);
                 }
+                // Xóa sổ usertoken trong state khi ở vùng admin
+                setUser(null); 
+
+            } else {
+                // --- VÙNG CLIENT: CHỈ LÀM VIỆC VỚI USER ---
+                try {
+                    const userRes = await axios.get(`${BASE_URL}/api/auth/me`, { withCredentials: true });
+                    if (userRes.data && userRes.data.user) {
+                        setUser(userRes.data.user);
+                    } else {
+                        setUser(null);
+                    }
+                } catch (e) {
+                    setUser(null);
+                }
+                // Xóa sổ admintoken trong state khi ở vùng client
+                setAdmin(null);
             }
         } catch (err) {
             console.log("Hệ thống xác thực có vấn đề");
