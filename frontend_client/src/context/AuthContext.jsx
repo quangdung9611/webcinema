@@ -14,11 +14,19 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = useCallback(async () => {
         setLoading(true);
         const hostname = window.location.hostname;
-        // Kiểm tra xem có phải sub-domain admin không
+        
+        // 1. Xác định xem đang đứng ở subdomain admin hay không
         const isAdminDomain = hostname.startsWith('admin.');
 
+        // 2. CHỌN ĐÚNG PATH: Nhà nào thức nấy
+        // Nếu ở admin.quangdungcinema.id.vn -> Gọi /admin/api/auth/me
+        // Nếu ở quangdungcinema.id.vn -> Gọi /api/auth/me
+        const apiPath = isAdminDomain 
+            ? `${BASE_URL}/admin/api/auth/me` 
+            : `${BASE_URL}/api/auth/me`;
+
         try {
-            const res = await axios.get(`${BASE_URL}/api/auth/me`, {
+            const res = await axios.get(apiPath, {
                 withCredentials: true
             });
 
@@ -28,7 +36,7 @@ export const AuthProvider = ({ children }) => {
                 // ĐANG Ở TRANG ADMIN
                 if (userData?.role === 'admin') {
                     setAdmin(userData);
-                    setUser(userData); // Admin cũng là một user
+                    setUser(userData); 
                 } else {
                     setAdmin(null);
                     setUser(null);
@@ -36,11 +44,12 @@ export const AuthProvider = ({ children }) => {
             } else {
                 // ĐANG Ở TRANG USER (KHÁCH HÀNG)
                 setUser(userData || null);
-                setAdmin(null); // Không cấp quyền admin ở domain khách
+                setAdmin(null); 
             }
 
         } catch (err) {
-            console.log("Auth error:", err.response?.data?.message || err.message);
+            // Khi bị 401 (hết hạn hoặc chưa login), xóa sạch state
+            console.log(`Auth check failed at ${apiPath}:`, err.response?.data?.message || err.message);
             setAdmin(null);
             setUser(null);
         } finally {
@@ -56,11 +65,8 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         checkAuth();
 
-        // Lắng nghe sự kiện tùy biến để cập nhật UI ngay lập tức
         const handleAuthChange = () => checkAuth();
         window.addEventListener('authChange', handleAuthChange);
-        
-        // Sự kiện storage giúp đồng bộ giữa các tab (nếu dùng chung domain)
         window.addEventListener('storage', handleAuthChange); 
 
         return () => {
