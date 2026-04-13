@@ -8,16 +8,19 @@ const BASE_COOKIE_CONFIG = {
     sameSite: 'none'
 };
 
-// Khai báo domain đồng bộ với AuthController
-const USER_DOMAIN = "quangdungcinema.id.vn";
-const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn";
+// 🔥 QUAN TRỌNG: Dùng chung một Domain gốc có dấu chấm
+const SHARED_DOMAIN = ".quangdungcinema.id.vn";
 
 const AuthMiddleware = (req, res, next) => {
+    // 1. Nhận diện request admin dựa trên URL (prefix /admin/api ông đã đặt ở server.js)
+    const isAdminPath = req.originalUrl.startsWith('/admin/api');
 
-    // 1. Lấy token (ưu tiên admin nếu đang ở domain admin)
-    const token = req.cookies.admintoken || req.cookies.usertoken;
+    // 2. Lấy token (ưu tiên admintoken nếu đang gọi API admin)
+    const token = isAdminPath 
+        ? (req.cookies.admintoken || req.cookies.usertoken) 
+        : req.cookies.usertoken;
 
-    // 2. Check tồn tại
+    // 3. Check tồn tại
     if (!token) {
         return res.status(401).json({ 
             success: false,
@@ -26,18 +29,16 @@ const AuthMiddleware = (req, res, next) => {
     }
 
     try {
-        // 3. Decode token
+        // 4. Decode token
         const decoded = jwt.verify(token, SECRET_KEY);
         req.user = decoded;
 
-        // 4. Check admin domain
-        const isAdminDomain = req.hostname === ADMIN_DOMAIN;
-
-        if (isAdminDomain && req.user.role !== 'admin') {
+        // 5. Kiểm tra quyền truy cập Admin
+        // Nếu request vào đường dẫn admin mà role không phải admin thì chặn ngay
+        if (isAdminPath && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 success: false,
-                message: "Không có quyền truy cập admin!" 
-                // Ở đây không xóa cookie vì có thể họ đang login user nhầm tab
+                message: "Bạn không có quyền truy cập vùng quản trị!" 
             });
         }
 
@@ -46,22 +47,19 @@ const AuthMiddleware = (req, res, next) => {
     } catch (err) {
         console.error("Token error:", err.message);
 
-        // 🔥 PHẢI XÓA COOKIE KÈM DOMAIN MỚI SẠCH ĐƯỢC
-        res.clearCookie('admintoken', {
+        // 🔥 XÓA COOKIE SẠCH SẼ THEO DOMAIN CHUNG
+        const clearOptions = {
             ...BASE_COOKIE_CONFIG,
-            domain: ADMIN_DOMAIN, // Thêm vào đây
+            domain: SHARED_DOMAIN,
             path: '/'
-        });
+        };
 
-        res.clearCookie('usertoken', {
-            ...BASE_COOKIE_CONFIG,
-            domain: USER_DOMAIN,  // Thêm vào đây
-            path: '/'
-        });
+        res.clearCookie('admintoken', clearOptions);
+        res.clearCookie('usertoken', clearOptions);
 
         return res.status(401).json({ 
             success: false,
-            message: "Phiên hết hạn, đăng nhập lại!"
+            message: "Phiên làm việc hết hạn!"
         });
     }
 };

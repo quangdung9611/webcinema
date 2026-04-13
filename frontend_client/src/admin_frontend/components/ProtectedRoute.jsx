@@ -5,8 +5,9 @@ import { useAuth } from '../../context/AuthContext';
 const ProtectedRoute = ({ children }) => {
     const location = useLocation();
     const { user, admin, loading } = useAuth();
+    const hostname = window.location.hostname;
 
-    // 1. Loading
+    // 1. Đang load dữ liệu từ API /getMe hoặc /checkAuth
     if (loading) {
         return (
             <div style={{ 
@@ -17,19 +18,28 @@ const ProtectedRoute = ({ children }) => {
                 background: '#0a0a0a',
                 color: '#ff4d4d'
             }}>
-                <div>🔐 Đang xác thực...</div>
+                <div>🔐 Đang xác thực quyền truy cập...</div>
             </div>
         );
     }
 
-    // 2. Check quyền admin (an toàn hơn)
-    const isAdmin = admin || (user && user.role === 'admin');
+    // 2. Kiểm tra xem đang ở domain nào
+    const isAdminDomain = hostname === 'admin.quangdungcinema.id.vn';
 
-    if (!isAdmin) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
+    if (isAdminDomain) {
+        // Nếu ở trang ADMIN: Bắt buộc phải có state 'admin' hoặc user.role là admin
+        const hasAdminAccess = admin || (user && user.role === 'admin');
+        if (!hasAdminAccess) {
+            return <Navigate to="/login" state={{ from: location }} replace />;
+        }
+    } else {
+        // Nếu ở trang USER: Chỉ cần có state 'user' là được
+        if (!user) {
+            return <Navigate to="/login" state={{ from: location }} replace />;
+        }
     }
 
-    // 3. OK
+    // 3. Mọi thứ OK
     return children;
 };
 

@@ -7,13 +7,13 @@ const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 // --- CẤU HÌNH COOKIE CHUNG ---
 const BASE_COOKIE_CONFIG = {
     httpOnly: true,
-    secure: true, // HTTPS (Render/Vercel)
-    sameSite: 'none', // Cho phép cross-site
+    secure: true,    // Bắt buộc phải true khi dùng HTTPS trên Render
+    sameSite: 'none', // Bắt buộc 'none' để cross-domain (từ render về domain riêng)
 };
 
-// Domain (Dùng để giới hạn phạm vi của Cookie - CÁCH B)
-const USER_DOMAIN = "quangdungcinema.id.vn";
-const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn";
+// Sử dụng dấu chấm ở đầu để cookie có hiệu lực cho sub-domain
+const USER_DOMAIN = ".quangdungcinema.id.vn";
+const ADMIN_DOMAIN = ".admin.quangdungcinema.id.vn"; 
 
 // -----------------------------------------------------------
 // 1. ĐĂNG KÝ (GIỮ NGUYÊN)
@@ -66,7 +66,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. LOGIN (SỬA LẠI ĐỂ TÁCH BIỆT DOMAIN THEO CÁCH B)
+// 2. LOGIN (TÁCH BIỆT DOMAIN)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -92,21 +92,18 @@ exports.login = async (req, res) => {
 
         const isAdmin = user.role === 'admin';
 
+        // Xử lý Cookie theo domain
         if (isAdmin) {
-            // 🔥 ADMIN → Chỉ định đích danh domain ADMIN
-            // Điều này ngăn trang User nhìn thấy admintoken
             res.cookie('admintoken', token, {
                 ...BASE_COOKIE_CONFIG,
-                domain: ADMIN_DOMAIN, 
+                domain: ADMIN_DOMAIN, // .admin.quangdungcinema.id.vn
                 path: '/',
                 maxAge: 24 * 60 * 60 * 1000
             });
         } else {
-            // 🔥 USER → Chỉ định đích danh domain USER
-            // Điều này ngăn trang Admin nhìn thấy usertoken (nếu cần tách biệt)
             res.cookie('usertoken', token, {
                 ...BASE_COOKIE_CONFIG,
-                domain: USER_DOMAIN,
+                domain: USER_DOMAIN, // .quangdungcinema.id.vn
                 path: '/',
                 maxAge: 24 * 60 * 60 * 1000
             });
@@ -115,6 +112,7 @@ exports.login = async (req, res) => {
         const roleKey = isAdmin ? 'admin' : 'customer';
 
         res.json({
+            success: true,
             message: "Đăng nhập thành công",
             role: user.role,
             [roleKey]: {
@@ -131,51 +129,48 @@ exports.login = async (req, res) => {
 
     } catch (err) {
         console.error("Login Error:", err);
-        res.status(500).json({ error: "Lỗi server" });
+        res.status(500).json({ success: false, error: "Lỗi server" });
     }
 };
 
 // -----------------------------------------------------------
-// 3. GET ME (GIỮ NGUYÊN)
+// 3. GET ME
 // -----------------------------------------------------------
 exports.getMe = async (req, res) => {
     try {
         const userId = req.user ? req.user.user_id : null;
-        if (!userId) return res.status(401).json({ message: "Chưa xác thực" });
+        if (!userId) return res.status(401).json({ success: false, message: "Chưa xác thực" });
 
         const [users] = await db.query(
             'SELECT user_id, username, full_name, phone, address, email, role, points FROM users WHERE user_id = ?',
             [userId]
         );
 
-        if (users.length === 0) return res.status(404).json({ message: "Không tìm thấy user" });
+        if (users.length === 0) return res.status(404).json({ success: false, message: "Không tìm thấy user" });
 
-        res.json({ user: users[0] });
+        res.json({ success: true, user: users[0] });
 
     } catch (err) {
         console.error("GetMe Error:", err);
-        res.status(500).json({ error: "Lỗi server" });
+        res.status(500).json({ success: false, error: "Lỗi server" });
     }
 };
 
 // -----------------------------------------------------------
-// 4. LOGOUT (CẦN TRUYỀN ĐÚNG DOMAIN ĐỂ XÓA SẠCH)
+// 4. LOGOUT
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
-
-    // Xóa usertoken tại domain của user
     res.clearCookie('usertoken', {
         ...BASE_COOKIE_CONFIG,
         domain: USER_DOMAIN,
         path: '/'
     });
 
-    // Xóa admintoken tại domain của admin
     res.clearCookie('admintoken', {
         ...BASE_COOKIE_CONFIG,
         domain: ADMIN_DOMAIN,
         path: '/'
     });
 
-    res.json({ message: "Đăng xuất thành công" });
+    res.json({ success: true, message: "Đăng xuất thành công" });
 };

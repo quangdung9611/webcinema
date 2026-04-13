@@ -12,56 +12,43 @@ export const AuthProvider = ({ children }) => {
 
     const checkAuth = useCallback(async () => {
         setLoading(true);
-
         const hostname = window.location.hostname;
         const isAdminDomain = hostname === 'admin.quangdungcinema.id.vn';
 
         try {
+            const res = await axios.get(`${BASE_URL}/api/auth/me`, {
+                withCredentials: true
+            });
+
+            const userData = res.data?.user;
+
             if (isAdminDomain) {
-                // 🔥 ADMIN
-                try {
-                    const res = await axios.get(`${BASE_URL}/api/auth/me`, {
-                        withCredentials: true
-                    });
-
-                    if (res.data?.user?.role === 'admin') {
-                        setAdmin(res.data.user);
-                    } else {
-                        setAdmin(null);
-                    }
-
-                } catch {
+                // Nếu ở domain Admin, chỉ chấp nhận role admin
+                if (userData?.role === 'admin') {
+                    setAdmin(userData);
+                } else {
                     setAdmin(null);
                 }
-
-                setUser(null);
-
+                setUser(null); // Luôn dọn sạch user ở domain admin
             } else {
-                // 🔥 USER
-                try {
-                    const res = await axios.get(`${BASE_URL}/api/auth/me`, {
-                        withCredentials: true
-                    });
-
-                    if (res.data?.user) {
-                        setUser(res.data.user);
-                    } else {
-                        setUser(null);
-                    }
-
-                } catch {
-                    setUser(null);
-                }
-
-                setAdmin(null);
+                // Nếu ở domain User
+                setUser(userData || null);
+                setAdmin(null); // Luôn dọn sạch admin ở domain user
             }
 
         } catch (err) {
-            console.log("Auth error:", err);
+            console.log("Auth error:", err.message);
+            setAdmin(null);
+            setUser(null);
         } finally {
             setLoading(false);
         }
+    }, []);
 
+    // Thêm hàm clearAuth để dùng cho Logout
+    const clearAuth = useCallback(() => {
+        setUser(null);
+        setAdmin(null);
     }, []);
 
     useEffect(() => {
@@ -69,12 +56,17 @@ export const AuthProvider = ({ children }) => {
 
         const handleAuthChange = () => checkAuth();
         window.addEventListener('authChange', handleAuthChange);
+        window.addEventListener('storage', handleAuthChange); // Thêm cái này để đồng bộ tab tốt hơn
 
-        return () => window.removeEventListener('authChange', handleAuthChange);
+        return () => {
+            window.removeEventListener('authChange', handleAuthChange);
+            window.removeEventListener('storage', handleAuthChange);
+        };
     }, [checkAuth]);
 
     return (
-        <AuthContext.Provider value={{ user, admin, setUser, setAdmin, loading, checkAuth }}>
+        // Export đầy đủ các hàm cần thiết
+        <AuthContext.Provider value={{ user, admin, setUser, setAdmin, loading, checkAuth, clearAuth }}>
             {children}
         </AuthContext.Provider>
     );
