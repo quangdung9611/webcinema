@@ -8,15 +8,15 @@ const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 const BASE_COOKIE_CONFIG = {
     httpOnly: true,
     secure: true,    // Bắt buộc phải true khi dùng HTTPS trên Render
-    sameSite: 'none', // Bắt buộc 'none' để cross-domain (từ render về domain riêng)
+    sameSite: 'none', // Bắt buộc 'none' để cross-domain
 };
 
-// Sử dụng dấu chấm ở đầu để cookie có hiệu lực cho sub-domain
+// 🔥 KHÔNG dùng dấu chấm ở đầu để tách biệt tuyệt đối giữa 2 domain
 const USER_DOMAIN = "quangdungcinema.id.vn";
 const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn"; 
 
 // -----------------------------------------------------------
-// 1. ĐĂNG KÝ (GIỮ NGUYÊN)
+// 1. ĐĂNG KÝ (GIỮ NGUYÊN CODE BAN ĐẦU)
 // -----------------------------------------------------------
 exports.register = async (req, res) => {
     const { username, full_name, phone, address, email, password, role } = req.body;
@@ -66,7 +66,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. LOGIN (TÁCH BIỆT DOMAIN)
+// 2. LOGIN (TÁCH BIỆT DOMAIN & DỌN DẸP TOKEN)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -78,7 +78,7 @@ exports.login = async (req, res) => {
         const user = users[0];
 
         if (role_input && user.role !== role_input) {
-            return res.status(403).json({ message: "Sai quyền" });
+            return res.status(403).json({ message: "Sai quyền truy cập" });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -92,18 +92,26 @@ exports.login = async (req, res) => {
 
         const isAdmin = user.role === 'admin';
 
-        // Xử lý Cookie theo domain
+        // 🔥 XỬ LÝ COOKIE TÁCH BIỆT HOÀN TOÀN
         if (isAdmin) {
+            // Khi login Admin: Xóa sạch usertoken ở domain khách (nếu có)
+            res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, domain: USER_DOMAIN, path: '/' });
+            
+            // Cấp admintoken cho domain admin
             res.cookie('admintoken', token, {
                 ...BASE_COOKIE_CONFIG,
-                domain: ADMIN_DOMAIN, // .admin.quangdungcinema.id.vn
+                domain: ADMIN_DOMAIN,
                 path: '/',
                 maxAge: 24 * 60 * 60 * 1000
             });
         } else {
+            // Khi login User: Xóa sạch admintoken ở domain admin (nếu có)
+            res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, domain: ADMIN_DOMAIN, path: '/' });
+
+            // Cấp usertoken cho domain khách
             res.cookie('usertoken', token, {
                 ...BASE_COOKIE_CONFIG,
-                domain: USER_DOMAIN, // .quangdungcinema.id.vn
+                domain: USER_DOMAIN,
                 path: '/',
                 maxAge: 24 * 60 * 60 * 1000
             });
@@ -134,7 +142,7 @@ exports.login = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 3. GET ME
+// 3. GET ME (GIỮ NGUYÊN LOGIC)
 // -----------------------------------------------------------
 exports.getMe = async (req, res) => {
     try {
@@ -157,15 +165,17 @@ exports.getMe = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 4. LOGOUT
+// 4. LOGOUT (QUÉT SẠCH CẢ 2 DOMAIN)
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
+    // Xóa usertoken tại domain khách
     res.clearCookie('usertoken', {
         ...BASE_COOKIE_CONFIG,
         domain: USER_DOMAIN,
         path: '/'
     });
 
+    // Xóa admintoken tại domain admin
     res.clearCookie('admintoken', {
         ...BASE_COOKIE_CONFIG,
         domain: ADMIN_DOMAIN,

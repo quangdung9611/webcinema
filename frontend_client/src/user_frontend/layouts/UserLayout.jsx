@@ -10,16 +10,15 @@ const UserLayout = () => {
 
     const fetchUserData = async () => {
         try {
-            // [CẬP NHẬT]: Gọi API /me và dùng withCredentials để tự động gửi Cookie
-            // Không cần lấy token từ sessionStorage và không cần gắn Header Authorization thủ công nữa
-            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/auth/me', {
-                withCredentials: true 
-            });
+            // Chỉ cần gọi endpoint ngắn gọn vì đã có baseURL ở App.js
+            const res = await axios.get('/api/auth/me');
             
-            // Backend của Dũng trả về { user: { ... } } dựa theo file middleware đã sửa
-            setUser(res.data.user || res.data);
+            // Backend trả về { success: true, user: { ... } }
+            if (res.data && res.data.user) {
+                setUser(res.data.user);
+            }
         } catch (err) {
-            // Nếu lỗi (chưa đăng nhập hoặc cookie hết hạn), set user về null
+            // Khi lỗi 401 (chưa đăng nhập), xóa trắng user state
             setUser(null);
         }
     };
@@ -27,7 +26,7 @@ const UserLayout = () => {
     useEffect(() => {
         fetchUserData();
         
-        // Lắng nghe sự kiện 'authChange' để cập nhật lại thông tin khi User đăng nhập/đăng xuất
+        // Cơ chế này của Dũng rất hay để cập nhật UI ngay lập tức khi Login thành công
         window.addEventListener('authChange', fetchUserData);
         return () => window.removeEventListener('authChange', fetchUserData);
     }, []);
@@ -35,13 +34,13 @@ const UserLayout = () => {
     return (
         <div className="user-site-container">
             <header className="user-header-section">
-                {/* UserHeader sẽ nhận state user để hiển thị "Xin chào..." hoặc nút "Đăng nhập" */}
+                {/* Truyền cả user và setUser xuống để Header xử lý Đăng xuất */}
                 <UserHeader user={user} setUser={setUser} />
             </header>
 
             <main className="user-main-content">
-                {/* Outlet cho phép các trang con gọi lại fetchUserData khi cần thiết */}
-                <Outlet context={{ fetchUserData }} />
+                {/* Truyền fetchUserData qua context để các trang con (như Profile) có thể gọi lại */}
+                <Outlet context={{ fetchUserData, user }} />
             </main>
 
             <footer className="user-footer-section">
