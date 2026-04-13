@@ -2,12 +2,16 @@ const jwt = require('jsonwebtoken');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
-// Cấu hình cookie dọn dẹp (PHẢI giống hệt lúc set ở AuthController)
+// 🔥 ÉP CỨNG DOMAIN: Phải giống hệt bên AuthController
+const USER_DOMAIN = "quangdungcinema.id.vn";
+const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn"; 
+
+// Cấu hình cookie dọn dẹp
 const BASE_COOKIE_CONFIG = {
     httpOnly: true,
     secure: true,
     sameSite: 'none',
-    path: '/' // Quan trọng: Phải khớp path mới xóa được
+    path: '/' 
 };
 
 const AuthMiddleware = (req, res, next) => {
@@ -42,10 +46,14 @@ const AuthMiddleware = (req, res, next) => {
         console.error("Token error:", err.message);
 
         // 3. XÓA TOKEN KHI LỖI: 
-        // Đã xóa bỏ thuộc tính 'domain' để khớp với AuthController
+        // 🔥 PHẢI truyền đúng domain tương ứng thì trình duyệt mới cho xóa
         const tokenName = isAdminPath ? 'admintoken' : 'usertoken';
+        const targetDomain = isAdminPath ? ADMIN_DOMAIN : USER_DOMAIN;
 
-        res.clearCookie(tokenName, BASE_COOKIE_CONFIG);
+        res.clearCookie(tokenName, { 
+            ...BASE_COOKIE_CONFIG, 
+            domain: targetDomain 
+        });
 
         return res.status(401).json({ 
             success: false,
