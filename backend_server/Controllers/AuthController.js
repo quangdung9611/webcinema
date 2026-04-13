@@ -55,8 +55,9 @@ exports.register = async (req, res) => {
     }
 };
 
-// ... (phần register và config bên trên giữ nguyên)
-
+// -----------------------------------------------------------
+// 2. XỬ LÝ ĐĂNG NHẬP (CẬP NHẬT: KHÔNG XÓA CHÉO ĐỂ DÙNG SONG SONG)
+// -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
 
@@ -75,35 +76,26 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET_KEY, { expiresIn: '24h' });
         
-        // --- LOGIC CHIA VÙNG & DỌN DẸP CHÉO ---
         const isAdmin = user.role === 'admin';
         
         if (isAdmin) {
-            // 1. Cấp thẻ cho Admin vào vùng /admin
+            // 1. Cấp thẻ cho Admin vào vùng /admin (Chỉ hiện ở tab Admin)
             res.cookie('admintoken', token, { 
                 ...BASE_COOKIE_CONFIG, 
                 path: '/admin', 
                 maxAge: 24 * 60 * 60 * 1000 
             });
 
-            // 2. QUAN TRỌNG: Đuổi sạch thẻ User ở vùng / để tránh hiện 2 cái
-            res.clearCookie('usertoken', { 
-                ...BASE_COOKIE_CONFIG, 
-                path: '/' 
-            });
+            // ĐÃ BỎ LỆNH res.clearCookie('usertoken') để không đá User ra
         } else {
-            // 1. Cấp thẻ cho User vào vùng /
+            // 1. Cấp thẻ cho User vào vùng / (Dùng chung toàn trang)
             res.cookie('usertoken', token, { 
                 ...BASE_COOKIE_CONFIG, 
                 path: '/', 
                 maxAge: 24 * 60 * 60 * 1000 
             });
 
-            // 2. QUAN TRỌNG: Đuổi sạch thẻ Admin ở vùng /admin (nếu sếp muốn đổi vai làm khách)
-            res.clearCookie('admintoken', { 
-                ...BASE_COOKIE_CONFIG, 
-                path: '/admin' 
-            });
+            // ĐÃ BỎ LỆNH res.clearCookie('admintoken') để không đá Admin ra
         }
         
         const roleKey = isAdmin ? 'admin' : 'customer';
@@ -126,8 +118,6 @@ exports.login = async (req, res) => {
         res.status(500).json({ error: "Lỗi đăng nhập" });
     }
 };
-
-// ... (phần getMe và logout bên dưới giữ nguyên)
 
 // -----------------------------------------------------------
 // 3. LẤY THÔNG TIN CÁ NHÂN (GIỮ NGUYÊN CODE BAN ĐẦU)
@@ -155,9 +145,9 @@ exports.getMe = async (req, res) => {
 // 4. XỬ LÝ ĐĂNG XUẤT (XÓA CHÍNH XÁC THEO PATH)
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
-    // Xóa dứt khoát theo từng vùng path đã chia
-    res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, path: '/', maxAge: 0 });
-    res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, path: '/admin', maxAge: 0 });
+    // Xóa đúng theo vùng đã chia
+    res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, path: '/' });
+    res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, path: '/admin' });
 
     res.json({ message: "Đã đăng xuất hệ thống thành công" });
 };
