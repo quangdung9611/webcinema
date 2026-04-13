@@ -12,8 +12,8 @@ const BASE_COOKIE_CONFIG = {
 };
 
 // Sử dụng dấu chấm ở đầu để cookie có hiệu lực cho sub-domain
-const USER_DOMAIN = ".quangdungcinema.id.vn";
-const ADMIN_DOMAIN = ".admin.quangdungcinema.id.vn"; 
+const USER_DOMAIN = "quangdungcinema.id.vn";
+const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn"; 
 
 // -----------------------------------------------------------
 // 1. ĐĂNG KÝ (GIỮ NGUYÊN)
