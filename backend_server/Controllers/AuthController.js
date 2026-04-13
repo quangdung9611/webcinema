@@ -5,26 +5,33 @@ const db = require('../Config/db');
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 // --- CẤU HÌNH COOKIE CHUNG ---
-// Xóa bỏ thuộc tính domain ở đây để trình duyệt tự gán vào host gọi API
 const BASE_COOKIE_CONFIG = {
     httpOnly: true,
-    secure: true,    // Bắt buộc trên Render
-    sameSite: 'none', // Bắt buộc cho cross-domain (id.vn -> render.com)
-    path: '/'
+    secure: true,    // Bắt buộc phải true khi dùng HTTPS trên Render
+    sameSite: 'none', // Bắt buộc 'none' để cross-domain
 };
 
+// 🔥 KHÔNG dùng dấu chấm ở đầu để tách biệt tuyệt đối giữa 2 domain
+const USER_DOMAIN = "quangdungcinema.id.vn";
+const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn"; 
+
 // -----------------------------------------------------------
-// 1. ĐĂNG KÝ (GIỮ NGUYÊN)
+// 1. ĐĂNG KÝ (GIỮ NGUYÊN CODE BAN ĐẦU)
 // -----------------------------------------------------------
 exports.register = async (req, res) => {
     const { username, full_name, phone, address, email, password, role } = req.body;
+
     try {
         if (!full_name || full_name.length < 8) {
             return res.status(400).json({ field: 'full_name', message: "Họ tên phải từ 8 ký tự trở lên" });
         }
+
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
         if (!passwordRegex.test(password)) {
-            return res.status(400).json({ field: 'password', message: "Mật khẩu yếu!" });
+            return res.status(400).json({
+                field: 'password',
+                message: "Mật khẩu yếu!"
+            });
         }
 
         const [existing] = await db.query(
@@ -34,16 +41,24 @@ exports.register = async (req, res) => {
 
         if (existing.length > 0) {
             const user = existing[0];
-            const field = user.username === username ? 'username' : user.email === email ? 'email' : 'phone';
+            const field =
+                user.username === username ? 'username' :
+                user.email === email ? 'email' : 'phone';
+
             return res.status(400).json({ field, message: `${field} đã tồn tại` });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const finalRole = role || 'customer';
+
         const [result] = await db.query(
-            `INSERT INTO users (username, full_name, phone, address, email, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [username, full_name, phone, address || '', email, hashedPassword, role || 'customer']
+            `INSERT INTO users (username, full_name, phone, address, email, password, role)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [username, full_name, phone, address || '', email, hashedPassword, finalRole]
         );
+
         res.status(201).json({ message: "Đăng ký thành công", userId: result.insertId });
+
     } catch (err) {
         console.error("Register Error:", err);
         res.status(500).json({ error: "Lỗi hệ thống" });
@@ -51,15 +66,17 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. LOGIN (KHÔNG DÙNG THUỘC TÍNH DOMAIN)
+// 2. LOGIN (TÁCH BIỆT DOMAIN & DỌN DẸP TOKEN)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
+
     try {
         const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         if (users.length === 0) return res.status(401).json({ message: "Sai thông tin" });
 
         const user = users[0];
+
         if (role_input && user.role !== role_input) {
             return res.status(403).json({ message: "Sai quyền truy cập" });
         }
@@ -75,26 +92,33 @@ exports.login = async (req, res) => {
 
         const isAdmin = user.role === 'admin';
 
-        // 🔥 XỬ LÝ COOKIE: Bỏ tham số domain để trình duyệt tự quản lý theo Host
+        // 🔥 XỬ LÝ COOKIE TÁCH BIỆT HOÀN TOÀN
         if (isAdmin) {
-            // Xóa sạch usertoken (nếu có)
-            res.clearCookie('usertoken', BASE_COOKIE_CONFIG);
-            // Cấp admintoken
+            // Khi login Admin: Xóa sạch usertoken ở domain khách (nếu có)
+            res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, domain: USER_DOMAIN, path: '/' });
+            
+            // Cấp admintoken cho domain admin
             res.cookie('admintoken', token, {
                 ...BASE_COOKIE_CONFIG,
+                domain: ADMIN_DOMAIN,
+                path: '/',
                 maxAge: 24 * 60 * 60 * 1000
             });
         } else {
-            // Xóa sạch admintoken (nếu có)
-            res.clearCookie('admintoken', BASE_COOKIE_CONFIG);
-            // Cấp usertoken
+            // Khi login User: Xóa sạch admintoken ở domain admin (nếu có)
+            res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, domain: ADMIN_DOMAIN, path: '/' });
+
+            // Cấp usertoken cho domain khách
             res.cookie('usertoken', token, {
                 ...BASE_COOKIE_CONFIG,
+                domain: USER_DOMAIN,
+                path: '/',
                 maxAge: 24 * 60 * 60 * 1000
             });
         }
 
         const roleKey = isAdmin ? 'admin' : 'customer';
+
         res.json({
             success: true,
             message: "Đăng nhập thành công",
@@ -103,10 +127,14 @@ exports.login = async (req, res) => {
                 user_id: user.user_id,
                 username: user.username,
                 full_name: user.full_name,
+                phone: user.phone,
+                address: user.address,
                 email: user.email,
+                points: user.points,
                 role: user.role
             }
         });
+
     } catch (err) {
         console.error("Login Error:", err);
         res.status(500).json({ success: false, error: "Lỗi server" });
@@ -114,7 +142,7 @@ exports.login = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 3. GET ME (GIỮ NGUYÊN)
+// 3. GET ME (GIỮ NGUYÊN LOGIC)
 // -----------------------------------------------------------
 exports.getMe = async (req, res) => {
     try {
@@ -125,18 +153,34 @@ exports.getMe = async (req, res) => {
             'SELECT user_id, username, full_name, phone, address, email, role, points FROM users WHERE user_id = ?',
             [userId]
         );
+
         if (users.length === 0) return res.status(404).json({ success: false, message: "Không tìm thấy user" });
+
         res.json({ success: true, user: users[0] });
+
     } catch (err) {
+        console.error("GetMe Error:", err);
         res.status(500).json({ success: false, error: "Lỗi server" });
     }
 };
 
 // -----------------------------------------------------------
-// 4. LOGOUT (QUÉT SẠCH KHÔNG CẦN DOMAIN)
+// 4. LOGOUT (QUÉT SẠCH CẢ 2 DOMAIN)
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
-    res.clearCookie('usertoken', BASE_COOKIE_CONFIG);
-    res.clearCookie('admintoken', BASE_COOKIE_CONFIG);
+    // Xóa usertoken tại domain khách
+    res.clearCookie('usertoken', {
+        ...BASE_COOKIE_CONFIG,
+        domain: USER_DOMAIN,
+        path: '/'
+    });
+
+    // Xóa admintoken tại domain admin
+    res.clearCookie('admintoken', {
+        ...BASE_COOKIE_CONFIG,
+        domain: ADMIN_DOMAIN,
+        path: '/'
+    });
+
     res.json({ success: true, message: "Đăng xuất thành công" });
 };
