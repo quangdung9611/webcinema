@@ -56,7 +56,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. XỬ LÝ ĐĂNG NHẬP (CẬP NHẬT: KHÔNG XÓA CHÉO ĐỂ DÙNG SONG SONG)
+// 2. XỬ LÝ ĐĂNG NHẬP (CẬP NHẬT: XÓA USERTTOKEN KHI LOGIN ADMIN)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -79,23 +79,25 @@ exports.login = async (req, res) => {
         const isAdmin = user.role === 'admin';
         
         if (isAdmin) {
-            // 1. Cấp thẻ cho Admin vào vùng /admin (Chỉ hiện ở tab Admin)
+            // [THÊM MỚI]: Xóa usertoken cũ (nếu có) để trang Admin sạch sẽ
+            res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, path: '/' });
+
+            // 1. Cấp thẻ cho Admin vào vùng /admin
             res.cookie('admintoken', token, { 
                 ...BASE_COOKIE_CONFIG, 
                 path: '/admin', 
                 maxAge: 24 * 60 * 60 * 1000 
             });
-
-            // ĐÃ BỎ LỆNH res.clearCookie('usertoken') để không đá User ra
         } else {
-            // 1. Cấp thẻ cho User vào vùng / (Dùng chung toàn trang)
+            // [THÊM MỚI]: Xóa admintoken cũ (nếu có) khi user thường login
+            res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, path: '/admin' });
+
+            // 1. Cấp thẻ cho User vào vùng /
             res.cookie('usertoken', token, { 
                 ...BASE_COOKIE_CONFIG, 
                 path: '/', 
                 maxAge: 24 * 60 * 60 * 1000 
             });
-
-            // ĐÃ BỎ LỆNH res.clearCookie('admintoken') để không đá Admin ra
         }
         
         const roleKey = isAdmin ? 'admin' : 'customer';
