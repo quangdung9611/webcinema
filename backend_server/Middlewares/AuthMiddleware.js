@@ -9,11 +9,9 @@ const BASE_COOKIE_CONFIG = {
 };
 
 const AuthMiddleware = (req, res, next) => {
-    // 1. XÁC ĐỊNH TOKEN CẦN LẤY DỰA TRÊN ĐƯỜNG DẪN (URL)
-    const isAccessingAdmin = req.originalUrl.includes('/admin');
-    
-    // Nếu là API admin thì ưu tiên lấy admintoken, nếu là API thường thì lấy usertoken
-    const token = isAccessingAdmin ? req.cookies.admintoken : req.cookies.usertoken;
+    // 1. THỬ LẤY ADMIN TOKEN TRƯỚC, NẾU KHÔNG CÓ THÌ LẤY USER TOKEN
+    // Cách này giúp ông đứng ở đâu cũng có thể check được role
+    const token = req.cookies.admintoken || req.cookies.usertoken;
 
     // 2. KIỂM TRA SỰ TỒN TẠI CỦA TOKEN
     if (!token) {
@@ -24,12 +22,14 @@ const AuthMiddleware = (req, res, next) => {
     }
 
     try {
-        // 3. GIẢI MÃ TOKEN
+        // 3. GIẢI MÃ TOKEN ĐỂ LẤY ROLE
         const decoded = jwt.verify(token, SECRET_KEY);
-        req.user = decoded; // { user_id, role, ... }
+        req.user = decoded; // Trong này sẽ có { user_id, role, ... }
 
-        // 4. KIỂM TRA QUYỀN TRUY CẬP NGHIÊM NGẶT
-        // Nếu API dành cho admin mà trong token role không phải admin -> Chặn
+        // 4. KIỂM TRA ROLE TRỰC TIẾP TỪ TOKEN
+        // Nếu URL có chứa chữ /admin nhưng role trong token không phải admin thì chặn
+        const isAccessingAdmin = req.originalUrl.includes('/admin');
+        
         if (isAccessingAdmin && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 success: false,
@@ -43,12 +43,9 @@ const AuthMiddleware = (req, res, next) => {
     } catch (err) {
         console.error("Lỗi xác thực Token:", err.message);
         
-        // Chỉ xóa đúng cái token đang bị lỗi để không ảnh hưởng đến tab còn lại (nếu có)
-        if (isAccessingAdmin) {
-            res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, path: '/admin' });
-        } else {
-            res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, path: '/' });
-        }
+        // Khi lỗi, xóa cả 2 cho sạch máy nếu cần
+        res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, path: '/admin' });
+        res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, path: '/' });
 
         return res.status(401).json({ 
             success: false,
