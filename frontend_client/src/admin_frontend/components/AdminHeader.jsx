@@ -15,7 +15,7 @@ const AdminHeader = ({ toggleSidebar }) => {
         // Chỉ đá đi nếu đã check xong (loading = false) mà không thấy biến admin
         // Biến admin này mình đã check role='admin' sẵn trong Context rồi
         if (!loading && !admin) {
-            navigate('/admin/login');
+            navigate('/login');
         }
     }, [admin, loading, navigate]);
 
@@ -35,7 +35,7 @@ const AdminHeader = ({ toggleSidebar }) => {
             window.dispatchEvent(new Event('authChange'));
             
             // Về trang login của admin
-            navigate('/admin/login');
+            navigate('/login');
         }
     };
 

@@ -71,7 +71,7 @@ const AdminLogin = () => {
                 message: `Chào mừng Quản trị viên hệ thống.`,
                 onConfirm: () => {
                     setModalConfig(prev => ({ ...prev, show: false }));
-                    navigate('/admin/dashboard', { replace: true });
+                    navigate('/dashboard', { replace: true });
                 }
             });
 

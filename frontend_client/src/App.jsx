@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from './context/AuthContext'; // 1. IMPORT HOOK NÀY
+import { useAuth } from './context/AuthContext'; 
 // --- CẤU HÌNH QUAN TRỌNG ---
 axios.defaults.withCredentials = true;
 
@@ -65,6 +65,7 @@ import ShowtimeUpdate from './admin_frontend/pages/Admin/Showtime/ShowTimeUpdate
 import NewsList from './admin_frontend/pages/Admin/News/NewsList';
 import NewsAdd from './admin_frontend/pages/Admin/News/NewsAdd';
 import NewsUpdate from './admin_frontend/pages/Admin/News/NewsUpdate';
+
 const AdminLayoutWrapper = () => (
     <ProtectedRoute>
         <AdminLayout />
@@ -73,6 +74,9 @@ const AdminLayoutWrapper = () => (
 
 function App() {
     const { loading } = useAuth();
+    const hostname = window.location.hostname;
+    const isAdminDomain = hostname === 'admin.quangdungcinema.id.vn';
+
     if (loading) {
         return (
             <div style={{ 
@@ -83,93 +87,102 @@ function App() {
             </div>
         );
     }
+
     return (
         <Router>
-            {/* Dùng class thay vì inline style */}
             <div className="app-wrapper">
                 <Routes>
-                    {/* --- USER ROUTES --- */}
-                    <Route path="/" element={<UserLayout />}>
-                        <Route index element={<UserHome />} />
-                        <Route path="movies/status/:statusSlug" element={<MovieStatusPage />} />
-                        <Route path="movies/detail/:slug" element={<MovieDetail />} />
-                        <Route path="actors" element={<Actor />} />
-                        <Route path="actor/:slug" element={<ActorDetail />} /> 
-                        <Route path="cinema/:slug" element={<CinemaDetail />} /> 
-                        <Route path="booking" element={<Booking />} />
-                        <Route path="foods" element={<Food />} />
-                        <Route path="cinema-genre" element={<CinemaGenre />} />
-                        <Route path="payment" element={<Payment />} />
-                        <Route path="film-review" element={<FilmReview />} />
-                        <Route path="/film-review/:slug" element={<FilmReviewDetail />} />
-                        <Route path="bank-app" element={<BankApp />} />
-                        <Route path="momo-app" element={<MomoApp />} />
-                        <Route path="confirm-success" element={<ConfirmSuccess />} />
-                        <Route path="login" element={<UserLogin />} />
-                        <Route path="register" element={<UserRegister />} />
-                        <Route path="profile" element={<Profile />} />
-                    </Route>
-
-                    {/* --- ADMIN ROUTES --- */}
-                    <Route path="/admin/login" element={<AdminLogin />} />
-                    <Route path="/admin" element={<AdminLayoutWrapper />}>
-                        <Route index element={<Navigate to="dashboard" replace />} />
-                        <Route path="dashboard" element={<AdminDashboard />} />
-                        <Route path="users">
-                            <Route index element={<UserList />} />
-                            <Route path="add" element={<UserAdd />} />
-                            <Route path="update/:user_id" element={<UserUpdate />} />
+                    {isAdminDomain ? (
+                        /* --- ROUTE CHO DOMAIN ADMIN (Đã bỏ /admin) --- */
+                        <Route path="/">
+                            {/* Vào admin.quangdungcinema.id.vn/ thì vào thẳng login hoặc dashboard */}
+                            <Route index element={<Navigate to="/dashboard" replace />} />
+                            <Route path="login" element={<AdminLogin />} />
+                            
+                            <Route path="/" element={<AdminLayoutWrapper />}>
+                                <Route path="dashboard" element={<AdminDashboard />} />
+                                <Route path="users">
+                                    <Route index element={<UserList />} />
+                                    <Route path="add" element={<UserAdd />} />
+                                    <Route path="update/:user_id" element={<UserUpdate />} />
+                                </Route>
+                                <Route path="movies">
+                                    <Route index element={<MovieList />} />
+                                    <Route path="add" element={<MovieAdd />} />
+                                    <Route path="update/:id" element={<MovieUpdate />} />
+                                </Route>
+                                <Route path="rooms">
+                                    <Route index element={<RoomList />} />
+                                    <Route path="add" element={<RoomAdd />} />
+                                    <Route path="update/:room_id" element={<RoomUpdate />} />
+                                </Route>
+                                <Route path="news">
+                                    <Route index element={<NewsList />} />
+                                    <Route path="add" element={<NewsAdd />} />
+                                    <Route path="update/:news_id" element={<NewsUpdate />} />
+                                </Route>
+                                <Route path="coupons">
+                                    <Route index element={<CouponList />} />
+                                    <Route path="add" element={<CouponAdd />} />
+                                    <Route path="update/:coupon_id" element={<CouponUpdate />} />
+                                </Route>
+                                <Route path="genres">
+                                    <Route index element={<GenresList />} />
+                                    <Route path="add" element={<GenresAdd />} />
+                                    <Route path="update/:genre_id" element={<GenresUpdate />} />
+                                </Route>
+                                <Route path="cinemas">
+                                    <Route index element={<CinemaList />} />
+                                    <Route path="add" element={<CinemaAdd />} />
+                                    <Route path="update/:cinema_id" element={<CinemaUpdate />} />
+                                </Route>
+                                <Route path="showtimes">
+                                    <Route index element={<ShowTimeList />} />
+                                    <Route path="add" element={<ShowtimeAdd />} />
+                                    <Route path="update/:showtime_id" element={<ShowtimeUpdate />} />
+                                </Route>
+                                <Route path="seats" element={<SeatList />} />
+                                <Route path="movie-genres" element={<MovieGenreList />} />
+                                <Route path="movie-actors" element={<MovieActorList />} />
+                                <Route path="bookings" element={<BookingList />} />
+                                <Route path="bookings/:id" element={<BookingDetail />} />
+                                <Route path="tickets" element={<TicketList />} />
+                                <Route path="actors">
+                                    <Route index element={<ActorList/>} />
+                                    <Route path="add" element={<ActorAdd />} />
+                                    <Route path="update/:id" element={<ActorUpdate/>} />
+                                </Route>
+                            </Route>
+                            <Route path="*" element={<NotFoundPage />} />
                         </Route>
-                        <Route path="movies">
-                            <Route index element={<MovieList />} />
-                            <Route path="add" element={<MovieAdd />} />
-                            <Route path="update/:id" element={<MovieUpdate />} />
+                    ) : (
+                        /* --- ROUTE CHO DOMAIN USER --- */
+                        <Route path="/">
+                            <Route path="/" element={<UserLayout />}>
+                                <Route index element={<UserHome />} />
+                                <Route path="movies/status/:statusSlug" element={<MovieStatusPage />} />
+                                <Route path="movies/detail/:slug" element={<MovieDetail />} />
+                                <Route path="actors" element={<Actor />} />
+                                <Route path="actor/:slug" element={<ActorDetail />} /> 
+                                <Route path="cinema/:slug" element={<CinemaDetail />} /> 
+                                <Route path="booking" element={<Booking />} />
+                                <Route path="foods" element={<Food />} />
+                                <Route path="cinema-genre" element={<CinemaGenre />} />
+                                <Route path="payment" element={<Payment />} />
+                                <Route path="film-review" element={<FilmReview />} />
+                                <Route path="/film-review/:slug" element={<FilmReviewDetail />} />
+                                <Route path="bank-app" element={<BankApp />} />
+                                <Route path="momo-app" element={<MomoApp />} />
+                                <Route path="confirm-success" element={<ConfirmSuccess />} />
+                                <Route path="login" element={<UserLogin />} />
+                                <Route path="register" element={<UserRegister />} />
+                                <Route path="profile" element={<Profile />} />
+                            </Route>
+                            {/* Nếu khách cố tình gõ /admin ở domain chính, đá về home */}
+                            <Route path="admin/*" element={<Navigate to="/" replace />} />
+                            <Route path="*" element={<NotFoundPage />} />
                         </Route>
-                        <Route path="rooms">
-                            <Route index element={<RoomList />} />
-                            <Route path="add" element={<RoomAdd />} />
-                            <Route path="update/:room_id" element={<RoomUpdate />} />
-                        </Route>
-                        {/* ROUTE TIN TỨC MỚI BỔ SUNG */}
-                        <Route path="news">
-                            <Route index element={<NewsList />} />
-                            <Route path="add" element={<NewsAdd />} />
-                            <Route path="update/:news_id" element={<NewsUpdate />} />
-                        </Route>
-                        <Route path="coupons">
-                            <Route index element={<CouponList />} />
-                            <Route path="add" element={<CouponAdd />} />
-                            <Route path="update/:coupon_id" element={<CouponUpdate />} />
-                        </Route>
-                        <Route path="genres">
-                            <Route index element={<GenresList />} />
-                            <Route path="add" element={<GenresAdd />} />
-                            <Route path="update/:genre_id" element={<GenresUpdate />} />
-                        </Route>
-                        <Route path="cinemas">
-                            <Route index element={<CinemaList />} />
-                            <Route path="add" element={<CinemaAdd />} />
-                            <Route path="update/:cinema_id" element={<CinemaUpdate />} />
-                        </Route>
-                         <Route path="showtimes">
-                            <Route index element={<ShowTimeList />} />
-                            <Route path="add" element={<ShowtimeAdd />} />
-                            <Route path="update/:showtime_id" element={<ShowtimeUpdate />} />
-                        </Route>
-                        <Route path="seats" element={<SeatList />} />
-                        <Route path="movie-genres" element={<MovieGenreList />} />
-                        <Route path="movie-actors" element={<MovieActorList />} />
-                        <Route path="bookings" element={<BookingList />} />
-                        <Route path="bookings/:id" element={<BookingDetail />} />
-                        <Route path="tickets" element={<TicketList />} />
-                        <Route path="actors">
-                            <Route index element={<ActorList/>} />
-                            <Route path="add" element={<ActorAdd />} />
-                            <Route path="update/:id" element={<ActorUpdate/>} />
-                        </Route>
-                    </Route>
-
-                    <Route path="*" element={<NotFoundPage />} />
+                    )}
                 </Routes>
             </div>
         </Router>

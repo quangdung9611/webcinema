@@ -1,70 +1,43 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import axios from 'axios';
+const checkAuth = useCallback(async () => {
+    setLoading(true);
 
-const AuthContext = createContext();
+    const hostname = window.location.hostname;
+    const isAdminDomain = hostname === 'admin.quangdungcinema.id.vn';
 
-const BASE_URL = 'https://webcinema-zb8z.onrender.com'; 
+    try {
+        if (isAdminDomain) {
+    // 🔥 ADMIN → PHẢI GỌI ĐÚNG API ADMIN
+    const res = await axios.get(`${BASE_URL}/admin/api/auth/me`, {
+        withCredentials: true
+    });
 
-export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);       
-    const [admin, setAdmin] = useState(null);     
-    const [loading, setLoading] = useState(true);
+    if (res.data?.user?.role === 'admin') {
+        setAdmin(res.data.user);
+    } else {
+        setAdmin(null);
+    }
 
-    const checkAuth = useCallback(async () => {
-        setLoading(true); 
-        try {
-            const isAdminPath = window.location.pathname.includes('/admin');
+    setUser(null);
 
-            if (isAdminPath) {
-                // --- VÙNG ADMIN: CHỈ LÀM VIỆC VỚI ADMIN ---
-                try {
-                    const adminRes = await axios.get(`${BASE_URL}/admin/api/auth/me`, { withCredentials: true });
-                    
-                    if (adminRes.data && adminRes.data.user && adminRes.data.user.role === 'admin') {
-                        setAdmin(adminRes.data.user);
-                    } else {
-                        setAdmin(null);
-                    }
-                } catch (e) {
-                    setAdmin(null);
-                }
-                // Xóa sổ usertoken trong state khi ở vùng admin
-                setUser(null); 
+} else {
+    // 🔥 USER
+    const res = await axios.get(`${BASE_URL}/api/auth/me`, {
+        withCredentials: true
+    });
 
-            } else {
-                // --- VÙNG CLIENT: CHỈ LÀM VIỆC VỚI USER ---
-                try {
-                    const userRes = await axios.get(`${BASE_URL}/api/auth/me`, { withCredentials: true });
-                    if (userRes.data && userRes.data.user) {
-                        setUser(userRes.data.user);
-                    } else {
-                        setUser(null);
-                    }
-                } catch (e) {
-                    setUser(null);
-                }
-                // Xóa sổ admintoken trong state khi ở vùng client
-                setAdmin(null);
-            }
-        } catch (err) {
-            console.log("Hệ thống xác thực có vấn đề");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    if (res.data?.user) {
+        setUser(res.data.user);
+    } else {
+        setUser(null);
+    }
 
-    useEffect(() => {
-        checkAuth();
-        const handleAuthChange = () => checkAuth();
-        window.addEventListener('authChange', handleAuthChange);
-        return () => window.removeEventListener('authChange', handleAuthChange);
-    }, [checkAuth]);
+    setAdmin(null);
+}
 
-    return (
-        <AuthContext.Provider value={{ user, admin, setUser, setAdmin, loading, checkAuth }}>
-            {children}
-        </AuthContext.Provider>
-    );
-};
+    } catch (err) {
+        console.log("Auth error:", err);
+    } finally {
+        setLoading(false);
+    }
 
-export const useAuth = () => useContext(AuthContext);
+}, []);

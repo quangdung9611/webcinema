@@ -9,47 +9,52 @@ const BASE_COOKIE_CONFIG = {
 };
 
 const AuthMiddleware = (req, res, next) => {
-    // 1. THỬ LẤY ADMIN TOKEN TRƯỚC, NẾU KHÔNG CÓ THÌ LẤY USER TOKEN
-    // Cách này giúp ông đứng ở đâu cũng có thể check được role
+
+    // 1. Lấy token (ưu tiên admin)
     const token = req.cookies.admintoken || req.cookies.usertoken;
 
-    // 2. KIỂM TRA SỰ TỒN TẠI CỦA TOKEN
+    // 2. Check tồn tại
     if (!token) {
         return res.status(401).json({ 
             success: false,
-            message: "Vui lòng đăng nhập để thực hiện thao tác này!" 
+            message: "Vui lòng đăng nhập!" 
         });
     }
 
     try {
-        // 3. GIẢI MÃ TOKEN ĐỂ LẤY ROLE
+        // 3. Decode token
         const decoded = jwt.verify(token, SECRET_KEY);
-        req.user = decoded; // Trong này sẽ có { user_id, role, ... }
+        req.user = decoded;
 
-        // 4. KIỂM TRA ROLE TRỰC TIẾP TỪ TOKEN
-        // Nếu URL có chứa chữ /admin nhưng role trong token không phải admin thì chặn
-        const isAccessingAdmin = req.originalUrl.includes('/admin');
-        
-        if (isAccessingAdmin && req.user.role !== 'admin') {
+        // 4. Check admin domain
+        const isAdminDomain = req.hostname === "admin.quangdungcinema.id.vn";
+
+        if (isAdminDomain && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 success: false,
-                message: "Quyền hạn của bạn không đủ để vào khu vực quản trị!" 
+                message: "Không có quyền truy cập admin!" 
             });
         }
 
-        // 5. CHO PHÉP ĐI TIẾP
         next();
-        
+
     } catch (err) {
-        console.error("Lỗi xác thực Token:", err.message);
-        
-        // Khi lỗi, xóa cả 2 cho sạch máy nếu cần
-        res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, path: '/admin' });
-        res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, path: '/' });
+        console.error("Token error:", err.message);
+
+        // 🔥 XÓA COOKIE ĐÚNG CÁCH (KHÔNG DOMAIN)
+        res.clearCookie('admintoken', {
+            ...BASE_COOKIE_CONFIG,
+            path: '/'
+        });
+
+        res.clearCookie('usertoken', {
+            ...BASE_COOKIE_CONFIG,
+            path: '/'
+        });
 
         return res.status(401).json({ 
             success: false,
-            message: "Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!"
+            message: "Phiên hết hạn, đăng nhập lại!"
         });
     }
 };
