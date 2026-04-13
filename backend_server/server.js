@@ -45,7 +45,8 @@ app.use(cookieParser());
 
 const corsOptions = {
   origin: [
-    'https://quangdungcinema.id.vn',       
+    'https://quangdungcinema.id.vn',  
+    'https://admin.quangdungcinema.id.vn', // <--- THÊM DÒNG NÀY (BẮT BUỘC)     
     'http://localhost:3000',               
     'http://localhost:5173',
     /\.vercel\.app$/ 
