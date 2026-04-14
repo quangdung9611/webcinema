@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 // 🔥 PHÂN CHIA DOMAIN ĐÚNG VỚI AUTHCONTROLLER
-const USER_DOMAIN = "quangdungcinema.id.vn";
+const USER_DOMAIN = "www.quangdungcinema.id.vn";
 const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn";
 
 const AuthMiddleware = (req, res, next) => {

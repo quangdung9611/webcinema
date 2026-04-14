@@ -14,7 +14,7 @@ const BASE_COOKIE_CONFIG = {
 };
 
 // 🔥 Tách biệt tuyệt đối 2 domain theo ý bạn
-const USER_DOMAIN = "quangdungcinema.id.vn";
+const USER_DOMAIN = "www.quangdungcinema.id.vn";
 const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn"; 
 
 // -----------------------------------------------------------
