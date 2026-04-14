@@ -2,24 +2,19 @@ const jwt = require('jsonwebtoken');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
-// 🔥 Dùng chung domain gốc có dấu chấm để bao phủ toàn bộ subdomain
-const COMMON_DOMAIN = ".quangdungcinema.id.vn";
-
-const BASE_COOKIE_CONFIG = {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'none',
-    domain: COMMON_DOMAIN, // 🔥 Bắt buộc để khớp với AuthController
-    path: '/' 
-};
+// 🔥 PHÂN CHIA DOMAIN ĐÚNG VỚI AUTHCONTROLLER
+const USER_DOMAIN = "quangdungcinema.id.vn";
+const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn";
 
 const AuthMiddleware = (req, res, next) => {
-    // 1. Xác định loại API đang gọi (Dựa trên tiền tố route)
-    const isAdminPath = req.originalUrl.startsWith('/admin/api');
+    // 1. Xác định môi trường dựa trên Hostname (Tên miền đang gọi API)
+    const hostname = req.hostname; 
+    const isAdminDomain = hostname.includes('admin.');
 
-    // 2. Lấy token tương ứng từ cookie
+    // 2. Lấy ĐÚNG token của domain đó
+    // Trình duyệt bây giờ sẽ chỉ gửi admintoken nếu đang ở admin.quangdungcinema.id.vn
     const cookies = req.cookies || {};
-    const token = isAdminPath ? cookies.admintoken : cookies.usertoken;
+    const token = isAdminDomain ? cookies.admintoken : cookies.usertoken;
 
     if (!token) {
         return res.status(401).json({ 
@@ -32,9 +27,8 @@ const AuthMiddleware = (req, res, next) => {
         const decoded = jwt.verify(token, SECRET_KEY);
         req.user = decoded;
 
-        // 3. Kiểm tra chéo quyền hạn
-        // Nếu dùng usertoken để vào link admin thì chặn đứng
-        if (isAdminPath && req.user.role !== 'admin') {
+        // 3. Kiểm tra chéo quyền hạn (Chống trường hợp lấy token user gắn vào admin)
+        if (isAdminDomain && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 success: false,
                 message: "Bạn không có quyền truy cập vùng quản trị!" 
@@ -46,11 +40,17 @@ const AuthMiddleware = (req, res, next) => {
     } catch (err) {
         console.error("Token error:", err.message);
 
-        // 4. DỌN SẠCH COOKIE KHI LỖI (Hết hạn hoặc giả mạo)
-        // Việc dùng COMMON_DOMAIN ở đây giúp xóa sạch cookie cũ dù bạn đang ở subdomain nào
-        const tokenName = isAdminPath ? 'admintoken' : 'usertoken';
-        
-        res.clearCookie(tokenName, BASE_COOKIE_CONFIG);
+        // 4. XÓA COOKIE KHI LỖI: Phải xóa đúng "hộ khẩu" nó mới mất
+        const tokenName = isAdminDomain ? 'admintoken' : 'usertoken';
+        const targetDomain = isAdminDomain ? ADMIN_DOMAIN : USER_DOMAIN;
+
+        res.clearCookie(tokenName, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+            domain: targetDomain, // 🔥 Xóa đúng domain đã cấp
+            path: '/' 
+        });
 
         return res.status(401).json({ 
             success: false,

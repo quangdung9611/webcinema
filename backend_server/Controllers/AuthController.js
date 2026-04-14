@@ -4,18 +4,19 @@ const db = require('../Config/db');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
-// 🔥 CHIẾN THUẬT: Dùng chung một domain gốc để phủ sóng toàn bộ subdomain
-const COMMON_DOMAIN = ".quangdungcinema.id.vn";
+// 🔥 PHÂN CHIA DOMAIN RẠCH RÒI: Không dùng dấu chấm ở đầu để tránh bị load chung
+const USER_DOMAIN = "quangdungcinema.id.vn";
+const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn";
 
+// Cấu hình cơ sở (Bỏ domain ra để tùy biến theo role khi login)
 const BASE_COOKIE_CONFIG = {
     httpOnly: true,
     secure: true,    // Bắt buộc trên Render (HTTPS)
     sameSite: 'none', // Bắt buộc cho cross-domain
-    domain: COMMON_DOMAIN, // 🔥 Dấu chấm ở đầu là chìa khóa để dùng chung cho mọi subdomain
     path: '/',
 };
 
-// 1. ĐĂNG KÝ (GIỮ NGUYÊN LOGIC)
+// 1. ĐĂNG KÝ (GIỮ NGUYÊN LOGIC CỦA DŨNG)
 exports.register = async (req, res) => {
     const { username, full_name, phone, address, email, password, role } = req.body;
     try {
@@ -54,7 +55,7 @@ exports.register = async (req, res) => {
     }
 };
 
-// 2. LOGIN (SỬA LẠI ĐỂ DÙNG CHUNG DOMAIN)
+// 2. LOGIN (SỬA LẠI ĐỂ CHIA ĐÚNG TOKEN VÀO ĐÚNG DOMAIN)
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
 
@@ -78,10 +79,13 @@ exports.login = async (req, res) => {
 
         const isAdmin = user.role === 'admin';
         const tokenName = isAdmin ? 'admintoken' : 'usertoken';
+        // 🔥 QUYẾT ĐỊNH: Token nào thì nằm ở Domain nấy
+        const targetDomain = isAdmin ? ADMIN_DOMAIN : USER_DOMAIN;
 
-        // 🔥 CẤP COOKIE: Luôn dán nhãn .quangdungcinema.id.vn
+        // CẤP COOKIE: Đích danh domain, không dấu chấm ở đầu để tránh "tràn" cookie
         res.cookie(tokenName, token, {
             ...BASE_COOKIE_CONFIG,
+            domain: targetDomain,
             maxAge: 24 * 60 * 60 * 1000
         });
 
@@ -127,10 +131,13 @@ exports.getMe = async (req, res) => {
     }
 };
 
-// 4. LOGOUT (XÓA CẢ 2 TOKEN TRÊN DOMAIN CHUNG)
+// 4. LOGOUT (XÓA CHÍNH XÁC TOKEN Ở TỪNG DOMAIN)
 exports.logout = (req, res) => {
-    res.clearCookie('usertoken', BASE_COOKIE_CONFIG);
-    res.clearCookie('admintoken', BASE_COOKIE_CONFIG);
+    // Xóa usertoken ở domain khách
+    res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, domain: USER_DOMAIN });
+    
+    // Xóa admintoken ở domain admin
+    res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, domain: ADMIN_DOMAIN });
 
     res.json({ success: true, message: "Đăng xuất thành công" });
 };

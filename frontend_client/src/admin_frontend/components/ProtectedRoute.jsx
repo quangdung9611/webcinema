@@ -2,16 +2,12 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-// 🔥 KHAI BÁO DOMAIN ĐỒNG BỘ VỚI AUTHCONTEXT VÀ BACKEND
-const USER_DOMAIN = "quangdungcinema.id.vn";
-const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn";
-
 const ProtectedRoute = ({ children }) => {
     const location = useLocation();
     const { user, admin, loading } = useAuth();
     const hostname = window.location.hostname;
 
-    // 1. Đang load dữ liệu từ API
+    // 1. Đang load dữ liệu từ API (Giữ nguyên giao diện loading của Dũng)
     if (loading) {
         return (
             <div style={{ 
@@ -31,30 +27,32 @@ const ProtectedRoute = ({ children }) => {
         );
     }
 
-    // 2. Xác định Domain hiện tại dựa trên hằng số đã khai báo
-    const isAdminDomain = hostname === ADMIN_DOMAIN;
+    // 2. Xác định môi trường đang đứng
+    // Dùng startsWith('admin.') sẽ an toàn hơn so khớp tuyệt đối vì nó chạy được cả trên localhost
+    const isAdminDomain = hostname.startsWith('admin.');
 
     if (isAdminDomain) {
         // --- TRANG ADMIN ---
-        // Ép kiểu boolean và kiểm tra chặt chẽ role admin
+        // Kiểm tra role admin từ state admin hoặc user trong AuthContext
         const hasAdminAccess = (admin && admin.role === 'admin') || (user && user.role === 'admin');
         
         if (!hasAdminAccess) {
-            // Nếu không phải admin, đá về trang login của admin
+            // Nếu không phải admin, đẩy về trang login của admin
+            // replace: true để không cho user bấm back lại trang bảo mật
             return <Navigate to="/login" state={{ from: location }} replace />;
         }
     } else {
-        // --- TRANG USER ---
-        // Domain khách: Cả khách hàng (user) và quản trị viên (admin) đều được vào
+        // --- TRANG USER (KHÁCH) ---
+        // Ở trang khách, chỉ cần có bất kỳ ai đăng nhập (user hoặc admin) là cho xem
         const hasAccess = user || admin;
         
         if (!hasAccess) {
-            // Nếu chưa đăng nhập bất cứ tài khoản nào, đá về trang login của khách
+            // Nếu chưa đăng nhập, đẩy về login của trang khách
             return <Navigate to="/login" state={{ from: location }} replace />;
         }
     }
 
-    // 3. Mọi thứ OK -> Cho phép truy cập nội dung bên trong
+    // 3. Vượt qua kiểm tra -> Trả về nội dung trang
     return children;
 };
 
