@@ -47,6 +47,7 @@ app.use(cookieParser());
 const corsOptions = {
   origin: [
     'https://quangdungcinema.id.vn',  
+    'https://www.quangdungcinema.id.vn',  
     'https://admin.quangdungcinema.id.vn', 
     'http://localhost:3000',               
     'http://localhost:5173',
