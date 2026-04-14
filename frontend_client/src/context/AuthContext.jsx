@@ -3,8 +3,14 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-// 🔥 THAY ĐỔI LỚN: Sử dụng domain API mới thay cho link Render cũ
+// 1. Cấu hình BASE_URL
 const BASE_URL = 'https://api.quangdungcinema.id.vn';
+
+// Tạo instance để tự động đính kèm Cookie (withCredentials)
+const api = axios.create({
+    baseURL: BASE_URL,
+    withCredentials: true 
+});
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);    
@@ -14,40 +20,34 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = useCallback(async () => {
         setLoading(true);
         const hostname = window.location.hostname;
-        
-        // 1. Xác định môi trường đang đứng (trang chủ hay trang admin)
         const isAdminDomain = hostname.startsWith('admin.');
 
-        // 2. CHỌN ĐÚNG PATH (Dùng link api. chuyên nghiệp)
-        // Link mới: https://api.quangdungcinema.id.vn/api/auth/me
-        const apiPath = isAdminDomain 
-            ? `${BASE_URL}/admin/api/auth/me` 
-            : `${BASE_URL}/api/auth/me`;
+        // 🔥 CHỈNH LẠI ENDPOINT: 
+        // Nếu Backend của ông chỉ có 1 route /api/auth/me dùng chung cho cả 2 token
+        // thì ông chỉ cần gọi đúng route đó. 
+        const endpoint = '/api/auth/me'; 
 
         try {
-            const res = await axios.get(apiPath, {
-                withCredentials: true // 🔥 BẮT BUỘC: Để trình duyệt tự gửi Cookie usertoken/admintoken
-            });
-
+            // Sử dụng instance 'api' đã có withCredentials: true
+            const res = await api.get(endpoint);
             const userData = res.data?.user;
 
             if (isAdminDomain) {
-                // --- LUỒNG TRANG ADMIN ---
+                // Kiểm tra nếu là admin thì mới setAdmin
                 if (userData && userData.role === 'admin') {
                     setAdmin(userData);
-                    setUser(userData); 
+                    setUser(userData);
                 } else {
                     setAdmin(null);
                     setUser(null);
                 }
             } else {
-                // --- LUỒNG TRANG KHÁCH ---
+                // Trang khách www.
                 setUser(userData || null);
                 setAdmin(null); 
             }
-
         } catch (err) {
-            console.warn(`Auth check: Phiên làm việc không tồn tại hoặc đã hết hạn.`);
+            console.warn("Phiên làm việc đã hết hạn hoặc chưa đăng nhập.");
             setAdmin(null);
             setUser(null);
         } finally {
@@ -61,15 +61,15 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
+        // Gọi checkAuth ngay khi app load
         checkAuth();
 
         const handleAuthChange = () => checkAuth();
         window.addEventListener('authChange', handleAuthChange);
-        window.addEventListener('storage', handleAuthChange); 
-
+        
+        // 🔥 QUAN TRỌNG: Thêm cái này để khi login xong nó load lại data ngay
         return () => {
             window.removeEventListener('authChange', handleAuthChange);
-            window.removeEventListener('storage', handleAuthChange);
         };
     }, [checkAuth]);
 
@@ -82,7 +82,8 @@ export const AuthProvider = ({ children }) => {
             loading, 
             checkAuth, 
             clearAuth,
-            BASE_URL // Để các component khác dùng axios gọi API cho đúng link api.
+            BASE_URL,
+            api 
         }}>
             {children}
         </AuthContext.Provider>

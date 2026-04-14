@@ -15,7 +15,6 @@ import '../styles/Header.css';
 
 const UserHeader = () => {
     const navigate = useNavigate();
-    // Dùng clearAuth thay cho clearLocalAuth
     const { user, clearAuth } = useAuth(); 
     const [showDropdown, setShowDropdown] = useState(false);
     const [cinemas, setCinemas] = useState([]);
@@ -24,7 +23,6 @@ const UserHeader = () => {
     const dropdownRef = useRef(null);
     const navRef = useRef(null);
 
-    // Đóng menu khi click ra ngoài
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -38,9 +36,14 @@ const UserHeader = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // -----------------------------------------------------------
+    // 1. SỬA HÀM FETCH CINEMAS (THÊM withCredentials)
+    // -----------------------------------------------------------
     const fetchCinemas = async () => {
         try {
-            const res = await axios.get('https://api.quangdungcinema.id.vn/api/cinemas');
+            const res = await axios.get('https://api.quangdungcinema.id.vn/api/cinemas', {
+                withCredentials: true // 🔥 PHẢI CÓ để gửi/nhận cookie
+            });
             setCinemas(res.data);
         } catch (err) { 
             console.error("Lỗi lấy dữ liệu rạp:", err); 
@@ -53,21 +56,16 @@ const UserHeader = () => {
 
     const handleLogout = async () => {
         try {
-            // Bước 1: Gọi API xóa Cookie tại Backend (xóa cả usertoken và admintoken)
+            // Bước 1: Gọi API xóa Cookie (withCredentials cực kỳ quan trọng ở đây)
             await axios.post('https://api.quangdungcinema.id.vn/api/auth/logout', {}, { 
                 withCredentials: true 
             });
         } catch (err) {
             console.error("Lỗi khi logout:", err);
         } finally {
-            // Bước 2: Dọn dẹp RAM (State) - Không còn Storage nào để xóa ở đây
             clearAuth(); 
             setShowDropdown(false);
-            
-            // Bước 3: Bắn sự kiện đồng bộ giữa các tab
             window.dispatchEvent(new Event('authChange'));
-            
-            // Bước 4: Chuyển hướng
             navigate('/');
         }
     };
