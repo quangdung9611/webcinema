@@ -13,7 +13,7 @@ const Booking = () => {
     const { movie, cinemaName, slot, selectedDate } = location.state || {};
     const showtimeId = slot?.showtime_id || slot?.id;
 
-    const socket = useMemo(() => io("https://webcinema-zb8z.onrender.com", {
+    const socket = useMemo(() => io("https://api.quangdungcinema.id.vn", {
         withCredentials: true,
         transports: ["websocket", "polling"]
     }), []);
@@ -78,7 +78,7 @@ const Booking = () => {
     const fetchShowtimeDetail = useCallback(async () => {
         if (!showtimeId) return;
         try {
-           const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/showtimes/detail/${showtimeId}`);
+           const res = await axios.get(`https://api.quangdungcinema.id.vn/api/showtimes/detail/${showtimeId}`);
             setShowtimeDetail(res.data);
         } catch (err) {
             console.error("Lỗi tải chi tiết suất chiếu:", err);
@@ -89,7 +89,7 @@ const Booking = () => {
         if (!showtimeId) return;
         try {
             setLoading(true);
-            const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/seats/showtime/${showtimeId}`);
+            const res = await axios.get(`https://api.quangdungcinema.id.vn/api/seats/showtime/${showtimeId}`);
             
             let initialSeats = res.data;
             const savedSeats = sessionStorage.getItem('selectedSeats');
@@ -280,7 +280,7 @@ const Booking = () => {
                             )}
 
                             <div className="movie-info-summary">
-                                <img src={`https://webcinema-zb8z.onrender.com/uploads/posters/${showtimeDetail?.poster_url || movie?.poster_url}`} alt="" className="summary-poster" />
+                                <img src={`https://api.quangdungcinema.id.vn/uploads/posters/${showtimeDetail?.poster_url || movie?.poster_url}`} alt="" className="summary-poster" />
                                 <div className="summary-meta-data">
                                     <h4 className="movie-title-text">{showtimeDetail?.title || movie?.title}</h4>
                                     <p className="movie-sub-desc">

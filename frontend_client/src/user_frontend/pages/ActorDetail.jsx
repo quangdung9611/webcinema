@@ -16,11 +16,11 @@ const ActorDetail = () => {
             if (!slug || slug === 'undefined') return;
             try {
                 setLoading(true);
-                const response = await axios.get(`https://webcinema-zb8z.onrender.com/api/actors/${slug}`);
+                const response = await axios.get(`https://api.quangdungcinema.id.vn/api/actors/${slug}`);
                 setActor(response.data);
 
                 // Lấy phim cho sidebar
-                const resRelated = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies`);
+                const resRelated = await axios.get(`https://api.quangdungcinema.id.vn/api/movies`);
                 setRelatedMovies(resRelated.data.slice(0, 3));
 
                 setLoading(false);
@@ -49,7 +49,7 @@ const ActorDetail = () => {
                             <div className="actor-avatar-wrapper">
                                 {actor.avatar ? (
                                     <img 
-                                        src={`https://webcinema-zb8z.onrender.com/uploads/actors/${actor.avatar}`} 
+                                        src={`https://api.quangdungcinema.id.vn/uploads/actors/${actor.avatar}`} 
                                         alt={actor.name} 
                                         className="actor-img"
                                         onError={(e) => { 
@@ -98,7 +98,7 @@ const ActorDetail = () => {
                                         >
                                             <div className="actor-movie-poster">
                                                 <img 
-                                                    src={`https://webcinema-zb8z.onrender.com/uploads/posters/${movie.poster_url}`} 
+                                                    src={`https://api.quangdungcinema.id.vn/uploads/posters/${movie.poster_url}`} 
                                                     alt={movie.title}
                                                     onError={(e) => { e.target.style.visibility = 'hidden'; }}
                                                 />
@@ -131,7 +131,7 @@ const ActorDetail = () => {
                                 >
                                     <div className="sidebar-poster-vertical">
                                         <img 
-                                            src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} 
+                                            src={`https://api.quangdungcinema.id.vn/uploads/posters/${m.poster_url}`} 
                                             alt={m.title} 
                                         />
                                         {/* Overlay nhãn tuổi và rating */}

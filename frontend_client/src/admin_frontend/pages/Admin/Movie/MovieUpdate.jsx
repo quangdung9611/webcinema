@@ -64,7 +64,7 @@ const MovieUpdate = () => {
     useEffect(() => {
         const fetchMovie = async () => {
             try {
-                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies/detail/${id}`);
+                const res = await axios.get(`https://api.quangdungcinema.id.vn/api/movies/detail/${id}`);
                 const movie = res.data;
 
                 setFormData({
@@ -130,7 +130,7 @@ const MovieUpdate = () => {
         if (newBackdrop) data.append('backdrop_url', newBackdrop);
 
         try {
-            await axios.put(`https://webcinema-zb8z.onrender.com/api/movies/update/${id}`, data, {
+            await axios.put(`https://api.quangdungcinema.id.vn/api/movies/update/${id}`, data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             
@@ -213,7 +213,7 @@ const MovieUpdate = () => {
                         <label>Ảnh Poster (Dọc)</label>
                         <div className="poster-update-section" style={{ display: 'flex', gap: '20px', alignItems: 'center', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
                             <img 
-                                src={preview ? preview : `https://webcinema-zb8z.onrender.com/uploads/posters/${oldPoster}`} 
+                                src={preview ? preview : `https://api.quangdungcinema.id.vn/uploads/posters/${oldPoster}`} 
                                 alt="Poster" 
                                 style={{ width: '80px', height: '110px', objectFit: 'cover', borderRadius: '4px' }}
                             />
@@ -228,7 +228,7 @@ const MovieUpdate = () => {
                         <label>Ảnh Backdrop (Ngang)</label>
                         <div className="poster-update-section" style={{ display: 'flex', gap: '20px', alignItems: 'center', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
                             <img 
-                                src={backdropPreview ? backdropPreview : `https://webcinema-zb8z.onrender.com/uploads/backdrops/${oldBackdrop}`} 
+                                src={backdropPreview ? backdropPreview : `https://api.quangdungcinema.id.vn/uploads/backdrops/${oldBackdrop}`} 
                                 alt="Backdrop" 
                                 style={{ width: '160px', height: '90px', objectFit: 'cover', borderRadius: '4px' }}
                             />

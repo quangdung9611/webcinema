@@ -46,7 +46,7 @@ const NewsList = () => {
     const fetchNews = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/news');
+            const res = await axios.get('https://api.quangdungcinema.id.vn/api/news');
             setNews(res.data);
         } catch (err) {
             showModal('error', 'Lỗi', 'Không thể tải danh sách tin tức!');
@@ -64,7 +64,7 @@ const NewsList = () => {
             `Bạn có chắc muốn xóa bài viết: "${title}"? Hành động này không thể hoàn tác.`,
             async () => {
                 try {
-                    await axios.delete(`https://webcinema-zb8z.onrender.com/api/news/${news_id}`);
+                    await axios.delete(`https://api.quangdungcinema.id.vn/api/news/${news_id}`);
                     setNews(news.filter(n => n.news_id !== news_id));
                     showModal('success', 'Thành công', 'Đã xóa bài viết khỏi danh sách!');
                 } catch (err) {
@@ -119,7 +119,7 @@ const NewsList = () => {
                                 <tr key={n.news_id}>
                                     <td className="td-poster">
                                         <img 
-                                            src={`https://webcinema-zb8z.onrender.com/uploads/news/${n.image_url}`}
+                                            src={`https://api.quangdungcinema.id.vn/uploads/news/${n.image_url}`}
                                             alt={n.title}
                                             className="movie-poster-img"
                                             style={{ objectFit: 'cover', borderRadius: '4px' }}

@@ -40,9 +40,9 @@ const ShowtimeUpdate = () => {
             try {
                 // CẬP NHẬT ĐƯỜNG DẪN: Thêm /detail/ vào trước showtime_id cho đúng Router mới
                 const [movieRes, cinemaRes, showtimeRes] = await Promise.all([
-                    axios.get('https://webcinema-zb8z.onrender.com/api/movies'),
-                    axios.get('https://webcinema-zb8z.onrender.com/api/cinemas'),
-                    axios.get(`https://webcinema-zb8z.onrender.com/api/showtimes/detail/${showtime_id}`)
+                    axios.get('https://api.quangdungcinema.id.vn/api/movies'),
+                    axios.get('https://api.quangdungcinema.id.vn/api/cinemas'),
+                    axios.get(`https://api.quangdungcinema.id.vn/api/showtimes/detail/${showtime_id}`)
                 ]);
 
                 setMovies(movieRes.data);
@@ -51,7 +51,7 @@ const ShowtimeUpdate = () => {
                 const st = showtimeRes.data;
                 if (st) {
                     // Lấy danh sách phòng của rạp hiện tại
-                    const roomRes = await axios.get(`https://webcinema-zb8z.onrender.com/api/rooms/cinema/${st.cinema_id}`);
+                    const roomRes = await axios.get(`https://api.quangdungcinema.id.vn/api/rooms/cinema/${st.cinema_id}`);
                     setRooms(roomRes.data);
 
                     // Định dạng thời gian chuẩn cho input datetime-local
@@ -98,7 +98,7 @@ const ShowtimeUpdate = () => {
         
         if (newCinemaId) {
             try {
-                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/rooms/cinema/${newCinemaId}`);
+                const res = await axios.get(`https://api.quangdungcinema.id.vn/api/rooms/cinema/${newCinemaId}`);
                 setRooms(res.data);
             } catch (err) {
                 console.error("Lỗi tải danh sách phòng:", err);
@@ -113,7 +113,7 @@ const ShowtimeUpdate = () => {
         e.preventDefault();
         try {
             // CẬP NHẬT ĐƯỜNG DẪN: Thêm /update/ vào trước showtime_id cho đúng Router mới
-            await axios.put(`https://webcinema-zb8z.onrender.com/api/showtimes/update/${showtime_id}`, formData);
+            await axios.put(`https://api.quangdungcinema.id.vn/api/showtimes/update/${showtime_id}`, formData);
             
             showNotice(
                 'success',

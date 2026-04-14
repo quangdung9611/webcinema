@@ -111,7 +111,7 @@ const NewsAdd = () => {
 
         try {
             // Gọi API tạo tin tức mới
-            await axios.post('https://webcinema-zb8z.onrender.com/api/news', submitData, {
+            await axios.post('https://api.quangdungcinema.id.vn/api/news', submitData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 

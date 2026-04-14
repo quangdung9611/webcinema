@@ -9,13 +9,13 @@ const FilmReviewDetail = () => {
     const { slug } = useParams();
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
-    const IMAGE_BASE_URL = 'https://webcinema-zb8z.onrender.com/uploads';
+    const IMAGE_BASE_URL = 'https://api.quangdungcinema.id.vn/uploads';
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/news/${slug}`);
+                const res = await axios.get(`https://api.quangdungcinema.id.vn/api/news/${slug}`);
                 setItem(res.data);
                 setLoading(false);
             } catch (error) {
@@ -30,7 +30,7 @@ const FilmReviewDetail = () => {
     const handleLikeDetail = async () => {
         if (!item) return;
         try {
-            await axios.post(`https://webcinema-zb8z.onrender.com/api/news/like/${item.news_id}`);
+            await axios.post(`https://api.quangdungcinema.id.vn/api/news/like/${item.news_id}`);
             setItem(prev => ({ ...prev, likes: (prev.likes || 0) + 1 }));
         } catch (error) {
             console.error("Lỗi khi thích bài viết:", error);

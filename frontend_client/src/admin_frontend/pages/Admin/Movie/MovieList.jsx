@@ -45,7 +45,7 @@ const MovieList = () => {
     const fetchMovies = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/movies');
+            const res = await axios.get('https://api.quangdungcinema.id.vn/api/movies');
             setMovies(res.data);
         } catch (err) {
             showModal('error', 'Lỗi', 'Không thể tải danh sách phim!');
@@ -115,7 +115,7 @@ const MovieList = () => {
             `Bạn có chắc muốn xóa phim: "${title}"? Dữ liệu liên quan sẽ bị ảnh hưởng.`,
             async () => {
                 try {
-                    await axios.delete(`https://webcinema-zb8z.onrender.com/api/movies/${movie_id}`);
+                    await axios.delete(`https://api.quangdungcinema.id.vn/api/movies/${movie_id}`);
                     setMovies(movies.filter(m => m.movie_id !== movie_id));
                     showModal('success', 'Thành công', 'Đã xóa phim khỏi danh sách!');
                 } catch (err) {
@@ -173,7 +173,7 @@ const MovieList = () => {
                                 <tr key={m.movie_id}>
                                     <td className="td-poster">
                                         <img 
-                                            src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`}
+                                            src={`https://api.quangdungcinema.id.vn/uploads/posters/${m.poster_url}`}
                                             alt={m.title}
                                             className="movie-poster-img"
                                         />

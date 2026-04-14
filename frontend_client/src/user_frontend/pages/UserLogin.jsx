@@ -46,7 +46,7 @@ const UserLogin = () => {
         try {
             // 1. Gửi request login
             // withCredentials: true cực kỳ quan trọng để trình duyệt nhận Set-Cookie từ Server
-            await axios.post('https://webcinema-zb8z.onrender.com/api/auth/login', {
+            await axios.post('https://api.quangdungcinema.id.vn/api/auth/login', {
                 ...formData,
                 role_input: 'customer' // Ép kiểu login là customer để nhận usertoken ở path '/'
             }, { withCredentials: true });

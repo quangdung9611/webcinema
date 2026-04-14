@@ -18,9 +18,9 @@ const MovieActorList = () => {
         const fetchInitialData = async () => {
             try {
                 const [resMovies, resActors, resAssignments] = await Promise.all([
-                    axios.get('https://webcinema-zb8z.onrender.com/api/movies'),
-                    axios.get('https://webcinema-zb8z.onrender.com/api/actors'),
-                    axios.get('https://webcinema-zb8z.onrender.com/api/movie-actors/all-assignments')
+                    axios.get('https://api.quangdungcinema.id.vn/api/movies'),
+                    axios.get('https://api.quangdungcinema.id.vn/api/actors'),
+                    axios.get('https://api.quangdungcinema.id.vn/api/movie-actors/all-assignments')
                 ]);
                 setMovies(resMovies.data);
                 setActors(resActors.data);
@@ -52,7 +52,7 @@ const MovieActorList = () => {
 
     const handleSaveRow = async (movie) => {
         try {
-            await axios.post('https://webcinema-zb8z.onrender.com/api/movie-actors/update', {
+            await axios.post('https://api.quangdungcinema.id.vn/api/movie-actors/update', {
                 movie_id: movie.movie_id,
                 actor_ids: movieActorMap[movie.movie_id] || []
             });
@@ -89,7 +89,7 @@ const MovieActorList = () => {
                             return (
                                 <tr key={m.movie_id} className={isOpen ? "row-active" : ""}>
                                     <td className="movie-info-cell">
-                                        <img src={`https://webcinema-zb8z.onrender.com/uploads/posters/${m.poster_url}`} className="table-poster" alt="" />
+                                        <img src={`https://api.quangdungcinema.id.vn/uploads/posters/${m.poster_url}`} className="table-poster" alt="" />
                                         <span className="title-text">{m.title}</span>
                                     </td>
                                     <td>

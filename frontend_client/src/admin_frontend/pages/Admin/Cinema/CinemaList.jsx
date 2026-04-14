@@ -45,7 +45,7 @@ const CinemaList = () => {
     const fetchCinemas = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/cinemas');
+            const res = await axios.get('https://api.quangdungcinema.id.vn/api/cinemas');
             setCinemas(res.data);
         } catch (err) {
             showModal('error', 'Lỗi hệ thống', 'Không thể tải danh sách rạp chiếu.');
@@ -65,7 +65,7 @@ const CinemaList = () => {
             `Quang Dũng có chắc chắn muốn xóa rạp "${cinema_name}" không?`,
             async () => {
                 try {
-                    await axios.delete(`https://webcinema-zb8z.onrender.com/api/cinemas/delete/${cinema_id}`);
+                    await axios.delete(`https://api.quangdungcinema.id.vn/api/cinemas/delete/${cinema_id}`);
                     setCinemas(cinemas.filter(c => c.cinema_id !== cinema_id)); 
                     showModal('success', 'Thành công', 'Đã xóa rạp chiếu thành công!');
                 } catch (err) {

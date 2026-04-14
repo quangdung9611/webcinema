@@ -40,13 +40,14 @@ const newsRoutes = require('./Routers/NewRouter');
 // 1. CẤU HÌNH HỆ THỐNG & CORS
 // ===========================================================
 
+// 🔥 QUAN TRỌNG: Để nhận cookie từ domain thật trên Render
 app.set('trust proxy', 1); 
 app.use(cookieParser()); 
 
 const corsOptions = {
   origin: [
     'https://quangdungcinema.id.vn',  
-    'https://admin.quangdungcinema.id.vn', // <--- THÊM DÒNG NÀY (BẮT BUỘC)     
+    'https://admin.quangdungcinema.id.vn', 
     'http://localhost:3000',               
     'http://localhost:5173',
     /\.vercel\.app$/ 
@@ -104,12 +105,11 @@ io.on('connection', (socket) => {
 // 2. ROUTES
 // ===========================================================
 
-// --- TRANG CHỦ API ---
 app.get('/api', (req, res) => {
   res.send('🚀 Cinema Backend is flying!');
 });
 
-// --- ROUTE CHO USER (Vẫn giữ /api/...) ---
+// --- ROUTE CHO USER (Giữ nguyên /api/...) ---
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/genres', genreRoutes);
@@ -131,10 +131,8 @@ app.use('/api/movie-genres', movieGenreRoutes);
 app.use('/api/movie-actors', movieActorRoutes);
 app.use('/api/news', newsRoutes);
 
-// --- ROUTE CHO ADMIN (QUAN TRỌNG: ĐỔI THÀNH /admin/api) ---
-// Thay đổi prefix từ '/api/admin/auth' -> '/admin/api/auth'
+// --- ROUTE CHO ADMIN (Phân tách domain cookie qua prefix) ---
 app.use('/admin/api/auth', adminAuthRoutes);
-// Thay đổi prefix từ '/api/admin/manage' -> '/admin/api/manage'
 app.use('/admin/api/manage', adminRouter); 
 
 // ===========================================================
@@ -143,12 +141,15 @@ app.use('/admin/api/manage', adminRouter);
 
 const PORT = process.env.PORT || 5000; 
 
+// 🔥 Thay server.listen thay vì app.listen để Socket.io chạy được
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port: ${PORT}`);
   
+  // Keep-alive: Nên dùng chính cái domain mới của bạn nếu đã trỏ xong
+  const SELF_URL = process.env.BACKEND_URL || 'https://api.quangdungcinema.id.vn';
   setInterval(async () => {
     try {
-      await axios.get(`https://webcinema-zb8z.onrender.com/api?t=${Date.now()}`);
+      await axios.get(`${SELF_URL}/api?t=${Date.now()}`);
     } catch (err) {
       console.log('🔔 [Keep-Alive]: Server is staying awake.');
     }

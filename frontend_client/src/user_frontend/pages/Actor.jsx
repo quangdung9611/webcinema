@@ -12,7 +12,7 @@ const Actor = () => {
     const [allMovies, setAllMovies] = useState([]); // Tất cả phim để truyền vào Sidebar
     const [loading, setLoading] = useState(true);
 
-    const IMAGE_BASE_URL = 'https://webcinema-zb8z.onrender.com/uploads';
+    const IMAGE_BASE_URL = 'https://api.quangdungcinema.id.vn/uploads';
 
     useEffect(() => {
         const fetchAllData = async () => {
@@ -20,8 +20,8 @@ const Actor = () => {
                 setLoading(true);
                 // Gọi song song cả Actors và Movies giống CinemaGenre gọi Movies/Genres
                 const [resActors, resMovies] = await Promise.all([
-                    axios.get('https://webcinema-zb8z.onrender.com/api/actors'),
-                    axios.get('https://webcinema-zb8z.onrender.com/api/movies')
+                    axios.get('https://api.quangdungcinema.id.vn/api/actors'),
+                    axios.get('https://api.quangdungcinema.id.vn/api/movies')
                 ]);
 
                 setActors(resActors.data);

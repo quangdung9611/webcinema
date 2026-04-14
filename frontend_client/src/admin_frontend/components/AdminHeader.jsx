@@ -9,11 +9,10 @@ const AdminHeader = ({ toggleSidebar }) => {
     const navigate = useNavigate();
     
     // 1. LẤY BIẾN 'admin' RA THAY VÌ 'user'
-    const { admin, loading, checkAuth, setAdmin } = useAuth(); 
+    const { admin, loading, setAdmin } = useAuth(); 
 
     useEffect(() => {
         // Chỉ đá đi nếu đã check xong (loading = false) mà không thấy biến admin
-        // Biến admin này mình đã check role='admin' sẵn trong Context rồi
         if (!loading && !admin) {
             navigate('/login');
         }
@@ -21,8 +20,8 @@ const AdminHeader = ({ toggleSidebar }) => {
 
     const handleLogout = async () => {
         try {
-            // SỬA URL: Gọi đúng cổng admin/api
-            await axios.post('https://webcinema-zb8z.onrender.com/admin/api/auth/logout', {}, {
+            // SỬA URL: Gọi đúng cổng admin/api trên Render
+            await axios.post('https://api.quangdungcinema.id.vn/admin/api/auth/logout', {}, {
                 withCredentials: true
             });
         } catch (error) {

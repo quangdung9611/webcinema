@@ -3,38 +3,37 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-// Dùng URL Render của Dũng
-const BASE_URL = 'https://webcinema-zb8z.onrender.com';
+// 🔥 THAY ĐỔI LỚN: Sử dụng domain API mới thay cho link Render cũ
+const BASE_URL = 'https://api.quangdungcinema.id.vn';
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);    // Thông tin người dùng nói chung
-    const [admin, setAdmin] = useState(null);  // Thông tin quản trị viên
+    const [user, setUser] = useState(null);    
+    const [admin, setAdmin] = useState(null);  
     const [loading, setLoading] = useState(true);
 
     const checkAuth = useCallback(async () => {
         setLoading(true);
         const hostname = window.location.hostname;
         
-        // 1. Xác định xem đang đứng ở subdomain admin hay không
+        // 1. Xác định môi trường đang đứng (trang chủ hay trang admin)
         const isAdminDomain = hostname.startsWith('admin.');
 
-        // 2. CHỌN ĐÚNG PATH: Nhà nào thức nấy
-        // Nếu ở admin.quangdungcinema.id.vn -> Gọi /admin/api/auth/me
-        // Nếu ở quangdungcinema.id.vn -> Gọi /api/auth/me
+        // 2. CHỌN ĐÚNG PATH (Dùng link api. chuyên nghiệp)
+        // Link mới: https://api.quangdungcinema.id.vn/api/auth/me
         const apiPath = isAdminDomain 
             ? `${BASE_URL}/admin/api/auth/me` 
             : `${BASE_URL}/api/auth/me`;
 
         try {
             const res = await axios.get(apiPath, {
-                withCredentials: true
+                withCredentials: true // 🔥 BẮT BUỘC: Để trình duyệt tự gửi Cookie usertoken/admintoken
             });
 
             const userData = res.data?.user;
 
             if (isAdminDomain) {
-                // ĐANG Ở TRANG ADMIN
-                if (userData?.role === 'admin') {
+                // --- LUỒNG TRANG ADMIN ---
+                if (userData && userData.role === 'admin') {
                     setAdmin(userData);
                     setUser(userData); 
                 } else {
@@ -42,14 +41,13 @@ export const AuthProvider = ({ children }) => {
                     setUser(null);
                 }
             } else {
-                // ĐANG Ở TRANG USER (KHÁCH HÀNG)
+                // --- LUỒNG TRANG KHÁCH ---
                 setUser(userData || null);
                 setAdmin(null); 
             }
 
         } catch (err) {
-            // Khi bị 401 (hết hạn hoặc chưa login), xóa sạch state
-            console.log(`Auth check failed at ${apiPath}:`, err.response?.data?.message || err.message);
+            console.warn(`Auth check: Phiên làm việc không tồn tại hoặc đã hết hạn.`);
             setAdmin(null);
             setUser(null);
         } finally {
@@ -83,7 +81,8 @@ export const AuthProvider = ({ children }) => {
             setAdmin, 
             loading, 
             checkAuth, 
-            clearAuth 
+            clearAuth,
+            BASE_URL // Để các component khác dùng axios gọi API cho đúng link api.
         }}>
             {children}
         </AuthContext.Provider>

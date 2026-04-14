@@ -92,7 +92,7 @@ const UserAdd = () => {
         if (!validateForm()) return;
 
         try {
-            await axios.post('https://webcinema-zb8z.onrender.com/api/users/add', formData);
+            await axios.post('https://api.quangdungcinema.id.vn/api/users/add', formData);
             
             // HIỆN MODAL THÀNH CÔNG
             setModal({

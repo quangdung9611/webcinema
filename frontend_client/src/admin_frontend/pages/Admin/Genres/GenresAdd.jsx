@@ -45,7 +45,7 @@ const GenresAdd = () => {
 
         try {
             const token = sessionStorage.getItem('usertoken');
-            await axios.post('https://webcinema-zb8z.onrender.com/api/genres/add', formData, {
+            await axios.post('https://api.quangdungcinema.id.vn/api/genres/add', formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             

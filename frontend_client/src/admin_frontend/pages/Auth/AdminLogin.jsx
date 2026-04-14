@@ -52,8 +52,8 @@ const AdminLogin = () => {
 
         setLoading(true);
         try {
-            // Gọi API Login
-            await axios.post('https://webcinema-zb8z.onrender.com/admin/api/auth/login', 
+            // Gọi API Login - Sử dụng link Render trực tiếp theo yêu cầu của Dũng
+            await axios.post('https://api.quangdungcinema.id.vn/admin/api/auth/login', 
                 { email, password, role_input: 'admin' },
                 { withCredentials: true } 
             );

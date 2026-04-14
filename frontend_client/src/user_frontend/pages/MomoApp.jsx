@@ -27,7 +27,7 @@ const MomoApp = () => {
             setIsConfirming(true); // Hiển thị loader "Đang kiểm tra"
             
             // 1. Gọi API cập nhật DB (Chạy ngầm, không dùng await để tránh đứng trang nếu API lỗi)
-            axios.post('https://webcinema-zb8z.onrender.com/api/momo/confirm-fast', {
+            axios.post('https://api.quangdungcinema.id.vn/api/momo/confirm-fast', {
                 bookingId: bookingId
             }).then(() => {
                 console.log("Xác nhận thanh toán thành công qua API");
@@ -52,7 +52,7 @@ const MomoApp = () => {
         <div className="momo-checkout-page">
             <nav className="momo-nav-bar">
                 <div className="nav-content">
-                    <img src="https://webcinema-zb8z.onrender.com/uploads/Bank/momo_logo.jpg" alt="MoMo Logo" />
+                    <img src="https://api.quangdungcinema.id.vn/uploads/Bank/momo_logo.jpg" alt="MoMo Logo" />
                     <span>Cổng thanh toán MoMo</span>
                 </div>
             </nav>
@@ -64,7 +64,7 @@ const MomoApp = () => {
                     <div className="info-group">
                         <label>Nhà cung cấp</label>
                         <div className="vendor-info">
-                            <img src="https://webcinema-zb8z.onrender.com/uploads/Bank/galaxy_logo.jpg" alt="Galaxy" />
+                            <img src="https://api.quangdungcinema.id.vn/uploads/Bank/galaxy_logo.jpg" alt="Galaxy" />
                             <span>Galaxy Cinema</span>
                         </div>
                     </div>

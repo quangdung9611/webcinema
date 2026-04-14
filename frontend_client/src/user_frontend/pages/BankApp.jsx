@@ -46,7 +46,7 @@ const BankApp = () => {
             hasSentOtp.current = true;
 
             try {
-                await axios.post('https://webcinema-zb8z.onrender.com/api/bank/send-otp', {
+                await axios.post('https://api.quangdungcinema.id.vn/api/bank/send-otp', {
                     email: customerEmail,
                     bookingId: bookingId
                 });
@@ -80,7 +80,7 @@ const BankApp = () => {
         setLoading(true);
         try {
             // Bước 1: Xác thực mã OTP
-            const res = await axios.post('https://webcinema-zb8z.onrender.com/api/bank/verify-otp', {
+            const res = await axios.post('https://api.quangdungcinema.id.vn/api/bank/verify-otp', {
                 email: customerEmail,
                 otp: otp,
                 bookingId: bookingId
@@ -89,7 +89,7 @@ const BankApp = () => {
             if (res.data.success) {
                 // Bước 2: Gọi Route chốt đơn dành riêng cho Bank (đã bàn ở Backend)
                 // Route này sẽ sử dụng executeBankCompletion để không bị kẹt lỗi "Reserved"
-                const completeRes = await axios.post('https://webcinema-zb8z.onrender.com/api/payment/complete-bank', {
+                const completeRes = await axios.post('https://api.quangdungcinema.id.vn/api/payment/complete-bank', {
                     bookingId: bookingId
                 });
 
@@ -129,7 +129,7 @@ const BankApp = () => {
                     <div className="info-group">
                         <label>Đơn vị</label>
                         <div className="vendor-info">
-                            <img src="https://webcinema-zb8z.onrender.com/uploads/Bank/galaxy_logo.jpg" alt="Galaxy" />
+                            <img src="https://api.quangdungcinema.id.vn/uploads/Bank/galaxy_logo.jpg" alt="Galaxy" />
                             <span>Galaxy Cinema</span>
                         </div>
                     </div>
@@ -155,7 +155,7 @@ const BankApp = () => {
                         {/* THÊM PHẦN QR VÀO ĐÂY */}
                     <div className="bank-qr-mini-wrapper">
                         <img 
-                            src={`https://webcinema-zb8z.onrender.com/uploads/Bank/Qr_nganhang.jpg`} 
+                            src={`https://api.quangdungcinema.id.vn/uploads/Bank/Qr_nganhang.jpg`} 
                             alt="Bank QR" 
                             className="bank-qr-mini"
                         />

@@ -53,7 +53,7 @@ const NewsUpdate = () => {
     useEffect(() => {
         const fetchNews = async () => {
             try {
-                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/news/detail/${news_id}`);
+                const res = await axios.get(`https://api.quangdungcinema.id.vn/api/news/detail/${news_id}`);
                 const news = res.data;
 
                 setFormData({
@@ -111,7 +111,7 @@ const NewsUpdate = () => {
         }
 
         try {
-            await axios.put(`https://webcinema-zb8z.onrender.com/api/news/update/${news_id}`, data, {
+            await axios.put(`https://api.quangdungcinema.id.vn/api/news/update/${news_id}`, data, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             
@@ -150,7 +150,7 @@ const NewsUpdate = () => {
                         <label>Hình ảnh bài viết</label>
                         <div className="poster-update-section" style={{ display: 'flex', gap: '20px', alignItems: 'center', background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
                             <img 
-                                src={preview ? preview : `https://webcinema-zb8z.onrender.com/uploads/news/${oldImage}`} 
+                                src={preview ? preview : `https://api.quangdungcinema.id.vn/uploads/news/${oldImage}`} 
                                 alt="News" 
                                 style={{ width: '180px', height: '110px', objectFit: 'cover', borderRadius: '4px', border: '2px solid #fff', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
                             />

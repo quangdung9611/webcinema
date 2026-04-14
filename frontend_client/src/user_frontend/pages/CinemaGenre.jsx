@@ -14,15 +14,15 @@ const CinemaGenre = () => {
     const [genres, setGenres] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const IMAGE_BASE_URL = 'https://webcinema-zb8z.onrender.com/uploads';
+    const IMAGE_BASE_URL = 'https://api.quangdungcinema.id.vn/uploads';
 
     useEffect(() => {
         const fetchAllData = async () => {
             try {
                 setLoading(true);
                 const [resMovies, resGenres] = await Promise.all([
-                    axios.get('https://webcinema-zb8z.onrender.com/api/movies'),
-                    axios.get('https://webcinema-zb8z.onrender.com/api/genres')
+                    axios.get('https://api.quangdungcinema.id.vn/api/movies'),
+                    axios.get('https://api.quangdungcinema.id.vn/api/genres')
                 ]);
 
                 setAllMovies(resMovies.data);
@@ -52,7 +52,7 @@ const CinemaGenre = () => {
     const handleMovieClick = async (e, movie) => {
         e.preventDefault(); 
         try {
-            await axios.patch(`https://webcinema-zb8z.onrender.com/api/movies/view/${movie.movie_id}`);
+            await axios.patch(`https://api.quangdungcinema.id.vn/api/movies/view/${movie.movie_id}`);
             navigate(`/movies/detail/${movie.slug}`);
         } catch (error) {
             console.error("Lỗi tăng lượt xem:", error);
@@ -62,7 +62,7 @@ const CinemaGenre = () => {
 
     const handleLikeMovie = async (movieId) => {
         try {
-            await axios.patch(`https://webcinema-zb8z.onrender.com/api/movies/like/${movieId}`);
+            await axios.patch(`https://api.quangdungcinema.id.vn/api/movies/like/${movieId}`);
             setMovies(prevMovies => 
                 prevMovies.map(movie => 
                     movie.movie_id === movieId 

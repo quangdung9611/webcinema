@@ -30,7 +30,7 @@ const Profile = () => {
     const fetchHistory = async () => {
         setLoadingHistory(true);
         try {
-            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/users/booking-history', { withCredentials: true });
+            const res = await axios.get('https://api.quangdungcinema.id.vn/api/users/booking-history', { withCredentials: true });
             setBookingHistory(res.data.bookings || []);
         } catch (error) {
             console.error("Lỗi fetch lịch sử:", error);
@@ -62,7 +62,7 @@ const Profile = () => {
             // --- HÀM XỬ LÝ XÓA LỊCH SỬ (DŨNG DÙNG BẢN NÀY ĐỂ FIX TRIỆT ĐỂ) ---
         const handleClearHistory = async () => {
             try {
-                const res = await axios.post('https://webcinema-zb8z.onrender.com/api/users/clear-history', {}, { withCredentials: true });
+                const res = await axios.post('https://api.quangdungcinema.id.vn/api/users/clear-history', {}, { withCredentials: true });
                 
                 if (res.data.success) {
                     // 1. Cập nhật giao diện cục bộ ngay lập tức
@@ -117,7 +117,7 @@ const Profile = () => {
         }
         setLoading(true);
         try {
-            await axios.put('https://webcinema-zb8z.onrender.com/api/users/profile/update', 
+            await axios.put('https://api.quangdungcinema.id.vn/api/users/profile/update', 
                 { ...formData, ...passwordData }, { withCredentials: true });
             setModal({ show: true, type: 'success', title: 'Thành công', message: 'Hồ sơ đã được cập nhật!', onConfirm: () => setModal({ ...modal, show: false }) });
             setIsEditing(false);
@@ -258,7 +258,7 @@ const Profile = () => {
                                             {bookingHistory.map((item, index) => (
                                                 <div key={index} className="history-ticket-item">
                                                     <div className="ticket-thumb">
-                                                        <img src={item.moviePoster?.startsWith('http') ? item.moviePoster : `https://webcinema-zb8z.onrender.com/uploads/posters/${item.moviePoster}`} alt="poster" />
+                                                        <img src={item.moviePoster?.startsWith('http') ? item.moviePoster : `https://api.quangdungcinema.id.vn/uploads/posters/${item.moviePoster}`} alt="poster" />
                                                     </div>
                                                     
                                                     <div className="ticket-main-info">

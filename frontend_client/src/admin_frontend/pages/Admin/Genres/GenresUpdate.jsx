@@ -43,7 +43,7 @@ const GenresUpdate = () => {
     useEffect(() => {
         const fetchGenre = async () => {
             try {
-                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/genres/${genre_id}`);
+                const res = await axios.get(`https://api.quangdungcinema.id.vn/api/genres/${genre_id}`);
                 const genre = res.data;
                 
                 if (genre) {
@@ -98,7 +98,7 @@ const GenresUpdate = () => {
         }
 
         try {
-            await axios.put(`https://webcinema-zb8z.onrender.com/api/genres/update/${genre_id}`, formData);
+            await axios.put(`https://api.quangdungcinema.id.vn/api/genres/update/${genre_id}`, formData);
             
             showNotice(
                 'success',

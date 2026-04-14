@@ -37,7 +37,7 @@ const CouponList = () => {
     const fetchCoupons = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/coupons/all');
+            const res = await axios.get('https://api.quangdungcinema.id.vn/api/coupons/all');
             if (res.data.success) {
                 setCoupons(res.data.data);
             }
@@ -58,7 +58,7 @@ const CouponList = () => {
             `Quang Dũng có chắc chắn muốn xóa mã giảm giá "${coupon_code}"? Hành động này không thể hoàn tác.`,
             async () => {
                 try {
-                    const res = await axios.delete(`https://webcinema-zb8z.onrender.com/api/coupons/delete/${coupon_id}`);
+                    const res = await axios.delete(`https://api.quangdungcinema.id.vn/api/coupons/delete/${coupon_id}`);
                     if (res.data.success) {
                         setCoupons(prev => prev.filter(c => c.coupon_id !== coupon_id));
                         showModal('success', 'Thành công', 'Đã xóa mã giảm giá thành công!');

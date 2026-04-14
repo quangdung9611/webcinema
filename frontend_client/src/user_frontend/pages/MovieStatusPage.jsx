@@ -18,7 +18,7 @@ const MovieStatusPage = () => {
         const fetchMovies = async () => {
             setLoading(true);
             try {
-                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/movies/category/${statusSlug}`);
+                const res = await axios.get(`https://api.quangdungcinema.id.vn/api/movies/category/${statusSlug}`);
                 setMovies(res.data);
             } catch (err) {
                 console.error("Lỗi lấy danh sách phim:", err);
@@ -48,7 +48,7 @@ const MovieStatusPage = () => {
                             <div className="movie-item__poster-container">
                                 {poster_url ? (
                                     <img 
-                                        src={`https://webcinema-zb8z.onrender.com/uploads/posters/${poster_url}`} 
+                                        src={`https://api.quangdungcinema.id.vn/uploads/posters/${poster_url}`} 
                                         alt={title} 
                                         className="movie-item__img"
                                         onError={(e) => {

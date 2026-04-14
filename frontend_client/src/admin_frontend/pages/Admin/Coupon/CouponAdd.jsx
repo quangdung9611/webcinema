@@ -74,7 +74,7 @@ const CouponAdd = () => {
 
         try {
             // Gửi dữ liệu lên API đã tạo ở CouponController
-            await axios.post('https://webcinema-zb8z.onrender.com/api/coupons/create', formData);
+            await axios.post('https://api.quangdungcinema.id.vn/api/coupons/create', formData);
             
             // HIỆN MODAL THÀNH CÔNG
             setModal({

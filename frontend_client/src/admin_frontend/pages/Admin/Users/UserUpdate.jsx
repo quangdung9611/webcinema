@@ -33,7 +33,7 @@ const UserUpdate = () => {
         const fetchUser = async () => {
             try {
                 // Lấy danh sách hoặc API get by ID nếu bạn có
-                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/users`);
+                const res = await axios.get(`https://api.quangdungcinema.id.vn/api/users`);
                 const user = res.data.find(u => u.user_id === parseInt(user_id));
                 
                 if (user) {
@@ -84,7 +84,7 @@ const UserUpdate = () => {
         }
 
         try {
-            await axios.put(`https://webcinema-zb8z.onrender.com/api/users/update/${user_id}`, formData);
+            await axios.put(`https://api.quangdungcinema.id.vn/api/users/update/${user_id}`, formData);
             
             showNotice(
                 'success',

@@ -12,9 +12,9 @@ const UserHome = () => {
   const banners = ['banner1.jpg', 'banner2.jpg', 'banner3.jpg', 'banner4.jpg'];
   
   // Đường dẫn folder ảnh ngang (PC)
-  const bannerBaseUrl = "https://webcinema-zb8z.onrender.com/uploads/banners/";
+  const bannerBaseUrl = "https://api.quangdungcinema.id.vn/uploads/banners/";
   // Đường dẫn folder ảnh dọc (Mobile)
-  const bannerDocUrl = "https://webcinema-zb8z.onrender.com/uploads/banner_doc/";
+  const bannerDocUrl = "https://api.quangdungcinema.id.vn/uploads/banner_doc/";
   
   const [currentBanner, setCurrentBanner] = useState(0);
 
@@ -30,13 +30,13 @@ const UserHome = () => {
   const [groupedMovies, setGroupedMovies] = useState({ "Đang chiếu": [], "Sắp chiếu": [] });
   const [filterStatus, setFilterStatus] = useState('Đang chiếu');
   const [loading, setLoading] = useState(true);
-  const movieBaseUrl = "https://webcinema-zb8z.onrender.com/uploads/posters/"; 
+  const movieBaseUrl = "https://api.quangdungcinema.id.vn/uploads/posters/"; 
 
   useEffect(() => {
     const fetchMovies = async () => {
       setLoading(true);
       try {
-        const response = await axios.get('https://webcinema-zb8z.onrender.com/api/movies/status-group');
+        const response = await axios.get('https://api.quangdungcinema.id.vn/api/movies/status-group');
         setGroupedMovies(response.data);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu status-group:", error);

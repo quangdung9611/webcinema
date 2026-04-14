@@ -60,7 +60,7 @@ const UserRegister = () => {
             // nhưng ta chủ động dọn dẹp sessionStorage cũ nếu có lỡ bám lại từ trước
             sessionStorage.removeItem('usertoken'); 
 
-            await axios.post('https://webcinema-zb8z.onrender.com/api/auth/register', formData);
+            await axios.post('https://api.quangdungcinema.id.vn/api/auth/register', formData);
             
             setModalConfig({
                 show: true,

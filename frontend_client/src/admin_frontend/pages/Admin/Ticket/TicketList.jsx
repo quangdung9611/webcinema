@@ -62,7 +62,7 @@ const TicketList = () => {
     useEffect(() => {
         const fetchCinemas = async () => {
             try {
-                const res = await axios.get('https://webcinema-zb8z.onrender.com/api/cinemas');
+                const res = await axios.get('https://api.quangdungcinema.id.vn/api/cinemas');
                 setCinemas(res.data);
             } catch (err) { console.error("Lỗi lấy rạp:", err); }
         };
@@ -74,7 +74,7 @@ const TicketList = () => {
         if (filters.cinemaId) {
             const fetchRooms = async () => {
                 try {
-                    const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/rooms/cinema/${filters.cinemaId}`);
+                    const res = await axios.get(`https://api.quangdungcinema.id.vn/api/rooms/cinema/${filters.cinemaId}`);
                     setRooms(res.data);
                     setFilters(prev => ({ ...prev, roomId: '', showtimeId: '' })); 
                     setTickets([]);
@@ -91,7 +91,7 @@ const TicketList = () => {
         if (filters.roomId) {
             const fetchAllSeats = async () => {
                 try {
-                    const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/seats/room/${filters.roomId}`);
+                    const res = await axios.get(`https://api.quangdungcinema.id.vn/api/seats/room/${filters.roomId}`);
                     setAllSeats(res.data);
                 } catch (err) { console.error("Lỗi lấy sơ đồ ghế:", err); }
             };
@@ -99,7 +99,7 @@ const TicketList = () => {
 
             const fetchShowtimes = async () => {
                 try {
-                    const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/tickets/filter`, {
+                    const res = await axios.get(`https://api.quangdungcinema.id.vn/api/tickets/filter`, {
                         params: { roomId: filters.roomId, date: today }
                     });
                     setShowtimes(res.data);
@@ -115,7 +115,7 @@ const TicketList = () => {
         if (!filters.showtimeId) return;
         setLoading(true);
         try {
-            const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/tickets/showtime/${filters.showtimeId}`);
+            const res = await axios.get(`https://api.quangdungcinema.id.vn/api/tickets/showtime/${filters.showtimeId}`);
             setTickets(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             console.error("Lỗi lấy vé:", err);
@@ -132,7 +132,7 @@ const TicketList = () => {
             `Quang Dũng xác nhận soát vé cho mã: ${code}?`,
             async () => {
                 try {
-                    await axios.post('https://webcinema-zb8z.onrender.com/api/tickets/check-in', { ticketCode: code });
+                    await axios.post('https://api.quangdungcinema.id.vn/api/tickets/check-in', { ticketCode: code });
                     openModal('success', 'Thành công', `Đã soát vé ${code} thành công!`);
                     fetchTickets(); 
                 } catch (err) {

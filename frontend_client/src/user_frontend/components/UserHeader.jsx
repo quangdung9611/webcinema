@@ -40,7 +40,7 @@ const UserHeader = () => {
 
     const fetchCinemas = async () => {
         try {
-            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/cinemas');
+            const res = await axios.get('https://api.quangdungcinema.id.vn/api/cinemas');
             setCinemas(res.data);
         } catch (err) { 
             console.error("Lỗi lấy dữ liệu rạp:", err); 
@@ -54,7 +54,7 @@ const UserHeader = () => {
     const handleLogout = async () => {
         try {
             // Bước 1: Gọi API xóa Cookie tại Backend (xóa cả usertoken và admintoken)
-            await axios.post('https://webcinema-zb8z.onrender.com/api/auth/logout', {}, { 
+            await axios.post('https://api.quangdungcinema.id.vn/api/auth/logout', {}, { 
                 withCredentials: true 
             });
         } catch (err) {

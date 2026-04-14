@@ -22,7 +22,7 @@ const AdminDashboard = () => {
         setLoading(true);
         try {
             // [CẬP NHẬT 1]: Đổi prefix thành /admin/api/manage/stats
-            const resStats = await axios.get('https://webcinema-zb8z.onrender.com/admin/api/manage/stats', {
+            const resStats = await axios.get('https://api.quangdungcinema.id.vn/admin/api/manage/stats', {
                 withCredentials: true 
             });
             
@@ -36,7 +36,7 @@ const AdminDashboard = () => {
             }
 
             // [CẬP NHẬT 2]: Đổi prefix thành /admin/api/manage/revenue-chart
-            const resChart = await axios.get(`https://webcinema-zb8z.onrender.com/admin/api/manage/revenue-chart?startDate=${start}&endDate=${end}`, {
+            const resChart = await axios.get(`https://api.quangdungcinema.id.vn/admin/api/manage/revenue-chart?startDate=${start}&endDate=${end}`, {
                 withCredentials: true
             });
             

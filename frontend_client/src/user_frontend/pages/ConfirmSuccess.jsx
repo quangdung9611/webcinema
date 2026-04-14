@@ -41,7 +41,7 @@ const ConfirmSuccess = () => {
                 
                 // Thay vì gọi "complete" (yêu cầu chốt), ông nên gọi API lấy "detail" 
                 // để xem đơn hàng đã được Callback chốt chưa.
-                const response = await axios.get(`https://webcinema-zb8z.onrender.com/api/bookings/detail/${bID}`, {
+                const response = await axios.get(`https://api.quangdungcinema.id.vn/api/bookings/detail/${bID}`, {
                     withCredentials: true 
                 });
 
@@ -49,7 +49,7 @@ const ConfirmSuccess = () => {
                     console.log("✅ [CINEMA STAR] Đơn hàng đã được xác nhận!");
 
                     // Sau đó mới cập nhật Profile để lấy điểm thưởng mới
-                    const userRes = await axios.get('https://webcinema-zb8z.onrender.com/api/auth/me', {
+                    const userRes = await axios.get('https://api.quangdungcinema.id.vn/api/auth/me', {
                         withCredentials: true 
                     });
 
@@ -95,7 +95,7 @@ const ConfirmSuccess = () => {
 
     const finalOrderId = orderId || bookingId;
     const posterUrl = moviePoster 
-        ? (moviePoster.startsWith('http') ? moviePoster : `https://webcinema-zb8z.onrender.com/uploads/posters/${moviePoster}`)
+        ? (moviePoster.startsWith('http') ? moviePoster : `https://api.quangdungcinema.id.vn/uploads/posters/${moviePoster}`)
         : null;
 
     return (

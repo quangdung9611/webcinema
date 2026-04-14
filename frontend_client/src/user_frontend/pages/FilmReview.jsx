@@ -10,14 +10,14 @@ const FilmReview = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const IMAGE_BASE_URL = 'https://webcinema-zb8z.onrender.com/uploads';
+    const IMAGE_BASE_URL = 'https://api.quangdungcinema.id.vn/uploads';
 
     useEffect(() => {
         const fetchReviewData = async () => {
             try {
                 setLoading(true);
                 // Chỉ cần lấy tin tức, MovieSidebar sẽ tự lo phần phim
-                const resNews = await axios.get('https://webcinema-zb8z.onrender.com/api/news/all');
+                const resNews = await axios.get('https://api.quangdungcinema.id.vn/api/news/all');
                 setNews(resNews.data);
                 setLoading(false);
             } catch (error) {
@@ -33,7 +33,7 @@ const FilmReview = () => {
     const handleLike = async (e, newsId) => {
         e.preventDefault();
         try {
-            await axios.post(`https://webcinema-zb8z.onrender.com/api/news/like/${newsId}`);
+            await axios.post(`https://api.quangdungcinema.id.vn/api/news/like/${newsId}`);
             setNews(prevNews => 
                 prevNews.map(item => 
                     item.news_id === newsId 

@@ -4,19 +4,18 @@ const db = require('../Config/db');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
-// --- CẤU HÌNH COOKIE CHUNG ---
+// 🔥 CHIẾN THUẬT: Dùng chung một domain gốc để phủ sóng toàn bộ subdomain
+const COMMON_DOMAIN = ".quangdungcinema.id.vn";
+
 const BASE_COOKIE_CONFIG = {
     httpOnly: true,
-    secure: true,    // Luôn để true vì Render dùng HTTPS
-    sameSite: 'none', // Bắt buộc 'none' để cookie bay từ Render sang domain .id.vn
+    secure: true,    // Bắt buộc trên Render (HTTPS)
+    sameSite: 'none', // Bắt buộc cho cross-domain
+    domain: COMMON_DOMAIN, // 🔥 Dấu chấm ở đầu là chìa khóa để dùng chung cho mọi subdomain
     path: '/',
 };
 
-// 🔥 ÉP CỨNG TỐI THƯỢNG: Không quan tâm môi trường nào
-const USER_DOMAIN = "quangdungcinema.id.vn";
-const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn"; 
-
-// 1. ĐĂNG KÝ (GIỮ NGUYÊN)
+// 1. ĐĂNG KÝ (GIỮ NGUYÊN LOGIC)
 exports.register = async (req, res) => {
     const { username, full_name, phone, address, email, password, role } = req.body;
     try {
@@ -27,21 +26,27 @@ exports.register = async (req, res) => {
         if (!passwordRegex.test(password)) {
             return res.status(400).json({ field: 'password', message: "Mật khẩu yếu!" });
         }
+
         const [existing] = await db.query(
             'SELECT username, email, phone FROM users WHERE username = ? OR email = ? OR phone = ?',
             [username, email, phone]
         );
+
         if (existing.length > 0) {
             const user = existing[0];
             const field = user.username === username ? 'username' : user.email === email ? 'email' : 'phone';
             return res.status(400).json({ field, message: `${field} đã tồn tại` });
         }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const finalRole = role || 'customer';
+
         const [result] = await db.query(
-            `INSERT INTO users (username, full_name, phone, address, email, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO users (username, full_name, phone, address, email, password, role)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [username, full_name, phone, address || '', email, hashedPassword, finalRole]
         );
+
         res.status(201).json({ message: "Đăng ký thành công", userId: result.insertId });
     } catch (err) {
         console.error("Register Error:", err);
@@ -49,16 +54,19 @@ exports.register = async (req, res) => {
     }
 };
 
-// 2. LOGIN (TÁCH BIỆT DOMAIN & DỌN DẸP TOKEN)
+// 2. LOGIN (SỬA LẠI ĐỂ DÙNG CHUNG DOMAIN)
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
+
     try {
         const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         if (users.length === 0) return res.status(401).json({ message: "Sai thông tin" });
+
         const user = users[0];
         if (role_input && user.role !== role_input) {
             return res.status(403).json({ message: "Sai quyền truy cập" });
         }
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(401).json({ message: "Sai thông tin" });
 
@@ -69,23 +77,13 @@ exports.login = async (req, res) => {
         );
 
         const isAdmin = user.role === 'admin';
+        const tokenName = isAdmin ? 'admintoken' : 'usertoken';
 
-        // 🔥 XỬ LÝ COOKIE: ÉP THẲNG VÀO 2 DOMAIN RIÊNG BIỆT
-        if (isAdmin) {
-            res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, domain: USER_DOMAIN });
-            res.cookie('admintoken', token, {
-                ...BASE_COOKIE_CONFIG,
-                domain: ADMIN_DOMAIN,
-                maxAge: 24 * 60 * 60 * 1000
-            });
-        } else {
-            res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, domain: ADMIN_DOMAIN });
-            res.cookie('usertoken', token, {
-                ...BASE_COOKIE_CONFIG,
-                domain: USER_DOMAIN,
-                maxAge: 24 * 60 * 60 * 1000
-            });
-        }
+        // 🔥 CẤP COOKIE: Luôn dán nhãn .quangdungcinema.id.vn
+        res.cookie(tokenName, token, {
+            ...BASE_COOKIE_CONFIG,
+            maxAge: 24 * 60 * 60 * 1000
+        });
 
         const roleKey = isAdmin ? 'admin' : 'customer';
         res.json({
@@ -103,6 +101,7 @@ exports.login = async (req, res) => {
                 role: user.role
             }
         });
+
     } catch (err) {
         console.error("Login Error:", err);
         res.status(500).json({ success: false, error: "Lỗi server" });
@@ -114,10 +113,12 @@ exports.getMe = async (req, res) => {
     try {
         const userId = req.user ? req.user.user_id : null;
         if (!userId) return res.status(401).json({ success: false, message: "Chưa xác thực" });
+
         const [users] = await db.query(
             'SELECT user_id, username, full_name, phone, address, email, role, points FROM users WHERE user_id = ?',
             [userId]
         );
+
         if (users.length === 0) return res.status(404).json({ success: false, message: "Không tìm thấy user" });
         res.json({ success: true, user: users[0] });
     } catch (err) {
@@ -126,9 +127,10 @@ exports.getMe = async (req, res) => {
     }
 };
 
-// 4. LOGOUT (QUÉT SẠCH TRÊN CẢ 2 DOMAIN)
+// 4. LOGOUT (XÓA CẢ 2 TOKEN TRÊN DOMAIN CHUNG)
 exports.logout = (req, res) => {
-    res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, domain: USER_DOMAIN });
-    res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, domain: ADMIN_DOMAIN });
+    res.clearCookie('usertoken', BASE_COOKIE_CONFIG);
+    res.clearCookie('admintoken', BASE_COOKIE_CONFIG);
+
     res.json({ success: true, message: "Đăng xuất thành công" });
 };

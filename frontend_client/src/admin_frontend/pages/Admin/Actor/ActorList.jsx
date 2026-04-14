@@ -45,7 +45,7 @@ const ActorList = () => {
     const fetchActors = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/actors');
+            const res = await axios.get('https://api.quangdungcinema.id.vn/api/actors');
             setActors(res.data);
         } catch (err) {
             showModal('error', 'Lỗi', 'Không thể tải danh sách diễn viên!');
@@ -64,7 +64,7 @@ const ActorList = () => {
             async () => {
                 try {
                     const token = sessionStorage.getItem('usertoken');
-                    await axios.delete(`https://webcinema-zb8z.onrender.com/api/actors/delete/${actor_id}`, {
+                    await axios.delete(`https://api.quangdungcinema.id.vn/api/actors/delete/${actor_id}`, {
                         data: { token: token } 
                     });
                     setActors(actors.filter(a => a.actor_id !== actor_id));
@@ -122,7 +122,7 @@ const ActorList = () => {
                                 <tr key={a.actor_id}>
                                     <td className="td-poster">
                                         <img 
-                                            src={`https://webcinema-zb8z.onrender.com/uploads/actors/${a.avatar}`}
+                                            src={`https://api.quangdungcinema.id.vn/uploads/actors/${a.avatar}`}
                                             alt={a.name}
                                             className="movie-poster-img"
                                         />

@@ -39,8 +39,8 @@ const ShowtimeAdd = () => {
         const fetchData = async () => {
             try {
                 const [movieRes, cinemaRes] = await Promise.all([
-                    axios.get('https://webcinema-zb8z.onrender.com/api/movies'),
-                    axios.get('https://webcinema-zb8z.onrender.com/api/cinemas')
+                    axios.get('https://api.quangdungcinema.id.vn/api/movies'),
+                    axios.get('https://api.quangdungcinema.id.vn/api/cinemas')
                 ]);
                 setMovies(movieRes.data);
                 setCinemas(cinemaRes.data);
@@ -56,7 +56,7 @@ const ShowtimeAdd = () => {
         if (formData.cinema_id) {
             const fetchRooms = async () => {
                 try {
-                    const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/rooms/cinema/${formData.cinema_id}`);
+                    const res = await axios.get(`https://api.quangdungcinema.id.vn/api/rooms/cinema/${formData.cinema_id}`);
                     setRooms(res.data);
                 } catch (err) {
                     console.error("Lỗi tải danh sách phòng:", err);
@@ -110,7 +110,7 @@ const ShowtimeAdd = () => {
 
         try {
             // Gửi finalData thay vì formData gốc
-            await axios.post('https://webcinema-zb8z.onrender.com/api/showtimes/add', finalData);
+            await axios.post('https://api.quangdungcinema.id.vn/api/showtimes/add', finalData);
             
             setModal({
                 show: true,

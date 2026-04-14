@@ -30,7 +30,7 @@ const CouponUpdate = () => {
         const fetchCoupon = async () => {
             try {
                 // Lấy danh sách để tìm mã tương ứng (hoặc dùng API get by ID nếu Dũng có)
-                const res = await axios.get(`https://webcinema-zb8z.onrender.com/api/coupons/all`);
+                const res = await axios.get(`https://api.quangdungcinema.id.vn/api/coupons/all`);
                 const coupon = res.data.data.find(c => c.coupon_id === parseInt(id));
                 
                 if (coupon) {
@@ -84,7 +84,7 @@ const CouponUpdate = () => {
         }
 
         try {
-            await axios.put(`https://webcinema-zb8z.onrender.com/api/coupons/update/${id}`, formData);
+            await axios.put(`https://api.quangdungcinema.id.vn/api/coupons/update/${id}`, formData);
             
             showNotice(
                 'success',

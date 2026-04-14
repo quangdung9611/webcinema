@@ -143,7 +143,7 @@ const MovieAdd = () => {
         submitData.append('backdrop_url', backdrop); 
 
         try {
-            await axios.post('https://webcinema-zb8z.onrender.com/api/movies/add', submitData, {
+            await axios.post('https://api.quangdungcinema.id.vn/api/movies/add', submitData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setModal({

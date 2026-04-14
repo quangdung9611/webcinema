@@ -48,7 +48,7 @@ const Payment = () => {
     const handleTimeExpire = async () => {
         try {
             if (selectedSeats?.length > 0) {
-                await axios.post('https://webcinema-zb8z.onrender.com/api/seats/release', { 
+                await axios.post('https://api.quangdungcinema.id.vn/api/seats/release', { 
                     seatIds: selectedSeats.map(s => s.seat_id),
                     showtimeId: showtimeId
                 });
@@ -84,7 +84,7 @@ const Payment = () => {
             return;
         }
         try {
-            const res = await axios.post(`https://webcinema-zb8z.onrender.com/api/coupons/check`, {
+            const res = await axios.post(`https://api.quangdungcinema.id.vn/api/coupons/check`, {
                 code: inputCode,
                 userId: userInfo.user_id
             });
@@ -123,7 +123,7 @@ const Payment = () => {
                 status: 'pending' 
             };
 
-            const response = await axios.post('https://webcinema-zb8z.onrender.com/api/payment/process', postData);
+            const response = await axios.post('https://api.quangdungcinema.id.vn/api/payment/process', postData);
 
             if (response.data.success) {
                 const finalState = { 
@@ -149,7 +149,7 @@ const Payment = () => {
                 setIsTimerActive(false); 
 
                 if (paymentMethod === 'bank') {
-                    await axios.post('https://webcinema-zb8z.onrender.com/api/bank/send-otp', { email: userInfo.email, bookingId: response.data.bookingId });
+                    await axios.post('https://api.quangdungcinema.id.vn/api/bank/send-otp', { email: userInfo.email, bookingId: response.data.bookingId });
                     navigate('/bank-app', { state: finalState });
                 } else {
                     navigate('/momo-app', { state: finalState });
@@ -253,7 +253,7 @@ const Payment = () => {
                             )}
 
                             <div className="movie-info-summary">
-                                <img src={`https://webcinema-zb8z.onrender.com/uploads/posters/${showtimeDetail?.poster_url || movie?.poster_url}`} alt="" className="summary-poster" />
+                                <img src={`https://api.quangdungcinema.id.vn/uploads/posters/${showtimeDetail?.poster_url || movie?.poster_url}`} alt="" className="summary-poster" />
                                 <div className="summary-meta-data">
                                     <h4 className="movie-title-text">{showtimeDetail?.title || movie?.title}</h4>
                                     <p className="movie-sub-desc">

@@ -11,7 +11,7 @@ const MovieSidebar = ({ IMAGE_BASE_URL, title = "Phim Đang Chiếu" }) => {
     const [loading, setLoading] = useState(true);
 
     // Endpoint Render của Dũng
-    const API_URL = 'https://webcinema-zb8z.onrender.com/api';
+    const API_URL = 'https://api.quangdungcinema.id.vn/api';
 
     useEffect(() => {
         const fetchMovies = async () => {

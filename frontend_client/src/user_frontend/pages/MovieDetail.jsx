@@ -28,8 +28,8 @@ const MovieDetail = () => {
         show: false, type: '', title: '', message: null, onConfirm: null 
     });
 
-    const API_BASE_URL = "https://webcinema-zb8z.onrender.com/api";
-    const IMAGE_BASE_URL = "https://webcinema-zb8z.onrender.com/uploads";
+    const API_BASE_URL = "https://api.quangdungcinema.id.vn/api";
+    const IMAGE_BASE_URL = "https://api.quangdungcinema.id.vn/uploads";
 
     const getYoutubeID = (url) => {
         if (!url) return null;

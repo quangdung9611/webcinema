@@ -19,7 +19,7 @@ router.delete('/delete/:cinema_id', cinemaController.deleteCinema);
 router.get('/id/:cinema_id', cinemaController.getCinemaById);
 
 // 6. Lấy chi tiết rạp theo Slug (Dùng cho người dùng)
-// GIỮ NGUYÊN THEO Ý DŨNG: https://webcinema-zb8z.onrender.com/api/cinemas/:slug
+// GIỮ NGUYÊN THEO Ý DŨNG: https://api.quangdungcinema.id.vn/api/cinemas/:slug
 router.get('/:slug', cinemaController.getCinemaBySlug);
 
 module.exports = router;

@@ -36,7 +36,7 @@ const UserList = () => {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('https://webcinema-zb8z.onrender.com/api/users');
+            const res = await axios.get('https://api.quangdungcinema.id.vn/api/users');
             setUsers(res.data);
         } catch (err) {
             showModal('error', 'Lỗi', 'Không thể tải danh sách người dùng.');
@@ -54,7 +54,7 @@ const UserList = () => {
             `Quang Dũng có chắc chắn muốn xóa user "${username}" (ID: #${user_id})? Hành động này không thể hoàn tác.`,
             async () => {
                 try {
-                    await axios.delete(`https://webcinema-zb8z.onrender.com/api/users/delete/${user_id}`);
+                    await axios.delete(`https://api.quangdungcinema.id.vn/api/users/delete/${user_id}`);
                     setUsers(users.filter(u => u.user_id !== user_id));
                     showModal('success', 'Thành công', 'Đã xóa người dùng thành công!');
                 } catch (err) {

@@ -32,11 +32,11 @@ const RoomUpdate = () => {
         const fetchData = async () => {
             try {
                 // Lấy danh sách rạp trước
-                const resCinemas = await axios.get('https://webcinema-zb8z.onrender.com/api/cinemas');
+                const resCinemas = await axios.get('https://api.quangdungcinema.id.vn/api/cinemas');
                 setCinemas(resCinemas.data);
 
                 // Lấy thông tin chi tiết phòng
-                const resRoom = await axios.get(`https://webcinema-zb8z.onrender.com/api/rooms/${room_id}`);
+                const resRoom = await axios.get(`https://api.quangdungcinema.id.vn/api/rooms/${room_id}`);
                 if (resRoom.data) {
                     setFormData({
                         room_name: resRoom.data.room_name || '',
@@ -81,7 +81,7 @@ const RoomUpdate = () => {
         }
 
         try {
-            await axios.put(`https://webcinema-zb8z.onrender.com/api/rooms/update/${room_id}`, formData);
+            await axios.put(`https://api.quangdungcinema.id.vn/api/rooms/update/${room_id}`, formData);
             
             showNotice(
                 'success',
