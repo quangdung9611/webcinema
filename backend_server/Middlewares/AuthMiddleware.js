@@ -2,17 +2,12 @@ const jwt = require('jsonwebtoken');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
-// 🔥 PHÂN CHIA DOMAIN ĐÚNG VỚI AUTHCONTROLLER
-const USER_DOMAIN = "quangdungcinema.id.vn";
-const ADMIN_DOMAIN = "admin.quangdungcinema.id.vn";
-
 const AuthMiddleware = (req, res, next) => {
-    // 1. Xác định môi trường dựa trên Hostname (Tên miền đang gọi API)
+    // 1. Xác định môi trường dựa trên Hostname
     const hostname = req.hostname; 
     const isAdminDomain = hostname.includes('admin.');
 
-    // 2. Lấy ĐÚNG token của domain đó
-    // Trình duyệt bây giờ sẽ chỉ gửi admintoken nếu đang ở admin.quangdungcinema.id.vn
+    // 2. Lấy token theo domain
     const cookies = req.cookies || {};
     const token = isAdminDomain ? cookies.admintoken : cookies.usertoken;
 
@@ -27,7 +22,7 @@ const AuthMiddleware = (req, res, next) => {
         const decoded = jwt.verify(token, SECRET_KEY);
         req.user = decoded;
 
-        // 3. Kiểm tra chéo quyền hạn (Chống trường hợp lấy token user gắn vào admin)
+        // 3. Kiểm tra quyền hạn
         if (isAdminDomain && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 success: false,
@@ -40,15 +35,13 @@ const AuthMiddleware = (req, res, next) => {
     } catch (err) {
         console.error("Token error:", err.message);
 
-        // 4. XÓA COOKIE KHI LỖI: Phải xóa đúng "hộ khẩu" nó mới mất
+        // 4. Xóa cookie khi lỗi
         const tokenName = isAdminDomain ? 'admintoken' : 'usertoken';
-        const targetDomain = isAdminDomain ? ADMIN_DOMAIN : USER_DOMAIN;
 
         res.clearCookie(tokenName, {
             httpOnly: true,
             secure: true,
             sameSite: 'none',
-            domain: targetDomain, // 🔥 Xóa đúng domain đã cấp
             path: '/' 
         });
 

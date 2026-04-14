@@ -22,31 +22,32 @@ export const AuthProvider = ({ children }) => {
         const hostname = window.location.hostname;
         const isAdminDomain = hostname.startsWith('admin.');
 
-        // 🔥 CHỈNH LẠI ENDPOINT: 
-        // Nếu Backend của ông chỉ có 1 route /api/auth/me dùng chung cho cả 2 token
-        // thì ông chỉ cần gọi đúng route đó. 
-        const endpoint = '/api/auth/me'; 
+        // 🔥 SỬA LẠI ĐÂY: Quyết định endpoint dựa trên subdomain
+        // Admin dùng cụm /admin/api, User dùng cụm /api
+        const endpoint = isAdminDomain 
+            ? '/admin/api/auth/me' 
+            : '/api/auth/me'; 
 
         try {
-            // Sử dụng instance 'api' đã có withCredentials: true
             const res = await api.get(endpoint);
             const userData = res.data?.user;
 
             if (isAdminDomain) {
-                // Kiểm tra nếu là admin thì mới setAdmin
+                // Nếu đang ở domain admin, chỉ chấp nhận nếu role đúng là admin
                 if (userData && userData.role === 'admin') {
                     setAdmin(userData);
-                    setUser(userData);
+                    setUser(userData); // Admin vẫn có quyền xem như user
                 } else {
                     setAdmin(null);
                     setUser(null);
                 }
             } else {
-                // Trang khách www.
+                // Trang khách (quangdungcinema.id.vn)
                 setUser(userData || null);
                 setAdmin(null); 
             }
         } catch (err) {
+            // Khi lỗi 401 (chưa đăng nhập), console.warn thôi cho đỡ đỏ log
             console.warn("Phiên làm việc đã hết hạn hoặc chưa đăng nhập.");
             setAdmin(null);
             setUser(null);
@@ -61,13 +62,11 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
-        // Gọi checkAuth ngay khi app load
         checkAuth();
 
         const handleAuthChange = () => checkAuth();
         window.addEventListener('authChange', handleAuthChange);
         
-        // 🔥 QUAN TRỌNG: Thêm cái này để khi login xong nó load lại data ngay
         return () => {
             window.removeEventListener('authChange', handleAuthChange);
         };
