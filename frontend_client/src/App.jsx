@@ -97,14 +97,17 @@ function App() {
                     {isAdminDomain ? (
                         /* --- ROUTE CHO DOMAIN ADMIN --- */
                         <Route path="/">
-                            {/* Route đăng nhập cho Admin */}
+                            {/* Trang đăng nhập: admin.quangdungcinema.id.vn/login */}
                             <Route path="login" element={<AdminLogin />} />
 
-                            {/* Bọc toàn bộ trang quản trị vào Wrapper bảo mật và Layout */}
+                            {/* Bọc bảo mật cho các trang nội bộ */}
                             <Route element={<AdminLayoutWrapper />}>
-                                <Route index element={<Navigate to="/dashboard" replace />} />
-                                <Route path="dashboard" element={<AdminDashboard />} />
+                                {/* 🔥 THAY ĐỔI CHÍNH: Trang chủ domain chính là Dashboard */}
+                                <Route index element={<AdminDashboard />} />
                                 
+                                {/* Nếu user gõ /dashboard thì đá về trang chủ / cho đồng nhất */}
+                                <Route path="dashboard" element={<Navigate to="/" replace />} />
+
                                 <Route path="users">
                                     <Route index element={<UserList />} />
                                     <Route path="add" element={<UserAdd />} />

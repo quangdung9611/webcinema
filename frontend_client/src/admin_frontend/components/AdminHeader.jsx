@@ -8,11 +8,11 @@ import '../styles/AdminHeader.css';
 const AdminHeader = ({ toggleSidebar }) => {
     const navigate = useNavigate();
     
-    // 1. LẤY BIẾN 'admin' RA THAY VÌ 'user'
+    // Lấy biến admin, loading và hàm setAdmin từ AuthContext
     const { admin, loading, setAdmin } = useAuth(); 
 
     useEffect(() => {
-        // Chỉ đá đi nếu đã check xong (loading = false) mà không thấy biến admin
+        // Kiểm tra quyền hạn: Nếu đã load xong mà không có admin thì đá về login
         if (!loading && !admin) {
             navigate('/login');
         }
@@ -20,20 +20,20 @@ const AdminHeader = ({ toggleSidebar }) => {
 
     const handleLogout = async () => {
         try {
-            // SỬA URL: Gọi đúng cổng admin/api trên Render
+            // Gọi API logout - withCredentials để Server xóa cookie admintoken
             await axios.post('https://api.quangdungcinema.id.vn/admin/api/auth/logout', {}, {
                 withCredentials: true
             });
         } catch (error) {
             console.error("Lỗi đăng xuất Admin:", error);
         } finally {
-            // 2. Dọn dẹp state của admin
+            // Dọn dẹp state admin trong ứng dụng
             if (setAdmin) setAdmin(null); 
             
-            // Thông báo cập nhật auth cho toàn hệ thống
+            // Bắn event để các tab khác (nếu có) cũng đồng bộ trạng thái
             window.dispatchEvent(new Event('authChange'));
             
-            // Về trang login của admin
+            // Về trang login
             navigate('/login');
         }
     };
@@ -50,13 +50,14 @@ const AdminHeader = ({ toggleSidebar }) => {
                 </button>
 
                 <div className="admin-brand-logo">
-                    <Link to="/admin">ADMIN PANEL</Link>
+                    {/* 🔥 SỬA CHỖ NÀY: Dùng "/" thay vì "/admin" vì domain đã là admin.rồi */}
+                    <Link to="/">ADMIN PANEL</Link>
                 </div>
             </div>
 
             <div className="admin-header-profile-section">
                 <span className="admin-header-welcome-text">
-                    {/* 3. HIỂN THỊ TÊN TỪ BIẾN admin */}
+                    {/* Hiển thị tên Quang Dũng từ state admin */}
                     Xin chào <strong>{admin?.full_name || admin?.username || "Quản trị viên"}</strong>
                 </span>
 

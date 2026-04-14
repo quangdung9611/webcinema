@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Thêm useEffect vào đây
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../../components/Modal';
@@ -11,7 +11,6 @@ const AdminLogin = () => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
-    // Lấy thêm biến admin và loading từ AuthContext
     const { checkAuth, admin, loading: authLoading } = useAuth(); 
 
     const [modalConfig, setModalConfig] = useState({
@@ -24,11 +23,11 @@ const AdminLogin = () => {
 
     const navigate = useNavigate();
 
-    // --- [CẬP NHẬT QUAN TRỌNG]: TỰ ĐỘNG VÀO DASHBOARD NẾU ĐÃ CÓ TOKEN ---
+    // --- TỰ ĐỘNG VÀO TRANG CHỦ NẾU ĐÃ CÓ TOKEN ---
     useEffect(() => {
-        // Nếu đã xác thực xong (authLoading = false) và biến admin có dữ liệu
         if (!authLoading && admin) {
-            navigate('/dashboard', { replace: true });
+            // 🔥 Lưu ý: Nếu trang Dashboard của ông là trang chủ của subdomain admin, hãy dùng "/"
+            navigate('/', { replace: true }); 
         }
     }, [admin, authLoading, navigate]);
 
@@ -52,16 +51,15 @@ const AdminLogin = () => {
 
         setLoading(true);
         try {
-            // Gọi API Login - Sử dụng link Render trực tiếp theo yêu cầu của Dũng
+            // 1. Gọi API Login - Đã có withCredentials để nhận admintoken
             await axios.post('https://api.quangdungcinema.id.vn/admin/api/auth/login', 
                 { email, password, role_input: 'admin' },
                 { withCredentials: true } 
             );
 
-            // Bắt Context cập nhật lại biến admin ngay lập tức
+            // 2. Ép Context chạy lệnh /me để lấy thông tin admin ngay lập tức
             await checkAuth();
 
-            // Kích hoạt event cho các tab khác
             window.dispatchEvent(new Event('authChange'));
 
             setModalConfig({
@@ -71,7 +69,8 @@ const AdminLogin = () => {
                 message: `Chào mừng Quản trị viên hệ thống.`,
                 onConfirm: () => {
                     setModalConfig(prev => ({ ...prev, show: false }));
-                    navigate('/dashboard', { replace: true });
+                    // 🔥 Điều hướng về trang chủ Admin
+                    navigate('/', { replace: true });
                 }
             });
 
@@ -89,7 +88,6 @@ const AdminLogin = () => {
         }
     };
 
-    // Nếu đang loading từ AuthContext thì hiện màn hình chờ nhẹ để tránh nháy trang Login
     if (authLoading) return <div className="admin-login-page">Đang kiểm tra quyền hạn...</div>;
 
     return (

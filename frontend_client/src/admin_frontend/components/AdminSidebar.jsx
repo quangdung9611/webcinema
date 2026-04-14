@@ -13,7 +13,7 @@ const AdminSidebar = ({ sidebarOpen, closeSidebar }) => {
 
     // ĐÃ LOẠI BỎ /admin Ở TẤT CẢ CÁC ĐƯỜNG DẪN
     const menuItems = [
-        { path: '/dashboard', icon: <LayoutDashboard size={20}/>, label: 'Dashboard' },
+        { path: '/', icon: <LayoutDashboard size={20}/>, label: 'Dashboard' },
         { path: '/users', icon: <Users size={20}/>, label: 'Quản lý User' },
         { path: '/movies', icon: <Film size={20}/>, label: 'Quản lý phim' },
         { path: '/news', icon: <Newspaper size={20}/>, label: 'Quản lý Tin tức' },

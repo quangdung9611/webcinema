@@ -68,7 +68,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. LOGIN (SỬA LẠI ĐỂ NHẬN DIỆN DOMAIN THẬT)
+// 2. LOGIN (BẢN FIX LỖI TAM GIÁC VÀNG)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -92,34 +92,27 @@ exports.login = async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        const isAdmin = user.role === 'admin';
-
-        // 🔥 XỬ LÝ COOKIE TÁCH BIỆT HOÀN TOÀN TRÊN DOMAIN THẬT
-        if (isAdmin) {
-            // Xóa usertoken cũ ở domain khách
-            res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG, domain: USER_DOMAIN, path: '/' });
-            
-            // Cấp admintoken CHỈ cho domain admin
+        // 🔥 CHỈ CẤP COOKIE CHO ĐÚNG DOMAIN ĐANG ĐỨNG
+        if (user.role === 'admin') {
+            // Chỉ cấp admintoken cho subdomain admin.
+            // KHÔNG gọi clearCookie của usertoken ở đây để tránh lỗi tam giác
             res.cookie('admintoken', token, {
                 ...BASE_COOKIE_CONFIG,
-                domain: ADMIN_DOMAIN, // Ép trình duyệt lưu vào domain admin thật
+                domain: ADMIN_DOMAIN, 
                 path: '/',
                 maxAge: 24 * 60 * 60 * 1000
             });
         } else {
-            // Xóa admintoken cũ ở domain admin
-            res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG, domain: ADMIN_DOMAIN, path: '/' });
-
-            // Cấp usertoken CHỈ cho domain khách
+            // Chỉ cấp usertoken cho domain chính
             res.cookie('usertoken', token, {
                 ...BASE_COOKIE_CONFIG,
-                domain: USER_DOMAIN, // Ép trình duyệt lưu vào domain khách thật
+                domain: USER_DOMAIN,
                 path: '/',
                 maxAge: 24 * 60 * 60 * 1000
             });
         }
 
-        const roleKey = isAdmin ? 'admin' : 'customer';
+        const roleKey = user.role === 'admin' ? 'admin' : 'customer';
 
         res.json({
             success: true,
@@ -129,10 +122,7 @@ exports.login = async (req, res) => {
                 user_id: user.user_id,
                 username: user.username,
                 full_name: user.full_name,
-                phone: user.phone,
-                address: user.address,
                 email: user.email,
-                points: user.points,
                 role: user.role
             }
         });
@@ -142,7 +132,6 @@ exports.login = async (req, res) => {
         res.status(500).json({ success: false, error: "Lỗi server" });
     }
 };
-
 // -----------------------------------------------------------
 // 3. GET ME (GIỮ NGUYÊN)
 // -----------------------------------------------------------
