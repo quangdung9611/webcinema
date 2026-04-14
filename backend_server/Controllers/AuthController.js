@@ -91,7 +91,7 @@ exports.login = async (req, res) => {
         if (user.role === 'admin') {
             res.cookie('admintoken', token, {
                 ...BASE_COOKIE_CONFIG,
-                // domain: ADMIN_DOMAIN,
+                domain: ADMIN_DOMAIN,
                 path: '/',
                 maxAge: 24 * 60 * 60 * 1000
             });
