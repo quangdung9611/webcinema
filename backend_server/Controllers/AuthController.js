@@ -5,39 +5,21 @@ const db = require('../Config/db');
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 /**
- * 🔥 HÀM TẠO CẤU HÌNH COOKIE ĐÍCH DANH
- * Giúp tách biệt hoàn toàn usertoken và admintoken
+ * 🔥 HÀM TẠO CẤU HÌNH COOKIE CHUẨN HIỆN ĐẠI
+ * Bỏ domain thủ công để tránh lỗi "Invalid Domain" (Tam giác vàng)
  */
 const getCookieConfig = (req) => {
-    const origin = req.get('origin') || "";
-    let targetDomain = "";
-
-    // Tách lấy domain sạch từ origin (bỏ https://)
-    if (origin) {
-        targetDomain = origin.replace(/^https?:\/\//, '').split(':')[0];
-    }
-
-    // Nếu là localhost thì không set domain để trình duyệt tự nhận
-    if (targetDomain.includes('localhost')) {
-        return {
-            httpOnly: true,
-            secure: false, // Localhost thường không có HTTPS
-            sameSite: 'Lax',
-            path: '/'
-        };
-    }
-
     return {
         httpOnly: true,
-        secure: true,    // Bắt buộc trên Render/Vercel
-        sameSite: 'Lax', 
-        domain: targetDomain, // 🔥 Cắm đúng "hộ khẩu" trang nào thì cookie nằm trang đó
+        secure: true,      // Bắt buộc phải có khi dùng SameSite: 'None'
+        sameSite: 'None',  // 🔥 QUAN TRỌNG: Cho phép API và Web khác domain vẫn nhận được nhau
         path: '/',
+        // ❌ KHÔNG set domain ở đây nữa. Trình duyệt sẽ tự gán cho api.quangdungcinema.id.vn
     };
 };
 
 // -----------------------------------------------------------
-// 1. REGISTER
+// 1. REGISTER (Giữ nguyên logic của ông)
 // -----------------------------------------------------------
 exports.register = async (req, res) => {
     const { username, full_name, phone, address, email, password, role } = req.body;
@@ -73,7 +55,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. LOGIN (Tách biệt tuyệt đối Token)
+// 2. LOGIN (Tách biệt Token bằng Tên thay vì Domain)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -98,23 +80,20 @@ exports.login = async (req, res) => {
         const cookieConfig = getCookieConfig(req);
         const origin = req.get('origin') || "";
 
-        // 🔥 LOGIC TÁCH BIỆT TOKEN:
-        // Đứng ở domain admin thì chỉ cấp admintoken
+        // 🔥 TÁCH BIỆT TOKEN:
+        // Cả 2 token đều lưu ở api.quangdungcinema.id.vn nhưng mang tên khác nhau
         if (origin.includes('admin.')) {
             res.cookie('admintoken', token, {
                 ...cookieConfig,
                 maxAge: 24 * 60 * 60 * 1000
             });
-            // Xóa usertoken nếu lỡ có (để sạch máy)
+            // Xóa usertoken cho sạch máy nếu lỡ có
             res.clearCookie('usertoken', cookieConfig);
-        } 
-        // Đứng ở domain chính thì chỉ cấp usertoken
-        else {
+        } else {
             res.cookie('usertoken', token, {
                 ...cookieConfig,
                 maxAge: 24 * 60 * 60 * 1000
             });
-            // Xóa admintoken nếu lỡ có
             res.clearCookie('admintoken', cookieConfig);
         }
 
@@ -138,13 +117,12 @@ exports.login = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 3. GET ME
+// 3. GET ME & 4. LOGOUT (Giữ nguyên logic của ông nhưng dùng config mới)
 // -----------------------------------------------------------
 exports.getMe = async (req, res) => {
     try {
         const userId = req.user ? req.user.user_id : null;
         if (!userId) return res.status(401).json({ success: false, message: "Chưa xác thực" });
-
         const [users] = await db.query(
             'SELECT user_id, username, full_name, phone, address, email, role, points FROM users WHERE user_id = ?',
             [userId]
@@ -152,20 +130,13 @@ exports.getMe = async (req, res) => {
         if (users.length === 0) return res.status(404).json({ success: false, message: "Không tìm thấy user" });
         res.json({ success: true, user: users[0] });
     } catch (err) {
-        console.error("GetMe Error:", err);
         res.status(500).json({ success: false, error: "Lỗi server" });
     }
 };
 
-// -----------------------------------------------------------
-// 4. LOGOUT
-// -----------------------------------------------------------
 exports.logout = (req, res) => {
-    const cookieConfig = getCookieConfig(req);
-    
-    // Xóa cả 2 cho chắc ăn nhưng vẫn theo đúng domain config
-    res.clearCookie('usertoken', cookieConfig);
-    res.clearCookie('admintoken', cookieConfig);
-
+    const config = getCookieConfig(req);
+    res.clearCookie('usertoken', config);
+    res.clearCookie('admintoken', config);
     res.json({ success: true, message: "Đăng xuất thành công" });
 };

@@ -3,34 +3,16 @@ const jwt = require('jsonwebtoken');
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 /**
- * 🔥 HÀM TRỢ GIÚP LẤY CẤU HÌNH COOKIE ĐÍCH DANH
- * Phải khớp 100% với bên AuthController thì mới xóa (clear) cookie được
+ * 🔥 HÀM TRỢ GIÚP LẤY CẤU HÌNH COOKIE
+ * Phải khớp hoàn toàn với AuthController để lệnh clearCookie có tác dụng
  */
-const getCookieConfig = (req) => {
-    const origin = req.get('origin') || "";
-    let targetDomain = "";
-
-    // Tách lấy domain sạch từ origin (ví dụ: admin.quangdungcinema.id.vn)
-    if (origin) {
-        targetDomain = origin.replace(/^https?:\/\//, '').split(':')[0];
-    }
-
-    // Nếu là localhost thì trả về config đơn giản
-    if (targetDomain.includes('localhost')) {
-        return {
-            httpOnly: true,
-            secure: false,
-            sameSite: 'Lax',
-            path: '/'
-        };
-    }
-
+const getCookieConfig = () => {
     return {
         httpOnly: true,
-        secure: true,
-        sameSite: 'Lax',
-        domain: targetDomain, // 🔥 Phải khớp với domain lúc set cookie
+        secure: true,      // Bắt buộc trên Render/HTTPS
+        sameSite: 'None',  // 🔥 QUAN TRỌNG: Phải khớp với lúc set cookie
         path: '/'
+        // ❌ KHÔNG set domain ở đây
     };
 };
 
@@ -44,13 +26,13 @@ const verifyToken = (token) => {
 };
 
 // -----------------------------------------------------------
-// 1. MIDDLEWARE TỔNG QUÁT (Dùng cho /me hoặc check chung)
+// 1. MIDDLEWARE TỔNG QUÁT (Dùng cho GetMe hoặc check chung)
 // -----------------------------------------------------------
 exports.authGeneral = (req, res, next) => {
     const origin = req.get('origin') || "";
     const isAdminDomain = origin.includes('admin.');
     
-    // Ở trang admin thì tìm admintoken, trang chủ thì tìm usertoken
+    // Tên token vẫn tách biệt: usertoken cho khách, admintoken cho admin
     const tokenName = isAdminDomain ? 'admintoken' : 'usertoken';
     const token = req.cookies[tokenName];
 
@@ -60,14 +42,14 @@ exports.authGeneral = (req, res, next) => {
 
     const decoded = verifyToken(token);
     if (!decoded) {
-        // Xóa cookie đúng domain nếu token hết hạn
-        res.clearCookie(tokenName, getCookieConfig(req));
+        // Xóa cookie nếu hết hạn (Dùng config không domain)
+        res.clearCookie(tokenName, getCookieConfig());
         return res.status(401).json({ success: false, message: "Phiên làm việc hết hạn!" });
     }
 
     req.user = decoded;
 
-    // Bảo vệ vùng Admin: Nếu đang đứng ở domain admin mà role không phải admin thì đá
+    // Chốt chặn cuối: Admin domain chỉ cho phép role admin vào
     if (isAdminDomain && req.user.role !== 'admin') {
         return res.status(403).json({ success: false, message: "Bạn không có quyền quản trị!" });
     }
@@ -76,7 +58,7 @@ exports.authGeneral = (req, res, next) => {
 };
 
 // -----------------------------------------------------------
-// 2. MIDDLEWARE CHỈ DÀNH CHO ADMIN (Các API quản lý phim, vé...)
+// 2. MIDDLEWARE CHỈ DÀNH CHO ADMIN
 // -----------------------------------------------------------
 exports.verifyAdmin = (req, res, next) => {
     const token = req.cookies.admintoken;
@@ -86,9 +68,8 @@ exports.verifyAdmin = (req, res, next) => {
     }
 
     const decoded = verifyToken(token);
-    // Phải là admin và phải có token hợp lệ
     if (!decoded || decoded.role !== 'admin') {
-        res.clearCookie('admintoken', getCookieConfig(req));
+        res.clearCookie('admintoken', getCookieConfig());
         return res.status(403).json({ success: false, message: "Quyền truy cập bị từ chối!" });
     }
 
@@ -97,7 +78,7 @@ exports.verifyAdmin = (req, res, next) => {
 };
 
 // -----------------------------------------------------------
-// 3. MIDDLEWARE CHỈ DÀNH CHO USER (Customer mua vé)
+// 3. MIDDLEWARE CHỈ DÀNH CHO USER
 // -----------------------------------------------------------
 exports.verifyUser = (req, res, next) => {
     const token = req.cookies.usertoken;
@@ -108,7 +89,7 @@ exports.verifyUser = (req, res, next) => {
 
     const decoded = verifyToken(token);
     if (!decoded) {
-        res.clearCookie('usertoken', getCookieConfig(req));
+        res.clearCookie('usertoken', getCookieConfig());
         return res.status(401).json({ success: false, message: "Phiên làm việc hết hạn!" });
     }
 

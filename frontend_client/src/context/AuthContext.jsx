@@ -8,20 +8,11 @@ const BASE_URL = 'https://api.quangdungcinema.id.vn';
 // 1. Khởi tạo Axios instance
 const api = axios.create({
     baseURL: BASE_URL,
-    withCredentials: true 
+    withCredentials: true // 🔥 BẮT BUỘC: Để gửi kèm admintoken/usertoken tự động
 });
 
-/**
- * 🔥 LOGIC INCLUDE ORIGIN:
- * Đảm bảo mỗi request gửi đi đều mang theo Origin chính xác.
- * Backend sẽ dựa vào đây để set 'domain' cho cookie khớp với trang Dũng đang đứng.
- */
-api.interceptors.request.use((config) => {
-    config.headers['Origin'] = window.location.origin; 
-    return config;
-}, (error) => {
-    return Promise.reject(error);
-});
+// Loại bỏ Interceptor ép Origin vì trình duyệt sẽ tự gửi Origin chuẩn của nó
+// Điều này giúp tránh lỗi "CORS preflight" phức tạp.
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);    
@@ -33,7 +24,7 @@ export const AuthProvider = ({ children }) => {
         const hostname = window.location.hostname;
         const isAdminDomain = hostname.startsWith('admin.');
 
-        // Chọn đúng "cửa" để hỏi thông tin
+        // Chọn đúng "cửa" để xác thực dựa trên trang đang đứng
         const endpoint = isAdminDomain 
             ? '/admin/api/auth/me'  
             : '/api/auth/me';        
@@ -43,30 +34,27 @@ export const AuthProvider = ({ children }) => {
             const userData = res.data?.user;
 
             if (isAdminDomain) {
-                // Nếu ở trang admin, chỉ chấp nhận role admin
+                // Ở trang admin thì chỉ tin tưởng dữ liệu có role admin
                 if (userData && userData.role === 'admin') {
                     setAdmin(userData);
                     setUser(null); 
                 } else {
-                    // Nếu lỡ có token user thường ở đây, coi như không hợp lệ
                     setAdmin(null);
                     setUser(null);
                 }
             } else {
-                // Nếu ở trang user, chỉ quan tâm user thường (hoặc admin xem với tư cách khách)
+                // Ở trang chủ thì nhận diện user bình thường
                 setUser(userData || null);
                 setAdmin(null);
             }
         } catch (err) {
             setAdmin(null);
             setUser(null);
-            // console.log("Hệ thống: Phiên làm việc không tồn tại hoặc hết hạn.");
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // Hàm xóa sạch bách khi Logout
     const clearAuth = useCallback(() => {
         setUser(null);
         setAdmin(null);
@@ -75,7 +63,6 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         checkAuth();
         
-        // Lắng nghe sự kiện để đồng bộ giữa các tab
         const handleAuthChange = () => checkAuth();
         window.addEventListener('authChange', handleAuthChange);
         
@@ -84,15 +71,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{ 
-            user, 
-            admin, 
-            setUser, 
-            setAdmin, 
-            loading, 
-            checkAuth, 
-            clearAuth, 
-            BASE_URL, 
-            api 
+            user, admin, setUser, setAdmin, loading, checkAuth, clearAuth, BASE_URL, api 
         }}>
             {children}
         </AuthContext.Provider>
