@@ -77,24 +77,25 @@ exports.login = async (req, res) => {
             { expiresIn: '24h' }
         );
 
+                // --- Trong AuthController.js (Hàm login) ---
+
         const cookieConfig = getCookieConfig(req);
         const origin = req.get('origin') || "";
 
-        // 🔥 TÁCH BIỆT TOKEN:
-        // Cả 2 token đều lưu ở api.quangdungcinema.id.vn nhưng mang tên khác nhau
         if (origin.includes('admin.')) {
+            // 🟢 Chỉ cấp thêm admintoken
             res.cookie('admintoken', token, {
                 ...cookieConfig,
                 maxAge: 24 * 60 * 60 * 1000
             });
-            // Xóa usertoken cho sạch máy nếu lỡ có
-            res.clearCookie('usertoken', cookieConfig);
+            // ❌ XÓA BỎ dòng res.clearCookie('usertoken', ...) ở đây
         } else {
+            // 🔵 Chỉ cấp thêm usertoken
             res.cookie('usertoken', token, {
                 ...cookieConfig,
                 maxAge: 24 * 60 * 60 * 1000
             });
-            res.clearCookie('admintoken', cookieConfig);
+            // ❌ XÓA BỎ dòng res.clearCookie('admintoken', ...) ở đây
         }
 
         const roleKey = user.role === 'admin' ? 'admin' : 'customer';
