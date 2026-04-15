@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../../components/Modal';
 import { useAuth } from '../../../context/AuthContext'; 
@@ -11,7 +10,8 @@ const AdminLogin = () => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
-    const { checkAuth, admin, loading: authLoading } = useAuth(); 
+    // 🔥 Lấy api và checkAuth từ context
+    const { checkAuth, admin, loading: authLoading, api } = useAuth(); 
 
     const [modalConfig, setModalConfig] = useState({
         show: false,
@@ -23,10 +23,9 @@ const AdminLogin = () => {
 
     const navigate = useNavigate();
 
-    // --- TỰ ĐỘNG VÀO TRANG CHỦ NẾU ĐÃ CÓ TOKEN ---
+    // Tự động vào trang chủ nếu đã có session admin
     useEffect(() => {
         if (!authLoading && admin) {
-            // 🔥 Lưu ý: Nếu trang Dashboard của ông là trang chủ của subdomain admin, hãy dùng "/"
             navigate('/', { replace: true }); 
         }
     }, [admin, authLoading, navigate]);
@@ -51,15 +50,19 @@ const AdminLogin = () => {
 
         setLoading(true);
         try {
-            // 1. Gọi API Login - Đã có withCredentials để nhận admintoken
-            await axios.post('https://api.quangdungcinema.id.vn/admin/api/auth/login', 
-                { email, password, role_input: 'admin' },
-                { withCredentials: true } 
+            /**
+             * 🔥 DÙNG instance 'api' ĐÃ CÀI INTERCEPTOR:
+             * Backend sẽ nhận được Origin: https://admin.quangdungcinema.id.vn
+             * Từ đó nó sẽ set cookie domain chính xác là trang admin.
+             */
+            await api.post('/admin/api/auth/login', 
+                { email, password, role_input: 'admin' }
             );
 
             // 2. Ép Context chạy lệnh /me để lấy thông tin admin ngay lập tức
             await checkAuth();
 
+            // 3. Bắn event đồng bộ
             window.dispatchEvent(new Event('authChange'));
 
             setModalConfig({
@@ -69,7 +72,6 @@ const AdminLogin = () => {
                 message: `Chào mừng Quản trị viên hệ thống.`,
                 onConfirm: () => {
                     setModalConfig(prev => ({ ...prev, show: false }));
-                    // 🔥 Điều hướng về trang chủ Admin
                     navigate('/', { replace: true });
                 }
             });

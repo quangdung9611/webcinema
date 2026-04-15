@@ -4,17 +4,21 @@ const authController = require('../Controllers/AuthController');
 // 🔥 Sử dụng verifyAdmin để ép buộc chỉ chấp nhận admintoken
 const { verifyAdmin } = require('../Middlewares/AuthMiddleware');
 
-// Path gốc: /api/admin/auth
+/**
+ * 🚩 ĐƯỜNG DẪN GỐC (Mounted trong server.js): /admin/api/auth
+ */
 
 // 1. Login Admin
-// Khi login, Backend của ông sẽ dựa vào role để cấp 'admintoken'
+// Endpoint: POST /admin/api/auth/login
 router.post('/login', authController.login); 
 
 // 2. Lấy thông tin Admin (Profile)
-// Dùng verifyAdmin: Nếu ông cầm usertoken mà mò vào đây, nó sẽ báo 401/403 ngay
+// Endpoint: GET /admin/api/auth/me
+// Dùng verifyAdmin: Chỉ cho phép admintoken, usertoken sẽ bị đá văng
 router.get('/me', verifyAdmin, authController.getMe); 
 
 // 3. Logout Admin
+// Endpoint: POST /admin/api/auth/logout
 router.post('/logout', authController.logout);
 
 module.exports = router;

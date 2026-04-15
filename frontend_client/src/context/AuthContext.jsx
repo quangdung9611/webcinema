@@ -5,10 +5,23 @@ const AuthContext = createContext();
 
 const BASE_URL = 'https://api.quangdungcinema.id.vn';
 
-// Cấu hình axios dùng chung
+// 1. Khởi tạo Axios instance
 const api = axios.create({
     baseURL: BASE_URL,
     withCredentials: true 
+});
+
+/**
+ * 🔥 LOGIC INCLUDE ORIGIN:
+ * Đảm bảo mỗi request gửi đi đều mang theo Origin chính xác
+ * giúp Backend thực hiện "bẻ lái" domain cookie chuẩn 100%
+ */
+api.interceptors.request.use((config) => {
+    const origin = window.location.origin;
+    config.headers['Origin'] = origin; 
+    return config;
+}, (error) => {
+    return Promise.reject(error);
 });
 
 export const AuthProvider = ({ children }) => {
@@ -20,14 +33,9 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         const hostname = window.location.hostname;
         
-        // Nhận diện domain
+        // Nhận diện domain để chọn "cửa" API
         const isAdminDomain = hostname.startsWith('admin.');
 
-        /**
-         * 🔥 CHỈNH ENDPOINT CHO KHỚP BACKEND:
-         * Admin: /admin/api/auth/me (Lấy admintoken)
-         * User: /api/auth/me (Lấy usertoken)
-         */
         const endpoint = isAdminDomain 
             ? '/admin/api/auth/me'  
             : '/api/auth/me';        
@@ -37,24 +45,18 @@ export const AuthProvider = ({ children }) => {
             const userData = res.data?.user;
 
             if (isAdminDomain) {
-                // Nếu ở trang Admin, chỉ lưu vào state admin
                 if (userData && userData.role === 'admin') {
                     setAdmin(userData);
-                    setUser(null); // Đảm bảo không bị lẫn lộn
+                    setUser(null); 
                 }
             } else {
-                // Nếu ở trang User
                 setUser(userData || null);
                 setAdmin(null);
             }
         } catch (err) {
-            // Nếu lỗi (401), xóa sạch state tương ứng
-            if (isAdminDomain) {
-                setAdmin(null);
-            } else {
-                setUser(null);
-            }
-            console.log("Hệ thống: Chưa có phiên làm việc tại domain này.");
+            if (isAdminDomain) setAdmin(null);
+            else setUser(null);
+            console.log("Hệ thống: Phiên làm việc không tồn tại tại domain này.");
         } finally {
             setLoading(false);
         }
@@ -67,27 +69,14 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         checkAuth();
-        
-        // Lắng nghe sự kiện để cập nhật auth tức thì khi login/logout
         const handleAuthChange = () => checkAuth();
         window.addEventListener('authChange', handleAuthChange);
-        
-        return () => {
-            window.removeEventListener('authChange', handleAuthChange);
-        };
+        return () => window.removeEventListener('authChange', handleAuthChange);
     }, [checkAuth]);
 
     return (
         <AuthContext.Provider value={{ 
-            user, 
-            admin, 
-            setUser, 
-            setAdmin, 
-            loading, 
-            checkAuth, 
-            clearAuth,
-            BASE_URL,
-            api 
+            user, admin, setUser, setAdmin, loading, checkAuth, clearAuth, BASE_URL, api 
         }}>
             {children}
         </AuthContext.Provider>

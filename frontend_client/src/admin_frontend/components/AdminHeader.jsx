@@ -1,18 +1,17 @@
 import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Menu } from 'lucide-react';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext'; 
 import '../styles/AdminHeader.css';
 
 const AdminHeader = ({ toggleSidebar }) => {
     const navigate = useNavigate();
     
-    // Lấy biến admin, loading và hàm setAdmin từ AuthContext
-    const { admin, loading, setAdmin } = useAuth(); 
+    // 🔥 Lấy api từ context để hưởng lợi từ Interceptor Origin
+    const { admin, loading, setAdmin, api, clearAuth } = useAuth(); 
 
     useEffect(() => {
-        // Kiểm tra quyền hạn: Nếu đã load xong mà không có admin thì đá về login
+        // Nếu đã load xong mà không thấy admin thì đá về login ngay
         if (!loading && !admin) {
             navigate('/login');
         }
@@ -20,20 +19,26 @@ const AdminHeader = ({ toggleSidebar }) => {
 
     const handleLogout = async () => {
         try {
-            // Gọi API logout - withCredentials để Server xóa cookie admintoken
-            await axios.post('https://api.quangdungcinema.id.vn/admin/api/auth/logout', {}, {
-                withCredentials: true
-            });
+            /**
+             * 🔥 Dùng instance 'api' từ AuthContext:
+             * 1. Nó tự gửi withCredentials: true
+             * 2. Nó tự gửi Origin header để Backend bẻ lái domain xóa cookie
+             */
+            await api.post('/admin/api/auth/logout');
         } catch (error) {
             console.error("Lỗi đăng xuất Admin:", error);
         } finally {
-            // Dọn dẹp state admin trong ứng dụng
-            if (setAdmin) setAdmin(null); 
+            // Dọn sạch state ở Frontend
+            if (clearAuth) {
+                clearAuth();
+            } else {
+                setAdmin(null);
+            }
             
-            // Bắn event để các tab khác (nếu có) cũng đồng bộ trạng thái
+            // Bắn event đồng bộ các tab
             window.dispatchEvent(new Event('authChange'));
             
-            // Về trang login
+            // Quay về login
             navigate('/login');
         }
     };
@@ -50,15 +55,14 @@ const AdminHeader = ({ toggleSidebar }) => {
                 </button>
 
                 <div className="admin-brand-logo">
-                    {/* 🔥 SỬA CHỖ NÀY: Dùng "/" thay vì "/admin" vì domain đã là admin.rồi */}
+                    {/* Vì subdomain là admin. rồi nên Link to="/" sẽ là trang chủ Admin */}
                     <Link to="/">ADMIN PANEL</Link>
                 </div>
             </div>
 
             <div className="admin-header-profile-section">
                 <span className="admin-header-welcome-text">
-                    {/* Hiển thị tên Quang Dũng từ state admin */}
-                    Xin chào <strong>{admin?.full_name || admin?.username || "Quản trị viên"}</strong>
+                    Xin chào <strong>{admin?.full_name || "Quản trị viên"}</strong>
                 </span>
 
                 <button 
