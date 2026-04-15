@@ -4,20 +4,23 @@ const db = require('../Config/db');
 
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
-// --- CẤU HÌNH COOKIE CHUNG ---
-// 🔥 QUAN TRỌNG: Dùng dấu chấm ở trước để bao phủ tất cả subdomain
-const SHARED_DOMAIN = ".quangdungcinema.id.vn"; 
-
-const BASE_COOKIE_CONFIG = {
-    httpOnly: true,
-    secure: true,    // Bắt buộc trên HTTPS (Render/Vercel)
-    sameSite: 'none', // Cho phép gửi cookie giữa các subdomain khác nhau
-    domain: SHARED_DOMAIN, // Hộ khẩu chung cho cả gia đình
-    path: '/',
+/**
+ * 🔥 HÀM TẠO CẤU HÌNH COOKIE ĐÍCH DANH
+ * Thay vì dùng SHARED_DOMAIN có dấu chấm (gây tràn token), 
+ * ta sẽ dùng domain chính xác của từng trang.
+ */
+const getCookieConfig = (req) => {
+    return {
+        httpOnly: true,
+        secure: true,    // Bắt buộc trên HTTPS (Render/Vercel)
+        sameSite: 'Lax', // 'Lax' giúp trình duyệt quản lý cookie subdomain tốt hơn 'none' khi bỏ domain chung
+        domain: req.hostname, // 🔥 Chìa khóa đây: Cấp đúng địa chỉ mà request gửi tới
+        path: '/',
+    };
 };
 
 // -----------------------------------------------------------
-// 1. REGISTER (Giữ nguyên logic của ông)
+// 1. REGISTER (Giữ nguyên logic gốc của Dũng)
 // -----------------------------------------------------------
 exports.register = async (req, res) => {
     const { username, full_name, phone, address, email, password, role } = req.body;
@@ -53,7 +56,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. LOGIN (Đã sửa lại Cookie)
+// 2. LOGIN (Tách biệt Token theo Domain)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -75,15 +78,19 @@ exports.login = async (req, res) => {
             { expiresIn: '24h' }
         );
 
-        // 🔥 Cấp cookie dùng chung domain cha
-        if (user.role === 'admin') {
+        const cookieConfig = getCookieConfig(req);
+
+        // 🔥 XỬ LÝ CHỈ ĐỊNH ĐÚNG NƠI ĐÚNG CHỖ
+        if (user.role === 'admin' && req.hostname.startsWith('admin.')) {
+            // Nếu là Admin và đang login ở trang quản trị
             res.cookie('admintoken', token, {
-                ...BASE_COOKIE_CONFIG,
+                ...cookieConfig,
                 maxAge: 24 * 60 * 60 * 1000
             });
         } else {
+            // Mọi trường hợp khác (User thường hoặc Admin xem phim ở trang khách)
             res.cookie('usertoken', token, {
-                ...BASE_COOKIE_CONFIG,
+                ...cookieConfig,
                 maxAge: 24 * 60 * 60 * 1000
             });
         }
@@ -108,7 +115,7 @@ exports.login = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 3. GET ME (Giữ nguyên)
+// 3. GET ME (Giữ nguyên logic của Dũng)
 // -----------------------------------------------------------
 exports.getMe = async (req, res) => {
     try {
@@ -128,12 +135,14 @@ exports.getMe = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 4. LOGOUT (Sửa lại để xóa sạch token ở domain chung)
+// 4. LOGOUT (Xóa sạch token ở đúng domain đang đứng)
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
-    // Xóa cả 2 cho chắc cú
-    res.clearCookie('usertoken', { ...BASE_COOKIE_CONFIG });
-    res.clearCookie('admintoken', { ...BASE_COOKIE_CONFIG });
+    const cookieConfig = getCookieConfig(req);
+    
+    // Xóa cả 2 ở domain hiện tại để chắc chắn
+    res.clearCookie('usertoken', cookieConfig);
+    res.clearCookie('admintoken', cookieConfig);
 
     res.json({ success: true, message: "Đăng xuất thành công" });
 };

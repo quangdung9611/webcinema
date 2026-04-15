@@ -40,7 +40,7 @@ const newsRoutes = require('./Routers/NewRouter');
 // 1. CẤU HÌNH HỆ THỐNG & CORS
 // ===========================================================
 
-// 🔥 QUAN TRỌNG: Để nhận cookie từ domain thật trên Render
+// 🔥 QUAN TRỌNG: Để nhận cookie từ đúng domain chỉ định (không dùng chung dấu chấm nữa)
 app.set('trust proxy', 1); 
 app.use(cookieParser()); 
 
@@ -53,7 +53,7 @@ const corsOptions = {
     'http://localhost:5173',
     /\.vercel\.app$/ 
   ], 
-  credentials: true, 
+  credentials: true, // Cho phép nhận usertoken/admintoken từ các domain khác nhau
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 };
@@ -110,7 +110,7 @@ app.get('/api', (req, res) => {
   res.send('🚀 Cinema Backend is flying!');
 });
 
-// --- ROUTE CHO USER (Giữ nguyên /api/...) ---
+// --- NHÓM API CHO USER ---
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/genres', genreRoutes);
@@ -132,7 +132,7 @@ app.use('/api/movie-genres', movieGenreRoutes);
 app.use('/api/movie-actors', movieActorRoutes);
 app.use('/api/news', newsRoutes);
 
-// --- ROUTE CHO ADMIN (Phân tách domain cookie qua prefix) ---
+// --- NHÓM API CHO ADMIN ---
 app.use('/admin/api/auth', adminAuthRoutes);
 app.use('/admin/api/manage', adminRouter); 
 
@@ -142,17 +142,16 @@ app.use('/admin/api/manage', adminRouter);
 
 const PORT = process.env.PORT || 5000; 
 
-// 🔥 Thay server.listen thay vì app.listen để Socket.io chạy được
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port: ${PORT}`);
   
-  // Keep-alive: Nên dùng chính cái domain mới của bạn nếu đã trỏ xong
+  // Tự động gọi chính mình để chống "ngủ" trên Render
   const SELF_URL = process.env.BACKEND_URL || 'https://api.quangdungcinema.id.vn';
   setInterval(async () => {
     try {
       await axios.get(`${SELF_URL}/api?t=${Date.now()}`);
     } catch (err) {
-      console.log('🔔 [Keep-Alive]: Server is staying awake.');
+      // Giữ im lặng khi server đang thức
     }
   }, 300000); 
 
