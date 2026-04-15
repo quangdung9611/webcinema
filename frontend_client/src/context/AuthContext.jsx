@@ -3,10 +3,8 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-// 1. Cấu hình BASE_URL
 const BASE_URL = 'https://api.quangdungcinema.id.vn';
 
-// Tạo instance để tự động đính kèm Cookie (withCredentials)
 const api = axios.create({
     baseURL: BASE_URL,
     withCredentials: true 
@@ -20,37 +18,38 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = useCallback(async () => {
         setLoading(true);
         const hostname = window.location.hostname;
-        const isAdminDomain = hostname.startsWith('admin.');
+        
+        // Hỗ trợ cả domain thật và localhost khi dev
+        const isAdminDomain = hostname.startsWith('admin.') || hostname.includes('admin');
 
-        // 🔥 SỬA LẠI ĐÂY: Quyết định endpoint dựa trên subdomain
-        // Admin dùng cụm /admin/api, User dùng cụm /api
+        // Chọn đúng endpoint như đã thống nhất ở Backend
         const endpoint = isAdminDomain 
-            ? '/admin/api/auth/me' 
-            : '/api/auth/me'; 
+            ? '/api/admin/auth/me'  // Đường riêng cho Admin
+            : '/api/auth/me';        // Đường riêng cho User
 
         try {
             const res = await api.get(endpoint);
             const userData = res.data?.user;
 
             if (isAdminDomain) {
-                // Nếu đang ở domain admin, chỉ chấp nhận nếu role đúng là admin
+                // Đang ở tab Admin: Chỉ quan tâm nếu là admin thực thụ
                 if (userData && userData.role === 'admin') {
                     setAdmin(userData);
-                    setUser(userData); // Admin vẫn có quyền xem như user
                 } else {
                     setAdmin(null);
-                    setUser(null);
                 }
             } else {
-                // Trang khách (quangdungcinema.id.vn)
+                // Đang ở tab User: Lưu vào state user
                 setUser(userData || null);
-                setAdmin(null); 
             }
         } catch (err) {
-            // Khi lỗi 401 (chưa đăng nhập), console.warn thôi cho đỡ đỏ log
-            console.warn("Phiên làm việc đã hết hạn hoặc chưa đăng nhập.");
-            setAdmin(null);
-            setUser(null);
+            // Chỉ xóa state của domain hiện tại để không ảnh hưởng tab kia
+            if (isAdminDomain) {
+                setAdmin(null);
+            } else {
+                setUser(null);
+            }
+            console.warn("Chưa đăng nhập tại domain này.");
         } finally {
             setLoading(false);
         }
@@ -63,7 +62,8 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         checkAuth();
-
+        
+        // Lắng nghe sự kiện thay đổi auth (nếu có)
         const handleAuthChange = () => checkAuth();
         window.addEventListener('authChange', handleAuthChange);
         

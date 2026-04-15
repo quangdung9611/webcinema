@@ -7,17 +7,12 @@ const ProtectedRoute = ({ children }) => {
     const { user, admin, loading } = useAuth();
     const hostname = window.location.hostname;
 
-    // 1. Đang load dữ liệu từ API (Giữ nguyên giao diện loading của Dũng)
+    // 1. Giao diện Loading (Dũng giữ nguyên cái này là đẹp rồi)
     if (loading) {
         return (
             <div style={{ 
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100vh',
-                background: '#0a0a0a',
-                color: '#ff4d4d',
-                fontFamily: 'sans-serif'
+                display: 'flex', justifyContent: 'center', alignItems: 'center', 
+                height: '100vh', background: '#0a0a0a', color: '#ff4d4d', fontFamily: 'sans-serif' 
             }}>
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ marginBottom: '10px', fontSize: '24px' }}>🔐</div>
@@ -27,32 +22,27 @@ const ProtectedRoute = ({ children }) => {
         );
     }
 
-    // 2. Xác định môi trường đang đứng
-    // Dùng startsWith('admin.') sẽ an toàn hơn so khớp tuyệt đối vì nó chạy được cả trên localhost
-    const isAdminDomain = hostname.startsWith('admin.');
+    // 2. Xác định môi trường (Hỗ trợ cả production và localhost)
+    const isAdminDomain = hostname.startsWith('admin.') || hostname.includes('admin');
 
     if (isAdminDomain) {
         // --- TRANG ADMIN ---
-        // Kiểm tra role admin từ state admin hoặc user trong AuthContext
-        const hasAdminAccess = (admin && admin.role === 'admin') || (user && user.role === 'admin');
-        
-        if (!hasAdminAccess) {
-            // Nếu không phải admin, đẩy về trang login của admin
-            // replace: true để không cho user bấm back lại trang bảo mật
+        // Chỉ cho phép nếu state 'admin' tồn tại và có role đúng là admin
+        if (!admin || admin.role !== 'admin') {
+            // Lưu lại vị trí đang truy cập để sau khi login xong quay lại đúng chỗ đó
             return <Navigate to="/login" state={{ from: location }} replace />;
         }
     } else {
         // --- TRANG USER (KHÁCH) ---
-        // Ở trang khách, chỉ cần có bất kỳ ai đăng nhập (user hoặc admin) là cho xem
-        const hasAccess = user || admin;
+        // Ở trang khách, ưu tiên 'user'. Nếu là admin đi lướt web thì vẫn cho xem.
+        const hasAccess = user || (admin && admin.role === 'admin');
         
         if (!hasAccess) {
-            // Nếu chưa đăng nhập, đẩy về login của trang khách
             return <Navigate to="/login" state={{ from: location }} replace />;
         }
     }
 
-    // 3. Vượt qua kiểm tra -> Trả về nội dung trang
+    // 3. Mọi thứ OK -> Cho phép truy cập
     return children;
 };
 
