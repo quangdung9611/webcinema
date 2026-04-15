@@ -13,12 +13,11 @@ const api = axios.create({
 
 /**
  * 🔥 LOGIC INCLUDE ORIGIN:
- * Đảm bảo mỗi request gửi đi đều mang theo Origin chính xác
- * giúp Backend thực hiện "bẻ lái" domain cookie chuẩn 100%
+ * Đảm bảo mỗi request gửi đi đều mang theo Origin chính xác.
+ * Backend sẽ dựa vào đây để set 'domain' cho cookie khớp với trang Dũng đang đứng.
  */
 api.interceptors.request.use((config) => {
-    const origin = window.location.origin;
-    config.headers['Origin'] = origin; 
+    config.headers['Origin'] = window.location.origin; 
     return config;
 }, (error) => {
     return Promise.reject(error);
@@ -32,10 +31,9 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = useCallback(async () => {
         setLoading(true);
         const hostname = window.location.hostname;
-        
-        // Nhận diện domain để chọn "cửa" API
         const isAdminDomain = hostname.startsWith('admin.');
 
+        // Chọn đúng "cửa" để hỏi thông tin
         const endpoint = isAdminDomain 
             ? '/admin/api/auth/me'  
             : '/api/auth/me';        
@@ -45,23 +43,30 @@ export const AuthProvider = ({ children }) => {
             const userData = res.data?.user;
 
             if (isAdminDomain) {
+                // Nếu ở trang admin, chỉ chấp nhận role admin
                 if (userData && userData.role === 'admin') {
                     setAdmin(userData);
                     setUser(null); 
+                } else {
+                    // Nếu lỡ có token user thường ở đây, coi như không hợp lệ
+                    setAdmin(null);
+                    setUser(null);
                 }
             } else {
+                // Nếu ở trang user, chỉ quan tâm user thường (hoặc admin xem với tư cách khách)
                 setUser(userData || null);
                 setAdmin(null);
             }
         } catch (err) {
-            if (isAdminDomain) setAdmin(null);
-            else setUser(null);
-            console.log("Hệ thống: Phiên làm việc không tồn tại tại domain này.");
+            setAdmin(null);
+            setUser(null);
+            // console.log("Hệ thống: Phiên làm việc không tồn tại hoặc hết hạn.");
         } finally {
             setLoading(false);
         }
     }, []);
 
+    // Hàm xóa sạch bách khi Logout
     const clearAuth = useCallback(() => {
         setUser(null);
         setAdmin(null);
@@ -69,14 +74,25 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         checkAuth();
+        
+        // Lắng nghe sự kiện để đồng bộ giữa các tab
         const handleAuthChange = () => checkAuth();
         window.addEventListener('authChange', handleAuthChange);
+        
         return () => window.removeEventListener('authChange', handleAuthChange);
     }, [checkAuth]);
 
     return (
         <AuthContext.Provider value={{ 
-            user, admin, setUser, setAdmin, loading, checkAuth, clearAuth, BASE_URL, api 
+            user, 
+            admin, 
+            setUser, 
+            setAdmin, 
+            loading, 
+            checkAuth, 
+            clearAuth, 
+            BASE_URL, 
+            api 
         }}>
             {children}
         </AuthContext.Provider>

@@ -5,35 +5,39 @@ const db = require('../Config/db');
 const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
 
 /**
- * 🔥 HÀM TẠO CẤU HÌNH COOKIE THÔNG MINH
- * Tự động bẻ lái domain từ API về đúng domain giao diện (User hoặc Admin)
+ * 🔥 HÀM TẠO CẤU HÌNH COOKIE ĐÍCH DANH
+ * Giúp tách biệt hoàn toàn usertoken và admintoken
  */
 const getCookieConfig = (req) => {
-    let targetDomain = req.hostname; // Mặc định là api.quangdungcinema.id.vn
-
-    // Lấy domain của Frontend gửi request tới
     const origin = req.get('origin') || "";
+    let targetDomain = "";
 
-    // Nếu request đến từ trang Admin, ép cookie về domain admin
-    if (origin.includes('admin.quangdungcinema.id.vn')) {
-        targetDomain = 'admin.quangdungcinema.id.vn';
-    } 
-    // Nếu request đến từ trang khách, ép về domain chính
-    else if (origin.includes('quangdungcinema.id.vn')) {
-        targetDomain = 'quangdungcinema.id.vn';
+    // Tách lấy domain sạch từ origin (bỏ https://)
+    if (origin) {
+        targetDomain = origin.replace(/^https?:\/\//, '').split(':')[0];
+    }
+
+    // Nếu là localhost thì không set domain để trình duyệt tự nhận
+    if (targetDomain.includes('localhost')) {
+        return {
+            httpOnly: true,
+            secure: false, // Localhost thường không có HTTPS
+            sameSite: 'Lax',
+            path: '/'
+        };
     }
 
     return {
         httpOnly: true,
-        secure: true,    // Bắt buộc trên HTTPS (Render/Vercel)
-        sameSite: 'Lax', // 'Lax' giúp trình duyệt quản lý cookie subdomain tốt hơn
-        domain: targetDomain, // 🔥 Đã được "bẻ lái" để không bị dính chữ .api.
+        secure: true,    // Bắt buộc trên Render/Vercel
+        sameSite: 'Lax', 
+        domain: targetDomain, // 🔥 Cắm đúng "hộ khẩu" trang nào thì cookie nằm trang đó
         path: '/',
     };
 };
 
 // -----------------------------------------------------------
-// 1. REGISTER (Giữ nguyên logic gốc của Dũng)
+// 1. REGISTER
 // -----------------------------------------------------------
 exports.register = async (req, res) => {
     const { username, full_name, phone, address, email, password, role } = req.body;
@@ -69,7 +73,7 @@ exports.register = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 2. LOGIN (Tách biệt Token theo Domain giao diện)
+// 2. LOGIN (Tách biệt tuyệt đối Token)
 // -----------------------------------------------------------
 exports.login = async (req, res) => {
     const { email, password, role_input } = req.body;
@@ -92,18 +96,26 @@ exports.login = async (req, res) => {
         );
 
         const cookieConfig = getCookieConfig(req);
+        const origin = req.get('origin') || "";
 
-        // 🔥 CẤP COOKIE THEO ROLE VÀ DOMAIN
-        if (user.role === 'admin' && req.get('origin')?.includes('admin.')) {
+        // 🔥 LOGIC TÁCH BIỆT TOKEN:
+        // Đứng ở domain admin thì chỉ cấp admintoken
+        if (origin.includes('admin.')) {
             res.cookie('admintoken', token, {
                 ...cookieConfig,
                 maxAge: 24 * 60 * 60 * 1000
             });
-        } else {
+            // Xóa usertoken nếu lỡ có (để sạch máy)
+            res.clearCookie('usertoken', cookieConfig);
+        } 
+        // Đứng ở domain chính thì chỉ cấp usertoken
+        else {
             res.cookie('usertoken', token, {
                 ...cookieConfig,
                 maxAge: 24 * 60 * 60 * 1000
             });
+            // Xóa admintoken nếu lỡ có
+            res.clearCookie('admintoken', cookieConfig);
         }
 
         const roleKey = user.role === 'admin' ? 'admin' : 'customer';
@@ -126,7 +138,7 @@ exports.login = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 3. GET ME (Giữ nguyên logic của Dũng)
+// 3. GET ME
 // -----------------------------------------------------------
 exports.getMe = async (req, res) => {
     try {
@@ -146,11 +158,12 @@ exports.getMe = async (req, res) => {
 };
 
 // -----------------------------------------------------------
-// 4. LOGOUT (Xóa sạch token ở đúng domain giao diện)
+// 4. LOGOUT
 // -----------------------------------------------------------
 exports.logout = (req, res) => {
     const cookieConfig = getCookieConfig(req);
     
+    // Xóa cả 2 cho chắc ăn nhưng vẫn theo đúng domain config
     res.clearCookie('usertoken', cookieConfig);
     res.clearCookie('admintoken', cookieConfig);
 

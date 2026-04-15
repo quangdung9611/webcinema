@@ -7,23 +7,29 @@ const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
  * Phải khớp 100% với bên AuthController thì mới xóa (clear) cookie được
  */
 const getCookieConfig = (req) => {
-    let targetDomain = req.hostname; 
-
-    // Lấy domain của Frontend gửi request tới (Dùng origin để bẻ lái domain)
     const origin = req.get('origin') || "";
+    let targetDomain = "";
 
-    if (origin.includes('admin.quangdungcinema.id.vn')) {
-        targetDomain = 'admin.quangdungcinema.id.vn';
-    } 
-    else if (origin.includes('quangdungcinema.id.vn')) {
-        targetDomain = 'quangdungcinema.id.vn';
+    // Tách lấy domain sạch từ origin (ví dụ: admin.quangdungcinema.id.vn)
+    if (origin) {
+        targetDomain = origin.replace(/^https?:\/\//, '').split(':')[0];
+    }
+
+    // Nếu là localhost thì trả về config đơn giản
+    if (targetDomain.includes('localhost')) {
+        return {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'Lax',
+            path: '/'
+        };
     }
 
     return {
         httpOnly: true,
         secure: true,
         sameSite: 'Lax',
-        domain: targetDomain, // 🔥 Đã bẻ lái để khớp với domain chứa cookie
+        domain: targetDomain, // 🔥 Phải khớp với domain lúc set cookie
         path: '/'
     };
 };
@@ -38,10 +44,9 @@ const verifyToken = (token) => {
 };
 
 // -----------------------------------------------------------
-// 1. MIDDLEWARE TỔNG QUÁT (Dùng cho GetMe hoặc check chung)
+// 1. MIDDLEWARE TỔNG QUÁT (Dùng cho /me hoặc check chung)
 // -----------------------------------------------------------
 exports.authGeneral = (req, res, next) => {
-    // Check origin để biết đang ở domain nào
     const origin = req.get('origin') || "";
     const isAdminDomain = origin.includes('admin.');
     
@@ -62,7 +67,7 @@ exports.authGeneral = (req, res, next) => {
 
     req.user = decoded;
 
-    // Bảo vệ vùng Admin: Check role nếu đang đứng ở domain admin
+    // Bảo vệ vùng Admin: Nếu đang đứng ở domain admin mà role không phải admin thì đá
     if (isAdminDomain && req.user.role !== 'admin') {
         return res.status(403).json({ success: false, message: "Bạn không có quyền quản trị!" });
     }
@@ -71,7 +76,7 @@ exports.authGeneral = (req, res, next) => {
 };
 
 // -----------------------------------------------------------
-// 2. MIDDLEWARE CHỈ DÀNH CHO ADMIN (Dùng cho các API quản lý)
+// 2. MIDDLEWARE CHỈ DÀNH CHO ADMIN (Các API quản lý phim, vé...)
 // -----------------------------------------------------------
 exports.verifyAdmin = (req, res, next) => {
     const token = req.cookies.admintoken;
@@ -81,8 +86,8 @@ exports.verifyAdmin = (req, res, next) => {
     }
 
     const decoded = verifyToken(token);
+    // Phải là admin và phải có token hợp lệ
     if (!decoded || decoded.role !== 'admin') {
-        // Xóa token nếu không hợp lệ hoặc sai quyền
         res.clearCookie('admintoken', getCookieConfig(req));
         return res.status(403).json({ success: false, message: "Quyền truy cập bị từ chối!" });
     }
