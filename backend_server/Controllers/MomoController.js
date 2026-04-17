@@ -1,7 +1,7 @@
 const axios = require('axios');
 const crypto = require('crypto');
 const db = require('../Config/db');
-const mailService = require('../services/MailServiceTicket'); // Import đúng service Dũng cần
+const mailService = require('../Services/MailServiceTicket'); // Import đúng service Dũng cần
 
 /**
  * HÀM XỬ LÝ LÕI: Chốt đơn, Đổi trạng thái ghế, Cộng điểm và Gửi Mail
