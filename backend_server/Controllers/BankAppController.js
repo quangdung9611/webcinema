@@ -5,20 +5,26 @@ let otpStorage = {};
 
 const BankAppController = {
     // 1. GỬI OTP
-    sendOTP: async (req, res) => {
+        sendOTP: async (req, res) => {
         const { email, bookingId } = req.body;
         if (!email || !bookingId) return res.status(400).json({ success: false, message: "Thiếu thông tin!" });
 
+        // Khóa chống gửi nhiều lần: Nếu mã cũ gửi chưa đầy 30 giây thì chặn lại
+        if (otpStorage[email]) {
+            const lastSent = otpStorage[email].expires - (5 * 60 * 1000);
+            if (Date.now() - lastSent < 30000) { 
+                return res.json({ success: true, message: "Mã đã được gửi, vui lòng kiểm tra mail!" });
+            }
+        }
+
         const otp = Math.floor(100000 + Math.random() * 900000);
-        // Lưu thời gian hết hạn sau 5 phút
         otpStorage[email] = { otp, bookingId, expires: Date.now() + 5 * 60 * 1000 };
 
         res.json({ success: true, message: "Mã OTP đang được gửi!" });
 
-        // Gọi service gửi mail ngầm để không làm chậm response
+        // Gửi mail ngầm qua service
         mailService.sendOTP(email, otp, bookingId).catch(err => console.error("Lỗi gửi OTP:", err));
     },
-
     // 2. XÁC THỰC OTP & CHỐT ĐƠN (Giữ nguyên logic gốc của ông)
     verifyOTP: async (req, res) => {
         const { email, otp, bookingId } = req.body;

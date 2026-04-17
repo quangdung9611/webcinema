@@ -36,33 +36,24 @@ const BankApp = () => {
     };
 
     // 1. LOGIC GỬI OTP DUY NHẤT 1 LẦN
-    useEffect(() => {
+        useEffect(() => {
         const sendOtpInitial = async () => {
-            // Kiểm tra thông tin đầu vào
-            if (!customerEmail || !bookingId) {
-                openModal('error', 'Thiếu thông tin', 'Không tìm thấy thông tin thanh toán!', () => navigate('/'));
-                return;
-            };
+            if (!customerEmail || !bookingId || hasSentOtp.current) return;
 
-            // CHỐT CHẶN: Nếu đã gửi rồi thì thoát luôn, không chạy tiếp code bên dưới
-            if (hasSentOtp.current) return;
-            hasSentOtp.current = true; // Đánh dấu đã gửi ngay lập tức
+            hasSentOtp.current = true; // Khóa ngay lập tức trước khi gọi axios
 
             try {
                 await axios.post('https://api.quangdungcinema.id.vn/api/bank/send-otp', {
                     email: customerEmail,
                     bookingId: bookingId
                 });
-                console.log(">>> [DŨNG] OTP đã được gửi lần đầu và duy nhất.");
             } catch (err) {
                 console.error("Lỗi gửi OTP:", err);
-                openModal('error', 'Lỗi hệ thống', 'Không thể gửi mã OTP. Vui lòng quay lại.');
-                // Nếu lỗi nặng, không cho user bấm gửi lại mà bắt quay lại trang trước
+                // hasSentOtp.current = false; // Chỉ mở khóa nếu ông muốn cho user gửi lại khi lỗi
             }
         };
-
         sendOtpInitial();
-    }, [bookingId, customerEmail, navigate]);
+    }, [bookingId, customerEmail]);
 
     // 2. ĐẾM NGƯỢC & TỰ ĐỘNG HỦY ĐƠN KHI HẾT HẠN
     useEffect(() => {
