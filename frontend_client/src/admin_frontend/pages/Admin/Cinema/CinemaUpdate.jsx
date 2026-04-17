@@ -107,7 +107,7 @@ const CinemaUpdate = () => {
                 `Thông tin của ${formData.cinema_name} đã được lưu lại.`,
                 () => {
                     setModal(prev => ({ ...prev, show: false }));
-                    navigate('/admin/cinemas');
+                    navigate('/cinemas');
                 }
             );
         } catch (err) {
@@ -176,7 +176,7 @@ const CinemaUpdate = () => {
                 </div>
 
                 <div className="update-actions">
-                    <button type="button" className="btn-go-back" onClick={() => navigate('/admin/cinemas')}>
+                    <button type="button" className="btn-go-back" onClick={() => navigate('/cinemas')}>
                         Quay lại
                     </button>
                     <button type="submit" className="btn-submit-update">

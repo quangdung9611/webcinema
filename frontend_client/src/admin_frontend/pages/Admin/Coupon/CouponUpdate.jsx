@@ -92,7 +92,7 @@ const CouponUpdate = () => {
                 `Mã giảm giá ${formData.coupon_code} đã được cập nhật.`,
                 () => {
                     setModal(prev => ({ ...prev, show: false }));
-                    navigate('/admin/coupons');
+                    navigate('/coupons');
                 }
             );
         } catch (err) {
@@ -156,7 +156,7 @@ const CouponUpdate = () => {
                     <button 
                         type="button" 
                         className="btn-go-back" 
-                        onClick={() => navigate('/admin/coupons')}
+                        onClick={() => navigate('/coupons')}
                     >
                         Quay lại
                     </button>

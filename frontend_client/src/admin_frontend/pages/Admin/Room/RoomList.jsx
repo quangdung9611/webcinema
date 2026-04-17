@@ -105,7 +105,7 @@ const RoomList = () => {
                 </h2>
                 <button 
                     className="btn-add-user" 
-                    onClick={() => navigate('/admin/rooms/add')}
+                    onClick={() => navigate('/rooms/add')}
                 >
                     <Plus size={18} /> Thêm Phòng Mới
                 </button>
@@ -140,7 +140,7 @@ const RoomList = () => {
                                         <div className="action-buttons">
                                             <button 
                                                 className="btn-action-edit"
-                                                onClick={() => navigate(`/admin/rooms/update/${r.room_id}`)}
+                                                onClick={() => navigate(`/rooms/update/${r.room_id}`)}
                                                 title="Sửa"
                                             >
                                                 <Edit size={16} />

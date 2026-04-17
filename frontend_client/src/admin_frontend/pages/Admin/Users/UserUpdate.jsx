@@ -92,7 +92,7 @@ const UserUpdate = () => {
                 `Thông tin của ${formData.full_name} đã được lưu lại.`,
                 () => {
                     setModal(prev => ({ ...prev, show: false }));
-                    navigate('/admin/users');
+                    navigate('/users');
                 }
             );
         } catch (err) {
@@ -187,7 +187,7 @@ const UserUpdate = () => {
                     <button 
                         type="button" 
                         className="btn-go-back" 
-                        onClick={() => navigate('/admin/users')}
+                        onClick={() => navigate('/users')}
                     >
                         Quay lại
                     </button>

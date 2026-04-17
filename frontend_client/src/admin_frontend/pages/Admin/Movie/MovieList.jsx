@@ -143,7 +143,7 @@ const MovieList = () => {
                 </h2>
                 <button 
                     className="btn-add-user" 
-                    onClick={() => navigate('/admin/movies/add')}
+                    onClick={() => navigate('/movies/add')}
                 >
                     <Plus size={18} /> Thêm Phim Mới
                 </button>
@@ -212,7 +212,7 @@ const MovieList = () => {
                                         <div className="action-buttons">
                                             <button 
                                                 className="btn-action-edit"
-                                                onClick={() => navigate(`/admin/movies/update/${m.movie_id}`)}
+                                                onClick={() => navigate(`/movies/update/${m.movie_id}`)}
                                                 title="Sửa phim"
                                             >
                                                 <Edit size={16} />

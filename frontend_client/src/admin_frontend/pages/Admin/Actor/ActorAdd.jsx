@@ -95,7 +95,7 @@ const ActorAdd = () => {
                 type: 'success',
                 title: 'THÀNH CÔNG',
                 message: `Đã thêm diễn viên ${formData.name} vào hệ thống.`,
-                onConfirm: () => navigate('/admin/actors')
+                onConfirm: () => navigate('/actors')
             });
         } catch (err) {
             setErrors({ server: err.response?.data?.error || "Lỗi kết nối Server" });
@@ -176,7 +176,7 @@ const ActorAdd = () => {
 
                 <div className="form-actions">
                     <button type="submit" className="btn-save">Lưu Diễn Viên</button>
-                    <button type="button" className="btn-back" onClick={() => navigate('/admin/actors')}>Quay lại</button>
+                    <button type="button" className="btn-back" onClick={() => navigate('/actors')}>Quay lại</button>
                 </div>
             </form>
         </div>

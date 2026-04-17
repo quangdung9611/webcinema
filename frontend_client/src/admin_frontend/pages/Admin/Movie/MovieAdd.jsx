@@ -151,7 +151,7 @@ const MovieAdd = () => {
                 type: 'success',
                 title: 'THÀNH CÔNG',
                 message: `Đã thêm phim ${formData.title} vào hệ thống.`,
-                onConfirm: () => navigate('/admin/movies')
+                onConfirm: () => navigate('/movies')
             });
         } catch (err) {
             console.error("Lỗi gửi form:", err);
@@ -290,7 +290,7 @@ const MovieAdd = () => {
 
                 <div className="form-actions">
                     <button type="submit" className="btn-save">Lưu Phim</button>
-                    <button type="button" className="btn-back" onClick={() => navigate('/admin/movies')}>Quay lại</button>
+                    <button type="button" className="btn-back" onClick={() => navigate('/movies')}>Quay lại</button>
                 </div>
             </form>
         </div>

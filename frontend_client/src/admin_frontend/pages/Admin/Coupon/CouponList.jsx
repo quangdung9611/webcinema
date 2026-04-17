@@ -97,7 +97,7 @@ const CouponList = () => {
                 </h2>
                 <button 
                     className="btn-add-user"
-                    onClick={() => navigate('/admin/coupons/add')}
+                    onClick={() => navigate('/coupons/add')}
                 >
                     <Plus size={18} /> Thêm Mã Mới
                 </button>
@@ -132,7 +132,7 @@ const CouponList = () => {
                                         <div className="action-buttons">
                                             <button 
                                                 className="btn-action-edit"
-                                                onClick={() => navigate(`/admin/coupons/update/${c.coupon_id}`)}
+                                                onClick={() => navigate(`/coupons/update/${c.coupon_id}`)}
                                                 title="Sửa"
                                             >
                                                 <Edit size={16} />

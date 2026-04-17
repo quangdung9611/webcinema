@@ -75,7 +75,7 @@ const RoomAdd = () => {
                 message: `Đã thêm phòng ${formData.room_type}: ${formData.room_name} vào hệ thống.`,
                 onConfirm: () => {
                     setModal(prev => ({ ...prev, show: false }));
-                    navigate('/admin/rooms');
+                    navigate('/rooms');
                 }
             });
         } catch (err) {
@@ -161,7 +161,7 @@ const RoomAdd = () => {
 
                 <div className="form-actions">
                     <button type="submit" className="btn-save">Lưu phòng chiếu</button>
-                    <button type="button" className="btn-back" onClick={() => navigate('/admin/rooms')}>Quay lại</button>
+                    <button type="button" className="btn-back" onClick={() => navigate('/rooms')}>Quay lại</button>
                 </div>
             </form>
         </div>

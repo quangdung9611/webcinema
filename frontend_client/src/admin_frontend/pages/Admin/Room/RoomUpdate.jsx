@@ -89,7 +89,7 @@ const RoomUpdate = () => {
                 `Thông tin phòng ${formData.room_name} đã được cập nhật.`,
                 () => {
                     setModal(prev => ({ ...prev, show: false }));
-                    navigate('/admin/rooms');
+                    navigate('/rooms');
                 }
             );
         } catch (err) {
@@ -168,7 +168,7 @@ const RoomUpdate = () => {
                     <button 
                         type="button" 
                         className="btn-go-back" 
-                        onClick={() => navigate('/admin/rooms')}
+                        onClick={() => navigate('/rooms')}
                     >
                         Quay lại
                     </button>

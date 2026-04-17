@@ -92,7 +92,7 @@ const NewsList = () => {
                 </h2>
                 <button 
                     className="btn-add-user" 
-                    onClick={() => navigate('/admin/news/add')}
+                    onClick={() => navigate('/news/add')}
                 >
                     <Plus size={18} /> Thêm Tin Tức Mới
                 </button>
@@ -146,7 +146,7 @@ const NewsList = () => {
                                         <div className="action-buttons">
                                             <button 
                                                 className="btn-action-edit"
-                                                onClick={() => navigate(`/admin/news/update/${n.news_id}`)}
+                                                onClick={() => navigate(`/news/update/${n.news_id}`)}
                                                 title="Sửa bài viết"
                                             >
                                                 <Edit size={16} />

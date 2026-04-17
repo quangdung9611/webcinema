@@ -45,7 +45,7 @@ const CinemaAdd = () => {
             setModal({
                 show: true, type: 'success', title: 'THÀNH CÔNG',
                 message: `Rạp "${formData.cinema_name}" đã được thêm thành công!`,
-                onConfirm: () => { setModal({ show: false }); navigate('/admin/cinemas'); }
+                onConfirm: () => { setModal({ show: false }); navigate('/cinemas'); }
             });
         } catch (err) {
             setModal({
@@ -81,7 +81,7 @@ const CinemaAdd = () => {
 
                 <div className="form-actions">
                     <button type="submit" className="btn-save">Lưu rạp chiếu</button>
-                    <button type="button" className="btn-back" onClick={() => navigate('/admin/cinemas')}>Quay lại</button>
+                    <button type="button" className="btn-back" onClick={() => navigate('/cinemas')}>Quay lại</button>
                 </div>
             </form>
         </div>

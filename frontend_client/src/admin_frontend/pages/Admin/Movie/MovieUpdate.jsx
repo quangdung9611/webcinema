@@ -135,7 +135,7 @@ const MovieUpdate = () => {
             });
             
             handleShowModal('success', 'THÀNH CÔNG', `Đã cập nhật phim "${formData.title}" thành công!`, () => {
-                navigate('/admin/movies');
+                navigate('/movies');
             });
         } catch (err) {
             handleShowModal('error', 'THẤT BẠI', err.response?.data?.error || 'Lỗi hệ thống.');
@@ -255,7 +255,7 @@ const MovieUpdate = () => {
 
                 <div className="update-actions">
                     <button type="submit" className="btn-submit-update">LƯU THAY ĐỔI</button>
-                    <button type="button" className="btn-go-back" onClick={() => navigate('/admin/movies')}>HỦY BỎ</button>
+                    <button type="button" className="btn-go-back" onClick={() => navigate('/movies')}>HỦY BỎ</button>
                 </div>
             </form>
         </div>

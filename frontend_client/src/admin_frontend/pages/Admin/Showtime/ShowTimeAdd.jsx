@@ -119,7 +119,7 @@ const ShowtimeAdd = () => {
                 message: `Suất chiếu đã được tạo thành công!`,
                 onConfirm: () => {
                     setModal({ show: false });
-                    navigate('/admin/showtimes');
+                    navigate('/showtimes');
                 }
             });
         } catch (err) {
@@ -195,7 +195,7 @@ const ShowtimeAdd = () => {
 
                 <div className="form-actions">
                     <button type="submit" className="btn-save">Lưu suất chiếu</button>
-                    <button type="button" className="btn-back" onClick={() => navigate('/admin/showtimes')}>Quay lại</button>
+                    <button type="button" className="btn-back" onClick={() => navigate('/showtimes')}>Quay lại</button>
                 </div>
             </form>
         </div>

@@ -52,7 +52,7 @@ const GenresAdd = () => {
             setModal({
                 show: true, type: 'success', title: 'THÀNH CÔNG',
                 message: `Thể loại "${formData.genre_name}" đã được thêm!`,
-                onConfirm: () => { setModal({ show: false }); navigate('/admin/genres'); }
+                onConfirm: () => { setModal({ show: false }); navigate('/genres'); }
             });
         } catch (err) {
             setModal({
@@ -82,7 +82,7 @@ const GenresAdd = () => {
 
                 <div className="form-actions">
                     <button type="submit" className="btn-save">Lưu thể loại</button>
-                    <button type="button" className="btn-back" onClick={() => navigate('/admin/genres')}>Quay lại</button>
+                    <button type="button" className="btn-back" onClick={() => navigate('/genres')}>Quay lại</button>
                 </div>
             </form>
         </div>

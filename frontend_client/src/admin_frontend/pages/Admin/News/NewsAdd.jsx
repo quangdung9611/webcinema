@@ -120,7 +120,7 @@ const NewsAdd = () => {
                 type: 'success',
                 title: 'THÀNH CÔNG',
                 message: `Đã đăng bài viết: ${formData.title}`,
-                onConfirm: () => navigate('/admin/news')
+                onConfirm: () => navigate('/news')
             });
         } catch (err) {
             setErrors({ server: err.response?.data?.message || "Lỗi khi đăng bài viết" });
@@ -205,7 +205,7 @@ const NewsAdd = () => {
 
                 <div className="form-actions">
                     <button type="submit" className="btn-save">Đăng Bài Viết</button>
-                    <button type="button" className="btn-back" onClick={() => navigate('/admin/news')}>Quay lại</button>
+                    <button type="button" className="btn-back" onClick={() => navigate('/news')}>Quay lại</button>
                 </div>
             </form>
         </div>

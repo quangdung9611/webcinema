@@ -116,7 +116,7 @@ const NewsUpdate = () => {
             });
             
             handleShowModal('success', 'THÀNH CÔNG', `Đã cập nhật bài viết "${formData.title}" thành công!`, () => {
-                navigate('/admin/news');
+                navigate('/news');
             });
         } catch (err) {
             console.error("Lỗi cập nhật tin tức:", err.response?.data);
@@ -181,7 +181,7 @@ const NewsUpdate = () => {
 
                 <div className="update-actions" style={{ marginTop: '20px' }}>
                     <button type="submit" className="btn-submit-update">LƯU THAY ĐỔI</button>
-                    <button type="button" className="btn-go-back" onClick={() => navigate('/admin/news')}>HỦY BỎ</button>
+                    <button type="button" className="btn-go-back" onClick={() => navigate('/news')}>HỦY BỎ</button>
                 </div>
             </form>
         </div>

@@ -106,7 +106,7 @@ const GenresUpdate = () => {
                 `Thông tin của ${formData.genre_name} đã được lưu lại.`,
                 () => {
                     setModal(prev => ({ ...prev, show: false }));
-                    navigate('/admin/genres');
+                    navigate('/genres');
                 }
             );
         } catch (err) {
@@ -155,7 +155,7 @@ const GenresUpdate = () => {
                     <button 
                         type="button" 
                         className="btn-go-back" 
-                        onClick={() => navigate('/admin/genres')}
+                        onClick={() => navigate('/genres')}
                     >
                         Quay lại
                     </button>

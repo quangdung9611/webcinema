@@ -84,7 +84,7 @@ const CouponAdd = () => {
                 message: `Mã giảm giá ${formData.coupon_code} đã được tạo thành công!`,
                 onConfirm: () => {
                     setModal({ show: false });
-                    navigate('/admin/coupons'); // Chuyển về danh sách mã
+                    navigate('/coupons'); // Chuyển về danh sách mã
                 }
             });
         } catch (err) {
@@ -145,7 +145,7 @@ const CouponAdd = () => {
 
                 <div className="form-actions">
                     <button type="submit" className="btn-save">Lưu mã giảm giá</button>
-                    <button type="button" className="btn-back" onClick={() => navigate('/admin/coupons')}>Quay lại</button>
+                    <button type="button" className="btn-back" onClick={() => navigate('/coupons')}>Quay lại</button>
                 </div>
             </form>
         </div>

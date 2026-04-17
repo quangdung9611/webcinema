@@ -82,7 +82,7 @@ const UserList = () => {
                 </h2>
                 <button 
                     className="btn-add-user"
-                    onClick={() => navigate('/admin/users/add')}
+                    onClick={() => navigate('/users/add')}
                 >
                     <UserPlus size={18} /> Thêm User Mới
                 </button>
@@ -119,7 +119,7 @@ const UserList = () => {
                                         <div className="action-buttons">
                                             <button 
                                                className="btn-action-edit"
-                                                onClick={() => navigate(`/admin/users/update/${u.user_id}`)}
+                                                onClick={() => navigate(`/users/update/${u.user_id}`)}
                                                 title="Sửa"
                                                 
                                             >

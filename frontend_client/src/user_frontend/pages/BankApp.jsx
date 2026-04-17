@@ -1,21 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Modal from '../../admin_frontend/components/Modal'; // Dũng nhớ kiểm tra đúng đường dẫn file Modal.jsx nhé
+import Modal from '../../admin_frontend/components/Modal'; 
 import '../styles/BankApp.css';
 
 const BankApp = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    
+    // Dùng useRef để đánh dấu đã gửi OTP chưa (ref không bị mất giá trị khi re-render)
     const hasSentOtp = useRef(false);
 
-    const { bookingId, customerEmail, totalAmount, movieTitle } = location.state || {}; 
+    const { bookingId, customerEmail, totalAmount } = location.state || {}; 
     
     const [timeLeft, setTimeLeft] = useState(300);
     const [otp, setOtp] = useState(''); 
     const [loading, setLoading] = useState(false);
 
-    // --- LOGIC MODAL ---
     const [modalConfig, setModalConfig] = useState({
         show: false,
         type: 'confirm',
@@ -34,44 +35,61 @@ const BankApp = () => {
         });
     };
 
-    // 1. Tự động gửi OTP
+    // 1. LOGIC GỬI OTP DUY NHẤT 1 LẦN
     useEffect(() => {
         const sendOtpInitial = async () => {
+            // Kiểm tra thông tin đầu vào
             if (!customerEmail || !bookingId) {
                 openModal('error', 'Thiếu thông tin', 'Không tìm thấy thông tin thanh toán!', () => navigate('/'));
                 return;
             };
 
+            // CHỐT CHẶN: Nếu đã gửi rồi thì thoát luôn, không chạy tiếp code bên dưới
             if (hasSentOtp.current) return;
-            hasSentOtp.current = true;
+            hasSentOtp.current = true; // Đánh dấu đã gửi ngay lập tức
 
             try {
                 await axios.post('https://api.quangdungcinema.id.vn/api/bank/send-otp', {
                     email: customerEmail,
                     bookingId: bookingId
                 });
+                console.log(">>> [DŨNG] OTP đã được gửi lần đầu và duy nhất.");
             } catch (err) {
                 console.error("Lỗi gửi OTP:", err);
-                openModal('error', 'Lỗi hệ thống', 'Không thể gửi mã OTP lúc này. Vui lòng thử lại.');
-                hasSentOtp.current = false;
+                openModal('error', 'Lỗi hệ thống', 'Không thể gửi mã OTP. Vui lòng quay lại.');
+                // Nếu lỗi nặng, không cho user bấm gửi lại mà bắt quay lại trang trước
             }
         };
 
         sendOtpInitial();
     }, [bookingId, customerEmail, navigate]);
 
-    // 2. Đếm ngược & Xử lý hết hạn
+    // 2. ĐẾM NGƯỢC & TỰ ĐỘNG HỦY ĐƠN KHI HẾT HẠN
     useEffect(() => {
         if (timeLeft <= 0) {
-            openModal('error', 'Hết hạn', 'Phiên giao dịch đã hết hạn!', () => navigate(-1));
+            // Khi hết 5 phút, gọi API hủy đơn bên Backend để giải phóng ghế
+            const handleTimeout = async () => {
+                try {
+                    await axios.post('https://api.quangdungcinema.id.vn/api/bank/cancel-timeout', {
+                        bookingId: bookingId,
+                        email: customerEmail
+                    });
+                } catch (err) {
+                    console.error("Lỗi khi tự động hủy đơn:", err);
+                }
+                openModal('error', 'Hết hạn', 'Phiên giao dịch đã hết hạn, đơn hàng đã bị hủy!', () => navigate('/'));
+            };
+            
+            handleTimeout();
             return;
         }
+
         const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
         return () => clearInterval(timer);
-    }, [timeLeft, navigate]);
+    }, [timeLeft, bookingId, customerEmail, navigate]);
 
-    // 3. Xác thực OTP
-        const handleVerifyPayment = async () => {
+    // 3. XÁC THỰC OTP
+    const handleVerifyPayment = async () => {
         if (otp.length < 6) {
             openModal('confirm', 'Thông báo', 'Vui lòng nhập đủ 6 số mã OTP');
             return;
@@ -79,7 +97,7 @@ const BankApp = () => {
 
         setLoading(true);
         try {
-            // Bước 1: Xác thực mã OTP
+            // Xác thực mã OTP và chốt đơn luôn ở Backend
             const res = await axios.post('https://api.quangdungcinema.id.vn/api/bank/verify-otp', {
                 email: customerEmail,
                 otp: otp,
@@ -87,25 +105,16 @@ const BankApp = () => {
             });
 
             if (res.data.success) {
-                // Bước 2: Gọi Route chốt đơn dành riêng cho Bank (đã bàn ở Backend)
-                // Route này sẽ sử dụng executeBankCompletion để không bị kẹt lỗi "Reserved"
-                const completeRes = await axios.post('https://api.quangdungcinema.id.vn/api/payment/complete-bank', {
-                    bookingId: bookingId
+                // Dọn dẹp session sau khi thanh toán xong
+                sessionStorage.removeItem('holdExpiresAt');
+                sessionStorage.removeItem('selectedSeats');
+                
+                openModal('success', 'Thanh toán thành công', 'Cảm ơn bạn đã đặt vé!', () => {
+                    navigate('/confirm-success', { state: { bookingId: bookingId } });
                 });
-
-                if (completeRes.data.success) {
-                    // Xóa dữ liệu tạm để tránh lỗi logic khi đặt vé tiếp theo
-                    sessionStorage.removeItem('holdExpiresAt');
-                    sessionStorage.removeItem('selectedSeats');
-                    sessionStorage.setItem('last_booking_id', bookingId);
-                    
-                    openModal('success', 'Thanh toán thành công', 'Cảm ơn bạn đã đặt vé!', () => {
-                        navigate('/confirm-success', { state: completeRes.data.data });
-                    });
-                }
             }
         } catch (err) {
-            const errorMsg = err.response?.data?.message || "Giao dịch thất bại hoặc mã OTP sai!";
+            const errorMsg = err.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn!";
             openModal('error', 'Thất bại', errorMsg);
             setLoading(false);
         }
@@ -130,12 +139,12 @@ const BankApp = () => {
                         <label>Đơn vị</label>
                         <div className="vendor-info">
                             <img src="https://api.quangdungcinema.id.vn/uploads/Bank/galaxy_logo.jpg" alt="Galaxy" />
-                            <span>Galaxy Cinema</span>
+                            <span>Dũng Cinema</span>
                         </div>
                     </div>
                     <div className="info-group">
                         <label>Mã đơn</label>
-                        <p className="order-value">{bookingId}</p>
+                        <p className="order-value">#{bookingId}</p>
                     </div>
                     <div className="info-group">
                         <label>Số tiền</label>
@@ -152,15 +161,14 @@ const BankApp = () => {
 
                 <div className="bank-otp-section">
                     <div className="otp-card">
-                        {/* THÊM PHẦN QR VÀO ĐÂY */}
-                    <div className="bank-qr-mini-wrapper">
-                        <img 
-                            src={`https://api.quangdungcinema.id.vn/uploads/Bank/Qr_nganhang.jpg`} 
-                            alt="Bank QR" 
-                            className="bank-qr-mini"
-                        />
-                        <div className="qr-scan-line"></div>
-                    </div>
+                        <div className="bank-qr-mini-wrapper">
+                            <img 
+                                src={`https://api.quangdungcinema.id.vn/uploads/Bank/Qr_nganhang.jpg`} 
+                                alt="Bank QR" 
+                                className="bank-qr-mini"
+                            />
+                            <div className="qr-scan-line"></div>
+                        </div>
                         <h3 className="otp-title">NHẬP MÃ OTP</h3>
                         <p className="otp-sub">Gửi đến: <strong>{customerEmail}</strong></p>
                         <div className="otp-input-wrapper">
@@ -170,13 +178,12 @@ const BankApp = () => {
                             />
                         </div>
                         <button className="btn-confirm-payment" onClick={handleVerifyPayment} disabled={loading}>
-                            {loading ? "ĐANG XỬ LÝ..." : "XÁC NHẬN"}
+                            {loading ? "ĐANG XỬ LÝ..." : "XÁC NHẬN THANH TOÁN"}
                         </button>
                     </div>
                 </div>
             </main>
 
-            {/* RENDER MODAL TẠI ĐÂY */}
             <Modal 
                 show={modalConfig.show}
                 type={modalConfig.type}

@@ -99,7 +99,7 @@ const ShowTimeList = () => {
                 </h2>
                 <button 
                     className="btn-add-user"
-                    onClick={() => navigate('/admin/showtimes/add')}
+                    onClick={() => navigate('/showtimes/add')}
                 >
                     <Plus size={18} /> Thêm Suất Chiếu
                 </button>
@@ -164,7 +164,7 @@ const ShowTimeList = () => {
                                                 <div className="action-buttons">
                                                     <button 
                                                         className="btn-action-edit"
-                                                        onClick={() => navigate(`/admin/showtimes/update/${s.showtime_id}`)}
+                                                        onClick={() => navigate(`/showtimes/update/${s.showtime_id}`)}
                                                         title="Chỉnh sửa suất chiếu"
                                                     >
                                                         <Edit size={16} />

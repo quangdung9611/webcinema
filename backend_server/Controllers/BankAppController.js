@@ -1,129 +1,50 @@
 const db = require('../Config/db');
-const path = require('path');
-const fs = require('fs');
-const nodemailer = require('nodemailer');
-
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'nguyenphamquangdung9611@gmail.com',
-        pass: 'gezt gsvc gpdn rqfc' 
-    }
-});
+const mailService = require('../Services/MailServiceTicket'); // Gọi service gửi mail chuyên biệt
 
 let otpStorage = {};
 
-const sendTicketEmail = async (customerEmail, ticketData) => {
-    const {
-        bookingId, customerName, seatLabel,
-        movieTitle, cinemaName, startTime,
-        selectedDate, selectedFoods, moviePoster
-    } = ticketData;
-
-    const fileName = moviePoster ? path.basename(moviePoster) : null;
-    const absolutePath = fileName
-        ? path.join(__dirname, '..', 'uploads', 'posters', fileName)
-        : null;
-
-    const fileExists = absolutePath && fs.existsSync(absolutePath);
-
-    const mailOptions = {
-        from: '"Dũng Cinema 🍿" <nguyenphamquangdung9611@gmail.com>',
-        to: customerEmail,
-        subject: `[VÉ ĐIỆN TỬ] ${movieTitle?.toUpperCase()} - MÃ ĐƠN #${bookingId}`,
-        html: `
-            <div style="background-color: #f4f4f4; padding: 20px; font-family: 'Segoe UI', Arial, sans-serif;">
-                <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                    <div style="background: #e74c3c; padding: 25px; text-align: center; color: white;">
-                        <h1 style="margin: 0; font-size: 24px;">THANH TOÁN THÀNH CÔNG!</h1>
-                        <p style="margin-top: 5px; opacity: 0.9;">Cảm ơn bạn đã lựa chọn Dũng Cinema</p>
-                    </div>
-                    <div style="padding: 30px;">
-                        <p>Chào <b>${customerName}</b>, đơn hàng của bạn đã được xác nhận:</p>
-                        <div style="border: 2px dashed #eee; padding: 20px; margin: 20px 0; border-radius: 8px;">
-                            <h3 style="color: #e74c3c; margin: 0 0 15px 0; font-size: 20px;">${movieTitle}</h3>
-                            <p style="margin: 5px 0;"><b>📍 Rạp:</b> ${cinemaName}</p>
-                            <p style="margin: 5px 0;"><b>⏰ Suất chiếu:</b> ${startTime} | ${selectedDate}</p>
-                            <p style="margin: 5px 0;"><b>💺 Ghế:</b> <span style="font-size: 18px; color: #e74c3c; font-weight:bold;">${seatLabel}</span></p>
-                            <p style="margin: 5px 0;"><b>🍿 Combo:</b> ${selectedFoods || 'Không có'}</p>
-                        </div>
-                        ${fileExists ? `<div style="text-align: center; margin: 20px 0;"><img src="cid:poster_img_email" style="max-width: 220px; border-radius: 10px; border: 1px solid #eee;" /></div>` : ''}
-                        <div style="text-align: center; padding: 15px; background: #fff9f9; border-radius: 8px;">
-                            <p style="font-size: 12px; color: #888; margin-bottom: 5px; text-transform: uppercase;">Mã số nhận vé</p>
-                            <h2 style="margin: 0; color: #27ae60; font-size: 28px; letter-spacing: 2px;">#${bookingId}</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>`,
-        attachments: fileExists ? [{ filename: fileName, path: absolutePath, cid: 'poster_img_email' }] : []
-    };
-    return transporter.sendMail(mailOptions);
-};
-
 const BankAppController = {
-        sendOTP: async (req, res) => {
+    // 1. GỬI OTP
+    sendOTP: async (req, res) => {
         const { email, bookingId } = req.body;
-        if (!email || !bookingId) {
-            return res.status(400).json({ success: false, message: "Thiếu thông tin!" });
-        }
+        if (!email || !bookingId) return res.status(400).json({ success: false, message: "Thiếu thông tin!" });
+
         const otp = Math.floor(100000 + Math.random() * 900000);
+        // Lưu thời gian hết hạn sau 5 phút
         otpStorage[email] = { otp, bookingId, expires: Date.now() + 5 * 60 * 1000 };
 
-        // 1. TRẢ KẾT QUẢ VỀ FRONTEND NGAY LẬP TỨC
-        res.json({ success: true, message: "Mã OTP đang được gửi, vui lòng kiểm tra mail!" });
+        res.json({ success: true, message: "Mã OTP đang được gửi!" });
 
-        // 2. GỬI MAIL CHẠY NGẦM (Bỏ await)
-        transporter.sendMail({
-            from: '"Dũng Cinema 🍿" <nguyenphamquangdung9611@gmail.com>',
-            to: email,
-            subject: `[${otp}] Mã xác thực thanh toán Cinema Star`,
-            html: `<h2 style="text-align:center">Mã OTP của ông là: <span style="color:red">${otp}</span></h2>
-                <p style="text-align:center">Mã này có hiệu lực trong 5 phút cho đơn hàng #${bookingId}</p>`
-        }).catch(error => {
-            console.error("❌ Lỗi gửi OTP ngầm:", error);
-            // Vì đã res.json ở trên rồi nên ở đây chỉ log lỗi thôi, không res nữa
-        });
+        // Gọi service gửi mail ngầm để không làm chậm response
+        mailService.sendOTP(email, otp, bookingId).catch(err => console.error("Lỗi gửi OTP:", err));
     },
 
+    // 2. XÁC THỰC OTP & CHỐT ĐƠN (Giữ nguyên logic gốc của ông)
     verifyOTP: async (req, res) => {
         const { email, otp, bookingId } = req.body;
         const record = otpStorage[email];
 
-        if (!record || record.otp != otp) {
+        if (!record || record.otp != otp || record.expires < Date.now()) {
             return res.status(400).json({ success: false, message: "Mã OTP không đúng hoặc đã hết hạn!" });
         }
 
         const connection = await db.getConnection();
         try {
-            const [checkStatus] = await connection.query("SELECT status, user_id FROM bookings WHERE booking_id = ?", [bookingId]);
-            if (checkStatus[0] && checkStatus[0].status === 'Completed') {
-                return res.status(400).json({ success: false, message: "Giao dịch này đã được thanh toán hoàn tất!" });
-            }
-
             await connection.beginTransaction();
-            
-            // 1. Cập nhật trạng thái đơn hàng
-            await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
 
-            // 2. Cập nhật trạng thái vé (Dùng NOW() của MySQL cho chuẩn múi giờ server)
+            // 1. Update trạng thái đơn hàng và vé
+            await connection.execute("UPDATE bookings SET status = 'Completed' WHERE booking_id = ?", [bookingId]);
             await connection.execute(
-                `UPDATE tickets 
-                 SET seat_status = 'Booked', 
-                     ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'),
-                     updated_at = NOW()
-                 WHERE booking_id = ? AND seat_status = 'Reserved'`, 
-                [bookingId]
+                `UPDATE tickets SET seat_status = 'Booked', ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'), updated_at = NOW()
+                 WHERE booking_id = ? AND seat_status = 'Reserved'`, [bookingId]
             );
 
-            // 3. Lấy thông tin đầy đủ
+            // 2. Lấy data đơn hàng (Giữ nguyên câu Query SELECT dài của ông)
             const [orderRows] = await connection.query(`
                 SELECT 
-                    b.booking_id, b.user_id,
-                    u.full_name, u.email,
-                    m.title AS movieTitle, 
-                    m.poster_url AS moviePoster, 
-                    c.cinema_name AS cinemaName,
-                    r.room_name AS roomName,
+                    b.booking_id, b.user_id, u.full_name, u.email,
+                    m.title AS movieTitle, m.poster_url AS moviePoster, 
+                    c.cinema_name AS cinemaName, r.room_name AS roomName,
                     DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') as start_time_raw,
                     GROUP_CONCAT(DISTINCT bd.item_name SEPARATOR ', ') AS seatLabel
                 FROM bookings b
@@ -136,85 +57,86 @@ const BankAppController = {
                 WHERE b.booking_id = ?
                 GROUP BY b.booking_id
             `, [bookingId]);
-
+            
             const order = orderRows[0];
             if (!order) throw new Error("Không tìm thấy dữ liệu đơn hàng!");
 
-            // 4. LOGIC CỘNG ĐIỂM THƯỞNG
+            // 3. Logic cộng điểm thưởng (VIP 10%, Đôi 7%, Thường 5%)
             const [details] = await connection.execute(
                 `SELECT bd.price, bd.quantity, s.seat_type 
                  FROM booking_details bd
                  LEFT JOIN seats s ON bd.seat_id = s.seat_id
-                 WHERE bd.booking_id = ?`,
-                [bookingId]
+                 WHERE bd.booking_id = ?`, [bookingId]
             );
 
             let totalEarnedPoints = 0;
             details.forEach(item => {
                 const itemTotal = Number(item.price) * Number(item.quantity);
-                if (item.seat_type) {
-                    const type = String(item.seat_type).toUpperCase();
-                    let rate = (type === 'VIP') ? 0.10 : (type === 'DOUBLE' || type === 'SWEETBOX' || type === 'COUPLE') ? 0.07 : 0.05;
-                    totalEarnedPoints += Math.floor(itemTotal * rate);
-                } else {
-                    totalEarnedPoints += Math.floor(itemTotal * 0.03);
-                }
+                const type = String(item.seat_type || '').toUpperCase();
+                let rate = (type === 'VIP') ? 0.10 : (['DOUBLE', 'SWEETBOX', 'COUPLE'].includes(type)) ? 0.07 : 0.05;
+                totalEarnedPoints += Math.floor(itemTotal * rate);
             });
 
             if (totalEarnedPoints > 0) {
-                // Sửa thành points (có s) theo đúng db ông khẳng định
-                await connection.execute(
-                    `UPDATE users SET points = points + ? WHERE user_id = ?`,
-                    [totalEarnedPoints, order.user_id]
-                );
+                await connection.execute(`UPDATE users SET points = points + ? WHERE user_id = ?`, [totalEarnedPoints, order.user_id]);
             }
 
-            // CHỐT GIAO DỊCH DATABASE TRƯỚC
             await connection.commit();
             delete otpStorage[email];
 
-            // 5. Xử lý thời gian (Sau khi commit để an toàn)
-            const [datePart, timePart] = order.start_time_raw.split(' ');
-            const [y, m, d] = datePart.split('-');
-            const [hh, mm] = timePart.split(':');
-            const formattedTime = `${hh}:${mm}`;
-            const formattedDate = `${d}/${m}/${y}`;
-
-            // 6. Gửi vé Email (Gửi ngầm sau khi đã trả kết quả cho BankApp)
-            const [foodRows] = await connection.query(
-                "SELECT item_name, quantity FROM booking_details WHERE booking_id = ? AND seat_id IS NULL", 
-                [bookingId]
-            );
+            // 4. CHUẨN BỊ DATA VÀ GỬI VÉ QUA SERVICE
+            const [foodRows] = await connection.query("SELECT item_name, quantity FROM booking_details WHERE booking_id = ? AND seat_id IS NULL", [bookingId]);
             const foodString = foodRows.map(f => `${f.item_name} (x${f.quantity})`).join(', ') || 'Không có';
 
-            sendTicketEmail(email, {
+            mailService.sendTicketEmail(email, {
                 bookingId: order.booking_id,
                 customerName: order.full_name,
                 movieTitle: order.movieTitle,
                 moviePoster: order.moviePoster,
                 cinemaName: order.cinemaName,
-                startTime: formattedTime,
-                selectedDate: formattedDate,
+                startTime: order.start_time_raw.split(' ')[1].substring(0, 5),
+                selectedDate: order.start_time_raw.split(' ')[0].split('-').reverse().join('/'),
                 seatLabel: order.seatLabel,
                 selectedFoods: foodString
-            }).catch(e => console.error("Lỗi gửi mail:", e));
+            }).catch(e => console.error("Lỗi gửi vé:", e));
 
-            // Trả kết quả thành công ngay lập tức
-            res.json({ 
-                success: true, 
-                message: "Thanh toán thành công!",
-                data: { orderId: order.booking_id }
-            });
+            res.json({ success: true, message: "Thanh toán thành công!", data: { orderId: order.booking_id } });
 
         } catch (error) {
             if (connection) await connection.rollback();
-            console.error("❌ [DŨNG] Lỗi Verify OTP:", error);
-            // Trả lỗi chi tiết để Dũng dễ debug
-            res.status(500).json({ success: false, message: error.sqlMessage || error.message });
+            res.status(500).json({ success: false, message: error.message });
+        } finally {
+            if (connection) connection.release();
+        }
+    },
+
+    // 5. BỔ SUNG: HÀM HỦY ĐƠN KHI QUÁ 5 PHÚT (HỦY TRẠNG THÁI PENDING)
+    cancelBookingTimeout: async (req, res) => {
+        const { bookingId, email } = req.body;
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // Chuyển trạng thái đơn hàng sang Cancelled
+            await connection.execute("UPDATE bookings SET status = 'Cancelled' WHERE booking_id = ?", [bookingId]);
+
+            // Giải phóng ghế từ Reserved về Available trong bảng tickets
+            await connection.execute(
+                "UPDATE tickets SET seat_status = 'Available', booking_id = NULL WHERE booking_id = ?", 
+                [bookingId]
+            );
+
+            await connection.commit();
+            if (email) delete otpStorage[email]; // Xóa OTP thừa trong RAM
+
+            res.json({ success: true, message: "Hết thời gian thanh toán, ghế đã được giải phóng." });
+        } catch (error) {
+            if (connection) await connection.rollback();
+            res.status(500).json({ success: false, message: error.message });
         } finally {
             if (connection) connection.release();
         }
     }
 };
 
-module.exports = { ...BankAppController, sendTicketEmail };
+module.exports = BankAppController;

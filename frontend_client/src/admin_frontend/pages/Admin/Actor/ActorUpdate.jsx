@@ -109,7 +109,7 @@ const ActorUpdate = () => {
             });
             
             handleShowModal('success', 'THÀNH CÔNG', `Đã cập nhật diễn viên "${formData.name}" thành công!`, () => {
-                navigate('/admin/actors');
+                navigate('/actors');
             });
         } catch (err) {
             console.error("Lỗi update:", err.response?.data);
@@ -196,7 +196,7 @@ const ActorUpdate = () => {
 
                 <div className="update-actions">
                     <button type="submit" className="btn-submit-update">LƯU THAY ĐỔI</button>
-                    <button type="button" className="btn-go-back" onClick={() => navigate('/admin/actors')}>HỦY BỎ</button>
+                    <button type="button" className="btn-go-back" onClick={() => navigate('/actors')}>HỦY BỎ</button>
                 </div>
             </form>
         </div>

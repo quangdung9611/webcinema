@@ -121,7 +121,7 @@ const ShowtimeUpdate = () => {
                 'Thông tin suất chiếu đã được lưu lại.',
                 () => {
                     setModal(prev => ({ ...prev, show: false }));
-                    navigate('/admin/showtimes');
+                    navigate('/showtimes');
                 }
             );
         } catch (err) {
@@ -196,7 +196,7 @@ const ShowtimeUpdate = () => {
                 </div>
 
                 <div className="update-actions">
-                    <button type="button" className="btn-go-back" onClick={() => navigate('/admin/showtimes')}>
+                    <button type="button" className="btn-go-back" onClick={() => navigate('/showtimes')}>
                         <ArrowLeft size={18} /> Quay lại
                     </button>
                     

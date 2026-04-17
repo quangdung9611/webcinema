@@ -84,7 +84,7 @@ const GenresList = () => {
                 </h2>
                 <button 
                     className="btn-add-user"
-                    onClick={() => navigate('/admin/genres/add')}
+                    onClick={() => navigate('/genres/add')}
                 >
                     <Plus size={18} /> Thêm Thể Loại Mới
                 </button>
@@ -115,7 +115,7 @@ const GenresList = () => {
                                         <div className="action-buttons">
                                             <button 
                                                 className="btn-action-edit"
-                                                onClick={() => navigate(`/admin/genres/update/${g.genre_id}`)}
+                                                onClick={() => navigate(`/genres/update/${g.genre_id}`)}
                                                 title="Sửa"
                                             >
                                                 <Edit size={16} />

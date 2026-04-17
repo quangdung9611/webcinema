@@ -94,7 +94,7 @@ const ActorList = () => {
                 </h2>
                 <button 
                     className="btn-add-user" 
-                    onClick={() => navigate('/admin/actors/add')}
+                    onClick={() => navigate('/actors/add')}
                 >
                     <UserPlus size={18} /> Thêm Diễn Viên Mới
                 </button>
@@ -144,7 +144,7 @@ const ActorList = () => {
                                         <div className="action-buttons">
                                             <button 
                                                 className="btn-action-edit"
-                                                onClick={() => navigate(`/admin/actors/update/${a.actor_id}`)}
+                                                onClick={() => navigate(`/actors/update/${a.actor_id}`)}
                                                 title="Sửa diễn viên"
                                             >
                                                 <Edit size={16} />

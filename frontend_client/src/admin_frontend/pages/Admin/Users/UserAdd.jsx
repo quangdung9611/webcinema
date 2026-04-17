@@ -102,7 +102,7 @@ const UserAdd = () => {
                 message: `Tài khoản ${formData.full_name} đã được tạo thành công!`,
                 onConfirm: () => {
                     setModal({ show: false });
-                    navigate('/admin/users');
+                    navigate('/users');
                 }
             });
         } catch (err) {
@@ -190,7 +190,7 @@ const UserAdd = () => {
 
                 <div className="form-actions">
                     <button type="submit" className="btn-save">Lưu người dùng</button>
-                    <button type="button" className="btn-back" onClick={() => navigate('/admin/users')}>Quay lại</button>
+                    <button type="button" className="btn-back" onClick={() => navigate('/users')}>Quay lại</button>
                 </div>
             </form>
         </div>
