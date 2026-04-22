@@ -1,5 +1,5 @@
 /* ============================================================
-   USER LAYOUT - FIX ZOOM & SCROLL VERSION
+   USER LAYOUT - FIX ZOOM & SCROLL VERSION (TRANSPARENT)
 ============================================================ */
 
 .user-site-container {
@@ -8,7 +8,8 @@
     /* Đảm bảo trang luôn đủ cao nhưng cho phép nở dài ra */
     min-height: 100vh; 
     width: 100%;
-    background-color: #0a0a0a;
+    /* SỬA: background-color: #0a0a0a; thành transparent */
+    background-color: transparent !important;
     /* Quan trọng: Cho phép trình duyệt quản lý cuộn dọc */
     overflow-y: visible; 
 }
@@ -20,13 +21,15 @@
     position: sticky;
     top: 0;
     z-index: 1000;
-    /* Đảm bảo header có nền để không bị nội dung bên dưới hiện xuyên qua khi cuộn */
-    background-color: #0a0a0a; 
+    /* SỬA: Header nên có màu tím mờ nhẹ (Glassmorphism) 
+       để khi cuộn trang, nội dung bên dưới lướt qua nhìn sẽ sang hơn */
+    background-color: rgba(26, 11, 46, 0.85) !important; 
+    backdrop-filter: blur(10px); /* Hiệu ứng kính mờ cho rạp phim xịn */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* ================= MAIN - TỐI ƯU CHIỀU CAO ================= */
 .user-main-content {
-    /* flex: 1 0 auto; giữ nguyên để đẩy footer xuống đáy */
     flex: 1 0 auto; 
     width: 100%;
     display: flex;
@@ -35,8 +38,9 @@
     /* NHÍCH LÊN: Xóa bỏ hoàn toàn padding bottom */
     padding-bottom: 0; 
     
-    /* NHÍCH LÊN: Nếu các Section bên trong có margin, 
-       đoạn này sẽ ép chúng sát lại với nhau */
+    /* Ép trong suốt để thấy nền tím của body */
+    background-color: transparent !important;
+    
     gap: 0; 
     
     /* Ngăn chặn việc tự tạo ra khoảng trống thừa khi zoom */
@@ -44,12 +48,13 @@
 }
 
 /* Ép các phần tử con trực tiếp bên trong (như banner, movie-grid) 
-   không được tự ý tạo khoảng cách quá lớn */
+    không được tự ý tạo khoảng cách quá lớn */
 .user-main-content > div {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
     padding-top: 10px; 
     padding-bottom: 10px;
+    background-color: transparent !important;
 }
 
 /* ================= FOOTER ================= */
@@ -57,4 +62,7 @@
     flex-shrink: 0; /* Giữ Footer ổn định */
     width: 100%;
     margin-top: auto; /* Luôn nằm dưới cùng kể cả khi trang ít nội dung */
+    /* Footer thường nên để màu đen tuyền để kết thúc dải gradient mượt mà */
+    background-color: #000000; 
+    border-top: 1px solid rgba(138, 43, 226, 0.2);
 }

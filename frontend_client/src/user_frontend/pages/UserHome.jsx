@@ -2,23 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import axios from 'axios';
 
-// Giữ nguyên CSS của bạn
+// Import CSS đã được tinh chỉnh màu tím đen và hiệu ứng mượt
 import '../styles/user_home.css';
 
 const UserHome = () => {
   const navigate = useNavigate();
   
-  // 1. DỮ LIỆU BANNER & LOGIC CHUYỂN SLIDE
+  // 1. DỮ LIỆU BANNER & LOGIC CHUYỂN SLIDE (Giữ nguyên của ông)
   const banners = ['banner1.jpg', 'banner2.jpg', 'banner3.jpg', 'banner4.jpg'];
   
-  // Đường dẫn folder ảnh ngang (PC)
   const bannerBaseUrl = "https://api.quangdungcinema.id.vn/uploads/banners/";
-  // Đường dẫn folder ảnh dọc (Mobile)
   const bannerDocUrl = "https://api.quangdungcinema.id.vn/uploads/banner_doc/";
   
   const [currentBanner, setCurrentBanner] = useState(0);
 
-  // Tự động chuyển banner mỗi 3 giây
+  // Tự động chuyển banner mỗi 3 giây (Giữ nguyên của ông)
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentBanner((prev) => (prev + 1) % banners.length);
@@ -26,7 +24,7 @@ const UserHome = () => {
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  // 2. QUẢN LÝ DỮ LIỆU PHIM TỪ API
+  // 2. QUẢN LÝ DỮ LIỆU PHIM TỪ API (Giữ nguyên của ông)
   const [groupedMovies, setGroupedMovies] = useState({ "Đang chiếu": [], "Sắp chiếu": [] });
   const [filterStatus, setFilterStatus] = useState('Đang chiếu');
   const [loading, setLoading] = useState(true);
@@ -51,43 +49,62 @@ const UserHome = () => {
 
   return (
     <div className="user-home">
-      {/* 1. PHẦN BANNER - RESPONSIVE TỰ ĐỘNG TẠI 992PX */}
-      <div className="carousel-wrapper">
-        <div className="banner-slide-simple">
-          {banners.map((imgName, index) => (
-            <picture 
-              key={index} 
-              style={{ display: index === currentBanner ? 'block' : 'none' }}
-            >
-              {/* Nếu màn hình < 992px: Lấy hình từ folder banner_doc */}
-              <source 
-                media="(max-width: 767px)" 
-                srcSet={`${bannerDocUrl}${imgName}`} 
-              />
-              
-              {/* Mặc định (> 768px): Lấy hình từ folder banners gốc */}
-              <img 
-                src={`${bannerBaseUrl}${imgName}`} 
-                alt={`Promotion ${index + 1}`} 
-                className={`banner-img ${index === currentBanner ? 'active' : ''}`}
-              />
-            </picture>
-          ))}
-          
-          {/* Các dấu chấm chỉ số (Pagination) tự chế */}
-          <div className="banner-dots">
-            {banners.map((_, index) => (
-              <span 
+      {/* 1. PHẦN BANNER - CẬP NHẬT KIỂU CENTERED HIỆN ĐẠI */}
+      <div className="carousel-wrapper-modern">
+        <div className="carousel-track">
+          {banners.map((imgName, index) => {
+            // Tính toán vị trí để hiển thị 3 slide cùng lúc
+          // SỬA THÀNH:
+          let position = "hidden-slide"; 
+          if (index === currentBanner) {
+            position = "active-slide";
+          } else if (index === (currentBanner - 1 + banners.length) % banners.length) {
+            position = "prev-slide";
+          } else if (index === (currentBanner + 1) % banners.length) {
+            position = "next-slide";
+          }
+            return (
+              <div 
                 key={index} 
-                className={`dot ${index === currentBanner ? 'active' : ''}`}
+                className={`banner-item-modern ${position}`}
                 onClick={() => setCurrentBanner(index)}
-              ></span>
-            ))}
-          </div>
+              >
+                <picture>
+                  {/* Mobile: Folder banner_doc */}
+                  <source 
+                    media="(max-width: 767px)" 
+                    srcSet={`${bannerDocUrl}${imgName}`} 
+                  />
+                  {/* PC: Folder banners gốc */}
+                  <img 
+                    src={`${bannerBaseUrl}${imgName}`} 
+                    alt={`Promotion ${index + 1}`} 
+                    className="banner-img"
+                  />
+                </picture>
+                
+                {/* Lớp phủ để làm mờ 2 bên và tạo độ sâu */}
+                <div className="banner-overlay-modern"></div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* THUMBNAILS NHỎ PHÍA DƯỚI (Giữ nguyên tính năng cũ của ông) */}
+        <div className="banner-thumbnails">
+          {banners.map((imgName, index) => (
+            <div 
+              key={index} 
+              className={`thumb-box ${index === currentBanner ? 'active' : ''}`}
+              onClick={() => setCurrentBanner(index)}
+            >
+              <img src={`${bannerBaseUrl}${imgName}`} alt={`Thumb ${index}`} />
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* 2. DANH SÁCH PHIM */}
+      {/* 2. DANH SÁCH PHIM (Giữ nguyên cấu trúc logic của ông) */}
       <div className="movie-container">
         <div className="movie-tabs">
           <div className="tab-left">
@@ -115,8 +132,8 @@ const UserHome = () => {
         </div>
 
         {loading ? (
-          <div className="loading-state" style={{color: '#fff', textAlign: 'center', padding: '50px'}}>
-             Đang tải phim...
+          <div className="loading-state">
+              Đang tải phim...
           </div>
         ) : (
           <div className="movie-grid">
@@ -147,7 +164,7 @@ const UserHome = () => {
                 </div>
               ))
             ) : (
-              <div className="empty-results" style={{color: '#888', gridColumn: '1/-1', textAlign: 'center', padding: '50px'}}>
+              <div className="empty-results">
                 Hiện chưa có phim nào ở mục này...
               </div>
             )}

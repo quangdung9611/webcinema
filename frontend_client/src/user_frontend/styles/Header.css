@@ -1,26 +1,29 @@
 /* ============================================================
-   VARIABLES
-   ============================================================ */
+   VARIABLES - GALAXY PURPLE THEME
+============================================================ */
 :root {
   --primary: #f1c40f;
-  --bg-dark: #0a0a0a;
-  --bg-light: #1a1a1a;
+  --bg-dark: #0f021f;
+  --bg-light: #1a0b2e;
   --text-white: #ffffff;
-  --text-gray: #bbb;
-  --border-color: #222;
+  --text-gray: rgba(255, 255, 255, 0.6);
+  --border-color: rgba(138, 43, 226, 0.2);
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --shadow: 0 10px 35px rgba(0, 0, 0, 0.5);
+  --shadow: 0 10px 35px rgba(0, 0, 0, 0.7);
+  --accent-purple: #8a2be2;
 }
 
 /* ============================================================
    BASE NAVBAR
-   ============================================================ */
+============================================================ */
 .user-navbar {
   position: sticky;
   top: 0;
   z-index: 1000;
   height: 70px;
-  background: var(--bg-dark);
+  background: rgba(15, 2, 31, 0.9) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--border-color);
@@ -34,11 +37,12 @@
   max-width: 1300px;
   margin: 0 auto;
   padding: 0 20px;
+  position: relative;
 }
 
 /* ============================================================
    LOGO
-   ============================================================ */
+============================================================ */
 .logo {
   font-size: 1.6rem;
   font-weight: 800;
@@ -46,6 +50,7 @@
   letter-spacing: 1.5px;
   cursor: pointer;
   user-select: none;
+  text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
 }
 
 .logo span {
@@ -53,10 +58,11 @@
 }
 
 /* ============================================================
-   USER MENU & DROPDOWN
-   ============================================================ */
+   USER MENU
+============================================================ */
 .user-menu {
   position: relative;
+  z-index: 1101;
 }
 
 .account-trigger {
@@ -64,31 +70,35 @@
   align-items: center;
   gap: 10px;
   padding: 6px 14px;
-  color: var(--primary);
-  background: rgba(241, 196, 15, 0.05);
-  border: 1px solid transparent;
+  color: var(--text-white);
+  background: rgba(138, 43, 226, 0.1);
+  border: 1px solid rgba(138, 43, 226, 0.2);
   border-radius: 50px;
   cursor: pointer;
   transition: var(--transition);
 }
 
 .account-trigger:hover {
-  background: rgba(241, 196, 15, 0.1);
-  border-color: rgba(241, 196, 15, 0.3);
+  background: rgba(138, 43, 226, 0.2);
+  border-color: var(--accent-purple);
 }
 
 .rotate {
   transform: rotate(180deg);
 }
 
+/* ============================================================
+   DROPDOWN
+============================================================ */
 .dropdown-content {
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
-  z-index: 1100;
+  z-index: 1200;
   min-width: 220px;
   padding: 8px 0;
-  background: #ffffff;
+  background: #16052e !important;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: var(--shadow);
   transform-origin: top right;
@@ -98,13 +108,17 @@
 .dropdown-user-info {
   padding: 12px 20px;
   font-size: 0.85rem;
-  color: #333;
+  color: var(--text-white);
+}
+
+.dropdown-user-info strong {
+  color: var(--primary);
 }
 
 .dropdown-divider {
   height: 1px;
   margin: 4px 0;
-  background: #eee;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .dropdown-item {
@@ -113,20 +127,69 @@
   gap: 12px;
   padding: 12px 20px;
   font-size: 0.9rem;
-  color: #444;
+  color: var(--text-gray);
   cursor: pointer;
   transition: var(--transition);
 }
 
 .dropdown-item:hover {
   padding-left: 25px;
-  color: var(--primary);
-  background: #f9f9f9;
+  color: var(--text-white);
+  background: rgba(138, 43, 226, 0.2);
 }
 
 /* ============================================================
-    DESKTOP NAVIGATION (Từ 993px trở lên)
-   ============================================================ */
+   HAMBURGER BUTTON
+============================================================ */
+.hamburger {
+  display: none;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: 0.3s ease;
+  z-index: 1300; /* FIX mất dấu X */
+}
+
+.hamburger:hover {
+  background: rgba(138, 43, 226, 0.12);
+}
+
+.hamburger.active {
+  background: rgba(138, 43, 226, 0.15);
+  box-shadow: 0 0 15px rgba(138, 43, 226, 0.35);
+}
+
+.hamburger .bar {
+  position: absolute;
+  left: 9px;
+  width: 26px;
+  height: 2.6px;
+  border-radius: 50px;
+  background: #fff;
+  transition: 0.3s ease;
+}
+
+.hamburger .bar:nth-child(1) {
+  top: 13px;
+}
+
+.hamburger .bar:nth-child(2) {
+  top: 20px;
+}
+
+.hamburger .bar:nth-child(3) {
+  top: 27px;
+}
+
+/* ============================================================
+   DESKTOP NAVIGATION
+============================================================ */
 @media (min-width: 993px) {
   .hamburger,
   .menu-overlay {
@@ -135,7 +198,7 @@
 
   .nav-links {
     display: flex;
-    gap: 5px; /* Giảm gap một chút để menu không tràn */
+    gap: 5px;
     list-style: none;
   }
 
@@ -147,21 +210,21 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 25px 12px; /* Giảm padding một chút để menu gọn hơn */
-    font-size: 0.82rem; /* Giảm nhẹ font size để vừa các màn hình laptop nhỏ */
-    font-weight: 500;
+    padding: 25px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
     text-transform: uppercase;
     color: var(--text-white);
     text-decoration: none;
     transition: var(--transition);
-    white-space: nowrap; /* Quan trọng: Không cho chữ rớt xuống dòng */
+    white-space: nowrap;
   }
 
   .nav-links > li:hover > a {
-    color: var(--primary);
+    color: var(--accent-purple);
+    text-shadow: 0 0 8px var(--accent-purple);
   }
 
-  /* Submenu Desktop */
   .sub-menu {
     position: absolute;
     top: 100%;
@@ -169,9 +232,10 @@
     display: none;
     min-width: 200px;
     padding: 10px 0;
-    background: #ffffff;
+    background: #1a0b2e !important;
+    border: 1px solid var(--border-color);
     border-radius: 0 0 8px 8px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
     animation: fadeIn 0.2s ease;
   }
 
@@ -181,81 +245,57 @@
 
   .has-dropdown:hover .icon-down {
     transform: rotate(180deg);
-    color: var(--primary);
+    color: var(--accent-purple);
   }
 
   .sub-menu li a {
     display: block;
     padding: 10px 20px;
     font-size: 0.9rem;
-    color: #333 !important;
+    color: var(--text-gray) !important;
     text-decoration: none;
     transition: var(--transition);
   }
 
   .sub-menu li a:hover {
     padding-left: 25px;
-    color: var(--primary) !important;
-    background: #f5f5f5;
+    color: var(--text-white) !important;
+    background: rgba(138, 43, 226, 0.2);
   }
 }
 
 /* ============================================================
-    MOBILE & TABLET NAVIGATION (Dưới 992px)
-   ============================================================ */
+   MOBILE & TABLET
+============================================================ */
 @media (max-width: 992px) {
+  .hamburger {
+    display: block;
+  }
+
   .logo {
     font-size: 1.3rem;
   }
 
   .username-display {
-    display: none; /* Ẩn tên user trên mobile/tablet để đỡ chật */
+    display: none;
   }
 
-  /* Hiện Hamburger tại mốc 992px */
-  .hamburger {
-    order: -1;
-    display: flex !important;
-    flex-direction: column;
-    gap: 4px;
-    padding: 10px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    z-index: 1010;
-  }
-
-  .hamburger .bar {
-    width: 24px;
-    height: 2px;
-    background-color: var(--text-white);
-    border-radius: 2px;
-    transition: var(--transition);
-  }
-
-  /* Animation Hamburger */
+  /* ACTIVE => X */
   .hamburger.active .bar:nth-child(1) {
-    transform: translateY(6px) rotate(45deg);
-    background-color: var(--primary);
+    top: 20px;
+    transform: rotate(45deg);
+    background: var(--accent-purple);
   }
 
   .hamburger.active .bar:nth-child(2) {
     opacity: 0;
+    transform: scale(0);
   }
 
   .hamburger.active .bar:nth-child(3) {
-    transform: translateY(-6px) rotate(-45deg);
-    background-color: var(--primary);
-  }
-
-  /* Menu Drawer Mobile */
-  .menu-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 998;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(4px);
-    /* Mặc định overlay chỉ hiện khi có menu-overlay trong DOM */
+    top: 20px;
+    transform: rotate(-45deg);
+    background: var(--accent-purple);
   }
 
   .nav-links {
@@ -267,15 +307,16 @@
     height: 100vh;
     padding: 80px 0 30px;
     overflow-y: auto;
-    background: var(--bg-dark);
+    background: #0f021f !important;
     list-style: none;
     transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    display: block; /* Đảm bảo cấu trúc block để đẩy ra vào */
+    display: block;
   }
 
   .nav-links.active {
     left: 0;
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.7);
+    border-right: 1px solid var(--border-color);
   }
 
   .nav-links li a {
@@ -285,29 +326,58 @@
     font-size: 1rem;
     color: var(--text-white);
     text-decoration: none;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
-  /* Accordion Submenu Mobile */
   .sub-menu {
     max-height: 0;
     overflow: hidden;
-    background: #151515;
+    background: rgba(0, 0, 0, 0.3) !important;
     transition: max-height 0.3s ease;
-    /* Gỡ bỏ các style cũ của desktop */
-    position: static; 
+    position: static;
     width: 100%;
     box-shadow: none;
-    display: block; 
+    display: block;
   }
 
   .has-dropdown.mobile-active .sub-menu {
-    max-height: 800px; /* Tăng max-height để chứa hết danh sách rạp */
+    max-height: 800px;
   }
 
   .sub-menu li a {
     padding-left: 45px;
     font-size: 0.9rem;
     color: var(--text-gray) !important;
+  }
+
+  .menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 998;
+  }
+}
+
+/* ============================================================
+   ANIMATION
+============================================================ */
+@keyframes dropdownAnim {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

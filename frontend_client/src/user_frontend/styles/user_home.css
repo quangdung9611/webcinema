@@ -1,94 +1,150 @@
 /* ============================================================
-    USER HOME - GALAXY STYLE (RESPONSIVE 992PX)
+    USER HOME - GALAXY STYLE (BẢN NÂNG CẤP CAROUSEL 3D)
     Author: Quang Dung Project
+    Update: Added Modern Centered Carousel with Blur Effects
 ============================================================ */
 
 :root {
     --primary: #f1c40f; /* Màu vàng thương hiệu */
-    --transition: 0.3s ease;
+    --accent-purple: #8a2be2; /* Tím Neon huyền bí */
+    --transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); /* Tăng thời gian mượt hơn cho carousel */
 }
 
 .user-home {
-    padding: 0 0 40px 0; /* Bỏ padding top để banner sát Header */
-    background-color: #000;
+    padding: 0 0 40px 0; 
+    background-color: transparent; 
     min-height: 100vh;
 }
 
-/* --- 1. CAROUSEL SECTION (BANNER) --- */
-.carousel-wrapper {
+/* --- 1. MODERN CAROUSEL SECTION (BANNER 3D CENTER MODE) --- */
+.carousel-wrapper-modern {
     width: 100%;
     position: relative;
-    padding: 0; /* Tràn viền chuẩn Galaxy */
-    box-sizing: border-box;
+    padding: 40px 0; /* Tạo không gian cho slide phóng to không bị cắt */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.banner-slide-simple {
-    width: 100%;
-    /* Tỉ lệ cho PC: 2048 x 682 */
-    aspect-ratio: 2048 / 682; 
-    overflow: hidden;
+.carousel-track {
     position: relative;
-    background-color: #050505;
+    width: 100%;
+    aspect-ratio: 2048 / 800; /* Tinh chỉnh lại tỉ lệ để đẹp hơn trên PC */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.banner-item-modern {
+    position: absolute;
+    width: 80%; /* Slide chính chiếm 65% chiều rộng */
+    height: 100%;
+    transition: var(--transition);
+    border-radius: 20px;
+    overflow: hidden;
+    opacity: 0;
+    z-index: 1;
+    transform: scale(0.7); /* Mặc định các slide ẩn sẽ nhỏ hơn */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
 }
 
 .banner-img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Quan trọng để ảnh không bị méo */
-    transition: opacity 0.5s ease-in-out;
+    object-fit: cover;
+   
+    /* object-position: center;  */
+    transition: transform 0.5s ease;
 }
 
-/* Hiệu ứng chuyển cảnh nhẹ nhàng */
-.banner-img.active {
-    animation: fadeIn 0.8s ease;
-}
+/* HIỆU ỨNG TRẠNG THÁI SLIDE */
 
-@keyframes fadeIn {
-    from { opacity: 0.6; }
-    to { opacity: 1; }
-}
-
-/* Tùy chỉnh các chấm tròn (Pagination) */
-.banner-dots {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
+/* Slide chính ở giữa */
+.banner-item-modern.active-slide {
+    opacity: 1;
     z-index: 10;
+    transform: translateX(0) scale(1); /* Phóng to 100% */
+    box-shadow: 0 0 40px rgba(138, 43, 226, 0.4);
+    border: 1px solid rgba(138, 43, 226, 0.3);
 }
 
-.dot {
-    width: 12px;
-    height: 12px;
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 50%;
-    cursor: pointer;
-    transition: var(--transition);
+/* Slide bên trái (Mờ) */
+.banner-item-modern.prev-slide {
+    opacity: 0.4;
+    z-index: 5;
+    transform: translateX(-48%) scale(0.8); /* Đẩy sang trái */
+    filter: blur(5px); /* Hiệu ứng mờ như ý ông */
 }
 
-.dot.active {
-    width: 30px; /* Hiệu ứng thanh dài cho chấm đang chọn */
+/* Slide bên phải (Mờ) */
+.banner-item-modern.next-slide {
+    opacity: 0.4;
+    z-index: 5;
+    transform: translateX(48%) scale(0.8); /* Đẩy sang phải */
+    filter: blur(5px); /* Hiệu ứng mờ như ý ông */
+}
+
+/* Lớp phủ cho slide mờ */
+.banner-overlay-modern {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15, 2, 31, 0.6), transparent);
+    transition: 0.3s;
+}
+
+.active-slide .banner-overlay-modern {
+    background: transparent; /* Slide chính hiện rõ nhất */
+}
+
+/* Banner Thumbnails - Giữ nguyên logic cũ của ông */
+.banner-thumbnails {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    z-index: 20;
+}
+
+.thumb-box {
+    width: 60px;
+    height: 35px;
     border-radius: 6px;
-    background: var(--primary);
-    box-shadow: 0 0 10px var(--primary);
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: 0.3s ease;
+    opacity: 0.4;
 }
 
-/* --- 2. MOVIE SECTION --- */
+.thumb-box.active {
+    border-color: var(--accent-purple);
+    opacity: 1;
+    transform: scale(1.15);
+    box-shadow: 0 0 15px var(--accent-purple);
+}
+
+.thumb-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* --- 2. MOVIE SECTION (GIỮ NGUYÊN CODE CŨ CỦA ÔNG) --- */
 .movie-container {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
     padding: 40px 20px;
     box-sizing: border-box;
+    background-color: transparent;
 }
 
 .movie-tabs {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #222;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 30px;
 }
 
@@ -96,18 +152,19 @@
     background: none;
     border: none;
     color: #666;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.1rem;
+    font-weight: 700;
     margin-right: 25px;
     padding-bottom: 10px;
     cursor: pointer;
     text-transform: uppercase;
     position: relative;
-    transition: var(--transition);
+    transition: 0.3s ease;
 }
 
 .tab-btn.active {
     color: #fff;
+    text-shadow: 0 0 8px rgba(138, 43, 226, 0.8);
 }
 
 .tab-btn.active::after {
@@ -117,14 +174,15 @@
     left: 0;
     width: 100%;
     height: 3px;
-    background-color: #03599d; /* Màu xanh Galaxy */
+    background-color: var(--accent-purple); 
+    box-shadow: 0 0 10px var(--accent-purple);
 }
 
 .view-all-link {
     color: #888;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: var(--transition);
+    transition: 0.3s ease;
 }
 
 .view-all-link:hover {
@@ -135,57 +193,64 @@
 .movie-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    gap: 25px;
+}
+
+.movie-item {
+    transition: transform 0.3s ease;
 }
 
 .poster-wrapper {
     position: relative;
     width: 100%;
     aspect-ratio: 2 / 3;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
-    background: #1a1a1a;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
 }
 
 .poster-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: 0.5s ease;
+    transition: transform 0.5s ease;
+}
+
+.movie-item:hover {
+    transform: translateY(-10px);
+}
+
+.movie-item:hover .poster-wrapper {
+    border-color: rgba(138, 43, 226, 0.7);
+    box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
 }
 
 .movie-item:hover .poster-img {
-    transform: scale(1.08);
+    transform: scale(1.1);
 }
 
 .movie-name {
     color: #fff;
     font-size: 0.95rem;
-    margin-top: 12px;
+    margin-top: 15px;
     font-weight: 600;
     text-transform: uppercase;
-    text-align: left;
+    text-align: center;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.4;
     height: 2.7rem;
+    transition: color 0.3s ease;
 }
 
-/* .age-badge {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    padding: 2px 8px;
-    border-radius: 4px;
-    color: #fff;
-    font-weight: bold;
-    font-size: 12px;
-    background-color: rgba(0, 0, 0, 0.8);
-    border: 1px solid rgba(255,255,255,0.3);
-    z-index: 2;
-} */
+.movie-item:hover .movie-name {
+    color: var(--accent-purple);
+}
 
 .poster-hover {
     position: absolute;
@@ -193,7 +258,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(0,0,0,0.65);
+    background: rgba(15, 2, 31, 0.75);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -203,53 +268,47 @@
 }
 
 .btn-book {
-    background-color: var(--primary);
-    color: #000;
+    background-color: var(--accent-purple);
+    color: #fff;
     font-weight: bold;
-    padding: 12px 24px;
-    border-radius: 5px;
+    padding: 10px 20px;
+    border-radius: 25px;
     cursor: pointer;
     border: none;
     text-transform: uppercase;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    box-shadow: 0 0 10px rgba(138, 43, 226, 0.4);
+    transition: all 0.3s ease;
 }
 
-/* --- 4. RESPONSIVE (CHỈ DÙNG MỘT MỐC 767PX) --- */
+.btn-book:hover {
+    background-color: #fff;
+    color: #1a0b2e;
+    transform: scale(1.1);
+}
+
+/* --- 4. RESPONSIVE --- */
 
 @media (max-width: 767px) {
-    /* 1. Sửa Banner: Chuyển sang tỉ lệ hình 1350x900 */
-    .banner-slide-simple {
-        /* 1350/900 = 1.5 */
-        aspect-ratio: 1.5 / 1 !important; 
-        border-radius: 0; /* Tràn viền phẳng cho chuyên nghiệp */
-    }
-
-    .carousel-wrapper {
-        padding: 0; 
-    }
-
-    .banner-img {
-        object-fit: cover !important;
-        object-position: center;
-    }
-
-    /* 2. Sửa các chấm tròn Pagination cho nhỏ lại */
-    .dot {
-        width: 8px;
-        height: 8px;
+    .banner-item-modern {
+        width: 85%; /* To hơn trên mobile */
     }
     
-    .dot.active {
-        width: 20px;
+    /* Ẩn 2 cái mờ trên mobile để giao diện sạch sẽ */
+    .banner-item-modern.prev-slide, 
+    .banner-item-modern.next-slide {
+        display: none;
+    }
+    
+    .carousel-track {
+        aspect-ratio: 1.5 / 1;
     }
 
-    /* 3. Sửa Grid phim: 2 cột chuẩn Mobile */
     .movie-grid {
         grid-template-columns: repeat(2, 1fr); 
-        gap: 12px;
+        gap: 15px;
     }
 
-    /* 4. Sửa Container và Font chữ */
     .movie-container {
         padding: 25px 15px;
     }
@@ -257,16 +316,5 @@
     .movie-name {
         font-size: 0.85rem;
         height: 2.4rem;
-        line-height: 1.2;
-    }
-
-    .btn-book {
-        padding: 8px 16px;
-        font-size: 0.75rem;
-    }
-
-    /* Đẩy sát nội dung lên trên để banner không bị hở với Header */
-    .user-home {
-        padding: 0 0 30px 0;
     }
 }

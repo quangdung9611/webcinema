@@ -21,7 +21,14 @@ body {
     /* Ép body luôn cao ít nhất bằng màn hình */
     min-height: 100vh;
     height: auto !important;
-    background-color: #000;
+
+    background: linear-gradient(180deg, 
+        #310a5a 0%,    /* Tím sáng hơn một chút ở trên cùng */
+        #16052e 35%,   /* Tím trung gian lan tỏa xuống danh sách phim */
+        #000000 100%   /* Đen sâu thẳm ở cuối trang */
+    ) !important;
+    background-attachment: fixed !important; /* Thêm cái này để nền đứng yên cực ảo */
+    
     color: #fff;
     line-height: 1.6;
     font-family: 'Inter', sans-serif;
@@ -33,7 +40,6 @@ body {
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
 }
-
 #root, .app-wrapper {
     /* Đảm bảo React bọc ngoài cũng đi theo luồng Flexbox */
     display: flex;
