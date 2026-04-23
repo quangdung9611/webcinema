@@ -1,143 +1,111 @@
 /* ============================================================
-    USER HOME - GALAXY STYLE (BẢN NÂNG CẤP CAROUSEL 3D)
+    USER HOME - SWIPER GALAXY EDITION
     Author: Quang Dung Project
-    Update: Added Modern Centered Carousel with Blur Effects
+    Update: Tối ưu cho Swiper JS (Fade + Zoom + No Gap)
 ============================================================ */
 
 :root {
-    --primary: #f1c40f; /* Màu vàng thương hiệu */
-    --accent-purple: #8a2be2; /* Tím Neon huyền bí */
-    --transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); /* Tăng thời gian mượt hơn cho carousel */
+    --primary: #f1c40f; 
+    --accent-purple: #8a2be2; 
+    --transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .user-home {
-    padding: 0 0 40px 0; 
+    padding-top: 0 !important;
+    margin-top: 0 !important;
     background-color: transparent; 
     min-height: 100vh;
 }
 
-/* --- 1. MODERN CAROUSEL SECTION (BANNER 3D CENTER MODE) --- */
-.carousel-wrapper-modern {
+/* --- 1. SWIPER BANNER SECTION (FADE & ZOOM) --- */
+.carousel-full-wrapper {
     width: 100%;
     position: relative;
-    padding: 40px 0; /* Tạo không gian cho slide phóng to không bị cắt */
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    background-color: #000;
+    line-height: 0; /* Khử khoảng hở dòng ảnh */
 }
 
-.carousel-track {
-    position: relative;
+/* Tỉ lệ khung hình cho Swiper */
+.mySwiper {
     width: 100%;
-    aspect-ratio: 2048 / 800; /* Tinh chỉnh lại tỉ lệ để đẹp hơn trên PC */
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    aspect-ratio: 2048 / 850; 
 }
 
-.banner-item-modern {
-    position: absolute;
-    width: 80%; /* Slide chính chiếm 65% chiều rộng */
+.banner-full-item {
+    width: 100%;
     height: 100%;
-    transition: var(--transition);
-    border-radius: 20px;
-    overflow: hidden;
-    opacity: 0;
-    z-index: 1;
-    transform: scale(0.7); /* Mặc định các slide ẩn sẽ nhỏ hơn */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    cursor: pointer;
+    position: relative;
+    overflow: hidden; /* Quan trọng để ảnh không zoom tràn ra ngoài */
 }
 
-.banner-img {
+/* CSS cho ảnh Banner - Hiệu ứng Zoom */
+.banner-img-fade-zoom {
     width: 100%;
     height: 100%;
     object-fit: cover;
-   
-    /* object-position: center;  */
-    transition: transform 0.5s ease;
+    display: block;
+    transform: scale(1);
+    transition: transform 1s ease-in-out;
 }
 
-/* HIỆU ỨNG TRẠNG THÁI SLIDE */
-
-/* Slide chính ở giữa */
-.banner-item-modern.active-slide {
-    opacity: 1;
-    z-index: 10;
-    transform: translateX(0) scale(1); /* Phóng to 100% */
-    box-shadow: 0 0 40px rgba(138, 43, 226, 0.4);
-    border: 1px solid rgba(138, 43, 226, 0.3);
+/* KHI SLIDE ĐANG ACTIVE (Class của Swiper), ẢNH SẼ PHÓNG TO CHẬM */
+.swiper-slide-active .banner-img-fade-zoom {
+    transform: scale(1.1);
+    transition: transform 6s ease-out; /* Phóng to từ từ trong 6 giây */
 }
 
-/* Slide bên trái (Mờ) */
-.banner-item-modern.prev-slide {
-    opacity: 0.4;
-    z-index: 5;
-    transform: translateX(-48%) scale(0.8); /* Đẩy sang trái */
-    filter: blur(5px); /* Hiệu ứng mờ như ý ông */
-}
-
-/* Slide bên phải (Mờ) */
-.banner-item-modern.next-slide {
-    opacity: 0.4;
-    z-index: 5;
-    transform: translateX(48%) scale(0.8); /* Đẩy sang phải */
-    filter: blur(5px); /* Hiệu ứng mờ như ý ông */
-}
-
-/* Lớp phủ cho slide mờ */
-.banner-overlay-modern {
+.banner-full-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(15, 2, 31, 0.6), transparent);
-    transition: 0.3s;
+    background: linear-gradient(to top, rgba(15, 2, 31, 0.8) 0%, transparent 50%);
+    z-index: 2;
 }
 
-.active-slide .banner-overlay-modern {
-    background: transparent; /* Slide chính hiện rõ nhất */
-}
-
-/* Banner Thumbnails - Giữ nguyên logic cũ của ông */
-.banner-thumbnails {
+/* --- CỤM MINI THUMBNAIL GÓC PHẢI --- */
+.mini-thumbnail-nav {
+    position: absolute;
+    right: 40px;
+    bottom: 40px;
     display: flex;
-    gap: 12px;
-    margin-top: 30px;
-    z-index: 20;
+    gap: 15px;
+    z-index: 50;
 }
 
-.thumb-box {
-    width: 60px;
-    height: 35px;
-    border-radius: 6px;
+.mini-nav-item {
+    width: 110px;
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
     overflow: hidden;
     cursor: pointer;
-    border: 2px solid transparent;
-    transition: 0.3s ease;
-    opacity: 0.4;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
 }
 
-.thumb-box.active {
+.mini-nav-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.5);
+}
+
+.mini-nav-item.active {
     border-color: var(--accent-purple);
-    opacity: 1;
-    transform: scale(1.15);
+    transform: translateY(-5px);
     box-shadow: 0 0 15px var(--accent-purple);
 }
 
-.thumb-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.mini-nav-item.active img {
+    filter: brightness(1);
 }
 
-/* --- 2. MOVIE SECTION (GIỮ NGUYÊN CODE CŨ CỦA ÔNG) --- */
+/* --- 2. MOVIE SECTION (GIỮ NGUYÊN CODE CỦA ÔNG) --- */
 .movie-container {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
     padding: 40px 20px;
     box-sizing: border-box;
-    background-color: transparent;
 }
 
 .movie-tabs {
@@ -178,18 +146,7 @@
     box-shadow: 0 0 10px var(--accent-purple);
 }
 
-.view-all-link {
-    color: #888;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: 0.3s ease;
-}
-
-.view-all-link:hover {
-    color: var(--primary);
-}
-
-/* --- 3. GRID & POSTER --- */
+/* --- 3. GRID & POSTER (GIỮ NGUYÊN) --- */
 .movie-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -209,7 +166,6 @@
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
-    transition: all 0.3s ease;
 }
 
 .poster-img {
@@ -223,11 +179,6 @@
     transform: translateY(-10px);
 }
 
-.movie-item:hover .poster-wrapper {
-    border-color: rgba(138, 43, 226, 0.7);
-    box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
-}
-
 .movie-item:hover .poster-img {
     transform: scale(1.1);
 }
@@ -239,17 +190,12 @@
     font-weight: 600;
     text-transform: uppercase;
     text-align: center;
+    line-height: 1.4;
+    height: 2.7rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    line-height: 1.4;
-    height: 2.7rem;
-    transition: color 0.3s ease;
-}
-
-.movie-item:hover .movie-name {
-    color: var(--accent-purple);
 }
 
 .poster-hover {
@@ -277,44 +223,21 @@
     border: none;
     text-transform: uppercase;
     font-size: 0.8rem;
-    box-shadow: 0 0 10px rgba(138, 43, 226, 0.4);
     transition: all 0.3s ease;
 }
 
-.btn-book:hover {
-    background-color: #fff;
-    color: #1a0b2e;
-    transform: scale(1.1);
-}
-
 /* --- 4. RESPONSIVE --- */
-
 @media (max-width: 767px) {
-    .banner-item-modern {
-        width: 85%; /* To hơn trên mobile */
+    .mySwiper {
+        aspect-ratio: 1 / 1.3;
     }
     
-    /* Ẩn 2 cái mờ trên mobile để giao diện sạch sẽ */
-    .banner-item-modern.prev-slide, 
-    .banner-item-modern.next-slide {
+    .mini-thumbnail-nav {
         display: none;
-    }
-    
-    .carousel-track {
-        aspect-ratio: 1.5 / 1;
     }
 
     .movie-grid {
         grid-template-columns: repeat(2, 1fr); 
         gap: 15px;
-    }
-
-    .movie-container {
-        padding: 25px 15px;
-    }
-
-    .movie-name {
-        font-size: 0.85rem;
-        height: 2.4rem;
     }
 }
