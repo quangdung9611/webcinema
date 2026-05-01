@@ -111,7 +111,7 @@ const MovieDetail = () => {
         if (!selectedRoom || !selectedDate || !movie) return;
         const checkSlots = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/showtimes/filter`, {
+                const res = await axios.get(`${API_BASE_URL}/showtimes/filter/${movie.movie_id}`, {
                     params: {
                         movie_id: movie.movie_id,
                         room_id: selectedRoom.room_id,
