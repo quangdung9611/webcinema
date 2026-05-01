@@ -12,6 +12,8 @@ const showtimeController = require('../Controllers/ShowTimeController');
 // GET: https://api.quangdungcinema.id.vn/api/showtimes/
 router.get('/', showtimeController.getAllShowtimes);
 
+// Đặt dòng này lên TRÊN các route có tham số như /detail/:id để tránh bị nhận nhầm nhé
+router.get('/filter', showtimeController.filterShowtimes);
 // 2. Lấy chi tiết một suất chiếu (Dùng để đổ dữ liệu vào Form Update)
 // GET: https://api.quangdungcinema.id.vn/api/showtimes/detail/:id
 router.get('/detail/:id', showtimeController.getShowtimeDetail);

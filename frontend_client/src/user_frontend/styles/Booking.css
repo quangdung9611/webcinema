@@ -529,18 +529,15 @@ p,span,small,strong,label,h1,h2,h3,h4,h5,h6,div{
     width:100%;
     margin-bottom:10px;
   }
-
   .total-value{
     font-size:22px;
   }
-
   .seat-legend-area{
     display:grid;
     grid-template-columns:repeat(2,1fr);
     gap:12px;
     padding:20px 5px;
   }
-
   .legend-item{
     font-size:11px;
   }

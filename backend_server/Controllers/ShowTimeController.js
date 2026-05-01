@@ -221,3 +221,32 @@ exports.deleteShowtime = async (req, res) => {
         res.status(500).json({ error: "Lỗi hệ thống khi xóa" });
     }
 };
+exports.filterShowtimes = async (req, res) => {
+    try {
+        const { movie_id, room_id, date } = req.query;
+
+        if (!movie_id || !room_id || !date) {
+            return res.status(400).json({ error: "Thiếu dữ liệu lọc rồi Dũng ơi!" });
+        }
+
+        // Đảm bảo MySQL hiểu đúng múi giờ Việt Nam trước khi query
+        await db.query("SET time_zone = '+07:00'");
+
+        const [rows] = await db.query(`
+            SELECT 
+                showtime_id, 
+                DATE_FORMAT(start_time, '%Y-%m-%d %H:%i') as start_time, 
+                room_id
+            FROM showtimes 
+            WHERE movie_id = ? 
+              AND room_id = ? 
+              AND DATE(start_time) = ?
+            ORDER BY start_time ASC
+        `, [movie_id, room_id, date]);
+
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error("❌ [DŨNG] Lỗi lọc suất chiếu:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống" });
+    }
+};
