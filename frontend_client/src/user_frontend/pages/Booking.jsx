@@ -10,7 +10,12 @@ const Booking = () => {
     const location = useLocation();
     const navigate = useNavigate();
     
-    const { movie, cinemaName, slot, selectedDate } = location.state || {};
+  // ✅ FIX
+const { movie, cinema, room, showtime, date } = location.state || {};
+
+const cinemaName = cinema?.cinema_name;
+const slot = showtime;
+const selectedDate = date;
     const showtimeId = slot?.showtime_id || slot?.id;
 
     const socket = useMemo(() => io("https://api.quangdungcinema.id.vn", {

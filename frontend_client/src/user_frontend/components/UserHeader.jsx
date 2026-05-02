@@ -93,10 +93,15 @@ const UserHeader = () => {
                     <span className="bar"></span>
                 </button>
 
+                {/* THAY THẾ PHẦN LOGO CHỮ BẰNG ẢNH */}
                 <div className="logo" onClick={() => { navigate('/'); closeMobileMenu(); }}>
-                    CINEMA<span>STAR</span>
+                    <img 
+                        src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png" 
+                        alt="Cinema Star Logo" 
+                        style={{ height: '45px', objectFit: 'contain' }} 
+                    />
                 </div>
-                
+                                
                 {isMenuOpen && <div className="menu-overlay" onClick={closeMobileMenu}></div>}
 
                 <ul ref={navRef} className={`nav-links ${isMenuOpen ? 'active' : ''}`}>

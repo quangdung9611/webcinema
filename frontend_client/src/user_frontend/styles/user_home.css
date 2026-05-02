@@ -98,7 +98,104 @@
 .mini-nav-item.active img {
     filter: brightness(1);
 }
+/* ============================================================
+    QUICK BOOKING - CINEMA STAR EDITION
+    Vị trí: Nằm đè lên chân Banner (Floating)
+============================================================ */
 
+.quick-booking-container {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    margin: -40px auto 20px; /* Đẩy lên trên để đè lên banner 40px */
+    z-index: 100;
+    padding: 0 20px;
+}
+
+.quick-booking-content {
+    background: rgba(20, 10, 35, 0.95); /* Màu nền tím đen đậm */
+    backdrop-filter: blur(15px); /* Hiệu ứng kính mờ */
+    border: 1px solid rgba(138, 43, 226, 0.3); /* Viền tím mờ */
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 
+                0 0 20px rgba(138, 43, 226, 0.1);
+}
+
+.quick-booking-selects {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Chia 4 cột cho Phim, Rạp, Ngày, Suất */
+    gap: 12px;
+    flex-grow: 1;
+}
+
+/* Style cho các ô Select */
+.quick-booking-selects select {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none; /* Khử style mặc định của trình duyệt */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+}
+
+.quick-booking-selects select:hover:not(:disabled) {
+    border-color: var(--accent-purple);
+    background-color: rgba(138, 43, 226, 0.1);
+}
+
+.quick-booking-selects select:focus {
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 8px rgba(138, 43, 226, 0.4);
+}
+
+.quick-booking-selects select:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Ô option bên trong select (Cho các trình duyệt hỗ trợ) */
+.quick-booking-selects select option {
+    background: #1a0a2e;
+    color: #fff;
+}
+
+/* Nút đặt vé */
+.btn-quick-booking {
+    background: linear-gradient(45deg, #8a2be2, #a020f0);
+    color: #fff;
+    border: none;
+    padding: 0 30px;
+    height: 48px;
+    border-radius: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-quick-booking:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(138, 43, 226, 0.5);
+    filter: brightness(1.1);
+}
+
+.btn-quick-booking:active {
+    transform: translateY(0);
+}
 /* --- 2. MOVIE SECTION (GIỮ NGUYÊN CODE CỦA ÔNG) --- */
 .movie-container {
     width: 100%;
@@ -145,7 +242,78 @@
     background-color: var(--accent-purple); 
     box-shadow: 0 0 10px var(--accent-purple);
 }
+/* ============================================================
+    HOME FEATURES - CINEMA STAR STYLE
+============================================================ */
 
+.home-features-section {
+    width: 100%;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 cột đều nhau */
+    gap: 30px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 15px;
+    border: 1px solid rgba(138, 43, 226, 0.1);
+    transition: all 0.3s ease;
+}
+
+.feature-item:hover {
+    background: rgba(138, 43, 226, 0.05);
+    border-color: var(--accent-purple);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Hiệu ứng Icon tròn tím neon */
+.feature-icon-wrapper {
+    min-width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(138, 43, 226, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--accent-purple);
+    border: 1px solid var(--accent-purple);
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.2);
+    transition: all 0.3s ease;
+}
+
+.feature-item:hover .feature-icon-wrapper {
+    background: var(--accent-purple);
+    color: #fff;
+    box-shadow: 0 0 20px var(--accent-purple);
+}
+
+/* Chữ đi kèm */
+.feature-text h4 {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin: 0;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.feature-text p {
+    color: #aaa;
+    font-size: 0.8rem;
+    margin: 0;
+}
 /* --- 3. GRID & POSTER (GIỮ NGUYÊN) --- */
 .movie-grid {
     display: grid;
@@ -225,7 +393,286 @@
     font-size: 0.8rem;
     transition: all 0.3s ease;
 }
+/* ============================================================
+    PROMOTIONS SECTION
+============================================================ */
+.promotions-section {
+    max-width: 1200px;
+    margin: 60px auto;
+    padding: 0 20px;
+}
 
+.section-header {
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.section-title {
+    font-size: 1.8rem;
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.title-underline {
+    width: 60px;
+    height: 4px;
+    background: var(--accent-purple);
+    border-radius: 2px;
+}
+
+.promotions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.promo-card {
+    background: #1a1a1a;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.promo-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--accent-purple);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+}
+
+.promo-image {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
+}
+
+.promo-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.promo-card:hover .promo-image img {
+    transform: scale(1.1);
+}
+
+.promo-tag {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ff0000;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.promo-info {
+    padding: 20px;
+}
+
+.promo-info h3 {
+    color: #fff;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.promo-info p {
+    color: #aaa;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.btn-detail {
+    background: transparent;
+    color: var(--accent-purple);
+    border: 1px solid var(--accent-purple);
+    padding: 8px 18px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-detail:hover {
+    background: var(--accent-purple);
+    color: #fff;
+}
+/* ============================================================
+    CINEMA CORNER SECTION
+============================================================ */
+.cinema-corner-section {
+    max-width: 1200px;
+    margin: 60px auto;
+    padding: 0 20px;
+}
+
+.cinema-corner-content {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr; /* Trái to, phải nhỏ */
+    gap: 30px;
+}
+
+/* Tin chính */
+.news-main .news-card {
+    position: relative;
+    border-radius: 15px;
+    overflow: hidden;
+    height: 100%;
+    cursor: pointer;
+}
+
+.news-main .news-img {
+    height: 400px;
+}
+
+.news-main .news-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.5s;
+}
+
+.news-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 30px;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+}
+
+.news-category {
+    background: var(--accent-purple);
+    color: #fff;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.news-info h3 {
+    color: #fff;
+    margin: 10px 0;
+    font-size: 1.5rem;
+}
+
+.news-main:hover .news-img img {
+    transform: scale(1.05);
+}
+
+/* Tin phụ bên phải */
+.news-list-side {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.news-side-item {
+    display: flex;
+    gap: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.side-img {
+    min-width: 120px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.side-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.side-info h4 {
+    color: #eee;
+    font-size: 0.95rem;
+    margin-bottom: 5px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.side-info span {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.news-side-item:hover h4 {
+    color: var(--accent-purple);
+}
+/* ============================================================
+    CUSTOM SCROLLBAR - CINEMA STAR STYLE
+    Áp dụng cho toàn trang và các vùng có scroll nội bộ
+============================================================ */
+
+/* 1. Áp dụng cho toàn bộ trình duyệt */
+::-webkit-scrollbar {
+    width: 8px; /* Độ rộng thanh cuộn dọc */
+    height: 8px; /* Độ cao thanh cuộn ngang (nếu có) */
+}
+
+/* 2. Phần nền của thanh cuộn (Track) */
+::-webkit-scrollbar-track {
+    background: #0f021f; /* Màu tím đen cực đậm để ẩn mình vào nền dự án */
+    border-radius: 10px;
+}
+
+/* 3. Phần tay cầm thanh cuộn (Thumb) */
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #8a2be2, #4b0082); /* Gradient tím đặc trưng */
+    border-radius: 10px;
+    border: 2px solid #0f021f; /* Tạo khoảng trống nhỏ giữa thanh cuộn và viền */
+    transition: all 0.3s ease;
+}
+
+/* 4. Hiệu ứng khi hover vào thanh cuộn */
+::-webkit-scrollbar-thumb:hover {
+    background: #a020f0; /* Sáng lên một chút khi Dũng rê chuột vào */
+    box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+}
+.scroll-content-y {
+    max-height: 300px; /* Bắt buộc phải có chiều cao tối đa */
+    overflow-y: auto;  /* Cho phép cuộn dọc */
+}
+/* 5. Tùy chỉnh riêng cho các vùng cuộn nội bộ (như cột chọn rạp, chọn suất chiếu) */
+.scroll-content-y::-webkit-scrollbar {
+    width: 5px; /* Làm mảnh hơn cho các vùng nhỏ để nhìn tinh tế */
+}
+
+.scroll-content-y::-webkit-scrollbar-thumb {
+    background: rgba(138, 43, 226, 0.5); /* Độ trong suốt nhẹ */
+}
+
+.scroll-content-y::-webkit-scrollbar-thumb:hover {
+    background: rgba(138, 43, 226, 1);
+}
+
+/* Hỗ trợ cho Firefox (Firefox dùng thuộc tính khác) */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #8a2be2 #0f021f;
+}
 /* --- 4. RESPONSIVE --- */
 @media (max-width: 767px) {
     .mySwiper {

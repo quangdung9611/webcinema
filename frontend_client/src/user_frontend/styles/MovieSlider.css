@@ -1,0 +1,235 @@
+/* ===== GLOBAL BACKGROUND ===== */
+body {
+  background: radial-gradient(circle at 20% 30%, #1a0b2e, #000);
+  
+}
+
+/* ===== WRAPPER ===== */
+.slider-wrapper {
+  padding: 100px 0;
+  text-align: center;
+  position: relative;
+}
+
+/* ===== TITLE ===== */
+.slider-title {
+  color: #fff;
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  margin-bottom: 60px;
+  position: relative;
+  text-transform: uppercase;
+}
+
+/* line 2 bên title */
+.slider-title::before,
+.slider-title::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #a855f7);
+}
+
+.slider-title::before {
+  left: 25%;
+}
+
+.slider-title::after {
+  right: 25%;
+  background: linear-gradient(to left, transparent, #a855f7);
+}
+
+/* ===== SLIDER ===== */
+.slider {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ===== TRACK ===== */
+.slider-track {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  perspective: 1000px;
+}
+
+/* ===== CARD ===== */
+.card {
+  position: relative;
+  width: 200px;
+  height: 300px;
+  border-radius: 20px;
+  overflow: hidden;
+
+  transform: scale(0.7);
+  opacity: 0.3;
+  filter: blur(2px);
+
+  transition: all 0.5s ease;
+}
+
+/* ===== IMAGE ===== */
+.card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===== OVERLAY ===== */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.9), transparent 60%);
+}
+
+/* ===== INFO ===== */
+.info {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  text-align: center;
+  padding: 0 10px;
+}
+
+.info h3 {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* ===== STATUS ===== */
+.status {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+}
+
+.status.now_showing {
+  background: rgba(34,197,94,0.2);
+  color: #22c55e;
+}
+
+.status.coming_soon {
+  background: rgba(168,85,247,0.2);
+  color: #a855f7;
+}
+
+/* ===== ACTIVE CARD (TRUNG TÂM) ===== */
+.card.active {
+  transform: scale(1.25);
+  opacity: 1;
+  filter: none;
+  z-index: 20;
+
+  box-shadow:
+    0 0 40px rgba(168, 85, 247, 0.8),
+    0 0 100px rgba(168, 85, 247, 0.5),
+    0 20px 60px rgba(0,0,0,0.9);
+}
+
+/* glow reflection dưới */
+.card.active::after {
+  content: "";
+  position: absolute;
+  bottom: -40px;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(to bottom, rgba(168,85,247,0.4), transparent);
+  filter: blur(15px);
+}
+
+/* ===== CARD GẦN ===== */
+.card.near {
+  transform: scale(0.9);
+  opacity: 0.6;
+  filter: blur(0.5px);
+}
+
+/* ===== CARD XA ===== */
+.card:not(.active):not(.near) {
+  transform: scale(0.65);
+  opacity: 0.2;
+  filter: blur(3px);
+}
+
+/* ===== ARROWS ===== */
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 50px;
+  height: 50px;
+
+  border-radius: 50%;
+  border: none;
+
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 22px;
+
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.arrow:hover {
+  background: rgba(168, 85, 247, 0.7);
+  box-shadow: 0 0 15px #a855f7;
+}
+
+.arrow.left { left: 20px; }
+.arrow.right { right: 20px; }
+
+/* ===== DOTS ===== */
+.dots {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #555;
+  transition: 0.3s;
+}
+
+.dot.active {
+  background: #a855f7;
+  box-shadow: 0 0 12px #a855f7;
+}
+
+/* ===== HOVER EFFECT ===== */
+.card:hover {
+  transform: scale(1.05);
+  filter: none;
+  opacity: 1;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .card {
+    width: 140px;
+    height: 200px;
+  }
+
+  .card.active {
+    transform: scale(1.1);
+  }
+
+  .slider-title {
+    font-size: 28px;
+  }
+}
