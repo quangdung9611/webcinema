@@ -250,15 +250,27 @@ exports.filterShowtimes = async (req, res) => {
         res.status(500).json({ error: "Lỗi hệ thống" });
     }
 };
-// Hàm mới chuyên biệt cho "Mua vé nhanh"
+// Hàm mới chuyên biệt cho "Mua vé nhanh" - Đã sửa lỗi mảng rỗng
 exports.getQuickBookingData = async (req, res) => {
     try {
         const { movie_id, cinema_id, date } = req.query;
 
-        // Thiết lập múi giờ VN
+        // Thiết lập múi giờ VN để so sánh NOW() cho chuẩn
         await db.query("SET time_zone = '+07:00'");
 
-        // TRƯỜNG HỢP 1: Chỉ có movie_id -> Trả về danh sách Rạp có chiếu phim đó
+        // --- TRƯỜNG HỢP 0: KHÔNG CÓ PARAM ---
+        // Khi vừa load trang, trả về danh sách phim đang có suất chiếu tương lai
+        if (!movie_id && !cinema_id && !date) {
+            const [movies] = await db.query(`
+                SELECT DISTINCT m.movie_id, m.title 
+                FROM showtimes s
+                JOIN movies m ON s.movie_id = m.movie_id
+                WHERE s.start_time >= NOW()
+            `);
+            return res.status(200).json(movies);
+        }
+
+        // --- TRƯỜNG HỢP 1: CÓ movie_id -> Trả về danh sách Rạp của phim đó ---
         if (movie_id && !cinema_id && !date) {
             const [cinemas] = await db.query(`
                 SELECT DISTINCT c.cinema_id, c.cinema_name 
@@ -269,7 +281,7 @@ exports.getQuickBookingData = async (req, res) => {
             return res.status(200).json(cinemas);
         }
 
-        // TRƯỜNG HỢP 2: Có movie_id + cinema_id -> Trả về các Ngày có suất chiếu
+        // --- TRƯỜNG HỢP 2: CÓ movie_id + cinema_id -> Trả về các Ngày ---
         if (movie_id && cinema_id && !date) {
             const [dates] = await db.query(`
                 SELECT DISTINCT DATE_FORMAT(start_time, '%Y-%m-%d') as show_date
@@ -280,24 +292,24 @@ exports.getQuickBookingData = async (req, res) => {
             return res.status(200).json(dates);
         }
 
-        // TRƯỜNG HỢP 3: Có đủ movie_id + cinema_id + date -> Trả về Giờ chiếu cụ thể
+        // --- TRƯỜNG HỢP 3: CÓ ĐỦ movie_id + cinema_id + date -> Trả về Giờ chiếu ---
         if (movie_id && cinema_id && date) {
             const [times] = await db.query(`
                 SELECT 
-                    showtime_id, 
-                    DATE_FORMAT(start_time, '%H:%i') as start_time,
-                    room_id
-                FROM showtimes 
-                WHERE movie_id = ? 
-                  AND cinema_id = ? 
-                  AND DATE(start_time) = ?
-                  AND start_time >= NOW()
-                ORDER BY start_time ASC
+                    s.showtime_id, 
+                    DATE_FORMAT(s.start_time, '%H:%i') as start_time,
+                    r.room_name
+                FROM showtimes s
+                JOIN rooms r ON s.room_id = r.room_id
+                WHERE s.movie_id = ? 
+                  AND s.cinema_id = ? 
+                  AND DATE(s.start_time) = ?
+                  AND s.start_time >= NOW()
+                ORDER BY s.start_time ASC
             `, [movie_id, cinema_id, date]);
             return res.status(200).json(times);
         }
 
-        // Nếu không gửi gì hoặc thiếu thông tin cơ bản
         return res.status(200).json([]);
 
     } catch (error) {
