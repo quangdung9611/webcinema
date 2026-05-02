@@ -250,3 +250,58 @@ exports.filterShowtimes = async (req, res) => {
         res.status(500).json({ error: "Lỗi hệ thống" });
     }
 };
+// Hàm mới chuyên biệt cho "Mua vé nhanh"
+exports.getQuickBookingData = async (req, res) => {
+    try {
+        const { movie_id, cinema_id, date } = req.query;
+
+        // Thiết lập múi giờ VN
+        await db.query("SET time_zone = '+07:00'");
+
+        // TRƯỜNG HỢP 1: Chỉ có movie_id -> Trả về danh sách Rạp có chiếu phim đó
+        if (movie_id && !cinema_id && !date) {
+            const [cinemas] = await db.query(`
+                SELECT DISTINCT c.cinema_id, c.cinema_name 
+                FROM showtimes s
+                JOIN cinemas c ON s.cinema_id = c.cinema_id
+                WHERE s.movie_id = ? AND s.start_time >= NOW()
+            `, [movie_id]);
+            return res.status(200).json(cinemas);
+        }
+
+        // TRƯỜNG HỢP 2: Có movie_id + cinema_id -> Trả về các Ngày có suất chiếu
+        if (movie_id && cinema_id && !date) {
+            const [dates] = await db.query(`
+                SELECT DISTINCT DATE_FORMAT(start_time, '%Y-%m-%d') as show_date
+                FROM showtimes 
+                WHERE movie_id = ? AND cinema_id = ? AND start_time >= NOW()
+                ORDER BY show_date ASC
+            `, [movie_id, cinema_id]);
+            return res.status(200).json(dates);
+        }
+
+        // TRƯỜNG HỢP 3: Có đủ movie_id + cinema_id + date -> Trả về Giờ chiếu cụ thể
+        if (movie_id && cinema_id && date) {
+            const [times] = await db.query(`
+                SELECT 
+                    showtime_id, 
+                    DATE_FORMAT(start_time, '%H:%i') as start_time,
+                    room_id
+                FROM showtimes 
+                WHERE movie_id = ? 
+                  AND cinema_id = ? 
+                  AND DATE(start_time) = ?
+                  AND start_time >= NOW()
+                ORDER BY start_time ASC
+            `, [movie_id, cinema_id, date]);
+            return res.status(200).json(times);
+        }
+
+        // Nếu không gửi gì hoặc thiếu thông tin cơ bản
+        return res.status(200).json([]);
+
+    } catch (error) {
+        console.error("❌ [DŨNG] Lỗi lấy dữ liệu đặt vé nhanh:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống" });
+    }
+};

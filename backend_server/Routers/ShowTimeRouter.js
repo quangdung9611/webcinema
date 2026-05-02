@@ -9,29 +9,29 @@ const showtimeController = require('../Controllers/ShowTimeController');
  */
 
 // 1. Lấy danh sách tất cả suất chiếu (Dùng cho bảng quản lý Admin)
-// GET: https://api.quangdungcinema.id.vn/api/showtimes/
 router.get('/', showtimeController.getAllShowtimes);
 
-// Đặt dòng này lên TRÊN các route có tham số như /detail/:id để tránh bị nhận nhầm nhé
-// router.get('/filter/:movieId', showtimeController.filterShowtimes);
-// 2. Lấy chi tiết một suất chiếu (Dùng để đổ dữ liệu vào Form Update)
-// GET: https://api.quangdungcinema.id.vn/api/showtimes/detail/:id
+// 2. ROUTE MỚI: Đặt vé nhanh (Dùng cho thanh Quick Booking ở trang chủ)
+// GET: https://api.quangdungcinema.id.vn/api/showtimes/quick-booking
+// Route này dùng Query Params nên để trên các route có :id
+router.get('/quick-booking', showtimeController.getQuickBookingData);
+
+// 3. Lấy chi tiết một suất chiếu
 router.get('/detail/:id', showtimeController.getShowtimeDetail);
 
-// 3. Thêm mới suất chiếu
-// POST: https://api.quangdungcinema.id.vn/api/showtimes/add
+// 4. Thêm mới suất chiếu
 router.post('/add', showtimeController.createShowtime);
 
-// 4. Cập nhật suất chiếu theo ID
-// PUT: https://api.quangdungcinema.id.vn/api/showtimes/update/:id
+// 5. Cập nhật suất chiếu theo ID
 router.put('/update/:id', showtimeController.updateShowtime);
 
-// 5. Xóa suất chiếu theo ID
-// DELETE: https://api.quangdungcinema.id.vn/api/showtimes/delete/:id
+// 6. Xóa suất chiếu theo ID
 router.delete('/delete/:id', showtimeController.deleteShowtime);
 
-// 6. Lấy suất chiếu theo phim (Dùng cho giao diện người dùng/Client)
-// GET: https://api.quangdungcinema.id.vn/api/showtimes/movie/:movieId
-router.get('/filter/:movieId', showtimeController.getShowtimesByMovie);
+// 7. Lấy suất chiếu theo phim (Dùng cho giao diện người dùng/Client)
+router.get('/movie/:movieId', showtimeController.getShowtimesByMovie);
+
+// 8. Route lọc cũ (nếu Dũng vẫn muốn giữ lại cho mục đích khác)
+router.get('/filter-legacy', showtimeController.filterShowtimes);
 
 module.exports = router;

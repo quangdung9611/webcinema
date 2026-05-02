@@ -10,9 +10,13 @@ const UserFooter = () => {
 
                 {/* ===== CỘT 1 ===== */}
                 <div className="footer-section about">
-                    <h2 className="footer-logo">
-                        CINEMA <span>SHOP</span>
-                    </h2>
+                     <div className="logo" onClick={() => { navigate('/'); closeMobileMenu(); }}>
+                        <img 
+                            src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png" 
+                            alt="Cinema Star Logo" 
+                            style={{ height: '45px', objectFit: 'contain' }} 
+                        />
+                    </div>
 
                     <p>
                         Tận hưởng những giây phút giải trí tuyệt vời với hệ thống rạp chiếu phim 

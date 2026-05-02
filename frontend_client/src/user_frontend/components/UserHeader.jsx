@@ -98,7 +98,7 @@ const UserHeader = () => {
                     <img 
                         src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png" 
                         alt="Cinema Star Logo" 
-                        style={{ height: '45px', objectFit: 'contain' }} 
+                        style={{ height: '90px', height: '90px', objectFit: 'contain' }} 
                     />
                 </div>
                                 
