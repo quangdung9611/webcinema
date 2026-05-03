@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import axios from 'axios';
 import MovieSlider from '../components/MovieSlider';
-// 1. IMPORT SWIPER COMPONENTS & MODULES
+
+// SWIPER
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade, Navigation, Pagination } from 'swiper/modules';
-// Thêm dòng này nè Dũng:
+
 import { Ticket, Star, CreditCard, Monitor } from 'lucide-react';
-// 2. IMPORT SWIPER STYLES
+
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import 'swiper/css/navigation';
@@ -18,7 +19,6 @@ import '../styles/user_home.css';
 const UserHome = () => {
   const navigate = useNavigate();
   
-  // --- DỮ LIỆU BANNER (Giữ nguyên) ---
   const banners = ['banner1.png', 'banner2.png', 'banner3.png', 'banner4.png'];
   const bannerBaseUrl = "https://api.quangdungcinema.id.vn/uploads/banners/";
   const bannerDocUrl = "https://api.quangdungcinema.id.vn/uploads/banner_doc/";
@@ -26,35 +26,40 @@ const UserHome = () => {
   const [swiperInstance, setSwiperInstance] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // --- QUẢN LÝ DỮ LIỆU PHIM & QUICK BOOKING ---
   const [groupedMovies, setGroupedMovies] = useState({ "Đang chiếu": [], "Sắp chiếu": [] });
   const [loading, setLoading] = useState(true);
   const movieBaseUrl = "https://api.quangdungcinema.id.vn/uploads/posters/"; 
 
-  // State cho Đặt vé nhanh
+  // QUICK BOOKING STATE
   const [quickData, setQuickData] = useState({ movies: [], cinemas: [] });
-  const [selectedQuick, setSelectedQuick] = useState({ movie: '', cinema: '', date: '', showtime: '' });
-  const [availableShowtimes, setAvailableShowtimes] = useState([]);
-  const [availableDates, setAvailableDates] = useState([]);
+  const [selectedQuick, setSelectedQuick] = useState({
+    movie: '',
+    cinema: '',
+    date: '',
+    showtime: ''
+  });
 
-  // 1. Fetch dữ liệu ban đầu (Phim Slider + List Phim/Rạp cho Quick Booking)
+  const [availableDates, setAvailableDates] = useState([]);
+  const [availableShowtimes, setAvailableShowtimes] = useState([]);
+
+  // LOAD BAN ĐẦU
   useEffect(() => {
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        const [statusRes, movieRes, cinemaRes] = await Promise.all([
+        const [statusRes, movieRes] = await Promise.all([
           axios.get('https://api.quangdungcinema.id.vn/api/movies/status-group'),
-          axios.get('https://api.quangdungcinema.id.vn/api/movies'),
-          axios.get('https://api.quangdungcinema.id.vn/api/cinemas')
+          axios.get('https://api.quangdungcinema.id.vn/api/showtimes/quick-booking')
         ]);
         
         setGroupedMovies(statusRes.data);
         setQuickData({
           movies: movieRes.data,
-          cinemas: cinemaRes.data
+          cinemas: []
         });
+
       } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu:", error);
+        console.error("Lỗi khi load data:", error);
       } finally {
         setLoading(false);
       }
@@ -62,36 +67,102 @@ const UserHome = () => {
     fetchInitialData();
   }, []);
 
-  // 2. Fetch Suất chiếu khi chọn xong Phim + Rạp
+  // 🔥 CHỌN PHIM → LOAD RẠP
   useEffect(() => {
-    const fetchQuickShowtimes = async () => {
-      if (selectedQuick.movie && selectedQuick.cinema) {
-        try {
-          const res = await axios.get(`https://api.quangdungcinema.id.vn/api/showtimes`, {
-            params: {
-              movie_id: selectedQuick.movie,
-              cinema_id: selectedQuick.cinema
-            }
-          });
-          setAvailableShowtimes(res.data);
-          // Lọc ra danh sách các ngày duy nhất
-          const dates = [...new Set(res.data.map(item => item.show_date))];
-          setAvailableDates(dates);
-        } catch (error) {
-          console.error("Lỗi fetch suất chiếu nhanh:", error);
-        }
-      }
-    };
-    fetchQuickShowtimes();
-  }, [selectedQuick.movie, selectedQuick.cinema]);
-
-  // 3. Xử lý nút Đặt vé nhanh
-  const handleQuickBook = () => {
-    if (!selectedQuick.showtime) {
-      alert("Dũng ơi, chọn đầy đủ thông tin suất chiếu đã nhé!");
+    if (!selectedQuick.movie) {
+      setQuickData(prev => ({ ...prev, cinemas: [] }));
+      setAvailableDates([]);
+      setAvailableShowtimes([]);
       return;
     }
-    // Lưu vào sessionStorage để trang Booking lấy ra dùng[cite: 1]
+
+    const fetchCinemas = async () => {
+      try {
+        const res = await axios.get(
+          "https://api.quangdungcinema.id.vn/api/showtimes/quick-booking",
+          { params: { movie_id: selectedQuick.movie } }
+        );
+
+        setQuickData(prev => ({
+          ...prev,
+          cinemas: res.data
+        }));
+
+      } catch (error) {
+        console.error("Lỗi load rạp:", error);
+      }
+    };
+
+    fetchCinemas();
+  }, [selectedQuick.movie]);
+
+  // 🔥 CHỌN RẠP → LOAD NGÀY
+  useEffect(() => {
+  if (!selectedQuick.movie || !selectedQuick.cinema) {
+    setAvailableDates([]);
+    setAvailableShowtimes([]);
+    return;
+  }
+
+  const fetchDates = async () => {
+    try {
+      const res = await axios.get(
+        "https://api.quangdungcinema.id.vn/api/showtimes/quick-booking",
+        {
+          params: {
+            movie_id: selectedQuick.movie,
+            cinema_id: selectedQuick.cinema
+          }
+        }
+      );
+
+      // ✅ FIX: lấy đúng field show_date
+      setAvailableDates(res.data.map(d => d.show_date));
+
+    } catch (error) {
+      console.error("Lỗi load ngày:", error);
+    }
+  };
+
+  fetchDates();
+}, [selectedQuick.movie, selectedQuick.cinema]); // ✅ FIX dependency
+
+  // 🔥 CHỌN NGÀY → LOAD SUẤT
+  useEffect(() => {
+  if (!selectedQuick.movie || !selectedQuick.cinema || !selectedQuick.date) {
+    setAvailableShowtimes([]);
+    return;
+  }
+
+  const fetchShowtimes = async () => {
+    try {
+      const res = await axios.get(
+        "https://api.quangdungcinema.id.vn/api/showtimes/quick-booking",
+        {
+          params: {
+            movie_id: selectedQuick.movie,
+            cinema_id: selectedQuick.cinema,
+            date: selectedQuick.date
+          }
+        }
+      );
+
+      setAvailableShowtimes(res.data);
+
+    } catch (error) {
+      console.error("Lỗi load suất:", error);
+    }
+  };
+
+  fetchShowtimes();
+}, [selectedQuick.movie, selectedQuick.cinema, selectedQuick.date]); // ✅ FIX
+  // HANDLE BOOK
+  const handleQuickBook = () => {
+    if (!selectedQuick.showtime) {
+      alert("Dũng ơi, chọn đầy đủ thông tin nha!");
+      return;
+    }
+
     sessionStorage.setItem('quickBooking', JSON.stringify(selectedQuick));
     navigate('/booking');
   };
@@ -139,63 +210,90 @@ const UserHome = () => {
         </div>
       </div>
 
-      {/* 2. THANH ĐẶT VÉ NHANH (MỚI TÍCH HỢP) */}
-      <section className="quick-booking-container">
-        <div className="quick-booking-content">
-          <div className="quick-booking-selects">
-            {/* Chọn Phim */}
-            <select 
-              value={selectedQuick.movie}
-              onChange={(e) => setSelectedQuick({...selectedQuick, movie: e.target.value, date: '', showtime: ''})}
-            >
-              <option value="">Chọn phim</option>
-              {quickData.movies.map(m => (
-                <option key={m.movie_id} value={m.movie_id}>{m.title}</option>
-              ))}
-            </select>
+     {/* 2. THANH ĐẶT VÉ NHANH (MỚI TÍCH HỢP) */}
+  <section className="quick-booking-container">
+    <div className="quick-booking-content">
+      <div className="quick-booking-selects">
 
-            {/* Chọn Rạp */}
-            <select 
-              value={selectedQuick.cinema}
-              onChange={(e) => setSelectedQuick({...selectedQuick, cinema: e.target.value, date: '', showtime: ''})}
-            >
-              <option value="">Chọn rạp</option>
-              {quickData.cinemas.map(c => (
-                <option key={c.cinema_id} value={c.cinema_id}>{c.cinema_name}</option>
-              ))}
-            </select>
+        {/* Chọn Phim */}
+        <select 
+          value={selectedQuick.movie}
+          onChange={(e) => setSelectedQuick({
+            movie: e.target.value,
+            cinema: '',
+            date: '',
+            showtime: ''
+          })}
+        >
+          <option value="">Chọn phim</option>
+          {quickData.movies.map(m => (
+            <option key={m.movie_id} value={m.movie_id}>{m.title}</option>
+          ))}
+        </select>
 
-            {/* Chọn Ngày */}
-            <select 
-              disabled={!availableDates.length}
-              value={selectedQuick.date}
-              onChange={(e) => setSelectedQuick({...selectedQuick, date: e.target.value, showtime: ''})}
-            >
-              <option value="">Chọn ngày</option>
-              {availableDates.map(date => (
-                <option key={date} value={date}>{date}</option>
-              ))}
-            </select>
+        {/* Chọn Rạp */}
+          <select 
+                disabled={!selectedQuick.movie}  // ✅ FIX: chưa chọn phim thì khóa
+                value={selectedQuick.cinema}
+                onChange={(e) => setSelectedQuick({
+                  ...selectedQuick,
+                  cinema: e.target.value,
+                  date: '',
+                  showtime: ''
+                })}
+              >
+                <option value="">Chọn rạp</option>
+                {quickData.cinemas.map(c => (
+                  <option key={c.cinema_id} value={c.cinema_id}>{c.cinema_name}</option>
+                ))}
+              </select>
 
-            {/* Chọn Suất */}
-            <select 
-              disabled={!selectedQuick.date}
-              value={selectedQuick.showtime}
-              onChange={(e) => setSelectedQuick({...selectedQuick, showtime: e.target.value})}
-            >
-              <option value="">Chọn suất</option>
-              {availableShowtimes
-                .filter(s => s.show_date === selectedQuick.date)
-                .map(s => (
-                  <option key={s.showtime_id} value={s.showtime_id}>
-                    {s.start_time} - {s.room_name}
+              <select 
+                disabled={!selectedQuick.cinema || !availableDates.length}
+                value={selectedQuick.date}
+                onChange={(e) => setSelectedQuick({
+                  ...selectedQuick,
+                  date: e.target.value,
+                  showtime: ''
+                })}
+              >
+                <option value="">Chọn ngày</option>
+                {availableDates.map(date => (
+                  <option key={date} value={date}>
+                    {date}
                   </option>
                 ))}
-            </select>
-          </div>
-          <button className="btn-quick-booking" onClick={handleQuickBook}>ĐẶT VÉ NGAY</button>
-        </div>
-      </section>
+              </select>
+
+        {/* Chọn Suất */}
+        <select 
+          disabled={!selectedQuick.date}
+          value={selectedQuick.showtime}
+          onChange={(e) => setSelectedQuick({
+            ...selectedQuick,
+            showtime: e.target.value
+          })}
+        >
+          <option value="">Chọn suất</option>
+
+          {/* ❌ BỎ filter vì API đã lọc rồi */}
+          {availableShowtimes.map(s => (
+            <option key={s.showtime_id} value={s.showtime_id}>
+              {s.start_time} - {s.room_name}
+            </option>
+          ))}
+        </select>
+
+      </div>
+
+      <button 
+        className="btn-quick-booking" 
+        onClick={handleQuickBook}
+      >
+        ĐẶT VÉ NGAY
+      </button>
+    </div>
+  </section>
       {/* 4 ICON TIỆN ÍCH DƯỚI QUICK BOOKING */}
       <section className="home-features-section">
           <div className="features-grid">
