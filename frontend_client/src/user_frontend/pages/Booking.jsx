@@ -15,15 +15,15 @@ import '../styles/Booking.css';
 const Booking = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { movie } = location.state || {}; // Lấy thông tin phim từ trang trước
+    const { movie } = location.state || {}; 
 
-    // --- 1. STATES QUẢN LÝ LUỒNG (STEPS) ---
+    // --- 1. STATES QUẢN LÝ LUỒNG ---
     const [currentStep, setCurrentStep] = useState(1); 
     const [cinemas, setCinemas] = useState([]); 
     const [availableDates, setAvailableDates] = useState([]);
     const [availableShowtimes, setAvailableShowtimes] = useState([]);
 
-    // --- 2. STATES LỰA CHỌN CỦA NGƯỜI DÙNG ---
+    // --- 2. STATES LỰA CHỌN ---
     const [selectedCinema, setSelectedCinema] = useState(null);
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedShowtime, setSelectedShowtime] = useState(null);
@@ -37,6 +37,7 @@ const Booking = () => {
             ref.current.scrollLeft += offset;
         }
     };
+
     // --- 3. STATES DỮ LIỆU GHẾ & UI ---
     const [seats, setSeats] = useState([]); 
     const [showtimeDetail, setShowtimeDetail] = useState(null); 
@@ -79,22 +80,30 @@ const Booking = () => {
         fetchInitialData();
     }, [movie, navigate]);
 
-    // --- 5. LOGIC LẤY SUẤT CHIẾU (STEP 2) ---
+    // --- 5. LOGIC LẤY SUẤT CHIẾU (Sử dụng API filter-booking mới) ---
     useEffect(() => {
-        if (selectedCinema && selectedDate && movie?.id) {
+        // Chỉ gọi API khi có đủ 3 yếu tố: Rạp, Ngày và Phim
+        if (selectedCinema && selectedDate && (movie?.movie_id || movie?.id)) {
             const fetchShowtimes = async () => {
                 try {
-                    const res = await axios.get(`https://api.quangdungcinema.id.vn/api/showtimes/filter`, {
-                        params: { cinemaId: selectedCinema.cinema_id, date: selectedDate, movieId: movie.id }
+                    const res = await axios.get(`https://api.quangdungcinema.id.vn/api/showtimes/filter-booking`, {
+                        params: { 
+                            cinema_id: selectedCinema.cinema_id, 
+                            date: selectedDate, 
+                            movie_id: movie.movie_id || movie.id 
+                        }
                     });
                     setAvailableShowtimes(res.data);
-                } catch (err) { console.error("Lỗi tải suất chiếu:", err); }
+                } catch (err) { 
+                    console.error("Lỗi tải suất chiếu:", err); 
+                    setAvailableShowtimes([]);
+                }
             };
             fetchShowtimes();
         }
-    }, [selectedCinema, selectedDate, movie?.id]);
+    }, [selectedCinema, selectedDate, movie]);
 
-    // --- 6. LOGIC LẤY GHẾ & SOCKET (STEP 3) ---
+    // --- 6. LOGIC LẤY GHẾ & SOCKET (GIỮ NGUYÊN) ---
     const fetchSeats = useCallback(async () => {
         if (!showtimeId) return;
         try {
@@ -106,7 +115,6 @@ const Booking = () => {
             setShowtimeDetail(detailRes.data);
             setSeats(seatsRes.data);
 
-            // Restore session 10 phút
             const savedSeats = sessionStorage.getItem('selectedSeats');
             const savedShowtime = sessionStorage.getItem('currentShowtimeId');
             if (savedSeats && savedShowtime === showtimeId.toString()) {
@@ -120,12 +128,12 @@ const Booking = () => {
     }, [showtimeId, socket]);
 
     useEffect(() => {
-        if (currentStep === 3 && showtimeId) {
+        if (showtimeId) {
             fetchSeats();
         }
-    }, [currentStep, showtimeId, fetchSeats]);
+    }, [showtimeId, fetchSeats]);
 
-    // --- 7. XỬ LÝ REAL-TIME SOCKET ---
+    // --- 7. XỬ LÝ REAL-TIME SOCKET (GIỮ NGUYÊN) ---
     useEffect(() => {
         if (!showtimeId) return;
         socket.on('server-khoa-ghe', (data) => {
@@ -188,7 +196,6 @@ const Booking = () => {
     return (
     <div className="booking-wrapper">
         <div className="booking-container">
-            {/* CỘT TRÁI: THÔNG TIN VÉ (POSTER) */}
             <aside className="ticket-sidebar">
                 <div className="poster-container">
                     <img 
@@ -219,11 +226,9 @@ const Booking = () => {
                 </div>
             </aside>
 
-            {/* CỘT PHẢI: BỘ LỌC NGANG & SƠ ĐỒ GHẾ */}
             <section className="main-booking-area">
-                {/* NAV STEP-BAR: DISPLAY FLEX NGANG */}
                 <nav className="booking-nav-flex">
-                    {/* 1. CHỌN RẠP */}
+                    {/* BƯỚC 1: CHỌN RẠP */}
                     <div className="nav-col cinema-select">
                         <label>1. CHỌN RẠP</label>
                         <select 
@@ -231,6 +236,9 @@ const Booking = () => {
                             onChange={(e) => {
                                 const cinema = cinemas.find(c => c.cinema_id == e.target.value);
                                 setSelectedCinema(cinema);
+                                setSelectedDate(null); // Reset ngày khi đổi rạp
+                                setSelectedShowtime(null); // Reset suất chiếu
+                                setAvailableShowtimes([]);
                             }}
                         >
                             <option value="">-- Chọn rạp --</option>
@@ -238,51 +246,59 @@ const Booking = () => {
                         </select>
                     </div>
 
-                    {/* 2. CHỌN NGÀY (THU NHỎ + SLIDER) */}
-                    <div className="nav-col date-slider">
+                    {/* BƯỚC 2: CHỌN NGÀY - Disabled nếu chưa chọn Rạp */}
+                    <div className={`nav-col date-slider ${!selectedCinema ? 'disabled-step' : ''}`}>
                         <label>2. CHỌN NGÀY</label>
                         <div className="slider-controls">
-                            <button className="slide-btn" onClick={() => scroll(dateRef, -150)}>‹</button>
+                            <button className="slide-btn" onClick={() => scroll(dateRef, -150)} disabled={!selectedCinema}>‹</button>
                             <div className="scroll-list" ref={dateRef}>
                                 {availableDates.map(d => (
                                     <div 
                                         key={d} 
                                         className={`compact-card ${selectedDate === d ? 'active' : ''}`}
-                                        onClick={() => setSelectedDate(d)}
+                                        onClick={() => {
+                                            if(selectedCinema) {
+                                                setSelectedDate(d);
+                                                setSelectedShowtime(null); // Reset suất khi đổi ngày
+                                            }
+                                        }}
                                     >
                                         <span className="day-txt">{new Date(d).toLocaleDateString('vi-VN', {weekday: 'short'})}</span>
                                         <span className="date-txt">{new Date(d).getDate()}/{new Date(d).getMonth() + 1}</span>
                                     </div>
                                 ))}
                             </div>
-                            <button className="slide-btn" onClick={() => scroll(dateRef, 150)}>›</button>
+                            <button className="slide-btn" onClick={() => scroll(dateRef, 150)} disabled={!selectedCinema}>›</button>
                         </div>
                     </div>
 
-                    {/* 3. SUẤT CHIẾU (THU NHỎ + SLIDER) */}
-                    <div className="nav-col time-slider">
+                    {/* BƯỚC 3: SUẤT CHIẾU - Disabled nếu chưa chọn Ngày */}
+                    <div className={`nav-col time-slider ${!selectedDate ? 'disabled-step' : ''}`}>
                         <label>3. SUẤT CHIẾU</label>
                         <div className="slider-controls">
-                            <button className="slide-btn" onClick={() => scroll(timeRef, -120)}>‹</button>
+                            <button className="slide-btn" onClick={() => scroll(timeRef, -120)} disabled={!selectedDate}>‹</button>
                             <div className="scroll-list" ref={timeRef}>
-                                {availableShowtimes.map(st => (
-                                    <div 
-                                        key={st.id} 
-                                        className={`compact-card time-card ${selectedShowtime?.id === st.id ? 'active' : ''}`}
-                                        onClick={() => setSelectedShowtime(st)}
-                                    >
-                                        <span className="time-txt">
-                                            {new Date(st.start_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
-                                        </span>
-                                    </div>
-                                ))}
+                                {availableShowtimes.length > 0 ? (
+                                    availableShowtimes.map(st => (
+                                        <div 
+                                            key={st.showtime_id || st.id} 
+                                            className={`compact-card time-card ${selectedShowtime?.showtime_id === st.showtime_id || selectedShowtime?.id === st.id ? 'active' : ''}`}
+                                            onClick={() => setSelectedShowtime(st)}
+                                        >
+                                            <span className="time-txt">
+                                                {new Date(st.start_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                                            </span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    selectedDate && <span className="no-showtimes">Hết suất</span>
+                                )}
                             </div>
-                            <button className="slide-btn" onClick={() => scroll(timeRef, 120)}>›</button>
+                            <button className="slide-btn" onClick={() => scroll(timeRef, 120)} disabled={!selectedDate}>›</button>
                         </div>
                     </div>
                 </nav>
 
-                {/* SƠ ĐỒ GHẾ - XUẤT HIỆN DƯỚI NAV */}
                 <div className="seat-selection-content">
                     {selectedShowtime ? (
                         <div className="seat-map-wrapper animate-in">

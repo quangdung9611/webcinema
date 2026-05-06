@@ -323,7 +323,6 @@ exports.getQuickBookingData = async (req, res) => {
         res.status(500).json({ error: "Lỗi hệ thống" });
     }
 };
-// Hàm mới dành riêng cho trang Booking - Lọc theo Rạp và Ngày khi đã biết Phim
 exports.getShowtimesForBooking = async (req, res) => {
     try {
         const { movie_id, cinema_id, date } = req.query;
@@ -332,8 +331,9 @@ exports.getShowtimesForBooking = async (req, res) => {
             return res.status(400).json({ error: "Dũng ơi, chọn rạp và ngày mới hiện suất chiếu được!" });
         }
 
-        // Set múi giờ Việt Nam để lấy giờ hiện tại chính xác
-        await db.query("SET time_zone = '+07:00'");
+        // 1. Lấy giờ hiện tại của Việt Nam từ Node.js
+        const vtimezone = new Date().toLocaleString("en-US", {timeZone: "Asia/Ho_Chi_Minh"});
+        const nowInVN = new Date(vtimezone);
 
         const [rows] = await db.query(`
             SELECT 
@@ -346,9 +346,9 @@ exports.getShowtimesForBooking = async (req, res) => {
             WHERE s.movie_id = ? 
               AND s.cinema_id = ? 
               AND DATE(s.start_time) = ?
-              AND s.start_time >= NOW() -- Chỉ lấy các suất chưa chiếu để khách khỏi đặt nhầm
+              AND s.start_time >= ? -- Sử dụng biến giờ từ Node.js thay vì NOW() của MySQL
             ORDER BY s.start_time ASC
-        `, [movie_id, cinema_id, date]);
+        `, [movie_id, cinema_id, date, nowInVN]); // Truyền nowInVN vào đây
 
         res.status(200).json(rows);
     } catch (error) {
