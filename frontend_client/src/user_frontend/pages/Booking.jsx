@@ -1,209 +1,181 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { io } from "socket.io-client";
+
+// Components
 import Modal from '../../admin_frontend/components/Modal';
 import CountdownTimer from './CountdownTimer'; 
+import { SeatNormal, SeatVIP, SeatCouple } from "../components/SeatIcon";
+import Seat from "../components/Seat";
+
+// Styles
 import '../styles/Booking.css';
-import { io } from "socket.io-client";
 
 const Booking = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    
-  // ✅ FIX
-const { movie, cinema, room, showtime, date } = location.state || {};
+    const { movie } = location.state || {}; // Lấy thông tin phim từ trang trước
 
-const cinemaName = cinema?.cinema_name;
-const slot = showtime;
-const selectedDate = date;
-    const showtimeId = slot?.showtime_id || slot?.id;
+    // --- 1. STATES QUẢN LÝ LUỒNG (STEPS) ---
+    const [currentStep, setCurrentStep] = useState(1); 
+    const [cinemas, setCinemas] = useState([]); 
+    const [availableDates, setAvailableDates] = useState([]);
+    const [availableShowtimes, setAvailableShowtimes] = useState([]);
+
+    // --- 2. STATES LỰA CHỌN CỦA NGƯỜI DÙNG ---
+    const [selectedCinema, setSelectedCinema] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [selectedShowtime, setSelectedShowtime] = useState(null);
+    const [selectedSeats, setSelectedSeats] = useState([]); 
+
+    const dateRef = useRef(null);
+    const timeRef = useRef(null);
+
+    const scroll = (ref, offset) => {
+        if (ref.current) {
+            ref.current.scrollLeft += offset;
+        }
+    };
+    // --- 3. STATES DỮ LIỆU GHẾ & UI ---
+    const [seats, setSeats] = useState([]); 
+    const [showtimeDetail, setShowtimeDetail] = useState(null); 
+    const [loading, setLoading] = useState(false);
+    const [isTimerActive, setIsTimerActive] = useState(false);
+    const [modalConfig, setModalConfig] = useState({
+        show: false, type: 'info', title: '', message: '',
+        onConfirm: () => {}, onCancel: null
+    });
 
     const socket = useMemo(() => io("https://api.quangdungcinema.id.vn", {
         withCredentials: true,
         transports: ["websocket", "polling"]
     }), []);
 
-    const [seats, setSeats] = useState([]); 
-    const [selectedSeats, setSelectedSeats] = useState([]); 
-    const [showtimeDetail, setShowtimeDetail] = useState(null); 
-    const [loading, setLoading] = useState(true);
-    const [isTimerActive, setIsTimerActive] = useState(false);
+    const showtimeId = selectedShowtime?.showtime_id || selectedShowtime?.id;
 
-    const [modalConfig, setModalConfig] = useState({
-        show: false, type: 'info', title: '', message: '',
-        onConfirm: () => {}, onCancel: null
-    });
-
-    const closeModal = () => setModalConfig(prev => ({ ...prev, show: false }));
-
-    // --- EFFECT LẮNG NGHE REAL-TIME ---
+    // --- 4. LOGIC KHỞI TẠO (RẠP & NGÀY) ---
     useEffect(() => {
-        if (!showtimeId) return;
+        window.scrollTo(0, 0);
+        if (!movie) { navigate('/'); return; }
 
-        socket.on('server-gui-danh-sach-dang-giu', (holdingList) => {
-            setSeats(prevSeats => {
-                if (prevSeats.length === 0) return prevSeats;
-                return prevSeats.map(seat => {
-                    const isHeld = holdingList.some(h => 
-                        Number(h.seatId) === Number(seat.seat_id) && 
-                        Number(h.showtimeId) === Number(showtimeId)
-                    );
-                    return { ...seat, is_locked_by_user: isHeld };
-                });
-            });
-        });
-
-        socket.on('server-khoa-ghe', (data) => {
-            if (Number(data.showtimeId) === Number(showtimeId)) {
-                setSeats(prevSeats => prevSeats.map(seat => 
-                    Number(seat.seat_id) === Number(data.seatId) 
-                    ? { ...seat, is_locked_by_user: true } 
-                    : seat
-                ));
-            }
-        });
-
-        socket.on('server-mo-khoa-ghe', (data) => {
-            if (Number(data.showtimeId) === Number(showtimeId)) {
-                setSeats(prevSeats => prevSeats.map(seat => 
-                    Number(seat.seat_id) === Number(data.seatId) 
-                    ? { ...seat, is_locked_by_user: false } 
-                    : seat
-                ));
-            }
-        });
-
-        return () => {
-            socket.off('server-gui-danh-sach-dang-giu');
-            socket.off('server-khoa-ghe');
-            socket.off('server-mo-khoa-ghe');
+        const fetchInitialData = async () => {
+            try {
+                setLoading(true);
+                const res = await axios.get('https://api.quangdungcinema.id.vn/api/cinemas');
+                setCinemas(res.data);
+                
+                const dates = [];
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() + i);
+                    dates.push(d.toISOString().split('T')[0]);
+                }
+                setAvailableDates(dates);
+            } catch (err) {
+                console.error("Lỗi tải dữ liệu ban đầu:", err);
+            } finally { setLoading(false); }
         };
-    }, [showtimeId, socket]);
+        fetchInitialData();
+    }, [movie, navigate]);
 
-    const fetchShowtimeDetail = useCallback(async () => {
-        if (!showtimeId) return;
-        try {
-           const res = await axios.get(`https://api.quangdungcinema.id.vn/api/showtimes/detail/${showtimeId}`);
-            setShowtimeDetail(res.data);
-        } catch (err) {
-            console.error("Lỗi tải chi tiết suất chiếu:", err);
+    // --- 5. LOGIC LẤY SUẤT CHIẾU (STEP 2) ---
+    useEffect(() => {
+        if (selectedCinema && selectedDate && movie?.id) {
+            const fetchShowtimes = async () => {
+                try {
+                    const res = await axios.get(`https://api.quangdungcinema.id.vn/api/showtimes/filter`, {
+                        params: { cinemaId: selectedCinema.cinema_id, date: selectedDate, movieId: movie.id }
+                    });
+                    setAvailableShowtimes(res.data);
+                } catch (err) { console.error("Lỗi tải suất chiếu:", err); }
+            };
+            fetchShowtimes();
         }
-    }, [showtimeId]);
+    }, [selectedCinema, selectedDate, movie?.id]);
 
+    // --- 6. LOGIC LẤY GHẾ & SOCKET (STEP 3) ---
     const fetchSeats = useCallback(async () => {
         if (!showtimeId) return;
         try {
             setLoading(true);
-            const res = await axios.get(`https://api.quangdungcinema.id.vn/api/seats/showtime/${showtimeId}`);
-            
-            let initialSeats = res.data;
+            const [detailRes, seatsRes] = await Promise.all([
+                axios.get(`https://api.quangdungcinema.id.vn/api/showtimes/detail/${showtimeId}`),
+                axios.get(`https://api.quangdungcinema.id.vn/api/seats/showtime/${showtimeId}`)
+            ]);
+            setShowtimeDetail(detailRes.data);
+            setSeats(seatsRes.data);
+
+            // Restore session 10 phút
             const savedSeats = sessionStorage.getItem('selectedSeats');
             const savedShowtime = sessionStorage.getItem('currentShowtimeId');
-            
             if (savedSeats && savedShowtime === showtimeId.toString()) {
-                const parsedSeats = JSON.parse(savedSeats);
-                setSelectedSeats(parsedSeats);
-                if (sessionStorage.getItem('holdExpiresAt')) {
-                    setIsTimerActive(true);
-                }
-                parsedSeats.forEach(s => {
-                    socket.emit('client-chon-ghe', { seatId: s.seat_id, showtimeId });
-                });
+                const parsed = JSON.parse(savedSeats);
+                setSelectedSeats(parsed);
+                if (sessionStorage.getItem('holdExpiresAt')) setIsTimerActive(true);
+                parsed.forEach(s => socket.emit('client-chon-ghe', { seatId: s.seat_id, showtimeId }));
             }
-            setSeats(initialSeats);
-        } catch (err) {
-            console.error("Lỗi tải dữ liệu ghế:", err);
-            setSeats([]);
-        } finally {
-            setLoading(false);
-        }
+        } catch (err) { console.error("Lỗi tải sơ đồ ghế:", err); } 
+        finally { setLoading(false); }
     }, [showtimeId, socket]);
 
     useEffect(() => {
-        window.scrollTo(0, 0);
-        if (!movie || !slot) {
-            navigate('/');
-            return;
+        if (currentStep === 3 && showtimeId) {
+            fetchSeats();
         }
-        fetchShowtimeDetail();
-        fetchSeats();
-    }, [fetchSeats, fetchShowtimeDetail, movie, slot, navigate]);
+    }, [currentStep, showtimeId, fetchSeats]);
 
-    const clearBookingSession = () => {
-        selectedSeats.forEach(s => {
-            socket.emit('client-huy-chon-ghe', { seatId: s.seat_id, showtimeId });
+    // --- 7. XỬ LÝ REAL-TIME SOCKET ---
+    useEffect(() => {
+        if (!showtimeId) return;
+        socket.on('server-khoa-ghe', (data) => {
+            if (Number(data.showtimeId) === Number(showtimeId)) {
+                setSeats(prev => prev.map(s => Number(s.seat_id) === Number(data.seatId) ? { ...s, is_locked_by_user: true } : s));
+            }
         });
+        socket.on('server-mo-khoa-ghe', (data) => {
+            if (Number(data.showtimeId) === Number(showtimeId)) {
+                setSeats(prev => prev.map(s => Number(s.seat_id) === Number(data.seatId) ? { ...s, is_locked_by_user: false } : s));
+            }
+        });
+        return () => { socket.off('server-khoa-ghe'); socket.off('server-mo-khoa-ghe'); };
+    }, [showtimeId, socket]);
+
+    // --- 8. HÀM HÀNH ĐỘNG ---
+    const clearBookingSession = useCallback(() => {
+        selectedSeats.forEach(s => socket.emit('client-huy-chon-ghe', { seatId: s.seat_id, showtimeId }));
         sessionStorage.removeItem('selectedSeats');
         sessionStorage.removeItem('holdExpiresAt');
         sessionStorage.removeItem('currentShowtimeId');
         setIsTimerActive(false);
         setSelectedSeats([]);
-    };
-
-    const handleTimeExpire = () => {
-        clearBookingSession();
-        setModalConfig({
-            show: true, type: 'error', title: 'HẾT GIỜ',
-            message: 'Đã hết thời gian giữ ghế, vui lòng chọn lại nhé!',
-            onConfirm: () => { closeModal(); window.location.reload(); }
-        });
-    };
+    }, [selectedSeats, socket, showtimeId]);
 
     const handleSeatClick = (seat) => {
         if (seat.seat_status === 'Booked' || Number(seat.is_active) === 0 || seat.is_locked_by_user) return;
-        
         const isSelected = selectedSeats.find(s => s.seat_id === seat.seat_id);
-        let updatedSeats = [];
+        let updated = [];
 
         if (isSelected) {
-            updatedSeats = selectedSeats.filter(s => s.seat_id !== seat.seat_id);
+            updated = selectedSeats.filter(s => s.seat_id !== seat.seat_id);
             socket.emit('client-huy-chon-ghe', { seatId: seat.seat_id, showtimeId });
-            if (updatedSeats.length === 0) clearBookingSession();
+            if (updated.length === 0) clearBookingSession();
         } else {
-            if (selectedSeats.length >= 8) {
-                setModalConfig({ show: true, type: 'info', title: 'GIỚI HẠN', message: 'Tối đa 8 ghế thôi nhé!', onConfirm: closeModal });
-                return;
-            }
-            updatedSeats = [...selectedSeats, seat];
+            if (selectedSeats.length >= 8) return;
+            updated = [...selectedSeats, seat];
             socket.emit('client-chon-ghe', { seatId: seat.seat_id, showtimeId });
-            
             if (selectedSeats.length === 0) {
-                const expiresAt = Date.now() + 10 * 60 * 1000;
-                sessionStorage.setItem('holdExpiresAt', expiresAt.toString());
+                sessionStorage.setItem('holdExpiresAt', (Date.now() + 10 * 60 * 1000).toString());
                 sessionStorage.setItem('currentShowtimeId', showtimeId.toString());
                 setIsTimerActive(true);
             }
         }
-        setSelectedSeats(updatedSeats);
-        sessionStorage.setItem('selectedSeats', JSON.stringify(updatedSeats));
-    };
-
-    // --- LOGIC ĐIỀU HƯỚNG ĐỒNG BỘ ---
-    const handleContinue = () => {
-        if (selectedSeats.length === 0) return;
-        
-        // 1. Gom tất cả state hiện tại vào 1 object để mang đi xuyên suốt
-        const bookingData = { 
-            ...location.state, 
-            showtimeDetail, 
-            selectedSeats, 
-            totalTicketPrice: selectedSeats.reduce((sum, s) => sum + Number(s.price), 0),
-            // Khởi tạo sẵn bắp nước rỗng để các file sau không bị undefined
-            selectedFoods: [], 
-            totalFoodPrice: 0 
-        };
-        
-        // 2. Lưu tạm vào sessionStorage để đề phòng khách F5 ở trang sau
-        sessionStorage.setItem('booking_temp', JSON.stringify(bookingData));
-        
-        // 3. THÊM DÒNG NÀY: Chuyển thẳng sang trang chọn đồ ăn
-        navigate('/foods', { state: bookingData });
+        setSelectedSeats(updated);
+        sessionStorage.setItem('selectedSeats', JSON.stringify(updated));
     };
 
     const groupedSeats = useMemo(() => {
-        const uniqueSeats = Array.from(new Map(seats.map(s => [s.seat_id, s])).values());
-        
-        return uniqueSeats.reduce((acc, seat) => {
+        return seats.reduce((acc, seat) => {
             const row = seat.seat_row;
             if (!acc[row]) acc[row] = [];
             acc[row].push(seat);
@@ -212,125 +184,162 @@ const selectedDate = date;
         }, {});
     }, [seats]);
 
-    if (loading) return <div className="loading-screen">Đang tải sơ đồ ghế...</div>;
-
+    // --- 9. GIAO DIỆN RETURN ---
     return (
-        <div className="booking-page-full-wrapper">
-            <Modal {...modalConfig} onConfirm={modalConfig.onConfirm} onCancel={modalConfig.onCancel} />
-            
-            {/* Cập nhật Stepper: 01 đang Active, còn lại là chưa tới */}
-            <div className="stepper-bar-full">
-                <div className="stepper-content">
-                    <div className="step-item active">01 CHỌN GHẾ</div>
-                    <div className="step-item">02 CHỌN THỨC ĂN</div>
-                    <div className="step-item">03 THANH TOÁN</div>
-                    <div className="step-item">04 XÁC NHẬN</div>
+    <div className="booking-wrapper">
+        <div className="booking-container">
+            {/* CỘT TRÁI: THÔNG TIN VÉ (POSTER) */}
+            <aside className="ticket-sidebar">
+                <div className="poster-container">
+                    <img 
+                        src={`https://api.quangdungcinema.id.vn/uploads/posters/${showtimeDetail?.poster_url || movie?.poster_url}`} 
+                        alt="Movie Poster" 
+                    />
                 </div>
-            </div>
+                <div className="ticket-details">
+                    <h2 className="movie-name">{showtimeDetail?.title || movie?.title}</h2>
+                    <div className="detail-item">
+                        <span>Rạp:</span> <strong>{selectedCinema?.cinema_name || '---'}</strong>
+                    </div>
+                    <div className="detail-item">
+                        <span>Ngày:</span> <strong>{selectedDate || '---'}</strong>
+                    </div>
+                    <div className="detail-item">
+                        <span>Suất:</span> 
+                        <strong>{selectedShowtime ? new Date(selectedShowtime.start_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</strong>
+                    </div>
+                    <div className="detail-item">
+                        <span>Ghế:</span> 
+                        <strong className="seats-list">{selectedSeats.map(s => `${s.seat_row}${s.seat_number}`).join(', ') || '---'}</strong>
+                    </div>
+                    <div className="total-price-box">
+                        <p>TỔNG TIỀN</p>
+                        <h3>{selectedSeats.reduce((sum, s) => sum + Number(s.price), 0).toLocaleString()} ₫</h3>
+                    </div>
+                </div>
+            </aside>
 
-            <div className="booking-main-layout">
-                <div className="booking-grid-container">
-                    <div className="left-section-seatmap">
-                        <div className="seat-selection-card">
-                            <div className="seats-layout-engine">
-                                {Object.keys(groupedSeats).sort().reverse().map(row => (
-                                    <div key={row} className="seat-row">
-                                        <span className="row-label side-label">{row}</span>
-                                        <div className="row-cells-group">
-                                            {groupedSeats[row].map(seat => {
-                                                const isSelected = selectedSeats.some(s => s.seat_id === seat.seat_id);
-                                                const isBooked = seat.seat_status === 'Booked';
-                                                const isMaintenance = Number(seat.is_active) === 0;
-                                                const isLockedRealtime = seat.is_locked_by_user; 
+            {/* CỘT PHẢI: BỘ LỌC NGANG & SƠ ĐỒ GHẾ */}
+            <section className="main-booking-area">
+                {/* NAV STEP-BAR: DISPLAY FLEX NGANG */}
+                <nav className="booking-nav-flex">
+                    {/* 1. CHỌN RẠP */}
+                    <div className="nav-col cinema-select">
+                        <label>1. CHỌN RẠP</label>
+                        <select 
+                            value={selectedCinema?.cinema_id || ''} 
+                            onChange={(e) => {
+                                const cinema = cinemas.find(c => c.cinema_id == e.target.value);
+                                setSelectedCinema(cinema);
+                            }}
+                        >
+                            <option value="">-- Chọn rạp --</option>
+                            {cinemas.map(c => <option key={c.cinema_id} value={c.cinema_id}>{c.cinema_name}</option>)}
+                        </select>
+                    </div>
 
-                                                return (
-                                                    <div 
-                                                        key={seat.seat_id}
-                                                        className={`seat-unit ${seat.seat_type.toLowerCase()} 
-                                                            ${isSelected || isLockedRealtime ? 'selected' : ''} 
-                                                            ${isBooked ? 'booked' : ''} 
-                                                            ${isMaintenance ? 'maintenance' : ''}`}
-                                                        onClick={() => handleSeatClick(seat)}
-                                                    >
-                                                        {isBooked ? <span className="booked-icon">X</span> : 
-                                                         isMaintenance ? <span className="maintenance-icon">X</span> : seat.seat_number}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                        <span className="row-label side-label">{row}</span>
+                    {/* 2. CHỌN NGÀY (THU NHỎ + SLIDER) */}
+                    <div className="nav-col date-slider">
+                        <label>2. CHỌN NGÀY</label>
+                        <div className="slider-controls">
+                            <button className="slide-btn" onClick={() => scroll(dateRef, -150)}>‹</button>
+                            <div className="scroll-list" ref={dateRef}>
+                                {availableDates.map(d => (
+                                    <div 
+                                        key={d} 
+                                        className={`compact-card ${selectedDate === d ? 'active' : ''}`}
+                                        onClick={() => setSelectedDate(d)}
+                                    >
+                                        <span className="day-txt">{new Date(d).toLocaleDateString('vi-VN', {weekday: 'short'})}</span>
+                                        <span className="date-txt">{new Date(d).getDate()}/{new Date(d).getMonth() + 1}</span>
                                     </div>
                                 ))}
                             </div>
-                             <div className="screen-container">
-                                <div className="screen-line">Màn hình</div>
-                            </div>
-                            <div className="seat-legend-area">
-                                <div className="legend-item"><span className="legend-box status-booked">X</span> Đã bán</div>
-                                <div className="legend-item"><span className="legend-box status-selected"></span> Đang chọn</div>
-                                <div className="legend-item"><span className="legend-box status-maintenance">X</span> Bảo trì</div>
-                                <div className="legend-item"><span className="legend-box type-vip"></span> VIP</div>
-                                <div className="legend-item"><span className="legend-box type-standard"></span> Thường</div>
-                                <div className="legend-item"><span className="legend-box type-couple"></span> Ghế đôi</div>
-                            </div>
+                            <button className="slide-btn" onClick={() => scroll(dateRef, 150)}>›</button>
                         </div>
                     </div>
 
-                    <aside className="right-section-sidebar">
-                        <div className="sidebar-sticky-content">
-                            {isTimerActive && selectedSeats.length > 0 && (
-                                <div className="timer-display-box">
-                                    <CountdownTimer onExpire={handleTimeExpire} />
-                                </div>
-                            )}
-
-                            <div className="movie-info-summary">
-                                <img src={`https://api.quangdungcinema.id.vn/uploads/posters/${showtimeDetail?.poster_url || movie?.poster_url}`} alt="" className="summary-poster" />
-                                <div className="summary-meta-data">
-                                    <h4 className="movie-title-text">{showtimeDetail?.title || movie?.title}</h4>
-                                    <p className="movie-sub-desc">
-                                        {showtimeDetail?.room_type || '2D'} Phụ Đề - 
-                                        <span className="age-badge-t18">
-                                            T{showtimeDetail?.age_rating || movie?.age_rating || '18'}
+                    {/* 3. SUẤT CHIẾU (THU NHỎ + SLIDER) */}
+                    <div className="nav-col time-slider">
+                        <label>3. SUẤT CHIẾU</label>
+                        <div className="slider-controls">
+                            <button className="slide-btn" onClick={() => scroll(timeRef, -120)}>‹</button>
+                            <div className="scroll-list" ref={timeRef}>
+                                {availableShowtimes.map(st => (
+                                    <div 
+                                        key={st.id} 
+                                        className={`compact-card time-card ${selectedShowtime?.id === st.id ? 'active' : ''}`}
+                                        onClick={() => setSelectedShowtime(st)}
+                                    >
+                                        <span className="time-txt">
+                                            {new Date(st.start_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
                                         </span>
-                                    </p>
-                                </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <button className="slide-btn" onClick={() => scroll(timeRef, 120)}>›</button>
+                        </div>
+                    </div>
+                </nav>
+
+                {/* SƠ ĐỒ GHẾ - XUẤT HIỆN DƯỚI NAV */}
+                <div className="seat-selection-content">
+                    {selectedShowtime ? (
+                        <div className="seat-map-wrapper animate-in">
+                            <div className="screen-header">
+                                <div className="screen-line"></div>
+                                <span>MÀN HÌNH</span>
                             </div>
 
-                            <div className="ticket-details-breakdown">
-                                <p className="detail-row"><strong>{cinemaName}</strong> - {showtimeDetail?.room_name || 'Đang tải...'}</p>
-                                <p className="detail-row">Suất: <strong>{new Date(slot?.start_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</strong> - {selectedDate}</p>
-                                <div className="selected-seats-display">
-                                    <span>Ghế: </span>
-                                    <strong className="highlight-orange">
-                                        {selectedSeats.length > 0 
-                                            ? selectedSeats.map(s => `${s.seat_row}${s.seat_number}`).join(', ')
-                                            : 'Chưa chọn'}
-                                    </strong>
-                                </div>
+                            <div className="seats-layout">
+                                {Object.keys(groupedSeats).sort().reverse().map(row => (
+                                    <div key={row} className="seat-row">
+                                        <span className="row-id">{row}</span>
+                                        <div className="row-items">
+                                            {groupedSeats[row].map(seat => (
+                                                <Seat 
+                                                    key={seat.seat_id} 
+                                                    type={seat.seat_type} 
+                                                    selected={selectedSeats.some(s => s.seat_id === seat.seat_id)}
+                                                    sold={seat.seat_status === 'Booked'}
+                                                    number={seat.seat_number} 
+                                                    onClick={() => handleSeatClick(seat)} 
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
 
-                            <div className="payment-footer-section">
-                                <div className="total-amount-row">
-                                    <span className="total-label">Tạm tính</span>
-                                    <span className="total-value">
-                                        {selectedSeats.reduce((sum, s) => sum + Number(s.price), 0).toLocaleString()} ₫
-                                    </span>
-                                </div>
+                            <div className="seat-legend">
+                                <div className="leg-item"><div className="box normal"></div> Thường</div>
+                                <div className="leg-item"><div className="box vip"></div> VIP</div>
+                                <div className="leg-item"><div className="box couple"></div> Đôi</div>
+                                <div className="leg-item"><div className="box selected"></div> Đang chọn</div>
+                                <div className="leg-item"><div className="box sold"></div> Đã bán</div>
+                            </div>
 
-                                <div className="action-buttons-group">
-                                    <button className="btn-confirm-booking" onClick={handleContinue} disabled={selectedSeats.length === 0}>
-                                        TIẾP TỤC
-                                    </button>
-                                    <button className="btn-go-back" onClick={() => navigate(-1)}>Quay lại</button>
-                                </div>
+                            <div className="booking-actions">
+                                <button 
+                                    className="btn-next" 
+                                    disabled={selectedSeats.length === 0} 
+                                    onClick={() => navigate('/foods', { state: { ...location.state, selectedShowtime, selectedSeats } })}
+                                >
+                                    TIẾP TỤC CHỌN ĐỒ ĂN
+                                </button>
                             </div>
                         </div>
-                    </aside>
+                    ) : (
+                        <div className="placeholder-msg">
+                            <i className="fas fa-info-circle"></i>
+                            <p>Vui lòng chọn đầy đủ thông tin ở trên để hiển thị sơ đồ ghế</p>
+                        </div>
+                    )}
                 </div>
-            </div>
+            </section>
         </div>
-    );
+    </div>
+);
 };
 
 export default Booking;

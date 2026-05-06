@@ -8,30 +8,32 @@ const showtimeController = require('../Controllers/ShowTimeController');
  * ==========================================
  */
 
-// 1. Lấy danh sách tất cả suất chiếu (Dùng cho bảng quản lý Admin)
+// 1. Lấy danh sách tất cả suất chiếu (Admin)
 router.get('/', showtimeController.getAllShowtimes);
 
-// 2. ROUTE MỚI: Đặt vé nhanh (Dùng cho thanh Quick Booking ở trang chủ)
-// GET: https://api.quangdungcinema.id.vn/api/showtimes/quick-booking
-// Route này dùng Query Params nên để trên các route có :id
+// 2. Đặt vé nhanh (Trang chủ)
 router.get('/quick-booking', showtimeController.getQuickBookingData);
 
-// 3. Lấy chi tiết một suất chiếu
+// 3. MỚI: Lọc suất chiếu cho trang Booking (Phim đã có sẵn, lọc theo Rạp + Ngày)
+// GET: https://api.quangdungcinema.id.vn/api/showtimes/filter-booking
+router.get('/filter-booking', showtimeController.getShowtimesForBooking);
+
+// 4. Lấy chi tiết một suất chiếu
 router.get('/detail/:id', showtimeController.getShowtimeDetail);
 
-// 4. Thêm mới suất chiếu
+// 5. Thêm mới suất chiếu
 router.post('/add', showtimeController.createShowtime);
 
-// 5. Cập nhật suất chiếu theo ID
+// 6. Cập nhật suất chiếu theo ID
 router.put('/update/:id', showtimeController.updateShowtime);
 
-// 6. Xóa suất chiếu theo ID
+// 7. Xóa suất chiếu theo ID
 router.delete('/delete/:id', showtimeController.deleteShowtime);
 
-// 7. Lấy suất chiếu theo phim (Dùng cho giao diện người dùng/Client)
+// 8. Lấy suất chiếu theo phim (Client - Movie Detail)
 router.get('/movie/:movieId', showtimeController.getShowtimesByMovie);
 
-// 8. Route lọc cũ (nếu Dũng vẫn muốn giữ lại cho mục đích khác)
+// 9. Route lọc cũ
 router.get('/filter-legacy', showtimeController.filterShowtimes);
 
 module.exports = router;

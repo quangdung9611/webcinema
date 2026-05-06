@@ -157,15 +157,46 @@ const UserHome = () => {
   fetchShowtimes();
 }, [selectedQuick.movie, selectedQuick.cinema, selectedQuick.date]); // ✅ FIX
   // HANDLE BOOK
-  const handleQuickBook = () => {
-    if (!selectedQuick.showtime) {
-      alert("Dũng ơi, chọn đầy đủ thông tin nha!");
-      return;
-    }
+  const handleQuickBook = async () => {
+  if (!selectedQuick.showtime) {
+    alert("Dũng ơi, chọn đầy đủ thông tin nha!");
+    return;
+  }
 
-    sessionStorage.setItem('quickBooking', JSON.stringify(selectedQuick));
-    navigate('/booking');
-  };
+  try {
+    // gọi API lấy detail suất chiếu
+    const res = await axios.get(
+      `https://api.quangdungcinema.id.vn/api/showtimes/detail/${selectedQuick.showtime}`
+    );
+
+    const showtimeData = res.data;
+
+    navigate('/booking', {
+      state: {
+        movie: {
+          title: showtimeData.title,
+          poster_url: showtimeData.poster_url,
+          age_rating: showtimeData.age_rating
+        },
+        cinema: {
+          cinema_name: showtimeData.cinema_name
+        },
+        room: {
+          room_name: showtimeData.room_name,
+          room_type: showtimeData.room_type
+        },
+        showtime: {
+          showtime_id: showtimeData.showtime_id,
+          start_time: showtimeData.start_time
+        },
+        date: showtimeData.start_time.split(' ')[0]
+      }
+    });
+
+  } catch (err) {
+    console.error("Lỗi khi lấy showtime detail:", err);
+  }
+};
 
   return (
     <div className="user-home">

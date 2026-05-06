@@ -323,3 +323,36 @@ exports.getQuickBookingData = async (req, res) => {
         res.status(500).json({ error: "Lỗi hệ thống" });
     }
 };
+// Hàm mới dành riêng cho trang Booking - Lọc theo Rạp và Ngày khi đã biết Phim
+exports.getShowtimesForBooking = async (req, res) => {
+    try {
+        const { movie_id, cinema_id, date } = req.query;
+
+        if (!movie_id || !cinema_id || !date) {
+            return res.status(400).json({ error: "Dũng ơi, chọn rạp và ngày mới hiện suất chiếu được!" });
+        }
+
+        // Set múi giờ Việt Nam để lấy giờ hiện tại chính xác
+        await db.query("SET time_zone = '+07:00'");
+
+        const [rows] = await db.query(`
+            SELECT 
+                s.showtime_id, 
+                DATE_FORMAT(s.start_time, '%H:%i') as start_time, 
+                r.room_name,
+                r.room_type
+            FROM showtimes s
+            JOIN rooms r ON s.room_id = r.room_id
+            WHERE s.movie_id = ? 
+              AND s.cinema_id = ? 
+              AND DATE(s.start_time) = ?
+              AND s.start_time >= NOW() -- Chỉ lấy các suất chưa chiếu để khách khỏi đặt nhầm
+            ORDER BY s.start_time ASC
+        `, [movie_id, cinema_id, date]);
+
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error("❌ [DŨNG] Lỗi lọc suất chiếu Booking:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống" });
+    }
+};

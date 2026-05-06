@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "../styles/MovieSlider.css";
 
 const MovieSlider = ({ title, movies, baseUrl, onClickMovie }) => {
   const [activeIndex, setActiveIndex] = useState(0);
+
+  // ✅ AUTO SLIDE
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % movies.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [movies.length]);
 
   if (!Array.isArray(movies) || movies.length === 0) return null;
 
@@ -25,14 +34,17 @@ const MovieSlider = ({ title, movies, baseUrl, onClickMovie }) => {
 
         <div className="slider-track">
           {movies.map((movie, index) => {
-            const isActive = index === activeIndex;
-            const isNear =
-              index === activeIndex - 1 || index === activeIndex + 1;
+            const diff = index - activeIndex;
+
+            let position = "far";
+            if (diff === 0) position = "active";
+            else if (diff === -1 || diff === movies.length - 1) position = "left";
+            else if (diff === 1 || diff === -movies.length + 1) position = "right";
 
             return (
               <div
                 key={movie.movie_id}
-                className={`card ${isActive ? "active" : ""} ${isNear ? "near" : ""}`}
+                className={`card ${position}`}
                 onClick={() => onClickMovie(movie)}
               >
                 <img
@@ -44,7 +56,6 @@ const MovieSlider = ({ title, movies, baseUrl, onClickMovie }) => {
 
                 <div className="info">
                   <h3>{movie.title}</h3>
-
                   <span className="status">
                     {title === "PHIM ĐANG CHIẾU"
                       ? "ĐANG CHIẾU"
@@ -57,6 +68,17 @@ const MovieSlider = ({ title, movies, baseUrl, onClickMovie }) => {
         </div>
 
         <button className="arrow right" onClick={next}>›</button>
+      </div>
+
+      {/* DOT */}
+      <div className="dots">
+        {movies.map((_, i) => (
+          <span
+            key={i}
+            className={i === activeIndex ? "dot active" : "dot"}
+            onClick={() => setActiveIndex(i)}
+          />
+        ))}
       </div>
     </div>
   );

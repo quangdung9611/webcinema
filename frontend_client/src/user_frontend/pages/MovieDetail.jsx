@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Clock, Calendar, MapPin, Star, User, Play, Info, Ticket, Monitor, ChevronRight, AlertCircle } from 'lucide-react'; 
+// Dọn dẹp lại các icon thực sự có dùng
+import { Star, User, Play } from 'lucide-react'; 
 import Modal from '../../admin_frontend/components/Modal';
 import { useAuth } from '../../context/AuthContext';
 import '../styles/MovieDetail.css';
@@ -16,16 +17,10 @@ const MovieDetail = () => {
     const [relatedMovies, setRelatedMovies] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // --- Logic đặt vé 4 bước ---
-    const [cinemas, setCinemas] = useState([]);
-    const [rooms, setRooms] = useState([]);
-    const [showtimes, setShowtimes] = useState([]);
-    const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('sv-SE')); 
-    const [selectedCinema, setSelectedCinema] = useState(null);
-    const [selectedRoom, setSelectedRoom] = useState(null);
-    const [hasChecked, setHasChecked] = useState(false);
+    // Logic Tabs
+    const [activeTab, setActiveTab] = useState('overview');
 
-    // --- Logic Review & Modal ---
+    // Logic Review & Modal
     const [userRating, setUserRating] = useState(0); 
     const [hover, setHover] = useState(0); 
     const [reviewComment, setReviewComment] = useState(""); 
@@ -54,30 +49,27 @@ const MovieDetail = () => {
         } catch (error) {
             console.error("Lỗi lấy danh sách review:", error);
         }
-    }, []);
+    }, [API_BASE_URL]);
 
-    // 1. Khởi tạo dữ liệu phim & rạp
     useEffect(() => {
         const fetchMovieData = async () => {
             if (!slug || slug === 'undefined') return;
             try {
                 setLoading(true);
-                const [resMovie, resCinemas, resRelated] = await Promise.all([
+                const [resMovie, resRelated] = await Promise.all([
                     axios.get(`${API_BASE_URL}/movies/${slug}`),
-                    axios.get(`${API_BASE_URL}/cinemas`),
                     axios.get(`${API_BASE_URL}/movies`)
                 ]);
 
                 const movieData = resMovie.data;
                 setMovie(movieData);
-                setCinemas(resCinemas.data);
                 
                 if (movieData?.movie_id) {
                     fetchReviews(movieData.movie_id);
                 }
 
                 const filtered = resRelated.data.filter(m => m.slug !== slug);
-                setRelatedMovies(filtered.slice(0, 4)); // Đồng bộ với layout 4 phim/hàng
+                setRelatedMovies(filtered.slice(0, 4));
 
             } catch (error) {
                 console.error("Lỗi gọi API:", error);
@@ -87,53 +79,7 @@ const MovieDetail = () => {
         };
         fetchMovieData();
         window.scrollTo(0, 0);
-    }, [slug, fetchReviews]);
-
-    // 2. Load phòng khi chọn rạp
-    useEffect(() => {
-        if (!selectedCinema) return;
-        const fetchRooms = async () => {
-            try {
-                const res = await axios.get(`${API_BASE_URL}/rooms/cinema/${selectedCinema.cinema_id}`);
-                setRooms(res.data);
-                setSelectedRoom(null);
-                setShowtimes([]);
-                setHasChecked(false);
-            } catch (error) {
-                console.error("Lỗi tải phòng:", error);
-            }
-        };
-        fetchRooms();
-    }, [selectedCinema]);
-
-    // 3. Check suất chiếu khi đủ điều kiện (Phòng + Ngày)
-    useEffect(() => {
-        if (!selectedRoom || !selectedDate || !movie) return;
-        const checkSlots = async () => {
-            try {
-                const res = await axios.get(`${API_BASE_URL}/showtimes/filter/${movie.movie_id}`, {
-                    params: {
-                        movie_id: movie.movie_id,
-                        room_id: selectedRoom.room_id,
-                        date: selectedDate
-                    }
-                });
-                setShowtimes(res.data);
-                setHasChecked(true);
-
-                if (res.data.length === 0) {
-                    setModalConfig({
-                        show: true, type: 'error', title: 'Thông báo',
-                        message: `Hết suất chiếu cho phim này tại phòng ${selectedRoom.room_name} vào ngày ${selectedDate} rồi Dũng ơi!`,
-                        onConfirm: () => setModalConfig({show: false})
-                    });
-                }
-            } catch (error) {
-                console.error("Lỗi check suất chiếu:", error);
-            }
-        };
-        checkSlots();
-    }, [selectedRoom, selectedDate, movie]);
+    }, [slug, fetchReviews, API_BASE_URL]);
 
     const closeModal = () => setModalConfig(prev => ({ ...prev, show: false }));
 
@@ -188,28 +134,6 @@ const MovieDetail = () => {
         });
     };
 
-    const handleBooking = (slot) => {
-        if (!user) {
-            setModalConfig({
-                show: true, type: 'confirm', title: 'Đăng nhập', message: 'Bạn đăng nhập để đặt vé nhé!',
-                onConfirm: () => {
-                    closeModal();
-                    navigate('/login', { state: { from: location.pathname } });
-                }
-            });
-            return;
-        }
-        navigate('/booking', { 
-            state: { 
-                movie, 
-                cinema: selectedCinema, 
-                room: selectedRoom, 
-                showtime: slot, 
-                date: selectedDate 
-            } 
-        });
-    };
-
     const renderStarRating = () => (
         <div className="star-rating-container">
             <div className="star-rating-hint">Chia sẻ cảm nghĩ của bạn về phim này:</div>
@@ -240,216 +164,145 @@ const MovieDetail = () => {
         </div>
     );
 
+    const videoId = movie ? getYoutubeID(movie.trailer_url) : null;
+
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case 'overview':
+                return (
+                    <div className="tab-pane fade-in">
+                        <p className="movie-desc">
+                            {movie.description?.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ')}
+                        </p>
+                        <div className="movie-specs">
+                            <p><span>Starring:</span> {movie.cast || 'Updating...'}</p>
+                            <p><span>Director:</span> {movie.director || 'Updating...'}</p>
+                            <p><span>Genre:</span> {movie.genres?.map(g => g.genre_name).join(', ')}</p>
+                        </div>
+                    </div>
+                );
+            case 'trailers':
+                return (
+                    <div className="tab-pane fade-in">
+                        <div className="trailer-embed">
+                            <iframe 
+                                src={`https://www.youtube.com/embed/${videoId}`} 
+                                title="Trailer"
+                                allowFullScreen
+                            ></iframe>
+                        </div>
+                    </div>
+                );
+            case 'reviews':
+                return (
+                    <div className="tab-pane fade-in">
+                    {/* Đổi thành tab-content-area để kích hoạt thanh cuộn dọc mỏng */}
+                    <div className="tab-content-area reviews-container">
+                        
+                        {/* Đưa nút lên đầu để người dùng dễ thấy, hoặc giữ ở dưới tùy bạn */}
+                        <button className="add-review-btn" onClick={openRatingModal}>
+                            + Viết đánh giá
+                        </button>
+
+                        {reviews.map((r, i) => (
+                            /* Đổi thành review-card để có hiệu ứng kính mờ và hover */
+                            <div key={i} className="review-card">
+                                <div className="review-user-info">
+                                    {/* Icon và Username chuyên nghiệp hơn */}
+                                    <div className="user-icon-circle">
+                                        <User size={14} />
+                                    </div>
+                                    <span className="user-name-text">{r.username}</span>
+                                </div>
+                                <p className="review-comment">{r.comment}</p>
+                            </div>
+                        ))}
+                        
+                    </div>
+                </div>
+                );
+            default: return null;
+        }
+    };
+
     if (loading) return <div className="loading-screen"><span>Đang tải phim...</span></div>;
     if (!movie) return <div className="error">Không tìm thấy phim.</div>;
 
-    const videoId = getYoutubeID(movie.trailer_url);
-
-    const dates = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() + i);
-        return {
-            dayName: i === 0 ? 'Hôm nay' : ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][date.getDay()],
-            displayDate: date.getDate() < 10 ? `0${date.getDate()}` : date.getDate(),
-            dateString: date.toLocaleDateString('sv-SE'),
-            month: date.getMonth() + 1
-        };
-    });
-
     return (
-        <div className="movie-detail-container">
-            <Modal
-                show={modalConfig.show}
-                type={modalConfig.type}
-                title={modalConfig.title}
-                message={modalConfig.message === 'rating_mode' ? renderStarRating() : modalConfig.message}
-                onConfirm={modalConfig.message === 'rating_mode' ? handleSendReview : (modalConfig.onConfirm || closeModal)}
-                onCancel={closeModal}
-            />
+    <div className="netflix-detail-container">
+        <Modal 
+            show={modalConfig.show} 
+            type={modalConfig.type} 
+            title={modalConfig.title}
+            message={modalConfig.message === 'rating_mode' ? renderStarRating() : modalConfig.message}
+            onConfirm={modalConfig.message === 'rating_mode' ? handleSendReview : (modalConfig.onConfirm || closeModal)}
+            onCancel={closeModal}
+        />
 
-            {/* SECTION 1: HERO HEADER */}
-            <header className="movie-hero">
-                <div className="hero-backdrop">
-                    <img src={`${IMAGE_BASE_URL}/backdrops/${movie.backdrop_url}`} alt={movie.title} />
-                    <div className="hero-gradient-overlay"></div>
+        <div className="netflix-content-layout">
+            {/* CỘT TRÁI: POSTER */}
+            <div className="left-column">
+                <div className="main-poster-wrapper">
+                    <img src={`${IMAGE_BASE_URL}/posters/${movie.poster_url}`} alt={movie.title} />
                 </div>
-                <div className="hero-info-wrapper">
-                    <h1 className="movie-title-large">{movie.title}</h1>
-                    <div className="movie-tags-row">
-                        <span className="tag-fill">T</span>
-                        <span className="info-item"><Clock size={16}/> {movie.duration} phút</span>
-                        <span className="info-item"><Calendar size={16}/> {new Date(movie.release_date).getFullYear()}</span>
+            </div>
+
+            {/* CỘT PHẢI: THÔNG TIN - Sẽ tự động cao bằng cột trái */}
+            <div className="right-column">
+                {/* Nhóm trên: Tiêu đề và Tabs */}
+                <div className="upper-info">
+                    <div className="header-row">
+                        <h1 className="movie-title">{movie.title}</h1>
+                        <div className="score-badge">
+                            <span>{movie.avg_rating || "0.0"}</span>
+                            <Star size={20} fill="#f5b50a" color="#f5b50a" />
+                        </div>
                     </div>
-                    <div className="movie-genres-row">
-                        {movie.genres?.map((g, i) => (
-                            <span key={i} className="genre-label">{g.genre_name}</span>
-                        ))}
+
+                    <div className="meta-row">
+                        <span>{new Date(movie.release_date).getFullYear()}</span>
+                        <span className="age-limit">16+</span>
+                        <span>{movie.duration}m</span>
                     </div>
-                    <p className="movie-summary-short">
-                        {movie.description?.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').slice(0, 250)}...
-                    </p>
-                    <div className="hero-action-btns">
-                        <button className="btn-primary-purple" onClick={() => videoId && window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank')}>
-                            <Play size={20} fill="currentColor"/> Xem Trailer
+
+                    <div className="netflix-tabs">
+                        <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>Overview</button>
+                        <button className={activeTab === 'trailers' ? 'active' : ''} onClick={() => setActiveTab('trailers')}>Trailers & More</button>
+                        <button className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>Reviews</button>
+                        <button 
+                            className="booking-btn" 
+                            onClick={() => navigate('/booking', { 
+                                state: { movie: movie } // Truyền nguyên object movie sang
+                            })}
+                        >
+                            Booking
                         </button>
                     </div>
                 </div>
-            </header>
 
-            <main className="movie-main-content">
-                {/* STEP BOOKING SECTION */}
-                    <section id="booking-section" className="booking-stepper-container">
-                    {/* 1. THANH 7 NGÀY CỐ ĐỊNH PHÍA TRÊN */}
-                    <div className="calendar-horizontal-wrapper">
-                        <div className="calendar-grid-7days">
-                            {dates.slice(0, 7).map((d, i) => (
-                                <div 
-                                    key={i} 
-                                    className={`day-item-horizontal ${selectedDate === d.dateString ? 'selected' : ''}`}
-                                    onClick={() => {
-                                        setSelectedDate(d.dateString);
-                                        setHasChecked(false);
-                                        setShowtimes([]);
-                                    }}
-                                >
-                                    <div className="day-name">{d.dayName}</div>
-                                    <div className="day-number">{d.displayDate}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* 2. KHU VỰC CHỌN RẠP - PHÒNG - SUẤT CHIẾU (CÓ SCROLL) */}
-                    <div className="booking-body-layout">
-                        {/* CỘT RẠP */}
-                        <div className="booking-col">
-                            <div className="col-header">CHỌN RẠP</div>
-                            <div className="scroll-content-y">
-                                {cinemas.map((c, i) => (
-                                    <div 
-                                        key={i} 
-                                        className={`cinema-item-card ${selectedCinema?.cinema_id === c.cinema_id ? 'selected' : ''}`}
-                                        onClick={() => setSelectedCinema(c)}
-                                    >
-                                        <div className="cinema-info">
-                                            <div className="cinema-brand">{c.cinema_name}</div>
-                                            <div className="cinema-location">TP. Hồ Chí Minh</div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* CỘT PHÒNG */}
-                        <div className="booking-col">
-                            <div className="col-header">CHỌN PHÒNG</div>
-                            <div className="scroll-content-y">
-                                {selectedCinema ? (
-                                    rooms.length > 0 ? rooms.map((r, i) => (
-                                        <div 
-                                            key={i} 
-                                            className={`room-type-card ${selectedRoom?.room_id === r.room_id ? 'active' : ''}`}
-                                            onClick={() => setSelectedRoom(r)}
-                                        >
-                                            <span className="room-name">{r.room_type}</span>
-                                          
-                                        </div>
-                                    )) : <p className="no-data-text">Hết phòng tại rạp này</p>
-                                ) : <p className="no-data-text">Vui lòng chọn rạp trước</p>}
-                            </div>
-                        </div>
-
-                        {/* CỘT SUẤT CHIẾU */}
-                    <div className="booking-col">
-                        <div className="col-header">SUẤT CHIẾU</div>
-                        <div className="scroll-content-y">
-                            {!selectedRoom ? (
-                                <p className="no-data-text">Vui lòng chọn phòng trước</p>
-                            ) : showtimes.length > 0 ? (
-                                <div className="time-grid-inner">
-                                    {showtimes.map((s, i) => (
-                                        <button key={i} className="slot-btn" onClick={() => handleBooking(s)}>
-                                            {/* Fix lỗi hiển thị giờ nếu start_time là định dạng string khác */}
-                                            {new Date(s.start_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                        </button>
-                                    ))}
-                                </div>
-                            ) : hasChecked ? (
-                                <p className="no-data-text">Hết suất chiếu rồi Dũng ơi!</p>
-                            ) : (
-                                <p className="no-data-text">Đang tìm suất chiếu...</p>
-                            )}
-                        </div>
-                    </div>
-                    </div>
-                </section>
-
-                {/* INFO DETAILS GRID */}
-                <div className="info-details-grid">
-                    <section className="movie-synopsis">
-                        <h3 className="section-label">NỘI DUNG PHIM</h3>
-                        {/* Thêm class movie-description-content ở đây */}
-                        <div className="movie-description-content" dangerouslySetInnerHTML={{ __html: movie.description }} />
-                    </section>
-
-                    <section className="movie-trailer-box">
-                        <h3 className="section-label">TRAILER</h3>
-                        <div className="video-container">
-                            <iframe src={`https://www.youtube.com/embed/${videoId}`} title="Trailer" frameBorder="0" allowFullScreen></iframe>
-                        </div>
-                    </section>
-
-                    <section className="rating-summary-box" onClick={openRatingModal}>
-                        <h3 className="section-label">ĐÁNH GIÁ</h3>
-                        <div className="big-rating">
-                            <Star fill="#f5b50a" color="#f5b50a" size={32}/>
-                            <span className="score">{movie.avg_rating || "0.0"}</span>
-                            <span className="total">/10</span>
-                        </div>
-                        <p className="count">({movie.total_reviews || 0} đánh giá)</p>
-                    </section>
+                {/* Nhóm giữa: Nội dung Tab - Sẽ tự nở ra để chiếm diện tích */}
+                <div className="tab-content-area">
+                    {renderTabContent()}
                 </div>
 
-                {/* PHIM ĐỀ XUẤT */}
-                <section className="related-movies-section">
-                    <h3 className="section-label">PHIM ĐỀ XUẤT</h3>
+                {/* Nhóm dưới: Phim liên quan - Luôn nằm sát đáy poster */}
+                <div className="related-fixed-bottom">
+                    <h3 className="related-title">Related Movies</h3>
                     <div className="related-grid">
-                        {relatedMovies.map((m, index) => (
-                            <div key={index} className="related-card" onClick={() => { navigate(`/movie/${m.slug}`); window.scrollTo(0, 0); }}>
-                                <div className="card-poster">
+                        {relatedMovies.slice(0, 3).map((m, i) => (
+                            <div key={i} className="related-item" onClick={() => navigate(`/movie/${m.slug}`)}>
+                                <div className="img-holder">
                                     <img src={`${IMAGE_BASE_URL}/posters/${m.poster_url}`} alt={m.title} />
                                 </div>
-                                <div className="card-info">
-                                    <h4 className="related-title">{m.title}</h4>
-                                    <p className="related-meta">{m.duration} phút</p>
-                                </div>
+                                <p>{m.title}</p>
                             </div>
                         ))}
                     </div>
-                </section>
-
-                {/* REVIEWS SECTION */}
-                <section className="community-reviews">
-                    <h3 className="section-label">BÌNH LUẬN TỪ CỘNG ĐỒNG</h3>
-                    <div className="reviews-horizontal">
-                        {reviews.slice(0, 3).map((rev, i) => (
-                            <div key={i} className="review-card-modern">
-                                <div className="rev-user">
-                                    <div className="rev-avatar"><User/></div>
-                                    <div>
-                                        <div className="rev-name">{rev.username}</div>
-                                        <div className="rev-stars">{'★'.repeat(rev.rating_score)}</div>
-                                    </div>
-                                </div>
-                                <p className="rev-comment">{rev.comment}</p>
-                            </div>
-                        ))}
-                    </div>
-                    <button className="btn-write-rev" onClick={openRatingModal}>Viết bình luận</button>
-                </section>
-            </main>
+                </div>
+            </div>
         </div>
-    );
+    </div>
+);
 };
 
 export default MovieDetail;
