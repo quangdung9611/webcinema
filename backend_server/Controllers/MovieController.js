@@ -360,7 +360,7 @@ exports.incrementViews = async (req, res) => {
     }
 };
 /* ==========================================================
-    GET MOVIES WITH GENRE FILTER (NO PAGINATION)
+    GET MOVIES WITH GENRE FILTER (CHUẨN CSDL)
    ========================================================== */
 exports.getMoviesWithGenre = async (req, res) => {
     try {
@@ -374,16 +374,12 @@ exports.getMoviesWithGenre = async (req, res) => {
                 m.poster_url,
                 m.status,
                 m.age_rating,
-                m.rating,
                 m.release_date
             FROM movies m
         `;
 
         let params = [];
 
-        /* =========================
-            FILTER GENRE
-        ========================= */
         if (genre) {
             sql += `
                 JOIN movie_genres mg ON m.movie_id = mg.movie_id
@@ -393,12 +389,10 @@ exports.getMoviesWithGenre = async (req, res) => {
             params.push(genre);
         }
 
-        // Sắp xếp phim mới nhất lên đầu
         sql += ` ORDER BY m.created_at DESC `;
 
         const [movies] = await db.query(sql, params);
 
-        // Trả về trực tiếp mảng movies để Frontend dễ xử lý
         res.status(200).json(movies || []);
 
     } catch (error) {
