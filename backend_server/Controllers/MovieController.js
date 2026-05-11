@@ -360,12 +360,14 @@ exports.incrementViews = async (req, res) => {
     }
 };
 /* ==========================================================
-    GET MOVIES WITH GENRE FILTER (CHUẨN CSDL)
+    GET MOVIES WITH GENRE FILTER (FIXED & MATCH DB)
    ========================================================== */
 exports.getMoviesWithGenre = async (req, res) => {
     try {
         const { genre } = req.query;
+        let params = [];
 
+        // Chỉ lấy các cột chắc chắn có trong table movies của ông
         let sql = `
             SELECT DISTINCT
                 m.movie_id,
@@ -374,11 +376,10 @@ exports.getMoviesWithGenre = async (req, res) => {
                 m.poster_url,
                 m.status,
                 m.age_rating,
-                m.release_date
+                m.release_date,
+                m.created_at
             FROM movies m
         `;
-
-        let params = [];
 
         if (genre) {
             sql += `
@@ -389,17 +390,14 @@ exports.getMoviesWithGenre = async (req, res) => {
             params.push(genre);
         }
 
+        // Sắp xếp theo ngày tạo mới nhất
         sql += ` ORDER BY m.created_at DESC `;
 
         const [movies] = await db.query(sql, params);
-
         res.status(200).json(movies || []);
 
     } catch (error) {
         console.error("Lỗi getMoviesWithGenre:", error);
-        res.status(500).json({
-            message: "Lỗi server",
-            error: error.message
-        });
+        res.status(500).json({ message: "Lỗi server", error: error.message });
     }
 };
