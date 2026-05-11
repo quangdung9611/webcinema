@@ -1,7 +1,7 @@
 import { SeatNormal, SeatVIP, SeatCouple } from "./SeatIcon";
 
-const Seat = ({ type, selected, sold, number, onClick }) => {
-  const seatType = type?.toUpperCase(); // 🔥 FIX CHÍNH
+const Seat = ({ type, selected, sold, maintenance, number, onClick }) => {
+  const seatType = type?.toUpperCase();
 
   let Icon = SeatNormal;
 
@@ -10,13 +10,14 @@ const Seat = ({ type, selected, sold, number, onClick }) => {
 
   return (
     <div
-      className={`seat ${seatType} ${selected ? "selected" : ""} ${sold ? "sold" : ""}`}
+      className={`seat ${seatType} ${selected ? "selected" : ""} ${sold ? "sold" : ""}   ${maintenance ? "maintenance" : ""} `}
       onClick={!sold ? onClick : undefined}
     >
       <Icon className="seat-icon" />
 
-      {/* HIỂN THỊ SỐ GHẾ */}
-      <span className="seat-number">{number}</span>
+      <span className="seat-number">
+        {number}
+      </span>
     </div>
   );
 };

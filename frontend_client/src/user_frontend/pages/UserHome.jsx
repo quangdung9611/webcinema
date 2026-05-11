@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import axios from 'axios';
-import MovieSlider from '../components/MovieSlider';
+// import MovieSlider from '../components/MovieSlider';
+import FilmGenre from '..components/FilmGenre';
 
 // SWIPER
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -325,7 +326,7 @@ const UserHome = () => {
       </button>
     </div>
   </section>
-      {/* 4 ICON TIỆN ÍCH DƯỚI QUICK BOOKING */}
+      {/* 3 ICON TIỆN ÍCH DƯỚI QUICK BOOKING */}
       <section className="home-features-section">
           <div className="features-grid">
               <div className="feature-item">
@@ -369,29 +370,13 @@ const UserHome = () => {
               </div>
           </div>
       </section>
-      {/* 3. DANH SÁCH PHIM SLIDER */}
+      {/* 4. FILM GENRE SECTION */}
       <div className="movie-container">
-        {loading ? (
-          <div className="loading-state">Đang tải phim...</div>
-        ) : (
-          <>
-            <MovieSlider
-              title="PHIM ĐANG CHIẾU"
-              movies={groupedMovies["Đang chiếu"] || []}
-              baseUrl={movieBaseUrl}
-              onClickMovie={(movie) => navigate(`/movies/detail/${movie.slug || movie.movie_slug}`)}
-            />
 
-            <MovieSlider
-              title="PHIM SẮP CHIẾU"
-              movies={groupedMovies["Sắp chiếu"] || []}
-              baseUrl={movieBaseUrl}
-              onClickMovie={(movie) => navigate(`/movies/detail/${movie.slug || movie.movie_slug}`)}
-            />
-          </>
-        )}
+          <FilmGenre />
+
       </div>
-      {/* SECTION ƯU ĐÃI HẤP DẪN */}
+    {/*5 SECTION ƯU ĐÃI HẤP DẪN */}
     <section className="promotions-section">
         <div className="section-header">
             <h2 className="section-title">ƯU ĐÃI HẤP DẪN</h2>

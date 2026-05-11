@@ -86,3 +86,38 @@ exports.getAllAssignments = async (req, res) => {
         });
     }
 };
+// api lấy danh sách phim bằng slug 
+exports.getMoviesByGenreSlug = async (req, res) => {
+
+    const { slug } = req.params;
+
+    try {
+
+        const sql = `
+            SELECT DISTINCT m.*
+            FROM movies m
+
+            INNER JOIN movie_genres mg
+                ON m.movie_id = mg.movie_id
+
+            INNER JOIN genres g
+                ON mg.genre_id = g.genre_id
+
+            WHERE g.slug = ?
+
+            ORDER BY m.created_at DESC
+        `;
+
+        const [rows] = await db.query(sql, [slug]);
+
+        res.status(200).json(rows);
+
+    } catch (error) {
+
+        console.error("Lỗi getMoviesByGenreSlug:", error);
+
+        res.status(500).json({
+            error: "Lỗi server"
+        });
+    }
+};

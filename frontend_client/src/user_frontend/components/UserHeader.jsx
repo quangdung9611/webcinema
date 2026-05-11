@@ -94,11 +94,16 @@ const UserHeader = () => {
                 </button>
 
                 {/* THAY THẾ PHẦN LOGO CHỮ BẰNG ẢNH */}
-                <div className="logo" onClick={() => { navigate('/'); closeMobileMenu(); }}>
-                    <img 
-                        src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png" 
-                        alt="Cinema Star Logo" 
-                        style={{ height: '90px', height: '90px', objectFit: 'contain' }} 
+                <div
+                    className="header-logo"
+                    onClick={() => {
+                        navigate('/');
+                        closeMobileMenu();
+                    }}
+                >
+                    <img
+                        src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
+                        alt="Cinema Star Logo"
                     />
                 </div>
                                 

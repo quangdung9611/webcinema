@@ -1,85 +1,323 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Facebook, Instagram, Youtube, MapPin, Phone, Mail } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+
+import {
+    Facebook,
+    Instagram,
+    Youtube,
+    MapPin,
+    Phone,
+    Mail,
+    Clock3,
+    ShieldCheck,
+    Ticket,
+    Headphones,
+    ChevronRight,
+    CircleHelp,
+    BadgePercent,
+    Gift,
+    FileText
+} from 'lucide-react';
+
 import '../styles/Footer.css';
 
 const UserFooter = () => {
+
+    const navigate = useNavigate();
+
     return (
-        <footer className="user-footer">
-            <div className="footer-container">
+        <footer className="mystic-footer">
 
-                {/* ===== CỘT 1 ===== */}
-                <div className="footer-section about">
-                     <div className="logo" onClick={() => { navigate('/'); closeMobileMenu(); }}>
-                        <img 
-                            src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png" 
-                            alt="Cinema Star Logo" 
-                            style={{ height: '45px', objectFit: 'contain' }} 
+            {/* ========= MAIN ========= */}
+            <div className="mystic-footer-container">
+
+                {/* ===== LEFT ===== */}
+                <div className="mystic-footer-brand">
+
+                    <div className="mystic-footer-heading">
+                            <h3>GIỚI THIỆU</h3>
+                            <span></span>
+                    </div>
+
+                    <p className="mystic-footer-description">
+                        CineStar mang đến trải nghiệm điện ảnh đẳng cấp với hệ
+                        thống rạp hiện đại, âm thanh sống động và dịch vụ tận tâm
+                        hàng đầu.
+                    </p>
+
+                    <div className="mystic-footer-divider"></div>
+
+                    <h4 className="mystic-footer-social-title">
+                        KẾT NỐI VỚI CHÚNG TÔI
+                    </h4>
+
+                    <div className="mystic-footer-socials">
+
+                        <a href="#">
+                            <Facebook size={22} />
+                        </a>
+
+                        <a href="#">
+                            <Instagram size={22} />
+                        </a>
+
+                        <a href="#">
+                            <Youtube size={22} />
+                        </a>
+
+                    </div>
+
+                </div>
+
+                {/* ===== RIGHT ===== */}
+                <div className="mystic-footer-grid">
+
+                    {/* ===== COLUMN ===== */}
+                    <div className="mystic-footer-column">
+
+                        <div className="mystic-footer-heading">
+                            <h3>DỊCH VỤ</h3>
+                            <span></span>
+                        </div>
+
+                        <ul>
+
+                            <li>
+                                <Link to="/movies">
+                                    <div>
+                                        <Ticket size={19} />
+                                        <span>Phim Đang Chiếu</span>
+                                    </div>
+
+                                    <ChevronRight size={18} />
+                                </Link>
+                            </li>
+
+                            <li>
+                                <Link to="/coming-soon">
+                                    <div>
+                                        <Ticket size={19} />
+                                        <span>Phim Sắp Chiếu</span>
+                                    </div>
+
+                                    <ChevronRight size={18} />
+                                </Link>
+                            </li>
+
+                            <li>
+                                <Link to="/promotion">
+                                    <div>
+                                        <BadgePercent size={19} />
+                                        <span>Khuyến Mãi</span>
+                                    </div>
+
+                                    <ChevronRight size={18} />
+                                </Link>
+                            </li>
+
+                            <li>
+                                <Link to="/booking-policy">
+                                    <div>
+                                        <FileText size={19} />
+                                        <span>Quy Định Đặt Vé</span>
+                                    </div>
+
+                                    <ChevronRight size={18} />
+                                </Link>
+                            </li>
+
+                            <li>
+                                <Link to="/membership">
+                                    <div>
+                                        <Gift size={19} />
+                                        <span>Ưu Đãi Thành Viên</span>
+                                    </div>
+
+                                    <ChevronRight size={18} />
+                                </Link>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                    {/* ===== COLUMN ===== */}
+                    <div className="mystic-footer-column">
+
+                        <div className="mystic-footer-heading">
+                            <h3>LIÊN HỆ</h3>
+                            <span></span>
+                        </div>
+
+                        <div className="mystic-footer-contact-list">
+
+                            <div className="mystic-footer-contact-item">
+                                <MapPin size={22} />
+
+                                <p>
+                                    123 Đường Số 7, Bình Tân,
+                                    TP. Hồ Chí Minh
+                                </p>
+                            </div>
+
+                            <div className="mystic-footer-contact-item">
+                                <Phone size={22} />
+
+                                <p>
+                                    Hotline: 1900 1234
+                                </p>
+                            </div>
+
+                            <div className="mystic-footer-contact-item">
+                                <Mail size={22} />
+
+                                <p>
+                                    support@cinemashop.vn
+                                </p>
+                            </div>
+
+                            <div className="mystic-footer-contact-item">
+                                <Clock3 size={22} />
+
+                                <p>
+                                    Giờ hoạt động:
+                                    <br />
+                                    08:00 - 23:00 (Tất cả các ngày)
+                                </p>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {/* ===== COLUMN ===== */}
+                    <div className="mystic-footer-column">
+
+                        <div className="mystic-footer-heading">
+                            <h3>HỖ TRỢ</h3>
+                            <span></span>
+                        </div>
+
+                        <ul>
+
+                            <li>
+                                <Link to="/faq">
+
+                                    <div>
+                                        <CircleHelp size={19} />
+                                        <span>Câu Hỏi Thường Gặp</span>
+                                    </div>
+
+                                    <ChevronRight size={18} />
+                                </Link>
+                            </li>
+
+                            <li>
+                                <Link to="/privacy-policy">
+
+                                    <div>
+                                        <ShieldCheck size={19} />
+                                        <span>Chính Sách Bảo Mật</span>
+                                    </div>
+
+                                    <ChevronRight size={18} />
+                                </Link>
+                            </li>
+
+                            <li>
+                                <Link to="/terms">
+
+                                    <div>
+                                        <FileText size={19} />
+                                        <span>Điều Khoản Sử Dụng</span>
+                                    </div>
+
+                                    <ChevronRight size={18} />
+                                </Link>
+                            </li>
+
+                            <li>
+                                <Link to="/booking-guide">
+
+                                    <div>
+                                        <Ticket size={19} />
+                                        <span>Hướng Dẫn Đặt Vé</span>
+                                    </div>
+
+                                    <ChevronRight size={18} />
+                                </Link>
+                            </li>
+
+                            <li>
+                                <Link to="/contact">
+
+                                    <div>
+                                        <Headphones size={19} />
+                                        <span>Liên Hệ Hỗ Trợ</span>
+                                    </div>
+
+                                    <ChevronRight size={18} />
+                                </Link>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {/* ========= FEATURE BAR ========= */}
+            <div className="mystic-footer-feature-bar">
+
+                <div className="mystic-footer-feature">
+                    <ShieldCheck size={22} />
+                    <span>Thanh toán an toàn</span>
+                </div>
+
+                <div className="mystic-footer-feature">
+                    <Ticket size={22} />
+                    <span>Đặt vé nhanh chóng</span>
+                </div>
+
+                <div className="mystic-footer-feature">
+                    <Headphones size={22} />
+                    <span>Hỗ trợ 24/7</span>
+                </div>
+
+            </div>
+
+            {/* ========= COPYRIGHT ========= */}
+            <div className="mystic-footer-bottom">
+                <div
+                        className="mystic-footer-logo"
+                        onClick={() => navigate('/')}
+                    >
+                        <img
+                            src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
+                            alt="Cinema Logo"
                         />
-                    </div>
-
-                    <p>
-                        Tận hưởng những giây phút giải trí tuyệt vời với hệ thống rạp chiếu phim 
-                        hiện đại hàng đầu. Hình ảnh sắc nét, âm thanh sống động.
-                    </p>
-
-                    <div className="social-links">
-                        <a href="#"><Facebook size={20} /></a>
-                        <a href="#"><Instagram size={20} /></a>
-                        <a href="#"><Youtube size={20} /></a>
-                    </div>
                 </div>
 
-                {/* ===== CỘT 2 ===== */}
-                <div className="footer-section links">
-                    <h3>Dịch Vụ</h3>
-                    <ul>
-                        <li><Link to="/movies">Phim Đang Chiếu</Link></li>
-                        <li><Link to="/coming-soon">Phim Sắp Chiếu</Link></li>
-                        <li><Link to="/promotion">Khuyến Mãi</Link></li>
-                        <li><Link to="/booking-policy">Quy Định Đặt Vé</Link></li>
-                    </ul>
-                </div>
-
-                {/* ===== CỘT 3 ===== */}
-                <div className="footer-section contact">
-                    <h3>Liên Hệ</h3>
-
-                    <p>
-                        <MapPin size={16} />
-                        <span>123 Đường Số 7, Bình Tân, TP.HCM</span>
-                    </p>
-
-                    <p>
-                        <Phone size={16} />
-                        <span>Hotline: 1900 1234</span>
-                    </p>
-
-                    <p>
-                        <Mail size={16} />
-                        <span>support@cinemashop.vn</span>
-                    </p>
-                </div>
-
-                {/* ===== CỘT 4 ===== */}
-                <div className="footer-section support">
-                    <h3>Hỗ Trợ</h3>
-                    <ul>
-                        <li><Link to="/faq">Câu Hỏi Thường Gặp</Link></li>
-                        <li><Link to="/privacy-policy">Chính Sách Bảo Mật</Link></li>
-                        <li><Link to="/terms">Điều Khoản Sử Dụng</Link></li>
-                        <li><Link to="/contact">Liên Hệ Hỗ Trợ</Link></li>
-                    </ul>
-                </div>
-
-            </div>
-
-            {/* ===== BOTTOM ===== */}
-            <div className="footer-bottom">
                 <p>
-                    © 2026 Cinema Shop - Thiết kế bởi Quang Dũng. All Rights Reserved.
+                    © 2026 <span>CineStar</span>. Tất cả quyền được bảo lưu.
                 </p>
+
+                <button
+                    className="mystic-footer-scrolltop"
+                    onClick={() =>
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        })
+                    }
+                >
+                    ↑
+                </button>
+
             </div>
+
         </footer>
     );
 };

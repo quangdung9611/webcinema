@@ -8,7 +8,7 @@ import Modal from '../../admin_frontend/components/Modal';
 import CountdownTimer from './CountdownTimer'; 
 import { SeatNormal, SeatVIP, SeatCouple } from "../components/SeatIcon";
 import Seat from "../components/Seat";
-
+import BookingSidebar from '../components/BookingSidebar';
 // Styles
 import '../styles/Booking.css';
 
@@ -196,36 +196,57 @@ const Booking = () => {
     return (
     <div className="booking-wrapper">
         <div className="booking-container">
-            <aside className="ticket-sidebar">
-                <div className="poster-container">
-                    <img 
-                        src={`https://api.quangdungcinema.id.vn/uploads/posters/${showtimeDetail?.poster_url || movie?.poster_url}`} 
-                        alt="Movie Poster" 
-                    />
-                </div>
-                <div className="ticket-details">
-                    <h2 className="movie-name">{showtimeDetail?.title || movie?.title}</h2>
-                    <div className="detail-item">
-                        <span>Rạp:</span> <strong>{selectedCinema?.cinema_name || '---'}</strong>
-                    </div>
-                    <div className="detail-item">
-                        <span>Ngày:</span> <strong>{selectedDate || '---'}</strong>
-                    </div>
-                    <div className="detail-item">
-                        <span>Suất:</span> 
-                        <strong>{selectedShowtime ? new Date(selectedShowtime.start_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '---'}</strong>
-                    </div>
-                    <div className="detail-item">
-                        <span>Ghế:</span> 
-                        <strong className="seats-list">{selectedSeats.map(s => `${s.seat_row}${s.seat_number}`).join(', ') || '---'}</strong>
-                    </div>
-                    <div className="total-price-box">
-                        <p>TỔNG TIỀN</p>
-                        <h3>{selectedSeats.reduce((sum, s) => sum + Number(s.price), 0).toLocaleString()} ₫</h3>
-                    </div>
-                </div>
-            </aside>
+        <BookingSidebar
+                movie={movie}
+                showtimeDetail={showtimeDetail}
+                selectedCinema={selectedCinema}
+                selectedDate={selectedDate}
+                selectedShowtime={selectedShowtime}
 
+                // SAFE ARRAY
+                selectedSeats={
+                    Array.isArray(selectedSeats)
+                        ? selectedSeats
+                        : []
+                }
+
+                // ĐỒNG BỘ FOOD ARRAY
+                foods={[]}
+                selectedFoods={[]}
+
+                totalTicketPrice={selectedSeats.reduce(
+                    (sum, s) => sum + Number(s.price),
+                    0
+                )}
+
+                totalFoodPrice={0}
+
+                grandTotal={selectedSeats.reduce(
+                    (sum, s) => sum + Number(s.price),
+                    0
+                )}
+
+                isTimerActive={isTimerActive}
+
+                onExpire={() => {
+
+                    clearBookingSession();
+
+                    setModalConfig({
+                        show: true,
+                        type: 'error',
+                        title: 'Hết thời gian giữ ghế',
+                        message:
+                            'Ghế bạn chọn đã được mở khóa. Vui lòng chọn lại ghế.',
+
+                        onConfirm: () =>
+                            setModalConfig(prev => ({
+                                ...prev,
+                                show: false
+                            }))
+                    });
+                }}
+            />
             <section className="main-booking-area">
                 <nav className="booking-nav-flex">
                     {/* BƯỚC 1: CHỌN RẠP */}
@@ -279,17 +300,18 @@ const Booking = () => {
                             <button className="slide-btn" onClick={() => scroll(timeRef, -120)} disabled={!selectedDate}>‹</button>
                             <div className="scroll-list" ref={timeRef}>
                                 {availableShowtimes.length > 0 ? (
-                                    availableShowtimes.map(st => (
-                                        <div 
-                                            key={st.showtime_id || st.id} 
-                                            className={`compact-card time-card ${selectedShowtime?.showtime_id === st.showtime_id || selectedShowtime?.id === st.id ? 'active' : ''}`}
-                                            onClick={() => setSelectedShowtime(st)}
-                                        >
-                                            <span className="time-txt">
-                                                {new Date(st.start_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
-                                            </span>
-                                        </div>
-                                    ))
+                                  availableShowtimes.map(st => (
+                                    <div 
+                                        key={st.showtime_id || st.id} 
+                                        className={`compact-card time-card ${selectedShowtime?.showtime_id === st.showtime_id || selectedShowtime?.id === st.id ? 'active' : ''}`}
+                                        onClick={() => setSelectedShowtime(st)}
+                                    >
+                                        <span className="time-txt">
+                                            {/* Dũng chỉ cần in trực tiếp cái chuỗi giờ từ Backend ra thôi */}
+                                            {st.start_time} 
+                                        </span>
+                                    </div>
+                                ))
                                 ) : (
                                     selectedDate && <span className="no-showtimes">Hết suất</span>
                                 )}
@@ -301,7 +323,7 @@ const Booking = () => {
 
                 <div className="seat-selection-content">
                     {selectedShowtime ? (
-                        <div className="seat-map-wrapper animate-in">
+                        <div className="seat-map-booking">
                             <div className="screen-header">
                                 <div className="screen-line"></div>
                                 <span>MÀN HÌNH</span>
@@ -318,6 +340,7 @@ const Booking = () => {
                                                     type={seat.seat_type} 
                                                     selected={selectedSeats.some(s => s.seat_id === seat.seat_id)}
                                                     sold={seat.seat_status === 'Booked'}
+                                                    maintenance={Number(seat.is_active) === 0}
                                                     number={seat.seat_number} 
                                                     onClick={() => handleSeatClick(seat)} 
                                                 />
@@ -328,6 +351,10 @@ const Booking = () => {
                             </div>
 
                             <div className="seat-legend">
+                                <div className="leg-item">
+                                    <div className="box maintenance"></div>
+                                    Bảo trì
+                                </div>
                                 <div className="leg-item"><div className="box normal"></div> Thường</div>
                                 <div className="leg-item"><div className="box vip"></div> VIP</div>
                                 <div className="leg-item"><div className="box couple"></div> Đôi</div>
@@ -336,10 +363,21 @@ const Booking = () => {
                             </div>
 
                             <div className="booking-actions">
-                                <button 
-                                    className="btn-next" 
-                                    disabled={selectedSeats.length === 0} 
-                                    onClick={() => navigate('/foods', { state: { ...location.state, selectedShowtime, selectedSeats } })}
+                               <button
+                                    className="btn-next"
+                                    disabled={selectedSeats.length === 0}
+                                    onClick={() =>
+                                      navigate('/foods', {
+                                        state: {
+                                            movie,
+                                            selectedCinema,
+                                            selectedDate,
+                                            selectedShowtime,
+                                            selectedSeats,
+                                            showtimeDetail
+                                        }
+                                    })
+                                    }
                                 >
                                     TIẾP TỤC CHỌN ĐỒ ĂN
                                 </button>
@@ -351,6 +389,14 @@ const Booking = () => {
                             <p>Vui lòng chọn đầy đủ thông tin ở trên để hiển thị sơ đồ ghế</p>
                         </div>
                     )}
+                    <Modal
+                        show={modalConfig.show}
+                        type={modalConfig.type}
+                        title={modalConfig.title}
+                        message={modalConfig.message}
+                        onConfirm={modalConfig.onConfirm}
+                        onCancel={modalConfig.onCancel}
+                    />
                 </div>
             </section>
         </div>

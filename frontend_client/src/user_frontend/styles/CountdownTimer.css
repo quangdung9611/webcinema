@@ -1,0 +1,137 @@
+/* =========================
+   COUNTDOWN WRAPPER
+========================= */
+
+.countdown-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    width: 100%;
+
+    margin-bottom: 28px;
+    padding: 18px 22px;
+
+    border-radius: 22px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(26, 26, 40, 0.95),
+            rgba(16, 16, 28, 0.98)
+        );
+
+    border:
+        1px solid rgba(255,255,255,0.06);
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.28);
+
+    position: relative;
+
+    overflow: hidden;
+}
+
+/* glow */
+
+.countdown-wrapper::before {
+    content: "";
+
+    position: absolute;
+
+    top: -80px;
+    right: -60px;
+
+    width: 180px;
+    height: 180px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(168,85,247,0.18),
+            transparent 70%
+        );
+
+    pointer-events: none;
+}
+
+/* =========================
+   ICON
+========================= */
+
+.countdown-icon {
+    flex-shrink: 0;
+
+    width: 58px;
+    height: 58px;
+
+    border-radius: 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #c084fc;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(124,58,237,0.25),
+            rgba(168,85,247,0.12)
+        );
+
+    border:
+        1px solid rgba(168,85,247,0.18);
+
+    box-shadow:
+        0 8px 20px rgba(124,58,237,0.25);
+}
+
+/* =========================
+   CONTENT
+========================= */
+
+.countdown-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.countdown-label {
+    margin: 0 0 6px;
+
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+
+    color: #94a3b8;
+}
+
+.countdown-time {
+    font-size: 2rem;
+    font-weight: 800;
+
+    line-height: 1;
+
+    color: #fff;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+
+    .countdown-wrapper {
+        padding: 16px;
+        border-radius: 18px;
+    }
+
+    .countdown-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .countdown-time {
+        font-size: 1.6rem;
+    }
+}

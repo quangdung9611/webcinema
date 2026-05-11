@@ -1,26 +1,44 @@
 import React, { useState, useEffect } from 'react';
+import { TimerReset } from 'lucide-react';
+
+import '../styles/CountdownTimer.css';
 
 const CountdownTimer = ({ onExpire }) => {
-    // 1. Hàm tính toán số giây còn lại thực tế
+
+    // =========================
+    // CALCULATE TIME LEFT
+    // =========================
+
     const calculateSecondsLeft = () => {
-        const expiry = sessionStorage.getItem('holdExpiresAt');
-        // Trả về null nếu không tìm thấy để phân biệt với số 0
+
+        const expiry =
+            sessionStorage.getItem('holdExpiresAt');
+
         if (!expiry) return null;
 
         const now = Date.now();
-        const diff = Math.floor((parseInt(expiry) - now) / 1000);
-        
+
+        const diff = Math.floor(
+            (parseInt(expiry) - now) / 1000
+        );
+
         return diff > 0 ? diff : 0;
     };
 
-    const [seconds, setSeconds] = useState(calculateSecondsLeft());
+    const [seconds, setSeconds] =
+        useState(calculateSecondsLeft());
+
+    // =========================
+    // EFFECT
+    // =========================
 
     useEffect(() => {
+
         const timer = setInterval(() => {
-            const timeLeft = calculateSecondsLeft();
-            
-            // QUAN TRỌNG: Nếu bỗng dưng không thấy session đâu (do vừa bị xóa)
-            // thì dẹp luôn cái timer ngay lập tức
+
+            const timeLeft =
+                calculateSecondsLeft();
+
             if (timeLeft === null) {
                 clearInterval(timer);
                 setSeconds(null);
@@ -33,37 +51,64 @@ const CountdownTimer = ({ onExpire }) => {
                 clearInterval(timer);
                 onExpire();
             }
+
         }, 1000);
 
         return () => clearInterval(timer);
+
     }, [onExpire]);
 
-    // 2. Nếu session bị xóa (seconds === null) thì biến mất hoàn toàn khỏi giao diện
+    // =========================
+    // HIDE
+    // =========================
+
     if (seconds === null) {
         return null;
     }
 
-    // 3. Hàm format mm:ss
+    // =========================
+    // FORMAT
+    // =========================
+
     const formatTime = (totalSeconds) => {
-        const mins = Math.floor(totalSeconds / 60);
-        const secs = totalSeconds % 60;
+
+        const mins =
+            Math.floor(totalSeconds / 60);
+
+        const secs =
+            totalSeconds % 60;
+
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
+    // =========================
+    // RENDER
+    // =========================
+
     return (
-        <div className="timer-container" style={{
-            background: '#fff3cd',
-            color: '#856404',
-            padding: '12px',
-            borderRadius: '8px',
-            border: '1px solid #ffeeba',
-            textAlign: 'center',
-            marginBottom: '20px',
-            fontWeight: 'bold',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-        }}>
-            <p style={{ margin: 0, fontSize: '14px' }}>⏰ THỜI GIAN GIỮ GHẾ CÒN LẠI</p>
-            <span style={{ fontSize: '24px', color: '#d9534f' }}>{formatTime(seconds)}</span>
+        <div className="countdown-wrapper">
+
+            {/* ICON */}
+            <div className="countdown-icon">
+                <TimerReset
+                    size={24}
+                    strokeWidth={2.4}
+                />
+            </div>
+
+            {/* CONTENT */}
+            <div className="countdown-content">
+
+                <p className="countdown-label">
+                    THỜI GIAN GIỮ GHẾ
+                </p>
+
+                <span className="countdown-time">
+                    {formatTime(seconds)}
+                </span>
+
+            </div>
+
         </div>
     );
 };

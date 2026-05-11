@@ -1,199 +1,524 @@
-/* ============================================================
-   USER FOOTER - 4 CỘT DESKTOP | 2 CỘT MOBILE (<=767px)
-============================================================ */
+/* =====================================================
+   FOOTER MAIN
+===================================================== */
 
-.user-footer {
-    background: #050505;
-    color: #ffffff;
-    border-top: 1px solid #222;
-  padding: 30px 0 20px 0;
+.mystic-footer {
+    position: relative;
+    overflow: hidden;
+
+    border-top: 1px solid rgba(168, 85, 247, 0.14);
 }
 
-/* ================= CONTAINER ================= */
+/* =====================================================
+   MAIN CONTAINER
+===================================================== */
 
-.footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
+.mystic-footer-container {
+    width: 100%;
+    max-width: 1300px;
+
+    margin: 0px auto;
+
     display: grid;
     grid-template-columns: repeat(4, 1fr);
+
+    gap: 55px;
+
+    align-items: flex-start;
+
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+/* =====================================================
+   BRAND COLUMN
+===================================================== */
+
+.mystic-footer-brand {
+    width: 100%;
+}
+
+.mystic-footer-description {
+    color: rgba(255,255,255,0.74);
+
+    font-size: 16px;
+    line-height: 2;
+
+    margin-top: 30px;
+    margin-bottom: 38px;
+}
+
+/* =====================================================
+   DIVIDER
+===================================================== */
+
+.mystic-footer-divider {
+    width: 110px;
+    height: 3px;
+
+    border-radius: 30px;
+
+    margin-bottom: 38px;
+
+    background: linear-gradient(
+        90deg,
+        #d946ef,
+        #ffffff
+    );
+
+    box-shadow:
+        0 0 18px rgba(217, 70, 239, 0.35);
+}
+
+/* =====================================================
+   SOCIAL
+===================================================== */
+
+.mystic-footer-social-title {
+    color: #ffffff;
+
+    font-size: 16px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 26px;
+}
+
+.mystic-footer-socials {
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+}
+
+.mystic-footer-socials a {
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 18px;
+
+    text-decoration: none;
+
+    color: #ffffff;
+
+    background: rgba(255,255,255,0.03);
+
+    border: 1px solid rgba(168, 85, 247, 0.2);
+
+    backdrop-filter: blur(12px);
+
+    transition: all 0.35s ease;
+}
+
+.mystic-footer-socials a:hover {
+    transform: translateY(-5px);
+
+    color: #ffffff;
+
+    border-color: #d946ef;
+
+    background: rgba(168, 85, 247, 0.14);
+
+    box-shadow:
+        0 0 22px rgba(217, 70, 239, 0.28);
+}
+
+/* =====================================================
+   GRID RIGHT
+===================================================== */
+
+.mystic-footer-grid {
+    grid-column: span 3;
+
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 55px;
+}
+
+/* =====================================================
+   COLUMN
+===================================================== */
+
+.mystic-footer-column {
+    width: 100%;
+}
+
+/* =====================================================
+   HEADING
+===================================================== */
+
+.mystic-footer-heading {
+    margin-bottom: 34px;
+}
+
+.mystic-footer-heading h3 {
+    color: #ffffff;
+
+    font-size: 26px;
+    font-weight: 900;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 14px;
+}
+
+.mystic-footer-heading span {
+    display: block;
+
+    width: 95px;
+    height: 4px;
+
+    border-radius: 30px;
+
+    background: linear-gradient(
+        90deg,
+        #d946ef,
+        #ffffff
+    );
+
+    box-shadow:
+        0 0 16px rgba(217, 70, 239, 0.38);
+}
+
+/* =====================================================
+   LIST
+===================================================== */
+
+.mystic-footer-column ul {
+    list-style: none;
+
+    margin: 0;
+    padding: 0;
+}
+
+.mystic-footer-column ul li {
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.mystic-footer-column ul li a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 14px;
+
+    padding: 20px 0;
+
+    text-decoration: none;
+
+    color: rgba(255,255,255,0.82);
+
+    font-size: 16px;
+    font-weight: 400;
+
+    transition: all 0.3s ease;
+}
+
+.mystic-footer-column ul li a div {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+}
+
+.mystic-footer-column ul li a svg {
+    flex-shrink: 0;
+}
+
+.mystic-footer-column ul li a:hover {
+    color: #d946ef;
+
+    padding-left: 8px;
+}
+
+/* =====================================================
+   CONTACT
+===================================================== */
+
+.mystic-footer-contact-list {
+    display: flex;
+    flex-direction: column;
+
     gap: 30px;
 }
 
-/* ================= LOGO ================= */
-
-.footer-logo {
-    font-size: 2rem;
-    font-weight: 900;
-    margin-bottom: 15px;
-    line-height: 1.2;
-    color: #fff;
-    text-decoration: none;
-    display: block;
-}
-
-.footer-logo span {
-    color: #f1c40f;
-}
-
-/* ================= ABOUT ================= */
-
-.about p {
-    color: #aaa;
-    line-height: 1.7;
-    font-size: 0.8rem;
-    max-width: 380px;
-}
-
-/* ================= TITLES ================= */
-
-.footer-section h3 {
-    margin-bottom: 22px;
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* ================= LINKS ================= */
-
-.links ul,
-.support ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.links li,
-.support li {
-    margin-bottom: 12px;
-}
-
-.links a,
-.support a {
-    color: #bbb;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    display: inline-block;
-}
-
-.links a:hover,
-.support a:hover {
-    color: #f1c40f;
-    padding-left: 6px;
-}
-
-/* ================= CONTACT ================= */
-
-.contact p {
-    color: #bbb;
-    margin-bottom: 15px;
+.mystic-footer-contact-item {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.95rem;
-}
+    align-items: flex-start;
 
-.contact svg {
-    color: #f1c40f;
-}
-
-/* ================= SOCIAL ================= */
-
-.social-links {
-    margin-top: 20px;
-    display: flex;
     gap: 15px;
 }
 
-.social-links a {
-    color: #fff;
-    transition: all 0.3s ease;
+.mystic-footer-contact-item svg {
+    color: #facc15;
+
+    flex-shrink: 0;
+
+    margin-top: 3px;
+}
+
+.mystic-footer-contact-item p {
+    margin: 0;
+
+    color: rgba(255,255,255,0.82);
+
+    font-size: 16px;
+    line-height: 1.9;
+}
+
+/* =====================================================
+   FEATURE BAR
+===================================================== */
+
+.mystic-footer-feature-bar {
+    width: 100%;
+    max-width: 1300px;
+
+    margin: 0 auto;
+    padding: 34px 24px;
+
     display: flex;
     align-items: center;
+    justify-content: center;
+
+    gap: 70px;
+
+    border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
-.social-links a:hover {
-    color: #f1c40f;
-    transform: scale(1.15);
+.mystic-footer-feature {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    color: rgba(255,255,255,0.88);
+
+    font-size: 16px;
+    font-weight: 500;
 }
 
-/* ================= BOTTOM ================= */
-
-.footer-bottom {
-    margin-top: 60px;
-    padding-top: 25px;
-    border-top: 1px solid #222;
-    text-align: center;
+.mystic-footer-feature svg {
+    color: #d946ef;
 }
 
-.footer-bottom p {
-    color: #666;
-    font-size: 0.85rem;
+/* =====================================================
+   BOTTOM
+===================================================== */
+
+.mystic-footer-bottom {
+    width: 100%;
+    max-width: 1300px;
+
+    margin: 0 auto;
+    padding: 42px 24px 50px;
+
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 18px;
 }
 
-/* ============================================================
-   FOOTER RESPONSIVE: CHỐT 2 HÀNG - 2 CỘT TẠI 992PX
-============================================================ */
+.mystic-footer-logo {
+    cursor: pointer;
+}
+
+.mystic-footer-logo img {
+    width: 155px;
+
+    object-fit: contain;
+
+    opacity: 0.95;
+}
+
+.mystic-footer-bottom p {
+    color: rgba(255,255,255,0.72);
+
+    font-size: 16px;
+
+    margin: 0;
+}
+
+.mystic-footer-bottom p span {
+    color: #d946ef;
+}
+
+/* =====================================================
+   SCROLL TOP
+===================================================== */
+
+.mystic-footer-scrolltop {
+    position: absolute;
+    right: 24px;
+
+    width: 58px;
+    height: 58px;
+
+    border: none;
+    outline: none;
+
+    border-radius: 50%;
+
+    cursor: pointer;
+
+    color: #ffffff;
+
+    font-size: 22px;
+
+    background: linear-gradient(
+        135deg,
+        #7e22ce,
+        #d946ef
+    );
+
+    transition: all 0.35s ease;
+}
+
+.mystic-footer-scrolltop:hover {
+    transform: translateY(-5px);
+
+    box-shadow:
+        0 0 25px rgba(217, 70, 239, 0.42);
+}
+
+/* =====================================================
+   LAPTOP
+===================================================== */
+
+@media (max-width: 1150px) {
+
+    .mystic-footer-container {
+        grid-template-columns: repeat(2, 1fr);
+
+        gap: 60px;
+    }
+
+    .mystic-footer-grid {
+        grid-column: unset;
+
+        grid-template-columns: repeat(2, 1fr);
+
+        gap: 50px;
+    }
+
+}
+
+/* =====================================================
+   TABLET
+===================================================== */
 
 @media (max-width: 992px) {
-    .footer-container {
-        /* Chia chính xác 2 cột đều nhau */
-        display: grid;
-        grid-template-columns: 1fr 1fr; 
-        gap: 40px 30px;
-        text-align: center;
+
+    .mystic-footer-container {
+        grid-template-columns: repeat(2, 1fr);
     }
 
-    /* Cột 1 (About) và Cột 2 (Dịch vụ) nằm hàng 1 */
-    /* Cột 3 (Liên hệ) và Cột 4 (Hỗ trợ) nằm hàng 2 */
-    .footer-section {
-        grid-column: span 1; /* Đảm bảo mỗi thằng chỉ chiếm 1 cột */
-        display: flex;
-        flex-direction: column;
-        align-items: center; /* Căn giữa nội dung bên trong flex */
-    }
-
-    .footer-logo {
-        font-size: 1.6rem;
-        margin-bottom: 10px;
-    }
-
-    .about p {
-        font-size: 0.85rem;
-        max-width: 100%;
-        margin: 0 auto;
-    }
-
-    /* Căn giữa danh sách link */
-    .links ul, .support ul {
-        text-align: center;
-        padding: 0;
-    }
-
-    /* Căn giữa các dòng liên hệ */
-    .contact p {
-        width: 100%;
-        justify-content: center;
-        font-size: 0.9rem;
-    }
-
-    .social-links {
-        justify-content: center;
-        width: 100%;
-    }
-
-    .footer-section h3 {
-        margin-top: 10px;
-        color: #f1c40f;
-    }
-}
-
-/* Khi màn hình quá nhỏ thì mới về 1 cột dọc */
-@media (max-width: 576px) {
-    .footer-container {
+    .mystic-footer-grid {
         grid-template-columns: 1fr;
+    }
+
+    .mystic-footer-feature-bar {
+        flex-wrap: wrap;
+
         gap: 30px;
     }
+
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 768px) {
+
+    .mystic-footer-container {
+        grid-template-columns: 1fr;
+
+        gap: 55px;
+
+        padding: 65px 20px 55px;
+    }
+
+    .mystic-footer-grid {
+        grid-template-columns: 1fr;
+
+        gap: 50px;
+    }
+
+    .mystic-footer-heading h3 {
+        font-size: 23px;
+    }
+
+    .mystic-footer-description {
+        font-size: 15px;
+
+        line-height: 1.9;
+    }
+
+    .mystic-footer-column ul li a {
+        font-size: 15px;
+
+        padding: 18px 0;
+    }
+
+    .mystic-footer-contact-item p {
+        font-size: 15px;
+    }
+
+    .mystic-footer-feature-bar {
+        flex-direction: column;
+        align-items: flex-start;
+
+        padding: 28px 20px;
+    }
+
+    .mystic-footer-bottom {
+        flex-direction: column;
+
+        gap: 22px;
+
+        text-align: center;
+    }
+
+    .mystic-footer-scrolltop {
+        position: relative;
+
+        right: unset;
+    }
+
+}
+
+/* =====================================================
+   SMALL MOBILE
+===================================================== */
+
+@media (max-width: 480px) {
+
+    .mystic-footer-socials a {
+        width: 52px;
+        height: 52px;
+    }
+
+    .mystic-footer-social-title {
+        font-size: 15px;
+    }
+
+    .mystic-footer-bottom p {
+        font-size: 14px;
+
+        line-height: 1.7;
+    }
+
+    .mystic-footer-logo img {
+        width: 135px;
+    }
+
 }

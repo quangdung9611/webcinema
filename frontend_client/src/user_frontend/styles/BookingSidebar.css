@@ -1,0 +1,375 @@
+/* =========================================
+   BOOKING SIDEBAR
+========================================= */
+
+.ticket-sidebar {
+    width: 320px;
+    flex-shrink: 0;
+
+    position: sticky;
+    top: 20px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    height: fit-content;
+}
+
+/* =========================================
+   POSTER
+========================================= */
+
+.poster-container {
+    width: 100%;
+    overflow: hidden;
+
+    border-radius: 22px;
+
+    background: linear-gradient(
+        180deg,
+        rgba(255,255,255,0.06),
+        rgba(255,255,255,0.02)
+    );
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+    box-shadow:
+        0 20px 40px rgba(0,0,0,0.28),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.poster-container img {
+    width: 100%;
+    aspect-ratio: 2/3;
+
+    object-fit: cover;
+    display: block;
+}
+
+/* =========================================
+   INFO BOX
+========================================= */
+
+.ticket-details {
+    padding: 22px;
+
+    border-radius: 22px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+
+    background: linear-gradient(
+        180deg,
+        rgba(255,255,255,0.06),
+        rgba(255,255,255,0.03)
+    );
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+    backdrop-filter: blur(14px);
+
+    box-shadow:
+        0 12px 30px rgba(0,0,0,0.22);
+}
+
+/* =========================================
+   TITLE
+========================================= */
+
+.movie-name {
+    margin: 0;
+
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.45;
+
+    text-transform: uppercase;
+
+    color: white;
+}
+
+/* =========================================
+   DETAIL ITEM
+========================================= */
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    gap: 14px;
+
+    padding-bottom: 12px;
+
+    font-size: 0.95rem;
+
+    color: rgba(255,255,255,0.72);
+
+    border-bottom: 1px dashed rgba(255,255,255,0.08);
+}
+
+.detail-item:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.detail-item strong {
+    color: white;
+    font-weight: 600;
+    text-align: right;
+}
+
+.seats-list {
+    color: #facc15;
+}
+
+/* =========================================
+   FOOD
+========================================= */
+
+.food-selected-box {
+    padding-top: 18px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.food-selected-title {
+    margin: 0;
+
+    font-size: 0.82rem;
+
+    letter-spacing: 1px;
+    text-transform: uppercase;
+
+    color: rgba(255,255,255,0.55);
+}
+
+.food-selected-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+
+    font-size: 0.92rem;
+
+    color: rgba(255,255,255,0.78);
+}
+
+.food-selected-item strong {
+    color: #f59e0b;
+}
+
+.empty-food-text {
+    margin: 0;
+
+    font-size: 0.9rem;
+    font-style: italic;
+
+    color: rgba(255,255,255,0.45);
+}
+
+/* =========================================
+   TOTAL
+========================================= */
+
+.total-price-box {
+    padding-top: 18px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.price-row {
+    display: flex;
+    justify-content: space-between;
+
+    font-size: 0.95rem;
+
+    color: rgba(255,255,255,0.72);
+}
+
+.price-row strong {
+    color: white;
+}
+
+.grand-total {
+    margin-top: 6px;
+    padding-top: 16px;
+
+    text-align: center;
+
+    border-top: 1px dashed rgba(255,255,255,0.1);
+}
+
+.grand-total p {
+    margin: 0 0 8px;
+
+    font-size: 0.82rem;
+
+    letter-spacing: 2px;
+    text-transform: uppercase;
+
+    color: rgba(255,255,255,0.45);
+}
+
+.grand-total h3 {
+    margin: 0;
+
+    font-size: 1.9rem;
+    font-weight: 800;
+
+    background: linear-gradient(
+        135deg,
+        #f59e0b,
+        #f97316
+    );
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* =========================================
+   ACTIONS
+========================================= */
+
+.food-sidebar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.btn-next,
+.btn-back-food {
+    width: 100%;
+    border: none;
+
+    cursor: pointer;
+
+    transition: 0.25s ease;
+}
+
+.btn-next {
+    height: 56px;
+
+    border-radius: 18px;
+
+    background: linear-gradient(
+        135deg,
+        #7c3aed,
+        #9333ea
+    );
+
+    color: white;
+
+    font-size: 0.95rem;
+    font-weight: 700;
+
+    box-shadow:
+        0 12px 25px rgba(124,58,237,0.28);
+}
+
+.btn-next:hover {
+    transform: translateY(-2px);
+}
+
+.btn-next:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.btn-back-food {
+    height: 52px;
+
+    border-radius: 16px;
+
+    background: rgba(255,255,255,0.04);
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+    color: rgba(255,255,255,0.8);
+
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.btn-back-food:hover {
+    background: rgba(255,255,255,0.08);
+    color: white;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 1024px) {
+
+    .ticket-sidebar {
+        width: 100%;
+
+        position: static;
+
+        display: grid;
+        grid-template-columns: 240px 1fr;
+
+        gap: 24px;
+    }
+
+    .poster-container {
+        max-width: 240px;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .ticket-sidebar {
+        grid-template-columns: 1fr;
+    }
+
+    .poster-container {
+        max-width: 220px;
+        margin: 0 auto;
+    }
+
+    .ticket-details {
+        padding: 20px;
+    }
+
+    .movie-name {
+        font-size: 1.2rem;
+    }
+
+    .grand-total h3 {
+        font-size: 1.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .ticket-details {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .detail-item {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .detail-item strong {
+        text-align: left;
+    }
+
+    .btn-next,
+    .btn-back-food {
+        height: 50px;
+        font-size: 0.9rem;
+    }
+}

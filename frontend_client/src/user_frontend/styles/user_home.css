@@ -673,18 +673,287 @@
     scrollbar-width: thin;
     scrollbar-color: #8a2be2 #0f021f;
 }
-/* --- 4. RESPONSIVE --- */
+/* ============================================================
+    RESPONSIVE FULL - USER HOME
+============================================================ */
+
+/* =========================
+   LAPTOP NHỎ / TABLET NGANG
+========================= */
+@media (max-width: 1200px) {
+
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .promotions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cinema-corner-content {
+        grid-template-columns: 1fr;
+    }
+
+    .news-main .news-img {
+        height: 350px;
+    }
+}
+
+
+/* =========================
+   TABLET
+========================= */
+@media (max-width: 992px) {
+
+    /* QUICK BOOKING */
+    .quick-booking-container {
+        margin-top: -20px;
+        padding: 0 15px;
+    }
+
+    .quick-booking-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+        padding: 18px;
+    }
+
+    .quick-booking-selects {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .btn-quick-booking {
+        width: 100%;
+        height: 50px;
+    }
+
+    /* MOVIE */
+    .movie-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* FEATURE */
+    .feature-item {
+        padding: 18px;
+    }
+
+    .feature-text h4 {
+        font-size: 0.85rem;
+    }
+
+    .feature-text p {
+        font-size: 0.75rem;
+    }
+
+    /* PROMOTION */
+    .promo-image {
+        height: 160px;
+    }
+
+    /* CINEMA CORNER */
+    .news-main .news-img {
+        height: 300px;
+    }
+
+    .news-info h3 {
+        font-size: 1.3rem;
+    }
+}
+
+
+/* =========================
+   MOBILE
+========================= */
 @media (max-width: 767px) {
+
+    /* SWIPER */
     .mySwiper {
         aspect-ratio: 1 / 1.3;
     }
-    
+
     .mini-thumbnail-nav {
         display: none;
     }
 
-    .movie-grid {
-        grid-template-columns: repeat(2, 1fr); 
+    /* QUICK BOOKING */
+    .quick-booking-container {
+        margin-top: -10px;
+        padding: 0 12px;
+    }
+
+    .quick-booking-content {
+        padding: 15px;
+        border-radius: 10px;
+    }
+
+    .quick-booking-selects {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-booking-selects select {
+        height: 48px;
+        font-size: 0.9rem;
+    }
+
+    .btn-quick-booking {
+        width: 100%;
+        height: 48px;
+        font-size: 0.9rem;
+    }
+
+    /* FEATURES */
+    .features-grid {
+        grid-template-columns: 1fr;
         gap: 15px;
+    }
+
+    .feature-item {
+        padding: 16px;
+    }
+
+    .feature-icon-wrapper {
+        min-width: 50px;
+        height: 50px;
+    }
+
+    /* MOVIE */
+    .movie-container {
+        padding: 30px 15px;
+    }
+
+    .movie-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .movie-name {
+        font-size: 0.85rem;
+    }
+
+    /* SECTION TITLE */
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    /* PROMOTION */
+    .promotions-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .promo-image {
+        height: 200px;
+    }
+
+    .promo-info h3 {
+        font-size: 1rem;
+        white-space: normal;
+    }
+
+    /* CINEMA CORNER */
+    .cinema-corner-section {
+        margin: 40px auto;
+    }
+
+    .news-main .news-img {
+        height: 240px;
+    }
+
+    .news-info {
+        padding: 20px;
+    }
+
+    .news-info h3 {
+        font-size: 1.1rem;
+    }
+
+    .news-info p {
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+    .news-side-item {
+        gap: 12px;
+    }
+
+    .side-img {
+        min-width: 100px;
+        height: 70px;
+    }
+
+    .side-info h4 {
+        font-size: 0.85rem;
+    }
+}
+
+
+/* =========================
+   SMALL MOBILE
+========================= */
+@media (max-width: 480px) {
+
+    /* SWIPER */
+    .mySwiper {
+        aspect-ratio: 1 / 1.5;
+    }
+
+    /* FEATURE */
+    .feature-item {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+    }
+
+    .feature-text h4 {
+        font-size: 0.8rem;
+    }
+
+    .feature-text p {
+        font-size: 0.72rem;
+    }
+
+    /* MOVIE */
+    .movie-grid {
+        gap: 12px;
+    }
+
+    .movie-name {
+        font-size: 0.8rem;
+    }
+
+    .btn-book {
+        padding: 8px 16px;
+        font-size: 0.7rem;
+    }
+
+    /* PROMO */
+    .promo-image {
+        height: 180px;
+    }
+
+    .promo-info {
+        padding: 15px;
+    }
+
+    /* NEWS */
+    .news-main .news-img {
+        height: 200px;
+    }
+
+    .news-info h3 {
+        font-size: 1rem;
+    }
+
+    .news-side-item {
+        flex-direction: column;
+    }
+
+    .side-img {
+        width: 100%;
+        height: 180px;
+    }
+
+    .side-info h4 {
+        font-size: 0.82rem;
     }
 }

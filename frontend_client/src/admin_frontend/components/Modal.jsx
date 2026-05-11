@@ -1,67 +1,129 @@
 import React from 'react';
-import '../styles/Modal.css'; 
 
-const Modal = ({ show, type, title, message, onConfirm, onCancel }) => {
+import {
+    Check,
+    X,
+    CircleAlert,
+    X as CloseIcon
+} from 'lucide-react';
+
+import '../styles/Modal.css';
+
+const Modal = ({
+    show,
+    type,
+    title,
+    message,
+    onConfirm,
+    onCancel
+}) => {
+
     if (!show) return null;
 
-    const getHeaderColor = () => {
-        const colors = {
-            success: '#2ecc71',
-            error: '#e74c3c',
-            confirm: '#f39c12'
-        };
-        return colors[type] || '#3498db';
-    };
+    // =========================
+    // ICON
+    // =========================
 
     const getIcon = () => {
+
         const icons = {
-            success: '✅',
-            error: '❌',
-            confirm: '❓'
+            success: (
+                <Check
+                    size={34}
+                    strokeWidth={2.8}
+                />
+            ),
+
+            error: (
+                <X
+                    size={34}
+                    strokeWidth={2.8}
+                />
+            ),
+
+            confirm: (
+                <CircleAlert
+                    size={34}
+                    strokeWidth={2.5}
+                />
+            )
         };
-        return icons[type] || 'ℹ️';
+
+        return (
+            icons[type] ||
+            <CircleAlert size={34} />
+        );
     };
+
+    // =========================
+    // RENDER
+    // =========================
 
     return (
         <div className="modal-overlay">
+
             <div className="modal-content">
-                {/* Dấu X đóng nhanh */}
-                <button className="modal-close-x" onClick={onCancel || onConfirm}>
-                    &times;
+
+                {/* CLOSE */}
+                <button
+                    className="modal-close-x"
+                    onClick={onCancel || onConfirm}
+                >
+                    <CloseIcon
+                        size={18}
+                        strokeWidth={2.5}
+                    />
                 </button>
 
-                <div className="modal-icon">{getIcon()}</div>
-                
-                <h3 style={{ color: getHeaderColor(), marginBottom: '15px' }}>
+                {/* ICON */}
+                <div className={`modal-icon ${type}`}>
+                    {getIcon()}
+                </div>
+
+                {/* TITLE */}
+                <h3>
                     {title}
                 </h3>
-                
-                {/* CHỖ SỬA QUAN TRỌNG NHẤT: 
-                  Đổi từ <p> sang <div> để chứa được StarRating và Textarea của Dũng 
-                */}
-                <div className="modal-message" style={{ marginBottom: '20px' }}>
+
+                {/* MESSAGE */}
+                <div className="modal-message">
                     {message}
                 </div>
-                
+
+                {/* ACTIONS */}
                 <div className="modal-actions">
+
                     {type === 'confirm' ? (
                         <>
-                            <button className="modal-btn btn-cancel" onClick={onCancel}>Hủy bỏ</button>
-                            <button 
-                                className="modal-btn" 
-                                style={{ backgroundColor: '#2ecc71', color: '#fff' }} 
+                            {/* CANCEL */}
+                            <button
+                                className="modal-btn btn-cancel"
+                                onClick={onCancel}
+                            >
+                                Hủy bỏ
+                            </button>
+
+                            {/* CONFIRM */}
+                            <button
+                                className="modal-btn confirm-btn"
                                 onClick={onConfirm}
-                            > Xác nhận </button>
+                            >
+                                Xác nhận
+                            </button>
                         </>
                     ) : (
-                        <button 
-                            className="modal-btn" 
-                            style={{ backgroundColor: getHeaderColor(), color: '#fff' }} 
+                        <button
+                            className="modal-btn confirm-btn"
                             onClick={onConfirm}
-                        > Đóng </button>
+                        >
+                            Đóng
+                        </button>
                     )}
+
                 </div>
+
             </div>
+
         </div>
     );
 };
