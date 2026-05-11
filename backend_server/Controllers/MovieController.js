@@ -374,7 +374,6 @@ exports.getMoviesWithGenre = async (req, res) => {
                 m.poster_url,
                 m.status,
                 m.age_rating,
-                m.language,
                 m.rating,
                 m.release_date
             FROM movies m
