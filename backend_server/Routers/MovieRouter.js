@@ -18,7 +18,7 @@ router.get('/with-genre', movieController.getMoviesWithGenre);
 router.get('/category/:statusSlug', movieController.getMoviesByStatusSlug);
 
 // Pagination + filter thể loại (Giữ lại để dùng sau nếu cần)
-router.get('/pagination', movieController.getMoviesPagination);
+// router.get('/pagination', movieController.getMoviesPagination);
 
 // Danh sách tất cả phim
 router.get('/', movieController.getAllMovies);
