@@ -1,43 +1,67 @@
 const express = require('express');
 const router = express.Router();
-const movieController = require('../Controllers/MovieController'); 
-const upload = require('../Middlewares/UploadMiddleware'); 
 
-// --- CÁC ROUTE CHO PHIM ---
+const movieController = require('../Controllers/MovieController');
+const upload = require('../Middlewares/UploadMiddleware');
 
-// 1. Lấy phim theo nhóm (Cho Mega Menu - 4 phim mỗi bên)
+/* ==========================================================
+    1. PUBLIC ROUTES (KHÔNG ĐỤNG PARAM DYNAMIC)
+   ========================================================== */
+
+// Lấy phim theo nhóm (mega menu)
 router.get('/status-group', movieController.getMoviesByStatusGroup);
 
-// 2. Lấy danh sách phim theo trang Category
+// Lấy phim theo category (đang chiếu / sắp chiếu)
 router.get('/category/:statusSlug', movieController.getMoviesByStatusSlug);
 
-// 3. Lấy tất cả phim (Cho trang danh sách Admin)
+// Pagination + filter thể loại
+router.get('/pagination', movieController.getMoviesPagination);
+
+// Danh sách tất cả phim
 router.get('/', movieController.getAllMovies);
 
-// --- CÁC ROUTE TƯƠNG TÁC (LIKE & VIEW) ---
-// Route tăng lượt thích
-router.patch('/like/:id', movieController.likeMovie);
+/* ==========================================================
+    2. INTERACTION ROUTES (LIKE / VIEW)
+   ========================================================== */
 
-// Route tăng lượt xem (Gọi khi khách vào xem chi tiết phim)
+router.patch('/like/:id', movieController.likeMovie);
 router.patch('/view/:id', movieController.incrementViews);
 
+/* ==========================================================
+    3. ADMIN ROUTES (CRUD MOVIE)
+   ========================================================== */
 
-// 4. Các route Admin 
-// SỬA TẠI ĐÂY: Dùng upload.fields để nhận cùng lúc 2 loại ảnh khác nhau
-router.post('/add', upload.fields([
-    { name: 'posters', maxCount: 1 }, 
-    { name: 'backdrop_url', maxCount: 1 }
-]), movieController.addMovie);
+// Thêm phim
+router.post(
+    '/add',
+    upload.fields([
+        { name: 'posters', maxCount: 1 },
+        { name: 'backdrop_url', maxCount: 1 }
+    ]),
+    movieController.addMovie
+);
 
-router.put('/update/:id', upload.fields([
-    { name: 'posters', maxCount: 1 }, 
-    { name: 'backdrop_url', maxCount: 1 }
-]), movieController.updateMovie);
+// Cập nhật phim
+router.put(
+    '/update/:id',
+    upload.fields([
+        { name: 'posters', maxCount: 1 },
+        { name: 'backdrop_url', maxCount: 1 }
+    ]),
+    movieController.updateMovie
+);
 
+// Xóa phim
 router.delete('/:id', movieController.deleteMovie);
+
+// Lấy chi tiết phim theo ID (admin / edit)
 router.get('/detail/:id', movieController.getMovieById);
 
-// 5. Lấy 1 phim THEO SLUG (Dành cho trang Chi tiết)
+/* ==========================================================
+    4. PUBLIC DETAIL ROUTE (PHẢI ĐẶT CUỐI)
+   ========================================================== */
+
+// Lấy phim theo slug (trang chi tiết user)
 router.get('/:slug', movieController.getMovieBySlug);
 
 module.exports = router;

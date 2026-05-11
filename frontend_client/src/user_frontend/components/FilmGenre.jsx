@@ -12,13 +12,14 @@ const FilmGenre = () => {
     const [movies, setMovies] = useState([]);
     const [genres, setGenres] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeGenre, setActiveGenre] = useState(slug);
+    const [activeGenre, setActiveGenre] = useState("");
 
-    const baseUrl = "https://api.quangdungcinema.id.vn/uploads/posters/";
+    const baseUrl =
+        "https://api.quangdungcinema.id.vn/uploads/posters/";
 
-    /* =========================
+    /* =====================================================
        LOAD ALL GENRES
-    ========================= */
+    ===================================================== */
     useEffect(() => {
 
         const fetchGenres = async () => {
@@ -42,10 +43,13 @@ const FilmGenre = () => {
 
     }, []);
 
-    /* =========================
-       LOAD MOVIES BY GENRE
-    ========================= */
+    /* =====================================================
+       LOAD MOVIES BY SLUG
+    ===================================================== */
     useEffect(() => {
+
+        // tránh lỗi replace undefined
+        if (!slug) return;
 
         setActiveGenre(slug);
 
@@ -59,11 +63,17 @@ const FilmGenre = () => {
                     `https://api.quangdungcinema.id.vn/api/movie-genres/${slug}`
                 );
 
-                setMovies(res.data);
+                // fix tránh undefined
+                setMovies(Array.isArray(res.data) ? res.data : []);
 
             } catch (error) {
 
-                console.error("Lỗi load phim theo thể loại:", error);
+                console.error(
+                    "Lỗi load phim theo thể loại:",
+                    error
+                );
+
+                setMovies([]);
 
             } finally {
 
@@ -76,157 +86,221 @@ const FilmGenre = () => {
 
     }, [slug]);
 
+    /* =====================================================
+       HANDLE NAVIGATE GENRE
+    ===================================================== */
+    const handleGenreClick = (genreSlug) => {
+
+        setActiveGenre(genreSlug);
+
+        navigate(`/film-genre/${genreSlug}`);
+    };
+
     return (
 
         <div className="film-genre-page">
 
-            {/* =========================
-               HEADER
-            ========================= */}
-            <div className="genre-header">
+            {/* =====================================================
+               HERO SECTION
+            ===================================================== */}
+            <div className="filmgenre-hero">
 
-                <h1>
-                    {slug.replace(/-/g, " ")}
-                </h1>
+                <div className="filmgenre-overlay"></div>
 
-                <p>
-                    Khám phá những bộ phim hấp dẫn thuộc thể loại bạn yêu thích
-                </p>
+                <div className="filmgenre-content">
 
-            </div>
+                    <span className="filmgenre-subtitle">
+                        QUANG DŨNG CINEMA
+                    </span>
 
-            {/* =========================
-               GENRE TABS
-            ========================= */}
-            <div className="genre-tabs">
+                    <h1>
+                        {slug
+                            ? slug.replace(/-/g, " ")
+                            : "Thể loại phim"}
+                    </h1>
 
-                {genres.map((genre) => (
+                    <p>
+                        Khám phá những bộ phim hot nhất
+                        thuộc thể loại bạn yêu thích
+                        với chất lượng điện ảnh đỉnh cao.
+                    </p>
 
-                    <button
-                        key={genre.genre_id}
-                        className={
-                            activeGenre === genre.slug
-                                ? "genre-tab active"
-                                : "genre-tab"
-                        }
-                        onClick={() =>
-                            navigate(`/film-genre/${genre.slug}`)
-                        }
-                    >
-                        {genre.genre_name}
-                    </button>
+                    <div className="filmgenre-buttons">
 
-                ))}
+                        <button
+                            className="filmgenre-watch-btn"
+                        >
+                            XEM NGAY
+                        </button>
 
-            </div>
+                        <button
+                            className="filmgenre-list-btn"
+                        >
+                            DANH SÁCH
+                        </button>
 
-            {/* =========================
-               LOADING
-            ========================= */}
-            {loading ? (
+                    </div>
 
-                <div className="loading">
-                    Đang tải phim...
                 </div>
 
-            ) : (
+            </div>
 
-                <>
-                    {/* =========================
-                       EMPTY
-                    ========================= */}
-                    {movies.length === 0 ? (
+            {/* =====================================================
+               GENRE TABS
+            ===================================================== */}
+            <div className="genre-tabs-wrapper">
 
-                        <div className="empty-movie">
-                            Không có phim nào thuộc thể loại này
-                        </div>
+                <div className="genre-tabs">
 
-                    ) : (
+                    {genres.map((genre) => (
 
-                        /* =========================
-                           MOVIES GRID
-                        ========================= */
-                        <div className="genre-movies-grid">
+                        <button
+                            key={genre.genre_id}
+                            className={
+                                activeGenre === genre.slug
+                                    ? "genre-tab active"
+                                    : "genre-tab"
+                            }
+                            onClick={() =>
+                                handleGenreClick(
+                                    genre.slug
+                                )
+                            }
+                        >
+                            {genre.genre_name}
+                        </button>
 
-                            {movies.map((movie) => (
+                    ))}
 
-                                <div
-                                    key={movie.movie_id}
-                                    className="genre-movie-card"
-                                >
+                </div>
 
-                                    {/* POSTER */}
-                                    <div className="genre-poster">
+            </div>
 
-                                        <img
-                                            src={`${baseUrl}${movie.poster_url}`}
-                                            alt={movie.title}
-                                        />
+            {/* =====================================================
+               MOVIES SECTION
+            ===================================================== */}
+            <div className="filmgenre-container">
 
-                                        {/* OVERLAY */}
-                                        <div className="genre-overlay">
+                <div className="filmgenre-section-header">
 
-                                            {/* DETAIL BUTTON */}
-                                            <button
-                                                className="genre-detail-btn"
-                                                onClick={() =>
-                                                    navigate(
-                                                        `/movies/detail/${movie.slug || movie.movie_slug}`
-                                                    )
-                                                }
-                                            >
-                                                CHI TIẾT
-                                            </button>
+                    <h2>
+                        DANH SÁCH PHIM
+                    </h2>
 
-                                            {/* BOOK BUTTON */}
-                                            <button
-                                                className="genre-book-btn"
-                                                onClick={() =>
-                                                    navigate("/booking", {
+                    <div className="filmgenre-line"></div>
+
+                </div>
+
+                {loading ? (
+
+                    <div className="loading-movies">
+                        Đang tải phim...
+                    </div>
+
+                ) : movies.length === 0 ? (
+
+                    <div className="empty-movies">
+                        Không có phim nào thuộc
+                        thể loại này
+                    </div>
+
+                ) : (
+
+                    <div className="genre-movies-grid">
+
+                        {movies.map((movie) => (
+
+                            <div
+                                key={movie.movie_id}
+                                className="genre-movie-card"
+                            >
+
+                                {/* =========================
+                                   POSTER
+                                ========================= */}
+                                <div className="genre-poster">
+
+                                    <img
+                                        src={`${baseUrl}${movie.poster_url}`}
+                                        alt={movie.title}
+                                    />
+
+                                    {/* OVERLAY */}
+                                    <div className="genre-overlay">
+
+                                        <button
+                                            className="genre-detail-btn"
+                                            onClick={() =>
+                                                navigate(
+                                                    `/movies/detail/${movie.slug || movie.movie_slug}`
+                                                )
+                                            }
+                                        >
+                                            CHI TIẾT
+                                        </button>
+
+                                        <button
+                                            className="genre-book-btn"
+                                            onClick={() =>
+                                                navigate(
+                                                    "/booking",
+                                                    {
                                                         state: {
-                                                            movie: movie
+                                                            movie:
+                                                                movie
                                                         }
-                                                    })
-                                                }
-                                            >
-                                                ĐẶT VÉ
-                                            </button>
-
-                                        </div>
+                                                    }
+                                                )
+                                            }
+                                        >
+                                            ĐẶT VÉ
+                                        </button>
 
                                     </div>
 
-                                    {/* INFO */}
-                                    <div className="genre-info">
+                                    {/* AGE */}
+                                    <div className="movie-age-badge">
+                                        {movie.age_rating ||
+                                            "T18"}
+                                    </div>
 
-                                        <h3>
-                                            {movie.title}
-                                        </h3>
+                                </div>
 
-                                        <div className="genre-meta">
+                                {/* =========================
+                                   INFO
+                                ========================= */}
+                                <div className="genre-info">
 
-                                            <span className="genre-rating">
-                                                ⭐ 9.0
-                                            </span>
+                                    <h3>
+                                        {movie.title}
+                                    </h3>
 
-                                            <span className="genre-type">
-                                                2D Phụ Đề
-                                            </span>
+                                    <div className="genre-meta">
 
-                                        </div>
+                                        <span className="genre-rating">
+                                            ⭐{" "}
+                                            {movie.rating ||
+                                                "9.0"}
+                                        </span>
+
+                                        <span className="genre-type">
+                                            {movie.language ||
+                                                "2D Phụ Đề"}
+                                        </span>
 
                                     </div>
 
                                 </div>
 
-                            ))}
+                            </div>
 
-                        </div>
+                        ))}
 
-                    )}
-                </>
+                    </div>
 
-            )}
+                )}
+
+            </div>
 
         </div>
     );

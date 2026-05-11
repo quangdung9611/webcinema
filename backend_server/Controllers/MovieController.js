@@ -359,3 +359,107 @@ exports.incrementViews = async (req, res) => {
         res.status(500).json({ error: "Lỗi hệ thống khi cập nhật lượt xem" });
     }
 };
+/* ==========================================================
+    GET MOVIES WITH PAGINATION + GENRE FILTER
+   ========================================================== */
+
+exports.getMoviesPagination = async (req, res) => {
+
+    try {
+
+        let { page, limit, genre } = req.query;
+
+        page = parseInt(page) || 1;
+        limit = parseInt(limit) || 8;
+
+        const offset = (page - 1) * limit;
+
+        let sql = `
+            SELECT DISTINCT
+                m.movie_id,
+                m.title,
+                m.slug,
+                m.poster_url,
+                m.status,
+                m.age_rating,
+                m.release_date
+            FROM movies m
+        `;
+
+        let countSql = `
+            SELECT COUNT(DISTINCT m.movie_id) AS total
+            FROM movies m
+        `;
+
+        let params = [];
+        let countParams = [];
+
+        /* =========================
+           FILTER GENRE
+        ========================= */
+
+        if (genre) {
+
+            sql += `
+                JOIN movie_genres mg 
+                    ON m.movie_id = mg.movie_id
+
+                JOIN genres g 
+                    ON mg.genre_id = g.genre_id
+
+                WHERE g.slug = ?
+            `;
+
+            countSql += `
+                JOIN movie_genres mg 
+                    ON m.movie_id = mg.movie_id
+
+                JOIN genres g 
+                    ON mg.genre_id = g.genre_id
+
+                WHERE g.slug = ?
+            `;
+
+            params.push(genre);
+            countParams.push(genre);
+        }
+
+        sql += `
+            ORDER BY m.created_at DESC
+            LIMIT ? OFFSET ?
+        `;
+
+        params.push(limit, offset);
+
+        /* =========================
+           QUERY
+        ========================= */
+
+        const [movies] = await db.query(sql, params);
+
+        const [countRows] = await db.query(
+            countSql,
+            countParams
+        );
+
+        const totalMovies = countRows[0].total;
+
+        res.status(200).json({
+            currentPage: page,
+            totalPages: Math.ceil(totalMovies / limit),
+            totalMovies,
+            movies
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Lỗi getMoviesPagination:",
+            error
+        );
+
+        res.status(500).json({
+            message: "Lỗi server"
+        });
+    }
+};

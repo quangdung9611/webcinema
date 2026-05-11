@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import axios from 'axios';
 // import MovieSlider from '../components/MovieSlider';
-import FilmGenre from '..components/FilmGenre';
+import FilmGenre from '../components/FilmGenre';
 
 // SWIPER
 import { Swiper, SwiperSlide } from 'swiper/react';
