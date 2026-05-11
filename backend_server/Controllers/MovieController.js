@@ -360,19 +360,11 @@ exports.incrementViews = async (req, res) => {
     }
 };
 /* ==========================================================
-    GET MOVIES WITH PAGINATION + GENRE FILTER
+    GET MOVIES WITH GENRE FILTER (NO PAGINATION)
    ========================================================== */
-
-exports.getMoviesPagination = async (req, res) => {
-
+exports.getMoviesWithGenre = async (req, res) => {
     try {
-
-        let { page, limit, genre } = req.query;
-
-        page = parseInt(page) || 1;
-        limit = parseInt(limit) || 8;
-
-        const offset = (page - 1) * limit;
+        const { genre } = req.query;
 
         let sql = `
             SELECT DISTINCT
@@ -382,84 +374,39 @@ exports.getMoviesPagination = async (req, res) => {
                 m.poster_url,
                 m.status,
                 m.age_rating,
+                m.language,
+                m.rating,
                 m.release_date
             FROM movies m
         `;
 
-        let countSql = `
-            SELECT COUNT(DISTINCT m.movie_id) AS total
-            FROM movies m
-        `;
-
         let params = [];
-        let countParams = [];
 
         /* =========================
-           FILTER GENRE
+            FILTER GENRE
         ========================= */
-
         if (genre) {
-
             sql += `
-                JOIN movie_genres mg 
-                    ON m.movie_id = mg.movie_id
-
-                JOIN genres g 
-                    ON mg.genre_id = g.genre_id
-
+                JOIN movie_genres mg ON m.movie_id = mg.movie_id
+                JOIN genres g ON mg.genre_id = g.genre_id
                 WHERE g.slug = ?
             `;
-
-            countSql += `
-                JOIN movie_genres mg 
-                    ON m.movie_id = mg.movie_id
-
-                JOIN genres g 
-                    ON mg.genre_id = g.genre_id
-
-                WHERE g.slug = ?
-            `;
-
             params.push(genre);
-            countParams.push(genre);
         }
 
-        sql += `
-            ORDER BY m.created_at DESC
-            LIMIT ? OFFSET ?
-        `;
-
-        params.push(limit, offset);
-
-        /* =========================
-           QUERY
-        ========================= */
+        // Sắp xếp phim mới nhất lên đầu
+        sql += ` ORDER BY m.created_at DESC `;
 
         const [movies] = await db.query(sql, params);
 
-        const [countRows] = await db.query(
-            countSql,
-            countParams
-        );
-
-        const totalMovies = countRows[0].total;
-
-        res.status(200).json({
-            currentPage: page,
-            totalPages: Math.ceil(totalMovies / limit),
-            totalMovies,
-            movies
-        });
+        // Trả về trực tiếp mảng movies để Frontend dễ xử lý
+        res.status(200).json(movies || []);
 
     } catch (error) {
-
-        console.error(
-            "Lỗi getMoviesPagination:",
-            error
-        );
-
+        console.error("Lỗi getMoviesWithGenre:", error);
         res.status(500).json({
-            message: "Lỗi server"
+            message: "Lỗi server",
+            error: error.message
         });
     }
 };

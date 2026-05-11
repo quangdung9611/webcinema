@@ -5,16 +5,19 @@ const movieController = require('../Controllers/MovieController');
 const upload = require('../Middlewares/UploadMiddleware');
 
 /* ==========================================================
-    1. PUBLIC ROUTES (KHÔNG ĐỤNG PARAM DYNAMIC)
+    1. PUBLIC ROUTES (Cấu trúc tĩnh - Đặt lên đầu)
    ========================================================== */
 
 // Lấy phim theo nhóm (mega menu)
 router.get('/status-group', movieController.getMoviesByStatusGroup);
 
+// Lấy phim theo thể loại (Hàm mới bạn vừa yêu cầu - không phân trang)
+router.get('/with-genre', movieController.getMoviesWithGenre);
+
 // Lấy phim theo category (đang chiếu / sắp chiếu)
 router.get('/category/:statusSlug', movieController.getMoviesByStatusSlug);
 
-// Pagination + filter thể loại
+// Pagination + filter thể loại (Giữ lại để dùng sau nếu cần)
 router.get('/pagination', movieController.getMoviesPagination);
 
 // Danh sách tất cả phim
@@ -58,10 +61,11 @@ router.delete('/:id', movieController.deleteMovie);
 router.get('/detail/:id', movieController.getMovieById);
 
 /* ==========================================================
-    4. PUBLIC DETAIL ROUTE (PHẢI ĐẶT CUỐI)
+    4. PUBLIC DETAIL ROUTE (PHẢI ĐẶT CUỐI CÙNG)
    ========================================================== */
 
 // Lấy phim theo slug (trang chi tiết user)
+// Đặt cuối cùng để tránh trùng với /with-genre hoặc /status-group
 router.get('/:slug', movieController.getMovieBySlug);
 
 module.exports = router;
