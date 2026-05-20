@@ -7,7 +7,6 @@ import axios from 'axios';
 
 import {
     CalendarDays,
-    Plus,
     Edit,
     Trash2,
     Loader2,
@@ -73,6 +72,57 @@ const ShowTimePage = () => {
         onConfirm: null,
         onCancel: null
     });
+
+    /* =====================================================
+        TIMEZONE HELPERS (FIX CHUẨN MÚI GIỜ)
+    ===================================================== */
+
+    // Convert DATETIME từ MySQL -> input datetime-local
+    const formatForInput = (dateString) => {
+
+        if (!dateString) return '';
+
+        // VD:
+        // "2026-05-20 19:30"
+        // -> "2026-05-20T19:30"
+
+        return dateString.slice(0, 16).replace(' ', 'T');
+
+    };
+
+    // Format hiển thị bảng
+    const formatDateTime = (dateStr) => {
+
+        if (!dateStr) {
+            return {
+                date: '--/--/----',
+                time: '--:--'
+            };
+        }
+
+        // Parse thủ công để tránh lệch timezone
+        const [datePart, timePart] =
+            dateStr.split(' ');
+
+        if (!datePart || !timePart) {
+            return {
+                date: '--/--/----',
+                time: '--:--'
+            };
+        }
+
+        const [year, month, day] =
+            datePart.split('-');
+
+        const [hour, minute] =
+            timePart.split(':');
+
+        return {
+            date: `${day}/${month}/${year}`,
+            time: `${hour}:${minute}`
+        };
+
+    };
 
     /* =====================================================
         ALERT MODAL
@@ -205,26 +255,17 @@ const ShowTimePage = () => {
 
             setRooms(roomRes.data);
 
-            const date = new Date(st.start_time);
-
-            const formattedTime =
-                new Date(
-                    date.getTime() -
-                    (
-                        date.getTimezoneOffset() *
-                        60000
-                    )
-                )
-                    .toISOString()
-                    .slice(0, 16);
-
             setEditingShowtime(st);
 
             setFormData({
                 movie_id: st.movie_id,
                 cinema_id: st.cinema_id,
                 room_id: st.room_id,
-                start_time: formattedTime
+
+                // FIX CHUẨN
+                start_time: formatForInput(
+                    st.start_time
+                )
             });
 
             setIsFormOpen(true);
@@ -303,6 +344,12 @@ const ShowTimePage = () => {
 
             const submitData = {
                 ...formData,
+
+                // datetime-local
+                // 2026-05-20T19:30
+                // ->
+                // 2026-05-20 19:30
+
                 start_time:
                     formData.start_time.replace(
                         'T',
@@ -388,27 +435,6 @@ const ShowTimePage = () => {
 
             closeAlert
         );
-
-    };
-
-    /* =====================================================
-        FORMAT DATETIME
-    ===================================================== */
-
-    const formatDateTime = (dateStr) => {
-
-        const date = new Date(dateStr);
-
-        return {
-            date: date.toLocaleDateString('vi-VN'),
-            time: date.toLocaleTimeString(
-                'vi-VN',
-                {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }
-            )
-        };
 
     };
 

@@ -7,7 +7,6 @@ import axios from 'axios';
 
 import {
     Tv,
-    Plus,
     Edit,
     Trash2,
     Loader2,
@@ -41,14 +40,25 @@ const CinemaPage = () => {
 
     const [loading, setLoading] = useState(false);
 
+    const [submitLoading, setSubmitLoading] =
+        useState(false);
+
     const [search, setSearch] = useState('');
 
     const [isFormOpen, setIsFormOpen] = useState(false);
 
-    const [editingCinema, setEditingCinema] = useState(null);
+    const [editingCinema, setEditingCinema] =
+        useState(null);
 
     const [formData, setFormData] =
         useState(initialFormData);
+
+    /* =====================================================
+        FORM ERRORS
+    ===================================================== */
+
+    const [formErrors, setFormErrors] =
+        useState({});
 
     const [alertModal, setAlertModal] =
         useState({
@@ -146,6 +156,66 @@ const CinemaPage = () => {
     };
 
     /* =====================================================
+        VALIDATE FORM
+    ===================================================== */
+
+    const validateForm = () => {
+
+        const errors = {};
+
+        /* TÊN RẠP */
+
+        if (!formData.cinema_name.trim()) {
+
+            errors.cinema_name =
+                'Vui lòng nhập tên rạp';
+
+        } else if (
+            formData.cinema_name.trim().length < 5
+        ) {
+
+            errors.cinema_name =
+                'Tên rạp phải từ 5 ký tự trở lên';
+
+        }
+
+        /* THÀNH PHỐ */
+
+        if (!formData.city.trim()) {
+
+            errors.city =
+                'Vui lòng nhập thành phố';
+
+        } else if (
+            formData.city.trim().length < 2
+        ) {
+
+            errors.city =
+                'Tên thành phố quá ngắn';
+
+        }
+
+        /* ĐỊA CHỈ */
+
+        if (!formData.address.trim()) {
+
+            errors.address =
+                'Vui lòng nhập địa chỉ';
+
+        } else if (
+            formData.address.trim().length < 5
+        ) {
+
+            errors.address =
+                'Địa chỉ phải từ 5 ký tự trở lên';
+
+        }
+
+        return errors;
+
+    };
+
+    /* =====================================================
         OPEN ADD
     ===================================================== */
 
@@ -154,6 +224,8 @@ const CinemaPage = () => {
         setEditingCinema(null);
 
         setFormData(initialFormData);
+
+        setFormErrors({});
 
         setIsFormOpen(true);
 
@@ -166,6 +238,8 @@ const CinemaPage = () => {
     const handleOpenEdit = (cinema) => {
 
         setEditingCinema(cinema);
+
+        setFormErrors({});
 
         setFormData({
             cinema_name:
@@ -193,6 +267,10 @@ const CinemaPage = () => {
             value
         } = e.target;
 
+        /* =================================================
+            AUTO GENERATE SLUG
+        ================================================= */
+
         if (name === 'cinema_name') {
 
             setFormData(prev => ({
@@ -201,13 +279,89 @@ const CinemaPage = () => {
                 slug: generateSlug(value)
             }));
 
-            return;
+        } else {
+
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
 
         }
 
-        setFormData(prev => ({
+        /* =================================================
+            REALTIME VALIDATION
+        ================================================= */
+
+        let errorMessage = '';
+
+        switch (name) {
+
+            case 'cinema_name':
+
+                if (!value.trim()) {
+
+                    errorMessage =
+                        'Vui lòng nhập tên rạp';
+
+                } else if (
+                    value.trim().length < 5
+                ) {
+
+                    errorMessage =
+                        'Tên rạp phải từ 5 ký tự trở lên';
+
+                }
+
+                break;
+
+            case 'city':
+
+                if (!value.trim()) {
+
+                    errorMessage =
+                        'Vui lòng nhập thành phố';
+
+                } else if (
+                    value.trim().length < 2
+                ) {
+
+                    errorMessage =
+                        'Tên thành phố quá ngắn';
+
+                }
+
+                break;
+
+            case 'address':
+
+                if (!value.trim()) {
+
+                    errorMessage =
+                        'Vui lòng nhập địa chỉ';
+
+                } else if (
+                    value.trim().length < 5
+                ) {
+
+                    errorMessage =
+                        'Địa chỉ phải từ 5 ký tự trở lên';
+
+                }
+
+                break;
+
+            default:
+                break;
+
+        }
+
+        /* =================================================
+            SET ERRORS
+        ================================================= */
+
+        setFormErrors(prev => ({
             ...prev,
-            [name]: value
+            [name]: errorMessage
         }));
 
     };
@@ -220,7 +374,23 @@ const CinemaPage = () => {
 
         e.preventDefault();
 
+        const errors = validateForm();
+
+        if (
+            Object.keys(errors).length > 0
+        ) {
+
+            setFormErrors(errors);
+
+            return;
+
+        }
+
         try {
+
+            setSubmitLoading(true);
+
+            setFormErrors({});
 
             if (editingCinema) {
 
@@ -254,11 +424,32 @@ const CinemaPage = () => {
 
         } catch (error) {
 
+            const backendField =
+                error.response?.data?.field;
+
+            const backendError =
+                error.response?.data?.error;
+
+            if (backendField) {
+
+                setFormErrors({
+                    [backendField]:
+                        backendError
+                });
+
+                return;
+
+            }
+
             showAlert(
                 'Lỗi',
-                error.response?.data?.error ||
+                backendError ||
                 'Đã xảy ra lỗi.'
             );
+
+        } finally {
+
+            setSubmitLoading(false);
 
         }
 
@@ -566,8 +757,10 @@ const CinemaPage = () => {
                 <AdminForm
                     fields={formFields}
                     formData={formData}
+                    errors={formErrors}
                     onChange={handleChange}
                     onSubmit={handleSubmit}
+                    loading={submitLoading}
                     submitText={
                         editingCinema
                             ? 'Lưu thay đổi'

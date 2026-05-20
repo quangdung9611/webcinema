@@ -7,7 +7,6 @@ import axios from 'axios';
 
 import {
     Theater,
-    Plus,
     Edit,
     Trash2,
     Loader2
@@ -41,6 +40,9 @@ const GenresPage = () => {
 
     const [loading, setLoading] = useState(false);
 
+    const [submitLoading, setSubmitLoading] =
+        useState(false);
+
     const [search, setSearch] = useState('');
 
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -48,6 +50,11 @@ const GenresPage = () => {
     const [editingGenre, setEditingGenre] = useState(null);
 
     const [formData, setFormData] = useState(initialFormData);
+
+    /* ===== BỔ SUNG ===== */
+
+    const [formErrors, setFormErrors] =
+        useState({});
 
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -123,6 +130,34 @@ const GenresPage = () => {
     };
 
     /* =====================================================
+        VALIDATE FORM
+    ===================================================== */
+
+    const validateForm = () => {
+
+        const errors = {};
+
+        /* GENRE NAME */
+
+        if (!formData.genre_name.trim()) {
+
+            errors.genre_name =
+                'Vui lòng nhập tên thể loại';
+
+        } else if (
+            formData.genre_name.trim().length < 2
+        ) {
+
+            errors.genre_name =
+                'Tên thể loại phải từ 2 ký tự trở lên';
+
+        }
+
+        return errors;
+
+    };
+
+    /* =====================================================
         GENERATE SLUG
     ===================================================== */
 
@@ -152,6 +187,10 @@ const GenresPage = () => {
 
         setFormData(initialFormData);
 
+        /* ===== BỔ SUNG ===== */
+
+        setFormErrors({});
+
         setIsFormOpen(true);
 
     };
@@ -163,6 +202,10 @@ const GenresPage = () => {
     const handleOpenEdit = (genre) => {
 
         setEditingGenre(genre);
+
+        /* ===== BỔ SUNG ===== */
+
+        setFormErrors({});
 
         setFormData({
             genre_name: genre.genre_name || '',
@@ -192,6 +235,29 @@ const GenresPage = () => {
                 slug: generateSlug(value)
             }));
 
+            /* ===== REALTIME VALIDATION ===== */
+
+            let errorMessage = '';
+
+            if (!value.trim()) {
+
+                errorMessage =
+                    'Vui lòng nhập tên thể loại';
+
+            } else if (
+                value.trim().length < 2
+            ) {
+
+                errorMessage =
+                    'Tên thể loại phải từ 2 ký tự trở lên';
+
+            }
+
+            setFormErrors(prev => ({
+                ...prev,
+                genre_name: errorMessage
+            }));
+
             return;
 
         }
@@ -211,7 +277,25 @@ const GenresPage = () => {
 
         e.preventDefault();
 
+        /* ===== VALIDATE ===== */
+
+        const errors = validateForm();
+
+        if (
+            Object.keys(errors).length > 0
+        ) {
+
+            setFormErrors(errors);
+
+            return;
+
+        }
+
         try {
+
+            setSubmitLoading(true);
+
+            setFormErrors({});
 
             if (editingGenre) {
 
@@ -245,11 +329,34 @@ const GenresPage = () => {
 
         } catch (error) {
 
+            const backendField =
+                error.response?.data?.field;
+
+            const backendError =
+                error.response?.data?.error;
+
+            /* ===== FIELD ERROR ===== */
+
+            if (backendField) {
+
+                setFormErrors({
+                    [backendField]:
+                        backendError
+                });
+
+                return;
+
+            }
+
             showAlert(
                 'Lỗi',
-                error.response?.data?.error ||
+                backendError ||
                 'Đã xảy ra lỗi.'
             );
+
+        } finally {
+
+            setSubmitLoading(false);
 
         }
 
@@ -477,8 +584,18 @@ const GenresPage = () => {
                 <AdminForm
                     fields={formFields}
                     formData={formData}
+
+                    /* ===== BỔ SUNG ===== */
+
+                    errors={formErrors}
+
                     onChange={handleChange}
                     onSubmit={handleSubmit}
+
+                    /* ===== BỔ SUNG ===== */
+
+                    loading={submitLoading}
+
                     submitText={
                         editingGenre
                             ? 'Lưu thay đổi'
