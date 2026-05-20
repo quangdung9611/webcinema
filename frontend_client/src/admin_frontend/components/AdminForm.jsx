@@ -42,23 +42,44 @@ const AdminForm = ({
                         key={field.name}
                     >
 
-                        {/* ================================= */}
                         {/* LABEL */}
-                        {/* ================================= */}
-
                         <label className="admin-form-label">
-
                             {field.label}
-
                         </label>
 
-                        {/* ================================= */}
-                        {/* INPUT */}
-                        {/* ================================= */}
+                        {/* =====================================================
+                            FILE INPUT (FIX MỚI)
+                        ===================================================== */}
+                        {
+                            field.type === 'file' && (
 
+                                <>
+                                    <input
+                                        type="file"
+                                        name={field.name}
+                                        onChange={onChange}
+                                        className="admin-form-input"
+                                    />
+
+                                    {/* ERROR */}
+                                    {
+                                        errors?.[field.name] && (
+                                            <p className="admin-form-error">
+                                                <AlertCircle size={15} />
+                                                {errors[field.name]}
+                                            </p>
+                                        )
+                                    }
+
+                                </>
+                            )
+                        }
+
+                        {/* INPUT */}
                         {
                             field.type !== 'textarea' &&
-                            field.type !== 'select' && (
+                            field.type !== 'select' &&
+                            field.type !== 'file' && (
 
                                 <>
 
@@ -68,7 +89,7 @@ const AdminForm = ({
                                         name={field.name}
 
                                         value={
-                                            formData[field.name] || ''
+                                            formData[field.name] ?? ''
                                         }
 
                                         placeholder={
@@ -83,21 +104,19 @@ const AdminForm = ({
 
                                         className={`
                                             admin-form-input
-
                                             ${
                                                 errors?.[field.name]
                                                     ? 'error'
-                                                    : formData[field.name]
+                                                    : (formData[field.name] !== '' &&
+                                                       formData[field.name] !== undefined &&
+                                                       formData[field.name] !== null)
                                                         ? 'success'
                                                         : ''
                                             }
                                         `}
                                     />
 
-                                    {/* ================================= */}
                                     {/* PASSWORD STRENGTH */}
-                                    {/* ================================= */}
-
                                     {
                                         field.name === 'password' &&
                                         formData.password && (
@@ -133,10 +152,7 @@ const AdminForm = ({
                                         )
                                     }
 
-                                    {/* ================================= */}
                                     {/* ERROR */}
-                                    {/* ================================= */}
-
                                     {
                                         errors?.[field.name] && (
 
@@ -151,13 +167,12 @@ const AdminForm = ({
                                         )
                                     }
 
-                                    {/* ================================= */}
                                     {/* SUCCESS */}
-                                    {/* ================================= */}
-
                                     {
                                         !errors?.[field.name] &&
-                                        formData[field.name] && (
+                                        formData[field.name] !== '' &&
+                                        formData[field.name] !== undefined &&
+                                        formData[field.name] !== null && (
 
                                             <div className="admin-form-success">
 
@@ -175,10 +190,7 @@ const AdminForm = ({
                             )
                         }
 
-                        {/* ================================= */}
                         {/* TEXTAREA */}
-                        {/* ================================= */}
-
                         {
                             field.type === 'textarea' && (
 
@@ -188,7 +200,7 @@ const AdminForm = ({
                                         name={field.name}
 
                                         value={
-                                            formData[field.name] || ''
+                                            formData[field.name] ?? ''
                                         }
 
                                         placeholder={
@@ -205,21 +217,19 @@ const AdminForm = ({
 
                                         className={`
                                             admin-form-textarea
-
                                             ${
                                                 errors?.[field.name]
                                                     ? 'error'
-                                                    : formData[field.name]
+                                                    : (formData[field.name] !== '' &&
+                                                       formData[field.name] !== undefined &&
+                                                       formData[field.name] !== null)
                                                         ? 'success'
                                                         : ''
                                             }
                                         `}
                                     />
 
-                                    {/* ================================= */}
                                     {/* ERROR */}
-                                    {/* ================================= */}
-
                                     {
                                         errors?.[field.name] && (
 
@@ -234,13 +244,12 @@ const AdminForm = ({
                                         )
                                     }
 
-                                    {/* ================================= */}
                                     {/* SUCCESS */}
-                                    {/* ================================= */}
-
                                     {
                                         !errors?.[field.name] &&
-                                        formData[field.name] && (
+                                        formData[field.name] !== '' &&
+                                        formData[field.name] !== undefined &&
+                                        formData[field.name] !== null && (
 
                                             <div className="admin-form-success">
 
@@ -258,10 +267,7 @@ const AdminForm = ({
                             )
                         }
 
-                        {/* ================================= */}
                         {/* SELECT */}
-                        {/* ================================= */}
-
                         {
                             field.type === 'select' && (
 
@@ -271,7 +277,7 @@ const AdminForm = ({
                                         name={field.name}
 
                                         value={
-                                            formData[field.name] || ''
+                                            formData[field.name] ?? ''
                                         }
 
                                         onChange={onChange}
@@ -282,11 +288,12 @@ const AdminForm = ({
 
                                         className={`
                                             admin-form-select
-
                                             ${
                                                 errors?.[field.name]
                                                     ? 'error'
-                                                    : formData[field.name]
+                                                    : (formData[field.name] !== '' &&
+                                                       formData[field.name] !== undefined &&
+                                                       formData[field.name] !== null)
                                                         ? 'success'
                                                         : ''
                                             }
@@ -314,10 +321,7 @@ const AdminForm = ({
 
                                     </select>
 
-                                    {/* ================================= */}
                                     {/* ERROR */}
-                                    {/* ================================= */}
-
                                     {
                                         errors?.[field.name] && (
 
@@ -332,13 +336,12 @@ const AdminForm = ({
                                         )
                                     }
 
-                                    {/* ================================= */}
                                     {/* SUCCESS */}
-                                    {/* ================================= */}
-
                                     {
                                         !errors?.[field.name] &&
-                                        formData[field.name] && (
+                                        formData[field.name] !== '' &&
+                                        formData[field.name] !== undefined &&
+                                        formData[field.name] !== null && (
 
                                             <div className="admin-form-success">
 
@@ -361,10 +364,7 @@ const AdminForm = ({
                 ))
             }
 
-            {/* ================================= */}
             {/* FOOTER */}
-            {/* ================================= */}
-
             <div className="admin-form-footer">
 
                 <button
@@ -379,14 +379,12 @@ const AdminForm = ({
                     {
                         loading ? (
                             <>
-
                                 <Loader2
                                     size={18}
                                     className="admin-btn-spinner"
                                 />
 
                                 Đang xử lý...
-
                             </>
                         ) : (
                             submitText

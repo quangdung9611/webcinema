@@ -55,6 +55,9 @@ const MoviePage = () => {
 
     const [backdropFile, setBackdropFile] = useState(null);
 
+    // Thêm state để quản lý các thông báo lỗi của từng ô input trong form
+    const [formErrors, setFormErrors] = useState({});
+
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -129,6 +132,48 @@ const MoviePage = () => {
     };
 
     /* =====================================================
+        VALIDATE FORM
+    ===================================================== */
+
+    const validateForm = () => {
+
+        const errors = {};
+
+        if (!formData.title.trim()) {
+            errors.title = 'Vui lòng nhập tên phim.';
+        }
+
+        if (!formData.director.trim()) {
+            errors.director = 'Vui lòng nhập tên đạo diễn.';
+        }
+
+        if (!formData.nation.trim()) {
+            errors.nation = 'Vui lòng nhập quốc gia sản xuất.';
+        }
+
+        if (!formData.duration) {
+            errors.duration = 'Vui lòng nhập thời lượng phim.';
+        } else if (Number(formData.duration) <= 0) {
+            errors.duration = 'Thời lượng phim phải lớn hơn 0 phút.';
+        }
+
+        if (!formData.release_date) {
+            errors.release_date = 'Vui lòng chọn ngày phát hành.';
+        }
+
+        // Khi thêm mới, bắt buộc phải chọn file Poster
+        if (!editingMovie && !posterFile) {
+            errors.posters = 'Vui lòng chọn file hình ảnh cho Poster.';
+        }
+
+        setFormErrors(errors);
+
+        // Nếu object errors không có key nào nghĩa là dữ liệu hợp lệ (trả về true)
+        return Object.keys(errors).length === 0;
+
+    };
+
+    /* =====================================================
         GENERATE SLUG
     ===================================================== */
 
@@ -162,13 +207,16 @@ const MoviePage = () => {
 
         setBackdropFile(null);
 
+        // Reset lại các thông báo lỗi cũ khi mở form thêm mới
+        setFormErrors({});
+
         setIsFormOpen(true);
 
     };
 
     /* =====================================================
         OPEN EDIT
-    ===================================================== */
+    ==================================================== */
 
     const handleOpenEdit = (movie) => {
 
@@ -193,6 +241,9 @@ const MoviePage = () => {
 
         setBackdropFile(null);
 
+        // Reset lại các thông báo lỗi cũ khi mở form chỉnh sửa
+        setFormErrors({});
+
         setIsFormOpen(true);
 
     };
@@ -204,6 +255,14 @@ const MoviePage = () => {
     const handleChange = (e) => {
 
         const { name, value, files } = e.target;
+
+        // Xóa thông báo lỗi của input tương ứng khi người dùng bắt đầu sửa đổi dữ liệu
+        if (formErrors[name]) {
+            setFormErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
 
         if (name === 'posters') {
 
@@ -247,6 +306,11 @@ const MoviePage = () => {
     const handleSubmit = async (e) => {
 
         e.preventDefault();
+
+        // Thực hiện kiểm tra lỗi validation trước khi gửi dữ liệu lên server
+        if (!validateForm()) {
+            return;
+        }
 
         try {
 
@@ -678,6 +742,7 @@ const MoviePage = () => {
                 <AdminForm
                     fields={formFields}
                     formData={formData}
+                    errors={formErrors} // Truyền state errors vào để AdminForm map error text theo name
                     onChange={handleChange}
                     onSubmit={handleSubmit}
                     submitText={

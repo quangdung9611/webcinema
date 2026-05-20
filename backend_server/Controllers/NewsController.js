@@ -127,8 +127,6 @@ const NewsController = {
             const slug = createSlug(title);
             const initialLikes = likes || 0;
 
-            // --- CHỐT GIỜ VIỆT NAM ---
-            // Dùng sv-SE để ra định dạng YYYY-MM-DD HH:mm:ss mà MySQL DATETIME hiểu được
             const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
             const sql = 'INSERT INTO news (title, slug, content, image_url, views, likes, created_at) VALUES (?, ?, ?, ?, 0, ?, ?)';
@@ -148,7 +146,7 @@ const NewsController = {
         }
     },
 
-    // 6. Cập nhật bài viết
+    // 6. Cập nhật bài viết (Đã bổ sung check trùng title & slug)
     updateNews: async (req, res) => {
         const { news_id } = req.params;
         const { title, content, likes } = req.body;
@@ -162,24 +160,37 @@ const NewsController = {
         try {
             await connection.beginTransaction();
 
+            // 6.1 Kiểm tra bài viết cần sửa có tồn tại không
             const [old] = await connection.query("SELECT image_url FROM news WHERE news_id = ?", [news_id]);
             if (old.length === 0) {
                 if (req.file) deleteFile(req.file.filename);
                 return res.status(404).json({ message: "Bài viết không tồn tại." });
             }
 
+            // 6.2 Kiểm tra trùng tên (Title) hoặc đường dẫn (Slug) với các bài viết KHÁC
+            const newSlug = createSlug(title);
+            const checkDupSql = "SELECT news_id FROM news WHERE (title = ? OR slug = ?) AND news_id != ?";
+            const [duplicate] = await connection.query(checkDupSql, [title.trim(), newSlug, news_id]);
+
+            if (duplicate.length > 0) {
+                if (req.file) deleteFile(req.file.filename);
+                return res.status(400).json({ message: "Tiêu đề hoặc đường dẫn bài viết này đã tồn tại hệ thống rồi!" });
+            }
+
+            // 6.3 Xử lý file ảnh
             let finalImage = old[0].image_url;
             if (req.file) {
                 deleteFile(old[0].image_url); // Xóa ảnh cũ vật lý
                 finalImage = req.file.filename;
             }
 
+            // 6.4 Thực thi cập nhật dữ liệu
             const sql = `
                 UPDATE news 
                 SET title = ?, slug = ?, content = ?, image_url = ?, likes = ?
                 WHERE news_id = ?`;
             
-            await connection.query(sql, [title.trim(), createSlug(title), content, finalImage, likes || 0, news_id]);
+            await connection.query(sql, [title.trim(), newSlug, content, finalImage, likes || 0, news_id]);
 
             await connection.commit();
             res.status(200).json({ success: true, message: "Cập nhật bài viết thành công!" });
