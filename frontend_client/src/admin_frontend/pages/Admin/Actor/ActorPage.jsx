@@ -50,6 +50,9 @@ const ActorPage = () => {
 
     const [preview, setPreview] = useState(null);
 
+    // State quản lý thông báo lỗi hiển thị trực tiếp trên Form của Modal
+    const [errorText, setErrorText] = useState('');
+
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -157,6 +160,8 @@ const ActorPage = () => {
 
         setPreview(null);
 
+        setErrorText(''); // Xóa lỗi cũ khi mở form thêm mới
+
         setIsFormOpen(true);
 
     };
@@ -188,6 +193,8 @@ const ActorPage = () => {
 
         setAvatarFile(null);
 
+        setErrorText(''); // Xóa lỗi cũ khi mở form chỉnh sửa
+
         setIsFormOpen(true);
 
     };
@@ -199,6 +206,9 @@ const ActorPage = () => {
     const handleChange = (e) => {
 
         const { name, value, files } = e.target;
+
+        // Người dùng thay đổi input -> tạm thời xóa bớt thông báo lỗi trên form
+        if (errorText) setErrorText('');
 
         if (name === 'avatar') {
 
@@ -244,6 +254,7 @@ const ActorPage = () => {
     const handleSubmit = async (e) => {
 
         e.preventDefault();
+        setErrorText(''); // Reset lại errorText trước khi gửi request
 
         try {
 
@@ -309,6 +320,8 @@ const ActorPage = () => {
                     }
                 );
 
+                setIsFormOpen(false); // Thành công thì đóng form đóng modal
+
                 showAlert(
                     'Thành công',
                     'Cập nhật diễn viên thành công.'
@@ -326,6 +339,8 @@ const ActorPage = () => {
                     }
                 );
 
+                setIsFormOpen(false); // Thành công thì đóng form đóng modal
+
                 showAlert(
                     'Thành công',
                     'Thêm diễn viên thành công.'
@@ -333,17 +348,13 @@ const ActorPage = () => {
 
             }
 
-            setIsFormOpen(false);
-
             fetchActors();
 
         } catch (error) {
 
-            showAlert(
-                'Lỗi',
-                error.response?.data?.error ||
-                'Đã xảy ra lỗi.'
-            );
+            // Bắt lỗi trùng lặp (400 Bad Request) từ Backend đẩy lên và cập nhật vào errorText
+            const msg = error.response?.data?.error || 'Đã xảy ra lỗi.';
+            setErrorText(msg);
 
         }
 
@@ -689,6 +700,25 @@ const ActorPage = () => {
                     }
 
                 </div>
+
+                {/* KHU VỰC HIỂN THỊ ERROR TEXT (DẠNG USERPAGE) */}
+                {errorText && (
+                    <div 
+                        className="admin-form-error"
+                        style={{
+                            color: '#ef4444',
+                            backgroundColor: '#fef2f2',
+                            border: '1px solid #fee2e2',
+                            padding: '10px 14px',
+                            borderRadius: '6px',
+                            marginBottom: '16px',
+                            fontSize: '14px',
+                            fontWeight: '500'
+                        }}
+                    >
+                        {errorText}
+                    </div>
+                )}
 
                 <AdminForm
                     fields={formFields}

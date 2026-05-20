@@ -21,20 +21,56 @@ const createSlug = (name) => {
 
 /**
  * Validate dữ liệu đầu vào cho Diễn viên
+ * Đã nâng cấp để kiểm tra đầy đủ tất cả các trường dựa theo CSDL
  */
 const validateActorData = (data, file, isUpdate = false) => {
-    const { name, gender } = data;
+    const { name, gender, nationality, biography, birthday } = data;
 
-    if (!name || name.trim().length < 2) 
+    // 1. Kiểm tra Tên diễn viên (Bắt buộc)
+    if (!name || name.trim() === "") {
+        return "Vui lòng nhập tên diễn viên.";
+    }
+    if (name.trim().length < 2) { 
         return "Tên diễn viên phải từ 2 ký tự trở lên.";
+    }
 
+    // 2. Kiểm tra Giới tính (Bắt buộc)
+    if (!gender || gender.trim() === "") {
+        return "Vui lòng chọn giới tính cho diễn viên.";
+    }
     const validGenders = ['Nam', 'Nữ', 'Khác'];
-    if (gender && !validGenders.includes(gender))
+    if (!validGenders.includes(gender)) {
         return "Giới tính không hợp lệ (Nam, Nữ, Khác).";
+    }
 
-    // Khi thêm mới (!isUpdate) thì bắt buộc có file ảnh đại diện
-    if (!isUpdate && !file) 
+    // 3. Kiểm tra Quốc tịch (Bắt buộc)
+    if (!nationality || nationality.trim() === "") {
+        return "Vui lòng nhập quốc tịch của diễn viên.";
+    }
+
+    // 4. Kiểm tra Ngày sinh (Bắt buộc và phải hợp lệ)
+    if (!birthday || birthday.trim() === "") {
+        return "Vui lòng chọn ngày sinh của diễn viên.";
+    } else {
+        const inputDate = new Date(birthday);
+        const today = new Date();
+        if (isNaN(inputDate.getTime())) {
+            return "Định dạng ngày sinh không hợp lệ.";
+        }
+        if (inputDate > today) {
+            return "Ngày sinh không thể lớn hơn ngày hiện tại.";
+        }
+    }
+
+    // 5. Kiểm tra Tiểu sử (Bắt buộc)
+    if (!biography || biography.trim() === "") {
+        return "Vui lòng điền tiểu sử của diễn viên.";
+    }
+
+    // 6. Kiểm tra ảnh đại diện (Khi thêm mới bắt buộc phải có file)
+    if (!isUpdate && !file) {
         return "Vui lòng upload ảnh đại diện cho diễn viên.";
+    }
 
     return null;
 };
@@ -147,7 +183,7 @@ exports.addActor = async (req, res) => {
         await connection.query(
             `INSERT INTO actors (name, slug, gender, nationality, avatar, biography, birthday) 
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [name.trim(), actorSlug, gender || "Nam", nationality || "", avatar, biography || "", birthday || null]
+            [name.trim(), actorSlug, gender, nationality.trim(), avatar, biography.trim(), birthday]
         );
 
         await connection.commit();
@@ -210,7 +246,7 @@ exports.updateActor = async (req, res) => {
             `UPDATE actors 
              SET name=?, slug=?, gender=?, nationality=?, avatar=?, biography=?, birthday=? 
              WHERE actor_id=?`,
-            [name.trim(), actorSlug, gender, nationality, finalAvatar, biography, birthday, id]
+            [name.trim(), actorSlug, gender, nationality.trim(), finalAvatar, biography.trim(), birthday, id]
         );
 
         await connection.commit();
@@ -223,6 +259,7 @@ exports.updateActor = async (req, res) => {
         connection.release();
     }
 };
+
 // [DELETE] /api/actors/delete/:id - Xóa diễn viên
 exports.deleteActor = async (req, res) => {
     const { id } = req.params;

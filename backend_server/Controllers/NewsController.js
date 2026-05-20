@@ -16,6 +16,45 @@ const createSlug = (title) => {
         .replace(/^-+|-+$/g, '');
 };
 
+/**
+ * Validate dữ liệu đầu vào cho Tin tức (News) dựa trên CSDL
+ * Đã bổ sung để kiểm tra đầy đủ các giá trị chưa nhập hoặc nhập thiếu
+ */
+const validateNewsData = (data, file, isUpdate = false) => {
+    const { title, content, likes } = data;
+
+    // 1. Kiểm tra Tiêu đề bài viết
+    if (!title || title.trim() === "") {
+        return "Vui lòng nhập tiêu đề bài viết.";
+    }
+    if (title.trim().length < 5) {
+        return "Tiêu đề bài viết phải từ 5 ký tự trở lên.";
+    }
+
+    // 2. Kiểm tra Nội dung bài viết
+    if (!content || content.trim() === "") {
+        return "Vui lòng nhập nội dung bài viết.";
+    }
+    if (content.trim().length < 10) {
+        return "Nội dung bài viết quá ngắn (phải từ 10 ký tự trở lên).";
+    }
+
+    // 3. Kiểm tra số lượt Thích (Nếu có truyền lên thì phải là số không âm)
+    if (likes !== undefined && likes !== null && likes !== "") {
+        const parsedLikes = parseInt(likes, 10);
+        if (isNaN(parsedLikes) || parsedLikes < 0) {
+            return "Số lượt thích phải là một số nguyên dương hợp lệ.";
+        }
+    }
+
+    // 4. Kiểm tra file Ảnh bài viết (Khi thêm mới bắt buộc phải chọn file)
+    if (!isUpdate && !file) {
+        return "Vui lòng upload hình ảnh đại diện cho bài viết.";
+    }
+
+    return null; // Không có lỗi
+};
+
 const deleteFile = (fileName) => {
     if (!fileName) return;
     const pureFileName = path.basename(fileName);
@@ -114,9 +153,11 @@ const NewsController = {
     createNews: async (req, res) => {
         const { title, content, likes } = req.body;
         
-        if (!title || !content || !req.file) {
+        // Thực hiện validate dữ liệu nâng cấp chi tiết dựa trên CSDL
+        const errorMsg = validateNewsData(req.body, req.file, false);
+        if (errorMsg) {
             if (req.file) deleteFile(req.file.filename);
-            return res.status(400).json({ message: "Vui lòng điền đầy đủ và upload ảnh." });
+            return res.status(400).json({ message: errorMsg });
         }
 
         const connection = await db.getConnection();
@@ -125,12 +166,12 @@ const NewsController = {
 
             const image_url = req.file.filename;
             const slug = createSlug(title);
-            const initialLikes = likes || 0;
+            const initialLikes = parseInt(likes, 10) || 0;
 
             const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
             const sql = 'INSERT INTO news (title, slug, content, image_url, views, likes, created_at) VALUES (?, ?, ?, ?, 0, ?, ?)';
-            await connection.query(sql, [title.trim(), slug, content, image_url, initialLikes, nowVN]);
+            await connection.query(sql, [title.trim(), slug, content.trim(), image_url, initialLikes, nowVN]);
 
             await connection.commit();
             res.status(201).json({ success: true, message: "Đăng bài viết thành công!" });
@@ -146,14 +187,16 @@ const NewsController = {
         }
     },
 
-    // 6. Cập nhật bài viết (Đã bổ sung check trùng title & slug)
+    // 6. Cập nhật bài viết (Đã tích hợp check trống & check trùng nâng cao)
     updateNews: async (req, res) => {
         const { news_id } = req.params;
         const { title, content, likes } = req.body;
 
-        if (!title || !content) {
+        // Thực hiện validate dữ liệu nâng cấp chi tiết dựa trên CSDL (isUpdate = true)
+        const errorMsg = validateNewsData(req.body, req.file, true);
+        if (errorMsg) {
             if (req.file) deleteFile(req.file.filename);
-            return res.status(400).json({ message: "Tiêu đề và nội dung không được để trống." });
+            return res.status(400).json({ message: errorMsg });
         }
 
         const connection = await db.getConnection();
@@ -177,20 +220,20 @@ const NewsController = {
                 return res.status(400).json({ message: "Tiêu đề hoặc đường dẫn bài viết này đã tồn tại hệ thống rồi!" });
             }
 
-            // 6.3 Xử lý file ảnh
+            // 6.3 Xử lý file ảnh bài viết
             let finalImage = old[0].image_url;
             if (req.file) {
                 deleteFile(old[0].image_url); // Xóa ảnh cũ vật lý
                 finalImage = req.file.filename;
             }
 
-            // 6.4 Thực thi cập nhật dữ liệu
+            // 6.4 Thực thi cập nhật dữ liệu vào DB
             const sql = `
                 UPDATE news 
                 SET title = ?, slug = ?, content = ?, image_url = ?, likes = ?
                 WHERE news_id = ?`;
             
-            await connection.query(sql, [title.trim(), newSlug, content, finalImage, likes || 0, news_id]);
+            await connection.query(sql, [title.trim(), newSlug, content.trim(), finalImage, parseInt(likes, 10) || 0, news_id]);
 
             await connection.commit();
             res.status(200).json({ success: true, message: "Cập nhật bài viết thành công!" });
