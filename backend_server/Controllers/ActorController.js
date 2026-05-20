@@ -117,7 +117,7 @@ exports.getActorBySlug = async (req, res) => {
 exports.addActor = async (req, res) => {
     const { name, gender, nationality, biography, birthday } = req.body;
 
-    // Validate
+    // 1. Validate dữ liệu cơ bản
     const errorMsg = validateActorData(req.body, req.file, false);
     if (errorMsg) {
         if (req.file) deleteActorFile(req.file.originalname);
@@ -128,8 +128,21 @@ exports.addActor = async (req, res) => {
     try {
         await connection.beginTransaction();
         
-        const avatar = req.file.originalname; 
         const actorSlug = createSlug(name);
+
+        // ĐOẠN CHECK TRÙNG KHI THÊM MỚI: Kiểm tra xem tên hoặc slug này đã tồn tại chưa
+        const [existingActor] = await connection.query(
+            "SELECT actor_id FROM actors WHERE name = ? OR slug = ?", 
+            [name.trim(), actorSlug]
+        );
+
+        if (existingActor.length > 0) {
+            if (req.file) deleteActorFile(req.file.originalname);
+            await connection.rollback();
+            return res.status(400).json({ error: "Tên hoặc slug của diễn viên này đã tồn tại trong hệ thống." });
+        }
+
+        const avatar = req.file.originalname; 
 
         await connection.query(
             `INSERT INTO actors (name, slug, gender, nationality, avatar, biography, birthday) 
@@ -153,26 +166,43 @@ exports.updateActor = async (req, res) => {
     const { id } = req.params;
     const { name, gender, nationality, biography, birthday, avatar_old } = req.body;
     
-    // Validate (isUpdate = true)
+    // 1. Validate dữ liệu cơ bản (isUpdate = true)
     const errorMsg = validateActorData(req.body, req.file, true);
-    if (errorMsg) return res.status(400).json({ error: errorMsg });
+    if (errorMsg) {
+        if (req.file) deleteActorFile(req.file.originalname);
+        return res.status(400).json({ error: errorMsg });
+    }
 
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
 
-        // Kiểm tra diễn viên tồn tại
+        // 2. Kiểm tra diễn viên mục tiêu có tồn tại hay không
         const [old] = await connection.query("SELECT avatar FROM actors WHERE actor_id = ?", [id]);
         if (old.length === 0) {
-            connection.release();
+            await connection.rollback();
             return res.status(404).json({ error: "Diễn viên không tồn tại." });
+        }
+
+        const actorSlug = createSlug(name);
+
+        // ĐOẠN CHECK TRÙNG KHI CẬP NHẬT: Kiểm tra xem tên hoặc slug mới có trùng với AI KHÁC không (loại trừ ID hiện tại ra)
+        const [duplicateActor] = await connection.query(
+            "SELECT actor_id FROM actors WHERE (name = ? OR slug = ?) AND actor_id != ?", 
+            [name.trim(), actorSlug, id]
+        );
+
+        if (duplicateActor.length > 0) {
+            if (req.file) deleteActorFile(req.file.originalname); // Xóa ảnh mới vừa upload lên nếu bị trùng thông tin
+            await connection.rollback();
+            return res.status(400).json({ error: "Tên hoặc đường dẫn slug của diễn viên đã bị trùng với một diễn viên khác." });
         }
 
         let finalAvatar = old[0].avatar;
 
         // Nếu có upload ảnh mới
         if (req.file) {
-            deleteActorFile(old[0].avatar); // Xóa ảnh cũ trên server
+            deleteActorFile(old[0].avatar); // Xóa file ảnh cũ trên server
             finalAvatar = req.file.originalname;
         }
 
@@ -180,19 +210,19 @@ exports.updateActor = async (req, res) => {
             `UPDATE actors 
              SET name=?, slug=?, gender=?, nationality=?, avatar=?, biography=?, birthday=? 
              WHERE actor_id=?`,
-            [name.trim(), createSlug(name), gender, nationality, finalAvatar, biography, birthday, id]
+            [name.trim(), actorSlug, gender, nationality, finalAvatar, biography, birthday, id]
         );
 
         await connection.commit();
         res.status(200).json({ message: "Cập nhật diễn viên thành công!" });
     } catch (error) {
         await connection.rollback();
+        if (req.file) deleteActorFile(req.file.originalname);
         res.status(500).json({ error: "Lỗi server: " + error.message });
     } finally {
         connection.release();
     }
 };
-
 // [DELETE] /api/actors/delete/:id - Xóa diễn viên
 exports.deleteActor = async (req, res) => {
     const { id } = req.params;

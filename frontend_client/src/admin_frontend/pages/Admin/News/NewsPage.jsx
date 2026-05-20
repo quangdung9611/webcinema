@@ -46,6 +46,9 @@ const NewsPage = () => {
 
     const [formData, setFormData] = useState(initialFormData);
 
+    // Bổ sung state lưu trữ error-text cho từng trường dữ liệu giống UserPage
+    const [errors, setErrors] = useState({});
+
     const [imageFile, setImageFile] = useState(null);
 
     const [preview, setPreview] = useState(null);
@@ -153,6 +156,8 @@ const NewsPage = () => {
 
         setFormData(initialFormData);
 
+        setErrors({}); // Reset error-text khi mở form thêm mới
+
         setImageFile(null);
 
         setPreview(null);
@@ -175,6 +180,8 @@ const NewsPage = () => {
             content: item.content || ''
         });
 
+        setErrors({}); // Reset error-text khi mở form chỉnh sửa
+
         setPreview(
             item.image_url
                 ? `https://api.quangdungcinema.id.vn/uploads/news/${item.image_url}`
@@ -194,6 +201,14 @@ const NewsPage = () => {
     const handleChange = (e) => {
 
         const { name, value, files } = e.target;
+
+        // Xóa thông báo lỗi của field đó khi người dùng bắt đầu nhập lại dữ liệu
+        if (errors[name]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
 
         if (name === 'newsImage') {
 
@@ -233,12 +248,43 @@ const NewsPage = () => {
     };
 
     /* =====================================================
+        VALIDATE FORM
+    ===================================================== */
+
+    const validateForm = () => {
+
+        const newErrors = {};
+
+        if (!formData.title.trim()) {
+            newErrors.title = 'Vui lòng nhập tiêu đề bài viết.';
+        }
+
+        if (!formData.content.trim()) {
+            newErrors.content = 'Vui lòng nhập nội dung bài viết.';
+        }
+
+        // Nếu thêm bài viết mới thì bắt buộc phải chọn hình ảnh
+        if (!editingNews && !imageFile) {
+            newErrors.newsImage = 'Vui lòng chọn hình ảnh đại diện cho bài viết.';
+        }
+
+        setErrors(newErrors);
+
+        // Trả về true nếu không có lỗi nào
+        return Object.keys(newErrors).length === 0;
+
+    };
+
+    /* =====================================================
         SUBMIT
     ===================================================== */
 
     const handleSubmit = async (e) => {
 
         e.preventDefault();
+
+        // Chạy hàm validate dữ liệu đầu vào trước khi submit
+        if (!validateForm()) return;
 
         try {
 
@@ -310,11 +356,16 @@ const NewsPage = () => {
 
         } catch (error) {
 
-            showAlert(
-                'Lỗi',
-                error.response?.data?.message ||
-                'Đã xảy ra lỗi.'
-            );
+            // Nếu Backend trả về lỗi validation cụ thể, map thẳng vào ô input
+            if (error.response?.data?.errors) {
+                setErrors(error.response.data.errors);
+            } else {
+                showAlert(
+                    'Lỗi',
+                    error.response?.data?.message ||
+                    'Đã xảy ra lỗi khi lưu bài viết.'
+                );
+            }
 
         }
 
@@ -621,6 +672,7 @@ const NewsPage = () => {
                 <AdminForm
                     fields={formFields}
                     formData={formData}
+                    errors={errors} // Truyền errors object xuống component AdminForm giống UserPage
                     onChange={handleChange}
                     onSubmit={handleSubmit}
                     submitText={
