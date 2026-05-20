@@ -7,22 +7,25 @@ const storage = multer.diskStorage({
         // 1. Mặc định ban đầu
         let dir = 'uploads/posters/'; 
 
-        // 2. Kiểm tra nhãn (fieldname) để chọn thư mục đích
+        // 2. Kiểm tra nhãn (fieldname) khớp hoàn toàn với tên trường trong CSDL
         if (file.fieldname === 'backdrop_url') { 
-            // Nếu là hình ngang -> vào backdrops
+            // Cột backdrop_url trong bảng movies -> lưu vào backdrops
             dir = 'uploads/backdrops/';
         } 
-        else if (file.fieldname === 'food_image') {
+        else if (file.fieldname === 'image_url') {
+            // Cột image_url trong bảng foods (hoặc combo/bắp nước) -> lưu vào foods
             dir = 'uploads/foods/';
         } 
-        else if (file.fieldname === 'newsImage') { 
+        else if (file.fieldname === 'image') { 
+            // Cột image trong bảng news (tin tức) -> lưu vào news
             dir = 'uploads/news/';
         }
-        else if (file.fieldname === 'actorImage') {
+        else if (file.fieldname === 'avatar') {
+            // Cột avatar trong bảng actors -> Đổi từ 'actorImage' sang 'avatar'
             dir = 'uploads/actors/';
         }
         else {
-            // Mọi trường hợp khác hoặc field 'posters' -> vào posters
+            // Mọi trường hợp khác hoặc cột 'poster_url' (phim) -> lưu vào posters
             dir = 'uploads/posters/';
         }
 

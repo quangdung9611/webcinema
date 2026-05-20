@@ -258,6 +258,9 @@ const ActorPage = () => {
 
         try {
 
+            // Lấy token từ sessionStorage
+            const token = sessionStorage.getItem('usertoken');
+
             const submitData = new FormData();
 
             submitData.append(
@@ -289,6 +292,11 @@ const ActorPage = () => {
                 'biography',
                 formData.biography
             );
+
+            // Đính kèm token vào FormData để Backend có thể nhận diện quyền Admin
+            if (token) {
+                submitData.append('token', token);
+            }
 
             if (avatarFile) {
 

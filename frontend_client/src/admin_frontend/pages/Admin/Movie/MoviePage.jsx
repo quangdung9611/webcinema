@@ -228,7 +228,7 @@ const MoviePage = () => {
             director: movie.director || '',
             nation: movie.nation || '',
             duration: movie.duration || '',
-            age_rating: movie.age_rating || '0',
+            age_rating: movie.age_rating !== undefined ? String(movie.age_rating) : '0',
             release_date: movie.release_date
                 ? movie.release_date.substring(0, 10)
                 : '',
@@ -742,7 +742,7 @@ const MoviePage = () => {
                 <AdminForm
                     fields={formFields}
                     formData={formData}
-                    errors={formErrors} // Truyền state errors vào để AdminForm map error text theo name
+                    errors={formErrors}
                     onChange={handleChange}
                     onSubmit={handleSubmit}
                     submitText={
