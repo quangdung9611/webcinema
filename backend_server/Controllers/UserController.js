@@ -108,44 +108,143 @@ exports.createUser = async (req, res) => {
 
 // 3. Cập nhật thông tin người dùng (Quan trọng cho Form Admin)
 exports.updateUser = async (req, res) => {
+
     const { user_id } = req.params;
-    const { full_name, phone, email, role, address, password } = req.body;
+
+    const {
+        username,
+        full_name,
+        phone,
+        email,
+        role,
+        address,
+        password
+    } = req.body;
 
     try {
-        const validationError = validateUserData(req.body, true);
-        if (validationError) return res.status(400).json(validationError);
 
-        // Câu lệnh SQL động
-        let sql = `UPDATE users SET full_name = ?, phone = ?, email = ?, role = ?, address = ?`;
-        let params = [full_name, phone, email, role, address];
+        const validationError =
+            validateUserData(req.body, true);
 
-        // Xử lý đổi mật khẩu: Nếu field password gửi lên có giá trị thì mới cập nhật
-        if (password && password.trim() !== "") {
-            const hashedPassword = await bcrypt.hash(password, 10);
+        if (validationError) {
+            return res.status(400).json(validationError);
+        }
+
+        /* ==========================================
+            CHECK TRÙNG USERNAME / EMAIL / PHONE
+        ========================================== */
+
+        const [existing] = await db.query(
+            `
+            SELECT username, email, phone
+            FROM users
+            WHERE (
+                username = ?
+                OR email = ?
+                OR phone = ?
+            )
+            AND user_id != ?
+            `,
+            [
+                username,
+                email,
+                phone,
+                user_id
+            ]
+        );
+
+        if (existing.length > 0) {
+
+            const user = existing[0];
+
+            const field =
+                user.username === username
+                    ? 'username'
+                    : (
+                        user.email === email
+                            ? 'email'
+                            : 'phone'
+                    );
+
+            return res.status(400).json({
+                field,
+                error: `${field} đã tồn tại trong hệ thống`
+            });
+
+        }
+
+        /* ==========================================
+            UPDATE QUERY
+        ========================================== */
+
+        let sql = `
+            UPDATE users
+            SET
+                username = ?,
+                full_name = ?,
+                phone = ?,
+                email = ?,
+                role = ?,
+                address = ?
+        `;
+
+        let params = [
+            username,
+            full_name,
+            phone,
+            email,
+            role,
+            address
+        ];
+
+        /* PASSWORD */
+
+        if (password && password.trim() !== '') {
+
+            const hashedPassword =
+                await bcrypt.hash(password, 10);
+
             sql += `, password = ?`;
+
             params.push(hashedPassword);
+
         }
 
         sql += ` WHERE user_id = ?`;
+
         params.push(user_id);
 
-        const [result] = await db.query(sql, params);
+        const [result] = await db.query(
+            sql,
+            params
+        );
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Không tìm thấy người dùng để cập nhật" });
+
+            return res.status(404).json({
+                error: 'Không tìm thấy người dùng'
+            });
+
         }
-        
-        res.status(200).json({ message: "Cập nhật thông tin thành công!" });
+
+        res.status(200).json({
+            message: 'Cập nhật thành công'
+        });
 
     } catch (err) {
-        console.error("Update User Error:", err);
-        if (err.code === 'ER_DUP_ENTRY') {
-            return res.status(400).json({ error: "Email hoặc Số điện thoại đã được người khác sử dụng" });
-        }
-        res.status(500).json({ error: "Lỗi hệ thống khi cập nhật" });
-    }
-};
 
+        console.error(
+            'Update User Error:',
+            err
+        );
+
+        res.status(500).json({
+            error: 'Lỗi hệ thống khi cập nhật'
+        });
+
+    }
+
+};
 // 4. Xóa người dùng
 exports.deleteUser = async (req, res) => {
     const { user_id } = req.params;

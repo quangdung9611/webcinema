@@ -1,0 +1,321 @@
+/* =========================================================
+   ADMIN TABLE CONTAINER
+========================================================= */
+
+.admin-table-container {
+    width: 100%;
+
+    background: #0b1120 !important;
+
+    border: 1px solid rgba(255,255,255,0.06);
+
+    border-radius: 24px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 10px 40px rgba(0,0,0,0.35);
+
+    backdrop-filter: blur(10px);
+}
+
+/* =========================================================
+   WRAPPER
+========================================================= */
+
+.admin-table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+
+    background: transparent !important;
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.admin-table {
+    width: 100%;
+
+    min-width: 900px;
+
+    border-collapse: collapse;
+
+    background: transparent !important;
+
+    color: #ffffff !important;
+}
+
+/* =========================================================
+   TABLE HEAD
+========================================================= */
+
+.admin-table thead {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,0.05),
+            rgba(255,255,255,0.02)
+        ) !important;
+}
+
+.admin-table thead tr {
+    /* Chặn triệt để border ẩn của dòng header */
+    border: none !important;
+    border-bottom: none !important;
+}
+
+.admin-table th {
+    padding: 22px 18px;
+
+    text-align: left;
+
+    white-space: nowrap;
+
+    color: #94a3b8 !important;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+
+    background: transparent !important;
+
+    /* Đảm bảo ô tiêu đề không tự sinh border */
+    border: none !important;
+    border-bottom: none !important;
+}
+
+/* =========================================================
+   TABLE BODY
+========================================================= */
+
+.admin-table tbody {
+    background: transparent !important;
+}
+
+.admin-table tbody tr {
+    background: transparent !important;
+
+    /* Triệt tiêu hoàn toàn đường kẻ ngang trên từng dòng */
+    border: none !important;
+    border-bottom: none !important;
+
+    transition: 0.25s ease;
+}
+
+.admin-table tbody tr:hover {
+    background:
+        rgba(255,255,255,0.04) !important;
+}
+
+.admin-table td {
+    padding: 20px 18px;
+
+    vertical-align: middle;
+
+    color: #f8fafc !important;
+
+    font-size: 15px;
+
+    /* ÉP BUỘC XÓA BORDER-BOTTOM TẠI ĐÂY */
+    border: none !important;
+    border-bottom: none !important;
+
+    background: transparent !important;
+}
+
+/* =========================================================
+   REMOVE WHITE BACKGROUND FORCE
+========================================================= */
+
+.admin-table *,
+.admin-table tr,
+.admin-table td,
+.admin-table th,
+.admin-table tbody,
+.admin-table thead {
+    background-color: transparent;
+    /* Quét thêm một lớp kiểm tra viền cho toàn bộ phần tử con */
+    border-bottom: none !important;
+}
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.admin-table-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+/* =========================================================
+   ACTION BUTTON
+========================================================= */
+
+.admin-action-btn {
+    width: 42px;
+
+    height: 42px;
+
+    border: none !important; /* Đảm bảo nút không bị dính border-bottom từ luật chung */
+
+    outline: none;
+
+    border-radius: 14px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition: 0.25s ease;
+
+    flex-shrink: 0;
+
+    color: white;
+}
+
+.admin-action-btn:hover {
+    transform: translateY(-3px) scale(1.03);
+}
+
+/* EDIT */
+
+.edit-btn {
+    background:
+        linear-gradient(
+            135deg,
+            #f59e0b,
+            #f97316
+        ) !important;
+}
+
+/* DELETE */
+
+.delete-btn {
+    background:
+        linear-gradient(
+            135deg,
+            #ef4444,
+            #dc2626
+        ) !important;
+}
+
+/* =========================================================
+   STATUS BADGE
+========================================================= */
+
+.status-badge {
+    padding: 7px 14px;
+
+    border-radius: 999px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: none !important; /* Đảm bảo badge không dính border-bottom */
+}
+
+.status-badge.admin {
+    background:
+        rgba(239,68,68,0.15) !important;
+
+    color: #f87171;
+}
+
+.status-badge.customer {
+    background:
+        rgba(59,130,246,0.15) !important;
+
+    color: #60a5fa;
+}
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.admin-table-empty {
+    text-align: center;
+
+    padding: 50px 20px !important;
+
+    color: #94a3b8 !important;
+
+    font-size: 15px;
+
+    border: none !important;
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.admin-table-wrapper::-webkit-scrollbar {
+    height: 7px;
+}
+
+.admin-table-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.admin-table-wrapper::-webkit-scrollbar-thumb {
+    background:
+        rgba(255,255,255,0.18);
+
+    border-radius: 999px;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 992px) {
+
+    .admin-table {
+        min-width: 800px;
+    }
+
+}
+
+@media (max-width: 768px) {
+
+    .admin-table-container {
+        border-radius: 20px;
+    }
+
+    .admin-table {
+        min-width: 700px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 16px;
+    }
+
+}
+
+@media (max-width: 480px) {
+
+    .admin-table {
+        min-width: 650px;
+    }
+
+}

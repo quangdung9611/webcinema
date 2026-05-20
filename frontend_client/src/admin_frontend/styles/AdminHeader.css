@@ -1,133 +1,357 @@
-/* ========================================================================== 
-   HEADER BASE (Mặc định cho PC >= 1024px)
-   ========================================================================== */
+/* =========================================================
+   ADMIN HEADER
+========================================================= */
+
 .admin-header-main {
-    background: #111317;
-    color: #ffffff;
-    padding: 0 40px;
-    height: 72px;
+    height: 78px;
+
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    border-bottom: 2px solid rgba(255, 77, 77, 0.3);
+    justify-content: space-between;
+
+    padding: 0 28px;
+
     position: sticky;
     top: 0;
-    z-index: 1000;
+
+    z-index: 1300;
+
+    backdrop-filter: blur(10px);
+
+    border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
-.admin-header-wrapper-left {
+/* =========================================================
+   LEFT
+========================================================= */
+
+.admin-header-left {
     display: flex;
     align-items: center;
-    gap: 20px;
+
+    gap: 18px;
+
+    flex-shrink: 0;
 }
+
+/* =========================================================
+   MENU BUTTON
+========================================================= */
 
 .admin-hamburger-trigger {
-    display: none; 
-    background: none;
+    width: 42px;
+    height: 42px;
+
     border: none;
-    color: white;
+    outline: none;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    background: transparent;
+
+    color: #ffffff;
+
+    border-radius: 12px;
+
     cursor: pointer;
-    padding: 6px;
-    font-size: 1.5rem;
-    line-height: 0;
+
+    transition: 0.25s ease;
 }
 
-.admin-brand-logo a {
-    font-size: 1.5rem;
-    font-weight: 900;
-    color: #ff4d4d;
-    text-decoration: none;
-    letter-spacing: 2px;
+.admin-hamburger-trigger:hover {
+    background: rgba(255,255,255,0.05);
 }
 
-.admin-header-profile-section {
+/* =========================================================
+   LOGO
+========================================================= */
+
+.admin-brand-logo {
     display: flex;
     align-items: center;
-    gap: 25px;
+
+    text-decoration: none;
 }
 
-.admin-header-welcome-text {
-    font-size: 0.9rem;
-    font-weight: 500;
+.admin-logo-image {
+    height: 90px;
+
+    width: auto;
+
+    object-fit: contain;
 }
 
-.btn-header-auth-logout {
-    background: linear-gradient(135deg, #ff4d4d 0%, #d63031 100%);
+/* =========================================================
+   PAGE TITLE
+========================================================= */
+
+.admin-page-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+
+    color: #ffffff;
+}
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.admin-header-search-wrapper {
+    width: 100%;
+    max-width: 420px;
+
+    height: 46px;
+
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    margin: 0 30px;
+}
+
+.admin-search-icon {
+    position: absolute;
+
+    left: 16px;
+
+    color: #9ca3af;
+}
+
+.admin-search-input {
+    width: 100%;
+    height: 100%;
+
     border: none;
-    color: white;
-    padding: 8px 18px;
-    border-radius: 8px;
+    outline: none;
+
+    background: transparent;
+
+    padding: 0 18px 0 46px;
+
+    color: #ffffff;
+
+    font-size: 0.95rem;
+}
+
+.admin-search-input::placeholder {
+    color: #9ca3af;
+}
+
+/* =========================================================
+   RIGHT
+========================================================= */
+
+.admin-header-right {
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    flex-shrink: 0;
+}
+
+/* =========================================================
+   NOTIFICATION
+========================================================= */
+
+.admin-notification-btn {
+    width: 44px;
+    height: 44px;
+
+    border: none;
+    outline: none;
+
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: transparent;
+
+    border-radius: 12px;
+
+    color: #ffffff;
+
     cursor: pointer;
-    font-weight: 600;
-    transition: 0.3s ease;
+
+    transition: 0.25s ease;
 }
 
-/* ========================================================================== 
-   1. VÙNG TABLET (Từ 740px đến 1023px) - PHIÊN BẢN SIÊU TO
-   ========================================================================== */
-@media screen and (min-width: 740px) and (max-width: 1023px) {
+.admin-notification-btn:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.admin-notification-badge {
+    position: absolute;
+
+    top: 6px;
+    right: 6px;
+
+    width: 18px;
+    height: 18px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #a855f7;
+
+    color: #ffffff;
+
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+/* =========================================================
+   USER
+========================================================= */
+
+.admin-user-dropdown {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    cursor: pointer;
+}
+
+.admin-user-avatar img {
+    width: 46px;
+    height: 46px;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+    border: 2px solid rgba(255,255,255,0.08);
+
+    background: rgba(255,255,255,0.04);
+
+    padding: 2px;
+}
+.admin-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-user-greeting {
+    font-size: 0.8rem;
+
+    color: #9ca3af;
+}
+
+.admin-user-name {
+    color: #ffffff;
+
+    font-weight: 700;
+}
+
+.admin-user-arrow {
+    color: #9ca3af;
+}
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+.admin-logout-btn {
+    height: 44px;
+
+    padding: 0 18px;
+
+    border-radius: 12px;
+
+    border: 1px solid rgba(255,255,255,0.08);
+
+    background: transparent;
+
+    color: #ffffff;
+
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    cursor: pointer;
+
+    transition: 0.25s ease;
+}
+
+.admin-logout-btn:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media screen and (max-width: 1023px) {
+
     .admin-header-main {
-        padding: 0 30px;
-        height: 85px; 
+        padding: 0 20px;
     }
 
     .admin-hamburger-trigger {
-        display: block; 
-        font-size: 2.2rem; 
-        padding: 10px;
+        display: flex;
     }
 
-    .admin-brand-logo a {
-        font-size: 1.7rem; 
+    .admin-page-title {
+        display: none;
     }
 
-    .admin-header-profile-section {
-        gap: 25px;
+    .admin-header-search-wrapper {
+        max-width: 300px;
     }
 
-    .admin-header-welcome-text {
-        font-size: 1.1rem; 
-        font-weight: 600;
-    }
-
-    .btn-header-auth-logout {
-        padding: 12px 24px;
-        font-size: 1rem;
-        border-radius: 10px;
-    }
 }
 
-/* ========================================================================== 
-   2. VÙNG MOBILE (Dưới 740px)
-   ========================================================================== */
+/* =========================================================
+   MOBILE
+========================================================= */
+
 @media screen and (max-width: 739px) {
+
     .admin-header-main {
-        padding: 0 15px;
-        height: 60px; 
+        height: 72px;
+
+        padding: 0 16px;
     }
 
-    .admin-hamburger-trigger {
-        display: block;
-        font-size: 1.6rem;
+    .admin-logo-image {
+        height: 58px;
     }
 
-    .admin-brand-logo a {
-        font-size: 1.2rem;
-        letter-spacing: 1px;
+    .admin-header-search-wrapper {
+        display: none;
     }
 
-    .admin-header-welcome-text {
-        display: none; /* Mobile ẩn tên cho thoáng */
+    .admin-user-info,
+    .admin-user-arrow {
+        display: none;
     }
 
-    .admin-header-profile-section {
-        gap: 10px;
+    .admin-logout-btn span {
+        display: none;
     }
 
-    .btn-header-auth-logout {
-        padding: 6px 12px;
-        font-size: 0.75rem;
-        border-radius: 6px;
+    .admin-logout-btn {
+        width: 44px;
+
+        padding: 0;
+
+        justify-content: center;
     }
+
 }

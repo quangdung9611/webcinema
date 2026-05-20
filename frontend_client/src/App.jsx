@@ -34,39 +34,52 @@ import Profile from './user_frontend/pages/Profile';
 // --- PAGES ADMIN ---
 import AdminLogin from './admin_frontend/pages/Auth/AdminLogin';
 import AdminDashboard from './admin_frontend/pages/Admin/AdminDashboard';
-import UserList from './admin_frontend/pages/Admin/Users/UserList';
-import UserAdd from './admin_frontend/pages/Admin/Users/UserAdd';
-import UserUpdate from './admin_frontend/pages/Admin/Users/UserUpdate';
-import GenresList from './admin_frontend/pages/Admin/Genres/GenresList';
-import GenresAdd from './admin_frontend/pages/Admin/Genres/GenresAdd';
-import GenresUpdate from './admin_frontend/pages/Admin/Genres/GenresUpdate';
-import CinemaList from './admin_frontend/pages/Admin/Cinema/CinemaList';
-import CinemaAdd from './admin_frontend/pages/Admin/Cinema/CinemaAdd';
-import CinemaUpdate from './admin_frontend/pages/Admin/Cinema/CinemaUpdate';
-import RoomList from './admin_frontend/pages/Admin/Room/RoomList';
-import RoomAdd from './admin_frontend/pages/Admin/Room/RoomAdd';
-import RoomUpdate from './admin_frontend/pages/Admin/Room/RoomUpdate';
-import MovieList from './admin_frontend/pages/Admin/Movie/MovieList';
-import MovieAdd from './admin_frontend/pages/Admin/Movie/MovieAdd';
-import MovieUpdate from './admin_frontend/pages/Admin/Movie/MovieUpdate';
+// import UserList from './admin_frontend/pages/Admin/Users/UserList';
+// import UserAdd from './admin_frontend/pages/Admin/Users/UserAdd';
+// import UserUpdate from './admin_frontend/pages/Admin/Users/UserUpdate';
+import UserPage from './admin_frontend/pages/Admin/Users/UserPage';
+import GenresPage from './admin_frontend/pages/Admin/Genres/GenresPage';
+// import GenresList from './admin_frontend/pages/Admin/Genres/GenresList';
+// import GenresAdd from './admin_frontend/pages/Admin/Genres/GenresAdd';
+// import GenresUpdate from './admin_frontend/pages/Admin/Genres/GenresUpdate';
+import CinemaPage from './admin_frontend/pages/Admin/Cinema/CinemaPage';
+// import CinemaList from './admin_frontend/pages/Admin/Cinema/CinemaList';
+// import CinemaAdd from './admin_frontend/pages/Admin/Cinema/CinemaAdd';
+// import CinemaUpdate from './admin_frontend/pages/Admin/Cinema/CinemaUpdate';
+import RoomPage from './admin_frontend/pages/Admin/Room/RoomPage';
+// import RoomList from './admin_frontend/pages/Admin/Room/RoomList';
+// import RoomAdd from './admin_frontend/pages/Admin/Room/RoomAdd';
+// import RoomUpdate from './admin_frontend/pages/Admin/Room/RoomUpdate';
+import MoviePage from './admin_frontend/pages/Admin/Movie/MoviePage';
+// import MovieList from './admin_frontend/pages/Admin/Movie/MovieList';
+// import MovieAdd from './admin_frontend/pages/Admin/Movie/MovieAdd';
+// import MovieUpdate from './admin_frontend/pages/Admin/Movie/MovieUpdate';
 import SeatList from './admin_frontend/pages/Admin/Seat/SeatList';
 import TicketList from './admin_frontend/pages/Admin/Ticket/TicketList';
-import ActorList from './admin_frontend/pages/Admin/Actor/ActorList';
-import ActorAdd from './admin_frontend/pages/Admin/Actor/ActorAdd';
-import ActorUpdate from './admin_frontend/pages/Admin/Actor/ActorUpdate';
-import CouponList from './admin_frontend/pages/Admin/Coupon/CouponList';
-import CouponAdd from './admin_frontend/pages/Admin/Coupon/CouponAdd';
-import CouponUpdate from './admin_frontend/pages/Admin/Coupon/CouponUpdate';
-import BookingList from './admin_frontend/pages/Admin/Booking/BookingList';
-import BookingDetail from './admin_frontend/pages/Admin/Booking/BookingDetail';
-import MovieGenreList from './admin_frontend/pages/Admin/MovieGenre/MovieGenreList';
-import MovieActorList from './admin_frontend/pages/Admin/MovieActor/MovieActorList';
-import ShowTimeList from './admin_frontend/pages/Admin/Showtime/ShowTimeList';
-import ShowtimeAdd from './admin_frontend/pages/Admin/Showtime/ShowTimeAdd';
-import ShowtimeUpdate from './admin_frontend/pages/Admin/Showtime/ShowTimeUpdate';
-import NewsList from './admin_frontend/pages/Admin/News/NewsList';
-import NewsAdd from './admin_frontend/pages/Admin/News/NewsAdd';
-import NewsUpdate from './admin_frontend/pages/Admin/News/NewsUpdate';
+import ActorPage from './admin_frontend/pages/Admin/Actor/ActorPage';
+// import ActorList from './admin_frontend/pages/Admin/Actor/ActorList';
+// import ActorAdd from './admin_frontend/pages/Admin/Actor/ActorAdd';
+// import ActorUpdate from './admin_frontend/pages/Admin/Actor/ActorUpdate';
+import CouponPage from './admin_frontend/pages/Admin/Coupon/CouponPage';
+// import CouponList from './admin_frontend/pages/Admin/Coupon/CouponList';
+// import CouponAdd from './admin_frontend/pages/Admin/Coupon/CouponAdd';
+// import CouponUpdate from './admin_frontend/pages/Admin/Coupon/CouponUpdate';
+import BookingPage from './admin_frontend/pages/Admin/Booking/BookingPage';
+// import BookingList from './admin_frontend/pages/Admin/Booking/BookingList';
+// import BookingDetail from './admin_frontend/pages/Admin/Booking/BookingDetail';
+import MovieGenrePage from './admin_frontend/pages/Admin/MovieGenre/MovieGenrePage';
+// import MovieGenreList from './admin_frontend/pages/Admin/MovieGenre/MovieGenreList';
+import MovieActorPage from './admin_frontend/pages/Admin/MovieActor/MovieActorPage';
+// import MovieActorList from './admin_frontend/pages/Admin/MovieActor/MovieActorList';
+import ShowTimePage from './admin_frontend/pages/Admin/Showtime/ShowTimePage';
+// import ShowTimeList from './admin_frontend/pages/Admin/Showtime/ShowTimeList';
+// import ShowtimeAdd from './admin_frontend/pages/Admin/Showtime/ShowTimeAdd';
+// import ShowtimeUpdate from './admin_frontend/pages/Admin/Showtime/ShowTimeUpdate';
+import NewsPage from './admin_frontend/pages/Admin/News/NewsPage';
+// import NewsList from './admin_frontend/pages/Admin/News/NewsList';
+// import NewsAdd from './admin_frontend/pages/Admin/News/NewsAdd';
+// import NewsUpdate from './admin_frontend/pages/Admin/News/NewsUpdate';
+
 
 const AdminLayoutWrapper = () => (
     <ProtectedRoute>
@@ -108,66 +121,72 @@ function App() {
                                 {/* Nếu user gõ /dashboard thì đá về trang chủ / cho đồng nhất */}
                                 <Route path="dashboard" element={<Navigate to="/" replace />} />
 
-                                <Route path="users">
+                                {/* <Route path="users">
                                     <Route index element={<UserList />} />
                                     <Route path="add" element={<UserAdd />} />
                                     <Route path="update/:user_id" element={<UserUpdate />} />
-                                </Route>
-
-                                <Route path="movies">
+                                </Route> */}
+                                <Route path="users" element={<UserPage />} />
+                                {/* <Route path="movies">
                                     <Route index element={<MovieList />} />
                                     <Route path="add" element={<MovieAdd />} />
                                     <Route path="update/:id" element={<MovieUpdate />} />
-                                </Route>
-
-                                <Route path="rooms">
+                                </Route> */}
+                                <Route path="movies" element={<MoviePage />} />
+                                <Route path="rooms" element={<RoomPage />} />
+                                {/* <Route path="rooms">
                                     <Route index element={<RoomList />} />
                                     <Route path="add" element={<RoomAdd />} />
                                     <Route path="update/:room_id" element={<RoomUpdate />} />
-                                </Route>
+                                </Route> */}
 
-                                <Route path="news">
+                                {/* <Route path="news">
                                     <Route index element={<NewsList />} />
                                     <Route path="add" element={<NewsAdd />} />
                                     <Route path="update/:news_id" element={<NewsUpdate />} />
-                                </Route>
-
-                                <Route path="coupons">
+                                </Route> */}
+                                <Route path="news" element={<NewsPage />} />
+                                <Route path="coupons" element={<CouponPage />} />
+                                {/* <Route path="coupons">
                                     <Route index element={<CouponList />} />
                                     <Route path="add" element={<CouponAdd />} />
                                     <Route path="update/:coupon_id" element={<CouponUpdate />} />
-                                </Route>
-
-                                <Route path="genres">
+                                </Route> */}
+                                <Route path="genres" element={<GenresPage />} />
+                                {/* <Route path="genres">
                                     <Route index element={<GenresList />} />
                                     <Route path="add" element={<GenresAdd />} />
                                     <Route path="update/:genre_id" element={<GenresUpdate />} />
-                                </Route>
-
-                                <Route path="cinemas">
+                                </Route> */}
+                                <Route path="cinemas" element={<CinemaPage />} />
+                                {/* <Route path="cinemas">
                                     <Route index element={<CinemaList />} />
                                     <Route path="add" element={<CinemaAdd />} />
                                     <Route path="update/:cinema_id" element={<CinemaUpdate />} />
-                                </Route>
-
-                                <Route path="showtimes">
+                                </Route> */}
+                                <Route path="showtimes" element={<ShowTimePage />} />
+                                {/* <Route path="showtimes">
                                     <Route index element={<ShowTimeList />} />
                                     <Route path="add" element={<ShowtimeAdd />} />
                                     <Route path="update/:showtime_id" element={<ShowtimeUpdate />} />
-                                </Route>
+                                </Route> */}
 
                                 <Route path="seats" element={<SeatList />} />
-                                <Route path="movie-genres" element={<MovieGenreList />} />
-                                <Route path="movie-actors" element={<MovieActorList />} />
-                                <Route path="bookings" element={<BookingList />} />
-                                <Route path="bookings/:id" element={<BookingDetail />} />
+                                {/* <Route path="movie-genres" element={<MovieGenreList />} /> */}
+                                <Route path="movie-genres" element={<MovieGenrePage />} />
+                                {/* <Route path="movie-actors" element={<MovieActorList />} /> */}
+                                <Route path="movie-actors" element={<MovieActorPage />} />
+                                <Route path="bookings" element={<BookingPage />} />
+                                {/* <Route path="bookings" element={<BookingList />} />
+                                <Route path="bookings/:id" element={<BookingDetail />} /> */}
                                 <Route path="tickets" element={<TicketList />} />
+                                <Route path="actors" element={<ActorPage />} />
                                 
-                                <Route path="actors">
+                                {/* <Route path="actors">
                                     <Route index element={<ActorList/>} />
                                     <Route path="add" element={<ActorAdd />} />
                                     <Route path="update/:id" element={<ActorUpdate/>} />
-                                </Route>
+                                </Route> */}
                             </Route>
                             <Route path="*" element={<NotFoundPage />} />
                         </Route>

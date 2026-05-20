@@ -6,119 +6,79 @@
     position: fixed;
     inset: 0;
 
+    z-index: 99999;
+
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
     padding: 20px;
 
-    background:
-        rgba(5, 5, 10, 0.72);
+    background: rgba(0, 0, 0, 0.72);
 
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(5px);
 
-    z-index: 99999;
-
-    animation: fadeOverlay 0.25s ease;
+    animation: overlayFade 0.2s ease;
 }
 
 /* =========================
-   MODAL BOX
+   MODAL
 ========================= */
 
 .modal-content {
     position: relative;
 
     width: 100%;
-    max-width: 430px;
+    max-width: 420px;
 
-    padding: 34px 30px;
+    background: #17171f;
 
-    border-radius: 28px;
+    border-radius: 22px;
 
-    overflow: hidden;
+    padding: 34px 30px 28px;
 
     text-align: center;
 
-    background:
-        linear-gradient(
-            145deg,
-            rgba(30, 30, 45, 0.96),
-            rgba(18, 18, 30, 0.98)
-        );
-
-    border:
-        1px solid rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.06);
 
     box-shadow:
-        0 25px 60px rgba(0,0,0,0.45),
-        0 0 35px rgba(124,58,237,0.18);
+        0 10px 35px rgba(0,0,0,0.45);
 
-    animation:
-        modalShow 0.32s cubic-bezier(.18,.89,.32,1.28);
-}
-
-/* glow */
-.modal-content::before {
-    content: "";
-
-    position: absolute;
-
-    top: -120px;
-    left: 50%;
-
-    transform: translateX(-50%);
-
-    width: 240px;
-    height: 240px;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(139,92,246,0.28),
-            transparent 70%
-        );
-
-    pointer-events: none;
+    animation: modalShow 0.25s ease;
 }
 
 /* =========================
-   CLOSE BUTTON
+   CLOSE
 ========================= */
 
 .modal-close-x {
     position: absolute;
 
-    top: 14px;
+    top: 16px;
     right: 16px;
 
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: transparent;
+
+    color: #8b8b99;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    border: none;
-    border-radius: 50%;
-
-    background:
-        rgba(255,255,255,0.05);
-
-    color: #cbd5e1;
-
     cursor: pointer;
 
-    transition: 0.25s ease;
+    transition: 0.2s ease;
 }
 
 .modal-close-x:hover {
-    background:
-        rgba(239,68,68,0.18);
-
-    color: #fff;
-
-    transform: rotate(90deg);
+    background: rgba(255,255,255,0.06);
+    color: white;
 }
 
 /* =========================
@@ -136,67 +96,33 @@
     display: flex;
     align-items: center;
     justify-content: center;
-
-    position: relative;
-
-    z-index: 2;
 }
 
 /* SUCCESS */
 
 .modal-icon.success {
+    background: rgba(34,197,94,0.12);
     color: #22c55e;
 
-    background:
-        linear-gradient(
-            135deg,
-            rgba(34,197,94,0.18),
-            rgba(34,197,94,0.08)
-        );
-
-    border:
-        1px solid rgba(34,197,94,0.2);
-
-    box-shadow:
-        0 10px 25px rgba(34,197,94,0.22);
+    border: 1px solid rgba(34,197,94,0.2);
 }
 
 /* ERROR */
 
 .modal-icon.error {
+    background: rgba(239,68,68,0.12);
     color: #ef4444;
 
-    background:
-        linear-gradient(
-            135deg,
-            rgba(239,68,68,0.18),
-            rgba(239,68,68,0.08)
-        );
-
-    border:
-        1px solid rgba(239,68,68,0.2);
-
-    box-shadow:
-        0 10px 25px rgba(239,68,68,0.22);
+    border: 1px solid rgba(239,68,68,0.2);
 }
 
 /* CONFIRM */
 
 .modal-icon.confirm {
+    background: rgba(245,158,11,0.12);
     color: #f59e0b;
 
-    background:
-        linear-gradient(
-            135deg,
-            rgba(245,158,11,0.18),
-            rgba(245,158,11,0.08)
-        );
-
-    border:
-        1px solid rgba(245,158,11,0.2);
-
-    box-shadow:
-        0 10px 25px rgba(245,158,11,0.22);
+    border: 1px solid rgba(245,158,11,0.2);
 }
 
 /* =========================
@@ -204,15 +130,12 @@
 ========================= */
 
 .modal-content h3 {
-    position: relative;
-    z-index: 2;
+    color: white;
 
-    margin-bottom: 16px;
-
-    font-size: 1.55rem;
+    font-size: 26px;
     font-weight: 700;
 
-    color: #fff;
+    margin-bottom: 14px;
 }
 
 /* =========================
@@ -220,16 +143,12 @@
 ========================= */
 
 .modal-message {
-    position: relative;
-    z-index: 2;
+    color: #b6b6c3;
 
-    margin-bottom: 28px;
-
-    color: #cbd5e1;
-
+    font-size: 15px;
     line-height: 1.7;
 
-    font-size: 0.98rem;
+    margin-bottom: 30px;
 }
 
 /* =========================
@@ -237,12 +156,8 @@
 ========================= */
 
 .modal-actions {
-    position: relative;
-    z-index: 2;
-
     display: flex;
     justify-content: center;
-
     gap: 14px;
 }
 
@@ -252,58 +167,43 @@
 
 .modal-btn {
     min-width: 120px;
-
-    padding: 13px 22px;
+    height: 46px;
 
     border: none;
-    border-radius: 14px;
+    border-radius: 12px;
 
-    font-size: 0.95rem;
+    font-size: 15px;
     font-weight: 600;
 
     cursor: pointer;
 
-    transition: 0.25s ease;
+    transition: 0.2s ease;
 }
 
-/* confirm */
+/* CONFIRM */
 
-.modal-btn.confirm-btn {
+.confirm-btn {
+    background: #9333ea;
     color: white;
-
-    background:
-        linear-gradient(
-            135deg,
-            #7c3aed,
-            #a855f7
-        );
-
-    box-shadow:
-        0 10px 20px rgba(124,58,237,0.3);
 }
 
-.modal-btn.confirm-btn:hover {
+.confirm-btn:hover {
+    background: #a855f7;
     transform: translateY(-2px);
-
-    box-shadow:
-        0 15px 28px rgba(124,58,237,0.42);
 }
 
-/* cancel */
+/* CANCEL */
 
 .btn-cancel {
-    color: #e2e8f0;
+    background: rgba(255,255,255,0.05);
 
-    background:
-        rgba(255,255,255,0.06);
+    color: white;
 
-    border:
-        1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.08);
 }
 
 .btn-cancel:hover {
-    background:
-        rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.1);
 }
 
 /* =========================
@@ -311,26 +211,18 @@
 ========================= */
 
 @keyframes modalShow {
-
     from {
         opacity: 0;
-
-        transform:
-            translateY(30px)
-            scale(0.9);
+        transform: translateY(18px) scale(0.96);
     }
 
     to {
         opacity: 1;
-
-        transform:
-            translateY(0)
-            scale(1);
+        transform: translateY(0) scale(1);
     }
 }
 
-@keyframes fadeOverlay {
-
+@keyframes overlayFade {
     from {
         opacity: 0;
     }
@@ -341,13 +233,17 @@
 }
 
 /* =========================
-   RESPONSIVE
+   MOBILE
 ========================= */
 
 @media (max-width: 480px) {
 
     .modal-content {
         padding: 28px 22px;
+    }
+
+    .modal-content h3 {
+        font-size: 22px;
     }
 
     .modal-actions {
@@ -358,7 +254,4 @@
         width: 100%;
     }
 
-    .modal-content h3 {
-        font-size: 1.3rem;
-    }
 }

@@ -1,31 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Film, Ticket, Users, DollarSign, Calendar, RefreshCcw } from 'lucide-react';
-import { 
-    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-    PieChart, Pie, Cell, Legend, BarChart, Bar 
+
+import {
+    Film,
+    Ticket,
+    Users,
+    DollarSign,
+    RefreshCcw,
+    TrendingUp,
+    MoreHorizontal
+} from 'lucide-react';
+
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell
 } from 'recharts';
-import '../../styles/AdminDashboard.css'; 
+
+import '../../styles/AdminDashboard.css';
 
 const AdminDashboard = () => {
-    const [stats, setStats] = useState({ movies: 0, tickets: 0, users: 0, revenue: 0 });
-    const [chartData, setChartData] = useState({ daily: [], movies: [], tickets: [] });
+
+    const [stats, setStats] = useState({
+        movies: 0,
+        tickets: 0,
+        users: 0,
+        revenue: 0
+    });
+
+    const [chartData, setChartData] = useState({
+        daily: [],
+        movies: [],
+        tickets: []
+    });
+
     const [loading, setLoading] = useState(true);
-    
-    // Khởi tạo ngày mặc định (Có thể dùng moment hoặc date-fns để lấy ngày hiện tại)
-    const [startDate, setStartDate] = useState('2026-03-07');
-    const [endDate, setEndDate] = useState('2026-03-14');
 
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+    const COLORS = [
+        '#a855f7',
+        '#3b82f6',
+        '#22c55e',
+        '#f59e0b',
+        '#94a3b8'
+    ];
 
-    const fetchDashboardData = async (start = startDate, end = endDate) => {
+    const fetchDashboardData = async () => {
+
         setLoading(true);
+
         try {
-            // [CẬP NHẬT 1]: Đổi prefix thành /admin/api/manage/stats
-            const resStats = await axios.get('https://api.quangdungcinema.id.vn/admin/api/manage/stats', {
-                withCredentials: true 
-            });
-            
+
+            const resStats = await axios.get(
+                'https://api.quangdungcinema.id.vn/admin/api/manage/stats',
+                {
+                    withCredentials: true
+                }
+            );
+
             if (resStats.data.success) {
                 setStats({
                     movies: resStats.data.movies,
@@ -35,137 +73,433 @@ const AdminDashboard = () => {
                 });
             }
 
-            // [CẬP NHẬT 2]: Đổi prefix thành /admin/api/manage/revenue-chart
-            const resChart = await axios.get(`https://api.quangdungcinema.id.vn/admin/api/manage/revenue-chart?startDate=${start}&endDate=${end}`, {
-                withCredentials: true
-            });
-            
+            const resChart = await axios.get(
+                'https://api.quangdungcinema.id.vn/admin/api/manage/revenue-chart',
+                {
+                    withCredentials: true
+                }
+            );
+
             if (resChart.data.success) {
+
                 setChartData({
                     daily: resChart.data.dailyData,
                     movies: resChart.data.movieData,
-                    tickets: resChart.data.ticketData 
+                    tickets: resChart.data.ticketData
                 });
+
             }
+
         } catch (error) {
-            console.error("Lỗi kết nối API Dashboard:", error);
-            // Nếu trả về 401 hoặc 403, ProtectedRoute của ông sẽ tự động đá user về login
+
+            console.error('Dashboard Error:', error);
+
         } finally {
+
             setLoading(false);
+
         }
+
     };
 
     useEffect(() => {
         fetchDashboardData();
     }, []);
 
-    const handleUpdateFilter = () => {
-        fetchDashboardData(startDate, endDate);
-    };
+    if (loading) {
 
-    if (loading) return (
-        <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh', color: '#00468f', fontWeight: 'bold' }}>
-            <RefreshCcw className="spin-icon" size={24} style={{ marginRight: '10px' }} />
-            ĐANG TẢI DỮ LIỆU THỰC TẾ...
-        </div>
-    );
+        return (
+            <div className="dashboard-loading">
+                <RefreshCcw className="dashboard-loading-icon" />
+                <span>Đang tải dữ liệu...</span>
+            </div>
+        );
+
+    }
 
     return (
-        <div className="dashboard-content">
-            <div className="dashboard-header">
-                <h1>Bảng điều khiển Admin</h1>
-                <p>Chào mừng <strong>Quang Dũng</strong>! Hệ thống đang vận hành ổn định.</p>
-            </div>
-            
-            <div className="dashboard-stats-grid">
-                <div className="stat-card-new card-blue">
-                    <div className="stat-data"><span>Tổng số phim</span><h2>{stats.movies}</h2></div>
-                    <div className="stat-icon"><Film size={28} /></div>
-                </div>
-                <div className="stat-card-new card-red">
-                    <div className="stat-data"><span>Vé đã bán</span><h2>{stats.tickets}</h2></div>
-                    <div className="stat-icon"><Ticket size={28} /></div>
-                </div>
-                <div className="stat-card-new card-green">
-                    <div className="stat-data"><span>Người dùng</span><h2>{stats.users}</h2></div>
-                    <div className="stat-icon"><Users size={28} /></div>
-                </div>
-                <div className="stat-card-new card-gold">
-                    <div className="stat-data"><span>Doanh thu</span><h2>{stats.revenue.toLocaleString('vi-VN')}đ</h2></div>
-                    <div className="stat-icon"><DollarSign size={28} /></div>
-                </div>
-            </div>
 
-            {/* BỘ LỌC KIỂU ACB ONE */}
-            <div className="acb-filter-container">
-                <div className="filter-title">
-                    <Calendar size={20} /> <span>Tuỳ chọn thời gian</span>
-                </div>
-                <div className="filter-controls">
-                    <div className="filter-group">
-                        <label>Từ ngày</label>
-                        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        <div className="cinema-dashboard">
+
+            {/* ================= TOP STATS ================= */}
+
+            <div className="dashboard-stats-row">
+
+                <div className="dashboard-stat-card purple-card">
+
+                    <div className="dashboard-stat-left">
+
+                        <div className="dashboard-stat-icon purple-icon">
+                            <Film size={28} />
+                        </div>
+
+                        <div className="dashboard-stat-content">
+
+                            <p>TỔNG SỐ PHIM</p>
+
+                            <h2>{stats.movies}</h2>
+
+                            <span>+12 phim mới</span>
+
+                        </div>
+
                     </div>
-                    <div className="filter-group">
-                        <label>Đến ngày</label>
-                        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-                    </div>
-                    <button className="btn-update-acb" onClick={handleUpdateFilter}>
-                        <RefreshCcw size={16} /> CẬP NHẬT
+
+                    <button className="dashboard-more-btn">
+                        <MoreHorizontal size={18} />
                     </button>
+
                 </div>
+
+                <div className="dashboard-stat-card blue-card">
+
+                    <div className="dashboard-stat-left">
+
+                        <div className="dashboard-stat-icon blue-icon">
+                            <Ticket size={28} />
+                        </div>
+
+                        <div className="dashboard-stat-content">
+
+                            <p>TỔNG VÉ ĐÃ BÁN</p>
+
+                            <h2>{stats.tickets}</h2>
+
+                            <span>+18.2% so với tuần trước</span>
+
+                        </div>
+
+                    </div>
+
+                    <button className="dashboard-more-btn">
+                        <MoreHorizontal size={18} />
+                    </button>
+
+                </div>
+
+                <div className="dashboard-stat-card green-card">
+
+                    <div className="dashboard-stat-left">
+
+                        <div className="dashboard-stat-icon green-icon">
+                            <Users size={28} />
+                        </div>
+
+                        <div className="dashboard-stat-content">
+
+                            <p>TỔNG NGƯỜI DÙNG</p>
+
+                            <h2>{stats.users}</h2>
+
+                            <span>+24 người mới</span>
+
+                        </div>
+
+                    </div>
+
+                    <button className="dashboard-more-btn">
+                        <MoreHorizontal size={18} />
+                    </button>
+
+                </div>
+
+                <div className="dashboard-stat-card gold-card">
+
+                    <div className="dashboard-stat-left">
+
+                        <div className="dashboard-stat-icon gold-icon">
+                            <DollarSign size={28} />
+                        </div>
+
+                        <div className="dashboard-stat-content">
+
+                            <p>DOANH THU</p>
+
+                            <h2>
+                                {stats.revenue.toLocaleString('vi-VN')} đ
+                            </h2>
+
+                            <span>+15.7% so với tuần trước</span>
+
+                        </div>
+
+                    </div>
+
+                    <button className="dashboard-more-btn">
+                        <MoreHorizontal size={18} />
+                    </button>
+
+                </div>
+
             </div>
-            
-            <div className="dashboard-charts-container">
-                <div className="chart-box">
-                    <h3>Doanh thu theo thời gian</h3>
-                    <div className="chart-wrapper">
-                        <ResponsiveContainer width="100%" height={300}>
+
+            {/* ================= CHART AREA ================= */}
+
+            <div className="dashboard-middle-grid">
+
+                {/* ===== LINE CHART ===== */}
+
+                <div className="dashboard-chart-card revenue-chart-card">
+
+                    <div className="dashboard-card-header">
+
+                        <h3>DOANH THU THEO THỜI GIAN</h3>
+
+                        <button className="dashboard-chart-filter">
+                            7 ngày qua
+                        </button>
+
+                    </div>
+
+                    <div className="dashboard-chart-wrapper">
+
+                        <ResponsiveContainer width="100%" height={320}>
+
                             <LineChart data={chartData.daily}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="date" />
-                                <YAxis tickFormatter={(value) => `${value / 1000}k`} />
-                                <Tooltip formatter={(value) => new Intl.NumberFormat('vi-VN').format(value) + 'đ'} />
-                                <Line type="monotone" dataKey="daily_total" stroke="#00468f" strokeWidth={3} dot={{ r: 6, fill: '#00468f' }} name="Doanh thu" />
+
+                                <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    vertical={false}
+                                    stroke="rgba(255,255,255,0.06)"
+                                />
+
+                                <XAxis
+                                    dataKey="date"
+                                    stroke="#94a3b8"
+                                />
+
+                                <YAxis
+                                    stroke="#94a3b8"
+                                    tickFormatter={(value) => `${value / 1000}k`}
+                                />
+
+                                <Tooltip />
+
+                                <Line
+                                    type="monotone"
+                                    dataKey="daily_total"
+                                    stroke="#a855f7"
+                                    strokeWidth={3}
+                                    dot={{
+                                        r: 4,
+                                        fill: '#a855f7'
+                                    }}
+                                />
+
                             </LineChart>
+
                         </ResponsiveContainer>
+
                     </div>
+
                 </div>
 
-                <div className="chart-box">
-                    <h3>Tỷ trọng doanh thu phim</h3>
-                    <div className="chart-wrapper">
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie data={chartData.movies} cx="50%" cy="50%" labelLine={false} label={({ percent }) => `${(percent * 100).toFixed(0)}%`} outerRadius={80} dataKey="value">
-                                    {chartData.movies.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip formatter={(value) => new Intl.NumberFormat('vi-VN').format(value) + 'đ'} />
-                                <Legend />
-                            </PieChart>
-                        </ResponsiveContainer>
+                {/* ===== PIE CHART ===== */}
+
+                <div className="dashboard-chart-card pie-chart-card">
+
+                    <div className="dashboard-card-header">
+
+                        <h3>TỶ LỆ DOANH THU THEO PHIM</h3>
+
                     </div>
+
+                    <div className="dashboard-pie-layout">
+
+                        <div className="dashboard-pie-wrapper">
+
+                            <ResponsiveContainer width="100%" height={280}>
+
+                                <PieChart>
+
+                                    <Pie
+                                        data={chartData.movies}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={90}
+                                        paddingAngle={3}
+                                        dataKey="value"
+                                    >
+
+                                        {
+                                            chartData.movies.map((entry, index) => (
+                                                <Cell
+                                                    key={index}
+                                                    fill={COLORS[index % COLORS.length]}
+                                                />
+                                            ))
+                                        }
+
+                                    </Pie>
+
+                                </PieChart>
+
+                            </ResponsiveContainer>
+
+                        </div>
+
+                        <div className="dashboard-pie-legend">
+
+                            {
+                                chartData.movies.map((movie, index) => (
+
+                                    <div
+                                        className="dashboard-legend-item"
+                                        key={index}
+                                    >
+
+                                        <div className="dashboard-legend-left">
+
+                                            <span
+                                                className="dashboard-legend-color"
+                                                style={{
+                                                    background: COLORS[index % COLORS.length]
+                                                }}
+                                            />
+
+                                            <p>{movie.name}</p>
+
+                                        </div>
+
+                                        <span>
+                                            {movie.percent || '0%'}
+                                        </span>
+
+                                    </div>
+
+                                ))
+                            }
+
+                        </div>
+
+                    </div>
+
                 </div>
 
-                <div className="chart-box full-width">
-                    <h3>Chi tiết số lượng vé bán ra theo phim</h3>
-                    <div className="chart-wrapper taller">
-                        <ResponsiveContainer width="100%" height={400}>
-                            <BarChart data={chartData.tickets}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="movieName" />
-                                <YAxis allowDecimals={false} />
-                                <Tooltip cursor={{fill: '#f5f5f5'}} />
-                                <Bar dataKey="ticketCount" fill="#00468f" radius={[6, 6, 0, 0]} name="Số vé đã bán" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
             </div>
+
+            {/* ================= BOTTOM AREA ================= */}
+
+            <div className="dashboard-bottom-grid">
+
+                {/* ===== RECENT TICKETS ===== */}
+
+                <div className="dashboard-table-card">
+
+                    <div className="dashboard-card-header">
+
+                        <h3>DANH SÁCH VÉ BÁN GẦN ĐÂY</h3>
+
+                    </div>
+
+                    <div className="dashboard-table-wrapper">
+
+                        <table className="dashboard-ticket-table">
+
+                            <thead>
+
+                                <tr>
+                                    <th>Phim</th>
+                                    <th>Số vé</th>
+                                    <th>Doanh thu</th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {
+                                    chartData.tickets.map((ticket, index) => (
+
+                                        <tr key={index}>
+
+                                            <td>{ticket.movieName}</td>
+
+                                            <td>{ticket.ticketCount}</td>
+
+                                            <td>
+                                                {ticket.totalRevenue?.toLocaleString('vi-VN')} đ
+                                            </td>
+
+                                        </tr>
+
+                                    ))
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <button className="dashboard-view-more-btn">
+                        Xem tất cả vé
+                    </button>
+
+                </div>
+
+                {/* ===== TOP MOVIES ===== */}
+
+                <div className="dashboard-top-movie-card">
+
+                    <div className="dashboard-card-header">
+
+                        <h3>PHIM DOANH THU CAO</h3>
+
+                    </div>
+
+                    <div className="dashboard-top-movie-list">
+
+                        {
+                            chartData.movies.map((movie, index) => (
+
+                                <div
+                                    className="dashboard-top-movie-item"
+                                    key={index}
+                                >
+
+                                    <div className="dashboard-top-movie-left">
+
+                                        <span className="dashboard-rank">
+                                            {index + 1}
+                                        </span>
+
+                                        <div className="dashboard-movie-poster" />
+
+                                        <div>
+
+                                            <h4>{movie.name}</h4>
+
+                                            <p>
+                                                {movie.value?.toLocaleString('vi-VN')} đ
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                    <TrendingUp size={18} />
+
+                                </div>
+
+                            ))
+                        }
+
+                    </div>
+
+                    <button className="dashboard-view-more-btn">
+                        Xem tất cả phim
+                    </button>
+
+                </div>
+
+            </div>
+
         </div>
+
     );
+
 };
 
 export default AdminDashboard;

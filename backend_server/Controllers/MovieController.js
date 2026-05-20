@@ -155,103 +155,135 @@ exports.getMovieById = async (req, res) => {
     }
 };
 
-// [POST] /api/movies/add
+/* ==========================================================
+    ADD MOVIE (THÊM CHECK TRÙNG TITLE + SLUG)
+   ========================================================== */
+
 exports.addMovie = async (req, res) => {
     const { title, description, director, nation, duration, age_rating, release_date, status, trailer_url, total_likes } = req.body;
-    const files = req.files || {}; 
+    const files = req.files || {};
 
     const errorMsg = validateMovieData(req.body, files, false);
-    if (errorMsg) {
-        if (files['posters']) deleteFile(files['posters'][0].filename, 'posters');
-        if (files['backdrop_url']) deleteFile(files['backdrop_url'][0].filename, 'backdrops');
-        return res.status(400).json({ error: errorMsg });
-    }
+    if (errorMsg) return res.status(400).json({ error: errorMsg });
 
     const connection = await db.getConnection();
+
     try {
         await connection.beginTransaction();
-        
+
+        const slug = createSlug(title);
+
+        // 🔥 CHECK TRÙNG (ADD)
+        const [dup] = await connection.query(
+            "SELECT movie_id FROM movies WHERE title = ? OR slug = ?",
+            [title.trim(), slug]
+        );
+
+        if (dup.length > 0) {
+            await connection.rollback();
+            return res.status(400).json({
+                error: "Phim đã tồn tại (trùng tên hoặc slug)."
+            });
+        }
+
         const cleanDate = release_date ? release_date.substring(0, 10) : null;
-        
-        // Lấy giờ hiện tại chuẩn VN cho created_at
         const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
-        const poster_url = (files['posters'] && files['posters'].length > 0) ? files['posters'][0].filename : null;
-        const backdrop_url = (files['backdrop_url'] && files['backdrop_url'].length > 0) ? files['backdrop_url'][0].filename : null;
+        const poster_url = files['posters']?.[0]?.filename || null;
+        const backdrop_url = files['backdrop_url']?.[0]?.filename || null;
 
         await connection.query(
-            `INSERT INTO movies (title, slug, description, director, nation, duration, age_rating, poster_url, backdrop_url, trailer_url, release_date, status, total_likes, created_at) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [title.trim(), createSlug(title), description || "", director || "", nation || null, duration, age_rating || 0, poster_url, backdrop_url, trailer_url || null, cleanDate, status || "Sắp chiếu", total_likes || 0, nowVN]
+            `INSERT INTO movies 
+            (title, slug, description, director, nation, duration, age_rating, poster_url, backdrop_url, trailer_url, release_date, status, total_likes, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [title.trim(), slug, description || "", director || "", nation || null, duration, age_rating || 0, poster_url, backdrop_url, trailer_url || null, cleanDate, status || "Sắp chiếu", total_likes || 0, nowVN]
         );
 
         await connection.commit();
-        console.log(`✅ [Success] Admin Dũng đã thêm phim mới thành công: ${title}`);
         res.status(201).json({ message: "Thêm phim thành công!" });
+
     } catch (error) {
         await connection.rollback();
-        if (files['posters']) deleteFile(files['posters'][0].filename, 'posters');
-        if (files['backdrop_url']) deleteFile(files['backdrop_url'][0].filename, 'backdrops');
         res.status(500).json({ error: error.message });
     } finally {
         connection.release();
     }
 };
 
-// [PUT] /api/movies/update/:id
+/* ==========================================================
+    UPDATE MOVIE (THÊM CHECK TRÙNG TITLE + SLUG)
+   ========================================================== */
+
 exports.updateMovie = async (req, res) => {
     const { id } = req.params;
     const { title, director, nation, duration, age_rating, release_date, status, description, trailer_url, total_likes } = req.body;
-    const files = req.files || {}; 
-    
+    const files = req.files || {};
+
     const errorMsg = validateMovieData(req.body, files, true);
     if (errorMsg) return res.status(400).json({ error: errorMsg });
 
     const connection = await db.getConnection();
+
     try {
         await connection.beginTransaction();
 
-        const [old] = await connection.query("SELECT poster_url, backdrop_url FROM movies WHERE movie_id = ?", [id]);
+        const [old] = await connection.query(
+            "SELECT poster_url, backdrop_url FROM movies WHERE movie_id = ?",
+            [id]
+        );
+
         if (old.length === 0) {
-            connection.release();
             return res.status(404).json({ error: "Phim không tồn tại." });
         }
 
-        const cleanDate = release_date ? release_date.substring(0, 10) : null;
+        const slug = createSlug(title);
+
+        // 🔥 CHECK TRÙNG (UPDATE - LOẠI TRỪ ID HIỆN TẠI)
+        const [dup] = await connection.query(
+            "SELECT movie_id FROM movies WHERE (title = ? OR slug = ?) AND movie_id != ?",
+            [title.trim(), slug, id]
+        );
+
+        if (dup.length > 0) {
+            await connection.rollback();
+            return res.status(400).json({
+                error: "Tên phim hoặc slug đã tồn tại."
+            });
+        }
+
         let poster_url = old[0].poster_url;
         let backdrop_url = old[0].backdrop_url;
 
-        // Xử lý Poster mới
-        if (files['posters'] && files['posters'].length > 0) {
+        if (files['posters']) {
             deleteFile(old[0].poster_url, 'posters');
             poster_url = files['posters'][0].filename;
         }
 
-        // Xử lý Backdrop mới
-        if (files['backdrop_url'] && files['backdrop_url'].length > 0) {
+        if (files['backdrop_url']) {
             deleteFile(old[0].backdrop_url, 'backdrops');
             backdrop_url = files['backdrop_url'][0].filename;
         }
 
         await connection.query(
-            `UPDATE movies 
-             SET title=?, slug=?, director=?, nation=?, duration=?, age_rating=?, release_date=?, status=?, description=?, poster_url=?, backdrop_url=?, trailer_url=?, total_likes=? 
+            `UPDATE movies SET
+                title=?, slug=?, director=?, nation=?,
+                duration=?, age_rating=?, release_date=?,
+                status=?, description=?, poster_url=?,
+                backdrop_url=?, trailer_url=?, total_likes=?
              WHERE movie_id=?`,
-            [title.trim(), createSlug(title), director || "", nation || null, duration, age_rating || 0, cleanDate, status || "Sắp chiếu", description || "", poster_url, backdrop_url, trailer_url || null, total_likes || 0, id]
+            [title.trim(), slug, director || "", nation || null, duration, age_rating || 0, release_date?.substring(0, 10) || null, status || "Sắp chiếu", description || "", poster_url, backdrop_url, trailer_url || null, total_likes || 0, id]
         );
 
         await connection.commit();
-        console.log(`✅ [Success] Đã cập nhật phim & backdrop cho ID: ${id}`);
         res.status(200).json({ message: "Cập nhật thành công!" });
+
     } catch (error) {
         await connection.rollback();
-        console.error("Lỗi Update server:", error.message);
-        res.status(500).json({ error: "Lỗi server: " + error.message });
+        res.status(500).json({ error: error.message });
     } finally {
         connection.release();
     }
 };
-
 exports.deleteMovie = async (req, res) => {
     const connection = await db.getConnection();
     try {

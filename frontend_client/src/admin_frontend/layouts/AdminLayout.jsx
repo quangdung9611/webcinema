@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
-import AdminSidebar from '../components/AdminSidebar';
 import AdminHeader from '../components/AdminHeader';
+import AdminSidebar from '../components/AdminSidebar';
 
 import '../styles/AdminLayout.css';
 
 const AdminLayout = () => {
+
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
+        setSidebarOpen(prev => !prev);
     };
 
     const closeSidebar = () => {
@@ -18,31 +19,44 @@ const AdminLayout = () => {
     };
 
     return (
-        <div className="admin-container">
-            {/* Sidebar bên trái */}
-            <AdminSidebar 
-                sidebarOpen={sidebarOpen} 
-                closeSidebar={closeSidebar}
-            />
+        <div className="admin-layout">
 
-            {/* Vùng nội dung bên phải */}
-            <div className={`admin-right-side ${sidebarOpen ? 'sidebar-open' : ''}`}>
-                
-                {/* Header chứa thông tin Admin và nút Logout */}
-                <AdminHeader toggleSidebar={toggleSidebar} />
+            {/* ================= HEADER ================= */}
 
-                {/* Main Content: Nơi các trang con (Dashboard, UserList...) hiển thị */}
-                <main className="admin-main-content">
-                    {/*  */}
-                    <Outlet /> 
+            <AdminHeader toggleSidebar={toggleSidebar} />
+
+            {/* ================= BODY ================= */}
+
+            <div className="admin-body">
+
+                {/* ================= SIDEBAR ================= */}
+
+                <AdminSidebar
+                    sidebarOpen={sidebarOpen}
+                    closeSidebar={closeSidebar}
+                />
+
+                {/* ================= CONTENT ================= */}
+
+                <main className="admin-content">
+
+                    <div className="admin-page-wrapper">
+                        <Outlet />
+                    </div>
+
                 </main>
 
             </div>
 
-            {/* Lớp phủ khi mở Sidebar trên điện thoại */}
+            {/* ================= OVERLAY ================= */}
+
             {sidebarOpen && (
-                <div className="sidebar-overlay" onClick={closeSidebar}></div>
+                <div
+                    className="admin-overlay"
+                    onClick={closeSidebar}
+                />
             )}
+
         </div>
     );
 };

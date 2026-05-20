@@ -1,96 +1,47 @@
 /* =========================================
-   FILM GENRE PAGE (UPDATED CLEAN VERSION)
+   FILM GENRE PAGE
 ========================================= */
 
 .film-genre-page{
+    width:100%;
+    max-width:1300px;
+    margin:0 auto;
     min-height:100vh;
-    background: transparent; /* bỏ background cũ để ăn theo index.css */
-    padding:40px 60px 80px;
     color:#fff;
+    padding:0 20px;
 }
 
 /* =========================================
-   HERO
+   CONTAINER
 ========================================= */
 
-.filmgenre-hero{
-    position:relative;
-    margin-bottom:40px;
+.genre-tabs-wrapper,
+.filmgenre-container{
+    width:100%;
 }
 
-.filmgenre-overlay{
-    position:absolute;
-    inset:0;
-    background:rgba(0,0,0,0.6);
-    border-radius:18px;
-}
+/* =========================================
+   SECTION HEADER
+========================================= */
 
-.filmgenre-content{
-    position:relative;
-    padding:40px;
-    text-align:center;
-}
-
-.filmgenre-subtitle{
-    font-size:13px;
-    letter-spacing:2px;
-    color:#c084fc;
-}
-
-.filmgenre-content h1{
-    font-size:40px;
-    font-weight:800;
-    text-transform:uppercase;
-    margin:12px 0;
-    background:linear-gradient(to right,#fff,#c084fc);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-}
-
-.filmgenre-content p{
-    color:#b9b9c9;
-    font-size:15px;
-    max-width:650px;
-    margin:0 auto;
-    line-height:1.6;
-}
-
-/* buttons */
-.filmgenre-buttons{
+.filmgenre-section-header{
     display:flex;
-    justify-content:center;
-    gap:12px;
-    margin-top:20px;
+    align-items:center;
+    gap:16px;
+    margin-bottom:35px;
 }
 
-.filmgenre-watch-btn,
-.filmgenre-list-btn{
-    border:none;
-    padding:10px 18px;
-    border-radius:12px;
-    cursor:pointer;
-    font-weight:600;
-    transition:0.3s;
+.filmgenre-section-header h2{
+    font-size:28px;
+    font-weight:800;
+    letter-spacing:1px;
+    white-space:nowrap;
 }
 
-.filmgenre-watch-btn{
-    background:#9333ea;
-    color:#fff;
-}
-
-.filmgenre-watch-btn:hover{
-    background:#7e22ce;
-}
-
-.filmgenre-list-btn{
-    background:transparent;
-    border:1px solid #555;
-    color:#fff;
-}
-
-.filmgenre-list-btn:hover{
-    background:#fff;
-    color:#000;
+.filmgenre-line{
+    width:100%;
+    height:1px;
+    background:rgba(255,255,255,0.08);
 }
 
 /* =========================================
@@ -99,6 +50,7 @@
 
 .genre-tabs{
     display:flex;
+    align-items:center;
     gap:14px;
     flex-wrap:wrap;
     margin-bottom:45px;
@@ -106,9 +58,9 @@
 
 .genre-tab{
     border:none;
-    background:#1c1c29;
+    background:#171717;
     color:#fff;
-    padding:11px 22px;
+    padding:10px 22px;
     border-radius:999px;
     cursor:pointer;
     font-size:14px;
@@ -117,12 +69,13 @@
 }
 
 .genre-tab:hover{
-    background:#9333ea;
+    background:#e50914;
     transform:translateY(-2px);
 }
 
 .genre-tab.active{
-    background:#9333ea;
+    background:#e50914;
+    box-shadow:0 0 18px rgba(229,9,20,0.4);
 }
 
 /* =========================================
@@ -140,7 +93,7 @@
 ========================================= */
 
 .genre-movie-card{
-    transition:all 0.3s ease;
+    transition:all 0.35s ease;
 }
 
 .genre-movie-card:hover{
@@ -154,19 +107,21 @@
 .genre-poster{
     position:relative;
     overflow:hidden;
-    border-radius:22px;
+    border-radius:20px;
     aspect-ratio:2/3;
     background:#111;
+    box-shadow:
+    0 10px 30px rgba(0,0,0,0.45);
 }
 
 .genre-poster img{
     width:100%;
     height:100%;
     object-fit:cover;
-    transition:0.4s;
+    transition:0.45s ease;
 }
 
-.genre-movie-card:hover img{
+.genre-movie-card:hover .genre-poster img{
     transform:scale(1.08);
 }
 
@@ -177,14 +132,24 @@
 .genre-overlay{
     position:absolute;
     inset:0;
-    background:rgba(0,0,0,0.7);
+
+    background:
+    linear-gradient(
+        to top,
+        rgba(0,0,0,0.95),
+        rgba(0,0,0,0.2)
+    );
+
     display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
     align-items:center;
-    justify-content:center;
     gap:12px;
 
+    padding-bottom:22px;
+
     opacity:0;
-    transition:0.3s;
+    transition:0.35s ease;
 }
 
 .genre-movie-card:hover .genre-overlay{
@@ -197,10 +162,12 @@
 
 .genre-detail-btn,
 .genre-book-btn{
+    width:85%;
     border:none;
-    padding:10px 16px;
+    padding:12px;
     border-radius:12px;
     cursor:pointer;
+    font-size:13px;
     font-weight:700;
     transition:0.3s;
 }
@@ -211,13 +178,39 @@
 }
 
 .genre-book-btn{
-    background:#9333ea;
+    background:#e50914;
     color:#fff;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
 }
 
-.genre-book-btn:hover,
-.genre-detail-btn:hover{
-    transform:translateY(-2px);
+.genre-detail-btn:hover,
+.genre-book-btn:hover{
+    transform:translateY(-2px) scale(1.02);
+}
+
+/* =========================================
+   AGE BADGE
+========================================= */
+
+.movie-age-badge{
+    position:absolute;
+    top:12px;
+    right:12px;
+
+    background:#e50914;
+    color:#fff;
+
+    font-size:12px;
+    font-weight:700;
+
+    padding:6px 10px;
+    border-radius:10px;
+
+    z-index:10;
 }
 
 /* =========================================
@@ -225,18 +218,25 @@
 ========================================= */
 
 .genre-info{
-    padding-top:14px;
+    padding-top:16px;
 }
 
 .genre-info h3{
     font-size:16px;
     font-weight:700;
-    margin-bottom:8px;
+    line-height:1.4;
+    margin-bottom:10px;
 
     display:-webkit-box;
     -webkit-line-clamp:2;
     -webkit-box-orient:vertical;
     overflow:hidden;
+
+    transition:0.3s;
+}
+
+.genre-movie-card:hover .genre-info h3{
+    color:#e50914;
 }
 
 /* =========================================
@@ -246,82 +246,110 @@
 .genre-meta{
     display:flex;
     justify-content:space-between;
-    font-size:13px;
+    align-items:center;
+    gap:10px;
 }
 
 .genre-rating{
-    color:#facc15;
+    display:flex;
+    align-items:center;
+    font-size:13px;
+    color:#ffb703;
+    font-weight:600;
 }
 
 .genre-type{
-    color:#cfcfe7;
+    font-size:12px;
+    color:#b8b8b8;
 }
 
 /* =========================================
-   LOADING / EMPTY FIX
+   LOADING
 ========================================= */
 
 .loading-movies,
 .empty-movies{
+    padding:80px 20px;
     text-align:center;
-    padding:50px;
     color:#aaa;
+    font-size:15px;
 }
 
 /* =========================================
    RESPONSIVE
 ========================================= */
 
-/* TABLET */
-@media(max-width:1024px){
+/* ===== TABLET ===== */
+@media(max-width:992px){
+
     .film-genre-page{
-        padding:30px;
+        padding:0 18px;
     }
 
-    .genre-movies-grid{
-        grid-template-columns:repeat(3,1fr);
-    }
-
-    .filmgenre-content h1{
-        font-size:34px;
-    }
-}
-
-/* MOBILE */
-@media(max-width:768px){
     .genre-movies-grid{
         grid-template-columns:repeat(2,1fr);
+        gap:24px;
     }
 
-    .filmgenre-content h1{
-        font-size:28px;
+    .filmgenre-section-header h2{
+        font-size:24px;
     }
 
-    .filmgenre-content p{
-        font-size:14px;
-    }
 }
 
-/* SMALL MOBILE */
-@media(max-width:480px){
+/* ===== MOBILE ===== */
+@media(max-width:768px){
+
     .film-genre-page{
-        padding:20px 14px 60px;
+        padding:0 16px;
+    }
+
+    .genre-tabs{
+        gap:10px;
+        margin-bottom:35px;
+    }
+
+    .genre-tab{
+        padding:9px 18px;
+        font-size:13px;
     }
 
     .genre-movies-grid{
         grid-template-columns:1fr;
+        gap:22px;
     }
 
-    .filmgenre-buttons{
-        flex-direction:column;
+    .genre-info h3{
+        font-size:15px;
     }
 
-    .genre-tabs{
-        gap:8px;
+}
+
+/* ===== SMALL MOBILE ===== */
+@media(max-width:480px){
+
+    .film-genre-page{
+        padding:0 14px;
+    }
+
+    .filmgenre-section-header{
+        margin-bottom:24px;
+    }
+
+    .filmgenre-section-header h2{
+        font-size:20px;
     }
 
     .genre-tab{
         font-size:12px;
         padding:8px 14px;
     }
+
+    .genre-detail-btn,
+    .genre-book-btn{
+        width:88%;
+        padding:11px;
+        font-size:12px;
+    }
+
 }

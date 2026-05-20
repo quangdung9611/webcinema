@@ -1,0 +1,835 @@
+/* =========================================================
+   ADMIN FORM OVERLAY
+========================================================= */
+
+.admin-form-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 9999;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(0, 0, 0, 0.6);
+
+    backdrop-filter: blur(10px);
+
+    animation: adminFormFade 0.25s ease;
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.admin-form-modal {
+
+    width: 100%;
+    max-width: 680px;
+
+    background: #ffffff;
+
+    border-radius: 28px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 25px 60px rgba(0,0,0,0.35),
+        0 0 0 1px rgba(0,0,0,0.05);
+
+    animation: adminFormScale 0.28s ease;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.admin-form-header {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 24px 28px;
+
+    background: #ffffff;
+
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-form-header h2 {
+
+    margin: 0;
+
+    font-size: 30px;
+
+    font-weight: 800;
+
+    color: #111827;
+
+    line-height: 1.2;
+
+    text-transform: uppercase;
+}
+
+/* =========================================================
+   CLOSE BUTTON
+========================================================= */
+
+.admin-form-close-btn {
+
+    width: 46px;
+    height: 46px;
+
+    border: none;
+    outline: none;
+
+    border-radius: 14px;
+
+    background: #f3f4f6;
+
+    color: #374151;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition: all 0.25s ease;
+}
+
+.admin-form-close-btn:hover {
+
+    background: #e5e7eb;
+
+    transform: rotate(90deg) scale(1.05);
+}
+
+/* =========================================================
+   BODY
+========================================================= */
+
+.admin-form-body {
+
+    padding: 28px;
+
+    max-height: 80vh;
+
+    overflow-y: auto;
+
+    background: #ffffff;
+}
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.admin-form {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 22px;
+}
+
+/* =========================================================
+   FORM GROUP
+========================================================= */
+
+.admin-form-group {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 10px;
+
+    position: relative;
+}
+
+/* =========================================================
+   LABEL
+========================================================= */
+
+.admin-form-label {
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    color: #111827;
+
+    line-height: 1.4;
+}
+
+/* =========================================================
+   INPUT / TEXTAREA / SELECT
+========================================================= */
+
+.admin-form-input,
+.admin-form-textarea,
+.admin-form-select,
+.admin-form-group input,
+.admin-form-group textarea,
+.admin-form-group select {
+
+    width: 100%;
+
+    padding: 16px 18px;
+
+    border: 2px solid #d1d5db;
+
+    border-radius: 18px;
+
+    outline: none;
+
+    background: #f9fafb;
+
+    color: #111827;
+
+    font-size: 15px;
+
+    font-weight: 500;
+
+    font-family: inherit;
+
+    transition:
+        border-color 0.25s ease,
+        background 0.25s ease,
+        transform 0.2s ease,
+        box-shadow 0.25s ease;
+}
+
+/* =========================================================
+   PLACEHOLDER
+========================================================= */
+
+.admin-form-input::placeholder,
+.admin-form-textarea::placeholder,
+.admin-form-group input::placeholder,
+.admin-form-group textarea::placeholder {
+
+    color: #9ca3af;
+}
+
+/* =========================================================
+   TEXTAREA
+========================================================= */
+
+.admin-form-textarea,
+.admin-form-group textarea {
+
+    resize: vertical;
+
+    min-height: 130px;
+}
+
+/* =========================================================
+   SELECT
+========================================================= */
+
+.admin-form-select,
+.admin-form-group select {
+
+    cursor: pointer;
+}
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+.admin-form-input:focus,
+.admin-form-textarea:focus,
+.admin-form-select:focus,
+.admin-form-group input:focus,
+.admin-form-group textarea:focus,
+.admin-form-group select:focus {
+
+    border-color: #2563eb;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 0 0 4px rgba(37,99,235,0.12);
+
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   FILE INPUT
+========================================================= */
+
+.admin-form-group input[type="file"] {
+
+    padding: 14px;
+
+    background: #ffffff;
+}
+
+/* =========================================================
+   ERROR INPUT
+========================================================= */
+
+.admin-form-input.error,
+.admin-form-textarea.error,
+.admin-form-select.error,
+.admin-form-group input.error,
+.admin-form-group textarea.error,
+.admin-form-group select.error {
+
+    border-color: #ef4444 !important;
+
+    background: #fff5f5 !important;
+
+    color: #991b1b;
+
+    box-shadow:
+        0 0 0 3px rgba(239,68,68,0.14) !important;
+
+    animation: shakeInput 0.35s ease;
+}
+
+/* =========================================================
+   SUCCESS INPUT
+========================================================= */
+
+.admin-form-input.success,
+.admin-form-textarea.success,
+.admin-form-select.success {
+
+    border-color: #10b981 !important;
+
+    background: #f0fdf4 !important;
+
+    box-shadow:
+        0 0 0 3px rgba(16,185,129,0.15) !important;
+}
+
+/* =========================================================
+   ERROR TEXT
+========================================================= */
+
+.admin-form-error {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    margin-top: 2px;
+
+    padding-left: 2px;
+
+    color: #ef4444 !important;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    line-height: 1.5;
+
+    animation: adminErrorFade 0.25s ease;
+}
+
+/* =========================================================
+   SUCCESS TEXT
+========================================================= */
+
+.admin-form-success {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    margin-top: 2px;
+
+    padding-left: 2px;
+
+    color: #10b981 !important;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    line-height: 1.5;
+
+    animation: adminErrorFade 0.25s ease;
+}
+
+/* =========================================================
+   PASSWORD STRENGTH
+========================================================= */
+
+.admin-password-strength {
+
+    margin-top: 8px;
+}
+
+.admin-password-bar {
+
+    width: 100%;
+
+    height: 8px;
+
+    border-radius: 999px;
+
+    background: #e5e7eb;
+
+    overflow: hidden;
+}
+
+.admin-password-fill {
+
+    height: 100%;
+
+    border-radius: inherit;
+
+    transition: all 0.3s ease;
+}
+
+.admin-password-fill.weak {
+
+    width: 33%;
+
+    background: #ef4444;
+}
+
+.admin-password-fill.medium {
+
+    width: 66%;
+
+    background: #f59e0b;
+}
+
+.admin-password-fill.strong {
+
+    width: 100%;
+
+    background: #10b981;
+}
+
+.admin-password-text {
+
+    margin-top: 6px;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+.admin-password-text.weak {
+
+    color: #ef4444;
+}
+
+.admin-password-text.medium {
+
+    color: #f59e0b;
+}
+
+.admin-password-text.strong {
+
+    color: #10b981;
+}
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.admin-form-footer {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 14px;
+
+    margin-top: 8px;
+}
+
+/* =========================================================
+   BUTTON
+========================================================= */
+
+.admin-form-submit-btn,
+.admin-form-cancel-btn {
+
+    border: none;
+    outline: none;
+
+    padding: 14px 24px;
+
+    border-radius: 16px;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: all 0.25s ease;
+}
+
+/* =========================================================
+   CANCEL BUTTON
+========================================================= */
+
+.admin-form-cancel-btn {
+
+    background: #f3f4f6;
+
+    color: #374151;
+}
+
+.admin-form-cancel-btn:hover {
+
+    background: #e5e7eb;
+
+    transform: translateY(-2px);
+}
+
+/* =========================================================
+   SUBMIT BUTTON
+========================================================= */
+
+.admin-form-submit-btn {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    min-width: 180px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #1d4ed8
+        );
+
+    color: #ffffff;
+
+    box-shadow:
+        0 10px 25px rgba(37,99,235,0.28);
+}
+
+.admin-form-submit-btn:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 14px 30px rgba(37,99,235,0.35);
+}
+
+.admin-form-submit-btn:disabled {
+
+    opacity: 0.75;
+
+    cursor: not-allowed;
+
+    transform: none;
+
+    box-shadow: none;
+}
+
+/* =========================================================
+   LOADING SPINNER
+========================================================= */
+
+.admin-btn-spinner {
+
+    width: 18px;
+    height: 18px;
+
+    border-radius: 50%;
+
+    border: 2px solid rgba(255,255,255,0.4);
+
+    border-top-color: #ffffff;
+
+    animation: adminSpin 0.7s linear infinite;
+}
+
+/* =========================================================
+   SHAKE FORM
+========================================================= */
+
+.admin-form.shake {
+
+    animation: formShake 0.35s ease;
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.admin-form-body::-webkit-scrollbar {
+
+    width: 7px;
+}
+
+.admin-form-body::-webkit-scrollbar-track {
+
+    background: transparent;
+}
+
+.admin-form-body::-webkit-scrollbar-thumb {
+
+    background: rgba(37,99,235,0.4);
+
+    border-radius: 999px;
+}
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes adminFormFade {
+
+    from {
+
+        opacity: 0;
+    }
+
+    to {
+
+        opacity: 1;
+    }
+}
+
+@keyframes adminFormScale {
+
+    from {
+
+        opacity: 0;
+
+        transform: scale(0.92);
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform: scale(1);
+    }
+}
+
+@keyframes adminErrorFade {
+
+    from {
+
+        opacity: 0;
+
+        transform: translateY(-4px);
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform: translateY(0);
+    }
+}
+
+@keyframes adminSpin {
+
+    to {
+
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes shakeInput {
+
+    0% { transform: translateX(0); }
+
+    25% { transform: translateX(-4px); }
+
+    50% { transform: translateX(4px); }
+
+    75% { transform: translateX(-3px); }
+
+    100% { transform: translateX(0); }
+}
+
+@keyframes formShake {
+
+    0% { transform: translateX(0); }
+
+    25% { transform: translateX(-6px); }
+
+    50% { transform: translateX(6px); }
+
+    75% { transform: translateX(-4px); }
+
+    100% { transform: translateX(0); }
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media screen and (max-width: 992px) {
+
+    .admin-form-modal {
+
+        max-width: 92%;
+    }
+
+    .admin-form-header {
+
+        padding: 22px;
+    }
+
+    .admin-form-header h2 {
+
+        font-size: 26px;
+    }
+
+    .admin-form-body {
+
+        padding: 22px;
+    }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media screen and (max-width: 768px) {
+
+    .admin-form-overlay {
+
+        padding: 14px;
+    }
+
+    .admin-form-modal {
+
+        max-width: 100%;
+
+        border-radius: 24px;
+    }
+
+    .admin-form-header {
+
+        padding: 20px;
+    }
+
+    .admin-form-header h2 {
+
+        font-size: 22px;
+    }
+
+    .admin-form-body {
+
+        padding: 20px;
+    }
+
+    .admin-form {
+
+        gap: 18px;
+    }
+
+    .admin-form-input,
+    .admin-form-textarea,
+    .admin-form-select,
+    .admin-form-group input,
+    .admin-form-group textarea,
+    .admin-form-group select {
+
+        padding: 15px 16px;
+
+        border-radius: 16px;
+
+        font-size: 14px;
+    }
+
+    .admin-form-footer {
+
+        flex-direction: column;
+    }
+
+    .admin-form-submit-btn,
+    .admin-form-cancel-btn {
+
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media screen and (max-width: 480px) {
+
+    .admin-form-header {
+
+        padding: 18px;
+    }
+
+    .admin-form-header h2 {
+
+        font-size: 20px;
+    }
+
+    .admin-form-body {
+
+        padding: 18px;
+    }
+
+    .admin-form-group {
+
+        gap: 8px;
+    }
+
+    .admin-form-label {
+
+        font-size: 14px;
+    }
+
+    .admin-form-input,
+    .admin-form-textarea,
+    .admin-form-select,
+    .admin-form-group input,
+    .admin-form-group textarea,
+    .admin-form-group select {
+
+        padding: 14px;
+
+        font-size: 14px;
+
+        border-radius: 14px;
+    }
+
+    .admin-form-error,
+    .admin-form-success,
+    .admin-password-text {
+
+        font-size: 12px;
+    }
+
+    .admin-form-submit-btn,
+    .admin-form-cancel-btn {
+
+        padding: 13px 18px;
+
+        font-size: 14px;
+    }
+}

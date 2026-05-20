@@ -11,6 +11,8 @@ import {
     Settings
 } from 'lucide-react';
 import Modal from '../../../components/Modal'; 
+// Import bộ icon ghế
+import { SeatNormal, SeatVIP, SeatCouple } from "../../../../user_frontend/components/SeatIcon"; 
 import '../../../styles/AdminSeat.css';
 
 const SeatList = () => {
@@ -57,7 +59,6 @@ const SeatList = () => {
         if (selectedRoom) {
             setLoading(true);
             try {
-                // API này giờ đã có JOIN lấy customer_name từ Backend
                 const res = await axios.get(`https://api.quangdungcinema.id.vn/api/seats/room/${selectedRoom}`);
                 setSeats(res.data);
             } catch (err) { console.error("Lỗi lấy ghế:", err); } 
@@ -81,8 +82,7 @@ const SeatList = () => {
 
             if (modal.type === 'maintenance') {
                 const seat = modal.data;
-                // Chỉ gọi API Toggle bảo trì
-                await axios.put('https://api.quangdungcinema.id.vn/api/seats/toggle-active', {
+                await axios.put('https://api.quangdungcinema.lyria.id.vn/api/seats/toggle-active', {
                     seatId: seat.seat_id,
                     isActive: seat.is_active ? 0 : 1
                 });
@@ -100,7 +100,6 @@ const SeatList = () => {
             fetchSeats();
             setModal({ ...modal, isOpen: false });
         } catch (err) {
-            // Hiển thị lỗi từ Backend (ví dụ: Ghế đã đặt không được khóa)
             setModal({
                 isOpen: true,
                 type: 'error',
@@ -114,10 +113,18 @@ const SeatList = () => {
         const row = seat.seat_row;
         if (!acc[row]) acc[row] = [];
         acc[row].push(seat);
+        // Đảm bảo số ghế sắp xếp tăng dần từ trái qua phải theo số ghế
+        acc[row].sort((a, b) => Number(a.seat_number) - Number(b.seat_number));
         return acc;
     }, {});
 
-    const roomInfo = rooms.find(r => r.room_id == selectedRoom);
+    // --- RENDER ICON HELPER ---
+    const renderSeatIcon = (seatType) => {
+        const typeLower = seatType ? seatType.toLowerCase() : 'standard';
+        if (typeLower === 'vip') return <SeatVIP className="seat-icon-svg" />;
+        if (typeLower === 'couple') return <SeatCouple className="seat-icon-svg" />;
+        return <SeatNormal className="seat-icon-svg" />;
+    };
 
     return (
         <div className="admin-seat-container">
@@ -193,67 +200,93 @@ const SeatList = () => {
                 ) : seats.length > 0 ? (
                     <div className="seat-map-wrapper">
                         <div className="screen">MÀN HÌNH</div>
-                        <div className="admin-grid">
-                            {Object.keys(groupedSeats).sort().map(row => (
+                        {/* Đổi tên class bọc sang tên tương tự client để đồng bộ styling css */}
+                        <div className="admin-grid seats-layout">
+                            {Object.keys(groupedSeats).sort().reverse().map(row => (
                                 <div key={row} className="seat-row">
-                                    <span className="row-name">{row}</span>
-                                    {groupedSeats[row].map(seat => {
-                                        const isMaint = seat.is_active === 0;
-                                        const isBooked = !!seat.customer_name;
-                                        const typeClass = isMaint ? 'seat-maintenance' : isBooked ? 'seat-booked' : `seat-${seat.seat_type.toLowerCase()}`;
-                                        
-                                        return (
-                                            <div 
-                                                key={seat.seat_id} 
-                                                className={`seat-item ${typeClass}`}
-                                                title={isBooked ? `Khách: ${seat.customer_name}` : `Ghế ${seat.seat_type}`}
-                                                onClick={() => {
-                                                    if (isBooked) {
-                                                        // Nếu có người đặt: Hiện thông tin khách
-                                                        setModal({ 
-                                                            isOpen: true, 
-                                                            type: 'info', 
-                                                            data: seat, 
-                                                            title: `Thông tin Ghế ${seat.seat_row}${seat.seat_number}` 
-                                                        });
-                                                    } else {
-                                                        // Nếu ghế trống: Chỉ cho phép chỉnh bảo trì
-                                                        setModal({ 
-                                                            isOpen: true, 
-                                                            type: 'maintenance', 
-                                                            data: seat, 
-                                                            title: `Chỉnh sửa bảo trì ghế ${seat.seat_row}${seat.seat_number}` 
-                                                        });
-                                                    }
-                                                }}
-                                            >
-                                                {isMaint ? <X size={14} /> : (seat.seat_type === 'Couple' ? `${seat.seat_number}-${seat.seat_number + 1}` : seat.seat_number)}
-                                            </div>
-                                        );
-                                    })}
+                                    <span className="row-name row-id">{row}</span>
+                                    <div className="row-items" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                        {groupedSeats[row].map(seat => {
+                                            const isMaint = seat.is_active === 0;
+                                            const isBooked = !!seat.customer_name;
+                                            const seatTypeLower = seat.seat_type ? seat.seat_type.toLowerCase() : 'standard';
+                                            const typeClass = isMaint ? 'seat-maintenance' : isBooked ? 'seat-booked' : `seat-${seatTypeLower}`;
+                                            
+                                            return (
+                                                <div 
+                                                    key={seat.seat_id} 
+                                                    className={`seat-item ${typeClass}`}
+                                                    title={isBooked ? `Khách: ${seat.customer_name}` : `Ghế ${seat.seat_type}`}
+                                                    onClick={() => {
+                                                        if (isBooked) {
+                                                            setModal({ 
+                                                                isOpen: true, 
+                                                                type: 'info', 
+                                                                data: seat, 
+                                                                title: `Thông tin Ghế ${seat.seat_row}${seat.seat_number}` 
+                                                            });
+                                                        } else {
+                                                            setModal({ 
+                                                                isOpen: true, 
+                                                                type: 'maintenance', 
+                                                                data: seat, 
+                                                                title: `Chỉnh sửa bảo trì ghế ${seat.seat_row}${seat.seat_number}` 
+                                                            });
+                                                        }
+                                                    }}
+                                                >
+                                                    {/* Khảm SVG Icon làm nền */}
+                                                    {renderSeatIcon(seat.seat_type)}
+
+                                                    {/* Khảm Text số ghế đè lên trên */}
+                                                    <span className="seat-number-text">
+                                                        {isMaint ? (
+                                                            <X size={12} />
+                                                        ) : (
+                                                            seatTypeLower === 'couple' 
+                                                                ? `${seat.seat_number}-${Number(seat.seat_number) + 1}` 
+                                                                : seat.seat_number
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             ))}
                         </div>
+                        
                         {/* --- BẢNG CHÚ THÍCH (LEGEND) --- */}
                         <div className="seat-legend">
-                            <div className="legend-item">
-                                <div className="seat-item seat-standard small"></div>
+                            <div className="legend-item leg-item">
+                                <div className="seat-item seat-standard small">
+                                    {renderSeatIcon('Standard')}
+                                </div>
                                 <span>Thường</span>
                             </div>
-                            <div className="legend-item">
-                                <div className="seat-item seat-vip small"></div>
+                            <div className="legend-item leg-item">
+                                <div className="seat-item seat-vip small">
+                                    {renderSeatIcon('VIP')}
+                                </div>
                                 <span>VIP</span>
                             </div>
-                            <div className="legend-item">
-                                <div className="seat-item seat-couple small"></div>
+                            <div className="legend-item leg-item">
+                                <div className="seat-item seat-couple small">
+                                    {renderSeatIcon('Couple')}
+                                </div>
                                 <span>Đôi</span>
                             </div>
-                            <div className="legend-item">
-                                <div className="seat-item seat-booked small"></div>
+                            <div className="legend-item leg-item">
+                                <div className="seat-item seat-booked small">
+                                    {renderSeatIcon('Standard')}
+                                </div>
                                 <span>Đã đặt</span>
                             </div>
-                            <div className="legend-item">
-                                <div className="seat-item seat-maintenance small"><X size={10} /></div>
+                            <div className="legend-item leg-item">
+                                <div className="seat-item seat-maintenance small">
+                                    {renderSeatIcon('Standard')}
+                                    <span className="seat-number-text"><X size={10} /></span>
+                                </div>
                                 <span>Bảo trì</span>
                             </div>
                         </div>

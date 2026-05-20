@@ -44,7 +44,7 @@ const AdminSidebar = ({ sidebarOpen, closeSidebar }) => {
             <div className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}>
 
                 <div className="sidebar-header">
-                    <h2 className="sidebar-title">CINEMA STAR</h2>
+                
 
                     <button 
                         className="sidebar-close-btn"

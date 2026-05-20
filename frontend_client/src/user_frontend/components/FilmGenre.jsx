@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-import { Star } from "lucide-react"; // Import icon ngôi sao
-
+import { Star, Ticket } from "lucide-react"; // Thêm icon Ticket cho giống Slider
+import { useNavigate } from "react-router-dom"; 
 import "../styles/FilmGenre.css";
 
 const FilmGenre = () => {
@@ -9,11 +9,12 @@ const FilmGenre = () => {
     const [genres, setGenres] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeGenre, setActiveGenre] = useState("");
-
+    
+    const navigate = useNavigate();
     const baseUrl = "https://api.quangdungcinema.id.vn/uploads/posters/";
 
     /* =====================================================
-        FETCH MOVIES (Sử dụng API with-genre mới)
+        FETCH MOVIES (Giữ nguyên logic ban đầu)
     ===================================================== */
     const fetchMovies = useCallback(async (genreSlug) => {
         try {
@@ -21,16 +22,12 @@ const FilmGenre = () => {
             let url = "";
 
             if (!genreSlug) {
-                // Lấy tất cả phim
                 url = "https://api.quangdungcinema.id.vn/api/movies";
             } else {
-                // Lấy phim theo thể loại (API không phân trang mới viết)
                 url = `https://api.quangdungcinema.id.vn/api/movies/with-genre?genre=${genreSlug}`;
             }
 
             const res = await axios.get(url);
-            
-            // Backend mới trả về mảng trực tiếp nên set thẳng luôn
             setMovies(res.data || []);
 
         } catch (error) {
@@ -42,7 +39,7 @@ const FilmGenre = () => {
     }, []);
 
     /* =====================================================
-        LOAD GENRES (Chạy 1 lần khi load trang)
+        LOAD GENRES (Giữ nguyên logic ban đầu)
     ===================================================== */
     useEffect(() => {
         const fetchGenres = async () => {
@@ -76,7 +73,7 @@ const FilmGenre = () => {
         <div className="film-genre-page">
 
             {/* HERO */}
-            <div className="filmgenre-hero">
+            {/* <div className="filmgenre-hero">
                 <div className="filmgenre-overlay"></div>
                 <div className="filmgenre-content">
                     <span className="filmgenre-subtitle">
@@ -87,12 +84,11 @@ const FilmGenre = () => {
                         Khám phá những bộ phim hot nhất theo thể loại bạn yêu thích
                     </p>
                 </div>
-            </div>
+            </div> */}
 
             {/* GENRE TABS */}
             <div className="genre-tabs-wrapper">
                 <div className="genre-tabs">
-                    {/* TAB ALL */}
                     <button
                         className={activeGenre === "" ? "genre-tab active" : "genre-tab"}
                         onClick={() => handleGenreClick("")}
@@ -135,16 +131,29 @@ const FilmGenre = () => {
                                         alt={movie.title}
                                     />
                                     <div className="genre-overlay">
+                                        {/* NÚT CHI TIẾT: Cập nhật giống MovieSlider */}
                                         <button
                                             className="genre-detail-btn"
-                                            onClick={() => window.location.href = `/movies/detail/${movie.slug}`}
+                                            onClick={() => navigate(`/movies/detail/${movie.slug || movie.movie_slug}`)}
                                         >
                                             CHI TIẾT
                                         </button>
+
+                                        {/* NÚT ĐẶT VÉ: Cập nhật truyền state giống MovieSlider */}
                                         <button
                                             className="genre-book-btn"
-                                            onClick={() => window.location.href = "/booking"}
+                                            onClick={() => navigate('/booking', {
+                                                state: {
+                                                    movie: {
+                                                        movie_id: movie.movie_id,
+                                                        title: movie.title,
+                                                        poster_url: movie.poster_url,
+                                                        age_rating: movie.age_rating
+                                                    }
+                                                }
+                                            })}
                                         >
+                                            <Ticket size={16} style={{ marginRight: '5px' }} />
                                             ĐẶT VÉ
                                         </button>
                                     </div>
@@ -154,7 +163,11 @@ const FilmGenre = () => {
                                 </div>
 
                                 {/* INFO */}
-                                <div className="genre-info">
+                                <div 
+                                    className="genre-info" 
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => navigate(`/movies/detail/${movie.slug || movie.movie_slug}`)}
+                                >
                                     <h3>{movie.title}</h3>
                                     <div className="genre-meta">
                                         <span className="genre-rating">

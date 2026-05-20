@@ -1,45 +1,56 @@
 /* ============================================================
-    USER HOME - SWIPER GALAXY EDITION
-    Author: Quang Dung Project
-    Update: Tối ưu cho Swiper JS (Fade + Zoom + No Gap)
+    USER HOME - CINEMA GALAXY EDITION
 ============================================================ */
 
 :root {
-    --primary: #f1c40f; 
-    --accent-purple: #8a2be2; 
+    --primary: #f1c40f;
+    --accent-purple: #8a2be2;
+    --bg-dark: #0f021f;
     --transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ============================================================
+    MAIN LAYOUT
+============================================================ */
+
 .user-home {
+    min-height: 100vh;
+    background: transparent;
     padding-top: 0 !important;
     margin-top: 0 !important;
-    background-color: transparent; 
-    min-height: 100vh;
 }
 
-/* --- 1. SWIPER BANNER SECTION (FADE & ZOOM) --- */
+.home-container {
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ============================================================
+    SWIPER BANNER
+============================================================ */
+
 .carousel-full-wrapper {
     width: 100%;
     position: relative;
     overflow: hidden;
-    background-color: #000;
-    line-height: 0; /* Khử khoảng hở dòng ảnh */
+    background: #000;
+    line-height: 0;
 }
 
-/* Tỉ lệ khung hình cho Swiper */
 .mySwiper {
     width: 100%;
-    aspect-ratio: 2048 / 850; 
+    aspect-ratio: 2048 / 850;
 }
 
 .banner-full-item {
+    position: relative;
     width: 100%;
     height: 100%;
-    position: relative;
-    overflow: hidden; /* Quan trọng để ảnh không zoom tràn ra ngoài */
+    overflow: hidden;
 }
 
-/* CSS cho ảnh Banner - Hiệu ứng Zoom */
 .banner-img-fade-zoom {
     width: 100%;
     height: 100%;
@@ -49,36 +60,43 @@
     transition: transform 1s ease-in-out;
 }
 
-/* KHI SLIDE ĐANG ACTIVE (Class của Swiper), ẢNH SẼ PHÓNG TO CHẬM */
 .swiper-slide-active .banner-img-fade-zoom {
     transform: scale(1.1);
-    transition: transform 6s ease-out; /* Phóng to từ từ trong 6 giây */
+    transition: transform 6s ease-out;
 }
 
 .banner-full-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(15, 2, 31, 0.8) 0%, transparent 50%);
     z-index: 2;
+    background: linear-gradient(
+        to top,
+        rgba(15, 2, 31, 0.9) 0%,
+        rgba(15, 2, 31, 0.4) 45%,
+        transparent 100%
+    );
 }
 
-/* --- CỤM MINI THUMBNAIL GÓC PHẢI --- */
+/* ============================================================
+    MINI THUMBNAIL
+============================================================ */
+
 .mini-thumbnail-nav {
     position: absolute;
     right: 40px;
     bottom: 40px;
+    z-index: 50;
     display: flex;
     gap: 15px;
-    z-index: 50;
 }
 
 .mini-nav-item {
     width: 110px;
     aspect-ratio: 16 / 9;
-    border-radius: 8px;
     overflow: hidden;
+    border-radius: 10px;
     cursor: pointer;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255,255,255,0.2);
     transition: all 0.3s ease;
 }
 
@@ -87,67 +105,82 @@
     height: 100%;
     object-fit: cover;
     filter: brightness(0.5);
+    transition: 0.3s;
 }
 
 .mini-nav-item.active {
     border-color: var(--accent-purple);
     transform: translateY(-5px);
-    box-shadow: 0 0 15px var(--accent-purple);
+    box-shadow: 0 0 18px rgba(138, 43, 226, 0.8);
 }
 
 .mini-nav-item.active img {
     filter: brightness(1);
 }
+
 /* ============================================================
-    QUICK BOOKING - CINEMA STAR EDITION
-    Vị trí: Nằm đè lên chân Banner (Floating)
+    QUICK BOOKING
 ============================================================ */
 
 .quick-booking-container {
     position: relative;
+    z-index: 100;
     width: 100%;
     max-width: 1100px;
-    margin: -40px auto 20px; /* Đẩy lên trên để đè lên banner 40px */
-    z-index: 100;
-    padding: 0 20px;
+    margin: -40px auto 30px;
 }
 
 .quick-booking-content {
-    background: rgba(20, 10, 35, 0.95); /* Màu nền tím đen đậm */
-    backdrop-filter: blur(15px); /* Hiệu ứng kính mờ */
-    border: 1px solid rgba(138, 43, 226, 0.3); /* Viền tím mờ */
-    border-radius: 12px;
-    padding: 20px;
     display: flex;
     align-items: center;
     gap: 15px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 
-                0 0 20px rgba(138, 43, 226, 0.1);
+    padding: 20px;
+    border-radius: 16px;
+
+    background: rgba(20, 10, 35, 0.95);
+    backdrop-filter: blur(15px);
+
+    border: 1px solid rgba(138, 43, 226, 0.3);
+
+    box-shadow:
+        0 15px 35px rgba(0, 0, 0, 0.6),
+        0 0 20px rgba(138, 43, 226, 0.1);
 }
 
 .quick-booking-selects {
+    flex: 1;
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* Chia 4 cột cho Phim, Rạp, Ngày, Suất */
+    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
-    flex-grow: 1;
 }
 
-/* Style cho các ô Select */
 .quick-booking-selects select {
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 12px 15px;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    width: 100%;
+    height: 48px;
+
+    padding: 0 15px;
+
+    border-radius: 10px;
     outline: none;
+
+    color: #fff;
+    font-size: 0.9rem;
+
     cursor: pointer;
-    transition: all 0.3s ease;
-    appearance: none; /* Khử style mặc định của trình duyệt */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+    border: 1px solid rgba(255,255,255,0.1);
+
+    background-color: rgba(255,255,255,0.05);
+
+    appearance: none;
+
+    transition: 0.3s;
+
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
     background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 16px;
+    background-position: right 12px center;
+    background-size: 15px;
 }
 
 .quick-booking-selects select:hover:not(:disabled) {
@@ -157,164 +190,209 @@
 
 .quick-booking-selects select:focus {
     border-color: var(--accent-purple);
-    box-shadow: 0 0 8px rgba(138, 43, 226, 0.4);
+    box-shadow: 0 0 10px rgba(138, 43, 226, 0.4);
 }
 
 .quick-booking-selects select:disabled {
-    opacity: 0.4;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
-/* Ô option bên trong select (Cho các trình duyệt hỗ trợ) */
-.quick-booking-selects select option {
+.quick-booking-selects option {
     background: #1a0a2e;
     color: #fff;
 }
 
-/* Nút đặt vé */
 .btn-quick-booking {
-    background: linear-gradient(45deg, #8a2be2, #a020f0);
-    color: #fff;
-    border: none;
-    padding: 0 30px;
     height: 48px;
-    border-radius: 8px;
+    padding: 0 30px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: linear-gradient(45deg, #8a2be2, #a020f0);
+
+    color: #fff;
     font-weight: 700;
-    text-transform: uppercase;
     letter-spacing: 1px;
+    text-transform: uppercase;
+
     cursor: pointer;
-    transition: all 0.3s ease;
+
     white-space: nowrap;
+
+    transition: 0.3s;
 }
 
 .btn-quick-booking:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(138, 43, 226, 0.5);
     filter: brightness(1.1);
+
+    box-shadow: 0 6px 18px rgba(138, 43, 226, 0.5);
 }
 
-.btn-quick-booking:active {
-    transform: translateY(0);
-}
-/* --- 2. MOVIE SECTION (GIỮ NGUYÊN CODE CỦA ÔNG) --- */
-.movie-container {
+/* ============================================================
+    COMMON SECTION
+============================================================ */
+
+.home-features-section,
+.movie-container,
+.promotions-section,
+.cinema-corner-section {
     width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 40px 20px;
-    box-sizing: border-box;
+    margin-top: 60px;
 }
 
-.movie-tabs {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.section-header {
     margin-bottom: 30px;
 }
 
+.section-title {
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.title-underline {
+    width: 60px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--accent-purple);
+}
+
+/* ============================================================
+    MOVIE TABS
+============================================================ */
+
+.movie-tabs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 35px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
 .tab-btn {
-    background: none;
+    position: relative;
+
+    padding-bottom: 12px;
+    margin-right: 25px;
+
     border: none;
+    background: transparent;
+
     color: #666;
     font-size: 1.1rem;
     font-weight: 700;
-    margin-right: 25px;
-    padding-bottom: 10px;
-    cursor: pointer;
     text-transform: uppercase;
-    position: relative;
-    transition: 0.3s ease;
+
+    cursor: pointer;
+
+    transition: 0.3s;
 }
 
 .tab-btn.active {
     color: #fff;
-    text-shadow: 0 0 8px rgba(138, 43, 226, 0.8);
+    text-shadow: 0 0 10px rgba(138,43,226,0.8);
 }
 
 .tab-btn.active::after {
     content: "";
     position: absolute;
-    bottom: -1px;
     left: 0;
+    bottom: -1px;
+
     width: 100%;
     height: 3px;
-    background-color: var(--accent-purple); 
+
+    background: var(--accent-purple);
+
     box-shadow: 0 0 10px var(--accent-purple);
 }
-/* ============================================================
-    HOME FEATURES - CINEMA STAR STYLE
-============================================================ */
 
-.home-features-section {
-    width: 100%;
-    max-width: 1200px;
-    margin: 40px auto;
-    padding: 0 20px;
-}
+/* ============================================================
+    FEATURES
+============================================================ */
 
 .features-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4 cột đều nhau */
-    gap: 30px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
 }
 
 .feature-item {
     display: flex;
     align-items: center;
     gap: 15px;
+
     padding: 20px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 15px;
-    border: 1px solid rgba(138, 43, 226, 0.1);
-    transition: all 0.3s ease;
+
+    border-radius: 18px;
+
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(138,43,226,0.15);
+
+    transition: 0.3s;
 }
 
 .feature-item:hover {
-    background: rgba(138, 43, 226, 0.05);
-    border-color: var(--accent-purple);
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+
+    background: rgba(138,43,226,0.06);
+    border-color: var(--accent-purple);
+
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
 }
 
-/* Hiệu ứng Icon tròn tím neon */
 .feature-icon-wrapper {
     min-width: 60px;
     height: 60px;
+
     border-radius: 50%;
-    background: rgba(138, 43, 226, 0.1);
+
     display: flex;
     justify-content: center;
     align-items: center;
+
     color: var(--accent-purple);
+
+    background: rgba(138,43,226,0.1);
     border: 1px solid var(--accent-purple);
-    box-shadow: 0 0 15px rgba(138, 43, 226, 0.2);
-    transition: all 0.3s ease;
+
+    box-shadow: 0 0 15px rgba(138,43,226,0.2);
+
+    transition: 0.3s;
 }
 
 .feature-item:hover .feature-icon-wrapper {
     background: var(--accent-purple);
     color: #fff;
+
     box-shadow: 0 0 20px var(--accent-purple);
 }
 
-/* Chữ đi kèm */
 .feature-text h4 {
-    color: #fff;
-    font-size: 0.9rem;
-    font-weight: 700;
-    margin: 0;
     margin-bottom: 5px;
+
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 700;
+
     text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 .feature-text p {
     color: #aaa;
-    font-size: 0.8rem;
-    margin: 0;
+    font-size: 0.82rem;
 }
-/* --- 3. GRID & POSTER (GIỮ NGUYÊN) --- */
+
+/* ============================================================
+    MOVIE GRID
+============================================================ */
+
 .movie-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -325,102 +403,104 @@
     transition: transform 0.3s ease;
 }
 
+.movie-item:hover {
+    transform: translateY(-10px);
+}
+
 .poster-wrapper {
     position: relative;
+
     width: 100%;
     aspect-ratio: 2 / 3;
-    border-radius: 12px;
+
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+    border-radius: 14px;
+
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.05);
+
+    box-shadow: 0 8px 18px rgba(0,0,0,0.4);
 }
 
 .poster-img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s ease;
-}
 
-.movie-item:hover {
-    transform: translateY(-10px);
+    object-fit: cover;
+
+    transition: transform 0.5s ease;
 }
 
 .movie-item:hover .poster-img {
     transform: scale(1.1);
 }
 
-.movie-name {
-    color: #fff;
-    font-size: 0.95rem;
-    margin-top: 15px;
-    font-weight: 600;
-    text-transform: uppercase;
-    text-align: center;
-    line-height: 1.4;
-    height: 2.7rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
 .poster-hover {
     position: absolute;
     inset: 0;
+
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(15, 2, 31, 0.75);
+
     opacity: 0;
-    transition: opacity 0.3s ease;
+
+    background: rgba(15,2,31,0.75);
+
+    transition: 0.3s;
 }
 
 .poster-wrapper:hover .poster-hover {
     opacity: 1;
 }
 
-.btn-book {
-    background-color: var(--accent-purple);
+.movie-name {
+    margin-top: 15px;
+
     color: #fff;
-    font-weight: bold;
-    padding: 10px 20px;
-    border-radius: 25px;
-    cursor: pointer;
-    border: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+
+    text-align: center;
     text-transform: uppercase;
-    font-size: 0.8rem;
-    transition: all 0.3s ease;
-}
-/* ============================================================
-    PROMOTIONS SECTION
-============================================================ */
-.promotions-section {
-    max-width: 1200px;
-    margin: 60px auto;
-    padding: 0 20px;
+
+    line-height: 1.5;
+
+    height: 2.8rem;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
 }
 
-.section-header {
-    margin-bottom: 30px;
-    text-align: left;
-}
+.btn-book {
+    padding: 10px 22px;
 
-.section-title {
-    font-size: 1.8rem;
-    color: #fff;
-    font-weight: 800;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-}
+    border: none;
+    border-radius: 999px;
 
-.title-underline {
-    width: 60px;
-    height: 4px;
     background: var(--accent-purple);
-    border-radius: 2px;
+
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+
+    cursor: pointer;
+
+    transition: 0.3s;
 }
+
+.btn-book:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 18px rgba(138,43,226,0.6);
+}
+
+/* ============================================================
+    PROMOTIONS
+============================================================ */
 
 .promotions-grid {
     display: grid;
@@ -429,22 +509,27 @@
 }
 
 .promo-card {
-    background: #1a1a1a;
-    border-radius: 12px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
+
+    border-radius: 16px;
+
+    background: #1a1a1a;
+    border: 1px solid rgba(255,255,255,0.05);
+
+    transition: 0.3s;
 }
 
 .promo-card:hover {
     transform: translateY(-10px);
+
     border-color: var(--accent-purple);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+
+    box-shadow: 0 15px 30px rgba(0,0,0,0.5);
 }
 
 .promo-image {
     position: relative;
-    height: 180px;
+    height: 190px;
     overflow: hidden;
 }
 
@@ -452,6 +537,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+
     transition: transform 0.5s ease;
 }
 
@@ -461,14 +547,18 @@
 
 .promo-tag {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 12px;
+    right: 12px;
+
+    padding: 5px 12px;
+
+    border-radius: 999px;
+
     background: #ff0000;
+
     color: #fff;
-    padding: 4px 12px;
-    border-radius: 20px;
     font-size: 0.7rem;
-    font-weight: bold;
+    font-weight: 700;
     text-transform: uppercase;
 }
 
@@ -477,105 +567,118 @@
 }
 
 .promo-info h3 {
+    margin-bottom: 10px;
+
     color: #fff;
     font-size: 1.1rem;
-    margin-bottom: 10px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .promo-info p {
+    margin-bottom: 20px;
+
     color: #aaa;
     font-size: 0.85rem;
-    line-height: 1.5;
-    margin-bottom: 20px;
+    line-height: 1.6;
+
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+
     overflow: hidden;
 }
 
 .btn-detail {
-    background: transparent;
-    color: var(--accent-purple);
-    border: 1px solid var(--accent-purple);
     padding: 8px 18px;
-    border-radius: 5px;
+
+    border-radius: 8px;
+    border: 1px solid var(--accent-purple);
+
+    background: transparent;
+
+    color: var(--accent-purple);
     font-size: 0.8rem;
     font-weight: 600;
+
     cursor: pointer;
-    transition: all 0.3s ease;
+
+    transition: 0.3s;
 }
 
 .btn-detail:hover {
     background: var(--accent-purple);
     color: #fff;
 }
+
 /* ============================================================
-    CINEMA CORNER SECTION
+    CINEMA CORNER
 ============================================================ */
-.cinema-corner-section {
-    max-width: 1200px;
-    margin: 60px auto;
-    padding: 0 20px;
-}
 
 .cinema-corner-content {
     display: grid;
-    grid-template-columns: 1.5fr 1fr; /* Trái to, phải nhỏ */
+    grid-template-columns: 1.5fr 1fr;
     gap: 30px;
 }
 
-/* Tin chính */
 .news-main .news-card {
     position: relative;
-    border-radius: 15px;
     overflow: hidden;
+    border-radius: 16px;
     height: 100%;
     cursor: pointer;
 }
 
 .news-main .news-img {
-    height: 400px;
+    height: 420px;
 }
 
 .news-main .news-img img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+
     transition: 0.5s;
-}
-
-.news-info {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 30px;
-    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-}
-
-.news-category {
-    background: var(--accent-purple);
-    color: #fff;
-    padding: 3px 10px;
-    font-size: 0.7rem;
-    border-radius: 4px;
-    text-transform: uppercase;
-}
-
-.news-info h3 {
-    color: #fff;
-    margin: 10px 0;
-    font-size: 1.5rem;
 }
 
 .news-main:hover .news-img img {
     transform: scale(1.05);
 }
 
-/* Tin phụ bên phải */
+.news-info {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+
+    width: 100%;
+    padding: 30px;
+
+    background: linear-gradient(
+        to top,
+        rgba(0,0,0,0.95),
+        transparent
+    );
+}
+
+.news-category {
+    display: inline-block;
+
+    padding: 4px 10px;
+
+    border-radius: 5px;
+
+    background: var(--accent-purple);
+
+    color: #fff;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+}
+
+.news-info h3 {
+    margin-top: 12px;
+
+    color: #fff;
+    font-size: 1.5rem;
+}
+
 .news-list-side {
     display: flex;
     flex-direction: column;
@@ -585,15 +688,22 @@
 .news-side-item {
     display: flex;
     gap: 15px;
+
     cursor: pointer;
+
     transition: 0.3s;
+}
+
+.news-side-item:hover h4 {
+    color: var(--accent-purple);
 }
 
 .side-img {
     min-width: 120px;
     height: 80px;
-    border-radius: 8px;
+
     overflow: hidden;
+    border-radius: 10px;
 }
 
 .side-img img {
@@ -603,83 +713,82 @@
 }
 
 .side-info h4 {
+    margin-bottom: 6px;
+
     color: #eee;
     font-size: 0.95rem;
-    margin-bottom: 5px;
-    line-height: 1.4;
+    line-height: 1.5;
+
+    transition: 0.3s;
+
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+
     overflow: hidden;
 }
 
 .side-info span {
-    color: #666;
+    color: #777;
     font-size: 0.8rem;
 }
 
-.news-side-item:hover h4 {
-    color: var(--accent-purple);
-}
 /* ============================================================
-    CUSTOM SCROLLBAR - CINEMA STAR STYLE
-    Áp dụng cho toàn trang và các vùng có scroll nội bộ
+    SCROLLBAR
 ============================================================ */
 
-/* 1. Áp dụng cho toàn bộ trình duyệt */
 ::-webkit-scrollbar {
-    width: 8px; /* Độ rộng thanh cuộn dọc */
-    height: 8px; /* Độ cao thanh cuộn ngang (nếu có) */
+    width: 8px;
+    height: 8px;
 }
 
-/* 2. Phần nền của thanh cuộn (Track) */
 ::-webkit-scrollbar-track {
-    background: #0f021f; /* Màu tím đen cực đậm để ẩn mình vào nền dự án */
-    border-radius: 10px;
+    background: #0f021f;
 }
 
-/* 3. Phần tay cầm thanh cuộn (Thumb) */
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, #8a2be2, #4b0082); /* Gradient tím đặc trưng */
     border-radius: 10px;
-    border: 2px solid #0f021f; /* Tạo khoảng trống nhỏ giữa thanh cuộn và viền */
-    transition: all 0.3s ease;
+
+    background: linear-gradient(
+        to bottom,
+        #8a2be2,
+        #4b0082
+    );
+
+    border: 2px solid #0f021f;
 }
 
-/* 4. Hiệu ứng khi hover vào thanh cuộn */
 ::-webkit-scrollbar-thumb:hover {
-    background: #a020f0; /* Sáng lên một chút khi Dũng rê chuột vào */
-    box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+    background: #a020f0;
+    box-shadow: 0 0 10px rgba(138,43,226,0.5);
 }
+
 .scroll-content-y {
-    max-height: 300px; /* Bắt buộc phải có chiều cao tối đa */
-    overflow-y: auto;  /* Cho phép cuộn dọc */
+    max-height: 300px;
+    overflow-y: auto;
 }
-/* 5. Tùy chỉnh riêng cho các vùng cuộn nội bộ (như cột chọn rạp, chọn suất chiếu) */
+
 .scroll-content-y::-webkit-scrollbar {
-    width: 5px; /* Làm mảnh hơn cho các vùng nhỏ để nhìn tinh tế */
+    width: 5px;
 }
 
 .scroll-content-y::-webkit-scrollbar-thumb {
-    background: rgba(138, 43, 226, 0.5); /* Độ trong suốt nhẹ */
+    background: rgba(138,43,226,0.5);
 }
 
 .scroll-content-y::-webkit-scrollbar-thumb:hover {
-    background: rgba(138, 43, 226, 1);
+    background: rgba(138,43,226,1);
 }
 
-/* Hỗ trợ cho Firefox (Firefox dùng thuộc tính khác) */
 * {
     scrollbar-width: thin;
     scrollbar-color: #8a2be2 #0f021f;
 }
+
 /* ============================================================
-    RESPONSIVE FULL - USER HOME
+    RESPONSIVE
 ============================================================ */
 
-/* =========================
-   LAPTOP NHỎ / TABLET NGANG
-========================= */
 @media (max-width: 1200px) {
 
     .features-grid {
@@ -699,23 +808,11 @@
     }
 }
 
-
-/* =========================
-   TABLET
-========================= */
 @media (max-width: 992px) {
-
-    /* QUICK BOOKING */
-    .quick-booking-container {
-        margin-top: -20px;
-        padding: 0 15px;
-    }
 
     .quick-booking-content {
         flex-direction: column;
         align-items: stretch;
-        gap: 15px;
-        padding: 18px;
     }
 
     .quick-booking-selects {
@@ -724,49 +821,19 @@
 
     .btn-quick-booking {
         width: 100%;
-        height: 50px;
     }
 
-    /* MOVIE */
     .movie-grid {
         grid-template-columns: repeat(3, 1fr);
     }
-
-    /* FEATURE */
-    .feature-item {
-        padding: 18px;
-    }
-
-    .feature-text h4 {
-        font-size: 0.85rem;
-    }
-
-    .feature-text p {
-        font-size: 0.75rem;
-    }
-
-    /* PROMOTION */
-    .promo-image {
-        height: 160px;
-    }
-
-    /* CINEMA CORNER */
-    .news-main .news-img {
-        height: 300px;
-    }
-
-    .news-info h3 {
-        font-size: 1.3rem;
-    }
 }
 
-
-/* =========================
-   MOBILE
-========================= */
 @media (max-width: 767px) {
 
-    /* SWIPER */
+    .home-container {
+        padding: 0 14px;
+    }
+
     .mySwiper {
         aspect-ratio: 1 / 1.3;
     }
@@ -775,50 +842,16 @@
         display: none;
     }
 
-    /* QUICK BOOKING */
     .quick-booking-container {
-        margin-top: -10px;
-        padding: 0 12px;
-    }
-
-    .quick-booking-content {
-        padding: 15px;
-        border-radius: 10px;
+        margin-top: -15px;
     }
 
     .quick-booking-selects {
         grid-template-columns: 1fr;
     }
 
-    .quick-booking-selects select {
-        height: 48px;
-        font-size: 0.9rem;
-    }
-
-    .btn-quick-booking {
-        width: 100%;
-        height: 48px;
-        font-size: 0.9rem;
-    }
-
-    /* FEATURES */
     .features-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
-    }
-
-    .feature-item {
-        padding: 16px;
-    }
-
-    .feature-icon-wrapper {
-        min-width: 50px;
-        height: 50px;
-    }
-
-    /* MOVIE */
-    .movie-container {
-        padding: 30px 15px;
     }
 
     .movie-grid {
@@ -826,122 +859,36 @@
         gap: 15px;
     }
 
-    .movie-name {
-        font-size: 0.85rem;
-    }
-
-    /* SECTION TITLE */
-    .section-title {
-        font-size: 1.5rem;
-    }
-
-    /* PROMOTION */
     .promotions-grid {
         grid-template-columns: 1fr;
-        gap: 20px;
-    }
-
-    .promo-image {
-        height: 200px;
-    }
-
-    .promo-info h3 {
-        font-size: 1rem;
-        white-space: normal;
-    }
-
-    /* CINEMA CORNER */
-    .cinema-corner-section {
-        margin: 40px auto;
     }
 
     .news-main .news-img {
         height: 240px;
     }
 
-    .news-info {
-        padding: 20px;
-    }
-
-    .news-info h3 {
-        font-size: 1.1rem;
-    }
-
-    .news-info p {
-        font-size: 0.85rem;
-        line-height: 1.5;
-    }
-
-    .news-side-item {
-        gap: 12px;
-    }
-
-    .side-img {
-        min-width: 100px;
-        height: 70px;
-    }
-
-    .side-info h4 {
-        font-size: 0.85rem;
+    .section-title {
+        font-size: 1.5rem;
     }
 }
 
-
-/* =========================
-   SMALL MOBILE
-========================= */
 @media (max-width: 480px) {
 
-    /* SWIPER */
     .mySwiper {
         aspect-ratio: 1 / 1.5;
     }
 
-    /* FEATURE */
-    .feature-item {
-        flex-direction: column;
-        text-align: center;
-        align-items: center;
-    }
-
-    .feature-text h4 {
-        font-size: 0.8rem;
-    }
-
-    .feature-text p {
-        font-size: 0.72rem;
-    }
-
-    /* MOVIE */
     .movie-grid {
         gap: 12px;
     }
 
     .movie-name {
-        font-size: 0.8rem;
+        font-size: 0.82rem;
     }
 
-    .btn-book {
-        padding: 8px 16px;
-        font-size: 0.7rem;
-    }
-
-    /* PROMO */
-    .promo-image {
-        height: 180px;
-    }
-
-    .promo-info {
-        padding: 15px;
-    }
-
-    /* NEWS */
-    .news-main .news-img {
-        height: 200px;
-    }
-
-    .news-info h3 {
-        font-size: 1rem;
+    .feature-item {
+        flex-direction: column;
+        text-align: center;
     }
 
     .news-side-item {
@@ -953,7 +900,7 @@
         height: 180px;
     }
 
-    .side-info h4 {
-        font-size: 0.82rem;
+    .news-main .news-img {
+        height: 200px;
     }
 }

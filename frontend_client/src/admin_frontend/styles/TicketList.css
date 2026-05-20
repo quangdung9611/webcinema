@@ -1,18 +1,9 @@
-/* --- BIẾN MÀU SẮC CHỦ ĐẠO --- */
+/* --- BIẾN MÀU SẮC CHỦ ĐẠO (Chỉ giữ lại các biến trạng thái đặc thù của sơ đồ ghế) --- */
 :root
 {
-    --primary: #4f46e5;
-    --primary-hover: #4338ca;
     --success: #10b981;
     --warning: #f59e0b;
     --danger: #ef4444;
-    --bg-main: #f8fafc;
-    --bg-card: #ffffff;
-    --bg-dark: #0f172a;
-    --text-main: #1e293b;
-    --text-muted: #64748b;
-    --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
     --radius: 14px;
 }
 
@@ -20,21 +11,14 @@
 .admin-ticket-container
 {
     padding: 2rem;
-    background-color: var(--bg-main);
     min-height: 100vh;
-    color: var(--text-main);
-    font-family: 'Inter', system-ui, sans-serif;
 }
 
 .admin-ticket-header h2
 {
-    font-size: 1.75rem;
     font-weight: 800;
     text-align: center;
     margin-bottom: 2.5rem;
-    background: linear-gradient(to right, var(--primary), #ec4899);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     letter-spacing: -0.5px;
     display: flex;
     align-items: center;
@@ -45,10 +29,8 @@
 /* --- TOOLBAR BỘ LỌC --- */
 .top-toolbar
 {
-    background: var(--bg-card);
     padding: 1.5rem;
     border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
     border: 1px solid #e2e8f0;
     margin-bottom: 2rem;
 }
@@ -70,9 +52,7 @@
 
 .filter-group label
 {
-    font-size: 0.75rem;
     font-weight: 700;
-    color: var(--text-muted);
     text-transform: uppercase;
 }
 
@@ -82,23 +62,18 @@
     padding: 0 1rem;
     border: 1.5px solid #e2e8f0;
     border-radius: 10px;
-    background: #fff;
-    font-size: 0.95rem;
     transition: all 0.2s;
     cursor: pointer;
 }
 
 .filter-group select:focus
 {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
     outline: none;
 }
 
 /* --- NÚT CHUYỂN TAB --- */
 .view-mode-switch
 {
-    background: #f1f5f9;
     padding: 4px;
     border-radius: 10px;
     display: inline-flex;
@@ -112,19 +87,10 @@
     gap: 8px;
     padding: 0.6rem 1.5rem;
     border: none;
-    background: transparent;
     font-weight: 600;
-    color: var(--text-muted);
     cursor: pointer;
     border-radius: 8px;
     transition: all 0.3s ease;
-}
-
-.view-mode-switch button.active
-{
-    background: #fff;
-    color: var(--primary);
-    box-shadow: var(--shadow-sm);
 }
 
 /* --- STATS CARDS --- */
@@ -143,14 +109,12 @@
     gap: 20px;
     padding: 1.5rem;
     border-radius: var(--radius);
-    color: white;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .stat-card:hover
 {
     transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
 }
 
 .stat-card.blue
@@ -170,7 +134,6 @@
 
 .stat-card span
 {
-    font-size: 2.25rem;
     font-weight: 800;
     display: block;
     line-height: 1;
@@ -179,7 +142,6 @@
 .stat-card p
 {
     margin: 4px 0 0 0;
-    font-size: 0.8rem;
     font-weight: 600;
     opacity: 0.9;
     display: flex;
@@ -199,7 +161,6 @@
     left: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--text-muted);
 }
 
 .search-bar input
@@ -208,35 +169,27 @@
     padding: 12px 15px 12px 45px;
     border: 1.5px solid #e2e8f0;
     border-radius: 10px;
-    font-size: 0.95rem;
     transition: all 0.2s;
 }
 
 .search-bar input:focus
 {
-    border-color: var(--primary);
     outline: none;
-    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.05);
 }
 
 .admin-table
 {
     width: 100%;
     border-collapse: collapse;
-    background: #fff;
     border-radius: var(--radius);
     overflow: hidden;
-    box-shadow: var(--shadow-sm);
 }
 
 .admin-table th
 {
-    background: #f8fafc;
     padding: 1.25rem 1rem;
     text-align: left;
-    font-size: 0.75rem;
     font-weight: 700;
-    color: var(--text-muted);
     text-transform: uppercase;
     border-bottom: 2px solid #f1f5f9;
 }
@@ -245,14 +198,12 @@
 {
     padding: 1.25rem 1rem;
     border-bottom: 1px solid #f1f5f9;
-    font-size: 0.9rem;
 }
 
 .status-badge
 {
     padding: 4px 12px;
     border-radius: 20px;
-    font-size: 0.75rem;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
@@ -271,13 +222,11 @@
     color: #b45309;
 }
 
-/* --- VISUAL MONITOR (SƠ ĐỒ GHẾ) --- */
+/* --- VISUAL MONITOR (SƠ ĐỒ GHẾ GIÁM SÁT) --- */
 .visual-monitor-container
 {
-    background: #ffffff;
     padding: 4rem 2rem;
     border-radius: 24px;
-    box-shadow: var(--shadow-lg);
     text-align: center;
     border: 1px solid #f1f5f9;
 }
@@ -286,12 +235,8 @@
 {
     width: 60%;
     height: 8px;
-    background: #e2e8f0;
     margin: 0 auto 4rem;
     border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    color: #94a3b8;
-    font-size: 0.75rem;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -317,9 +262,7 @@
 .row-label-admin
 {
     width: 30px;
-    color: #94a3b8;
     font-weight: 800;
-    font-size: 0.85rem;
 }
 
 .seat-item-admin
@@ -339,7 +282,6 @@
 
 .seat-num-text
 {
-    font-size: 10px;
     font-weight: 700;
     z-index: 2;
 }
@@ -351,32 +293,28 @@
     z-index: 1;
 }
 
-/* TRẠNG THÁI GHẾ ADMIN */
+/* TRẠNG THÁI GHẾ TRONG TRANG VÉ */
 .seat-item-admin.empty
 {
-    background-color: #f8fafc;
-    color: #cbd5e1;
+    border-color: #cbd5e1;
 }
 
 .seat-item-admin.reserved
 {
-    background-color: var(--warning);
-    color: white;
+    background-color: var(--warning) !important;
     border-color: #d97706;
 }
 
 .seat-item-admin.sold
 {
-    background-color: var(--danger);
-    color: white;
+    background-color: var(--danger) !important;
     border-color: #dc2626;
     cursor: pointer;
 }
 
 .seat-item-admin.used
 {
-    background-color: var(--success);
-    color: white;
+    background-color: var(--success) !important;
     border-color: #059669;
 }
 
@@ -389,14 +327,12 @@
 {
     transform: scale(1.15) translateY(-5px);
     z-index: 10;
-    box-shadow: 0 8px 15px rgba(239, 68, 68, 0.3);
 }
 
 .customer-mininame
 {
     position: absolute;
     bottom: 2px;
-    font-size: 7px;
     font-weight: 400;
     text-transform: uppercase;
     max-width: 90%;
@@ -419,8 +355,6 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--text-muted);
-    font-size: 0.85rem;
     font-weight: 600;
 }
 
@@ -433,7 +367,6 @@
 
 .box.empty
 {
-    background: #f8fafc;
     border: 1px solid #e2e8f0;
 }
 
@@ -459,7 +392,6 @@
     align-items: center;
     justify-content: center;
     padding: 4rem;
-    color: var(--text-muted);
     font-weight: 600;
     gap: 12px;
 }
@@ -471,32 +403,22 @@
 
 @keyframes spin
 {
-    from
-    {
-        transform: rotate(0deg);
-    }
-
-    to
-    {
-        transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .empty-msg
 {
     text-align: center;
     padding: 4rem;
-    background: #fff;
     border-radius: var(--radius);
-    color: var(--text-muted);
     border: 1px dashed #cbd5e1;
 }
 
 .checkin-btn
 {
     padding: 6px 16px;
-    background: var(--primary);
-    color: white;
+    background: #4f46e5;
     border: none;
     border-radius: 6px;
     font-weight: 600;
@@ -504,17 +426,86 @@
     transition: 0.2s;
 }
 
-.checkin-btn:hover
-{
-    background: var(--primary-hover);
-}
-
 .disabled-btn
 {
     padding: 6px 16px;
-    background: #f1f5f9;
-    color: #94a3b8;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
     cursor: not-allowed;
+}
+/* ==========================================================================
+   MÃ BỔ SUNG RESPONSIVE MEDIA QUERIES
+   ========================================================================== */
+
+/* --- CHO MÀN HÌNH MEDIUM & TABLET (Dưới 992px) --- */
+@media (max-width: 992px) {
+    .ticket-stats-cards {
+        gap: 1rem;
+    }
+    .stat-card {
+        padding: 1.25rem;
+        gap: 15px;
+    }
+}
+
+/* --- CHO MÀN HÌNH NHỎ & MOBILE (Dưới 768px) --- */
+@media (max-width: 768px) {
+    .admin-ticket-container {
+        padding: 1rem; /* Thu nhỏ khoảng cách viền tổng thể */
+    }
+
+    .admin-ticket-header h2 {
+        margin-bottom: 1.5rem;
+    }
+
+    /* Chuyển 3 khối thống kê thành hàng dọc */
+    .ticket-stats-cards {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .top-toolbar {
+        padding: 1rem;
+    }
+
+    /* Chuyển các ô select bộ lọc thành hàng đơn xếp chồng */
+    .filter-selection-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    /* Kéo dài nút chuyển chế độ Tab full màn hình */
+    .view-mode-switch {
+        display: flex;
+        width: 100%;
+    }
+    .view-mode-switch button {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .visual-monitor-container {
+        padding: 2rem 1rem;
+    }
+
+    .screen-bar-admin {
+        margin-bottom: 2.5rem;
+    }
+
+    .map-legend {
+        gap: 1rem 1.5rem;
+    }
+}
+
+/* --- CHO THIẾT BỊ DI ĐỘNG RẤT NHỎ (Dưới 480px) --- */
+@media (max-width: 480px) {
+    .admin-table th, 
+    .admin-table td {
+        padding: 1rem 0.5rem;
+    }
+
+    .checkin-btn, 
+    .disabled-btn {
+        padding: 6px 10px;
+    }
 }

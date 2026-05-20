@@ -1,0 +1,294 @@
+/* =========================================================
+   ADMIN MODAL OVERLAY
+========================================================= */
+
+.admin-modal-overlay {
+    position: fixed;
+    inset: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    z-index: 9999;
+
+    background: rgba(0, 0, 0, 0.55);
+
+    backdrop-filter: blur(10px);
+
+    animation: modalFade 0.25s ease;
+}
+
+/* =========================================================
+   MODAL CONTAINER
+========================================================= */
+
+.admin-modal-container {
+    width: 100%;
+
+    background: #ffffff;
+
+    border-radius: 28px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(0, 0, 0, 0.05);
+
+    animation: modalScale 0.25s ease;
+}
+
+/* =========================================================
+   MODAL SIZE
+========================================================= */
+
+.admin-modal-container.sm {
+    max-width: 450px;
+}
+
+.admin-modal-container.md {
+    max-width: 650px;
+}
+
+.admin-modal-container.lg {
+    max-width: 900px;
+}
+
+.admin-modal-container.xl {
+    max-width: 1200px;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.admin-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 24px 28px;
+
+    background: #ffffff;
+
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-modal-header h2 {
+    margin: 0;
+
+    font-size: 32px;
+
+    font-weight: 800;
+
+    color: #111827;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+}
+
+/* =========================================================
+   CLOSE BUTTON
+========================================================= */
+
+.admin-modal-close-btn {
+    width: 44px;
+    height: 44px;
+
+    border: none;
+    outline: none;
+
+    border-radius: 14px;
+
+    background: #f3f4f6;
+
+    color: #374151;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition: 0.3s ease;
+}
+
+.admin-modal-close-btn:hover {
+    background: #e5e7eb;
+
+    transform: rotate(90deg);
+}
+
+/* =========================================================
+   BODY
+========================================================= */
+
+.admin-modal-body {
+    padding: 28px;
+
+    max-height: 80vh;
+
+    overflow-y: auto;
+
+    background: #ffffff;
+
+    color: #111827;
+}
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.admin-modal-body p,
+.admin-modal-body span,
+.admin-modal-body label,
+.admin-modal-body div {
+    color: #111827;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.admin-modal-body button {
+    border: none;
+    outline: none;
+
+    border-radius: 14px;
+
+    padding: 12px 20px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: 0.25s ease;
+}
+
+.admin-modal-body button:hover {
+    transform: translateY(-2px);
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.admin-modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.admin-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.admin-modal-body::-webkit-scrollbar-thumb {
+    background: rgba(37, 99, 235, 0.4);
+
+    border-radius: 999px;
+}
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+@keyframes modalFade {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+@keyframes modalScale {
+
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media screen and (max-width: 992px) {
+
+    .admin-modal-container {
+        max-width: 95%;
+    }
+
+    .admin-modal-header {
+        padding: 22px;
+    }
+
+    .admin-modal-header h2 {
+        font-size: 28px;
+    }
+
+    .admin-modal-body {
+        padding: 22px;
+    }
+
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media screen and (max-width: 768px) {
+
+    .admin-modal-overlay {
+        padding: 14px;
+    }
+
+    .admin-modal-container {
+        border-radius: 22px;
+    }
+
+    .admin-modal-header {
+        padding: 18px 20px;
+    }
+
+    .admin-modal-header h2 {
+        font-size: 24px;
+    }
+
+    .admin-modal-body {
+        padding: 20px;
+    }
+
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media screen and (max-width: 480px) {
+
+    .admin-modal-header {
+        padding: 16px;
+    }
+
+    .admin-modal-header h2 {
+        font-size: 20px;
+    }
+
+    .admin-modal-body {
+        padding: 16px;
+    }
+
+}
