@@ -55,6 +55,9 @@ const ShowTimePage = () => {
 
     const [loading, setLoading] = useState(false);
 
+    const [submitLoading, setSubmitLoading] =
+        useState(false);
+
     const [search, setSearch] = useState('');
 
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -64,6 +67,13 @@ const ShowTimePage = () => {
 
     const [formData, setFormData] =
         useState(initialFormData);
+
+    /* =====================================================
+        FORM ERRORS
+    ===================================================== */
+
+    const [formErrors, setFormErrors] =
+        useState({});
 
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -77,38 +87,37 @@ const ShowTimePage = () => {
         TIMEZONE HELPERS (FIX CHUẨN MÚI GIỜ)
     ===================================================== */
 
-    // Convert DATETIME từ MySQL -> input datetime-local
     const formatForInput = (dateString) => {
 
         if (!dateString) return '';
 
-        // VD:
-        // "2026-05-20 19:30"
-        // -> "2026-05-20T19:30"
-
-        return dateString.slice(0, 16).replace(' ', 'T');
+        return dateString
+            .slice(0, 16)
+            .replace(' ', 'T');
 
     };
 
-    // Format hiển thị bảng
     const formatDateTime = (dateStr) => {
 
         if (!dateStr) {
+
             return {
                 date: '--/--/----',
                 time: '--:--'
             };
+
         }
 
-        // Parse thủ công để tránh lệch timezone
         const [datePart, timePart] =
             dateStr.split(' ');
 
         if (!datePart || !timePart) {
+
             return {
                 date: '--/--/----',
                 time: '--:--'
             };
+
         }
 
         const [year, month, day] =
@@ -121,6 +130,46 @@ const ShowTimePage = () => {
             date: `${day}/${month}/${year}`,
             time: `${hour}:${minute}`
         };
+
+    };
+
+    /* =====================================================
+        VALIDATE FORM
+    ===================================================== */
+
+    const validateForm = () => {
+
+        const errors = {};
+
+        if (!formData.movie_id) {
+
+            errors.movie_id =
+                'Vui lòng chọn phim';
+
+        }
+
+        if (!formData.cinema_id) {
+
+            errors.cinema_id =
+                'Vui lòng chọn rạp';
+
+        }
+
+        if (!formData.room_id) {
+
+            errors.room_id =
+                'Vui lòng chọn phòng';
+
+        }
+
+        if (!formData.start_time) {
+
+            errors.start_time =
+                'Vui lòng chọn thời gian chiếu';
+
+        }
+
+        return errors;
 
     };
 
@@ -229,6 +278,8 @@ const ShowTimePage = () => {
 
         setRooms([]);
 
+        setFormErrors({});
+
         setIsFormOpen(true);
 
     };
@@ -257,12 +308,13 @@ const ShowTimePage = () => {
 
             setEditingShowtime(st);
 
+            setFormErrors({});
+
             setFormData({
                 movie_id: st.movie_id,
                 cinema_id: st.cinema_id,
                 room_id: st.room_id,
 
-                // FIX CHUẨN
                 start_time: formatForInput(
                     st.start_time
                 )
@@ -297,6 +349,72 @@ const ShowTimePage = () => {
             ...prev,
             [name]: value
         }));
+
+        /* =============================================
+            REALTIME VALIDATION
+        ============================================= */
+
+        let errorMessage = '';
+
+        switch (name) {
+
+            case 'movie_id':
+
+                if (!value) {
+
+                    errorMessage =
+                        'Vui lòng chọn phim';
+
+                }
+
+                break;
+
+            case 'cinema_id':
+
+                if (!value) {
+
+                    errorMessage =
+                        'Vui lòng chọn rạp';
+
+                }
+
+                break;
+
+            case 'room_id':
+
+                if (!value) {
+
+                    errorMessage =
+                        'Vui lòng chọn phòng';
+
+                }
+
+                break;
+
+            case 'start_time':
+
+                if (!value) {
+
+                    errorMessage =
+                        'Vui lòng chọn thời gian chiếu';
+
+                }
+
+                break;
+
+            default:
+                break;
+
+        }
+
+        setFormErrors(prev => ({
+            ...prev,
+            [name]: errorMessage
+        }));
+
+        /* =============================================
+            FETCH ROOMS
+        ============================================= */
 
         if (name === 'cinema_id') {
 
@@ -340,15 +458,26 @@ const ShowTimePage = () => {
 
         e.preventDefault();
 
+        const errors = validateForm();
+
+        if (
+            Object.keys(errors).length > 0
+        ) {
+
+            setFormErrors(errors);
+
+            return;
+
+        }
+
         try {
+
+            setSubmitLoading(true);
+
+            setFormErrors({});
 
             const submitData = {
                 ...formData,
-
-                // datetime-local
-                // 2026-05-20T19:30
-                // ->
-                // 2026-05-20 19:30
 
                 start_time:
                     formData.start_time.replace(
@@ -389,11 +518,32 @@ const ShowTimePage = () => {
 
         } catch (error) {
 
+            const backendField =
+                error.response?.data?.field;
+
+            const backendError =
+                error.response?.data?.error;
+
+            if (backendField) {
+
+                setFormErrors({
+                    [backendField]:
+                        backendError
+                });
+
+                return;
+
+            }
+
             showAlert(
                 'Lỗi',
-                error.response?.data?.error ||
+                backendError ||
                 'Đã xảy ra lỗi.'
             );
+
+        } finally {
+
+            setSubmitLoading(false);
 
         }
 
@@ -798,8 +948,10 @@ const ShowTimePage = () => {
                 <AdminForm
                     fields={formFields}
                     formData={formData}
+                    errors={formErrors}
                     onChange={handleChange}
                     onSubmit={handleSubmit}
+                    loading={submitLoading}
                     submitText={
                         editingShowtime
                             ? 'Lưu thay đổi'
