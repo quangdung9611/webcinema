@@ -1,183 +1,830 @@
-/* Container bao phủ toàn màn hình */
-.admin-login-page {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+/* =========================================================
+    ADMIN LOGIN WRAPPER
+========================================================= */
+
+.admin-login-wrapper {
+
+    position: relative;
+
+    width: 100%;
+
     min-height: 100vh;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-}
 
-/* Thẻ card chứa form đăng nhập */
-.admin-card {
-    background: #1f2937; /* Màu xám đậm chuẩn Admin */
-    color: #ffffff;
-    padding: 40px;
-    border-radius: 12px;
-    width: 100%;
-    max-width: 380px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-    border-top: 4px solid #ef4444; /* Đường viền đỏ phía trên tạo điểm nhấn */
-}
-
-.admin-card h2 {
-    text-align: center;
-    margin-bottom: 30px;
-    font-size: 24px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #f3f4f6;
-}
-
-/* Các nhóm nhập liệu */
-.form-group {
-    margin-bottom: 20px;
     display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    overflow: hidden;
+
+    padding: 40px;
+
+    background:
+        radial-gradient(circle at top left,
+            rgba(255, 0, 76, 0.15),
+            transparent 30%),
+
+        radial-gradient(circle at bottom right,
+            rgba(59, 130, 246, 0.12),
+            transparent 35%),
+
+        #050816;
+
+}
+
+/* =========================================================
+    OVERLAY
+========================================================= */
+
+.admin-login-overlay {
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(6, 11, 30, 0.92),
+            rgba(2, 6, 23, 0.96)
+        );
+
+    z-index: 1;
+
+}
+
+/* =========================================================
+    MAIN CONTAINER
+========================================================= */
+
+.admin-login-container {
+
+    position: relative;
+
+    z-index: 2;
+
+    width: 100%;
+
+    max-width: 1450px;
+
+    min-height: 850px;
+
+    display: grid;
+
+    grid-template-columns: 1.15fr 0.85fr;
+
+    border-radius: 36px;
+
+    overflow: hidden;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(10, 15, 35, 0.95),
+            rgba(5, 10, 25, 0.92)
+        );
+
+    backdrop-filter: blur(18px);
+
+    box-shadow:
+        0 0 80px rgba(0, 0, 0, 0.55),
+        0 0 120px rgba(255, 0, 76, 0.08);
+
+}
+
+/* =========================================================
+    LEFT PANEL
+========================================================= */
+
+.admin-login-left {
+
+    position: relative;
+
+    padding: 70px 70px 60px;
+
+    display: flex;
+
     flex-direction: column;
+
+    justify-content: space-between;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(7, 12, 30, 0.95),
+            rgba(4, 8, 24, 0.92)
+        );
+
 }
 
-.form-group label {
-    margin-bottom: 8px;
-    font-size: 14px;
-    color: #9ca3af;
-    text-align: left;
+/* =========================================================
+    RED GLOW EFFECT
+========================================================= */
+
+.admin-login-left::before {
+
+    content: '';
+
+    position: absolute;
+
+    top: -180px;
+
+    left: -120px;
+
+    width: 700px;
+
+    height: 700px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255, 0, 76, 0.28),
+            transparent 65%
+        );
+
+    filter: blur(70px);
+
+    z-index: 0;
+
 }
 
-/* Input dành riêng cho Admin */
-.admin-input {
-    width: 100%;
-    padding: 12px 15px;
-    background: #374151;
-    border: 1px solid #4b5563;
-    border-radius: 6px;
-    color: black;
-    font-size: 16px;
-    transition: all 0.3s ease;
-    box-sizing: border-box; /* Giúp input không bị tràn khỏi card */
+/* =========================================================
+    CINEMA GLOW LINE
+========================================================= */
+
+.admin-login-left::after {
+
+    content: '';
+
+    position: absolute;
+
+    top: 20px;
+
+    left: 20px;
+
+    width: 260px;
+
+    height: 260px;
+
+    border-top: 6px solid rgba(255, 50, 80, 0.9);
+
+    border-left: 6px solid rgba(255, 50, 80, 0.9);
+
+    border-top-left-radius: 120px;
+
+    filter: blur(1px);
+
+    box-shadow:
+        0 0 20px rgba(255, 0, 76, 0.5),
+        0 0 60px rgba(255, 0, 76, 0.35);
+
 }
 
-.admin-input:focus {
-    outline: none;
-    border-color: #ef4444;
-    background: #4b5563;
-    box-shadow: 0 0 5px rgba(239, 68, 68, 0.4);
+/* =========================================================
+    BRAND
+========================================================= */
+
+.admin-brand {
+
+    position: relative;
+
+    z-index: 2;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    text-align: center;
+
+    gap: 18px;
+
 }
 
-/* Nút bấm Đăng nhập */
-.btn-admin {
-    width: 100%;
-    padding: 14px;
-    margin-top: 10px;
-    background-color: #ef4444; /* Màu đỏ mạnh mẽ */
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
+.admin-brand-logo {
+
+    width: 88px;
+
+    height: 88px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 0, 76, 0.18),
+            rgba(255, 0, 76, 0.08)
+        );
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    color: #ff3b5f;
+
+    box-shadow:
+        0 0 30px rgba(255, 0, 76, 0.25);
+
+}
+
+.admin-brand h1 {
+
+    font-size: 74px;
+
+    font-weight: 900;
+
+    letter-spacing: -3px;
+
+    line-height: 1;
+
+    color: #ffffff;
+
+}
+
+.admin-brand h1::after {
+
+    content: ' STAR';
+
+    color: #ff3b5f;
+
+}
+
+.admin-brand span {
+
+    letter-spacing: 10px;
+
+    font-size: 17px;
+
     text-transform: uppercase;
-    transition: background 0.3s ease;
+
+    color: rgba(255, 255, 255, 0.7);
+
 }
 
-.btn-admin:hover {
-    background-color: #dc2626;
+/* =========================================================
+    LEFT CONTENT
+========================================================= */
+
+.admin-left-content {
+
+    position: relative;
+
+    z-index: 2;
+
+    max-width: 650px;
+
+    margin: 0 auto;
+
+    text-align: center;
+
 }
 
-.btn-admin:disabled {
-    background-color: #991b1b;
-    cursor: not-allowed;
-    opacity: 0.7;
+.admin-left-content h2 {
+
+    font-size: 56px;
+
+    font-weight: 900;
+
+    line-height: 1.1;
+
+    margin-bottom: 24px;
+
+    color: #ffffff;
+
 }
-/* Chữ báo lỗi dưới input admin */
-.admin-error-text {
-    color: #ff4d4d;
-    font-size: 0.8rem;
-    margin-top: 6px;
+
+.admin-left-content p {
+
+    font-size: 22px;
+
+    line-height: 1.8;
+
+    color: rgba(255, 255, 255, 0.72);
+
+}
+
+/* =========================================================
+    FEATURE LIST
+========================================================= */
+
+.admin-feature-list {
+
+    position: relative;
+
+    z-index: 2;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 26px;
+
+    margin-top: 60px;
+
+}
+
+.admin-feature-card {
+
+    width: 220px;
+
+    padding: 26px 24px;
+
+    border-radius: 24px;
+
+    text-align: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.05),
+            rgba(255, 255, 255, 0.02)
+        );
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    backdrop-filter: blur(12px);
+
+    transition: 0.35s ease;
+
+}
+
+.admin-feature-card:hover {
+
+    transform: translateY(-6px);
+
+    border-color: rgba(255, 0, 76, 0.3);
+
+    box-shadow:
+        0 0 30px rgba(255, 0, 76, 0.18);
+
+}
+
+.admin-feature-card svg {
+
+    color: #ff3b5f;
+
+    margin-bottom: 18px;
+
+}
+
+.admin-feature-card strong {
+
     display: block;
-    font-style: italic;
-    animation: slideIn 0.3s ease;
+
+    margin-bottom: 10px;
+
+    font-size: 22px;
+
+    color: #ffffff;
+
 }
 
-/* Viền đỏ khi input admin có lỗi */
-.admin-input.input-error {
-    border: 1px solid #ff4d4d !important;
-    background: rgba(255, 77, 77, 0.05) !important;
+.admin-feature-card span {
+
+    line-height: 1.7;
+
+    color: rgba(255, 255, 255, 0.72);
+
 }
 
-@keyframes slideIn {
-    from { opacity: 0; transform: translateY(-3px); }
-    to { opacity: 1; transform: translateY(0); }
+/* =========================================================
+    CINEMA ICON
+========================================================= */
+
+.admin-cinema-icon {
+
+    position: absolute;
+
+    bottom: -50px;
+
+    left: -20px;
+
+    opacity: 0.05;
+
+    color: #ffffff;
+
+    transform: rotate(-15deg);
+
 }
 
-/* Giữ form không bị nhảy khi lỗi hiện ra */
-.form-group {
-    margin-bottom: 1.5rem;
-    min-height: 90px;
-}
-/* Hiệu ứng Responsive cho màn hình nhỏ */
-/* --- HIỆU ỨNG RESPONSIVE CHI TIẾT --- */
+/* =========================================================
+    RIGHT PANEL
+========================================================= */
 
-/* 1. Cho Máy tính bảng (Tablet) - Dưới 768px */
+.admin-login-right {
+
+    position: relative;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    padding: 70px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(15, 23, 42, 0.82),
+            rgba(5, 10, 25, 0.92)
+        );
+
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+
+}
+
+/* =========================================================
+    LOGIN HEADER
+========================================================= */
+
+.admin-login-header {
+
+    text-align: center;
+
+    margin-bottom: 50px;
+
+}
+
+.admin-login-icon {
+
+    width: 88px;
+
+    height: 88px;
+
+    margin: 0 auto 28px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color: #ff3b5f;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 0, 76, 0.2),
+            rgba(255, 0, 76, 0.08)
+        );
+
+    border: 1px solid rgba(255, 0, 76, 0.25);
+
+    box-shadow:
+        0 0 40px rgba(255, 0, 76, 0.18);
+
+}
+
+.admin-login-header h2 {
+
+    font-size: 54px;
+
+    font-weight: 900;
+
+    margin-bottom: 18px;
+
+    color: #ffffff;
+
+}
+
+.admin-login-header p {
+
+    font-size: 20px;
+
+    color: rgba(255, 255, 255, 0.7);
+
+}
+
+/* =========================================================
+    FORM
+========================================================= */
+
+.admin-login-form {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 30px;
+
+}
+
+.admin-input-group {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 14px;
+
+}
+
+.admin-input-group label {
+
+    font-size: 17px;
+
+    font-weight: 700;
+
+    color: #ffffff;
+
+}
+
+.admin-input-box {
+
+    height: 74px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 16px;
+
+    padding: 0 24px;
+
+    border-radius: 20px;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.04),
+            rgba(255, 255, 255, 0.02)
+        );
+
+    transition: 0.3s ease;
+
+}
+
+.admin-input-box:focus-within {
+
+    border-color: rgba(255, 0, 76, 0.4);
+
+    box-shadow:
+        0 0 25px rgba(255, 0, 76, 0.12);
+
+}
+
+.admin-input-box.error {
+
+    border-color: rgba(255, 0, 76, 0.5);
+
+}
+
+.admin-input-box svg {
+
+    color: rgba(255, 255, 255, 0.72);
+
+    flex-shrink: 0;
+
+}
+
+.admin-input-box input {
+
+    width: 100%;
+
+    height: 100%;
+
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    color: #ffffff;
+
+    font-size: 17px;
+
+}
+
+.admin-input-box input::placeholder {
+
+    color: rgba(255, 255, 255, 0.4);
+
+}
+
+.toggle-password-btn {
+
+    border: none;
+
+    background: transparent;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    cursor: pointer;
+
+    color: rgba(255, 255, 255, 0.72);
+
+}
+
+.admin-error-text {
+
+    font-size: 14px;
+
+    color: #ff4d6d;
+
+    margin-left: 4px;
+
+}
+
+/* =========================================================
+    BUTTON
+========================================================= */
+
+.btn-admin-login {
+
+    height: 74px;
+
+    border: none;
+
+    border-radius: 22px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 14px;
+
+    cursor: pointer;
+
+    font-size: 19px;
+
+    font-weight: 800;
+
+    color: #ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ff2d55,
+            #ff3b5f
+        );
+
+    transition: 0.35s ease;
+
+    margin-top: 10px;
+
+    box-shadow:
+        0 12px 30px rgba(255, 0, 76, 0.28);
+
+}
+
+.btn-admin-login:hover {
+
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 18px 40px rgba(255, 0, 76, 0.35);
+
+}
+
+.btn-admin-login:disabled {
+
+    opacity: 0.7;
+
+    cursor: not-allowed;
+
+}
+
+/* =========================================================
+    FOOTER
+========================================================= */
+
+.admin-login-footer {
+
+    margin-top: 45px;
+
+    text-align: center;
+
+    font-size: 15px;
+
+    color: rgba(255, 255, 255, 0.45);
+
+}
+
+/* =========================================================
+    AUTH LOADING
+========================================================= */
+
+.admin-auth-loading {
+
+    min-height: 100vh;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color: #ffffff;
+
+}
+
+/* =========================================================
+    RESPONSIVE
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    .admin-login-container {
+
+        grid-template-columns: 1fr;
+
+        max-width: 760px;
+
+    }
+
+    .admin-login-left {
+
+        display: none;
+
+    }
+
+}
+
 @media (max-width: 768px) {
-    .admin-card {
-        max-width: 340px; /* Thu nhỏ card lại một chút */
-        padding: 30px;
+
+    .admin-login-wrapper {
+
+        padding: 20px;
+
     }
-    
-    .admin-card h2 {
-        font-size: 20px; /* Chữ nhỏ lại để không bị xuống dòng */
+
+    .admin-login-right {
+
+        padding: 50px 30px;
+
     }
+
+    .admin-login-header h2 {
+
+        font-size: 40px;
+
+    }
+
+    .admin-input-box {
+
+        height: 64px;
+
+    }
+
+    .btn-admin-login {
+
+        height: 66px;
+
+        font-size: 17px;
+
+    }
+
 }
 
-/* 2. Cho Điện thoại di động (Mobile) - Dưới 480px */
 @media (max-width: 480px) {
-    .admin-login-page {
-        padding: 15px; /* Thêm khoảng cách với rìa màn hình */
-        background: #1a1a2e; /* Đơn giản hóa background để mượt hơn trên mobile */
+
+    .admin-login-right {
+
+        padding: 40px 22px;
+
     }
 
-    .admin-card {
-        padding: 25px 20px;
-        border-radius: 8px; /* Bo góc ít hơn cho hợp màn hình nhỏ */
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    .admin-login-header h2 {
+
+        font-size: 32px;
+
     }
 
-    .admin-card h2 {
-        font-size: 18px;
-        margin-bottom: 20px;
-    }
+    .admin-login-header p {
 
-    .admin-input {
-        padding: 10px; /* Input nhỏ lại một chút cho dễ bấm */
-        font-size: 14px;
-    }
-
-    .btn-admin {
-        padding: 12px;
-        font-size: 14px;
-    }
-
-    .admin-subtitle {
-        font-size: 13px;
-        margin-bottom: 20px;
-    }
-}
-
-/* 3. Cho màn hình cực nhỏ hoặc xoay ngang (Small Mobile) - Dưới 350px */
-@media (max-width: 350px) {
-    .admin-card {
-        padding: 15px;
-    }
-    
-    .admin-card h2 {
         font-size: 16px;
-    }
-}
 
-/* --- TỐI ƯU TRẢI NGHIỆM CẢM ỨNG --- */
-@media (pointer: coarse) {
-    .btn-admin, .admin-input {
-        min-height: 48px; /* Kích thước chuẩn để dễ chạm bằng ngón tay */
     }
+
+    .admin-input-group label {
+
+        font-size: 15px;
+
+    }
+
 }
