@@ -7,7 +7,6 @@ import axios from 'axios';
 
 import {
     Ticket,
-    Plus,
     Edit,
     Trash2,
     Loader2,
@@ -20,8 +19,16 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
+/* =====================================================
+    API
+===================================================== */
+
 const COUPON_API =
     'https://api.quangdungcinema.id.vn/api/coupons';
+
+/* =====================================================
+    INITIAL FORM
+===================================================== */
 
 const initialFormData = {
     coupon_code: '',
@@ -39,6 +46,9 @@ const CouponPage = () => {
 
     const [loading, setLoading] = useState(false);
 
+    const [submitLoading, setSubmitLoading] =
+        useState(false);
+
     const [search, setSearch] = useState('');
 
     const [isFormOpen, setIsFormOpen] =
@@ -49,6 +59,9 @@ const CouponPage = () => {
 
     const [formData, setFormData] =
         useState(initialFormData);
+
+    const [formErrors, setFormErrors] =
+        useState({});
 
     const [alertModal, setAlertModal] =
         useState({
@@ -104,7 +117,9 @@ const CouponPage = () => {
             );
 
             if (res.data.success) {
+
                 setCoupons(res.data.data);
+
             }
 
         } catch (error) {
@@ -138,6 +153,8 @@ const CouponPage = () => {
 
         setFormData(initialFormData);
 
+        setFormErrors({});
+
         setIsFormOpen(true);
 
     };
@@ -153,6 +170,8 @@ const CouponPage = () => {
                 ?.split('T')[0];
 
         setEditingCoupon(coupon);
+
+        setFormErrors({});
 
         setFormData({
             coupon_code:
@@ -170,86 +189,205 @@ const CouponPage = () => {
     };
 
     /* =====================================================
-        HANDLE CHANGE
-    ===================================================== */
-
-    const handleChange = (e) => {
-
-        const { name, value } = e.target;
-
-        setFormData(prev => ({
-            ...prev,
-            [name]:
-                name === 'coupon_code'
-                    ? value.toUpperCase()
-                    : value
-        }));
-
-    };
-
-    /* =====================================================
-        VALIDATE
+        VALIDATE FORM
     ===================================================== */
 
     const validateForm = () => {
+
+        const errors = {};
+
+        /* COUPON CODE */
 
         if (
             !formData.coupon_code.trim()
         ) {
 
-            showAlert(
-                'Thiếu dữ liệu',
-                'Vui lòng nhập mã giảm giá.'
-            );
+            errors.coupon_code =
+                'Vui lòng nhập mã giảm giá';
 
-            return false;
+        } else if (
+            formData.coupon_code.trim().length < 3
+        ) {
+
+            errors.coupon_code =
+                'Mã giảm giá phải từ 3 ký tự trở lên';
 
         }
 
+        /* DISCOUNT VALUE */
+
         if (
-            !formData.discount_value ||
+            !formData.discount_value
+        ) {
+
+            errors.discount_value =
+                'Vui lòng nhập số tiền giảm';
+
+        } else if (
             Number(formData.discount_value) <= 0
         ) {
 
-            showAlert(
-                'Sai dữ liệu',
-                'Số tiền giảm phải lớn hơn 0.'
-            );
-
-            return false;
+            errors.discount_value =
+                'Số tiền giảm phải lớn hơn 0';
 
         }
 
-        if (!formData.expiry_date) {
+        /* EXPIRY DATE */
 
-            showAlert(
-                'Thiếu dữ liệu',
-                'Vui lòng chọn ngày hết hạn.'
+        if (
+            !formData.expiry_date
+        ) {
+
+            errors.expiry_date =
+                'Vui lòng chọn ngày hết hạn';
+
+        } else {
+
+            const selectedDate =
+                new Date(formData.expiry_date);
+
+            const today =
+                new Date();
+
+            today.setHours(
+                0,
+                0,
+                0,
+                0
             );
 
-            return false;
+            if (
+                selectedDate < today
+            ) {
+
+                errors.expiry_date =
+                    'Ngày hết hạn không được ở quá khứ';
+
+            }
 
         }
 
-        const selectedDate =
-            new Date(formData.expiry_date);
+        return errors;
 
-        const today = new Date();
+    };
 
-        today.setHours(0, 0, 0, 0);
+    /* =====================================================
+        HANDLE CHANGE
+    ===================================================== */
 
-        if (selectedDate < today) {
+    const handleChange = (e) => {
 
-            showAlert(
-                'Sai ngày',
-                'Ngày hết hạn không được ở quá khứ.'
-            );
+        const {
+            name,
+            value
+        } = e.target;
 
-            return false;
+        const finalValue =
+            name === 'coupon_code'
+                ? value.toUpperCase()
+                : value;
+
+        /* UPDATE FORM */
+
+        setFormData(prev => ({
+            ...prev,
+            [name]: finalValue
+        }));
+
+        /* REALTIME VALIDATION */
+
+        let errorMessage = '';
+
+        switch (name) {
+
+            case 'coupon_code':
+
+                if (
+                    !finalValue.trim()
+                ) {
+
+                    errorMessage =
+                        'Vui lòng nhập mã giảm giá';
+
+                } else if (
+                    finalValue.trim().length < 3
+                ) {
+
+                    errorMessage =
+                        'Mã giảm giá phải từ 3 ký tự trở lên';
+
+                }
+
+                break;
+
+            case 'discount_value':
+
+                if (
+                    !finalValue
+                ) {
+
+                    errorMessage =
+                        'Vui lòng nhập số tiền giảm';
+
+                } else if (
+                    Number(finalValue) <= 0
+                ) {
+
+                    errorMessage =
+                        'Số tiền giảm phải lớn hơn 0';
+
+                }
+
+                break;
+
+            case 'expiry_date':
+
+                if (
+                    !finalValue
+                ) {
+
+                    errorMessage =
+                        'Vui lòng chọn ngày hết hạn';
+
+                } else {
+
+                    const selectedDate =
+                        new Date(finalValue);
+
+                    const today =
+                        new Date();
+
+                    today.setHours(
+                        0,
+                        0,
+                        0,
+                        0
+                    );
+
+                    if (
+                        selectedDate < today
+                    ) {
+
+                        errorMessage =
+                            'Ngày hết hạn không được ở quá khứ';
+
+                    }
+
+                }
+
+                break;
+
+            default:
+                break;
 
         }
 
-        return true;
+        /* SET ERROR */
+
+        setFormErrors(prev => ({
+            ...prev,
+            [name]: errorMessage
+        }));
 
     };
 
@@ -261,9 +399,24 @@ const CouponPage = () => {
 
         e.preventDefault();
 
-        if (!validateForm()) return;
+        const errors =
+            validateForm();
+
+        if (
+            Object.keys(errors).length > 0
+        ) {
+
+            setFormErrors(errors);
+
+            return;
+
+        }
 
         try {
+
+            setSubmitLoading(true);
+
+            setFormErrors({});
 
             if (editingCoupon) {
 
@@ -297,11 +450,35 @@ const CouponPage = () => {
 
         } catch (error) {
 
+            const backendField =
+                error.response?.data?.field;
+
+            const backendError =
+                error.response?.data?.error ||
+                error.response?.data?.message;
+
+            /* BACKEND FIELD ERROR */
+
+            if (backendField) {
+
+                setFormErrors({
+                    [backendField]:
+                        backendError
+                });
+
+                return;
+
+            }
+
             showAlert(
                 'Lỗi',
-                error.response?.data?.message ||
+                backendError ||
                 'Đã xảy ra lỗi hệ thống.'
             );
+
+        } finally {
+
+            setSubmitLoading(false);
 
         }
 
@@ -543,6 +720,7 @@ const CouponPage = () => {
             label: 'Mã giảm giá',
             name: 'coupon_code',
             type: 'text',
+
             placeholder:
                 'Ví dụ: GIAM50K'
         },
@@ -551,6 +729,7 @@ const CouponPage = () => {
             label: 'Số tiền giảm',
             name: 'discount_value',
             type: 'number',
+
             placeholder:
                 'Ví dụ: 50000'
         },
@@ -628,6 +807,7 @@ const CouponPage = () => {
                 onClose={() =>
                     setIsFormOpen(false)
                 }
+
                 title={
                     editingCoupon
                         ? 'Cập nhật mã giảm giá'
@@ -638,8 +818,11 @@ const CouponPage = () => {
                 <AdminForm
                     fields={formFields}
                     formData={formData}
+                    errors={formErrors}
                     onChange={handleChange}
                     onSubmit={handleSubmit}
+                    loading={submitLoading}
+
                     submitText={
                         editingCoupon
                             ? 'Lưu thay đổi'

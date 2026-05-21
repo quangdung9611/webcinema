@@ -7,13 +7,11 @@ import axios from 'axios';
 
 import {
     Monitor,
-    Plus,
     Edit,
     Trash2,
     Loader2,
     Layout,
-    MapPin,
-    Layers
+    MapPin
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -53,6 +51,9 @@ const RoomPage = () => {
 
     const [loading, setLoading] = useState(false);
 
+    const [submitLoading, setSubmitLoading] =
+        useState(false);
+
     const [search, setSearch] = useState('');
 
     const [isFormOpen, setIsFormOpen] =
@@ -63,6 +64,9 @@ const RoomPage = () => {
 
     const [formData, setFormData] =
         useState(initialFormData);
+
+    const [formErrors, setFormErrors] =
+        useState({});
 
     const [alertModal, setAlertModal] =
         useState({
@@ -100,6 +104,52 @@ const RoomPage = () => {
             ...prev,
             open: false
         }));
+
+    };
+
+    /* =====================================================
+        VALIDATE FORM
+    ===================================================== */
+
+    const validateForm = () => {
+
+        const errors = {};
+
+        /* ROOM NAME */
+
+        if (!formData.room_name.trim()) {
+
+            errors.room_name =
+                'Vui lòng nhập tên phòng';
+
+        } else if (
+            formData.room_name.trim().length < 2
+        ) {
+
+            errors.room_name =
+                'Tên phòng phải từ 2 ký tự trở lên';
+
+        }
+
+        /* ROOM TYPE */
+
+        if (!formData.room_type) {
+
+            errors.room_type =
+                'Vui lòng chọn loại phòng';
+
+        }
+
+        /* CINEMA */
+
+        if (!formData.cinema_id) {
+
+            errors.cinema_id =
+                'Vui lòng chọn rạp chiếu';
+
+        }
+
+        return errors;
 
     };
 
@@ -170,6 +220,8 @@ const RoomPage = () => {
 
         setFormData(initialFormData);
 
+        setFormErrors({});
+
         setIsFormOpen(true);
 
     };
@@ -181,6 +233,8 @@ const RoomPage = () => {
     const handleOpenEdit = (room) => {
 
         setEditingRoom(room);
+
+        setFormErrors({});
 
         setFormData({
             room_name: room.room_name || '',
@@ -208,6 +262,60 @@ const RoomPage = () => {
             [name]: value
         }));
 
+        let errorMessage = '';
+
+        switch (name) {
+
+            case 'room_name':
+
+                if (!value.trim()) {
+
+                    errorMessage =
+                        'Vui lòng nhập tên phòng';
+
+                } else if (
+                    value.trim().length < 2
+                ) {
+
+                    errorMessage =
+                        'Tên phòng phải từ 2 ký tự trở lên';
+
+                }
+
+                break;
+
+            case 'room_type':
+
+                if (!value) {
+
+                    errorMessage =
+                        'Vui lòng chọn loại phòng';
+
+                }
+
+                break;
+
+            case 'cinema_id':
+
+                if (!value) {
+
+                    errorMessage =
+                        'Vui lòng chọn rạp chiếu';
+
+                }
+
+                break;
+
+            default:
+                break;
+
+        }
+
+        setFormErrors(prev => ({
+            ...prev,
+            [name]: errorMessage
+        }));
+
     };
 
     /* =====================================================
@@ -218,21 +326,23 @@ const RoomPage = () => {
 
         e.preventDefault();
 
+        const errors = validateForm();
+
         if (
-            !formData.room_name ||
-            !formData.cinema_id ||
-            !formData.room_type
+            Object.keys(errors).length > 0
         ) {
 
-            showAlert(
-                'Thiếu thông tin',
-                'Vui lòng nhập đầy đủ thông tin.'
-            );
+            setFormErrors(errors);
 
             return;
+
         }
 
         try {
+
+            setSubmitLoading(true);
+
+            setFormErrors({});
 
             if (editingRoom) {
 
@@ -266,11 +376,32 @@ const RoomPage = () => {
 
         } catch (error) {
 
+            const backendField =
+                error.response?.data?.field;
+
+            const backendError =
+                error.response?.data?.error;
+
+            if (backendField) {
+
+                setFormErrors({
+                    [backendField]:
+                        backendError
+                });
+
+                return;
+
+            }
+
             showAlert(
                 'Lỗi',
-                error.response?.data?.error ||
+                backendError ||
                 'Đã xảy ra lỗi.'
             );
+
+        } finally {
+
+            setSubmitLoading(false);
 
         }
 
@@ -666,8 +797,10 @@ const RoomPage = () => {
                 <AdminForm
                     fields={formFields}
                     formData={formData}
+                    errors={formErrors}
                     onChange={handleChange}
                     onSubmit={handleSubmit}
+                    loading={submitLoading}
                     submitText={
                         editingRoom
                             ? 'Lưu thay đổi'
