@@ -17,7 +17,6 @@ const FoodController = {
                     price,
                     food_image,
                     category,
-                    description,
                     status,
                     created_at
                 FROM product_menu
@@ -66,7 +65,6 @@ const FoodController = {
                     price,
                     food_image,
                     category,
-                    description,
                     status,
                     created_at
                 FROM product_menu
@@ -121,7 +119,6 @@ const FoodController = {
                 price,
                 food_image,
                 category,
-                description,
                 status
             } = req.body;
 
@@ -192,10 +189,9 @@ const FoodController = {
                     price,
                     food_image,
                     category,
-                    description,
                     status
                 )
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?)
             `;
 
             const [result] =
@@ -208,8 +204,6 @@ const FoodController = {
                     food_image || null,
 
                     category || 'Other',
-
-                    description || null,
 
                     status ?? 1
                 ]);
@@ -253,7 +247,6 @@ const FoodController = {
                 price,
                 food_image,
                 category,
-                description,
                 status
             } = req.body;
 
@@ -355,7 +348,6 @@ const FoodController = {
                     price = ?,
                     food_image = ?,
                     category = ?,
-                    description = ?,
                     status = ?
                 WHERE product_id = ?
             `;
@@ -369,8 +361,6 @@ const FoodController = {
                 food_image || null,
 
                 category || 'Other',
-
-                description || null,
 
                 status ?? 1,
 

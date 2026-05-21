@@ -79,7 +79,7 @@ import NewsPage from './admin_frontend/pages/Admin/News/NewsPage';
 // import NewsList from './admin_frontend/pages/Admin/News/NewsList';
 // import NewsAdd from './admin_frontend/pages/Admin/News/NewsAdd';
 // import NewsUpdate from './admin_frontend/pages/Admin/News/NewsUpdate';
-
+import FoodPage from './admin_frontend/pages/Admin/Food/FoodPage';
 
 const AdminLayoutWrapper = () => (
     <ProtectedRoute>
@@ -181,6 +181,7 @@ function App() {
                                 <Route path="bookings/:id" element={<BookingDetail />} /> */}
                                 <Route path="tickets" element={<TicketList />} />
                                 <Route path="actors" element={<ActorPage />} />
+                                <Route path="foods" element={<FoodPage />} />
                                 
                                 {/* <Route path="actors">
                                     <Route index element={<ActorList/>} />
