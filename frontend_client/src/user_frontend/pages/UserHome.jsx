@@ -42,6 +42,74 @@ const UserHome = () => {
   const bannerDocUrl = "https://api.quangdungcinema.id.vn/uploads/banner_doc/";
 
   // =========================
+  // PROMOTIONS DATA
+  // =========================
+
+  const promotions = [
+    {
+      id: 1,
+      image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1200&auto=format&fit=crop',
+      title: 'COMBO BẮP NƯỚC SIÊU TIẾT KIỆM',
+      desc: 'Thưởng thức phim hay cùng combo ưu đãi hấp dẫn chỉ từ 79K.',
+      tag: 'HOT'
+    },
+    {
+      id: 2,
+      image: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=1200&auto=format&fit=crop',
+      title: 'THỨ 4 VUI VẺ - GIÁ CỰC ÊM',
+      desc: 'Đồng giá vé xem phim mỗi thứ 4 hàng tuần cho mọi khách hàng.',
+      tag: 'NEW'
+    },
+    {
+      id: 3,
+      image: 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=1200&auto=format&fit=crop',
+      title: 'THÀNH VIÊN NHẬN QUÀ KHỦNG',
+      desc: 'Tích điểm đổi quà và nhận hàng loạt voucher cực hấp dẫn.',
+      tag: 'VIP'
+    },
+    {
+      id: 4,
+      image: 'https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?q=80&w=1200&auto=format&fit=crop',
+      title: 'ƯU ĐÃI NHÓM BẠN THÂN',
+      desc: 'Mua 4 vé nhận ngay combo nước miễn phí tại quầy.',
+      tag: 'SALE'
+    }
+  ];
+
+  // =========================
+  // CINEMA NEWS
+  // =========================
+
+  const cinemaNews = [
+    {
+      id: 1,
+      image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1200&auto=format&fit=crop',
+      category: 'ĐIỆN ẢNH',
+      title: 'Top bộ phim bom tấn đáng mong chờ nhất năm nay'
+    },
+    {
+      id: 2,
+      image: 'https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?q=80&w=1200&auto=format&fit=crop',
+      title: 'Không gian rạp chiếu hiện đại chuẩn quốc tế'
+    },
+    {
+      id: 3,
+      image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=1200&auto=format&fit=crop',
+      title: 'Những tựa phim tình cảm gây sốt phòng vé'
+    },
+    {
+      id: 4,
+      image: 'https://images.unsplash.com/photo-1517602302552-471fe67acf66?q=80&w=1200&auto=format&fit=crop',
+      title: 'Cập nhật lịch chiếu phim mới nhất tháng này'
+    },
+    {
+      id: 5,
+      image: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=1200&auto=format&fit=crop',
+      title: 'Review các bộ phim hành động đỉnh cao'
+    }
+  ];
+
+  // =========================
   // STATE
   // =========================
 
@@ -629,6 +697,7 @@ const UserHome = () => {
         {/* CONTENT */}
         <div className="home-container">
 
+          {/* FEATURES */}
           <section className="home-features-section">
 
             <div className="features-grid">
@@ -685,6 +754,118 @@ const UserHome = () => {
           <div className="movie-container">
             <FilmGenre />
           </div>
+
+          {/* PROMOTIONS */}
+          <section className="promotions-section">
+
+            <div className="section-header">
+              <h2 className="section-title">
+                ƯU ĐÃI HẤP DẪN
+              </h2>
+
+              <div className="title-underline"></div>
+            </div>
+
+            <div className="promotions-grid">
+
+              {promotions.map((promo) => (
+
+                <div
+                  className="promo-card"
+                  key={promo.id}
+                >
+
+                  <div className="promo-image">
+
+                    <img
+                      src={promo.image}
+                      alt={promo.title}
+                    />
+
+                    <span className="promo-tag">
+                      {promo.tag}
+                    </span>
+
+                  </div>
+
+                  <div className="promo-info">
+
+                    <h3>
+                      {promo.title}
+                    </h3>
+
+                    <p>
+                      {promo.desc}
+                    </p>
+
+                    <button className="btn-detail">
+                      Xem chi tiết
+                    </button>
+
+                  </div>
+
+                </div>
+              ))}
+
+            </div>
+
+          </section>
+
+          {/* CINEMA CORNER */}
+          <section className="cinema-corner-section">
+
+            <div className="section-header">
+
+              <h2 className="section-title">
+                GÓC ĐIỆN ẢNH
+              </h2>
+
+              <div className="title-underline"></div>
+
+            </div>
+
+            <div className="cinema-news-grid">
+
+              {cinemaNews.map((news) => (
+
+                <div
+                  className="cinema-news-card"
+                  key={news.id}
+                >
+
+                  <div className="cinema-news-image">
+
+                    <img
+                      src={news.image}
+                      alt={news.title}
+                    />
+
+                    {news.category && (
+                      <span className="cinema-news-category">
+                        {news.category}
+                      </span>
+                    )}
+
+                  </div>
+
+                  <div className="cinema-news-content">
+
+                    <h3>
+                      {news.title}
+                    </h3>
+
+                    <button className="btn-detail">
+                      Đọc thêm
+                    </button>
+
+                  </div>
+
+                </div>
+              ))}
+
+            </div>
+
+          </section>
 
         </div>
 

@@ -44,9 +44,11 @@ const UserPage = () => {
 
     const [search, setSearch] = useState('');
 
-    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isFormOpen, setIsFormOpen] =
+        useState(false);
 
-    const [editingUser, setEditingUser] = useState(null);
+    const [editingUser, setEditingUser] =
+        useState(null);
 
     const [formData, setFormData] =
         useState(initialFormData);
@@ -54,14 +56,47 @@ const UserPage = () => {
     const [formErrors, setFormErrors] =
         useState({});
 
+    /* =====================================================
+        ALERT MODAL
+    ===================================================== */
+
     const [alertModal, setAlertModal] =
         useState({
             open: false,
             title: '',
             message: '',
+            type: 'default',
             onConfirm: null,
             onCancel: null
         });
+
+    const showAlert = (
+        title,
+        message,
+        type = 'default',
+        onConfirm = null,
+        onCancel = null
+    ) => {
+
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
+
+    };
+
+    const closeAlert = () => {
+
+        setAlertModal(prev => ({
+            ...prev,
+            open: false
+        }));
+
+    };
 
     /* =====================================================
         FETCH USERS
@@ -82,7 +117,8 @@ const UserPage = () => {
 
             showAlert(
                 'Lỗi',
-                'Không thể tải danh sách người dùng.'
+                'Không thể tải danh sách người dùng.',
+                'error'
             );
 
         } finally {
@@ -98,36 +134,6 @@ const UserPage = () => {
         fetchUsers();
 
     }, []);
-
-    /* =====================================================
-        ALERT MODAL
-    ===================================================== */
-
-    const showAlert = (
-        title,
-        message,
-        onConfirm = null,
-        onCancel = null
-    ) => {
-
-        setAlertModal({
-            open: true,
-            title,
-            message,
-            onConfirm,
-            onCancel
-        });
-
-    };
-
-    const closeAlert = () => {
-
-        setAlertModal(prev => ({
-            ...prev,
-            open: false
-        }));
-
-    };
 
     /* =====================================================
         PASSWORD STRENGTH
@@ -181,8 +187,6 @@ const UserPage = () => {
 
         const errors = {};
 
-        /* USERNAME */
-
         if (!formData.username.trim()) {
 
             errors.username =
@@ -197,8 +201,6 @@ const UserPage = () => {
 
         }
 
-        /* FULL NAME */
-
         if (!formData.full_name.trim()) {
 
             errors.full_name =
@@ -212,8 +214,6 @@ const UserPage = () => {
                 'Họ tên phải từ 8 ký tự trở lên';
 
         }
-
-        /* EMAIL */
 
         if (!formData.email.trim()) {
 
@@ -231,8 +231,6 @@ const UserPage = () => {
 
         }
 
-        /* PHONE */
-
         if (!formData.phone.trim()) {
 
             errors.phone =
@@ -248,8 +246,6 @@ const UserPage = () => {
                 'Số điện thoại phải đúng 10 số';
 
         }
-
-        /* PASSWORD */
 
         if (
             !editingUser &&
@@ -270,8 +266,6 @@ const UserPage = () => {
                 'Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt';
 
         }
-
-        /* ADDRESS */
 
         if (!formData.address.trim()) {
 
@@ -339,147 +333,14 @@ const UserPage = () => {
 
         const { name, value } = e.target;
 
-        /* UPDATE FORM */
-
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
 
-        /* REALTIME VALIDATION */
-
-        let errorMessage = '';
-
-        switch (name) {
-
-            case 'username':
-
-                if (!value.trim()) {
-
-                    errorMessage =
-                        'Vui lòng nhập username';
-
-                } else if (
-                    value.trim().length < 6
-                ) {
-
-                    errorMessage =
-                        'Username phải từ 6 ký tự trở lên';
-
-                }
-
-                break;
-
-            case 'full_name':
-
-                if (!value.trim()) {
-
-                    errorMessage =
-                        'Vui lòng nhập họ tên';
-
-                } else if (
-                    value.trim().length < 8
-                ) {
-
-                    errorMessage =
-                        'Họ tên phải từ 8 ký tự trở lên';
-
-                }
-
-                break;
-
-            case 'email':
-
-                if (!value.trim()) {
-
-                    errorMessage =
-                        'Vui lòng nhập email';
-
-                } else if (
-                    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-                        value
-                    )
-                ) {
-
-                    errorMessage =
-                        'Email không đúng định dạng';
-
-                }
-
-                break;
-
-            case 'phone':
-
-                if (!value.trim()) {
-
-                    errorMessage =
-                        'Vui lòng nhập số điện thoại';
-
-                } else if (
-                    !/^[0-9]{10}$/.test(
-                        value
-                    )
-                ) {
-
-                    errorMessage =
-                        'Số điện thoại phải đúng 10 số';
-
-                }
-
-                break;
-
-            case 'password':
-
-                if (
-                    !editingUser &&
-                    !value.trim()
-                ) {
-
-                    errorMessage =
-                        'Vui lòng nhập mật khẩu';
-
-                } else if (
-                    value &&
-                    !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/.test(
-                        value
-                    )
-                ) {
-
-                    errorMessage =
-                        'Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt';
-
-                }
-
-                break;
-
-            case 'address':
-
-                if (!value.trim()) {
-
-                    errorMessage =
-                        'Vui lòng nhập địa chỉ';
-
-                } else if (
-                    value.trim().length < 5
-                ) {
-
-                    errorMessage =
-                        'Địa chỉ quá ngắn';
-
-                }
-
-                break;
-
-            default:
-                break;
-
-        }
-
-        /* SET ERROR */
-
         setFormErrors(prev => ({
             ...prev,
-            [name]: errorMessage
+            [name]: ''
         }));
 
     };
@@ -519,7 +380,8 @@ const UserPage = () => {
 
                 showAlert(
                     'Thành công',
-                    'Cập nhật người dùng thành công.'
+                    'Cập nhật người dùng thành công.',
+                    'success'
                 );
 
             } else {
@@ -531,7 +393,8 @@ const UserPage = () => {
 
                 showAlert(
                     'Thành công',
-                    'Thêm người dùng thành công.'
+                    'Thêm người dùng thành công.',
+                    'success'
                 );
 
             }
@@ -562,7 +425,8 @@ const UserPage = () => {
             showAlert(
                 'Lỗi',
                 backendError ||
-                'Đã xảy ra lỗi.'
+                'Đã xảy ra lỗi.',
+                'error'
             );
 
         } finally {
@@ -582,6 +446,7 @@ const UserPage = () => {
         showAlert(
             'Xác nhận xóa',
             `Bạn có chắc muốn xóa "${user.username}"?`,
+            'warning',
 
             async () => {
 
@@ -595,11 +460,18 @@ const UserPage = () => {
 
                     fetchUsers();
 
+                    showAlert(
+                        'Thành công',
+                        'Xóa người dùng thành công.',
+                        'success'
+                    );
+
                 } catch (error) {
 
                     showAlert(
                         'Lỗi',
-                        'Không thể xóa người dùng.'
+                        'Không thể xóa người dùng.',
+                        'error'
                     );
 
                 }
@@ -800,10 +672,6 @@ const UserPage = () => {
 
     ];
 
-    /* =====================================================
-        RENDER
-    ===================================================== */
-
     return (
 
         <>
@@ -912,6 +780,8 @@ const UserPage = () => {
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
+                type={alertModal.type}
+                size="sm"
             >
 
                 <div className="admin-alert-content">

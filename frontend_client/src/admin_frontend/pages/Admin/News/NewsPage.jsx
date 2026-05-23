@@ -12,7 +12,11 @@ import {
     Loader2,
     Eye,
     Heart,
-    ExternalLink
+    ExternalLink,
+    CheckCircle2,
+    XCircle,
+    AlertTriangle,
+    Info
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -22,7 +26,10 @@ import AdminForm from '../../../components/AdminForm';
 
 const API_URL = 'https://api.quangdungcinema.id.vn/api/news';
 
-// Chuẩn hóa cấu trúc dữ liệu form khớp với thực tế vận hành
+/* =====================================================
+    INITIAL FORM DATA
+===================================================== */
+
 const initialFormData = {
     news_id: '',
     title: '',
@@ -40,6 +47,8 @@ const NewsPage = () => {
 
     const [loading, setLoading] = useState(false);
 
+    const [submitLoading, setSubmitLoading] = useState(false);
+
     const [search, setSearch] = useState('');
 
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -48,30 +57,72 @@ const NewsPage = () => {
 
     const [formData, setFormData] = useState(initialFormData);
 
-    // Bổ sung state lưu trữ error-text cho từng trường dữ liệu giống UserPage
     const [errors, setErrors] = useState({});
 
     const [imageFile, setImageFile] = useState(null);
 
     const [preview, setPreview] = useState(null);
 
+    /* =====================================================
+        ALERT MODAL
+    ===================================================== */
+
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
         message: '',
+        type: 'default',
         onConfirm: null,
         onCancel: null
     });
 
+    const showAlert = (
+        title,
+        message,
+        type = 'default',
+        onConfirm = null,
+        onCancel = null
+    ) => {
+
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
+
+    };
+
+    const closeAlert = () => {
+
+        setAlertModal(prev => ({
+            ...prev,
+            open: false
+        }));
+
+    };
+
     /* =====================================================
-        CLEANUP PREVIEW URL (Tránh rò rỉ bộ nhớ)
+        CLEANUP PREVIEW URL
     ===================================================== */
+
     useEffect(() => {
+
         return () => {
-            if (preview && preview.startsWith('blob:')) {
+
+            if (
+                preview &&
+                preview.startsWith('blob:')
+            ) {
+
                 URL.revokeObjectURL(preview);
+
             }
+
         };
+
     }, [preview]);
 
     /* =====================================================
@@ -92,7 +143,8 @@ const NewsPage = () => {
 
             showAlert(
                 'Lỗi',
-                'Không thể tải danh sách tin tức từ máy chủ.'
+                'Không thể tải danh sách tin tức từ máy chủ.',
+                'error'
             );
 
         } finally {
@@ -108,36 +160,6 @@ const NewsPage = () => {
         fetchNews();
 
     }, []);
-
-    /* =====================================================
-        ALERT MODAL
-    ===================================================== */
-
-    const showAlert = (
-        title,
-        message,
-        onConfirm = null,
-        onCancel = null
-    ) => {
-
-        setAlertModal({
-            open: true,
-            title,
-            message,
-            onConfirm,
-            onCancel
-        });
-
-    };
-
-    const closeAlert = () => {
-
-        setAlertModal(prev => ({
-            ...prev,
-            open: false
-        }));
-
-    };
 
     /* =====================================================
         GENERATE SLUG
@@ -169,7 +191,7 @@ const NewsPage = () => {
 
         setFormData(initialFormData);
 
-        setErrors({}); // Reset error-text khi mở form thêm mới
+        setErrors({});
 
         setImageFile(null);
 
@@ -194,7 +216,7 @@ const NewsPage = () => {
             content: item.content || ''
         });
 
-        setErrors({}); // Reset error-text khi mở form chỉnh sửa
+        setErrors({});
 
         setPreview(
             item.image_url
@@ -214,14 +236,19 @@ const NewsPage = () => {
 
     const handleChange = (e) => {
 
-        const { name, value, files } = e.target;
+        const {
+            name,
+            value,
+            files
+        } = e.target;
 
-        // Xóa thông báo lỗi của field đó khi người dùng bắt đầu nhập lại dữ liệu
         if (errors[name]) {
+
             setErrors(prev => ({
                 ...prev,
                 [name]: ''
             }));
+
         }
 
         if (name === 'newsImage') {
@@ -231,10 +258,16 @@ const NewsPage = () => {
             setImageFile(file);
 
             if (file) {
-                // Giải phóng url preview cũ nếu có trước khi tạo cái mới
-                if (preview && preview.startsWith('blob:')) {
+
+                if (
+                    preview &&
+                    preview.startsWith('blob:')
+                ) {
+
                     URL.revokeObjectURL(preview);
+
                 }
+
                 setPreview(
                     URL.createObjectURL(file)
                 );
@@ -273,24 +306,38 @@ const NewsPage = () => {
         const newErrors = {};
 
         if (!formData.title.trim()) {
-            newErrors.title = 'Vui lòng nhập tiêu đề bài viết.';
-        } else if (formData.title.trim().length < 5) {
-            newErrors.title = 'Tiêu đề bài viết phải chứa ít nhất 5 ký tự.';
+
+            newErrors.title =
+                'Vui lòng nhập tiêu đề bài viết.';
+
+        } else if (
+            formData.title.trim().length < 5
+        ) {
+
+            newErrors.title =
+                'Tiêu đề bài viết phải chứa ít nhất 5 ký tự.';
+
         }
 
         if (!formData.content.trim()) {
-            newErrors.content = 'Vui lòng nhập nội dung chi tiết bài viết.';
+
+            newErrors.content =
+                'Vui lòng nhập nội dung chi tiết bài viết.';
+
         }
 
-        // Nếu thêm bài viết mới thì bắt buộc phải chọn hình ảnh ảnh bìa bài viết
         if (!editingNews && !imageFile) {
-            newErrors.newsImage = 'Vui lòng chọn hình ảnh đại diện bài viết.';
+
+            newErrors.newsImage =
+                'Vui lòng chọn hình ảnh đại diện bài viết.';
+
         }
 
         setErrors(newErrors);
 
-        // Trả về true nếu dữ liệu sạch hoàn toàn không có lỗi
-        return Object.keys(newErrors).length === 0;
+        return (
+            Object.keys(newErrors).length === 0
+        );
 
     };
 
@@ -302,10 +349,11 @@ const NewsPage = () => {
 
         e.preventDefault();
 
-        // Chạy hàm validate dữ liệu đầu vào trước khi submit lên server
         if (!validateForm()) return;
 
         try {
+
+            setSubmitLoading(true);
 
             const submitData = new FormData();
 
@@ -324,7 +372,6 @@ const NewsPage = () => {
                 formData.content.trim()
             );
 
-            // Gửi tệp tin ảnh đại diện lên bộ nhớ lưu trữ trung gian nếu có thay đổi
             if (imageFile) {
 
                 submitData.append(
@@ -334,12 +381,18 @@ const NewsPage = () => {
 
             }
 
-            // Lấy token xác thực từ sessionStorage theo chuẩn hệ thống
-            const token = sessionStorage.getItem('usertoken');
+            const token =
+                sessionStorage.getItem('usertoken');
+
             const config = {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
-                    ...(token && { 'Authorization': `Bearer ${token}` })
+                    'Content-Type':
+                        'multipart/form-data',
+
+                    ...(token && {
+                        'Authorization':
+                            `Bearer ${token}`
+                    })
                 }
             };
 
@@ -353,7 +406,8 @@ const NewsPage = () => {
 
                 showAlert(
                     'Thành công',
-                    'Cập nhật nội dung bài viết thành công.'
+                    'Cập nhật nội dung bài viết thành công.',
+                    'success'
                 );
 
             } else {
@@ -366,7 +420,8 @@ const NewsPage = () => {
 
                 showAlert(
                     'Thành công',
-                    'Đăng tải bài viết tin tức mới thành công.'
+                    'Đăng tải bài viết tin tức mới thành công.',
+                    'success'
                 );
 
             }
@@ -377,16 +432,28 @@ const NewsPage = () => {
 
         } catch (error) {
 
-            // Nếu Backend trả về lỗi validation cụ thể, map thẳng vào ô input giao diện
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
+            if (
+                error.response?.data?.errors
+            ) {
+
+                setErrors(
+                    error.response.data.errors
+                );
+
             } else {
+
                 showAlert(
                     'Lỗi hệ thống',
                     error.response?.data?.message ||
-                    'Đã xảy ra sự cố ngoài ý muốn khi lưu thông tin bài viết.'
+                    'Đã xảy ra sự cố ngoài ý muốn khi lưu thông tin bài viết.',
+                    'error'
                 );
+
             }
+
+        } finally {
+
+            setSubmitLoading(false);
 
         }
 
@@ -400,15 +467,24 @@ const NewsPage = () => {
 
         showAlert(
             'Xác nhận xóa bài viết',
+
             `Hành động này không thể hoàn tác. Bạn có chắc muốn xóa bài viết "${item.title}" khỏi hệ thống?`,
+
+            'warning',
 
             async () => {
 
                 try {
-                    const token = sessionStorage.getItem('usertoken');
+
+                    const token =
+                        sessionStorage.getItem('usertoken');
+
                     const config = {
                         headers: {
-                            ...(token && { 'Authorization': `Bearer ${token}` })
+                            ...(token && {
+                                'Authorization':
+                                    `Bearer ${token}`
+                            })
                         }
                     };
 
@@ -421,11 +497,18 @@ const NewsPage = () => {
 
                     fetchNews();
 
+                    showAlert(
+                        'Thành công',
+                        'Xóa bài viết thành công.',
+                        'success'
+                    );
+
                 } catch (error) {
 
                     showAlert(
                         'Lỗi',
-                        'Hệ thống không thể thực hiện xóa bài viết này.'
+                        'Hệ thống không thể thực hiện xóa bài viết này.',
+                        'error'
                     );
 
                 }
@@ -443,10 +526,13 @@ const NewsPage = () => {
 
     const filteredNews = news.filter(item => {
 
-        const keyword = search.toLowerCase();
+        const keyword =
+            search.toLowerCase();
 
         return (
-            item.title?.toLowerCase().includes(keyword)
+            item.title
+                ?.toLowerCase()
+                .includes(keyword)
         );
 
     });
@@ -489,8 +575,11 @@ const NewsPage = () => {
             render: (row) => (
 
                 <span className="status-badge">
+
                     <Eye size={12} />
+
                     {row.views || 0}
+
                 </span>
 
             )
@@ -503,8 +592,11 @@ const NewsPage = () => {
             render: (row) => (
 
                 <span className="status-badge">
+
                     <Heart size={12} />
+
                     {row.likes || 0}
+
                 </span>
 
             )
@@ -515,8 +607,9 @@ const NewsPage = () => {
             key: 'created_at',
 
             render: (row) =>
-                new Date(row.created_at)
-                    .toLocaleDateString('vi-VN')
+                new Date(
+                    row.created_at
+                ).toLocaleDateString('vi-VN')
         },
 
         {
@@ -533,7 +626,9 @@ const NewsPage = () => {
                         color: '#06b6d4'
                     }}
                 >
+
                     <ExternalLink size={18} />
+
                 </a>
 
             )
@@ -549,16 +644,24 @@ const NewsPage = () => {
 
                     <button
                         className="admin-action-btn edit-btn"
-                        onClick={() => handleOpenEdit(row)}
+                        onClick={() =>
+                            handleOpenEdit(row)
+                        }
                     >
+
                         <Edit size={16} />
+
                     </button>
 
                     <button
                         className="admin-action-btn delete-btn"
-                        onClick={() => handleDelete(row)}
+                        onClick={() =>
+                            handleDelete(row)
+                        }
                     >
+
                         <Trash2 size={16} />
+
                     </button>
 
                 </div>
@@ -578,14 +681,16 @@ const NewsPage = () => {
             label: 'Tiêu đề bài viết',
             name: 'title',
             type: 'text',
-            placeholder: 'Nhập tiêu đề bài viết tin tức mới'
+            placeholder:
+                'Nhập tiêu đề bài viết tin tức mới'
         },
 
         {
             label: 'Đường dẫn liên kết (Slug)',
             name: 'slug',
             type: 'text',
-            placeholder: 'Đường dẫn tự động tạo theo tiêu đề bài viết',
+            placeholder:
+                'Đường dẫn tự động tạo theo tiêu đề bài viết',
             disabled: true
         },
 
@@ -599,10 +704,59 @@ const NewsPage = () => {
             label: 'Nội dung chi tiết bài viết',
             name: 'content',
             type: 'textarea',
-            placeholder: 'Nhập nội dung thông tin bài viết chi tiết tại đây...'
+            placeholder:
+                'Nhập nội dung thông tin bài viết chi tiết tại đây...'
         }
 
     ];
+
+    /* =====================================================
+        ALERT ICON
+    ===================================================== */
+
+    const renderAlertIcon = () => {
+
+        switch (alertModal.type) {
+
+            case 'success':
+
+                return (
+                    <CheckCircle2
+                        size={58}
+                        color="#22c55e"
+                    />
+                );
+
+            case 'error':
+
+                return (
+                    <XCircle
+                        size={58}
+                        color="#ef4444"
+                    />
+                );
+
+            case 'warning':
+
+                return (
+                    <AlertTriangle
+                        size={58}
+                        color="#f59e0b"
+                    />
+                );
+
+            default:
+
+                return (
+                    <Info
+                        size={58}
+                        color="#3b82f6"
+                    />
+                );
+
+        }
+
+    };
 
     /* =====================================================
         RENDER
@@ -618,7 +772,9 @@ const NewsPage = () => {
 
                 subtitle="Quản lý toàn bộ bài viết hệ thống"
 
-                icon={<Newspaper size={30} />}
+                icon={
+                    <Newspaper size={30} />
+                }
 
                 buttonText="Thêm bài viết"
 
@@ -664,7 +820,9 @@ const NewsPage = () => {
 
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={() =>
+                    setIsFormOpen(false)
+                }
                 title={
                     editingNews
                         ? 'Cập nhật bài viết hệ thống'
@@ -700,9 +858,10 @@ const NewsPage = () => {
                 <AdminForm
                     fields={formFields}
                     formData={formData}
-                    errors={errors} // Truyền chuẩn xác object errors xuống AdminForm bắt lỗi giao diện
+                    errors={errors}
                     onChange={handleChange}
                     onSubmit={handleSubmit}
+                    loading={submitLoading}
                     submitText={
                         editingNews
                             ? 'Lưu thay đổi bài viết'
@@ -720,9 +879,21 @@ const NewsPage = () => {
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
+                type={alertModal.type}
+                size="sm"
             >
 
                 <div className="admin-alert-content">
+
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            marginBottom: '18px'
+                        }}
+                    >
+                        {renderAlertIcon()}
+                    </div>
 
                     <p>
                         {alertModal.message}
@@ -735,7 +906,9 @@ const NewsPage = () => {
 
                                 <button
                                     className="admin-cancel-btn"
-                                    onClick={alertModal.onCancel}
+                                    onClick={
+                                        alertModal.onCancel
+                                    }
                                 >
                                     Hủy bỏ
                                 </button>
@@ -746,7 +919,8 @@ const NewsPage = () => {
                         <button
                             className="admin-confirm-btn"
                             onClick={
-                                alertModal.onConfirm || closeAlert
+                                alertModal.onConfirm ||
+                                closeAlert
                             }
                         >
                             Xác nhận hành động

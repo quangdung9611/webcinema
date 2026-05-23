@@ -7,13 +7,17 @@ import axios from 'axios';
 
 import {
     Popcorn,
-    Plus,
     Edit,
     Trash2,
     Loader2,
     Package,
     BadgeDollarSign,
-    Image as ImageIcon
+    ImagePlus,
+    Tag,
+    CircleDollarSign,
+    CircleCheck,
+    CircleX,
+    UtensilsCrossed
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -28,7 +32,6 @@ const initialFormData = {
     product_name: '',
     price: '',
     category: 'Popcorn',
-    description: '',
     status: '1'
 };
 
@@ -57,6 +60,9 @@ const FoodPage = () => {
         useState(initialFormData);
 
     const [foodImage, setFoodImage] =
+        useState(null);
+
+    const [preview, setPreview] =
         useState(null);
 
     const [formErrors, setFormErrors] =
@@ -211,6 +217,8 @@ const FoodPage = () => {
 
         setFoodImage(null);
 
+        setPreview(null);
+
         setFormErrors({});
 
         setIsFormOpen(true);
@@ -226,6 +234,7 @@ const FoodPage = () => {
         setEditingFood(food);
 
         setFormData({
+
             product_name:
                 food.product_name || '',
 
@@ -235,12 +244,16 @@ const FoodPage = () => {
             category:
                 food.category || 'Popcorn',
 
-            description:
-                food.description || '',
-
             status:
                 String(food.status ?? '1')
+
         });
+
+        setPreview(
+            food.food_image
+                ? `https://api.quangdungcinema.id.vn/uploads/foods/${food.food_image}`
+                : null
+        );
 
         setFoodImage(null);
 
@@ -275,7 +288,18 @@ const FoodPage = () => {
             name === 'food_image'
         ) {
 
-            setFoodImage(files[0]);
+            const file =
+                files[0];
+
+            setFoodImage(file);
+
+            if (file) {
+
+                setPreview(
+                    URL.createObjectURL(file)
+                );
+
+            }
 
             return;
 
@@ -466,10 +490,12 @@ const FoodPage = () => {
                     src={`https://api.quangdungcinema.id.vn/uploads/foods/${row.food_image}`}
                     alt={row.product_name}
                     style={{
-                        width: '70px',
-                        height: '70px',
+                        width: '72px',
+                        height: '72px',
                         objectFit: 'cover',
-                        borderRadius: '12px'
+                        borderRadius: '14px',
+                        border:
+                            '2px solid rgba(255,255,255,0.08)'
                     }}
                 />
 
@@ -486,15 +512,49 @@ const FoodPage = () => {
                     style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '10px'
+                        gap: '12px'
                     }}
                 >
 
-                    <Package size={18} />
+                    <div
+                        style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '12px',
+                            background:
+                                'linear-gradient(135deg,#fef3c7,#fde68a)',
+                            color: '#d97706',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
 
-                    <strong>
-                        {row.product_name}
-                    </strong>
+                        <UtensilsCrossed
+                            size={18}
+                        />
+
+                    </div>
+
+                    <div>
+
+                        <div
+                            style={{
+                                fontWeight: '700'
+                            }}
+                        >
+                            {row.product_name}
+                        </div>
+
+                        <small
+                            style={{
+                                color: '#94a3b8'
+                            }}
+                        >
+                            #{row.product_id}
+                        </small>
+
+                    </div>
 
                 </div>
 
@@ -503,7 +563,24 @@ const FoodPage = () => {
 
         {
             title: 'Danh mục',
-            key: 'category'
+            key: 'category',
+
+            render: (row) => (
+
+                <span
+                    className="status-badge used"
+                    style={{
+                        gap: '6px'
+                    }}
+                >
+
+                    <Tag size={14} />
+
+                    {row.category}
+
+                </span>
+
+            )
         },
 
         {
@@ -512,9 +589,14 @@ const FoodPage = () => {
 
             render: (row) => (
 
-                <span className="status-badge">
+                <span
+                    className="status-badge"
+                    style={{
+                        gap: '6px'
+                    }}
+                >
 
-                    <BadgeDollarSign
+                    <CircleDollarSign
                         size={15}
                     />
 
@@ -538,10 +620,23 @@ const FoodPage = () => {
                 <span
                     className={`status-badge ${
                         Number(row.status) === 1
-                            ? 'Đang bán'
-                            : 'Ngừng bán'
+                            ? 'used'
+                            : 'expired'
                     }`}
+                    style={{
+                        gap: '6px'
+                    }}
                 >
+
+                    {
+                        Number(row.status) === 1
+                            ? (
+                                <CircleCheck size={14} />
+                            )
+                            : (
+                                <CircleX size={14} />
+                            )
+                    }
 
                     {
                         Number(row.status) === 1
@@ -601,6 +696,10 @@ const FoodPage = () => {
             label: 'Tên sản phẩm',
             name: 'product_name',
             type: 'text',
+
+            icon:
+                <Package size={16} />,
+
             placeholder:
                 'Nhập tên đồ ăn hoặc nước uống'
         },
@@ -609,6 +708,10 @@ const FoodPage = () => {
             label: 'Giá sản phẩm',
             name: 'price',
             type: 'number',
+
+            icon:
+                <BadgeDollarSign size={16} />,
+
             placeholder:
                 'Ví dụ: 79000'
         },
@@ -617,6 +720,9 @@ const FoodPage = () => {
             label: 'Danh mục',
             name: 'category',
             type: 'select',
+
+            icon:
+                <Tag size={16} />,
 
             options: [
                 {
@@ -647,6 +753,9 @@ const FoodPage = () => {
             name: 'status',
             type: 'select',
 
+            icon:
+                <CircleCheck size={16} />,
+
             options: [
                 {
                     label: 'Đang bán',
@@ -662,15 +771,10 @@ const FoodPage = () => {
         {
             label: 'Hình ảnh sản phẩm',
             name: 'food_image',
-            type: 'file'
-        },
+            type: 'file',
 
-        {
-            label: 'Mô tả sản phẩm',
-            name: 'description',
-            type: 'textarea',
-            placeholder:
-                'Nhập mô tả sản phẩm'
+            icon:
+                <ImagePlus size={16} />
         }
 
     ];
@@ -746,6 +850,36 @@ const FoodPage = () => {
                         : 'Thêm sản phẩm'
                 }
             >
+
+                {
+                    preview && (
+
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent:
+                                    'center',
+                                marginBottom: '20px'
+                            }}
+                        >
+
+                            <img
+                                src={preview}
+                                alt="preview"
+                                style={{
+                                    width: '120px',
+                                    height: '120px',
+                                    objectFit: 'cover',
+                                    borderRadius: '16px',
+                                    border:
+                                        '3px solid rgba(255,255,255,0.08)'
+                                }}
+                            />
+
+                        </div>
+
+                    )
+                }
 
                 <AdminForm
                     fields={formFields}

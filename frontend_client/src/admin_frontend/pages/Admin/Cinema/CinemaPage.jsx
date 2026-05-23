@@ -12,7 +12,16 @@ import {
     Loader2,
     MapPin,
     Building2,
-    Navigation
+    Navigation,
+
+    // =====================================================
+    // ALERT ICONS
+    // =====================================================
+
+    CheckCircle2,
+    XCircle,
+    AlertTriangle,
+    Info
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -60,11 +69,16 @@ const CinemaPage = () => {
     const [formErrors, setFormErrors] =
         useState({});
 
+    /* =====================================================
+        ALERT MODAL
+    ===================================================== */
+
     const [alertModal, setAlertModal] =
         useState({
             open: false,
             title: '',
             message: '',
+            type: 'default',
             onConfirm: null,
             onCancel: null
         });
@@ -88,7 +102,8 @@ const CinemaPage = () => {
 
             showAlert(
                 'Lỗi',
-                'Không thể tải danh sách rạp.'
+                'Không thể tải danh sách rạp.',
+                'error'
             );
 
         } finally {
@@ -112,6 +127,7 @@ const CinemaPage = () => {
     const showAlert = (
         title,
         message,
+        type = 'default',
         onConfirm = null,
         onCancel = null
     ) => {
@@ -120,6 +136,7 @@ const CinemaPage = () => {
             open: true,
             title,
             message,
+            type,
             onConfirm,
             onCancel
         });
@@ -132,6 +149,39 @@ const CinemaPage = () => {
             ...prev,
             open: false
         }));
+
+    };
+
+    /* =====================================================
+        ALERT CONFIG
+    ===================================================== */
+
+    const alertConfig = {
+
+        success: {
+            icon: <CheckCircle2 size={52} />,
+            iconClass: 'success'
+        },
+
+        error: {
+            icon: <XCircle size={52} />,
+            iconClass: 'error'
+        },
+
+        warning: {
+            icon: <AlertTriangle size={52} />,
+            iconClass: 'warning'
+        },
+
+        info: {
+            icon: <Info size={52} />,
+            iconClass: 'info'
+        },
+
+        default: {
+            icon: <Info size={52} />,
+            iconClass: 'default'
+        }
 
     };
 
@@ -401,7 +451,8 @@ const CinemaPage = () => {
 
                 showAlert(
                     'Thành công',
-                    'Cập nhật rạp thành công.'
+                    'Cập nhật rạp thành công.',
+                    'success'
                 );
 
             } else {
@@ -413,7 +464,8 @@ const CinemaPage = () => {
 
                 showAlert(
                     'Thành công',
-                    'Thêm rạp thành công.'
+                    'Thêm rạp thành công.',
+                    'success'
                 );
 
             }
@@ -444,7 +496,8 @@ const CinemaPage = () => {
             showAlert(
                 'Lỗi',
                 backendError ||
-                'Đã xảy ra lỗi.'
+                'Đã xảy ra lỗi.',
+                'error'
             );
 
         } finally {
@@ -464,6 +517,7 @@ const CinemaPage = () => {
         showAlert(
             'Xác nhận xóa',
             `Bạn có chắc muốn xóa "${cinema.cinema_name}"?`,
+            'warning',
 
             async () => {
 
@@ -477,11 +531,18 @@ const CinemaPage = () => {
 
                     fetchCinemas();
 
+                    showAlert(
+                        'Thành công',
+                        'Xóa rạp thành công.',
+                        'success'
+                    );
+
                 } catch (error) {
 
                     showAlert(
                         'Lỗi',
-                        'Không thể xóa rạp.'
+                        'Không thể xóa rạp.',
+                        'error'
                     );
 
                 }
@@ -752,6 +813,7 @@ const CinemaPage = () => {
                         ? 'Cập nhật rạp'
                         : 'Thêm rạp'
                 }
+                type="info"
             >
 
                 <AdminForm
@@ -778,9 +840,20 @@ const CinemaPage = () => {
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
+                type={alertModal.type}
             >
 
                 <div className="admin-alert-content">
+
+                    <div
+                        className={`admin-alert-icon ${alertConfig[alertModal.type]?.iconClass}`}
+                    >
+                        {
+                            alertConfig[
+                                alertModal.type
+                            ]?.icon
+                        }
+                    </div>
 
                     <p>
                         {alertModal.message}

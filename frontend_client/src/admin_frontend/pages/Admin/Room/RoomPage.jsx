@@ -11,7 +11,11 @@ import {
     Trash2,
     Loader2,
     Layout,
-    MapPin
+    MapPin,
+    Building2,
+    Layers3,
+    CircleDot,
+    Tv2
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -484,25 +488,55 @@ const RoomPage = () => {
 
     const renderTypeBadge = (type) => {
 
-        const colors = {
-            '2D': '#64748b',
-            '3D': '#2563eb',
-            'IMAX': '#7c3aed'
+        const config = {
+
+            '2D': {
+                bg: '#e0f2fe',
+                color: '#0284c7',
+                icon: <CircleDot size={14} />
+            },
+
+            '3D': {
+                bg: '#ede9fe',
+                color: '#7c3aed',
+                icon: <Layers3 size={14} />
+            },
+
+            'IMAX': {
+                bg: '#dcfce7',
+                color: '#16a34a',
+                icon: <Tv2 size={14} />
+            }
+
         };
+
+        const item =
+            config[type] || {
+                bg: '#e2e8f0',
+                color: '#475569',
+                icon: <Monitor size={14} />
+            };
 
         return (
 
             <span
                 style={{
-                    background: colors[type] || '#64748b',
-                    color: '#fff',
-                    padding: '6px 10px',
+                    background: item.bg,
+                    color: item.color,
+                    padding: '7px 12px',
                     borderRadius: '999px',
                     fontSize: '12px',
-                    fontWeight: '600'
+                    fontWeight: '700',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
                 }}
             >
+
+                {item.icon}
+
                 {type}
+
             </span>
 
         );
@@ -525,24 +559,27 @@ const RoomPage = () => {
                     style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '12px'
+                        gap: '14px'
                     }}
                 >
 
                     <div
                         style={{
-                            width: '42px',
-                            height: '42px',
-                            borderRadius: '12px',
-                            background: '#dbeafe',
-                            color: '#2563eb',
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '14px',
+                            background:
+                                'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                            color: '#fff',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            boxShadow:
+                                '0 4px 14px rgba(37,99,235,0.35)'
                         }}
                     >
 
-                        <Monitor size={18} />
+                        <Monitor size={20} />
 
                     </div>
 
@@ -550,7 +587,8 @@ const RoomPage = () => {
 
                         <div
                             style={{
-                                fontWeight: '600'
+                                fontWeight: '700',
+                                fontSize: '15px'
                             }}
                         >
                             {row.room_name}
@@ -558,10 +596,19 @@ const RoomPage = () => {
 
                         <small
                             style={{
-                                color: '#64748b'
+                                color: '#64748b',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                marginTop: '4px'
                             }}
                         >
-                            ID: #{row.room_id}
+
+                            <Building2 size={13} />
+
+                            Room ID:
+                            #{row.room_id}
+
                         </small>
 
                     </div>
@@ -591,12 +638,13 @@ const RoomPage = () => {
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '5px',
-                            fontWeight: '600'
+                            gap: '6px',
+                            fontWeight: '700',
+                            color: '#0f172a'
                         }}
                     >
 
-                        <Layout size={14} />
+                        <Layout size={15} />
 
                         {row.cinema_name}
 
@@ -604,11 +652,12 @@ const RoomPage = () => {
 
                     <div
                         style={{
-                            marginTop: '6px',
+                            marginTop: '7px',
                             color: '#64748b',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '5px'
+                            gap: '5px',
+                            fontSize: '13px'
                         }}
                     >
 

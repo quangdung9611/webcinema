@@ -35,7 +35,7 @@ const couponRoutes = require('./Routers/CouponRouter');
 const movieGenreRoutes = require('./Routers/MovieGenreRouter');
 const movieActorRoutes = require('./Routers/MovieActorRouter');
 const newsRoutes = require('./Routers/NewRouter');
-
+const forgotPasswordRoutes =require('./Routers/ForgotPassRouter');
 // ===========================================================
 // 1. CẤU HÌNH HỆ THỐNG & CORS
 // ===========================================================

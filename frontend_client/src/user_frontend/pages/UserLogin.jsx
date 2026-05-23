@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff } from 'lucide-react'; // Đã thêm Eye và EyeOff
 import { useAuth } from '../../context/AuthContext'; 
 import '../styles/UserAuth.css';
 
@@ -13,11 +13,12 @@ const UserLogin = () => {
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
-    const [serverError, setServerError] = useState(''); 
+    const [serverError, setServerError] = useState('');
+    const [showPassword, setShowPassword] = useState(false); // State cho icon mắt
 
     const navigate = useNavigate();
     const location = useLocation();
-    const { checkAuth } = useAuth(); // Lấy hàm checkAuth để ép cập nhật state ngay sau login
+    const { checkAuth } = useAuth();
 
     const validate = () => {
         let tempErrors = {};
@@ -44,22 +45,14 @@ const UserLogin = () => {
 
         setLoading(true);
         try {
-            // 1. Gửi request login
-            // withCredentials: true cực kỳ quan trọng để trình duyệt nhận Set-Cookie từ Server
             await axios.post('https://api.quangdungcinema.id.vn/api/auth/login', {
                 ...formData,
-                role_input: 'customer' // Ép kiểu login là customer để nhận usertoken ở path '/'
+                role_input: 'customer'
             }, { withCredentials: true });
             
-            // 2. ÉP CONTEXT CẬP NHẬT NGAY
-            // Vì không còn localStorage, ta phải gọi checkAuth để nó chạy API /me lấy data user vào State
             await checkAuth();
-
-            // 3. Thông báo cho các tab khác (nếu có)
             window.dispatchEvent(new Event('authChange'));
             
-            // 4. Điều hướng
-            // replace: true để người dùng không bấm 'Back' quay lại trang login được nữa
             const from = location.state?.from || '/';
             navigate(from, { replace: true });
             
@@ -86,7 +79,7 @@ const UserLogin = () => {
 
                 <form onSubmit={handleLogin} noValidate>
                     <div className="form-group">
-                        <label>Email</label>
+                        <label>Email address</label>
                         <input 
                             type="email" 
                             name="email"
@@ -100,21 +93,37 @@ const UserLogin = () => {
                     </div>
 
                     <div className="form-group">
-                        <label>Mật khẩu</label>
-                        <input 
-                            type="password" 
-                            name="password"
-                            placeholder="••••••••"
-                            className={`auth-input ${errors.password ? 'input-error' : ''}`}
-                            value={formData.password}
-                            onChange={handleChange}
-                            autoComplete="current-password"
-                        />
+                        <label>Password</label>
+                        <div className="password-wrapper">
+                            <input 
+                                type={showPassword ? "text" : "password"} 
+                                name="password"
+                                placeholder="••••••••"
+                                className={`auth-input ${errors.password ? 'input-error' : ''}`}
+                                value={formData.password}
+                                onChange={handleChange}
+                                autoComplete="current-password"
+                            />
+                            <button 
+                                type="button" 
+                                className="toggle-password" 
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                         {errors.password && <span className="error-text">{errors.password}</span>}
                     </div>
 
+                    <div className="form-options">
+                        <label className="remember-me">
+                            <input type="checkbox" /> Remember me
+                        </label>
+                        <a href="/forgot-password" className="forgot-link">Forgot password?</a>
+                    </div>
+
                     <button type="submit" className="btn-user" disabled={loading}>
-                        {loading ? "ĐANG XỬ LÝ..." : "ĐĂNG NHẬP"}
+                        {loading ? "ĐANG XỬ LÝ..." : "SIGN IN"}
                     </button>
                 </form>
 

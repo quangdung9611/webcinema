@@ -8,9 +8,9 @@ import {
     Info
 } from 'lucide-react';
 
-import '../styles/AdminModal.css';
+import '../styles/Modal.css';
 
-const AdminModal = ({
+const Modal = ({
 
     /* =========================================================
         MODAL CONTROL
@@ -63,7 +63,7 @@ const AdminModal = ({
 
                 return (
 
-                    <div className="admin-modal-icon success">
+                    <div className="modal-icon success">
 
                         <CheckCircle2
                             size={72}
@@ -82,7 +82,7 @@ const AdminModal = ({
 
                 return (
 
-                    <div className="admin-modal-icon error">
+                    <div className="modal-icon error">
 
                         <XCircle
                             size={72}
@@ -101,7 +101,7 @@ const AdminModal = ({
 
                 return (
 
-                    <div className="admin-modal-icon warning">
+                    <div className="modal-icon warning">
 
                         <AlertTriangle
                             size={72}
@@ -120,7 +120,7 @@ const AdminModal = ({
 
                 return (
 
-                    <div className="admin-modal-icon info">
+                    <div className="modal-icon info">
 
                         <Info
                             size={72}
@@ -146,12 +146,12 @@ const AdminModal = ({
     return (
 
         <div
-            className="admin-modal-overlay"
+            className="modal-overlay"
             onClick={onClose}
         >
 
             <div
-                className={`admin-modal-container ${size} ${type}`}
+                className={`modal-container ${size} ${type}`}
                 onClick={(e) => e.stopPropagation()}
             >
 
@@ -162,7 +162,7 @@ const AdminModal = ({
                 {
                     type !== 'default' && (
 
-                        <div className="admin-modal-icon-wrapper">
+                        <div className="modal-icon-wrapper">
 
                             {renderIcon()}
 
@@ -175,16 +175,16 @@ const AdminModal = ({
                     HEADER
                 ===================================================== */}
 
-                <div className="admin-modal-header">
+                <div className="modal-header">
 
-                    <h2 className="admin-modal-title">
+                    <h2 className="modal-title">
 
                         {title}
 
                     </h2>
 
                     <button
-                        className="admin-modal-close-btn"
+                        className="modal-close-btn"
                         onClick={onClose}
                     >
 
@@ -198,7 +198,7 @@ const AdminModal = ({
                     BODY
                 ===================================================== */}
 
-                <div className="admin-modal-body">
+                <div className="modal-body">
 
                     {children}
 
@@ -212,4 +212,4 @@ const AdminModal = ({
 
 };
 
-export default AdminModal;
+export default Modal;

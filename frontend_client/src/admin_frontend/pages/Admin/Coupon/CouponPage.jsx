@@ -11,7 +11,11 @@ import {
     Trash2,
     Loader2,
     CalendarDays,
-    BadgeDollarSign
+    BadgeDollarSign,
+    Tag,
+    CircleDollarSign,
+    Clock3,
+    Percent
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -589,18 +593,21 @@ const CouponPage = () => {
 
                     <div
                         style={{
-                            width: '42px',
-                            height: '42px',
-                            borderRadius: '12px',
-                            background: '#fff7ed',
+                            width: '44px',
+                            height: '44px',
+                            borderRadius: '14px',
+                            background:
+                                'linear-gradient(135deg, #fff7ed, #ffedd5)',
                             color: '#f97316',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            boxShadow:
+                                '0 4px 12px rgba(249, 115, 22, 0.15)'
                         }}
                     >
 
-                        <Ticket size={18} />
+                        <Tag size={20} />
 
                     </div>
 
@@ -609,11 +616,26 @@ const CouponPage = () => {
                         <div
                             style={{
                                 fontWeight: '700',
-                                color: '#f97316'
+                                color: '#f97316',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
                             }}
                         >
+
+                            <Percent size={15} />
+
                             {row.coupon_code}
+
                         </div>
+
+                        <small
+                            style={{
+                                color: '#94a3b8'
+                            }}
+                        >
+                            Coupon giảm giá
+                        </small>
 
                     </div>
 
@@ -629,14 +651,14 @@ const CouponPage = () => {
             render: (row) => (
 
                 <div
-                    className="status-badge"
+                    className="status-badge used"
+                    style={{
+                        gap: '6px'
+                    }}
                 >
 
-                    <BadgeDollarSign
-                        size={14}
-                        style={{
-                            marginRight: '4px'
-                        }}
+                    <CircleDollarSign
+                        size={15}
                     />
 
                     {formatCurrency(
@@ -658,15 +680,49 @@ const CouponPage = () => {
                     style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '6px'
+                        gap: '8px'
                     }}
                 >
 
-                    <CalendarDays size={15} />
+                    <div
+                        style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '10px',
+                            background:
+                                'rgba(59,130,246,0.1)',
+                            color: '#3b82f6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
 
-                    {formatDate(
-                        row.expiry_date
-                    )}
+                        <Clock3 size={16} />
+
+                    </div>
+
+                    <div>
+
+                        <div
+                            style={{
+                                fontWeight: '600'
+                            }}
+                        >
+                            {formatDate(
+                                row.expiry_date
+                            )}
+                        </div>
+
+                        <small
+                            style={{
+                                color: '#94a3b8'
+                            }}
+                        >
+                            Hạn sử dụng
+                        </small>
+
+                    </div>
 
                 </div>
 
@@ -721,6 +777,8 @@ const CouponPage = () => {
             name: 'coupon_code',
             type: 'text',
 
+            icon: <Tag size={16} />,
+
             placeholder:
                 'Ví dụ: GIAM50K'
         },
@@ -730,6 +788,9 @@ const CouponPage = () => {
             name: 'discount_value',
             type: 'number',
 
+            icon:
+                <BadgeDollarSign size={16} />,
+
             placeholder:
                 'Ví dụ: 50000'
         },
@@ -737,7 +798,10 @@ const CouponPage = () => {
         {
             label: 'Ngày hết hạn',
             name: 'expiry_date',
-            type: 'date'
+            type: 'date',
+
+            icon:
+                <CalendarDays size={16} />
         }
 
     ];

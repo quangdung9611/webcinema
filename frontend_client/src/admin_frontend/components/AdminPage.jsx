@@ -2,7 +2,8 @@ import React from 'react';
 
 import {
     Search,
-    Plus
+    Plus,
+    LayoutDashboard
 } from 'lucide-react';
 
 import '../styles/AdminPage.css';
@@ -41,6 +42,11 @@ const AdminPage = ({
 
 }) => {
 
+    // ================================
+    // ICON FALLBACK (MÌNH THÊM)
+    // ================================
+    const renderIcon = icon ? icon : <LayoutDashboard size={22} />;
+
     return (
 
         <div className="admin-page">
@@ -54,7 +60,7 @@ const AdminPage = ({
                 <div className="admin-page-hero-left">
 
                     <div className="admin-page-icon-box">
-                        {icon}
+                        {renderIcon}
                     </div>
 
                     <div className="admin-page-hero-content">

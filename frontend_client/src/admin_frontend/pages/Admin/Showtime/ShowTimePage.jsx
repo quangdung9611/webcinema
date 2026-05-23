@@ -45,22 +45,29 @@ const ShowTimePage = () => {
         STATES
     ===================================================== */
 
-    const [showtimes, setShowtimes] = useState([]);
+    const [showtimes, setShowtimes] =
+        useState([]);
 
-    const [movies, setMovies] = useState([]);
+    const [movies, setMovies] =
+        useState([]);
 
-    const [cinemas, setCinemas] = useState([]);
+    const [cinemas, setCinemas] =
+        useState([]);
 
-    const [rooms, setRooms] = useState([]);
+    const [rooms, setRooms] =
+        useState([]);
 
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] =
+        useState(false);
 
     const [submitLoading, setSubmitLoading] =
         useState(false);
 
-    const [search, setSearch] = useState('');
+    const [search, setSearch] =
+        useState('');
 
-    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isFormOpen, setIsFormOpen] =
+        useState(false);
 
     const [editingShowtime, setEditingShowtime] =
         useState(null);
@@ -68,23 +75,53 @@ const ShowTimePage = () => {
     const [formData, setFormData] =
         useState(initialFormData);
 
-    /* =====================================================
-        FORM ERRORS
-    ===================================================== */
-
     const [formErrors, setFormErrors] =
         useState({});
 
-    const [alertModal, setAlertModal] = useState({
-        open: false,
-        title: '',
-        message: '',
-        onConfirm: null,
-        onCancel: null
-    });
+    /* =====================================================
+        ALERT MODAL
+    ===================================================== */
+
+    const [alertModal, setAlertModal] =
+        useState({
+            open: false,
+            title: '',
+            message: '',
+            type: 'default',
+            onConfirm: null,
+            onCancel: null
+        });
+
+    const showAlert = (
+        title,
+        message,
+        type = 'default',
+        onConfirm = null,
+        onCancel = null
+    ) => {
+
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
+
+    };
+
+    const closeAlert = () => {
+
+        setAlertModal(prev => ({
+            ...prev,
+            open: false
+        }));
+
+    };
 
     /* =====================================================
-        TIMEZONE HELPERS (FIX CHUẨN MÚI GIỜ)
+        TIMEZONE HELPERS
     ===================================================== */
 
     const formatForInput = (dateString) => {
@@ -174,36 +211,6 @@ const ShowTimePage = () => {
     };
 
     /* =====================================================
-        ALERT MODAL
-    ===================================================== */
-
-    const showAlert = (
-        title,
-        message,
-        onConfirm = null,
-        onCancel = null
-    ) => {
-
-        setAlertModal({
-            open: true,
-            title,
-            message,
-            onConfirm,
-            onCancel
-        });
-
-    };
-
-    const closeAlert = () => {
-
-        setAlertModal(prev => ({
-            ...prev,
-            open: false
-        }));
-
-    };
-
-    /* =====================================================
         FETCH DATA
     ===================================================== */
 
@@ -223,7 +230,8 @@ const ShowTimePage = () => {
 
             showAlert(
                 'Lỗi',
-                'Không thể tải danh sách suất chiếu.'
+                'Không thể tải danh sách suất chiếu.',
+                'error'
             );
 
         } finally {
@@ -326,7 +334,8 @@ const ShowTimePage = () => {
 
             showAlert(
                 'Lỗi',
-                'Không thể tải dữ liệu suất chiếu.'
+                'Không thể tải dữ liệu suất chiếu.',
+                'error'
             );
 
         } finally {
@@ -349,10 +358,6 @@ const ShowTimePage = () => {
             ...prev,
             [name]: value
         }));
-
-        /* =============================================
-            REALTIME VALIDATION
-        ============================================= */
 
         let errorMessage = '';
 
@@ -495,7 +500,8 @@ const ShowTimePage = () => {
 
                 showAlert(
                     'Thành công',
-                    'Cập nhật suất chiếu thành công.'
+                    'Cập nhật suất chiếu thành công.',
+                    'success'
                 );
 
             } else {
@@ -507,7 +513,8 @@ const ShowTimePage = () => {
 
                 showAlert(
                     'Thành công',
-                    'Thêm suất chiếu thành công.'
+                    'Thêm suất chiếu thành công.',
+                    'success'
                 );
 
             }
@@ -538,7 +545,8 @@ const ShowTimePage = () => {
             showAlert(
                 'Lỗi',
                 backendError ||
-                'Đã xảy ra lỗi.'
+                'Đã xảy ra lỗi.',
+                'error'
             );
 
         } finally {
@@ -558,6 +566,7 @@ const ShowTimePage = () => {
         showAlert(
             'Xác nhận xóa',
             `Bạn có chắc muốn xóa suất chiếu phim "${showtime.title}"?`,
+            'warning',
 
             async () => {
 
@@ -571,12 +580,19 @@ const ShowTimePage = () => {
 
                     fetchShowtimes();
 
+                    showAlert(
+                        'Thành công',
+                        'Xóa suất chiếu thành công.',
+                        'success'
+                    );
+
                 } catch (error) {
 
                     showAlert(
                         'Lỗi',
                         error.response?.data?.error ||
-                        'Không thể xóa suất chiếu.'
+                        'Không thể xóa suất chiếu.',
+                        'error'
                     );
 
                 }
@@ -969,6 +985,8 @@ const ShowTimePage = () => {
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
+                type={alertModal.type}
+                size="sm"
             >
 
                 <div className="admin-alert-content">

@@ -9,7 +9,11 @@ import {
     Theater,
     Edit,
     Trash2,
-    Loader2
+    Loader2,
+    Tag,
+    Hash,
+    Navigation,
+    Sparkles
 } from 'lucide-react';
 
 import {
@@ -50,8 +54,6 @@ const GenresPage = () => {
     const [editingGenre, setEditingGenre] = useState(null);
 
     const [formData, setFormData] = useState(initialFormData);
-
-    /* ===== BỔ SUNG ===== */
 
     const [formErrors, setFormErrors] =
         useState({});
@@ -187,8 +189,6 @@ const GenresPage = () => {
 
         setFormData(initialFormData);
 
-        /* ===== BỔ SUNG ===== */
-
         setFormErrors({});
 
         setIsFormOpen(true);
@@ -202,8 +202,6 @@ const GenresPage = () => {
     const handleOpenEdit = (genre) => {
 
         setEditingGenre(genre);
-
-        /* ===== BỔ SUNG ===== */
 
         setFormErrors({});
 
@@ -276,8 +274,6 @@ const GenresPage = () => {
     const handleSubmit = async (e) => {
 
         e.preventDefault();
-
-        /* ===== VALIDATE ===== */
 
         const errors = validateForm();
 
@@ -428,9 +424,22 @@ const GenresPage = () => {
 
             render: (row) => (
 
-                <strong>
-                    #{row.genre_id}
-                </strong>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontWeight: '700'
+                    }}
+                >
+
+                    <Hash size={16} />
+
+                    <span>
+                        #{row.genre_id}
+                    </span>
+
+                </div>
 
             )
         },
@@ -441,9 +450,52 @@ const GenresPage = () => {
 
             render: (row) => (
 
-                <span className="movie-title-main">
-                    {row.genre_name}
-                </span>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}
+                >
+
+                    <div
+                        style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '12px',
+                            background: '#ede9fe',
+                            color: '#7c3aed',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+
+                        <Tag size={18} />
+
+                    </div>
+
+                    <div>
+
+                        <div
+                            style={{
+                                fontWeight: '700'
+                            }}
+                        >
+                            {row.genre_name}
+                        </div>
+
+                        <small
+                            style={{
+                                color: '#94a3b8'
+                            }}
+                        >
+                            Thể loại phim
+                        </small>
+
+                    </div>
+
+                </div>
 
             )
         },
@@ -454,8 +506,38 @@ const GenresPage = () => {
 
             render: (row) => (
 
-                <span className="ticket-code">
-                    {row.slug}
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        color: '#94a3b8'
+                    }}
+                >
+
+                    <Navigation size={15} />
+
+                    <span>
+                        {row.slug}
+                    </span>
+
+                </div>
+
+            )
+        },
+
+        {
+            title: 'Trạng thái',
+            key: 'status',
+
+            render: () => (
+
+                <span className="status-badge used">
+
+                    <Sparkles size={14} />
+
+                    Hoạt động
+
                 </span>
 
             )
@@ -585,14 +667,10 @@ const GenresPage = () => {
                     fields={formFields}
                     formData={formData}
 
-                    /* ===== BỔ SUNG ===== */
-
                     errors={formErrors}
 
                     onChange={handleChange}
                     onSubmit={handleSubmit}
-
-                    /* ===== BỔ SUNG ===== */
 
                     loading={submitLoading}
 

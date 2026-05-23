@@ -9,7 +9,11 @@ import {
     Smile,
     Edit,
     Trash2,
-    Loader2
+    Loader2,
+    CheckCircle2,
+    XCircle,
+    AlertTriangle,
+    Info
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -38,6 +42,8 @@ const ActorPage = () => {
 
     const [loading, setLoading] = useState(false);
 
+    const [submitLoading, setSubmitLoading] = useState(false);
+
     const [search, setSearch] = useState('');
 
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -50,16 +56,48 @@ const ActorPage = () => {
 
     const [preview, setPreview] = useState(null);
 
-    // State quản lý thông báo lỗi hiển thị trực tiếp trên Form của Modal
     const [errorText, setErrorText] = useState('');
+
+    /* =====================================================
+        ALERT MODAL
+    ===================================================== */
 
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
         message: '',
+        type: 'default',
         onConfirm: null,
         onCancel: null
     });
+
+    const showAlert = (
+        title,
+        message,
+        type = 'default',
+        onConfirm = null,
+        onCancel = null
+    ) => {
+
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
+
+    };
+
+    const closeAlert = () => {
+
+        setAlertModal(prev => ({
+            ...prev,
+            open: false
+        }));
+
+    };
 
     /* =====================================================
         FETCH ACTORS
@@ -79,7 +117,8 @@ const ActorPage = () => {
 
             showAlert(
                 'Lỗi',
-                'Không thể tải danh sách diễn viên.'
+                'Không thể tải danh sách diễn viên.',
+                'error'
             );
 
         } finally {
@@ -95,36 +134,6 @@ const ActorPage = () => {
         fetchActors();
 
     }, []);
-
-    /* =====================================================
-        ALERT MODAL
-    ===================================================== */
-
-    const showAlert = (
-        title,
-        message,
-        onConfirm = null,
-        onCancel = null
-    ) => {
-
-        setAlertModal({
-            open: true,
-            title,
-            message,
-            onConfirm,
-            onCancel
-        });
-
-    };
-
-    const closeAlert = () => {
-
-        setAlertModal(prev => ({
-            ...prev,
-            open: false
-        }));
-
-    };
 
     /* =====================================================
         GENERATE SLUG
@@ -160,7 +169,7 @@ const ActorPage = () => {
 
         setPreview(null);
 
-        setErrorText(''); // Xóa lỗi cũ khi mở form thêm mới
+        setErrorText('');
 
         setIsFormOpen(true);
 
@@ -178,11 +187,15 @@ const ActorPage = () => {
             name: actor.name || '',
             slug: actor.slug || '',
             gender: actor.gender || 'Nam',
-            nationality: actor.nationality || 'Việt Nam',
+            nationality:
+                actor.nationality || 'Việt Nam',
+
             birthday: actor.birthday
                 ? actor.birthday.substring(0, 10)
                 : '',
-            biography: actor.biography || ''
+
+            biography:
+                actor.biography || ''
         });
 
         setPreview(
@@ -193,7 +206,7 @@ const ActorPage = () => {
 
         setAvatarFile(null);
 
-        setErrorText(''); // Xóa lỗi cũ khi mở form chỉnh sửa
+        setErrorText('');
 
         setIsFormOpen(true);
 
@@ -205,10 +218,17 @@ const ActorPage = () => {
 
     const handleChange = (e) => {
 
-        const { name, value, files } = e.target;
+        const {
+            name,
+            value,
+            files
+        } = e.target;
 
-        // Người dùng thay đổi input -> tạm thời xóa bớt thông báo lỗi trên form
-        if (errorText) setErrorText('');
+        if (errorText) {
+
+            setErrorText('');
+
+        }
 
         if (name === 'avatar') {
 
@@ -254,14 +274,20 @@ const ActorPage = () => {
     const handleSubmit = async (e) => {
 
         e.preventDefault();
-        setErrorText(''); // Reset lại errorText trước khi gửi request
+
+        setErrorText('');
 
         try {
 
-            // Lấy token từ sessionStorage
-            const token = sessionStorage.getItem('usertoken');
+            setSubmitLoading(true);
 
-            const submitData = new FormData();
+            const token =
+                sessionStorage.getItem(
+                    'usertoken'
+                );
+
+            const submitData =
+                new FormData();
 
             submitData.append(
                 'name',
@@ -293,9 +319,13 @@ const ActorPage = () => {
                 formData.biography
             );
 
-            // Đính kèm token vào FormData để Backend có thể nhận diện quyền Admin
             if (token) {
-                submitData.append('token', token);
+
+                submitData.append(
+                    'token',
+                    token
+                );
+
             }
 
             if (avatarFile) {
@@ -304,6 +334,7 @@ const ActorPage = () => {
                     editingActor
                         ? 'actorImage'
                         : 'avatar',
+
                     avatarFile
                 );
 
@@ -323,16 +354,18 @@ const ActorPage = () => {
                     submitData,
                     {
                         headers: {
-                            'Content-Type': 'multipart/form-data'
+                            'Content-Type':
+                                'multipart/form-data'
                         }
                     }
                 );
 
-                setIsFormOpen(false); // Thành công thì đóng form đóng modal
+                setIsFormOpen(false);
 
                 showAlert(
                     'Thành công',
-                    'Cập nhật diễn viên thành công.'
+                    'Cập nhật diễn viên thành công.',
+                    'success'
                 );
 
             } else {
@@ -342,16 +375,18 @@ const ActorPage = () => {
                     submitData,
                     {
                         headers: {
-                            'Content-Type': 'multipart/form-data'
+                            'Content-Type':
+                                'multipart/form-data'
                         }
                     }
                 );
 
-                setIsFormOpen(false); // Thành công thì đóng form đóng modal
+                setIsFormOpen(false);
 
                 showAlert(
                     'Thành công',
-                    'Thêm diễn viên thành công.'
+                    'Thêm diễn viên thành công.',
+                    'success'
                 );
 
             }
@@ -360,9 +395,21 @@ const ActorPage = () => {
 
         } catch (error) {
 
-            // Bắt lỗi trùng lặp (400 Bad Request) từ Backend đẩy lên và cập nhật vào errorText
-            const msg = error.response?.data?.error || 'Đã xảy ra lỗi.';
+            const msg =
+                error.response?.data?.error ||
+                'Đã xảy ra lỗi.';
+
             setErrorText(msg);
+
+            showAlert(
+                'Lỗi',
+                msg,
+                'error'
+            );
+
+        } finally {
+
+            setSubmitLoading(false);
 
         }
 
@@ -377,6 +424,7 @@ const ActorPage = () => {
         showAlert(
             'Xác nhận xóa',
             `Bạn có chắc muốn xóa "${actor.name}"?`,
+            'warning',
 
             async () => {
 
@@ -400,11 +448,18 @@ const ActorPage = () => {
 
                     fetchActors();
 
+                    showAlert(
+                        'Thành công',
+                        'Xóa diễn viên thành công.',
+                        'success'
+                    );
+
                 } catch (error) {
 
                     showAlert(
                         'Lỗi',
-                        'Không thể xóa diễn viên.'
+                        'Không thể xóa diễn viên.',
+                        'error'
                     );
 
                 }
@@ -426,6 +481,7 @@ const ActorPage = () => {
             search.toLowerCase();
 
         return (
+
             actor.name
                 ?.toLowerCase()
                 .includes(keyword) ||
@@ -437,6 +493,7 @@ const ActorPage = () => {
             actor.nationality
                 ?.toLowerCase()
                 .includes(keyword)
+
         );
 
     });
@@ -526,16 +583,24 @@ const ActorPage = () => {
 
                     <button
                         className="admin-action-btn edit-btn"
-                        onClick={() => handleOpenEdit(row)}
+                        onClick={() =>
+                            handleOpenEdit(row)
+                        }
                     >
+
                         <Edit size={16} />
+
                     </button>
 
                     <button
                         className="admin-action-btn delete-btn"
-                        onClick={() => handleDelete(row)}
+                        onClick={() =>
+                            handleDelete(row)
+                        }
                     >
+
                         <Trash2 size={16} />
+
                     </button>
 
                 </div>
@@ -555,14 +620,16 @@ const ActorPage = () => {
             label: 'Họ tên',
             name: 'name',
             type: 'text',
-            placeholder: 'Nhập tên diễn viên'
+            placeholder:
+                'Nhập tên diễn viên'
         },
 
         {
             label: 'Slug',
             name: 'slug',
             type: 'text',
-            placeholder: 'Slug tự động',
+            placeholder:
+                'Slug tự động',
             disabled: true
         },
 
@@ -591,7 +658,8 @@ const ActorPage = () => {
             label: 'Quốc tịch',
             name: 'nationality',
             type: 'text',
-            placeholder: 'Ví dụ: Việt Nam'
+            placeholder:
+                'Ví dụ: Việt Nam'
         },
 
         {
@@ -610,10 +678,59 @@ const ActorPage = () => {
             label: 'Tiểu sử',
             name: 'biography',
             type: 'textarea',
-            placeholder: 'Nhập tiểu sử diễn viên'
+            placeholder:
+                'Nhập tiểu sử diễn viên'
         }
 
     ];
+
+    /* =====================================================
+        ALERT ICON
+    ===================================================== */
+
+    const renderAlertIcon = () => {
+
+        switch (alertModal.type) {
+
+            case 'success':
+
+                return (
+                    <CheckCircle2
+                        size={58}
+                        color="#22c55e"
+                    />
+                );
+
+            case 'error':
+
+                return (
+                    <XCircle
+                        size={58}
+                        color="#ef4444"
+                    />
+                );
+
+            case 'warning':
+
+                return (
+                    <AlertTriangle
+                        size={58}
+                        color="#f59e0b"
+                    />
+                );
+
+            default:
+
+                return (
+                    <Info
+                        size={58}
+                        color="#3b82f6"
+                    />
+                );
+
+        }
+
+    };
 
     /* =====================================================
         RENDER
@@ -629,7 +746,9 @@ const ActorPage = () => {
 
                 subtitle="Quản lý toàn bộ diễn viên hệ thống"
 
-                icon={<Smile size={30} />}
+                icon={
+                    <Smile size={30} />
+                }
 
                 buttonText="Thêm diễn viên"
 
@@ -675,7 +794,9 @@ const ActorPage = () => {
 
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={() =>
+                    setIsFormOpen(false)
+                }
                 title={
                     editingActor
                         ? 'Cập nhật diễn viên'
@@ -709,30 +830,37 @@ const ActorPage = () => {
 
                 </div>
 
-                {/* KHU VỰC HIỂN THỊ ERROR TEXT (DẠNG USERPAGE) */}
-                {errorText && (
-                    <div 
-                        className="admin-form-error"
-                        style={{
-                            color: '#ef4444',
-                            backgroundColor: '#fef2f2',
-                            border: '1px solid #fee2e2',
-                            padding: '10px 14px',
-                            borderRadius: '6px',
-                            marginBottom: '16px',
-                            fontSize: '14px',
-                            fontWeight: '500'
-                        }}
-                    >
-                        {errorText}
-                    </div>
-                )}
+                {
+                    errorText && (
+
+                        <div
+                            className="admin-form-error"
+                            style={{
+                                color: '#ef4444',
+                                backgroundColor: '#fef2f2',
+                                border:
+                                    '1px solid #fee2e2',
+                                padding: '10px 14px',
+                                borderRadius: '6px',
+                                marginBottom: '16px',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                            }}
+                        >
+
+                            {errorText}
+
+                        </div>
+
+                    )
+                }
 
                 <AdminForm
                     fields={formFields}
                     formData={formData}
                     onChange={handleChange}
                     onSubmit={handleSubmit}
+                    loading={submitLoading}
                     submitText={
                         editingActor
                             ? 'Lưu thay đổi'
@@ -750,9 +878,21 @@ const ActorPage = () => {
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
+                type={alertModal.type}
+                size="sm"
             >
 
                 <div className="admin-alert-content">
+
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            marginBottom: '18px'
+                        }}
+                    >
+                        {renderAlertIcon()}
+                    </div>
 
                     <p>
                         {alertModal.message}
@@ -765,7 +905,9 @@ const ActorPage = () => {
 
                                 <button
                                     className="admin-cancel-btn"
-                                    onClick={alertModal.onCancel}
+                                    onClick={
+                                        alertModal.onCancel
+                                    }
                                 >
                                     Hủy
                                 </button>
@@ -776,7 +918,8 @@ const ActorPage = () => {
                         <button
                             className="admin-confirm-btn"
                             onClick={
-                                alertModal.onConfirm || closeAlert
+                                alertModal.onConfirm ||
+                                closeAlert
                             }
                         >
                             Xác nhận

@@ -171,7 +171,42 @@
     font-size: 0.85rem;
     animation: shake 0.4s ease-in-out;
 }
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
 
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    display: flex;
+    align-items: center;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    color: #fff;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.forgot-link {
+    color: #fff;
+    text-decoration: none;
+}
 /* Hiệu ứng rung khi có lỗi */
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
