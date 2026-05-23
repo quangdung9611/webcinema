@@ -4,9 +4,9 @@
 
 const bcrypt = require('bcryptjs');
 
-const db = require('../config/db');
+const db = require('../Config/db');
 
-const transporter = require('../config/mailer');
+const transporter = require('../Config/mailer');
 
 const otpEmailTemplate =
     require('../Templates/OtpEmailTemplate');
