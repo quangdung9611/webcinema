@@ -7,7 +7,7 @@ const path = require('path');
 const fs = require('fs');
 
 const transporter =
-    require('../config/mailer');
+    require('../Config/mailer');
 
 const OtpEmailTemplate =
     require('../Templates/OtpEmailTemplate');
