@@ -9,10 +9,10 @@ const fs = require('fs');
 const transporter =
     require('../config/mailer');
 
-const otpPaymentTemplate =
+const OtpEmailTemplate =
     require('../Templates/OtpEmailTemplate');
 
-const ticketEmailTemplate =
+const TicketEmailTemplate =
     require('../Templates/TicketEmailTemplate');
 
 // =========================================================
@@ -41,7 +41,7 @@ const MailServiceTicket = {
             subject:
                 `[${otp}] Mã xác thực thanh toán Cinema Star`,
 
-            html: otpPaymentTemplate(
+            html: OtpEmailTemplate(
 
                 otp,
                 bookingId
@@ -129,7 +129,7 @@ const MailServiceTicket = {
             subject:
                 `[VÉ ĐIỆN TỬ] ${ticketData.movieTitle?.toUpperCase()} - MÃ ĐƠN #${ticketData.bookingId}`,
 
-            html: ticketEmailTemplate(
+            html: TicketEmailTemplate(
 
                 ticketData,
                 fileExists

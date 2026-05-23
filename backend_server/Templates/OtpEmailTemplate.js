@@ -1,4 +1,4 @@
-const OtpPaymentTemplate = (otp, bookingId) => {
+const OtpEmailTemplate = (otp, bookingId) => {
     return `
         <div style="text-align:center;font-family:Arial, sans-serif;">
             
@@ -46,4 +46,4 @@ const OtpPaymentTemplate = (otp, bookingId) => {
     `;
 };
 
-module.exports = OtpPaymentTemplate;
+module.exports = OtpEmailTemplate;

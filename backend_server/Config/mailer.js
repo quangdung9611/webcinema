@@ -12,9 +12,9 @@ const transporter = nodemailer.createTransport({
 
     service: 'gmail',
 
-    auth: {
-        user: 'nguyenphamquangdung9611@gmail.com', //
-        pass: 'gezt gsvc gpdn rqfc' //
+   auth: {
+        user: process.env.EMAIL_USER, // Lấy từ Render
+        pass: process.env.EMAIL_PASS  // Lấy từ Render
     }
 
 });
