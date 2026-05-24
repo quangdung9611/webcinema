@@ -1,12 +1,20 @@
 const express = require('express'); 
-const app = express();               
+const app = express(); 
 const cors = require('cors');
 const path = require('path');
-const db = require('./Config/db');   
+const db = require('./Config/db'); 
 const cookieParser = require('cookie-parser'); 
 const axios = require('axios'); 
 require('dotenv').config();
-require('./Config/mailer');
+
+// --- TÍCH HỢP MAILER VỚI TRY-CATCH ---
+try {
+    require('./Config/mailer');
+    console.log("✅ Mailer module loaded successfully!");
+} catch (err) {
+    console.error("❌ Failed to load mailer module:", err);
+}
+
 // --- THÊM SOCKET.IO ---
 const http = require('http');
 const { Server } = require("socket.io");
@@ -36,11 +44,10 @@ const movieGenreRoutes = require('./Routers/MovieGenreRouter');
 const movieActorRoutes = require('./Routers/MovieActorRouter');
 const newsRoutes = require('./Routers/NewRouter');
 const forgotPasswordRoutes =require('./Routers/ForgotPassRouter');
+
 // ===========================================================
 // 1. CẤU HÌNH HỆ THỐNG & CORS
 // ===========================================================
-
-// 🔥 QUAN TRỌNG: Để nhận cookie từ đúng domain chỉ định (không dùng chung dấu chấm nữa)
 app.set('trust proxy', 1); 
 app.use(cookieParser()); 
 
@@ -53,7 +60,7 @@ const corsOptions = {
     'http://localhost:5173',
     /\.vercel\.app$/ 
   ], 
-  credentials: true, // Cho phép nhận usertoken/admintoken từ các domain khác nhau
+  credentials: true,
   methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 };
@@ -105,12 +112,10 @@ io.on('connection', (socket) => {
 // ===========================================================
 // 2. ROUTES
 // ===========================================================
-
 app.get('/api', (req, res) => {
   res.send('🚀 Cinema Backend is flying!');
 });
 
-// --- NHÓM API CHO USER ---
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/genres', genreRoutes);
@@ -131,21 +136,18 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/movie-genres', movieGenreRoutes);
 app.use('/api/movie-actors', movieActorRoutes);
 app.use('/api/news', newsRoutes);
-
-// --- NHÓM API CHO ADMIN ---
 app.use('/admin/api/auth', adminAuthRoutes);
 app.use('/admin/api/manage', adminRouter); 
 app.use('/api/forgot-password', forgotPasswordRoutes);
+
 // ===========================================================
 // 3. KHỞI CHẠY SERVER
 // ===========================================================
-
 const PORT = process.env.PORT || 5000; 
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port: ${PORT}`);
   
-  // Tự động gọi chính mình để chống "ngủ" trên Render
   const SELF_URL = process.env.BACKEND_URL || 'https://api.quangdungcinema.id.vn';
   setInterval(async () => {
     try {
