@@ -1,27 +1,27 @@
 const nodemailer = require('nodemailer');
 
-console.log('📧 START MAILER');
+console.log('📧 MAILER INIT STARTING...');
 
+// =========================================================
+// TRANSPORTER (GMAIL)
+// =========================================================
 const transporter = nodemailer.createTransport({
-
-    host: 'smtp.gmail.com',
-
-    port: 587,
-
-    secure: false,
-
+    service: 'gmail',
     auth: {
-
-        user: process.env.EMAIL_USER,
-
-        pass: process.env.EMAIL_PASS
-
-    },
-
-    tls: {
-        rejectUnauthorized: false
+        user: process.env.EMAIL_USER,   // Gmail của bạn
+        pass: process.env.EMAIL_PASS    // App Password (KHÔNG phải password thường)
     }
+});
 
+// =========================================================
+// VERIFY CONNECTION
+// =========================================================
+transporter.verify((error, success) => {
+    if (error) {
+        console.log('❌ MAILER ERROR:', error);
+    } else {
+        console.log('✅ MAILER READY TO SEND EMAILS');
+    }
 });
 
 module.exports = transporter;

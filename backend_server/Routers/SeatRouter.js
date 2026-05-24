@@ -43,4 +43,5 @@ router.put('/toggle-active', seatController.toggleSeatActive);
  */
 router.put('/update-type', seatController.updateSeatTypeAndPrice);
 
+
 module.exports = router;
