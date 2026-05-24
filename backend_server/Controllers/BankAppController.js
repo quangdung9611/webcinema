@@ -43,111 +43,74 @@ const BankAppController = {
 
         }
 
-        // =================================================
-        // CHỐNG SPAM OTP 30S
-        // =================================================
-
-        if (otpStorage[email]) {
-
-            const lastSent =
-
-                otpStorage[email].expires -
-
-                (5 * 60 * 1000);
-
-            if (
-
-                Date.now() - lastSent < 30000
-
-            ) {
-
-                return res.json({
-
-                    success: true,
-
-                    message:
-                        "Mã đã được gửi, vui lòng kiểm tra mail!"
-
-                });
-
-            }
-
-        }
-
-        // =================================================
-        // GENERATE OTP
-        // =================================================
-
-        const otp = Math.floor(
-
-            100000 +
-            Math.random() * 900000
-
-        ).toString();
-
-        otpStorage[email] = {
-
-            otp,
-
-            bookingId,
-
-            expires:
-
-                Date.now() +
-
-                5 * 60 * 1000
-
-        };
-
-        // =================================================
-        // DEBUG
-        // =================================================
-
-        console.log(
-            '🔥 START SEND OTP'
-        );
-
-        console.log({
-
-            email,
-            otp,
-            bookingId
-
-        });
-
-        // =================================================
-        // RESPONSE FAST
-        // =================================================
-
-        res.json({
-
-            success: true,
-
-            message:
-                "Mã OTP đang được gửi!"
-
-        });
-
-        // =================================================
-        // SEND MAIL
-        // =================================================
-
         try {
 
-            const info =
-                await mailService.sendOTP(
+            // =================================================
+            // GENERATE OTP
+            // =================================================
 
-                    email,
-                    otp,
-                    bookingId
+            const otp = Math.floor(
 
-                );
+                100000 +
+                Math.random() * 900000
+
+            ).toString();
+
+            // =================================================
+            // SAVE OTP
+            // =================================================
+
+            otpStorage[email] = {
+
+                otp,
+
+                bookingId,
+
+                expires:
+                    Date.now() + 5 * 60 * 1000
+
+            };
+
+            console.log(
+                '🔥 START SEND OTP'
+            );
+
+            console.log({
+
+                email,
+                otp,
+                bookingId
+
+            });
+
+            // =================================================
+            // SEND MAIL
+            // =================================================
+
+            await mailService.sendOTP(
+
+                email,
+                otp,
+                bookingId
+
+            );
 
             console.log(
                 '✅ OTP SENT SUCCESS'
             );
 
-            console.log(info);
+            // =================================================
+            // RESPONSE
+            // =================================================
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Mã OTP đã được gửi!"
+
+            });
 
         }
         catch (err) {
@@ -157,6 +120,15 @@ const BankAppController = {
             );
 
             console.log(err);
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Không gửi được OTP!"
+
+            });
 
         }
 
@@ -185,6 +157,8 @@ const BankAppController = {
 
             !record ||
 
+            record.bookingId != bookingId ||
+
             record.otp != otp ||
 
             record.expires < Date.now()
@@ -208,6 +182,58 @@ const BankAppController = {
         try {
 
             await connection.beginTransaction();
+
+            // =============================================
+            // GET BOOKING
+            // =============================================
+
+            const [bookingRows] =
+                await connection.execute(
+
+                    `
+                        SELECT
+                            user_id,
+                            status
+                        FROM bookings
+                        WHERE booking_id = ?
+                    `,
+
+                    [bookingId]
+
+                );
+
+            if (
+                bookingRows.length === 0
+            ) {
+
+                throw new Error(
+                    'Không tìm thấy đơn hàng!'
+                );
+
+            }
+
+            // =============================================
+            // CHECK COMPLETED
+            // =============================================
+
+            if (
+
+                String(
+                    bookingRows[0].status
+                ).toLowerCase() === 'completed'
+
+            ) {
+
+                return res.json({
+
+                    success: true,
+
+                    message:
+                        'Đơn hàng đã thanh toán!'
+
+                });
+
+            }
 
             // =============================================
             // UPDATE BOOKING
@@ -241,13 +267,9 @@ const BankAppController = {
                         seat_status = 'Booked',
 
                         ticket_code = REPLACE(
-
                             ticket_code,
-
                             'WAIT-',
-
                             'TIC-'
-
                         ),
 
                         updated_at = NOW()
@@ -262,7 +284,28 @@ const BankAppController = {
             );
 
             // =============================================
-            // GET ORDER
+            // UPDATE SEATS
+            // =============================================
+
+            await connection.execute(
+
+                `
+                    UPDATE seats s
+
+                    JOIN booking_details bd
+                    ON s.seat_id = bd.seat_id
+
+                    SET s.seat_status = 'Booked'
+
+                    WHERE bd.booking_id = ?
+                `,
+
+                [bookingId]
+
+            );
+
+            // =============================================
+            // GET ORDER INFO
             // =============================================
 
             const [orderRows] =
@@ -288,19 +331,16 @@ const BankAppController = {
                             r.room_name AS roomName,
 
                             DATE_FORMAT(
-
                                 s.start_time,
-
                                 '%Y-%m-%d %H:%i:%s'
-
                             ) as start_time_raw,
 
                             GROUP_CONCAT(
-
-                                DISTINCT bd.item_name
-
+                                DISTINCT CASE
+                                    WHEN bd.seat_id IS NOT NULL
+                                    THEN bd.item_name
+                                END
                                 SEPARATOR ', '
-
                             ) AS seatLabel
 
                         FROM bookings b
@@ -346,7 +386,7 @@ const BankAppController = {
             }
 
             // =============================================
-            // CALCULATE POINTS
+            // ADD USER POINTS
             // =============================================
 
             const [details] =
@@ -354,74 +394,36 @@ const BankAppController = {
 
                     `
                         SELECT
-
-                            bd.price,
-
-                            bd.quantity,
-
-                            s.seat_type
-
-                        FROM booking_details bd
-
-                        LEFT JOIN seats s
-                        ON bd.seat_id = s.seat_id
-
-                        WHERE bd.booking_id = ?
+                            price,
+                            quantity,
+                            seat_id
+                        FROM booking_details
+                        WHERE booking_id = ?
                     `,
 
                     [bookingId]
 
                 );
 
-            let totalEarnedPoints = 0;
+            let totalPoints = 0;
 
             details.forEach(item => {
 
-                const itemTotal =
+                const lineTotal =
 
-                    Number(item.price) *
+                    Number(item.price || 0) *
 
-                    Number(item.quantity);
+                    Number(item.quantity || 0);
 
-                const type =
+                totalPoints += item.seat_id
 
-                    String(
-                        item.seat_type || ''
-                    ).toUpperCase();
+                    ? Math.floor(lineTotal * 0.05)
 
-                let rate =
-
-                    (type === 'VIP')
-
-                        ? 0.10
-
-                        : (
-
-                            ['DOUBLE', 'SWEETBOX', 'COUPLE']
-
-                            .includes(type)
-
-                        )
-
-                            ? 0.07
-
-                            : 0.05;
-
-                totalEarnedPoints +=
-
-                    Math.floor(
-
-                        itemTotal * rate
-
-                    );
+                    : Math.floor(lineTotal * 0.03);
 
             });
 
-            // =============================================
-            // UPDATE USER POINTS
-            // =============================================
-
-            if (totalEarnedPoints > 0) {
+            if (totalPoints > 0) {
 
                 await connection.execute(
 
@@ -434,11 +436,8 @@ const BankAppController = {
                     `,
 
                     [
-
-                        totalEarnedPoints,
-
+                        totalPoints,
                         order.user_id
-
                     ]
 
                 );
@@ -466,11 +465,8 @@ const BankAppController = {
 
                     `
                         SELECT
-
                             item_name,
-
                             quantity
-
                         FROM booking_details
 
                         WHERE booking_id = ?
@@ -521,6 +517,9 @@ const BankAppController = {
                         cinemaName:
                             order.cinemaName,
 
+                        roomName:
+                            order.roomName,
+
                         startTime:
                             order.start_time_raw
                                 .split(' ')[1]
@@ -562,7 +561,7 @@ const BankAppController = {
             // RESPONSE
             // =============================================
 
-            res.json({
+            return res.json({
 
                 success: true,
 
@@ -593,7 +592,7 @@ const BankAppController = {
 
             console.log(error);
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 success: false,
 
@@ -660,13 +659,30 @@ const BankAppController = {
                 `
                     UPDATE tickets
 
-                    SET
-
-                        seat_status = 'Available',
-
-                        booking_id = NULL
+                    SET seat_status = 'Available'
 
                     WHERE booking_id = ?
+                `,
+
+                [bookingId]
+
+            );
+
+            // =============================================
+            // RELEASE SEATS
+            // =============================================
+
+            await connection.execute(
+
+                `
+                    UPDATE seats s
+
+                    JOIN booking_details bd
+                    ON s.seat_id = bd.seat_id
+
+                    SET s.seat_status = 'Available'
+
+                    WHERE bd.booking_id = ?
                 `,
 
                 [bookingId]
@@ -685,7 +701,7 @@ const BankAppController = {
 
             }
 
-            res.json({
+            return res.json({
 
                 success: true,
 
@@ -703,7 +719,13 @@ const BankAppController = {
 
             }
 
-            res.status(500).json({
+            console.log(
+                '❌ CANCEL TIMEOUT ERROR'
+            );
+
+            console.log(error);
+
+            return res.status(500).json({
 
                 success: false,
 

@@ -35,6 +35,22 @@ const PaymentController = {
             await connection.beginTransaction();
 
             // =============================================
+            // VALIDATE
+            // =============================================
+
+            if (
+                !showtimeId ||
+                !selectedSeats ||
+                selectedSeats.length === 0
+            ) {
+
+                throw new Error(
+                    'Thiếu thông tin ghế hoặc suất chiếu'
+                );
+
+            }
+
+            // =============================================
             // GET SHOWTIME
             // =============================================
 
@@ -53,17 +69,90 @@ const PaymentController = {
 
                 );
 
+            if (
+                showtimeRows.length === 0
+            ) {
+
+                throw new Error(
+                    'Suất chiếu không tồn tại'
+                );
+
+            }
+
             const {
 
                 room_id,
                 cinema_id
 
-            } = showtimeRows[0] || {
+            } = showtimeRows[0];
 
-                room_id: null,
-                cinema_id: null
+            // =============================================
+            // CHECK SEATS
+            // =============================================
 
-            };
+            for (let seat of selectedSeats) {
+
+                const [seatRows] =
+                    await connection.execute(
+
+                        `
+                            SELECT
+                                seat_status
+                            FROM seats
+                            WHERE seat_id = ?
+                        `,
+
+                        [seat.seat_id]
+
+                    );
+
+                if (
+                    seatRows.length === 0
+                ) {
+
+                    throw new Error(
+                        `Ghế không tồn tại`
+                    );
+
+                }
+
+                const currentStatus =
+                    String(
+                        seatRows[0].seat_status
+                    ).toLowerCase();
+
+                if (
+                    currentStatus === 'booked' ||
+                    currentStatus === 'reserved'
+                ) {
+
+                    throw new Error(
+                        `Ghế ${seat.seat_row}${seat.seat_number} đã được giữ`
+                    );
+
+                }
+
+            }
+
+            // =============================================
+            // UPDATE SEATS RESERVED
+            // =============================================
+
+            for (let seat of selectedSeats) {
+
+                await connection.execute(
+
+                    `
+                        UPDATE seats
+                        SET seat_status = 'Reserved'
+                        WHERE seat_id = ?
+                    `,
+
+                    [seat.seat_id]
+
+                );
+
+            }
 
             // =============================================
             // TIME
@@ -138,6 +227,10 @@ const PaymentController = {
 
                 for (let seat of selectedSeats) {
 
+                    // =====================================
+                    // BOOKING DETAILS
+                    // =====================================
+
                     await connection.execute(
 
                         `
@@ -166,8 +259,16 @@ const PaymentController = {
 
                     );
 
+                    // =====================================
+                    // TEMP CODE
+                    // =====================================
+
                     const tempCode =
                         `WAIT-${Date.now()}-${seat.seat_id}`;
+
+                    // =====================================
+                    // INSERT TICKETS
+                    // =====================================
 
                     await connection.execute(
 
@@ -189,7 +290,7 @@ const PaymentController = {
 
                             VALUES (
 
-                                ?, ?, ?, ?, ?, ?, ?,
+                                ?, ?, ?, ?, ?, ?, ?, 
 
                                 'Reserved',
                                 'Valid',
@@ -346,6 +447,7 @@ const PaymentController = {
                 success: false,
 
                 message:
+                    error.message ||
                     "Lỗi giữ ghế!"
 
             });
@@ -509,7 +611,6 @@ const PaymentController = {
                     updated_at = ?
 
                 WHERE booking_id = ?
-                AND seat_status = 'Reserved'
             `,
 
             [
@@ -757,6 +858,8 @@ const PaymentController = {
                     await connection.rollback();
 
                 }
+
+                console.log(err);
 
             }
             finally {
