@@ -25,59 +25,29 @@ const MailServiceTicket = {
     // SEND PAYMENT OTP
     // =====================================================
 
-    sendOTP: async (
-        email,
-        otp,
-        bookingId
-    ) => {
+    sendOTP: async (email, otp, bookingId) => {
+    // THÊM DÒNG NÀY ĐỂ DEBUG
+    console.log(`DEBUG: Nhận yêu cầu gửi OTP tới: ${email}, OTP: ${otp}, BookingID: ${bookingId}`);
 
-        try {
-
-            const info = await transporter.sendMail({
-
-                from:
-                    `"Dũng Cinema 🍿" <${process.env.EMAIL_USER}>`,
-
-                to: email,
-
-                subject:
-                    `[${otp}] Mã xác thực thanh toán Cinema Star`,
-
-                html: OtpEmailTemplate(
-
-                    otp,
-                    bookingId
-
-                )
-
-            });
-
-            console.log(
-
-                '✅ OTP MAIL SENT'
-
-            );
-
-            console.log(info);
-
-            return info;
-
-        }
-        catch (err) {
-
-            console.log(
-
-                '❌ OTP MAIL ERROR'
-
-            );
-
-            console.log(err);
-
-            throw err;
-
-        }
-
-    },
+    if (!email) {
+        console.error("❌ LỖI: Email người nhận bị trống!");
+        return;
+    }
+    
+    try {
+        const info = await transporter.sendMail({
+            from: `"Dũng Cinema 🍿" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: `[${otp}] Mã xác thực thanh toán Cinema Star`,
+            html: OtpEmailTemplate(otp, bookingId)
+        });
+        console.log('✅ OTP MAIL SENT');
+        return info;
+    } catch (err) {
+        console.log('❌ OTP MAIL ERROR:', err);
+        throw err;
+    }
+},
 
     // =====================================================
     // SEND TICKET EMAIL
