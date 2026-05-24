@@ -6,7 +6,7 @@ const db = require('./Config/db');
 const cookieParser = require('cookie-parser'); 
 const axios = require('axios'); 
 require('dotenv').config();
-
+require('./Config/mailer');
 // --- THÊM SOCKET.IO ---
 const http = require('http');
 const { Server } = require("socket.io");
@@ -135,7 +135,7 @@ app.use('/api/news', newsRoutes);
 // --- NHÓM API CHO ADMIN ---
 app.use('/admin/api/auth', adminAuthRoutes);
 app.use('/admin/api/manage', adminRouter); 
-
+app.use('/api/forgot-password', forgotPasswordRoutes);
 // ===========================================================
 // 3. KHỞI CHẠY SERVER
 // ===========================================================

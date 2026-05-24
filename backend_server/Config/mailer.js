@@ -1,56 +1,46 @@
-// =========================================================
-// IMPORTS
-// =========================================================
-
 const nodemailer = require('nodemailer');
 
-// =========================================================
-// MAIL TRANSPORTER
-// =========================================================
+console.log('📧 MAIL CONFIG:', {
+
+    user: process.env.EMAIL_USER,
+
+    passExists: !!process.env.EMAIL_PASS
+
+});
 
 const transporter = nodemailer.createTransport({
 
-    service: 'gmail',
+    host: 'smtp.gmail.com',
 
-   auth: {
-        user: process.env.EMAIL_USER, // Lấy từ Render
-        pass: process.env.EMAIL_PASS  // Lấy từ Render
+    port: 465,
+
+    secure: true,
+
+    auth: {
+
+        user: process.env.EMAIL_USER,
+
+        pass: process.env.EMAIL_PASS
+
     }
 
 });
 
-// =========================================================
-// VERIFY CONNECTION
-// =========================================================
-
-transporter.verify((error) => {
+transporter.verify((error, success) => {
 
     if (error) {
 
-        console.log(
+        console.log('❌ MAILER ERROR');
 
-            '❌ Mailer Error:',
-
-            error
-
-        );
+        console.log(error);
 
     }
-
     else {
 
-        console.log(
-
-            '✅ Mailer Connected'
-
-        );
+        console.log('✅ MAILER CONNECTED');
 
     }
 
 });
-
-// =========================================================
-// EXPORT
-// =========================================================
 
 module.exports = transporter;

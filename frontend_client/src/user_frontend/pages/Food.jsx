@@ -40,15 +40,23 @@ const Food = () => {
             navigate('/');
         }
 
-        const fetchFoods = async () => {
+       const fetchFoods = async () => {
             try {
                 const res = await axios.get(
                     'https://api.quangdungcinema.id.vn/api/foods'
                 );
-
-                setFoods(res.data);
+                
+                // Kiểm tra dữ liệu: API của bạn trả về object có thuộc tính 'data'
+                // Nên phải dùng res.data.data để lấy danh sách món ăn
+                if (res.data && Array.isArray(res.data.data)) {
+                    setFoods(res.data.data);
+                } else {
+                    console.error('Dữ liệu không đúng định dạng:', res.data);
+                    setFoods([]);
+                }
             } catch (err) {
                 console.error('Lỗi tải thức ăn:', err);
+                setFoods([]);
             }
         };
 

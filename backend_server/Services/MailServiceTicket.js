@@ -31,24 +31,51 @@ const MailServiceTicket = {
         bookingId
     ) => {
 
-        return transporter.sendMail({
+        try {
 
-            from:
-                `"Dũng Cinema 🍿" <${process.env.EMAIL_USER}>`,
+            const info = await transporter.sendMail({
 
-            to: email,
+                from:
+                    `"Dũng Cinema 🍿" <${process.env.EMAIL_USER}>`,
 
-            subject:
-                `[${otp}] Mã xác thực thanh toán Cinema Star`,
+                to: email,
 
-            html: OtpEmailTemplate(
+                subject:
+                    `[${otp}] Mã xác thực thanh toán Cinema Star`,
 
-                otp,
-                bookingId
+                html: OtpEmailTemplate(
 
-            )
+                    otp,
+                    bookingId
 
-        });
+                )
+
+            });
+
+            console.log(
+
+                '✅ OTP MAIL SENT'
+
+            );
+
+            console.log(info);
+
+            return info;
+
+        }
+        catch (err) {
+
+            console.log(
+
+                '❌ OTP MAIL ERROR'
+
+            );
+
+            console.log(err);
+
+            throw err;
+
+        }
 
     },
 
@@ -63,108 +90,151 @@ const MailServiceTicket = {
 
     ) => {
 
-        // =================================================
-        // GET POSTER
-        // =================================================
+        try {
 
-        const {
+            // =================================================
+            // GET POSTER
+            // =================================================
 
-            moviePoster
+            const {
 
-        } = ticketData;
+                moviePoster
 
-        // =================================================
-        // FILE NAME
-        // =================================================
+            } = ticketData;
 
-        const fileName = moviePoster
+            // =================================================
+            // FILE NAME
+            // =================================================
 
-            ? path.basename(moviePoster)
+            const fileName = moviePoster
 
-            : null;
+                ? path.basename(moviePoster)
 
-        // =================================================
-        // ABSOLUTE PATH
-        // =================================================
+                : null;
 
-        const absolutePath = fileName
+            // =================================================
+            // ABSOLUTE PATH
+            // =================================================
 
-            ? path.join(
+            const absolutePath = fileName
 
-                __dirname,
+                ? path.join(
 
-                '..',
+                    __dirname,
 
-                'uploads',
+                    '..',
 
-                'posters',
+                    'uploads',
 
-                fileName
+                    'posters',
 
-            )
+                    fileName
 
-            : null;
+                )
 
-        // =================================================
-        // CHECK FILE EXISTS
-        // =================================================
+                : null;
 
-        const fileExists =
+            // =================================================
+            // CHECK FILE EXISTS
+            // =================================================
 
-            absolutePath &&
+            const fileExists =
 
-            fs.existsSync(absolutePath);
+                absolutePath &&
 
-        // =================================================
-        // MAIL OPTIONS
-        // =================================================
+                fs.existsSync(absolutePath);
 
-        const mailOptions = {
+            console.log({
 
-            from:
-                `"Dũng Cinema 🍿" <${process.env.EMAIL_USER}>`,
-
-            to: customerEmail,
-
-            subject:
-                `[VÉ ĐIỆN TỬ] ${ticketData.movieTitle?.toUpperCase()} - MÃ ĐƠN #${ticketData.bookingId}`,
-
-            html: TicketEmailTemplate(
-
-                ticketData,
+                fileName,
+                absolutePath,
                 fileExists
 
-            ),
+            });
 
-            attachments: fileExists
+            // =================================================
+            // MAIL OPTIONS
+            // =================================================
 
-                ? [
+            const mailOptions = {
 
-                    {
+                from:
+                    `"Dũng Cinema 🍿" <${process.env.EMAIL_USER}>`,
 
-                        filename: fileName,
+                to: customerEmail,
 
-                        path: absolutePath,
+                subject:
+                    `[VÉ ĐIỆN TỬ] ${ticketData.movieTitle?.toUpperCase()} - MÃ ĐƠN #${ticketData.bookingId}`,
 
-                        cid: 'poster_img'
+                html: TicketEmailTemplate(
 
-                    }
+                    ticketData,
+                    fileExists
 
-                ]
+                ),
 
-                : []
+                // =================================================
+                // TẠM TẮT ATTACHMENT ĐỂ TEST
+                // =================================================
 
-        };
+                attachments: []
 
-        // =================================================
-        // SEND MAIL
-        // =================================================
+                /*
+                attachments: fileExists
 
-        return transporter.sendMail(
+                    ? [
 
-            mailOptions
+                        {
 
-        );
+                            filename: fileName,
+
+                            path: absolutePath,
+
+                            cid: 'poster_img'
+
+                        }
+
+                    ]
+
+                    : []
+                */
+
+            };
+
+            // =================================================
+            // SEND MAIL
+            // =================================================
+
+            const info = await transporter.sendMail(
+
+                mailOptions
+
+            );
+
+            console.log(
+
+                '✅ TICKET MAIL SENT'
+
+            );
+
+            console.log(info);
+
+            return info;
+
+        }
+        catch (err) {
+
+            console.log(
+
+                '❌ TICKET MAIL ERROR'
+
+            );
+
+            console.log(err);
+
+            throw err;
+
+        }
 
     }
 
