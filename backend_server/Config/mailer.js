@@ -1,11 +1,10 @@
 const nodemailer = require('nodemailer');
 
-console.log('📧 MAIL CONFIG:', {
+console.log('📧 START MAILER');
 
-    user: process.env.EMAIL_USER,
-
-    passExists: !!process.env.EMAIL_PASS
-
+console.log({
+    EMAIL_USER: process.env.EMAIL_USER,
+    EMAIL_PASS_EXISTS: !!process.env.EMAIL_PASS
 });
 
 const transporter = nodemailer.createTransport({
@@ -22,25 +21,31 @@ const transporter = nodemailer.createTransport({
 
         pass: process.env.EMAIL_PASS
 
+    },
+
+    tls: {
+        rejectUnauthorized: false
     }
 
 });
 
-transporter.verify((error, success) => {
+(async () => {
 
-    if (error) {
+    try {
 
-        console.log('❌ MAILER ERROR');
-
-        console.log(error);
-
-    }
-    else {
+        await transporter.verify();
 
         console.log('✅ MAILER CONNECTED');
 
     }
+    catch (err) {
 
-});
+        console.log('❌ MAILER VERIFY ERROR');
+
+        console.log(err);
+
+    }
+
+})();
 
 module.exports = transporter;
