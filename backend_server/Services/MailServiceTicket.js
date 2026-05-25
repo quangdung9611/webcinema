@@ -54,9 +54,9 @@ const MailServiceTicket = {
                 // SENDER EMAIL ĐÃ VERIFY TRÊN BREVO
                 // =================================================
 
-                // Đã đổi thành process.env.BREVO_USER để khớp với tài khoản Brevo của bạn
+                // Đã đổi thành email tên miền của bạn
                 from:
-                    `"Dũng Cinema 🍿" <${process.env.BREVO_USER}>`,
+                    `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
 
                 to: email,
 
@@ -172,9 +172,9 @@ const MailServiceTicket = {
                 // VERIFIED BREVO SENDER
                 // =================================================
 
-                // Đã đổi thành process.env.BREVO_USER
+                // Đã đổi thành email tên miền của bạn
                 from:
-                    `"Dũng Cinema 🍿" <${process.env.BREVO_USER}>`,
+                    `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
 
                 to: customerEmail,
 
@@ -192,27 +192,15 @@ const MailServiceTicket = {
                 // ATTACHMENTS
                 // =================================================
 
-                attachments: []
-
-                /*
                 attachments: fileExists
-
                     ? [
-
                         {
-
                             filename: fileName,
-
                             path: absolutePath,
-
                             cid: 'poster_img'
-
                         }
-
                     ]
-
                     : []
-                */
 
             };
 
