@@ -26,28 +26,67 @@ const MailServiceTicket = {
     // =====================================================
 
     sendOTP: async (email, otp, bookingId) => {
-    // THÊM DÒNG NÀY ĐỂ DEBUG
-    console.log(`DEBUG: Nhận yêu cầu gửi OTP tới: ${email}, OTP: ${otp}, BookingID: ${bookingId}`);
 
-    if (!email) {
-        console.error("❌ LỖI: Email người nhận bị trống!");
-        return;
-    }
-    
-    try {
-        const info = await transporter.sendMail({
-            from: `"Dũng Cinema 🍿" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: `[${otp}] Mã xác thực thanh toán Cinema Star`,
-            html: OtpEmailTemplate(otp, bookingId)
-        });
-        console.log('✅ OTP MAIL SENT');
-        return info;
-    } catch (err) {
-        console.log('❌ OTP MAIL ERROR:', err);
-        throw err;
-    }
-},
+        // DEBUG
+        console.log(
+            `DEBUG: Nhận yêu cầu gửi OTP tới: ${email}, OTP: ${otp}, BookingID: ${bookingId}`
+        );
+
+        // CHECK EMAIL
+        if (!email) {
+
+            console.error(
+                "❌ LỖI: Email người nhận bị trống!"
+            );
+
+            return;
+        }
+
+        try {
+
+            console.log(
+                '📨 Đang chuẩn bị gửi OTP mail...'
+            );
+
+            const info = await transporter.sendMail({
+
+                // =================================================
+                // SENDER EMAIL ĐÃ VERIFY TRÊN BREVO
+                // =================================================
+
+                from:
+                    '"Dũng Cinema 🍿" <nguyenphamquangdung9611@gmail.com>',
+
+                to: email,
+
+                subject:
+                    `[${otp}] Mã xác thực thanh toán Cinema Star`,
+
+                html:
+                    OtpEmailTemplate(otp, bookingId)
+
+            });
+
+            console.log(
+                '✅ OTP MAIL SENT SUCCESSFULLY'
+            );
+
+            console.log(info);
+
+            return info;
+
+        }
+        catch (err) {
+
+            console.log(
+                '❌ OTP MAIL ERROR'
+            );
+
+            console.log(err);
+
+            throw err;
+        }
+    },
 
     // =====================================================
     // SEND TICKET EMAIL
@@ -128,8 +167,12 @@ const MailServiceTicket = {
 
             const mailOptions = {
 
+                // =================================================
+                // VERIFIED BREVO SENDER
+                // =================================================
+
                 from:
-                    `"Dũng Cinema 🍿" <${process.env.EMAIL_USER}>`,
+                    '"Dũng Cinema 🍿" <nguyenphamquangdung9611@gmail.com>',
 
                 to: customerEmail,
 
@@ -144,7 +187,7 @@ const MailServiceTicket = {
                 ),
 
                 // =================================================
-                // TẠM TẮT ATTACHMENT ĐỂ TEST
+                // ATTACHMENTS
                 // =================================================
 
                 attachments: []
@@ -175,6 +218,10 @@ const MailServiceTicket = {
             // SEND MAIL
             // =================================================
 
+            console.log(
+                '📨 Đang gửi vé điện tử...'
+            );
+
             const info = await transporter.sendMail(
 
                 mailOptions
@@ -183,7 +230,7 @@ const MailServiceTicket = {
 
             console.log(
 
-                '✅ TICKET MAIL SENT'
+                '✅ TICKET MAIL SENT SUCCESSFULLY'
 
             );
 
