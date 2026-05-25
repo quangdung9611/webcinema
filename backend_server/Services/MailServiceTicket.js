@@ -54,8 +54,9 @@ const MailServiceTicket = {
                 // SENDER EMAIL ĐÃ VERIFY TRÊN BREVO
                 // =================================================
 
+                // Đã đổi thành process.env.BREVO_USER để khớp với tài khoản Brevo của bạn
                 from:
-                    '"Dũng Cinema 🍿" <nguyenphamquangdung9611@gmail.com>',
+                    `"Dũng Cinema 🍿" <${process.env.BREVO_USER}>`,
 
                 to: email,
 
@@ -171,8 +172,9 @@ const MailServiceTicket = {
                 // VERIFIED BREVO SENDER
                 // =================================================
 
+                // Đã đổi thành process.env.BREVO_USER
                 from:
-                    '"Dũng Cinema 🍿" <nguyenphamquangdung9611@gmail.com>',
+                    `"Dũng Cinema 🍿" <${process.env.BREVO_USER}>`,
 
                 to: customerEmail,
 
