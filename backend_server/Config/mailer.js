@@ -2,15 +2,17 @@ const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Bắt buộc dùng 465 + true cho Gmail
+    port: 587, // Đổi từ 465 sang 587
+    secure: false, // Với port 587 thì secure phải là false
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
     },
-    // Thêm dòng này để tăng thời gian chờ, tránh bị timeout ngay lập tức
-    connectionTimeout: 10000, 
-    greetingTimeout: 10000 
+    tls: {
+        rejectUnauthorized: false // Bỏ qua lỗi chứng chỉ nếu có
+    },
+    connectionTimeout: 15000, // Tăng lên 15 giây
+    greetingTimeout: 15000
 });
 
 module.exports = transporter;
