@@ -1,250 +1,584 @@
-/* =========================================
-   1. CONFIGURATION (BIẾN TỔNG)
-   ========================================= */
-:root {
-  --clr-primary: #ff4d4d;
-  --clr-success: #2ecc71;
-  --clr-bg-dark: #121212;
-  --clr-card: #1a1a1a;
-  --clr-ticket: #ffffff;
-  
-  --clr-text-main: #ffffff;
-  --clr-text-muted: #aaaaaa;
-  --clr-text-dark: #333333;
-  
-  --btn-padding: 20px;
-  --btn-font-size: 18px;
-  --btn-radius: 12px;
+/* ======================================================
+   CONFIRM SUCCESS PAGE
+====================================================== */
 
-  --transition: all 0.3s ease;
-  --shadow-card: 0 20px 40px rgba(0, 0, 0, 0.5);
+.confirm-success-page {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+
+    padding: 40px 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* =========================================
-   2. TRANG TỔNG (LAYOUT)
-   ========================================= */
-.success-page-wrapper {
-  display: flex;
-  flex-direction: column; /* Để Stepper ở trên, Card ở dưới */
-  align-items: center;
-  min-height: 100vh;
-  background-color: var(--clr-bg-dark);
-  font-family: 'Segoe UI', Tahoma, sans-serif;
+/* ======================================================
+   OVERLAY
+====================================================== */
+
+.success-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
 }
 
-/* Fix Stepper nằm trên cùng */
-.success-page-wrapper .stepper-bar-full {
-  width: 100%;
-  background: white;
-  padding: 15px 0;
-  border-bottom: 1px solid #333;
-  margin-bottom: 40px;
-}
+/* ======================================================
+   CONTAINER
+====================================================== */
 
-.success-card {
-  width: 90%;
-  max-width: 650px;
-  padding: 40px;
-  background-color: var(--clr-card);
-  border-radius: 24px;
-  box-shadow: var(--shadow-card);
-  text-align: center;
-  color: var(--clr-text-main);
-  margin-bottom: 50px;
-}
+.success-container {
+    position: relative;
+    z-index: 5;
 
-/* =========================================
-   3. PHẦN ĐẦU (HEADER)
-   ========================================= */
-.check-circle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 24px;
-  background-color: var(--clr-success);
-  border-radius: 50%;
-  font-size: 50px;
-  color: white;
-  box-shadow: 0 0 30px rgba(46, 204, 113, 0.4);
-  animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
+    width: 100%;
+    max-width: 1250px;
 
-@keyframes bounceIn {
-  from { transform: scale(0); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.success-header h2 {
-  font-size: 30px;
-  font-weight: 800;
-  margin-bottom: 8px;
-  letter-spacing: 1px;
-}
-
-/* =========================================
-   4. CHIẾC VÉ (TICKET COMPONENT)
-   ========================================= */
-.ticket-visual {
-  display: flex;
-  margin-bottom: 40px;
-  background-color: var(--clr-ticket);
-  color: var(--clr-text-dark);
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-  text-align: left;
-}
-
-.ticket-left {
-  flex: 1.8;
-  padding: 25px;
-  display: flex;
-  gap: 20px;
-}
-
-.movie-poster-mini img {
-  width: 110px;
-  height: 160px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.ticket-movie-title {
-  margin: 0 0 12px;
-  color: var(--clr-primary);
-  font-size: 22px;
-  font-weight: 900;
-  line-height: 1.2;
-}
-
-.ticket-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.ticket-divider {
-  position: relative;
-  width: 30px;
-  background-color: var(--clr-ticket);
-}
-
-.dashed-line {
-  height: 80%;
-  margin: 10% auto;
-  border-left: 2px dashed #ddd;
-}
-
-.arc-top, .arc-bottom {
-  position: absolute;
-  left: 50%;
-  width: 30px;
-  height: 30px;
-  background-color: var(--clr-card); /* Để tạo lỗ hổng */
-  border-radius: 50%;
-  transform: translateX(-50%);
-}
-.arc-top { top: -15px; }
-.arc-bottom { bottom: -15px; }
-
-.ticket-right {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background-color: #fcfcfc;
-  border-left: 1px solid #eeeeee;
-}
-
-/* =========================================
-   5. RESPONSIVE (BREAKPOINTS)
-   ========================================= */
-
-/* Tablet & Laptop nhỏ (< 992px) */
-@media (max-width: 992px) {
-  .success-card {
-    max-width: 600px;
-    padding: 30px;
-  }
-  .ticket-movie-title {
-    font-size: 18px;
-  }
-}
-
-/* Mobile (< 576px) */
-@media (max-width: 576px) {
-  .success-card {
-    padding: 20px 15px;
-    width: 95%;
-  }
-
-  .check-circle {
-    width: 70px;
-    height: 70px;
-    font-size: 35px;
-  }
-
-  .success-header h2 {
-    font-size: 22px;
-  }
-
-  .ticket-visual {
-    flex-direction: column; /* Chuyển vé thành chiều dọc */
-  }
-
-  .ticket-left {
+    display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
-  }
-
-  .ticket-detail-grid {
-    grid-template-columns: 1fr; /* Thông tin thành 1 cột */
-    text-align: center;
-  }
-
-  .ticket-divider {
-    width: 100%;
-    height: 20px;
-  }
-
-  .dashed-line {
-    width: 80%;
-    height: 0;
-    margin: 10px auto;
-    border-top: 2px dashed #ddd;
-    border-left: none;
-  }
-
-  .arc-top, .arc-bottom {
-    top: 50%;
-    transform: translateY(-50%);
-    left: auto;
-  }
-  .arc-top { left: -15px; }
-  .arc-bottom { right: -15px; }
-
-  .action-buttons {
-    flex-direction: column;
-  }
 }
 
-/* =========================================
-   6. CẤU HÌNH KHI IN (PRINT)
-   ========================================= */
-@media print {
-  body * { visibility: hidden; }
-  .ticket-visual, .ticket-visual * { visibility: visible; }
-  .ticket-visual {
-    position: absolute;
-    top: 0;
-    left: 0;
+/* ======================================================
+   TOP
+====================================================== */
+
+.success-top {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.success-icon {
+    width: 110px;
+    height: 110px;
+
+    margin: auto;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 4px solid #1cff81;
+
+    box-shadow:
+        0 0 20px rgba(28, 255, 129, 0.5),
+        0 0 60px rgba(28, 255, 129, 0.2);
+}
+
+.success-top h1 {
+    margin-top: 22px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.success-top p {
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+.success-top p span {
+    color: #34ff91;
+    font-weight: 700;
+}
+
+.order-badge {
+    margin-top: 22px;
+
+    width: fit-content;
+
+    padding: 12px 28px;
+
+    border-radius: 999px;
+
+    border:
+        1px solid rgba(255,255,255,0.12);
+
+    font-weight: 700;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.35);
+}
+
+.order-badge span {
+    color: #ff8b1d;
+    margin-left: 8px;
+}
+
+/* ======================================================
+   TICKET
+====================================================== */
+
+.cinema-ticket {
     width: 100%;
-    border: 1px solid #ddd;
-  }
-  .arc-top, .arc-bottom { display: none; }
+
+    display: flex;
+
+    overflow: hidden;
+
+    border-radius: 32px;
+
+    border:
+        1px solid rgba(255,255,255,0.08);
+
+    box-shadow:
+        0 0 40px rgba(0,0,0,0.45),
+        0 0 25px rgba(0, 132, 255, 0.12);
+}
+
+/* ======================================================
+   LEFT
+====================================================== */
+
+.ticket-left {
+    flex: 1.8;
+
+    display: flex;
+
+    gap: 38px;
+
+    padding: 38px;
+}
+
+.poster-box {
+    display: flex;
+    align-items: stretch;
+}
+
+.poster-box img {
+    width: 240px;
+    height: 100%;
+
+    min-height: 360px;
+
+    object-fit: cover;
+
+    border-radius: 22px;
+
+    box-shadow:
+        0 15px 35px rgba(0,0,0,0.5);
+}
+
+.no-poster {
+    width: 240px;
+    min-height: 360px;
+
+    border-radius: 22px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ticket-info {
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.ticket-info h2 {
+    margin-bottom: 32px;
+
+    color: #ff3636;
+
+    font-weight: 900;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+}
+
+.ticket-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.detail-row {
+    display: grid;
+
+    grid-template-columns: 24px 140px 1fr;
+
+    align-items: center;
+
+    gap: 16px;
+
+    padding-bottom: 16px;
+
+    border-bottom:
+        1px solid rgba(255,255,255,0.08);
+}
+
+.detail-row svg {
+    color: #7ea6ff;
+}
+
+.label {
+    color: #c9d2e3;
+    font-weight: 500;
+}
+
+.value {
+    font-weight: 600;
+}
+
+.seat-value {
+    color: #ff8420;
+    font-weight: 800;
+}
+
+/* ======================================================
+   DIVIDER
+====================================================== */
+
+.ticket-divider {
+    position: relative;
+
+    width: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dash-line {
+    width: 2px;
+    height: 90%;
+
+    border-left:
+        2px dashed rgba(255,255,255,0.2);
+}
+
+.circle-top,
+.circle-bottom {
+    position: absolute;
+
+    left: 50%;
+
+    width: 40px;
+    height: 40px;
+
+    border-radius: 50%;
+
+    transform: translateX(-50%);
+}
+
+.circle-top {
+    top: -18px;
+}
+
+.circle-bottom {
+    bottom: -18px;
+}
+
+/* ======================================================
+   RIGHT
+====================================================== */
+
+.ticket-right {
+    width: 350px;
+
+    padding: 40px 30px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.pin-title {
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+}
+
+.pin-code {
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 24px;
+}
+
+.qr-wrapper {
+    background: #ffffff;
+
+    padding: 14px;
+
+    border-radius: 18px;
+}
+
+.qr-note {
+    margin-top: 18px;
+
+    text-align: center;
+
+    line-height: 1.5;
+}
+
+/* ======================================================
+   EMAIL
+====================================================== */
+
+.email-box {
+    width: 100%;
+
+    margin-top: 32px;
+
+    padding: 24px 28px;
+
+    border-radius: 24px;
+
+    border:
+        1px solid rgba(255,255,255,0.06);
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    backdrop-filter: blur(10px);
+}
+
+.email-left {
+    display: flex;
+    align-items: center;
+
+    gap: 18px;
+}
+
+.email-left p {
+    margin-bottom: 6px;
+}
+
+.email-left h4 {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* ======================================================
+   BUTTONS
+====================================================== */
+
+.success-actions {
+    margin-top: 35px;
+
+    display: flex;
+
+    gap: 28px;
+}
+
+.success-actions button {
+    border: none;
+
+    min-width: 300px;
+
+    padding: 20px 40px;
+
+    border-radius: 24px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: all 0.3s ease;
+}
+
+.success-actions button:hover {
+    transform: translateY(-4px);
+}
+
+/* ======================================================
+   TIME
+====================================================== */
+
+.print-time {
+    margin-top: 25px;
+}
+.home-btn {
+    background:
+        linear-gradient(
+            135deg,
+            #0a56ff,
+            #0037a6
+        );
+
+    color: #ffffff;
+
+    border:
+        1px solid rgba(82, 145, 255, 0.45);
+
+    box-shadow:
+        0 10px 30px rgba(0, 89, 255, 0.35);
+}
+
+.download-btn {
+    background:
+        linear-gradient(
+            135deg,
+            #ff9b2f,
+            #ff5a00
+        );
+
+    color: #ffffff;
+
+    border:
+        1px solid rgba(255, 170, 70, 0.3);
+
+    box-shadow:
+        0 10px 30px rgba(255, 106, 0, 0.4);
+}
+
+.home-btn:hover,
+.download-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+
+    filter: brightness(1.08);
+}
+/* ======================================================
+   RESPONSIVE
+====================================================== */
+
+@media (max-width: 1100px) {
+
+    .ticket-left {
+        gap: 24px;
+    }
+
+    .poster-box img,
+    .no-poster {
+        width: 200px;
+        min-height: 320px;
+    }
+}
+
+@media (max-width: 992px) {
+
+    .cinema-ticket {
+        flex-direction: column;
+    }
+
+    .ticket-divider {
+        width: 100%;
+        height: 42px;
+    }
+
+    .dash-line {
+        width: 90%;
+        height: 2px;
+
+        border-left: none;
+
+        border-top:
+            2px dashed rgba(255,255,255,0.2);
+    }
+
+    .circle-top,
+    .circle-bottom {
+        top: 50%;
+
+        transform: translateY(-50%);
+    }
+
+    .circle-top {
+        left: -18px;
+    }
+
+    .circle-bottom {
+        left: auto;
+        right: -18px;
+    }
+
+    .ticket-right {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .ticket-left {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .ticket-info {
+        width: 100%;
+    }
+
+    .ticket-info h2 {
+        text-align: center;
+    }
+
+    .poster-box img,
+    .no-poster {
+        width: 220px;
+        min-height: 320px;
+    }
+
+    .email-box {
+        flex-direction: column;
+
+        gap: 20px;
+
+        align-items: flex-start;
+    }
+
+    .success-actions {
+        width: 100%;
+
+        flex-direction: column;
+    }
+
+    .success-actions button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+
+    .poster-box img,
+    .no-poster {
+        width: 180px;
+        min-height: 280px;
+    }
+
+    .detail-row {
+        grid-template-columns: 22px 90px 1fr;
+        gap: 10px;
+    }
+
+    .email-left h4 {
+        word-break: break-all;
+    }
+}
+
+/* ======================================================
+   PRINT
+====================================================== */
+
+@media print {
+
+    body * {
+        visibility: hidden;
+    }
+
+    .cinema-ticket,
+    .cinema-ticket * {
+        visibility: visible;
+    }
+
+    .cinema-ticket {
+        position: absolute;
+
+        top: 0;
+        left: 0;
+
+        width: 100%;
+    }
 }

@@ -13,6 +13,8 @@ import {
     MapPin,
     Building2,
     Navigation,
+    Phone,
+    Map,
 
     // =====================================================
     // ALERT ICONS
@@ -36,7 +38,9 @@ const initialFormData = {
     cinema_name: '',
     address: '',
     city: '',
-    slug: ''
+    slug: '',
+    hotline: '',
+    map_link: ''
 };
 
 const CinemaPage = () => {
@@ -261,6 +265,33 @@ const CinemaPage = () => {
 
         }
 
+        /* HOTLINE */
+
+        if (!formData.hotline.trim()) {
+
+            errors.hotline =
+                'Vui lòng nhập hotline';
+
+        } else if (
+            !/^[0-9]{9,11}$/.test(
+                formData.hotline.trim()
+            )
+        ) {
+
+            errors.hotline =
+                'Hotline không hợp lệ';
+
+        }
+
+        /* MAP LINK */
+
+        if (!formData.map_link.trim()) {
+
+            errors.map_link =
+                'Vui lòng nhập link Google Map';
+
+        }
+
         return errors;
 
     };
@@ -299,7 +330,11 @@ const CinemaPage = () => {
             city:
                 cinema.city || '',
             slug:
-                cinema.slug || ''
+                cinema.slug || '',
+            hotline:
+                cinema.hotline || '',
+            map_link:
+                cinema.map_link || ''
         });
 
         setIsFormOpen(true);
@@ -395,6 +430,37 @@ const CinemaPage = () => {
 
                     errorMessage =
                         'Địa chỉ phải từ 5 ký tự trở lên';
+
+                }
+
+                break;
+
+            case 'hotline':
+
+                if (!value.trim()) {
+
+                    errorMessage =
+                        'Vui lòng nhập hotline';
+
+                } else if (
+                    !/^[0-9]{9,11}$/.test(
+                        value.trim()
+                    )
+                ) {
+
+                    errorMessage =
+                        'Hotline không hợp lệ';
+
+                }
+
+                break;
+
+            case 'map_link':
+
+                if (!value.trim()) {
+
+                    errorMessage =
+                        'Vui lòng nhập link Google Map';
 
                 }
 
@@ -637,6 +703,54 @@ const CinemaPage = () => {
         },
 
         {
+            title: 'Hotline',
+            key: 'hotline',
+
+            render: (row) => (
+
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}
+                >
+                    <Phone size={16} />
+
+                    <span>
+                        {row.hotline}
+                    </span>
+                </div>
+
+            )
+        },
+
+        {
+            title: 'Google Map',
+            key: 'map_link',
+
+            render: (row) => (
+
+                <a
+                    href={row.map_link}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        color: '#60a5fa',
+                        textDecoration: 'none'
+                    }}
+                >
+                    <Map size={15} />
+                    Xem map
+                </a>
+
+            )
+        },
+
+        {
             title: 'Thành phố',
             key: 'city',
 
@@ -734,6 +848,20 @@ const CinemaPage = () => {
             name: 'city',
             type: 'text',
             placeholder: 'Ví dụ: Hồ Chí Minh'
+        },
+
+        {
+            label: 'Hotline',
+            name: 'hotline',
+            type: 'text',
+            placeholder: 'Ví dụ: 19006017'
+        },
+
+        {
+            label: 'Google Map Link',
+            name: 'map_link',
+            type: 'text',
+            placeholder: 'Dán link Google Map'
         },
 
         {
