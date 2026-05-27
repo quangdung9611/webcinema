@@ -144,6 +144,7 @@ exports.getShowtimeDetail = async (req, res) => {
                 s.room_id,
                 DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') as start_time,
                 m.title, 
+                m.slug,
                 m.poster_url, 
                 m.age_rating,
                 r.room_name, 
