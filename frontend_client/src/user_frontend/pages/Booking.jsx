@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { io } from "socket.io-client";
 
@@ -16,7 +16,7 @@ const Booking = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { movie } = location.state || {}; 
-
+    const { slug } = useParams(); // Lấy slug từ URL
     // --- 1. STATES QUẢN LÝ LUỒNG ---
     const [currentStep, setCurrentStep] = useState(1); 
     const [cinemas, setCinemas] = useState([]); 
