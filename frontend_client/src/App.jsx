@@ -201,7 +201,10 @@ function App() {
                                 <Route path="actors" element={<Actor />} />
                                 <Route path="actor/:slug" element={<ActorDetail />} /> 
                                 <Route path="cinema/:slug" element={<CinemaDetail />} /> 
-                                <Route path="booking" element={<Booking />} />
+                                <Route
+                                    path="booking/:slug"
+                                    element={<Booking />}
+                                />
                                 <Route path="foods" element={<Food />} />
                                 <Route path="cinema-genre" element={<CinemaGenre />} />
                                 <Route path="payment" element={<Payment />} />

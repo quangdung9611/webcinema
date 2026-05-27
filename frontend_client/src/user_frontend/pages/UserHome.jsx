@@ -421,31 +421,36 @@ const UserHome = () => {
 
       const showtimeData = res.data;
 
-      navigate('/booking', {
+      navigate(
+      `/booking/${showtimeData.slug}`,
+      {
         state: {
-          movie: {
-            title: showtimeData.title,
-            poster_url: showtimeData.poster_url,
-            age_rating: showtimeData.age_rating
-          },
+            movie: {
+                title: showtimeData.title,
+                poster_url: showtimeData.poster_url,
+                age_rating: showtimeData.age_rating
+            },
 
-          cinema: {
-            cinema_name: showtimeData.cinema_name
-          },
+            cinema: {
+                cinema_name: showtimeData.cinema_name
+            },
 
-          room: {
-            room_name: showtimeData.room_name,
-            room_type: showtimeData.room_type
-          },
+            room: {
+                room_name: showtimeData.room_name,
+                room_type: showtimeData.room_type
+            },
 
-          showtime: {
-            showtime_id: showtimeData.showtime_id,
-            start_time: showtimeData.start_time
-          },
+            showtime: {
+                showtime_id: showtimeData.showtime_id,
+                start_time: showtimeData.start_time
+            },
 
-          date: showtimeData.start_time.split(' ')[0]
+            date:
+                showtimeData.start_time
+                    .split(' ')[0]
         }
-      });
+    }
+);
 
     } catch (err) {
 
