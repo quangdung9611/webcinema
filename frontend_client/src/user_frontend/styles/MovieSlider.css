@@ -20,7 +20,6 @@
 }
 
 .movie-section-title {
-    color: #fff;
     font-size: 2rem;
     font-weight: 800;
     letter-spacing: 2px;
@@ -32,12 +31,6 @@
     width: 80px;
     height: 3px;
     border-radius: 20px;
-    background: linear-gradient(
-        to right,
-        transparent,
-        #8a2be2,
-        transparent
-    );
 }
 
 /* =========================================================
@@ -73,8 +66,6 @@
     aspect-ratio: 2 / 3;
     border-radius: 22px;
     overflow: hidden;
-
-    background: rgba(255,255,255,0.03);
 
     border: 1px solid rgba(255,255,255,0.08);
 
@@ -112,14 +103,6 @@
     position: absolute;
     inset: 0;
 
-    background:
-        linear-gradient(
-            to top,
-            rgba(0,0,0,0.95),
-            rgba(0,0,0,0.15),
-            transparent
-        );
-
     opacity: 0.9;
 }
 
@@ -135,11 +118,6 @@
     padding: 6px 12px;
 
     border-radius: 30px;
-
-    background:
-        rgba(138,43,226,0.95);
-
-    color: #fff;
 
     font-size: 0.7rem;
     font-weight: 700;
@@ -188,11 +166,6 @@
     border-radius: 50%;
     border: none;
 
-    background:
-        rgba(255,255,255,0.12);
-
-    color: #fff;
-
     backdrop-filter: blur(10px);
 
     display: flex;
@@ -206,9 +179,6 @@
 
 .play-btn:hover {
     transform: scale(1.12);
-
-    background:
-        rgba(138,43,226,0.95);
 
     box-shadow:
         0 0 20px rgba(138,43,226,0.6);
@@ -227,15 +197,6 @@
 
     border-radius: 50px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #8a2be2,
-            #a855f7
-        );
-
-    color: #fff;
-
     font-size: 0.82rem;
     font-weight: 700;
 
@@ -252,6 +213,7 @@
     box-shadow:
         0 0 20px rgba(138,43,226,0.5);
 }
+
 /* ===============================
    DETAIL BUTTON
 ================================= */
@@ -262,10 +224,8 @@
     border: none;
     border-radius: 12px;
 
-    background: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(10px);
 
-    color: #fff;
     font-size: 0.82rem;
     font-weight: 700;
     letter-spacing: 0.5px;
@@ -281,9 +241,6 @@
 }
 
 .detail-btn:hover {
-    background: #fff;
-    color: #111;
-
     transform: translateY(-3px) scale(1.03);
 
     box-shadow:
@@ -294,6 +251,7 @@
 .detail-btn:active {
     transform: scale(0.96);
 }
+
 /* =========================================================
    INFO
 ========================================================= */
@@ -303,8 +261,6 @@
 }
 
 .movie-info h3 {
-    color: #fff;
-
     font-size: 1rem;
     font-weight: 700;
 
@@ -334,15 +290,11 @@
     align-items: center;
     gap: 5px;
 
-    color: #f1c40f;
-
     font-size: 0.82rem;
     font-weight: 600;
 }
 
 .movie-type {
-    color: rgba(255,255,255,0.6);
-
     font-size: 0.78rem;
 }
 

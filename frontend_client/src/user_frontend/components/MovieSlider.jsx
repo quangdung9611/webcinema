@@ -71,16 +71,17 @@ const MovieSlider = ({ title, movies, baseUrl, onClickMovie }) => {
                   onClick={(e) => {
                     e.stopPropagation();
 
-                    navigate('/booking', {
-                      state: {
-                        movie: {
-                          movie_id: movie.movie_id,
-                          title: movie.title,
-                          poster_url: movie.poster_url,
-                          age_rating: movie.age_rating
-                        }
+                  navigate(`/booking/${movie.slug || movie.movie_slug}`, {
+                    state: {
+                      movie: {
+                        movie_id: movie.movie_id,
+                        title: movie.title,
+                        poster_url: movie.poster_url,
+                        age_rating: movie.age_rating,
+                        slug: movie.slug || movie.movie_slug
                       }
-                    });
+                    }
+                  });
                   }}
                 >
   <Ticket size={16} />

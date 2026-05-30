@@ -421,7 +421,7 @@ const UserHome = () => {
 
       const showtimeData = res.data;
 
-      navigate('/booking', {
+      navigate(`/booking/${showtimeData.slug}`, {
         state: {
           movie: {
             title: showtimeData.title,

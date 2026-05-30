@@ -2,12 +2,10 @@
    1. TỔNG THỂ & LAYOUT CHÍNH
    ========================================= */
 .actor-profile-page {
-  background-color: #000000;
-  color: #ffffff;
   min-height: 100vh;
   padding-top: 40px;
   padding-bottom: 40px;
-  font-family: 'Inter', sans-serif;
+  
 }
 
 .detail-content-flex {
@@ -21,11 +19,11 @@
 }
 
 .main-detail-col {
-  flex: 7.5; /* Ưu tiên diện tích cho nghệ sĩ */
+  flex: 7.5;
 }
 
 .sidebar-col {
-  flex: 2.5; /* Thu hẹp sidebar */
+  flex: 2.5;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -39,7 +37,7 @@
   align-items: center;
   gap: 30px;
   margin-bottom: 40px;
-  background-color: #0a0a0a;
+
   padding: 30px;
   border-radius: 20px;
   border: 1px solid #1a1a1a;
@@ -63,14 +61,12 @@
   font-size: 32px;
   font-weight: 800;
   margin-bottom: 10px;
-  color: #ffffff;
 }
 
 .badge-item {
   display: inline-block;
   margin-right: 15px;
   font-size: 14px;
-  color: #999;
 }
 
 .badge-item i {
@@ -94,11 +90,9 @@
 }
 
 .description-text {
-  background-color: #0a0a0a;
   padding: 25px;
   border-radius: 12px;
   line-height: 1.7;
-  color: #ccc;
   border: 1px solid #111;
 }
 
@@ -112,7 +106,6 @@
 }
 
 .actor-movie-card {
-  background-color: #0a0a0a;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid #1a1a1a;
@@ -151,14 +144,12 @@
 }
 
 /* =========================================
-   5. SIDEBAR PHIM ĐANG CHIẾU (ĐÃ THU NHỎ)
+   5. SIDEBAR PHIM ĐANG CHIẾU
    ========================================= */
 .sidebar-title-v2 {
-   
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
 }
 
 .blue-line {
@@ -170,15 +161,14 @@
 .sidebar-movie-item-vertical {
   margin-bottom: 25px;
   cursor: pointer;
-  /* ÉP KÍCH THƯỚC NHỎ LẠI */
-  width: 300px; 
+  width: 300px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .sidebar-poster-vertical {
   width: 100%;
-  height: 400px; /* Chiều cao ngắn lại cho cân đối */
+  height: 400px;
   position: relative;
   border-radius: 8px;
   overflow: hidden;
@@ -195,7 +185,6 @@
   margin-top: 8px;
   font-size: 13px;
   text-align: center;
-  color: #aaa;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -212,16 +201,12 @@
 }
 
 .rating-tag {
-  background: rgba(0, 0, 0, 0.85);
-  color: #ffc107;
   padding: 2px 5px;
   border-radius: 4px;
   font-size: 10px;
 }
 
 .age-limit-tag {
-  background: #e91e63;
-  color: #fff;
   padding: 2px 5px;
   border-radius: 4px;
   font-size: 10px;
@@ -248,12 +233,11 @@
     flex-direction: column;
   }
 
-  .main-detail-col, 
+  .main-detail-col,
   .sidebar-col {
     width: 100%;
   }
 
-  /* Sidebar khi nhảy xuống dưới sẽ dàn hàng ngang */
   .sidebar-movie-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -291,7 +275,7 @@
   }
 
   .sidebar-movie-list {
-    grid-template-columns: repeat(3, 1fr); /* 3 cột siêu nhỏ */
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .sidebar-poster-vertical {

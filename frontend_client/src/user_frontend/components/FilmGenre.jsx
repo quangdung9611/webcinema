@@ -141,21 +141,25 @@ const FilmGenre = () => {
 
                                         {/* NÚT ĐẶT VÉ: Cập nhật truyền state giống MovieSlider */}
                                         <button
-                                            className="genre-book-btn"
-                                            onClick={() => navigate('/booking', {
+                                        className="genre-book-btn"
+                                        onClick={() => navigate(
+                                            `/booking/${movie.slug || movie.movie_slug}`,
+                                            {
                                                 state: {
                                                     movie: {
                                                         movie_id: movie.movie_id,
                                                         title: movie.title,
                                                         poster_url: movie.poster_url,
-                                                        age_rating: movie.age_rating
+                                                        age_rating: movie.age_rating,
+                                                        slug: movie.slug || movie.movie_slug
                                                     }
                                                 }
-                                            })}
-                                        >
-                                            <Ticket size={16} style={{ marginRight: '5px' }} />
-                                            ĐẶT VÉ
-                                        </button>
+                                            }
+                                        )}
+                                    >
+                                        <Ticket size={16} style={{ marginRight: '5px' }} />
+                                        ĐẶT VÉ
+                                    </button>
                                     </div>
                                     <div className="movie-age-badge">
                                         {movie.age_rating || "T18"}

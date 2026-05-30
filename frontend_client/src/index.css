@@ -1,5 +1,6 @@
+
 /* ==========================================
-   1. GLOBAL RESET & DARK THEME OPTIMIZATION
+   1. GLOBAL RESET
 ========================================== */
 
 *,
@@ -11,7 +12,7 @@
 }
 
 /* ==========================================
-   2. TYPOGRAPHY SYSTEM SIZE
+   2. HTML & BODY
 ========================================== */
 
 html {
@@ -21,16 +22,13 @@ html {
     overflow-y: auto !important;
     overflow-x: hidden;
     scroll-behavior: smooth;
-    background-color: #1e1f26;
 }
 
 body {
     width: 100%;
     min-height: 100vh;
     height: auto !important;
-
-    background: #1e1f26 !important;
-
+    background: #1f0908 !important;
     color: #ffffff;
 
     font-family:
@@ -65,7 +63,6 @@ body {
     flex-direction: column;
     flex: 1;
     width: 100%;
-    background-color: #1e1f26;
 }
 
 /* ==========================================
@@ -75,11 +72,10 @@ body {
 main,
 .main-content {
     flex: 1 0 auto;
-    background-color: #1e1f26;
 }
 
 /* ==========================================
-   5. TYPOGRAPHY SYSTEM
+   5. TYPOGRAPHY
 ========================================== */
 
 h1,
@@ -106,8 +102,6 @@ h6,
     color: #ffffff;
 }
 
-/* ===== TITLE SIZE SYSTEM ===== */
-
 h1 {
     font-size: 3rem;
 }
@@ -131,8 +125,6 @@ h5 {
 h6 {
     font-size: 1rem;
 }
-
-/* ===== TEXT SIZE SYSTEM ===== */
 
 p,
 span,
@@ -201,7 +193,7 @@ ul {
 }
 
 /* ==========================================
-   10. CONTAINER & NOT FOUND
+   10. CONTAINER
 ========================================== */
 
 .container {
@@ -221,8 +213,6 @@ ul {
     align-items: center;
 
     text-align: center;
-
-    background-color: #1e1f26;
 }
 
 /* ==========================================
@@ -233,8 +223,6 @@ footer {
     flex-shrink: 0;
     margin-top: auto;
     padding: 60px 0;
-
-    background-color: #15161b;
 
     border-top: 1px solid #2a2b33;
 }
@@ -248,16 +236,16 @@ footer {
 }
 
 ::-webkit-scrollbar-track {
-    background: #1e1f26;
+    background: #1b1d27;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #33363f;
+    background: #3b3f52;
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #4de1c1;
+    background: #6ef7d7;
 }
 
 /* ==========================================
@@ -286,7 +274,6 @@ footer {
     h3 {
         font-size: 1.9rem;
     }
-
 }
 
 @media (max-width: 992px) {
@@ -349,3 +336,4 @@ footer {
         font-size: 1.4rem;
     }
 }
+

@@ -1,66 +1,65 @@
 /* ==========================================
-   FILM REVIEW - DARK CYBER THEME
-   Đồng bộ hoàn hảo với Cinema Star Ecosystem
-   ========================================== */
-
-:root {
-    --bg-main: #000000;
-    --bg-card: rgba(255, 255, 255, 0.03);
-    --text-main: #ffffff;
-    --text-muted: #aaaaaa;
-    --border-dark: rgba(255, 255, 255, 0.08);
-    --primary-cyan: #00d2ff;
-    --accent-gold: #f1c40f;
-}
+   FILM REVIEW - CLEAN VERSION
+========================================== */
 
 .genre-page-bg {
-    /* Nền Gradient tạo chiều sâu cho trang Review */
-    background: radial-gradient(circle at top right, #1a1a1a 0%, #000000 100%);
     padding: 60px 0;
+
     min-height: 100vh;
-    font-family: 'Inter', -apple-system, sans-serif;
-    color: var(--text-main);
 }
 
 .genre-content-flex {
     display: flex;
+
     max-width: 1250px;
+
     margin: 0 auto;
-    gap: 50px; 
+
+    gap: 50px;
+
     padding: 0 20px;
 }
 
-/* --- CỘT CHÍNH (CONTENT) --- */
+/* ==========================================
+   MAIN CONTENT
+========================================== */
+
 .main-genre-col {
     flex: 7.5;
+
     min-width: 0;
 }
 
 .section-header-galaxy {
     display: flex;
+
     align-items: center;
+
     gap: 15px;
+
     margin-bottom: 35px;
 }
 
 .blue-line {
     width: 5px;
     height: 30px;
-    background: linear-gradient(to bottom, var(--primary-cyan), #3a7bd5);
+
     border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
 }
 
 .section-title {
     font-size: 26px;
+
     font-weight: 900;
-    color: var(--text-main);
+
     text-transform: uppercase;
+
     letter-spacing: 1px;
-    background: linear-gradient(to right, #fff, #888);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
 }
+
+/* ==========================================
+   FILTER
+========================================== */
 
 .genre-filters-bar {
     margin-bottom: 40px;
@@ -68,65 +67,102 @@
 
 .filter-select-custom {
     padding: 12px 20px;
-    border: 1px solid var(--border-dark);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
     border-radius: 30px;
+
     font-size: 14px;
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #fff;
+
     outline: none;
+
     cursor: pointer;
+
     min-width: 200px;
+
     backdrop-filter: blur(10px);
+
     transition: 0.3s ease;
 }
 
 .filter-select-custom:hover {
-    border-color: var(--primary-cyan);
     box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
 }
 
-/* --- REVIEW CARDS (HIỆU ỨNG HI-TECH) --- */
+/* ==========================================
+   REVIEW LIST
+========================================== */
+
 .movie-genre-list {
     display: flex;
+
     flex-direction: column;
+
     gap: 25px;
 }
 
 .movie-card-horizontal {
     display: flex;
+
     gap: 30px;
+
     padding: 25px;
+
     border-radius: 20px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-dark);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
     backdrop-filter: blur(5px);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    transition:
+        all 0.4s cubic-bezier(
+            0.175,
+            0.885,
+            0.32,
+            1.275
+        );
+
     position: relative;
+
     overflow: hidden;
 }
 
-/* Hiệu ứng viền sáng nhẹ khi hover */
+/* Hover */
+
 .movie-card-horizontal:hover {
     transform: translateY(-5px) scale(1.01);
-    border-color: rgba(0, 210, 255, 0.3);
-    background: rgba(255, 255, 255, 0.06);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.4);
 }
+
+/* ==========================================
+   IMAGE
+========================================== */
 
 .movie-image-container {
     width: 280px;
-    aspect-ratio: 16/9;
+
+    aspect-ratio: 16 / 9;
+
     flex-shrink: 0;
+
     border-radius: 12px;
+
     overflow: hidden;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+
+    box-shadow:
+        0 10px 25px rgba(0,0,0,0.5);
+
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .movie-img-main {
     width: 100%;
     height: 100%;
+
     object-fit: cover;
+
     transition: 0.6s ease;
 }
 
@@ -134,10 +170,17 @@
     transform: scale(1.1);
 }
 
+/* ==========================================
+   CONTENT
+========================================== */
+
 .movie-content-info {
     flex: 1;
+
     display: flex;
+
     flex-direction: column;
+
     min-width: 0;
 }
 
@@ -147,104 +190,159 @@
 
 .movie-name-link h3 {
     font-size: 22px;
+
     font-weight: 800;
-    color: var(--text-main);
+
     margin: 0 0 12px 0;
+
     line-height: 1.3;
+
     transition: 0.3s;
 }
 
 .movie-name-link:hover h3 {
-    color: var(--primary-cyan);
-    text-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+    text-shadow:
+        0 0 10px rgba(0, 210, 255, 0.3);
 }
+
+/* ==========================================
+   META
+========================================== */
 
 .movie-meta-row {
     display: flex;
+
     align-items: center;
+
     gap: 20px;
+
     margin-bottom: 15px;
 }
 
 .btn-fb-like {
-    background: linear-gradient(45deg, #1877f2, var(--primary-cyan));
-    color: #fff;
     border: none;
+
     padding: 6px 16px;
+
     border-radius: 50px;
+
     font-size: 12px;
+
     font-weight: 700;
+
     display: flex;
+
     align-items: center;
+
     gap: 8px;
+
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(24, 119, 242, 0.3);
+
+    box-shadow:
+        0 4px 10px rgba(24, 119, 242, 0.3);
 }
 
 .view-count {
     display: flex;
+
     align-items: center;
+
     gap: 6px;
+
     font-size: 13px;
-    color: var(--text-muted);
 }
+
+/* ==========================================
+   SUMMARY
+========================================== */
 
 .movie-summary-text {
     font-size: 15px;
-    color: var(--text-muted);
+
     line-height: 1.8;
+
     margin-bottom: 15px;
+
     display: -webkit-box;
+
     -webkit-line-clamp: 3;
+
     -webkit-box-orient: vertical;
+
     overflow: hidden;
 }
 
 .movie-release-date {
     font-size: 12px;
-    color: #666;
+
     margin-top: auto;
-    background: rgba(255, 255, 255, 0.05);
+
     padding: 4px 12px;
+
     border-radius: 4px;
+
     width: fit-content;
 }
 
-/* --- CỘT PHẢI (SIDEBAR) --- */
+/* ==========================================
+   SIDEBAR
+========================================== */
+
 .sidebar-col {
     flex: 2.5;
 }
 
-/* --- RESPONSIVE --- */
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
 @media (max-width: 992px) {
-    .sidebar-col { display: none; }
-    .main-genre-col { flex: 1; }
+
+    .sidebar-col {
+        display: none;
+    }
+
+    .main-genre-col {
+        flex: 1;
+    }
 }
 
 @media (max-width: 768px) {
+
     .movie-card-horizontal {
         flex-direction: column;
+
         gap: 20px;
     }
+
     .movie-image-container {
         width: 100%;
+
         max-width: 400px;
     }
 }
 
 @media (max-width: 576px) {
+
     .movie-card-horizontal {
         padding: 20px;
+
         text-align: center;
     }
+
     .movie-image-container {
         margin: 0 auto;
     }
+
     .movie-meta-row {
         justify-content: center;
     }
+
     .movie-release-date {
         margin: 15px auto 0;
     }
-    .btn-fb-like span { display: none; } 
+
+    .btn-fb-like span {
+        display: none;
+    }
 }
