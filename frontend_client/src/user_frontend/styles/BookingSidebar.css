@@ -1,9 +1,9 @@
-/* =========================================
-   BOOKING SIDEBAR
-========================================= */
+/* =========================================================
+   BOOKING SIDEBAR - CINEMA RED THEME
+========================================================= */
 
 .ticket-sidebar {
-    width: 320px;
+    width: 340px;
     flex-shrink: 0;
 
     position: sticky;
@@ -16,43 +16,46 @@
     height: fit-content;
 }
 
-/* =========================================
+/* =========================================================
    POSTER
-========================================= */
+========================================================= */
 
 .poster-container {
     width: 100%;
+
     overflow: hidden;
 
     border-radius: 22px;
 
-    background: linear-gradient(
-        180deg,
-        rgba(255,255,255,0.06),
-        rgba(255,255,255,0.02)
-    );
+    background: rgba(0, 0, 0, 0.45);
 
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 50, 50, 0.18);
 
     box-shadow:
-        0 20px 40px rgba(0,0,0,0.28),
-        inset 0 1px 0 rgba(255,255,255,0.05);
+        0 0 25px rgba(255, 0, 0, 0.08),
+        0 10px 35px rgba(0, 0, 0, 0.45);
 }
 
 .poster-container img {
     width: 100%;
-    aspect-ratio: 2/3;
+    aspect-ratio: 2 / 3;
 
     object-fit: cover;
     display: block;
+
+    transition: 0.4s ease;
 }
 
-/* =========================================
-   INFO BOX
-========================================= */
+.poster-container:hover img {
+    transform: scale(1.03);
+}
+
+/* =========================================================
+   DETAILS BOX
+========================================================= */
 
 .ticket-details {
-    padding: 22px;
+    padding: 24px;
 
     border-radius: 22px;
 
@@ -60,195 +63,211 @@
     flex-direction: column;
     gap: 18px;
 
-    background: linear-gradient(
-        180deg,
-        rgba(255,255,255,0.06),
-        rgba(255,255,255,0.03)
-    );
+    background: rgba(0, 0, 0, 0.42);
 
-    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
 
-    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 50, 50, 0.15);
 
     box-shadow:
-        0 12px 30px rgba(0,0,0,0.22);
+        0 0 25px rgba(255, 0, 0, 0.06),
+        inset 0 0 20px rgba(255, 0, 0, 0.03);
 }
 
-/* =========================================
-   TITLE
-========================================= */
+/* =========================================================
+   MOVIE NAME
+========================================================= */
 
 .movie-name {
     margin: 0;
 
     font-size: 1.35rem;
-    font-weight: 700;
-    line-height: 1.45;
+    font-weight: 800;
+
+    line-height: 1.5;
 
     text-transform: uppercase;
 
-    color: white;
+    text-align: center;
+
+    color: #ffffff;
+
+    padding-bottom: 18px;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* =========================================
-   DETAIL ITEM
-========================================= */
+/* =========================================================
+   DETAIL ITEMS
+========================================================= */
 
 .detail-item {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
 
-    gap: 14px;
+    gap: 12px;
 
     padding-bottom: 12px;
 
-    font-size: 0.95rem;
-
-    color: rgba(255,255,255,0.72);
-
-    border-bottom: 1px dashed rgba(255,255,255,0.08);
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
 .detail-item:last-child {
-    padding-bottom: 0;
     border-bottom: none;
 }
 
+.detail-item span {
+    color: rgba(255, 255, 255, 0.65);
+
+    font-size: 0.92rem;
+}
+
 .detail-item strong {
-    color: white;
-    font-weight: 600;
+    color: #ffffff;
+
     text-align: right;
+
+    font-size: 0.92rem;
+    font-weight: 600;
 }
 
 .seats-list {
-    color: #facc15;
+    color: #ffcf4a;
 }
 
-/* =========================================
-   FOOD
-========================================= */
+/* =========================================================
+   FOOD SECTION
+========================================================= */
 
 .food-selected-box {
-    padding-top: 18px;
+    margin-top: 6px;
+
+    padding-top: 16px;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 
     display: flex;
     flex-direction: column;
-    gap: 12px;
 
-    border-top: 1px solid rgba(255,255,255,0.08);
+    gap: 12px;
 }
 
 .food-selected-title {
     margin: 0;
 
-    font-size: 0.82rem;
+    color: #ff5d5d;
 
-    letter-spacing: 1px;
+    font-size: 0.8rem;
+
+    letter-spacing: 2px;
+
     text-transform: uppercase;
-
-    color: rgba(255,255,255,0.55);
 }
 
 .food-selected-item {
     display: flex;
     justify-content: space-between;
-    gap: 12px;
+
+    gap: 10px;
+
+    color: rgba(255, 255, 255, 0.8);
 
     font-size: 0.92rem;
-
-    color: rgba(255,255,255,0.78);
 }
 
 .food-selected-item strong {
-    color: #f59e0b;
+    color: #ffb347;
 }
 
 .empty-food-text {
-    margin: 0;
+    color: rgba(255, 255, 255, 0.4);
 
-    font-size: 0.9rem;
     font-style: italic;
-
-    color: rgba(255,255,255,0.45);
 }
 
-/* =========================================
+/* =========================================================
    TOTAL
-========================================= */
+========================================================= */
 
 .total-price-box {
+    margin-top: 4px;
+
     padding-top: 18px;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 
     display: flex;
     flex-direction: column;
-    gap: 12px;
 
-    border-top: 1px solid rgba(255,255,255,0.08);
+    gap: 12px;
 }
 
 .price-row {
     display: flex;
     justify-content: space-between;
 
-    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.72);
 
-    color: rgba(255,255,255,0.72);
+    font-size: 0.95rem;
 }
 
 .price-row strong {
-    color: white;
+    color: #ffffff;
 }
 
 .grand-total {
-    margin-top: 6px;
-    padding-top: 16px;
+    margin-top: 10px;
+
+    padding-top: 18px;
 
     text-align: center;
 
-    border-top: 1px dashed rgba(255,255,255,0.1);
+    border-top: 1px dashed rgba(255, 255, 255, 0.12);
 }
 
 .grand-total p {
-    margin: 0 0 8px;
+    margin: 0 0 10px;
 
-    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.5);
 
     letter-spacing: 2px;
-    text-transform: uppercase;
 
-    color: rgba(255,255,255,0.45);
+    font-size: 0.8rem;
+
+    text-transform: uppercase;
 }
 
 .grand-total h3 {
     margin: 0;
 
-    font-size: 1.9rem;
-    font-weight: 800;
+    font-size: 2rem;
+    font-weight: 900;
 
-    background: linear-gradient(
-        135deg,
-        #f59e0b,
-        #f97316
-    );
+    color: #ff4040;
 
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    text-shadow:
+        0 0 10px rgba(255, 0, 0, 0.35),
+        0 0 20px rgba(255, 0, 0, 0.2);
 }
 
-/* =========================================
+/* =========================================================
    ACTIONS
-========================================= */
+========================================================= */
 
 .food-sidebar-actions {
     display: flex;
     flex-direction: column;
+
     gap: 12px;
+
+    margin-top: 10px;
 }
 
 .btn-next,
 .btn-back-food {
     width: 100%;
+
     border: none;
 
     cursor: pointer;
@@ -256,15 +275,17 @@
     transition: 0.25s ease;
 }
 
+/* CONTINUE BUTTON */
+
 .btn-next {
     height: 56px;
 
-    border-radius: 18px;
+    border-radius: 16px;
 
     background: linear-gradient(
-        135deg,
-        #7c3aed,
-        #9333ea
+        180deg,
+        #ff2e2e,
+        #b00000
     );
 
     color: white;
@@ -272,69 +293,83 @@
     font-size: 0.95rem;
     font-weight: 700;
 
+    letter-spacing: 1px;
+
     box-shadow:
-        0 12px 25px rgba(124,58,237,0.28);
+        0 0 20px rgba(255, 0, 0, 0.25);
 }
 
 .btn-next:hover {
     transform: translateY(-2px);
+
+    box-shadow:
+        0 0 30px rgba(255, 0, 0, 0.4);
 }
 
 .btn-next:disabled {
     opacity: 0.45;
+
     cursor: not-allowed;
 }
+
+/* BACK BUTTON */
 
 .btn-back-food {
     height: 52px;
 
     border-radius: 16px;
 
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
 
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 
-    color: rgba(255,255,255,0.8);
+    color: rgba(255, 255, 255, 0.8);
 
     font-size: 0.92rem;
     font-weight: 600;
 }
 
 .btn-back-food:hover {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255, 255, 255, 0.08);
+
     color: white;
 }
 
-/* =========================================
+/* =========================================================
    RESPONSIVE
-========================================= */
+========================================================= */
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
+    .ticket-sidebar {
+        width: 300px;
+    }
+}
 
+@media (max-width: 992px) {
     .ticket-sidebar {
         width: 100%;
 
         position: static;
 
         display: grid;
-        grid-template-columns: 240px 1fr;
+        grid-template-columns: 260px 1fr;
 
         gap: 24px;
     }
 
     .poster-container {
-        max-width: 240px;
+        max-width: 260px;
     }
 }
 
 @media (max-width: 768px) {
-
     .ticket-sidebar {
         grid-template-columns: 1fr;
     }
 
     .poster-container {
-        max-width: 220px;
+        max-width: 240px;
+
         margin: 0 auto;
     }
 
@@ -343,24 +378,23 @@
     }
 
     .movie-name {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
     }
 
     .grand-total h3 {
-        font-size: 1.6rem;
+        font-size: 1.7rem;
     }
 }
 
 @media (max-width: 480px) {
-
     .ticket-details {
         padding: 18px;
-        border-radius: 18px;
     }
 
     .detail-item {
         flex-direction: column;
-        gap: 6px;
+
+        gap: 5px;
     }
 
     .detail-item strong {
@@ -370,6 +404,5 @@
     .btn-next,
     .btn-back-food {
         height: 50px;
-        font-size: 0.9rem;
     }
 }

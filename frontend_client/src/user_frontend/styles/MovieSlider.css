@@ -1,10 +1,12 @@
+
 /* =========================================================
    MOVIE SECTION
 ========================================================= */
 
 .movie-section {
     width: 100%;
-    margin-bottom: 70px;
+    margin-bottom: 80px;
+    position: relative;
 }
 
 /* =========================================================
@@ -15,22 +17,41 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 18px;
-    margin-bottom: 40px;
+    gap: 22px;
+    margin-bottom: 48px;
 }
 
 .movie-section-title {
+    position: relative;
+
     font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: 2px;
+    font-weight: 900;
+
+    letter-spacing: 3px;
     text-transform: uppercase;
     margin: 0;
+
+    color: #ffffff;
+
+    text-shadow:
+        0 0 14px rgba(255,0,0,.15);
 }
 
 .movie-section-header .line {
-    width: 80px;
+    width: 85px;
     height: 3px;
-    border-radius: 20px;
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #ff2424,
+            #6f0000
+        );
+
+    box-shadow:
+        0 0 18px rgba(255,0,0,.22);
 }
 
 /* =========================================================
@@ -49,11 +70,13 @@
 
 .movie-card {
     cursor: pointer;
-    transition: 0.45s ease;
+    transition: .45s ease;
+    position: relative;
 }
 
 .movie-card:hover {
-    transform: translateY(-12px);
+    transform:
+        translateY(-12px);
 }
 
 /* =========================================================
@@ -64,36 +87,99 @@
     position: relative;
     width: 100%;
     aspect-ratio: 2 / 3;
-    border-radius: 22px;
+
+    border-radius: 24px;
     overflow: hidden;
 
-    border: 1px solid rgba(255,255,255,0.08);
+    background: #220707;
+
+    border: 1px solid rgba(255,255,255,.08);
+
+    transition: .45s ease;
 
     box-shadow:
-        0 10px 25px rgba(0,0,0,0.45);
+        0 10px 25px rgba(0,0,0,.45);
+}
+/* =========================================================
+   RED BORDER HOVER
+========================================================= */
 
-    transition: 0.45s ease;
+/* =========================================================
+   ULTRA RED BORDER HOVER
+========================================================= */
+
+.movie-poster::before {
+    content: "";
+
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+
+    border-radius: 30px;
+
+    opacity: 0;
+
+    transition: .35s ease;
+
+    z-index: 30;
+    pointer-events: none;
+
+    border: 4px solid rgba(255,20,20,.95);
+
+    box-shadow:
+        0 0 18px rgba(255,0,0,.85),
+        0 0 40px rgba(255,0,0,.65),
+        0 0 70px rgba(180,0,0,.45),
+        inset 0 0 20px rgba(255,0,0,.25);
+
+    transform: scale(.96);
+}
+
+/* HOVER FULL POSTER */
+
+.movie-card:hover .movie-poster::before {
+    opacity: 1;
+    transform: scale(1);
 }
 
 .movie-card:hover .movie-poster {
-    border-color: rgba(138,43,226,0.6);
+    transform: translateY(-4px);
+
+  border: 5px solid #ff0000;
 
     box-shadow:
-        0 0 25px rgba(138,43,226,0.25),
-        0 20px 40px rgba(0,0,0,0.6);
+        0 0 30px rgba(255,0,0,.30),
+        0 28px 55px rgba(0,0,0,.65);
 }
+/* =========================================================
+   IMAGE
+========================================================= */
 
 .movie-poster img {
     width: 100%;
     height: 100%;
+
     object-fit: cover;
 
-    transition: 0.7s ease;
+    border-radius: 22px;
+
+    transition: .8s ease;
+
+    filter:
+        brightness(.88)
+        contrast(1.05);
 }
 
 .movie-card:hover .movie-poster img {
     transform: scale(1.08);
+
+    filter:
+        brightness(1)
+        contrast(1.08);
 }
+
 
 /* =========================================================
    OVERLAY
@@ -103,7 +189,17 @@
     position: absolute;
     inset: 0;
 
-    opacity: 0.9;
+    opacity: .95;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.92),
+            rgba(90,0,0,.16),
+            transparent
+        );
+
+    z-index: 3;
 }
 
 /* =========================================================
@@ -115,18 +211,68 @@
     top: 14px;
     left: 14px;
 
-    padding: 6px 12px;
+    padding: 7px 14px;
 
-    border-radius: 30px;
+    border-radius: 999px;
 
-    font-size: 0.7rem;
+    font-size: .72rem;
     font-weight: 700;
 
     letter-spacing: 1px;
 
+    color: #fff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ff2424,
+            #850000
+        );
+
+    box-shadow:
+        0 0 18px rgba(255,0,0,.25);
+
     backdrop-filter: blur(10px);
 
-    z-index: 5;
+    z-index: 10;
+}
+
+/* =========================================================
+   MOVIE INFO / TITLE
+========================================================= */
+
+.movie-info {
+    padding-top: 18px;
+}
+
+.movie-info h3 {
+    font-size: 1rem;
+    font-weight: 800;
+
+    line-height: 1.55;
+
+    margin-bottom: 12px;
+
+    color: #ffffff;
+
+    letter-spacing: .4px;
+
+    overflow: hidden;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+
+    min-height: 52px;
+
+    transition: .35s ease;
+}
+
+.movie-card:hover .movie-info h3 {
+    color: #ff4d4d;
+
+    text-shadow:
+        0 0 12px rgba(255,0,0,.18);
 }
 
 /* =========================================================
@@ -147,9 +293,9 @@
     opacity: 0;
     transform: translateY(20px);
 
-    transition: 0.45s ease;
+    transition: .45s ease;
 
-    z-index: 10;
+    z-index: 12;
 }
 
 .movie-card:hover .movie-hover-content {
@@ -157,16 +303,23 @@
     transform: translateY(0);
 }
 
-/* PLAY BUTTON */
+/* =========================================================
+   PLAY BUTTON
+========================================================= */
 
 .play-btn {
-    width: 70px;
-    height: 70px;
+    width: 72px;
+    height: 72px;
 
     border-radius: 50%;
-    border: none;
+    border: 1px solid rgba(255,0,0,.25);
 
-    backdrop-filter: blur(10px);
+    background:
+        rgba(255,0,0,.12);
+
+    color: #ffffff;
+
+    backdrop-filter: blur(14px);
 
     display: flex;
     justify-content: center;
@@ -174,110 +327,126 @@
 
     cursor: pointer;
 
-    transition: 0.35s ease;
+    transition: .35s ease;
+
+    box-shadow:
+        0 0 18px rgba(255,0,0,.12);
 }
 
 .play-btn:hover {
-    transform: scale(1.12);
+    transform:
+        scale(1.12);
+
+    background:
+        rgba(255,0,0,.20);
 
     box-shadow:
-        0 0 20px rgba(138,43,226,0.6);
+        0 0 30px rgba(255,0,0,.32);
 }
 
-/* BOOK BUTTON */
+/* =========================================================
+   BOOK BUTTON
+========================================================= */
 
 .book-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
 
     border: none;
 
     padding: 12px 22px;
 
-    border-radius: 50px;
+    border-radius: 999px;
 
-    font-size: 0.82rem;
+    background:
+        linear-gradient(
+            135deg,
+            #ff2a2a,
+            #8d0000
+        );
+
+    color: #ffffff;
+
+    font-size: .82rem;
     font-weight: 700;
 
     letter-spacing: 1px;
 
     cursor: pointer;
 
-    transition: 0.35s ease;
+    transition: .35s ease;
+
+    box-shadow:
+        0 10px 22px rgba(0,0,0,.25);
 }
 
 .book-btn:hover {
-    transform: scale(1.05);
+    transform:
+        translateY(-2px)
+        scale(1.05);
 
     box-shadow:
-        0 0 20px rgba(138,43,226,0.5);
+        0 0 24px rgba(255,0,0,.28),
+        0 16px 28px rgba(0,0,0,.32);
 }
 
-/* ===============================
+/* =========================================================
    DETAIL BUTTON
-================================= */
+========================================================= */
 
 .detail-btn {
     min-width: 110px;
-    height: 42px;
-    border: none;
-    border-radius: 12px;
+    height: 44px;
 
-    backdrop-filter: blur(10px);
+    border-radius: 14px;
 
-    font-size: 0.82rem;
+    background:
+        rgba(255,255,255,.08);
+
+    color: #ffffff;
+
+    border:
+        1px solid rgba(255,255,255,.12);
+
+    backdrop-filter: blur(12px);
+
+    font-size: .82rem;
     font-weight: 700;
-    letter-spacing: 0.5px;
-
-    cursor: pointer;
-    transition: all 0.35s ease;
-
-    border: 1px solid rgba(255,255,255,0.15);
+    letter-spacing: .5px;
 
     display: flex;
     align-items: center;
     justify-content: center;
+
+    cursor: pointer;
+
+    transition: all .35s ease;
 }
 
 .detail-btn:hover {
-    transform: translateY(-3px) scale(1.03);
+    transform:
+        translateY(-3px)
+        scale(1.03);
+
+    background:
+        rgba(255,0,0,.12);
+
+    border-color:
+        rgba(255,0,0,.22);
 
     box-shadow:
-        0 10px 25px rgba(255,255,255,0.2),
-        0 0 15px rgba(255,255,255,0.15);
+        0 0 20px rgba(255,0,0,.16);
 }
 
 .detail-btn:active {
-    transform: scale(0.96);
+    transform: scale(.96);
 }
 
 /* =========================================================
-   INFO
+   MOVIE META
 ========================================================= */
-
-.movie-info {
-    padding-top: 16px;
-}
-
-.movie-info h3 {
-    font-size: 1rem;
-    font-weight: 700;
-
-    line-height: 1.5;
-
-    margin-bottom: 10px;
-
-    overflow: hidden;
-
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-
-    min-height: 48px;
-}
-
-/* META */
 
 .movie-meta {
     display: flex;
@@ -285,22 +454,61 @@
     align-items: center;
 }
 
+/* =========================================================
+   MOVIE RATING
+========================================================= */
+
 .movie-rating {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
 
-    font-size: 0.82rem;
-    font-weight: 600;
+    font-size: .82rem;
+    font-weight: 700;
+
+    color: #ffcb45;
 }
 
+/* =========================================================
+   MOVIE TYPE
+========================================================= */
+
 .movie-type {
-    font-size: 0.78rem;
+    font-size: .76rem;
+    font-weight: 600;
+
+    color: #dddddd;
+
+    background:
+        rgba(255,255,255,.06);
+
+    border:
+        1px solid rgba(255,255,255,.08);
+
+    padding: 6px 12px;
+
+    border-radius: 999px;
+
+    transition: .35s ease;
+}
+
+.movie-card:hover .movie-type {
+    border-color:
+        rgba(255,0,0,.18);
+
+    background:
+        rgba(255,0,0,.08);
+
+    color: #ffffff;
 }
 
 /* =========================================================
    RESPONSIVE
 ========================================================= */
+
+/* =========================
+   LARGE DESKTOP
+========================= */
 
 @media (max-width: 1200px) {
 
@@ -309,46 +517,182 @@
         gap: 22px;
     }
 
+    .movie-section-title {
+        font-size: 1.8rem;
+    }
+
+    .movie-poster {
+        border-radius: 22px;
+    }
+
+    .movie-poster::before {
+        border-radius: 22px;
+    }
+
+    .movie-info h3 {
+        font-size: .95rem;
+    }
+
 }
+
+/* =========================
+   TABLET
+========================= */
 
 @media (max-width: 992px) {
 
     .movies-grid {
         grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .movie-section {
+        margin-bottom: 60px;
+    }
+
+    .movie-section-header {
+        gap: 16px;
+        margin-bottom: 38px;
     }
 
     .movie-section-title {
-        font-size: 1.7rem;
+        font-size: 1.65rem;
+        letter-spacing: 2px;
+    }
+
+    .movie-section-header .line {
+        width: 60px;
+    }
+
+    .movie-card:hover {
+        transform: translateY(-8px);
+    }
+
+    .movie-info {
+        padding-top: 15px;
+    }
+
+    .movie-info h3 {
+        font-size: .9rem;
+        min-height: 48px;
+    }
+
+    .play-btn {
+        width: 62px;
+        height: 62px;
+    }
+
+    .book-btn {
+        padding: 11px 18px;
+        font-size: .75rem;
+    }
+
+    .detail-btn {
+        min-width: 100px;
+        height: 40px;
+        font-size: .75rem;
     }
 
 }
 
+/* =========================
+   MOBILE
+========================= */
+
 @media (max-width: 768px) {
+
+    .movie-section {
+        margin-bottom: 50px;
+    }
 
     .movies-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 18px;
     }
 
+    .movie-section-header {
+        gap: 12px;
+        margin-bottom: 30px;
+    }
+
     .movie-section-title {
-        font-size: 1.4rem;
+        font-size: 1.35rem;
+        letter-spacing: 1.5px;
+        text-align: center;
     }
 
     .movie-section-header .line {
-        width: 50px;
+        width: 45px;
+        height: 2px;
+    }
+
+    .movie-poster {
+        border-radius: 18px;
+    }
+
+    .movie-poster::before {
+        border-radius: 18px;
+    }
+
+    .movie-card:hover {
+        transform: translateY(-6px);
+    }
+
+    .movie-hover-content {
+        gap: 10px;
+    }
+
+    .movie-info {
+        padding-top: 14px;
+    }
+
+    .movie-info h3 {
+        font-size: .84rem;
+        line-height: 1.45;
+        min-height: 42px;
+    }
+
+    .movie-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .movie-rating {
+        font-size: .75rem;
+    }
+
+    .movie-type {
+        font-size: .68rem;
+        padding: 5px 10px;
+    }
+
+    .movie-badge {
+        font-size: .62rem;
+        padding: 5px 10px;
     }
 
     .play-btn {
-        width: 55px;
-        height: 55px;
+        width: 52px;
+        height: 52px;
     }
 
     .book-btn {
-        padding: 10px 16px;
-        font-size: 0.72rem;
+        padding: 10px 15px;
+        font-size: .7rem;
+    }
+
+    .detail-btn {
+        min-width: 88px;
+        height: 38px;
+        font-size: .7rem;
     }
 
 }
+
+/* =========================
+   SMALL MOBILE
+========================= */
 
 @media (max-width: 480px) {
 
@@ -356,24 +700,79 @@
         gap: 14px;
     }
 
+    .movie-section-header {
+        margin-bottom: 24px;
+    }
+
     .movie-section-title {
-        font-size: 1.1rem;
+        font-size: 1.05rem;
+        letter-spacing: 1px;
+    }
+
+    .movie-section-header .line {
+        width: 34px;
+    }
+
+    .movie-poster {
+        border-radius: 16px;
+    }
+
+    .movie-poster::before {
+        border-radius: 16px;
     }
 
     .movie-info h3 {
-        font-size: 0.85rem;
-        min-height: 42px;
+        font-size: .8rem;
+        min-height: 38px;
     }
 
     .movie-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
+        gap: 5px;
+    }
+
+    .movie-rating {
+        font-size: .7rem;
+    }
+
+    .movie-type {
+        font-size: .64rem;
+        padding: 4px 8px;
     }
 
     .movie-badge {
-        font-size: 0.6rem;
-        padding: 5px 10px;
+        font-size: .58rem;
+        padding: 4px 8px;
+    }
+
+    .play-btn {
+        width: 46px;
+        height: 46px;
+    }
+
+    .book-btn {
+        padding: 8px 13px;
+        font-size: .66rem;
+    }
+
+    .detail-btn {
+        min-width: 78px;
+        height: 34px;
+        font-size: .66rem;
     }
 
 }
+
+/* =========================================================
+   SMOOTH EFFECT
+========================================================= */
+
+.movie-card,
+.movie-poster,
+.movie-info h3,
+.play-btn,
+.book-btn,
+.detail-btn,
+.movie-type {
+    will-change: transform;
+}
+

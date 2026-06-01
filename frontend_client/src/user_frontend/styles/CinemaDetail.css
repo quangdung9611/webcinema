@@ -5,6 +5,9 @@
 .cinema-detail-page {
     width: 100%;
     overflow: hidden;
+
+    margin-top: 0 !important;
+    padding-top: 0 !important;
 }
 
 /* =========================================================
@@ -34,10 +37,14 @@
     flex-direction: column;
 
     gap: 16px;
+
+    color: #ffffff;
 }
 
 .spin-icon {
     animation: spin 1s linear infinite;
+
+    color: #ef4444;
 }
 
 @keyframes spin {
@@ -65,6 +72,9 @@
     align-items: center;
 
     overflow: hidden;
+
+    margin-top: 0;
+    padding-top: 0;
 }
 
 .hero-bg {
@@ -76,6 +86,8 @@
 
     object-fit: cover;
     object-position: center;
+
+    transform: scale(1.05);
 }
 
 .cinema-overlay {
@@ -85,8 +97,9 @@
     background:
         linear-gradient(
             180deg,
-            rgba(0, 0, 0, 0.4) 0%,
-            rgba(0, 0, 0, 0.88) 100%
+            rgba(0,0,0,.35) 0%,
+            rgba(0,0,0,.75) 55%,
+            rgba(10,10,10,.95) 100%
         );
 }
 
@@ -121,29 +134,35 @@
     border-radius: 999px;
 
     background:
-        rgba(255, 255, 255, 0.08);
+        rgba(239,68,68,.12);
 
     border:
-        1px solid rgba(255, 255, 255, 0.1);
+        1px solid rgba(239,68,68,.25);
 
-    color: #d8b4fe;
+    color: #ff8b8b;
 
     font-weight: 700;
     letter-spacing: 1px;
 
     margin-bottom: 24px;
+
+    backdrop-filter: blur(12px);
 }
 
 .hero-left h1 {
-    color: #fff;
+    color: #ffffff;
 
     font-size: 68px;
     font-weight: 800;
+
     line-height: 1.1;
 
     margin-bottom: 28px;
 
     text-transform: uppercase;
+
+    text-shadow:
+        0 0 20px rgba(255,0,0,.25);
 }
 
 .hero-info {
@@ -160,7 +179,11 @@
 
     gap: 12px;
 
-    color: #fff;
+    color: rgba(255,255,255,.9);
+}
+
+.hero-info-item svg {
+    color: #ef4444;
 }
 
 .map-link {
@@ -168,11 +191,11 @@
 
     text-decoration: none;
 
-    transition: 0.3s;
+    transition: .3s;
 }
 
 .map-link:hover {
-    opacity: 0.8;
+    color: #ff6b6b;
 }
 
 /* =========================================================
@@ -199,16 +222,31 @@
     border-radius: 18px;
 
     background:
-        rgba(255, 255, 255, 0.06);
+        rgba(255,255,255,.04);
 
     border:
-        1px solid rgba(255, 255, 255, 0.08);
+        1px solid rgba(255,255,255,.08);
 
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(14px);
 
-    color: #fff;
+    color: #ffffff;
+
+    transition: .3s;
 }
 
+.hero-select:hover {
+    border-color:
+        rgba(239,68,68,.35);
+
+    background:
+        rgba(239,68,68,.08);
+
+    transform: translateY(-2px);
+}
+
+.hero-select svg {
+    color: #ef4444;
+}
 /* =========================================================
    CONTENT
 ========================================================= */
@@ -232,10 +270,18 @@
 }
 
 .section-title h2 {
-    color: #fff;
+    color: #ffffff;
 
     font-size: 32px;
     font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: .5px;
+}
+
+.section-title svg {
+    color: #ef4444;
 }
 
 /* =========================================================
@@ -264,6 +310,10 @@
     gap: 16px;
 }
 
+/* =========================================================
+   DATE CARD
+========================================================= */
+
 .date-card {
     border: none;
     outline: none;
@@ -275,46 +325,71 @@
     border-radius: 22px;
 
     background:
-        rgba(255, 255, 255, 0.03);
+        rgba(255,255,255,.03);
 
     border:
-        1px solid rgba(255, 255, 255, 0.08);
+        1px solid rgba(255,255,255,.08);
 
     display: flex;
     flex-direction: column;
+
     align-items: center;
     justify-content: center;
 
     gap: 8px;
 
-    color: #fff;
+    color: #ffffff;
 
-    transition: 0.3s;
+    transition: .3s;
 }
 
 .date-card:hover {
-    transform: translateY(-3px);
+    transform:
+        translateY(-4px);
 
-    border-color: #a855f7;
+    border-color:
+        rgba(239,68,68,.45);
+
+    background:
+        rgba(239,68,68,.08);
+
+    box-shadow:
+        0 0 20px rgba(239,68,68,.15);
 }
+
+/* ACTIVE */
 
 .date-card.active {
     background:
         linear-gradient(
             135deg,
-            #a855f7,
-            #7c3aed
+            #ef4444,
+            #991b1b
         );
 
     border-color: transparent;
+
+    box-shadow:
+        0 0 25px rgba(239,68,68,.35);
+}
+
+.date-card.active .date-day,
+.date-card.active .date-number {
+    color: #fff;
 }
 
 .date-day {
+    font-size: .95rem;
     font-weight: 700;
+
+    color: #ffffff;
 }
 
 .date-number {
-    opacity: 0.9;
+    font-size: .85rem;
+
+    color:
+        rgba(255,255,255,.75);
 }
 
 /* =========================================================
@@ -328,10 +403,10 @@
     border-radius: 50%;
 
     border:
-        1px solid rgba(255, 255, 255, 0.08);
+        1px solid rgba(255,255,255,.08);
 
     background:
-        rgba(255, 255, 255, 0.03);
+        rgba(255,255,255,.03);
 
     display: flex;
     align-items: center;
@@ -339,23 +414,36 @@
 
     cursor: pointer;
 
-    color: #fff;
+    color: #ffffff;
 
-    transition: 0.3s;
+    transition: .3s;
 }
 
 .date-nav:hover {
+    transform: scale(1.08);
+
+    border-color:
+        rgba(239,68,68,.4);
+
     background:
-        rgba(168, 85, 247, 0.2);
+        rgba(239,68,68,.12);
+
+    color: #ef4444;
 }
 
+.date-nav svg {
+    width: 18px;
+    height: 18px;
+}
 /* =========================================================
    MOVIE GRID
 ========================================================= */
 
 .movie-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+
+    grid-template-columns:
+        repeat(4, 1fr);
 
     gap: 28px;
 }
@@ -372,19 +460,26 @@
     overflow: hidden;
 
     background:
-        rgba(255, 255, 255, 0.03);
+        rgba(255,255,255,.03);
 
     border:
-        1px solid rgba(255, 255, 255, 0.08);
+        1px solid rgba(255,255,255,.08);
 
-    transition: 0.35s;
+    backdrop-filter: blur(12px);
+
+    transition: .35s ease;
 }
 
 .movie-card:hover {
-    transform: translateY(-6px);
+    transform:
+        translateY(-8px);
 
     border-color:
-        rgba(168, 85, 247, 0.35);
+        rgba(239,68,68,.35);
+
+    box-shadow:
+        0 15px 35px rgba(0,0,0,.45),
+        0 0 25px rgba(239,68,68,.12);
 }
 
 /* =========================================================
@@ -411,11 +506,11 @@
     object-position: center;
 
     transition:
-        transform 0.4s ease;
+        transform .45s ease;
 }
 
 .movie-card:hover .movie-poster img {
-    transform: scale(1.06);
+    transform: scale(1.08);
 }
 
 /* =========================================================
@@ -431,12 +526,16 @@
     justify-content: center;
 
     background:
-        rgba(0, 0, 0, 0.55);
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.88),
+            rgba(0,0,0,.25)
+        );
 
     opacity: 0;
     visibility: hidden;
 
-    transition: 0.35s;
+    transition: .35s ease;
 }
 
 .movie-card:hover .movie-overlay {
@@ -445,7 +544,7 @@
 }
 
 /* =========================================================
-   BOOKING BTN
+   BOOKING BUTTON
 ========================================================= */
 
 .booking-btn {
@@ -461,19 +560,23 @@
     background:
         linear-gradient(
             135deg,
-            #a855f7,
-            #7c3aed
+            #ef4444,
+            #991b1b
         );
 
     color: #fff;
 
     font-weight: 700;
 
-    transition: 0.3s;
+    transition: .3s;
 }
 
 .booking-btn:hover {
-    transform: scale(1.05);
+    transform:
+        scale(1.06);
+
+    box-shadow:
+        0 0 18px rgba(239,68,68,.4);
 }
 
 /* =========================================================
@@ -518,6 +621,12 @@
     gap: 6px;
 
     color: #d1d5db;
+
+    font-size: .9rem;
+}
+
+.movie-meta svg {
+    color: #ef4444;
 }
 
 /* =========================================================
@@ -542,10 +651,10 @@
     border-radius: 14px;
 
     background:
-        rgba(255, 255, 255, 0.06);
+        rgba(255,255,255,.05);
 
     border:
-        1px solid rgba(255, 255, 255, 0.08);
+        1px solid rgba(255,255,255,.08);
 
     color: #fff;
 
@@ -554,19 +663,25 @@
 
     gap: 8px;
 
-    transition: 0.3s;
+    transition: .3s;
 }
 
 .showtime-btn:hover {
     background:
-        rgba(168, 85, 247, 0.2);
+        rgba(239,68,68,.12);
 
     border-color:
-        rgba(168, 85, 247, 0.4);
+        rgba(239,68,68,.35);
+
+    color: #ffb4b4;
+}
+
+.showtime-btn svg {
+    color: #ef4444;
 }
 
 /* =========================================================
-   EMPTY
+   EMPTY BOX
 ========================================================= */
 
 .empty-box {
@@ -582,12 +697,16 @@
     border-radius: 30px;
 
     background:
-        rgba(255, 255, 255, 0.03);
+        rgba(255,255,255,.03);
 
     border:
-        1px solid rgba(255, 255, 255, 0.08);
+        1px solid rgba(255,255,255,.08);
 
     color: #fff;
+}
+
+.empty-box svg {
+    color: #ef4444;
 }
 
 /* =========================================================
@@ -604,7 +723,10 @@
     border-radius: 30px;
 
     border:
-        1px solid rgba(255, 255, 255, 0.08);
+        1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.35);
 }
 
 .map-wrapper iframe {
@@ -644,6 +766,7 @@
 
     .cinema-hero-content {
         flex-direction: column;
+
         align-items: flex-start;
     }
 
@@ -678,6 +801,7 @@
 
     .date-wrapper {
         flex-direction: column;
+
         align-items: stretch;
     }
 
@@ -695,8 +819,8 @@
     }
 
     .movie-card {
-        max-width: 420px;
         width: 100%;
+        max-width: 420px;
 
         margin: 0 auto;
     }
@@ -725,6 +849,7 @@
 
     .movie-card {
         max-width: 100%;
+
         border-radius: 22px;
     }
 

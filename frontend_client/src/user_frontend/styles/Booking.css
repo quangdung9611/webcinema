@@ -1,5 +1,5 @@
 /* =========================================================
-   BOOKING PAGE UI - CINEMA STYLE
+   BOOKING PAGE - CINEMA RED BLACK
 ========================================================= */
 
 .booking-wrapper {
@@ -7,23 +7,7 @@
 
     padding: 40px 0;
 
-    background:
-        radial-gradient(circle at top left,
-            rgba(118,255,209,0.08),
-            transparent 25%),
-
-        radial-gradient(circle at bottom right,
-            rgba(124,58,237,0.12),
-            transparent 25%),
-
-        linear-gradient(
-            135deg,
-            #13141d 0%,
-            #181a25 45%,
-            #11131b 100%
-        );
-
-    color: #fff;
+    color: #ffffff;
 
     overflow: hidden;
 }
@@ -45,22 +29,17 @@
 
     padding: 24px;
 
-    border-radius: 32px;
+    border-radius: 30px;
 
-    background:
-        linear-gradient(
-            145deg,
-            rgba(255,255,255,0.04),
-            rgba(255,255,255,0.015)
-        );
+    background: rgba(0, 0, 0, 0.35);
 
-    border:
-        1px solid rgba(255,255,255,0.06);
+    border: 1px solid rgba(255, 40, 40, 0.12);
+
+    backdrop-filter: blur(12px);
 
     box-shadow:
-        0 25px 60px rgba(0,0,0,0.45);
-
-    backdrop-filter: blur(18px);
+        0 0 30px rgba(255, 0, 0, 0.06),
+        0 20px 50px rgba(0, 0, 0, 0.45);
 }
 
 /* =========================================================
@@ -72,51 +51,45 @@
 
     flex-shrink: 0;
 
-    padding: 22px;
-
-    border-radius: 24px;
-
-    background:
-        linear-gradient(
-            180deg,
-            rgba(255,255,255,0.05),
-            rgba(255,255,255,0.02)
-        );
-
-    border:
-        1px solid rgba(255,255,255,0.06);
-
-    height: fit-content;
-
     position: sticky;
     top: 20px;
+
+    height: fit-content;
 }
 
-/* poster */
+/* =========================================================
+   POSTER
+========================================================= */
+
 .poster-container {
     width: 100% !important;
 
-    max-width: 210px;
+    max-width: 220px;
 
     margin: 0 auto 24px;
 
-    border-radius: 18px;
-
     overflow: hidden;
 
-    position: relative;
+    border-radius: 18px;
 
     box-shadow:
-        0 18px 40px rgba(0,0,0,0.45);
+        0 0 25px rgba(255, 0, 0, 0.12),
+        0 15px 40px rgba(0, 0, 0, 0.45);
 }
 
 .poster-container img {
     width: 100%;
     height: auto;
 
+    object-fit: cover;
+
     display: block;
 
-    object-fit: cover;
+    transition: .35s ease;
+}
+
+.poster-container:hover img {
+    transform: scale(1.03);
 }
 
 /* =========================================================
@@ -131,6 +104,318 @@
 }
 
 /* =========================================================
+   STEP NAVIGATION
+========================================================= */
+
+.booking-nav-flex {
+    width: 100%;
+
+    display: flex;
+    align-items: stretch;
+
+    gap: 22px;
+
+    margin-bottom: 50px;
+}
+
+.nav-col {
+    display: flex;
+    flex-direction: column;
+
+    gap: 14px;
+}
+
+.nav-col label {
+    font-size: 0.72rem;
+    font-weight: 700;
+
+    letter-spacing: 2px;
+
+    text-transform: uppercase;
+
+    color: rgba(255,255,255,.55);
+}
+
+/* =========================================================
+   CINEMA SELECT
+========================================================= */
+
+.cinema-select {
+    width: 240px;
+}
+
+.cinema-select select {
+    width: 100%;
+    height: 60px;
+
+    padding: 0 18px;
+
+    border-radius: 16px;
+
+    border: 1px solid rgba(255,255,255,.08);
+
+    background: rgba(255,255,255,.04);
+
+    color: white;
+
+    outline: none;
+
+    font-size: .95rem;
+    font-weight: 600;
+
+    transition: .25s ease;
+}
+
+.cinema-select select:focus {
+    border-color: rgba(255, 70, 70, .55);
+
+    box-shadow:
+        0 0 0 4px rgba(255, 0, 0, .08);
+}
+
+.cinema-select option {
+    background: #1f0908;
+}
+
+/* =========================================================
+   DATE + TIME AREA
+========================================================= */
+
+.date-slider {
+    flex: 1.6;
+    min-width: 0;
+}
+
+.time-slider {
+    flex: 1;
+    min-width: 320px;
+}
+
+.slider-controls {
+    height: 60px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+}
+
+.scroll-list {
+    flex: 1;
+
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    overflow-x: auto;
+
+    scrollbar-width: none;
+
+    scroll-behavior: smooth;
+}
+
+.scroll-list::-webkit-scrollbar {
+    display: none;
+}
+
+/* =========================================================
+   ARROW BUTTON
+========================================================= */
+
+.slide-btn {
+    width: 42px;
+    height: 42px;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: rgba(255,255,255,.06);
+
+    color: white;
+
+    font-size: 1rem;
+
+    cursor: pointer;
+
+    flex-shrink: 0;
+
+    transition: .25s ease;
+}
+
+.slide-btn:hover {
+    background: #ff3434;
+
+    color: white;
+
+    box-shadow:
+        0 0 20px rgba(255,0,0,.25);
+}
+
+/* =========================================================
+   COMMON CARD
+========================================================= */
+
+.compact-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    cursor: pointer;
+
+    transition: .25s ease;
+}
+
+/* =========================================================
+   DATE CARD
+========================================================= */
+
+.date-slider .compact-card {
+    width: 76px;
+    min-width: 76px;
+
+    height: 76px;
+
+    border-radius: 50%;
+
+    flex-direction: column;
+
+    background: rgba(255,255,255,.04);
+
+    border: 1px solid rgba(255,255,255,.06);
+
+    backdrop-filter: blur(10px);
+}
+
+.date-slider .compact-card:hover {
+    transform:
+        translateY(-3px)
+        scale(1.05);
+
+    background:
+        rgba(255,0,0,.08);
+
+    border-color:
+        rgba(255,70,70,.45);
+
+    box-shadow:
+        0 0 18px rgba(255,0,0,.15);
+}
+
+.date-slider .compact-card.active {
+    background:
+        linear-gradient(
+            180deg,
+            #ff4040,
+            #b00000
+        );
+
+    border-color:
+        rgba(255,255,255,.12);
+
+    box-shadow:
+        0 0 25px rgba(255,0,0,.25);
+}
+
+.day-txt {
+    font-size: .62rem;
+
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    text-transform: uppercase;
+
+    margin-bottom: 4px;
+
+    opacity: .8;
+}
+
+.date-txt {
+    font-size: 1rem;
+
+    font-weight: 800;
+
+    line-height: 1;
+}
+
+.date-slider .compact-card.active .day-txt,
+.date-slider .compact-card.active .date-txt {
+    color: white;
+}
+
+/* =========================================================
+   TIME CARD
+========================================================= */
+
+.time-card {
+    min-width: 96px;
+
+    height: 60px;
+
+    border-radius: 14px;
+
+    background:
+        rgba(255,255,255,.04);
+
+    border:
+        1px solid rgba(255,255,255,.06);
+
+    font-size: .95rem;
+    font-weight: 700;
+}
+
+.time-card:hover {
+    transform: translateY(-2px);
+
+    border-color:
+        rgba(255,60,60,.45);
+
+    background:
+        rgba(255,0,0,.08);
+
+    box-shadow:
+        0 0 20px rgba(255,0,0,.15);
+}
+
+.time-card.active {
+    background:
+        linear-gradient(
+            180deg,
+            #ff2e2e,
+            #b00000
+        );
+
+    border-color:
+        rgba(255,255,255,.12);
+
+    box-shadow:
+        0 0 25px rgba(255,0,0,.25);
+}
+
+/* =========================================================
+   DISABLED
+========================================================= */
+
+.disabled-step {
+    opacity: .4;
+    pointer-events: none;
+}
+
+.no-showtimes {
+    height: 60px;
+
+    display: flex;
+    align-items: center;
+
+    color: rgba(255,255,255,.45);
+
+    font-size: .92rem;
+}
+/* =========================================================
    STEP NAV
 ========================================================= */
 
@@ -142,7 +427,7 @@
 
     gap: 22px;
 
-    margin-bottom: 52px;
+    margin-bottom: 50px;
 }
 
 .nav-col {
@@ -157,11 +442,11 @@
 
     font-weight: 700;
 
-    letter-spacing: 1.8px;
+    letter-spacing: 2px;
 
     text-transform: uppercase;
 
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,.55);
 }
 
 /* =========================================================
@@ -169,7 +454,7 @@
 ========================================================= */
 
 .cinema-select {
-    width: 230px;
+    width: 240px;
 }
 
 .cinema-select select {
@@ -178,33 +463,37 @@
 
     padding: 0 18px;
 
-    border-radius: 18px;
+    border-radius: 16px;
 
-    border:
-        1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,70,70,.15);
 
-    background:
-        rgba(255,255,255,0.04);
+    background: rgba(0,0,0,.45);
 
-    color: white;
+    color: #ffffff;
 
     outline: none;
 
-    font-size: 0.95rem;
+    font-size: .95rem;
     font-weight: 600;
 
-    transition: 0.25s ease;
+    transition: .25s ease;
+}
+
+.cinema-select select:hover {
+    border-color: rgba(255,70,70,.4);
 }
 
 .cinema-select select:focus {
-    border-color: #76ffd1;
+    border-color: #ff4444;
 
     box-shadow:
-        0 0 0 4px rgba(118,255,209,0.08);
+        0 0 0 4px rgba(255,0,0,.12),
+        0 0 20px rgba(255,0,0,.18);
 }
 
 .cinema-select option {
-    background: #1b1c28;
+    background: #1a0b0b;
+    color: white;
 }
 
 /* =========================================================
@@ -249,7 +538,10 @@
     display: none;
 }
 
-/* arrow */
+/* =========================================================
+   ARROW BUTTON
+========================================================= */
+
 .slide-btn {
     width: 42px;
     height: 42px;
@@ -258,23 +550,24 @@
 
     border-radius: 50%;
 
-    background:
-        rgba(255,255,255,0.06);
+    background: rgba(255,255,255,.05);
 
     color: white;
-
-    font-size: 1rem;
 
     cursor: pointer;
 
     flex-shrink: 0;
 
-    transition: 0.22s ease;
+    transition: .25s ease;
 }
 
 .slide-btn:hover {
-    background: #76ffd1;
-    color: #111;
+    background: #ff2e2e;
+
+    color: white;
+
+    box-shadow:
+        0 0 20px rgba(255,0,0,.35);
 }
 
 /* =========================================================
@@ -290,7 +583,7 @@
 
     cursor: pointer;
 
-    transition: 0.25s ease;
+    transition: .25s ease;
 }
 
 /* =========================================================
@@ -307,54 +600,46 @@
 
     flex-direction: column;
 
-    background:
-        rgba(255,255,255,0.035);
+    background: rgba(255,255,255,.03);
 
-    border:
-        1px solid rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,.06);
 
     backdrop-filter: blur(10px);
 }
 
-/* hover */
 .date-slider .compact-card:hover {
     transform:
         translateY(-3px)
         scale(1.04);
 
     border-color:
-        rgba(118,255,209,0.45);
+        rgba(255,70,70,.35);
 
     background:
-        rgba(118,255,209,0.08);
+        rgba(255,0,0,.08);
 
     box-shadow:
-        0 10px 24px rgba(118,255,209,0.15);
+        0 0 20px rgba(255,0,0,.15);
 }
 
-/* active */
 .date-slider .compact-card.active {
-
     background:
         linear-gradient(
-            135deg,
-            #76ffd1,
-            #5ce0ff
+            180deg,
+            #ff3b3b,
+            #b00000
         );
 
-    color: #111;
-
     border:
-        1px solid rgba(255,255,255,0.12);
+        1px solid rgba(255,255,255,.12);
 
     box-shadow:
-        0 0 0 5px rgba(118,255,209,0.10),
-        0 14px 35px rgba(118,255,209,0.28);
+        0 0 0 5px rgba(255,0,0,.10),
+        0 12px 28px rgba(255,0,0,.25);
 }
 
-/* thứ */
 .day-txt {
-    font-size: 0.62rem;
+    font-size: .62rem;
 
     font-weight: 700;
 
@@ -362,24 +647,22 @@
 
     text-transform: uppercase;
 
-    opacity: 0.72;
+    color: rgba(255,255,255,.7);
 
     margin-bottom: 4px;
 }
 
-/* ngày */
 .date-txt {
     font-size: 1rem;
 
     font-weight: 800;
 
-    line-height: 1;
+    color: #ffffff;
 }
 
-/* active text */
 .date-slider .compact-card.active .day-txt,
 .date-slider .compact-card.active .date-txt {
-    color: #111;
+    color: white;
 }
 
 /* =========================================================
@@ -393,13 +676,13 @@
 
     border-radius: 14px;
 
-    background:
-        rgba(255,255,255,0.04);
+    background: rgba(255,255,255,.04);
 
-    border:
-        1px solid rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,.06);
 
-    font-size: 0.95rem;
+    color: white;
+
+    font-size: .95rem;
     font-weight: 700;
 }
 
@@ -407,25 +690,28 @@
     transform: translateY(-2px);
 
     border-color:
-        rgba(124,58,237,0.45);
+        rgba(255,70,70,.4);
 
     background:
-        rgba(124,58,237,0.12);
+        rgba(255,0,0,.08);
 
     box-shadow:
-        0 10px 25px rgba(124,58,237,0.18);
+        0 10px 25px rgba(255,0,0,.12);
 }
 
 .time-card.active {
     background:
         linear-gradient(
-            135deg,
-            #7c3aed,
-            #8b5cf6
+            180deg,
+            #ff3b3b,
+            #b00000
         );
 
+    border-color:
+        rgba(255,255,255,.15);
+
     box-shadow:
-        0 14px 35px rgba(124,58,237,0.32);
+        0 0 20px rgba(255,0,0,.25);
 }
 
 /* =========================================================
@@ -433,7 +719,7 @@
 ========================================================= */
 
 .disabled-step {
-    opacity: 0.4;
+    opacity: .4;
     pointer-events: none;
 }
 
@@ -443,11 +729,10 @@
     display: flex;
     align-items: center;
 
-    color: rgba(255,255,255,0.45);
+    color: rgba(255,255,255,.45);
 
-    font-size: 0.92rem;
+    font-size: .92rem;
 }
-
 /* =========================================================
    SEAT AREA
 ========================================================= */
@@ -461,6 +746,7 @@
 
     display: flex;
     flex-direction: column;
+
     align-items: center;
 }
 
@@ -473,12 +759,12 @@
 
     text-align: center;
 
-    margin-bottom: 55px;
+    margin-bottom: 60px;
 }
 
 .screen-line {
     width: 92%;
-    height: 5px;
+    height: 6px;
 
     margin: 0 auto 14px;
 
@@ -488,12 +774,13 @@
         linear-gradient(
             to right,
             transparent,
-            #ff6b6b,
+            #ff4040,
             transparent
         );
 
     box-shadow:
-        0 0 25px rgba(255,107,107,0.45);
+        0 0 20px rgba(255,0,0,.35),
+        0 0 40px rgba(255,0,0,.15);
 
     transform:
         perspective(500px)
@@ -501,13 +788,13 @@
 }
 
 .screen-header span {
-    font-size: 0.72rem;
+    font-size: .75rem;
+
+    font-weight: 700;
 
     letter-spacing: 8px;
 
-    color: rgba(255,255,255,0.42);
-
-    font-weight: 700;
+    color: rgba(255,255,255,.45);
 }
 
 /* =========================================================
@@ -516,44 +803,32 @@
 
 .seats-layout {
     width: 100%;
-
     display: flex;
     flex-direction: column;
-
-    gap: 14px;
-
     align-items: center;
+    gap: 14px;
 }
 
 .seat-row {
     width: 100%;
-
     display: flex;
     justify-content: center;
     align-items: center;
-
     gap: 18px;
 }
 
 .row-id {
-    width: 20px;
-
+    width: 22px;
     text-align: center;
-
-    font-size: 0.82rem;
+    font-size: .82rem;
     font-weight: 700;
-
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,.55);
 }
 
 .row-items {
     display: grid;
-
-    grid-template-columns:
-        repeat(10, auto);
-
+    grid-template-columns: repeat(10, auto);
     gap: 12px;
-
     justify-content: center;
 }
 
@@ -563,22 +838,21 @@
 
 .seat {
     position: relative;
-
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
     cursor: pointer;
-
-    transition: 0.22s ease;
+    transition: .22s ease;
 }
 
-/* couple */
+/* COUPLE */
+
 .seat.COUPLE {
-    width: 76px;
+    width: 78px;
 }
 
 .seat-icon {
@@ -588,59 +862,97 @@
 
 .seat-number {
     position: absolute;
-
     top: 50%;
     left: 50%;
 
-    transform:
-        translate(-50%, -48%);
+    transform: translate(-50%, -48%);
 
-    font-size: 0.68rem;
+    font-size: .68rem;
     font-weight: 700;
 
-    color: #fff;
-
+    color: #ffffff;
     z-index: 2;
 }
 
-/* colors */
+/* =========================================================
+   NORMAL
+========================================================= */
+
 .seat.NORMAL {
-    color: #d1d5db;
+    color: #9ca3af;
 }
+
+/* =========================================================
+   VIP
+========================================================= */
 
 .seat.VIP {
-    color: #ffb357;
-}
-
-.seat.COUPLE {
-    color: #b66dff;
-}
-
-.seat.selected {
-    color: #76ffd1;
+    color: #fbbf24;
 
     filter:
-        drop-shadow(0 0 8px rgba(118,255,209,0.75))
-        drop-shadow(0 0 16px rgba(118,255,209,0.25));
+        drop-shadow(0 0 6px rgba(251,191,36,.25));
 }
+
+/* =========================================================
+   COUPLE
+========================================================= */
+
+.seat.COUPLE {
+    color: #c026d3;
+
+    filter:
+        drop-shadow(0 0 8px rgba(192,38,211,.25));
+}
+
+/* =========================================================
+   SELECTED
+========================================================= */
+
+.seat.selected {
+    color: #ff2e2e;
+
+    filter:
+        drop-shadow(0 0 10px rgba(255,0,0,.8))
+        drop-shadow(0 0 20px rgba(255,0,0,.4))
+        drop-shadow(0 0 35px rgba(255,0,0,.2));
+}
+
+.seat.selected .seat-number {
+    color: white;
+}
+
+/* =========================================================
+   SOLD
+========================================================= */
 
 .seat.sold {
-    color: #ef4444;
+    color: #5b0a0a;
 
-    opacity: 0.75;
+    opacity: .95;
 
     cursor: not-allowed;
+
+    filter:
+        brightness(.75);
 }
+
+/* =========================================================
+   MAINTENANCE
+========================================================= */
 
 .seat.maintenance {
-    color: #6b7280;
+    color: #4b5563;
 
-    opacity: 0.4;
-
-    filter: grayscale(1);
+    opacity: .45;
 
     cursor: not-allowed;
+
+    filter: grayscale(1);
 }
+
+/* =========================================================
+   HOVER
+========================================================= */
 
 .seat:hover:not(.sold):not(.maintenance) {
     transform:
@@ -648,12 +960,19 @@
         scale(1.08);
 }
 
+.seat:hover:not(.sold):not(.maintenance):not(.selected) {
+    color: #ff6666;
+
+    filter:
+        drop-shadow(0 0 8px rgba(255,0,0,.35));
+}
+
 /* =========================================================
    LEGEND
 ========================================================= */
 
 .seat-legend {
-    margin-top: 55px;
+    margin-top: 60px;
 
     display: flex;
     justify-content: center;
@@ -668,48 +987,68 @@
 
     gap: 10px;
 
-    font-size: 0.88rem;
+    font-size: .88rem;
 
-    color: rgba(255,255,255,0.72);
+    color: rgba(255,255,255,.78);
 }
 
 .leg-item .box {
     width: 20px;
     height: 20px;
 
-    border-radius: 7px;
+    border-radius: 6px;
 
     flex-shrink: 0;
 }
 
+/* NORMAL */
+
 .box.normal {
-    background: #d1d5db;
+    background: #9ca3af;
 }
 
+/* VIP */
+
 .box.vip {
-    background: #ffb357;
+    background: #fbbf24;
+
+    box-shadow:
+        0 0 10px rgba(251,191,36,.25);
 }
+
+/* COUPLE */
 
 .box.couple {
     width: 38px;
 
-    background: #b66dff;
+    background: #c026d3;
+
+    box-shadow:
+        0 0 10px rgba(192,38,211,.25);
 }
+
+/* SELECTED */
 
 .box.selected {
-    background: #76ffd1;
+    background: #ff2e2e;
+
+    box-shadow:
+        0 0 14px rgba(255,0,0,.5);
 }
+
+/* SOLD */
 
 .box.sold {
-    background: #ef4444;
+    background: #5b0a0a;
 }
+
+/* MAINTENANCE */
 
 .box.maintenance {
-    background: #6b7280;
+    background: #4b5563;
 }
-
 /* =========================================================
-   BUTTON
+   BUTTON ACTION
 ========================================================= */
 
 .booking-actions {
@@ -718,7 +1057,7 @@
     display: flex;
     justify-content: center;
 
-    margin-top: 55px;
+    margin-top: 60px;
 }
 
 .btn-next {
@@ -731,38 +1070,49 @@
 
     background:
         linear-gradient(
-            135deg,
-            #8b5cf6,
-            #6366f1
+            180deg,
+            #ff2e2e,
+            #a80000
         );
 
     color: white;
 
-    font-size: 0.95rem;
+    font-size: .95rem;
     font-weight: 700;
 
     letter-spacing: 1px;
 
     cursor: pointer;
 
-    transition: 0.25s ease;
+    transition: .25s ease;
 
     box-shadow:
-        0 15px 35px rgba(99,102,241,0.32);
+        0 0 20px rgba(255,0,0,.18),
+        0 15px 35px rgba(255,0,0,.22);
 }
 
 .btn-next:hover {
     transform:
         translateY(-3px)
         scale(1.02);
+
+    box-shadow:
+        0 0 30px rgba(255,0,0,.35),
+        0 20px 45px rgba(255,0,0,.28);
+}
+
+.btn-next:active {
+    transform:
+        translateY(0)
+        scale(.99);
 }
 
 .btn-next:disabled {
     background:
-        rgba(255,255,255,0.08);
+        rgba(255,255,255,.08);
 
     color:
-        rgba(255,255,255,0.3);
+        rgba(255,255,255,.3);
 
     box-shadow: none;
 
@@ -770,7 +1120,7 @@
 }
 
 /* =========================================================
-   EMPTY
+   EMPTY PLACEHOLDER
 ========================================================= */
 
 .placeholder-msg {
@@ -782,13 +1132,31 @@
     justify-content: center;
     align-items: center;
 
-    gap: 14px;
+    gap: 16px;
 
-    color: rgba(255,255,255,0.45);
+    text-align: center;
+
+    color: rgba(255,255,255,.45);
 }
 
 .placeholder-msg i {
-    font-size: 2rem;
+    font-size: 2.5rem;
+
+    color: rgba(255,0,0,.5);
+}
+
+.placeholder-msg h3 {
+    font-size: 1.15rem;
+
+    font-weight: 700;
+
+    color: rgba(255,255,255,.8);
+}
+
+.placeholder-msg p {
+    max-width: 400px;
+
+    line-height: 1.7;
 }
 
 /* =========================================================
@@ -802,7 +1170,7 @@
     }
 
     .ticket-sidebar {
-        width: 260px !important;
+        width: 280px !important;
     }
 
     .poster-container {
@@ -811,6 +1179,15 @@
 
     .row-items {
         gap: 10px;
+    }
+
+    .seat {
+        width: 38px;
+        height: 38px;
+    }
+
+    .seat.COUPLE {
+        width: 72px;
     }
 }
 
@@ -831,13 +1208,15 @@
 
         display: flex;
 
+        flex-direction: row;
+
         align-items: center;
 
-        gap: 20px;
+        gap: 24px;
     }
 
     .poster-container {
-        width: 170px !important;
+        width: 180px !important;
 
         margin: 0;
     }
@@ -847,9 +1226,13 @@
     }
 
     .cinema-select,
-    .time-slider,
-    .date-slider {
+    .date-slider,
+    .time-slider {
         width: 100%;
+    }
+
+    .time-slider {
+        min-width: 100%;
     }
 }
 
@@ -874,7 +1257,9 @@
     }
 
     .poster-container {
-        width: 180px !important;
+        width: 200px !important;
+
+        margin: 0 auto;
     }
 
     .date-slider .compact-card {
@@ -890,7 +1275,7 @@
     }
 
     .seat.COUPLE {
-        width: 66px;
+        width: 64px;
     }
 
     .row-items {
@@ -901,9 +1286,18 @@
         gap: 10px;
     }
 
+    .seat-number {
+        font-size: .6rem;
+    }
+
     .btn-next {
         width: 100%;
+
         min-width: unset;
+    }
+
+    .seat-legend {
+        gap: 18px;
     }
 }
 
@@ -926,7 +1320,7 @@
     }
 
     .nav-col label {
-        font-size: 0.64rem;
+        font-size: .62rem;
     }
 
     .date-slider .compact-card {
@@ -937,11 +1331,11 @@
     }
 
     .day-txt {
-        font-size: 0.52rem;
+        font-size: .52rem;
     }
 
     .date-txt {
-        font-size: 0.82rem;
+        font-size: .82rem;
     }
 
     .time-card {
@@ -956,11 +1350,11 @@
     }
 
     .seat.COUPLE {
-        width: 56px;
+        width: 54px;
     }
 
     .seat-number {
-        font-size: 0.55rem;
+        font-size: .52rem;
     }
 
     .row-items {
@@ -975,6 +1369,14 @@
         letter-spacing: 4px;
     }
 
+    .seat-legend {
+        gap: 14px;
+    }
+
+    .leg-item {
+        font-size: .78rem;
+    }
+
     .booking-actions {
         margin-top: 40px;
     }
@@ -982,6 +1384,10 @@
     .btn-next {
         height: 54px;
 
-        font-size: 0.85rem;
+        font-size: .85rem;
+    }
+
+    .placeholder-msg {
+        min-height: 350px;
     }
 }

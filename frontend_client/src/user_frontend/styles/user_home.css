@@ -1,7 +1,28 @@
+
 /* ============================================================
-    USER HOME - MODERN CINEMA SILVER
-    MATCH WITH BACKGROUND #3A3F52
+    USER HOME - NETFLIX HORROR RED BLACK
+    MATCH BACKGROUND #1f0908
 ============================================================ */
+
+:root {
+    --bg-main: #1f0908;
+    --bg-card: #2b0b0a;
+    --bg-hover: #3a0f0d;
+    --bg-input: #33100f;
+
+    --primary-red: #ff1e1e;
+    --secondary-red: #cc1111;
+    --dark-red: #8b0000;
+
+    --text-main: #ffffff;
+    --text-soft: #cfcfcf;
+    --border-red: rgba(255, 40, 40, 0.15);
+
+    --shadow-red:
+        0 0 18px rgba(255, 0, 0, 0.12);
+
+    --transition: .35s ease;
+}
 
 /* ============================================================
     MAIN LAYOUT
@@ -11,6 +32,12 @@
     min-height: 100vh;
     padding-top: 0 !important;
     margin-top: 0 !important;
+/* 
+    background:
+        radial-gradient(circle at top,
+            rgba(120,0,0,0.20),
+            transparent 35%),
+        #1f0908; */
 }
 
 .home-container {
@@ -51,6 +78,11 @@
 
     transform: scale(1);
     transition: transform 1s ease-in-out;
+
+    filter:
+        brightness(.52)
+        contrast(1.12)
+        saturate(1.1);
 }
 
 .swiper-slide-active .banner-img-fade-zoom {
@@ -63,7 +95,13 @@
     inset: 0;
     z-index: 2;
 
-    background: rgba(0, 0, 0, 0.28);
+    background:
+        linear-gradient(
+            to top,
+            rgba(31,9,8,1) 0%,
+            rgba(31,9,8,.6) 40%,
+            rgba(0,0,0,.3) 100%
+        );
 }
 
 /* ============================================================
@@ -89,37 +127,40 @@
 
     cursor: pointer;
 
-    border: 2px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,0,0,.18);
 
-    transition: 0.3s ease;
+    transition: .3s ease;
+
+    background: #2b0b0a;
 
     box-shadow:
-        0 6px 18px rgba(0,0,0,0.22);
+        0 8px 18px rgba(0,0,0,.45);
 }
 
 .mini-nav-item img {
     width: 100%;
     height: 100%;
-
     object-fit: cover;
 
-    filter: brightness(0.58);
+    filter:
+        brightness(.45)
+        contrast(1.1);
 
-    transition: 0.3s ease;
+    transition: .3s ease;
 }
 
 .mini-nav-item.active {
-    border-color: #dfe3ec;
+    border-color: #ff2b2b;
 
-    transform: translateY(-4px);
+    transform: translateY(-5px);
 
     box-shadow:
-        0 0 20px rgba(255,255,255,0.10),
-        0 10px 25px rgba(0,0,0,0.30);
+        0 0 20px rgba(255,0,0,.35),
+        0 10px 25px rgba(0,0,0,.45);
 }
 
 .mini-nav-item.active img {
-    filter: brightness(1);
+    filter: brightness(.95);
 }
 
 /* ============================================================
@@ -141,17 +182,22 @@
     align-items: center;
     gap: 16px;
 
-    padding: 22px;
+    padding: 24px;
 
-    border-radius: 22px;
+    border-radius: 24px;
 
-    background: #474d63;
+    background:
+        linear-gradient(
+            135deg,
+            #2a0908,
+            #1a0505
+        );
 
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,0,0,.12);
 
     box-shadow:
-        0 10px 30px rgba(0,0,0,0.30),
-        0 0 0 1px rgba(255,255,255,0.03);
+        0 10px 35px rgba(0,0,0,.5),
+        0 0 30px rgba(255,0,0,.08);
 }
 
 .quick-booking-selects {
@@ -165,77 +211,87 @@
 
 .quick-booking-selects select {
     width: 100%;
-    height: 50px;
+    height: 54px;
 
-    padding: 0 16px;
+    padding: 0 18px;
 
-    border-radius: 12px;
+    border-radius: 14px;
     outline: none;
 
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,0,0,.10);
 
-    background: #535a73;
+    background: #341110;
 
-    color: #f4f4f4;
+    color: #ffffff;
 
-    font-size: 0.92rem;
+    font-size: .92rem;
 
     cursor: pointer;
 
-    transition: 0.3s ease;
+    transition: .3s ease;
 }
 
 .quick-booking-selects select:hover:not(:disabled) {
-    border-color: rgba(255,255,255,0.22);
+    border-color: rgba(255,0,0,.28);
 
-    background: #5c647d;
+    background: #401414;
 }
 
 .quick-booking-selects select:focus {
-    border-color: rgba(255,255,255,0.35);
+    border-color: rgba(255,50,50,.55);
 
     box-shadow:
-        0 0 0 3px rgba(255,255,255,0.06);
+        0 0 0 4px rgba(255,0,0,.10);
 }
 
 .quick-booking-selects option {
-    background: #3A3F52;
+    background: #220707;
     color: #fff;
 }
 
-.btn-quick-booking {
-    height: 50px;
+/* ============================================================
+    BUTTON QUICK BOOKING
+============================================================ */
 
-    padding: 0 30px;
+.btn-quick-booking {
+    height: 54px;
+
+    padding: 0 34px;
 
     border: none;
-    border-radius: 12px;
+    border-radius: 14px;
 
-    background: #eceff6;
+    background:
+        linear-gradient(
+            135deg,
+            #ff2424,
+            #b30000
+        );
 
-    color: #232733;
+    color: #ffffff;
 
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: 1px;
 
     cursor: pointer;
 
     white-space: nowrap;
 
-    transition: 0.3s ease;
+    transition: .35s ease;
 
     box-shadow:
-        0 8px 18px rgba(0,0,0,0.20);
+        0 0 20px rgba(255,0,0,.18),
+        0 10px 24px rgba(0,0,0,.4);
 }
 
 .btn-quick-booking:hover {
-    transform: translateY(-2px);
-
-    background: #ffffff;
+    transform:
+        translateY(-3px)
+        scale(1.03);
 
     box-shadow:
-        0 14px 28px rgba(0,0,0,0.25),
-        0 0 20px rgba(255,255,255,0.10);
+        0 0 28px rgba(255,0,0,.30),
+        0 18px 34px rgba(0,0,0,.45);
 }
 
 /* ============================================================
@@ -247,34 +303,45 @@
 .promotions-section,
 .cinema-corner-section {
     width: 100%;
-    margin-top: 65px;
+    margin-top: 70px;
 }
 
 .section-header {
-    margin-bottom: 30px;
+    margin-bottom: 34px;
 }
 
 .section-title {
+    position: relative;
+
     color: #ffffff;
 
-    font-size: 1.9rem;
+    font-size: 2rem;
     font-weight: 800;
 
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
 
-    margin-bottom: 10px;
+    margin-bottom: 14px;
+
+    text-shadow:
+        0 0 10px rgba(255,0,0,.12);
 }
 
 .title-underline {
-    width: 65px;
+    width: 90px;
     height: 4px;
 
     border-radius: 999px;
 
-    background: #dfe3ec;
+    background:
+        linear-gradient(
+            90deg,
+            #ff1a1a,
+            #6f0000
+        );
 
     box-shadow:
-        0 0 10px rgba(255,255,255,0.15);
+        0 0 14px rgba(255,0,0,.28);
 }
 
 /* ============================================================
@@ -284,7 +351,6 @@
 .features-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-
     gap: 22px;
 }
 
@@ -293,34 +359,47 @@
     align-items: center;
     gap: 16px;
 
-    padding: 22px;
+    padding: 24px;
 
-    border-radius: 20px;
+    border-radius: 22px;
 
-    background: #474d63;
+    background:
+        linear-gradient(
+            145deg,
+            #2a0908,
+            #180505
+        );
 
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,0,0,.12);
 
-    transition: 0.3s ease;
+    transition: .35s ease;
 
     box-shadow:
-        0 10px 24px rgba(0,0,0,0.18);
+        0 12px 30px rgba(0,0,0,.35);
 }
 
 .feature-item:hover {
-    transform: translateY(-6px);
+    transform:
+        translateY(-8px);
 
-    background: #515872;
+    background:
+        linear-gradient(
+            145deg,
+            #35100f,
+            #220707
+        );
 
-    border-color: rgba(255,255,255,0.14);
+    border-color:
+        rgba(255,0,0,.30);
 
     box-shadow:
-        0 16px 35px rgba(0,0,0,0.28);
+        0 0 22px rgba(255,0,0,.14),
+        0 18px 38px rgba(0,0,0,.5);
 }
 
 .feature-icon-wrapper {
-    min-width: 62px;
-    height: 62px;
+    min-width: 65px;
+    height: 65px;
 
     display: flex;
     align-items: center;
@@ -328,12 +407,16 @@
 
     border-radius: 50%;
 
-    background: rgba(255,255,255,0.08);
+    background:
+        rgba(255,0,0,.10);
 
-    color: #ffffff;
+    color: #ff3a3a;
+
+    border:
+        1px solid rgba(255,0,0,.12);
 
     box-shadow:
-        inset 0 0 10px rgba(255,255,255,0.04);
+        inset 0 0 12px rgba(255,0,0,.12);
 }
 
 .feature-text h4 {
@@ -341,15 +424,16 @@
 
     color: #ffffff;
 
-    font-size: 0.92rem;
+    font-size: .95rem;
     font-weight: 700;
 
     line-height: 1.5;
 }
 
 .feature-text p {
-    color: #d4d8e2;
-    font-size: 0.84rem;
+    color: #bbbbbb;
+    font-size: .84rem;
+    line-height: 1.6;
 }
 
 /* ============================================================
@@ -359,16 +443,16 @@
 .movie-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-
-    gap: 24px;
+    gap: 26px;
 }
 
 .movie-item {
-    transition: transform 0.3s ease;
+    transition: .35s ease;
 }
 
 .movie-item:hover {
-    transform: translateY(-8px);
+    transform:
+        translateY(-10px);
 }
 
 .poster-wrapper {
@@ -379,12 +463,31 @@
 
     overflow: hidden;
 
-    border-radius: 18px;
+    border-radius: 22px;
 
-    border: 1px solid rgba(255,255,255,0.06);
+    background: #250909;
+
+    border:
+        1px solid rgba(255,0,0,.12);
 
     box-shadow:
-        0 12px 28px rgba(0,0,0,0.28);
+        0 12px 30px rgba(0,0,0,.35);
+}
+
+.poster-wrapper::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.55),
+            transparent 40%
+        );
+
+    pointer-events: none;
 }
 
 .poster-img {
@@ -393,11 +496,21 @@
 
     object-fit: cover;
 
-    transition: transform 0.5s ease;
+    transition:
+        transform .55s ease,
+        filter .4s ease;
+
+    filter:
+        brightness(.9)
+        contrast(1.05);
 }
 
 .movie-item:hover .poster-img {
     transform: scale(1.08);
+
+    filter:
+        brightness(1)
+        contrast(1.1);
 }
 
 .poster-hover {
@@ -408,11 +521,19 @@
     align-items: center;
     justify-content: center;
 
-    background: rgba(0,0,0,0.45);
+    background:
+        linear-gradient(
+            rgba(0,0,0,.15),
+            rgba(120,0,0,.55)
+        );
+
+    backdrop-filter: blur(2px);
 
     opacity: 0;
 
-    transition: 0.3s ease;
+    transition: .35s ease;
+
+    z-index: 2;
 }
 
 .poster-wrapper:hover .poster-hover {
@@ -420,12 +541,12 @@
 }
 
 .movie-name {
-    margin-top: 14px;
+    margin-top: 16px;
 
     color: #ffffff;
 
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: .95rem;
+    font-weight: 700;
 
     line-height: 1.5;
     text-align: center;
@@ -437,38 +558,55 @@
 
     overflow: hidden;
 
-    min-height: 46px;
+    min-height: 48px;
+
+    transition: .3s ease;
 }
 
+.movie-item:hover .movie-name {
+    color: #ff4545;
+}
+
+/* ============================================================
+    BUTTON BOOK NOW
+============================================================ */
+
 .btn-book {
-    padding: 10px 22px;
+    padding: 12px 24px;
 
     border: none;
     border-radius: 999px;
 
-    background: #eceff6;
+    background:
+        linear-gradient(
+            135deg,
+            #ff2020,
+            #a40000
+        );
 
-    color: #232733;
+    color: #ffffff;
 
-    font-size: 0.82rem;
+    font-size: .82rem;
     font-weight: 700;
+
+    letter-spacing: .5px;
 
     cursor: pointer;
 
-    transition: 0.3s ease;
+    transition: .35s ease;
 
     box-shadow:
-        0 8px 16px rgba(0,0,0,0.20);
+        0 0 18px rgba(255,0,0,.14),
+        0 8px 18px rgba(0,0,0,.35);
 }
 
 .btn-book:hover {
-    transform: scale(1.05);
-
-    background: #ffffff;
+    transform:
+        scale(1.08);
 
     box-shadow:
-        0 14px 28px rgba(0,0,0,0.28),
-        0 0 18px rgba(255,255,255,0.10);
+        0 0 28px rgba(255,0,0,.28),
+        0 16px 34px rgba(0,0,0,.45);
 }
 
 /* ============================================================
@@ -478,34 +616,48 @@
 .promotions-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-
     gap: 24px;
 }
 
 .promo-card {
+    position: relative;
     overflow: hidden;
 
     border-radius: 24px;
 
-    background: #474d63;
+    background:
+        linear-gradient(
+            145deg,
+            #2a0908,
+            #180505
+        );
 
-    border: 1px solid rgba(255,255,255,0.08);
+    border:
+        1px solid rgba(255,0,0,.12);
 
-    transition: 0.35s ease;
+    transition: .4s ease;
 
     box-shadow:
-        0 12px 28px rgba(0,0,0,0.20);
+        0 12px 30px rgba(0,0,0,.35);
 }
 
 .promo-card:hover {
-    transform: translateY(-10px);
+    transform:
+        translateY(-12px);
 
-    background: #525973;
+    border-color:
+        rgba(255,0,0,.30);
 
-    border-color: rgba(255,255,255,0.14);
+    background:
+        linear-gradient(
+            145deg,
+            #35100f,
+            #210707
+        );
 
     box-shadow:
-        0 20px 42px rgba(0,0,0,0.30);
+        0 0 26px rgba(255,0,0,.15),
+        0 24px 45px rgba(0,0,0,.55);
 }
 
 .promo-image {
@@ -513,6 +665,21 @@
     height: 240px;
 
     overflow: hidden;
+    position: relative;
+}
+
+.promo-image::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.7),
+            transparent
+        );
 }
 
 .promo-image img {
@@ -521,31 +688,45 @@
 
     object-fit: cover;
 
-    transition: 0.6s ease;
+    transition: .7s ease;
+
+    filter:
+        brightness(.82)
+        contrast(1.05);
 }
 
 .promo-card:hover .promo-image img {
     transform: scale(1.08);
+
+    filter:
+        brightness(.95)
+        contrast(1.08);
 }
 
 .promo-tag {
     position: absolute;
     top: 16px;
     left: 16px;
+    z-index: 5;
 
-    padding: 7px 14px;
+    padding: 8px 16px;
 
     border-radius: 999px;
 
-    background: rgba(255,255,255,0.92);
+    background:
+        linear-gradient(
+            135deg,
+            #ff2a2a,
+            #900000
+        );
 
-    color: #232733;
+    color: #fff;
 
-    font-size: 0.78rem;
+    font-size: .78rem;
     font-weight: 700;
 
     box-shadow:
-        0 6px 14px rgba(0,0,0,0.18);
+        0 0 18px rgba(255,0,0,.22);
 }
 
 .promo-info {
@@ -563,7 +744,7 @@
 .promo-info p {
     margin-bottom: 20px;
 
-    color: #d4d8e2;
+    color: #bdbdbd;
 
     line-height: 1.7;
 }
@@ -573,13 +754,12 @@
 ============================================================ */
 
 .cinema-corner-section {
-    margin-bottom: 80px;
+    margin-bottom: 0;
 }
 
 .cinema-news-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-
     gap: 24px;
 }
 
@@ -588,25 +768,39 @@
 
     border-radius: 24px;
 
-    background: #474d63;
+    background:
+        linear-gradient(
+            145deg,
+            #290808,
+            #180505
+        );
 
-    border: 1px solid rgba(255,255,255,0.08);
+    border:
+        1px solid rgba(255,0,0,.12);
 
-    transition: 0.35s ease;
+    transition: .4s ease;
 
     box-shadow:
-        0 12px 28px rgba(0,0,0,0.20);
+        0 12px 28px rgba(0,0,0,.35);
 }
 
 .cinema-news-card:hover {
-    transform: translateY(-10px);
+    transform:
+        translateY(-10px);
 
-    background: #525973;
+    border-color:
+        rgba(255,0,0,.30);
 
-    border-color: rgba(255,255,255,0.14);
+    background:
+        linear-gradient(
+            145deg,
+            #351010,
+            #220707
+        );
 
     box-shadow:
-        0 20px 42px rgba(0,0,0,0.30);
+        0 0 24px rgba(255,0,0,.14),
+        0 20px 40px rgba(0,0,0,.45);
 }
 
 .cinema-news-image {
@@ -614,6 +808,21 @@
     height: 230px;
 
     overflow: hidden;
+    position: relative;
+}
+
+.cinema-news-image::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.65),
+            transparent
+        );
 }
 
 .cinema-news-image img {
@@ -622,31 +831,46 @@
 
     object-fit: cover;
 
-    transition: 0.6s ease;
+    transition: .7s ease;
+
+    filter:
+        brightness(.82)
+        contrast(1.05);
 }
 
-.cinema-news-card:hover .cinema-news-image img {
+.cinema-news-card:hover
+.cinema-news-image img {
     transform: scale(1.08);
+
+    filter:
+        brightness(.95)
+        contrast(1.08);
 }
 
 .cinema-news-category {
     position: absolute;
     top: 16px;
     left: 16px;
+    z-index: 5;
 
-    padding: 7px 14px;
+    padding: 8px 16px;
 
     border-radius: 999px;
 
-    background: rgba(255,255,255,0.92);
+    background:
+        linear-gradient(
+            135deg,
+            #ff2424,
+            #870000
+        );
 
-    color: #232733;
+    color: #ffffff;
 
-    font-size: 0.78rem;
+    font-size: .78rem;
     font-weight: 700;
 
     box-shadow:
-        0 6px 14px rgba(0,0,0,0.18);
+        0 0 16px rgba(255,0,0,.22);
 }
 
 .cinema-news-content {
@@ -667,32 +891,39 @@
 
 .btn-detail {
     width: 100%;
-    height: 44px;
+    height: 46px;
 
-    border: 1px solid rgba(255,255,255,0.10);
+    border: none;
     border-radius: 14px;
 
-    background: #5a617a;
+    background:
+        linear-gradient(
+            135deg,
+            #ff2424,
+            #8d0000
+        );
 
     color: #ffffff;
 
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: .4px;
 
     cursor: pointer;
 
-    transition: 0.3s ease;
+    transition: .35s ease;
 
     box-shadow:
-        0 8px 18px rgba(0,0,0,0.18);
+        0 0 16px rgba(255,0,0,.14),
+        0 8px 20px rgba(0,0,0,.35);
 }
 
 .btn-detail:hover {
-    transform: translateY(-2px);
-
-    background: #666f89;
+    transform:
+        translateY(-3px);
 
     box-shadow:
-        0 14px 28px rgba(0,0,0,0.25);
+        0 0 26px rgba(255,0,0,.24),
+        0 16px 30px rgba(0,0,0,.45);
 }
 
 /* ============================================================
@@ -703,9 +934,26 @@
     width: 8px;
 }
 
+::-webkit-scrollbar-track {
+    background: #160505;
+}
+
 ::-webkit-scrollbar-thumb {
     border-radius: 999px;
-    background: rgba(255,255,255,0.18);
+
+    background:
+        linear-gradient(
+            #ff2424,
+            #710000
+        );
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background:
+        linear-gradient(
+            #ff4040,
+            #950000
+        );
 }
 
 /* ============================================================
@@ -797,7 +1045,7 @@
     }
 
     .movie-name {
-        font-size: 0.82rem;
+        font-size: .82rem;
     }
 
     .feature-item {
@@ -810,3 +1058,6 @@
         padding: 18px;
     }
 }
+
+
+
