@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const db = require('../Config/db');
-
+const MailServiceTicket =
+    require('../Services/MailServiceTicket');
 /**
  * ==========================================
  * HÀM HỖ TRỢ (HELPER FUNCTIONS)
@@ -422,4 +423,225 @@ exports.clearBookingHistory = async (req, res) => {
     } finally {
         if (connection) connection.release();
     }
+};
+
+exports.sendResetOTP = async (req, res) => {
+
+    const { email } = req.body;
+
+    try {
+
+        const [users] = await db.query(
+            `
+            SELECT user_id
+            FROM users
+            WHERE email = ?
+            `,
+            [email]
+        );
+
+        if (users.length === 0) {
+
+            return res.status(404).json({
+                message: 'Email không tồn tại'
+            });
+
+        }
+
+        const otp =
+            Math.floor(
+                100000 + Math.random() * 900000
+            ).toString();
+
+        otpStorage[email] = {
+
+            otp,
+
+            expiresAt:
+                Date.now() +
+                5 * 60 * 1000
+
+        };
+
+        await MailServiceTicket
+            .sendResetPasswordOTP(
+                email,
+                otp
+            );
+
+        res.status(200).json({
+
+            message:
+                'OTP đã được gửi'
+
+        });
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+
+            message:
+                'Lỗi gửi OTP'
+
+        });
+
+    }
+
+};
+
+exports.verifyResetOTP = async (req, res) => {
+
+    const {
+        email,
+        otp
+    } = req.body;
+
+    try {
+
+        const savedOtp =
+            otpStorage[email];
+
+        if (!savedOtp) {
+
+            return res.status(400).json({
+
+                message:
+                    'OTP không tồn tại'
+
+            });
+
+        }
+
+        if (
+            Date.now() >
+            savedOtp.expiresAt
+        ) {
+
+            delete otpStorage[email];
+
+            return res.status(400).json({
+
+                message:
+                    'OTP đã hết hạn'
+
+            });
+
+        }
+
+        if (
+            savedOtp.otp !== otp
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    'OTP không chính xác'
+
+            });
+
+        }
+
+        res.status(200).json({
+
+            message:
+                'OTP hợp lệ'
+
+        });
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+
+            message:
+                'Lỗi xác thực OTP'
+
+        });
+
+    }
+
+};
+
+exports.resetPassword = async (req, res) => {
+
+    const {
+
+        email,
+        otp,
+        password
+
+    } = req.body;
+
+    try {
+
+        const savedOtp =
+            otpStorage[email];
+
+        if (!savedOtp) {
+
+            return res.status(400).json({
+
+                message:
+                    'OTP không hợp lệ'
+
+            });
+
+        }
+
+        if (
+            savedOtp.otp !== otp
+        ) {
+
+            return res.status(400).json({
+
+                message:
+                    'OTP không chính xác'
+
+            });
+
+        }
+
+        const hashedPassword =
+            await bcrypt.hash(
+                password,
+                10
+            );
+
+        await db.query(
+            `
+            UPDATE users
+            SET password = ?
+            WHERE email = ?
+            `,
+            [
+                hashedPassword,
+                email
+            ]
+        );
+
+        delete otpStorage[email];
+
+        res.status(200).json({
+
+            message:
+                'Đổi mật khẩu thành công'
+
+        });
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+
+            message:
+                'Lỗi cập nhật mật khẩu'
+
+        });
+
+    }
+
 };

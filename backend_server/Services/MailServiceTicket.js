@@ -3,7 +3,6 @@
 // =========================================================
 
 const path = require('path');
-
 const fs = require('fs');
 
 const transporter =
@@ -14,6 +13,9 @@ const OtpEmailTemplate =
 
 const TicketEmailTemplate =
     require('../Templates/TicketEmailTemplate');
+
+const ResetPasswordOtpTemplate =
+    require('../Templates/ResetPasswordOtpTemplate');
 
 // =========================================================
 // MAIL SERVICE
@@ -27,12 +29,10 @@ const MailServiceTicket = {
 
     sendOTP: async (email, otp, bookingId) => {
 
-        // DEBUG
         console.log(
             `DEBUG: Nhận yêu cầu gửi OTP tới: ${email}, OTP: ${otp}, BookingID: ${bookingId}`
         );
 
-        // CHECK EMAIL
         if (!email) {
 
             console.error(
@@ -50,11 +50,6 @@ const MailServiceTicket = {
 
             const info = await transporter.sendMail({
 
-                // =================================================
-                // SENDER EMAIL ĐÃ VERIFY TRÊN BREVO
-                // =================================================
-
-                // Đã đổi thành email tên miền của bạn
                 from:
                     `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
 
@@ -64,7 +59,10 @@ const MailServiceTicket = {
                     `[${otp}] Mã xác thực thanh toán Cinema Star`,
 
                 html:
-                    OtpEmailTemplate(otp, bookingId)
+                    OtpEmailTemplate(
+                        otp,
+                        bookingId
+                    )
 
             });
 
@@ -76,8 +74,7 @@ const MailServiceTicket = {
 
             return info;
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.log(
                 '❌ OTP MAIL ERROR'
@@ -86,7 +83,9 @@ const MailServiceTicket = {
             console.log(err);
 
             throw err;
+
         }
+
     },
 
     // =====================================================
@@ -102,77 +101,36 @@ const MailServiceTicket = {
 
         try {
 
-            // =================================================
-            // GET POSTER
-            // =================================================
-
             const {
-
                 moviePoster
-
             } = ticketData;
 
-            // =================================================
-            // FILE NAME
-            // =================================================
-
             const fileName = moviePoster
-
                 ? path.basename(moviePoster)
-
                 : null;
-
-            // =================================================
-            // ABSOLUTE PATH
-            // =================================================
 
             const absolutePath = fileName
-
                 ? path.join(
-
                     __dirname,
-
                     '..',
-
                     'uploads',
-
                     'posters',
-
                     fileName
-
                 )
-
                 : null;
 
-            // =================================================
-            // CHECK FILE EXISTS
-            // =================================================
-
             const fileExists =
-
                 absolutePath &&
-
                 fs.existsSync(absolutePath);
 
             console.log({
-
                 fileName,
                 absolutePath,
                 fileExists
-
             });
-
-            // =================================================
-            // MAIL OPTIONS
-            // =================================================
 
             const mailOptions = {
 
-                // =================================================
-                // VERIFIED BREVO SENDER
-                // =================================================
-
-                // Đã đổi thành email tên miền của bạn
                 from:
                     `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
 
@@ -181,16 +139,11 @@ const MailServiceTicket = {
                 subject:
                     `[VÉ ĐIỆN TỬ] ${ticketData.movieTitle?.toUpperCase()} - MÃ ĐƠN #${ticketData.bookingId}`,
 
-                html: TicketEmailTemplate(
-
-                    ticketData,
-                    fileExists
-
-                ),
-
-                // =================================================
-                // ATTACHMENTS
-                // =================================================
+                html:
+                    TicketEmailTemplate(
+                        ticketData,
+                        fileExists
+                    ),
 
                 attachments: fileExists
                     ? [
@@ -204,37 +157,84 @@ const MailServiceTicket = {
 
             };
 
-            // =================================================
-            // SEND MAIL
-            // =================================================
-
             console.log(
                 '📨 Đang gửi vé điện tử...'
             );
 
-            const info = await transporter.sendMail(
-
-                mailOptions
-
-            );
+            const info =
+                await transporter.sendMail(
+                    mailOptions
+                );
 
             console.log(
-
                 '✅ TICKET MAIL SENT SUCCESSFULLY'
-
             );
 
             console.log(info);
 
             return info;
 
-        }
-        catch (err) {
+        } catch (err) {
 
             console.log(
-
                 '❌ TICKET MAIL ERROR'
+            );
 
+            console.log(err);
+
+            throw err;
+
+        }
+
+    },
+
+    // =====================================================
+    // SEND RESET PASSWORD OTP
+    // =====================================================
+
+    sendResetPasswordOTP: async (
+
+        email,
+        otp
+
+    ) => {
+
+        try {
+
+            console.log(
+                '📨 Đang gửi OTP khôi phục mật khẩu...'
+            );
+
+            const info =
+                await transporter.sendMail({
+
+                    from:
+                        `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+
+                    to: email,
+
+                    subject:
+                        `[${otp}] Mã OTP khôi phục mật khẩu`,
+
+                    html:
+                        ResetPasswordOtpTemplate(
+                            otp
+                        )
+
+                });
+
+            console.log(
+                '✅ RESET PASSWORD OTP SENT SUCCESSFULLY'
+            );
+
+            console.log(info);
+
+            return info;
+
+        } catch (err) {
+
+            console.log(
+                '❌ RESET PASSWORD OTP ERROR'
             );
 
             console.log(err);
