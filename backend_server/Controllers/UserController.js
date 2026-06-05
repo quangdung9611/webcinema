@@ -442,8 +442,8 @@ exports.sendResetOTP = async (req, res) => {
 
         if (users.length === 0) {
 
-            return res.status(404).json({
-                message: 'Email không tồn tại'
+            return res.status(200).json({
+                message: 'Nếu email tồn tại trong hệ thống, mã OTP đã được gửi.'
             });
 
         }

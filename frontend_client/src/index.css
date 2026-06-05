@@ -28,13 +28,22 @@ body {
     width: 100%;
     min-height: 100vh;
     height: auto !important;
-    background: 
-       /* Thay thế dòng radial-gradient cũ bằng dòng này */
-       radial-gradient(circle at center, rgba(150, 0, 0, 0.3) 0%, rgba(31, 9, 8, 0.8) 40%),
-        linear-gradient(90deg, #0a0303 0%, transparent 20%, transparent 80%, #0a0303 100%),
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(220, 38, 38, 0.10) 0%,
+            rgba(31, 9, 8, 0.85) 45%
+        ),
+        linear-gradient(
+            90deg,
+            #0a0303 0%,
+            transparent 20%,
+            transparent 80%,
+            #0a0303 100%
+        ),
         #1f0908;
 
-    background-blend-mode: screen, normal, normal; /* Điều chỉnh cho khớp với 3 lớp */
+    background-blend-mode: screen, normal, normal; 
     background-repeat: no-repeat;
     background-attachment: fixed;
     background-size: cover;

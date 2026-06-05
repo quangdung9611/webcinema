@@ -1,397 +1,940 @@
-
-/* ==========================================
-   2. LAYOUT: POSTER VS INFO
-   ========================================== */
-.netflix-detail-container {
-    padding-top: 80px;
-    background-color: #000000;
-    min-height: 100vh;
+/* ==========================================================================
+   1. HERO BANNER NGANG (FULL SCREEN WIDE)
+   ========================================================================== */
+.cinema-hero-banner {
+  position: relative;
+  width: 100%;
+  height: 550px;
+  overflow: hidden;
 }
 
-.netflix-content-layout {
-    display: flex;
-    align-items: stretch; /* Giữ cân bằng 2 cột */
-    gap: 50px;
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 40px 20px;
+.banner-horizontal-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
 }
 
-/* Cột trái: Poster */
-.left-column {
-    flex: 0 0 400px;
+.banner-gradient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%);
 }
 
-.main-poster-wrapper img {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 500 / 750;
-    object-fit: cover;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-    display: block;
+/* Nút Play chính giữa banner */
+.play-trailer-center-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  background-color: rgba(245, 181, 10, 0.9);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(245, 181, 10, 0.5);
+  z-index: 10;
 }
 
-/* Cột phải: Cố định chiều cao theo Poster */
-.right-column {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    max-height: 600px; /* Điều chỉnh con số này khớp với chiều cao ảnh poster của bạn */
+.play-trailer-center-btn:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+  background-color: #f5b50a;
+  box-shadow: 0 0 30px rgba(245, 181, 10, 0.8);
 }
 
-/* ==========================================
-   3. TYPOGRAPHY & HEADER INFO
-   ========================================== */
-.header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 15px;
-    flex-shrink: 0;
+.play-icon-shape {
+  width: 0;
+  height: 0;
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+  border-left: 20px solid #ffffff;
+  margin-left: 6px;
 }
 
-.movie-title {
-    font-size: 4rem; /* Giảm nhẹ để cân đối hơn với khung hình */
-    font-weight: 900;
-    line-height: 1;
-    letter-spacing: -0.05em;
-    color: #fff;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    word-break: break-word;
+/* Thông tin chữ trên Banner */
+.banner-info-holder {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1300px;
+  padding: 0 20px 40px 20px;
+  box-sizing: border-box;
+  z-index: 5;
 }
 
-.score-badge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 8px 15px;
-    border-radius: 100px;
-    backdrop-filter: blur(10px);
+.banner-top-cast-names {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  margin-bottom: 15px;
+  opacity: 0.9;
 }
 
-.score-badge span {
-    font-weight: 800;
-    font-size: 1.2rem;
-    color: #f5b50a;
+.banner-big-title-graphics {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.meta-row {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    color: #b3b3b3;
-    font-weight: 500;
-    margin-bottom: 20px;
-    flex-shrink: 0;
+.director-small-tag {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
 }
 
-.age-limit {
-    border: 1px solid #666;
-    padding: 1px 8px;
-    font-size: 0.85rem;
-    border-radius: 4px;
+.banner-main-title {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0;
+  text-transform: uppercase;
 }
 
-/* ==========================================
-   4. TABS & CONTENT AREA (VÙNG CUỘN NỘI BỘ)
-   ========================================== */
-.netflix-tabs {
-    display: flex;
-    gap: 30px;
-    border-bottom: 1px solid #222;
-    margin-bottom: 15px;
-    flex-shrink: 0;
+
+/* ==========================================================================
+   2. MAIN CONTENT CONTAINER (MAX-WIDTH: 1300PX)
+   ========================================================================== */
+.cinema-main-content-container {
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
 }
 
-.netflix-tabs button {
-    background: none;
-    border: none;
-    color: #666;
-    font-family: 'Inter', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding-bottom: 15px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
+
+/* ==========================================================================
+   3. SECTION 2: MAIN INFO GRID (POSTER & DETAILS)
+   ========================================================================== */
+.info-grid-row {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 40px;
+  align-items: start;
 }
 
-.netflix-tabs button.active {
-    color: #fff;
+/* Khối Poster dọc bên trái */
+.info-left-poster-block {
+  position: relative;
+  margin-top: -120px;
+  z-index: 15;
 }
 
-.netflix-tabs button.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background-color: #e50914;
+.floating-poster-img {
+  width: 100%;
+  height: 480px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
 }
 
-.netflix-tabs button.booking-btn {
-    margin-left: auto;
-    color: #f5b50a;
+/* Khối chi tiết bên phải */
+.info-right-details-block {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
 }
 
-/* Vùng nội dung có thể cuộn nếu trailer quá to */
-.tab-content-area {
-    flex: 1;
-    overflow-y: auto;
-    padding-right: 15px;
-    margin-bottom: 10px;
+.movie-primary-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
-/* Tùy chỉnh scrollbar cho đẹp */
-.tab-content-area::-webkit-scrollbar {
-    width: 4px;
+.primary-title-text {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
 }
-.tab-content-area::-webkit-scrollbar-thumb {
-    background: #333;
+
+.age-badge-t16 {
+  padding: 4px 12px;
+  background-color: #ff4d4f;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.movie-quick-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.meta-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.icon-gold {
+  color: #f5b50a;
+}
+
+/* Bảng thông số kỹ thuật (Grid) */
+.specs-table-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 30px;
+  background-color: rgba(255, 255, 255, 0.03);
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.spec-item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.spec-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+  opacity: 0.6;
+}
+
+.spec-value-content {
+  font-weight: 500;
+}
+
+.highlight-text {
+  color: #ff4d4f;
+}
+
+/* Nhóm nút hành động */
+.action-buttons-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.btn-action-red-submit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ff4d4f;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-action-red-submit:hover {
+  background-color: #e03e3f;
+}
+
+.btn-action-outline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action-outline:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+
+/* ==========================================================================
+   4. CHUNG CHO CÁC KHỐI SECTION BLOCK
+   ========================================================================== */
+.cinema-section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title-label {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin: 0;
+  position: relative;
+  padding-left: 12px;
+}
+
+.section-title-label::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 18px;
+  background-color: #ff4d4f;
+  border-radius: 2px;
+}
+
+.view-all-link-red {
+  font-size: 14px;
+  color: #ff4d4f;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+
+/* ==========================================================================
+   5. SECTION 3: DANH SÁCH DIỄN VIÊN (HIỂN THỊ 4 CÁI TRÊN PC)
+   ========================================================================== */
+.cast-avatars-horizontal-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* Ép hiển thị đúng 4 cột trên PC */
+  gap: 25px;
+}
+
+.actor-circle-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.02);
+  padding: 20px;
+  border-radius: 12px;
+  transition: transform 0.2s ease;
+}
+
+.actor-circle-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Phóng to khung ảnh avatar diễn viên */
+.actor-avatar-frame {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 15px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.actor-real-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholder-avatar-bg {
+  width: 100%;
+  height: 100%;
+  background-color: #333333;
+}
+
+.actor-real-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.actor-character-name {
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+
+/* ==========================================================================
+   6. SECTION 4: NỘI DUNG PHIM & ĐÁNH GIÁ (CHIA ĐÔI LAYOUT)
+   ========================================================================== */
+.two-columns-split-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+}
+
+/* Cột trái: Nội dung */
+.split-left-column-box {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.movie-synopsis-text-wrapper {
+  font-size: 15px;
+  line-height: 1.8;
+  opacity: 0.8;
+}
+
+.movie-synopsis-text-wrapper p {
+  margin: 0;
+}
+
+.toggle-expand-description-btn {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: #ff4d4f;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Cột phải: Đánh giá */
+.split-right-column-box {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.btn-write-review-small {
+  background-color: transparent;
+  border: 1px solid #ff4d4f;
+  color: #ff4d4f;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-write-review-small:hover {
+  background-color: #ff4d4f;
+  color: #ffffff;
+}
+
+/* Bảng thống kê điểm */
+.rating-statistics-dashboard {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  background-color: rgba(255, 255, 255, 0.02);
+  padding: 25px;
+  border-radius: 12px;
+}
+
+.dashboard-big-score-left {
+  text-align: center;
+}
+
+.huge-number {
+  font-size: 48px;
+  font-weight: 800;
+  color: #f5b50a;
+  display: inline-block;
+}
+
+.slash-ten {
+  font-size: 16px;
+  opacity: 0.5;
+  display: inline-block;
+}
+
+.stars-row-display {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.total-votes-count-txt {
+  font-size: 13px;
+  opacity: 0.5;
+}
+
+/* Các thanh Progress bar */
+.dashboard-progress-bars-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progress-bar-line-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.star-line-label {
+  min-width: 30px;
+  opacity: 0.7;
+}
+
+.progress-track-bg {
+  flex: 1;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill-active {
+  height: 100%;
+  background-color: #f5b50a;
+  border-radius: 3px;
+}
+
+.progress-percent-text {
+  min-width: 35px;
+  text-align: right;
+  opacity: 0.7;
+}
+
+/* Tìm class này trong file CSS của ông và cập nhật lại */
+.mini-comments-list-viewport {
+    max-height: 400px; /* Điều chỉnh chiều cao tối đa tùy ý ông (ví dụ 400px hoặc 500px) */
+    overflow-y: auto;  /* Đây là lệnh tạo thanh cuộn dọc khi nội dung vượt quá chiều cao */
+    padding-right: 10px; /* Tạo khoảng cách để nội dung không dính vào thanh cuộn */
+    margin-top: 15px;
+}
+
+/* Custom lại thanh scrollbar cho đẹp hơn (tùy chọn) */
+.mini-comments-list-viewport::-webkit-scrollbar {
+    width: 6px;
+}
+
+.mini-comments-list-viewport::-webkit-scrollbar-track {
+    background: #1a1a1a; /* Màu nền của thanh scroll */
     border-radius: 10px;
 }
 
-.tab-content-area p {
-    margin-bottom: 12px; 
-    display: flex;
-    justify-content: flex-start;
-    align-items: flex-start;
-}
-
-.tab-content-area strong, 
-.tab-content-area span:first-child {
-    color: #808080; 
-    width: 100px;
-    flex-shrink: 0;
-    font-weight: 600;
-}
-
-.tab-content-area span:last-child {
-    color: #ffffff;
-    padding-left: 10px;
-    text-align: left;
-}
-
-/* Trailer 16:9 To & Rõ */
-.tab-pane .trailer-embed {
-    position: relative;
-    width: 100%;
-    padding-top: 56.25%; /* Tỉ lệ 16:9 */
-    background: #000;
-    border-radius: 8px;
-    overflow: hidden;
-    margin: 10px 0;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-}
-
-.tab-pane .trailer-embed iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* ==========================================
-   5. RELATED MOVIES (CỐ ĐỊNH Ở ĐÁY)
-   ========================================== */
-.related-fixed-bottom {
-    flex-shrink: 0; /* Không cho phép bị co lại */
-    padding-top: 20px;
-    border-top: 1px solid #222;
-    background: #000;
-}
-
-.related-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 15px;
-    color: #fff;
-}
-
-.related-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-}
-
-.related-item {
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.related-item:hover {
-    transform: translateY(-5px);
-}
-
-.related-item .img-holder {
-    width: 100%;
-    aspect-ratio: 16/9;
-    border-radius: 6px;
-    overflow: hidden;
-    margin-bottom: 8px;
-    background: #111;
-}
-
-.related-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.related-item p {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #ccc;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-/* ==========================================
-   6. MODERN REVIEWS STYLING (CLEAN CODE)
-   ========================================== */
-
-/* Thùng chứa chung cho cả Tab Review */
-.reviews-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* Khoảng cách giữa các card và nút */
-}
-
-/* Nút Viết đánh giá - Tinh tế & Hiện đại */
-.add-review-btn {
-    background: rgba(255, 255, 255, 0.05);
-    color: #f5b50a; /* Màu vàng sang trọng */
-    border: 1px solid rgba(245, 181, 10, 0.3);
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: fit-content;
-    margin-bottom: 10px;
-    font-family: 'Inter', sans-serif;
-}
-
-.add-review-btn:hover {
-    background: #f5b50a;
-    color: #000;
-    box-shadow: 0 0 15px rgba(245, 181, 10, 0.4);
-    transform: translateY(-2px);
-}
-
-/* Thẻ Review đơn lẻ - Glassmorphism style */
-.review-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 20px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.review-card:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(229, 9, 20, 0.4); /* Highlight đỏ nhẹ khi hover */
-    transform: translateX(8px); /* Nhích nhẹ sang phải tạo cảm giác mượt */
-}
-
-/* Dòng thông tin User */
-.review-user-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-/* Vòng tròn bao quanh icon User */
-.user-icon-circle {
-    width: 36px;
-    height: 36px;
-    background: rgba(229, 9, 24, 0.1); /* Màu đỏ nhạt */
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #e50914; /* Màu đỏ Netflix */
-    border: 1px solid rgba(229, 9, 20, 0.2);
-}
-
-/* Tên User */
-.user-name-text {
-    font-weight: 700;
-    font-size: 1rem;
-    color: #ffffff;
-    letter-spacing: 0.5px;
-}
-
-/* Nội dung bình luận */
-.review-comment {
-    font-size: 0.95rem;
-    color: #cccccc;
-    line-height: 1.6;
-    padding-left: 5px;
-    font-weight: 400;
-}
-
-/* Tinh chỉnh Scrollbar riêng cho vùng Review */
-.tab-content-area.reviews-container::-webkit-scrollbar {
-    width: 4px;
-}
-
-.tab-content-area.reviews-container::-webkit-scrollbar-thumb {
-    background: #333;
+.mini-comments-list-viewport::-webkit-scrollbar-thumb {
+    background: #444; /* Màu của thanh trượt */
     border-radius: 10px;
 }
 
-.tab-content-area.reviews-container::-webkit-scrollbar-thumb:hover {
-    background: #e50914;
+.mini-comments-list-viewport::-webkit-scrollbar-thumb:hover {
+    background: #f5b50a; /* Màu khi di chuột vào thanh trượt */
 }
-/* ==========================================
-   7. RESPONSIVE DESIGN
-   ========================================== */
+.mini-comment-card {
+  background-color: rgba(255, 255, 255, 0.01);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 15px;
+}
+
+.comment-user-meta-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.user-avatar-placeholder-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #444444;
+}
+
+.user-name-title-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.comment-username {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.user-stars-small-row {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.comment-time-ago {
+  font-size: 12px;
+  opacity: 0.4;
+}
+
+.comment-content-body-text {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  opacity: 0.8;
+}
+
+.empty-reviews-placeholder {
+  text-align: center;
+  padding: 30px;
+  opacity: 0.5;
+  font-size: 14px;
+}
+
+
+/* ==========================================================================
+   7. SECTION 5: PHIM LIÊN QUAN (HIỂN THỊ THÀNH 4 CỘT LỚN TRÊN PC)
+   ========================================================================== */
+.layout-margin-top-large {
+  margin-top: 20px;
+}
+
+.related-movies-carousel-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.related-movies-flex-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* Khóa cứng hiển thị đúng 4 cột trên PC */
+  gap: 25px;
+  width: 100%;
+}
+
+.related-movie-poster-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+}
+
+/* Tăng kích thước ảnh phim liên quan cho to lên */
+.poster-image-holder {
+  position: relative;
+  width: 100%;
+  height: 380px; /* Tăng chiều cao để hình to và nét */
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.poster-image-holder img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.related-movie-poster-card:hover .poster-image-holder img {
+  transform: scale(1.05);
+}
+
+.poster-hover-dark-gradient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.related-movie-poster-card:hover .poster-hover-dark-gradient-overlay {
+  opacity: 1;
+}
+
+.hover-score-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f5b50a;
+}
+
+.related-card-movie-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.related-card-score-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* Các nút điều hướng Carousel rác nếu có dùng */
+.carousel-nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: all 0.2s ease;
+}
+
+.carousel-nav-arrow:hover {
+  background-color: #ff4d4f;
+  border-color: #ff4d4f;
+}
+
+.arrow-left {
+  left: -20px;
+}
+
+.arrow-right {
+  right: -20px;
+}
+
+
+/* ==========================================================================
+   8. MODAL TRAILER & RATING POPUP SPECIFIC
+   ========================================================================== */
+.modal-trailer-iframe-container {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* Tỷ lệ màn hình 16:9 chuẩn bài */
+}
+
+.modal-trailer-iframe-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 8px;
+}
+
+.star-rating-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.star-rating-hint {
+  font-size: 15px;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.star-list-interactive {
+  display: flex;
+  gap: 6px;
+}
+
+.interactive-star {
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.interactive-star:hover {
+  transform: scale(1.2);
+}
+
+.modal-review-textarea {
+  width: 100%;
+  height: 100px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-family: inherit;
+  font-size: 14px;
+  resize: none;
+  box-sizing: border-box;
+}
+
+.modal-review-textarea:focus {
+  outline: none;
+  border-color: #ff4d4f;
+}
+
+
+/* ==========================================================================
+   9. RESPONSIVE LAYER (TABLET & MOBILE)
+   ========================================================================== */
+
+/* --- TABLET LAYOUT (DƯỚI 1024PX) --- */
 @media (max-width: 1024px) {
-    .netflix-content-layout { 
-        gap: 30px; 
-        padding: 20px; 
-    }
-    .left-column { 
-        flex: 0 0 300px; 
-    }
-    .movie-title { 
-        font-size: 2.8rem; 
-    }
-    .right-column { 
-        max-height: none; 
-    } /* Tắt vùng cuộn khi màn hình nhỏ */
+  .cinema-hero-banner {
+    height: 400px;
+  }
+
+  .banner-main-title {
+    font-size: 34px;
+  }
+
+  .info-grid-row {
+    grid-template-columns: 240px 1fr;
+    gap: 30px;
+  }
+
+  .info-left-poster-block {
+    margin-top: -80px;
+  }
+
+  .floating-poster-img {
+    height: 360px;
+  }
+
+  .primary-title-text {
+    font-size: 26px;
+  }
+
+  .specs-table-grid {
+    grid-template-columns: 1fr; /* Chuyển về 1 cột dọc */
+    gap: 12px;
+  }
+
+  /* Giảm xuống 3 cột trên máy tính bảng cho vừa vặn */
+  .cast-avatars-horizontal-list {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .related-movies-flex-strip {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .poster-image-holder {
+    height: 320px;
+  }
+
+  .two-columns-split-layout {
+    grid-template-columns: 1fr; /* Đánh giá và Nội dung xếp chồng lên nhau */
+    gap: 40px;
+  }
 }
 
+/* --- MOBILE LAYOUT (DƯỚI 768PX) --- */
 @media (max-width: 768px) {
-    .netflix-content-layout { 
-        flex-direction: column; 
-        align-items: center; 
-    }
-    .left-column { 
-        width: 100%; 
-        max-width: 280px; 
-    }
-    .right-column { 
-        width: 100%; 
-        max-height: none; 
-    }
-    .movie-title { 
-        font-size: 2.2rem; 
-        text-align: center; 
-    }
-    .netflix-tabs { 
-        justify-content: center; 
-    }
+  .cinema-hero-banner {
+    height: 300px;
+  }
+
+  .play-trailer-center-btn {
+    width: 60px;
+    height: 60px;
+  }
+
+  .play-icon-shape {
+    border-top: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+    border-left: 15px solid #ffffff;
+    margin-left: 4px;
+  }
+
+  .banner-main-title {
+    font-size: 24px;
+  }
+
+  .banner-info-holder {
+    padding-bottom: 20px;
+  }
+
+  .cinema-main-content-container {
+    padding: 25px 15px;
+    gap: 40px;
+  }
+
+  .info-grid-row {
+    grid-template-columns: 1fr; /* Poster và chữ xếp thẳng một hàng dọc */
+    gap: 25px;
+  }
+
+  .info-left-poster-block {
+    margin-top: 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  .floating-poster-img {
+    width: 200px;
+    height: 300px;
+  }
+
+  .movie-primary-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .action-buttons-group {
+    flex-direction: column; /* Nút bấm trải dọc ra dễ nhấn bằng tay */
+  }
+
+  .btn-action-red-submit, 
+  .btn-action-outline {
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Diễn viên rớt xuống còn 2 cột */
+  .cast-avatars-horizontal-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .actor-avatar-frame {
+    width: 100px;
+    height: 100px;
+  }
+
+  /* Phim liên quan rớt xuống còn 2 cột */
+  .related-movies-flex-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .poster-image-holder {
+    height: 260px;
+  }
+
+  .rating-statistics-dashboard {
+    flex-direction: column; /* Dashboard bẻ dọc */
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .dashboard-big-score-left {
+    text-align: left;
+    width: 100%;
+  }
+
+  .arrow-left, 
+  .arrow-right {
+    display: none; /* Ẩn nút mũi tên rác trên mobile để người dùng vuốt tay */
+  }
 }

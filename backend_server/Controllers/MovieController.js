@@ -612,35 +612,82 @@ exports.getMoviesByStatusGroup = async (req, res) => {
 // Lấy danh sách phim theo phân loại đường dẫn slug (Đang chiếu / Sắp chiếu)
 exports.getMoviesByStatusSlug = async (req, res) => {
     try {
+
         const { statusSlug } = req.params;
-        let dbStatus = "";
 
-        if (statusSlug === "phim-dang-chieu") {
-            dbStatus = "Đang chiếu";
-        } else if (statusSlug === "phim-sap-chieu") {
-            dbStatus = "Sắp chiếu";
-        } else {
-            return res.status(400).json({ 
-                message: "Đường dẫn không hợp lệ" 
+        // Map URL slug -> movies.status trong DB
+        const statusMap = {
+            "phim-dang-chieu":
+                "Đang chiếu",
+
+            "phim-sap-chieu":
+                "Sắp chiếu"
+        };
+
+        const dbStatus =
+            statusMap[statusSlug];
+
+        if (!dbStatus) {
+            return res.status(400).json({
+                message:
+                    "Đường dẫn không hợp lệ"
             });
         }
 
-        const [rows] = await db.query(
-            "SELECT * FROM movies WHERE status = ? ORDER BY release_date DESC",
-            [dbStatus]
-        );
+        const [rows] =
+            await db.query(
+                `SELECT
+                    m.movie_id,
+                    m.title,
+                    m.slug,
+                    m.poster_url,
+                    m.backdrop_url,
+                    m.status,
+                    m.age_rating,
+                    m.release_date,
+                    m.duration,
+                    m.trailer_url,
+                    m.nation,
+                    m.total_likes,
 
-        if (rows.length === 0) {
-            return res.status(404).json({ 
-                message: "Hiện chưa có phim trong mục này." 
-            });
-        }
+                    IFNULL(
+                        ROUND(
+                            AVG(
+                                r.rating_score
+                            ),
+                            1
+                        ),
+                        0
+                    ) AS average_rating
+
+                FROM movies m
+
+                LEFT JOIN reviews r
+                    ON m.movie_id =
+                       r.movie_id
+
+                WHERE m.status = ?
+
+                GROUP BY
+                    m.movie_id
+
+                ORDER BY
+                    m.release_date DESC`,
+                [dbStatus]
+            );
 
         res.status(200).json(rows);
+
     } catch (error) {
-        console.error("Lỗi getMoviesByStatusSlug:", error);
-        res.status(500).json({ 
-            message: "Lỗi server khi lấy danh sách phim" 
+
+        console.error(
+            "Lỗi getMoviesByStatusSlug:",
+            error
+        );
+
+        res.status(500).json({
+            message:
+                "Lỗi server khi lấy danh sách phim"
         });
     }
 };
