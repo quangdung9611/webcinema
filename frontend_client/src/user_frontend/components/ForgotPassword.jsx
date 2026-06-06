@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Modal from './Modal';
 
+import {
+    Mail,
+    ShieldCheck,
+    LockKeyhole
+} from 'lucide-react';
+
 import '../styles/ForgotPassword.css';
 
 const ForgotPassword = ({ onClose }) => {
@@ -11,11 +17,24 @@ const ForgotPassword = ({ onClose }) => {
     const [email, setEmail] = useState('');
     const [otp, setOtp] = useState('');
     const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] =
+        useState('');
 
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] =
+        useState(false);
 
-    const [message, setMessage] = useState('');
+    const [message, setMessage] =
+        useState('');
+
+    const [messageType, setMessageType] =
+        useState('');
+
+    const resetMessage = () => {
+
+        setMessage('');
+        setMessageType('');
+
+    };
 
     /* =====================================
         SEND OTP
@@ -25,19 +44,23 @@ const ForgotPassword = ({ onClose }) => {
 
         if (!email.trim()) {
 
-            return setMessage(
+            setMessage(
                 'Vui lòng nhập email'
             );
 
+            setMessageType('error');
+
+            return;
         }
 
         try {
 
             setLoading(true);
-            setMessage('');
+
+            resetMessage();
 
             await axios.post(
-                'https://api.quangdungcinema.id.vn/api/users/send-reset-otp',
+                'https://api.quangdungcinema.id.vn/api/forgot-password/send-otp',
                 { email }
             );
 
@@ -47,6 +70,10 @@ const ForgotPassword = ({ onClose }) => {
                 'OTP đã được gửi tới email của bạn'
             );
 
+            setMessageType(
+                'success'
+            );
+
         } catch (err) {
 
             setMessage(
@@ -54,12 +81,14 @@ const ForgotPassword = ({ onClose }) => {
                 'Không gửi được OTP'
             );
 
+            setMessageType(
+                'error'
+            );
+
         } finally {
 
             setLoading(false);
-
         }
-
     };
 
     /* =====================================
@@ -70,19 +99,25 @@ const ForgotPassword = ({ onClose }) => {
 
         if (!otp.trim()) {
 
-            return setMessage(
+            setMessage(
                 'Vui lòng nhập OTP'
             );
 
+            setMessageType(
+                'error'
+            );
+
+            return;
         }
 
         try {
 
             setLoading(true);
-            setMessage('');
+
+            resetMessage();
 
             await axios.post(
-                'https://api.quangdungcinema.id.vn/api/users/verify-reset-otp',
+                'https://api.quangdungcinema.id.vn/api/forgot-password/verify-otp',
                 {
                     email,
                     otp
@@ -95,6 +130,10 @@ const ForgotPassword = ({ onClose }) => {
                 'Xác thực OTP thành công'
             );
 
+            setMessageType(
+                'success'
+            );
+
         } catch (err) {
 
             setMessage(
@@ -102,77 +141,132 @@ const ForgotPassword = ({ onClose }) => {
                 'OTP không hợp lệ'
             );
 
+            setMessageType(
+                'error'
+            );
+
         } finally {
 
             setLoading(false);
-
         }
-
     };
 
     /* =====================================
         RESET PASSWORD
     ===================================== */
 
-    const handleResetPassword = async () => {
+    const handleResetPassword =
+        async () => {
 
-        if (!password.trim()) {
+            if (!password.trim()) {
 
-            return setMessage(
-                'Vui lòng nhập mật khẩu mới'
-            );
+                setMessage(
+                    'Vui lòng nhập mật khẩu mới'
+                );
 
+                setMessageType(
+                    'error'
+                );
+
+                return;
+            }
+
+            if (
+                password.length < 8
+            ) {
+
+                setMessage(
+                    'Mật khẩu phải có ít nhất 8 ký tự'
+                );
+
+                setMessageType(
+                    'error'
+                );
+
+                return;
+            }
+
+            if (
+                password !==
+                confirmPassword
+            ) {
+
+                setMessage(
+                    'Mật khẩu xác nhận không khớp'
+                );
+
+                setMessageType(
+                    'error'
+                );
+
+                return;
+            }
+
+            try {
+
+                setLoading(true);
+
+                resetMessage();
+
+                await axios.post(
+                    'https://api.quangdungcinema.id.vn/api/forgot-password/reset-password',
+                    {
+                        email,
+                        newPassword: password
+                    }
+                );
+
+                setMessage(
+                    'Đổi mật khẩu thành công!'
+                );
+
+                setMessageType(
+                    'success'
+                );
+
+                setTimeout(() => {
+
+                    onClose();
+
+                }, 1200);
+
+            } catch (err) {
+
+                setMessage(
+                    err.response?.data?.message ||
+                    'Không thể đổi mật khẩu'
+                );
+
+                setMessageType(
+                    'error'
+                );
+
+            } finally {
+
+                setLoading(false);
+            }
+        };
+
+    const renderStepIcon = () => {
+
+        switch (step) {
+
+            case 1:
+                return <Mail size={42} />;
+
+            case 2:
+                return (
+                    <ShieldCheck size={42} />
+                );
+
+            case 3:
+                return (
+                    <LockKeyhole size={42} />
+                );
+
+            default:
+                return null;
         }
-
-        if (password.length < 8) {
-
-            return setMessage(
-                'Mật khẩu phải có ít nhất 8 ký tự'
-            );
-
-        }
-
-        if (password !== confirmPassword) {
-
-            return setMessage(
-                'Mật khẩu xác nhận không khớp'
-            );
-
-        }
-
-        try {
-
-            setLoading(true);
-            setMessage('');
-
-            await axios.post(
-                'https://api.quangdungcinema.id.vn/api/users/reset-password',
-                {
-                    email,
-                    otp,
-                    password
-                }
-            );
-
-            alert(
-                'Đổi mật khẩu thành công!'
-            );
-
-            onClose();
-
-        } catch (err) {
-
-            setMessage(
-                err.response?.data?.message ||
-                'Không thể đổi mật khẩu'
-            );
-
-        } finally {
-
-            setLoading(false);
-
-        }
-
     };
 
     return (
@@ -182,28 +276,48 @@ const ForgotPassword = ({ onClose }) => {
             onClose={onClose}
             title="QUÊN MẬT KHẨU"
             size="md"
-            type="info"
+            type="default"
         >
 
             <div className="forgot-password">
 
-                {/* STEP INDICATOR */}
+                <div className="forgot-icon">
+                    {renderStepIcon()}
+                </div>
 
                 <div className="forgot-steps">
 
-                    <div className={`step ${step >= 1 ? 'active' : ''}`}>
+                    <div
+                        className={`step ${
+                            step >= 1
+                                ? 'active'
+                                : ''
+                        }`}
+                    >
                         1
                     </div>
 
                     <div className="line" />
 
-                    <div className={`step ${step >= 2 ? 'active' : ''}`}>
+                    <div
+                        className={`step ${
+                            step >= 2
+                                ? 'active'
+                                : ''
+                        }`}
+                    >
                         2
                     </div>
 
                     <div className="line" />
 
-                    <div className={`step ${step >= 3 ? 'active' : ''}`}>
+                    <div
+                        className={`step ${
+                            step >= 3
+                                ? 'active'
+                                : ''
+                        }`}
+                    >
                         3
                     </div>
 
@@ -211,104 +325,122 @@ const ForgotPassword = ({ onClose }) => {
 
                 {message && (
 
-                    <div className="forgot-message">
-
+                    <div
+                        className={`forgot-message ${messageType}`}
+                    >
                         {message}
-
                     </div>
 
                 )}
-
-                {/* STEP 1 */}
 
                 {step === 1 && (
 
                     <div className="forgot-form">
 
-                        <label>Email đăng ký</label>
+                        <label>
+                            Email đăng ký
+                        </label>
 
                         <input
                             type="email"
                             placeholder="Nhập email của bạn"
                             value={email}
                             onChange={(e) =>
-                                setEmail(e.target.value)
+                                setEmail(
+                                    e.target.value
+                                )
                             }
                         />
 
                         <button
                             className="forgot-btn"
-                            onClick={handleSendOTP}
-                            disabled={loading}
-                        >
-                            {
-                                loading
-                                    ? 'Đang gửi...'
-                                    : 'Gửi OTP'
+                            onClick={
+                                handleSendOTP
                             }
+                            disabled={
+                                loading
+                            }
+                        >
+
+                            {loading
+                                ? 'Đang gửi...'
+                                : 'Gửi OTP'}
+
                         </button>
 
                     </div>
 
                 )}
-
-                {/* STEP 2 */}
 
                 {step === 2 && (
 
                     <div className="forgot-form">
 
-                        <label>Mã OTP</label>
+                        <label>
+                            Nhập mã OTP
+                        </label>
 
                         <input
                             type="text"
-                            maxLength="6"
-                            placeholder="Nhập mã OTP"
+                            maxLength={6}
+                            placeholder="000000"
                             value={otp}
                             onChange={(e) =>
-                                setOtp(e.target.value)
+                                setOtp(
+                                    e.target.value
+                                )
                             }
                         />
 
                         <button
                             className="forgot-btn"
-                            onClick={handleVerifyOTP}
-                            disabled={loading}
-                        >
-                            {
-                                loading
-                                    ? 'Đang xác thực...'
-                                    : 'Xác nhận OTP'
+                            onClick={
+                                handleVerifyOTP
                             }
+                            disabled={
+                                loading
+                            }
+                        >
+
+                            {loading
+                                ? 'Đang xác thực...'
+                                : 'Xác nhận OTP'}
+
                         </button>
 
                     </div>
 
                 )}
 
-                {/* STEP 3 */}
-
                 {step === 3 && (
 
                     <div className="forgot-form">
 
-                        <label>Mật khẩu mới</label>
+                        <label>
+                            Mật khẩu mới
+                        </label>
 
                         <input
                             type="password"
                             placeholder="Nhập mật khẩu mới"
                             value={password}
                             onChange={(e) =>
-                                setPassword(e.target.value)
+                                setPassword(
+                                    e.target.value
+                                )
                             }
                         />
 
-                        <label>Xác nhận mật khẩu</label>
+                        <label>
+                            Xác nhận mật khẩu
+                        </label>
 
                         <input
                             type="password"
                             placeholder="Nhập lại mật khẩu"
-                            value={confirmPassword}
+                            value={
+                                confirmPassword
+                            }
                             onChange={(e) =>
                                 setConfirmPassword(
                                     e.target.value
@@ -318,14 +450,18 @@ const ForgotPassword = ({ onClose }) => {
 
                         <button
                             className="forgot-btn"
-                            onClick={handleResetPassword}
-                            disabled={loading}
-                        >
-                            {
-                                loading
-                                    ? 'Đang xử lý...'
-                                    : 'Đổi mật khẩu'
+                            onClick={
+                                handleResetPassword
                             }
+                            disabled={
+                                loading
+                            }
+                        >
+
+                            {loading
+                                ? 'Đang xử lý...'
+                                : 'Đổi mật khẩu'}
+
                         </button>
 
                     </div>
@@ -335,9 +471,7 @@ const ForgotPassword = ({ onClose }) => {
             </div>
 
         </Modal>
-
     );
-
 };
 
 export default ForgotPassword;

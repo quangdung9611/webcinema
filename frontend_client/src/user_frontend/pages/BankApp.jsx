@@ -1,7 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, {
+    useState,
+    useEffect,
+    useRef
+} from 'react';
+
+import {
+    useLocation,
+    useNavigate
+} from 'react-router-dom';
+
 import axios from 'axios';
+
 import Modal from '../../admin_frontend/components/Modal';
+import BookingSidebar from '../components/BookingSidebar';
+
 import '../styles/BankApp.css';
 
 const BankApp = () => {
@@ -16,34 +28,53 @@ const BankApp = () => {
     const bookingData =
         location.state ||
         JSON.parse(
-            sessionStorage.getItem('lastSuccessTicket')
+            sessionStorage.getItem(
+                'lastSuccessTicket'
+            )
         ) || {};
 
     const {
         bookingId,
         customerEmail,
-        totalAmount
+        totalAmount,
+
+        movie,
+        selectedCinema,
+        selectedDate,
+        selectedShowtime,
+        selectedSeats,
+        selectedFoods,
+        foods,
+        totalTicketPrice,
+        totalFoodPrice,
+        showtimeDetail
     } = bookingData;
 
     // =========================
     // STATES
     // =========================
 
-    const hasSentOtp = useRef(false);
+    const hasSentOtp =
+        useRef(false);
 
-    const [timeLeft, setTimeLeft] = useState(300);
+    const [timeLeft, setTimeLeft] =
+        useState(300);
 
-    const [otp, setOtp] = useState('');
+    const [otp, setOtp] =
+        useState('');
 
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] =
+        useState(false);
 
-    const [modalConfig, setModalConfig] = useState({
-        show: false,
-        type: 'confirm',
-        title: '',
-        message: '',
-        onConfirm: () => {}
-    });
+    const [modalConfig,
+        setModalConfig] =
+        useState({
+            show: false,
+            type: 'confirm',
+            title: '',
+            message: '',
+            onConfirm: () => {}
+        });
 
     // =========================
     // MODAL
@@ -77,11 +108,18 @@ const BankApp = () => {
 
     useEffect(() => {
 
-        if (!bookingId || !customerEmail) {
+        if (
+            !bookingId ||
+            !customerEmail
+        ) {
             navigate('/');
         }
 
-    }, [bookingId, customerEmail, navigate]);
+    }, [
+        bookingId,
+        customerEmail,
+        navigate
+    ]);
 
     // =========================
     // SEND OTP
@@ -89,89 +127,100 @@ const BankApp = () => {
 
     useEffect(() => {
 
-        const sendOtpInitial = async () => {
+        const sendOtpInitial =
+            async () => {
 
-            if (
-                !customerEmail ||
-                !bookingId ||
-                hasSentOtp.current
-            ) {
-                return;
-            }
+                if (
+                    !customerEmail ||
+                    !bookingId ||
+                    hasSentOtp.current
+                ) {
+                    return;
+                }
 
-            hasSentOtp.current = true;
-
-            try {
-
-                await axios.post(
-                    'https://api.quangdungcinema.id.vn/api/bank/send-otp',
-                    {
-                        email: customerEmail,
-                        bookingId: bookingId
-                    }
-                );
-
-            } catch (err) {
-
-                console.error(
-                    'Lỗi gửi OTP:',
-                    err
-                );
-            }
-        };
-
-        sendOtpInitial();
-
-    }, [bookingId, customerEmail]);
-
-    // =========================
-    // COUNTDOWN
-    // =========================
-
-    useEffect(() => {
-
-        if (timeLeft <= 0) {
-
-            const handleTimeout = async () => {
+                hasSentOtp.current = true;
 
                 try {
 
                     await axios.post(
-                        'https://api.quangdungcinema.id.vn/api/bank/cancel-timeout',
+                        'https://api.quangdungcinema.id.vn/api/bank/send-otp',
                         {
-                            bookingId,
-                            email: customerEmail
+                            email:
+                                customerEmail,
+                            bookingId
                         }
                     );
 
                 } catch (err) {
 
                     console.error(
-                        'Lỗi hủy đơn:',
+                        'Lỗi gửi OTP:',
                         err
                     );
                 }
-
-                openModal(
-                    'error',
-                    'HẾT HẠN',
-                    'Phiên giao dịch đã hết hạn!',
-                    () => navigate('/')
-                );
             };
+
+        sendOtpInitial();
+
+    }, [
+        bookingId,
+        customerEmail
+    ]);
+
+    // =========================
+    // TIMER 5 MINUTES
+    // =========================
+
+    useEffect(() => {
+
+        if (timeLeft <= 0) {
+
+            const handleTimeout =
+                async () => {
+
+                    try {
+
+                        await axios.post(
+                            'https://api.quangdungcinema.id.vn/api/bank/cancel-timeout',
+                            {
+                                bookingId,
+                                email:
+                                    customerEmail
+                            }
+                        );
+
+                    } catch (err) {
+
+                        console.error(
+                            'Lỗi hủy đơn:',
+                            err
+                        );
+                    }
+
+                    openModal(
+                        'error',
+                        'HẾT HẠN',
+                        'Phiên giao dịch đã hết hạn!',
+                        () => navigate('/')
+                    );
+                };
 
             handleTimeout();
 
             return;
         }
 
-        const timer = setInterval(() => {
+        const timer =
+            setInterval(() => {
 
-            setTimeLeft(prev => prev - 1);
+                setTimeLeft(prev =>
+                    prev - 1
+                );
 
-        }, 1000);
+            }, 1000);
 
-        return () => clearInterval(timer);
+        return () =>
+            clearInterval(timer);
 
     }, [
         timeLeft,
@@ -184,197 +233,170 @@ const BankApp = () => {
     // VERIFY OTP
     // =========================
 
-    const handleVerifyPayment = async () => {
+    const handleVerifyPayment =
+        async () => {
 
-        if (otp.length < 6) {
-
-            openModal(
-                'error',
-                'THÔNG BÁO',
-                'Vui lòng nhập đủ 6 số OTP'
-            );
-
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-
-            const res = await axios.post(
-                'https://api.quangdungcinema.id.vn/api/bank/verify-otp',
-                {
-                    email: customerEmail,
-                    otp,
-                    bookingId
-                }
-            );
-
-            if (res.data.success) {
-
-                sessionStorage.removeItem(
-                    'holdExpiresAt'
-                );
-
-                sessionStorage.removeItem(
-                    'selectedSeats'
-                );
+            if (otp.length < 6) {
 
                 openModal(
-                    'success',
-                    'THANH TOÁN THÀNH CÔNG',
-                    'Cảm ơn bạn đã đặt vé!',
-                    () => {
-
-                        navigate(
-                            '/confirm-success',
-                            {
-                                state: bookingData
-                            }
-                        );
-                    }
+                    'error',
+                    'THÔNG BÁO',
+                    'Vui lòng nhập đủ 6 số OTP'
                 );
+
+                return;
             }
 
-        } catch (err) {
+            setLoading(true);
 
-            const errorMsg =
-                err.response?.data?.message ||
-                'Mã OTP không đúng hoặc đã hết hạn!';
+            try {
 
-            openModal(
-                'error',
-                'THẤT BẠI',
-                errorMsg
-            );
+                const res =
+                    await axios.post(
+                        'https://api.quangdungcinema.id.vn/api/bank/verify-otp',
+                        {
+                            email:
+                                customerEmail,
+                            otp,
+                            bookingId
+                        }
+                    );
 
-        } finally {
+                if (
+                    res.data.success
+                ) {
 
-            setLoading(false);
-        }
-    };
+                    sessionStorage.removeItem(
+                        'holdExpiresAt'
+                    );
+
+                    sessionStorage.removeItem(
+                        'selectedSeats'
+                    );
+
+                    openModal(
+                        'success',
+                        'THANH TOÁN THÀNH CÔNG',
+                        'Cảm ơn bạn đã đặt vé!',
+                        () => {
+
+                            navigate(
+                                '/confirm-success',
+                                {
+                                    state:
+                                        bookingData
+                                }
+                            );
+                        }
+                    );
+                }
+
+            } catch (err) {
+
+                openModal(
+                    'error',
+                    'THẤT BẠI',
+                    err.response?.data
+                        ?.message ||
+                    'Mã OTP không đúng hoặc đã hết hạn!'
+                );
+
+            } finally {
+
+                setLoading(false);
+            }
+        };
 
     // =========================
     // TIME FORMAT
     // =========================
 
     const mins =
-        Math.floor(timeLeft / 60);
+        Math.floor(
+            timeLeft / 60
+        );
 
     const secs =
         timeLeft % 60;
-
-    // =========================
-    // RENDER
-    // =========================
 
     return (
 
         <div className="bank-checkout-page">
 
-            {/* NAVBAR */}
-            {/* <nav className="bank-nav-bar">
-
-                <div className="nav-content">
-
-                    <img
-                        src="https://vietqr.net/portal-v2/images/img/vietqr-logo-bin.png"
-                        alt="Bank Logo"
-                    />
-
-                    <span>
-                        Hệ thống xác thực giao dịch nội địa
-                    </span>
-
-                </div>
-
-            </nav> */}
-
-            {/* MAIN */}
             <main className="bank-checkout-container">
 
-                {/* LEFT */}
-                <div className="bank-order-details">
+                {/* LEFT SIDEBAR */}
+                <div className="bank-sidebar-wrapper">
 
-                    <h2 className="section-title">
-                        Chi tiết đơn hàng
-                    </h2>
+                    <BookingSidebar
+                        movie={movie}
 
-                    <div className="info-group">
+                        showtimeDetail={
+                            showtimeDetail
+                        }
 
-                        <label>
-                            Đơn vị
-                        </label>
+                        selectedCinema={
+                            selectedCinema
+                        }
 
-                        <div className="vendor-info">
+                        selectedDate={
+                            selectedDate
+                        }
 
-                            <img
-                                src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
-                                alt="Cinema"
-                            />
+                        selectedShowtime={
+                            selectedShowtime
+                        }
 
-                            <span>
-                                 CINEMASTAR
-                            </span>
+                        selectedSeats={
+                            Array.isArray(
+                                selectedSeats
+                            )
+                                ? selectedSeats
+                                : []
+                        }
 
-                        </div>
-                    </div>
+                        foods={
+                            Array.isArray(
+                                foods
+                            )
+                                ? foods
+                                : []
+                        }
 
-                    <div className="info-group">
+                        selectedFoods={
+                            Array.isArray(
+                                selectedFoods
+                            )
+                                ? selectedFoods
+                                : []
+                        }
 
-                        <label>
-                            Mã đơn
-                        </label>
+                        totalTicketPrice={
+                            totalTicketPrice
+                        }
 
-                        <p className="order-value">
-                            #{bookingId}
-                        </p>
+                        totalFoodPrice={
+                            totalFoodPrice
+                        }
 
-                    </div>
+                        grandTotal={
+                            totalAmount
+                        }
 
-                    <div className="info-group">
+                        isTimerActive={true}
 
-                        <label>
-                            Số tiền
-                        </label>
+                        remainingTime={
+                            timeLeft
+                        }
 
-                        <p className="order-value amount">
+                        showFoodSection={
+                            true
+                        }
+                    />
 
-                            {(Number(totalAmount) || 0)
-                                .toLocaleString('vi-VN')} đ
-
-                        </p>
-
-                    </div>
-
-                    <div className="bank-expiry-box">
-
-                        <p>
-                            OTP hết hạn sau:
-                        </p>
-
-                        <div className="expiry-timer">
-
-                            <span>
-
-                                {mins < 10
-                                    ? `0${mins}`
-                                    : mins}
-
-                                :
-
-                                {secs < 10
-                                    ? `0${secs}`
-                                    : secs}
-
-                            </span>
-
-                        </div>
-
-                    </div>
                 </div>
 
-                {/* RIGHT */}
+                {/* RIGHT OTP */}
                 <div className="bank-otp-section">
 
                     <div className="otp-card">
@@ -396,13 +418,11 @@ const BankApp = () => {
                         </h3>
 
                         <p className="otp-sub">
-
                             Gửi đến:
                             <strong>
                                 {' '}
                                 {customerEmail}
                             </strong>
-
                         </p>
 
                         <div className="otp-input-wrapper">
@@ -426,29 +446,62 @@ const BankApp = () => {
 
                         </div>
 
+                        <div className="bank-timer-box">
+
+                            OTP hết hạn sau:
+
+                            <span>
+
+                                {mins < 10
+                                    ? `0${mins}`
+                                    : mins}
+
+                                :
+
+                                {secs < 10
+                                    ? `0${secs}`
+                                    : secs}
+
+                            </span>
+
+                        </div>
+
                         <button
                             className="btn-confirm-payment"
-                            onClick={handleVerifyPayment}
-                            disabled={loading}
+                            onClick={
+                                handleVerifyPayment
+                            }
+                            disabled={
+                                loading
+                            }
                         >
-
                             {loading
                                 ? 'ĐANG XỬ LÝ...'
                                 : 'XÁC NHẬN THANH TOÁN'}
-
                         </button>
 
                     </div>
+
                 </div>
+
             </main>
 
-            {/* MODAL */}
             <Modal
-                show={modalConfig.show}
-                type={modalConfig.type}
-                title={modalConfig.title}
-                message={modalConfig.message}
-                onConfirm={modalConfig.onConfirm}
+                show={
+                    modalConfig.show
+                }
+                type={
+                    modalConfig.type
+                }
+                title={
+                    modalConfig.title
+                }
+                message={
+                    modalConfig.message
+                }
+                onConfirm={
+                    modalConfig.onConfirm
+                }
                 onCancel={() =>
                     setModalConfig(prev => ({
                         ...prev,
@@ -456,6 +509,7 @@ const BankApp = () => {
                     }))
                 }
             />
+
         </div>
     );
 };

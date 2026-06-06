@@ -366,9 +366,11 @@ const MovieDetail = () => {
                         </div>
 
                         <div className="action-buttons-group">
-                            <button 
-                                className="btn-action-red-submit" 
-                                onClick={() => navigate('/booking', { state: { movie: movie } })}
+                            <button
+                                className="btn-action-red-submit"
+                                onClick={() =>
+                                    navigate(`/booking/${movie.slug || movie.movie_slug}`)
+                                }
                             >
                                 <Ticket size={16} />
                                 <span>ĐẶT VÉ NGAY</span>

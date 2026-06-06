@@ -1,5 +1,5 @@
 /* =========================================
-   FOOD PAGE
+   FOOD PAGE - RED BLACK CINEMA
 ========================================= */
 
 .food-page-header {
@@ -16,7 +16,7 @@
     margin: 0 0 8px;
 
     font-size: 32px;
-    font-weight: 800;
+    font-weight: 900;
     letter-spacing: 1px;
 
     color: #fff;
@@ -28,7 +28,7 @@
     font-size: 15px;
     line-height: 1.6;
 
-    color: rgba(255,255,255,0.7);
+    color: rgba(255,255,255,0.72);
 }
 
 /* =========================================
@@ -46,32 +46,64 @@
 ========================================= */
 
 .food-card {
+    position: relative;
+
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 22px;
 
-    padding: 20px;
+    padding: 22px;
 
-    border-radius: 24px;
+    border-radius: 28px;
 
-    background: linear-gradient(
-        145deg,
-        rgba(31,18,53,0.96),
-        rgba(18,10,33,0.96)
-    );
+    background:
+        linear-gradient(
+            145deg,
+            rgba(28,4,4,0.96),
+            rgba(12,0,0,0.96)
+        );
 
-    border: 1px solid rgba(255,255,255,0.06);
+    border:
+        1px solid rgba(239,68,68,0.12);
 
-    transition: 0.3s ease;
+    overflow: hidden;
+
+    transition: 0.28s ease;
+
+    box-shadow:
+        0 10px 28px rgba(0,0,0,0.28);
+}
+
+/* glow đỏ nhẹ */
+.food-card::before {
+    content: '';
+
+    position: absolute;
+
+    width: 180px;
+    height: 180px;
+
+    top: -70px;
+    right: -70px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(220,38,38,0.08);
+
+    filter: blur(70px);
+
+    pointer-events: none;
 }
 
 .food-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-5px);
 
-    border-color: rgba(255,202,8,0.35);
+    border-color:
+        rgba(239,68,68,0.35);
 
     box-shadow:
-        0 15px 40px rgba(0,0,0,0.35);
+        0 18px 40px rgba(0,0,0,0.38);
 }
 
 /* =========================================
@@ -79,14 +111,17 @@
 ========================================= */
 
 .food-image {
-    width: 130px;
-    height: 130px;
+    width: 140px;
+    height: 140px;
 
     overflow: hidden;
 
-    border-radius: 20px;
+    border-radius: 22px;
 
     flex-shrink: 0;
+
+    border:
+        1px solid rgba(255,255,255,0.08);
 }
 
 .food-image img {
@@ -94,6 +129,12 @@
     height: 100%;
 
     object-fit: cover;
+
+    transition: 0.35s ease;
+}
+
+.food-card:hover .food-image img {
+    transform: scale(1.06);
 }
 
 /* =========================================
@@ -107,23 +148,25 @@
     flex-direction: column;
     justify-content: space-between;
 
-    min-height: 130px;
+    min-height: 140px;
 }
 
 .food-content h3 {
     margin: 0 0 10px;
 
-    font-size: 20px;
-    font-weight: 700;
+    font-size: 22px;
+    font-weight: 800;
+
+    line-height: 1.4;
 
     color: #fff;
 }
 
 .food-price {
-    font-size: 22px;
-    font-weight: 800;
+    font-size: 24px;
+    font-weight: 900;
 
-    color: #ffca08;
+    color: #ef4444;
 }
 
 /* =========================================
@@ -135,22 +178,26 @@
     align-items: center;
     gap: 14px;
 
-    margin-top: 18px;
+    margin-top: 20px;
 }
 
+/* NÚT + - */
 .qty-btn {
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
 
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
+    border-radius: 16px;
 
-    background: rgba(255,255,255,0.06);
+    border:
+        1px solid rgba(255,255,255,0.08);
+
+    background:
+        rgba(255,255,255,0.05);
 
     color: #fff;
 
-    font-size: 22px;
-    font-weight: 700;
+    font-size: 24px;
+    font-weight: 800;
 
     cursor: pointer;
 
@@ -158,17 +205,29 @@
 }
 
 .qty-btn:hover {
-    background: #ffca08;
-    color: #000;
+    background:
+        linear-gradient(
+            135deg,
+            #ef4444,
+            #991b1b
+        );
+
+    border-color:
+        rgba(239,68,68,0.45);
+
+    box-shadow:
+        0 10px 22px
+        rgba(239,68,68,0.28);
 }
 
+/* SỐ LƯỢNG */
 .food-qty {
-    min-width: 28px;
+    min-width: 34px;
 
     text-align: center;
 
-    font-size: 20px;
-    font-weight: 700;
+    font-size: 22px;
+    font-weight: 800;
 
     color: #fff;
 }
@@ -187,30 +246,36 @@
 @media (max-width: 768px) {
 
     .food-page-header h2 {
-        font-size: 24px;
+        font-size: 26px;
+    }
+
+    .food-page-header p {
+        font-size: 14px;
     }
 
     .food-card {
-        padding: 16px;
-        gap: 16px;
+        padding: 18px;
+        gap: 18px;
+
+        border-radius: 24px;
     }
 
     .food-image {
-        width: 100px;
-        height: 100px;
+        width: 110px;
+        height: 110px;
     }
 
     .food-content h3 {
-        font-size: 17px;
-    }
-
-    .food-price {
         font-size: 18px;
     }
 
+    .food-price {
+        font-size: 20px;
+    }
+
     .qty-btn {
-        width: 38px;
-        height: 38px;
+        width: 40px;
+        height: 40px;
 
         font-size: 20px;
     }
@@ -234,27 +299,35 @@
 
     .food-image {
         width: 100%;
-        height: 220px;
+        height: 240px;
     }
 
     .food-content {
         width: 100%;
         min-height: auto;
     }
+
+    .food-actions {
+        margin-top: 18px;
+    }
 }
 
 @media (max-width: 420px) {
 
     .food-card {
-        padding: 14px;
-        border-radius: 20px;
+        padding: 16px;
+        border-radius: 22px;
     }
 
     .food-page-header h2 {
-        font-size: 20px;
+        font-size: 22px;
     }
 
     .food-image {
-        height: 190px;
+        height: 200px;
+    }
+
+    .food-content h3 {
+        font-size: 17px;
     }
 }

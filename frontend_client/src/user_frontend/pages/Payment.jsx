@@ -325,12 +325,8 @@ const Payment = () => {
             ) {
 
                 const finalState = {
-
-                    orderId:
-                        response.data.bookingId,
-
-                    bookingId:
-                        response.data.bookingId,
+                    orderId: response.data.bookingId,
+                    bookingId: response.data.bookingId,
 
                     totalAmount:
                         Number(grandTotal),
@@ -341,30 +337,18 @@ const Payment = () => {
                     customerEmail:
                         userInfo.email,
 
-                    movieTitle:
-                        movie?.title,
-
-                    moviePoster:
-                        movie?.poster_url,
-
-                    cinemaName:
-                        selectedCinema?.cinema_name,
-
-                    roomName:
-                        showtimeDetail?.room_name,
-
-                    startTime:
-                        selectedShowtime?.start_time,
-
+                    // booking sidebar data
+                    movie,
+                    selectedCinema,
                     selectedDate,
-
+                    selectedShowtime,
                     selectedSeats,
-
-                    selectedFoods: Array.isArray(selectedFoods)
-                    ? selectedFoods
-                    : []
+                    selectedFoods,
+                    foods,
+                    totalTicketPrice,
+                    totalFoodPrice,
+                    showtimeDetail
                 };
-
                 // SAVE SUCCESS DATA
                 sessionStorage.setItem(
                     'lastSuccessTicket',

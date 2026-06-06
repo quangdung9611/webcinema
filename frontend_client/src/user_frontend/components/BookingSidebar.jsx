@@ -220,7 +220,7 @@ const BookingSidebar = ({
                         {showContinueButton && (
 
                             <button
-                                className="btn-next"
+                                className="btn-next-sidebar"
                                 onClick={onContinue}
                             >
                                 {continueText}
@@ -231,7 +231,7 @@ const BookingSidebar = ({
                         {showBackButton && (
 
                             <button
-                                className="btn-back-food"
+                                className="btn-back-food-sidebar"
                                 onClick={onBack}
                             >
                                 Quay lại

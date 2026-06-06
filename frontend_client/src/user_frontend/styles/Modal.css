@@ -14,13 +14,11 @@
 
     z-index: 9999;
 
-    background:
-        rgba(0, 0, 0, 0.72);
+    background: rgba(0, 0, 0, 0.45);
 
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(8px);
 
-    animation:
-        modalFade 0.3s ease;
+    animation: modalFade 0.25s ease;
 }
 
 /* =========================================================
@@ -29,52 +27,42 @@
 
 .modal-container {
     width: 100%;
-
     position: relative;
-
     overflow: hidden;
 
-    border-radius: 30px;
+    border-radius: 28px;
 
-    background:
-        linear-gradient(
-            145deg,
-            rgba(14, 14, 22, 0.96),
-            rgba(24, 24, 36, 0.96)
-        );
+    background: #ffffff;
 
-    border:
-        1px solid rgba(255,255,255,0.06);
+    border: 1px solid #e8e8e8;
 
     box-shadow:
-        0 25px 80px rgba(0,0,0,0.65),
-        0 0 40px rgba(168,85,247,0.15);
+        0 20px 60px rgba(0,0,0,0.18),
+        0 8px 25px rgba(0,0,0,0.08);
 
-    animation:
-        modalScale 0.35s ease;
+    animation: modalScale 0.3s ease;
 }
 
 /* =========================================================
-   GLOW EFFECT
+   LIGHT DECORATION
 ========================================================= */
 
 .modal-container::before {
     content: '';
 
     position: absolute;
+    top: -80px;
+    right: -80px;
 
-    top: -120px;
-    right: -120px;
-
-    width: 260px;
-    height: 260px;
+    width: 220px;
+    height: 220px;
 
     border-radius: 50%;
 
     background:
         radial-gradient(
             circle,
-            rgba(239,68,68,0.22),
+            rgba(220, 38, 38, 0.08),
             transparent 70%
         );
 
@@ -85,19 +73,18 @@
     content: '';
 
     position: absolute;
+    bottom: -80px;
+    left: -80px;
 
-    bottom: -120px;
-    left: -120px;
-
-    width: 260px;
-    height: 260px;
+    width: 220px;
+    height: 220px;
 
     border-radius: 50%;
 
     background:
         radial-gradient(
             circle,
-            rgba(168,85,247,0.18),
+            rgba(239, 68, 68, 0.06),
             transparent 70%
         );
 
@@ -113,15 +100,15 @@
 }
 
 .modal-container.md {
-    max-width: 680px;
+    max-width: 650px;
 }
 
 .modal-container.lg {
-    max-width: 950px;
+    max-width: 900px;
 }
 
 .modal-container.xl {
-    max-width: 1200px;
+    max-width: 1150px;
 }
 
 /* =========================================================
@@ -135,20 +122,11 @@
     align-items: center;
     justify-content: center;
 
-    padding:
-        22px
-        30px
-        20px;
+    padding: 24px 30px 20px;
 
-    border-bottom:
-        1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid #eeeeee;
 
-    background:
-        linear-gradient(
-            180deg,
-            rgba(255,255,255,0.03),
-            transparent
-        );
+    background: #ffffff;
 
     z-index: 2;
 }
@@ -156,17 +134,14 @@
 .modal-header h2 {
     margin: 0;
 
-    font-size: 34px;
-
-    font-weight: 900;
-
-    letter-spacing: 1.5px;
-
-    text-transform: uppercase;
+    font-size: 30px;
+    font-weight: 800;
 
     text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 
-    color: #ffffff;
+    color: #111111;
 }
 
 /* =========================================================
@@ -174,24 +149,22 @@
 ========================================================= */
 
 .modal-close-btn {
-
     position: absolute;
 
-    top: 22px;
-    right: 22px;
+    top: 20px;
+    right: 20px;
 
-    width: 48px;
-    height: 48px;
+    width: 46px;
+    height: 46px;
 
     border: none;
     outline: none;
 
-    border-radius: 16px;
+    border-radius: 14px;
 
-    background:
-        rgba(255,255,255,0.06);
+    background: #f5f5f5;
 
-    color: #f3f4f6;
+    color: #444444;
 
     display: flex;
     align-items: center;
@@ -199,17 +172,13 @@
 
     cursor: pointer;
 
-    transition: all 0.3s ease;
-
-    z-index: 10;
+    transition: all 0.25s ease;
 }
 
 .modal-close-btn:hover {
+    background: #ffe5e5;
 
-    background:
-        rgba(239,68,68,0.16);
-
-    color: #ffffff;
+    color: #dc2626;
 
     transform:
         rotate(90deg)
@@ -229,7 +198,7 @@
 
     overflow-y: auto;
 
-    color: #e5e7eb;
+    color: #222222;
 
     z-index: 2;
 }
@@ -243,12 +212,12 @@
 }
 
 .alert-content p {
-    margin-bottom: 26px;
+    margin-bottom: 24px;
 
-    font-size: 17px;
+    font-size: 16px;
     line-height: 1.7;
 
-    color: #d1d5db;
+    color: #444444;
 }
 
 /* =========================================================
@@ -266,18 +235,18 @@
 }
 
 /* =========================================================
-   TEXT
+   TEXT STYLE
 ========================================================= */
 
 .modal-body p,
 .modal-body span,
 .modal-body label,
 .modal-body div {
-    color: #d1d5db;
+    color: #333333;
 }
 
 /* =========================================================
-   BUTTONS
+   BUTTON BASE
 ========================================================= */
 
 .modal-body button {
@@ -286,43 +255,38 @@
 
     border-radius: 14px;
 
-    padding: 12px 24px;
+    padding: 13px 24px;
 
     font-size: 14px;
-
     font-weight: 700;
 
     cursor: pointer;
 
     transition: all 0.25s ease;
 }
-
 /* =========================================================
    PRIMARY BUTTON
 ========================================================= */
 
 .confirm-btn {
-    min-width: 140px;
+    min-width: 150px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #ef4444,
-            #dc2626
-        );
+    background: #dc2626;
 
-    color: white;
+    color: #ffffff;
 
     box-shadow:
-        0 10px 25px rgba(239,68,68,0.35);
+        0 8px 20px rgba(220, 38, 38, 0.22);
 }
 
 .confirm-btn:hover {
+    background: #b91c1c;
+
     transform:
         translateY(-2px);
 
     box-shadow:
-        0 14px 30px rgba(239,68,68,0.5);
+        0 14px 28px rgba(220, 38, 38, 0.3);
 }
 
 /* =========================================================
@@ -330,20 +294,17 @@
 ========================================================= */
 
 .cancel-btn {
-    min-width: 120px;
+    min-width: 130px;
 
-    background:
-        rgba(255,255,255,0.08);
+    background: #f5f5f5;
 
-    color: #f3f4f6;
+    color: #333333;
 
-    border:
-        1px solid rgba(255,255,255,0.08);
+    border: 1px solid #dddddd;
 }
 
 .cancel-btn:hover {
-    background:
-        rgba(255,255,255,0.14);
+    background: #ebebeb;
 
     transform:
         translateY(-2px);
@@ -358,54 +319,17 @@
 }
 
 .modal-body::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.modal-body::-webkit-scrollbar-thumb {
-    background:
-        linear-gradient(
-            180deg,
-            #ef4444,
-            #9333ea
-        );
-
+    background: #f1f1f1;
     border-radius: 999px;
 }
 
-/* =========================================================
-   ANIMATION
-========================================================= */
-
-@keyframes modalFade {
-
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-
+.modal-body::-webkit-scrollbar-thumb {
+    background: #d4d4d4;
+    border-radius: 999px;
 }
 
-@keyframes modalScale {
-
-    from {
-        opacity: 0;
-
-        transform:
-            scale(0.88)
-            translateY(40px);
-    }
-
-    to {
-        opacity: 1;
-
-        transform:
-            scale(1)
-            translateY(0);
-    }
-
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #bcbcbc;
 }
 
 /* =========================================================
@@ -413,18 +337,15 @@
 ========================================================= */
 
 .modal-icon-wrapper {
-
     display: flex;
     align-items: center;
     justify-content: center;
 
-    margin-top: 35px;
+    margin-top: 34px;
     margin-bottom: 8px;
 
     position: relative;
-
     z-index: 2;
-
 }
 
 /* =========================================================
@@ -432,9 +353,8 @@
 ========================================================= */
 
 .modal-icon {
-
-    width: 130px;
-    height: 130px;
+    width: 125px;
+    height: 125px;
 
     border-radius: 50%;
 
@@ -446,139 +366,149 @@
 
     animation:
         modalIconPop 0.45s ease;
-
 }
 
 /* =========================================================
-   SUCCESS
+   SUCCESS ICON (XANH LÁ)
 ========================================================= */
 
 .modal-icon.success {
-
-    color: #22c55e;
+    color: #16a34a;
 
     background:
         radial-gradient(
             circle,
-            rgba(34,197,94,0.22),
-            rgba(34,197,94,0.05)
+            rgba(22,163,74,0.14),
+            rgba(22,163,74,0.04)
         );
 
     border:
-        2px solid rgba(34,197,94,0.35);
+        2px solid rgba(22,163,74,0.18);
 
     box-shadow:
-        0 0 35px rgba(34,197,94,0.35),
-        inset 0 0 25px rgba(34,197,94,0.18);
-
+        0 0 30px rgba(22,163,74,0.14),
+        inset 0 0 20px rgba(22,163,74,0.08);
 }
 
 /* =========================================================
-   ERROR
+   ERROR ICON (ĐỎ)
 ========================================================= */
 
 .modal-icon.error {
-
-    color: #ef4444;
+    color: #dc2626;
 
     background:
         radial-gradient(
             circle,
-            rgba(239,68,68,0.22),
-            rgba(239,68,68,0.05)
+            rgba(220,38,38,0.14),
+            rgba(220,38,38,0.04)
         );
 
     border:
-        2px solid rgba(239,68,68,0.35);
+        2px solid rgba(220,38,38,0.18);
 
     box-shadow:
-        0 0 35px rgba(239,68,68,0.35),
-        inset 0 0 25px rgba(239,68,68,0.18);
-
+        0 0 30px rgba(220,38,38,0.14),
+        inset 0 0 20px rgba(220,38,38,0.08);
 }
 
 /* =========================================================
-   WARNING
+   WARNING ICON (CAM)
 ========================================================= */
 
 .modal-icon.warning {
-
-    color: #f59e0b;
+    color: #ea580c;
 
     background:
         radial-gradient(
             circle,
-            rgba(245,158,11,0.22),
-            rgba(245,158,11,0.05)
+            rgba(234,88,12,0.14),
+            rgba(234,88,12,0.04)
         );
 
     border:
-        2px solid rgba(245,158,11,0.35);
+        2px solid rgba(234,88,12,0.18);
 
     box-shadow:
-        0 0 35px rgba(245,158,11,0.35),
-        inset 0 0 25px rgba(245,158,11,0.18);
-
+        0 0 30px rgba(234,88,12,0.14),
+        inset 0 0 20px rgba(234,88,12,0.08);
 }
 
 /* =========================================================
-   INFO
+   INFO ICON (XANH DƯƠNG)
 ========================================================= */
 
 .modal-icon.info {
-
-    color: #3b82f6;
+    color: #2563eb;
 
     background:
         radial-gradient(
             circle,
-            rgba(59,130,246,0.22),
-            rgba(59,130,246,0.05)
+            rgba(37,99,235,0.14),
+            rgba(37,99,235,0.04)
         );
 
     border:
-        2px solid rgba(59,130,246,0.35);
+        2px solid rgba(37,99,235,0.18);
 
     box-shadow:
-        0 0 35px rgba(59,130,246,0.35),
-        inset 0 0 25px rgba(59,130,246,0.18);
-
+        0 0 30px rgba(37,99,235,0.14),
+        inset 0 0 20px rgba(37,99,235,0.08);
 }
-
 /* =========================================================
-   ICON ANIMATION
+   ANIMATION
 ========================================================= */
 
-@keyframes modalIconPop {
+@keyframes modalFade {
+    from {
+        opacity: 0;
+    }
 
-    0% {
+    to {
+        opacity: 1;
+    }
+}
 
+@keyframes modalScale {
+    from {
         opacity: 0;
 
         transform:
-            scale(0.6)
-            rotate(-12deg);
+            scale(0.9)
+            translateY(25px);
+    }
 
+    to {
+        opacity: 1;
+
+        transform:
+            scale(1)
+            translateY(0);
+    }
+}
+
+@keyframes modalIconPop {
+    0% {
+        opacity: 0;
+
+        transform:
+            scale(0.7)
+            rotate(-10deg);
     }
 
     60% {
-
         transform:
             scale(1.08)
-            rotate(3deg);
-
+            rotate(2deg);
     }
 
     100% {
-
         opacity: 1;
 
         transform:
             scale(1)
             rotate(0deg);
-
     }
-
 }
 
 /* =========================================================
@@ -589,20 +519,30 @@
 
     .modal-container {
         max-width: 95%;
+        border-radius: 24px;
     }
 
     .modal-header {
-        padding: 20px;
+        padding: 22px 24px 18px;
     }
 
     .modal-header h2 {
-        font-size: 28px;
+        font-size: 26px;
     }
 
     .modal-body {
-        padding: 22px;
+        padding: 24px;
     }
 
+    .modal-icon {
+        width: 110px;
+        height: 110px;
+    }
+
+    .modal-close-btn {
+        width: 44px;
+        height: 44px;
+    }
 }
 
 /* =========================================================
@@ -612,11 +552,11 @@
 @media screen and (max-width: 768px) {
 
     .modal-overlay {
-        padding: 14px;
+        padding: 16px;
     }
 
     .modal-container {
-        border-radius: 24px;
+        border-radius: 22px;
     }
 
     .modal-header {
@@ -624,54 +564,37 @@
     }
 
     .modal-header h2 {
-        font-size: 24px;
+        font-size: 22px;
+        line-height: 1.4;
+        padding-right: 45px;
     }
 
     .modal-close-btn {
+        top: 16px;
+        right: 16px;
 
-        top: 18px;
-        right: 18px;
+        width: 42px;
+        height: 42px;
 
-        width: 44px;
-        height: 44px;
+        border-radius: 12px;
     }
 
     .modal-body {
         padding: 20px;
     }
 
+    .modal-icon-wrapper {
+        margin-top: 28px;
+    }
+
     .modal-icon {
-        width: 110px;
-        height: 110px;
+        width: 95px;
+        height: 95px;
     }
 
-}
-
-/* =========================================================
-   SMALL MOBILE
-========================================================= */
-
-@media screen and (max-width: 480px) {
-
-    .modal-header {
-        padding: 16px;
-    }
-
-    .modal-header h2 {
-        font-size: 20px;
-    }
-
-    .modal-close-btn {
-
-        top: 14px;
-        right: 14px;
-
-        width: 40px;
-        height: 40px;
-    }
-
-    .modal-body {
-        padding: 16px;
+    .modal-icon svg {
+        width: 56px;
+        height: 56px;
     }
 
     .alert-actions {
@@ -682,5 +605,52 @@
     .cancel-btn {
         width: 100%;
     }
+}
 
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media screen and (max-width: 480px) {
+
+    .modal-overlay {
+        padding: 12px;
+    }
+
+    .modal-container {
+        border-radius: 18px;
+    }
+
+    .modal-header {
+        padding: 16px;
+    }
+
+    .modal-header h2 {
+        font-size: 18px;
+    }
+
+    .modal-body {
+        padding: 16px;
+    }
+
+    .modal-icon {
+        width: 88px;
+        height: 88px;
+    }
+
+    .modal-icon svg {
+        width: 50px;
+        height: 50px;
+    }
+
+    .alert-content p {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .modal-body button {
+        width: 100%;
+        padding: 13px 18px;
+        font-size: 14px;
+    }
 }

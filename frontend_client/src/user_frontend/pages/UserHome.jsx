@@ -530,33 +530,6 @@ const UserHome = () => {
 
           </Swiper>
 
-          {/* THUMB */}
-          <div className="mini-thumbnail-nav">
-
-            {banners.map((imgName, index) => (
-
-              <div
-                key={index}
-                className={`mini-nav-item ${
-                  index === activeIndex
-                    ? 'active'
-                    : ''
-                }`}
-                onClick={() =>
-                  swiperInstance?.slideToLoop(index)
-                }
-              >
-
-                <img
-                  src={`${bannerBaseUrl}${imgName}`}
-                  alt={`Thumb ${index}`}
-                />
-
-              </div>
-            ))}
-
-          </div>
-
         </div>
 
         {/* QUICK BOOKING */}

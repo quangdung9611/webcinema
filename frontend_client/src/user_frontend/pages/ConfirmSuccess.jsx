@@ -1,6 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, {
+    useEffect,
+    useState,
+    useRef
+} from 'react';
+
+import {
+    useLocation,
+    useNavigate
+} from 'react-router-dom';
+
 import { QRCodeCanvas } from 'qrcode.react';
+
 import axios from 'axios';
 
 import {
@@ -19,186 +29,273 @@ import '../styles/ConfirmSuccess.css';
 
 const ConfirmSuccess = () => {
 
-    const location = useLocation();
+    const location =
+        useLocation();
 
-    const navigate = useNavigate();
+    const navigate =
+        useNavigate();
 
-    const [printTime, setPrintTime] = useState('');
+    const [printTime,
+        setPrintTime] =
+        useState('');
 
-    const hasConfirmed = useRef(false);
+    const hasConfirmed =
+        useRef(false);
 
-    const [ticketData, setTicketData] = useState(() => {
+    // =========================
+    // INIT DATA
+    // =========================
 
-        const navState = location.state;
+    const [ticketData,
+        setTicketData] =
+        useState(() => {
 
-        const incomingData = navState?.data || navState;
+            const navState =
+                location.state;
 
-        if (incomingData && (incomingData.orderId || incomingData.bookingId)) {
+            const incomingData =
+                navState?.data ||
+                navState;
 
-            sessionStorage.setItem(
-                'lastSuccessTicket',
-                JSON.stringify(incomingData)
-            );
+            if (
+                incomingData &&
+                (
+                    incomingData.orderId ||
+                    incomingData.bookingId
+                )
+            ) {
 
-            return incomingData;
-        }
+                sessionStorage.setItem(
+                    'lastSuccessTicket',
+                    JSON.stringify(
+                        incomingData
+                    )
+                );
 
-        const savedData =
-            sessionStorage.getItem('lastSuccessTicket');
+                return incomingData;
+            }
 
-        return savedData
-            ? JSON.parse(savedData)
-            : null;
-    });
+            const savedData =
+                sessionStorage.getItem(
+                    'lastSuccessTicket'
+                );
+
+            return savedData
+                ? JSON.parse(savedData)
+                : null;
+        });
+
+    // =========================
+    // FETCH BOOKING DETAIL
+    // =========================
 
     useEffect(() => {
 
-        const confirmBookingOnServer = async () => {
+        const confirmBookingOnServer =
+            async () => {
 
-            const bID =
-                ticketData?.orderId ||
-                ticketData?.bookingId;
+                const bID =
+                    ticketData?.orderId ||
+                    ticketData?.bookingId;
 
-            if (bID && !hasConfirmed.current) {
+                if (
+                    bID &&
+                    !hasConfirmed.current
+                ) {
 
-                hasConfirmed.current = true;
+                    hasConfirmed.current =
+                        true;
 
-                try {
+                    try {
 
-                    await new Promise(resolve =>
-                        setTimeout(resolve, 1500)
-                    );
-
-                    const response =
-                        await axios.get(
-                            `https://api.quangdungcinema.id.vn/api/bookings/detail/${bID}`,
-                            {
-                                withCredentials: true
-                            }
+                        await new Promise(
+                            resolve =>
+                                setTimeout(
+                                    resolve,
+                                    1500
+                                )
                         );
 
-                    if (response.data.success) {
-
-                        const b = response.data.booking;
-
-                        const d = response.data.details;
-
-                        const seats = d
-                            ?.filter(
-                                i =>
-                                    i.seat_id ||
-                                    (
-                                        i.item_name &&
-                                        i.item_name.includes('Ghế')
-                                    )
-                            )
-                            .map(i =>
-                                i.item_name
-                                    .replace('Ghế ', '')
-                                    .trim()
-                            )
-                            .join(', ');
-
-                        setTicketData(prev => ({
-                            ...prev,
-
-                            movieTitle:
-                                b.movie_name ||
-                                prev.movieTitle,
-
-                            cinemaName:
-                                b.cinema_name ||
-                                prev.cinemaName,
-
-                            roomName:
-                                b.room_name ||
-                                prev.roomName,
-
-                            startTime:
-                                b.show_time?.split(' - ')[0] ||
-                                prev.startTime,
-
-                            selectedDate:
-                                b.show_time?.split(' - ')[1] ||
-                                prev.selectedDate,
-
-                            seatDisplay:
-                                seats ||
-                                prev.seatDisplay,
-
-                            ticketPIN:
-                                b.pin ||
-                                b.memo?.slice(-6) ||
-                                prev.ticketPIN,
-
-                            customerName:
-                                b.full_name ||
-                                prev.customerName,
-
-                            customerEmail:
-                                b.email ||
-                                prev.customerEmail,
-
-                            selectedFoods:
-                                d?.filter(
-                                    i =>
-                                        !i.seat_id &&
-                                        !i.item_name.includes('Ghế')
-                                )
-                        }));
-
-                        const userRes =
+                        const response =
                             await axios.get(
-                                'https://api.quangdungcinema.id.vn/api/auth/me',
+                                `https://api.quangdungcinema.id.vn/api/bookings/detail/${bID}`,
                                 {
                                     withCredentials: true
                                 }
                             );
 
-                        if (userRes.data.success) {
+                        if (
+                            response.data.success
+                        ) {
 
-                            localStorage.setItem(
-                                'user',
-                                JSON.stringify(userRes.data.user)
+                            const b =
+                                response.data.booking;
+
+                            const d =
+                                response.data.details;
+
+                            const seats =
+                                d
+                                    ?.filter(
+                                        i =>
+                                            i.seat_id ||
+                                            (
+                                                i.item_name &&
+                                                i.item_name.includes(
+                                                    'Ghế'
+                                                )
+                                            )
+                                    )
+                                    .map(
+                                        i =>
+                                            i.item_name
+                                                .replace(
+                                                    'Ghế ',
+                                                    ''
+                                                )
+                                                .trim()
+                                    )
+                                    .join(
+                                        ', '
+                                    );
+
+                            setTicketData(
+                                prev => ({
+                                    ...prev,
+
+                                    movieTitle:
+                                        b.movie_name ||
+                                        prev.movieTitle,
+
+                                    cinemaName:
+                                        b.cinema_name ||
+                                        prev.cinemaName,
+
+                                    roomName:
+                                        b.room_name ||
+                                        prev.roomName,
+
+                                    startTime:
+                                        b.show_time
+                                            ?.split(
+                                                ' - '
+                                            )[0] ||
+                                        prev.startTime,
+
+                                    selectedDate:
+                                        b.show_time
+                                            ?.split(
+                                                ' - '
+                                            )[1] ||
+                                        prev.selectedDate,
+
+                                    seatDisplay:
+                                        seats ||
+                                        prev.seatDisplay,
+
+                                    ticketPIN:
+                                        b.pin ||
+                                        b.memo?.slice(
+                                            -6
+                                        ) ||
+                                        prev.ticketPIN,
+
+                                    customerName:
+                                        b.full_name ||
+                                        prev.customerName,
+
+                                    customerEmail:
+                                        b.email ||
+                                        prev.customerEmail,
+
+                                    selectedFoods:
+                                        d?.filter(
+                                            i =>
+                                                !i.seat_id &&
+                                                !i.item_name.includes(
+                                                    'Ghế'
+                                                )
+                                        )
+                                })
                             );
 
-                            window.dispatchEvent(
-                                new Event('storage')
-                            );
+                            const userRes =
+                                await axios.get(
+                                    'https://api.quangdungcinema.id.vn/api/auth/me',
+                                    {
+                                        withCredentials: true
+                                    }
+                                );
+
+                            if (
+                                userRes.data.success
+                            ) {
+
+                                localStorage.setItem(
+                                    'user',
+                                    JSON.stringify(
+                                        userRes.data.user
+                                    )
+                                );
+
+                                window.dispatchEvent(
+                                    new Event(
+                                        'storage'
+                                    )
+                                );
+                            }
                         }
+
+                    } catch (err) {
+
+                        console.error(
+                            '❌ Lỗi:',
+                            err.message
+                        );
                     }
-
-                } catch (err) {
-
-                    console.error(
-                        '❌ Lỗi:',
-                        err.message
-                    );
                 }
-            }
-        };
+            };
 
         confirmBookingOnServer();
 
-    }, [ticketData?.orderId, ticketData?.bookingId]);
+    }, [
+        ticketData?.orderId,
+        ticketData?.bookingId
+    ]);
+
+    // =========================
+    // INIT PAGE
+    // =========================
 
     useEffect(() => {
 
-        const now = new Date();
+        const now =
+            new Date();
 
         setPrintTime(
-            now.toLocaleString('vi-VN')
+            now.toLocaleString(
+                'vi-VN'
+            )
         );
 
-        window.scrollTo(0, 0);
+        window.scrollTo(
+            0,
+            0
+        );
 
     }, []);
 
-    if (!ticketData) return null;
+    if (!ticketData)
+        return null;
+
+    // =========================
+    // DATA
+    // =========================
 
     const {
         movieTitle,
         moviePoster,
+        movie,
         cinemaName,
         roomName,
         startTime,
@@ -212,19 +309,35 @@ const ConfirmSuccess = () => {
     } = ticketData;
 
     const finalOrderId =
-        orderId || bookingId;
+        orderId ||
+        bookingId;
 
-    const posterUrl = moviePoster
-        ? (
-            moviePoster.startsWith('http')
-                ? moviePoster
-                : `https://api.quangdungcinema.id.vn/uploads/posters/${moviePoster}`
-        )
-        : null;
+    // =========================
+    // FIX POSTER
+    // =========================
+
+    const rawPoster =
+        moviePoster ||
+        movie?.poster_url ||
+        movie?.poster ||
+        movie?.image ||
+        '';
+
+    const posterUrl =
+        rawPoster
+            ? rawPoster.startsWith(
+                'http'
+            )
+                ? rawPoster
+                : `https://api.quangdungcinema.id.vn/uploads/posters/${rawPoster}`
+            : null;
 
     const displayRoom =
         roomName
-            ?.replace('Phòng ', '')
+            ?.replace(
+                'Phòng ',
+                ''
+            )
             .trim() || '1';
 
     return (
@@ -275,20 +388,23 @@ const ConfirmSuccess = () => {
 
                         <div className="poster-box">
 
-                            {
-                                posterUrl
-                                    ? (
-                                        <img
-                                            src={posterUrl}
-                                            alt={movieTitle}
-                                        />
-                                    )
-                                    : (
-                                        <div className="no-poster">
-                                            NO IMAGE
-                                        </div>
-                                    )
-                            }
+                            {posterUrl ? (
+
+                                <img
+                                    src={
+                                        posterUrl
+                                    }
+                                    alt={
+                                        movieTitle
+                                    }
+                                />
+
+                            ) : (
+
+                                <div className="no-poster">
+                                    NO IMAGE
+                                </div>
+                            )}
 
                         </div>
 
@@ -434,7 +550,9 @@ const ConfirmSuccess = () => {
 
                     <button
                         className="home-btn"
-                        onClick={() => navigate('/')}
+                        onClick={() =>
+                            navigate('/')
+                        }
                     >
 
                         <House size={20} />
@@ -445,7 +563,9 @@ const ConfirmSuccess = () => {
 
                     <button
                         className="download-btn"
-                        onClick={() => window.print()}
+                        onClick={() =>
+                            window.print()
+                        }
                     >
 
                         <Download size={20} />

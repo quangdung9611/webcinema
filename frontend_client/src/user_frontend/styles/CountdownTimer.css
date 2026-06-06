@@ -1,6 +1,6 @@
-/* =========================
-   COUNTDOWN WRAPPER
-========================= */
+/* =========================================================
+   COUNTDOWN TIMER - RED BLACK THEME
+========================================================= */
 
 .countdown-wrapper {
     display: flex;
@@ -17,47 +17,52 @@
     background:
         linear-gradient(
             145deg,
-            rgba(26, 26, 40, 0.95),
-            rgba(16, 16, 28, 0.98)
+            rgba(20,0,0,0.95),
+            rgba(8,0,0,0.98)
         );
 
     border:
-        1px solid rgba(255,255,255,0.06);
+        1px solid rgba(255,50,50,0.12);
 
     box-shadow:
-        0 10px 30px rgba(0,0,0,0.28);
+        0 10px 30px rgba(0,0,0,0.35),
+        0 0 20px rgba(255,0,0,0.08);
 
     position: relative;
 
     overflow: hidden;
+
+    backdrop-filter: blur(12px);
 }
 
-/* glow */
+/* =========================================================
+   RED GLOW EFFECT
+========================================================= */
 
 .countdown-wrapper::before {
     content: "";
 
     position: absolute;
 
-    top: -80px;
-    right: -60px;
+    top: -90px;
+    right: -70px;
 
-    width: 180px;
-    height: 180px;
+    width: 190px;
+    height: 190px;
 
     background:
         radial-gradient(
             circle,
-            rgba(168,85,247,0.18),
+            rgba(255,0,0,0.18),
             transparent 70%
         );
 
     pointer-events: none;
 }
 
-/* =========================
+/* =========================================================
    ICON
-========================= */
+========================================================= */
 
 .countdown-icon {
     flex-shrink: 0;
@@ -71,25 +76,26 @@
     align-items: center;
     justify-content: center;
 
-    color: #c084fc;
+    color: #ff4d4d;
 
     background:
         linear-gradient(
             135deg,
-            rgba(124,58,237,0.25),
-            rgba(168,85,247,0.12)
+            rgba(255,0,0,0.22),
+            rgba(140,0,0,0.12)
         );
 
     border:
-        1px solid rgba(168,85,247,0.18);
+        1px solid rgba(255,50,50,0.16);
 
     box-shadow:
-        0 8px 20px rgba(124,58,237,0.25);
+        0 0 18px rgba(255,0,0,0.18),
+        inset 0 0 10px rgba(255,0,0,0.08);
 }
 
-/* =========================
+/* =========================================================
    CONTENT
-========================= */
+========================================================= */
 
 .countdown-content {
     display: flex;
@@ -100,38 +106,64 @@
     margin: 0 0 6px;
 
     font-size: 0.82rem;
-    font-weight: 600;
-    letter-spacing: 1px;
+    font-weight: 700;
 
-    color: #94a3b8;
+    letter-spacing: 1.5px;
+
+    color: rgba(255,255,255,0.58);
+
+    text-transform: uppercase;
 }
 
 .countdown-time {
     font-size: 2rem;
-    font-weight: 800;
+    font-weight: 900;
 
     line-height: 1;
 
-    color: #fff;
+    color: #ff4040;
+
+    text-shadow:
+        0 0 8px rgba(255,0,0,0.35),
+        0 0 18px rgba(255,0,0,0.22);
 }
 
-/* =========================
+/* =========================================================
    RESPONSIVE
-========================= */
+========================================================= */
 
 @media (max-width: 768px) {
 
     .countdown-wrapper {
         padding: 16px;
         border-radius: 18px;
+
+        gap: 14px;
     }
 
     .countdown-icon {
         width: 50px;
         height: 50px;
+
+        border-radius: 16px;
     }
 
     .countdown-time {
         font-size: 1.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .countdown-wrapper {
+        padding: 14px 16px;
+    }
+
+    .countdown-label {
+        font-size: 0.75rem;
+    }
+
+    .countdown-time {
+        font-size: 1.4rem;
     }
 }

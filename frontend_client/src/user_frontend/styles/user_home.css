@@ -80,9 +80,9 @@
     transition: transform 1s ease-in-out;
 
     filter:
-        brightness(.52)
-        contrast(1.12)
-        saturate(1.1);
+        brightness(.9)
+        contrast(1.05)
+        saturate(1.05);
 }
 
 .swiper-slide-active .banner-img-fade-zoom {
@@ -91,6 +91,7 @@
 }
 
 .banner-full-overlay {
+    display: none;
     position: absolute;
     inset: 0;
     z-index: 2;
@@ -98,17 +99,16 @@
     background:
         linear-gradient(
             to top,
-            rgba(31,9,8,1) 0%,
-            rgba(31,9,8,.6) 40%,
-            rgba(0,0,0,.3) 100%
+            rgba(0,0,0,.15) 0%,
+            rgba(0,0,0,.05) 45%,
+            transparent 100%
         );
 }
-
 /* ============================================================
     MINI THUMBNAIL
 ============================================================ */
 
-.mini-thumbnail-nav {
+/* .mini-thumbnail-nav {
     position: absolute;
     right: 40px;
     bottom: 40px;
@@ -161,7 +161,7 @@
 
 .mini-nav-item.active img {
     filter: brightness(.95);
-}
+} */
 
 /* ============================================================
     QUICK BOOKING

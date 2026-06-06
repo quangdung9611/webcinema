@@ -289,7 +289,7 @@ const UserLogin = () => {
 
                     </div>
 
-                    {/* PASSWORD */}
+                  {/* PASSWORD */}
 
                     <div className="form-group">
 
@@ -347,13 +347,13 @@ const UserLogin = () => {
 
                                 {showPassword ? (
 
-                                    <EyeOff
+                                    <Eye
                                         size={18}
                                     />
 
                                 ) : (
 
-                                    <Eye
+                                    <EyeOff
                                         size={18}
                                     />
 

@@ -6,428 +6,531 @@ const bcrypt = require('bcryptjs');
 
 const db = require('../Config/db');
 
-const transporter = require('../Config/mailer');
+const transporter =
+    require('../Config/mailer');
 
-const otpEmailTemplate =
-    require('../Templates/OtpEmailTemplate');
+const ResetPasswordOtpTemplate =
+    require(
+        '../Templates/ResetPasswordOtpTemplate'
+    );
 
 // =========================================================
 // FORGOT PASSWORD
 // SEND OTP
 // =========================================================
 
-exports.forgotPassword = async (req, res) => {
+exports.forgotPassword =
+    async (req, res) => {
 
-    try {
+        try {
 
-        // =====================================================
-        // GET EMAIL
-        // =====================================================
+            // =====================================================
+            // GET EMAIL
+            // =====================================================
 
-        const { email } = req.body;
+            const { email } =
+                req.body;
 
-        // =====================================================
-        // VALIDATE
-        // =====================================================
+            // =====================================================
+            // VALIDATE
+            // =====================================================
 
-        if (!email) {
+            if (!email) {
 
-            return res.status(400).json({
+                return res
+                    .status(400)
+                    .json({
 
-                success: false,
+                        success: false,
 
-                message: 'Vui lòng nhập email'
+                        message:
+                            'Vui lòng nhập email'
 
-            });
+                    });
 
-        }
+            }
 
-        // =====================================================
-        // CHECK USER
-        // =====================================================
+            // =====================================================
+            // CHECK USER
+            // =====================================================
 
-        const [users] = await db.query(
+            const [users] =
+                await db.query(
 
-            `
-                SELECT *
-                FROM users
-                WHERE email = ?
-            `,
+                    `
+                    SELECT *
+                    FROM users
+                    WHERE email = ?
+                    `,
 
-            [email]
+                    [email]
 
-        );
+                );
 
-        // =====================================================
-        // USER NOT FOUND
-        // =====================================================
+            // =====================================================
+            // USER NOT FOUND
+            // =====================================================
 
-        if (users.length === 0) {
+            if (
+                users.length === 0
+            ) {
 
-            return res.status(404).json({
+                return res
+                    .status(404)
+                    .json({
 
-                success: false,
+                        success: false,
 
-                message: 'Email không tồn tại'
+                        message:
+                            'Email không tồn tại'
 
-            });
+                    });
 
-        }
+            }
 
-        // =====================================================
-        // GENERATE OTP
-        // =====================================================
+            // =====================================================
+            // GENERATE OTP
+            // =====================================================
 
-        const otp = Math.floor(
+            const otp =
+                Math.floor(
 
-            100000 + Math.random() * 900000
+                    100000 +
+                    Math.random() *
+                    900000
 
-        ).toString();
+                ).toString();
 
-        // =====================================================
-        // OTP EXPIRE
-        // 60 SECONDS
-        // =====================================================
+            // =====================================================
+            // OTP EXPIRE
+            // 60 SECONDS
+            // =====================================================
 
-        const otpExpire = Date.now() + 60 * 1000;
+            const otpExpire =
+                Date.now() +
+                60 * 1000;
 
-        // =====================================================
-        // SAVE OTP
-        // =====================================================
+            // =====================================================
+            // SAVE OTP
+            // =====================================================
 
-        await db.query(
+            await db.query(
 
-            `
+                `
                 UPDATE users
                 SET
                     otp_code = ?,
                     otp_expire = ?
                 WHERE email = ?
-            `,
+                `,
 
-            [
-                otp,
-                otpExpire,
+                [
+                    otp,
+                    otpExpire,
+                    email
+                ]
+
+            );
+
+            // =====================================================
+            // SEND EMAIL
+            // =====================================================
+
+            console.log(
+                '📨 Đang gửi OTP reset password tới:',
                 email
-            ]
+            );
 
-        );
+            await transporter.sendMail({
 
-        // =====================================================
-        // SEND EMAIL
-        // =====================================================
+                from:
+                    `"Dũng Cinema 🍿" <${process.env.EMAIL_USER}>`,
 
-        await transporter.sendMail({
+                to: email,
 
-            from: process.env.EMAIL_USER,
+                subject:
+                    'Mã OTP đặt lại mật khẩu',
 
-            to: email,
+                html:
+                    ResetPasswordOtpTemplate(
+                        otp
+                    )
 
-            subject: 'Mã OTP đặt lại mật khẩu',
+            });
 
-            html: otpEmailTemplate(otp)
+            console.log(
+                '✅ Gửi OTP thành công'
+            );
 
-        });
+            // =====================================================
+            // SUCCESS
+            // =====================================================
 
-        // =====================================================
-        // SUCCESS
-        // =====================================================
+            return res
+                .status(200)
+                .json({
 
-        return res.status(200).json({
+                    success: true,
 
-            success: true,
+                    message:
+                        'Đã gửi mã OTP'
 
-            message: 'Đã gửi mã OTP'
+                });
 
-        });
+        }
 
-    }
+        // =========================================================
+        // ERROR
+        // =========================================================
 
-    // =========================================================
-    // ERROR
-    // =========================================================
+        catch (error) {
 
-    catch (error) {
+            console.log(
+                '❌ FORGOT PASSWORD ERROR:'
+            );
 
-        console.log(error);
+            console.log(error);
 
-        return res.status(500).json({
+            return res
+                .status(500)
+                .json({
 
-            success: false,
+                    success: false,
 
-            message: 'Lỗi server'
+                    message:
+                        'Lỗi server'
 
-        });
+                });
 
-    }
+        }
 
-};
+    };
 
 // =========================================================
 // VERIFY OTP
 // =========================================================
 
-exports.verifyOtp = async (req, res) => {
+exports.verifyOtp =
+    async (req, res) => {
 
-    try {
+        try {
 
-        // =====================================================
-        // GET DATA
-        // =====================================================
+            // =====================================================
+            // GET DATA
+            // =====================================================
 
-        const {
-            email,
-            otp
-        } = req.body;
+            const {
+                email,
+                otp
+            } = req.body;
 
-        // =====================================================
-        // VALIDATE
-        // =====================================================
+            // =====================================================
+            // VALIDATE
+            // =====================================================
 
-        if (!email || !otp) {
+            if (
+                !email ||
+                !otp
+            ) {
 
-            return res.status(400).json({
+                return res
+                    .status(400)
+                    .json({
 
-                success: false,
+                        success: false,
 
-                message: 'Thiếu thông tin'
+                        message:
+                            'Thiếu thông tin'
 
-            });
+                    });
+
+            }
+
+            // =====================================================
+            // CHECK USER
+            // =====================================================
+
+            const [users] =
+                await db.query(
+
+                    `
+                    SELECT *
+                    FROM users
+                    WHERE email = ?
+                    `,
+
+                    [email]
+
+                );
+
+            // =====================================================
+            // USER NOT FOUND
+            // =====================================================
+
+            if (
+                users.length === 0
+            ) {
+
+                return res
+                    .status(404)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            'Người dùng không tồn tại'
+
+                    });
+
+            }
+
+            // =====================================================
+            // GET USER
+            // =====================================================
+
+            const user =
+                users[0];
+
+            // =====================================================
+            // CHECK OTP
+            // =====================================================
+
+            if (
+                user.otp_code !==
+                otp
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            'OTP không chính xác'
+
+                    });
+
+            }
+
+            // =====================================================
+            // CHECK EXPIRE
+            // =====================================================
+
+            if (
+                Date.now() >
+                user.otp_expire
+            ) {
+
+                return res
+                    .status(400)
+                    .json({
+
+                        success: false,
+
+                        message:
+                            'OTP đã hết hạn'
+
+                    });
+
+            }
+
+            // =====================================================
+            // SUCCESS
+            // =====================================================
+
+            return res
+                .status(200)
+                .json({
+
+                    success: true,
+
+                    message:
+                        'OTP hợp lệ'
+
+                });
 
         }
 
-        // =====================================================
-        // CHECK USER
-        // =====================================================
+        // =========================================================
+        // ERROR
+        // =========================================================
 
-        const [users] = await db.query(
+        catch (error) {
 
-            `
-                SELECT *
-                FROM users
-                WHERE email = ?
-            `,
+            console.log(
+                '❌ VERIFY OTP ERROR:'
+            );
 
-            [email]
+            console.log(error);
 
-        );
+            return res
+                .status(500)
+                .json({
 
-        // =====================================================
-        // USER NOT FOUND
-        // =====================================================
+                    success: false,
 
-        if (users.length === 0) {
+                    message:
+                        'Lỗi server'
 
-            return res.status(404).json({
-
-                success: false,
-
-                message: 'Người dùng không tồn tại'
-
-            });
+                });
 
         }
 
-        // =====================================================
-        // GET USER
-        // =====================================================
-
-        const user = users[0];
-
-        // =====================================================
-        // CHECK OTP
-        // =====================================================
-
-        if (user.otp_code !== otp) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message: 'OTP không chính xác'
-
-            });
-
-        }
-
-        // =====================================================
-        // CHECK EXPIRE
-        // =====================================================
-
-        if (Date.now() > user.otp_expire) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message: 'OTP đã hết hạn'
-
-            });
-
-        }
-
-        // =====================================================
-        // SUCCESS
-        // =====================================================
-
-        return res.status(200).json({
-
-            success: true,
-
-            message: 'OTP hợp lệ'
-
-        });
-
-    }
-
-    // =========================================================
-    // ERROR
-    // =========================================================
-
-    catch (error) {
-
-        console.log(error);
-
-        return res.status(500).json({
-
-            success: false,
-
-            message: 'Lỗi server'
-
-        });
-
-    }
-
-};
+    };
 
 // =========================================================
 // RESET PASSWORD
 // =========================================================
 
-exports.resetPassword = async (req, res) => {
+exports.resetPassword =
+    async (req, res) => {
 
-    try {
+        try {
 
-        // =====================================================
-        // GET DATA
-        // =====================================================
+            // =====================================================
+            // GET DATA
+            // =====================================================
 
-        const {
-            email,
-            newPassword
-        } = req.body;
+            const {
+                email,
+                newPassword
+            } = req.body;
 
-        // =====================================================
-        // VALIDATE
-        // =====================================================
+            // =====================================================
+            // VALIDATE
+            // =====================================================
 
-        if (!email || !newPassword) {
+            if (
+                !email ||
+                !newPassword
+            ) {
 
-            return res.status(400).json({
+                return res
+                    .status(400)
+                    .json({
 
-                success: false,
+                        success: false,
 
-                message: 'Thiếu thông tin'
+                        message:
+                            'Thiếu thông tin'
 
-            });
+                    });
 
-        }
+            }
 
-        // =====================================================
-        // CHECK USER
-        // =====================================================
+            // =====================================================
+            // CHECK USER
+            // =====================================================
 
-        const [users] = await db.query(
+            const [users] =
+                await db.query(
 
-            `
-                SELECT *
-                FROM users
-                WHERE email = ?
-            `,
+                    `
+                    SELECT *
+                    FROM users
+                    WHERE email = ?
+                    `,
 
-            [email]
+                    [email]
 
-        );
+                );
 
-        // =====================================================
-        // USER NOT FOUND
-        // =====================================================
+            // =====================================================
+            // USER NOT FOUND
+            // =====================================================
 
-        if (users.length === 0) {
+            if (
+                users.length === 0
+            ) {
 
-            return res.status(404).json({
+                return res
+                    .status(404)
+                    .json({
 
-                success: false,
+                        success: false,
 
-                message: 'Người dùng không tồn tại'
+                        message:
+                            'Người dùng không tồn tại'
 
-            });
+                    });
 
-        }
+            }
 
-        // =====================================================
-        // HASH PASSWORD
-        // =====================================================
+            // =====================================================
+            // HASH PASSWORD
+            // =====================================================
 
-        const hashedPassword = await bcrypt.hash(
+            const hashedPassword =
+                await bcrypt.hash(
 
-            newPassword,
-            10
+                    newPassword,
+                    10
 
-        );
+                );
 
-        // =====================================================
-        // UPDATE PASSWORD
-        // =====================================================
+            // =====================================================
+            // UPDATE PASSWORD
+            // =====================================================
 
-        await db.query(
+            await db.query(
 
-            `
+                `
                 UPDATE users
                 SET
                     password = ?,
                     otp_code = NULL,
                     otp_expire = NULL
                 WHERE email = ?
-            `,
+                `,
 
-            [
-                hashedPassword,
-                email
-            ]
+                [
+                    hashedPassword,
+                    email
+                ]
 
-        );
+            );
 
-        // =====================================================
-        // SUCCESS
-        // =====================================================
+            // =====================================================
+            // SUCCESS
+            // =====================================================
 
-        return res.status(200).json({
+            return res
+                .status(200)
+                .json({
 
-            success: true,
+                    success: true,
 
-            message: 'Đổi mật khẩu thành công'
+                    message:
+                        'Đổi mật khẩu thành công'
 
-        });
+                });
 
-    }
+        }
 
-    // =========================================================
-    // ERROR
-    // =========================================================
+        // =========================================================
+        // ERROR
+        // =========================================================
 
-    catch (error) {
+        catch (error) {
 
-        console.log(error);
+            console.log(
+                '❌ RESET PASSWORD ERROR:'
+            );
 
-        return res.status(500).json({
+            console.log(error);
 
-            success: false,
+            return res
+                .status(500)
+                .json({
 
-            message: 'Lỗi server'
+                    success: false,
 
-        });
+                    message:
+                        'Lỗi server'
 
-    }
+                });
 
-};
+        }
+
+    };

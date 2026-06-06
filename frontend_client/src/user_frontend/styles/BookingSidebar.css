@@ -24,16 +24,15 @@
     width: 100%;
 
     overflow: hidden;
-
     border-radius: 22px;
 
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(0,0,0,0.45);
 
-    border: 1px solid rgba(255, 50, 50, 0.18);
+    border: 1px solid rgba(255,50,50,0.18);
 
     box-shadow:
-        0 0 25px rgba(255, 0, 0, 0.08),
-        0 10px 35px rgba(0, 0, 0, 0.45);
+        0 0 25px rgba(255,0,0,0.08),
+        0 10px 35px rgba(0,0,0,0.45);
 }
 
 .poster-container img {
@@ -63,15 +62,20 @@
     flex-direction: column;
     gap: 18px;
 
-    background: rgba(0, 0, 0, 0.42);
+    background:
+        linear-gradient(
+            180deg,
+            rgba(20,0,0,0.88),
+            rgba(8,0,0,0.94)
+        );
 
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(14px);
 
-    border: 1px solid rgba(255, 50, 50, 0.15);
+    border: 1px solid rgba(255,50,50,0.15);
 
     box-shadow:
-        0 0 25px rgba(255, 0, 0, 0.06),
-        inset 0 0 20px rgba(255, 0, 0, 0.03);
+        0 0 25px rgba(255,0,0,0.08),
+        inset 0 0 20px rgba(255,0,0,0.04);
 }
 
 /* =========================================================
@@ -87,14 +91,14 @@
     line-height: 1.5;
 
     text-transform: uppercase;
-
     text-align: center;
 
-    color: #ffffff;
+    color: #fff;
 
     padding-bottom: 18px;
 
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom:
+        1px solid rgba(255,255,255,0.08);
 }
 
 /* =========================================================
@@ -110,7 +114,8 @@
 
     padding-bottom: 12px;
 
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+    border-bottom:
+        1px dashed rgba(255,255,255,0.08);
 }
 
 .detail-item:last-child {
@@ -118,13 +123,12 @@
 }
 
 .detail-item span {
-    color: rgba(255, 255, 255, 0.65);
-
+    color: rgba(255,255,255,0.65);
     font-size: 0.92rem;
 }
 
 .detail-item strong {
-    color: #ffffff;
+    color: #fff;
 
     text-align: right;
 
@@ -133,7 +137,7 @@
 }
 
 .seats-list {
-    color: #ffcf4a;
+    color: #ffcc66;
 }
 
 /* =========================================================
@@ -142,14 +146,13 @@
 
 .food-selected-box {
     margin-top: 6px;
-
     padding-top: 16px;
 
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top:
+        1px solid rgba(255,255,255,0.08);
 
     display: flex;
     flex-direction: column;
-
     gap: 12px;
 }
 
@@ -171,7 +174,7 @@
 
     gap: 10px;
 
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255,255,255,0.82);
 
     font-size: 0.92rem;
 }
@@ -180,26 +183,19 @@
     color: #ffb347;
 }
 
-.empty-food-text {
-    color: rgba(255, 255, 255, 0.4);
-
-    font-style: italic;
-}
-
 /* =========================================================
    TOTAL
 ========================================================= */
 
 .total-price-box {
     margin-top: 4px;
-
     padding-top: 18px;
 
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top:
+        1px solid rgba(255,255,255,0.08);
 
     display: flex;
     flex-direction: column;
-
     gap: 12px;
 }
 
@@ -207,29 +203,29 @@
     display: flex;
     justify-content: space-between;
 
-    color: rgba(255, 255, 255, 0.72);
+    color: rgba(255,255,255,0.72);
 
     font-size: 0.95rem;
 }
 
 .price-row strong {
-    color: #ffffff;
+    color: #fff;
 }
 
 .grand-total {
     margin-top: 10px;
-
     padding-top: 18px;
 
     text-align: center;
 
-    border-top: 1px dashed rgba(255, 255, 255, 0.12);
+    border-top:
+        1px dashed rgba(255,255,255,0.12);
 }
 
 .grand-total p {
     margin: 0 0 10px;
 
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255,255,255,0.5);
 
     letter-spacing: 2px;
 
@@ -247,92 +243,92 @@
     color: #ff4040;
 
     text-shadow:
-        0 0 10px rgba(255, 0, 0, 0.35),
-        0 0 20px rgba(255, 0, 0, 0.2);
+        0 0 10px rgba(255,0,0,0.35),
+        0 0 20px rgba(255,0,0,0.2);
 }
+.btn-next-sidebar,
+.btn-back-food-sidebar{
+    width: 260px !important;
+    height: 54px !important;
 
-/* =========================================================
-   ACTIONS
-========================================================= */
+    max-width: 100% !important;
 
-.food-sidebar-actions {
-    display: flex;
-    flex-direction: column;
+    border-radius: 16px !important;
 
-    gap: 12px;
-
-    margin-top: 10px;
-}
-
-.btn-next,
-.btn-back-food {
-    width: 100%;
-
-    border: none;
+    font-size: 0.95rem;
+    font-weight: 700;
 
     cursor: pointer;
 
     transition: 0.25s ease;
 }
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
 
-/* CONTINUE BUTTON */
+.food-sidebar-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
-.btn-next {
-    height: 56px;
-
-    border-radius: 16px;
-
-    background: linear-gradient(
-        180deg,
-        #ff2e2e,
-        #b00000
-    );
-
-    color: white;
-
-    font-size: 0.95rem;
-    font-weight: 700;
-
-    letter-spacing: 1px;
-
-    box-shadow:
-        0 0 20px rgba(255, 0, 0, 0.25);
+    gap: 12px;
+    margin-top: 18px;
 }
 
-.btn-next:hover {
+/* CONTINUE */
+
+.btn-next-sidebar {
+    border: none;
+
+    background:
+        linear-gradient(
+            180deg,
+            #ff2e2e,
+            #9f0000
+        );
+
+    color: #fff;
+
+    box-shadow:
+        0 0 20px rgba(255,0,0,0.22);
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+}
+
+.btn-next-sidebar:hover {
     transform: translateY(-2px);
 
     box-shadow:
-        0 0 30px rgba(255, 0, 0, 0.4);
+        0 0 28px rgba(255,0,0,0.35);
 }
 
-.btn-next:disabled {
+.btn-next-sidebar:disabled {
     opacity: 0.45;
-
     cursor: not-allowed;
 }
 
-/* BACK BUTTON */
+/* BACK */
 
-.btn-back-food {
-    height: 52px;
+.btn-back-food-sidebar {
+    border:
+        1px solid rgba(255,255,255,0.08);
 
-    border-radius: 16px;
+    background:
+        rgba(255,255,255,0.04);
 
-    background: rgba(255, 255, 255, 0.04);
-
-    border: 1px solid rgba(255, 255, 255, 0.08);
-
-    color: rgba(255, 255, 255, 0.8);
-
-    font-size: 0.92rem;
-    font-weight: 600;
+    color:
+        rgba(255,255,255,0.82);
 }
 
-.btn-back-food:hover {
-    background: rgba(255, 255, 255, 0.08);
+.btn-back-food-sidebar:hover {
+    background:
+        rgba(255,255,255,0.08);
 
-    color: white;
+    color: #fff;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
 }
 
 /* =========================================================
@@ -346,6 +342,7 @@
 }
 
 @media (max-width: 992px) {
+
     .ticket-sidebar {
         width: 100%;
 
@@ -363,13 +360,13 @@
 }
 
 @media (max-width: 768px) {
+
     .ticket-sidebar {
         grid-template-columns: 1fr;
     }
 
     .poster-container {
         max-width: 240px;
-
         margin: 0 auto;
     }
 
@@ -384,16 +381,21 @@
     .grand-total h3 {
         font-size: 1.7rem;
     }
+
+    .btn-next,
+    .btn-back-food {
+        width: 100%;
+    }
 }
 
 @media (max-width: 480px) {
+
     .ticket-details {
         padding: 18px;
     }
 
     .detail-item {
         flex-direction: column;
-
         gap: 5px;
     }
 
