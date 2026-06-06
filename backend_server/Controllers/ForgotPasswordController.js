@@ -4,10 +4,19 @@
 
 const bcrypt = require('bcryptjs');
 
-const db = require('../Config/db');
+const db =
+    require('../Config/db');
 
-const MailServiceTicket =
-    require('../Services/MailServiceTicket');
+const mailService =
+    require(
+        '../Services/MailServiceTicket'
+    );
+
+// =========================================================
+// OTP STORAGE (RAM)
+// =========================================================
+
+let otpStorage = {};
 
 // =========================================================
 // FORGOT PASSWORD
@@ -19,16 +28,12 @@ exports.forgotPassword =
 
         try {
 
-            // =====================================================
-            // GET EMAIL
-            // =====================================================
-
             const { email } =
                 req.body;
 
-            // =====================================================
+            // ===============================
             // VALIDATE
-            // =====================================================
+            // ===============================
 
             if (!email) {
 
@@ -45,9 +50,9 @@ exports.forgotPassword =
 
             }
 
-            // =====================================================
+            // ===============================
             // CHECK USER
-            // =====================================================
+            // ===============================
 
             const [users] =
                 await db.query(
@@ -61,10 +66,6 @@ exports.forgotPassword =
                     [email]
 
                 );
-
-            // =====================================================
-            // USER NOT FOUND
-            // =====================================================
 
             if (
                 users.length === 0
@@ -83,95 +84,128 @@ exports.forgotPassword =
 
             }
 
-            // =====================================================
+            // ===============================
+            // CHỐNG SPAM OTP
+            // 30 GIÂY
+            // ===============================
+
+            if (
+                otpStorage[email]
+            ) {
+
+                const lastSent =
+
+                    otpStorage[email]
+                        .expires -
+
+                    (
+                        5 *
+                        60 *
+                        1000
+                    );
+
+                if (
+
+                    Date.now()
+                    - lastSent
+
+                    < 30000
+
+                ) {
+
+                    return res
+                        .json({
+
+                            success:
+                                true,
+
+                            message:
+                                'Mã OTP đã được gửi, vui lòng kiểm tra email'
+
+                        });
+
+                }
+
+            }
+
+            // ===============================
             // GENERATE OTP
-            // =====================================================
+            // ===============================
 
             const otp =
                 Math.floor(
 
                     100000 +
-                    Math.random() *
-                    900000
+
+                    Math.random()
+                    * 900000
 
                 ).toString();
 
-            // =====================================================
-            // OTP EXPIRE
-            // 5 MINUTES
-            // =====================================================
+            // ===============================
+            // SAVE OTP TO RAM
+            // ===============================
 
-            const otpExpire =
-                Date.now() +
-                5 * 60 * 1000;
+            otpStorage[email] = {
 
-            // =====================================================
-            // SAVE OTP
-            // =====================================================
+                otp,
 
-            await db.query(
+                expires:
 
-                `
-                UPDATE users
-                SET
-                    otp_code = ?,
-                    otp_expire = ?
-                WHERE email = ?
-                `,
+                    Date.now()
 
-                [
-                    otp,
-                    otpExpire,
-                    email
-                ]
+                    +
 
-            );
+                    5 *
+                    60 *
+                    1000
 
-            // =====================================================
-            // SEND EMAIL
-            // =====================================================
+            };
 
             console.log(
-                `📨 Gửi OTP reset password tới: ${email}`
+                `📨 Gửi OTP reset password tới ${email}: ${otp}`
             );
 
-            await MailServiceTicket
+            // ===============================
+            // RESPONSE TRƯỚC
+            // ===============================
+
+            res.json({
+
+                success: true,
+
+                message:
+                    'OTP đang được gửi'
+
+            });
+
+            // ===============================
+            // SEND MAIL NGẦM
+            // ===============================
+
+            mailService
                 .sendResetPasswordOTP(
 
                     email,
                     otp
 
-                );
+                )
+                .catch(err => {
 
-            console.log(
-                '✅ RESET OTP SENT SUCCESSFULLY'
-            );
+                    console.log(
+                        '❌ SEND RESET OTP ERROR'
+                    );
 
-            // =====================================================
-            // SUCCESS
-            // =====================================================
-
-            return res
-                .status(200)
-                .json({
-
-                    success: true,
-
-                    message:
-                        'Đã gửi mã OTP'
+                    console.log(err);
 
                 });
 
         }
 
-        // =========================================================
-        // ERROR
-        // =========================================================
-
         catch (error) {
 
             console.log(
-                '❌ FORGOT PASSWORD ERROR:'
+                '❌ FORGOT PASSWORD ERROR'
             );
 
             console.log(error);
@@ -183,7 +217,6 @@ exports.forgotPassword =
                     success: false,
 
                     message:
-                        error.message ||
                         'Lỗi server'
 
                 });
@@ -201,22 +234,22 @@ exports.verifyOtp =
 
         try {
 
-            // =====================================================
-            // GET DATA
-            // =====================================================
-
             const {
+
                 email,
                 otp
+
             } = req.body;
 
-            // =====================================================
+            // ===============================
             // VALIDATE
-            // =====================================================
+            // ===============================
 
             if (
+
                 !email ||
                 !otp
+
             ) {
 
                 return res
@@ -232,56 +265,24 @@ exports.verifyOtp =
 
             }
 
-            // =====================================================
-            // CHECK USER
-            // =====================================================
-
-            const [users] =
-                await db.query(
-
-                    `
-                    SELECT *
-                    FROM users
-                    WHERE email = ?
-                    `,
-
-                    [email]
-
-                );
-
-            // =====================================================
-            // USER NOT FOUND
-            // =====================================================
-
-            if (
-                users.length === 0
-            ) {
-
-                return res
-                    .status(404)
-                    .json({
-
-                        success: false,
-
-                        message:
-                            'Người dùng không tồn tại'
-
-                    });
-
-            }
-
-            const user =
-                users[0];
-
-            // =====================================================
+            // ===============================
             // CHECK OTP
-            // =====================================================
+            // ===============================
+
+            const record =
+
+                otpStorage[email];
 
             if (
-                String(
-                    user.otp_code
-                ) !==
-                String(otp)
+
+                !record ||
+
+                record.otp
+                !== otp ||
+
+                record.expires
+                < Date.now()
+
             ) {
 
                 return res
@@ -291,39 +292,11 @@ exports.verifyOtp =
                         success: false,
 
                         message:
-                            'OTP không chính xác'
+                            'OTP không đúng hoặc đã hết hạn'
 
                     });
 
             }
-
-            // =====================================================
-            // CHECK EXPIRE
-            // =====================================================
-
-            if (
-                Date.now() >
-                Number(
-                    user.otp_expire
-                )
-            ) {
-
-                return res
-                    .status(400)
-                    .json({
-
-                        success: false,
-
-                        message:
-                            'OTP đã hết hạn'
-
-                    });
-
-            }
-
-            // =====================================================
-            // SUCCESS
-            // =====================================================
 
             return res
                 .status(200)
@@ -338,14 +311,10 @@ exports.verifyOtp =
 
         }
 
-        // =========================================================
-        // ERROR
-        // =========================================================
-
         catch (error) {
 
             console.log(
-                '❌ VERIFY OTP ERROR:'
+                '❌ VERIFY OTP ERROR'
             );
 
             console.log(error);
@@ -357,7 +326,6 @@ exports.verifyOtp =
                     success: false,
 
                     message:
-                        error.message ||
                         'Lỗi server'
 
                 });
@@ -375,22 +343,22 @@ exports.resetPassword =
 
         try {
 
-            // =====================================================
-            // GET DATA
-            // =====================================================
-
             const {
+
                 email,
                 newPassword
+
             } = req.body;
 
-            // =====================================================
+            // ===============================
             // VALIDATE
-            // =====================================================
+            // ===============================
 
             if (
+
                 !email ||
                 !newPassword
+
             ) {
 
                 return res
@@ -406,49 +374,33 @@ exports.resetPassword =
 
             }
 
-            // =====================================================
-            // CHECK USER
-            // =====================================================
-
-            const [users] =
-                await db.query(
-
-                    `
-                    SELECT *
-                    FROM users
-                    WHERE email = ?
-                    `,
-
-                    [email]
-
-                );
-
-            // =====================================================
-            // USER NOT FOUND
-            // =====================================================
+            // ===============================
+            // CHECK OTP VERIFIED
+            // ===============================
 
             if (
-                users.length === 0
+                !otpStorage[email]
             ) {
 
                 return res
-                    .status(404)
+                    .status(400)
                     .json({
 
                         success: false,
 
                         message:
-                            'Người dùng không tồn tại'
+                            'OTP chưa xác thực hoặc đã hết hạn'
 
                     });
 
             }
 
-            // =====================================================
+            // ===============================
             // HASH PASSWORD
-            // =====================================================
+            // ===============================
 
             const hashedPassword =
+
                 await bcrypt.hash(
 
                     newPassword,
@@ -456,31 +408,33 @@ exports.resetPassword =
 
                 );
 
-            // =====================================================
+            // ===============================
             // UPDATE PASSWORD
-            // =====================================================
+            // ===============================
 
             await db.query(
 
                 `
                 UPDATE users
-                SET
-                    password = ?,
-                    otp_code = NULL,
-                    otp_expire = NULL
+                SET password = ?
                 WHERE email = ?
                 `,
 
                 [
+
                     hashedPassword,
                     email
+
                 ]
 
             );
 
-            // =====================================================
-            // SUCCESS
-            // =====================================================
+            // ===============================
+            // DELETE OTP
+            // ===============================
+
+            delete
+                otpStorage[email];
 
             return res
                 .status(200)
@@ -495,14 +449,10 @@ exports.resetPassword =
 
         }
 
-        // =========================================================
-        // ERROR
-        // =========================================================
-
         catch (error) {
 
             console.log(
-                '❌ RESET PASSWORD ERROR:'
+                '❌ RESET PASSWORD ERROR'
             );
 
             console.log(error);
@@ -514,7 +464,6 @@ exports.resetPassword =
                     success: false,
 
                     message:
-                        error.message ||
                         'Lỗi server'
 
                 });
