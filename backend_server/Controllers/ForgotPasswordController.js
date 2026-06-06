@@ -6,13 +6,8 @@ const bcrypt = require('bcryptjs');
 
 const db = require('../Config/db');
 
-const transporter =
-    require('../Config/mailer');
-
-const ResetPasswordOtpTemplate =
-    require(
-        '../Templates/ResetPasswordOtpTemplate'
-    );
+const MailServiceTicket =
+    require('../Services/MailServiceTicket');
 
 // =========================================================
 // FORGOT PASSWORD
@@ -103,12 +98,12 @@ exports.forgotPassword =
 
             // =====================================================
             // OTP EXPIRE
-            // 60 SECONDS
+            // 5 MINUTES
             // =====================================================
 
             const otpExpire =
                 Date.now() +
-                60 * 1000;
+                5 * 60 * 1000;
 
             // =====================================================
             // SAVE OTP
@@ -137,29 +132,19 @@ exports.forgotPassword =
             // =====================================================
 
             console.log(
-                '📨 Đang gửi OTP reset password tới:',
-                email
+                `📨 Gửi OTP reset password tới: ${email}`
             );
 
-            await transporter.sendMail({
+            await MailServiceTicket
+                .sendResetPasswordOTP(
 
-                from:
-                    `"Dũng Cinema 🍿" <${process.env.EMAIL_USER}>`,
+                    email,
+                    otp
 
-                to: email,
-
-                subject:
-                    'Mã OTP đặt lại mật khẩu',
-
-                html:
-                    ResetPasswordOtpTemplate(
-                        otp
-                    )
-
-            });
+                );
 
             console.log(
-                '✅ Gửi OTP thành công'
+                '✅ RESET OTP SENT SUCCESSFULLY'
             );
 
             // =====================================================
@@ -198,6 +183,7 @@ exports.forgotPassword =
                     success: false,
 
                     message:
+                        error.message ||
                         'Lỗi server'
 
                 });
@@ -284,10 +270,6 @@ exports.verifyOtp =
 
             }
 
-            // =====================================================
-            // GET USER
-            // =====================================================
-
             const user =
                 users[0];
 
@@ -296,8 +278,10 @@ exports.verifyOtp =
             // =====================================================
 
             if (
-                user.otp_code !==
-                otp
+                String(
+                    user.otp_code
+                ) !==
+                String(otp)
             ) {
 
                 return res
@@ -319,7 +303,9 @@ exports.verifyOtp =
 
             if (
                 Date.now() >
-                user.otp_expire
+                Number(
+                    user.otp_expire
+                )
             ) {
 
                 return res
@@ -371,6 +357,7 @@ exports.verifyOtp =
                     success: false,
 
                     message:
+                        error.message ||
                         'Lỗi server'
 
                 });
@@ -527,6 +514,7 @@ exports.resetPassword =
                     success: false,
 
                     message:
+                        error.message ||
                         'Lỗi server'
 
                 });

@@ -189,61 +189,74 @@ const MailServiceTicket = {
     },
 
     // =====================================================
-    // SEND RESET PASSWORD OTP
-    // =====================================================
+// SEND RESET PASSWORD OTP
+// =====================================================
 
-    sendResetPasswordOTP: async (
+sendResetPasswordOTP: async (
 
-        email,
-        otp
+    email,
+    otp
 
-    ) => {
+) => {
 
-        try {
+    console.log(
+        `DEBUG: Nhận yêu cầu gửi RESET OTP tới: ${email}, OTP: ${otp}`
+    );
 
-            console.log(
-                '📨 Đang gửi OTP khôi phục mật khẩu...'
-            );
+    if (!email) {
 
-            const info =
-                await transporter.sendMail({
+        console.error(
+            "❌ LỖI: Email người nhận bị trống!"
+        );
 
-                    from:
-                        `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+        return;
+    }
 
-                    to: email,
+    try {
 
-                    subject:
-                        `[${otp}] Mã OTP khôi phục mật khẩu`,
+        console.log(
+            '📨 Đang chuẩn bị gửi RESET OTP mail...'
+        );
 
-                    html:
-                        ResetPasswordOtpTemplate(
-                            otp
-                        )
+        const info =
+            await transporter.sendMail({
 
-                });
+                from:
+                    `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
 
-            console.log(
-                '✅ RESET PASSWORD OTP SENT SUCCESSFULLY'
-            );
+                to: email,
 
-            console.log(info);
+                subject:
+                    `[${otp}] Mã OTP khôi phục mật khẩu`,
 
-            return info;
+                html:
+                    ResetPasswordOtpTemplate(
+                        otp
+                    )
 
-        } catch (err) {
+            });
 
-            console.log(
-                '❌ RESET PASSWORD OTP ERROR'
-            );
+        console.log(
+            '✅ RESET OTP MAIL SENT SUCCESSFULLY'
+        );
 
-            console.log(err);
+        console.log(info);
 
-            throw err;
+        return info;
 
-        }
+    } catch (err) {
+
+        console.log(
+            '❌ RESET OTP MAIL ERROR'
+        );
+
+        console.log(err);
+
+        throw err;
 
     }
+
+}
 
 };
 
