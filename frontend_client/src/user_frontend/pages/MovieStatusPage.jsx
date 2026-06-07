@@ -1,12 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, {
+    useState,
+    useEffect
+} from "react";
+
+import {
+    useParams,
+    useNavigate
+} from "react-router-dom";
+
 import axios from "axios";
+
 import {
     Star,
     Film,
     Eye,
     Ticket
 } from "lucide-react";
+
 import "../styles/MovieStatusPage.css";
 
 const MovieStatusPage = () => {
@@ -23,14 +33,20 @@ const MovieStatusPage = () => {
     const [loading, setLoading] =
         useState(true);
 
-    const slugMap = {
+    // MAP URL SLUG -> STATUS
+    const statusMap = {
         "phim-dang-chieu":
-            "PHIM ĐANG CHIẾU",
+            "Đang chiếu",
 
         "phim-sap-chieu":
-            "PHIM SẮP CHIẾU"
+            "Sắp chiếu"
     };
 
+    const activeStatus =
+        statusMap[statusSlug] ||
+        "Đang chiếu";
+
+    // FETCH MOVIES
     useEffect(() => {
 
         const fetchMovies =
@@ -42,40 +58,63 @@ const MovieStatusPage = () => {
 
                     const res =
                         await axios.get(
-                            `https://api.quangdungcinema.id.vn/api/movies/category/${statusSlug}`
+                            "https://api.quangdungcinema.id.vn/api/movies"
                         );
 
                     setMovies(
-                        res.data
+                        res.data || []
                     );
 
-                } catch (err) {
+                } catch (error) {
 
                     console.error(
-                        "Lỗi lấy danh sách phim:",
-                        err
+                        "Lỗi lấy phim:",
+                        error
                     );
 
                     setMovies([]);
 
                 } finally {
 
-                    setLoading(
-                        false
-                    );
+                    setLoading(false);
                 }
             };
 
         fetchMovies();
 
-        window.scrollTo(
-            0,
-            0
-        );
+        window.scrollTo({
+            top: 0,
+            behavior:
+                "smooth"
+        });
 
     }, [statusSlug]);
 
+    // FILTER MOVIES BY STATUS
+    const filteredMovies =
+        movies.filter(
+            (movie) =>
+                movie.status ===
+                activeStatus
+        );
+
+    // LIMIT 8 MOVIES
+    const displayedMovies =
+        filteredMovies.slice(
+            0,
+            8
+        );
+
+    const handleTabChange =
+        (slug) => {
+
+            navigate(
+                `/movies/status/${slug}`
+            );
+        };
+
     if (loading) {
+
         return (
             <div className="loading-state">
                 Đang tải phim...
@@ -84,25 +123,65 @@ const MovieStatusPage = () => {
     }
 
     return (
-        <main className="movie-client-page">
+        <main className="movie-status-page">
 
-            {/* HEADER */}
-            <div className="status-header-simple">
-                <h1>
-                    {slugMap[
-                        statusSlug
-                    ] ||
-                        "DANH SÁCH PHIM"}
-                </h1>
-            </div>
+          {/* HERO */}
+            <section className="movie-status-hero">
+                <img
+                    src="/images/movie-status-banner.png"
+                    alt="Movie Status Banner"
+                    className="movie-status-banner-img"
+                />
+            </section>
 
-            {/* GRID */}
+            {/* TABS */}
+            <section className="status-tabs-wrapper">
+
+                <div className="status-tabs">
+
+                    <button
+                        className={`status-tab ${
+                            statusSlug ===
+                            "phim-dang-chieu"
+                                ? "active"
+                                : ""
+                        }`}
+                        onClick={() =>
+                            handleTabChange(
+                                "phim-dang-chieu"
+                            )
+                        }
+                    >
+                        🎬 PHIM ĐANG CHIẾU
+                    </button>
+
+                    <button
+                        className={`status-tab ${
+                            statusSlug ===
+                            "phim-sap-chieu"
+                                ? "active"
+                                : ""
+                        }`}
+                        onClick={() =>
+                            handleTabChange(
+                                "phim-sap-chieu"
+                            )
+                        }
+                    >
+                        🎞 PHIM SẮP CHIẾU
+                    </button>
+
+                </div>
+
+            </section>
+
+            {/* MOVIE LIST */}
             <section className="movie-grid">
 
-                {movies.length >
+                {displayedMovies.length >
                 0 ? (
 
-                    movies.map(
+                    displayedMovies.map(
                         ({
                             movie_id,
                             title,
@@ -122,7 +201,7 @@ const MovieStatusPage = () => {
                                 {/* POSTER */}
                                 <div className="movie-item__poster-container">
 
-                                    {/* STAR RATING */}
+                                    {/* RATING */}
                                     <div className="movie-rating-badge">
 
                                         <Star
@@ -143,6 +222,15 @@ const MovieStatusPage = () => {
 
                                     </div>
 
+                                    {/* AGE */}
+                                    <span className="movie-item__age-tag">
+                                        T
+                                        {
+                                            age_rating
+                                        }
+                                    </span>
+
+                                    {/* IMAGE */}
                                     {poster_url ? (
                                         <img
                                             src={`https://api.quangdungcinema.id.vn/uploads/posters/${poster_url}`}
@@ -172,11 +260,8 @@ const MovieStatusPage = () => {
                                                     : "flex"
                                         }}
                                     >
-                                        <Film
-                                            size={
-                                                40
-                                            }
-                                        />
+                                        <Film size={40} />
+
                                         <span>
                                             NO
                                             POSTER
@@ -184,51 +269,46 @@ const MovieStatusPage = () => {
                                     </div>
 
                                     {/* OVERLAY */}
-                                   <div className="card-overlay">
+                                    <div className="card-overlay">
 
-                                    <button
-                                        className="btn-detail"
-                                        onClick={() =>
-                                            navigate(
-                                                `/movies/detail/${slug}`
-                                            )
-                                        }
-                                    >
-                                        <Eye size={18} />
-                                        XEM CHI TIẾT
-                                    </button>
+                                        <button
+                                            className="btn-detail"
+                                            onClick={() =>
+                                                navigate(
+                                                    `/movies/detail/${slug}`
+                                                )
+                                            }
+                                        >
+                                            <Eye size={18} />
+                                            XEM CHI TIẾT
+                                        </button>
 
-                                    <button
-                                        className="btn-book"
-                                        onClick={() =>
-                                            navigate(
-                                                `/booking/${slug}`,
-                                                {
-                                                    state: {
-                                                        movie: {
-                                                            movie_id,
-                                                            title,
-                                                            poster_url,
-                                                            age_rating,
-                                                            slug
+                                        <button
+                                            className="btn-book"
+                                            onClick={() =>
+                                                navigate(
+                                                    `/booking/${slug}`,
+                                                    {
+                                                        state:
+                                                        {
+                                                            movie:
+                                                            {
+                                                                movie_id,
+                                                                title,
+                                                                poster_url,
+                                                                age_rating,
+                                                                slug
+                                                            }
                                                         }
                                                     }
-                                                }
-                                            )
-                                        }
-                                    >
-                                        <Ticket size={18} />
-                                        ĐẶT VÉ
-                                    </button>
+                                                )
+                                            }
+                                        >
+                                            <Ticket size={18} />
+                                            ĐẶT VÉ
+                                        </button>
 
-                                </div>
-                                    {/* AGE */}
-                                    <span className="movie-item__age-tag">
-                                        T
-                                        {
-                                            age_rating
-                                        }
-                                    </span>
+                                    </div>
 
                                 </div>
 
@@ -256,14 +336,12 @@ const MovieStatusPage = () => {
                         />
 
                         <p>
-                            Hiện tại
-                            chưa có
-                            phim ở mục
-                            này...
+                            Hiện chưa
+                            có phim ở
+                            mục này...
                         </p>
 
                     </div>
-
                 )}
 
             </section>
