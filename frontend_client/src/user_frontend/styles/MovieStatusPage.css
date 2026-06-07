@@ -1,408 +1,443 @@
-/* ==========================================
+/* =========================================================
    MOVIE STATUS PAGE
-========================================== */
+========================================================= */
 
-.movie-client-page {
+.movie-status-page {
+    color: #fff;
+}
+
+/* =========================================================
+   HERO BANNER
+========================================================= */
+
+.movie-status-hero {
     width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+.movie-status-banner-img {
+    width: 100%;
+    height: auto;
+
+    display: block;
+    object-fit: contain;
+}
+
+/* =========================================================
+   CONTENT WRAPPER
+========================================================= */
+
+.status-tabs-wrapper,
+.movie-grid {
     max-width: 1300px;
     margin: 0 auto;
-    padding: 30px 40px;
-    box-sizing: border-box;
+    padding-inline: 24px;
 }
 
-/* ==========================================
-   HEADER
-========================================== */
+/* =========================================================
+   STATUS TABS
+========================================================= */
 
-.status-header-simple {
-    text-align: center;
-    margin-bottom: 35px;
+.status-tabs-wrapper {
+    margin-top: 40px;
+    margin-bottom: 45px;
 }
 
-.status-header-simple h1 {
-    margin: 0;
-    font-size: 32px;
-    font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+.status-tabs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
 }
 
-/* ==========================================
+.status-tab {
+    border: 1px solid
+        rgba(255,255,255,0.08);
+
+    background:
+        rgba(255,255,255,0.05);
+
+    color:
+        rgba(255,255,255,0.72);
+
+    padding:
+        15px 28px;
+
+    border-radius: 999px;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        transform .3s ease,
+        background .3s ease,
+        box-shadow .3s ease,
+        color .3s ease;
+
+    backdrop-filter: blur(10px);
+
+    white-space: nowrap;
+}
+
+.status-tab:hover {
+    transform:
+        translateY(-3px);
+
+    color: #fff;
+
+    border-color:
+        rgba(255,0,0,.35);
+}
+
+.status-tab.active {
+    background:
+        linear-gradient(
+            135deg,
+            #ff2929,
+            #8b0000
+        );
+
+    color: #fff;
+
+    border: none;
+
+    box-shadow:
+        0 0 22px
+        rgba(255,0,0,.3);
+}
+
+/* =========================================================
    MOVIE GRID
-========================================== */
+========================================================= */
 
 .movie-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 28px;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 34px;
+
+    padding-bottom: 80px;
 }
 
-/* ==========================================
+/* =========================================================
    MOVIE CARD
-========================================== */
+========================================================= */
 
 .movie-item {
-    width: 100%;
-    transition: transform .3s ease;
+    border-radius: 22px;
+    overflow: hidden;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.06);
+
+    transition:
+        transform .4s ease,
+        box-shadow .4s ease;
 }
 
 .movie-item:hover {
-    transform: translateY(-6px);
+    transform:
+        translateY(-10px);
+
+    box-shadow:
+        0 18px 40px
+        rgba(255,0,0,.18);
 }
 
-/* ==========================================
+/* =========================================================
    POSTER
-========================================== */
+========================================================= */
 
 .movie-item__poster-container {
     position: relative;
     overflow: hidden;
-    border-radius: 18px;
-    aspect-ratio: 2 / 3;
 }
-
-/* dark overlay */
-
-.movie-item__poster-container::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-
-    opacity: 0;
-    transition: .3s ease;
-}
-
-.movie-item:hover
-.movie-item__poster-container::after {
-    opacity: 1;
-}
-
-/* poster image */
 
 .movie-item__img {
     width: 100%;
-    height: 100%;
+    aspect-ratio: 2 / 3;
+
     object-fit: cover;
     display: block;
 
-    transition: transform .45s ease;
+    transition:
+        transform .5s ease;
 }
 
 .movie-item:hover
 .movie-item__img {
-    transform: scale(1.06);
+    transform:
+        scale(1.05);
 }
 
-/* ==========================================
-   AGE TAG
-========================================== */
-
-.movie-item__age-tag {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    z-index: 10;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    min-width: 44px;
-    height: 34px;
-    padding: 0 12px;
-    border-radius: 999px;
-
-    font-size: 13px;
-    font-weight: 700;
-
-    backdrop-filter: blur(10px);
-}
-
-/* ==========================================
+/* =========================================================
    RATING BADGE
-========================================== */
+========================================================= */
 
 .movie-rating-badge {
     position: absolute;
+
     top: 14px;
-    right: 14px;
+    left: 14px;
+
     z-index: 10;
+
+    background:
+        rgba(0,0,0,.8);
+
+    border:
+        1px solid
+        rgba(255,255,255,.08);
+
+    backdrop-filter:
+        blur(10px);
+
+    border-radius: 999px;
+
+    padding:
+        8px 12px;
 
     display: flex;
     align-items: center;
     gap: 6px;
 
-    min-height: 34px;
-    padding: 0 12px;
-    border-radius: 999px;
+    color: #ffd700;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* =========================================================
+   AGE TAG
+========================================================= */
+
+.movie-item__age-tag {
+    position: absolute;
+
+    top: 14px;
+    right: 14px;
+
+    z-index: 10;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ff2020,
+            #8b0000
+        );
+
+    color: #fff;
+
+    padding:
+        8px 12px;
+
+    border-radius: 10px;
 
     font-size: 13px;
     font-weight: 700;
-
-    backdrop-filter: blur(10px);
 }
 
-.movie-rating-badge svg {
-    width: 15px;
-    height: 15px;
-}
-
-/* ==========================================
+/* =========================================================
    CARD OVERLAY
-========================================== */
+========================================================= */
 
 .card-overlay {
     position: absolute;
     inset: 0;
-    z-index: 5;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.95),
+            rgba(0,0,0,.15)
+        );
 
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+
     gap: 14px;
 
     opacity: 0;
     visibility: hidden;
-    transform: translateY(12px);
 
-    transition: all .3s ease;
+    transition: .35s ease;
 }
 
 .movie-item:hover
 .card-overlay {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
 }
 
-/* ==========================================
+/* =========================================================
    BUTTONS
-========================================== */
+========================================================= */
 
-.btn-book,
-.btn-detail {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-
-    width: 180px;
-    height: 48px;
+.btn-detail,
+.btn-book {
+    width: 80%;
 
     border: none;
     outline: none;
-    cursor: pointer;
 
-    border-radius: 12px;
+    border-radius: 14px;
+
+    padding: 14px;
+
+    cursor: pointer;
 
     font-size: 14px;
     font-weight: 700;
 
-    transition: transform .25s ease;
-}
-
-.btn-book:hover,
-.btn-detail:hover {
-    transform: scale(1.05);
-}
-
-/* ==========================================
-   FALLBACK
-========================================== */
-
-.movie-item__fallback {
-    position: absolute;
-    inset: 0;
-
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     gap: 10px;
+
+    transition:
+        transform .3s ease;
 }
 
-.movie-item__fallback span {
-    font-size: 14px;
-    font-weight: 600;
+.btn-detail {
+    background: #fff;
+    color: #111;
 }
 
-/* ==========================================
+.btn-book {
+    background:
+        linear-gradient(
+            135deg,
+            #ff2626,
+            #8b0000
+        );
+
+    color: #fff;
+}
+
+.btn-detail:hover,
+.btn-book:hover {
+    transform:
+        scale(1.05);
+}
+
+/* =========================================================
    MOVIE INFO
-========================================== */
+========================================================= */
 
 .movie-item__info {
-    padding-top: 14px;
+    padding: 18px 14px;
 }
 
 .movie-item__title {
-    margin: 0;
-
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 700;
-    line-height: 1.45;
+
+    text-align: center;
+
+    line-height: 1.5;
+
+    min-height: 52px;
 
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
 
     overflow: hidden;
-    text-overflow: ellipsis;
-
-    min-height: 52px;
 }
 
-/* ==========================================
-   EMPTY
-========================================== */
+/* =========================================================
+   FALLBACK
+========================================================= */
 
-.empty-results {
+.movie-item__fallback {
     width: 100%;
-    grid-column: 1 / -1;
+    aspect-ratio: 2 / 3;
 
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
+    align-items: center;
+    flex-direction: column;
 
-    gap: 14px;
-    padding: 80px 20px;
+    gap: 12px;
+
+    background:
+        rgba(255,255,255,0.04);
+
+    color: #888;
 }
 
-.empty-results p {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-}
+/* =========================================================
+   LOADING / EMPTY
+========================================================= */
 
-/* ==========================================
-   LOADING
-========================================== */
+.loading-state,
+.empty-results {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 
-.loading-state {
-    text-align: center;
+    gap: 12px;
+
     padding: 100px 20px;
-    font-size: 18px;
-    font-weight: 600;
+
+    color: #aaa;
 }
 
-/* ==========================================
-   RESPONSIVE - 1200px
-========================================== */
+/* =========================================================
+   RESPONSIVE
+========================================================= */
 
 @media (max-width: 1200px) {
 
-    .movie-client-page {
-        padding: 28px 30px;
-    }
-
     .movie-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 24px;
+        grid-template-columns:
+            repeat(3, 1fr);
     }
 }
-
-/* ==========================================
-   RESPONSIVE - 992px
-========================================== */
-
-@media (max-width: 992px) {
-
-    .movie-client-page {
-        padding: 24px;
-    }
-
-    .movie-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 22px;
-    }
-
-    .status-header-simple h1 {
-        font-size: 28px;
-    }
-
-    .btn-book,
-    .btn-detail {
-        width: 170px;
-    }
-}
-
-/* ==========================================
-   RESPONSIVE - 768px
-========================================== */
 
 @media (max-width: 768px) {
 
-    .movie-client-page {
-        padding: 20px;
+    .status-tabs {
+        flex-wrap: wrap;
     }
 
     .movie-grid {
-        gap: 18px;
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 20px;
     }
 
-    .movie-item__title {
-        font-size: 16px;
-        min-height: auto;
-    }
+    .status-tab {
+        padding:
+            13px 22px;
 
-    .btn-book,
-    .btn-detail {
-        width: 150px;
-        height: 44px;
-        font-size: 13px;
+        font-size: 14px;
     }
 }
 
-/* ==========================================
-   RESPONSIVE - 576px
-========================================== */
-
-@media (max-width: 576px) {
-
-    .movie-client-page {
-        padding: 16px;
-    }
+@media (max-width: 480px) {
 
     .movie-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
+        grid-template-columns:
+            1fr;
     }
 
-    .status-header-simple h1 {
-        font-size: 22px;
+    .status-tabs {
+        flex-direction: column;
+        gap: 14px;
     }
 
-    .movie-item__title {
-        font-size: 15px;
-    }
-
-    .movie-rating-badge,
-    .movie-item__age-tag {
-        font-size: 12px;
-        min-height: 30px;
-        padding: 0 10px;
-    }
-
-    .btn-book,
-    .btn-detail {
-        width: 135px;
-        height: 40px;
-        font-size: 12px;
-    }
-}
-
-/* ==========================================
-   RESPONSIVE - 420px
-========================================== */
-
-@media (max-width: 420px) {
-
-    .movie-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .status-header-simple h1 {
-        font-size: 20px;
+    .status-tab {
+        width: 100%;
     }
 }

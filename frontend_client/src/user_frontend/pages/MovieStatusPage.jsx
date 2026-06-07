@@ -128,7 +128,7 @@ const MovieStatusPage = () => {
           {/* HERO */}
             <section className="movie-status-hero">
                 <img
-                    src="/images/movie-status-banner.png"
+                    src="https://api.quangdungcinema.id.vn/uploads/status_film/banner_herro.png"
                     alt="Movie Status Banner"
                     className="movie-status-banner-img"
                 />
@@ -152,7 +152,7 @@ const MovieStatusPage = () => {
                             )
                         }
                     >
-                        🎬 PHIM ĐANG CHIẾU
+                         PHIM ĐANG CHIẾU
                     </button>
 
                     <button
@@ -168,7 +168,7 @@ const MovieStatusPage = () => {
                             )
                         }
                     >
-                        🎞 PHIM SẮP CHIẾU
+                         PHIM SẮP CHIẾU
                     </button>
 
                 </div>
