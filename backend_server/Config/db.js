@@ -50,7 +50,7 @@ pool.getConnection()
 
 pool.on('error', (err) => {
     console.error(
-        '🔥 [Database Error]:',
+        ' [Database Error]:',
         err.message
     );
 
@@ -59,7 +59,7 @@ pool.on('error', (err) => {
         'PROTOCOL_CONNECTION_LOST'
     ) {
         console.log(
-            '📡 Đang nỗ lực kết nối lại...'
+            ' Đang nỗ lực kết nối lại...'
         );
     }
 });
