@@ -4,6 +4,7 @@ import axios from 'axios';
 
 import Modal from '../../admin_frontend/components/Modal';
 import FilmGenre from '../components/FilmGenre';
+import ScrollReveal from '../components/ScrollReveal';
 
 // SWIPER
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -466,73 +467,74 @@ const UserHome = () => {
 
   return (
 
-    <>
-      {/* MODAL */}
-      <Modal
-        show={modal.show}
-        type={modal.type}
-        title={modal.title}
-        message={modal.message}
-        onConfirm={closeModal}
-        onCancel={closeModal}
-      />
+  <>
+    {/* MODAL */}
+    <Modal
+      show={modal.show}
+      type={modal.type}
+      title={modal.title}
+      message={modal.message}
+      onConfirm={closeModal}
+      onCancel={closeModal}
+    />
 
-      <div className="user-home">
+    <div className="user-home">
 
-        {/* BANNER */}
-        <div className="carousel-full-wrapper">
+      {/* BANNER */}
+      <div className="carousel-full-wrapper">
 
-          <Swiper
-            modules={[
-              Autoplay,
-              EffectFade,
-              Navigation,
-              Pagination
-            ]}
-            effect={'fade'}
-            speed={1500}
-            autoplay={{
-              delay: 4000,
-              disableOnInteraction: false
-            }}
-            loop={true}
-            onSwiper={setSwiperInstance}
-            onSlideChange={(swiper) =>
-              setActiveIndex(swiper.realIndex)
-            }
-            className="mySwiper"
-          >
+        <Swiper
+          modules={[
+            Autoplay,
+            EffectFade,
+            Navigation,
+            Pagination
+          ]}
+          effect={'fade'}
+          speed={1500}
+          autoplay={{
+            delay: 4000,
+            disableOnInteraction: false
+          }}
+          loop={true}
+          onSwiper={setSwiperInstance}
+          onSlideChange={(swiper) =>
+            setActiveIndex(swiper.realIndex)
+          }
+          className="mySwiper"
+        >
 
-            {banners.map((imgName, index) => (
+          {banners.map((imgName, index) => (
 
-              <SwiperSlide
-                key={index}
-                className="banner-full-item"
-              >
+            <SwiperSlide
+              key={index}
+              className="banner-full-item"
+            >
 
-                <picture>
-                  <source
-                    media="(max-width: 767px)"
-                    srcSet={`${bannerDocUrl}${imgName}`}
-                  />
+              <picture>
+                <source
+                  media="(max-width: 767px)"
+                  srcSet={`${bannerDocUrl}${imgName}`}
+                />
 
-                  <img
-                    src={`${bannerBaseUrl}${imgName}`}
-                    alt={`Promotion ${index + 1}`}
-                    className="banner-img-fade-zoom"
-                  />
-                </picture>
+                <img
+                  src={`${bannerBaseUrl}${imgName}`}
+                  alt={`Promotion ${index + 1}`}
+                  className="banner-img-fade-zoom"
+                />
+              </picture>
 
-                <div className="banner-full-overlay"></div>
+              <div className="banner-full-overlay"></div>
 
-              </SwiperSlide>
-            ))}
+            </SwiperSlide>
+          ))}
 
-          </Swiper>
+        </Swiper>
 
-        </div>
+      </div>
 
-        {/* QUICK BOOKING */}
+      {/* QUICK BOOKING */}
+      <ScrollReveal>
         <section className="quick-booking-container">
 
           <div className="quick-booking-content">
@@ -551,7 +553,6 @@ const UserHome = () => {
                   })
                 }
               >
-
                 <option value="">
                   Chọn phim
                 </option>
@@ -564,7 +565,6 @@ const UserHome = () => {
                     {m.title}
                   </option>
                 ))}
-
               </select>
 
               {/* RẠP */}
@@ -580,7 +580,6 @@ const UserHome = () => {
                   })
                 }
               >
-
                 <option value="">
                   Chọn rạp
                 </option>
@@ -593,7 +592,6 @@ const UserHome = () => {
                     {c.cinema_name}
                   </option>
                 ))}
-
               </select>
 
               {/* NGÀY */}
@@ -611,7 +609,6 @@ const UserHome = () => {
                   })
                 }
               >
-
                 <option value="">
                   Chọn ngày
                 </option>
@@ -624,7 +621,6 @@ const UserHome = () => {
                     {date}
                   </option>
                 ))}
-
               </select>
 
               {/* SUẤT */}
@@ -638,7 +634,6 @@ const UserHome = () => {
                   })
                 }
               >
-
                 <option value="">
                   Chọn suất
                 </option>
@@ -651,7 +646,6 @@ const UserHome = () => {
                     {s.start_time} - {s.room_name}
                   </option>
                 ))}
-
               </select>
 
             </div>
@@ -666,11 +660,13 @@ const UserHome = () => {
           </div>
 
         </section>
+      </ScrollReveal>
 
-        {/* CONTENT */}
-        <div className="home-container">
+      {/* CONTENT */}
+      <div className="home-container">
 
-          {/* FEATURES */}
+        {/* FEATURES */}
+        <ScrollReveal delay={0.1}>
           <section className="home-features-section">
 
             <div className="features-grid">
@@ -722,13 +718,17 @@ const UserHome = () => {
             </div>
 
           </section>
+        </ScrollReveal>
 
-          {/* FILM */}
+        {/* FILM */}
+        <ScrollReveal delay={0.2}>
           <div className="movie-container">
             <FilmGenre />
           </div>
+        </ScrollReveal>
 
-          {/* PROMOTIONS */}
+        {/* PROMOTIONS */}
+        <ScrollReveal delay={0.3}>
           <section className="promotions-section">
 
             <div className="section-header">
@@ -783,8 +783,13 @@ const UserHome = () => {
             </div>
 
           </section>
+        </ScrollReveal>
 
-          {/* CINEMA CORNER */}
+        {/* CINEMA CORNER */}
+        <ScrollReveal
+          direction="zoom"
+          delay={0.4}
+        >
           <section className="cinema-corner-section">
 
             <div className="section-header">
@@ -839,12 +844,13 @@ const UserHome = () => {
             </div>
 
           </section>
-
-        </div>
+        </ScrollReveal>
 
       </div>
-    </>
-  );
+
+    </div>
+  </>
+);
 };
 
 export default UserHome;

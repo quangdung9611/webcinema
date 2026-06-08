@@ -29,20 +29,39 @@ body {
     min-height: 100vh;
     height: auto !important;
     background:
-        radial-gradient(
-            circle at center,
-            rgba(220, 38, 38, 0.10) 0%,
-            rgba(31, 9, 8, 0.85) 45%
-        ),
-        linear-gradient(
-            90deg,
-            #0a0303 0%,
-            transparent 20%,
-            transparent 80%,
-            #0a0303 100%
-        ),
-        #1f0908;
+    radial-gradient(
+        circle at top center,
+        rgba(230, 25, 40, 0.38) 0%,
+        rgba(60, 8, 10, 0.94) 36%,
+        transparent 74%
+    ),
 
+    radial-gradient(
+        circle at left center,
+        rgba(180, 20, 30, 0.22) 0%,
+        transparent 34%
+    ),
+
+    radial-gradient(
+        circle at bottom left,
+        rgba(150, 8, 18, 0.18) 0%,
+        transparent 36%
+    ),
+
+    radial-gradient(
+        circle at right center,
+        rgba(120, 0, 0, 0.14) 0%,
+        transparent 28%
+    ),
+
+    linear-gradient(
+        180deg,
+        #220708 0%,
+        #320909 26%,
+        #280808 54%,
+        #1b0707 76%,
+        #0b0b0d 100%
+    );
     background-blend-mode: screen, normal, normal; 
     background-repeat: no-repeat;
     background-attachment: fixed;
