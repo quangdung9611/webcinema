@@ -1,68 +1,237 @@
 /* ============================================================
-   USER LAYOUT - FIX ZOOM & SCROLL VERSION (TRANSPARENT)
+   USER LAYOUT - CLEAN VERSION
 ============================================================ */
 
 .user-site-container {
     display: flex;
     flex-direction: column;
-    /* Đảm bảo trang luôn đủ cao nhưng cho phép nở dài ra */
-    min-height: 100vh; 
+
+    min-height: 100vh;
     width: 100%;
-    /* SỬA: background-color: #0a0a0a; thành transparent */
-    background-color: transparent !important;
-    /* Quan trọng: Cho phép trình duyệt quản lý cuộn dọc */
-    overflow-y: visible; 
+
+    background-color:
+        transparent !important;
+
+    overflow-x: hidden;
+    overflow-y: visible;
 }
 
-/* ================= HEADER ================= */
+/* ============================================================
+   HEADER
+============================================================ */
+
 .user-header-section {
-    flex-shrink: 0; /* KHÔNG cho phép Header bị bóp nghẹt khi zoom */
-    width: 100%;
     position: sticky;
     top: 0;
     z-index: 1000;
-    /* SỬA: Header nên có màu tím mờ nhẹ (Glassmorphism) 
-       để khi cuộn trang, nội dung bên dưới lướt qua nhìn sẽ sang hơn */
-    background-color: rgba(26, 11, 46, 0.85) !important; 
-    backdrop-filter: blur(10px); /* Hiệu ứng kính mờ cho rạp phim xịn */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+    width: 100%;
+
+    flex-shrink: 0;
+
+    background:
+        rgba(10, 10, 10, 0.82) !important;
+
+    backdrop-filter:
+        blur(14px);
+
+    -webkit-backdrop-filter:
+        blur(14px);
+
+    border-bottom:
+        1px solid rgba(255,255,255,.05);
 }
 
-/* ================= MAIN - TỐI ƯU CHIỀU CAO ================= */
+/* ============================================================
+   MAIN CONTENT
+============================================================ */
+
 .user-main-content {
-    flex: 1 0 auto; 
+    flex: 1;
+
     width: 100%;
+
     display: flex;
     flex-direction: column;
 
-    /* NHÍCH LÊN: Xóa bỏ hoàn toàn padding bottom */
-    padding-bottom: 0; 
-    
-    /* Ép trong suốt để thấy nền tím của body */
-    background-color: transparent !important;
-    
-    gap: 0; 
-    
-    /* Ngăn chặn việc tự tạo ra khoảng trống thừa khi zoom */
-    justify-content: flex-start; 
+    margin: 0 !important;
+    padding: 0 !important;
+
+    gap: 0 !important;
+
+    justify-content:
+        flex-start;
+
+    background-color:
+        transparent !important;
 }
 
-/* Ép các phần tử con trực tiếp bên trong (như banner, movie-grid) 
-    không được tự ý tạo khoảng cách quá lớn */
-.user-main-content > div {
-    margin-top: 0 !important;
+/* FIX KHOẢNG CÁCH THỪA */
+
+.user-main-content > * {
     margin-bottom: 0 !important;
-    padding-top: 10px; 
-    padding-bottom: 10px;
-    background-color: transparent !important;
+    padding-bottom: 0 !important;
 }
 
-/* ================= FOOTER ================= */
+/* SECTION CUỐI KHÔNG ĐƯỢC TẠO GAP */
+
+.user-main-content > *:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* ============================================================
+   FOOTER
+============================================================ */
+
 .user-footer-section {
-    flex-shrink: 0; /* Giữ Footer ổn định */
     width: 100%;
-    margin-top: auto; /* Luôn nằm dưới cùng kể cả khi trang ít nội dung */
-    /* Footer thường nên để màu đen tuyền để kết thúc dải gradient mượt mà */
-    background-color: #000000; 
-    border-top: 1px solid rgba(138, 43, 226, 0.2);
+
+    flex-shrink: 0;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background:
+        transparent !important;
+}
+
+/* FIX FOOTER COMPONENT */
+
+.user-footer-section .mystic-footer {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* ============================================================
+   RESPONSIVE - 1200PX
+============================================================ */
+
+@media (max-width: 1200px) {
+
+    .user-site-container {
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    .user-main-content {
+        width: 100%;
+        padding: 0 !important;
+    }
+
+    .user-header-section {
+        width: 100%;
+    }
+
+    .user-footer-section {
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   RESPONSIVE - 992PX
+============================================================ */
+
+@media (max-width: 992px) {
+
+    .user-site-container {
+        overflow-x: hidden;
+    }
+
+    .user-main-content {
+        overflow-x: hidden;
+        padding: 0 !important;
+    }
+
+    .user-header-section {
+        position: sticky;
+        top: 0;
+    }
+
+    .user-footer-section {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .user-footer-section .mystic-footer {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}
+
+/* ============================================================
+   RESPONSIVE - 768PX
+============================================================ */
+
+@media (max-width: 768px) {
+
+    .user-site-container {
+        min-height: auto;
+    }
+
+    .user-header-section {
+        backdrop-filter:
+            blur(12px);
+
+        -webkit-backdrop-filter:
+            blur(12px);
+    }
+
+    .user-main-content {
+        width: 100%;
+        overflow-x: hidden;
+
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .user-main-content > * {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    .user-footer-section {
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   RESPONSIVE - 480PX
+============================================================ */
+
+@media (max-width: 480px) {
+
+    .user-site-container {
+        min-height: auto;
+        overflow-x: hidden;
+    }
+
+    .user-header-section {
+        backdrop-filter:
+            blur(10px);
+
+        -webkit-backdrop-filter:
+            blur(10px);
+    }
+
+    .user-main-content {
+        width: 100%;
+        padding: 0 !important;
+    }
+
+    .user-main-content > * {
+        margin: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    .user-footer-section {
+        width: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .user-footer-section .mystic-footer {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 }

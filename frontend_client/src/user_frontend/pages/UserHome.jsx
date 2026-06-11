@@ -491,7 +491,7 @@ const UserHome = () => {
             Pagination
           ]}
           effect={'fade'}
-          speed={1500}
+          speed={1000}
           autoplay={{
             delay: 4000,
             disableOnInteraction: false

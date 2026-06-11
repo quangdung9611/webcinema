@@ -341,7 +341,7 @@ exports.updateUserProfile = async (req, res) => {
     }
 };
 
-// 7. Lấy lịch sử giao dịch (Khớp chính xác database cinema_shop)
+// 7. Lấy lịch sử giao dịch
 exports.getBookingHistory = async (req, res) => {
     const userId = req.user.user_id;
 
@@ -352,29 +352,78 @@ exports.getBookingHistory = async (req, res) => {
         m.poster_url AS moviePoster,
         c.cinema_name AS cinemaName,
         r.room_name AS roomName,
-        DATE_FORMAT(b.booking_date, '%d/%m/%Y %H:%i') AS bookingDateFull, -- Ngày giờ đặt vé
-        DATE_FORMAT(s.start_time, '%d/%m/%Y') AS selectedDate,
-        TIME_FORMAT(s.start_time, '%H:%i') AS startTime,
-        GROUP_CONCAT(bd.item_name SEPARATOR ', ') AS seatDisplay, -- Danh sách ghế gộp lại
+
+        DATE_FORMAT(
+            b.created_at,
+            '%d/%m/%Y %H:%i'
+        ) AS bookingDateFull,
+
+        DATE_FORMAT(
+            s.start_time,
+            '%d/%m/%Y'
+        ) AS selectedDate,
+
+        TIME_FORMAT(
+            s.start_time,
+            '%H:%i'
+        ) AS startTime,
+
+        GROUP_CONCAT(
+            bd.item_name
+            SEPARATOR ', '
+        ) AS seatDisplay,
+
         b.total_amount AS total_amount,
         b.status,
         b.memo AS ticketPIN
-        FROM bookings b
-        JOIN showtimes s ON b.showtime_id = s.showtime_id
-        JOIN movies m ON s.movie_id = m.movie_id
-        JOIN rooms r ON s.room_id = r.room_id
-        JOIN cinemas c ON s.cinema_id = c.cinema_id
-        LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
-        WHERE b.user_id = ?
-        GROUP BY b.booking_id
-        ORDER BY b.booking_date DESC
+
+    FROM bookings b
+
+    JOIN showtimes s
+        ON b.showtime_id = s.showtime_id
+
+    JOIN movies m
+        ON s.movie_id = m.movie_id
+
+    JOIN rooms r
+        ON s.room_id = r.room_id
+
+    JOIN cinemas c
+        ON s.cinema_id = c.cinema_id
+
+    LEFT JOIN booking_details bd
+        ON b.booking_id = bd.booking_id
+
+    WHERE b.user_id = ?
+
+    GROUP BY b.booking_id
+
+    ORDER BY b.created_at DESC
     `;
+
     try {
-        const [rows] = await db.query(sql, [userId]);
-        res.status(200).json({ bookings: rows });
+
+        const [rows] =
+            await db.query(
+                sql,
+                [userId]
+            );
+
+        res.status(200).json({
+            bookings: rows
+        });
+
     } catch (error) {
-        console.error("Booking History Error:", error);
-        res.status(500).json({ error: "Lỗi khi lấy lịch sử giao dịch" });
+
+        console.error(
+            "Booking History Error:",
+            error
+        );
+
+        res.status(500).json({
+            error:
+                "Lỗi khi lấy lịch sử giao dịch"
+        });
     }
 };
 // 8. Xóa sạch lịch sử đặt vé và Reset điểm của User

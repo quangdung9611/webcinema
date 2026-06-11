@@ -197,6 +197,8 @@ const MovieStatusPage = () => {
                                 }
                                 className="movie-item"
                             >
+                             {/* CARD INNER */}
+                            <div className="movie-item-inner">
 
                                 {/* POSTER */}
                                 <div className="movie-item__poster-container">
@@ -322,7 +324,7 @@ const MovieStatusPage = () => {
                                     </h3>
 
                                 </div>
-
+                            </div>
                             </article>
                         )
                     )

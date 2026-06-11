@@ -1,9 +1,12 @@
 /* =========================================================
    MOVIE STATUS PAGE
+   PREMIUM CINEMA - GLOBAL SYSTEM
 ========================================================= */
 
 .movie-status-page {
-    color: #fff;
+    width: 100%;
+    color:
+        var(--text-primary);
 }
 
 /* =========================================================
@@ -14,6 +17,8 @@
     width: 100%;
     overflow: hidden;
     position: relative;
+
+    margin-bottom: 42px;
 }
 
 .movie-status-banner-img {
@@ -21,7 +26,12 @@
     height: auto;
 
     display: block;
-    object-fit: contain;
+    object-fit: cover;
+
+    filter:
+        brightness(.92)
+        contrast(1.04)
+        saturate(.96);
 }
 
 /* =========================================================
@@ -30,8 +40,11 @@
 
 .status-tabs-wrapper,
 .movie-grid {
-    max-width: 1300px;
+    width: 100%;
+    max-width: 1320px;
+
     margin: 0 auto;
+
     padding-inline: 24px;
 }
 
@@ -40,73 +53,91 @@
 ========================================================= */
 
 .status-tabs-wrapper {
-    margin-top: 40px;
-    margin-bottom: 45px;
+    margin-bottom: 52px;
 }
 
 .status-tabs {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 18px;
+    flex-wrap: wrap;
+
+    gap: 16px;
 }
 
 .status-tab {
-    border: 1px solid
-        rgba(255,255,255,0.08);
+    border:
+        var(--border-primary);
 
     background:
-        rgba(255,255,255,0.05);
+        var(--card-bg);
 
     color:
-        rgba(255,255,255,0.72);
+        var(--text-secondary);
 
     padding:
-        15px 28px;
+        14px 28px;
 
-    border-radius: 999px;
+    border-radius:
+        var(--radius-round);
 
-    font-size: 15px;
-    font-weight: 700;
+    font-size:
+        .92rem;
 
-    cursor: pointer;
+    font-weight:
+        700;
+
+    letter-spacing:
+        .3px;
+
+    white-space:
+        nowrap;
+
+    cursor:
+        pointer;
+
+    box-shadow:
+        var(--shadow-card);
 
     transition:
-        transform .3s ease,
-        background .3s ease,
-        box-shadow .3s ease,
-        color .3s ease;
-
-    backdrop-filter: blur(10px);
-
-    white-space: nowrap;
+        transform var(--transition-slow),
+        box-shadow var(--transition-slow),
+        border-color var(--transition-slow),
+        color var(--transition-normal);
 }
 
 .status-tab:hover {
     transform:
-        translateY(-3px);
+        translateY(-2px);
 
-    color: #fff;
+    border:
+        var(--border-glow);
 
-    border-color:
-        rgba(255,0,0,.35);
+    color:
+        var(--text-white);
+
+    box-shadow:
+        var(--shadow-card),
+        var(--shadow-glow-hover);
 }
 
 .status-tab.active {
     background:
         linear-gradient(
             135deg,
-            #ff2929,
-            #8b0000
+            var(--primary-color),
+            var(--primary-dark)
         );
 
-    color: #fff;
+    color:
+        var(--text-white);
 
-    border: none;
+    border:
+        var(--border-glow);
 
     box-shadow:
-        0 0 22px
-        rgba(255,0,0,.3);
+        var(--shadow-card),
+        var(--shadow-glow-hover);
 }
 
 /* =========================================================
@@ -119,7 +150,7 @@
     grid-template-columns:
         repeat(4, 1fr);
 
-    gap: 34px;
+    gap: 30px;
 
     padding-bottom: 80px;
 }
@@ -129,25 +160,46 @@
 ========================================================= */
 
 .movie-item {
-    border-radius: 22px;
-    overflow: hidden;
-
-    border:
-        1px solid
-        rgba(255,255,255,0.06);
-
-    transition:
-        transform .4s ease,
-        box-shadow .4s ease;
+    position: relative;
 }
 
-.movie-item:hover {
-    transform:
-        translateY(-10px);
+.movie-item-inner {
+    height: 100%;
+
+    overflow: hidden;
+
+    border-radius:
+        var(--radius-xl);
+
+    background:
+        var(--card-bg);
+
+    border:
+        var(--border-primary);
 
     box-shadow:
-        0 18px 40px
-        rgba(255,0,0,.18);
+        var(--shadow-card);
+
+    transition:
+        transform var(--transition-slow),
+        box-shadow var(--transition-slow),
+        border-color var(--transition-slow);
+}
+
+/* HOVER CARD */
+
+.movie-item:hover
+.movie-item-inner {
+
+    transform:
+        translateY(-6px);
+
+    border:
+        var(--border-glow);
+
+    box-shadow:
+        var(--shadow-card),
+        var(--shadow-glow-hover);
 }
 
 /* =========================================================
@@ -159,23 +211,58 @@
     overflow: hidden;
 }
 
+/* OVERLAY GRADIENT */
+
+.movie-item__poster-container::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.72) 0%,
+            rgba(0,0,0,.12) 45%,
+            transparent 100%
+        );
+
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* IMAGE */
+
 .movie-item__img {
     width: 100%;
     aspect-ratio: 2 / 3;
 
-    object-fit: cover;
     display: block;
+    object-fit: cover;
 
     transition:
-        transform .5s ease;
+        transform .65s ease,
+        filter .45s ease;
+
+    filter:
+        brightness(.88)
+        contrast(1.04)
+        saturate(.96);
 }
+
+/* IMAGE HOVER */
 
 .movie-item:hover
 .movie-item__img {
+
     transform:
         scale(1.05);
-}
 
+    filter:
+        brightness(.98)
+        contrast(1.08)
+        saturate(1);
+}
 /* =========================================================
    RATING BADGE
 ========================================================= */
@@ -188,8 +275,18 @@
 
     z-index: 10;
 
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    padding:
+        8px 12px;
+
+    border-radius:
+        var(--radius-round);
+
     background:
-        rgba(0,0,0,.8);
+        rgba(0,0,0,.65);
 
     border:
         1px solid
@@ -198,19 +295,14 @@
     backdrop-filter:
         blur(10px);
 
-    border-radius: 999px;
+    color:
+        #f5c451;
 
-    padding:
-        8px 12px;
+    font-size:
+        .82rem;
 
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    color: #ffd700;
-
-    font-size: 14px;
-    font-weight: 700;
+    font-weight:
+        700;
 }
 
 /* =========================================================
@@ -225,22 +317,34 @@
 
     z-index: 10;
 
-    background:
-        linear-gradient(
-            135deg,
-            #ff2020,
-            #8b0000
-        );
-
-    color: #fff;
-
     padding:
         8px 12px;
 
-    border-radius: 10px;
+    border-radius:
+        12px;
 
-    font-size: 13px;
-    font-weight: 700;
+    background:
+        linear-gradient(
+            135deg,
+            var(--primary-color),
+            var(--primary-dark)
+        );
+
+    color:
+        var(--text-white);
+
+    font-size:
+        .76rem;
+
+    font-weight:
+        700;
+
+    border:
+        1px solid
+        rgba(255,255,255,.06);
+
+    backdrop-filter:
+        blur(10px);
 }
 
 /* =========================================================
@@ -251,12 +355,7 @@
     position: absolute;
     inset: 0;
 
-    background:
-        linear-gradient(
-            to top,
-            rgba(0,0,0,.95),
-            rgba(0,0,0,.15)
-        );
+    z-index: 5;
 
     display: flex;
     flex-direction: column;
@@ -265,11 +364,26 @@
 
     gap: 14px;
 
+    padding: 24px;
+
     opacity: 0;
     visibility: hidden;
 
-    transition: .35s ease;
+    background:
+        linear-gradient(
+            rgba(0,0,0,.08),
+            rgba(0,0,0,.55)
+        );
+
+    backdrop-filter:
+        blur(2px);
+
+    transition:
+        opacity var(--transition-slow),
+        visibility var(--transition-slow);
 }
+
+/* OVERLAY HOVER */
 
 .movie-item:hover
 .card-overlay {
@@ -283,49 +397,86 @@
 
 .btn-detail,
 .btn-book {
-    width: 80%;
+    width: 100%;
+    height: 48px;
 
     border: none;
     outline: none;
 
-    border-radius: 14px;
+    border-radius:
+        16px;
 
-    padding: 14px;
+    cursor:
+        pointer;
 
-    cursor: pointer;
+    font-size:
+        .86rem;
 
-    font-size: 14px;
-    font-weight: 700;
+    font-weight:
+        700;
+
+    letter-spacing:
+        .3px;
 
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+
+    gap: 8px;
 
     transition:
-        transform .3s ease;
+        transform var(--transition-normal),
+        box-shadow var(--transition-normal),
+        background var(--transition-normal);
 }
 
+/* DETAIL */
+
 .btn-detail {
-    background: #fff;
-    color: #111;
+    background:
+        rgba(255,255,255,.96);
+
+    color:
+        #111;
+
+    box-shadow:
+        0 8px 20px
+        rgba(0,0,0,.20);
 }
+
+.btn-detail:hover {
+    transform:
+        translateY(-2px);
+
+    background:
+        #ffffff;
+}
+
+/* BOOK */
 
 .btn-book {
     background:
         linear-gradient(
             135deg,
-            #ff2626,
-            #8b0000
+            var(--primary-color),
+            var(--primary-dark)
         );
 
-    color: #fff;
+    color:
+        var(--text-white);
+
+    box-shadow:
+        0 10px 24px
+        rgba(0,0,0,.35);
 }
 
-.btn-detail:hover,
 .btn-book:hover {
     transform:
-        scale(1.05);
+        translateY(-2px);
+
+    box-shadow:
+        0 16px 34px
+        rgba(0,0,0,.42);
 }
 
 /* =========================================================
@@ -333,24 +484,51 @@
 ========================================================= */
 
 .movie-item__info {
-    padding: 18px 14px;
+    padding:
+        18px 16px 20px;
 }
 
 .movie-item__title {
-    font-size: 17px;
-    font-weight: 700;
+    color:
+        var(--text-white);
 
-    text-align: center;
+    font-size:
+        1rem;
 
-    line-height: 1.5;
+    font-weight:
+        700;
 
-    min-height: 52px;
+    text-align:
+        center;
 
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    line-height:
+        1.6;
 
-    overflow: hidden;
+    min-height:
+        52px;
+
+    display:
+        -webkit-box;
+
+    -webkit-line-clamp:
+        2;
+
+    -webkit-box-orient:
+        vertical;
+
+    overflow:
+        hidden;
+
+    transition:
+        color var(--transition-normal);
+}
+
+/* TITLE HOVER */
+
+.movie-item:hover
+.movie-item__title {
+    color:
+        #d8d8d8;
 }
 
 /* =========================================================
@@ -369,9 +547,10 @@
     gap: 12px;
 
     background:
-        rgba(255,255,255,0.04);
+        var(--card-bg);
 
-    color: #888;
+    color:
+        var(--text-muted);
 }
 
 /* =========================================================
@@ -385,11 +564,31 @@
     justify-content: center;
     align-items: center;
 
-    gap: 12px;
+    gap: 14px;
 
-    padding: 100px 20px;
+    text-align: center;
 
-    color: #aaa;
+    padding:
+        100px 20px;
+
+    color:
+        var(--text-muted);
+}
+
+.loading-state {
+    min-height:
+        50vh;
+
+    font-size:
+        1rem;
+
+    font-weight:
+        500;
+}
+
+.empty-results p {
+    font-size:
+        .95rem;
 }
 
 /* =========================================================
@@ -401,27 +600,48 @@
     .movie-grid {
         grid-template-columns:
             repeat(3, 1fr);
+
+        gap: 26px;
+    }
+}
+
+@media (max-width: 992px) {
+
+    .movie-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 24px;
+    }
+
+    .status-tabs-wrapper,
+    .movie-grid {
+        padding-inline:
+            20px;
     }
 }
 
 @media (max-width: 768px) {
 
     .status-tabs {
-        flex-wrap: wrap;
-    }
-
-    .movie-grid {
-        grid-template-columns:
-            repeat(2, 1fr);
-
-        gap: 20px;
+        gap: 12px;
     }
 
     .status-tab {
         padding:
-            13px 22px;
+            12px 22px;
 
-        font-size: 14px;
+        font-size:
+            .84rem;
+    }
+
+    .movie-grid {
+        gap: 20px;
+    }
+
+    .movie-item__title {
+        font-size:
+            .95rem;
     }
 }
 
@@ -430,14 +650,43 @@
     .movie-grid {
         grid-template-columns:
             1fr;
+
+        gap: 18px;
     }
 
     .status-tabs {
-        flex-direction: column;
-        gap: 14px;
+        flex-direction:
+            column;
+
+        align-items:
+            stretch;
     }
 
     .status-tab {
-        width: 100%;
+        width:
+            100%;
+    }
+
+    .status-tabs-wrapper,
+    .movie-grid {
+        padding-inline:
+            14px;
+    }
+
+    .btn-detail,
+    .btn-book {
+        height:
+            44px;
+
+        font-size:
+            .82rem;
+    }
+
+    .movie-item__title {
+        min-height:
+            44px;
+
+        font-size:
+            .92rem;
     }
 }

@@ -1,355 +1,619 @@
-/* =========================================
-   FILM GENRE PAGE
-========================================= */
+/* ============================================================
+   FILM GENRE PAGE - PREMIUM CINEMA
+   MATCH INDEX.CSS
+============================================================ */
 
-.film-genre-page{
-    width:100%;
-    max-width:1300px;
-    margin:0px auto;
-   
-    color:#fff;
-    padding:0 20px;
+.film-genre-page {
+    width: 100%;
+    max-width: 1320px;
+
+    margin: 0 auto;
+
+    padding: 40px 24px 0;
+
+    color:
+        var(--text-primary);
 }
 
-/* =========================================
+/* ============================================================
    CONTAINER
-========================================= */
+============================================================ */
 
 .genre-tabs-wrapper,
-.filmgenre-container{
-    width:100%;
+.filmgenre-container {
+    width: 100%;
 }
 
-/* =========================================
+/* ============================================================
    SECTION HEADER
-========================================= */
+============================================================ */
 
-.filmgenre-section-header{
-    display:flex;
-    align-items:center;
-    gap:16px;
-    margin-bottom:35px;
+.filmgenre-section-header {
+    display: flex;
+    align-items: center;
+
+    gap: 18px;
+
+    margin-bottom: 38px;
 }
 
-.filmgenre-section-header h2{
-    font-size:28px;
-    font-weight:800;
-    letter-spacing:1px;
-    white-space:nowrap;
+.filmgenre-section-header h2 {
+    white-space: nowrap;
+
+    margin: 0;
+
+    color:
+        var(--text-primary);
+
+    font-size:
+        clamp(1.8rem, 3vw, 2.4rem);
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    text-transform: uppercase;
 }
 
-.filmgenre-line{
-    width:100%;
-    height:1px;
-    background:rgba(255,255,255,0.08);
-}
-
-/* =========================================
-   GENRE TABS
-========================================= */
-
-.genre-tabs{
-    display:flex;
-    align-items:center;
-    gap:14px;
-    flex-wrap:wrap;
-    margin-bottom:45px;
-}
-
-.genre-tab{
-    border:none;
-    background:#171717;
-    color:#fff;
-    padding:10px 22px;
-    border-radius:999px;
-    cursor:pointer;
-    font-size:14px;
-    font-weight:600;
-    transition:all 0.3s ease;
-}
-
-.genre-tab:hover{
-    background:#e50914;
-    transform:translateY(-2px);
-}
-
-.genre-tab.active{
-    background:#e50914;
-    box-shadow:0 0 18px rgba(229,9,20,0.4);
-}
-
-/* =========================================
-   MOVIES GRID
-========================================= */
-
-.genre-movies-grid{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:28px;
-}
-
-/* =========================================
-   CARD
-========================================= */
-
-.genre-movie-card{
-    transition:all 0.35s ease;
-}
-
-.genre-movie-card:hover{
-    transform:translateY(-8px);
-}
-
-/* =========================================
-   POSTER
-========================================= */
-
-.genre-poster{
-    position:relative;
-    overflow:hidden;
-    border-radius:20px;
-    aspect-ratio:2/3;
-    background:#111;
-    box-shadow:
-    0 10px 30px rgba(0,0,0,0.45);
-}
-
-.genre-poster img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    transition:0.45s ease;
-}
-
-.genre-movie-card:hover .genre-poster img{
-    transform:scale(1.08);
-}
-
-/* =========================================
-   OVERLAY
-========================================= */
-
-.genre-overlay{
-    position:absolute;
-    inset:0;
+.filmgenre-line {
+    width: 100%;
+    height: 1px;
 
     background:
-    linear-gradient(
-        to top,
-        rgba(0,0,0,0.95),
-        rgba(0,0,0,0.2)
-    );
-
-    display:flex;
-    flex-direction:column;
-    justify-content:flex-end;
-    align-items:center;
-    gap:12px;
-
-    padding-bottom:22px;
-
-    opacity:0;
-    transition:0.35s ease;
+        linear-gradient(
+            to right,
+            rgba(255,255,255,.10),
+            rgba(255,255,255,.03)
+        );
 }
 
-.genre-movie-card:hover .genre-overlay{
-    opacity:1;
+/* ============================================================
+   GENRE TABS
+============================================================ */
+
+.genre-tabs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 14px;
+
+    margin-bottom: 50px;
 }
 
-/* =========================================
+.genre-tab {
+    border: none;
+    outline: none;
+
+    cursor: pointer;
+
+    padding: 12px 22px;
+
+    border-radius:
+        var(--radius-pill);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,.03),
+            rgba(255,255,255,.02)
+        );
+
+    border:
+        var(--border-primary);
+
+    color:
+        var(--text-secondary);
+
+    font-size: .9rem;
+    font-weight: 600;
+
+    transition:
+        var(--transition-normal);
+
+    box-shadow:
+        var(--shadow-card);
+
+    backdrop-filter:
+        blur(10px);
+}
+
+.genre-tab:hover {
+    transform:
+        translateY(-2px);
+
+    color:
+        var(--text-primary);
+
+    border:
+        var(--border-glow);
+
+    box-shadow:
+        var(--shadow-card),
+        0 0 20px rgba(255, 40, 40, .10);
+}
+
+.genre-tab.active {
+    color:
+        #ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(185,28,28,.95),
+            rgba(120,16,16,.95)
+        );
+
+    border:
+        1px solid
+        rgba(255,80,80,.22);
+
+    box-shadow:
+        0 12px 26px rgba(0,0,0,.30),
+        0 0 30px rgba(255,30,30,.18);
+}
+
+/* ============================================================
+   MOVIES GRID
+============================================================ */
+
+.genre-movies-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 28px;
+}
+
+/* ============================================================
+   MOVIE CARD
+============================================================ */
+
+.genre-movie-card {
+    position: relative;
+}
+
+/* NEW CLASS */
+.genre-movie-inner {
+    height: 100%;
+
+    background:
+        var(--card-bg);
+
+    border:
+        var(--border-primary);
+
+    border-radius:
+        var(--radius-xl);
+
+    overflow: hidden;
+
+    box-shadow:
+        var(--shadow-card);
+
+    transition:
+        transform .45s ease,
+        border-color .45s ease,
+        box-shadow .45s ease;
+}
+
+.genre-movie-card:hover
+.genre-movie-inner {
+
+    transform:
+        translateY(-6px);
+
+    border:
+        var(--border-glow);
+
+    box-shadow:
+        var(--shadow-card),
+        var(--shadow-glow-hover);
+}
+/* ============================================================
+   POSTER
+============================================================ */
+
+.genre-poster {
+    position: relative;
+
+    overflow: hidden;
+
+    width: 100%;
+
+    aspect-ratio: 2 / 3;
+
+    background:
+        var(--bg-secondary);
+}
+
+.genre-poster::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.72) 0%,
+            rgba(0,0,0,.15) 40%,
+            transparent 100%
+        );
+
+    z-index: 1;
+    pointer-events: none;
+}
+
+.genre-poster img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+   transition:
+        transform .65s ease,
+        filter .45s ease;
+
+    filter:
+        brightness(.88)
+        contrast(1.05)
+        saturate(.95);
+}
+
+.genre-movie-card:hover
+.genre-poster img {
+    transform:
+        scale(1.05);
+
+    filter:
+        brightness(.98)
+        contrast(1.08)
+        saturate(1);
+}
+/* ============================================================
+   OVERLAY
+============================================================ */
+
+.genre-overlay {
+    position: absolute;
+    inset: 0;
+
+    z-index: 3;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    padding: 20px;
+
+    opacity: 0;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.80),
+            rgba(0,0,0,.18),
+            transparent
+        );
+
+    backdrop-filter:
+        blur(2px);
+
+    transition:
+        var(--transition-normal);
+}
+
+.genre-movie-card:hover
+.genre-overlay {
+    opacity: 1;
+}
+
+/* ============================================================
    BUTTONS
-========================================= */
+============================================================ */
 
 .genre-detail-btn,
-.genre-book-btn{
-    width:85%;
-    border:none;
-    padding:12px;
-    border-radius:12px;
-    cursor:pointer;
-    font-size:13px;
-    font-weight:700;
-    transition:0.3s;
+.genre-book-btn {
+    width: 100%;
+    height: 48px;
+
+    border: none;
+    outline: none;
+
+    border-radius:
+        var(--radius-md);
+
+    cursor: pointer;
+
+    font-size: .88rem;
+    font-weight: 700;
+
+    transition:
+        var(--transition-normal);
 }
 
-.genre-detail-btn{
-    background:#fff;
-    color:#000;
+/* DETAIL */
+
+.genre-detail-btn {
+    background:
+        rgba(255,255,255,.95);
+
+    color:
+        #111111;
+
+    box-shadow:
+        0 8px 18px rgba(0,0,0,.18);
 }
 
-.genre-book-btn{
-    background:#e50914;
-    color:#fff;
+.genre-detail-btn:hover {
+    transform:
+        translateY(-2px);
 
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
+    background:
+        #ffffff;
 }
 
-.genre-detail-btn:hover,
-.genre-book-btn:hover{
-    transform:translateY(-2px) scale(1.02);
+/* BOOK */
+
+.genre-book-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    color:
+        #ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #b91c1c,
+            #7f1212
+        );
+
+    box-shadow:
+        0 10px 24px rgba(0,0,0,.25);
 }
 
-/* =========================================
+.genre-book-btn:hover {
+    transform:
+        translateY(-2px);
+
+    background:
+        linear-gradient(
+            135deg,
+            #d62828,
+            #991b1b
+        );
+
+    box-shadow:
+        0 14px 30px rgba(0,0,0,.32);
+}
+
+/* ============================================================
    AGE BADGE
-========================================= */
+============================================================ */
 
-.movie-age-badge{
-    position:absolute;
-    top:12px;
-    right:12px;
+.movie-age-badge {
+    position: absolute;
 
-    background:#e50914;
-    color:#fff;
+    top: 14px;
+    right: 14px;
 
-    font-size:12px;
-    font-weight:700;
+    z-index: 5;
 
-    padding:6px 10px;
-    border-radius:10px;
+    padding: 7px 12px;
 
-    z-index:10;
+    border-radius:
+        var(--radius-md);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(185,28,28,.95),
+            rgba(110,12,12,.95)
+        );
+
+    border:
+        1px solid
+        rgba(255,255,255,.08);
+
+    color:
+        #ffffff;
+
+    font-size: .75rem;
+    font-weight: 700;
+
+    letter-spacing: .4px;
+
+    box-shadow:
+        0 8px 18px rgba(0,0,0,.24);
+
+    backdrop-filter:
+        blur(12px);
 }
 
-/* =========================================
+/* ============================================================
    INFO
-========================================= */
+============================================================ */
 
-.genre-info{
-    padding-top:16px;
+.genre-info {
+    padding: 18px;
 }
 
-.genre-info h3{
-    font-size:16px;
-    font-weight:700;
-    line-height:1.4;
-    margin-bottom:10px;
+.genre-info h3 {
+    margin: 0 0 12px;
 
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;
-    overflow:hidden;
+    color:
+        var(--text-primary);
 
-    transition:0.3s;
+    font-size: 1rem;
+    font-weight: 700;
+
+    line-height: 1.55;
+
+    transition:
+        var(--transition-normal);
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+
+    min-height: 50px;
 }
 
-.genre-movie-card:hover .genre-info h3{
-    color:#e50914;
+.genre-movie-card:hover
+.genre-info h3 {
+    color:
+        rgba(255,255,255,.95);
 }
 
-/* =========================================
+/* ============================================================
    META
-========================================= */
+============================================================ */
 
-.genre-meta{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:10px;
+.genre-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
 }
 
-.genre-rating{
-    display:flex;
-    align-items:center;
-    font-size:13px;
-    color:#ffb703;
-    font-weight:600;
+.genre-rating {
+    display: flex;
+    align-items: center;
+
+    color:
+        #f7be38;
+
+    font-size: .88rem;
+    font-weight: 600;
 }
 
-.genre-type{
-    font-size:12px;
-    color:#b8b8b8;
+.genre-type {
+    color:
+        var(--text-muted);
+
+    font-size: .82rem;
+    font-weight: 500;
 }
 
-/* =========================================
-   LOADING
-========================================= */
+/* ============================================================
+   LOADING / EMPTY
+============================================================ */
 
 .loading-movies,
-.empty-movies{
-    padding:80px 20px;
-    text-align:center;
-    color:#aaa;
-    font-size:15px;
+.empty-movies {
+    padding: 80px 20px;
+
+    text-align: center;
+
+    color:
+        var(--text-muted);
+
+    font-size: 1rem;
+    font-weight: 500;
 }
 
-/* =========================================
+/* ============================================================
    RESPONSIVE
-========================================= */
+============================================================ */
 
-/* ===== TABLET ===== */
-@media(max-width:992px){
+@media (max-width: 1200px) {
 
-    .film-genre-page{
-        padding:0 18px;
+    .genre-movies-grid {
+        grid-template-columns:
+            repeat(3, 1fr);
     }
-
-    .genre-movies-grid{
-        grid-template-columns:repeat(2,1fr);
-        gap:24px;
-    }
-
-    .filmgenre-section-header h2{
-        font-size:24px;
-    }
-
 }
 
-/* ===== MOBILE ===== */
-@media(max-width:768px){
+@media (max-width: 992px) {
 
-    .film-genre-page{
-        padding:0 16px;
+    .film-genre-page {
+        padding:
+            36px 20px 0;
     }
 
-    .genre-tabs{
-        gap:10px;
-        margin-bottom:35px;
-    }
+    .genre-movies-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
 
-    .genre-tab{
-        padding:9px 18px;
-        font-size:13px;
+        gap: 24px;
     }
-
-    .genre-movies-grid{
-        grid-template-columns:1fr;
-        gap:22px;
-    }
-
-    .genre-info h3{
-        font-size:15px;
-    }
-
 }
 
-/* ===== SMALL MOBILE ===== */
-@media(max-width:480px){
+@media (max-width: 768px) {
 
-    .film-genre-page{
-        padding:0 14px;
+    .film-genre-page {
+        padding:
+            28px 16px 0;
     }
 
-    .filmgenre-section-header{
-        margin-bottom:24px;
+    .genre-tabs {
+        gap: 10px;
+        margin-bottom: 34px;
     }
 
-    .filmgenre-section-header h2{
-        font-size:20px;
+    .genre-tab {
+        padding: 10px 18px;
+        font-size: .84rem;
     }
 
-    .genre-tab{
-        font-size:12px;
-        padding:8px 14px;
+    .filmgenre-section-header {
+        margin-bottom: 28px;
+    }
+
+    .genre-movies-grid {
+        gap: 20px;
+    }
+
+    .genre-info {
+        padding: 16px;
+    }
+
+    .genre-info h3 {
+        font-size: .95rem;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .film-genre-page {
+        padding:
+            24px 14px 0;
+    }
+
+    .genre-tabs {
+        gap: 8px;
+    }
+
+    .genre-tab {
+        padding: 9px 14px;
+        font-size: .8rem;
+    }
+
+    .genre-movies-grid {
+        grid-template-columns:
+            1fr;
+
+        gap: 18px;
     }
 
     .genre-detail-btn,
-    .genre-book-btn{
-        width:88%;
-        padding:11px;
-        font-size:12px;
+    .genre-book-btn {
+        height: 44px;
+        font-size: .82rem;
     }
 
+    .genre-info h3 {
+        min-height: auto;
+    }
 }

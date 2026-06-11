@@ -3,6 +3,16 @@
 ===================================================== */
 
 .mystic-footer {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+
+    padding-top: 0;
+    padding-bottom: 0;
+
+    width: 100%;
+
+    flex-shrink: 0;
+
     position: relative;
     overflow: hidden;
 
@@ -13,12 +23,12 @@
             #4a0d0d 100%
         );
 
-    border-top: 1px solid rgba(255, 0, 0, 0.15);
+    border-top:
+        1px solid rgba(255, 0, 0, 0.15);
 
     box-shadow:
         0 -5px 30px rgba(255, 0, 0, 0.08);
 }
-
 .mystic-footer::before {
     content: "";
 

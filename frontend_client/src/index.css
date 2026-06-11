@@ -1,6 +1,169 @@
 
+:root {
+
+    /* =========================
+       BACKGROUND
+    ========================= */
+
+    --main-background:
+    radial-gradient(
+        circle at top center,
+        rgba(180, 20, 30, 0.18) 0%,
+        rgba(35, 8, 10, 0.75) 34%,
+        transparent 72%
+    ),
+
+    radial-gradient(
+        circle at left center,
+        rgba(140, 15, 25, 0.10) 0%,
+        transparent 30%
+    ),
+
+    radial-gradient(
+        circle at bottom left,
+        rgba(120, 10, 20, 0.08) 0%,
+        transparent 32%
+    ),
+
+    radial-gradient(
+        circle at right center,
+        rgba(100, 0, 0, 0.06) 0%,
+        transparent 26%
+    ),
+
+    linear-gradient(
+        180deg,
+        #151515 0%,
+        #1b1112 24%,
+        #171010 52%,
+        #111111 78%,
+        #090909 100%
+    );
+
+    /* =========================
+       COLORS
+    ========================= */
+
+    --primary-color: #ff2d2d;
+    --primary-hover: #ff4d4d;
+    --primary-dark: #d31f1f;
+
+    --accent-red: #8b0000;
+
+    --text-white: #ffffff;
+    --text-primary: #d1d1d1;
+    --text-secondary: #aaaaaa;
+    --text-muted: #777777;
+
+    /* ==========================================
+       CARD SYSTEM
+    ========================================== */
+
+    --card-bg:
+    linear-gradient(
+        180deg,
+        rgba(25,25,25,.95),
+        rgba(17,17,17,.98)
+    );
+
+    /* BORDER MẶC ĐỊNH */
+    --border-primary:
+    1px solid rgba(255,255,255,.06);
+
+    /* BORDER HOVER ĐỎ HƠN */
+    --border-glow:
+    1px solid rgba(255,55,55,.58);
+
+    /* SHADOW CARD */
+    --shadow-card:
+    0 10px 28px rgba(0,0,0,.32);
+
+    /* SHADOW GLOW */
+    --shadow-glow:
+    0 0 20px rgba(255,40,40,.12);
+
+    /* HOVER GLOW ĐỎ MƯỢT */
+    --shadow-glow-hover:
+    0 0 0 1px rgba(255,40,40,.14),
+    0 0 20px rgba(255,25,25,.24),
+    0 0 42px rgba(185,28,28,.20),
+    0 0 75px rgba(255,0,0,.12);
+
+    /* GLOBAL CARD TRANSITION */
+    --card-transition:
+    transform .45s cubic-bezier(.22,.61,.36,1),
+    box-shadow .45s cubic-bezier(.22,.61,.36,1),
+    border-color .45s cubic-bezier(.22,.61,.36,1);
+
+    /* =========================
+       SHADOW SYSTEM
+    ========================= */
+
+    --shadow-sm:
+    0 2px 8px rgba(0,0,0,.15);
+
+    --shadow-md:
+    0 6px 20px rgba(0,0,0,.25);
+
+    --shadow-lg:
+    0 12px 35px rgba(0,0,0,.35);
+
+    --shadow-body:
+    0 0 25px rgba(255,40,40,.25),
+    0 0 80px rgba(255,0,0,.12);
+
+    /* =========================
+       BORDER RADIUS
+    ========================= */
+
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+    --radius-round: 999px;
+
+    /* =========================
+       SPACING
+    ========================= */
+
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+
+    /* =========================
+        TYPOGRAPHY
+    ========================= */
+
+    --font-primary:
+    'Noto Sans',
+    sans-serif;
+
+    --font-heading:
+    'Noto Sans',
+    sans-serif;
+
+    /* =========================
+       CONTAINER
+    ========================= */
+
+    --container-width: 1200px;
+    --container-padding: 20px;
+
+    /* =========================
+       TRANSITION
+    ========================= */
+
+    --transition-fast: .2s ease;
+    --transition-normal: .3s ease;
+    --transition-slow: .45s ease;
+}
 /* ==========================================
-   1. GLOBAL RESET
+   2. GLOBAL RESET
 ========================================== */
 
 *,
@@ -12,11 +175,11 @@
 }
 
 /* ==========================================
-   2. HTML & BODY
+   3. HTML & BODY
 ========================================== */
 
 html {
-    font-size: 14px;
+    font-size: 16px;
     width: 100%;
     height: 100%;
     overflow-y: auto !important;
@@ -28,66 +191,45 @@ body {
     width: 100%;
     min-height: 100vh;
     height: auto !important;
-    background:
-    radial-gradient(
-        circle at top center,
-        rgba(230, 25, 40, 0.38) 0%,
-        rgba(60, 8, 10, 0.94) 36%,
-        transparent 74%
-    ),
 
-    radial-gradient(
-        circle at left center,
-        rgba(180, 20, 30, 0.22) 0%,
-        transparent 34%
-    ),
+    background: var(--main-background);
+    background-blend-mode:
+    screen,
+    normal,
+    normal;
 
-    radial-gradient(
-        circle at bottom left,
-        rgba(150, 8, 18, 0.18) 0%,
-        transparent 36%
-    ),
-
-    radial-gradient(
-        circle at right center,
-        rgba(120, 0, 0, 0.14) 0%,
-        transparent 28%
-    ),
-
-    linear-gradient(
-        180deg,
-        #220708 0%,
-        #320909 26%,
-        #280808 54%,
-        #1b0707 76%,
-        #0b0b0d 100%
-    );
-    background-blend-mode: screen, normal, normal; 
     background-repeat: no-repeat;
     background-attachment: fixed;
     background-size: cover;
+
     box-shadow:
-    0 0 25px rgba(255,40,40,.25),
-    0 0 80px rgba(255,0,0,.12);
-    color: #ffffff;
-   font-family: 'Noto Sans', sans-serif;
+    var(--shadow-body);
+
+    color: var(--text-white);
+
+    font-family:
+    var(--font-primary);
 
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.6;
 
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing:
+    antialiased;
+
+    -moz-osx-font-smoothing:
+    grayscale;
 
     display: flex;
     flex-direction: column;
 
     overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling:
+    touch;
 }
 
 /* ==========================================
-   3. ROOT APP
+   4. ROOT APP
 ========================================== */
 
 #root,
@@ -99,7 +241,7 @@ body {
 }
 
 /* ==========================================
-   4. MAIN CONTENT
+   5. MAIN CONTENT
 ========================================== */
 
 main,
@@ -108,7 +250,7 @@ main,
 }
 
 /* ==========================================
-   5. TYPOGRAPHY
+   6. TYPOGRAPHY
 ========================================== */
 
 h1,
@@ -116,43 +258,48 @@ h2,
 h3,
 h4,
 h5,
-h6,
-.hero-title,
-.movie-title {
-    font-family: 'Montserrat', sans-serif;
+h6 {
+    font-family:
+    var(--font-heading);
 
     font-weight: 900;
-
+    line-height: 1.2;
     letter-spacing: -0.02em;
+
+    color:
+    var(--text-white);
 
     word-wrap: break-word;
     overflow-wrap: break-word;
-
-    text-transform: uppercase;
-
-    line-height: 1.2;
-
-    color: #ffffff;
 }
 
 h1 {
-    font-size: 3rem;
+    font-size:
+    clamp(2.8rem, 6vw, 5rem);
+
+    text-transform:
+    uppercase;
 }
 
 h2 {
-    font-size: 2.4rem;
+    font-size:
+    clamp(2rem, 4vw, 3rem);
+
+    text-transform:
+    uppercase;
 }
 
 h3 {
-    font-size: 2rem;
+    font-size:
+    clamp(1.4rem, 2vw, 1.8rem);
 }
 
 h4 {
-    font-size: 1.6rem;
+    font-size: 1.3rem;
 }
 
 h5 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
 }
 
 h6 {
@@ -170,15 +317,15 @@ textarea,
 select,
 button {
     font-size: 1rem;
-    color: #d1d1d1;
+    color: var(--text-primary);
 }
 
 small {
-    font-size: 0.85rem;
+    font-size: .875rem;
 }
 
 /* ==========================================
-   6. FORM ELEMENTS
+   7. FORM ELEMENTS
 ========================================== */
 
 button,
@@ -186,6 +333,8 @@ input,
 select,
 textarea {
     font-family: inherit;
+    outline: none;
+    border: none;
 }
 
 button {
@@ -193,32 +342,75 @@ button {
 }
 
 /* ==========================================
-   7. MEDIA
+   8. MEDIA
 ========================================== */
 
 img,
-video {
-    max-width: 100%;
-    height: auto;
+picture,
+video,
+canvas,
+svg {
     display: block;
+    max-width: 100%;
+}
+
+img {
+    height: auto;
+    object-fit: cover;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+video {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    border-radius:
+    var(--radius-md);
+}
+
+/* Utility */
+
+.poster-image {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius:
+    var(--radius-lg);
+}
+
+.banner-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+}
+
+.thumbnail-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius:
+    var(--radius-md);
 }
 
 /* ==========================================
-   8. LINKS
+   9. LINKS
 ========================================== */
 
 a {
     text-decoration: none;
     color: inherit;
-    transition: opacity 0.2s ease;
+    transition:
+    opacity
+    var(--transition-fast);
 }
 
 a:hover {
-    opacity: 0.8;
+    opacity: .85;
 }
 
 /* ==========================================
-   9. LIST
+   10. LIST
 ========================================== */
 
 ul {
@@ -226,30 +418,23 @@ ul {
 }
 
 /* ==========================================
-   10. CONTAINER
+   11. CONTAINER
 ========================================== */
 
 .container {
     width: 100%;
-    max-width: 1200px;
+    max-width:
+    var(--container-width);
+
     margin: 0 auto;
-    padding: 0 20px;
-}
 
-.not-found-container {
-    flex: 1;
-
-    display: flex;
-    flex-direction: column;
-
-    justify-content: center;
-    align-items: center;
-
-    text-align: center;
+    padding:
+    0
+    var(--container-padding);
 }
 
 /* ==========================================
-   11. FOOTER
+   12. FOOTER
 ========================================== */
 
 footer {
@@ -257,11 +442,50 @@ footer {
     margin-top: auto;
     padding: 60px 0;
 
-    border-top: 1px solid #2a2b33;
+    border-top:
+    var(--border-primary);
 }
 
 /* ==========================================
-   12. CUSTOM SCROLLBAR
+   13. GLOBAL CARD
+========================================== */
+
+.card {
+    background:
+    var(--card-bg);
+
+    border:
+    var(--border-primary);
+
+    border-radius:
+    var(--radius-lg);
+
+    box-shadow:
+    var(--shadow-card);
+
+    transition:
+    transform
+    var(--transition-normal),
+    box-shadow
+    var(--transition-normal),
+    border
+    var(--transition-normal);
+}
+
+.card:hover {
+    border:
+    var(--border-glow);
+
+    box-shadow:
+    var(--shadow-card),
+    var(--shadow-glow-hover);
+
+    transform:
+    translateY(-3px);
+}
+
+/* ==========================================
+   14. CUSTOM SCROLLBAR
 ========================================== */
 
 ::-webkit-scrollbar {
@@ -278,95 +502,44 @@ footer {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #6ef7d7;
+    background:
+    var(--primary-color);
 }
 
 /* ==========================================
-   13. RESPONSIVE TYPOGRAPHY
+   15. RESPONSIVE
 ========================================== */
 
 @media (max-width: 1200px) {
 
     html {
-        font-size: 13.5px;
+        font-size: 15px;
     }
 
     .container {
         max-width: 1140px;
         padding: 0 24px;
     }
-
-    h1 {
-        font-size: 2.8rem;
-    }
-
-    h2 {
-        font-size: 2.2rem;
-    }
-
-    h3 {
-        font-size: 1.9rem;
-    }
 }
 
 @media (max-width: 992px) {
 
     html {
-        font-size: 13px;
-    }
-
-    h1 {
-        font-size: 2.6rem;
-    }
-
-    h2 {
-        font-size: 2.1rem;
-    }
-
-    h3 {
-        font-size: 1.8rem;
+        font-size: 14px;
     }
 }
 
 @media (max-width: 768px) {
 
     html {
-        font-size: 12px;
-    }
-
-    h1 {
-        font-size: 2.2rem;
-    }
-
-    h2 {
-        font-size: 1.9rem;
-    }
-
-    h3 {
-        font-size: 1.6rem;
-    }
-
-    h4 {
-        font-size: 1.3rem;
+        font-size: 13px;
     }
 }
 
 @media (max-width: 480px) {
 
     html {
-        font-size: 11.5px;
-    }
-
-    h1 {
-        font-size: 2rem;
-    }
-
-    h2 {
-        font-size: 1.7rem;
-    }
-
-    h3 {
-        font-size: 1.4rem;
+        font-size: 12px;
     }
 }
 
