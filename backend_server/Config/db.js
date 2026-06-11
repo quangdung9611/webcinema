@@ -9,56 +9,42 @@ const pool = mysql.createPool({
     port: process.env.DB_PORT || 26990,
 
     waitForConnections: true,
-    connectionLimit: 5,
+    connectionLimit: 10,
     queueLimit: 0,
 
-    // FIX GIỜ VIỆT NAM
-    timezone: '+07:00',
+    // FIX TIMEZONE VN
+    timezone: 'Z',
 
-    // Trả về string tránh lỗi convert JS Date
     dateStrings: true,
 
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000,
-
-    connectTimeout: 10000,
 
     ssl: {
         rejectUnauthorized: false
     }
 });
 
-// Set timezone cho từng connection MySQL
-pool.getConnection()
-    .then(async (conn) => {
+// Chạy timezone cho mọi connection
+pool.on('connection', async (connection) => {
+    try {
 
-        await conn.query(
+        await connection.query(
             "SET time_zone = '+07:00'"
         );
 
         console.log(
-            '🇻🇳 MySQL timezone set to Vietnam (+07:00)'
+            '🇻🇳 Connection timezone: +07:00'
         );
 
-        conn.release();
-
-    })
-    .catch((err) => {
+    } catch (err) {
 
         console.error(
-            'Timezone setup error:',
+            'Timezone Error:',
             err.message
         );
 
-    });
-
-pool.on('error', (err) => {
-
-    console.error(
-        '[Database Error]:',
-        err.message
-    );
-
+    }
 });
 
 module.exports = pool;
