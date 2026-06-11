@@ -1,4 +1,3 @@
-
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
@@ -13,13 +12,12 @@ const pool = mysql.createPool({
     connectionLimit: 5,
     queueLimit: 0,
 
-    // FIX LỆCH 7 TIẾNG
+    // FIX GIỜ VIỆT NAM
     timezone: '+07:00',
 
-    // Trả datetime dạng string tránh auto convert timezone
+    // Trả về string tránh lỗi convert JS Date
     dateStrings: true,
 
-    // Keep alive ổn định cho Render
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000,
 
@@ -30,7 +28,7 @@ const pool = mysql.createPool({
     }
 });
 
-// Force timezone Việt Nam cho từng connection
+// Set timezone cho từng connection MySQL
 pool.getConnection()
     .then(async (conn) => {
 
@@ -39,7 +37,7 @@ pool.getConnection()
         );
 
         console.log(
-            '🇻🇳 MySQL timezone: Asia/Ho_Chi_Minh (+07:00)'
+            '🇻🇳 MySQL timezone set to Vietnam (+07:00)'
         );
 
         conn.release();
@@ -48,7 +46,7 @@ pool.getConnection()
     .catch((err) => {
 
         console.error(
-            '❌ Timezone setup error:',
+            'Timezone setup error:',
             err.message
         );
 
@@ -57,21 +55,10 @@ pool.getConnection()
 pool.on('error', (err) => {
 
     console.error(
-        '❌ [Database Error]:',
+        '[Database Error]:',
         err.message
     );
 
-    if (
-        err.code ===
-        'PROTOCOL_CONNECTION_LOST'
-    ) {
-
-        console.log(
-            '🔄 Đang thử reconnect database...'
-        );
-
-    }
 });
 
 module.exports = pool;
-
