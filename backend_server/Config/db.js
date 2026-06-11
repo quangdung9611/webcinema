@@ -12,44 +12,39 @@ const pool = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0,
 
-    // Đồng bộ giờ Việt Nam
-    timezone: '+07:00',
-
-    // Tránh JS tự convert Date
-    dateStrings: true,
-
-    enableKeepAlive: true,
-    keepAliveInitialDelay: 10000,
-
-    connectTimeout: 10000,
+    charset: 'utf8mb4',
 
     ssl: {
         rejectUnauthorized: false
     }
 });
 
-// TEST kết nối + set timezone
+/**
+ * ==========================================
+ * FIX TIMEZONE VIỆT NAM (+07:00)
+ * ==========================================
+ */
 (async () => {
     try {
 
-        const conn =
+        const connection =
             await pool.getConnection();
 
-        await conn.query(
-            "SET time_zone = '+07:00'"
-        );
+        await connection.query(`
+            SET time_zone = '+07:00'
+        `);
 
         console.log(
-            '🇻🇳 MySQL timezone: +07:00'
+            '🇻🇳 MySQL timezone set: +07:00'
         );
 
-        conn.release();
+        connection.release();
 
-    } catch (err) {
+    } catch (error) {
 
         console.error(
-            'Timezone setup error:',
-            err.message
+            '❌ Timezone Error:',
+            error.message
         );
 
     }
@@ -58,20 +53,9 @@ const pool = mysql.createPool({
 pool.on('error', (err) => {
 
     console.error(
-        '[Database Error]:',
+        '❌ Database Error:',
         err.message
     );
-
-    if (
-        err.code ===
-        'PROTOCOL_CONNECTION_LOST'
-    ) {
-
-        console.log(
-            'Đang reconnect database...'
-        );
-
-    }
 
 });
 
