@@ -1,3 +1,4 @@
+
 const db = require('../Config/db');
 
 /**
@@ -6,11 +7,21 @@ const db = require('../Config/db');
  * ==========================================
  */
 
-// Chuẩn hóa YYYY-MM-DD HH:mm
+// Chuẩn hóa thời gian YYYY-MM-DD HH:mm
 const formatDateTime = (dateTime) => {
     if (!dateTime) return null;
 
     return dateTime
+        .replace('T', ' ')
+        .substring(0, 16);
+};
+
+// Lấy giờ Việt Nam hiện tại
+const getCurrentVNTime = () => {
+    return new Date()
+        .toLocaleString("sv-SE", {
+            timeZone: "Asia/Ho_Chi_Minh"
+        })
         .replace('T', ' ')
         .substring(0, 16);
 };
@@ -37,9 +48,7 @@ const validateShowtimeData = (data) => {
         };
     }
 
-    const now = formatDateTime(
-        new Date().toISOString()
-    );
+    const now = getCurrentVNTime();
 
     if (start_time < now) {
         return {
@@ -74,10 +83,12 @@ const checkShowtimeConflict = async (
         start_time
     ];
 
+    // UPDATE -> bỏ qua chính nó
     if (excludeId) {
         sql += `
             AND showtime_id != ?
         `;
+
         params.push(excludeId);
     }
 
@@ -94,41 +105,45 @@ const checkShowtimeConflict = async (
  */
 
 // 1. Lấy tất cả suất chiếu
-exports.getAllShowtimes = async (req, res) => {
+exports.getAllShowtimes = async (
+    req,
+    res
+) => {
 
     try {
 
         const [rows] =
             await db.query(`
-            SELECT
-                s.showtime_id,
+                SELECT
+                    s.showtime_id,
 
-                DATE_FORMAT(
-                    s.start_time,
-                    '%Y-%m-%d %H:%i'
-                ) AS start_time,
+                    DATE_FORMAT(
+                        s.start_time,
+                        '%Y-%m-%d %H:%i'
+                    ) AS start_time,
 
-                m.title,
-                m.duration,
+                    m.title,
+                    m.duration,
 
-                c.cinema_name,
+                    c.cinema_name,
 
-                r.room_name,
-                r.room_type
+                    r.room_name,
+                    r.room_type
 
-            FROM showtimes s
+                FROM showtimes s
 
-            JOIN movies m
-                ON s.movie_id = m.movie_id
+                JOIN movies m
+                    ON s.movie_id = m.movie_id
 
-            JOIN cinemas c
-                ON s.cinema_id = c.cinema_id
+                JOIN cinemas c
+                    ON s.cinema_id = c.cinema_id
 
-            JOIN rooms r
-                ON s.room_id = r.room_id
+                JOIN rooms r
+                    ON s.room_id = r.room_id
 
-            ORDER BY s.start_time DESC
-        `);
+                ORDER BY
+                    s.start_time DESC
+            `);
 
         res.status(200).json(rows);
 
@@ -148,7 +163,10 @@ exports.getAllShowtimes = async (req, res) => {
 };
 
 // 2. Lấy chi tiết suất chiếu
-exports.getShowtimeDetail = async (req, res) => {
+exports.getShowtimeDetail = async (
+    req,
+    res
+) => {
 
     const { id } = req.params;
 
@@ -156,40 +174,40 @@ exports.getShowtimeDetail = async (req, res) => {
 
         const [rows] =
             await db.query(`
-            SELECT
-                s.showtime_id,
-                s.movie_id,
-                s.cinema_id,
-                s.room_id,
+                SELECT
+                    s.showtime_id,
+                    s.movie_id,
+                    s.cinema_id,
+                    s.room_id,
 
-                DATE_FORMAT(
-                    s.start_time,
-                    '%Y-%m-%d %H:%i'
-                ) AS start_time,
+                    DATE_FORMAT(
+                        s.start_time,
+                        '%Y-%m-%d %H:%i'
+                    ) AS start_time,
 
-                m.title,
-                m.slug,
-                m.poster_url,
-                m.age_rating,
+                    m.title,
+                    m.slug,
+                    m.poster_url,
+                    m.age_rating,
 
-                r.room_name,
-                r.room_type,
+                    r.room_name,
+                    r.room_type,
 
-                c.cinema_name
+                    c.cinema_name
 
-            FROM showtimes s
+                FROM showtimes s
 
-            JOIN movies m
-                ON s.movie_id = m.movie_id
+                JOIN movies m
+                    ON s.movie_id = m.movie_id
 
-            JOIN rooms r
-                ON s.room_id = r.room_id
+                JOIN rooms r
+                    ON s.room_id = r.room_id
 
-            JOIN cinemas c
-                ON s.cinema_id = c.cinema_id
+                JOIN cinemas c
+                    ON s.cinema_id = c.cinema_id
 
-            WHERE s.showtime_id = ?
-        `, [id]);
+                WHERE s.showtime_id = ?
+            `, [id]);
 
         if (rows.length === 0) {
             return res.status(404).json({
@@ -198,7 +216,9 @@ exports.getShowtimeDetail = async (req, res) => {
             });
         }
 
-        res.status(200).json(rows[0]);
+        res.status(200).json(
+            rows[0]
+        );
 
     } catch (error) {
 
@@ -208,14 +228,18 @@ exports.getShowtimeDetail = async (req, res) => {
         );
 
         res.status(500).json({
-            error: "Lỗi hệ thống"
+            error:
+                "Lỗi hệ thống"
         });
 
     }
 };
 
 // 3. Thêm suất chiếu
-exports.createShowtime = async (req, res) => {
+exports.createShowtime = async (
+    req,
+    res
+) => {
 
     try {
 
@@ -226,9 +250,11 @@ exports.createShowtime = async (req, res) => {
             start_time
         } = req.body;
 
+        // Chuẩn hóa
         start_time =
             formatDateTime(start_time);
 
+        // Ép kiểu số
         movie_id =
             Number(movie_id);
 
@@ -238,6 +264,7 @@ exports.createShowtime = async (req, res) => {
         room_id =
             Number(room_id);
 
+        // Validate
         const validationError =
             validateShowtimeData({
                 movie_id,
@@ -251,6 +278,7 @@ exports.createShowtime = async (req, res) => {
                 .json(validationError);
         }
 
+        // Kiểm tra trùng lịch
         const isConflict =
             await checkShowtimeConflict(
                 room_id,
@@ -265,6 +293,7 @@ exports.createShowtime = async (req, res) => {
             });
         }
 
+        // Insert
         const sql = `
             INSERT INTO showtimes
             (
@@ -284,16 +313,24 @@ exports.createShowtime = async (req, res) => {
         `;
 
         const [result] =
-            await db.query(sql, [
-                movie_id,
-                cinema_id,
-                room_id,
-                start_time
-            ]);
+            await db.query(
+                sql,
+                [
+                    movie_id,
+                    cinema_id,
+                    room_id,
+                    start_time
+                ]
+            );
+
+        console.log(
+            `✅ [SUCCESS] Đã thêm suất chiếu: ${start_time}`
+        );
 
         res.status(201).json({
             message:
                 "Thêm suất chiếu thành công",
+
             showtime_id:
                 result.insertId
         });
@@ -314,7 +351,10 @@ exports.createShowtime = async (req, res) => {
 };
 
 // 4. Cập nhật suất chiếu
-exports.updateShowtime = async (req, res) => {
+exports.updateShowtime = async (
+    req,
+    res
+) => {
 
     const { id } = req.params;
 
@@ -327,9 +367,11 @@ exports.updateShowtime = async (req, res) => {
             start_time
         } = req.body;
 
+        // Chuẩn hóa
         start_time =
             formatDateTime(start_time);
 
+        // Ép kiểu số
         movie_id =
             Number(movie_id);
 
@@ -339,6 +381,7 @@ exports.updateShowtime = async (req, res) => {
         room_id =
             Number(room_id);
 
+        // Validate
         const validationError =
             validateShowtimeData({
                 movie_id,
@@ -352,23 +395,25 @@ exports.updateShowtime = async (req, res) => {
                 .json(validationError);
         }
 
+        // Kiểm tra tồn tại
         const [existing] =
-            await db.query(
-                `
-                SELECT showtime_id
+            await db.query(`
+                SELECT
+                    showtime_id
                 FROM showtimes
                 WHERE showtime_id = ?
-                `,
-                [id]
-            );
+            `, [id]);
 
-        if (existing.length === 0) {
+        if (
+            existing.length === 0
+        ) {
             return res.status(404).json({
                 error:
                     "Không tìm thấy suất chiếu"
             });
         }
 
+        // Kiểm tra trùng lịch
         const isConflict =
             await checkShowtimeConflict(
                 room_id,
@@ -384,7 +429,8 @@ exports.updateShowtime = async (req, res) => {
             });
         }
 
-        await db.query(`
+        // Update
+        const sql = `
             UPDATE showtimes
             SET
                 movie_id = ?,
@@ -396,13 +442,18 @@ exports.updateShowtime = async (req, res) => {
                         '%Y-%m-%d %H:%i'
                     )
             WHERE showtime_id = ?
-        `, [
-            movie_id,
-            cinema_id,
-            room_id,
-            start_time,
-            id
-        ]);
+        `;
+
+        await db.query(
+            sql,
+            [
+                movie_id,
+                cinema_id,
+                room_id,
+                start_time,
+                id
+            ]
+        );
 
         res.status(200).json({
             message:
@@ -423,3 +474,472 @@ exports.updateShowtime = async (req, res) => {
 
     }
 };
+
+// 5. Lấy suất chiếu theo phim
+exports.getShowtimesByMovie = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            movieId
+        } = req.params;
+
+        const nowVN =
+            getCurrentVNTime();
+
+        const [rows] =
+            await db.query(`
+                SELECT
+                    s.showtime_id,
+
+                    DATE_FORMAT(
+                        s.start_time,
+                        '%Y-%m-%d %H:%i:%s'
+                    ) AS start_time,
+
+                    r.room_name,
+                    r.room_type,
+
+                    c.cinema_name
+
+                FROM showtimes s
+
+                JOIN rooms r
+                    ON s.room_id = r.room_id
+
+                JOIN cinemas c
+                    ON s.cinema_id = c.cinema_id
+
+                WHERE
+                    s.movie_id = ?
+                    AND s.start_time >= ?
+
+                ORDER BY
+                    s.start_time ASC
+            `,
+            [
+                movieId,
+                nowVN
+            ]);
+
+        res.status(200).json(
+            rows
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ [DŨNG] Lỗi lấy lịch theo phim:",
+            error.message
+        );
+
+        res.status(500).json({
+            error:
+                "Lỗi hệ thống"
+        });
+
+    }
+};
+
+// 6. Xóa suất chiếu
+exports.deleteShowtime = async (
+    req,
+    res
+) => {
+
+    const {
+        id
+    } = req.params;
+
+    try {
+
+        // Check vé
+        const [tickets] =
+            await db.query(
+                `
+                SELECT *
+                FROM tickets
+                WHERE showtime_id = ?
+                `,
+                [id]
+            );
+
+        if (
+            tickets.length > 0
+        ) {
+            return res.status(400).json({
+                error:
+                    "Dũng ơi, vé đã bán rồi thì không được xóa suất chiếu đâu nha!"
+            });
+        }
+
+        const [result] =
+            await db.query(
+                `
+                DELETE FROM showtimes
+                WHERE showtime_id = ?
+                `,
+                [id]
+            );
+
+        if (
+            result.affectedRows === 0
+        ) {
+            return res.status(404).json({
+                error:
+                    "Không tìm thấy suất chiếu này"
+            });
+        }
+
+        res.status(200).json({
+            message:
+                "Đã xóa suất chiếu thành công"
+        });
+
+    } catch (err) {
+
+        console.error(
+            "❌ [DŨNG] Lỗi xóa suất chiếu:",
+            err.message
+        );
+
+        res.status(500).json({
+            error:
+                "Lỗi hệ thống khi xóa"
+        });
+
+    }
+};
+
+// 7. Filter showtimes
+exports.filterShowtimes = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            movie_id,
+            room_id,
+            date
+        } = req.query;
+
+        if (
+            !movie_id ||
+            !room_id ||
+            !date
+        ) {
+            return res.status(400).json({
+                error:
+                    "Thiếu dữ liệu lọc rồi Dũng ơi!"
+            });
+        }
+
+        const [rows] =
+            await db.query(`
+                SELECT
+                    showtime_id,
+
+                    DATE_FORMAT(
+                        start_time,
+                        '%Y-%m-%d %H:%i'
+                    ) AS start_time,
+
+                    room_id
+
+                FROM showtimes
+
+                WHERE
+                    movie_id = ?
+                    AND room_id = ?
+                    AND DATE(start_time) = ?
+
+                ORDER BY
+                    start_time ASC
+            `,
+            [
+                movie_id,
+                room_id,
+                date
+            ]);
+
+        res.status(200).json(
+            rows
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ [DŨNG] Lỗi lọc suất chiếu:",
+            error.message
+        );
+
+        res.status(500).json({
+            error:
+                "Lỗi hệ thống"
+        });
+
+    }
+};
+
+// 8. Quick booking
+exports.getQuickBookingData = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            movie_id,
+            cinema_id,
+            date
+        } = req.query;
+
+        const nowVN =
+            getCurrentVNTime();
+
+        // CASE 0:
+        // Danh sách phim
+        if (
+            !movie_id &&
+            !cinema_id &&
+            !date
+        ) {
+
+            const [movies] =
+                await db.query(`
+                    SELECT DISTINCT
+                        m.movie_id,
+                        m.title
+
+                    FROM showtimes s
+
+                    JOIN movies m
+                        ON s.movie_id = m.movie_id
+
+                    WHERE
+                        s.start_time >= ?
+                `,
+                [nowVN]);
+
+            return res.status(200)
+                .json(movies);
+        }
+
+        // CASE 1:
+        // Danh sách rạp
+        if (
+            movie_id &&
+            !cinema_id &&
+            !date
+        ) {
+
+            const [cinemas] =
+                await db.query(`
+                    SELECT DISTINCT
+                        c.cinema_id,
+                        c.cinema_name
+
+                    FROM showtimes s
+
+                    JOIN cinemas c
+                        ON s.cinema_id = c.cinema_id
+
+                    WHERE
+                        s.movie_id = ?
+                        AND s.start_time >= ?
+                `,
+                [
+                    movie_id,
+                    nowVN
+                ]);
+
+            return res.status(200)
+                .json(cinemas);
+        }
+
+        // CASE 2:
+        // Danh sách ngày
+        if (
+            movie_id &&
+            cinema_id &&
+            !date
+        ) {
+
+            const [dates] =
+                await db.query(`
+                    SELECT DISTINCT
+                        DATE_FORMAT(
+                            start_time,
+                            '%Y-%m-%d'
+                        ) AS show_date
+
+                    FROM showtimes
+
+                    WHERE
+                        movie_id = ?
+                        AND cinema_id = ?
+                        AND start_time >= ?
+
+                    ORDER BY
+                        show_date ASC
+                `,
+                [
+                    movie_id,
+                    cinema_id,
+                    nowVN
+                ]);
+
+            return res.status(200)
+                .json(dates);
+        }
+
+        // CASE 3:
+        // Danh sách suất
+        if (
+            movie_id &&
+            cinema_id &&
+            date
+        ) {
+
+            const [times] =
+                await db.query(`
+                    SELECT
+                        s.showtime_id,
+
+                        DATE_FORMAT(
+                            s.start_time,
+                            '%H:%i'
+                        ) AS start_time,
+
+                        r.room_name
+
+                    FROM showtimes s
+
+                    JOIN rooms r
+                        ON s.room_id = r.room_id
+
+                    WHERE
+                        s.movie_id = ?
+                        AND s.cinema_id = ?
+                        AND DATE(s.start_time) = ?
+                        AND s.start_time >= ?
+
+                    ORDER BY
+                        s.start_time ASC
+                `,
+                [
+                    movie_id,
+                    cinema_id,
+                    date,
+                    nowVN
+                ]);
+
+            return res.status(200)
+                .json(times);
+        }
+
+        return res.status(200)
+            .json([]);
+
+    } catch (error) {
+
+        console.error(
+            "❌ [DŨNG] Lỗi quick booking:",
+            error.message
+        );
+
+        res.status(500).json({
+            error:
+                "Lỗi hệ thống"
+        });
+
+    }
+};
+
+// 9. Lấy suất chiếu cho trang Booking
+exports.getShowtimesForBooking = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            movie_id,
+            cinema_id,
+            date
+        } = req.query;
+
+        if (
+            !movie_id ||
+            !cinema_id ||
+            !date
+        ) {
+            return res.status(400).json({
+                error:
+                    "Dũng ơi, chọn rạp và ngày mới hiện suất chiếu được!"
+            });
+        }
+
+        const nowVN =
+            getCurrentVNTime();
+
+        const [rows] =
+            await db.query(`
+                SELECT
+                    s.showtime_id,
+
+                    DATE_FORMAT(
+                        s.start_time,
+                        '%H:%i'
+                    ) AS start_time,
+
+                    r.room_name,
+                    r.room_type
+
+                FROM showtimes s
+
+                JOIN rooms r
+                    ON s.room_id = r.room_id
+
+                WHERE
+                    s.movie_id = ?
+                    AND s.cinema_id = ?
+                    AND DATE(s.start_time) = ?
+                    AND s.start_time >= ?
+
+                ORDER BY
+                    s.start_time ASC
+            `,
+            [
+                movie_id,
+                cinema_id,
+                date,
+                nowVN
+            ]);
+
+        res.status(200).json(
+            rows
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ [DŨNG] Lỗi lọc suất chiếu Booking:",
+            error.message
+        );
+
+        res.status(500).json({
+            error:
+                "Lỗi hệ thống"
+        });
+
+    }
+};
+
