@@ -9,64 +9,58 @@ exports.calculateBookingPoints = async (
     bookingId
 ) => {
 
-const [details] =
-    await connection.execute(
-        `
-        SELECT
-            bd.price,
-            bd.quantity,
-            s.seat_type
+    const [details] =
+        await connection.execute(
+            `
+            SELECT
+                bd.price,
+                bd.quantity,
+                s.seat_type
+            FROM booking_details bd
+            LEFT JOIN seats s
+                ON bd.seat_id = s.seat_id
+            WHERE bd.booking_id = ?
+            `,
+            [bookingId]
+        );
 
-        FROM booking_details bd
+    let totalPoints = 0;
 
-        LEFT JOIN seats s
-            ON bd.seat_id =
-            s.seat_id
+    for (const item of details) {
 
-        WHERE bd.booking_id = ?
-        `,
-        [bookingId]
-    );
+        const itemTotal =
+            Number(item.price) *
+            Number(item.quantity);
 
-let totalPoints = 0;
+        const type =
+            String(
+                item.seat_type || ''
+            ).toUpperCase();
 
-for (const item of details) {
+        let rate = 0.05;
 
-    const itemTotal =
-        Number(item.price) *
-        Number(item.quantity);
+        if (type === 'VIP') {
 
-    const type =
-        String(
-            item.seat_type || ''
-        ).toUpperCase();
+            rate = 0.10;
 
-    let rate = 0.05;
+        } else if (
+            [
+                'DOUBLE',
+                'SWEETBOX',
+                'COUPLE'
+            ].includes(type)
+        ) {
 
-    if (type === 'VIP') {
+            rate = 0.07;
+        }
 
-        rate = 0.10;
-
-    } else if (
-        [
-            'DOUBLE',
-            'SWEETBOX',
-            'COUPLE'
-        ].includes(type)
-    ) {
-
-        rate = 0.07;
+        totalPoints +=
+            Math.floor(
+                itemTotal * rate
+            );
     }
 
-    totalPoints +=
-        Math.floor(
-            itemTotal * rate
-        );
-}
-
-return totalPoints;
-```
-
+    return totalPoints;
 };
 
 /* =========================================================
@@ -74,35 +68,29 @@ ADD POINTS TO USER
 ========================================================= */
 
 exports.addPointsToUser = async (
-connection,
-userId,
-points
+    connection,
+    userId,
+    points
 ) => {
 
-```
-if (
-    !points ||
-    points <= 0
-) {
-    return;
-}
+    if (
+        !points ||
+        points <= 0
+    ) {
+        return;
+    }
 
-await connection.execute(
-    `
-    UPDATE users
-
-    SET points =
-        points + ?
-
-    WHERE user_id = ?
-    `,
-    [
-        points,
-        userId
-    ]
-);
-```
-
+    await connection.execute(
+        `
+        UPDATE users
+        SET points = points + ?
+        WHERE user_id = ?
+        `,
+        [
+            points,
+            userId
+        ]
+    );
 };
 
 /* =========================================================
@@ -110,38 +98,33 @@ SUBTRACT POINTS
 ========================================================= */
 
 exports.subtractPointsFromUser = async (
-connection,
-userId,
-points
+    connection,
+    userId,
+    points
 ) => {
 
-```
-if (
-    !points ||
-    points <= 0
-) {
-    return;
-}
+    if (
+        !points ||
+        points <= 0
+    ) {
+        return;
+    }
 
-await connection.execute(
-    `
-    UPDATE users
-
-    SET points =
-        GREATEST(
-            points - ?,
-            0
-        )
-
-    WHERE user_id = ?
-    `,
-    [
-        points,
-        userId
-    ]
-);
-```
-
+    await connection.execute(
+        `
+        UPDATE users
+        SET points =
+            GREATEST(
+                points - ?,
+                0
+            )
+        WHERE user_id = ?
+        `,
+        [
+            points,
+            userId
+        ]
+    );
 };
 
 /* =========================================================
@@ -149,29 +132,23 @@ GET USER POINTS
 ========================================================= */
 
 exports.getUserPoints = async (
-userId
+    userId
 ) => {
 
-```
-const [rows] =
-    await db.execute(
-        `
-        SELECT points
+    const [rows] =
+        await db.execute(
+            `
+            SELECT points
+            FROM users
+            WHERE user_id = ?
+            LIMIT 1
+            `,
+            [userId]
+        );
 
-        FROM users
-
-        WHERE user_id = ?
-
-        LIMIT 1
-        `,
-        [userId]
-    );
-
-return rows.length
-    ? Number(rows[0].points)
-    : 0;
-```
-
+    return rows.length
+        ? Number(rows[0].points)
+        : 0;
 };
 
 /* =========================================================
@@ -179,19 +156,18 @@ CHECK USER HAS ENOUGH POINTS
 ========================================================= */
 
 exports.hasEnoughPoints = async (
-userId,
-points
+    userId,
+    points
 ) => {
 
-```
-const currentPoints =
-    await exports.getUserPoints(
-        userId
-    );
+    const currentPoints =
+        await exports.getUserPoints(
+            userId
+        );
 
-return currentPoints >= points;
-
+    return currentPoints >= points;
 };
+
 /* =========================================================
 GET USER POINT INFO
 ========================================================= */
@@ -217,8 +193,8 @@ exports.getPointInfo = async (
     return rows.length
         ? rows[0]
         : null;
-
 };
+
 /* =========================================================
 REFUND POINTS
 ========================================================= */
@@ -253,5 +229,4 @@ exports.refundPoints = async (
         bookingRows[0].user_id,
         points
     );
-
 };
