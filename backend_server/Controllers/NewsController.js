@@ -624,3 +624,171 @@ exports.deleteNews = async (req, res) => {
     }
 
 };
+
+exports.getNewsById = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const [rows] = await db.query(
+            `
+            SELECT *
+            FROM news
+            WHERE news_id = ?
+            `,
+            [id]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({
+                message: 'Không tìm thấy bài viết'
+            });
+        }
+
+        return res.status(200).json(rows[0]);
+
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Lỗi server khi lấy chi tiết bài viết'
+        });
+    }
+};
+
+exports.createNews = async (req, res) => {
+
+    const { title, content, likes } = req.body;
+
+    const file = req.file;
+
+    try {
+
+        if (!title || !content) {
+            return res.status(400).json({
+                message: 'Thiếu dữ liệu bài viết'
+            });
+        }
+
+        const slug = createSlug(title);
+
+        const imageUrl = file ? file.filename : null;
+
+        const [duplicate] = await db.query(
+            `
+            SELECT news_id
+            FROM news
+            WHERE title = ? OR slug = ?
+            `,
+            [title.trim(), slug]
+        );
+
+        if (duplicate.length > 0) {
+            if (file) deleteFile(file.filename);
+
+            return res.status(400).json({
+                message: 'Tiêu đề đã tồn tại'
+            });
+        }
+
+        await db.query(
+            `
+            INSERT INTO news (title, slug, content, image_url, likes, views)
+            VALUES (?, ?, ?, ?, ?, 0)
+            `,
+            [
+                title.trim(),
+                slug,
+                content.trim(),
+                imageUrl,
+                parseInt(likes, 10) || 0
+            ]
+        );
+
+        return res.status(201).json({
+            success: true,
+            message: 'Tạo bài viết thành công'
+        });
+
+    } catch (error) {
+
+        if (file) deleteFile(file.filename);
+
+        return res.status(500).json({
+            message: 'Lỗi khi tạo bài viết'
+        });
+    }
+};
+exports.increaseLike = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const [rows] = await db.query(
+            `
+            SELECT likes
+            FROM news
+            WHERE news_id = ?
+            `,
+            [id]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({
+                message: 'Không tìm thấy bài viết'
+            });
+        }
+
+        await db.query(
+            `
+            UPDATE news
+            SET likes = likes + 1
+            WHERE news_id = ?
+            `,
+            [id]
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: 'Like +1 thành công'
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Lỗi khi tăng like'
+        });
+    }
+};
+exports.getNewsBySlug = async (req, res) => {
+    const { slug } = req.params;
+
+    try {
+        const [rows] = await db.query(
+            `
+            SELECT *
+            FROM news
+            WHERE slug = ?
+            `,
+            [slug]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({
+                message: 'Không tìm thấy bài viết'
+            });
+        }
+
+        // tăng view
+        await db.query(
+            `
+            UPDATE news
+            SET views = views + 1
+            WHERE slug = ?
+            `,
+            [slug]
+        );
+
+        return res.status(200).json(rows[0]);
+
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Lỗi server khi lấy chi tiết bài viết'
+        });
+    }
+};
