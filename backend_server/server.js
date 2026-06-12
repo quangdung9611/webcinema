@@ -44,7 +44,9 @@ const movieGenreRoutes = require('./Routers/MovieGenreRouter');
 const movieActorRoutes = require('./Routers/MovieActorRouter');
 const newsRoutes = require('./Routers/NewRouter');
 const forgotPasswordRoutes =require('./Routers/ForgotPassRouter');
+const promotionRoutes = require('./Routers/PromotionRouter');
 
+const blogCinemaRoutes = require('./Routers/BlogCinemaRouter');
 // ===========================================================
 // 1. CẤU HÌNH HỆ THỐNG & CORS
 // ===========================================================
@@ -136,6 +138,8 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/movie-genres', movieGenreRoutes);
 app.use('/api/movie-actors', movieActorRoutes);
 app.use('/api/news', newsRoutes);
+app.use( '/api/promotions', promotionRoutes);
+app.use('/api/blog-cinema',blogCinemaRoutes);
 app.use('/admin/api/auth', adminAuthRoutes);
 app.use('/admin/api/manage', adminRouter); 
 app.use('/api/forgot-password', forgotPasswordRoutes);

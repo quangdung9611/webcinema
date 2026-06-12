@@ -4,38 +4,104 @@ const fs = require('fs');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        // 1. Mặc định ban đầu
-        let dir = 'uploads/posters/'; 
 
-        // 2. Kiểm tra nhãn (fieldname) khớp hoàn toàn với tên trường trong CSDL
-        if (file.fieldname === 'backdrop_url') { 
-            // Cột backdrop_url trong bảng movies -> lưu vào backdrops
-            dir = 'uploads/backdrops/';
-        } 
-        else if (file.fieldname === 'image_url') {
-            // Cột image_url trong bảng foods (hoặc combo/bắp nước) -> lưu vào foods
-            dir = 'uploads/foods/';
-        } 
-        else if (file.fieldname === 'image') { 
-            // Cột image trong bảng news (tin tức) -> lưu vào news
-            dir = 'uploads/news/';
-        }
-        else if (file.fieldname === 'avatar') {
-            // Cột avatar trong bảng actors -> Đổi từ 'actorImage' sang 'avatar'
-            dir = 'uploads/actors/';
-        }
-        else {
-            // Mọi trường hợp khác hoặc cột 'poster_url' (phim) -> lưu vào posters
-            dir = 'uploads/posters/';
+    // 1. Mặc định ban đầu
+    let dir =
+        'uploads/posters/';
+
+    // 2. Kiểm tra nhãn (fieldname)
+    if (
+        file.fieldname ===
+        'backdrop_url'
+    ) {
+
+        // Movies backdrop
+        dir =
+            'uploads/backdrops/';
+
+    }
+    else if (
+        file.fieldname ===
+        'image_url'
+    ) {
+
+        // Foods
+        dir =
+            'uploads/foods/';
+
+        // Promotions
+        if (
+            req.originalUrl.includes(
+                'promotion'
+            )
+        ) {
+
+            dir =
+                'uploads/promotions/';
+
         }
 
-        // 3. Tự động tạo folder nếu chưa có (recursive giúp tạo cả cây thư mục)
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
+    }
+    else if (
+        file.fieldname ===
+        'image'
+    ) {
+
+        // News
+        dir =
+            'uploads/news/';
+
+        // Blog Cinema
+        if (
+            req.originalUrl.includes(
+                'blog-cinema'
+            )
+        ) {
+
+            dir =
+                'uploads/blog_cinema/';
+
         }
-        
-        cb(null, dir);
-    },
+
+    }
+    else if (
+        file.fieldname ===
+        'avatar'
+    ) {
+
+        // Actors
+        dir =
+            'uploads/actors/';
+
+    }
+    else {
+
+        // poster_url movie
+        dir =
+            'uploads/posters/';
+
+    }
+
+    // 3. Auto create folder
+    if (
+        !fs.existsSync(dir)
+    ) {
+
+        fs.mkdirSync(
+            dir,
+            {
+                recursive: true
+            }
+        );
+
+    }
+
+    cb(
+        null,
+        dir
+    );
+
+},
     filename: (req, file, cb) => {
         // Lấy đuôi file (.jpg, .png...)
         const ext = path.extname(file.originalname).toLowerCase();
