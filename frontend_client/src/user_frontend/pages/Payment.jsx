@@ -52,7 +52,7 @@ const Payment = () => {
         email: user?.email || '',
         phone: user?.phone || ''
     });
-
+   
     const [modal, setModal] = useState({
         show: false,
         type: '',

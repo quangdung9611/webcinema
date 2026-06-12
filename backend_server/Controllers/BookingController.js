@@ -25,9 +25,9 @@ exports.getAllBookings = async (
                 SELECT
                     b.booking_id,
                     DATE_FORMAT(
-                        b.created_at,
+                        b.booking_date,
                         '%d/%m/%Y %H:%i'
-                    ) AS created_at,
+                    ) AS booking_date,
                     b.total_amount,
                     b.status,
                     b.memo,
