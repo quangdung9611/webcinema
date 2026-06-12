@@ -619,7 +619,32 @@ exports.getBlogById =
     }
 
 };
+exports.createBlog = async (req, res) => {
+    // 1. Lấy dữ liệu từ req.body và req.file
+    const { title, description, content, category, likes } = req.body;
+    
+    // 2. Validate dữ liệu (dùng hàm validateBlogData có sẵn của bạn)
+    const errorMsg = validateBlogData(req.body, req.file, false);
+    if (errorMsg) {
+        if (req.file) deleteFile(req.file.filename);
+        return res.status(400).json({ message: errorMsg });
+    }
 
+    try {
+        const slug = createSlug(title);
+        const imageUrl = req.file ? req.file.filename : null;
+
+        const sql = `INSERT INTO blog_cinema (title, slug, description, content, category, image_url, likes) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        
+        await db.query(sql, [title, slug, description, content, category, imageUrl, likes || 0]);
+
+        return res.status(201).json({ success: true, message: 'Tạo blog thành công!' });
+    } catch (error) {
+        if (req.file) deleteFile(req.file.filename);
+        return res.status(500).json({ message: 'Lỗi server khi tạo blog' });
+    }
+};
 /* ==========================================================
     UPDATE BLOG
 ========================================================== */
