@@ -1,7 +1,14 @@
 const db = require('../Config/db');
 
+/* =========================================================
+    HELPER: SLUG
+========================================================= */
+
 const createSlug = (text) => {
-    return text.toString().toLowerCase().trim()
+    return text
+        .toString()
+        .toLowerCase()
+        .trim()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[đĐ]/g, 'd')
@@ -11,11 +18,11 @@ const createSlug = (text) => {
         .replace(/^-+|-+$/g, '');
 };
 
-/**
- * HÀM HỖ TRỢ: Kiểm tra dữ liệu Rạp
- */
-const validateCinemaData = (data) => {
+/* =========================================================
+    VALIDATE CINEMA
+========================================================= */
 
+const validateCinemaData = (data) => {
     const {
         cinema_name,
         address,
@@ -24,90 +31,68 @@ const validateCinemaData = (data) => {
         map_link
     } = data;
 
-    if (
-        !cinema_name ||
-        !address ||
-        !city ||
-        !hotline ||
-        !map_link
-    ) {
+    if (!cinema_name || !address || !city || !hotline || !map_link) {
         return {
-            error:
-                "Vui lòng nhập đầy đủ thông tin rạp"
+            error: "Vui lòng nhập đầy đủ thông tin rạp"
         };
     }
 
     if (cinema_name.trim().length < 5) {
         return {
             field: 'cinema_name',
-            error:
-                "Tên rạp phải từ 5 ký tự trở lên"
+            error: "Tên rạp phải từ 5 ký tự trở lên"
         };
     }
 
-    // CHECK HOTLINE
     if (!/^[0-9]{8,15}$/.test(hotline)) {
         return {
             field: 'hotline',
-            error:
-                "Hotline không hợp lệ"
+            error: "Hotline không hợp lệ"
         };
     }
 
-    // CHECK LINK MAP
     try {
-
         new URL(map_link);
-
     } catch {
-
         return {
             field: 'map_link',
-            error:
-                "Link Google Map không hợp lệ"
+            error: "Link Google Map không hợp lệ"
         };
     }
 
     return null;
 };
 
-// 1. Lấy danh sách rạp
+/* =========================================================
+    1. GET ALL CINEMAS
+========================================================= */
+
 exports.getAllCinemas = async (req, res) => {
     try {
-
-        const sql = `
+        const [rows] = await db.query(`
             SELECT *,
-            DATE_FORMAT(
-                created_at,
-                '%d/%m/%Y %H:%i'
-            ) AS formatted_date
+            DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS formatted_date
             FROM cinemas
             ORDER BY cinema_id DESC
-        `;
+        `);
 
-        const [rows] = await db.query(sql);
-
-        res.status(200).json(rows);
+        return res.status(200).json(rows);
 
     } catch (error) {
+        console.error("Get All Cinemas Error:", error);
 
-        console.error(
-            "Get All Cinemas Error:",
-            error
-        );
-
-        res.status(500).json({
-            error:
-                "Lỗi hệ thống khi lấy danh sách rạp"
+        return res.status(500).json({
+            error: "Lỗi hệ thống khi lấy danh sách rạp"
         });
     }
 };
 
-// 2. Thêm rạp mới
+/* =========================================================
+    2. CREATE CINEMA
+========================================================= */
+
 exports.createCinema = async (req, res) => {
-
     try {
-
         const {
             cinema_name,
             address,
@@ -116,317 +101,226 @@ exports.createCinema = async (req, res) => {
             map_link
         } = req.body;
 
-        const validationError =
-            validateCinemaData(req.body);
-
+        const validationError = validateCinemaData(req.body);
         if (validationError) {
-            return res
-                .status(400)
-                .json(validationError);
+            return res.status(400).json(validationError);
         }
 
-        // CHECK TRÙNG TÊN RẠP
+        const name = cinema_name.trim();
+
+        // CHECK DUP NAME
         const [existing] = await db.query(
-            `
-            SELECT cinema_name
-            FROM cinemas
-            WHERE cinema_name = ?
-            `,
-            [cinema_name.trim()]
+            `SELECT cinema_id FROM cinemas WHERE cinema_name = ?`,
+            [name]
         );
 
         if (existing.length > 0) {
-
             return res.status(400).json({
                 field: 'cinema_name',
-                error:
-                    "Tên rạp này đã tồn tại"
+                error: "Tên rạp này đã tồn tại"
             });
         }
 
-        // CHECK TRÙNG HOTLINE
+        // CHECK HOTLINE
         const [existingHotline] = await db.query(
-            `
-            SELECT hotline
-            FROM cinemas
-            WHERE hotline = ?
-            `,
+            `SELECT cinema_id FROM cinemas WHERE hotline = ?`,
             [hotline]
         );
 
         if (existingHotline.length > 0) {
-
             return res.status(400).json({
                 field: 'hotline',
-                error:
-                    "Số hotline này đã tồn tại"
+                error: "Số hotline này đã tồn tại"
             });
         }
 
-        // TẠO SLUG
-        const slug =
-            createSlug(cinema_name);
+        const slug = createSlug(name);
 
-        // GIỜ VN
-        const nowVN =
-            new Date().toLocaleString(
-                "sv-SE",
-                {
-                    timeZone:
-                        "Asia/Ho_Chi_Minh"
-                }
-            );
-
-        const sql = `
+        const [result] = await db.query(
+            `
             INSERT INTO cinemas
-            (
-                cinema_name,
+            (cinema_name, address, city, hotline, map_link, slug)
+            VALUES (?, ?, ?, ?, ?, ?)
+            `,
+            [
+                name,
+                address,
+                city,
+                hotline,
+                map_link,
+                slug
+            ]
+        );
+
+        return res.status(201).json({
+            success: true,
+            message: "Thêm rạp thành công",
+            cinema_id: result.insertId
+        });
+
+    } catch (err) {
+        console.error("Create Cinema Error:", err);
+
+        return res.status(500).json({
+            error: "Lỗi hệ thống khi tạo rạp"
+        });
+    }
+};
+
+/* =========================================================
+    3. UPDATE CINEMA
+========================================================= */
+
+exports.updateCinema = async (req, res) => {
+    const { cinema_id } = req.params;
+
+    try {
+        const {
+            cinema_name,
+            address,
+            city,
+            hotline,
+            map_link
+        } = req.body;
+
+        const validationError = validateCinemaData(req.body);
+        if (validationError) {
+            return res.status(400).json(validationError);
+        }
+
+        const name = cinema_name.trim();
+
+        const [existing] = await db.query(
+            `SELECT cinema_id FROM cinemas 
+             WHERE cinema_name = ? AND cinema_id != ?`,
+            [name, cinema_id]
+        );
+
+        if (existing.length > 0) {
+            return res.status(400).json({
+                field: 'cinema_name',
+                error: "Tên rạp này đã được sử dụng"
+            });
+        }
+
+        const [existingHotline] = await db.query(
+            `SELECT cinema_id FROM cinemas 
+             WHERE hotline = ? AND cinema_id != ?`,
+            [hotline, cinema_id]
+        );
+
+        if (existingHotline.length > 0) {
+            return res.status(400).json({
+                field: 'hotline',
+                error: "Số hotline đã được sử dụng"
+            });
+        }
+
+        const slug = createSlug(name);
+
+        const [result] = await db.query(
+            `
+            UPDATE cinemas
+            SET cinema_name = ?, address = ?, city = ?, hotline = ?, map_link = ?, slug = ?
+            WHERE cinema_id = ?
+            `,
+            [
+                name,
                 address,
                 city,
                 hotline,
                 map_link,
                 slug,
-                created_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `;
-
-        const [result] = await db.query(sql, [
-            cinema_name.trim(),
-            address,
-            city,
-            hotline,
-            map_link,
-            slug,
-            nowVN
-        ]);
-
-        res.status(201).json({
-            success: true,
-            message:
-                "Thêm rạp thành công",
-            cinema_id:
-                result.insertId
-        });
-
-    } catch (err) {
-
-        console.error(
-            "Create Cinema Error:",
-            err
-        );
-
-        res.status(500).json({
-            error:
-                "Lỗi hệ thống khi tạo rạp"
-        });
-    }
-};
-
-// 3. Cập nhật rạp
-exports.updateCinema = async (req, res) => {
-
-    const { cinema_id } = req.params;
-
-    const {
-        cinema_name,
-        address,
-        city,
-        hotline,
-        map_link
-    } = req.body;
-
-    try {
-
-        const validationError =
-            validateCinemaData(req.body);
-
-        if (validationError) {
-            return res
-                .status(400)
-                .json(validationError);
-        }
-
-        // CHECK TRÙNG TÊN
-        const [existing] = await db.query(
-            `
-            SELECT cinema_name
-            FROM cinemas
-            WHERE cinema_name = ?
-            AND cinema_id != ?
-            `,
-            [
-                cinema_name.trim(),
                 cinema_id
             ]
         );
-
-        if (existing.length > 0) {
-
-            return res.status(400).json({
-                field: 'cinema_name',
-                error:
-                    "Tên rạp này đã được sử dụng"
-            });
-        }
-
-        // CHECK TRÙNG HOTLINE
-        const [existingHotline] = await db.query(
-            `
-            SELECT hotline
-            FROM cinemas
-            WHERE hotline = ?
-            AND cinema_id != ?
-            `,
-            [
-                hotline,
-                cinema_id
-            ]
-        );
-
-        if (existingHotline.length > 0) {
-
-            return res.status(400).json({
-                field: 'hotline',
-                error:
-                    "Số hotline đã được sử dụng"
-            });
-        }
-
-        const slug =
-            createSlug(cinema_name);
-
-        const sql = `
-            UPDATE cinemas
-            SET
-                cinema_name = ?,
-                address = ?,
-                city = ?,
-                hotline = ?,
-                map_link = ?,
-                slug = ?
-            WHERE cinema_id = ?
-        `;
-
-        const [result] = await db.query(sql, [
-            cinema_name.trim(),
-            address,
-            city,
-            hotline,
-            map_link,
-            slug,
-            cinema_id
-        ]);
 
         if (result.affectedRows === 0) {
-
             return res.status(404).json({
-                error:
-                    "Không tìm thấy rạp để cập nhật"
+                error: "Không tìm thấy rạp để cập nhật"
             });
         }
 
-        res.status(200).json({
-            message:
-                "Cập nhật rạp thành công!"
+        return res.status(200).json({
+            message: "Cập nhật rạp thành công!"
         });
 
     } catch (err) {
+        console.error("Update Cinema Error:", err);
 
-        console.error(
-            "Update Cinema Error:",
-            err
-        );
-
-        res.status(500).json({
-            error:
-                "Lỗi hệ thống khi cập nhật rạp"
+        return res.status(500).json({
+            error: "Lỗi hệ thống khi cập nhật rạp"
         });
     }
 };
 
-// 4. Xóa rạp
-exports.deleteCinema = async (req, res) => {
+/* =========================================================
+    4. DELETE CINEMA
+========================================================= */
 
+exports.deleteCinema = async (req, res) => {
     const { cinema_id } = req.params;
 
     try {
-
         const [result] = await db.query(
-            'DELETE FROM cinemas WHERE cinema_id = ?',
+            `DELETE FROM cinemas WHERE cinema_id = ?`,
             [cinema_id]
         );
 
         if (result.affectedRows === 0) {
-
             return res.status(404).json({
-                error:
-                    "Không tìm thấy rạp"
+                error: "Không tìm thấy rạp"
             });
         }
 
-        res.status(200).json({
-            message:
-                "Xóa rạp thành công"
+        return res.status(200).json({
+            message: "Xóa rạp thành công"
         });
 
     } catch (err) {
-
-        res.status(500).json({
-            error:
-                "Không thể xóa rạp (Rạp đang có dữ liệu liên quan)"
+        return res.status(500).json({
+            error: "Không thể xóa rạp (có thể đang liên kết dữ liệu)"
         });
     }
 };
 
-// 5. Lấy chi tiết rạp theo Slug
-exports.getCinemaBySlug = async (req, res) => {
+/* =========================================================
+    5. GET CINEMA BY SLUG
+========================================================= */
 
+exports.getCinemaBySlug = async (req, res) => {
     const { slug } = req.params;
 
     try {
-
         const [cinemas] = await db.execute(
-            'SELECT * FROM cinemas WHERE slug = ?',
+            `SELECT * FROM cinemas WHERE slug = ?`,
             [slug]
         );
 
-        if (cinemas.length === 0) {
-
+        if (!cinemas.length) {
             return res.status(404).json({
-                error:
-                    "Không tìm thấy rạp này"
+                error: "Không tìm thấy rạp này"
             });
         }
 
         const cinema = cinemas[0];
 
-        const query = `
-            SELECT
-                m.movie_id,
-                m.title,
-                m.poster_url,
-                s.showtime_id,
-                s.start_time
+        const [rows] = await db.execute(
+            `
+            SELECT m.movie_id, m.title, m.poster_url, s.showtime_id, s.start_time
             FROM showtimes s
-            JOIN movies m
-                ON s.movie_id = m.movie_id
+            JOIN movies m ON s.movie_id = m.movie_id
             WHERE s.cinema_id = ?
             ORDER BY s.start_time ASC
-        `;
-
-        const [rows] = await db.execute(
-            query,
+            `,
             [cinema.cinema_id]
         );
 
-        const moviesMap = {};
+        const map = {};
 
         rows.forEach(row => {
-
-            if (!moviesMap[row.movie_id]) {
-
-                moviesMap[row.movie_id] = {
+            if (!map[row.movie_id]) {
+                map[row.movie_id] = {
                     movie_id: row.movie_id,
                     title: row.title,
                     poster_url: row.poster_url,
@@ -434,53 +328,49 @@ exports.getCinemaBySlug = async (req, res) => {
                 };
             }
 
-            moviesMap[row.movie_id].showtimes.push({
+            map[row.movie_id].showtimes.push({
                 showtime_id: row.showtime_id,
                 start_time: row.start_time
             });
         });
 
-        res.json({
-            cinema: cinema,
-            movies: Object.values(moviesMap)
+        return res.json({
+            cinema,
+            movies: Object.values(map)
         });
 
     } catch (error) {
-
-        res.status(500).json({
+        return res.status(500).json({
             error: "Lỗi server",
             details: error.message
         });
     }
 };
 
-// 1.5 Lấy chi tiết rạp theo ID
-exports.getCinemaById = async (req, res) => {
+/* =========================================================
+    6. GET CINEMA BY ID
+========================================================= */
 
+exports.getCinemaById = async (req, res) => {
     const { cinema_id } = req.params;
 
     try {
-
         const [rows] = await db.query(
-            'SELECT * FROM cinemas WHERE cinema_id = ?',
+            `SELECT * FROM cinemas WHERE cinema_id = ?`,
             [cinema_id]
         );
 
-        if (rows.length === 0) {
-
+        if (!rows.length) {
             return res.status(404).json({
-                error:
-                    "Không tìm thấy rạp"
+                error: "Không tìm thấy rạp"
             });
         }
 
-        res.status(200).json(rows[0]);
+        return res.status(200).json(rows[0]);
 
     } catch (error) {
-
-        res.status(500).json({
-            error:
-                "Lỗi hệ thống"
+        return res.status(500).json({
+            error: "Lỗi hệ thống"
         });
     }
 };

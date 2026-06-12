@@ -1,3 +1,4 @@
+
 // =========================================================
 // IMPORTS
 // =========================================================
@@ -7,16 +8,11 @@ const bcrypt = require('bcryptjs');
 const db =
     require('../Config/db');
 
+const otpService =
+    require('../Services/OtpService');
+
 const mailService =
-    require(
-        '../Services/MailServiceTicket'
-    );
-
-// =========================================================
-// OTP STORAGE (RAM)
-// =========================================================
-
-let otpStorage = {};
+    require('../Services/MailServiceTicket');
 
 // =========================================================
 // FORGOT PASSWORD
@@ -30,10 +26,6 @@ exports.forgotPassword =
 
             const { email } =
                 req.body;
-
-            // ===============================
-            // VALIDATE
-            // ===============================
 
             if (!email) {
 
@@ -50,26 +42,20 @@ exports.forgotPassword =
 
             }
 
-            // ===============================
-            // CHECK USER
-            // ===============================
-
             const [users] =
-                await db.query(
-
+                await db.execute(
                     `
-                    SELECT *
+                    SELECT
+                        user_id,
+                        email
                     FROM users
                     WHERE email = ?
+                    LIMIT 1
                     `,
-
                     [email]
-
                 );
 
-            if (
-                users.length === 0
-            ) {
+            if (!users.length) {
 
                 return res
                     .status(404)
@@ -84,93 +70,27 @@ exports.forgotPassword =
 
             }
 
-            // ===============================
-            // CHỐNG SPAM OTP
-            // 30 GIÂY
-            // ===============================
+            const otp =
+                await otpService.createOTP(
+                    email,
+                    'RESET_PASSWORD'
+                );
 
-            if (
-                otpStorage[email]
-            ) {
+            mailService
+                .sendResetPasswordOTP(
+                    email,
+                    otp
+                )
+                .catch(error => {
 
-                const lastSent =
-
-                    otpStorage[email]
-                        .expires -
-
-                    (
-                        5 *
-                        60 *
-                        1000
+                    console.error(
+                        '❌ SEND RESET OTP ERROR:',
+                        error
                     );
 
-                if (
+                });
 
-                    Date.now()
-                    - lastSent
-
-                    < 30000
-
-                ) {
-
-                    return res
-                        .json({
-
-                            success:
-                                true,
-
-                            message:
-                                'Mã OTP đã được gửi, vui lòng kiểm tra email'
-
-                        });
-
-                }
-
-            }
-
-            // ===============================
-            // GENERATE OTP
-            // ===============================
-
-            const otp =
-                Math.floor(
-
-                    100000 +
-
-                    Math.random()
-                    * 900000
-
-                ).toString();
-
-            // ===============================
-            // SAVE OTP TO RAM
-            // ===============================
-
-            otpStorage[email] = {
-
-                otp,
-
-                expires:
-
-                    Date.now()
-
-                    +
-
-                    5 *
-                    60 *
-                    1000
-
-            };
-
-            console.log(
-                `📨 Gửi OTP reset password tới ${email}: ${otp}`
-            );
-
-            // ===============================
-            // RESPONSE TRƯỚC
-            // ===============================
-
-            res.json({
+            return res.json({
 
                 success: true,
 
@@ -179,36 +99,14 @@ exports.forgotPassword =
 
             });
 
-            // ===============================
-            // SEND MAIL NGẦM
-            // ===============================
-
-            mailService
-                .sendResetPasswordOTP(
-
-                    email,
-                    otp
-
-                )
-                .catch(err => {
-
-                    console.log(
-                        '❌ SEND RESET OTP ERROR'
-                    );
-
-                    console.log(err);
-
-                });
-
         }
 
         catch (error) {
 
-            console.log(
-                '❌ FORGOT PASSWORD ERROR'
+            console.error(
+                '❌ FORGOT PASSWORD ERROR:',
+                error
             );
-
-            console.log(error);
 
             return res
                 .status(500)
@@ -217,7 +115,7 @@ exports.forgotPassword =
                     success: false,
 
                     message:
-                        'Lỗi server'
+                        error.message
 
                 });
 
@@ -235,21 +133,13 @@ exports.verifyOtp =
         try {
 
             const {
-
                 email,
                 otp
-
             } = req.body;
 
-            // ===============================
-            // VALIDATE
-            // ===============================
-
             if (
-
                 !email ||
                 !otp
-
             ) {
 
                 return res
@@ -265,38 +155,28 @@ exports.verifyOtp =
 
             }
 
-            // ===============================
-            // CHECK OTP
-            // ===============================
-
-            const record =
-
-                otpStorage[email];
+            const verifyResult =
+                await otpService.verifyOTP(
+                    email,
+                    otp,
+                    'RESET_PASSWORD'
+                );
 
             if (
-
-                !record ||
-
-                record.otp
-                !== otp ||
-
-                record.expires
-                < Date.now()
-
+                !verifyResult.success
             ) {
 
                 return res
                     .status(400)
-                    .json({
-
-                        success: false,
-
-                        message:
-                            'OTP không đúng hoặc đã hết hạn'
-
-                    });
+                    .json(
+                        verifyResult
+                    );
 
             }
+
+            await otpService.markUsed(
+                verifyResult.data.otp_id
+            );
 
             return res
                 .status(200)
@@ -313,11 +193,10 @@ exports.verifyOtp =
 
         catch (error) {
 
-            console.log(
-                '❌ VERIFY OTP ERROR'
+            console.error(
+                '❌ VERIFY OTP ERROR:',
+                error
             );
-
-            console.log(error);
 
             return res
                 .status(500)
@@ -326,7 +205,7 @@ exports.verifyOtp =
                     success: false,
 
                     message:
-                        'Lỗi server'
+                        error.message
 
                 });
 
@@ -344,21 +223,13 @@ exports.resetPassword =
         try {
 
             const {
-
                 email,
                 newPassword
-
             } = req.body;
 
-            // ===============================
-            // VALIDATE
-            // ===============================
-
             if (
-
                 !email ||
                 !newPassword
-
             ) {
 
                 return res
@@ -374,67 +245,55 @@ exports.resetPassword =
 
             }
 
-            // ===============================
-            // CHECK OTP VERIFIED
-            // ===============================
+            const [users] =
+                await db.execute(
+                    `
+                    SELECT
+                        user_id
+                    FROM users
+                    WHERE email = ?
+                    LIMIT 1
+                    `,
+                    [email]
+                );
 
-            if (
-                !otpStorage[email]
-            ) {
+            if (!users.length) {
 
                 return res
-                    .status(400)
+                    .status(404)
                     .json({
 
                         success: false,
 
                         message:
-                            'OTP chưa xác thực hoặc đã hết hạn'
+                            'Không tìm thấy tài khoản'
 
                     });
 
             }
 
-            // ===============================
-            // HASH PASSWORD
-            // ===============================
-
             const hashedPassword =
-
                 await bcrypt.hash(
-
                     newPassword,
                     10
-
                 );
 
-            // ===============================
-            // UPDATE PASSWORD
-            // ===============================
-
-            await db.query(
-
+            await db.execute(
                 `
                 UPDATE users
                 SET password = ?
                 WHERE email = ?
                 `,
-
                 [
-
                     hashedPassword,
                     email
-
                 ]
-
             );
 
-            // ===============================
-            // DELETE OTP
-            // ===============================
-
-            delete
-                otpStorage[email];
+            await otpService.deleteOTP(
+                email,
+                'RESET_PASSWORD'
+            );
 
             return res
                 .status(200)
@@ -451,11 +310,10 @@ exports.resetPassword =
 
         catch (error) {
 
-            console.log(
-                '❌ RESET PASSWORD ERROR'
+            console.error(
+                '❌ RESET PASSWORD ERROR:',
+                error
             );
-
-            console.log(error);
 
             return res
                 .status(500)
@@ -464,10 +322,11 @@ exports.resetPassword =
                     success: false,
 
                     message:
-                        'Lỗi server'
+                        error.message
 
                 });
 
         }
 
     };
+

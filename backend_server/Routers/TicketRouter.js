@@ -5,7 +5,7 @@ const ticketController = require('../Controllers/TicketController');
 // ==========================================
 // 1. DÀNH CHO ADMIN (QUẢN TRỊ & SOÁT VÉ)
 // ==========================================
-router.get('/filter', ticketController.getFilteredShowtimes);
+// router.get('/filter', ticketController.getFilteredShowtimes);
 /**
  * Lấy toàn bộ danh sách vé
  */

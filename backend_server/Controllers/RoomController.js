@@ -19,27 +19,39 @@ const validateRoomData = (data) => {
         !cinema_id ||
         !room_type
     ) {
-
         return {
             error:
                 'Vui lòng nhập tên phòng, chọn cụm rạp và loại phòng'
         };
-
     }
 
     if (
         room_name.trim().length < 2
     ) {
-
         return {
             field: 'room_name',
-            error: 'Tên phòng quá ngắn'
+            error:
+                'Tên phòng quá ngắn'
         };
+    }
 
+    const validRoomTypes = [
+        '2D',
+        '3D',
+        'IMAX'
+    ];
+
+    if (
+        !validRoomTypes.includes(room_type)
+    ) {
+        return {
+            field: 'room_type',
+            error:
+                'Loại phòng không hợp lệ'
+        };
     }
 
     return null;
-
 };
 
 /**
@@ -48,28 +60,33 @@ const validateRoomData = (data) => {
  * =========================================================
  */
 
-exports.getAllRooms = async (req, res) => {
+exports.getAllRooms = async (
+    req,
+    res
+) => {
 
     try {
 
         const sql = `
-            SELECT 
+            SELECT
                 r.room_id,
                 r.room_name,
                 r.room_type,
+                r.total_seats,
 
                 DATE_FORMAT(
                     r.created_at,
                     '%d/%m/%Y %H:%i'
                 ) AS formatted_date,
 
+                c.cinema_id,
                 c.cinema_name,
                 c.city
 
             FROM rooms r
 
             JOIN cinemas c
-            ON r.cinema_id = c.cinema_id
+                ON r.cinema_id = c.cinema_id
 
             ORDER BY r.room_id DESC
         `;
@@ -77,16 +94,18 @@ exports.getAllRooms = async (req, res) => {
         const [rows] =
             await db.query(sql);
 
-        res.status(200).json(rows);
+        return res.status(200).json(
+            rows
+        );
 
     } catch (error) {
 
         console.error(
-            '❌ [ROOM]',
+            'Get All Rooms Error:',
             error
         );
 
-        res.status(500).json({
+        return res.status(500).json({
             error:
                 'Lỗi khi lấy danh sách phòng từ database'
         });
@@ -101,31 +120,50 @@ exports.getAllRooms = async (req, res) => {
  * =========================================================
  */
 
-exports.getRoomById = async (req, res) => {
+exports.getRoomById = async (
+    req,
+    res
+) => {
 
-    const { id } = req.params;
+    const { id } =
+        req.params;
 
     try {
 
-        const [rows] = await db.query(
-            'SELECT * FROM rooms WHERE room_id = ?',
-            [id]
-        );
+        const [rows] =
+            await db.query(
+                `
+                SELECT
+                    *
+                FROM rooms
+                WHERE room_id = ?
+                `,
+                [id]
+            );
 
-        if (rows.length === 0) {
-
+        if (
+            rows.length === 0
+        ) {
             return res.status(404).json({
-                error: 'Không tìm thấy phòng'
+                error:
+                    'Không tìm thấy phòng'
             });
-
         }
 
-        res.status(200).json(rows[0]);
+        return res.status(200).json(
+            rows[0]
+        );
 
     } catch (error) {
 
-        res.status(500).json({
-            error: 'Lỗi lấy chi tiết phòng'
+        console.error(
+            'Get Room Detail Error:',
+            error
+        );
+
+        return res.status(500).json({
+            error:
+                'Lỗi lấy chi tiết phòng'
         });
 
     }
@@ -138,23 +176,46 @@ exports.getRoomById = async (req, res) => {
  * =========================================================
  */
 
-exports.getRoomsByCinema = async (req, res) => {
+exports.getRoomsByCinema = async (
+    req,
+    res
+) => {
 
-    const { cinema_id } = req.params;
+    const {
+        cinema_id
+    } = req.params;
 
     try {
 
-        const [rows] = await db.query(
-            'SELECT * FROM rooms WHERE cinema_id = ?',
-            [cinema_id]
-        );
+        const [rows] =
+            await db.query(
+                `
+                SELECT
+                    room_id,
+                    room_name,
+                    room_type,
+                    total_seats
+                FROM rooms
+                WHERE cinema_id = ?
+                ORDER BY room_name ASC
+                `,
+                [cinema_id]
+            );
 
-        res.status(200).json(rows);
+        return res.status(200).json(
+            rows
+        );
 
     } catch (error) {
 
-        res.status(500).json({
-            error: 'Lỗi lọc phòng theo rạp'
+        console.error(
+            'Get Rooms By Cinema Error:',
+            error
+        );
+
+        return res.status(500).json({
+            error:
+                'Lỗi lọc phòng theo rạp'
         });
 
     }
@@ -167,7 +228,10 @@ exports.getRoomsByCinema = async (req, res) => {
  * =========================================================
  */
 
-exports.createRoom = async (req, res) => {
+exports.createRoom = async (
+    req,
+    res
+) => {
 
     try {
 
@@ -180,14 +244,18 @@ exports.createRoom = async (req, res) => {
         /* VALIDATE */
 
         const validationError =
-            validateRoomData(req.body);
+            validateRoomData(
+                req.body
+            );
 
-        if (validationError) {
-
+        if (
+            validationError
+        ) {
             return res
                 .status(400)
-                .json(validationError);
-
+                .json(
+                    validationError
+                );
         }
 
         /* CLEAN DATA */
@@ -197,61 +265,55 @@ exports.createRoom = async (req, res) => {
 
         /* CHECK DUPLICATE */
 
-        const [existing] = await db.query(
-            `
-            SELECT * FROM rooms
-            WHERE room_name = ?
-            AND cinema_id = ?
-            `,
-            [
-                cleanRoomName,
-                cinema_id
-            ]
-        );
+        const [existing] =
+            await db.query(
+                `
+                SELECT room_id
+                FROM rooms
+                WHERE room_name = ?
+                AND cinema_id = ?
+                `,
+                [
+                    cleanRoomName,
+                    cinema_id
+                ]
+            );
 
-        if (existing.length > 0) {
-
+        if (
+            existing.length > 0
+        ) {
             return res.status(400).json({
-                field: 'room_name',
+                field:
+                    'room_name',
+
                 error:
                     'Tên phòng này đã tồn tại trong rạp này rồi'
             });
-
         }
+        
+        /* INSERT ROOM
+           created_at dùng DEFAULT CURRENT_TIMESTAMP
+        */
 
-        /* VIETNAM TIME */
-
-        const nowVN =
-            new Date().toLocaleString(
-                'sv-SE',
-                {
-                    timeZone:
-                        'Asia/Ho_Chi_Minh'
-                }
+        const [result] =
+            await db.query(
+                `
+                INSERT INTO rooms
+                (
+                    room_name,
+                    cinema_id,
+                    room_type
+                )
+                VALUES (?, ?, ?)
+                `,
+                [
+                    cleanRoomName,
+                    cinema_id,
+                    room_type
+                ]
             );
 
-        /* INSERT */
-
-        const [result] = await db.query(
-            `
-            INSERT INTO rooms
-            (
-                room_name,
-                cinema_id,
-                room_type,
-                created_at
-            )
-            VALUES (?, ?, ?, ?)
-            `,
-            [
-                cleanRoomName,
-                cinema_id,
-                room_type,
-                nowVN
-            ]
-        );
-
-        res.status(201).json({
+        return res.status(201).json({
 
             success: true,
 
@@ -265,7 +327,12 @@ exports.createRoom = async (req, res) => {
 
     } catch (err) {
 
-        res.status(500).json({
+        console.error(
+            'Create Room Error:',
+            err
+        );
+
+        return res.status(500).json({
             error:
                 'Lỗi hệ thống khi tạo phòng: ' +
                 err.message
@@ -281,9 +348,13 @@ exports.createRoom = async (req, res) => {
  * =========================================================
  */
 
-exports.updateRoom = async (req, res) => {
+exports.updateRoom = async (
+    req,
+    res
+) => {
 
-    const { id } = req.params;
+    const { id } =
+        req.params;
 
     try {
 
@@ -296,14 +367,18 @@ exports.updateRoom = async (req, res) => {
         /* VALIDATE */
 
         const validationError =
-            validateRoomData(req.body);
+            validateRoomData(
+                req.body
+            );
 
-        if (validationError) {
-
+        if (
+            validationError
+        ) {
             return res
                 .status(400)
-                .json(validationError);
-
+                .json(
+                    validationError
+                );
         }
 
         /* CLEAN DATA */
@@ -313,25 +388,30 @@ exports.updateRoom = async (req, res) => {
 
         /* CHECK DUPLICATE */
 
-        const [existing] = await db.query(
-            `
-            SELECT * FROM rooms
-            WHERE room_name = ?
-            AND cinema_id = ?
-            AND room_id != ?
-            `,
-            [
-                cleanRoomName,
-                cinema_id,
-                id
-            ]
-        );
+        const [existing] =
+            await db.query(
+                `
+                SELECT room_id
+                FROM rooms
+                WHERE room_name = ?
+                AND cinema_id = ?
+                AND room_id != ?
+                `,
+                [
+                    cleanRoomName,
+                    cinema_id,
+                    id
+                ]
+            );
 
-        if (existing.length > 0) {
+        if (
+            existing.length > 0
+        ) {
 
             return res.status(400).json({
 
-                field: 'room_name',
+                field:
+                    'room_name',
 
                 error:
                     'Tên phòng này đã tồn tại trong rạp này rồi'
@@ -340,24 +420,25 @@ exports.updateRoom = async (req, res) => {
 
         }
 
-        /* UPDATE */
+        /* UPDATE ROOM */
 
-        const [result] = await db.query(
-            `
-            UPDATE rooms
-            SET
-                room_name = ?,
-                cinema_id = ?,
-                room_type = ?
-            WHERE room_id = ?
-            `,
-            [
-                cleanRoomName,
-                cinema_id,
-                room_type,
-                id
-            ]
-        );
+        const [result] =
+            await db.query(
+                `
+                UPDATE rooms
+                SET
+                    room_name = ?,
+                    cinema_id = ?,
+                    room_type = ?
+                WHERE room_id = ?
+                `,
+                [
+                    cleanRoomName,
+                    cinema_id,
+                    room_type,
+                    id
+                ]
+            );
 
         if (
             result.affectedRows === 0
@@ -370,7 +451,7 @@ exports.updateRoom = async (req, res) => {
 
         }
 
-        res.status(200).json({
+        return res.status(200).json({
 
             success: true,
 
@@ -381,7 +462,12 @@ exports.updateRoom = async (req, res) => {
 
     } catch (err) {
 
-        res.status(500).json({
+        console.error(
+            'Update Room Error:',
+            err
+        );
+
+        return res.status(500).json({
             error:
                 'Lỗi cập nhật phòng: ' +
                 err.message
@@ -397,27 +483,90 @@ exports.updateRoom = async (req, res) => {
  * =========================================================
  */
 
-exports.deleteRoom = async (req, res) => {
+exports.deleteRoom = async (
+    req,
+    res
+) => {
 
-    const { id } = req.params;
+    const { id } =
+        req.params;
 
     try {
 
-        await db.query(
-            'DELETE FROM rooms WHERE room_id = ?',
-            [id]
-        );
+        /* CHECK ROOM EXISTS */
 
-        res.status(200).json({
+        const [room] =
+            await db.query(
+                `
+                SELECT room_id
+                FROM rooms
+                WHERE room_id = ?
+                `,
+                [id]
+            );
+
+        if (
+            room.length === 0
+        ) {
+
+            return res.status(404).json({
+                error:
+                    'Không tìm thấy phòng'
+            });
+
+        }
+
+        /* DELETE ROOM */
+
+        const [result] =
+            await db.query(
+                `
+                DELETE FROM rooms
+                WHERE room_id = ?
+                `,
+                [id]
+            );
+
+        if (
+            result.affectedRows === 0
+        ) {
+
+            return res.status(400).json({
+                error:
+                    'Xóa phòng thất bại'
+            });
+
+        }
+
+        return res.status(200).json({
+            success: true,
             message:
                 'Đã xóa phòng thành công'
         });
 
     } catch (err) {
 
-        res.status(500).json({
+        console.error(
+            'Delete Room Error:',
+            err
+        );
+
+        // Nếu bị khóa Foreign Key
+        if (
+            err.code ===
+            'ER_ROW_IS_REFERENCED_2'
+        ) {
+
+            return res.status(400).json({
+                error:
+                    'Không thể xóa vì phòng đã có dữ liệu ghế hoặc suất chiếu'
+            });
+
+        }
+
+        return res.status(500).json({
             error:
-                'Không thể xóa (Phòng có dữ liệu ghế hoặc suất chiếu)'
+                'Lỗi hệ thống khi xóa phòng'
         });
 
     }

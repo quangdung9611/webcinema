@@ -2,464 +2,625 @@ const db = require('../Config/db');
 const fs = require('fs');
 const path = require('path');
 
-/* ==========================================================
-    1. HELPERS & VALIDATION UTILS
-   ========================================================== */
+/* =========================================================
+ * 1. HELPERS & VALIDATION
+ * =========================================================
+ */
 
 /**
  * Tạo slug từ tiêu đề bài viết
  */
+
 const createSlug = (title) => {
+
     if (!title) {
-        return "";
+
+        return '';
+
     }
+
     return title
         .toLowerCase()
         .trim()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[đĐ]/g, 'd')
-        .replace(/[^\w\s-]/g, '')
-        .replace(/[\s_-]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+        .replace(
+            /[\u0300-\u036f]/g,
+            ''
+        )
+        .replace(
+            /[đĐ]/g,
+            'd'
+        )
+        .replace(
+            /[^\w\s-]/g,
+            ''
+        )
+        .replace(
+            /[\s_-]+/g,
+            '-'
+        )
+        .replace(
+            /^-+|-+$/g,
+            ''
+        );
+
 };
 
 /**
- * Validate dữ liệu đầu vào cho Tin tức (News) dựa trên CSDL
+ * Validate dữ liệu News
  */
-const validateNewsData = (data, file, isUpdate = false) => {
-    const { 
-        title, 
-        content, 
-        likes 
+
+const validateNewsData = (
+    data,
+    file,
+    isUpdate = false
+) => {
+
+    const {
+        title,
+        content,
+        likes
     } = data;
 
-    // 1. Kiểm tra Tiêu đề bài viết
-    if (!title || title.trim() === "") {
-        return "Vui lòng nhập tiêu đề bài viết.";
-    }
-    if (title.trim().length < 5) {
-        return "Tiêu đề bài viết phải từ 5 ký tự trở lên.";
+    /**
+     * Validate title
+     */
+
+    if (
+        !title ||
+        title.trim() === ''
+    ) {
+
+        return
+            'Vui lòng nhập tiêu đề bài viết.';
+
     }
 
-    // 2. Kiểm tra Nội dung bài viết
-    if (!content || content.trim() === "") {
-        return "Vui lòng nhập nội dung bài viết.";
-    }
-    if (content.trim().length < 10) {
-        return "Nội dung bài viết quá ngắn (phải từ 10 ký tự trở lên).";
+    if (
+        title.trim().length < 5
+    ) {
+
+        return
+            'Tiêu đề bài viết phải từ 5 ký tự trở lên.';
+
     }
 
-    // 3. Kiểm tra số lượt Thích
-    if (likes !== undefined && likes !== null && likes !== "") {
-        const parsedLikes = parseInt(likes, 10);
-        if (isNaN(parsedLikes) || parsedLikes < 0) {
-            return "Số lượt thích phải là một số nguyên dương hợp lệ.";
+    /**
+     * Validate content
+     */
+
+    if (
+        !content ||
+        content.trim() === ''
+    ) {
+
+        return
+            'Vui lòng nhập nội dung bài viết.';
+
+    }
+
+    if (
+        content.trim().length < 10
+    ) {
+
+        return
+            'Nội dung bài viết quá ngắn (phải từ 10 ký tự trở lên).';
+
+    }
+
+    /**
+     * Validate likes
+     */
+
+    if (
+        likes !== undefined &&
+        likes !== null &&
+        likes !== ''
+    ) {
+
+        const parsedLikes =
+            parseInt(
+                likes,
+                10
+            );
+
+        if (
+            isNaN(parsedLikes) ||
+            parsedLikes < 0
+        ) {
+
+            return
+                'Số lượt thích phải là số nguyên hợp lệ.';
+
         }
+
     }
 
-    // 4. Kiểm tra file Ảnh bài viết khi thêm mới
-    if (!isUpdate && !file) {
-        return "Vui lòng upload hình ảnh đại diện cho bài viết.";
+    /**
+     * Validate image
+     */
+
+    if (
+        !isUpdate &&
+        !file
+    ) {
+
+        return
+            'Vui lòng upload hình ảnh đại diện cho bài viết.';
+
     }
 
     return null;
+
 };
 
 /**
- * Xóa file vật lý trên server (Thư mục uploads/news)
+ * Xóa file vật lý
  */
-const deleteFile = (fileName) => {
+
+const deleteFile = (
+    fileName
+) => {
+
     if (!fileName) {
+
         return;
+
     }
-    const pureFileName = path.basename(fileName);
-    const filePath = path.join(
-        __dirname, 
-        '..', 
-        'uploads', 
-        'news', 
-        pureFileName
-    ); 
+
+    const pureFileName =
+        path.basename(
+            fileName
+        );
+
+    const filePath =
+        path.join(
+            __dirname,
+            '..',
+            'uploads',
+            'news',
+            pureFileName
+        );
 
     try {
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            console.log(`✅ [DŨNG] Đã xóa file: ${pureFileName}`);
+
+        if (
+            fs.existsSync(
+                filePath
+            )
+        ) {
+
+            fs.unlinkSync(
+                filePath
+            );
+
+            console.log(
+                `✅ Đã xóa file: ${pureFileName}`
+            );
+
         }
+
     } catch (err) {
-        console.error("❌ [DŨNG] Lỗi khi xóa file news:", err.message);
+
+        console.error(
+            '❌ Lỗi xóa file news:',
+            err.message
+        );
+
     }
+
 };
 
-/* ==========================================================
-    2. CONTROLLER FUNCTIONS
-   ========================================================== */
+/* =========================================================
+ * 2. GET ALL NEWS (USER)
+ * =========================================================
+ */
 
-const NewsController = {
-    // --- DÀNH CHO USER (CLIENT) ---
-    getAllNews: async (req, res) => {
-        try {
-            const query = `
-                SELECT 
-                    news_id, 
-                    title, 
-                    slug, 
-                    image_url, 
-                    views, 
-                    likes, 
-                    DATE_FORMAT(created_at, '%d/%m/%Y') AS date,
-                    IF(LENGTH(content) > 150, CONCAT(LEFT(content, 150), '...'), content) AS short_content
-                FROM news 
-                ORDER BY created_at DESC`;
-            
-            const [rows] = await db.query(query);
-            res.status(200).json(rows);
-        } catch (error) {
-            console.error("❌ [DŨNG] Lỗi lấy danh sách tin tức (User):", error);
-            res.status(500).json({ 
-                message: "Lỗi máy chủ khi lấy tin tức" 
+exports.getAllNews =
+    async (
+        req,
+        res
+    ) => {
+
+    try {
+
+        const sql = `
+            SELECT
+                news_id,
+                title,
+                slug,
+                image_url,
+                views,
+                likes,
+
+                DATE_FORMAT(
+                    created_at,
+                    '%d/%m/%Y'
+                ) AS date,
+
+                IF(
+                    LENGTH(content) > 150,
+                    CONCAT(
+                        LEFT(content, 150),
+                        '...'
+                    ),
+                    content
+                ) AS short_content
+
+            FROM news
+
+            ORDER BY
+                created_at DESC
+        `;
+
+        const [rows] =
+            await db.query(sql);
+
+        return res.status(200)
+            .json(rows);
+
+    } catch (error) {
+
+        console.error(
+            'Get All News Error:',
+            error
+        );
+
+        return res.status(500)
+            .json({
+
+                message:
+                    'Lỗi máy chủ khi lấy tin tức'
+
             });
-        }
-    },
 
-    // --- DÀNH CHO ADMIN ---
-    getAllNewsAdmin: async (req, res) => {
-        try {
-            const query = `
-                SELECT 
-                    *, 
-                    DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS full_date 
-                FROM news 
-                ORDER BY created_at DESC`;
-            const [rows] = await db.query(query);
-            res.status(200).json(rows);
-        } catch (error) {
-            console.error("❌ [DŨNG] Lỗi lấy danh sách tin tức (Admin):", error);
-            res.status(500).json({ 
-                message: "Lỗi máy chủ admin" 
+    }
+
+};
+
+/* =========================================================
+ * 3. GET ALL NEWS (ADMIN)
+ * =========================================================
+ */
+
+exports.getAllNewsAdmin =
+    async (
+        req,
+        res
+    ) => {
+
+    try {
+
+        const sql = `
+            SELECT
+                *,
+
+                DATE_FORMAT(
+                    created_at,
+                    '%d/%m/%Y %H:%i'
+                ) AS full_date
+
+            FROM news
+
+            ORDER BY
+                created_at DESC
+        `;
+
+        const [rows] =
+            await db.query(sql);
+
+        return res.status(200)
+            .json(rows);
+
+    } catch (error) {
+
+        console.error(
+            'Get News Admin Error:',
+            error
+        );
+
+        return res.status(500)
+            .json({
+
+                message:
+                    'Lỗi máy chủ admin'
+
             });
-        }
-    },
 
-    // 2. Lấy chi tiết bài viết theo Slug
-    getNewsBySlug: async (req, res) => {
-        const { slug } = req.params;
-        try {
-            await db.query(
-                'UPDATE news SET views = views + 1 WHERE slug = ?', 
-                [slug]
+    }
+
+};
+/**
+ * ==========================================================
+ * 6. UPDATE NEWS
+ * ==========================================================
+ */
+
+exports.updateNews = async (req, res) => {
+
+    const { news_id } = req.params;
+
+    const {
+        title,
+        content,
+        likes
+    } = req.body;
+
+    const errorMsg =
+        validateNewsData(
+            req.body,
+            req.file,
+            true
+        );
+
+    if (errorMsg) {
+
+        if (req.file) {
+            deleteFile(
+                req.file.filename
             );
-            
-            const [rows] = await db.query(
-                `SELECT 
-                    *, 
-                    DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS formatted_date 
-                 FROM news 
-                 WHERE slug = ?`, 
-                [slug]
-            );
-
-            if (rows.length === 0) {
-                return res.status(404).json({ 
-                    message: "Không tìm thấy bài viết" 
-                });
-            }
-            res.status(200).json(rows[0]);
-        } catch (error) {
-            console.error("❌ [DŨNG] Lỗi lấy chi tiết bài viết:", error);
-            res.status(500).json({ 
-                message: "Lỗi máy chủ" 
-            });
-        }
-    },
-
-    // 3. API Tăng lượt thích
-    increaseLike: async (req, res) => {
-        const { id } = req.params;
-        try {
-            await db.query(
-                'UPDATE news SET likes = likes + 1 WHERE news_id = ?', 
-                [id]
-            );
-            res.status(200).json({ 
-                success: true, 
-                message: "Đã thích bài viết thành công" 
-            });
-        } catch (error) {
-            res.status(500).json({ 
-                message: "Lỗi khi cập nhật lượt thích" 
-            });
-        }
-    },
-
-    // 4. Lấy chi tiết bài viết theo ID
-    getNewsById: async (req, res) => {
-        try {
-            const [rows] = await db.query(
-                'SELECT *, DATE_FORMAT(created_at, "%Y-%m-%dT%H:%i") as created_at_edit FROM news WHERE news_id = ?', 
-                [req.params.id]
-            );
-            if (rows.length === 0) {
-                return res.status(404).json({ 
-                    message: "Không tìm thấy bài viết" 
-                });
-            }
-            res.status(200).json(rows[0]);
-        } catch (error) {
-            res.status(500).json({ 
-                message: "Lỗi máy chủ" 
-            });
-        }
-    },
-
-    // 5. Thêm bài viết mới
-    createNews: async (req, res) => {
-        const { 
-            title, 
-            content, 
-            likes 
-        } = req.body;
-        
-        // Validate dữ liệu đầu vào
-        const errorMsg = validateNewsData(req.body, req.file, false);
-        if (errorMsg) {
-            if (req.file) {
-                deleteFile(req.file.filename);
-            }
-            return res.status(400).json({ 
-                message: errorMsg 
-            });
         }
 
-        const connection = await db.getConnection();
-        try {
-            await connection.beginTransaction();
+        return res.status(400).json({
+            message: errorMsg
+        });
 
-            const image_url = req.file.filename; // ĐỒNG BỘ: Lấy filename sạch từ middleware
-            const slug = createSlug(title);
-            const initialLikes = parseInt(likes, 10) || 0;
-            const nowVN = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+    }
 
-            // Kiểm tra trùng file vật lý trên server tránh bị ghi đè chéo
-            const checkPath = path.join(
-                __dirname, 
-                '..', 
-                'uploads', 
-                'news', 
-                image_url
-            );
-            if (fs.existsSync(checkPath)) {
-                if (req.file) {
-                    deleteFile(req.file.filename);
-                }
-                await connection.rollback();
-                return res.status(400).json({ 
-                    message: `Tên file ảnh "${image_url}" đã tồn tại trên máy chủ. Ông Dũng vui lòng đổi tên file ảnh rồi upload lại nha!` 
-                });
-            }
+    const connection =
+        await db.getConnection();
 
-            const sql = `
-                INSERT INTO news (
-                    title, 
-                    slug, 
-                    content, 
-                    image_url, 
-                    views, 
-                    likes, 
-                    created_at
-                ) VALUES (?, ?, ?, ?, 0, ?, ?)`;
-                
+    try {
+
+        await connection.beginTransaction();
+
+        /* CHECK NEWS EXISTS */
+
+        const [oldNews] =
             await connection.query(
-                sql, 
-                [
-                    title.trim(), 
-                    slug, 
-                    content.trim(), 
-                    image_url, 
-                    initialLikes, 
-                    nowVN
-                ]
-            );
-
-            await connection.commit();
-            res.status(201).json({ 
-                success: true, 
-                message: "Đăng bài viết thành công!" 
-            });
-        } catch (error) {
-            await connection.rollback();
-            if (req.file) {
-                deleteFile(req.file.filename);
-            }
-            if (error.code === 'ER_DUP_ENTRY') {
-                return res.status(400).json({ 
-                    message: "Tiêu đề này đã tồn tại rồi ông Dũng ơi!" 
-                });
-            }
-            res.status(500).json({ 
-                message: "Lỗi khi tạo bài viết: " + error.message 
-            });
-        } finally {
-            connection.release();
-        }
-    },
-
-    // 6. Cập nhật bài viết
-    updateNews: async (req, res) => {
-        const { news_id } = req.params;
-        const { 
-            title, 
-            content, 
-            likes 
-        } = req.body;
-
-        // Validate dữ liệu đầu vào
-        const errorMsg = validateNewsData(req.body, req.file, true);
-        if (errorMsg) {
-            if (req.file) {
-                deleteFile(req.file.filename);
-            }
-            return res.status(400).json({ 
-                message: errorMsg 
-            });
-        }
-
-        const connection = await db.getConnection();
-        try {
-            await connection.beginTransaction();
-
-            // 6.1 Kiểm tra bài viết cần sửa có tồn tại không
-            const [old] = await connection.query(
-                "SELECT image_url FROM news WHERE news_id = ?", 
+                `
+                SELECT image_url
+                FROM news
+                WHERE news_id = ?
+                `,
                 [news_id]
             );
-            if (old.length === 0) {
-                if (req.file) {
-                    deleteFile(req.file.filename);
-                }
-                await connection.rollback();
-                return res.status(404).json({ 
-                    message: "Bài viết không tồn tại." 
-                });
+
+        if (oldNews.length === 0) {
+
+            if (req.file) {
+                deleteFile(
+                    req.file.filename
+                );
             }
 
-            // 6.2 Kiểm tra trùng tên hoặc đường dẫn với bài viết KHÁC
-            const newSlug = createSlug(title);
-            const checkDupSql = "SELECT news_id FROM news WHERE (title = ? OR slug = ?) AND news_id != ?";
-            const [duplicate] = await connection.query(
-                checkDupSql, 
+            await connection.rollback();
+
+            return res.status(404).json({
+                message:
+                    'Bài viết không tồn tại'
+            });
+
+        }
+
+        /* CHECK DUPLICATE */
+
+        const slug =
+            createSlug(title);
+
+        const [duplicate] =
+            await connection.query(
+                `
+                SELECT news_id
+                FROM news
+                WHERE
+                    (
+                        title = ?
+                        OR slug = ?
+                    )
+                AND news_id != ?
+                `,
                 [
-                    title.trim(), 
-                    newSlug, 
+                    title.trim(),
+                    slug,
                     news_id
                 ]
             );
 
-            if (duplicate.length > 0) {
-                if (req.file) {
-                    deleteFile(req.file.filename);
-                }
-                await connection.rollback();
-                return res.status(400).json({ 
-                    message: "Tiêu đề hoặc đường dẫn bài viết này đã tồn tại hệ thống rồi!" 
-                });
-            }
+        if (duplicate.length > 0) {
 
-            // 6.3 Xử lý file ảnh bài viết (Cơ chế gánh tên an toàn)
-            let finalImage = old[0].image_url;
             if (req.file) {
-                const imageName = req.file.filename;
-                
-                // Chỉ xóa file cũ khi tên file mới khác tên file cũ
-                if (imageName !== old[0].image_url) {
-                    deleteFile(old[0].image_url); 
-                }
-                finalImage = imageName;
+                deleteFile(
+                    req.file.filename
+                );
             }
 
-            // 6.4 Thực thi cập nhật dữ liệu vào DB
-            const sql = `
-                UPDATE news SET 
-                    title = ?, 
-                    slug = ?, 
-                    content = ?, 
-                    image_url = ?, 
-                    likes = ?
-                WHERE news_id = ?`;
-            
-            await connection.query(
-                sql, 
-                [
-                    title.trim(), 
-                    newSlug, 
-                    content.trim(), 
-                    finalImage, 
-                    parseInt(likes, 10) || 0, 
-                    news_id
-                ]
-            );
-
-            await connection.commit();
-            res.status(200).json({ 
-                success: true, 
-                message: "Cập nhật bài viết thành công!" 
-            });
-        } catch (error) {
             await connection.rollback();
-            if (req.file) {
-                deleteFile(req.file.filename);
-            }
-            res.status(500).json({ 
-                message: "Lỗi cập nhật: " + error.message 
+
+            return res.status(400).json({
+                message:
+                    'Tiêu đề hoặc slug đã tồn tại'
             });
-        } finally {
-            connection.release();
+
         }
-    },
 
-    // 7. Xóa bài viết
-    deleteNews: async (req, res) => {
-        const { id } = req.params;
-        const { token } = req.body; // Đồng bộ usertoken bảo mật của ông Dũng
+        /* IMAGE HANDLE */
 
-        const connection = await db.getConnection();
-        try {
-            if (!token) {
-                return res.status(401).json({ 
-                    message: "Thiếu usertoken!" 
-                });
+        let imageUrl =
+            oldNews[0].image_url;
+
+        if (req.file) {
+
+            imageUrl =
+                req.file.filename;
+
+            if (
+                oldNews[0].image_url &&
+                oldNews[0].image_url !==
+                imageUrl
+            ) {
+
+                deleteFile(
+                    oldNews[0]
+                        .image_url
+                );
+
             }
 
-            await connection.beginTransaction();
-
-            const [news] = await connection.query(
-                "SELECT image_url FROM news WHERE news_id = ?", 
-                [id]
-            );
-            if (news.length > 0) {
-                deleteFile(news[0].image_url);
-            }
-
-            await connection.query(
-                "DELETE FROM news WHERE news_id = ?", 
-                [id]
-            );
-            
-            await connection.commit();
-            res.status(200).json({ 
-                success: true, 
-                message: "Đã xóa bài viết thành công." 
-            });
-        } catch (error) {
-            await connection.rollback();
-            res.status(500).json({ 
-                message: "Lỗi khi xóa bài viết." 
-            });
-        } finally {
-            connection.release();
         }
+
+        /* UPDATE NEWS */
+
+        const sql = `
+            UPDATE news
+            SET
+                title = ?,
+                slug = ?,
+                content = ?,
+                image_url = ?,
+                likes = ?
+            WHERE news_id = ?
+        `;
+
+        await connection.query(
+            sql,
+            [
+                title.trim(),
+                slug,
+                content.trim(),
+                imageUrl,
+                parseInt(likes, 10) || 0,
+                news_id
+            ]
+        );
+
+        await connection.commit();
+
+        return res.status(200).json({
+
+            success: true,
+
+            message:
+                'Cập nhật bài viết thành công!'
+
+        });
+
+    } catch (error) {
+
+        await connection.rollback();
+
+        if (req.file) {
+
+            deleteFile(
+                req.file.filename
+            );
+
+        }
+
+        return res.status(500).json({
+
+            message:
+                'Lỗi cập nhật bài viết: ' +
+                error.message
+
+        });
+
+    } finally {
+
+        connection.release();
+
     }
+
 };
 
-module.exports = NewsController;
+/**
+ * ==========================================================
+ * 7. DELETE NEWS
+ * ==========================================================
+ */
+
+exports.deleteNews = async (req, res) => {
+
+    const { id } =
+        req.params;
+
+    const { token } =
+        req.body;
+
+    const connection =
+        await db.getConnection();
+
+    try {
+
+        if (!token) {
+
+            return res.status(401).json({
+
+                message:
+                    'Thiếu usertoken!'
+
+            });
+
+        }
+
+        await connection.beginTransaction();
+
+        /* GET IMAGE */
+
+        const [news] =
+            await connection.query(
+                `
+                SELECT image_url
+                FROM news
+                WHERE news_id = ?
+                `,
+                [id]
+            );
+
+        if (news.length > 0) {
+
+            deleteFile(
+                news[0].image_url
+            );
+
+        }
+
+        /* DELETE NEWS */
+
+        await connection.query(
+            `
+            DELETE FROM news
+            WHERE news_id = ?
+            `,
+            [id]
+        );
+
+        await connection.commit();
+
+        return res.status(200).json({
+
+            success: true,
+
+            message:
+                'Đã xóa bài viết thành công.'
+
+        });
+
+    } catch (error) {
+
+        await connection.rollback();
+
+        return res.status(500).json({
+
+            message:
+                'Lỗi khi xóa bài viết.'
+
+        });
+
+    } finally {
+
+        connection.release();
+
+    }
+
+};
