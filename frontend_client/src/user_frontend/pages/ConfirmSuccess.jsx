@@ -165,39 +165,57 @@ const ConfirmSuccess = () => {
 
                                     movieTitle:
                                         b.movie_name ||
+                                        b.movieTitle ||
                                         prev.movieTitle,
+
+                                    moviePoster:
+                                        b.movie_poster ||
+                                        b.moviePoster ||
+                                        prev.moviePoster,
 
                                     cinemaName:
                                         b.cinema_name ||
+                                        b.cinemaName ||
                                         prev.cinemaName,
 
                                     roomName:
                                         b.room_name ||
+                                        b.roomName ||
                                         prev.roomName,
 
                                     startTime:
-                                        b.show_time
-                                            ?.split(
-                                                ' - '
-                                            )[0] ||
-                                        prev.startTime,
+                                        b.start_time
+                                            ? b.start_time
+                                                .split(' ')[1]
+                                                ?.substring(0, 5)
+                                            : (
+                                                b.show_time
+                                                    ?.split(' - ')[0] ||
+                                                prev.startTime
+                                            ),
 
                                     selectedDate:
-                                        b.show_time
-                                            ?.split(
-                                                ' - '
-                                            )[1] ||
-                                        prev.selectedDate,
+                                        b.start_time
+                                            ? b.start_time
+                                                .split(' ')[0]
+                                                .split('-')
+                                                .reverse()
+                                                .join('/')
+                                            : (
+                                                b.show_time
+                                                    ?.split(' - ')[1] ||
+                                                prev.selectedDate
+                                            ),
 
                                     seatDisplay:
+                                        b.seat_label ||
+                                        b.seatLabel ||
                                         seats ||
                                         prev.seatDisplay,
 
                                     ticketPIN:
                                         b.pin ||
-                                        b.memo?.slice(
-                                            -6
-                                        ) ||
+                                        b.memo?.slice(-6) ||
                                         prev.ticketPIN,
 
                                     customerName:
@@ -348,8 +366,6 @@ const ConfirmSuccess = () => {
 
             <div className="success-container">
 
-                {/* HEADER */}
-
                 <div className="success-top">
 
                     <div className="success-icon">
@@ -378,11 +394,7 @@ const ConfirmSuccess = () => {
 
                 </div>
 
-                {/* TICKET */}
-
                 <div className="cinema-ticket">
-
-                    {/* LEFT */}
 
                     <div className="ticket-left">
 
@@ -472,19 +484,11 @@ const ConfirmSuccess = () => {
 
                     </div>
 
-                    {/* DIVIDER */}
-
                     <div className="ticket-divider">
-
                         <div className="circle-top"></div>
-
                         <div className="dash-line"></div>
-
                         <div className="circle-bottom"></div>
-
                     </div>
-
-                    {/* RIGHT */}
 
                     <div className="ticket-right">
 
@@ -515,8 +519,6 @@ const ConfirmSuccess = () => {
 
                 </div>
 
-                {/* EMAIL */}
-
                 <div className="email-box">
 
                     <div className="email-left">
@@ -543,8 +545,6 @@ const ConfirmSuccess = () => {
                     />
 
                 </div>
-
-                {/* BUTTON */}
 
                 <div className="success-actions">
 

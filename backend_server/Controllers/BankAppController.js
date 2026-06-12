@@ -167,57 +167,56 @@ exports.verifyOTP = async (req, res) => {
                     )
                     .join(', ')
                 : 'Không có';
-
         /* ==========================
-           SEND TICKET EMAIL
-        ========================== */
+   SEND TICKET EMAIL
+========================== */
 
-        mailService
-            .sendTicketEmail(
-                email,
-                {
-                    bookingId:
-                        order.booking_id,
+mailService
+    .sendTicketEmail(
+        email,
+        {
+            bookingId:
+                order.booking_id,
 
-                    customerName:
-                        order.full_name,
+            customerName:
+                order.full_name,
 
-                    movieTitle:
-                        order.movieTitle,
+            movieTitle:
+                order.movie_name,
 
-                    moviePoster:
-                        order.moviePoster,
+            moviePoster:
+                order.movie_poster,
 
-                    cinemaName:
-                        order.cinemaName,
+            cinemaName:
+                order.cinema_name,
 
-                    startTime:
-                        order.start_time_raw
-                            .split(' ')[1]
-                            .substring(0, 5),
+            startTime:
+                order.start_time
+                    .split(' ')[1]
+                    .substring(0, 5),
 
-                    selectedDate:
-                        order.start_time_raw
-                            .split(' ')[0]
-                            .split('-')
-                            .reverse()
-                            .join('/'),
+            selectedDate:
+                order.start_time
+                    .split(' ')[0]
+                    .split('-')
+                    .reverse()
+                    .join('/'),
 
-                    seatLabel:
-                        order.seatLabel,
+            seatLabel:
+                order.seat_label,
 
-                    selectedFoods:
-                        foodString
-                }
-            )
-            .catch(error => {
+            selectedFoods:
+                foodString
+        }
+    )
+    .catch(error => {
 
-                console.error(
-                    'Lỗi gửi vé:',
-                    error
-                );
+        console.error(
+            'Lỗi gửi vé:',
+            error
+        );
 
-            });
+    });
 
         return res.json({
 
