@@ -14,7 +14,7 @@ import {
     AlertCircle,
     Check
 } from 'lucide-react';
-import Modal from '../../../components/Modal';
+import Modal from '../../../components/AdminModal';
 import '../../../styles/TicketList.css'; 
 
 const TicketList = () => {

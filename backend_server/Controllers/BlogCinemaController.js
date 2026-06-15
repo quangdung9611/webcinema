@@ -10,46 +10,27 @@ const path = require('path');
 /**
  * Tạo slug từ tiêu đề
  */
-
 const createSlug = (title) => {
 
     if (!title) {
-
         return '';
-
     }
 
     return title
         .toLowerCase()
         .trim()
         .normalize('NFD')
-        .replace(
-            /[\u0300-\u036f]/g,
-            ''
-        )
-        .replace(
-            /[đĐ]/g,
-            'd'
-        )
-        .replace(
-            /[^\w\s-]/g,
-            ''
-        )
-        .replace(
-            /[\s_-]+/g,
-            '-'
-        )
-        .replace(
-            /^-+|-+$/g,
-            ''
-        );
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 
 };
 
 /**
  * Validate dữ liệu Blog Cinema
  */
-
 const validateBlogData = (
     data,
     file,
@@ -59,8 +40,6 @@ const validateBlogData = (
     const {
         title,
         description,
-        content,
-        category,
         likes
     } = data;
 
@@ -107,40 +86,6 @@ const validateBlogData = (
     }
 
     /* ==========================
-       CONTENT
-    ========================== */
-
-    if (
-        !content ||
-        content.trim() === ''
-    ) {
-
-        return 'Vui lòng nhập nội dung blog.';
-
-    }
-
-    if (
-        content.trim().length < 10
-    ) {
-
-        return 'Nội dung blog quá ngắn.';
-
-    }
-
-    /* ==========================
-       CATEGORY
-    ========================== */
-
-    if (
-        !category ||
-        category.trim() === ''
-    ) {
-
-        return 'Vui lòng nhập danh mục blog.';
-
-    }
-
-    /* ==========================
        LIKES
     ========================== */
 
@@ -157,9 +102,7 @@ const validateBlogData = (
             );
 
         if (
-            isNaN(
-                parsedLikes
-            ) ||
+            isNaN(parsedLikes) ||
             parsedLikes < 0
         ) {
 
@@ -189,15 +132,12 @@ const validateBlogData = (
 /**
  * Xóa file vật lý
  */
-
 const deleteFile = (
     fileName
 ) => {
 
     if (!fileName) {
-
         return;
-
     }
 
     const pureFileName =
@@ -250,7 +190,6 @@ const deleteFile = (
 /**
  * GET ALL BLOGS
  */
-
 exports.getAllBlogs =
     async (
         req,
@@ -265,7 +204,6 @@ exports.getAllBlogs =
                 title,
                 slug,
                 description,
-                category,
                 image_url,
                 views,
                 likes,
@@ -315,7 +253,6 @@ exports.getAllBlogs =
 /**
  * GET BLOG BY SLUG
  */
-
 exports.getBlogBySlug =
     async (
         req,
@@ -324,8 +261,7 @@ exports.getBlogBySlug =
 
     const {
         slug
-    } =
-        req.params;
+    } = req.params;
 
     try {
 
@@ -364,10 +300,6 @@ exports.getBlogBySlug =
                 });
 
         }
-
-        /* ======================
-           INCREASE VIEW
-        ====================== */
 
         await db.query(
             `
@@ -411,7 +343,6 @@ exports.getBlogBySlug =
 /**
  * INCREASE LIKE
  */
-
 exports.increaseLike =
     async (
         req,
@@ -420,8 +351,7 @@ exports.increaseLike =
 
     const {
         id
-    } =
-        req.params;
+    } = req.params;
 
     try {
 
@@ -464,8 +394,7 @@ exports.increaseLike =
             .status(200)
             .json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     'Like +1 thành công'
@@ -487,6 +416,7 @@ exports.increaseLike =
 
 };
 
+
 /* ==========================================================
     3. ADMIN APIs
 ========================================================== */
@@ -494,7 +424,6 @@ exports.increaseLike =
 /**
  * GET ALL BLOGS ADMIN
  */
-
 exports.getAllBlogsAdmin =
     async (
         req,
@@ -550,7 +479,6 @@ exports.getAllBlogsAdmin =
 /**
  * GET BLOG BY ID
  */
-
 exports.getBlogById =
     async (
         req,
@@ -559,8 +487,7 @@ exports.getBlogById =
 
     const {
         id
-    } =
-        req.params;
+    } = req.params;
 
     try {
 
@@ -607,6 +534,11 @@ exports.getBlogById =
 
     } catch (error) {
 
+        console.error(
+            'Get Blog By Id Error:',
+            error
+        );
+
         return res
             .status(500)
             .json({
@@ -619,49 +551,178 @@ exports.getBlogById =
     }
 
 };
-exports.createBlog = async (req, res) => {
-    // 1. Lấy dữ liệu từ req.body và req.file
-    const { title, description, content, category, likes } = req.body;
-    
-    // 2. Validate dữ liệu (dùng hàm validateBlogData có sẵn của bạn)
-    const errorMsg = validateBlogData(req.body, req.file, false);
+
+/**
+ * ==========================================================
+ * CREATE BLOG
+ * ==========================================================
+ */
+
+exports.createBlog = async (
+    req,
+    res
+) => {
+
+    const {
+        title,
+        description,
+        likes
+    } = req.body;
+
+    const errorMsg =
+        validateBlogData(
+            req.body,
+            req.file,
+            false
+        );
+
     if (errorMsg) {
-        if (req.file) deleteFile(req.file.filename);
-        return res.status(400).json({ message: errorMsg });
+
+        if (req.file) {
+
+            deleteFile(
+                req.file.filename
+            );
+
+        }
+
+        return res
+            .status(400)
+            .json({
+                message: errorMsg
+            });
+
     }
 
     try {
-        const slug = createSlug(title);
-        const imageUrl = req.file ? req.file.filename : null;
 
-        const sql = `INSERT INTO blog_cinema (title, slug, description, content, category, image_url, likes) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`;
-        
-        await db.query(sql, [title, slug, description, content, category, imageUrl, likes || 0]);
+        const slug =
+            createSlug(
+                title
+            );
 
-        return res.status(201).json({ success: true, message: 'Tạo blog thành công!' });
+        const imageUrl =
+            req.file
+                ? req.file.filename
+                : null;
+
+        const [duplicate] =
+            await db.query(
+                `
+                SELECT blog_id
+                FROM blog_cinema
+                WHERE
+                    title = ?
+                    OR slug = ?
+                `,
+                [
+                    title.trim(),
+                    slug
+                ]
+            );
+
+        if (
+            duplicate.length > 0
+        ) {
+
+            if (req.file) {
+
+                deleteFile(
+                    req.file.filename
+                );
+
+            }
+
+            return res
+                .status(400)
+                .json({
+
+                    message:
+                        'Tiêu đề hoặc slug đã tồn tại'
+
+                });
+
+        }
+
+        await db.query(
+            `
+            INSERT INTO blog_cinema
+            (
+                title,
+                slug,
+                description,
+                image_url,
+                likes,
+                views,
+                is_active
+            )
+            VALUES
+            (?, ?, ?, ?, ?, 0, 1)
+            `,
+            [
+                title.trim(),
+                slug,
+                description.trim(),
+                imageUrl,
+                parseInt(
+                    likes,
+                    10
+                ) || 0
+            ]
+        );
+
+        return res
+            .status(201)
+            .json({
+
+                success: true,
+
+                message:
+                    'Tạo blog thành công!'
+
+            });
+
     } catch (error) {
-        if (req.file) deleteFile(req.file.filename);
-        return res.status(500).json({ message: 'Lỗi server khi tạo blog' });
+
+        if (req.file) {
+
+            deleteFile(
+                req.file.filename
+            );
+
+        }
+
+        return res
+            .status(500)
+            .json({
+
+                message:
+                    'Lỗi server khi tạo blog'
+
+            });
+
     }
+
 };
-/* ==========================================================
-    UPDATE BLOG
-========================================================== */
+
+/**
+ * ==========================================================
+ * UPDATE BLOG
+ * ==========================================================
+ */
 
 exports.updateBlog = async (
     req,
     res
 ) => {
 
-    const { id } =
-        req.params;
+    const {
+        id
+    } = req.params;
 
     const {
         title,
         description,
-        content,
-        category,
         likes,
         is_active
     } = req.body;
@@ -676,15 +737,17 @@ exports.updateBlog = async (
     if (errorMsg) {
 
         if (req.file) {
+
             deleteFile(
                 req.file.filename
             );
+
         }
 
-        return res.status(400)
+        return res
+            .status(400)
             .json({
-                message:
-                    errorMsg
+                message: errorMsg
             });
 
     }
@@ -696,10 +759,6 @@ exports.updateBlog = async (
 
         await connection
             .beginTransaction();
-
-        /* ======================
-           CHECK BLOG EXISTS
-        ====================== */
 
         const [oldBlog] =
             await connection.query(
@@ -716,28 +775,31 @@ exports.updateBlog = async (
         ) {
 
             if (req.file) {
+
                 deleteFile(
                     req.file.filename
                 );
+
             }
 
             await connection
                 .rollback();
 
-            return res.status(404)
+            return res
+                .status(404)
                 .json({
+
                     message:
                         'Blog không tồn tại'
+
                 });
 
         }
 
-        /* ======================
-           CHECK DUPLICATE
-        ====================== */
-
         const slug =
-            createSlug(title);
+            createSlug(
+                title
+            );
 
         const [duplicate] =
             await connection.query(
@@ -763,25 +825,26 @@ exports.updateBlog = async (
         ) {
 
             if (req.file) {
+
                 deleteFile(
                     req.file.filename
                 );
+
             }
 
             await connection
                 .rollback();
 
-            return res.status(400)
+            return res
+                .status(400)
                 .json({
+
                     message:
                         'Tiêu đề hoặc slug đã tồn tại'
+
                 });
 
         }
-
-        /* ======================
-           HANDLE IMAGE
-        ====================== */
 
         let imageUrl =
             oldBlog[0]
@@ -797,7 +860,7 @@ exports.updateBlog = async (
                     .image_url &&
                 oldBlog[0]
                     .image_url !==
-                imageUrl
+                    imageUrl
             ) {
 
                 deleteFile(
@@ -806,40 +869,34 @@ exports.updateBlog = async (
                 );
 
             }
+
         }
 
-        /* ======================
-           UPDATE BLOG
-        ====================== */
-
-        const sql = `
+        await connection.query(
+            `
             UPDATE blog_cinema
             SET
                 title = ?,
                 slug = ?,
                 description = ?,
-                content = ?,
-                category = ?,
                 image_url = ?,
                 likes = ?,
                 is_active = ?
             WHERE blog_id = ?
-        `;
-
-        await connection.query(
-            sql,
+            `,
             [
                 title.trim(),
                 slug,
                 description.trim(),
-                content.trim(),
-                category.trim(),
                 imageUrl,
                 parseInt(
                     likes,
                     10
                 ) || 0,
-                is_active ?? 1,
+                parseInt(
+                    is_active,
+                    10
+                ) || 0,
                 id
             ]
         );
@@ -847,7 +904,8 @@ exports.updateBlog = async (
         await connection
             .commit();
 
-        return res.status(200)
+        return res
+            .status(200)
             .json({
 
                 success: true,
@@ -870,7 +928,8 @@ exports.updateBlog = async (
 
         }
 
-        return res.status(500)
+        return res
+            .status(500)
             .json({
 
                 message:
@@ -887,17 +946,20 @@ exports.updateBlog = async (
 
 };
 
-/* ==========================================================
-    DELETE BLOG
-========================================================== */
+/**
+ * ==========================================================
+ * DELETE BLOG
+ * ==========================================================
+ */
 
 exports.deleteBlog = async (
     req,
     res
 ) => {
 
-    const { id } =
-        req.params;
+    const {
+        id
+    } = req.params;
 
     const connection =
         await db.getConnection();
@@ -906,10 +968,6 @@ exports.deleteBlog = async (
 
         await connection
             .beginTransaction();
-
-        /* ======================
-           GET IMAGE
-        ====================== */
 
         const [blog] =
             await connection.query(
@@ -928,7 +986,8 @@ exports.deleteBlog = async (
             await connection
                 .rollback();
 
-            return res.status(404)
+            return res
+                .status(404)
                 .json({
 
                     message:
@@ -937,10 +996,6 @@ exports.deleteBlog = async (
                 });
 
         }
-
-        /* ======================
-           DELETE FILE
-        ====================== */
 
         if (
             blog[0]
@@ -954,10 +1009,6 @@ exports.deleteBlog = async (
 
         }
 
-        /* ======================
-           DELETE BLOG
-        ====================== */
-
         await connection.query(
             `
             DELETE FROM blog_cinema
@@ -969,7 +1020,8 @@ exports.deleteBlog = async (
         await connection
             .commit();
 
-        return res.status(200)
+        return res
+            .status(200)
             .json({
 
                 success: true,
@@ -984,7 +1036,8 @@ exports.deleteBlog = async (
         await connection
             .rollback();
 
-        return res.status(500)
+        return res
+            .status(500)
             .json({
 
                 message:
@@ -999,3 +1052,4 @@ exports.deleteBlog = async (
     }
 
 };
+

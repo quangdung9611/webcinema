@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 // COMPONENTS
-import Modal from '../../admin_frontend/components/Modal';
+import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
 
 // STYLES

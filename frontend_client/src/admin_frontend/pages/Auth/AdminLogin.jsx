@@ -17,7 +17,7 @@ import {
     Timer
 } from 'lucide-react';
 
-import Modal from '../../components/Modal';
+import Modal from '../../components/AdminModal';
 
 import {
     useAuth

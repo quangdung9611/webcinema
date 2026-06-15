@@ -96,13 +96,7 @@ const AdminHeader = ({ toggleSidebar }) => {
 
                 </Link>
 
-                {/* PAGE TITLE */}
-
-                <div className="admin-page-title">
-
-                    Dashboard
-
-                </div>
+             
 
             </div>
 

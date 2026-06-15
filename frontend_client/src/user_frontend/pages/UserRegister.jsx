@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
-import Modal from '../../admin_frontend/components/Modal';
+import Modal from '../components/Modal';
 import '../styles/UserAuth.css';
 
 const UserRegister = () => {

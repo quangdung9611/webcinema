@@ -1,319 +1,448 @@
 /* =========================================================
-    PAGE
+   PAGE
 ========================================================= */
 
 .admin-page {
+
     width: 100%;
+
     display: flex;
+
     flex-direction: column;
-    gap: 28px;
+
+    gap: 24px;
 }
 
 /* =========================================================
-    HERO
+   HERO
 ========================================================= */
 
 .admin-page-hero {
+
     display: flex;
-    justify-content: space-between;
+
     align-items: center;
+    justify-content: space-between;
+
     gap: 24px;
 
-    padding: 34px;
+    padding: 32px;
 
-    border-radius: 30px;
+    border-radius: 24px;
 
     background:
-        radial-gradient(
-            circle at top left,
-            rgba(255, 59, 59, 0.15),
-            transparent 40%
-        ),
         linear-gradient(
-            145deg,
-            rgba(17, 24, 39, 0.96),
-            rgba(10, 15, 25, 0.92)
+            180deg,
+            #181818 0%,
+            #111111 100%
         );
 
-    border: 1px solid rgba(255,255,255,0.06);
-
-    backdrop-filter: blur(18px);
+    border:
+        1px solid rgba(255,255,255,.06);
 
     box-shadow:
-        0 10px 40px rgba(0,0,0,0.45);
+        0 12px 30px rgba(0,0,0,.35);
+
+    overflow: hidden;
+
+    position: relative;
 }
 
 /* =========================================================
-    HERO LEFT
+   HERO LEFT
 ========================================================= */
 
 .admin-page-hero-left {
+
     display: flex;
+
     align-items: center;
+
     gap: 24px;
 }
 
+/* =========================================================
+   ICON BOX
+========================================================= */
+
 .admin-page-icon-box {
-    width: 78px;
-    height: 78px;
+
+    width: 88px;
+    height: 88px;
+
+    flex-shrink: 0;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
     border-radius: 22px;
 
+    color: #ffffff;
+
     background:
         linear-gradient(
             135deg,
-            #ff4d4d,
-            #d60000
+            #ff3434,
+            #c1121f
         );
 
-    color: #ffffff;
-
     box-shadow:
-        0 10px 25px rgba(255, 0, 0, 0.35);
+        0 10px 24px rgba(255,50,50,.20);
 }
 
 .admin-page-icon-box svg {
-    width: 34px;
-    height: 34px;
+
+    width: 40px;
+    height: 40px;
 }
 
 /* =========================================================
-    TITLE
+   TITLE
 ========================================================= */
 
 .admin-page-title {
-    font-size: 42px;
-    font-weight: 800;
+
+    margin: 0;
+
     color: #ffffff;
-    margin-bottom: 8px;
+
+    font-size: 42px;
+
+    font-weight: 900;
+
     line-height: 1.1;
+
+    text-transform: uppercase;
 }
 
 .admin-page-subtitle {
-    font-size: 16px;
-    color: rgba(255,255,255,0.65);
-    line-height: 1.6;
+
+    margin-top: 8px;
+
+    color: #9ca3af;
+
+    font-size: 15px;
+
+    font-weight: 500;
 }
 
 /* =========================================================
-    HERO RIGHT
+   HERO RIGHT
 ========================================================= */
 
 .admin-page-hero-right {
+
     display: flex;
+
     align-items: center;
-    gap: 16px;
+
+    gap: 14px;
 }
 
 /* =========================================================
-    ADD BUTTON
+   ADD BUTTON
 ========================================================= */
 
 .admin-page-add-btn {
-    height: 56px;
+
+    height: 58px;
+
     padding: 0 28px;
 
     border: none;
+
     border-radius: 18px;
 
     display: flex;
-    align-items: center;
-    gap: 12px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #ff4747,
-            #d60000
-        );
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    cursor: pointer;
 
     color: #ffffff;
 
     font-size: 15px;
+
     font-weight: 700;
 
-    cursor: pointer;
+    background:
+        linear-gradient(
+            135deg,
+            #ff3434,
+            #c1121f
+        );
 
-    transition: all 0.25s ease;
+    box-shadow:
+        0 10px 20px rgba(255,50,50,.18);
+
+    transition:
+        all .25s ease;
 }
 
 .admin-page-add-btn:hover {
-    transform: translateY(-2px);
+
+    transform:
+        translateY(-2px);
 
     box-shadow:
-        0 12px 24px rgba(255, 0, 0, 0.35);
+        0 0 20px rgba(255,50,50,.25);
+}
+
+.admin-page-add-btn svg {
+
+    width: 18px;
+    height: 18px;
 }
 
 /* =========================================================
-    TOOLBAR
+   TOOLBAR
 ========================================================= */
 
 .admin-page-toolbar {
+
     display: flex;
+
     align-items: center;
     justify-content: space-between;
+
     gap: 20px;
 }
 
 /* =========================================================
-    SEARCH
+   SEARCH
 ========================================================= */
 
 .admin-page-search {
+
     flex: 1;
 
     position: relative;
 
-    height: 62px;
+    height: 60px;
 
     display: flex;
+
     align-items: center;
 
-    border-radius: 20px;
+    border-radius: 18px;
 
     background:
-        linear-gradient(
-            145deg,
-            rgba(17, 24, 39, 0.95),
-            rgba(10, 15, 25, 0.92)
-        );
+        #151515;
 
-    border: 1px solid rgba(255,255,255,0.06);
+    border:
+        1px solid rgba(255,255,255,.06);
 
-    backdrop-filter: blur(16px);
+    transition:
+        all .25s ease;
+}
 
-    overflow: hidden;
+.admin-page-search:hover {
+
+    border-color:
+        rgba(255,255,255,.10);
 }
 
 .admin-page-search:focus-within {
-    border-color: rgba(255, 70, 70, 0.45);
+
+    border-color:
+        rgba(255,50,50,.25);
 
     box-shadow:
-        0 0 0 4px rgba(255, 70, 70, 0.08);
+        0 0 0 3px rgba(255,50,50,.08);
 }
 
 .admin-page-search-icon {
-    position: absolute;
-    left: 22px;
 
-    color: rgba(255,255,255,0.45);
+    position: absolute;
+
+    left: 20px;
+
+    color: #6b7280;
 }
 
 .admin-page-search-input {
+
     width: 100%;
     height: 100%;
 
     border: none;
     outline: none;
 
-    padding-left: 58px;
-    padding-right: 20px;
-
     background: transparent;
 
     color: #ffffff;
+
+    padding-left: 55px;
+    padding-right: 20px;
 
     font-size: 15px;
 }
 
 .admin-page-search-input::placeholder {
-    color: rgba(255,255,255,0.4);
+
+    color: #6b7280;
 }
 
 /* =========================================================
-    CONTENT
+   TOOLBAR ACTIONS
+========================================================= */
+
+.admin-page-toolbar-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+}
+
+/* =========================================================
+   CONTENT
 ========================================================= */
 
 .admin-page-content {
-    border-radius: 28px;
 
-    background:
-        linear-gradient(
-            145deg,
-            rgba(17, 24, 39, 0.96),
-            rgba(10, 15, 25, 0.92)
-        );
-
-    border: 1px solid rgba(255,255,255,0.06);
-
-    backdrop-filter: blur(18px);
-
-    box-shadow:
-        0 10px 40px rgba(0,0,0,0.4);
-
-    overflow: hidden;
+    width: 100%;
 }
 
 /* =========================================================
-    RESPONSIVE
+   1200px
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    .admin-page-title {
+
+        font-size: 36px;
+    }
+}
+
+/* =========================================================
+   992px
 ========================================================= */
 
 @media (max-width: 992px) {
 
     .admin-page-hero {
+
         flex-direction: column;
+
         align-items: flex-start;
     }
 
     .admin-page-toolbar {
+
         flex-direction: column;
+
         align-items: stretch;
     }
 
     .admin-page-title {
+
         font-size: 32px;
     }
 
+    .admin-page-search {
+
+        width: 100%;
+    }
 }
+
+/* =========================================================
+   768px
+========================================================= */
 
 @media (max-width: 768px) {
 
     .admin-page {
+
         gap: 20px;
     }
 
     .admin-page-hero {
+
         padding: 24px;
-        border-radius: 24px;
+
+        border-radius: 20px;
     }
 
     .admin-page-title {
+
         font-size: 28px;
     }
 
     .admin-page-icon-box {
-        width: 64px;
-        height: 64px;
+
+        width: 72px;
+        height: 72px;
     }
 
-    .admin-page-search {
-        height: 56px;
+    .admin-page-icon-box svg {
+
+        width: 32px;
+        height: 32px;
+    }
+
+    .admin-page-hero-right {
+
+        width: 100%;
     }
 
     .admin-page-add-btn {
+
         width: 100%;
-        justify-content: center;
     }
 
+    .admin-page-search {
+
+        height: 56px;
+    }
 }
 
-@media (max-width: 576px) {
+/* =========================================================
+   480px
+========================================================= */
+
+@media (max-width: 480px) {
 
     .admin-page-hero-left {
-        align-items: flex-start;
+
         flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 16px;
     }
 
     .admin-page-title {
-        font-size: 24px;
+
+        font-size: 22px;
     }
 
     .admin-page-subtitle {
+
+        font-size: 13px;
+    }
+
+    .admin-page-search {
+
+        height: 52px;
+    }
+
+    .admin-page-search-input {
+
         font-size: 14px;
     }
 
+    .admin-page-add-btn {
+
+        height: 52px;
+
+        font-size: 14px;
+    }
 }

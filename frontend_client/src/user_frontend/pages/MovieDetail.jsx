@@ -16,7 +16,7 @@ import {
     Heart,
     Share2 
 } from 'lucide-react';
-import Modal from '../../admin_frontend/components/Modal';
+import Modal from '../components/Modal';
 import MovieSlider from '../components/MovieSlider';
 import { useAuth } from '../../context/AuthContext';
 import "../styles/MovieDetail.css";

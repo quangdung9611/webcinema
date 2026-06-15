@@ -10,7 +10,7 @@ import {
     User,
     Settings
 } from 'lucide-react';
-import Modal from '../../../components/Modal'; 
+import Modal from '../../../components/AdminModal'; 
 // Import bộ icon ghế
 import { SeatNormal, SeatVIP, SeatCouple } from "../../../../user_frontend/components/SeatIcon"; 
 import '../../../styles/AdminSeat.css';

@@ -1,10 +1,9 @@
 /* =========================================================
-   SIDEBAR
+   SIDEBAR - RED BLACK THEME
 ========================================================= */
 
 .admin-sidebar {
     width: 270px;
-
     flex-shrink: 0;
 
     min-height: calc(100vh - 78px);
@@ -12,12 +11,18 @@
     position: sticky;
     top: 78px;
 
-    border-right: 1px solid rgba(255,255,255,0.06);
+    border-right: 1px solid rgba(255, 0, 60, 0.15);
 
     overflow-y: auto;
     overflow-x: hidden;
 
     transition: 0.3s ease;
+
+    background: linear-gradient(
+        180deg,
+        rgba(10, 10, 12, 0.98),
+        rgba(0, 0, 0, 0.98)
+    );
 }
 
 /* =========================================================
@@ -51,9 +56,8 @@
     align-items: center;
     justify-content: center;
 
-    background: transparent;
-
-    color: #ffffff;
+    background: rgba(255, 0, 60, 0.08);
+    color: #ff2d55;
 
     cursor: pointer;
 
@@ -61,7 +65,9 @@
 }
 
 .sidebar-close-btn:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 0, 60, 0.18);
+    color: #ffffff;
+    box-shadow: 0 0 18px rgba(255, 0, 60, 0.25);
 }
 
 /* =========================================================
@@ -89,7 +95,6 @@
 
 .sidebar-link {
     width: 100%;
-
     height: 54px;
 
     display: flex;
@@ -103,9 +108,11 @@
 
     position: relative;
 
-    color: #9ca3af;
+    color: #b5b5b5;
 
     transition: all 0.25s ease;
+
+    background: transparent;
 }
 
 /* =========================================================
@@ -120,6 +127,8 @@
     justify-content: center;
 
     flex-shrink: 0;
+
+    color: #ff2d55;
 }
 
 /* =========================================================
@@ -128,7 +137,6 @@
 
 .link-text {
     font-weight: 500;
-
     white-space: nowrap;
 }
 
@@ -137,11 +145,13 @@
 ========================================================= */
 
 .sidebar-link:hover {
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 0, 60, 0.08);
 
     color: #ffffff;
 
-    transform: translateX(2px);
+    transform: translateX(3px);
+
+    box-shadow: inset 0 0 0 1px rgba(255, 0, 60, 0.15);
 }
 
 /* =========================================================
@@ -149,13 +159,14 @@
 ========================================================= */
 
 .sidebar-link.active {
-    background: rgba(255,255,255,0.06);
+    background: rgba(255, 0, 60, 0.12);
 
     color: #ffffff;
+
+    box-shadow: inset 3px 0 0 #ff2d55;
 }
 
 /* ACTIVE GLOW */
-
 .sidebar-link.active::before {
     content: '';
 
@@ -169,7 +180,9 @@
 
     border-radius: 20px;
 
-    background: #ffffff;
+    background: #ff2d55;
+
+    box-shadow: 0 0 12px rgba(255, 45, 85, 0.6);
 }
 
 /* =========================================================
@@ -181,8 +194,7 @@
 }
 
 .admin-sidebar::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.12);
-
+    background: rgba(255, 45, 85, 0.25);
     border-radius: 20px;
 }
 
@@ -206,7 +218,10 @@
 
         z-index: 1400;
 
-        backdrop-filter: blur(12px);
+        backdrop-filter: blur(14px);
+
+        background: rgba(10, 10, 12, 0.98);
+        border-right: 1px solid rgba(255, 0, 60, 0.2);
     }
 
     .admin-sidebar.open {
@@ -219,14 +234,12 @@
 
     .sidebar-overlay {
         position: fixed;
-
         inset: 0;
 
-        background: rgba(0,0,0,0.55);
+        background: rgba(0, 0, 0, 0.65);
 
         z-index: 1300;
     }
-
 }
 
 /* =========================================================
@@ -241,12 +254,10 @@
 
     .sidebar-link {
         height: 52px;
-
         border-radius: 14px;
     }
 
     .link-text {
         font-size: 0.95rem;
     }
-
 }

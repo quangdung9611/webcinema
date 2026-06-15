@@ -17,7 +17,7 @@ import axios from 'axios';
 import { io } from "socket.io-client";
 
 // COMPONENTS
-import Modal from '../../admin_frontend/components/Modal';
+import Modal from '../components/Modal';
 import CountdownTimer from './CountdownTimer';
 
 import {

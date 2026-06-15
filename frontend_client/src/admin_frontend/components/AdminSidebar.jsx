@@ -17,7 +17,9 @@ import {
     Tags,
     Newspaper,
     Clock,
-    Popcorn
+    Popcorn,
+    BookOpen,
+    Gift
 } from 'lucide-react';
 
 import '../styles/Sidebar.css';
@@ -58,7 +60,16 @@ const AdminSidebar = ({
             icon: <Newspaper size={20} />,
             label: 'Quản lý Tin tức'
         },
-
+        {
+            path: '/blog-cinema',
+            icon: <BookOpen size={20} />,
+            label: 'Blog Cinema'
+        },
+        {
+            path: '/promotions',
+            icon: <Gift size={20} />,
+            label: 'Quản lý Khuyến mãi'
+        },
         {
             path: '/actors',
             icon: <Star size={20} />,

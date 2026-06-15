@@ -68,21 +68,16 @@
    LOGO
 ========================================================= */
 
-.admin-brand-logo {
-    display: flex;
-    align-items: center;
-
-    text-decoration: none;
+.admin-brand-logo { 
+    display: flex; 
+    align-items: center; 
+    border-radius: none !important; 
+    text-decoration: none; 
+} .admin-logo-image { 
+    height: 90px; 
+    width: auto; 
+    object-fit: contain; 
 }
-
-.admin-logo-image {
-    height: 90px;
-
-    width: auto;
-
-    object-fit: contain;
-}
-
 /* =========================================================
    PAGE TITLE
 ========================================================= */

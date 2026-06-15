@@ -80,7 +80,8 @@ import NewsPage from './admin_frontend/pages/Admin/News/NewsPage';
 // import NewsAdd from './admin_frontend/pages/Admin/News/NewsAdd';
 // import NewsUpdate from './admin_frontend/pages/Admin/News/NewsUpdate';
 import FoodPage from './admin_frontend/pages/Admin/Food/FoodPage';
-
+import BlogCinemaPage from './admin_frontend/pages/Admin/BlogCinema/BlogCinemaPage';
+import PromotionPage from './admin_frontend/pages/Admin/Promotion/PromotionPage';
 const AdminLayoutWrapper = () => (
     <ProtectedRoute>
         <AdminLayout />
@@ -146,6 +147,8 @@ function App() {
                                     <Route path="update/:news_id" element={<NewsUpdate />} />
                                 </Route> */}
                                 <Route path="news" element={<NewsPage />} />
+                                <Route path="blog-cinema" element={<BlogCinemaPage />} />
+                                <Route path="promotions" element={<PromotionPage />} />
                                 <Route path="coupons" element={<CouponPage />} />
                                 {/* <Route path="coupons">
                                     <Route index element={<CouponList />} />

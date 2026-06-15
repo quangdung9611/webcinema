@@ -11,7 +11,7 @@ import {
 
 import axios from 'axios';
 
-import Modal from '../../admin_frontend/components/Modal';
+import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
 
 import '../styles/BankApp.css';

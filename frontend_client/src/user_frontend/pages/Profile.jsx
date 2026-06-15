@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
-import Modal from '../../admin_frontend/components/Modal';
+import Modal from '../components/Modal';
 import { QRCodeCanvas } from 'qrcode.react'; 
 import '../styles/Profile.css';
 import { 

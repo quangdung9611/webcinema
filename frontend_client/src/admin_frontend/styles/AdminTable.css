@@ -1,22 +1,28 @@
 /* =========================================================
-   ADMIN TABLE CONTAINER
+   ADMIN TABLE CONTAINER (RED - BLACK THEME)
 ========================================================= */
 
 .admin-table-container {
+
     width: 100%;
 
-    background: #0b1120 !important;
-
-    border: 1px solid rgba(255,255,255,0.06);
-
-    border-radius: 24px;
+    position: relative;
 
     overflow: hidden;
 
-    box-shadow:
-        0 10px 40px rgba(0,0,0,0.35);
+    border-radius: 24px;
 
-    backdrop-filter: blur(10px);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(10, 10, 12, 0.98),
+            rgba(20, 0, 0, 0.92)
+        );
+
+    border: 1px solid rgba(255, 71, 71, 0.10) !important;
+
+    box-shadow:
+        0 18px 45px rgba(0,0,0,.55);
 }
 
 /* =========================================================
@@ -24,11 +30,10 @@
 ========================================================= */
 
 .admin-table-wrapper {
+
     width: 100%;
 
     overflow-x: auto;
-
-    background: transparent !important;
 }
 
 /* =========================================================
@@ -36,112 +41,86 @@
 ========================================================= */
 
 .admin-table {
+
     width: 100%;
 
     min-width: 900px;
 
     border-collapse: collapse;
 
-    background: transparent !important;
+    color: #ffffff;
 
-    color: #ffffff !important;
+    border: none;
+    outline: none;
 }
 
 /* =========================================================
-   TABLE HEAD
+   TABLE HEADER
 ========================================================= */
 
 .admin-table thead {
-    background:
-        linear-gradient(
-            180deg,
-            rgba(255,255,255,0.05),
-            rgba(255,255,255,0.02)
-        ) !important;
-}
 
-.admin-table thead tr {
-    /* Chặn triệt để border ẩn của dòng header */
-    border: none !important;
-    border-bottom: none !important;
+    background:
+        rgba(255, 71, 71, 0.04);
+
+    border-bottom:
+        1px solid rgba(255, 71, 71, 0.12) !important;
 }
 
 .admin-table th {
-    padding: 22px 18px;
+
+    padding: 22px 20px;
 
     text-align: left;
 
-    white-space: nowrap;
-
-    color: #94a3b8 !important;
+    color: #ffb3b3;
 
     font-size: 13px;
-
-    font-weight: 700;
-
-    text-transform: uppercase;
+    font-weight: 800;
 
     letter-spacing: 1px;
+    text-transform: uppercase;
 
-    background: transparent !important;
+    white-space: nowrap;
 
-    /* Đảm bảo ô tiêu đề không tự sinh border */
-    border: none !important;
-    border-bottom: none !important;
+    border: none;
 }
 
 /* =========================================================
    TABLE BODY
 ========================================================= */
 
-.admin-table tbody {
-    background: transparent !important;
-}
-
 .admin-table tbody tr {
-    background: transparent !important;
 
-    /* Triệt tiêu hoàn toàn đường kẻ ngang trên từng dòng */
-    border: none !important;
-    border-bottom: none !important;
-
-    transition: 0.25s ease;
+    transition: all .25s ease;
+    border: none;
 }
 
 .admin-table tbody tr:hover {
+
     background:
-        rgba(255,255,255,0.04) !important;
+        rgba(255, 71, 71, 0.06);
+
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 71, 71, 0.08) !important;
 }
 
 .admin-table td {
-    padding: 20px 18px;
 
-    vertical-align: middle;
+    padding: 22px 20px;
 
-    color: #f8fafc !important;
+    color: #f3f4f6;
 
     font-size: 15px;
 
-    /* ÉP BUỘC XÓA BORDER-BOTTOM TẠI ĐÂY */
-    border: none !important;
-    border-bottom: none !important;
+    vertical-align: middle;
 
-    background: transparent !important;
+    border-bottom:
+        1px solid rgba(255, 71, 71, 0.08) !important;
 }
 
-/* =========================================================
-   REMOVE WHITE BACKGROUND FORCE
-========================================================= */
-
-.admin-table *,
-.admin-table tr,
-.admin-table td,
-.admin-table th,
-.admin-table tbody,
-.admin-table thead {
-    background-color: transparent;
-    /* Quét thêm một lớp kiểm tra viền cho toàn bộ phần tử con */
-    border-bottom: none !important;
+.admin-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 /* =========================================================
@@ -149,6 +128,7 @@
 ========================================================= */
 
 .admin-table-actions {
+
     display: flex;
 
     align-items: center;
@@ -161,55 +141,58 @@
 ========================================================= */
 
 .admin-action-btn {
-    width: 42px;
 
-    height: 42px;
+    width: 44px;
+    height: 44px;
 
-    border: none !important; /* Đảm bảo nút không bị dính border-bottom từ luật chung */
-
-    outline: none;
+    border: none;
 
     border-radius: 14px;
 
     display: flex;
 
     align-items: center;
-
     justify-content: center;
+
+    color: #ffffff;
 
     cursor: pointer;
 
-    transition: 0.25s ease;
-
-    flex-shrink: 0;
-
-    color: white;
+    transition: all .25s ease;
 }
 
 .admin-action-btn:hover {
-    transform: translateY(-3px) scale(1.03);
+    transform: translateY(-2px);
 }
 
-/* EDIT */
+/* =========================================================
+   EDIT BUTTON
+========================================================= */
 
 .edit-btn {
-    background:
-        linear-gradient(
-            135deg,
-            #f59e0b,
-            #f97316
-        ) !important;
+
+    background: linear-gradient(135deg, #ff5c00, #ff2d00);
+
+    box-shadow: 0 8px 18px rgba(255, 60, 0, .20);
 }
 
-/* DELETE */
+.edit-btn:hover {
+    box-shadow: 0 0 22px rgba(255, 80, 0, .35);
+}
+
+/* =========================================================
+   DELETE BUTTON
+========================================================= */
 
 .delete-btn {
-    background:
-        linear-gradient(
-            135deg,
-            #ef4444,
-            #dc2626
-        ) !important;
+
+    background: linear-gradient(135deg, #ff3b3b, #b30000);
+
+    box-shadow: 0 8px 18px rgba(255, 0, 0, .18);
+}
+
+.delete-btn:hover {
+    box-shadow: 0 0 22px rgba(255, 0, 0, .35);
 }
 
 /* =========================================================
@@ -217,51 +200,52 @@
 ========================================================= */
 
 .status-badge {
-    padding: 7px 14px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 8px 14px;
 
     border-radius: 999px;
 
     font-size: 13px;
 
-    font-weight: 600;
-
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    border: none !important; /* Đảm bảo badge không dính border-bottom */
+    font-weight: 700;
 }
 
 .status-badge.admin {
-    background:
-        rgba(239,68,68,0.15) !important;
 
-    color: #f87171;
+    background: rgba(255, 71, 71, .10);
+
+    color: #ff6b6b;
+
+    border: 1px solid rgba(255, 71, 71, .18);
 }
 
 .status-badge.customer {
-    background:
-        rgba(59,130,246,0.15) !important;
 
-    color: #60a5fa;
+    background: rgba(255,255,255,.04);
+
+    color: #e5e7eb;
+
+    border: 1px solid rgba(255,255,255,.06);
 }
 
 /* =========================================================
-   EMPTY
+   EMPTY STATE
 ========================================================= */
 
 .admin-table-empty {
+
     text-align: center;
 
-    padding: 50px 20px !important;
+    padding: 70px 20px !important;
 
-    color: #94a3b8 !important;
+    color: #9ca3af;
 
     font-size: 15px;
-
-    border: none !important;
 }
 
 /* =========================================================
@@ -269,7 +253,7 @@
 ========================================================= */
 
 .admin-table-wrapper::-webkit-scrollbar {
-    height: 7px;
+    height: 8px;
 }
 
 .admin-table-wrapper::-webkit-scrollbar-track {
@@ -277,45 +261,56 @@
 }
 
 .admin-table-wrapper::-webkit-scrollbar-thumb {
-    background:
-        rgba(255,255,255,0.18);
-
     border-radius: 999px;
+
+    background: linear-gradient(180deg, #ff3b3b, #7f1d1d);
 }
 
 /* =========================================================
    RESPONSIVE
 ========================================================= */
 
+@media (max-width: 1200px) {
+    .admin-table { min-width: 850px; }
+}
+
 @media (max-width: 992px) {
+    .admin-table { min-width: 800px; }
 
-    .admin-table {
-        min-width: 800px;
+    .admin-table th,
+    .admin-table td {
+        padding: 18px 16px;
     }
-
 }
 
 @media (max-width: 768px) {
-
     .admin-table-container {
         border-radius: 20px;
     }
 
-    .admin-table {
-        min-width: 700px;
-    }
+    .admin-table { min-width: 700px; }
 
-    .admin-table th,
-    .admin-table td {
-        padding: 16px;
+    .admin-action-btn {
+        width: 40px;
+        height: 40px;
     }
-
 }
 
 @media (max-width: 480px) {
-
-    .admin-table {
-        min-width: 650px;
+    .admin-table { 
+        min-width: 650px; 
     }
 
+    .admin-table th { 
+        font-size: 12px; 
+    }
+
+    .admin-table td { 
+        font-size: 13px; 
+    }
+
+    .admin-action-btn {
+        width: 36px;
+        height: 36px;
+    }
 }

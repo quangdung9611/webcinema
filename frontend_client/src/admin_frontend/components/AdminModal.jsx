@@ -48,99 +48,48 @@ const AdminModal = ({
     if (!open) return null;
 
     /* =========================================================
-        RENDER ICON
+        HEADER ICON
     ========================================================= */
 
-    const renderIcon = () => {
+    const renderHeaderIcon = () => {
 
         switch (type) {
 
-            /* =========================
-                SUCCESS
-            ========================= */
-
             case 'success':
-
                 return (
-
-                    <div className="admin-modal-icon success">
-
-                        <CheckCircle2
-                            size={72}
-                            strokeWidth={2.5}
-                        />
-
-                    </div>
-
+                    <CheckCircle2
+                        size={44}
+                        strokeWidth={2.5}
+                    />
                 );
-
-            /* =========================
-                ERROR
-            ========================= */
 
             case 'error':
-
                 return (
-
-                    <div className="admin-modal-icon error">
-
-                        <XCircle
-                            size={72}
-                            strokeWidth={2.5}
-                        />
-
-                    </div>
-
+                    <XCircle
+                        size={44}
+                        strokeWidth={2.5}
+                    />
                 );
-
-            /* =========================
-                WARNING
-            ========================= */
 
             case 'warning':
-
                 return (
-
-                    <div className="admin-modal-icon warning">
-
-                        <AlertTriangle
-                            size={72}
-                            strokeWidth={2.5}
-                        />
-
-                    </div>
-
+                    <AlertTriangle
+                        size={44}
+                        strokeWidth={2.5}
+                    />
                 );
-
-            /* =========================
-                INFO
-            ========================= */
 
             case 'info':
-
                 return (
-
-                    <div className="admin-modal-icon info">
-
-                        <Info
-                            size={72}
-                            strokeWidth={2.5}
-                        />
-
-                    </div>
-
+                    <Info
+                        size={44}
+                        strokeWidth={2.5}
+                    />
                 );
 
-            /* =========================
-                DEFAULT
-            ========================= */
-
             default:
-
                 return null;
-
         }
-
     };
 
     return (
@@ -156,32 +105,27 @@ const AdminModal = ({
             >
 
                 {/* =====================================================
-                    ICON
-                ===================================================== */}
-
-                {
-                    type !== 'default' && (
-
-                        <div className="admin-modal-icon-wrapper">
-
-                            {renderIcon()}
-
-                        </div>
-
-                    )
-                }
-
-                {/* =====================================================
                     HEADER
                 ===================================================== */}
 
                 <div className="admin-modal-header">
 
-                    <h2 className="admin-modal-title">
+                    <div
+                        className={`admin-modal-title-group ${type}`}
+                    >
 
-                        {title}
+                        {
+                            type !== 'default' &&
+                            renderHeaderIcon()
+                        }
 
-                    </h2>
+                        <h2 className="admin-modal-title">
+
+                            {title}
+
+                        </h2>
+
+                    </div>
 
                     <button
                         className="admin-modal-close-btn"

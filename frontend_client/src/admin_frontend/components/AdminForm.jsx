@@ -300,10 +300,6 @@ const AdminForm = ({
                                         `}
                                     >
 
-                                        <option value="">
-                                            -- Chọn --
-                                        </option>
-
                                         {
                                             field.options?.map((option) => (
 

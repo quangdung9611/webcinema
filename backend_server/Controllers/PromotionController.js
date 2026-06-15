@@ -10,46 +10,27 @@ const path = require('path');
 /**
  * Tạo slug từ tiêu đề khuyến mãi
  */
-
 const createSlug = (title) => {
 
     if (!title) {
-
         return '';
-
     }
 
     return title
         .toLowerCase()
         .trim()
         .normalize('NFD')
-        .replace(
-            /[\u0300-\u036f]/g,
-            ''
-        )
-        .replace(
-            /[đĐ]/g,
-            'd'
-        )
-        .replace(
-            /[^\w\s-]/g,
-            ''
-        )
-        .replace(
-            /[\s_-]+/g,
-            '-'
-        )
-        .replace(
-            /^-+|-+$/g,
-            ''
-        );
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 
 };
 
 /**
  * Validate dữ liệu Promotion
  */
-
 const validatePromotionData = (
     data,
     file,
@@ -58,7 +39,6 @@ const validatePromotionData = (
 
     const {
         title,
-        content,
         likes
     } = data;
 
@@ -71,8 +51,7 @@ const validatePromotionData = (
         title.trim() === ''
     ) {
 
-        return
-            'Vui lòng nhập tiêu đề khuyến mãi.';
+        return 'Vui lòng nhập tiêu đề khuyến mãi.';
 
     }
 
@@ -80,31 +59,7 @@ const validatePromotionData = (
         title.trim().length < 5
     ) {
 
-        return
-            'Tiêu đề khuyến mãi phải từ 5 ký tự trở lên.';
-
-    }
-
-    /**
-     * Validate content
-     */
-
-    if (
-        !content ||
-        content.trim() === ''
-    ) {
-
-        return
-            'Vui lòng nhập nội dung khuyến mãi.';
-
-    }
-
-    if (
-        content.trim().length < 10
-    ) {
-
-        return
-            'Nội dung khuyến mãi quá ngắn (phải từ 10 ký tự trở lên).';
+        return 'Tiêu đề khuyến mãi phải từ 5 ký tự trở lên.';
 
     }
 
@@ -129,8 +84,7 @@ const validatePromotionData = (
             parsedLikes < 0
         ) {
 
-            return
-                'Số lượt thích phải là số nguyên hợp lệ.';
+            return 'Số lượt thích phải là số nguyên hợp lệ.';
 
         }
 
@@ -145,8 +99,7 @@ const validatePromotionData = (
         !file
     ) {
 
-        return
-            'Vui lòng upload hình ảnh khuyến mãi.';
+        return 'Vui lòng upload hình ảnh khuyến mãi.';
 
     }
 
@@ -157,15 +110,12 @@ const validatePromotionData = (
 /**
  * Xóa file vật lý
  */
-
 const deleteFile = (
     fileName
 ) => {
 
     if (!fileName) {
-
         return;
-
     }
 
     const pureFileName =
@@ -231,23 +181,13 @@ exports.getAllPromotions =
                 slug,
                 description,
                 image_url,
-                tag,
                 views,
                 likes,
 
                 DATE_FORMAT(
                     created_at,
                     '%d/%m/%Y'
-                ) AS date,
-
-                IF(
-                    LENGTH(content) > 150,
-                    CONCAT(
-                        LEFT(content, 150),
-                        '...'
-                    ),
-                    content
-                ) AS short_content
+                ) AS date
 
             FROM promotions
 
@@ -398,7 +338,6 @@ exports.getPromotionById =
     }
 
 };
-
 /* =========================================================
  * 5. CREATE PROMOTION
  * =========================================================
@@ -413,8 +352,6 @@ exports.createPromotion =
     const {
         title,
         description,
-        content,
-        tag,
         likes
     } = req.body;
 
@@ -432,9 +369,11 @@ exports.createPromotion =
         if (errorMsg) {
 
             if (file) {
+
                 deleteFile(
                     file.filename
                 );
+
             }
 
             return res
@@ -476,9 +415,11 @@ exports.createPromotion =
         ) {
 
             if (file) {
+
                 deleteFile(
                     file.filename
                 );
+
             }
 
             return res
@@ -498,22 +439,18 @@ exports.createPromotion =
                 title,
                 slug,
                 description,
-                content,
                 image_url,
-                tag,
                 likes,
                 views,
                 is_active
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1)
+            VALUES (?, ?, ?, ?, ?, 0, 1)
             `,
             [
                 title.trim(),
                 slug,
                 description || '',
-                content.trim(),
                 imageUrl,
-                tag || null,
                 parseInt(
                     likes,
                     10
@@ -554,10 +491,10 @@ exports.createPromotion =
     }
 
 };
- /**
- * ==========================================================
+
+/* =========================================================
  * 6. UPDATE PROMOTION
- * ==========================================================
+ * =========================================================
  */
 
 exports.updatePromotion =
@@ -573,8 +510,6 @@ exports.updatePromotion =
     const {
         title,
         description,
-        content,
-        tag,
         likes,
         is_active
     } = req.body;
@@ -739,9 +674,7 @@ exports.updatePromotion =
                 title = ?,
                 slug = ?,
                 description = ?,
-                content = ?,
                 image_url = ?,
-                tag = ?,
                 likes = ?,
                 is_active = ?
             WHERE promotion_id = ?
@@ -753,9 +686,7 @@ exports.updatePromotion =
                 title.trim(),
                 slug,
                 description || '',
-                content.trim(),
                 imageUrl,
-                tag || null,
                 parseInt(
                     likes,
                     10
@@ -812,7 +743,6 @@ exports.updatePromotion =
     }
 
 };
-
 /**
  * ==========================================================
  * 7. DELETE PROMOTION

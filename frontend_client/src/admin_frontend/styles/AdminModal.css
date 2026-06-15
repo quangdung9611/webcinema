@@ -14,13 +14,11 @@
 
     z-index: 9999;
 
-    background:
-        rgba(0, 0, 0, 0.72);
+    background: rgba(5, 5, 5, 0.82);
 
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(14px);
 
-    animation:
-        modalFade 0.3s ease;
+    animation: modalFade .25s ease;
 }
 
 /* =========================================================
@@ -28,37 +26,39 @@
 ========================================================= */
 
 .admin-modal-container {
-    width: 100%;
 
     position: relative;
 
+    width: 100%;
+
     overflow: hidden;
 
-    border-radius: 30px;
+    border-radius: 24px;
 
     background:
         linear-gradient(
-            145deg,
-            rgba(14, 14, 22, 0.96),
-            rgba(24, 24, 36, 0.96)
+            180deg,
+            rgba(27,17,18,.98) 0%,
+            rgba(17,17,17,.98) 100%
         );
 
     border:
-        1px solid rgba(255,255,255,0.06);
+        1px solid rgba(255,50,50,.12);
 
     box-shadow:
-        0 25px 80px rgba(0,0,0,0.65),
-        0 0 40px rgba(168,85,247,0.15);
+        0 25px 80px rgba(0,0,0,.65),
+        0 0 30px rgba(255,30,30,.08);
 
     animation:
-        modalScale 0.35s ease;
+        modalScale .28s ease;
 }
 
 /* =========================================================
-   GLOW EFFECT
+   CINEMA GLOW EFFECT
 ========================================================= */
 
 .admin-modal-container::before {
+
     content: '';
 
     position: absolute;
@@ -74,7 +74,7 @@
     background:
         radial-gradient(
             circle,
-            rgba(239,68,68,0.22),
+            rgba(255,40,40,.18),
             transparent 70%
         );
 
@@ -82,6 +82,7 @@
 }
 
 .admin-modal-container::after {
+
     content: '';
 
     position: absolute;
@@ -97,7 +98,7 @@
     background:
         radial-gradient(
             circle,
-            rgba(168,85,247,0.18),
+            rgba(180,20,30,.12),
             transparent 70%
         );
 
@@ -105,19 +106,19 @@
 }
 
 /* =========================================================
-   MODAL SIZE
+   SIZE
 ========================================================= */
 
 .admin-modal-container.sm {
-    max-width: 460px;
+    max-width: 450px;
 }
 
 .admin-modal-container.md {
-    max-width: 680px;
+    max-width: 650px;
 }
 
 .admin-modal-container.lg {
-    max-width: 950px;
+    max-width: 900px;
 }
 
 .admin-modal-container.xl {
@@ -129,44 +130,78 @@
 ========================================================= */
 
 .admin-modal-header {
+
     position: relative;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    padding:
-        22px
-        30px
-        20px;
+    padding: 20px 28px;
 
     border-bottom:
-        1px solid rgba(255,255,255,0.06);
+        1px solid rgba(255,255,255,.05);
 
     background:
         linear-gradient(
             180deg,
-            rgba(255,255,255,0.03),
+            rgba(255,40,40,.04),
             transparent
         );
 
     z-index: 2;
 }
 
-.admin-modal-header h2 {
+/* =========================================================
+   TITLE GROUP
+========================================================= */
+
+.admin-modal-title-group {
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 12px;
+}
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.admin-modal-title {
+
     margin: 0;
 
     font-size: 34px;
 
     font-weight: 900;
 
-    letter-spacing: 1.5px;
-
     text-transform: uppercase;
 
-    text-align: center;
+    letter-spacing: 1px;
 
     color: #ffffff;
+}
+
+/* =========================================================
+   ICON COLORS
+========================================================= */
+
+.admin-modal-title-group.success {
+    color: #4ade80;
+}
+
+.admin-modal-title-group.error {
+    color: #ff4d4d;
+}
+
+.admin-modal-title-group.warning {
+    color: #f59e0b;
+}
+
+.admin-modal-title-group.info {
+    color: #60a5fa;
 }
 
 /* =========================================================
@@ -177,43 +212,49 @@
 
     position: absolute;
 
-    top: 22px;
-    right: 22px;
+    right: 18px;
+    top: 50%;
 
-    width: 48px;
-    height: 48px;
+    transform: translateY(-50%);
 
-    border: none;
-    outline: none;
+    width: 46px;
+    height: 46px;
 
-    border-radius: 16px;
-
-    background:
-        rgba(255,255,255,0.06);
-
-    color: #f3f4f6;
+    border-radius: 14px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
+    background:
+        rgba(255,255,255,.04);
+
+    border:
+        1px solid rgba(255,255,255,.06);
+
+    color: #f3f4f6;
+
     cursor: pointer;
 
-    transition: all 0.3s ease;
-
-    z-index: 10;
+    transition: all .3s ease;
 }
 
 .admin-modal-close-btn:hover {
 
     background:
-        rgba(239,68,68,0.16);
+        rgba(255,40,40,.16);
 
-    color: #ffffff;
+    border-color:
+        rgba(255,40,40,.18);
+
+    color: #fff;
 
     transform:
-        rotate(90deg)
-        scale(1.05);
+        translateY(-50%)
+        rotate(90deg);
+
+    box-shadow:
+        0 0 20px rgba(255,40,40,.15);
 }
 
 /* =========================================================
@@ -221,66 +262,51 @@
 ========================================================= */
 
 .admin-modal-body {
+
     position: relative;
 
-    padding: 30px;
+    padding: 32px;
 
     max-height: 80vh;
 
     overflow-y: auto;
 
-    color: #e5e7eb;
+    color: #d1d1d1;
 
     z-index: 2;
 }
-
-/* =========================================================
-   ALERT CONTENT
-========================================================= */
-
-.admin-alert-content {
-    text-align: center;
-}
-
-.admin-alert-content p {
-    margin-bottom: 26px;
-
-    font-size: 17px;
-    line-height: 1.7;
-
-    color: #d1d5db;
-}
-
-/* =========================================================
-   ALERT ACTIONS
-========================================================= */
-
-.admin-alert-actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 14px;
-
-    flex-wrap: wrap;
-}
-
-/* =========================================================
-   TEXT
-========================================================= */
 
 .admin-modal-body p,
 .admin-modal-body span,
 .admin-modal-body label,
 .admin-modal-body div {
-    color: #d1d5db;
+
+    color: #d1d1d1;
 }
 
 /* =========================================================
-   BUTTONS
+   ACTIONS
+========================================================= */
+
+.admin-alert-actions {
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    gap: 14px;
+
+    margin-top: 28px;
+
+    flex-wrap: wrap;
+}
+
+/* =========================================================
+   BUTTON BASE
 ========================================================= */
 
 .admin-modal-body button {
+
     border: none;
     outline: none;
 
@@ -289,40 +315,41 @@
     padding: 12px 24px;
 
     font-size: 14px;
-
     font-weight: 700;
 
     cursor: pointer;
 
-    transition: all 0.25s ease;
+    transition: all .25s ease;
 }
 
 /* =========================================================
-   PRIMARY BUTTON
+   CONFIRM BUTTON
 ========================================================= */
 
 .admin-confirm-btn {
+
     min-width: 140px;
+
+    color: #fff;
 
     background:
         linear-gradient(
             135deg,
-            #ef4444,
-            #dc2626
+            #ff2d2d,
+            #d31f1f
         );
 
-    color: white;
-
     box-shadow:
-        0 10px 25px rgba(239,68,68,0.35);
+        0 10px 24px rgba(255,40,40,.35);
 }
 
 .admin-confirm-btn:hover {
+
     transform:
         translateY(-2px);
 
     box-shadow:
-        0 14px 30px rgba(239,68,68,0.5);
+        0 14px 34px rgba(255,40,40,.45);
 }
 
 /* =========================================================
@@ -330,27 +357,32 @@
 ========================================================= */
 
 .admin-cancel-btn {
+
     min-width: 120px;
 
     background:
-        rgba(255,255,255,0.08);
+        rgba(255,255,255,.05);
 
     color: #f3f4f6;
 
     border:
-        1px solid rgba(255,255,255,0.08);
+        1px solid rgba(255,255,255,.08);
 }
 
 .admin-cancel-btn:hover {
+
     background:
-        rgba(255,255,255,0.14);
+        rgba(255,255,255,.10);
+
+    border-color:
+        rgba(255,255,255,.12);
 
     transform:
         translateY(-2px);
 }
 
 /* =========================================================
-   SCROLLBAR
+   CUSTOM SCROLLBAR
 ========================================================= */
 
 .admin-modal-body::-webkit-scrollbar {
@@ -362,18 +394,19 @@
 }
 
 .admin-modal-body::-webkit-scrollbar-thumb {
+
     background:
         linear-gradient(
             180deg,
-            #ef4444,
-            #9333ea
+            #ff2d2d,
+            #8b0000
         );
 
     border-radius: 999px;
 }
 
 /* =========================================================
-   ANIMATION
+   ANIMATIONS
 ========================================================= */
 
 @keyframes modalFade {
@@ -385,293 +418,80 @@
     to {
         opacity: 1;
     }
-
 }
 
 @keyframes modalScale {
 
     from {
+
         opacity: 0;
 
         transform:
-            scale(0.88)
-            translateY(40px);
+            scale(.92)
+            translateY(20px);
     }
 
     to {
+
         opacity: 1;
 
         transform:
             scale(1)
             translateY(0);
     }
-
-}
-
-/* =========================================================
-   MODAL ICON WRAPPER
-========================================================= */
-
-.admin-modal-icon-wrapper {
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin-top: 35px;
-    margin-bottom: 8px;
-
-    position: relative;
-
-    z-index: 2;
-
-}
-
-/* =========================================================
-   MODAL ICON BASE
-========================================================= */
-
-.admin-modal-icon {
-
-    width: 130px;
-    height: 130px;
-
-    border-radius: 50%;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    position: relative;
-
-    animation:
-        modalIconPop 0.45s ease;
-
-}
-
-/* =========================================================
-   SUCCESS
-========================================================= */
-
-.admin-modal-icon.success {
-
-    color: #22c55e;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(34,197,94,0.22),
-            rgba(34,197,94,0.05)
-        );
-
-    border:
-        2px solid rgba(34,197,94,0.35);
-
-    box-shadow:
-        0 0 35px rgba(34,197,94,0.35),
-        inset 0 0 25px rgba(34,197,94,0.18);
-
-}
-
-/* =========================================================
-   ERROR
-========================================================= */
-
-.admin-modal-icon.error {
-
-    color: #ef4444;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(239,68,68,0.22),
-            rgba(239,68,68,0.05)
-        );
-
-    border:
-        2px solid rgba(239,68,68,0.35);
-
-    box-shadow:
-        0 0 35px rgba(239,68,68,0.35),
-        inset 0 0 25px rgba(239,68,68,0.18);
-
-}
-
-/* =========================================================
-   WARNING
-========================================================= */
-
-.admin-modal-icon.warning {
-
-    color: #f59e0b;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(245,158,11,0.22),
-            rgba(245,158,11,0.05)
-        );
-
-    border:
-        2px solid rgba(245,158,11,0.35);
-
-    box-shadow:
-        0 0 35px rgba(245,158,11,0.35),
-        inset 0 0 25px rgba(245,158,11,0.18);
-
-}
-
-/* =========================================================
-   INFO
-========================================================= */
-
-.admin-modal-icon.info {
-
-    color: #3b82f6;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(59,130,246,0.22),
-            rgba(59,130,246,0.05)
-        );
-
-    border:
-        2px solid rgba(59,130,246,0.35);
-
-    box-shadow:
-        0 0 35px rgba(59,130,246,0.35),
-        inset 0 0 25px rgba(59,130,246,0.18);
-
-}
-
-/* =========================================================
-   ICON ANIMATION
-========================================================= */
-
-@keyframes modalIconPop {
-
-    0% {
-
-        opacity: 0;
-
-        transform:
-            scale(0.6)
-            rotate(-12deg);
-
-    }
-
-    60% {
-
-        transform:
-            scale(1.08)
-            rotate(3deg);
-
-    }
-
-    100% {
-
-        opacity: 1;
-
-        transform:
-            scale(1)
-            rotate(0deg);
-
-    }
-
 }
 
 /* =========================================================
    TABLET
 ========================================================= */
 
-@media screen and (max-width: 992px) {
+@media (max-width: 992px) {
 
     .admin-modal-container {
         max-width: 95%;
     }
 
-    .admin-modal-header {
-        padding: 20px;
-    }
-
-    .admin-modal-header h2 {
+    .admin-modal-title {
         font-size: 28px;
     }
-
-    .admin-modal-body {
-        padding: 22px;
-    }
-
 }
 
 /* =========================================================
    MOBILE
 ========================================================= */
 
-@media screen and (max-width: 768px) {
+@media (max-width: 768px) {
 
     .admin-modal-overlay {
-        padding: 14px;
+        padding: 16px;
     }
 
     .admin-modal-container {
-        border-radius: 24px;
+        border-radius: 20px;
     }
 
-    .admin-modal-header {
-        padding: 18px;
-    }
-
-    .admin-modal-header h2 {
+    .admin-modal-title {
         font-size: 24px;
     }
 
-    .admin-modal-close-btn {
-
-        top: 18px;
-        right: 18px;
-
-        width: 44px;
-        height: 44px;
-    }
-
     .admin-modal-body {
-        padding: 20px;
+        padding: 24px;
     }
 
-    .admin-modal-icon {
-        width: 110px;
-        height: 110px;
+    .admin-modal-close-btn {
+        width: 42px;
+        height: 42px;
     }
-
 }
 
 /* =========================================================
    SMALL MOBILE
 ========================================================= */
 
-@media screen and (max-width: 480px) {
+@media (max-width: 480px) {
 
-    .admin-modal-header {
-        padding: 16px;
-    }
-
-    .admin-modal-header h2 {
+    .admin-modal-title {
         font-size: 20px;
-    }
-
-    .admin-modal-close-btn {
-
-        top: 14px;
-        right: 14px;
-
-        width: 40px;
-        height: 40px;
-    }
-
-    .admin-modal-body {
-        padding: 16px;
     }
 
     .admin-alert-actions {
@@ -682,5 +502,4 @@
     .admin-cancel-btn {
         width: 100%;
     }
-
 }
