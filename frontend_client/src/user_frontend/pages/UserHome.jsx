@@ -41,75 +41,12 @@ const UserHome = () => {
 
   const bannerBaseUrl = "https://api.quangdungcinema.id.vn/uploads/banners/";
   const bannerDocUrl = "https://api.quangdungcinema.id.vn/uploads/banner_doc/";
+  const promotionImageUrl =
+  "https://api.quangdungcinema.id.vn/uploads/promotions/";
 
-  // =========================
-  // PROMOTIONS DATA
-  // =========================
-
-  const promotions = [
-    {
-      id: 1,
-      image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1200&auto=format&fit=crop',
-      title: 'COMBO BẮP NƯỚC SIÊU TIẾT KIỆM',
-      desc: 'Thưởng thức phim hay cùng combo ưu đãi hấp dẫn chỉ từ 79K.',
-      tag: 'HOT'
-    },
-    {
-      id: 2,
-      image: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=1200&auto=format&fit=crop',
-      title: 'THỨ 4 VUI VẺ - GIÁ CỰC ÊM',
-      desc: 'Đồng giá vé xem phim mỗi thứ 4 hàng tuần cho mọi khách hàng.',
-      tag: 'NEW'
-    },
-    {
-      id: 3,
-      image: 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=1200&auto=format&fit=crop',
-      title: 'THÀNH VIÊN NHẬN QUÀ KHỦNG',
-      desc: 'Tích điểm đổi quà và nhận hàng loạt voucher cực hấp dẫn.',
-      tag: 'VIP'
-    },
-    {
-      id: 4,
-      image: 'https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?q=80&w=1200&auto=format&fit=crop',
-      title: 'ƯU ĐÃI NHÓM BẠN THÂN',
-      desc: 'Mua 4 vé nhận ngay combo nước miễn phí tại quầy.',
-      tag: 'SALE'
-    }
-  ];
-
-  // =========================
-  // CINEMA NEWS
-  // =========================
-
-  const cinemaNews = [
-    {
-      id: 1,
-      image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1200&auto=format&fit=crop',
-      category: 'ĐIỆN ẢNH',
-      title: 'Top bộ phim bom tấn đáng mong chờ nhất năm nay'
-    },
-    {
-      id: 2,
-      image: 'https://images.unsplash.com/photo-1513106580091-1d82408b8cd6?q=80&w=1200&auto=format&fit=crop',
-      title: 'Không gian rạp chiếu hiện đại chuẩn quốc tế'
-    },
-    {
-      id: 3,
-      image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=1200&auto=format&fit=crop',
-      title: 'Những tựa phim tình cảm gây sốt phòng vé'
-    },
-    {
-      id: 4,
-      image: 'https://images.unsplash.com/photo-1517602302552-471fe67acf66?q=80&w=1200&auto=format&fit=crop',
-      title: 'Cập nhật lịch chiếu phim mới nhất tháng này'
-    },
-    {
-      id: 5,
-      image: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=1200&auto=format&fit=crop',
-      title: 'Review các bộ phim hành động đỉnh cao'
-    }
-  ];
-
+  const blogCinemaImageUrl =
+  "https://api.quangdungcinema.id.vn/uploads/blog_cinema/";
+ 
   // =========================
   // STATE
   // =========================
@@ -123,6 +60,8 @@ const UserHome = () => {
   });
 
   const [loading, setLoading] = useState(true);
+  const [promotions,setPromotions] = useState([]);
+  const [cinemaNews,setCinemaNews] = useState([]);
 
   // QUICK BOOKING
   const [quickData, setQuickData] = useState({
@@ -171,11 +110,28 @@ const UserHome = () => {
       setLoading(true);
 
       try {
+      const [
+        statusRes,
+        movieRes,
+        promotionRes,
+        blogRes
+      ] = await Promise.all([
+        axios.get(
+          'https://api.quangdungcinema.id.vn/api/movies/status-group'
+        ),
 
-        const [statusRes, movieRes] = await Promise.all([
-          axios.get('https://api.quangdungcinema.id.vn/api/movies/status-group'),
-          axios.get('https://api.quangdungcinema.id.vn/api/showtimes/quick-booking')
-        ]);
+        axios.get(
+          'https://api.quangdungcinema.id.vn/api/showtimes/quick-booking'
+        ),
+
+        axios.get(
+          'https://api.quangdungcinema.id.vn/api/promotions/all'
+        ),
+
+        axios.get(
+          'https://api.quangdungcinema.id.vn/api/blog-cinema/all'
+        )
+      ]);
 
         setGroupedMovies(statusRes.data);
 
@@ -183,6 +139,12 @@ const UserHome = () => {
           movies: movieRes.data,
           cinemas: []
         });
+        setPromotions(
+          promotionRes.data || []
+        );
+        setCinemaNews(
+          blogRes.data || []
+        );
 
       } catch (error) {
 
@@ -745,19 +707,15 @@ const UserHome = () => {
 
                 <div
                   className="promo-card"
-                  key={promo.id}
+                  key={promo.promotion_id}
                 >
 
                   <div className="promo-image">
 
                     <img
-                      src={promo.image}
+                      src={`${promotionImageUrl}${promo.image_url}`}
                       alt={promo.title}
                     />
-
-                    <span className="promo-tag">
-                      {promo.tag}
-                    </span>
 
                   </div>
 
@@ -768,10 +726,17 @@ const UserHome = () => {
                     </h3>
 
                     <p>
-                      {promo.desc}
+                      {promo.description}
                     </p>
 
-                    <button className="btn-detail">
+                    <button
+                      className="btn-detail"
+                      onClick={() =>
+                        navigate(
+                          `/promotion/${promo.slug}`
+                        )
+                      }
+                    >
                       Xem chi tiết
                     </button>
 
@@ -804,42 +769,47 @@ const UserHome = () => {
 
             <div className="cinema-news-grid">
 
-              {cinemaNews.map((news) => (
+            {cinemaNews.map((news) => (
 
-                <div
-                  className="cinema-news-card"
-                  key={news.id}
-                >
+                  <div
+                    className="cinema-news-card"
+                    key={news.blog_id}
+                  >
 
-                  <div className="cinema-news-image">
+                    <div className="cinema-news-image">
 
-                    <img
-                      src={news.image}
-                      alt={news.title}
-                    />
+                      <img
+                        src={`${blogCinemaImageUrl}${news.image_url}`}
+                        alt={news.title}
+                      />
 
-                    {news.category && (
                       <span className="cinema-news-category">
-                        {news.category}
+                        ĐIỆN ẢNH
                       </span>
-                    )}
+
+                    </div>
+
+                    <div className="cinema-news-content">
+
+                      <h3>
+                        {news.title}
+                      </h3>
+
+                      <button
+                        className="btn-detail"
+                        onClick={() =>
+                          navigate(
+                            `/blog-cinema/${news.slug}`
+                          )
+                        }
+                      >
+                        Đọc thêm
+                      </button>
+
+                    </div>
 
                   </div>
-
-                  <div className="cinema-news-content">
-
-                    <h3>
-                      {news.title}
-                    </h3>
-
-                    <button className="btn-detail">
-                      Đọc thêm
-                    </button>
-
-                  </div>
-
-                </div>
-              ))}
+                ))}
 
             </div>
 
