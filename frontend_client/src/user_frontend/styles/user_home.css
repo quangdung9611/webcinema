@@ -1,76 +1,213 @@
-
-/* ============================================================
-   USER HOME - PREMIUM CINEMA
+/* ==========================================================
+   USER HOME PREMIUM CINEMA
    PART 1
-============================================================ */
+========================================================== */
 
-/* ============================================================
-   MAIN LAYOUT
-============================================================ */
+/* ==========================================================
+   ANIMATION
+========================================================== */
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shine {
+    from {
+        left: -120%;
+    }
+
+    to {
+        left: 120%;
+    }
+}
+
+@keyframes pulseGlow {
+    0% {
+        box-shadow:
+            0 0 0 rgba(255, 0, 0, 0);
+    }
+
+    50% {
+        box-shadow:
+            0 0 30px rgba(255, 0, 0, .18);
+    }
+
+    100% {
+        box-shadow:
+            0 0 0 rgba(255, 0, 0, 0);
+    }
+}
+
+/* ==========================================================
+   PAGE
+========================================================== */
 
 .user-home {
     min-height: 100vh;
-    padding-top: 0 !important;
-    margin-top: 0 !important;
+
+    background:
+        radial-gradient(
+            circle at top center,
+            rgba(255, 0, 0, .06),
+            transparent 35%
+        ),
+        linear-gradient(
+            180deg,
+            #080808,
+            #0d0d0d,
+            #111
+        );
+
+    overflow: hidden;
 }
 
 .home-container {
     width: 100%;
-    max-width: 1320px;
+    max-width: 1400px;
+
     margin: 0 auto;
-    padding: 0 24px;
+
+    padding:
+        0 32px
+        120px;
 }
 
-/* ============================================================
-   SWIPER BANNER
-============================================================ */
+/* ==========================================================
+   COMMON SECTION
+========================================================== */
+
+.home-features-section,
+.movie-container,
+.promotions-section,
+.cinema-corner-section {
+    position: relative;
+
+    width: 100%;
+
+    margin-top: 110px;
+
+    animation:
+        fadeUp .8s ease;
+}
+
+.section-header {
+    position: relative;
+
+    margin-bottom: 50px;
+}
+
+.section-title {
+    position: relative;
+
+    display: inline-block;
+
+    color: var(--text-white);
+
+    font-size:
+        clamp(
+            2rem,
+            3vw,
+            2.8rem
+        );
+
+    font-weight: 900;
+
+    letter-spacing: 2px;
+
+    text-transform: uppercase;
+}
+
+.section-title::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    bottom: -14px;
+
+    width: 100%;
+    height: 3px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--primary-color),
+            transparent
+        );
+}
+
+.title-underline {
+    display: none;
+}
+
+/* ==========================================================
+   FULL BANNER
+========================================================== */
 
 .carousel-full-wrapper {
     position: relative;
+
     width: 100%;
+
     overflow: hidden;
+
     line-height: 0;
 }
 
 .mySwiper {
     width: 100%;
-    aspect-ratio: 2048 / 850;
+
+    aspect-ratio:
+        2048 / 850;
 }
 
 .banner-full-item {
     position: relative;
+
     width: 100%;
     height: 100%;
+
     overflow: hidden;
 }
 
 .banner-img-fade-zoom {
     width: 100%;
     height: 100%;
+
     object-fit: cover;
+
     display: block;
 
     transform: scale(1);
 
     transition:
-        transform 1.2s ease-in-out;
+        transform 8s ease;
 
     filter:
-        brightness(.88)
+        brightness(.85)
         contrast(1.05)
         saturate(.95);
 }
 
 .swiper-slide-active
 .banner-img-fade-zoom {
-    transform: scale(1.05);
-    transition:
-        transform 6s ease-out;
+    transform:
+        scale(1.08);
 }
 
 .banner-full-overlay {
     position: absolute;
+
     inset: 0;
+
     z-index: 2;
 
     pointer-events: none;
@@ -78,85 +215,314 @@
     background:
         linear-gradient(
             to top,
-            rgba(10,10,12,.40) 0%,
-            rgba(10,10,12,.10) 40%,
+            rgba(0,0,0,.90) 0%,
+            rgba(0,0,0,.35) 35%,
             transparent 100%
+        ),
+
+        radial-gradient(
+            circle at center,
+            transparent 30%,
+            rgba(0,0,0,.35) 100%
         );
 }
+/* =========================
+   PREMIUM BANNER WRAPPER
+========================= */
 
-/* ============================================================
+.banner-premium {
+  position: relative;
+  width: 100%;
+  height: 85vh;
+  overflow: hidden;
+}
+
+/* Swiper full */
+.premiumSwiper,
+.banner-slide {
+  width: 100%;
+  height: 100%;
+}
+
+/* =========================
+   IMAGE CINEMATIC STYLE
+========================= */
+
+.banner-media {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+
+  /* cinematic feel */
+  transform: scale(1.08);
+  animation: bannerZoom 1.4s ease-out forwards;
+}
+
+/* zoom mượt */
+@keyframes bannerZoom {
+  0% {
+    opacity: 0;
+    transform: scale(1.1);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+/* =========================
+   DARK OVERLAY PREMIUM
+========================= */
+
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0,0,0,0.75),
+    rgba(0,0,0,0.2),
+    rgba(0,0,0,0.55)
+  );
+  z-index: 2;
+}
+
+/* =========================
+   LIGHT SWEEP (PREMIUM EFFECT)
+========================= */
+
+.banner-light {
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.12),
+    transparent
+  );
+  transform: skewX(-20deg);
+  animation: lightMove 5s infinite ease-in-out;
+  z-index: 3;
+}
+
+@keyframes lightMove {
+  0% {
+    left: -120%;
+  }
+  100% {
+    left: 220%;
+  }
+}
+.banner-text {
+  position: absolute;
+  top: 20%;
+  left: 6%;
+  z-index: 5;
+  max-width: 50%;
+  color: white;
+}
+@keyframes titleIn {
+  0% {
+    opacity: 0;
+    transform: translateY(50px);
+    filter: blur(12px);
+    letter-spacing: 4px;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+    letter-spacing: 1px;
+  }
+}
+
+.banner-title {
+  font-size: 64px;
+  font-weight: 900;
+  text-transform: uppercase;
+
+  background: linear-gradient(90deg, #fff, #ffcc66, #ff3d3d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  animation: titleIn 1.2s ease-out forwards;
+}
+@keyframes subIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.banner-subtitle {
+  margin-top: 10px;
+  font-size: 18px;
+  color: rgba(255,255,255,0.85);
+
+  opacity: 0;
+  animation: subIn 1s ease-out 0.3s forwards;
+}
+@keyframes btnIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+.banner-btn {
+  margin-top: 25px;
+  padding: 14px 28px;
+
+  background: linear-gradient(90deg, #ffb300, #ff3d3d);
+  border: none;
+  border-radius: 12px;
+
+  font-weight: 700;
+  cursor: pointer;
+
+  box-shadow: 0 10px 30px rgba(255, 80, 0, 0.4);
+
+  opacity: 0;
+  animation: btnIn 1s ease-out 0.6s forwards;
+
+  transition: 0.3s;
+}
+
+.banner-btn:hover {
+  transform: scale(1.05);
+}
+/* ==========================================================
    QUICK BOOKING
-============================================================ */
+========================================================== */
 
 .quick-booking-container {
     position: relative;
+
     z-index: 100;
 
     width: 100%;
-    max-width: 1180px;
+    max-width: 1250px;
 
     margin:
-        -55px auto 40px;
+        -70px auto 0;
 }
 
 .quick-booking-content {
+    position: relative;
+
+    overflow: hidden;
+
     display: flex;
     align-items: center;
-    gap: 18px;
 
-    padding: 24px;
+    gap: 20px;
 
-    border-radius:
-        var(--radius-xl);
+    padding: 28px;
+
+    border-radius: 28px;
 
     background:
-        var(--card-bg);
-
-    border:
-        var(--border-primary);
+        rgba(15,15,15,.92);
 
     backdrop-filter:
-        blur(20px);
+        blur(25px);
+
+    border:
+        1px solid
+        rgba(255,255,255,.08);
 
     box-shadow:
-        var(--shadow-card);
+        0 20px 60px
+        rgba(0,0,0,.45);
 
     transition:
-        var(--transition-normal);
+        .4s ease;
+}
+
+.quick-booking-content::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: -120%;
+
+    width: 100px;
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.12),
+            transparent
+        );
+
+    animation:
+        shine 7s linear infinite;
 }
 
 .quick-booking-content:hover {
     border:
-        var(--border-glow);
+        1px solid
+        rgba(255,50,50,.25);
 
     box-shadow:
-        var(--shadow-card),
-        var(--shadow-glow);
+        0 25px 70px rgba(0,0,0,.55),
+        0 0 25px rgba(255,0,0,.12);
 }
 
 .quick-booking-selects {
     flex: 1;
 
     display: grid;
+
     grid-template-columns:
         repeat(4, 1fr);
 
-    gap: 14px;
+    gap: 16px;
 }
+
+/* ==========================================================
+   SELECT BOX
+========================================================== */
 
 .quick-booking-selects select {
     width: 100%;
-    height: 56px;
+    height: 60px;
 
-    padding: 0 18px;
+    padding:
+        0 20px;
 
     border-radius:
-        var(--radius-lg);
+        18px;
 
     border:
-        var(--border-primary);
-
-    outline: none;
+        1px solid
+        rgba(255,255,255,.08);
 
     background:
         rgba(255,255,255,.03);
@@ -165,17 +531,20 @@
         var(--text-white);
 
     font-size: .95rem;
-    font-weight: 500;
+    font-weight: 600;
+
+    outline: none;
 
     cursor: pointer;
 
     transition:
-        var(--transition-normal);
+        .3s ease;
 }
 
 .quick-booking-selects select:hover:not(:disabled) {
     border:
-        var(--border-glow);
+        1px solid
+        rgba(255,50,50,.30);
 
     background:
         rgba(255,255,255,.05);
@@ -183,11 +552,12 @@
 
 .quick-booking-selects select:focus {
     border:
-        var(--border-glow);
+        1px solid
+        var(--primary-color);
 
     box-shadow:
         0 0 0 4px
-        rgba(255,45,45,.10);
+        rgba(255,0,0,.10);
 }
 
 .quick-booking-selects select:disabled {
@@ -197,288 +567,303 @@
 
 .quick-booking-selects option {
     background:
-        #181818;
+        #121212;
 
     color:
-        var(--text-white);
+        #fff;
 }
 
-/* ============================================================
-   QUICK BOOKING BUTTON
-============================================================ */
+/* ==========================================================
+   QUICK BOOK BUTTON
+========================================================== */
 
 .btn-quick-booking {
-    height: 56px;
-    padding: 0 34px;
+    position: relative;
+
+    overflow: hidden;
+
+    min-width: 220px;
+
+    height: 60px;
 
     border: none;
 
     border-radius:
-        var(--radius-lg);
+        18px;
 
     background:
         linear-gradient(
             135deg,
-            var(--primary-color),
-            var(--primary-dark)
+            #ff2020,
+            #d60000
         );
 
     color:
-        var(--text-white);
+        #fff;
 
     font-size: .95rem;
-    font-weight: 700;
+    font-weight: 800;
 
-    letter-spacing: .5px;
+    letter-spacing: 1px;
 
     cursor: pointer;
-    white-space: nowrap;
 
     transition:
-        var(--transition-normal);
+        .35s ease;
 
     box-shadow:
-        var(--shadow-card);
+        0 15px 35px
+        rgba(255,0,0,.20);
 }
 
 .btn-quick-booking:hover {
     transform:
-        translateY(-3px);
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--primary-hover),
-            var(--primary-color)
-        );
+        translateY(-4px);
 
     box-shadow:
-        var(--shadow-card),
-        var(--shadow-glow-hover);
+        0 25px 45px
+        rgba(255,0,0,.30);
 }
 
-/* ============================================================
-   COMMON SECTION
-============================================================ */
+.btn-quick-booking::before {
+    content: "";
 
-.home-features-section,
-.movie-container,
-.promotions-section,
-.cinema-corner-section {
-    width: 100%;
-    margin-top: 80px;
-    
-}
+    position: absolute;
 
-.section-header {
-    margin-bottom: 36px;
-}
+    top: 0;
+    left: -120%;
 
-.section-title {
-    position: relative;
-
-    color:
-        var(--text-white);
-
-    font-size:
-        clamp(1.8rem, 3vw, 2.3rem);
-
-    font-weight: 800;
-
-    letter-spacing: 1px;
-    text-transform: uppercase;
-
-    margin-bottom: 14px;
-}
-
-.title-underline {
-    width: 90px;
-    height: 4px;
-
-    border-radius:
-        var(--radius-round);
+    width: 70px;
+    height: 100%;
 
     background:
         linear-gradient(
             90deg,
-            var(--primary-color),
-            var(--primary-dark)
+            transparent,
+            rgba(255,255,255,.35),
+            transparent
         );
 }
 
-/* ============================================================
+.btn-quick-booking:hover::before {
+    animation:
+        shine .8s ease;
+}
+/* ==========================================================
    FEATURES SECTION
-============================================================ */
+========================================================== */
 
 .features-grid {
     display: grid;
+
     grid-template-columns:
         repeat(4, 1fr);
 
-    gap: 22px;
+    gap: 24px;
 }
 
 .feature-item {
+    position: relative;
+
+    overflow: hidden;
+
     display: flex;
     align-items: center;
+
     gap: 18px;
 
-    padding: 24px;
+    padding: 26px;
 
-    border-radius:
-        var(--radius-xl);
+    border-radius: 24px;
 
     background:
-        var(--card-bg);
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.04),
+            rgba(255,255,255,.02)
+        );
 
     border:
-        var(--border-primary);
+        1px solid
+        rgba(255,255,255,.08);
+
+    backdrop-filter:
+        blur(15px);
 
     transition:
-        var(--transition-normal);
+        all .4s ease;
+}
 
-    box-shadow:
-        var(--shadow-card);
+.feature-item::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: -120%;
+
+    width: 70px;
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.12),
+            transparent
+        );
+}
+
+.feature-item:hover::before {
+    animation:
+        shine .8s ease;
 }
 
 .feature-item:hover {
     transform:
-        translateY(-8px);
+        translateY(-10px);
 
     border:
-        var(--border-glow);
+        1px solid
+        rgba(255,50,50,.25);
 
     box-shadow:
-        var(--shadow-card),
-        var(--shadow-glow-hover);
+        0 20px 40px rgba(0,0,0,.35),
+        0 0 25px rgba(255,0,0,.12);
 }
 
 .feature-icon-wrapper {
-    min-width: 68px;
-    height: 68px;
+    width: 72px;
+    height: 72px;
+
+    min-width: 72px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    border-radius:
-        var(--radius-lg);
+    border-radius: 20px;
 
     background:
-        rgba(255,45,45,.08);
+        linear-gradient(
+            135deg,
+            rgba(255,0,0,.15),
+            rgba(255,0,0,.05)
+        );
 
     border:
-        1px solid rgba(255,45,45,.12);
+        1px solid
+        rgba(255,0,0,.15);
 
     color:
         var(--primary-color);
 
     transition:
-        var(--transition-normal);
+        .35s ease;
 }
 
-.feature-item:hover
-.feature-icon-wrapper {
-    background:
-        rgba(255,45,45,.12);
+.feature-item:hover .feature-icon-wrapper {
+    transform:
+        scale(1.08);
+
+    animation:
+        pulseGlow 2s infinite;
 }
 
 .feature-text h4 {
-    margin-bottom: 6px;
-
-    color:
-        var(--text-white);
+    color: #fff;
 
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 800;
 
-    line-height: 1.4;
+    margin-bottom: 6px;
 }
 
 .feature-text p {
     color:
-        var(--text-secondary);
+        rgba(255,255,255,.65);
 
     font-size: .9rem;
+
     line-height: 1.7;
 }
 
-/* ============================================================
-   MOVIE GRID
-============================================================ */
+/* ==========================================================
+   MOVIE CONTAINER
+========================================================== */
+
+.movie-container {
+    position: relative;
+}
 
 .movie-grid {
     display: grid;
+
     grid-template-columns:
         repeat(4, 1fr);
 
-    gap: 28px;
+    gap: 30px;
 }
 
 .movie-item {
     transition:
-        var(--transition-normal);
+        .4s ease;
 }
 
 .movie-item:hover {
     transform:
-        translateY(-8px);
+        translateY(-10px);
 }
 
-/* ============================================================
+/* ==========================================================
    MOVIE POSTER
-============================================================ */
+========================================================== */
 
 .poster-wrapper {
     position: relative;
 
-    width: 100%;
-    aspect-ratio: 2 / 3;
-
     overflow: hidden;
 
-    border-radius:
-        var(--radius-xl);
+    border-radius: 24px;
+
+    aspect-ratio: 2 / 3;
 
     background:
-        var(--card-bg);
+        #151515;
 
     border:
-        var(--border-primary);
-
-    box-shadow:
-        var(--shadow-card);
+        1px solid
+        rgba(255,255,255,.08);
 
     transition:
-        var(--transition-normal);
+        .4s ease;
 }
 
-.movie-item:hover
-.poster-wrapper {
+.poster-wrapper:hover {
     border:
-        var(--border-glow);
+        1px solid
+        rgba(255,50,50,.25);
 
     box-shadow:
-        var(--shadow-card),
-        var(--shadow-glow-hover);
+        0 25px 50px rgba(0,0,0,.35),
+        0 0 25px rgba(255,0,0,.12);
 }
 
 .poster-wrapper::after {
     content: "";
 
     position: absolute;
+
     inset: 0;
 
     background:
         linear-gradient(
             to top,
-            rgba(0,0,0,.65) 0%,
-            rgba(0,0,0,.10) 45%,
-            transparent 100%
+            rgba(0,0,0,.85),
+            transparent 55%
         );
 
-    pointer-events: none;
-    z-index: 1;
+    z-index: 2;
 }
 
 .poster-img {
@@ -488,34 +873,24 @@
     object-fit: cover;
 
     transition:
-        transform .65s ease,
-        filter .4s ease;
-
-    filter:
-        brightness(.88)
-        contrast(1.04)
-        saturate(.96);
+        transform .8s ease;
 }
 
-.movie-item:hover
-.poster-img {
+.poster-wrapper:hover .poster-img {
     transform:
-        scale(1.04);
-
-    filter:
-        brightness(.98)
-        contrast(1.08)
-        saturate(1);
+        scale(1.08);
 }
 
-/* ============================================================
+/* ==========================================================
    POSTER HOVER
-============================================================ */
+========================================================== */
 
 .poster-hover {
     position: absolute;
+
     inset: 0;
-    z-index: 3;
+
+    z-index: 5;
 
     display: flex;
     align-items: center;
@@ -523,161 +898,355 @@
 
     opacity: 0;
 
-    background:
-        linear-gradient(
-            rgba(0,0,0,.08),
-            rgba(0,0,0,.45)
-        );
-
     backdrop-filter:
-        blur(2px);
+        blur(4px);
+
+    background:
+        rgba(0,0,0,.35);
 
     transition:
-        var(--transition-normal);
+        .4s ease;
 }
 
-.poster-wrapper:hover
-.poster-hover {
+.poster-wrapper:hover .poster-hover {
     opacity: 1;
 }
 
-/* ============================================================
-   MOVIE NAME
-============================================================ */
+/* ==========================================================
+   MOVIE TITLE
+========================================================== */
 
 .movie-name {
     margin-top: 16px;
 
-    color:
-        var(--text-white);
+    color: #fff;
 
     font-size: .95rem;
     font-weight: 700;
 
     text-align: center;
-    text-transform: uppercase;
 
     line-height: 1.6;
 
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-
-    overflow: hidden;
     min-height: 52px;
 
     transition:
-        var(--transition-normal);
+        .3s ease;
 }
 
-.movie-item:hover
-.movie-name {
+.movie-item:hover .movie-name {
     color:
-        var(--text-primary);
+        var(--primary-color);
 }
 
-/* ============================================================
-   BUTTON BOOK NOW
-============================================================ */
+/* ==========================================================
+   BUTTON BOOK
+========================================================== */
 
 .btn-book {
-    padding: 12px 24px;
+    height: 48px;
+
+    padding:
+        0 28px;
 
     border: none;
 
-    border-radius:
-        var(--radius-round);
+    border-radius: 50px;
 
     background:
         linear-gradient(
             135deg,
-            var(--primary-color),
-            var(--primary-dark)
+            #ff2020,
+            #d50000
         );
 
-    color:
-        var(--text-white);
+    color: #fff;
 
-    font-size: .84rem;
+    font-size: .85rem;
     font-weight: 700;
-
-    letter-spacing: .4px;
 
     cursor: pointer;
 
     transition:
-        var(--transition-normal);
-
-    box-shadow:
-        var(--shadow-card);
+        .35s ease;
 }
 
 .btn-book:hover {
     transform:
-        translateY(-2px);
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--primary-hover),
-            var(--primary-color)
-        );
+        translateY(-3px);
 
     box-shadow:
-        var(--shadow-card),
-        var(--shadow-glow-hover);
+        0 15px 35px
+        rgba(255,0,0,.25);
 }
 
-/* ============================================================
+/* ==========================================================
    PROMOTIONS
-============================================================ */
+========================================================== */
 
 .promotions-grid {
     display: grid;
+
     grid-template-columns:
         repeat(4, 1fr);
 
-    gap: 24px;
+    gap: 28px;
+}
+
+.promo-card {
+    position: relative;
+
+    overflow: hidden;
+
+    border-radius: 24px;
+
+    background:
+        #141414;
+
+    border:
+        1px solid
+        rgba(255,255,255,.08);
+
+    transition:
+        all .45s ease;
+}
+
+.promo-card:hover {
+    transform:
+        translateY(-12px);
+
+    border:
+        1px solid
+        rgba(255,50,50,.25);
+
+    box-shadow:
+        0 30px 60px rgba(0,0,0,.40),
+        0 0 30px rgba(255,0,0,.12);
+}
+
+.promo-image {
+    height: 240px;
+
+    overflow: hidden;
+}
+
+.promo-image img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    transition:
+        transform .8s ease;
+}
+
+.promo-card:hover .promo-image img {
+    transform:
+        scale(1.08);
+}
+
+.promo-info {
+    padding: 22px;
+}
+
+.promo-info h3 {
+    color: #fff;
+
+    font-size: 1rem;
+
+    margin-bottom: 12px;
+
+    line-height: 1.6;
+}
+
+.promo-info p {
+    color:
+        rgba(255,255,255,.65);
+
+    font-size: .9rem;
+
+    line-height: 1.8;
+
+    margin-bottom: 18px;
+}
+
+/* ==========================================================
+   CINEMA NEWS
+========================================================== */
+
+.cinema-news-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 28px;
+}
+
+.cinema-news-card {
+    overflow: hidden;
+
+    border-radius: 24px;
+
+    background:
+        #141414;
+
+    border:
+        1px solid
+        rgba(255,255,255,.08);
+
+    transition:
+        .45s ease;
+}
+
+.cinema-news-card:hover {
+    transform:
+        translateY(-12px);
+
+    border:
+        1px solid
+        rgba(255,50,50,.25);
+
+    box-shadow:
+        0 30px 60px rgba(0,0,0,.40),
+        0 0 30px rgba(255,0,0,.12);
+}
+
+.cinema-news-image {
+    height: 240px;
+
+    overflow: hidden;
+}
+
+.cinema-news-image img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    transition:
+        transform .8s ease;
+}
+
+.cinema-news-card:hover
+.cinema-news-image img {
+    transform:
+        scale(1.08);
+}
+
+.cinema-news-content {
+    padding: 22px;
+}
+
+.cinema-news-content h3 {
+    color: #fff;
+
+    font-size: 1rem;
+
+    line-height: 1.8;
+
+    margin-bottom: 20px;
+
+    transition:
+        .3s ease;
+}
+
+.cinema-news-card:hover h3 {
+    color:
+        var(--primary-color);
+}
+/* =========================================================
+   PROMOTIONS SECTION
+========================================================= */
+
+.promotions-section {
+    position: relative;
+}
+
+.promotions-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
 }
 
 .promo-card {
     position: relative;
     overflow: hidden;
 
-    border-radius:
-        var(--radius-xl);
-
     background:
-        var(--card-bg);
+        linear-gradient(
+            145deg,
+            rgba(18,18,22,.95),
+            rgba(12,12,14,.98)
+        );
 
-    border:
-        var(--border-primary);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 28px;
 
-    transition:
-        var(--transition-normal);
+    transition: all .45s ease;
 
     box-shadow:
-        var(--shadow-card);
+        0 10px 30px rgba(0,0,0,.25);
+
+    animation: fadeUp .8s ease;
+}
+
+.promo-card::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,0,60,.10),
+            transparent 60%
+        );
+
+    opacity: 0;
+
+    transition: .4s;
+}
+
+.promo-card:hover::before {
+    opacity: 1;
 }
 
 .promo-card:hover {
     transform:
-        translateY(-8px);
+        translateY(-12px);
 
-    border:
-        var(--border-glow);
+    border-color:
+        rgba(255,0,60,.35);
 
     box-shadow:
-        var(--shadow-card),
-        var(--shadow-glow-hover);
+        0 25px 50px rgba(255,0,60,.15);
 }
 
 .promo-image {
     position: relative;
-    overflow: hidden;
-
-    width: 100%;
     height: 240px;
+    overflow: hidden;
+}
+
+.promo-image img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    transition:
+        transform .7s ease,
+        filter .5s ease;
+}
+
+.promo-card:hover .promo-image img {
+    transform: scale(1.08);
+
+    filter:
+        brightness(1.05)
+        contrast(1.05);
 }
 
 .promo-image::after {
@@ -689,149 +1258,119 @@
     background:
         linear-gradient(
             to top,
-            rgba(0,0,0,.75),
-            transparent 50%
+            rgba(0,0,0,.8),
+            transparent 55%
         );
-
-    z-index: 1;
 }
 
-.promo-image img {
+.promo-info {
+    padding: 24px;
+}
+
+.promo-info h3 {
+    color: #fff;
+
+    font-size: 1rem;
+    font-weight: 700;
+
+    line-height: 1.6;
+
+    margin-bottom: 12px;
+
+    min-height: 52px;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+}
+
+.promo-info p {
+    color: rgba(255,255,255,.72);
+
+    font-size: .92rem;
+    line-height: 1.8;
+
+    margin-bottom: 20px;
+
+    min-height: 75px;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+}
+
+/* =========================================================
+   CINEMA NEWS
+========================================================= */
+
+.cinema-corner-section {
+    position: relative;
+    margin-bottom: 100px;
+}
+
+.cinema-news-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+}
+
+.cinema-news-card {
+    position: relative;
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(18,18,22,.95),
+            rgba(12,12,14,.98)
+        );
+
+    border-radius: 28px;
+
+    border: 1px solid rgba(255,255,255,.06);
+
+    transition: all .45s ease;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.25);
+
+    animation: fadeUp .9s ease;
+}
+
+.cinema-news-card:hover {
+    transform:
+        translateY(-12px);
+
+    border-color:
+        rgba(255,0,60,.35);
+
+    box-shadow:
+        0 25px 50px rgba(255,0,60,.15);
+}
+
+.cinema-news-image {
+    position: relative;
+    height: 240px;
+    overflow: hidden;
+}
+
+.cinema-news-image img {
     width: 100%;
     height: 100%;
 
     object-fit: cover;
 
     transition:
-        transform .7s ease,
+        transform .8s ease,
         filter .5s ease;
-
-    filter:
-        brightness(.88)
-        contrast(1.04)
-        saturate(.96);
 }
 
-.promo-card:hover
-.promo-image img {
-    transform:
-        scale(1.05);
-
-    filter:
-        brightness(.96)
-        contrast(1.06);
-}
-
-.promo-tag {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    z-index: 3;
-
-    padding: 8px 16px;
-
-    border-radius:
-        var(--radius-round);
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--primary-color),
-            var(--primary-dark)
-        );
-
-    border:
-        var(--border-primary);
-
-    color:
-        var(--text-white);
-
-    font-size: .78rem;
-    font-weight: 700;
-
-    backdrop-filter:
-        blur(10px);
-}
-
-.promo-info {
-    padding: 22px;
-}
-
-.promo-info h3 {
-    margin-bottom: 12px;
-
-    color:
-        var(--text-white);
-
-    font-size: 1rem;
-    font-weight: 700;
-
-    line-height: 1.6;
-}
-
-.promo-info p {
-    margin-bottom: 20px;
-
-    color:
-        var(--text-secondary);
-
-    font-size: .9rem;
-    line-height: 1.7;
-}
-
-/* ============================================================
-   CINEMA NEWS
-============================================================ */
-
-.cinema-corner-section {
-    margin-bottom: 0;
-}
-
-.cinema-news-grid {
-    display: grid;
-    grid-template-columns:
-        repeat(4, 1fr);
-
-    gap: 24px;
-}
-
-.cinema-news-card {
-    overflow: hidden;
-
-    border-radius:
-        var(--radius-xl);
-
-    background:
-        var(--card-bg);
-
-    border:
-        var(--border-primary);
-
-    transition:
-        var(--transition-normal);
-
-    box-shadow:
-        var(--shadow-card);
-}
-
-.cinema-news-card:hover {
-    transform:
-        translateY(-8px);
-
-    border:
-        var(--border-glow);
-
-    box-shadow:
-        var(--shadow-card),
-        var(--shadow-glow-hover);
-}
-
-.cinema-news-image {
-    position: relative;
-    overflow: hidden;
-
-    width: 100%;
-    height: 230px;
+.cinema-news-card:hover .cinema-news-image img {
+    transform: scale(1.08);
 }
 
 .cinema-news-image::after {
@@ -843,84 +1382,26 @@
     background:
         linear-gradient(
             to top,
-            rgba(0,0,0,.72),
-            transparent 50%
+            rgba(0,0,0,.85),
+            transparent 55%
         );
-
-    z-index: 1;
-}
-
-.cinema-news-image img {
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
-
-    transition:
-        transform .7s ease,
-        filter .5s ease;
-
-    filter:
-        brightness(.88)
-        contrast(1.04)
-        saturate(.96);
-}
-
-.cinema-news-card:hover
-.cinema-news-image img {
-    transform:
-        scale(1.05);
-
-    filter:
-        brightness(.96)
-        contrast(1.06);
-}
-
-.cinema-news-category {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    z-index: 3;
-
-    padding: 8px 16px;
-
-    border-radius:
-        var(--radius-round);
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--primary-color),
-            var(--primary-dark)
-        );
-
-    border:
-        var(--border-primary);
-
-    color:
-        var(--text-white);
-
-    font-size: .78rem;
-    font-weight: 700;
-
-    backdrop-filter:
-        blur(10px);
 }
 
 .cinema-news-content {
-    padding: 22px;
+    padding: 24px;
 }
 
 .cinema-news-content h3 {
-    margin-bottom: 18px;
-
-    color:
-        var(--text-white);
+    color: #fff;
 
     font-size: 1rem;
     font-weight: 700;
 
     line-height: 1.7;
+
+    min-height: 58px;
+
+    margin-bottom: 18px;
 
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -929,190 +1410,164 @@
     overflow: hidden;
 }
 
-/* ============================================================
-   BUTTON DETAIL
-============================================================ */
+/* =========================================================
+   BUTTON
+========================================================= */
 
 .btn-detail {
     width: 100%;
-    height: 48px;
+    height: 50px;
 
     border: none;
-
-    border-radius:
-        var(--radius-lg);
+    border-radius: 14px;
 
     background:
         linear-gradient(
             135deg,
-            var(--primary-color),
-            var(--primary-dark)
+            #ff003c,
+            #ff4040
         );
 
-    color:
-        var(--text-white);
+    color: #fff;
 
     font-size: .9rem;
     font-weight: 700;
 
-    letter-spacing: .4px;
-
     cursor: pointer;
 
-    transition:
-        var(--transition-normal);
+    transition: all .35s ease;
 
-    box-shadow:
-        var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-detail::before {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: -120%;
+
+    width: 80%;
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.3),
+            transparent
+        );
+
+    transition: .7s;
+}
+
+.btn-detail:hover::before {
+    left: 150%;
 }
 
 .btn-detail:hover {
     transform:
-        translateY(-2px);
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--primary-hover),
-            var(--primary-color)
-        );
+        translateY(-3px);
 
     box-shadow:
-        var(--shadow-card),
-        var(--shadow-glow-hover);
+        0 12px 30px rgba(255,0,60,.35);
 }
 
-/* ============================================================
+/* =========================================================
+   GLOBAL ANIMATIONS
+========================================================= */
+
+@keyframes fadeUp {
+
+    from {
+        opacity: 0;
+        transform:
+            translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0);
+    }
+}
+
+@keyframes glowPulse {
+
+    0% {
+        box-shadow:
+            0 0 0 rgba(255,0,60,0);
+    }
+
+    50% {
+        box-shadow:
+            0 0 30px rgba(255,0,60,.18);
+    }
+
+    100% {
+        box-shadow:
+            0 0 0 rgba(255,0,60,0);
+    }
+}
+
+/* =========================================================
    RESPONSIVE
-============================================================ */
+========================================================= */
 
 @media (max-width: 1200px) {
 
-    .features-grid {
-        grid-template-columns:
-            repeat(2, 1fr);
-    }
-
-    .movie-grid {
-        grid-template-columns:
-            repeat(4, 1fr);
-    }
-
     .promotions-grid,
     .cinema-news-grid {
-        grid-template-columns:
-            repeat(2, 1fr);
-    }
-
-    .home-container {
-        padding: 0 22px;
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 992px) {
 
-    .quick-booking-content {
-        flex-direction: column;
-        align-items: stretch;
+    .promotions-grid,
+    .cinema-news-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 
-    .quick-booking-selects {
-        grid-template-columns:
-            repeat(2, 1fr);
-    }
-
-    .btn-quick-booking {
-        width: 100%;
-    }
-
-    .movie-grid {
-        grid-template-columns:
-            repeat(3, 1fr);
-    }
-
-    .section-title {
-        font-size:
-            clamp(1.6rem, 3vw, 2rem);
+    .promo-image,
+    .cinema-news-image {
+        height: 220px;
     }
 }
 
 @media (max-width: 768px) {
 
-    .home-container {
-        padding: 0 16px;
-    }
-
-    .mySwiper {
-        aspect-ratio: 1 / 1.25;
-    }
-
-    .quick-booking-container {
-        margin:
-            -20px auto 30px;
-    }
-
-    .quick-booking-selects {
-        grid-template-columns:
-            1fr;
-    }
-
-    .features-grid,
     .promotions-grid,
     .cinema-news-grid {
-        grid-template-columns:
-            1fr;
+        grid-template-columns: 1fr;
     }
 
-    .movie-grid {
-        grid-template-columns:
-            repeat(2, 1fr);
-
-        gap: 18px;
+    .promo-card,
+    .cinema-news-card {
+        border-radius: 24px;
     }
 
-    .feature-item {
-        padding: 20px;
-    }
-
-    .section-title {
-        font-size: 1.5rem;
+    .promo-image,
+    .cinema-news-image {
+        height: 240px;
     }
 }
 
 @media (max-width: 480px) {
-
-    .mySwiper {
-        aspect-ratio: 1 / 1.45;
-    }
-
-    .movie-grid {
-        gap: 14px;
-    }
-
-    .movie-name {
-        font-size: .85rem;
-        min-height: 44px;
-    }
-
-    .feature-item {
-        flex-direction: column;
-        text-align: center;
-    }
 
     .promo-info,
     .cinema-news-content {
         padding: 18px;
     }
 
-    .quick-booking-content {
-        padding: 18px;
+    .promo-image,
+    .cinema-news-image {
+        height: 210px;
     }
 
-    .btn-book,
     .btn-detail {
-        height: 44px;
-        font-size: .82rem;
+        height: 46px;
+        font-size: .85rem;
     }
 }
-
-

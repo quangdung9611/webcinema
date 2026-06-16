@@ -32,13 +32,32 @@ const UserHome = () => {
   // BANNER
   // =========================
 
-  const banners = [
-    'banner1.png',
-    'banner2.png',
-    'banner3.png',
-    'banner4.png'
-  ];
-
+ const banners = [
+  {
+    img: 'banner1.png',
+    title: 'PHÒNG CHIẾU VIP',
+    subtitle: 'RIÊNG TƯ - ĐẲNG CẤP - KHÁC BIỆT',
+    button: 'KHÁM PHÁ NGAY'
+  },
+  {
+    img: 'banner2.png',
+    title: 'NHẬN ƯU ĐÃI NGAY',
+    subtitle: 'ĐẶT VÉ DỄ DÀNG - DEAL HOT MỖI NGÀY',
+    button: 'ĐẶT VÉ NGAY'
+  },
+  {
+    img: 'banner3.png',
+    title: 'COMBO BẮP NƯỚC',
+    subtitle: 'TRỌN VẸN TRẢI NGHIỆM ĐIỆN ẢNH',
+    button: 'XEM COMBO'
+  },
+  {
+    img: 'banner4.png',
+    title: 'TRẢI NGHIỆM BOM TẤN',
+    subtitle: 'HÌNH ẢNH - ÂM THANH - CẢM XÚC ĐỈNH CAO',
+    button: 'XEM LỊCH CHIẾU'
+  }
+];
   const bannerBaseUrl = "https://api.quangdungcinema.id.vn/uploads/banners/";
   const bannerDocUrl = "https://api.quangdungcinema.id.vn/uploads/banner_doc/";
   const promotionImageUrl =
@@ -443,57 +462,69 @@ const UserHome = () => {
     <div className="user-home">
 
       {/* BANNER */}
-      <div className="carousel-full-wrapper">
+    <div className="carousel-full-wrapper banner-premium">
+      <Swiper
+        modules={[Autoplay, EffectFade, Navigation, Pagination]}
+        effect="fade"
+        speed={1200}
+        autoplay={{
+          delay: 4500,
+          disableOnInteraction: false
+        }}
+        loop={true}
+        onSwiper={setSwiperInstance}
+        onSlideChange={(swiper) =>
+          setActiveIndex(swiper.realIndex)
+        }
+        className="premiumSwiper"
+      >
+        {banners.map((item, index) => (
+      <SwiperSlide key={index} className="banner-slide">
+        
+        <div className="banner-media">
+          
+          <picture>
+            <source
+              media="(max-width: 767px)"
+              srcSet={`${bannerDocUrl}${item.img}`}
+            />
 
-        <Swiper
-          modules={[
-            Autoplay,
-            EffectFade,
-            Navigation,
-            Pagination
-          ]}
-          effect={'fade'}
-          speed={1000}
-          autoplay={{
-            delay: 4000,
-            disableOnInteraction: false
-          }}
-          loop={true}
-          onSwiper={setSwiperInstance}
-          onSlideChange={(swiper) =>
-            setActiveIndex(swiper.realIndex)
-          }
-          className="mySwiper"
-        >
+            <img
+              src={`${bannerBaseUrl}${item.img}`}
+              className="banner-img"
+              alt={item.title}
+            />
+          </picture>
 
-          {banners.map((imgName, index) => (
+          {/* overlay */}
+          <div className="banner-overlay"></div>
 
-            <SwiperSlide
-              key={index}
-              className="banner-full-item"
-            >
+          {/* TEXT PREMIUM */}
+          <div className="banner-text">
 
-              <picture>
-                <source
-                  media="(max-width: 767px)"
-                  srcSet={`${bannerDocUrl}${imgName}`}
-                />
+            <h1 className="banner-title">
+              {item.title}
+            </h1>
 
-                <img
-                  src={`${bannerBaseUrl}${imgName}`}
-                  alt={`Promotion ${index + 1}`}
-                  className="banner-img-fade-zoom"
-                />
-              </picture>
+            <p className="banner-subtitle">
+              {item.subtitle}
+            </p>
 
-              <div className="banner-full-overlay"></div>
+            <button className="banner-btn">
+              {item.button}
+            </button>
 
-            </SwiperSlide>
-          ))}
+          </div>
 
-        </Swiper>
+          {/* light effect */}
+          <div className="banner-light"></div>
 
-      </div>
+        </div>
+
+      </SwiperSlide>
+    ))}
+      </Swiper>
+    </div>
 
       {/* QUICK BOOKING */}
       <ScrollReveal>
@@ -783,9 +814,9 @@ const UserHome = () => {
                         alt={news.title}
                       />
 
-                      <span className="cinema-news-category">
+                      {/* <span className="cinema-news-category">
                         ĐIỆN ẢNH
-                      </span>
+                      </span> */}
 
                     </div>
 
