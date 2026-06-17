@@ -28,34 +28,33 @@ const UserHome = () => {
 
   const navigate = useNavigate();
 
-  // =========================
-  // BANNER
-  // =========================
-
- const banners = [
+  const banners = [
   {
     img: 'banner1.png',
-    title: 'PHÒNG CHIẾU VIP',
-    subtitle: 'RIÊNG TƯ - ĐẲNG CẤP - KHÁC BIỆT',
-    button: 'KHÁM PHÁ NGAY'
+    title: 'PHÒNG VIP',
+    subtitle: 'RIÊNG TƯ • ĐẲNG CẤP • KHÁC BIỆT',
+    desc: 'Không gian điện ảnh sang trọng dành cho trải nghiệm riêng tư và đẳng cấp.'
   },
+
   {
     img: 'banner2.png',
-    title: 'NHẬN ƯU ĐÃI NGAY',
-    subtitle: 'ĐẶT VÉ DỄ DÀNG - DEAL HOT MỖI NGÀY',
-    button: 'ĐẶT VÉ NGAY'
+    title: 'ƯU ĐÃI HOT',
+    subtitle: 'ĐẶT VÉ NHANH • DEAL MỖI NGÀY',
+    desc: 'Săn ưu đãi hấp dẫn và đặt vé dễ dàng chỉ với vài thao tác.'
   },
+
   {
     img: 'banner3.png',
-    title: 'COMBO BẮP NƯỚC',
-    subtitle: 'TRỌN VẸN TRẢI NGHIỆM ĐIỆN ẢNH',
-    button: 'XEM COMBO'
+    title: 'COMBO VIP',
+    subtitle: 'BẮP GIÒN • NƯỚC MÁT • TRỌN VẸN',
+    desc: 'Thưởng thức combo hấp dẫn để tận hưởng trọn vẹn từng khoảnh khắc điện ảnh.'
   },
+
   {
     img: 'banner4.png',
-    title: 'TRẢI NGHIỆM BOM TẤN',
-    subtitle: 'HÌNH ẢNH - ÂM THANH - CẢM XÚC ĐỈNH CAO',
-    button: 'XEM LỊCH CHIẾU'
+    title: 'BOM TẤN',
+    subtitle: 'ÂM THANH • HÌNH ẢNH • CẢM XÚC',
+    desc: 'Đắm chìm trong không gian điện ảnh sống động với trải nghiệm đỉnh cao.'
   }
 ];
   const bannerBaseUrl = "https://api.quangdungcinema.id.vn/uploads/banners/";
@@ -479,7 +478,12 @@ const UserHome = () => {
         className="premiumSwiper"
       >
         {banners.map((item, index) => (
-      <SwiperSlide key={index} className="banner-slide">
+      <SwiperSlide
+        key={index}
+        className={`banner-slide ${
+          activeIndex === index ? "slide-active" : ""
+        }`}
+      >
         
         <div className="banner-media">
           
@@ -501,20 +505,16 @@ const UserHome = () => {
 
           {/* TEXT PREMIUM */}
           <div className="banner-text">
-
-            <h1 className="banner-title">
+           <h1 className="banner-title">
               {item.title}
             </h1>
-
             <p className="banner-subtitle">
               {item.subtitle}
             </p>
-
-            <button className="banner-btn">
-              {item.button}
-            </button>
-
-          </div>
+            <p className="banner-desc">
+                {item.desc}
+            </p>
+            </div>
 
           {/* light effect */}
           <div className="banner-light"></div>
