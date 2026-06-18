@@ -6,7 +6,7 @@
 /* ==========================================================
    ANIMATION
 ========================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@800&family=Inter:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Inter:wght@400;600&display=swap');
 @keyframes fadeUp {
     from {
         opacity: 0;
@@ -338,131 +338,225 @@
   0% { left: -120%; }
   100% { left: 220%; }
 }
-
 /* =========================
    PREMIUM CENTER TEXT
 ========================= */
+
 .banner-text {
-  position: absolute;
-  top: 34%;
-  left: 50%;
-  transform: translate(-50%, -34%);
-  z-index: 5;
-  width: 92%;
-  max-width: 1300px;
-  text-align: center;
-  color: #fff;
-  margin: 0 auto;
+    position: absolute;
+    top: 34%;
+    left: 50%;
+
+    transform: translate(-50%, -34%);
+
+    z-index: 5;
+
+    width: 92%;
+    max-width: 1300px;
+
+    text-align: center;
+    pointer-events: none;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 /* =========================
    PREMIUM ANIMATION
 ========================= */
+
 @keyframes fadeDownSoft {
-  0% { 
-    opacity: 0; 
-    transform: translateY(-70px); 
-    filter: blur(14px); 
-}
-  35% { 
-    opacity: .35; 
-}
-  100% { 
-    opacity: 1; 
-    transform: translateY(0); 
-    filter: blur(0); 
-}
+    0% {
+        opacity: 0;
+        transform: translateY(-55px);
+        filter: blur(12px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
 }
 
-@keyframes sparkle {
-  0%, 100% { 
-    filter: drop-shadow(0 0 5px #fff) scale(1); 
-}
-  50% { 
-    filter: drop-shadow(0 0 15px #f4d03f) scale(1.1); 
-}
+@keyframes shine {
+    0% {
+        transform: translateX(-250%);
+    }
+
+    100% {
+        transform: translateX(250%);
+    }
 }
 
 /* =========================
-   RESET ANIMATION
+   RESET
 ========================= */
+
 .banner-title,
 .banner-subtitle,
 .banner-desc {
-  opacity: 0;
-  will-change: transform, opacity;
+    opacity: 0;
+    will-change: transform, opacity;
+    margin: 0;
 }
 
 /* =========================
-   TITLE WITH DIAMOND SNOWFLAKES
+   TITLE - LUXURY GOLD
 ========================= */
+
 .banner-title {
-  position: relative; /* Cần thiết để định vị icon */
-  font-family: 'Syne', sans-serif;
-  font-size: clamp(6rem, 9vw, 9rem);
-  font-weight: 800;
-  line-height: 1.15;
-  text-transform: uppercase;
-  white-space: nowrap;
-  margin: 0 0 36px;
+    position: relative;
+    display: inline-block;
 
-  /* Gradient vàng đồng */
-  background: linear-gradient(180deg, #ffffff 0%, #ffe08a 42%, #ff5a36 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 16px 42px rgba(0,0,0,.45);
+    font-family: 'Cinzel', serif;
+
+    /* GIỐNG MẪU */
+    font-size: clamp(7rem, 10vw, 10rem);
+
+    font-weight: 900;
+
+    line-height: .92;
+
+    letter-spacing: 6px;
+
+    text-transform: uppercase;
+
+    margin-bottom: 40px;
+
+    background: linear-gradient(
+        180deg,
+        #fff9df 0%,
+        #ffe8a3 14%,
+        #ffd04a 38%,
+        #ffb100 58%,
+        #cc7d00 82%,
+        #8f5400 100%
+    );
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    text-shadow:
+        0 2px 0 #9f5f00,
+        0 4px 0 #8a5200,
+        0 6px 0 #6f4100,
+        0 12px 22px rgba(0,0,0,.4);
+
+    animation: fadeDownSoft 1s ease forwards;
 }
 
-/* Icon bông tuyết kim cương bao quanh */
-.banner-title::before,
+/* SHINE EFFECT */
+
 .banner-title::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 100px; 
-  height: 100px;
-  /* Thay đường dẫn ảnh của bạn vào đây */
-  background-image: url('path/to/your-diamond-snowflake.png'); 
-  background-size: contain;
-  background-repeat: no-repeat;
-  transform: translateY(-50%);
-  z-index: -1;
-  pointer-events: none;
-  animation: sparkle 3s infinite ease-in-out;
-}
+    content: "";
 
-.banner-title::before { left: -120px; }
-.banner-title::after { right: -120px; }
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            120deg,
+            transparent 35%,
+            rgba(255,255,255,.95) 50%,
+            transparent 65%
+        );
+
+    animation: shine 4s linear infinite;
+
+    mix-blend-mode: screen;
+
+    pointer-events: none;
+}
 
 /* =========================
    SUBTITLE
 ========================= */
+
 .banner-subtitle {
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(2rem, 2.7vw, 2.6rem);
-  font-weight: 600;
-  line-height: 1.6;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: rgba(255,255,255,.92);
-  text-shadow: 0 8px 24px rgba(0,0,0,.28);
+    font-family: 'Inter', sans-serif;
+
+   font-size: clamp(2.4rem, 3vw, 3.8rem);
+
+    font-weight: 800;
+
+    letter-spacing: 8px;
+
+    text-transform: uppercase;
+
+    line-height: 1.2;
+
+    margin-bottom: 30px;
+
+    background: linear-gradient(
+        180deg,
+        #fff6dc 0%,
+        #ffe7a4 18%,
+        #ffc94d 55%,
+        #dc9200 100%
+    );
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    text-shadow:
+        0 2px 0 rgba(159,95,0,.5),
+        0 4px 10px rgba(0,0,0,.4);
+
+    animation: fadeDownSoft 1s ease .2s forwards;
 }
 
-/* =========================
-   DESCRIPTION
-========================= */
-.banner-desc {
-  margin-top: 34px;
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(1.7rem, 2vw, 2rem);
-  font-weight: 400;
-  line-height: 2.15;
-  letter-spacing: .8px;
-  color: rgba(255,255,255,.82);
-  max-width: 850px;
-  margin-inline: auto;
-  text-shadow: 0 6px 18px rgba(0,0,0,.18);
+
+ .banner-btn {
+    margin-top: 36px;
+
+    padding: 22px 64px;
+
+    border: none;
+    border-radius: 999px;
+
+    cursor: pointer;
+
+    font-family: 'Cinzel', serif;
+
+    font-size: 2rem;
+    font-weight: 800;
+
+    letter-spacing: 4px;
+
+    text-transform: uppercase;
+
+    color: #5b3200;
+
+    background: linear-gradient(
+        180deg,
+        #fff6cf 0%,
+        #ffe08c 20%,
+        #ffc845 45%,
+        #e9a400 70%,
+        #b86f00 100%
+    );
+
+    box-shadow:
+        inset 0 2px 2px rgba(255,255,255,.4),
+        inset 0 -4px 8px rgba(120,70,0,.3),
+        0 15px 35px rgba(0,0,0,.35);
+
+    transition: all .35s ease;
+
+    opacity: 0;
+
+    animation: fadeDownSoft 1s ease .45s forwards;
+}
+
+.banner-btn:hover {
+    transform: translateY(-5px) scale(1.03);
+
+    box-shadow:
+        inset 0 2px 2px rgba(255,255,255,.5),
+        inset 0 -4px 8px rgba(120,70,0,.35),
+        0 22px 50px rgba(0,0,0,.45);
 }
 /* =========================
    ACTIVE SLIDE ANIMATION
@@ -728,10 +822,7 @@
 
 .features-grid {
     display: grid;
-
-    grid-template-columns:
-        repeat(4, 1fr);
-
+    grid-template-columns: repeat(4, 1fr);
     gap: 24px;
 }
 
@@ -749,61 +840,75 @@
 
     border-radius: 24px;
 
-    background:
-        linear-gradient(
-            180deg,
-            rgba(255,255,255,.04),
-            rgba(255,255,255,.02)
-        );
+    background: linear-gradient(
+        180deg,
+        rgba(255,255,255,.04),
+        rgba(255,255,255,.02)
+    );
 
-    border:
-        1px solid
-        rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.08);
 
-    backdrop-filter:
-        blur(15px);
+    backdrop-filter: blur(15px);
 
-    transition:
-        all .4s ease;
+    transition: all .45s ease;
+
+    box-shadow:
+        0 10px 25px rgba(0,0,0,.18);
 }
+
+/* ==========================================================
+   SHINE EFFECT
+========================================================== */
 
 .feature-item::before {
     content: "";
 
     position: absolute;
 
-    top: 0;
-    left: -120%;
+    top: -50%;
+    left: -150%;
 
-    width: 70px;
-    height: 100%;
+    width: 90px;
+    height: 220%;
 
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            rgba(255,255,255,.12),
-            transparent
-        );
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,.8),
+        transparent
+    );
+
+    transform: rotate(25deg);
+
+    transition: .9s ease;
+
+    z-index: 2;
+
+    pointer-events: none;
 }
 
 .feature-item:hover::before {
-    animation:
-        shine .8s ease;
+    left: 150%;
 }
 
-.feature-item:hover {
-    transform:
-        translateY(-10px);
+/* ==========================================================
+   CARD HOVER
+========================================================== */
 
-    border:
-        1px solid
-        rgba(255,50,50,.25);
+.feature-item:hover {
+    transform: translateY(-10px);
+
+    border: 1px solid rgba(255,50,50,.30);
 
     box-shadow:
         0 20px 40px rgba(0,0,0,.35),
-        0 0 25px rgba(255,0,0,.12);
+        0 0 25px rgba(255,0,0,.12),
+        0 0 45px rgba(255,0,0,.08);
 }
+
+/* ==========================================================
+   ICON
+========================================================== */
 
 .feature-icon-wrapper {
     width: 72px;
@@ -817,31 +922,35 @@
 
     border-radius: 20px;
 
-    background:
-        linear-gradient(
-            135deg,
-            rgba(255,0,0,.15),
-            rgba(255,0,0,.05)
-        );
+    background: linear-gradient(
+        135deg,
+        rgba(255,0,0,.15),
+        rgba(255,0,0,.05)
+    );
 
-    border:
-        1px solid
-        rgba(255,0,0,.15);
+    border: 1px solid rgba(255,0,0,.15);
 
-    color:
-        var(--primary-color);
+    color: var(--primary-color);
 
-    transition:
-        .35s ease;
+    transition: all .35s ease;
 }
 
 .feature-item:hover .feature-icon-wrapper {
     transform:
-        scale(1.08);
+        scale(1.12)
+        rotate(-3deg);
+
+    box-shadow:
+        0 0 20px rgba(255,0,0,.25),
+        0 0 40px rgba(255,0,0,.12);
 
     animation:
-        pulseGlow 2s infinite;
+        pulseGlow 1.8s infinite;
 }
+
+/* ==========================================================
+   TEXT
+========================================================== */
 
 .feature-text h4 {
     color: #fff;
@@ -850,386 +959,29 @@
     font-weight: 800;
 
     margin-bottom: 6px;
+
+    transition: .35s ease;
+}
+
+.feature-item:hover .feature-text h4 {
+    color: #ff4d4f;
 }
 
 .feature-text p {
-    color:
-        rgba(255,255,255,.65);
+    color: rgba(255,255,255,.65);
 
     font-size: .9rem;
 
     line-height: 1.7;
+
+    transition: .35s ease;
 }
 
-/* ==========================================================
-   MOVIE CONTAINER
-========================================================== */
-
-.movie-container {
-    position: relative;
-}
-
-.movie-grid {
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, 1fr);
-
-    gap: 30px;
-}
-
-.movie-item {
-    transition:
-        .4s ease;
-}
-
-.movie-item:hover {
-    transform:
-        translateY(-10px);
-}
-
-/* ==========================================================
-   MOVIE POSTER
-========================================================== */
-
-.poster-wrapper {
-    position: relative;
-
-    overflow: hidden;
-
-    border-radius: 24px;
-
-    aspect-ratio: 2 / 3;
-
-    background:
-        #151515;
-
-    border:
-        1px solid
-        rgba(255,255,255,.08);
-
-    transition:
-        .4s ease;
-}
-
-.poster-wrapper:hover {
-    border:
-        1px solid
-        rgba(255,50,50,.25);
-
-    box-shadow:
-        0 25px 50px rgba(0,0,0,.35),
-        0 0 25px rgba(255,0,0,.12);
-}
-
-.poster-wrapper::after {
-    content: "";
-
-    position: absolute;
-
-    inset: 0;
-
-    background:
-        linear-gradient(
-            to top,
-            rgba(0,0,0,.85),
-            transparent 55%
-        );
-
-    z-index: 2;
-}
-
-.poster-img {
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
-
-    transition:
-        transform .8s ease;
-}
-
-.poster-wrapper:hover .poster-img {
-    transform:
-        scale(1.08);
-}
-
-/* ==========================================================
-   POSTER HOVER
-========================================================== */
-
-.poster-hover {
-    position: absolute;
-
-    inset: 0;
-
-    z-index: 5;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    opacity: 0;
-
-    backdrop-filter:
-        blur(4px);
-
-    background:
-        rgba(0,0,0,.35);
-
-    transition:
-        .4s ease;
-}
-
-.poster-wrapper:hover .poster-hover {
-    opacity: 1;
-}
-
-/* ==========================================================
-   MOVIE TITLE
-========================================================== */
-
-.movie-name {
-    margin-top: 16px;
-
-    color: #fff;
-
-    font-size: .95rem;
-    font-weight: 700;
-
-    text-align: center;
-
-    line-height: 1.6;
-
-    min-height: 52px;
-
-    transition:
-        .3s ease;
-}
-
-.movie-item:hover .movie-name {
-    color:
-        var(--primary-color);
-}
-
-/* ==========================================================
-   BUTTON BOOK
-========================================================== */
-
-.btn-book {
-    height: 48px;
-
-    padding:
-        0 28px;
-
-    border: none;
-
-    border-radius: 50px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff2020,
-            #d50000
-        );
-
-    color: #fff;
-
-    font-size: .85rem;
-    font-weight: 700;
-
-    cursor: pointer;
-
-    transition:
-        .35s ease;
-}
-
-.btn-book:hover {
-    transform:
-        translateY(-3px);
-
-    box-shadow:
-        0 15px 35px
-        rgba(255,0,0,.25);
-}
-
-/* ==========================================================
-   PROMOTIONS
-========================================================== */
-
-.promotions-grid {
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, 1fr);
-
-    gap: 28px;
-}
-
-.promo-card {
-    position: relative;
-
-    overflow: hidden;
-
-    border-radius: 24px;
-
-    background:
-        #141414;
-
-    border:
-        1px solid
-        rgba(255,255,255,.08);
-
-    transition:
-        all .45s ease;
-}
-
-.promo-card:hover {
-    transform:
-        translateY(-12px);
-
-    border:
-        1px solid
-        rgba(255,50,50,.25);
-
-    box-shadow:
-        0 30px 60px rgba(0,0,0,.40),
-        0 0 30px rgba(255,0,0,.12);
-}
-
-.promo-image {
-    height: 240px;
-
-    overflow: hidden;
-}
-
-.promo-image img {
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
-
-    transition:
-        transform .8s ease;
-}
-
-.promo-card:hover .promo-image img {
-    transform:
-        scale(1.08);
-}
-
-.promo-info {
-    padding: 22px;
-}
-
-.promo-info h3 {
-    color: #fff;
-
-    font-size: 1rem;
-
-    margin-bottom: 12px;
-
-    line-height: 1.6;
-}
-
-.promo-info p {
-    color:
-        rgba(255,255,255,.65);
-
-    font-size: .9rem;
-
-    line-height: 1.8;
-
-    margin-bottom: 18px;
-}
-
-/* ==========================================================
-   CINEMA NEWS
-========================================================== */
-
-.cinema-news-grid {
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, 1fr);
-
-    gap: 28px;
-}
-
-.cinema-news-card {
-    overflow: hidden;
-
-    border-radius: 24px;
-
-    background:
-        #141414;
-
-    border:
-        1px solid
-        rgba(255,255,255,.08);
-
-    transition:
-        .45s ease;
-}
-
-.cinema-news-card:hover {
-    transform:
-        translateY(-12px);
-
-    border:
-        1px solid
-        rgba(255,50,50,.25);
-
-    box-shadow:
-        0 30px 60px rgba(0,0,0,.40),
-        0 0 30px rgba(255,0,0,.12);
-}
-
-.cinema-news-image {
-    height: 240px;
-
-    overflow: hidden;
-}
-
-.cinema-news-image img {
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
-
-    transition:
-        transform .8s ease;
-}
-
-.cinema-news-card:hover
-.cinema-news-image img {
-    transform:
-        scale(1.08);
-}
-
-.cinema-news-content {
-    padding: 22px;
-}
-
-.cinema-news-content h3 {
-    color: #fff;
-
-    font-size: 1rem;
-
-    line-height: 1.8;
-
-    margin-bottom: 20px;
-
-    transition:
-        .3s ease;
-}
-
-.cinema-news-card:hover h3 {
-    color:
-        var(--primary-color);
+.feature-item:hover .feature-text p {
+    color: rgba(255,255,255,.85);
 }
 /* =========================================================
-   PROMOTIONS SECTION
+   PROMOTIONS
 ========================================================= */
 
 .promotions-section {
@@ -1246,52 +998,56 @@
     position: relative;
     overflow: hidden;
 
-    background:
-        linear-gradient(
-            145deg,
-            rgba(18,18,22,.95),
-            rgba(12,12,14,.98)
-        );
+    background: linear-gradient(
+        145deg,
+        rgba(18,18,22,.95),
+        rgba(12,12,14,.98)
+    );
+
+    border-radius: 28px;
 
     border: 1px solid rgba(255,255,255,.06);
-    border-radius: 28px;
 
     transition: all .45s ease;
 
     box-shadow:
         0 10px 30px rgba(0,0,0,.25);
-
-    animation: fadeUp .8s ease;
 }
 
+/* Shine Effect */
 .promo-card::before {
     content: "";
 
     position: absolute;
-    inset: 0;
 
-    background:
-        linear-gradient(
-            145deg,
-            rgba(255,0,60,.10),
-            transparent 60%
-        );
+    top: -50%;
+    left: -150%;
 
-    opacity: 0;
+    width: 90px;
+    height: 250%;
 
-    transition: .4s;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,.65),
+        transparent
+    );
+
+    transform: rotate(25deg);
+
+    transition: .9s ease;
+
+    z-index: 5;
 }
 
 .promo-card:hover::before {
-    opacity: 1;
+    left: 140%;
 }
 
 .promo-card:hover {
-    transform:
-        translateY(-12px);
+    transform: translateY(-12px);
 
-    border-color:
-        rgba(255,0,60,.35);
+    border-color: rgba(255,0,60,.35);
 
     box-shadow:
         0 25px 50px rgba(255,0,60,.15);
@@ -1299,7 +1055,9 @@
 
 .promo-image {
     position: relative;
+
     height: 240px;
+
     overflow: hidden;
 }
 
@@ -1310,7 +1068,7 @@
     object-fit: cover;
 
     transition:
-        transform .7s ease,
+        transform .8s ease,
         filter .5s ease;
 }
 
@@ -1328,12 +1086,11 @@
     position: absolute;
     inset: 0;
 
-    background:
-        linear-gradient(
-            to top,
-            rgba(0,0,0,.8),
-            transparent 55%
-        );
+    background: linear-gradient(
+        to top,
+        rgba(0,0,0,.8),
+        transparent 55%
+    );
 }
 
 .promo-info {
@@ -1349,31 +1106,16 @@
     line-height: 1.6;
 
     margin-bottom: 12px;
-
-    min-height: 52px;
-
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-
-    overflow: hidden;
 }
 
 .promo-info p {
     color: rgba(255,255,255,.72);
 
     font-size: .92rem;
+
     line-height: 1.8;
 
     margin-bottom: 20px;
-
-    min-height: 75px;
-
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-
-    overflow: hidden;
 }
 
 /* =========================================================
@@ -1382,7 +1124,6 @@
 
 .cinema-corner-section {
     position: relative;
-    margin-bottom: 30px;
 }
 
 .cinema-news-grid {
@@ -1393,14 +1134,14 @@
 
 .cinema-news-card {
     position: relative;
+
     overflow: hidden;
 
-    background:
-        linear-gradient(
-            145deg,
-            rgba(18,18,22,.95),
-            rgba(12,12,14,.98)
-        );
+    background: linear-gradient(
+        145deg,
+        rgba(18,18,22,.95),
+        rgba(12,12,14,.98)
+    );
 
     border-radius: 28px;
 
@@ -1410,16 +1151,42 @@
 
     box-shadow:
         0 10px 30px rgba(0,0,0,.25);
+}
 
-    animation: fadeUp .9s ease;
+/* Shine Effect */
+.cinema-news-card::before {
+    content: "";
+
+    position: absolute;
+
+    top: -50%;
+    left: -150%;
+
+    width: 90px;
+    height: 250%;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,.65),
+        transparent
+    );
+
+    transform: rotate(25deg);
+
+    transition: .9s ease;
+
+    z-index: 5;
+}
+
+.cinema-news-card:hover::before {
+    left: 140%;
 }
 
 .cinema-news-card:hover {
-    transform:
-        translateY(-12px);
+    transform: translateY(-12px);
 
-    border-color:
-        rgba(255,0,60,.35);
+    border-color: rgba(255,0,60,.35);
 
     box-shadow:
         0 25px 50px rgba(255,0,60,.15);
@@ -1427,7 +1194,9 @@
 
 .cinema-news-image {
     position: relative;
+
     height: 240px;
+
     overflow: hidden;
 }
 
@@ -1444,6 +1213,10 @@
 
 .cinema-news-card:hover .cinema-news-image img {
     transform: scale(1.08);
+
+    filter:
+        brightness(1.05)
+        contrast(1.05);
 }
 
 .cinema-news-image::after {
@@ -1452,12 +1225,11 @@
     position: absolute;
     inset: 0;
 
-    background:
-        linear-gradient(
-            to top,
-            rgba(0,0,0,.85),
-            transparent 55%
-        );
+    background: linear-gradient(
+        to top,
+        rgba(0,0,0,.85),
+        transparent 55%
+    );
 }
 
 .cinema-news-content {
@@ -1472,81 +1244,69 @@
 
     line-height: 1.7;
 
-    min-height: 58px;
-
     margin-bottom: 18px;
-
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-
-    overflow: hidden;
 }
 
 /* =========================================================
    BUTTON
 ========================================================= */
+.premium-card-btn {
+    position: relative;
+    overflow: hidden;
 
-.btn-detail {
     width: 100%;
-    height: 50px;
+    height: 52px;
 
     border: none;
     border-radius: 14px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #ff003c,
-            #ff4040
-        );
+    cursor: pointer;
+
+    background: #e50914;
 
     color: #fff;
 
-    font-size: .9rem;
+    font-size: 0.95rem;
     font-weight: 700;
 
-    cursor: pointer;
-
     transition: all .35s ease;
-
-    position: relative;
-    overflow: hidden;
 }
 
-.btn-detail::before {
+/* Shine Effect */
+.premium-card-btn::before {
     content: "";
 
     position: absolute;
-    top: 0;
-    left: -120%;
 
-    width: 80%;
-    height: 100%;
+    top: -50%;
+    left: -150%;
 
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            rgba(255,255,255,.3),
-            transparent
-        );
+    width: 60px;
+    height: 220%;
 
-    transition: .7s;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,.95),
+        transparent
+    );
+
+    transform: rotate(25deg);
+
+    transition: .8s ease;
 }
 
-.btn-detail:hover::before {
+.premium-card-btn:hover::before {
     left: 150%;
 }
 
-.btn-detail:hover {
-    transform:
-        translateY(-3px);
+.premium-card-btn:hover {
+    transform: translateY(-3px);
 
     box-shadow:
-        0 12px 30px rgba(255,0,60,.35);
+        0 12px 30px rgba(229,9,20,.35),
+        0 0 20px rgba(255,50,50,.25);
 }
-
 /* =========================================================
    GLOBAL ANIMATIONS
 ========================================================= */
@@ -1827,16 +1587,16 @@
     }
 
     .quick-booking-selects select {
-        height: 46px;
+    height: 46px;
 
-        padding: 0 4px;
+    padding: 0 4px;
 
-        font-size: .7rem;
+    font-size: .7rem;
 
-        border-radius: 12px;
+    border-radius: 12px;
 
-        min-width: 0;
-    }
+    min-width: 0;
+}
 
     .btn-quick-booking {
         width: 100%;

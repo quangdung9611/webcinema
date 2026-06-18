@@ -268,133 +268,135 @@ const MovieDetail = () => {
             />
 
             {/* SECTION 1: HERO BANNER NGANG (BACKDROP) */}
+            {/* HERO BANNER NEW */}
+
             <div className="cinema-hero-banner">
-                <img 
-                    src={`${IMAGE_BASE_URL}/backdrops/${movie.backdrop_url || movie.poster_url}`} 
-                    alt="Movie Backdrop Banner" 
+
+                <img
+                    src={`${IMAGE_BASE_URL}/backdrops/${movie.backdrop_url || movie.poster_url}`}
+                    alt={movie.title}
                     className="banner-horizontal-img"
                 />
-                
+
                 <div className="banner-gradient-overlay"></div>
 
-                {/* Nút Play nằm chính giữa Banner ngang để kích hoạt Popup Trailer */}
-                <button 
-                    type="button"
-                    className="play-trailer-center-btn"
-                    onClick={openTrailerModal}
-                >
-                    <div className="play-icon-shape"></div>
-                </button>
+                <div className="hero-content-wrapper">
 
-                <div className="banner-info-holder">
-                    <div className="banner-top-cast-names">
-                        {actors.length > 0 ? actors.slice(0, 4).map(a => a.name).join('   •   ') : (movie.cast && movie.cast.split(',').slice(0, 4).join('   •   '))}
-                    </div>
-                </div>
-            </div>
+                    <div className="hero-info-side">
 
-            {/* SECTION 2: MAIN INFO AREA */}
-            <div className="cinema-main-content-container">
-                <div className="info-grid-row">
-                    
-                    <div className="info-left-poster-block">
-                        <img 
-                            src={`${IMAGE_BASE_URL}/posters/${movie.poster_url}`} 
-                            alt={movie.title} 
-                            className="floating-poster-img" 
-                        />
-                    </div>
+                        <div className="hero-title-row">
 
-                    <div className="info-right-details-block">
-                        <div className="movie-primary-header">
-                            <h2 className="primary-title-text">
+                            <h1 className="hero-movie-title">
                                 {movie.title}
-                            </h2>
-                            <span className="age-badge-t16">
+                            </h1>
+
+                            <span className="hero-age-badge">
                                 T16
                             </span>
+
                         </div>
 
-                        <div className="movie-quick-meta-row">
-                            <div className="meta-pill">
-                                <Star className="icon-gold" size={16} fill="#f5b50a"/> 
-                                <span>{movie.avg_rating || "0.0"} ({reviews.length} votes)</span>
+                        <div className="hero-rating-row">
+
+                            <div className="hero-rating-item">
+                                <Star
+                                    size={18}
+                                    fill="#f5b50a"
+                                    color="#f5b50a"
+                                />
+                                <span>
+                                    {movie.avg_rating || "0.0"} / 10
+                                </span>
                             </div>
-                            <div className="meta-pill">
-                                <Clock size={16}/> 
-                                <span>{movie.duration} phút</span>
+
+                            <div className="hero-rating-item">
+                                <Clock size={18} />
+                                <span>
+                                    {movie.duration} phút
+                                </span>
                             </div>
-                            <div className="meta-pill">
-                                <Calendar size={16}/> 
-                                <span>{new Date(movie.release_date).toLocaleDateString('vi-VN')}</span>
+
+                            <div className="hero-rating-item">
+                                <Calendar size={18} />
+                                <span>
+                                    {new Date(movie.release_date).toLocaleDateString("vi-VN")}
+                                </span>
                             </div>
+
+                        </div>
+                        <p className="hero-description">
+                            {
+                                movie.description
+                                    ?.replace(/<[^>]*>?/gm, '')
+                                    ?.replace(/&nbsp;/g, ' ')
+                            }
+                        </p>
+                        <div className="hero-info-list">
+
+                            <div className="hero-info-line">
+                                <strong>Đạo diễn:</strong>
+                                <span>
+                                    {movie.director || "Đang cập nhật"}
+                                </span>
+                            </div>
+
+                            <div className="hero-info-line">
+                                <strong>Thể loại:</strong>
+                                <span>
+                                    {movie.genres?.map(
+                                        genre => genre.genre_name
+                                    ).join(", ") || "Đang cập nhật"}
+                                </span>
+                            </div>
+
+                            <div className="hero-info-line">
+                                <strong>Diễn viên:</strong>
+                                <span>
+                                    {movie.cast || "Đang cập nhật"}
+                                </span>
+                            </div>
+
+                            <div className="hero-info-line">
+                                <strong>Quốc gia:</strong>
+                                <span>
+                                    {movie.country || "Việt Nam"}
+                                </span>
+                            </div>
+
                         </div>
 
-                        <div className="specs-table-grid">
-                            <div className="spec-item-row">
-                                <span className="spec-label"><Film size={16}/> Đạo diễn</span>
-                                <span className="spec-value-content highlight-text">{movie.director || 'Đang cập nhật'}</span>
-                            </div>
-                            <div className="spec-item-row">
-                                <span className="spec-label"><Star size={16}/> Thể loại</span>
-                                <span className="spec-value-content">{movie.genres?.map(g => g.genre_name).join(', ') || 'Kinh dị, Tâm lý'}</span>
-                            </div>
-                            <div className="spec-item-row">
-                                <span className="spec-label"><User size={16}/> Diễn viên</span>
-                                <span className="spec-value-content">{movie.cast || 'Đang cập nhật'}</span>
-                            </div>
-                            <div className="spec-item-row">
-                                <span className="spec-label"><Film size={16}/> Nhà sản xuất</span>
-                                <span className="spec-value-content">Galaxy Studio, HK Film</span>
-                            </div>
-                            <div className="spec-item-row">
-                                <span className="spec-label"><Globe size={16}/> Quốc gia</span>
-                                <span className="spec-value-content">{movie.country || 'Việt Nam'}</span>
-                            </div>
-                            <div className="spec-item-row">
-                                <span className="spec-label"><Film size={16}/> Định dạng</span>
-                                <span className="spec-value-content">2D, Dolby Atmos</span>
-                            </div>
-                            <div className="spec-item-row">
-                                <span className="spec-label"><MessageSquare size={16}/> Ngôn ngữ</span>
-                                <span className="spec-value-content">Tiếng Việt với phụ đề</span>
-                            </div>
-                            <div className="spec-item-row">
-                                <span className="spec-label"><Calendar size={16}/> Khởi chiếu chính thức</span>
-                                <span className="spec-value-content">{new Date(movie.release_date).toLocaleDateString('vi-VN')}</span>
-                            </div>
-                        </div>
+                        <div className="hero-action-group">
 
-                        <div className="action-buttons-group">
                             <button
-                                className="btn-action-red-submit"
+                                className="hero-book-btn"
                                 onClick={() =>
-                                    navigate(`/booking/${movie.slug || movie.movie_slug}`)
+                                    navigate(
+                                        `/booking/${movie.slug || movie.movie_slug}`
+                                    )
                                 }
                             >
-                                <Ticket size={16} />
+                                <Ticket size={18} />
                                 <span>ĐẶT VÉ NGAY</span>
                             </button>
-                            <button 
-                                className="btn-action-outline"
+
+                            <button
+                                className="hero-trailer-btn"
                                 onClick={openTrailerModal}
                             >
-                                <Play size={16} />
-                                <span>Xem Trailer</span>
+                                <Play size={18} />
+                                <span>XEM TRAILER</span>
                             </button>
-                            <button className="btn-action-outline">
-                                <Heart size={16} />
-                                <span>Yêu thích</span>
-                            </button>
-                            <button className="btn-action-outline">
-                                <Share2 size={16} />
-                                <span>Chia sẻ</span>
-                            </button>
+
                         </div>
+
                     </div>
+
                 </div>
 
-                {/* SECTION 3: DIỄN VIÊN CAROUSEL */}
+            </div>
+            <div className="cinema-main-content-container">
+                
+                {/* SECTION 2: DIỄN VIÊN CAROUSEL */}
                 <div className="cinema-section-block">
                     <div className="section-header-row">
                         <h3 className="section-title-label">DIỄN VIÊN</h3>
@@ -460,52 +462,62 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                {/* SECTION 4: NỘI DUNG PHIM & ĐÁNH GIÁ */}
-                <div className="two-columns-split-layout">
-                    <div className="split-left-column-box">
-                        <h3 className="section-title-label">NỘI DUNG PHIM</h3>
-                        <div className={`movie-synopsis-text-wrapper ${isExpanded ? 'expanded' : ''}`}>
-                            <p>
-                                {movie.description?.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ') || 
-                                'Câu chuyện xoay quanh một gia đình tưởng chừng như hoàn hảo, nhưng ẩn sau đó là những bí mật, tham vọng và tội lỗi bị chôn giấu suốt nhiều năm...'}
-                            </p>
-                        </div>
-                        <button 
-                            className="toggle-expand-description-btn" 
-                            onClick={() => setIsExpanded(!isExpanded)}
-                        >
-                            {isExpanded ? 'Thu gọn ▴' : 'Xem thêm ▾'}
-                        </button>
-                    </div>
-
+               {/* SECTION 3: ĐÁNH GIÁ TỪ KHÁN GIẢ */}
+                <div className="reviews-section-fullwidth">
                     <div className="split-right-column-box">
                         <div className="section-header-row">
                             <h3 className="section-title-label">ĐÁNH GIÁ TỪ KHÁN GIẢ</h3>
-                            <button className="btn-write-review-small" onClick={openRatingModal}>+ Viết đánh giá</button>
+                            <button
+                                className="btn-write-review-small"
+                                onClick={openRatingModal}
+                            >
+                                + Viết đánh giá
+                            </button>
                         </div>
-                        
+
                         <div className="rating-statistics-dashboard">
                             <div className="dashboard-big-score-left">
-                                <div className="huge-number">{movie.avg_rating || "0.0"}</div>
-                                <div className="slash-ten">/10</div>
-                                <div className="stars-row-display">
-                                    {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="#f5b50a" color="#f5b50a"/>)}
+                                <div className="huge-number">
+                                    {movie.avg_rating || "0.0"}
                                 </div>
-                                <div className="total-votes-count-txt">{reviews.length} đánh giá</div>
+
+                                <div className="slash-ten">/10</div>
+
+                                <div className="stars-row-display">
+                                    {[...Array(5)].map((_, i) => (
+                                        <Star
+                                            key={i}
+                                            size={14}
+                                            fill="#f5b50a"
+                                            color="#f5b50a"
+                                        />
+                                    ))}
+                                </div>
+
+                                <div className="total-votes-count-txt">
+                                    {reviews.length} đánh giá
+                                </div>
                             </div>
 
                             <div className="dashboard-progress-bars-right">
                                 {[5, 4, 3, 2, 1].map((stars) => (
                                     <div className="progress-bar-line-row" key={stars}>
-                                        <span className="star-line-label">{stars} ★</span>
+                                        <span className="star-line-label">
+                                            {stars} ★
+                                        </span>
+
                                         <div className="progress-track-bg">
-                                            <div 
-                                                className="progress-fill-active" 
-                                                style={{ width: `${starPercentages[stars] || 0}%` }}
-                                            >
-                                            </div>
+                                            <div
+                                                className="progress-fill-active"
+                                                style={{
+                                                    width: `${starPercentages[stars] || 0}%`,
+                                                }}
+                                            />
                                         </div>
-                                        <span className="progress-percent-text">{starPercentages[stars] || 0}%</span>
+
+                                        <span className="progress-percent-text">
+                                            {starPercentages[stars] || 0}%
+                                        </span>
                                     </div>
                                 ))}
                             </div>
@@ -513,31 +525,51 @@ const MovieDetail = () => {
 
                         <div className="mini-comments-list-viewport">
                             {reviews.length === 0 ? (
-                                <div className="empty-reviews-placeholder">Chưa có bình luận nào. Hãy là người đầu tiên đánh giá!</div>
+                                <div className="empty-reviews-placeholder">
+                                    Chưa có bình luận nào. Hãy là người đầu tiên đánh giá!
+                                </div>
                             ) : (
                                 reviews.slice(0, 3).map((rev, index) => (
                                     <div className="mini-comment-card" key={index}>
                                         <div className="comment-user-meta-header">
                                             <div className="user-avatar-placeholder-small"></div>
+
                                             <div className="user-name-title-box">
-                                                <span className="comment-username">{rev.username || 'Khán giả'}</span>
+                                                <span className="comment-username">
+                                                    {rev.username || "Khán giả"}
+                                                </span>
+
                                                 <div className="user-stars-small-row">
-                                                    {[...Array(Math.ceil((rev.rating || 10) / 2))].map((_, i) => (
-                                                        <Star key={i} size={10} fill="#f5b50a" color="#f5b50a" />
+                                                    {[...Array(
+                                                        Math.ceil(
+                                                            (rev.rating || 10) / 2
+                                                        )
+                                                    )].map((_, i) => (
+                                                        <Star
+                                                            key={i}
+                                                            size={10}
+                                                            fill="#f5b50a"
+                                                            color="#f5b50a"
+                                                        />
                                                     ))}
                                                 </div>
                                             </div>
-                                            <span className="comment-time-ago">Mới đây</span>
+
+                                            <span className="comment-time-ago">
+                                                Mới đây
+                                            </span>
                                         </div>
-                                        <p className="comment-content-body-text">{rev.comment}</p>
+
+                                        <p className="comment-content-body-text">
+                                            {rev.comment}
+                                        </p>
                                     </div>
                                 ))
                             )}
                         </div>
                     </div>
                 </div>
-
-                {/* SECTION 5: PHIM LIÊN QUAN - TÁI SỬ DỤNG COMPONENT */}
+                {/* SECTION 4: PHIM LIÊN QUAN - TÁI SỬ DỤNG COMPONENT */}
                 <MovieSlider 
                     title="PHIM LIÊN QUAN" 
                     movies={relatedMovies} 

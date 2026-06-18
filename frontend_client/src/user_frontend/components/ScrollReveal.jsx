@@ -74,13 +74,13 @@ const ScrollReveal = ({
             }}
 
             transition={{
-                duration,
+                duration: 2.2,
                 delay,
 
                 ease: [
-                    0.22,
-                    1,
-                    0.36,
+                    0.25,
+                    0.1,
+                    0.25,
                     1
                 ]
             }}

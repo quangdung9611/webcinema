@@ -33,28 +33,28 @@ const UserHome = () => {
     img: 'banner1.png',
     title: 'PHÒNG VIP',
     subtitle: 'RIÊNG TƯ • ĐẲNG CẤP • KHÁC BIỆT',
-    desc: 'Không gian điện ảnh sang trọng dành cho trải nghiệm riêng tư và đẳng cấp.'
+    button: 'KHÁM PHÁ NGAY'
   },
 
   {
     img: 'banner2.png',
     title: 'ƯU ĐÃI HOT',
     subtitle: 'ĐẶT VÉ NHANH • DEAL MỖI NGÀY',
-    desc: 'Săn ưu đãi hấp dẫn và đặt vé dễ dàng chỉ với vài thao tác.'
+    button: 'XEM ƯU ĐÃI'
   },
 
   {
     img: 'banner3.png',
     title: 'COMBO VIP',
     subtitle: 'BẮP GIÒN • NƯỚC MÁT • TRỌN VẸN',
-    desc: 'Thưởng thức combo hấp dẫn để tận hưởng trọn vẹn từng khoảnh khắc điện ảnh.'
+    button: 'THƯỞNG THỨC NGAY'
   },
 
   {
     img: 'banner4.png',
     title: 'BOM TẤN',
     subtitle: 'ÂM THANH • HÌNH ẢNH • CẢM XÚC',
-    desc: 'Đắm chìm trong không gian điện ảnh sống động với trải nghiệm đỉnh cao.'
+    button: 'ĐẶT VÉ NGAY'
   }
 ];
   const bannerBaseUrl = "https://api.quangdungcinema.id.vn/uploads/banners/";
@@ -511,9 +511,9 @@ const UserHome = () => {
             <p className="banner-subtitle">
               {item.subtitle}
             </p>
-            <p className="banner-desc">
-                {item.desc}
-            </p>
+            <button className="banner-btn">
+                {item.button}
+            </button>
             </div>
 
           {/* light effect */}
@@ -761,7 +761,7 @@ const UserHome = () => {
                     </p>
 
                     <button
-                      className="btn-detail"
+                      className="premium-card-btn"
                       onClick={() =>
                         navigate(
                           `/promotion/${promo.slug}`
@@ -827,7 +827,7 @@ const UserHome = () => {
                       </h3>
 
                       <button
-                        className="btn-detail"
+                        className="premium-card-btn"
                         onClick={() =>
                           navigate(
                             `/blog-cinema/${news.slug}`

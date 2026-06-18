@@ -1,105 +1,267 @@
-/* ==========================================================================
-   1. HERO BANNER NGANG (FULL SCREEN WIDE)
-   ========================================================================== */
+
+/* =======================================================
+   NETFLIX / FLIXSTREAM HERO
+======================================================= */
+
 .cinema-hero-banner {
-  position: relative;
-  width: 100%;
-  height: 550px;
-  overflow: hidden;
+    position: relative;
+    width: 100%;
+    height: 78vh;
+    min-height: 720px;
+    overflow: hidden;
+    background: #000;
 }
+
+/* BACKDROP */
 
 .banner-horizontal-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+    object-position: center;
 }
+
+/* OVERLAY */
 
 .banner-gradient-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%);
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.96) 0%,
+            rgba(0, 0, 0, 0.85) 20%,
+            rgba(0, 0, 0, 0.65) 40%,
+            rgba(0, 0, 0, 0.35) 65%,
+            rgba(0, 0, 0, 0.15) 100%
+        ),
+
+        linear-gradient(
+            180deg,
+            rgba(0, 0, 0, 0.15) 0%,
+            rgba(0, 0, 0, 0.15) 60%,
+            rgba(0, 0, 0, 0.95) 100%
+        );
+
+    z-index: 1;
 }
 
-/* Nút Play chính giữa banner */
-.play-trailer-center-btn {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80px;
-  height: 80px;
-  background-color: rgba(245, 181, 10, 0.9);
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 20px rgba(245, 181, 10, 0.5);
-  z-index: 10;
+/* CONTENT */
+
+.hero-content-wrapper {
+    position: relative;
+    z-index: 5;
+
+    max-width: 1500px;
+    width: 100%;
+
+    margin: 0 auto;
+    height: 100%;
+
+    display: flex;
+    align-items: center;
+
+    padding-left: 90px;
+    padding-right: 90px;
 }
 
-.play-trailer-center-btn:hover {
-  transform: translate(-50%, -50%) scale(1.1);
-  background-color: #f5b50a;
-  box-shadow: 0 0 30px rgba(245, 181, 10, 0.8);
+.hero-info-side {
+    width: 650px;
+    max-width: 100%;
 }
 
-.play-icon-shape {
-  width: 0;
-  height: 0;
-  border-top: 12px solid transparent;
-  border-bottom: 12px solid transparent;
-  border-left: 20px solid #ffffff;
-  margin-left: 6px;
+/* TITLE */
+
+.hero-title-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+
+    margin-bottom: 28px;
 }
 
-/* Thông tin chữ trên Banner */
-.banner-info-holder {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 1300px;
-  padding: 0 20px 40px 20px;
-  box-sizing: border-box;
-  z-index: 5;
+.hero-movie-title {
+    font-size: 78px;
+    font-weight: 900;
+    line-height: 1;
+
+    color: #fff;
+
+    margin: 0;
+    letter-spacing: -2px;
+
+    text-transform: uppercase;
 }
 
-.banner-top-cast-names {
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 2px;
-  margin-bottom: 15px;
-  opacity: 0.9;
+.hero-age-badge {
+    background: #ff385c;
+    color: white;
+
+    min-width: 70px;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 16px;
+
+    font-size: 24px;
+    font-weight: 800;
 }
 
-.banner-big-title-graphics {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* RATING */
+
+.hero-rating-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    margin-bottom: 30px;
 }
 
-.director-small-tag {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 3px;
+.hero-rating-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 12px 22px;
+
+    border-radius: 999px;
+
+    background: rgba(255,255,255,0.12);
+
+    backdrop-filter: blur(12px);
+
+    color: #fff;
+
+    font-size: 18px;
+    font-weight: 700;
 }
 
-.banner-main-title {
-  font-size: 48px;
-  font-weight: 800;
-  line-height: 1.2;
-  margin: 0;
-  text-transform: uppercase;
+/* INFO */
+
+.hero-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    margin-bottom: 40px;
 }
 
+.hero-info-line {
+    display: flex;
+    gap: 12px;
+
+    font-size: 18px;
+    line-height: 1.8;
+}
+
+.hero-info-line strong {
+    min-width: 130px;
+    color: #f5b50a;
+    font-weight: 700;
+}
+
+.hero-info-line span {
+    color: #ffffff;
+    font-weight: 500;
+}
+/* Description */
+.hero-description {
+    max-width: 500px;
+    margin-top: 20px;
+
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.9;
+
+    text-align: justify;
+    text-justify: inter-word;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+}
+.show-more-btn {
+    background: transparent;
+    border: none;
+    color: #ffcc00;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 10px;
+}
+/* BUTTONS */
+
+.hero-action-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.hero-book-btn {
+    height: 60px;
+    padding: 0 34px;
+
+    border: none;
+    border-radius: 12px;
+
+    background: #ffffff;
+    color: #000000;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    font-size: 17px;
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition: all .25s ease;
+}
+
+.hero-book-btn:hover {
+    transform: translateY(-2px);
+}
+
+.hero-trailer-btn {
+    height: 60px;
+    padding: 0 30px;
+
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 12px;
+
+    background: rgba(255,255,255,.08);
+
+    backdrop-filter: blur(14px);
+
+    color: white;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    font-size: 17px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: all .25s ease;
+}
+
+.hero-trailer-btn:hover {
+    background: rgba(255,255,255,.15);
+    transform: translateY(-2px);
+}
 
 /* ==========================================================================
    2. MAIN CONTENT CONTAINER (MAX-WIDTH: 1300PX)
@@ -114,158 +276,6 @@
   flex-direction: column;
   gap: 60px;
 }
-
-
-/* ==========================================================================
-   3. SECTION 2: MAIN INFO GRID (POSTER & DETAILS)
-   ========================================================================== */
-.info-grid-row {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 40px;
-  align-items: start;
-}
-
-/* Khối Poster dọc bên trái */
-.info-left-poster-block {
-  position: relative;
-  margin-top: -120px;
-  z-index: 15;
-}
-
-.floating-poster-img {
-  width: 100%;
-  height: 480px;
-  object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-}
-
-/* Khối chi tiết bên phải */
-.info-right-details-block {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-}
-
-.movie-primary-header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.primary-title-text {
-  font-size: 32px;
-  font-weight: 700;
-  margin: 0;
-}
-
-.age-badge-t16 {
-  padding: 4px 12px;
-  background-color: #ff4d4f;
-  border-radius: 4px;
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.movie-quick-meta-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.meta-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background-color: rgba(255, 255, 255, 0.08);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 14px;
-}
-
-.icon-gold {
-  color: #f5b50a;
-}
-
-/* Bảng thông số kỹ thuật (Grid) */
-.specs-table-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px 30px;
-  background-color: rgba(255, 255, 255, 0.03);
-  padding: 20px;
-  border-radius: 8px;
-}
-
-.spec-item-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  font-size: 14px;
-}
-
-.spec-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 120px;
-  opacity: 0.6;
-}
-
-.spec-value-content {
-  font-weight: 500;
-}
-
-.highlight-text {
-  color: #ff4d4f;
-}
-
-/* Nhóm nút hành động */
-.action-buttons-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-top: 10px;
-}
-
-.btn-action-red-submit {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ff4d4f;
-  border: none;
-  padding: 14px 28px;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 15px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.btn-action-red-submit:hover {
-  background-color: #e03e3f;
-}
-
-.btn-action-outline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 14px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-action-outline:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
 
 /* ==========================================================================
    4. CHUNG CHO CÁC KHỐI SECTION BLOCK
@@ -370,174 +380,165 @@
 
 
 /* ==========================================================================
-   6. SECTION 4: NỘI DUNG PHIM & ĐÁNH GIÁ (CHIA ĐÔI LAYOUT)
+   SECTION 3: ĐÁNH GIÁ TỪ KHÁN GIẢ
    ========================================================================== */
-.two-columns-split-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 50px;
+
+.reviews-section-fullwidth {
+  width: 100%;
+  margin-top: 50px;
 }
 
-/* Cột trái: Nội dung */
-.split-left-column-box {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.movie-synopsis-text-wrapper {
-  font-size: 15px;
-  line-height: 1.8;
-  opacity: 0.8;
-}
-
-.movie-synopsis-text-wrapper p {
-  margin: 0;
-}
-
-.toggle-expand-description-btn {
-  align-self: flex-start;
-  background: none;
-  border: none;
-  color: #ff4d4f;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-}
-
-/* Cột phải: Đánh giá */
 .split-right-column-box {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+}
+
+/* Header */
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .btn-write-review-small {
-  background-color: transparent;
+  background: transparent;
   border: 1px solid #ff4d4f;
   color: #ff4d4f;
-  padding: 6px 16px;
-  border-radius: 6px;
-  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 8px;
   font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 .btn-write-review-small:hover {
-  background-color: #ff4d4f;
-  color: #ffffff;
+  background: #ff4d4f;
+  color: #fff;
 }
 
-/* Bảng thống kê điểm */
+/* ==========================================================================
+   THỐNG KÊ ĐÁNH GIÁ
+   ========================================================================== */
+
 .rating-statistics-dashboard {
   display: flex;
   align-items: center;
-  gap: 40px;
-  background-color: rgba(255, 255, 255, 0.02);
-  padding: 25px;
-  border-radius: 12px;
+  gap: 50px;
+  padding: 28px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .dashboard-big-score-left {
+  min-width: 160px;
   text-align: center;
 }
 
 .huge-number {
-  font-size: 48px;
+  font-size: 60px;
   font-weight: 800;
   color: #f5b50a;
-  display: inline-block;
+  line-height: 1;
 }
 
 .slash-ten {
-  font-size: 16px;
+  font-size: 15px;
   opacity: 0.5;
-  display: inline-block;
+  margin-top: 4px;
 }
 
 .stars-row-display {
   display: flex;
   justify-content: center;
   gap: 4px;
-  margin: 8px 0;
+  margin: 10px 0;
 }
 
 .total-votes-count-txt {
   font-size: 13px;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
-/* Các thanh Progress bar */
+/* ==========================================================================
+   PROGRESS BAR
+   ========================================================================== */
+
 .dashboard-progress-bars-right {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .progress-bar-line-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 13px;
 }
 
 .star-line-label {
-  min-width: 30px;
-  opacity: 0.7;
+  min-width: 35px;
+  font-size: 13px;
+  opacity: 0.8;
 }
 
 .progress-track-bg {
   flex: 1;
-  height: 6px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
   overflow: hidden;
 }
 
 .progress-fill-active {
   height: 100%;
-  background-color: #f5b50a;
-  border-radius: 3px;
+  background: #f5b50a;
+  border-radius: 999px;
+  transition: width 0.3s ease;
 }
 
 .progress-percent-text {
-  min-width: 35px;
+  min-width: 45px;
   text-align: right;
+  font-size: 13px;
   opacity: 0.7;
 }
 
-/* Tìm class này trong file CSS của ông và cập nhật lại */
+/* ==========================================================================
+   DANH SÁCH BÌNH LUẬN
+   ========================================================================== */
+
 .mini-comments-list-viewport {
-    max-height: 400px; /* Điều chỉnh chiều cao tối đa tùy ý ông (ví dụ 400px hoặc 500px) */
-    overflow-y: auto;  /* Đây là lệnh tạo thanh cuộn dọc khi nội dung vượt quá chiều cao */
-    padding-right: 10px; /* Tạo khoảng cách để nội dung không dính vào thanh cuộn */
-    margin-top: 15px;
+  max-height: 450px;
+  overflow-y: auto;
+  padding-right: 10px;
 }
 
-/* Custom lại thanh scrollbar cho đẹp hơn (tùy chọn) */
 .mini-comments-list-viewport::-webkit-scrollbar {
-    width: 6px;
+  width: 6px;
 }
 
 .mini-comments-list-viewport::-webkit-scrollbar-track {
-    background: #1a1a1a; /* Màu nền của thanh scroll */
-    border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
 }
 
 .mini-comments-list-viewport::-webkit-scrollbar-thumb {
-    background: #444; /* Màu của thanh trượt */
-    border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
 }
 
 .mini-comments-list-viewport::-webkit-scrollbar-thumb:hover {
-    background: #f5b50a; /* Màu khi di chuột vào thanh trượt */
+  background: #f5b50a;
 }
+
 .mini-comment-card {
-  background-color: rgba(255, 255, 255, 0.01);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  padding-bottom: 15px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .comment-user-meta-header {
@@ -548,10 +549,11 @@
 }
 
 .user-avatar-placeholder-small {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background-color: #444444;
+  background: #444;
+  flex-shrink: 0;
 }
 
 .user-name-title-box {
@@ -568,28 +570,31 @@
 .user-stars-small-row {
   display: flex;
   gap: 2px;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .comment-time-ago {
   font-size: 12px;
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
 .comment-content-body-text {
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.7;
+  opacity: 0.85;
   margin: 0;
-  opacity: 0.8;
 }
 
+/* ==========================================================================
+   EMPTY REVIEW
+   ========================================================================== */
+
 .empty-reviews-placeholder {
+  padding: 40px;
   text-align: center;
-  padding: 30px;
   opacity: 0.5;
   font-size: 14px;
 }
-
 
 /* ==========================================================================
    7. SECTION 5: PHIM LIÊN QUAN (HIỂN THỊ THÀNH 4 CỘT LỚN TRÊN PC)
