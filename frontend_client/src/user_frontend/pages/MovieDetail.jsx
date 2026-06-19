@@ -14,10 +14,11 @@ import {
     Ticket,
     Play,
     Heart,
-    Share2 
+    Share2,
+    X 
 } from 'lucide-react';
 import Modal from '../components/Modal';
-import MovieSlider from '../components/MovieSlider';
+import MovieCard from "../components/MovieCard";
 import { useAuth } from '../../context/AuthContext';
 import "../styles/MovieDetail.css";
 
@@ -29,9 +30,10 @@ const MovieDetail = () => {
     
     const [movie, setMovie] = useState(null);
     const [relatedMovies, setRelatedMovies] = useState([]);
+    const [trailerMovies, setTrailerMovies] = useState([]);
     const [actors, setActors] = useState([]); 
     const [loading, setLoading] = useState(true);
-    
+    const [showTrailer, setShowTrailer] = useState(false);
     // Logic Đánh giá & Bình luận
     const [userRating, setUserRating] = useState(0); 
     const [hover, setHover] = useState(0); 
@@ -88,8 +90,21 @@ const MovieDetail = () => {
                     fetchReviews(movieData.movie_id);
                 }
 
-                const filtered = resRelated.data.filter(m => m.slug !== slug);
+               const filtered = resRelated.data.filter(
+                    m => m.slug !== slug
+                );
+
                 setRelatedMovies(filtered);
+
+                const trailerFiltered = filtered
+                    .filter(
+                        item =>
+                            item.trailer_url &&
+                            item.trailer_url.trim() !== ""
+                    )
+                    .slice(0, 6);
+
+                setTrailerMovies(trailerFiltered);
 
                 // ĐÃ SỬA: Lấy thẳng toàn bộ danh sách diễn viên từ DB, không filter bóp nghẹt data nữa
                 setActors(resActors.data || []);
@@ -172,17 +187,21 @@ const MovieDetail = () => {
 
     const openTrailerModal = () => {
         const videoId = getYoutubeID(movie.trailer_url);
+
         if (!videoId) return;
 
-        setModalConfig({
-            show: true,
-            type: 'confirm',
-            title: `Trailer: ${movie.title}`,
-            message: 'trailer_mode',
-            onConfirm: closeModal
-        });
+        setShowTrailer(true);
     };
+    const openTrailerByMovie = (movieItem) => {
 
+        if (!movieItem?.trailer_url) return;
+
+        window.open(
+            movieItem.trailer_url,
+            "_blank"
+        );
+
+    };
     const renderTrailerVideo = () => {
         const videoId = getYoutubeID(movie.trailer_url);
         return (
@@ -395,11 +414,29 @@ const MovieDetail = () => {
 
             </div>
             <div className="cinema-main-content-container">
-                
-                {/* SECTION 2: DIỄN VIÊN CAROUSEL */}
+                {/* SECTION 2: PHIM LIÊN QUAN - TÁI SỬ DỤNG COMPONENT */}
+                <div className="filmgenre-container">
+                    <div className="filmgenre-section-header">
+                        <h2>  PHIM LIÊN QUAN</h2>
+                        <div className="filmgenre-line"/>
+                    </div>
+                    <div className="genre-movies-grid">
+                        {
+                            relatedMovies.map(movie => (
+                                <MovieCard
+                                    key={movie.movie_id}
+                                    movie={movie}
+                                    baseUrl={`${IMAGE_BASE_URL}/posters/`}
+                                />
+                            ))
+                        }
+                    </div>
+                </div>
+                {/* SECTION 3: DIỄN VIÊN CAROUSEL */}
                 <div className="cinema-section-block">
                     <div className="section-header-row">
                         <h3 className="section-title-label">DIỄN VIÊN</h3>
+                        <div className="filmgenre-line" />
                         <span 
                             className="view-all-link-red" 
                             onClick={() => navigate('/actors')} 
@@ -461,20 +498,67 @@ const MovieDetail = () => {
                         )}
                     </div>
                 </div>
+                {/* SECTION 4: TRAILER KHÁC */}
+                <div className="cinema-section-block">
+                    <div className="section-header-row">
 
-               {/* SECTION 3: ĐÁNH GIÁ TỪ KHÁN GIẢ */}
+                        <h3 className="section-title-label">
+                            TRAILER KHÁC
+                        </h3>
+                        <div className="filmgenre-line" />
+                    </div>
+                    <div className="other-trailers-grid">
+                        {trailerMovies.map(item => {
+                            const videoId = getYoutubeID(item.trailer_url);
+                            return (
+                                <div
+                                    key={item.movie_id}
+                                    className="other-trailer-card"
+                                    onClick={() => openTrailerByMovie(item)}
+                                >
+                                    <div className="other-trailer-thumb">
+                                        <img
+                                            src={
+                                                videoId
+                                                    ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+                                                    : `${IMAGE_BASE_URL}/posters/${item.poster_url}`
+                                            }
+                                            alt={item.title}
+                                        />
+                                        <div className="other-trailer-overlay">
+                                            <Play
+                                                size={42}
+                                                strokeWidth={2.5}
+                                            />
+                                        </div>
+
+                                    </div>
+
+                                    <h4 className="other-trailer-title">
+                                        {item.title}
+                                    </h4>
+
+                                </div>
+                            );
+
+                        })}
+                    </div>
+
+                </div>
+               {/* SECTION 5: ĐÁNH GIÁ TỪ KHÁN GIẢ */}
                 <div className="reviews-section-fullwidth">
-                    <div className="split-right-column-box">
-                        <div className="section-header-row">
+                     <div className="section-header-row">
                             <h3 className="section-title-label">ĐÁNH GIÁ TỪ KHÁN GIẢ</h3>
+                            <div className="filmgenre-line" />
                             <button
                                 className="btn-write-review-small"
                                 onClick={openRatingModal}
                             >
-                                + Viết đánh giá
+                                Viết đánh giá
                             </button>
                         </div>
 
+                    <div className="split-right-column-box">
                         <div className="rating-statistics-dashboard">
                             <div className="dashboard-big-score-left">
                                 <div className="huge-number">
@@ -569,17 +653,35 @@ const MovieDetail = () => {
                         </div>
                     </div>
                 </div>
-                {/* SECTION 4: PHIM LIÊN QUAN - TÁI SỬ DỤNG COMPONENT */}
-                <MovieSlider 
-                    title="PHIM LIÊN QUAN" 
-                    movies={relatedMovies} 
-                    baseUrl={`${IMAGE_BASE_URL}/posters/`} 
-                    onClickMovie={(movie) => navigate(`/movies/detail/${movie.slug || movie.movie_slug}`)}
-                />
+               
 
             </div>
+            {/* TRAILER MODAL */}
+            {
+                showTrailer && (
+                    <div
+                        className="trailer-modal-overlay"
+                        onClick={() => setShowTrailer(false)}
+                    >
+                        <div
+                            className="trailer-modal-container"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <button
+                                className="trailer-close-btn"
+                                onClick={() => setShowTrailer(false)}
+                            >
+                                <X size={24} />
+                            </button>
+
+                            {renderTrailerVideo()}
+                        </div>
+                    </div>
+                )
+            }
         </div>
+        
     );
 };
-
+    
 export default MovieDetail;

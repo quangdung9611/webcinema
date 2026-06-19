@@ -260,9 +260,11 @@
   height: 100%;
   object-fit: cover;
 
-  /* cinematic feel */
-  transform: scale(1.08);
-  animation: bannerZoom 1.4s ease-out forwards;
+  animation:
+    bannerZoom 1.4s ease-out forwards,
+    cinematicDrift 18s ease-in-out infinite;
+
+  will-change: transform;
 }
 
 /* zoom mượt */
@@ -278,7 +280,38 @@
     filter: blur(0);
   }
 }
+@keyframes cinematicDrift {
 
+  0% {
+    transform:
+      scale(1.05)
+      translate3d(0,0,0);
+  }
+
+  25% {
+    transform:
+      scale(1.08)
+      translate3d(-15px,-8px,0);
+  }
+
+  50% {
+    transform:
+      scale(1.1)
+      translate3d(12px,-10px,0);
+  }
+
+  75% {
+    transform:
+      scale(1.08)
+      translate3d(-10px,6px,0);
+  }
+
+  100% {
+    transform:
+      scale(1.05)
+      translate3d(0,0,0);
+  }
+}
 /* =========================
    PREMIUM DARK OVERLAY
 ========================= */
@@ -311,7 +344,38 @@
       rgba(0,0,0,.78) 100%
     );
 }
+.banner-overlay::before {
+  content: "";
 
+  position: absolute;
+
+  top: 0;
+  right: 0;
+
+  width: 40%;
+  height: 100%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255,180,0,.18),
+      transparent 70%
+    );
+
+  animation:
+    screenGlow 6s ease-in-out infinite;
+}
+
+@keyframes screenGlow {
+
+  0%,100% {
+    opacity: .45;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
 /* =========================
    LIGHT SWEEP (PREMIUM EFFECT)
 ========================= */
@@ -337,6 +401,41 @@
 @keyframes lightMove {
   0% { left: -120%; }
   100% { left: 220%; }
+}
+
+.banner-particles {
+  position: absolute;
+  inset: 0;
+
+  z-index: 3;
+
+  pointer-events: none;
+
+  opacity: .25;
+
+  background-image:
+    radial-gradient(
+      rgba(255,140,0,.95) 1px,
+      transparent 1px
+    );
+
+  background-size:
+    180px 180px;
+
+  animation:
+    particleFloat 22s linear infinite;
+}
+@keyframes particleFloat {
+
+  from {
+    transform:
+      translateY(40px);
+  }
+
+  to {
+    transform:
+      translateY(-40px);
+  }
 }
 /* =========================
    PREMIUM CENTER TEXT

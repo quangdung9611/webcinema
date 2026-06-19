@@ -84,9 +84,9 @@ const MovieSlider = ({ title, movies, baseUrl, onClickMovie }) => {
                   });
                   }}
                 >
-  <Ticket size={16} />
-  ĐẶT VÉ
-</button>
+                <Ticket size={16} />
+                ĐẶT VÉ
+              </button>
               </div>
             </div>
 

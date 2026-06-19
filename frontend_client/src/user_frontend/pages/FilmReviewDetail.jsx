@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ThumbsUp, Eye, Calendar, ChevronLeft, User } from 'lucide-react';
-import MovieSidebar from '../components/MovieSidebar'; 
+// import MovieSidebar from '../components/MovieSidebar'; 
 import '../styles/FilmReviewDetail.css';
 
 const FilmReviewDetail = () => {
@@ -92,10 +92,10 @@ const FilmReviewDetail = () => {
 
                 {/* CỘT PHẢI (2.5) */}
                 <div className="sidebar-review-col">
-                    <MovieSidebar 
+                    {/* <MovieSidebar 
                         IMAGE_BASE_URL={IMAGE_BASE_URL}
                         title="Phim Đang Chiếu"
-                    />
+                    /> */}
                 </div>
 
             </div>

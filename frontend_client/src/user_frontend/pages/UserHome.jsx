@@ -515,7 +515,8 @@ const UserHome = () => {
                 {item.button}
             </button>
             </div>
-
+          {/* particle */}
+          <div className="banner-particles"></div>
           {/* light effect */}
           <div className="banner-light"></div>
 

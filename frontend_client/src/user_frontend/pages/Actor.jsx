@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { ThumbsUp, Eye } from 'lucide-react'; 
-import MovieSidebar from '../components/MovieSidebar'; 
+// import MovieSidebar from '../components/MovieSidebar'; 
 import '../styles/Actor.css';
 
 const Actor = () => {
@@ -110,11 +110,11 @@ const Actor = () => {
 
                 {/* CỘT PHẢI: SIDEBAR (2.5) */}
                 <div className="sidebar-col">
-                    <MovieSidebar 
+                    {/* <MovieSidebar 
                         IMAGE_BASE_URL={IMAGE_BASE_URL}
                         title="Phim Đang Chiếu"
                         relatedMovies={allMovies.slice(0, 6)} // Lấy 6 phim đầu tiên hiện lên Sidebar
-                    />
+                    /> */}
                 </div>
 
             </div>

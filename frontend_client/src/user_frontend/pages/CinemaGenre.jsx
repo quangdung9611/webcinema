@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ThumbsUp, Eye } from 'lucide-react'; 
-import MovieSidebar from '../components/MovieSidebar'; 
+// import MovieSidebar from '../components/MovieSidebar'; 
 import '../styles/CinemaGenre.css';
 
 const CinemaGenre = () => {
@@ -161,11 +161,11 @@ const CinemaGenre = () => {
                 </div>
 
                 <div className="sidebar-col">
-                    <MovieSidebar 
+                    {/* <MovieSidebar 
                         IMAGE_BASE_URL={IMAGE_BASE_URL}
                         title="Phim Đang Chiếu"
                         relatedMovies={allMovies.slice(0, 6)} // Truyền data vào đây để Sidebar có cái mà hiện
-                    />
+                    /> */}
                 </div>
 
             </div>
