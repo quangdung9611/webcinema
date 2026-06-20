@@ -432,71 +432,142 @@ const MovieDetail = () => {
                         }
                     </div>
                 </div>
-                {/* SECTION 3: DIỄN VIÊN CAROUSEL */}
+             {/* SECTION 3 : DIỄN VIÊN */}
+
                 <div className="cinema-section-block">
+
                     <div className="section-header-row">
-                        <h3 className="section-title-label">DIỄN VIÊN</h3>
+
+                        <h3 className="section-title-label">
+                            DIỄN VIÊN
+                        </h3>
+
                         <div className="filmgenre-line" />
-                        <span 
-                            className="view-all-link-red" 
-                            onClick={() => navigate('/actors')} 
-                            style={{ cursor: 'pointer' }}
+
+                        <span
+                            className="view-all-link-red"
+                            onClick={() => navigate('/actors')}
                         >
                             Xem tất cả ❯
                         </span>
+
                     </div>
+
+
                     <div className="cast-avatars-horizontal-list">
-                        {actors && actors.length > 0 ? (
-                            actors.map((actor, idx) => (
-                                <div 
-                                    className="actor-circle-card" 
-                                    key={actor.actor_id || idx}
-                                    onClick={() => actor.slug && navigate(`/actor/${actor.slug}`)}
-                                    style={{ cursor: 'pointer' }}
+
+                        {actors?.length > 0 ? (
+
+                            actors.map((actor, index) => (
+
+                                <div
+                                    key={actor.actor_id || index}
+                                    className="actor-circle-card"
+                                    onClick={() =>
+                                        actor.slug &&
+                                        navigate(`/actor/${actor.slug}`)
+                                    }
                                 >
+
                                     <div className="actor-avatar-frame">
+
                                         {actor.avatar ? (
-                                            <img 
-                                                src={`${IMAGE_BASE_URL}/actors/${actor.avatar}`} 
-                                                alt={actor.name} 
-                                                className="actor-real-img" 
+
+                                            <img
+                                                src={`${IMAGE_BASE_URL}/actors/${actor.avatar}`}
+                                                alt={actor.name}
+                                                className="actor-real-img"
                                                 onError={(e) => {
                                                     e.target.onerror = null;
-                                                    e.target.src = 'https://api.quangdungcinema.id.vn/uploads/actors/default-avatar.png';
+
+                                                    e.target.src =
+                                                        'https://api.quangdungcinema.id.vn/uploads/actors/default-avatar.png';
                                                 }}
                                             />
+
                                         ) : (
-                                            <div className="placeholder-avatar-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#333', width: '100%', height: '100%', borderRadius: '50%' }}>
-                                                <User size={24} color="#aaa" />
+
+                                            <div className="placeholder-avatar-bg">
+
+                                                <User
+                                                    size={28}
+                                                    color="#888"
+                                                />
+
                                             </div>
+
                                         )}
+
                                     </div>
-                                    <span className="actor-real-name">{actor.name}</span>
-                                    <span className="actor-character-name">Diễn viên</span>
+
+
+                                    <span className="actor-real-name">
+                                        {actor.name}
+                                    </span>
+
                                 </div>
+
                             ))
-                        ) : movie && movie.cast && movie.cast.trim() !== "" && movie.cast.toLowerCase() !== "đang cập nhật" ? (
-                            movie.cast.split(',').map((item, idx) => {
-                                const rawName = item.trim();
-                                if (!rawName) return null;
-                                return (
-                                    <div className="actor-circle-card" key={`raw-${idx}`}>
-                                        <div className="actor-avatar-frame">
-                                            <div className="placeholder-avatar-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#2a2a2a', width: '100%', height: '100%', borderRadius: '50%' }}>
-                                                <User size={24} color="#888" />
-                                            </div>
-                                        </div>
-                                        <span className="actor-real-name">{rawName}</span>
-                                        <span className="actor-character-name">Diễn viên</span>
-                                    </div>
-                                );
-                            })
+
                         ) : (
-                            <div className="empty-reviews-placeholder" style={{ gridColumn: '1 / -1', padding: '20px 0', textAlign: 'left', opacity: 0.6 }}>
+
+                            movie?.cast &&
+                            movie.cast.trim() !== '' &&
+                            movie.cast.toLowerCase() !== 'đang cập nhật'
+
+                        ) ? (
+
+                            movie.cast.split(',').map((item, index) => {
+
+                                const actorName = item.trim();
+
+                                if (!actorName) return null;
+
+                                return (
+
+                                    <div
+                                        key={`cast-${index}`}
+                                        className="actor-circle-card"
+                                    >
+
+                                        <div className="actor-avatar-frame">
+
+                                            <div className="placeholder-avatar-bg">
+
+                                                <User
+                                                    size={28}
+                                                    color="#888"
+                                                />
+
+                                            </div>
+
+                                        </div>
+
+
+                                        <span className="actor-real-name">
+
+                                            {actorName}
+
+                                        </span>
+
+                                    </div>
+
+                                );
+
+                            })
+
+                        ) : (
+
+                            <div className="empty-reviews-placeholder">
+
                                 Thông tin về dàn diễn viên của bộ phim đang được cập nhật...
+
                             </div>
+
                         )}
+
                     </div>
+
                 </div>
                 {/* SECTION 4: TRAILER KHÁC */}
                 <div className="cinema-section-block">

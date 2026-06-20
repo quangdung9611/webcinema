@@ -1,4 +1,4 @@
-import React,{
+import React, {
     useEffect,
     useState,
     useCallback
@@ -15,468 +15,256 @@ import MovieCard from "../components/MovieCard";
 
 import "../styles/FilmGenre.css";
 
+const API_URL =
+    "https://api.quangdungcinema.id.vn/api";
+
+const BASE_URL =
+    "https://api.quangdungcinema.id.vn/uploads/posters/";
+
+const containerVariants = {
+    hidden: {},
+    show: {
+        transition: {
+            staggerChildren: 0.08
+        }
+    }
+};
+
+const cardVariants = {
+    hidden: {
+        opacity: 0,
+        y: 80,
+        scale: 0.9,
+        filter: "blur(10px)"
+    },
+
+    show: {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        filter: "blur(0px)",
+        transition: {
+            duration: 0.9,
+            ease: [0.16, 1, 0.3, 1]
+        }
+    }
+};
 
 const FilmGenre = () => {
 
+    const [movies, setMovies] =
+        useState([]);
 
-const [movies,setMovies]=useState([]);
+    const [genres, setGenres] =
+        useState([]);
 
-const [genres,setGenres]=useState([]);
+    const [loading, setLoading] =
+        useState(true);
 
-const [loading,setLoading]=useState(true);
+    const [activeGenre, setActiveGenre] =
+        useState("");
 
-const [activeGenre,setActiveGenre]=useState("");
+    /* ==========================
+       FETCH MOVIES
+    ========================== */
 
+    const fetchMovies = useCallback(
+        async (genreSlug = "") => {
 
+            try {
 
-const baseUrl =
-"https://api.quangdungcinema.id.vn/uploads/posters/";
+                setLoading(true);
 
+                const url = genreSlug
+                    ? `${API_URL}/movies/with-genre?genre=${genreSlug}`
+                    : `${API_URL}/movies`;
 
+                const { data } =
+                    await axios.get(url);
 
-/*==========================
-FETCH MOVIES
-==========================*/
+                setMovies(data || []);
 
-const fetchMovies = useCallback(
+            } catch (error) {
 
-async(genreSlug)=>{
+                console.error(
+                    "Lỗi tải phim:",
+                    error
+                );
 
+                setMovies([]);
 
-try{
+            } finally {
 
-setLoading(true);
+                setLoading(false);
 
+            }
 
-let url="";
+        },
+        []
+    );
 
+    /* ==========================
+       FETCH GENRES
+    ========================== */
 
-if(!genreSlug){
+    useEffect(() => {
 
-url=
-"https://api.quangdungcinema.id.vn/api/movies";
+        const fetchGenres = async () => {
 
-}
-else{
+            try {
 
-url=
-`https://api.quangdungcinema.id.vn/api/movies/with-genre?genre=${genreSlug}`;
+                const { data } =
+                    await axios.get(
+                        `${API_URL}/genres`
+                    );
 
-}
+                setGenres(data || []);
 
+            } catch (error) {
 
-const res =
-await axios.get(url);
+                console.error(
+                    "Lỗi tải thể loại:",
+                    error
+                );
 
+            }
 
-setMovies(
+        };
 
-res.data || []
+        fetchGenres();
 
-);
+    }, []);
 
+    /* ==========================
+       LOAD MOVIES
+    ========================== */
 
-}
+    useEffect(() => {
 
+        fetchMovies(activeGenre);
 
-catch(error){
+    }, [activeGenre, fetchMovies]);
 
-console.error(error);
+    return (
 
-setMovies([]);
+        <div className="film-genre-page">
 
-}
+            {/* TABS */}
+            <div className="genre-tabs">
 
-
-finally{
-
-setLoading(false);
-
-}
-
-
-},[]);
-
-
-
-/*==========================
-FETCH GENRES
-==========================*/
-
-
-useEffect(()=>{
-
-
-const fetchGenres = async()=>{
-
-
-try{
-
-
-const res = await axios.get(
-
-"https://api.quangdungcinema.id.vn/api/genres"
-
-);
-
-
-setGenres(
-
-res.data || []
-
-);
-
-
-}
-
-catch(error){
-
-console.error(error);
-
-}
-
+                <button
+                    className={`genre-tab ${
+                        activeGenre === ""
+                            ? "active"
+                            : ""
+                    }`}
+                    onClick={() =>
+                        setActiveGenre("")
+                    }
+                >
+                    Tất cả
+                </button>
+
+                {genres.map((genre) => (
+
+                    <button
+                        key={genre.genre_id}
+                        className={`genre-tab ${
+                            activeGenre ===
+                            genre.slug
+                                ? "active"
+                                : ""
+                        }`}
+                        onClick={() =>
+                            setActiveGenre(
+                                genre.slug
+                            )
+                        }
+                    >
+                        {genre.genre_name}
+                    </button>
+
+                ))}
+
+            </div>
+
+            {/* MOVIES */}
+            <div className="filmgenre-container">
+
+                <div className="filmgenre-section-header">
+
+                    <h2>
+                        DANH SÁCH PHIM
+                    </h2>
+
+                    <div className="filmgenre-line" />
+
+                </div>
+
+                {loading ? (
+
+                    <div className="loading-movies">
+                        Đang tải phim...
+                    </div>
+
+                ) : movies.length === 0 ? (
+
+                    <div className="empty-movies">
+                        Không có phim nào
+                    </div>
+
+                ) : (
+
+                    <motion.div
+                        className="genre-movies-grid"
+                        variants={
+                            containerVariants
+                        }
+                        initial="hidden"
+                        animate="show"
+                    >
+
+                        <AnimatePresence>
+
+                            {movies.map(
+                                (movie) => (
+
+                                    <motion.div
+                                        key={
+                                            movie.movie_id
+                                        }
+                                        variants={
+                                            cardVariants
+                                        }
+                                        layout
+                                    >
+
+                                        <MovieCard
+                                            movie={
+                                                movie
+                                            }
+                                            baseUrl={
+                                                BASE_URL
+                                            }
+                                        />
+
+                                    </motion.div>
+
+                                )
+                            )}
+
+                        </AnimatePresence>
+
+                    </motion.div>
+
+                )}
+
+            </div>
+
+        </div>
+
+    );
 
 };
-
-
-fetchGenres();
-
-
-},[]);
-
-
-
-
-/*==========================
-LOAD MOVIES
-==========================*/
-
-
-useEffect(()=>{
-
-
-fetchMovies(
-
-activeGenre
-
-);
-
-
-},
-
-[
-activeGenre,
-fetchMovies
-]
-
-);
-
-
-
-
-/*==========================
-ANIMATION
-==========================*/
-
-
-const containerVariants={
-
-
-hidden:{},
-
-
-show:{
-
-
-transition:{
-
-staggerChildren:.08
-
-}
-
-
-}
-
-
-};
-
-
-
-const cardVariants={
-
-
-hidden:{
-
-
-opacity:0,
-
-y:80,
-
-scale:.9,
-
-filter:"blur(10px)"
-
-
-},
-
-
-
-show:{
-
-
-opacity:1,
-
-y:0,
-
-scale:1,
-
-filter:"blur(0px)",
-
-
-transition:{
-
-
-duration:.9,
-
-ease:[0.16,1,0.3,1]
-
-
-}
-
-
-}
-
-
-};
-
-
-
-return(
-
-
-<div className="film-genre-page">
-
-
-{/* TABS */}
-
-<div className="genre-tabs">
-
-
-<button
-
-className={
-
-activeGenre===""
-
-?
-
-"genre-tab active"
-
-:
-
-"genre-tab"
-
-}
-
-onClick={()=>setActiveGenre("")}
-
->
-
-Tất cả
-
-</button>
-
-
-
-{
-
-genres.map((genre)=>(
-
-
-<button
-
-key={genre.genre_id}
-
-
-className={
-
-activeGenre===genre.slug
-
-?
-
-"genre-tab active"
-
-:
-
-"genre-tab"
-
-}
-
-
-onClick={()=>setActiveGenre(
-
-genre.slug
-
-)}
-
->
-
-
-{genre.genre_name}
-
-
-</button>
-
-
-))
-
-}
-
-
-</div>
-
-
-
-
-
-{/* MOVIES */}
-
-
-<div className="filmgenre-container">
-
-
-<div className="filmgenre-section-header">
-
-
-<h2>
-
-DANH SÁCH PHIM
-
-</h2>
-
-
-<div className="filmgenre-line"/>
-
-
-</div>
-
-
-
-{
-
-loading
-
-?
-
-
-<div className="loading-movies">
-
-Đang tải phim...
-
-</div>
-
-
-:
-
-
-movies.length===0
-
-
-?
-
-
-<div className="empty-movies">
-
-Không có phim nào
-
-</div>
-
-
-
-:
-
-
-
-<motion.div
-
-
-className="genre-movies-grid"
-
-
-variants={containerVariants}
-
-initial="hidden"
-
-animate="show"
-
->
-
-
-
-<AnimatePresence>
-
-
-{
-
-movies.map(movie=>(
-
-
-<motion.div
-
-
-key={movie.movie_id}
-
-
-variants={cardVariants}
-
-layout
-
-
->
-
-
-<MovieCard
-
-
-movie={movie}
-
-baseUrl={baseUrl}
-
-
-/>
-
-
-
-</motion.div>
-
-
-))
-
-
-}
-
-
-</AnimatePresence>
-
-
-
-</motion.div>
-
-
-
-}
-
-
-</div>
-
-
-</div>
-
-
-);
-
-
-};
-
 
 export default FilmGenre;
