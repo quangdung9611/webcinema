@@ -215,6 +215,10 @@ const CinemaDetail = () => {
 
                 <div className="cinema-overlay"></div>
 
+                    <div className="hero-light"></div>
+
+                    <div className="cinema-particles"></div>
+
                 <img
                     src="https://api.quangdungcinema.id.vn/uploads/cinema_map/cinema.png"
                     alt=""
@@ -234,7 +238,7 @@ const CinemaDetail = () => {
                         <h1>
                             {cinema.cinema_name}
                         </h1>
-
+                        <div className="hero-divider"></div>
                         <div className="hero-info">
 
                             <div className="hero-info-item">
