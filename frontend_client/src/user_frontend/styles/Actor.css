@@ -1,259 +1,801 @@
-/* ==========================================
-   1. TỔNG THỂ TRANG DIỄN VIÊN
-   ========================================== */
-.actor-page-bg {
-    background-color: #000000;
-    color: #eeeeee;
-    padding: 40px 0;
-    min-height: 100vh;
+
+/* =========================
+   ACTOR PAGE
+========================= */
+
+.actor-page{
+    width:100%;
+    min-height:100vh;
 }
 
-.actor-content-flex {
-    display: flex;
-    flex-wrap: wrap;
-    max-width: 1250px;
-    margin: 0 auto;
-    gap: 40px;
-    padding: 0 20px;
+/* ==========================================================
+   HERO
+========================================================== */
+
+.actor-hero{
+    position:relative;
+    width:100%;
+    height:760px;
+    overflow:hidden;
+
+    display:flex;
+    align-items:center;
+
+    background:
+        linear-gradient(
+            rgba(0,0,0,.45),
+            rgba(0,0,0,.75)
+        ),
+     ;
+
+    background-size:cover;
+    background-position:center;
+
+    animation:heroMove 18s linear infinite alternate;
+}
+.hero-banner-img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+
+    animation:heroMove 18s linear infinite alternate;
 }
 
-/* Cột chính (7.5) */
-.main-actor-col {
-    flex: 7.5;
-    min-width: 0;
-}
+/* ==========================================================
+   BG ANIMATION
+========================================================== */
 
-/* Header kiểu Galaxy */
-.section-header-galaxy {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 30px;
-}
+@keyframes heroMove{
+    0%{
+        background-position:center;
+    }
 
-.blue-line {
-    width: 6px;
-    height: 30px;
-    background: #03599d;
-    display: inline-block;
-}
-
-.section-title {
-    font-size: 24px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin: 0;
-}
-
-/* Bộ lọc (Custom theo style CinemaGenre) */
-.actor-filters-bar {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 30px;
-}
-
-.filter-select-custom {
-    background: #1a1a1a;
-    color: #fff;
-    border: 1px solid #333;
-    padding: 10px 20px;
-    border-radius: 6px;
-    outline: none;
-    cursor: pointer;
-    font-size: 14px;
-    transition: 0.3s;
-}
-
-.filter-select-custom:focus {
-    border-color: #03599d;
-}
-
-/* ==========================================
-   2. DANH SÁCH DIỄN VIÊN (DẠNG NGANG)
-   ========================================== */
-.actor-list {
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-}
-
-.actor-card-horizontal {
-    display: flex;
-    gap: 25px;
-    background: #0d0d0d;
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid #222;
-    transition: 0.3s ease;
-}
-
-.actor-card-horizontal:hover {
-    border-color: #03599d;
-    background: #111;
-    transform: translateY(-2px);
-}
-
-.actor-img-box {
-    width: 180px;
-    height: 240px;
-    flex-shrink: 0;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #222;
-}
-
-.actor-img-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: 0.5s;
-}
-
-.actor-card-horizontal:hover .actor-img-box img {
-    transform: scale(1.1);
-}
-
-.actor-content-info {
-    flex: 1;
-}
-
-.actor-name-link {
-    text-decoration: none;
-}
-
-.actor-name-link h3 {
-    font-size: 22px;
-    color: #fff;
-    margin: 0 0 12px 0;
-    transition: 0.3s;
-}
-
-.actor-name-link:hover h3 {
-    color: #03599d;
-}
-
-.actor-meta-row {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    margin-bottom: 15px;
-}
-
-.btn-fb-like {
-    background: #1877f2;
-    color: #fff;
-    border: none;
-    padding: 6px 14px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.btn-fb-like:hover {
-    background: #166fe5;
-}
-
-.view-count {
-    font-size: 13px;
-    color: #888;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.actor-biography-text {
-    line-height: 1.6;
-    color: #bbb;
-    font-size: 14.5px;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-/* ==========================================
-   3. CỘT SIDEBAR (2.5) - GIỐNG CINEMA GENRE
-   ========================================== */
-.sidebar-col {
-    flex: 2.5;
-    min-width: 280px;
-}
-
-/* Các class bên trong Sidebar sẽ được kế thừa từ MovieSidebar.css 
-   Hoặc nếu ông viết chung thì dùng các class dưới đây */
-
-.no-data {
-    color: #888;
-    font-style: italic;
-    padding: 20px 0;
-}
-
-/* ==========================================
-   4. RESPONSIVE (ĐỒNG BỘ MỐC 992PX)
-   ========================================== */
-@media (max-width: 1200px) {
-    .actor-content-flex {
-        gap: 25px;
+    100%{
+        background-position:center top;
     }
 }
 
-@media (max-width: 992px) {
-    /* Ẩn sidebar đúng mốc movie detail / genre */
-    .sidebar-col {
-        display: none !important;
+/* ==========================================================
+   OVERLAY
+========================================================== */
+
+.actor-overlay{
+    position:absolute;
+    inset:0;
+    z-index:1;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(255,184,0,.08),
+            transparent 60%
+        ),
+        linear-gradient(
+            180deg,
+            rgba(0,0,0,.05),
+            rgba(0,0,0,.55)
+        );
+}
+
+/* ==========================================================
+   LIGHT
+========================================================== */
+
+.actor-hero::before{
+    content:"";
+
+    position:absolute;
+    top:0;
+    left:-40%;
+
+    width:25%;
+    height:100%;
+
+    z-index:2;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.08),
+            transparent
+        );
+
+    transform:skewX(-25deg);
+
+    animation:heroLight 10s linear infinite;
+}
+
+@keyframes heroLight{
+    0%{
+        left:-40%;
     }
 
-    .main-actor-col {
-        flex: 1;
-        width: 100%;
+    100%{
+        left:140%;
     }
 }
 
-@media (max-width: 768px) {
-    .actor-card-horizontal {
-        gap: 15px;
-        padding: 15px;
+/* ==========================================================
+   PARTICLES
+========================================================== */
+
+.actor-hero::after{
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    pointer-events:none;
+    z-index:2;
+
+    background-image:
+        radial-gradient(
+            rgba(255,184,0,.30) 1px,
+            transparent 1px
+        );
+
+    background-size:180px 180px;
+    opacity:.20;
+}
+
+/* ==========================================================
+   CONTENT
+========================================================== */
+
+.actor-content{
+    position:relative;
+    z-index:5;
+
+    width:100%;
+    max-width:1300px;
+
+    margin:0px auto;
+    padding-inline:40px;
+
+    transform:translateY(-40px);
+}
+
+/* ==========================================================
+   TEXT
+========================================================== */
+
+.actor-text{
+    max-width:850px;
+    animation:heroFloat 5s ease infinite;
+}
+
+@keyframes heroFloat{
+    0%{
+        transform:translateY(0);
     }
 
-    .actor-img-box {
-        width: 130px;
-        height: 180px;
+    50%{
+        transform:translateY(-6px);
     }
 
-    .actor-name-link h3 {
-        font-size: 18px;
-    }
-
-    .actor-biography-text {
-        -webkit-line-clamp: 3;
-        font-size: 13.5px;
+    100%{
+        transform:translateY(0);
     }
 }
 
-@media (max-width: 576px) {
-    .actor-card-horizontal {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
+/* ==========================================================
+   LABEL
+========================================================== */
+
+.actor-text span{
+    display:inline-flex;
+
+    padding:12px 24px;
+    margin-bottom:28px;
+
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.08);
+
+    background:rgba(255,255,255,.05);
+    backdrop-filter:blur(12px);
+
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:2px;
+    text-transform:uppercase;
+
+    color:#ffd15c;
+}
+
+/* ==========================================================
+   TITLE
+========================================================== */
+
+.actor-text h1{
+    font-size:120px;
+    font-weight:900;
+    line-height:.9;
+
+    margin-bottom:30px;
+
+    letter-spacing:4px;
+    text-transform:uppercase;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fff8d9 0%,
+            #ffd95c 35%,
+            #ffb800 70%,
+            #c98900 100%
+        );
+
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+
+    text-shadow:
+        0 0 25px rgba(255,184,0,.25),
+        0 0 60px rgba(255,184,0,.15);
+}
+
+/* ==========================================================
+   SUBTITLE
+========================================================== */
+
+.actor-text h3{
+    font-size:34px;
+    font-weight:700;
+    line-height:1.5;
+
+    color:#fff;
+    margin-bottom:30px;
+}
+
+/* ==========================================================
+   DESCRIPTION
+========================================================== */
+
+.actor-text p{
+    max-width:760px;
+
+    font-size:19px;
+    line-height:2;
+
+    color:rgba(255,255,255,.88);
+
+    margin-bottom:45px;
+}
+
+/* ==========================================================
+   BUTTON
+========================================================== */
+
+.actor-hero-btn{
+    display:inline-flex;
+
+    align-items:center;
+    justify-content:center;
+
+    min-width:220px;
+    height:60px;
+
+    padding:0 35px;
+
+    border-radius:999px;
+    text-decoration:none;
+
+    font-size:15px;
+    font-weight:800;
+    letter-spacing:1px;
+
+    color:#111;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffd95c,
+            #ffb800
+        );
+
+    box-shadow:
+        0 10px 30px rgba(255,184,0,.25);
+
+    transition:.4s;
+}
+
+.actor-hero-btn:hover{
+    transform:translateY(-4px);
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffe483,
+            #ffc233
+        );
+
+    box-shadow:
+        0 20px 45px rgba(255,184,0,.35);
+}
+
+/* =========================
+   ACTOR SECTION
+========================= */
+
+.actor-section{
+    position:relative;
+
+    max-width:1400px;
+    margin:auto;
+
+    padding:120px 30px;
+}
+
+/* =========================
+   SECTION HEADER
+========================= */
+
+.actor-section-header{
+    display:flex;
+    align-items:center;
+
+    gap:20px;
+    margin-bottom:60px;
+}
+
+.section-line{
+    width:80px;
+    height:3px;
+
+    border-radius:999px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #ffb800,
+            #ff5a00
+        );
+}
+
+.actor-section-header h2{
+    font-size:42px;
+    font-weight:800;
+
+    letter-spacing:2px;
+    text-transform:uppercase;
+
+    color:#fff;
+}
+
+/* =========================
+   GRID
+========================= */
+
+.actor-grid{
+    display:grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap:28px;
+}
+
+/* =========================
+   CARD
+========================= */
+
+.actor-card{
+    position:relative;
+    overflow:hidden;
+
+    border-radius:24px;
+
+    cursor:pointer;
+
+    background:
+        rgba(255,255,255,.03);
+
+    border:
+        1px solid rgba(255,255,255,.08);
+
+    backdrop-filter:blur(12px);
+
+    transition:.45s;
+}
+
+.actor-card:hover{
+    transform:translateY(-10px);
+
+    border-color:
+        rgba(255,50,50,.45);
+
+    box-shadow:
+        0 20px 50px rgba(0,0,0,.45),
+        0 0 35px rgba(255,184,0,.15);
+}
+
+/* =========================
+   GLOW BORDER
+========================= */
+
+.actor-card::before{
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    border-radius:24px;
+    padding:1px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ff3030,
+            #ff8f8f,
+            transparent
+        );
+
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+
+    -webkit-mask-composite:xor;
+
+    opacity:0;
+
+    transition:.4s;
+    pointer-events:none;
+}
+
+.actor-card:hover::before{
+    opacity:1;
+}
+
+/* =========================
+   SHINE EFFECT
+========================= */
+
+.actor-card::after{
+    content:"";
+
+    position:absolute;
+
+    top:0;
+    left:-120%;
+
+    width:50%;
+    height:100%;
+
+    z-index:5;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.18),
+            transparent
+        );
+
+    transform:skewX(-25deg);
+
+    transition:1s;
+}
+
+.actor-card:hover::after{
+    left:150%;
+}
+
+/* =========================
+   IMAGE
+========================= */
+
+.actor-image{
+    display:block;
+    width:100%;
+
+    aspect-ratio:3/2;
+    overflow:hidden;
+}
+
+.actor-image img{
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+    transition:.8s ease;
+}
+
+.actor-image::before{
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    z-index:2;
+
+    background:
+        linear-gradient(
+            180deg,
+            transparent,
+            rgba(0,0,0,.35)
+        );
+
+    opacity:0;
+    transition:.4s;
+}
+
+.actor-card:hover .actor-image::before{
+    opacity:1;
+}
+
+.actor-card:hover .actor-image img{
+    transform:scale(1.08);
+}
+
+/* =========================
+   INFO
+========================= */
+
+.actor-info{
+    padding:24px;
+}
+
+/* =========================
+   ACTOR NAME
+========================= */
+
+.actor-title{
+    display:block;
+
+    margin-bottom:14px;
+
+    text-decoration:none;
+
+    font-size:24px;
+    font-weight:800;
+    line-height:1.4;
+
+    color:#fff;
+
+    transition:.35s;
+}
+
+.actor-card:hover .actor-title{
+    color:#ff4040;
+
+    text-shadow:
+        0 0 10px rgba(255,0,0,.25);
+}
+
+/* =========================
+   META
+========================= */
+
+.actor-meta{
+    display:flex;
+    align-items:center;
+
+    gap:8px;
+    margin-bottom:18px;
+
+    color:#ffb800;
+
+    font-size:14px;
+    font-weight:600;
+}
+
+.actor-meta svg{
+    flex-shrink:0;
+}
+
+/* =========================
+   DESCRIPTION
+========================= */
+
+.actor-info p{
+    font-size:15px;
+    line-height:1.9;
+
+    color:rgba(255,255,255,.78);
+
+    text-align:justify;
+
+    display:-webkit-box;
+
+    -webkit-line-clamp:4;
+    -webkit-box-orient:vertical;
+
+    overflow:hidden;
+}
+
+/* =========================
+   1200px
+========================= */
+
+@media(max-width:1200px){
+
+    .actor-content{
+        padding-inline:30px;
+        transform:translateY(-50px);
     }
 
-    .actor-img-box {
-        width: 100%;
-        max-width: 180px;
-        height: 250px;
+    .actor-text h1{
+        font-size:95px;
     }
 
-    .actor-meta-row {
-        justify-content: center;
+    .actor-text h3{
+        font-size:28px;
     }
 
-    .actor-biography-text {
-        -webkit-line-clamp: 3;
+    .actor-text p{
+        max-width:700px;
+        font-size:18px;
+    }
+
+    .actor-grid{
+        grid-template-columns:repeat(3,1fr);
+        gap:24px;
+    }
+
+    .actor-section-header h2{
+        font-size:36px;
     }
 }
+
+/* =========================
+   992px
+========================= */
+
+@media(max-width:992px){
+
+    .actor-hero{
+        height:650px;
+    }
+
+    .actor-content{
+        transform:translateY(-35px);
+    }
+
+    .actor-text{
+        max-width:700px;
+    }
+
+    .actor-text h1{
+        font-size:80px;
+    }
+
+    .actor-text h3{
+        font-size:24px;
+        margin-bottom:25px;
+    }
+
+    .actor-text p{
+        font-size:17px;
+        line-height:1.9;
+    }
+
+    .actor-grid{
+        grid-template-columns:repeat(2,1fr);
+        gap:22px;
+    }
+
+    .actor-section{
+        padding:90px 25px;
+    }
+}
+
+/* =========================
+   768px
+========================= */
+
+@media(max-width:768px){
+
+    .actor-hero{
+        height:600px;
+    }
+
+    .actor-content{
+        padding-inline:22px;
+        transform:translateY(-20px);
+    }
+
+    .actor-text span{
+        font-size:12px;
+        letter-spacing:3px;
+    }
+
+    .actor-text h1{
+        font-size:60px;
+        margin-bottom:20px;
+    }
+
+    .actor-text h3{
+        font-size:20px;
+        margin-bottom:18px;
+    }
+
+    .actor-text p{
+        max-width:100%;
+        font-size:16px;
+        line-height:1.8;
+        text-align:left;
+    }
+
+    .actor-hero-btn{
+        min-width:180px;
+        height:52px;
+        font-size:14px;
+    }
+
+    .actor-grid{
+        grid-template-columns:1fr;
+    }
+
+    .actor-section-header{
+        margin-bottom:40px;
+    }
+
+    .actor-section-header h2{
+        font-size:28px;
+    }
+
+    .actor-title{
+        font-size:22px;
+    }
+}
+
+/* =========================
+   480px
+========================= */
+
+@media(max-width:480px){
+
+    .actor-hero{
+        height:550px;
+    }
+
+    .actor-content{
+        padding-inline:18px;
+        transform:translateY(-10px);
+    }
+
+    .actor-text h1{
+        font-size:48px;
+        letter-spacing:2px;
+    }
+
+    .actor-text h3{
+        font-size:18px;
+    }
+
+    .actor-text p{
+        font-size:15px;
+        line-height:1.8;
+    }
+
+    .actor-section{
+        padding:70px 18px;
+    }
+
+    .section-line{
+        width:50px;
+    }
+
+    .actor-section-header h2{
+        font-size:22px;
+    }
+
+    .actor-info{
+        padding:18px;
+    }
+
+    .actor-title{
+        font-size:20px;
+    }
+
+    .actor-info p{
+        font-size:14px;
+    }
+
+    .actor-meta{
+        font-size:13px;
+    }
+}
+

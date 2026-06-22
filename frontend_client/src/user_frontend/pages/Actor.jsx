@@ -1,125 +1,190 @@
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
-import { ThumbsUp, Eye } from 'lucide-react'; 
-// import MovieSidebar from '../components/MovieSidebar'; 
+import { Link } from 'react-router-dom';
+import { Eye } from 'lucide-react';
 import '../styles/Actor.css';
 
 const Actor = () => {
-    const navigate = useNavigate();
-    
-    const [actors, setActors] = useState([]);      // Danh sách diễn viên
-    const [allMovies, setAllMovies] = useState([]); // Tất cả phim để truyền vào Sidebar
+
+    const [actors, setActors] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const IMAGE_BASE_URL = 'https://api.quangdungcinema.id.vn/uploads';
+    const IMAGE_BASE_URL =
+        'https://api.quangdungcinema.id.vn/uploads';
 
     useEffect(() => {
-        const fetchAllData = async () => {
-            try {
-                setLoading(true);
-                // Gọi song song cả Actors và Movies giống CinemaGenre gọi Movies/Genres
-                const [resActors, resMovies] = await Promise.all([
-                    axios.get('https://api.quangdungcinema.id.vn/api/actors'),
-                    axios.get('https://api.quangdungcinema.id.vn/api/movies')
-                ]);
 
-                setActors(resActors.data);
-                setAllMovies(resMovies.data);
-                
+        const fetchActors = async () => {
+
+            try{
+
+                const res = await axios.get(
+                    'https://api.quangdungcinema.id.vn/api/actors'
+                );
+
+                setActors(res.data);
+
+            }catch(error){
+
+                console.error(error);
+
+            }finally{
+
                 setLoading(false);
-            } catch (error) {
-                console.error("Lỗi kết nối API:", error);
-                setLoading(false);
+
             }
+
         };
 
-        fetchAllData();
-        window.scrollTo(0, 0);
-    }, []);
+        fetchActors();
 
-    if (loading) return <div className="loading">Đang tải dữ liệu từ hệ thống...</div>;
+        window.scrollTo(0,0);
+
+    },[]);
+
+    if(loading){
+
+        return (
+            <div className="loading">
+                Đang tải dữ liệu...
+            </div>
+        );
+
+    }
 
     return (
-        <div className="actor-page-bg">
-            <div className="actor-content-flex">
-                
-                {/* CỘT TRÁI: MAIN CONTENT (7.5) */}
-                <div className="main-actor-col">
-                    <div className="section-header-galaxy">
-                        <span className="blue-line"></span>
-                        <h2 className="section-title">DIỄN VIÊN</h2>
+
+        <div className="actor-page">
+
+            {/* HERO */}
+
+            <section className="actor-hero">
+                <img
+                    src="https://api.quangdungcinema.id.vn/uploads/banner_actor/actor_hero.png"
+                    alt="Actor Banner"
+                    className="hero-banner-img"
+                />
+                <div className="actor-overlay"></div>
+
+                <div className="actor-content">
+
+                    <div className="actor-text">
+
+                        <span>GÓC ĐIỆN ẢNH</span>
+
+                        <h1>ACTORS</h1>
+
+                        <h3>
+                            Những gương mặt tạo nên linh hồn điện ảnh
+                        </h3>
+
+                        <p>
+                            Khám phá thông tin, tiểu sử, sự nghiệp,
+                            thành tựu nổi bật và các tác phẩm đáng nhớ
+                            của những diễn viên nổi tiếng trong và ngoài
+                            nước được cộng đồng yêu điện ảnh quan tâm.
+                        </p>
+
+                        <a
+                            href="#actor-list"
+                            className="actor-hero-btn"
+                        >
+                            KHÁM PHÁ NGAY
+                        </a>
+
                     </div>
-                    
-                    <div className="actor-filters-bar">
-                        <select className="filter-select-custom">
-                            <option value="">Tất cả quốc gia</option>
-                            <option value="vn">Việt Nam</option>
-                            <option value="us">Mỹ</option>
-                            <option value="kr">Hàn Quốc</option>
-                        </select>
-                    </div>
 
-                    <div className="actor-list">
-                        {actors.length > 0 ? (
-                            actors.map(actor => (
-                                <div key={actor.actor_id} className="actor-card-horizontal">
-                                    <Link 
-                                        to={`/actor/${actor.slug}`} 
-                                        className="actor-img-box"
-                                    >
-                                        <img 
-                                            src={`${IMAGE_BASE_URL}/actors/${actor.avatar}`} 
-                                            alt={actor.name} 
-                                        />
-                                    </Link>
+                </div>
 
-                                    <div className="actor-content-info">
-                                        <Link 
-                                            to={`/actor/${actor.slug}`} 
-                                            className="actor-name-link"
-                                        >
-                                            <h3>{actor.name}</h3>
-                                        </Link>
+            </section>
 
-                                        <div className="actor-meta-row">
-                                            <button className="btn-fb-like">
-                                                <ThumbsUp size={14} strokeWidth={2.5} fill="currentColor" /> 
-                                                <span>Thích</span>
-                                            </button>
+            {/* LIST */}
 
-                                            <span className="view-count">
-                                                <Eye size={14} strokeWidth={2} /> 
-                                                <span>{Math.floor(Math.random() * 5000)} lượt xem</span>
-                                            </span>
-                                        </div>
+            <section
+                id="actor-list"
+                className="actor-section"
+            >
 
-                                        <p className="actor-biography-text">
-                                            {actor.biography 
-                                                ? actor.biography.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ') 
-                                                : "Thông tin tiểu sử đang được cập nhật..."}
-                                        </p>
-                                    </div>
+                <div className="actor-section-header">
+
+                    <span className="section-line"></span>
+
+                    <h2>
+                        DANH SÁCH DIỄN VIÊN
+                    </h2>
+
+                </div>
+
+                <div className="actor-grid">
+
+                    {actors.map(actor => (
+
+                        <div
+                            key={actor.actor_id}
+                            className="actor-card"
+                        >
+
+                            <Link
+                                to={`/actor/${actor.slug}`}
+                                className="actor-image"
+                            >
+
+                                <img
+                                    src={`${IMAGE_BASE_URL}/actors/${actor.avatar}`}
+                                    alt={actor.name}
+                                />
+
+                            </Link>
+
+                            <div className="actor-info">
+
+                                <Link
+                                    to={`/actor/${actor.slug}`}
+                                    className="actor-title"
+                                >
+                                    {actor.name}
+                                </Link>
+
+                                <div className="actor-meta">
+
+                                    <Eye size={14}/>
+
+                                    <span>
+                                        {Math.floor(
+                                            Math.random() * 5000
+                                        )}
+                                        lượt xem
+                                    </span>
+
                                 </div>
-                            ))
-                        ) : (
-                            <p className="no-data">Hiện chưa có dữ liệu diễn viên.</p>
-                        )}
-                    </div>
+
+                                <p>
+
+                                    {actor.biography
+                                        ? actor.biography
+                                            .replace(/<[^>]*>/g,'')
+                                            .replace(/&nbsp;/g,' ')
+                                            .substring(0,140) + '...'
+                                        : 'Thông tin đang cập nhật...'}
+
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    ))}
+
                 </div>
 
-                {/* CỘT PHẢI: SIDEBAR (2.5) */}
-                <div className="sidebar-col">
-                    {/* <MovieSidebar 
-                        IMAGE_BASE_URL={IMAGE_BASE_URL}
-                        title="Phim Đang Chiếu"
-                        relatedMovies={allMovies.slice(0, 6)} // Lấy 6 phim đầu tiên hiện lên Sidebar
-                    /> */}
-                </div>
+            </section>
 
-            </div>
         </div>
+
     );
+
 };
 
 export default Actor;
+

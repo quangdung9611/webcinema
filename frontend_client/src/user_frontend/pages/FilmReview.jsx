@@ -160,16 +160,39 @@ const FilmReview = () => {
             </div>
         );
     }
-
     return (
         <div className="film-review-page">
-            {/* HERO */}
-            <section className="film-review-hero">
+           <section className="film-review-hero">
+
                 <img
                     src={`${IMAGE_BASE_URL}/film_review/banner_hero.png`}
-                    alt="Film Review Banner"
+                    alt=""
                     className="hero-banner-img"
                 />
+                <div className="film-review-overlay"></div>
+                <div className="film-review-light"></div>
+                <div className="film-review-text">
+                    <span>
+                        GÓC ĐIỆN ẢNH
+
+                    </span>
+                    <h1>
+                        FILM REVIEW
+                    </h1>
+                    <h3>
+
+                        Bình luận • Review • Phân tích phim
+
+                    </h3>
+                    <p>
+                        Khám phá thế giới điện ảnh qua những bài viết đánh giá chuyên sâu,
+                        phân tích nội dung, diễn xuất và nghệ thuật kể chuyện. Cập nhật các
+                        góc nhìn độc đáo, cảm nhận chân thực cùng những tác phẩm nổi bật đang
+                        được cộng đồng yêu phim quan tâm và thảo luận nhiều nhất.
+                    </p>
+                
+
+                </div>
             </section>
 
             {/* CONTENT */}
