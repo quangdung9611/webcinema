@@ -216,7 +216,7 @@ const CinemaDetail = () => {
                 <div className="cinema-overlay"></div>
 
                 <img
-                    src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1920&auto=format&fit=crop"
+                    src="https://api.quangdungcinema.id.vn/uploads/cinema_map/cinema.png"
                     alt=""
                     className="hero-bg"
                 />
