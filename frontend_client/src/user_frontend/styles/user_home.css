@@ -434,198 +434,209 @@ linear-gradient(
       translateY(-40px);
   }
 }
-/* =========================
-   PREMIUM CENTER TEXT
-========================= */
+/* ==========================================
+   BANNER INNER
+========================================== */
 
-.banner-text {
-    position: absolute;
-    top: 34%;
-    left: 50%;
+.banner-inner{
+    position:absolute;
+    inset:0;
 
-    transform: translate(-50%, -34%);
+    z-index:5;
 
-    z-index: 5;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 
-    width: 92%;
-    max-width: 1300px;
+    width:100%;
+    height:100%;
 
-    text-align: center;
-    pointer-events: none;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    padding:0 30px;
 }
 
-/* =========================
-   PREMIUM ANIMATION
-========================= */
+/* ==========================================
+   BANNER TEXT
+========================================== */
 
-@keyframes fadeDownSoft {
-    0% {
-        opacity: 0;
-        transform: translateY(-55px);
-        filter: blur(6px);
-    }
+.banner-text{
+    width:100%;
+    max-width:1100px;
 
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-        filter: blur(0);
-    }
+    margin:0 auto;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+
+    text-align:center;
+
+    gap:32px;
+
+    transform:translateY(-40px);
 }
 
-@keyframes shine {
-    0% {
-        transform: translateX(-250%);
+/* ==========================================
+   ANIMATION
+========================================== */
+
+@keyframes fadeDownSoft{
+
+    0%{
+        opacity:0;
+        transform:translateY(-55px);
+        filter:blur(6px);
     }
 
-    100% {
-        transform: translateX(250%);
+    100%{
+        opacity:1;
+        transform:translateY(0);
+        filter:blur(0);
     }
+
 }
 
-/* =========================
+@keyframes shine{
+
+    0%{
+        transform:translateX(-250%);
+    }
+
+    100%{
+        transform:translateX(250%);
+    }
+
+}
+
+/* ==========================================
    RESET
-========================= */
+========================================== */
 
 .banner-title,
 .banner-subtitle,
-.banner-desc {
-    opacity: 0;
-    will-change: transform, opacity;
-    margin: 0;
+.banner-btn{
+    opacity:0;
+    margin:0;
 }
 
-/* =========================
-   TITLE - LUXURY GOLD
-========================= */
+/* ==========================================
+   TITLE
+========================================== */
 
-.banner-title {
-    position: relative;
-    display: inline-block;
+.banner-title{
+    position:relative;
 
-    font-family: 'Cinzel', serif;
+    width:100%;
 
-    /* GIỐNG MẪU */
-    font-size: clamp(7rem, 10vw, 10rem);
+    font-family:'Cinzel', serif;
 
-    font-weight: 900;
+    font-size:clamp(7rem,10vw,12rem);
 
-    line-height: .92;
+    font-weight:900;
 
-    letter-spacing: 6px;
+    line-height:1;
 
-    text-transform: uppercase;
+    letter-spacing:5px;
 
-    margin-bottom: 40px;
+    white-space:nowrap;
 
-    background: linear-gradient(
+    text-transform:uppercase;
+
+    background:linear-gradient(
         180deg,
-        #fff9df 0%,
-        #ffe8a3 14%,
-        #ffd04a 38%,
-        #ffb100 58%,
-        #cc7d00 82%,
-        #8f5400 100%
+        #FFFDF5 0%,
+        #FFF6D8 20%,
+        #F7E7B6 45%,
+        #E6C76B 75%,
+        #B88A2A 100%
     );
 
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
 
     text-shadow:
-        0 2px 0 #9f5f00,
-        0 4px 0 #8a5200,
-        0 6px 0 #6f4100,
-        0 12px 22px rgba(0,0,0,.4);
+        0 0 10px rgba(255,248,220,.35),
+        0 0 25px rgba(247,231,182,.25),
+        0 10px 25px rgba(0,0,0,.75);
 
-    animation: fadeDownSoft 1s ease forwards;
+    animation:fadeDownSoft 1s ease forwards;
 }
 
-/* SHINE EFFECT */
+.banner-title::after{
+    content:"";
 
-.banner-title::after {
-    content: "";
+    position:absolute;
+    inset:0;
 
-    position: absolute;
-    inset: 0;
+    background:linear-gradient(
+        120deg,
+        transparent 35%,
+        rgba(255,255,255,.95) 50%,
+        transparent 65%
+    );
 
-    background:
-        linear-gradient(
-            120deg,
-            transparent 35%,
-            rgba(255,255,255,.95) 50%,
-            transparent 65%
-        );
+    animation:shine 4s linear infinite;
 
-    animation: shine 4s linear infinite;
+    mix-blend-mode:screen;
 
-    mix-blend-mode: screen;
-
-    pointer-events: none;
+    pointer-events:none;
 }
 
-/* =========================
+/* ==========================================
    SUBTITLE
-========================= */
+========================================== */
 
-.banner-subtitle {
-    font-family: 'Inter', sans-serif;
+.banner-subtitle{
+    width:100%;
+    max-width:1100px;
 
-   font-size: clamp(2.4rem, 3vw, 3.8rem);
+    font-size:clamp(3rem,3.5vw,4.5rem);
 
-    font-weight: 800;
+    font-weight:700;
 
-    letter-spacing: 8px;
+    line-height:1.4;
 
-    text-transform: uppercase;
+    letter-spacing:4px;
 
-    line-height: 1.2;
+    text-transform:uppercase;
 
-    margin-bottom: 30px;
-
-    background: linear-gradient(
-        180deg,
-        #fff6dc 0%,
-        #ffe7a4 18%,
-        #ffc94d 55%,
-        #dc9200 100%
-    );
-
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color:#F7E7B6;
 
     text-shadow:
-        0 2px 0 rgba(159,95,0,.5),
-        0 4px 10px rgba(0,0,0,.4);
+        0 0 10px rgba(255,248,220,.3),
+        0 4px 12px rgba(0,0,0,.7);
 
-    animation: fadeDownSoft 1s ease .2s forwards;
+    animation:fadeDownSoft 1s ease .2s forwards;
 }
 
+/* ==========================================
+   BUTTON
+========================================== */
 
- .banner-btn {
-    margin-top: 36px;
+.banner-btn{
+    width:100%;
+    max-width:920px;
 
-    padding: 22px 64px;
+    height:90px;
 
-    border: none;
-    border-radius: 999px;
+    border:none;
+    border-radius:999px;
 
-    cursor: pointer;
+    cursor:pointer;
 
-    font-family: 'Cinzel', serif;
+    font-family:'Cinzel', serif;
 
-    font-size: 2rem;
-    font-weight: 800;
+    font-size:2.5rem;
 
-    letter-spacing: 4px;
+    font-weight:900;
 
-    text-transform: uppercase;
+    letter-spacing:5px;
 
-    color: #5b3200;
+    text-transform:uppercase;
 
-    background: linear-gradient(
+    color:#5b3200;
+
+    background:linear-gradient(
         180deg,
         #fff6cf 0%,
         #ffe08c 20%,
@@ -639,20 +650,19 @@ linear-gradient(
         inset 0 -4px 8px rgba(120,70,0,.3),
         0 15px 35px rgba(0,0,0,.35);
 
-    transition: all .35s ease;
+    transition:all .35s ease;
 
-    opacity: 0;
-
-    animation: fadeDownSoft 1s ease .45s forwards;
+    animation:fadeDownSoft 1s ease .45s forwards;
 }
+.banner-btn:hover{
 
-.banner-btn:hover {
-    transform: translateY(-5px) scale(1.03);
+    transform:translateY(-5px) scale(1.03);
 
     box-shadow:
         inset 0 2px 2px rgba(255,255,255,.5),
         inset 0 -4px 8px rgba(120,70,0,.35),
         0 22px 50px rgba(0,0,0,.45);
+
 }
 /* =========================
    ACTIVE SLIDE ANIMATION

@@ -1,564 +1,301 @@
-/*=========================================================
-MOVIE CARD
-=========================================================*/
+/* ========================================
+   MOVIE CARD - CINEMA SYSTEM
+======================================== */
 
-.movie-card{
-    width:100%;
+.movie-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+
+    animation: cinemaFloat 8s var(--ease-smooth) infinite;
+    will-change: transform;
 }
 
+/* ========================================
+   INNER CARD
+======================================== */
 
-.movie-inner{
+.movie-inner {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
 
-    overflow:hidden;
-    height:100%;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 
-    position:relative;
+    border-radius: var(--radius-xl);
+    background: var(--cinema-card-bg);
+    border: var(--cinema-card-border);
+    box-shadow: var(--cinema-card-shadow);
 
-    border-radius:22px;
-
-    background:rgba(18,18,18,.95);
-
-    border:1px solid rgba(255,255,255,.06);
-
-    transition:
-    transform .4s ease,
-    border-color .4s ease,
-    box-shadow .4s ease;
-
+    transition: var(--cinema-transition);
 }
 
-
-.movie-inner:hover{
-
-    transform:translateY(-10px);
-
-    border-color:
-    rgba(255,40,40,.25);
-
-
-    box-shadow:
-    0 20px 50px rgba(0,0,0,.4);
-
+/* HOVER EFFECT */
+.movie-card:hover .movie-inner {
+    transform: var(--cinema-hover-transform);
+    box-shadow: var(--cinema-card-glow-hover);
 }
 
+/* ========================================
+   RGB BORDER
+======================================== */
 
+.movie-inner::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
 
-/*=================================
-SHINE EFFECT
-=================================*/
+    background: var(--cinema-border-gradient);
+    background-size: 300% 300%;
+    animation: cinemaBorderFlow var(--cinema-border-speed) linear infinite;
 
-.movie-inner::before{
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
 
-    content:"";
+    pointer-events: none;
+    z-index: 5;
+}
 
-    position:absolute;
+/* ========================================
+   DARK OVERLAY DEPTH
+======================================== */
 
-    top:0;
-    left:-150%;
+.movie-inner::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
 
-    width:70%;
-    height:100%;
-
-
-    background:
-
-    linear-gradient(
-
-        120deg,
-
-        transparent,
-
-        rgba(255,255,255,.12),
-
-        transparent
-
+    background: linear-gradient(
+        180deg,
+        rgba(25,25,25,0.98),
+        rgba(10,10,10,1)
     );
 
-
-    transition:.8s;
-
-    z-index:5;
-
+    z-index: 1;
+    pointer-events: none;
 }
 
+/* ========================================
+   GLOW LAYER
+======================================== */
 
-.movie-inner:hover::before{
+.card-glow {
+    position: absolute;
+    inset: -20px;
+    border-radius: var(--radius-xl);
 
-    left:160%;
+    background: radial-gradient(circle, rgba(255,30,30,0.18), transparent 70%);
+    filter: blur(30px);
 
+    opacity: 0.6;
+    animation: cinemaGlow 6s var(--ease-smooth) infinite;
+
+    z-index: 0;
 }
 
+/* ========================================
+   SWEEP LIGHT EFFECT
+======================================== */
 
+.movie-light-sweep {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
 
+    background: var(--card-sweep-gradient);
 
-/*=================================
-POSTER
-=================================*/
-
-
-.movie-poster{
-
-    position:relative;
-
-    overflow:hidden;
-
-    aspect-ratio:2/3;
-
+    transform: translateX(-140%);
+    opacity: 0;
 }
 
-
-.movie-poster img{
-
-    width:100%;
-    height:100%;
-
-    display:block;
-
-    object-fit:cover;
-
-
-    transition:
-
-    transform .6s ease,
-    filter .4s ease;
-
+.movie-card:hover .movie-light-sweep {
+    opacity: 1;
+    animation: cinemaSweep var(--cinema-sweep-speed) var(--ease-premium);
 }
 
+/* ========================================
+   IMAGE
+======================================== */
 
-.movie-inner:hover img{
-
-    transform:scale(1.08);
-
-    filter:brightness(1.05);
-
+.movie-poster {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    z-index: 2;
 }
 
+.movie-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 
+    transform: scale(1);
+    transition: transform 0.7s var(--ease-smooth),
+                filter 0.7s var(--ease-smooth);
+}
 
+.movie-card:hover .movie-poster img {
+    transform: scale(1.08);
+    filter: brightness(1.08);
+}
 
-/*=================================
-OVERLAY
-=================================*/
+/* gradient overlay */
+.movie-poster::after {
+    content: "";
+    position: absolute;
+    inset: 0;
 
-
-.movie-overlay{
-
-    position:absolute;
-    inset:0;
-
-
-    display:flex;
-
-    flex-direction:column;
-
-    justify-content:flex-end;
-
-
-    gap:12px;
-
-    padding:20px;
-
-
-    opacity:0;
-
-
-    background:
-
-    linear-gradient(
-
+    background: linear-gradient(
         to top,
-
-        rgba(0,0,0,.92),
-
-        rgba(0,0,0,.15)
-
+        rgba(0,0,0,0.85),
+        rgba(0,0,0,0.2),
+        transparent
     );
 
-
-    transition:.35s;
-
+    z-index: 3;
 }
 
+/* ========================================
+   INFO
+======================================== */
 
-.movie-inner:hover .movie-overlay{
-
-    opacity:1;
-
+.movie-info {
+    padding: 16px;
+    position: relative;
+    z-index: 2;
 }
 
+.movie-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-white);
 
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 
-/*=================================
-BUTTONS
-=================================*/
+    transition: color 0.3s ease;
+}
 
+.movie-card:hover .movie-name {
+    color: #ffd54f;
+}
+
+/* ========================================
+   OVERLAY ACTION
+======================================== */
+
+.movie-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+
+    background: rgba(0,0,0,0.55);
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition: 0.35s var(--ease-smooth);
+}
+
+.movie-card:hover .movie-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ========================================
+   BUTTONS
+======================================== */
 
 .movie-detail-btn,
-.movie-book-btn{
+.movie-book-btn {
+    border: none;
+    cursor: pointer;
 
-    width:100%;
-    height:48px;
+    min-width: 130px;
+    padding: 12px 20px;
 
+    border-radius: var(--radius-round);
+    font-weight: 700;
+    letter-spacing: 1px;
 
-    border:none;
-
-    border-radius:12px;
-
-
-    cursor:pointer;
-
-
-    font-weight:700;
-
-
-    transition:.3s;
-
+    transition: var(--motion-normal);
 }
 
-
-
-.movie-detail-btn{
-
-    background:white;
-
-    color:#111;
-
+.movie-detail-btn {
+    background: linear-gradient(135deg, #ff2d2d, #ff6a00);
+    color: #fff;
 }
 
-
-.movie-detail-btn:hover{
-
-    transform:translateY(-2px);
-
+.movie-book-btn {
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+    color: #fff;
 }
 
-
-
-.movie-book-btn{
-
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-
-    gap:8px;
-
-
-    color:white;
-
-
-    background:
-
-    linear-gradient(
-
-        135deg,
-
-        #d62828,
-
-        #991b1b
-
-    );
-
+/* hover */
+.movie-detail-btn:hover,
+.movie-book-btn:hover {
+    transform: translateY(-3px);
 }
 
+/* ========================================
+   BADGE
+======================================== */
 
-.movie-book-btn:hover{
+.movie-age-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
 
-    transform:translateY(-2px);
+    padding: 6px 10px;
+    border-radius: var(--radius-round);
 
+    font-size: 12px;
+    font-weight: 800;
 
-    box-shadow:
+    background: linear-gradient(135deg, #ff1e1e, #ff8800);
+    color: #fff;
 
-    0 0 25px rgba(255,0,0,.25);
-
+    z-index: 20;
 }
 
+/* ========================================
+   RESPONSIVE
+======================================== */
 
-
-/*=================================
-AGE BADGE
-=================================*/
-
-
-.movie-age-badge{
-
-
-    position:absolute;
-
-    top:14px;
-    right:14px;
-
-
-    z-index:10;
-
-
-    padding:7px 12px;
-
-
-    border-radius:10px;
-
-
-    font-size:.75rem;
-
-    font-weight:700;
-
-
-    color:white;
-
-
-    background:
-
-    linear-gradient(
-
-        135deg,
-
-        #d62828,
-
-        #8b1111
-
-    );
-
-
-    animation:
-
-    ageFloat 3s ease-in-out infinite;
-
+@media (max-width: 1200px) {
+    .movie-name { font-size: 0.95rem; }
 }
 
-
-
-@keyframes ageFloat{
-
-    0%{
-
-        transform:translateY(0);
-
-    }
-
-    50%{
-
-        transform:translateY(-4px);
-
-    }
-
-    100%{
-
-        transform:translateY(0);
-
-    }
-
+@media (max-width: 992px) {
+    .movie-card { animation-duration: 9s; }
+    .movie-name { font-size: 0.9rem; }
 }
 
-
-
-
-/*=================================
-INFO
-=================================*/
-
-
-.movie-info{
-
-    padding:18px;
-
-    cursor:pointer;
-
+@media (max-width: 768px) {
+    .movie-card { animation-duration: 10s; }
+    .movie-name { font-size: 14px; }
 }
 
-
-
-.movie-info h3{
-
-
-    margin:0 0 12px;
-
-
-    color:white;
-
-
-    font-size:1rem;
-
-    font-weight:700;
-
-
-    line-height:1.5;
-
-
-    min-height:48px;
-
-
-    display:-webkit-box;
-
-    -webkit-line-clamp:2;
-
-    -webkit-box-orient:vertical;
-
-
-    overflow:hidden;
-
-}
-
-
-
-.movie-meta{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-}
-
-
-
-.movie-rating{
-
-
-    display:flex;
-
-    align-items:center;
-
-
-    gap:5px;
-
-
-    color:#ffb020;
-
-}
-
-
-.movie-type{
-
-
-    color:#9ca3af;
-
-    font-size:.85rem;
-
-}
-/*=====================================
-RESPONSIVE
-======================================*/
-
-/*========== 1200px ==========*/
-
-@media (max-width:1200px){
-
-    .movie-grid{
-        grid-template-columns:repeat(3,1fr);
-        gap:24px;
-    }
-
-}
-
-
-/*========== 992px ==========*/
-
-@media (max-width:992px){
-
-    .movie-grid{
-        grid-template-columns:repeat(2,1fr);
-        gap:22px;
-    }
-
-    .movie-info{
-        padding:16px;
-    }
-
-    .movie-info h3{
-        font-size:.95rem;
-        min-height:46px;
-    }
-
-    .movie-detail-btn,
-    .movie-book-btn{
-        height:46px;
-    }
-
-}
-
-
-/*========== 768px ==========*/
-
-@media (max-width:768px){
-
-    .movie-grid{
-        gap:18px;
-    }
-
-
-    .movie-overlay{
-        padding:16px;
-    }
-
-
-    .movie-age-badge{
-        top:10px;
-        right:10px;
-    }
-
-
-    .movie-info{
-        padding:16px;
-    }
-
-}
-
-
- /*========== 480px ==========*/
-
-@media (max-width:480px){
-
-    .movie-grid{
-        grid-template-columns:1fr;
-        gap:16px;
-    }
-
-
-    .movie-info{
-        padding:14px;
-    }
-
-
-    .movie-info h3{
-
-        font-size:.92rem;
-
-        min-height:auto;
-
-    }
-
-
-    .movie-meta{
-
-        flex-direction:column;
-
-        align-items:flex-start;
-
-        gap:6px;
-
-    }
-
-
-    .movie-detail-btn,
-    .movie-book-btn{
-
-        height:44px;
-
-        font-size:.82rem;
-
-    }
-
-
-    .movie-age-badge{
-
-        font-size:.7rem;
-
-        padding:6px 10px;
-
-    }
-
+@media (max-width: 480px) {
+    .movie-name { font-size: 13px; }
 }

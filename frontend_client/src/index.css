@@ -1,120 +1,78 @@
-
 :root {
 
-    /* =========================
-       BACKGROUND
-    ========================= */
+    /* ========================================
+       1. BACKGROUND SYSTEM
+    ======================================== */
 
     --main-background:
-    radial-gradient(
-        circle at top center,
-        rgba(180, 20, 30, 0.18) 0%,
-        rgba(35, 8, 10, 0.75) 34%,
-        transparent 72%
-    ),
+        radial-gradient(circle at top center, rgba(180,20,30,0.18) 0%, rgba(35,8,10,0.75) 35%, transparent 75%),
+        radial-gradient(circle at left center, rgba(140,15,25,0.10) 0%, transparent 30%),
+        radial-gradient(circle at bottom left, rgba(120,10,20,0.08) 0%, transparent 35%),
+        radial-gradient(circle at right center, rgba(100,0,0,0.06) 0%, transparent 30%),
+        linear-gradient(180deg, #151515 0%, #1b1112 25%, #171010 55%, #111 80%, #090909 100%);
 
-    radial-gradient(
-        circle at left center,
-        rgba(140, 15, 25, 0.10) 0%,
-        transparent 30%
-    ),
 
-    radial-gradient(
-        circle at bottom left,
-        rgba(120, 10, 20, 0.08) 0%,
-        transparent 32%
-    ),
+    /* ========================================
+       2. COLOR SYSTEM
+    ======================================== */
 
-    radial-gradient(
-        circle at right center,
-        rgba(100, 0, 0, 0.06) 0%,
-        transparent 26%
-    ),
+    --color-primary: #ff2d2d;
+    --color-primary-hover: #ff4d4d;
+    --color-primary-dark: #d31f1f;
 
-    linear-gradient(
-        180deg,
-        #151515 0%,
-        #1b1112 24%,
-        #171010 52%,
-        #111111 78%,
-        #090909 100%
-    );
-
-    /* =========================
-       COLORS
-    ========================= */
-
-    --primary-color: #ff2d2d;
-    --primary-hover: #ff4d4d;
-    --primary-dark: #d31f1f;
-
-    --accent-red: #8b0000;
+    --color-accent: #8b0000;
 
     --text-white: #ffffff;
     --text-primary: #d1d1d1;
     --text-secondary: #aaaaaa;
     --text-muted: #777777;
 
-    /* ==========================================
-       CARD SYSTEM
-    ========================================== */
 
-    --card-bg:
-    linear-gradient(
-        180deg,
-        rgba(25,25,25,.95),
-        rgba(17,17,17,.98)
-    );
+    /* ========================================
+       3. CINEMA CARD SYSTEM (GLOBAL UI BASE)
+    ======================================== */
 
-    /* BORDER MẶC ĐỊNH */
-    --border-primary:
-    1px solid rgba(255,255,255,.06);
+    --cinema-card-bg:
+        linear-gradient(180deg, rgba(25,25,25,.95), rgba(17,17,17,.98));
 
-    /* BORDER HOVER ĐỎ HƠN */
-    --border-glow:
-    1px solid rgba(255,55,55,.58);
+    --cinema-card-border: 1px solid rgba(255,255,255,.06);
+    --cinema-card-border-hover: 1px solid rgba(255,60,60,.55);
 
-    /* SHADOW CARD */
-    --shadow-card:
-    0 10px 28px rgba(0,0,0,.32);
+    --cinema-card-shadow: 0 10px 28px rgba(0,0,0,.32);
+    --cinema-card-shadow-soft: 0 6px 18px rgba(0,0,0,.25);
 
-    /* SHADOW GLOW */
-    --shadow-glow:
-    0 0 20px rgba(255,40,40,.12);
+    --cinema-card-glow:
+        0 0 20px rgba(255,40,40,.12);
 
-    /* HOVER GLOW ĐỎ MƯỢT */
-    --shadow-glow-hover:
-    0 0 0 1px rgba(255,40,40,.14),
-    0 0 20px rgba(255,25,25,.24),
-    0 0 42px rgba(185,28,28,.20),
-    0 0 75px rgba(255,0,0,.12);
+    --cinema-card-glow-hover:
+        0 0 0 1px rgba(255,40,40,.15),
+        0 0 20px rgba(255,25,25,.25),
+        0 0 45px rgba(185,28,28,.2),
+        0 0 80px rgba(255,0,0,.12);
 
-    /* GLOBAL CARD TRANSITION */
-    --card-transition:
-    transform .45s cubic-bezier(.22,.61,.36,1),
-    box-shadow .45s cubic-bezier(.22,.61,.36,1),
-    border-color .45s cubic-bezier(.22,.61,.36,1);
 
-    /* =========================
-       SHADOW SYSTEM
-    ========================= */
+    /* ========================================
+       4. MOTION SYSTEM (CINEMATIC)
+    ======================================== */
 
-    --shadow-sm:
-    0 2px 8px rgba(0,0,0,.15);
+    --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 
-    --shadow-md:
-    0 6px 20px rgba(0,0,0,.25);
+    --cinema-transition:
+        transform .4s var(--ease-smooth),
+        box-shadow .4s var(--ease-smooth),
+        border-color .4s var(--ease-smooth);
 
-    --shadow-lg:
-    0 12px 35px rgba(0,0,0,.35);
+    --cinema-hover-transform:
+        translateY(-10px) scale(1.03);
 
-    --shadow-body:
-    0 0 25px rgba(255,40,40,.25),
-    0 0 80px rgba(255,0,0,.12);
+    --cinema-hover-fast-transform:
+        translateY(-6px) scale(1.02);
 
-    /* =========================
-       BORDER RADIUS
-    ========================= */
+
+    /* ========================================
+       5. BORDER / RADIUS SYSTEM
+    ======================================== */
 
     --radius-xs: 4px;
     --radius-sm: 8px;
@@ -123,9 +81,10 @@
     --radius-xl: 24px;
     --radius-round: 999px;
 
-    /* =========================
-       SPACING
-    ========================= */
+
+    /* ========================================
+       6. SPACING SYSTEM
+    ======================================== */
 
     --space-xs: 4px;
     --space-sm: 8px;
@@ -133,34 +92,60 @@
     --space-lg: 24px;
     --space-xl: 32px;
     --space-2xl: 48px;
-    --space-3xl: 64px;
 
-    /* =========================
-        TYPOGRAPHY
-    ========================= */
 
-    --font-primary:
-    'Noto Sans',
-    sans-serif;
-
-    --font-heading:
-    'Noto Sans',
-    sans-serif;
-
-    /* =========================
-       CONTAINER
-    ========================= */
+    /* ========================================
+       7. LAYOUT
+    ======================================== */
 
     --container-width: 1200px;
     --container-padding: 20px;
 
-    /* =========================
-       TRANSITION
-    ========================= */
 
-    --transition-fast: .2s ease;
-    --transition-normal: .3s ease;
-    --transition-slow: .45s ease;
+    /* ========================================
+       8. CINEMA EFFECT SYSTEM
+    ======================================== */
+
+    --cinema-border-gradient:
+        linear-gradient(
+            120deg,
+            #ff0000,
+            #ff7300,
+            #ffd000,
+            #ff3c3c,
+            #ffb300,
+            #ff0000
+        );
+
+    --cinema-border-speed: 3s;
+
+    --cinema-sweep-speed: 2.2s;
+
+}
+
+
+/* ========================================
+   9. GLOBAL KEYFRAMES
+======================================== */
+
+@keyframes cinemaFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+@keyframes cinemaSweep {
+    0% { transform: translateX(-140%); }
+    100% { transform: translateX(140%); }
+}
+
+@keyframes cinemaGlow {
+    0%, 100% { opacity: 0.4; transform: scale(0.98); }
+    50% { opacity: 1; transform: scale(1.03); }
+}
+
+@keyframes cinemaBorderFlow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
 }
 /* ==========================================
    2. GLOBAL RESET

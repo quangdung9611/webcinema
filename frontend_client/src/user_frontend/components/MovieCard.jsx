@@ -1,4 +1,3 @@
-
 import { Star, Ticket } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Tilt from "react-parallax-tilt";
@@ -37,24 +36,39 @@ const MovieCard = ({ movie, baseUrl }) => {
 
     return (
         <Tilt
-            tiltMaxAngleX={6}
-            tiltMaxAngleY={6}
-            perspective={1200}
+            tiltMaxAngleX={8}
+            tiltMaxAngleY={8}
+            perspective={1400}
             transitionSpeed={1200}
-            scale={1.03}
+            scale={1.04}
             glareEnable
-            glareMaxOpacity={0.18}
+            glareMaxOpacity={0.12}
+            glareColor="#ff1e1e"
             className="movie-card"
         >
             <div className="movie-inner">
 
+                {/* EFFECTS */}
+                <span className="movie-card-edge"></span>
+                <span className="movie-card-projector"></span>
+                <span className="movie-card-dust"></span>
+                <span className="movie-card-spotlight"></span>
+
+                {/* GLOW */}
+                <span className="card-glow"></span>
+
                 <div className="movie-poster">
+
                     <img
                         src={`${baseUrl}${movie.poster_url}`}
                         alt={movie.title}
+                        loading="lazy"
                     />
 
+                    <span className="shine-effect"></span>
+
                     <div className="movie-overlay">
+
                         <button
                             className="movie-detail-btn"
                             onClick={goDetail}
@@ -69,23 +83,28 @@ const MovieCard = ({ movie, baseUrl }) => {
                             <Ticket size={16} />
                             ĐẶT VÉ
                         </button>
+
                     </div>
 
                     <div className="movie-age-badge">
                         {movie.age_rating || "T18"}
                     </div>
+
                 </div>
 
                 <div
                     className="movie-info"
                     onClick={goDetail}
                 >
-                    <h3>{movie.title}</h3>
+                    <h3 className="movie-name">
+                        {movie.title}
+                    </h3>
 
                     <div className="movie-meta">
+
                         <span className="movie-rating">
                             <Star
-                                size={16}
+                                size={15}
                                 fill="#ffad27"
                                 color="#ffad27"
                             />
@@ -93,11 +112,12 @@ const MovieCard = ({ movie, baseUrl }) => {
                         </span>
 
                         <span className="movie-type">
-                            {movie.language ||
-                                "2D Phụ Đề"}
+                            {movie.language || "2D Phụ Đề"}
                         </span>
+
                     </div>
                 </div>
+                <span className="movie-light-sweep"></span>
 
             </div>
         </Tilt>
@@ -105,4 +125,3 @@ const MovieCard = ({ movie, baseUrl }) => {
 };
 
 export default MovieCard;
-

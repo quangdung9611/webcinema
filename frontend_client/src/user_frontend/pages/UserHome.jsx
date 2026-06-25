@@ -5,7 +5,7 @@ import axios from 'axios';
 import Modal from '../components/Modal';
 import FilmGenre from '../components/FilmGenre';
 import ScrollReveal from '../components/ScrollReveal';
-
+import CinemaCard from '../components/CinemaCard';
 // SWIPER
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade, Navigation, Pagination } from 'swiper/modules';
@@ -28,34 +28,34 @@ const UserHome = () => {
 
   const navigate = useNavigate();
 
-  const banners = [
-  {
-    img: 'banner1.png',
-    title: 'PHÒNG VIP',
-    subtitle: 'RIÊNG TƯ • ĐẲNG CẤP • KHÁC BIỆT',
-    button: 'KHÁM PHÁ NGAY'
-  },
+const banners = [
+    {
+        img: 'banner1.png',
+        title: 'PHÒNG VIP',
+        subtitle: 'RIÊNG TƯ • ĐẲNG CẤP • SANG',
+        button: 'KHÁM PHÁ NGAY'
+    },
 
-  {
-    img: 'banner2.png',
-    title: 'ƯU ĐÃI HOT',
-    subtitle: 'ĐẶT VÉ NHANH • DEAL MỖI NGÀY',
-    button: 'XEM ƯU ĐÃI'
-  },
+    {
+        img: 'banner2.png',
+        title: 'ƯU ĐÃI HOT',
+        subtitle: 'ĐẶT VÉ • TIẾT KIỆM • HẤP DẪN',
+        button: 'NHẬN ƯU ĐÃI'
+    },
 
-  {
-    img: 'banner3.png',
-    title: 'COMBO VIP',
-    subtitle: 'BẮP GIÒN • NƯỚC MÁT • TRỌN VẸN',
-    button: 'THƯỞNG THỨC NGAY'
-  },
+    {
+        img: 'banner3.png',
+        title: 'COMBO VIP',
+        subtitle: 'BẮP GIÒN • NƯỚC MÁT • THƠM',
+        button: 'THƯỞNG THỨC'
+    },
 
-  {
-    img: 'banner4.png',
-    title: 'BOM TẤN',
-    subtitle: 'ÂM THANH • HÌNH ẢNH • CẢM XÚC',
-    button: 'ĐẶT VÉ NGAY'
-  }
+    {
+        img: 'banner4.png',
+        title: 'BOM TẤN 4D',
+        subtitle: 'ÂM THANH • HÌNH ẢNH • ĐỈNH',
+        button: 'ĐẶT VÉ NGAY'
+    }
 ];
   const bannerBaseUrl = "https://api.quangdungcinema.id.vn/uploads/banners/";
   const bannerDocUrl = "https://api.quangdungcinema.id.vn/uploads/banner_doc/";
@@ -502,19 +502,26 @@ const UserHome = () => {
 
           {/* overlay */}
           <div className="banner-overlay"></div>
+         {/* TEXT PREMIUM */}
+          <div className="banner-inner">
 
-          {/* TEXT PREMIUM */}
-          <div className="banner-text">
-           <h1 className="banner-title">
-              {item.title}
-            </h1>
-            <p className="banner-subtitle">
-              {item.subtitle}
-            </p>
-            <button className="banner-btn">
-                {item.button}
-            </button>
-            </div>
+              <div className="banner-text">
+
+                  <h1 className="banner-title">
+                      {item.title}
+                  </h1>
+
+                  <p className="banner-subtitle">
+                      {item.subtitle}
+                  </p>
+
+                  <button className="banner-btn">
+                      {item.button}
+                  </button>
+
+              </div>
+
+          </div>
           {/* particle */}
           <div className="banner-particles"></div>
           {/* light effect */}
@@ -721,66 +728,37 @@ const UserHome = () => {
           </div>
         </ScrollReveal>
 
-        {/* PROMOTIONS */}
-        <ScrollReveal delay={0.3}>
-          <section className="promotions-section">
+      {/* PROMOTIONS */}
+<ScrollReveal delay={0.3}>
+  <section className="promotions-section">
 
-            <div className="section-header">
-              <h2 className="section-title">
-                ƯU ĐÃI HẤP DẪN
-              </h2>
+    <div className="section-header">
+      <h2 className="section-title">
+        ƯU ĐÃI HẤP DẪN
+      </h2>
 
-              <div className="title-underline"></div>
-            </div>
+      <div className="title-underline"></div>
+    </div>
 
-            <div className="promotions-grid">
+    <div className="cinema-grid">
 
-              {promotions.map((promo) => (
+      {promotions?.map((promo) => (
 
-                <div
-                  className="promo-card"
-                  key={promo.promotion_id}
-                >
+        <CinemaCard
+          key={promo.promotion_id}
+          type="promotion"
+          image={`${promotionImageUrl}${promo.image_url}`}
+          title={promo.title}
+          buttonText="Xem chi tiết"
+          link={`/promotion/${promo.slug}`}
+        />
 
-                  <div className="promo-image">
+      ))}
 
-                    <img
-                      src={`${promotionImageUrl}${promo.image_url}`}
-                      alt={promo.title}
-                    />
+    </div>
 
-                  </div>
-
-                  <div className="promo-info">
-
-                    <h3>
-                      {promo.title}
-                    </h3>
-
-                    <p>
-                      {promo.description}
-                    </p>
-
-                    <button
-                      className="premium-card-btn"
-                      onClick={() =>
-                        navigate(
-                          `/promotion/${promo.slug}`
-                        )
-                      }
-                    >
-                      Xem chi tiết
-                    </button>
-
-                  </div>
-
-                </div>
-              ))}
-
-            </div>
-
-          </section>
-        </ScrollReveal>
+  </section>
+</ScrollReveal>
 
         {/* CINEMA CORNER */}
         <ScrollReveal

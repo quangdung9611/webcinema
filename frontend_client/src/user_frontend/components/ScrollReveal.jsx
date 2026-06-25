@@ -4,61 +4,49 @@ const ScrollReveal = ({
     children,
     direction = "up",
     delay = 0,
-    duration = 1.5
+    duration = 2.8   // ⬅️ CHẬM HƠN
 }) => {
 
     const variants = {
-
         up: {
             opacity: 0,
-            y: 120,
-            scale: 0.92,
-            filter: "blur(18px)"
+            y: 50,
+            scale: 0.98,
+            filter: "blur(6px)"
         },
 
         left: {
             opacity: 0,
-            x: -120,
-            scale: 0.92,
-            filter: "blur(18px)"
+            x: -50,
+            scale: 0.98,
+            filter: "blur(6px)"
         },
 
         right: {
             opacity: 0,
-            x: 120,
-            scale: 0.92,
-            filter: "blur(18px)"
+            x: 50,
+            scale: 0.98,
+            filter: "blur(6px)"
         },
 
         zoom: {
             opacity: 0,
-            scale: 0.82,
-            filter: "blur(18px)"
-        },
-
-        bottom: {
-            opacity: 0,
-            y: 160,
-            scale: 0.9,
-            filter: "blur(18px)"
+            scale: 0.92,
+            filter: "blur(8px)"
         },
 
         rotate: {
             opacity: 0,
-            y: 80,
-            scale: 0.9,
-            rotate: -4,
-            filter: "blur(18px)"
+            y: 30,
+            scale: 0.97,
+            rotate: -1,
+            filter: "blur(6px)"
         }
     };
 
     return (
         <motion.div
-
-            initial={
-                variants[direction] || variants.up
-            }
-
+            initial={variants[direction] || variants.up}
             whileInView={{
                 opacity: 1,
                 x: 0,
@@ -67,27 +55,17 @@ const ScrollReveal = ({
                 rotate: 0,
                 filter: "blur(0px)"
             }}
-
             viewport={{
                 once: true,
-                amount: 0.15
+                amount: 0.25   // ⬅️ vào sâu hơn mới trigger
             }}
-
             transition={{
-                duration: 2.2,
+                duration,
                 delay,
-
-                ease: [
-                    0.25,
-                    0.1,
-                    0.25,
-                    1
-                ]
+                ease: [0.25, 0.8, 0.25, 1] // ⬅️ mượt + “lụi”
             }}
-
             style={{
-                willChange:
-                    "transform, opacity, filter"
+                willChange: "transform, opacity, filter"
             }}
         >
             {children}
