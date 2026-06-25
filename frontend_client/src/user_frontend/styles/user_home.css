@@ -1121,7 +1121,7 @@ linear-gradient(
 }
 
 /* Shine Effect */
-.promo-card::before {
+/* .promo-card::before {
     content: "";
 
     position: absolute;
@@ -1222,7 +1222,7 @@ linear-gradient(
     line-height: 1.8;
 
     margin-bottom: 20px;
-} */
+} */ */
 
 /* =========================================================
    CINEMA NEWS
@@ -1232,187 +1232,7 @@ linear-gradient(
     position: relative;
 }
 
-.cinema-news-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 28px;
-}
 
-.cinema-news-card {
-    position: relative;
-
-    overflow: hidden;
-
-    background: linear-gradient(
-        145deg,
-        rgba(18,18,22,.95),
-        rgba(12,12,14,.98)
-    );
-
-    border-radius: 28px;
-
-    border: 1px solid rgba(255,255,255,.06);
-
-    transition: all .45s ease;
-
-    box-shadow:
-        0 10px 30px rgba(0,0,0,.25);
-}
-
-/* Shine Effect */
-.cinema-news-card::before {
-    content: "";
-
-    position: absolute;
-
-    top: -50%;
-    left: -150%;
-
-    width: 90px;
-    height: 250%;
-
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255,255,255,.65),
-        transparent
-    );
-
-    transform: rotate(25deg);
-
-    transition: .9s ease;
-
-    z-index: 5;
-}
-
-.cinema-news-card:hover::before {
-    left: 140%;
-}
-
-.cinema-news-card:hover {
-    transform: translateY(-12px);
-
-    border-color: rgba(255,0,60,.35);
-
-    box-shadow:
-        0 25px 50px rgba(255,0,60,.15);
-}
-
-.cinema-news-image {
-    position: relative;
-
-    height: 240px;
-
-    overflow: hidden;
-}
-
-.cinema-news-image img {
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
-
-    transition:
-        transform .8s ease,
-        filter .5s ease;
-}
-
-.cinema-news-card:hover .cinema-news-image img {
-    transform: scale(1.08);
-
-    filter:
-        brightness(1.05)
-        contrast(1.05);
-}
-
-.cinema-news-image::after {
-    content: "";
-
-    position: absolute;
-    inset: 0;
-
-    background: linear-gradient(
-        to top,
-        rgba(0,0,0,.85),
-        transparent 55%
-    );
-}
-
-.cinema-news-content {
-    padding: 24px;
-}
-
-.cinema-news-content h3 {
-    color: #fff;
-
-    font-size: 1rem;
-    font-weight: 700;
-
-    line-height: 1.7;
-
-    margin-bottom: 18px;
-}
-
-/* =========================================================
-   BUTTON
-========================================================= */
-.premium-card-btn {
-    position: relative;
-    overflow: hidden;
-
-    width: 100%;
-    height: 52px;
-
-    border: none;
-    border-radius: 14px;
-
-    cursor: pointer;
-
-    background: #e50914;
-
-    color: #fff;
-
-    font-size: 0.95rem;
-    font-weight: 700;
-
-    transition: all .35s ease;
-}
-
-/* Shine Effect */
-.premium-card-btn::before {
-    content: "";
-
-    position: absolute;
-
-    top: -50%;
-    left: -150%;
-
-    width: 60px;
-    height: 220%;
-
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255,255,255,.95),
-        transparent
-    );
-
-    transform: rotate(25deg);
-
-    transition: .8s ease;
-}
-
-.premium-card-btn:hover::before {
-    left: 150%;
-}
-
-.premium-card-btn:hover {
-    transform: translateY(-3px);
-
-    box-shadow:
-        0 12px 30px rgba(229,9,20,.35),
-        0 0 20px rgba(255,50,50,.25);
-}
 /* =========================================================
    GLOBAL ANIMATIONS
 ========================================================= */

@@ -777,51 +777,22 @@ const banners = [
 
             </div>
 
-            <div className="cinema-news-grid">
+            <div className="cinema-grid">
 
-            {cinemaNews.map((news) => (
+  {cinemaNews.map((news) => (
 
-                  <div
-                    className="cinema-news-card"
-                    key={news.blog_id}
-                  >
+    <CinemaCard
+      key={news.blog_id}
+      type="news"
+      image={`${blogCinemaImageUrl}${news.image_url}`}
+      title={news.title}
+      buttonText="Đọc thêm"
+      link={`/blog-cinema/${news.slug}`}
+    />
 
-                    <div className="cinema-news-image">
+  ))}
 
-                      <img
-                        src={`${blogCinemaImageUrl}${news.image_url}`}
-                        alt={news.title}
-                      />
-
-                      {/* <span className="cinema-news-category">
-                        ĐIỆN ẢNH
-                      </span> */}
-
-                    </div>
-
-                    <div className="cinema-news-content">
-
-                      <h3>
-                        {news.title}
-                      </h3>
-
-                      <button
-                        className="premium-card-btn"
-                        onClick={() =>
-                          navigate(
-                            `/blog-cinema/${news.slug}`
-                          )
-                        }
-                      >
-                        Đọc thêm
-                      </button>
-
-                    </div>
-
-                  </div>
-                ))}
-
-            </div>
+</div>
 
           </section>
         </ScrollReveal>
