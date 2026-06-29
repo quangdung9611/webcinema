@@ -53,19 +53,6 @@
 .user-home {
     min-height: 100vh;
 
-    background:
-        radial-gradient(
-            circle at top center,
-            rgba(255, 0, 0, .06),
-            transparent 35%
-        ),
-        linear-gradient(
-            180deg,
-            #080808,
-            #0d0d0d,
-            #111
-        );
-
     overflow: hidden;
 }
 
@@ -203,242 +190,162 @@
         scale(1.08);
 }
 
-.banner-full-overlay {
-    position: absolute;
 
-    inset: 0;
+/* ==========================================================
+   PREMIUM BANNER WRAPPER
+========================================================== */
 
-    z-index: 2;
+.banner-premium{
+    position:relative;
+    width:100%;
+    height:85vh;
+    overflow:hidden;
+}
 
-    pointer-events: none;
+.premiumSwiper,
+.banner-slide{
+    width:100%;
+    height:100%;
+}
+
+/* ==========================================================
+   IMAGE
+========================================================== */
+
+.banner-media{
+    position:relative;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+}
+
+.banner-img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+
+    animation:
+        bannerZoom 1.4s ease-out forwards,
+        cinematicDrift 18s ease-in-out infinite;
+
+    will-change:transform;
+}
+
+@keyframes bannerZoom{
+
+    from{
+        opacity:0;
+        transform:scale(1.1);
+        filter:blur(5px);
+    }
+
+    to{
+        opacity:1;
+        transform:scale(1);
+        filter:blur(0);
+    }
+
+}
+
+@keyframes cinematicDrift{
+
+    0%{
+        transform:scale(1.05) translate3d(0,0,0);
+    }
+
+    25%{
+        transform:scale(1.08) translate3d(-15px,-8px,0);
+    }
+
+    50%{
+        transform:scale(1.1) translate3d(12px,-10px,0);
+    }
+
+    75%{
+        transform:scale(1.08) translate3d(-10px,6px,0);
+    }
+
+    100%{
+        transform:scale(1.05) translate3d(0,0,0);
+    }
+
+}
+
+/* ==========================================================
+   OVERLAY
+========================================================== */
+
+.banner-overlay{
+
+    position:absolute;
+    inset:0;
+
+    z-index:2;
+
+    pointer-events:none;
+
+    backdrop-filter:blur(1px);
 
     background:
-        linear-gradient(
-            to top,
-            rgba(0,0,0,.90) 0%,
-            rgba(0,0,0,.35) 35%,
-            transparent 100%
-        ),
 
         radial-gradient(
             circle at center,
-            transparent 30%,
-            rgba(0,0,0,.35) 100%
+            rgba(0,0,0,.15),
+            rgba(0,0,0,.38) 45%,
+            rgba(0,0,0,.72)
+        ),
+
+        linear-gradient(
+            to bottom,
+            rgba(0,0,0,.40),
+            rgba(0,0,0,.18) 30%,
+            rgba(0,0,0,.28) 55%,
+            rgba(0,0,0,.84)
         );
-}
-/* =========================
-   PREMIUM BANNER WRAPPER
-========================= */
-
-.banner-premium {
-  position: relative;
-  width: 100%;
-  height: 85vh;
-  overflow: hidden;
-}
-
-/* Swiper full */
-.premiumSwiper,
-.banner-slide {
-  width: 100%;
-  height: 100%;
-}
-
-/* =========================
-   IMAGE CINEMATIC STYLE
-========================= */
-
-.banner-media {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.banner-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-
-  animation:
-    bannerZoom 1.4s ease-out forwards,
-    cinematicDrift 18s ease-in-out infinite;
-
-  will-change: transform;
-}
-
-/* zoom mượt */
-@keyframes bannerZoom {
-  0% {
-    opacity: 0;
-    transform: scale(1.1);
-    filter: blur(5px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0);
-  }
-}
-@keyframes cinematicDrift {
-
-  0% {
-    transform:
-      scale(1.05)
-      translate3d(0,0,0);
-  }
-
-  25% {
-    transform:
-      scale(1.08)
-      translate3d(-15px,-8px,0);
-  }
-
-  50% {
-    transform:
-      scale(1.1)
-      translate3d(12px,-10px,0);
-  }
-
-  75% {
-    transform:
-      scale(1.08)
-      translate3d(-10px,6px,0);
-  }
-
-  100% {
-    transform:
-      scale(1.05)
-      translate3d(0,0,0);
-  }
-}
-/* =========================
-   PREMIUM DARK OVERLAY
-========================= */
-
-.banner-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-
-  pointer-events: none;
-
-  /* blur nền */
-  backdrop-filter: blur(1px);
-
-  background: radial-gradient(
-  circle at center,
-  rgba(0,0,0,.15) 0%,
-  rgba(0,0,0,.35) 48%,
-  rgba(0,0,0,.55) 100%
-),
-linear-gradient(
-  to bottom,
-  rgba(0,0,0,.55) 0%,
-  rgba(0,0,0,.20) 30%,
-  rgba(0,0,0,.28) 55%,
-  rgba(0,0,0,.78) 100%
-);
 
 }
-.banner-overlay::before {
-  content: "";
 
-  position: absolute;
+.banner-overlay::before{
 
-  top: 0;
-  right: 0;
+    content:"";
 
-  width: 40%;
-  height: 100%;
+    position:absolute;
 
-  background:
-    radial-gradient(
-      circle,
-      rgba(255,180,0,.18),
-      transparent 70%
-    );
+    top:0;
+    right:0;
 
-  animation:
-    screenGlow 6s ease-in-out infinite;
+    width:38%;
+    height:100%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255,190,60,.15),
+            transparent 72%
+        );
+
+    animation:screenGlow 6s ease-in-out infinite;
+
 }
 
-@keyframes screenGlow {
+@keyframes screenGlow{
 
-  0%,100% {
-    opacity: .45;
-  }
+    0%,100%{
+        opacity:.45;
+    }
 
-  50% {
-    opacity: 1;
-  }
-}
-/* =========================
-   LIGHT SWEEP (PREMIUM EFFECT)
-========================= */
+    50%{
+        opacity:.9;
+    }
 
-.banner-light {
-  position: absolute;
-  top: 0;
-  left: -120%;
-  width: 60%;
-  height: 100%;
-  background: linear-gradient(
-    120deg,
-    transparent,
-    rgba(255, 255, 255, 0.12),
-    transparent
-  );
-  transform: skewX(-20deg);
-  animation: lightMove 5s infinite ease-in-out;
-  z-index: 3;
-  pointer-events: none; /* Không cản trở click */
 }
 
-@keyframes lightMove {
-  0% { left: -120%; }
-  100% { left: 220%; }
-}
-
-.banner-particles {
-  position: absolute;
-  inset: 0;
-
-  z-index: 3;
-
-  pointer-events: none;
-
-  opacity: .25;
-
-  background-image:
-    radial-gradient(
-      rgba(255,140,0,.95) 1px,
-      transparent 1px
-    );
-
-  background-size:
-    180px 180px;
-
-  animation:
-    particleFloat 22s linear infinite;
-}
-@keyframes particleFloat {
-
-  from {
-    transform:
-      translateY(40px);
-  }
-
-  to {
-    transform:
-      translateY(-40px);
-  }
-}
-/* ==========================================
-   BANNER INNER
-========================================== */
+/* ==========================================================
+   CONTENT
+========================================================== */
 
 .banner-inner{
+
     position:absolute;
     inset:0;
 
@@ -446,71 +353,51 @@ linear-gradient(
 
     display:flex;
     align-items:center;
-    justify-content:center;
+    justify-content:flex-start;
 
-    width:100%;
-    height:100%;
-
-    padding:0 30px;
+    padding:0 6.5%;
 }
 
-/* ==========================================
-   BANNER TEXT
-========================================== */
 
-.banner-text{
-    width:100%;
-    max-width:1100px;
-
-    margin:0 auto;
-
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-
-    text-align:center;
-
-    gap:32px;
-
-    transform:translateY(-40px);
-}
-
-/* ==========================================
+/* ==========================================================
    ANIMATION
-========================================== */
+========================================================== */
 
 @keyframes fadeDownSoft{
 
-    0%{
+    from{
+
         opacity:0;
-        transform:translateY(-55px);
+        transform:translateY(-40px);
         filter:blur(6px);
+
     }
 
-    100%{
+    to{
+
         opacity:1;
         transform:translateY(0);
         filter:blur(0);
+
     }
 
 }
 
 @keyframes shine{
 
-    0%{
+    from{
         transform:translateX(-250%);
     }
 
-    100%{
+    to{
         transform:translateX(250%);
     }
 
 }
 
-/* ==========================================
+/* ==========================================================
    RESET
-========================================== */
+========================================================== */
 
 .banner-title,
 .banner-subtitle,
@@ -519,50 +406,76 @@ linear-gradient(
     margin:0;
 }
 
-/* ==========================================
-   TITLE
-========================================== */
+/* ==========================================================
+   TEXT LAYOUT
+========================================================== */
 
-.banner-title{
-    position:relative;
+.banner-text{
 
     width:100%;
+    max-width:700px;
 
-    font-family:'Cinzel', serif;
+    display:flex;
+    flex-direction:column;
 
-    font-size:clamp(7rem,10vw,12rem);
+    align-items:flex-start;
+    justify-content:center;
 
-    font-weight:900;
+    text-align:left;
 
-    line-height:1;
+    /* đưa block lên vừa phải */
+    transform:translateY(-25px);
 
-    letter-spacing:5px;
+    /* khoảng cách đều giữa các phần */
+    gap:34px;
+}
+
+/* ==========================================================
+   TITLE
+========================================================== */
+
+.banner-title{
+
+    position:relative;
+
+    display:inline-block;
+
+    width:max-content;
 
     white-space:nowrap;
+
+    font-family:'Cinzel',serif;
+
+    font-size:clamp(6.4rem,7vw,8.8rem);
+
+    font-weight:800;
+
+    line-height:.92;
+
+    letter-spacing:2px;
 
     text-transform:uppercase;
 
     background:linear-gradient(
         180deg,
-        #FFFDF5 0%,
-        #FFF6D8 20%,
-        #F7E7B6 45%,
-        #E6C76B 75%,
-        #B88A2A 100%
+        #fffef8 0%,
+        #fff4d6 22%,
+        #ecd48f 58%,
+        #bc8b2b 100%
     );
 
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
 
     text-shadow:
-        0 0 10px rgba(255,248,220,.35),
-        0 0 25px rgba(247,231,182,.25),
-        0 10px 25px rgba(0,0,0,.75);
+        0 5px 15px rgba(0,0,0,.45),
+        0 15px 30px rgba(0,0,0,.55);
 
     animation:fadeDownSoft 1s ease forwards;
 }
 
 .banner-title::after{
+
     content:"";
 
     position:absolute;
@@ -571,98 +484,103 @@ linear-gradient(
     background:linear-gradient(
         120deg,
         transparent 35%,
-        rgba(255,255,255,.95) 50%,
+        rgba(255,255,255,.92) 50%,
         transparent 65%
     );
 
-    animation:shine 4s linear infinite;
-
     mix-blend-mode:screen;
+
+    animation:shine 4s linear infinite;
 
     pointer-events:none;
 }
 
-/* ==========================================
+/* ==========================================================
    SUBTITLE
-========================================== */
+========================================================== */
 
 .banner-subtitle{
+
     width:100%;
-    max-width:1100px;
+    max-width:700px;
 
-    font-size:clamp(3rem,3.5vw,4.5rem);
+    font-family:'Inter',sans-serif;
 
-    font-weight:700;
+    font-size:1.55rem;
 
-    line-height:1.4;
+    font-weight:400;
 
-    letter-spacing:4px;
+    line-height:1.9;
 
-    text-transform:uppercase;
+    letter-spacing:.15px;
 
-    color:#F7E7B6;
+    color:rgba(255,247,232,.94);
 
-    text-shadow:
-        0 0 10px rgba(255,248,220,.3),
-        0 4px 12px rgba(0,0,0,.7);
+    text-transform:none;
+
+    text-align:justify;
+    text-justify:inter-word;
+
+    text-wrap:pretty;
+
+    overflow-wrap:break-word;
 
     animation:fadeDownSoft 1s ease .2s forwards;
 }
 
-/* ==========================================
+/* ==========================================================
    BUTTON
-========================================== */
+========================================================== */
 
 .banner-btn{
-    width:100%;
-    max-width:920px;
 
-    height:90px;
+    width:320px;
+    height:72px;
+
+    /* tạo khoảng thở phía trên */
+    margin-top:10px;
 
     border:none;
     border-radius:999px;
 
     cursor:pointer;
 
-    font-family:'Cinzel', serif;
+    font-family:'Cinzel',serif;
 
-    font-size:2.5rem;
+    font-size:1.55rem;
 
-    font-weight:900;
+    font-weight:700;
 
-    letter-spacing:5px;
+    letter-spacing:1.8px;
 
     text-transform:uppercase;
 
-    color:#5b3200;
+    color:#5c3400;
 
     background:linear-gradient(
         180deg,
-        #fff6cf 0%,
-        #ffe08c 20%,
-        #ffc845 45%,
-        #e9a400 70%,
-        #b86f00 100%
+        #fff7d4,
+        #ffe49b 30%,
+        #ffc94e 65%,
+        #c98600
     );
 
     box-shadow:
-        inset 0 2px 2px rgba(255,255,255,.4),
-        inset 0 -4px 8px rgba(120,70,0,.3),
-        0 15px 35px rgba(0,0,0,.35);
+        inset 0 2px 3px rgba(255,255,255,.45),
+        0 12px 28px rgba(0,0,0,.35);
 
-    transition:all .35s ease;
+    transition:.35s;
 
-    animation:fadeDownSoft 1s ease .45s forwards;
+    animation:fadeDownSoft 1s ease .4s forwards;
 }
+
 .banner-btn:hover{
 
-    transform:translateY(-5px) scale(1.03);
+    transform:translateY(-4px);
 
     box-shadow:
-        inset 0 2px 2px rgba(255,255,255,.5),
-        inset 0 -4px 8px rgba(120,70,0,.35),
-        0 22px 50px rgba(0,0,0,.45);
-
+        inset 0 2px 3px rgba(255,255,255,.55),
+        0 18px 35px rgba(0,0,0,.42);
 }
 /* =========================
    ACTIVE SLIDE ANIMATION
@@ -1287,13 +1205,6 @@ linear-gradient(
         padding: 24px;
     }
 
-    /* Promotion + News */
-    .promotions-grid,
-    .cinema-news-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-    }
-
     .home-features-section,
     .movie-container,
     .promotions-section,
@@ -1352,18 +1263,6 @@ linear-gradient(
         height: 54px;
     }
 
-    /* Promotion + News */
-    .promotions-grid,
-    .cinema-news-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 18px;
-    }
-
-    .promo-image,
-    .cinema-news-image {
-        height: 240px;
-    }
-
     .home-features-section,
     .movie-container,
     .promotions-section,
@@ -1415,13 +1314,13 @@ linear-gradient(
         border-radius: 22px;
     }
 
-        .quick-booking-selects {
-            width: 100%;
+    .quick-booking-selects {
+        width: 100%;
 
-            grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(4, 1fr);
 
-            gap: 8px;
-        }
+        gap: 8px;
+    }
 
     .quick-booking-selects select {
 
@@ -1447,23 +1346,6 @@ linear-gradient(
         height: 52px;
 
         font-size: .9rem;
-    }
-
-    /* Promotion + News */
-    .promotions-grid,
-    .cinema-news-grid {
-        grid-template-columns: 1fr;
-        gap: 18px;
-    }
-
-    .promo-card,
-    .cinema-news-card {
-        border-radius: 20px;
-    }
-
-    .promo-image,
-    .cinema-news-image {
-        height: 240px;
     }
 
     .home-features-section,
@@ -1513,19 +1395,22 @@ linear-gradient(
     }
 
     .quick-booking-selects select {
-    height: 46px;
 
-    padding: 0 4px;
+        height: 46px;
 
-    font-size: .7rem;
+        padding: 0 4px;
 
-    border-radius: 12px;
+        font-size: .7rem;
 
-    min-width: 0;
-}
+        border-radius: 12px;
+
+        min-width: 0;
+    }
 
     .btn-quick-booking {
+
         width: 100%;
+
         min-width: unset;
 
         height: 48px;
@@ -1533,22 +1418,6 @@ linear-gradient(
         font-size: .85rem;
 
         border-radius: 12px;
-    }
-
-    /* Promotion + News */
-    .promo-info,
-    .cinema-news-content {
-        padding: 16px;
-    }
-
-    .promo-image,
-    .cinema-news-image {
-        height: 220px;
-    }
-
-    .btn-detail {
-        height: 44px;
-        font-size: .82rem;
     }
 
     .home-features-section,

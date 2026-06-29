@@ -6,6 +6,7 @@ import Modal from '../components/Modal';
 import FilmGenre from '../components/FilmGenre';
 import ScrollReveal from '../components/ScrollReveal';
 import CinemaCard from '../components/CinemaCard';
+
 // SWIPER
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade, Navigation, Pagination } from 'swiper/modules';
@@ -30,31 +31,35 @@ const UserHome = () => {
 
 const banners = [
     {
-        img: 'banner1.png',
-        title: 'PHÒNG VIP',
-        subtitle: 'RIÊNG TƯ • ĐẲNG CẤP • SANG',
-        button: 'KHÁM PHÁ NGAY'
+        img: "banner1.png",
+        title: "PHÒNG VIP",
+        subtitle:
+            "Trải nghiệm không gian riêng tư với ghế ngồi cao cấp, dịch vụ tận nơi và chất lượng hình ảnh, âm thanh đạt chuẩn điện ảnh.",
+        button: "KHÁM PHÁ NGAY"
     },
 
     {
-        img: 'banner2.png',
-        title: 'ƯU ĐÃI HOT',
-        subtitle: 'ĐẶT VÉ • TIẾT KIỆM • HẤP DẪN',
-        button: 'NHẬN ƯU ĐÃI'
+        img: "banner2.png",
+        title: "ƯU ĐÃI HOT",
+        subtitle:
+            "Hàng loạt chương trình giảm giá hấp dẫn giúp bạn dễ dàng đặt vé với mức chi phí tiết kiệm nhưng vẫn tận hưởng trọn vẹn.",
+        button: "NHẬN ƯU ĐÃI"
     },
 
     {
-        img: 'banner3.png',
-        title: 'COMBO VIP',
-        subtitle: 'BẮP GIÒN • NƯỚC MÁT • THƠM',
-        button: 'THƯỞNG THỨC'
+        img: "banner3.png",
+        title: "COMBO VIP",
+        subtitle:
+            "Thưởng thức bắp rang thơm ngon cùng nước uống mát lạnh trong những combo được chuẩn bị riêng để chuyến xem phim thêm trọn vẹn.",
+        button: "THƯỞNG THỨC"
     },
 
     {
-        img: 'banner4.png',
-        title: 'BOM TẤN 4D',
-        subtitle: 'ÂM THANH • HÌNH ẢNH • ĐỈNH',
-        button: 'ĐẶT VÉ NGAY'
+        img: "banner4.png",
+        title: "BOM TẤN 4D",
+        subtitle:
+            "Đắm chìm trong những bộ phim bom tấn với hiệu ứng chuyển động chân thực, âm thanh sống động và hình ảnh sắc nét đầy cuốn hút.",
+        button: "ĐẶT VÉ NGAY"
     }
 ];
   const bannerBaseUrl = "https://api.quangdungcinema.id.vn/uploads/banners/";
@@ -339,7 +344,7 @@ const banners = [
     selectedQuick.cinema,
     selectedQuick.date
   ]);
-
+    
   // =========================
   // HANDLE QUICK BOOK
   // =========================
@@ -500,9 +505,10 @@ const banners = [
             />
           </picture>
 
-          {/* overlay */}
-          <div className="banner-overlay"></div>
-         {/* TEXT PREMIUM */}
+        <div className="banner-overlay"></div>
+
+          <div className="banner-particles"></div>
+
           <div className="banner-inner">
 
               <div className="banner-text">
@@ -522,10 +528,7 @@ const banners = [
               </div>
 
           </div>
-          {/* particle */}
-          <div className="banner-particles"></div>
-          {/* light effect */}
-          <div className="banner-light"></div>
+          
 
         </div>
 
@@ -728,37 +731,37 @@ const banners = [
           </div>
         </ScrollReveal>
 
-      {/* PROMOTIONS */}
-<ScrollReveal delay={0.3}>
-  <section className="promotions-section">
+        {/* PROMOTIONS */}
+        <ScrollReveal delay={0.3}>
+          <section className="promotions-section">
 
-    <div className="section-header">
-      <h2 className="section-title">
-        ƯU ĐÃI HẤP DẪN
-      </h2>
+            <div className="section-header">
+              <h2 className="section-title">
+                ƯU ĐÃI HẤP DẪN
+              </h2>
 
-      <div className="title-underline"></div>
-    </div>
+              <div className="title-underline"></div>
+            </div>
 
-    <div className="cinema-grid">
+            <div className="cinema-grid">
 
-      {promotions?.map((promo) => (
+              {promotions?.map((promo) => (
 
-        <CinemaCard
-          key={promo.promotion_id}
-          type="promotion"
-          image={`${promotionImageUrl}${promo.image_url}`}
-          title={promo.title}
-          buttonText="Xem chi tiết"
-          link={`/promotion/${promo.slug}`}
-        />
+                <CinemaCard
+                  key={promo.promotion_id}
+                  type="promotion"
+                  image={`${promotionImageUrl}${promo.image_url}`}
+                  title={promo.title}
+                  buttonText="Xem chi tiết"
+                  link={`/promotion/${promo.slug}`}
+                />
 
-      ))}
+              ))}
 
-    </div>
+            </div>
 
-  </section>
-</ScrollReveal>
+          </section>
+        </ScrollReveal>
 
         {/* CINEMA CORNER */}
         <ScrollReveal
@@ -798,7 +801,7 @@ const banners = [
         </ScrollReveal>
 
       </div>
-
+       
     </div>
   </>
 );

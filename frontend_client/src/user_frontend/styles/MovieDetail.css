@@ -1,499 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Inter:wght@400;600&display=swap');
 .cinema-main-content-container {
     max-width: 1300px;
     margin: 0px auto;
   }
-/*==================================================
-  HERO PREMIUM V6 - CINEMATIC UPGRADE
-==================================================*/
 
-.cinema-hero-banner{
-  position:relative;
-  width:100%;
-  height:78vh;
-  min-height:720px;
-  overflow:hidden;
-  background:#000;
-}
-
-/* ===============================
-   ANIMATION
-=============================== */
-
-@keyframes heroZoom{
-  from{
-    opacity:0;
-    transform:scale(1.08);
-    filter:blur(8px);
-  }
-  to{
-    opacity:1;
-    transform:scale(1);
-    filter:blur(0);
-  }
-}
-
-@keyframes fadeUp{
-  from{
-    opacity:0;
-    transform:translateY(40px);
-  }
-  to{
-    opacity:1;
-    transform:none;
-  }
-}
-
-@keyframes shine{
-  from{
-    transform:translateX(-250%);
-  }
-  to{
-    transform:translateX(250%);
-  }
-}
-
-@keyframes lightMove{
-  from{
-    left:-120%;
-  }
-  to{
-    left:180%;
-  }
-}
-
-/* ===============================
-   BACKGROUND
-=============================== */
-
-.banner-horizontal-img{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  object-position:center;
-  animation:heroZoom 1.5s ease forwards;
-}
-
-/* ===============================
-   OVERLAY
-=============================== */
-
-.banner-gradient-overlay{
-  position:absolute;
-  inset:0;
-  z-index:1;
-  background:linear-gradient(
-    90deg,
-    rgba(0,0,0,.95) 0%,
-    rgba(0,0,0,.85) 22%,
-    rgba(0,0,0,.65) 45%,
-    rgba(0,0,0,.28) 72%,
-    transparent 100%
-  );
-}
-
-.banner-gradient-overlay::before,
-.banner-gradient-overlay::after{
-  content:"";
-  position:absolute;
-  inset:0;
-}
-
-.banner-gradient-overlay::before{
-  background:radial-gradient(
-    circle at left center,
-    rgba(229,9,20,.18),
-    transparent 45%
-  );
-}
-
-.banner-gradient-overlay::after{
-  background:linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(0,0,0,.15) 50%,
-    rgba(0,0,0,.95) 100%
-  );
-}
-
-/* ===============================
-   LIGHT SWEEP
-=============================== */
-
-.cinema-hero-banner::after{
-  content:"";
-  position:absolute;
-  top:0;
-  left:-120%;
-  width:30%;
-  height:100%;
-  background:linear-gradient(
-    120deg,
-    transparent,
-    rgba(255,255,255,.08),
-    transparent
-  );
-  transform:skewX(-25deg);
-  animation:lightMove 7s linear infinite;
-  z-index:3;
-}
-
-/* ===============================
-   EXTRA DEPTH LAYER
-=============================== */
-
-.cinema-hero-banner::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:radial-gradient(
-    circle at center,
-    transparent 40%,
-    rgba(0,0,0,.55)
-  );
-  z-index:2;
-  pointer-events:none;
-}
-
-/* ===============================
-   CONTENT WRAPPER
-=============================== */
-
-.hero-content-wrapper{
-  position:relative;
-  z-index:5;
-  max-width:1400px;
-  height:100%;
-  margin:auto;
-  display:flex;
-  align-items:center;
-  padding:0 80px;
-
-  background:linear-gradient(
-    90deg,
-    rgba(0,0,0,.55),
-    transparent 60%
-  );
-
-  backdrop-filter:blur(2px);
-}
-
-.hero-info-side{
-  width:700px;
-}
-
-/* ===============================
-   ENTRANCE ANIMATION
-=============================== */
-
-.hero-title-row,
-.hero-rating-row,
-.hero-description,
-.hero-info-list{
-  opacity:0;
-  animation:fadeUp .8s ease forwards;
-}
-
-.hero-title-row{ animation-delay:.4s; }
-.hero-rating-row{ animation-delay:.7s; }
-.hero-description{ animation-delay:1s; }
-.hero-info-list{ animation-delay:1.3s; }
-
-/* ===============================
-   TITLE (PREMIUM FIX)
-=============================== */
-
-.hero-title-row{
-  display:flex;
-  align-items:center;
-  gap:20px;
-  margin-bottom:30px;
-}
-
-.hero-movie-title{
-  position:relative;
-  margin:0;
-  overflow:hidden;
-
-  font-family:'Cinzel Decorative',serif;
-
-  /* 🔥 REDUCED SIZE FOR PREMIUM LOOK */
-  font-size:clamp(3.8rem,5.5vw,6.2rem);
-
-  font-weight:900;
-  line-height:.95;
-  letter-spacing:5px;
-  text-transform:uppercase;
-
-  /* 🔥 FORCE ONE LINE + ELLIPSIS */
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  max-width:100%;
-
-  background:linear-gradient(
-    180deg,
-    #fffdf8 0%,
-    #ffe3e3 12%,
-    #ff8a8a 28%,
-    #ff4040 48%,
-    #d10000 72%,
-    #680000 100%
-  );
-
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-
-  text-shadow:
-    0 0 10px rgba(255,60,60,.15),
-    0 0 20px rgba(255,0,0,.10),
-    0 10px 30px rgba(0,0,0,.85);
-}
-
-/* shimmer effect */
-
-.hero-movie-title::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(
-    120deg,
-    transparent 40%,
-    rgba(255,255,255,.75) 50%,
-    transparent 60%
-  );
-  mix-blend-mode:screen;
-  animation:shine 6s linear infinite;
-}
-
-/* ===============================
-   AGE BADGE
-=============================== */
-
-.hero-age-badge{
-  padding:14px 22px;
-  border-radius:16px;
-  background:linear-gradient(180deg,#ff5555,#c80000);
-  color:#fff;
-  font-size:1.4rem;
-  font-weight:900;
-  box-shadow:0 0 25px rgba(255,0,0,.35);
-}
-
-/* ===============================
-   RATING
-=============================== */
-
-.hero-rating-row{
-  display:flex;
-  gap:16px;
-  flex-wrap:wrap;
-  margin-bottom:30px;
-}
-
-.hero-rating-item{
-  padding:14px 22px;
-  border-radius:22px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-
-  background:rgba(15,15,15,.75);
-  backdrop-filter:blur(18px);
-  border:1px solid rgba(255,255,255,.08);
-
-  color:white;
-  font-weight:700;
-  transition:.3s;
-}
-
-.hero-rating-item:hover{
-  transform:translateY(-4px);
-  border-color:#ff2f2f;
-  box-shadow:0 8px 20px rgba(255,0,0,.15);
-}
-
-/* ===============================
-   DESCRIPTION
-=============================== */
-
-.hero-description{
-  max-width:650px;
-  margin-bottom:35px;
-
-  color:rgba(255,255,255,.93);
-  font-size:1.08rem;
-  font-weight:500;
-  line-height:1.9;
-}
-
-/* ===============================
-   INFO LIST
-=============================== */
-
-.hero-info-list{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-
-.hero-info-line{
-  display:flex;
-  gap:15px;
-  font-size:1.05rem;
-  padding:2px 0;
-}
-
-.hero-info-line strong{
-  min-width:130px;
-  font-weight:800;
-  color:#ff3b3b;
-  text-shadow:0 0 10px rgba(255,59,59,.15);
-}
-
-.hero-info-line span{
-  font-weight:600;
-  color:white;
-}
-
-/* ===============================
-   ACTIONS
-=============================== */
-
-.hero-action-group{
-  display:flex;
-  align-items:center;
-  gap:18px;
-  flex-wrap:wrap;
-  opacity:0;
-  animation:fadeUp .8s ease forwards;
-  animation-delay:1.6s;
-}
-
-/* ===============================
-   BOOK BUTTON
-=============================== */
-
-.hero-book-btn{
-    margin-top: 30px;
-  position:relative;
-  overflow:hidden;
-  height:68px;
-  padding:0 34px;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:12px;
-
-  border:none;
-  border-radius:18px;
-  cursor:pointer;
-
-  font-size:1rem;
-  font-weight:800;
-  letter-spacing:.5px;
-  text-transform:uppercase;
-
-  color:white;
-
-  background:linear-gradient(
-    180deg,
-    #ff5a5a 0%,
-    #e50914 45%,
-    #970000 100%
-  );
-
-  box-shadow:
-    0 10px 30px rgba(229,9,20,.35),
-    inset 0 1px 2px rgba(255,255,255,.2);
-
-  transition:.35s ease;
-}
-
-.hero-book-btn::before{
-  content:"";
-  position:absolute;
-  top:0;
-  left:-120%;
-  width:80%;
-  height:100%;
-
-  background:linear-gradient(
-    120deg,
-    transparent,
-    rgba(255,255,255,.45),
-    transparent
-  );
-
-  transform:skewX(-20deg);
-  transition:.6s;
-}
-
-.hero-book-btn:hover{
-  transform:translateY(-4px);
-  box-shadow:
-    0 18px 40px rgba(229,9,20,.45),
-    inset 0 1px 2px rgba(255,255,255,.25);
-}
-
-.hero-book-btn:hover::before{
-  left:180%;
-}
-
-.hero-book-btn svg{
-  width:20px;
-  height:20px;
-}
-
-.hero-book-btn span{
-  white-space:nowrap;
-}
-
-/* ===============================
-   TRAILER BUTTON
-=============================== */
-
-.hero-trailer-btn{
-margin-top: 30px;
-  height:68px;
-  padding:0 34px;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:12px;
-
-  border-radius:18px;
-  cursor:pointer;
-
-  color:white;
-  font-size:1rem;
-  font-weight:700;
-
-  backdrop-filter:blur(18px);
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.1);
-
-  transition:.35s ease;
-}
-
-.hero-trailer-btn:hover{
-  transform:translateY(-4px);
-  background:rgba(255,255,255,.08);
-  border-color:rgba(255,255,255,.18);
-}
-
-.hero-trailer-btn svg{
-  width:20px;
-  height:20px;
-}
-
-.hero-trailer-btn span{
-  white-space:nowrap;
-}
 /* =========================================================
    PHIM LIÊN QUAN - PREMIUM TITLE STYLE
 ========================================================= */
@@ -1569,266 +1078,119 @@ TITLE
 
     border: none;
 }
-/* ==========================================================================
-   9. RESPONSIVE LAYER (TABLET & MOBILE)
+/* ========================================================================== 
+   RESPONSIVE MINIMAL - WITHOUT HERO BANNER (SECTION 1 REMOVED)
    ========================================================================== */
-@media(max-width:1200px){
 
-.hero-content-wrapper{
-padding:0 40px;
-}
 
-.hero-info-side{
-width:580px;
-}
+/* ===================== 1200px ===================== */
+@media (max-width: 1200px) {
 
-.hero-movie-title{
-font-size:clamp(4rem,7vw,6rem);
-}
+  .cast-avatars-horizontal-list {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
 
-.cast-avatars-horizontal-list{
-grid-template-columns:repeat(4,1fr);
-gap:24px;
-}
+  .other-trailers-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
 
-.other-trailers-grid{
-grid-template-columns:repeat(4,1fr);
-gap:24px;
-}
-
-.rating-statistics-dashboard{
-gap:28px;
-}
-
+  .rating-statistics-dashboard {
+    gap: 28px;
+  }
 }
 
 
+/* ===================== 992px ===================== */
+@media (max-width: 992px) {
 
-/*==================================================
-992px
-==================================================*/
+  .cinema-main-content-container {
+    padding: 0 20px;
+  }
 
-@media(max-width:992px){
+  .cast-avatars-horizontal-list {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
 
-.cinema-main-content-container{
-padding:0 20px;
-}
+  .other-trailers-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
 
-.hero-content-wrapper{
-padding:0 30px;
-}
+  .rating-statistics-dashboard {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
 
-.hero-info-side{
-width:100%;
-max-width:700px;
-}
-
-.hero-movie-title{
-font-size:clamp(3rem,6vw,4.5rem);
-}
-
-.hero-description{
-max-width:100%;
-}
-
-.hero-action-group{
-flex-wrap:wrap;
+  .dashboard-big-score-left {
+    align-items: flex-start;
+  }
 }
 
 
-.cast-avatars-horizontal-list{
-grid-template-columns:repeat(3,1fr);
-gap:22px;
+/* ===================== 768px ===================== */
+@media (max-width: 768px) {
+
+  .cinema-main-content-container {
+    padding: 0 15px;
+  }
+
+  .cast-avatars-horizontal-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+
+  .other-trailers-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+
+  .split-right-column-box {
+    padding: 24px;
+  }
+
+  .huge-number {
+    font-size: 58px;
+  }
 }
 
 
-.other-trailers-grid{
-grid-template-columns:repeat(3,1fr);
-gap:22px;
-}
-
-
-.rating-statistics-dashboard{
-grid-template-columns:1fr;
-gap:30px;
-}
-
-
-.dashboard-big-score-left{
-align-items:flex-start;
-}
-
-}
-
-
-
-
-/*==================================================
-768px
-==================================================*/
-
-@media(max-width:768px){
-
-.cinema-hero-banner{
-height:auto;
-min-height:650px;
-}
-
-
-.hero-content-wrapper{
-padding:50px 20px;
-align-items:flex-end;
-}
-
-
-.hero-movie-title{
-font-size:3rem;
-}
-
-
-.hero-rating-row{
-gap:10px;
-}
-
-
-.hero-rating-item{
-padding:8px 14px;
-font-size:13px;
-}
-
-
-.hero-description{
-font-size:14px;
-line-height:1.7;
-}
-
-
-.hero-info-line{
-font-size:14px;
-}
-
-
-.hero-action-group{
-flex-direction:column;
-}
-
-
-.hero-book-btn,
-.hero-trailer-btn{
-width:100%;
-justify-content:center;
-}
-
-
-.cast-avatars-horizontal-list{
-grid-template-columns:repeat(2,1fr);
-gap:18px;
-}
-
-
-.other-trailers-grid{
-grid-template-columns:repeat(2,1fr);
-gap:18px;
-}
-
-
-.actor-avatar-frame{
-border-radius:18px;
-}
-
-
-.other-trailer-thumb{
-border-radius:18px;
-}
-
-
-.split-right-column-box{
-padding:24px;
-}
-
-
-.huge-number{
-font-size:58px;
-}
-
-}
-
-
-
-
-/*==================================================
-480px
-==================================================*/
-
-@media(max-width:480px){
-
-.cinema-main-content-container{
-padding:0 15px;
-}
-
-
-.hero-content-wrapper{
-padding:30px 15px;
-}
-
-
-.hero-movie-title{
-font-size:2.2rem;
-letter-spacing:2px;
-}
-
-
-.hero-age-badge{
-width:50px;
-height:40px;
-font-size:16px;
-}
-
-
-.hero-description{
-font-size:13px;
-}
-
-
-.section-title-label{
-font-size:20px;
-}
-
-
-.cast-avatars-horizontal-list{
-grid-template-columns:1fr;
-gap:18px;
-}
-
-
-.other-trailers-grid{
-grid-template-columns:1fr;
-gap:18px;
-}
-
-
-.actor-real-name{
-font-size:16px;
-}
-
-
-.other-trailer-title{
-font-size:15px;
-}
-
-
-.split-right-column-box{
-padding:18px;
-}
-
-
-.huge-number{
-font-size:48px;
-}
-
-
-.progress-percent-text{
-font-size:12px;
-}
-
+/* ===================== 480px ===================== */
+@media (max-width: 480px) {
+
+  .cinema-main-content-container {
+    padding: 0 15px;
+  }
+
+  .cast-avatars-horizontal-list {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .other-trailers-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .actor-real-name {
+    font-size: 16px;
+  }
+
+  .other-trailer-title {
+    font-size: 15px;
+  }
+
+  .split-right-column-box {
+    padding: 18px;
+  }
+
+  .huge-number {
+    font-size: 48px;
+  }
+
+  .progress-percent-text {
+    font-size: 12px;
+  }
 }

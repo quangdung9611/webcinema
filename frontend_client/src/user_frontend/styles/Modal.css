@@ -1,5 +1,5 @@
 /* =========================================================
-   MODAL OVERLAY
+   MODAL OVERLAY - SINGLE LAYER CLEAN (NETFLIX STYLE)
 ========================================================= */
 
 .modal-overlay {
@@ -10,106 +10,84 @@
     align-items: center;
     justify-content: center;
 
-    padding: 24px;
+    padding: 20px;
 
-    z-index: 9999;
+    background: rgba(10, 10, 12, 0.75);
+    backdrop-filter: blur(14px);
 
-    background: rgba(0, 0, 0, 0.45);
+    z-index: 999999;
 
-    backdrop-filter: blur(8px);
+    animation: fadeIn 0.2s ease;
+}
 
-    animation: modalFade 0.25s ease;
+/* subtle silver vignette */
+.modal-overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background: radial-gradient(
+        circle at center,
+        rgba(255, 255, 255, 0.06),
+        rgba(0, 0, 0, 0.7) 70%
+    );
+
+    pointer-events: none;
 }
 
 /* =========================================================
-   MODAL CONTAINER
+   MODAL CONTAINER (SILVER CINEMA STYLE)
 ========================================================= */
 
 .modal-container {
-    width: 100%;
     position: relative;
+
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+
     overflow: hidden;
 
-    border-radius: 28px;
+    border-radius: 18px;
 
-    background: #ffffff;
+   background:
 
-    border: 1px solid #e8e8e8;
+    linear-gradient(
+        90deg,
+        rgba(20,20,20,.82) 0%,
+        rgba(35,35,35,.68) 20%,
+        rgba(70,70,70,.38) 42%,
+        rgba(120,120,120,.16) 68%,
+        rgba(180,180,180,.06) 85%,
+        transparent 100%
+    ),
+
+    linear-gradient(
+        180deg,
+        rgba(255,255,255,.05) 0%,
+        transparent 30%,
+        rgba(0,0,0,.58) 100%
+    );
+
+    border: 1px solid rgba(255,255,255,0.08);
 
     box-shadow:
-        0 20px 60px rgba(0,0,0,0.18),
-        0 8px 25px rgba(0,0,0,0.08);
+        0 40px 120px rgba(0,0,0,0.85),
+        0 0 0 1px rgba(255,255,255,0.03);
 
-    animation: modalScale 0.3s ease;
+    color: #fff;
+
+    animation: modalIn 0.25s ease;
 }
 
 /* =========================================================
-   LIGHT DECORATION
+   SIZE
 ========================================================= */
 
-.modal-container::before {
-    content: '';
-
-    position: absolute;
-    top: -80px;
-    right: -80px;
-
-    width: 220px;
-    height: 220px;
-
-    border-radius: 50%;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(220, 38, 38, 0.08),
-            transparent 70%
-        );
-
-    pointer-events: none;
-}
-
-.modal-container::after {
-    content: '';
-
-    position: absolute;
-    bottom: -80px;
-    left: -80px;
-
-    width: 220px;
-    height: 220px;
-
-    border-radius: 50%;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(239, 68, 68, 0.06),
-            transparent 70%
-        );
-
-    pointer-events: none;
-}
-
-/* =========================================================
-   MODAL SIZE
-========================================================= */
-
-.modal-container.sm {
-    max-width: 460px;
-}
-
-.modal-container.md {
-    max-width: 650px;
-}
-
-.modal-container.lg {
-    max-width: 900px;
-}
-
-.modal-container.xl {
-    max-width: 1150px;
-}
+.modal-container.sm { max-width: 420px; }
+.modal-container.md { max-width: 650px; }
+.modal-container.lg { max-width: 900px; }
+.modal-container.xl { max-width: 1100px; }
 
 /* =========================================================
    HEADER
@@ -119,538 +97,216 @@
     position: relative;
 
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
 
-    padding: 24px 30px 20px;
+    /* padding: 18px 20px; */
 
-    border-bottom: 1px solid #eeeeee;
+    background: rgba(255,255,255,0.04);
 
-    background: #ffffff;
-
-    z-index: 2;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-.modal-header h2 {
-    margin: 0;
+.modal-title {
+    font-size: 18px;
+    font-weight: 700;
 
-    font-size: 30px;
-    font-weight: 800;
-
-    text-align: center;
-    text-transform: uppercase;
     letter-spacing: 1px;
+    text-transform: uppercase;
 
-    color: #111111;
+    margin: 0;
+    color: #f5f5f5;
 }
 
-/* =========================================================
-   CLOSE BUTTON
-========================================================= */
+.modal-close-btn{
+    position:absolute;
 
-.modal-close-btn {
-    position: absolute;
+    top:16px;
+    right:16px;
 
-    top: 20px;
-    right: 20px;
+    width:48px;
+    height:48px;
 
-    width: 46px;
-    height: 46px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 
-    border: none;
-    outline: none;
+    border:none;
+    border-radius:50%;
 
-    border-radius: 14px;
+    cursor:pointer;
 
-    background: #f5f5f5;
+    color:#fff;
 
-    color: #444444;
+    background:rgba(20,20,20,.72);
+    backdrop-filter:blur(14px);
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border:1px solid rgba(255,255,255,.08);
 
-    cursor: pointer;
+    z-index:999;
 
-    transition: all 0.25s ease;
+    transition:.3s;
 }
 
-.modal-close-btn:hover {
-    background: #ffe5e5;
-
-    color: #dc2626;
-
-    transform:
-        rotate(90deg)
-        scale(1.05);
+.modal-close-btn:hover{
+    background:#e50914;
+    transform:rotate(90deg) scale(1.08);
 }
-
 /* =========================================================
    BODY
 ========================================================= */
 
 .modal-body {
-    position: relative;
+    padding: 0px;
 
-    padding: 30px;
-
-    max-height: 80vh;
-
+    max-height: 78vh;
     overflow-y: auto;
 
-    color: #222222;
-
-    z-index: 2;
+    color: #d7d7d7;
 }
 
-/* =========================================================
-   ALERT CONTENT
-========================================================= */
-
-.alert-content {
-    text-align: center;
-}
-
-.alert-content p {
-    margin-bottom: 24px;
-
-    font-size: 16px;
-    line-height: 1.7;
-
-    color: #444444;
-}
-
-/* =========================================================
-   ALERT ACTIONS
-========================================================= */
-
-.alert-actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 14px;
-
-    flex-wrap: wrap;
-}
-
-/* =========================================================
-   TEXT STYLE
-========================================================= */
-
-.modal-body p,
-.modal-body span,
-.modal-body label,
-.modal-body div {
-    color: #333333;
-}
-
-/* =========================================================
-   BUTTON BASE
-========================================================= */
-
-.modal-body button {
-    border: none;
-    outline: none;
-
-    border-radius: 14px;
-
-    padding: 13px 24px;
-
-    font-size: 14px;
-    font-weight: 700;
-
-    cursor: pointer;
-
-    transition: all 0.25s ease;
-}
-/* =========================================================
-   PRIMARY BUTTON
-========================================================= */
-
-.confirm-btn {
-    min-width: 150px;
-
-    background: #dc2626;
-
-    color: #ffffff;
-
-    box-shadow:
-        0 8px 20px rgba(220, 38, 38, 0.22);
-}
-
-.confirm-btn:hover {
-    background: #b91c1c;
-
-    transform:
-        translateY(-2px);
-
-    box-shadow:
-        0 14px 28px rgba(220, 38, 38, 0.3);
-}
-
-/* =========================================================
-   CANCEL BUTTON
-========================================================= */
-
-.cancel-btn {
-    min-width: 130px;
-
-    background: #f5f5f5;
-
-    color: #333333;
-
-    border: 1px solid #dddddd;
-}
-
-.cancel-btn:hover {
-    background: #ebebeb;
-
-    transform:
-        translateY(-2px);
-}
-
-/* =========================================================
-   SCROLLBAR
-========================================================= */
-
+/* scrollbar clean */
 .modal-body::-webkit-scrollbar {
-    width: 8px;
-}
-
-.modal-body::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 999px;
+    width: 6px;
 }
 
 .modal-body::-webkit-scrollbar-thumb {
-    background: #d4d4d4;
+    background: rgba(255,255,255,0.18);
     border-radius: 999px;
 }
 
-.modal-body::-webkit-scrollbar-thumb:hover {
-    background: #bcbcbc;
-}
-
 /* =========================================================
-   MODAL ICON WRAPPER
-========================================================= */
-
-.modal-icon-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin-top: 34px;
-    margin-bottom: 8px;
-
-    position: relative;
-    z-index: 2;
-}
-
-/* =========================================================
-   MODAL ICON BASE
+   ICON (SILVER GLOW STYLE)
 ========================================================= */
 
 .modal-icon {
-    width: 125px;
-    height: 125px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    margin: 14px auto 18px;
+
+    width: 80px;
+    height: 80px;
 
     border-radius: 50%;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: rgba(255,255,255,0.05);
 
-    position: relative;
-
-    animation:
-        modalIconPop 0.45s ease;
+    border: 1px solid rgba(255,255,255,0.08);
 }
 
-/* =========================================================
-   SUCCESS ICON (XANH LÁ)
-========================================================= */
+/* types */
+.modal-icon.success { color: #2ecc71; }
+.modal-icon.error { color: #ff4d4f; }
+.modal-icon.warning { color: #f5a623; }
+.modal-icon.info { color: #4da3ff; }
 
-.modal-icon.success {
-    color: #16a34a;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(22,163,74,0.14),
-            rgba(22,163,74,0.04)
-        );
-
-    border:
-        2px solid rgba(22,163,74,0.18);
-
-    box-shadow:
-        0 0 30px rgba(22,163,74,0.14),
-        inset 0 0 20px rgba(22,163,74,0.08);
-}
-
-/* =========================================================
-   ERROR ICON (ĐỎ)
-========================================================= */
-
-.modal-icon.error {
-    color: #dc2626;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(220,38,38,0.14),
-            rgba(220,38,38,0.04)
-        );
-
-    border:
-        2px solid rgba(220,38,38,0.18);
-
-    box-shadow:
-        0 0 30px rgba(220,38,38,0.14),
-        inset 0 0 20px rgba(220,38,38,0.08);
-}
-
-/* =========================================================
-   WARNING ICON (CAM)
-========================================================= */
-
-.modal-icon.warning {
-    color: #ea580c;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(234,88,12,0.14),
-            rgba(234,88,12,0.04)
-        );
-
-    border:
-        2px solid rgba(234,88,12,0.18);
-
-    box-shadow:
-        0 0 30px rgba(234,88,12,0.14),
-        inset 0 0 20px rgba(234,88,12,0.08);
-}
-
-/* =========================================================
-   INFO ICON (XANH DƯƠNG)
-========================================================= */
-
-.modal-icon.info {
-    color: #2563eb;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(37,99,235,0.14),
-            rgba(37,99,235,0.04)
-        );
-
-    border:
-        2px solid rgba(37,99,235,0.18);
-
-    box-shadow:
-        0 0 30px rgba(37,99,235,0.14),
-        inset 0 0 20px rgba(37,99,235,0.08);
-}
 /* =========================================================
    ANIMATION
 ========================================================= */
 
-@keyframes modalFade {
+@keyframes modalIn {
     from {
         opacity: 0;
+        transform: scale(0.92) translateY(20px);
+        filter: blur(8px);
     }
-
     to {
         opacity: 1;
+        transform: scale(1) translateY(0);
+        filter: blur(0);
     }
 }
 
-@keyframes modalScale {
-    from {
-        opacity: 0;
-
-        transform:
-            scale(0.9)
-            translateY(25px);
-    }
-
-    to {
-        opacity: 1;
-
-        transform:
-            scale(1)
-            translateY(0);
-    }
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-@keyframes modalIconPop {
-    0% {
-        opacity: 0;
+/* =========================================================
+   RESPONSIVE 1200px
+========================================================= */
 
-        transform:
-            scale(0.7)
-            rotate(-10deg);
-    }
-
-    60% {
-        transform:
-            scale(1.08)
-            rotate(2deg);
-    }
-
-    100% {
-        opacity: 1;
-
-        transform:
-            scale(1)
-            rotate(0deg);
+@media (max-width: 1200px) {
+    .modal-container {
+        max-width: 800px;
     }
 }
 
 /* =========================================================
-   TABLET
+   RESPONSIVE 992px
 ========================================================= */
 
-@media screen and (max-width: 992px) {
-
+@media (max-width: 992px) {
     .modal-container {
-        max-width: 95%;
-        border-radius: 24px;
-    }
-
-    .modal-header {
-        padding: 22px 24px 18px;
-    }
-
-    .modal-header h2 {
-        font-size: 26px;
-    }
-
-    .modal-body {
-        padding: 24px;
-    }
-
-    .modal-icon {
-        width: 110px;
-        height: 110px;
-    }
-
-    .modal-close-btn {
-        width: 44px;
-        height: 44px;
-    }
-}
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media screen and (max-width: 768px) {
-
-    .modal-overlay {
-        padding: 16px;
-    }
-
-    .modal-container {
-        border-radius: 22px;
-    }
-
-    .modal-header {
-        padding: 18px;
-    }
-
-    .modal-header h2 {
-        font-size: 22px;
-        line-height: 1.4;
-        padding-right: 45px;
-    }
-
-    .modal-close-btn {
-        top: 16px;
-        right: 16px;
-
-        width: 42px;
-        height: 42px;
-
-        border-radius: 12px;
+        max-width: 700px;
+        border-radius: 16px;
     }
 
     .modal-body {
         padding: 20px;
     }
 
-    .modal-icon-wrapper {
-        margin-top: 28px;
-    }
-
-    .modal-icon {
-        width: 95px;
-        height: 95px;
-    }
-
-    .modal-icon svg {
-        width: 56px;
-        height: 56px;
-    }
-
-    .alert-actions {
-        flex-direction: column;
-    }
-
-    .confirm-btn,
-    .cancel-btn {
-        width: 100%;
+    .modal-title {
+        font-size: 16px;
     }
 }
 
 /* =========================================================
-   SMALL MOBILE
+   RESPONSIVE 768px (MOBILE SHEET)
 ========================================================= */
 
-@media screen and (max-width: 480px) {
+@media (max-width: 768px) {
 
     .modal-overlay {
-        padding: 12px;
+        align-items: flex-end;
+        padding: 0;
     }
 
     .modal-container {
-        border-radius: 18px;
-    }
+        width: 100%;
+        max-width: 100%;
 
-    .modal-header {
-        padding: 16px;
-    }
-
-    .modal-header h2 {
-        font-size: 18px;
+        border-radius: 18px 18px 0 0;
     }
 
     .modal-body {
-        padding: 16px;
+        padding: 18px;
+        max-height: 75vh;
+    }
+
+    .modal-title {
+        font-size: 15px;
     }
 
     .modal-icon {
-        width: 88px;
-        height: 88px;
+        width: 65px;
+        height: 65px;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE 480px
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .modal-header {
+        padding: 14px;
     }
 
-    .modal-icon svg {
-        width: 50px;
-        height: 50px;
+    .modal-body {
+        padding: 14px;
     }
 
-    .alert-content p {
-        font-size: 14px;
-        line-height: 1.6;
+    .modal-close-btn {
+        width: 32px;
+        height: 32px;
     }
 
-    .modal-body button {
-        width: 100%;
-        padding: 13px 18px;
-        font-size: 14px;
+    .modal-icon {
+        width: 58px;
+        height: 58px;
     }
 }

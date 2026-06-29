@@ -12,7 +12,7 @@ import {
 } from "framer-motion";
 
 import MovieCard from "../components/MovieCard";
-
+import MoviePreviewModal from "../components/MoviePreviewModal";
 import "../styles/FilmGenre.css";
 
 const API_URL =
@@ -63,7 +63,17 @@ const FilmGenre = () => {
 
     const [activeGenre, setActiveGenre] =
         useState("");
+    const [previewOpen, setPreviewOpen] = useState(false);
 
+const [selectedMovie, setSelectedMovie] = useState(null);
+
+        const handlePreview = (movie) => {
+
+            setSelectedMovie(movie);
+
+            setPreviewOpen(true);
+
+        };
     /* ==========================
        FETCH MOVIES
     ========================== */
@@ -240,12 +250,9 @@ const FilmGenre = () => {
                                     >
 
                                         <MovieCard
-                                            movie={
-                                                movie
-                                            }
-                                            baseUrl={
-                                                BASE_URL
-                                            }
+                                            movie={movie}
+                                            baseUrl={BASE_URL}
+                                            onPreview={handlePreview}
                                         />
 
                                     </motion.div>
@@ -260,7 +267,13 @@ const FilmGenre = () => {
                 )}
 
             </div>
-
+                <MoviePreviewModal
+                    open={previewOpen}
+                    onClose={() => setPreviewOpen(false)}
+                    movies={movies}
+                    selectedMovie={selectedMovie}
+                    imageBaseUrl="https://api.quangdungcinema.id.vn/uploads"
+                />
         </div>
 
     );

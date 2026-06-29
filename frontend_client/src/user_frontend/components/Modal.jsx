@@ -1,215 +1,81 @@
-import React from 'react';
+import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
+import { X, CheckCircle2, XCircle, AlertTriangle, Info } from "lucide-react";
 
-import {
-    X,
-    CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Info
-} from 'lucide-react';
-
-import '../styles/Modal.css';
+import "../styles/Modal.css";
 
 const Modal = ({
-
-    /* =========================================================
-        MODAL CONTROL
-    ========================================================= */
-
     open,
     onClose,
-
-    /* =========================================================
-        CONTENT
-    ========================================================= */
-
-    title,
+    title = "",
     children,
-
-    /* =========================================================
-        SIZE
-    ========================================================= */
-
-    size = 'md',
-
-    /* =========================================================
-        TYPE
-        success | error | warning | info | default
-    ========================================================= */
-
-    type = 'default'
-
+    size = "md",
+    type = "default",
+    showHeader = true,
+    showCloseButton = true,
+    className = ""
 }) => {
 
-    /* =========================================================
-        HIDE MODAL
-    ========================================================= */
+    useEffect(() => {
+        if (!open) return;
+
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [open]);
 
     if (!open) return null;
 
-    /* =========================================================
-        RENDER ICON
-    ========================================================= */
-
     const renderIcon = () => {
-
         switch (type) {
-
-            /* =========================
-                SUCCESS
-            ========================= */
-
-            case 'success':
-
-                return (
-
-                    <div className="modal-icon success">
-
-                        <CheckCircle2
-                            size={72}
-                            strokeWidth={2.5}
-                        />
-
-                    </div>
-
-                );
-
-            /* =========================
-                ERROR
-            ========================= */
-
-            case 'error':
-
-                return (
-
-                    <div className="modal-icon error">
-
-                        <XCircle
-                            size={72}
-                            strokeWidth={2.5}
-                        />
-
-                    </div>
-
-                );
-
-            /* =========================
-                WARNING
-            ========================= */
-
-            case 'warning':
-
-                return (
-
-                    <div className="modal-icon warning">
-
-                        <AlertTriangle
-                            size={72}
-                            strokeWidth={2.5}
-                        />
-
-                    </div>
-
-                );
-
-            /* =========================
-                INFO
-            ========================= */
-
-            case 'info':
-
-                return (
-
-                    <div className="modal-icon info">
-
-                        <Info
-                            size={72}
-                            strokeWidth={2.5}
-                        />
-
-                    </div>
-
-                );
-
-            /* =========================
-                DEFAULT
-            ========================= */
-
-            default:
-
-                return null;
-
+            case "success": return <CheckCircle2 size={64} />;
+            case "error": return <XCircle size={64} />;
+            case "warning": return <AlertTriangle size={64} />;
+            case "info": return <Info size={64} />;
+            default: return null;
         }
-
     };
 
-    return (
-
-        <div
-            className="modal-overlay"
-            onClick={onClose}
-        >
+    const modal = (
+        <div className="modal-overlay" onClick={onClose}>
 
             <div
-                className={`modal-container ${size} ${type}`}
+                className={`modal-container ${size} ${type} ${className}`}
                 onClick={(e) => e.stopPropagation()}
             >
 
-                {/* =====================================================
-                    ICON
-                ===================================================== */}
+                {type !== "default" && (
+                    <div className={`modal-icon ${type}`}>
+                        {renderIcon()}
+                    </div>
+                )}
 
-                {
-                    type !== 'default' && (
+                {showHeader && (
+                    <div className="modal-header">
+                        <h2 className="modal-title">{title}</h2>
+                    </div>
+                )}
 
-                        <div className="modal-icon-wrapper">
-
-                            {renderIcon()}
-
-                        </div>
-
-                    )
-                }
-
-                {/* =====================================================
-                    HEADER
-                ===================================================== */}
-
-                <div className="modal-header">
-
-                    <h2 className="modal-title">
-
-                        {title}
-
-                    </h2>
-
+                {showCloseButton && (
                     <button
                         className="modal-close-btn"
                         onClick={onClose}
                     >
-
-                        <X size={20} />
-
+                        <X size={22} />
                     </button>
-
-                </div>
-
-                {/* =====================================================
-                    BODY
-                ===================================================== */}
+                )}
 
                 <div className="modal-body">
-
                     {children}
-
                 </div>
 
             </div>
-
         </div>
-
     );
 
+    return createPortal(modal, document.body);
 };
 
 export default Modal;

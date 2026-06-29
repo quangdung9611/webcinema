@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import Modal from '../components/Modal';
 import MovieCard from "../components/MovieCard";
+import MovieHeroBanner from '../components/MovieHeroBanner';
 import { useAuth } from '../../context/AuthContext';
 import "../styles/MovieDetail.css";
 
@@ -287,132 +288,14 @@ const MovieDetail = () => {
             />
 
             {/* SECTION 1: HERO BANNER NGANG (BACKDROP) */}
-            {/* HERO BANNER NEW */}
-
-            <div className="cinema-hero-banner">
-
-                <img
-                    src={`${IMAGE_BASE_URL}/backdrops/${movie.backdrop_url || movie.poster_url}`}
-                    alt={movie.title}
-                    className="banner-horizontal-img"
-                />
-
-                <div className="banner-gradient-overlay"></div>
-
-                <div className="hero-content-wrapper">
-
-                    <div className="hero-info-side">
-
-                        <div className="hero-title-row">
-
-                            <h1 className="hero-movie-title">
-                                {movie.title}
-                            </h1>
-
-                            <span className="hero-age-badge">
-                                T16
-                            </span>
-
-                        </div>
-
-                        <div className="hero-rating-row">
-
-                            <div className="hero-rating-item">
-                                <Star
-                                    size={18}
-                                    fill="#f5b50a"
-                                    color="#f5b50a"
-                                />
-                                <span>
-                                    {movie.avg_rating || "0.0"} / 10
-                                </span>
-                            </div>
-
-                            <div className="hero-rating-item">
-                                <Clock size={18} />
-                                <span>
-                                    {movie.duration} phút
-                                </span>
-                            </div>
-
-                            <div className="hero-rating-item">
-                                <Calendar size={18} />
-                                <span>
-                                    {new Date(movie.release_date).toLocaleDateString("vi-VN")}
-                                </span>
-                            </div>
-
-                        </div>
-                        <p className="hero-description">
-                            {
-                                movie.description
-                                    ?.replace(/<[^>]*>?/gm, '')
-                                    ?.replace(/&nbsp;/g, ' ')
-                            }
-                        </p>
-                        <div className="hero-info-list">
-
-                            <div className="hero-info-line">
-                                <strong>Đạo diễn:</strong>
-                                <span>
-                                    {movie.director || "Đang cập nhật"}
-                                </span>
-                            </div>
-
-                            <div className="hero-info-line">
-                                <strong>Thể loại:</strong>
-                                <span>
-                                    {movie.genres?.map(
-                                        genre => genre.genre_name
-                                    ).join(", ") || "Đang cập nhật"}
-                                </span>
-                            </div>
-
-                            <div className="hero-info-line">
-                                <strong>Diễn viên:</strong>
-                                <span>
-                                    {movie.cast || "Đang cập nhật"}
-                                </span>
-                            </div>
-
-                            <div className="hero-info-line">
-                                <strong>Quốc gia:</strong>
-                                <span>
-                                    {movie.country || "Việt Nam"}
-                                </span>
-                            </div>
-
-                        </div>
-
-                        <div className="hero-action-group">
-
-                            <button
-                                className="hero-book-btn"
-                                onClick={() =>
-                                    navigate(
-                                        `/booking/${movie.slug || movie.movie_slug}`
-                                    )
-                                }
-                            >
-                                <Ticket size={18} />
-                                <span>ĐẶT VÉ NGAY</span>
-                            </button>
-
-                            <button
-                                className="hero-trailer-btn"
-                                onClick={openTrailerModal}
-                            >
-                                <Play size={18} />
-                                <span>XEM TRAILER</span>
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
+            <MovieHeroBanner
+                movie={movie}
+                imageBaseUrl={IMAGE_BASE_URL}
+                onBook={() =>
+                    navigate(`/booking/${movie.slug || movie.movie_slug}`)
+                }
+                onTrailer={openTrailerModal}
+            />
             <div className="cinema-main-content-container">
                 {/* SECTION 2: PHIM LIÊN QUAN - TÁI SỬ DỤNG COMPONENT */}
                 <div className="filmgenre-container">
