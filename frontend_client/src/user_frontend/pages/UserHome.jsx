@@ -34,7 +34,7 @@ const banners = [
         eyebrow: "PREMIUM EXPERIENCE",
         title: "PHÒNG VIP",
         subtitle:
-            "Trải nghiệm không gian riêng tư với ghế ngồi cao cấp, dịch vụ tận nơi cùng hệ thống hình ảnh và âm thanh chuẩn điện ảnh đỉnh cao.",
+            "Nâng tầm trải nghiệm điện ảnh của bạn với không gian riêng tư đẳng cấp. Tận hưởng những chiếc ghế da êm ái có thể điều chỉnh độ nghiêng, dịch vụ phục vụ tận nơi chuyên nghiệp cùng hệ thống âm thanh vòm Dolby Atmos và màn hình sắc nét chuẩn điện ảnh, mang lại cảm giác sang trọng bậc nhất.",
         button: "KHÁM PHÁ NGAY"
     },
 
@@ -43,7 +43,7 @@ const banners = [
         eyebrow: "EXCLUSIVE OFFER",
         title: "ƯU ĐÃI HOT",
         subtitle:
-            "Khám phá hàng loạt chương trình giảm giá hấp dẫn giúp bạn đặt vé dễ dàng, tiết kiệm chi phí và tận hưởng những suất chiếu chất lượng.",
+            "Đừng bỏ lỡ cơ hội sở hữu tấm vé xem phim với mức giá không tưởng! Chúng mình liên tục cập nhật các chương trình khuyến mãi độc quyền, giảm giá sâu cho thành viên và các ưu đãi giờ vàng mỗi tuần, giúp bạn thỏa sức tận hưởng những siêu phẩm điện ảnh mới nhất mà vẫn tiết kiệm ngân sách tối đa.",
         button: "NHẬN ƯU ĐÃI"
     },
 
@@ -52,7 +52,7 @@ const banners = [
         eyebrow: "SPECIAL COMBO",
         title: "COMBO VIP",
         subtitle:
-            "Thưởng thức bắp rang thơm ngon cùng nước uống mát lạnh với các combo hấp dẫn, mang đến trải nghiệm xem phim trọn vẹn và đáng nhớ.",
+            "Trải nghiệm xem phim sẽ không thể trọn vẹn nếu thiếu đi hương vị bắp rang bơ giòn tan và những ly nước mát lạnh giải nhiệt. Hãy khám phá thực đơn đa dạng với các combo VIP được thiết kế riêng, kết hợp giữa đồ ăn nhẹ thượng hạng và thức uống đa dạng, sẵn sàng tiếp năng lượng cho hành trình điện ảnh của bạn.",
         button: "THƯỞNG THỨC"
     },
 
@@ -61,7 +61,7 @@ const banners = [
         eyebrow: "IMMERSIVE CINEMA",
         title: "BOM TẤN 4D",
         subtitle:
-            "Đắm chìm trong những bộ phim bom tấn với hiệu ứng chuyển động chân thực, âm thanh sống động và hình ảnh sắc nét đầy ấn tượng.",
+            "Bước ra khỏi màn ảnh và hòa mình vào thế giới của phim với công nghệ 4D đỉnh cao. Mọi giác quan của bạn sẽ được đánh thức nhờ hiệu ứng ghế rung chuyển, gió, nước và mùi hương được đồng bộ hoàn hảo với từng phân cảnh, khiến mỗi giây phút trong rạp đều trở thành một cuộc phiêu lưu kịch tính và sống động nhất.",
         button: "ĐẶT VÉ NGAY"
     }
 ];
