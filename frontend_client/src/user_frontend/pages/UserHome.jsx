@@ -28,37 +28,40 @@ import '../styles/user_home.css';
 const UserHome = () => {
 
   const navigate = useNavigate();
-
 const banners = [
     {
         img: "banner1.png",
+        eyebrow: "PREMIUM EXPERIENCE",
         title: "PHÒNG VIP",
         subtitle:
-            "Trải nghiệm không gian riêng tư với ghế ngồi cao cấp, dịch vụ tận nơi và chất lượng hình ảnh, âm thanh đạt chuẩn điện ảnh.",
+            "Trải nghiệm không gian riêng tư với ghế ngồi cao cấp, dịch vụ tận nơi cùng hệ thống hình ảnh và âm thanh chuẩn điện ảnh đỉnh cao.",
         button: "KHÁM PHÁ NGAY"
     },
 
     {
         img: "banner2.png",
+        eyebrow: "EXCLUSIVE OFFER",
         title: "ƯU ĐÃI HOT",
         subtitle:
-            "Hàng loạt chương trình giảm giá hấp dẫn giúp bạn dễ dàng đặt vé với mức chi phí tiết kiệm nhưng vẫn tận hưởng trọn vẹn.",
+            "Khám phá hàng loạt chương trình giảm giá hấp dẫn giúp bạn đặt vé dễ dàng, tiết kiệm chi phí và tận hưởng những suất chiếu chất lượng.",
         button: "NHẬN ƯU ĐÃI"
     },
 
     {
         img: "banner3.png",
+        eyebrow: "SPECIAL COMBO",
         title: "COMBO VIP",
         subtitle:
-            "Thưởng thức bắp rang thơm ngon cùng nước uống mát lạnh trong những combo được chuẩn bị riêng để chuyến xem phim thêm trọn vẹn.",
+            "Thưởng thức bắp rang thơm ngon cùng nước uống mát lạnh với các combo hấp dẫn, mang đến trải nghiệm xem phim trọn vẹn và đáng nhớ.",
         button: "THƯỞNG THỨC"
     },
 
     {
         img: "banner4.png",
+        eyebrow: "IMMERSIVE CINEMA",
         title: "BOM TẤN 4D",
         subtitle:
-            "Đắm chìm trong những bộ phim bom tấn với hiệu ứng chuyển động chân thực, âm thanh sống động và hình ảnh sắc nét đầy cuốn hút.",
+            "Đắm chìm trong những bộ phim bom tấn với hiệu ứng chuyển động chân thực, âm thanh sống động và hình ảnh sắc nét đầy ấn tượng.",
         button: "ĐẶT VÉ NGAY"
     }
 ];
@@ -512,6 +515,9 @@ const banners = [
           <div className="banner-inner">
 
               <div className="banner-text">
+                  <span className="banner-eyebrow">
+                      {item.eyebrow}
+                  </span>
 
                   <h1 className="banner-title">
                       {item.title}
