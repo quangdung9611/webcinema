@@ -6,7 +6,7 @@
 /* ==========================================================
    ANIMATION
 ========================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Inter:wght@400;600&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Inter:wght@400;600&display=swap'); */
 @keyframes fadeUp {
     from {
         opacity: 0;
@@ -198,9 +198,9 @@
 .banner-premium{
     position:relative;
     width:100%;
-    /* height:85vh; */
     overflow:hidden;
     aspect-ratio: 16/9;
+    max-height:550px;
 }
 
 .premiumSwiper,
@@ -330,7 +330,7 @@ CONTENT
     /* display:flex;
     align-items:center; */
     padding-left: 7%;
-    margin-top: 5%;
+    margin-top: 3%;
 }
 
 /* ==========================================================
@@ -376,11 +376,11 @@ TEXT
 
     display:flex;
     flex-direction:column;
-    align-items:center;
+    align-items:flex-start;
     justify-content:center;
 
-    width:min(700px,100%);
-
+     max-width:700px;
+    width:100%;
     gap:26px;
 
 }
@@ -389,17 +389,40 @@ PREMIUM EYEBROW
 ==========================================================*/
 
 .banner-eyebrow{
-    display:block;
-
-    font-size:1.1rem;
+   
+  display:inline-block;
+  font-size:clamp(1.2rem,1.5vw,1.5rem);
     font-weight:700;
     letter-spacing:5px;
 
-    color:#f5d470;
+    color:#e23b3b;
 
     line-height:1;
+     text-transform:uppercase;
+
+    background:linear-gradient(
+
+        180deg,
+
+        #ffdada 0%,
+
+        #ff8b8b 35%,
+
+        #d62828 70%,
+
+        #8b0000 100%
+
+    );
+
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+
+    text-shadow:
+
+        0 0 6px rgba(196,22,28,.12);
 
     opacity:0;
+
     animation:fadeDownSoft .9s forwards;
 }
 /* ==========================================================
@@ -415,39 +438,35 @@ PREMIUM EYEBROW
 
     white-space:nowrap;
 
-    font-family:'Cinzel',serif;
+    /* font-family:'Cinzel',serif; */
 
- font-size: clamp(6.8rem, 8vw, 9rem);
-
+  font-size: clamp(6rem, 6.5vw, 7.2rem);
     font-weight:900;
 
-    line-height:.92;
+ line-height:1.3;
 
     letter-spacing:2px;
 
     text-transform:uppercase;
 
-    background: linear-gradient(
-        180deg,
-        #fff7d1 0%,
-        #ffe58a 12%,
-        #ffd24d 25%,
-        #ffbe2e 40%,
-        #e5a800 55%,
-        #c98d00 70%,
-        #9c6800 85%,
-        #6f4700 100%
-    );
+   background:linear-gradient(
+    180deg,
+    #ffd2d2 0%,
+    #ff8d8d 18%,
+    #ff5a5a 38%,
+    #f23535 58%,
+    #d81f26 78%,
+    #9f1218 100%
+);
 
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
 
-    text-shadow:
-        0 1px 0 rgba(255,255,255,.18),
-        0 0 10px rgba(255,196,0,.18),
-        0 8px 20px rgba(0,0,0,.55),
-        0 18px 40px rgba(0,0,0,.75);
-
+   text-shadow:
+    0 1px 0 rgba(255,255,255,.15),
+    0 0 10px rgba(255,70,70,.35),
+    0 0 22px rgba(255,45,45,.25),
+    0 8px 18px rgba(0,0,0,.45);
     animation:fadeDownSoft 1s ease forwards;
 
 }
@@ -463,44 +482,40 @@ TITLE GLOW LINE
 
     left:0;
 
-    bottom:-24px;
+    bottom:-20px;
 
     width:82%;
 
-    height:3px;
+    height:2px;
 
     border-radius:999px;
 
-    background:
-        linear-gradient(
-            90deg,
+    background:linear-gradient(
+        90deg,
 
-            transparent 0%,
+        transparent 0%,
 
-            rgba(255,218,90,.15) 8%,
+        rgba(255,70,70,.08) 10%,
 
-            rgba(255,220,110,.75) 22%,
+        rgba(214,40,40,.45) 25%,
 
-            #ffe07b 50%,
+        #c4161c 50%,
 
-            rgba(255,220,110,.75) 78%,
+        rgba(214,40,40,.45) 75%,
 
-            rgba(255,218,90,.15) 92%,
+        rgba(255,70,70,.08) 90%,
 
-            transparent 100%
+        transparent 100%
 
-        );
+    );
 
     box-shadow:
 
-        0 0 8px rgba(255,218,90,.35),
+        0 0 6px rgba(196,22,28,.18),
 
-        0 0 18px rgba(255,205,60,.28),
+        0 0 14px rgba(196,22,28,.12);
 
-        0 0 40px rgba(255,190,0,.18);
-
-    animation:
-        goldLinePulse 4s ease-in-out infinite;
+    animation:redLinePulse 4s ease-in-out infinite;
 
 }
 
@@ -514,13 +529,13 @@ LIGHT SWEEP
 
     position:absolute;
 
-    bottom:-29px;
+    left:-20%;
 
-    left:-18%;
+    bottom:-24px;
 
-    width:18%;
+    width:20%;
 
-    height:12px;
+    height:10px;
 
     border-radius:999px;
 
@@ -530,18 +545,17 @@ LIGHT SWEEP
 
             ellipse at center,
 
-            rgba(255,245,180,.95) 0%,
+            rgba(255,120,120,.70) 0%,
 
-            rgba(255,220,100,.55) 35%,
+            rgba(214,40,40,.38) 40%,
 
-            rgba(255,190,0,0) 100%
+            rgba(196,22,28,0) 100%
 
         );
 
-    filter:blur(4px);
+    filter:blur(5px);
 
-    animation:
-        lightSweep 4s linear infinite;
+    animation:lightSweep 4s linear infinite;
 
 }
 
@@ -552,16 +566,11 @@ LIGHT SWEEP
 .banner-subtitle{
 
     width:100%;
-    max-width:700px;
+  
+    font-size:clamp(1rem,1.3vw,1.2rem);
 
-   
-
-    font-size:1.55rem;
-
+    line-height:1.8;
     font-weight:400;
-
-    line-height:1.9;
-
     letter-spacing:.15px;
 
     color:rgba(255,247,232,.94);
@@ -594,7 +603,7 @@ LIGHT SWEEP
 
     cursor:pointer;
 
-    font-family:'Cinzel',serif;
+    /* font-family:'Cinzel',serif; */
 
     font-size:2.15rem;
 
@@ -604,21 +613,23 @@ LIGHT SWEEP
 
     text-transform:uppercase;
 
-    color:#5c3400;
+   color:#ffffff;
 
     background:linear-gradient(
         180deg,
-        #fff9df 0%,
-        #ffe8a2 22%,
-        #ffd157 50%,
-        #f2b51a 74%,
-        #c98500 100%
+        #d43737 0%,
+        #b51f1f 45%,
+        #891414 75%,
+        #5b0d0d 100%
     );
 
     box-shadow:
-        inset 0 4px 8px rgba(255,255,255,.45),
-        0 18px 38px rgba(0,0,0,.42),
-        0 0 22px rgba(255,200,40,.18);
+
+        inset 0 1px 0 rgba(255,255,255,.15),
+
+        0 12px 28px rgba(0,0,0,.45),
+
+        0 4px 18px rgba(180,20,20,.22);
 
     transition:
         transform .35s,
