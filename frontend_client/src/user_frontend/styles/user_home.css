@@ -220,6 +220,82 @@
     overflow:hidden;
 }
 
+/*=========================================
+LEFT CINEMATIC SHADOW
+=========================================*/
+
+.banner-media::before{
+
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    z-index:2;
+
+    pointer-events:none;
+
+    background:
+        linear-gradient(
+
+            90deg,
+
+            rgba(0,0,0,.88) 0%,
+
+            rgba(0,0,0,.78) 15%,
+
+            rgba(0,0,0,.60) 30%,
+
+            rgba(0,0,0,.38) 45%,
+
+            rgba(0,0,0,.18) 60%,
+
+            rgba(0,0,0,.08) 75%,
+
+            transparent 92%
+
+        );
+
+}
+
+/*=========================================
+BOTTOM CINEMATIC SHADOW
+=========================================*/
+
+.banner-media::after{
+
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    z-index:2;
+
+    pointer-events:none;
+
+    background:
+        linear-gradient(
+
+            to top,
+
+            rgba(0,0,0,.95) 0%,
+
+            rgba(0,0,0,.72) 12%,
+
+            rgba(0,0,0,.45) 24%,
+
+            rgba(0,0,0,.20) 38%,
+
+            transparent 58%
+
+        );
+
+}
+
+/*=========================================
+IMAGE
+=========================================*/
+
 .banner-img{
 
     width:100%;
@@ -228,9 +304,9 @@
     object-fit:cover;
 
     filter:
-        brightness(.96)
-        contrast(1.05)
-        saturate(1.05);
+        brightness(.84)
+        contrast(1.12)
+        saturate(1.08);
 
     animation:
         bannerZoom 1.4s ease-out forwards,
@@ -274,33 +350,6 @@
     100%{
         transform:scale(1.05) translate3d(0,0,0);
     }
-
-}
-
-/* ==========================================================
-   OVERLAY
-========================================================== */
-/* ==========================================================
-   OVERLAY
-========================================================== */
-
-.banner-overlay{
-
-    position:absolute;
-    inset:0;
-
-    z-index:2;
-
-    pointer-events:none;
-
-    background:
-        linear-gradient(
-            to bottom,
-            rgba(0,0,0,.28),
-            rgba(0,0,0,.10) 35%,
-            rgba(0,0,0,.16) 65%,
-            rgba(0,0,0,.60)
-        );
 
 }
 

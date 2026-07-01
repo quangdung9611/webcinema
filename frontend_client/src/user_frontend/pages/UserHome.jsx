@@ -508,7 +508,7 @@ const banners = [
             />
           </picture>
 
-        <div className="banner-overlay"></div>
+        
 
           <div className="banner-particles"></div>
 
