@@ -234,28 +234,18 @@ LEFT CINEMATIC SHADOW
     z-index:2;
 
     pointer-events:none;
+  background:linear-gradient(
+    90deg,
 
-    background:
-        linear-gradient(
+    rgba(0,0,0,.88) 0%,
+    rgba(0,0,0,.72) 20%,
+    rgba(0,0,0,.45) 45%,
 
-            90deg,
+    rgba(0,0,0,.20) 60%,
+    rgba(0,0,0,.12) 75%,
 
-            rgba(0,0,0,.88) 0%,
-
-            rgba(0,0,0,.78) 15%,
-
-            rgba(0,0,0,.60) 30%,
-
-            rgba(0,0,0,.38) 45%,
-
-            rgba(0,0,0,.18) 60%,
-
-            rgba(0,0,0,.08) 75%,
-
-            transparent 92%
-
-        );
-
+    transparent 90%
+);
 }
 
 /*=========================================
@@ -289,6 +279,7 @@ BOTTOM CINEMATIC SHADOW
             transparent 58%
 
         );
+         
 
 }
 
@@ -498,24 +489,22 @@ PREMIUM EYEBROW
 
     text-transform:uppercase;
 
-   background:linear-gradient(
-    180deg,
-    #ffd2d2 0%,
-    #ff8d8d 18%,
-    #ff5a5a 38%,
-    #f23535 58%,
-    #d81f26 78%,
-    #9f1218 100%
-);
+      background:linear-gradient(
+        180deg,
+        #ffc3c3 0%,
+        #ff8f8f 22%,
+        #e54747 50%,
+        #c22323 75%,
+        #8d1414 100%
+    );
 
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
 
-   text-shadow:
-    0 1px 0 rgba(255,255,255,.15),
-    0 0 10px rgba(255,70,70,.35),
-    0 0 22px rgba(255,45,45,.25),
-    0 8px 18px rgba(0,0,0,.45);
+    text-shadow:
+        0 2px 3px rgba(0,0,0,.25),
+        0 0 10px rgba(255,60,60,.12),
+        0 8px 16px rgba(0,0,0,.4);
     animation:fadeDownSoft 1s ease forwards;
 
 }
@@ -622,7 +611,9 @@ LIGHT SWEEP
     font-weight:400;
     letter-spacing:.15px;
 
-    color:rgba(255,247,232,.94);
+    color:#ffffff;
+
+    opacity:.95;
 
     text-transform:none;
 
