@@ -1,10 +1,16 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Star } from "lucide-react";
 import Tilt from "react-parallax-tilt";
 
 import "../styles/MovieCard.css";
 
 const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
+
+    /* ==============================
+        STATE CINEMATIC
+    ============================== */
+
+    const [isOpening, setIsOpening] = useState(false);
 
     /* ==============================
         MOVIE DATA
@@ -22,13 +28,37 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
     }), [movie, baseUrl]);
 
     /* ==============================
+        CLICK HANDLER (CINEMATIC CORE)
+    ============================== */
+
+    const handleOpen = () => {
+
+        if (isOpening) return;
+
+        setIsOpening(true);
+
+        // trigger parent modal open
+        onClick?.(movie);
+
+        // reset state after animation (sync modal timing)
+        setTimeout(() => {
+            setIsOpening(false);
+        }, 900);
+    };
+
+    const handlePreview = (e) => {
+        e.stopPropagation();
+        onPreview?.(movie);
+    };
+
+    /* ==============================
         RENDER
     ============================== */
 
     return (
 
         <Tilt
-            className="movie-card"
+            className={`movie-card ${isOpening ? "is-opening" : ""}`}
             tiltMaxAngleX={8}
             tiltMaxAngleY={8}
             perspective={1200}
@@ -42,7 +72,8 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
 
             <div
                 className="movie-inner"
-                onClick={() => onClick?.(movie)}
+                onClick={handleOpen}
+                data-movie-id={movie?.id}
             >
 
                 {/* GLOW */}
@@ -51,7 +82,7 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
                 {/* POSTER */}
                 <div
                     className="movie-poster"
-                    onClick={() => onPreview?.(movie)}
+                    onClick={handlePreview}
                 >
 
                     <img
@@ -72,18 +103,16 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
                 </div>
 
                 {/* INFO */}
-
-                    <div
-                        className="movie-info"
-                        onClick={() => onPreview?.(movie)}
-                    >
+                <div
+                    className="movie-info"
+                    onClick={handlePreview}
+                >
 
                     <h3 className="movie-name">
                         {movieData.title}
                     </h3>
 
                     {/* STARS */}
-
                     <div className="movie-stars">
 
                         {[...Array(movieData.totalStars)].map((_, i) => (
@@ -105,16 +134,13 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
                     </div>
 
                     {/* META */}
-
                     <div className="movie-meta">
 
                         <span className="movie-score">
                             {movieData.rating.toFixed(1)}
                         </span>
 
-                        <span className="movie-dot">
-                            •
-                        </span>
+                        <span className="movie-dot">•</span>
 
                         <span className="movie-review-count">
                             {movieData.reviewCount} đánh giá
@@ -123,20 +149,13 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
                     </div>
 
                     {/* EXTRA */}
-
                     <div className="movie-extra">
 
-                        <span>
-                            {movieData.ageRating}
-                        </span>
+                        <span>{movieData.ageRating}</span>
 
-                        <span className="movie-dot">
-                            •
-                        </span>
+                        <span className="movie-dot">•</span>
 
-                        <span>
-                            {movieData.language}
-                        </span>
+                        <span>{movieData.language}</span>
 
                     </div>
 

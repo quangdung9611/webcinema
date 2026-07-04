@@ -1,0 +1,1310 @@
+/*=========================================================
+    MOVIE PREVIEW HERO
+    PREMIUM CINEMA VERSION
+=========================================================*/
+
+.preview-hero {
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+
+    /* ❌ bỏ height auto + aspect-ratio */
+    height: 650px;
+ 
+    overflow: hidden;
+    border-radius: 22px;
+
+    background: #050505;
+    isolation: isolate;
+
+   
+}
+
+/*=========================================================
+    BACKDROP
+=========================================================*/
+
+.preview-hero-backdrop{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+    
+ object-position: center top; /* 👈 quan trọng */
+
+    user-select:none;
+
+    pointer-events:none;
+
+    transform:scale(1);
+
+    transition:
+        transform .9s cubic-bezier(.22,.61,.36,1),
+        filter .9s cubic-bezier(.22,.61,.36,1);
+
+    will-change:
+        transform,
+        filter;
+
+}
+
+.preview-hero:hover
+.preview-hero-backdrop{
+
+    transform:
+        scale(1.05);
+
+    filter:
+        brightness(1.05)
+        saturate(1.08);
+
+}
+
+/*=========================================================
+    DARK OVERLAY
+=========================================================*/
+
+.preview-hero-overlay{
+
+    position:absolute;
+
+    inset:0;
+
+    z-index:1;
+
+    background:
+
+        linear-gradient(
+
+            90deg,
+
+            rgba(5,5,5,.96) 0%,
+
+            rgba(5,5,5,.88) 16%,
+
+            rgba(5,5,5,.68) 34%,
+
+            rgba(5,5,5,.38) 50%,
+
+            rgba(5,5,5,.14) 66%,
+
+            rgba(5,5,5,.02) 100%
+
+        );
+
+}
+
+/*=========================================================
+    CINEMA SHADOW
+=========================================================*/
+
+.preview-hero-shadow{
+
+    position:absolute;
+
+    inset:0;
+
+    z-index:2;
+
+    pointer-events:none;
+
+    background:
+
+        linear-gradient(
+
+            to bottom,
+
+            rgba(0,0,0,.18),
+
+            transparent 20%
+
+        ),
+
+        linear-gradient(
+
+            to top,
+
+            rgba(0,0,0,.82),
+
+            transparent 42%
+
+        );
+
+}
+
+/*=========================================================
+    LIGHT EFFECT
+=========================================================*/
+
+.preview-hero::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    z-index:3;
+
+    pointer-events:none;
+
+    background:
+
+        radial-gradient(
+
+            circle at 82% 18%,
+
+            rgba(255,255,255,.10),
+
+            transparent 38%
+
+        );
+
+}
+
+.preview-hero::after{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    z-index:3;
+
+    pointer-events:none;
+
+    background:
+
+        linear-gradient(
+
+            180deg,
+
+            rgba(255,255,255,.03),
+
+            transparent 22%
+
+        );
+
+}
+
+/*=========================================================
+    CONTENT CONTAINER
+=========================================================*/
+
+.preview-hero-container{
+
+    position:relative;
+
+    z-index:10;
+
+    width:100%;
+    height:100%;
+
+    display:flex;
+
+    align-items:center;
+
+    padding:
+
+        70px
+        70px
+        60px;
+
+    max-width:1200px;
+
+    margin:auto;
+
+}
+
+/*=========================================================
+    CONTENT
+=========================================================*/
+
+.preview-hero-content{
+
+    width:40%;
+
+    min-width:420px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:flex-start;
+
+    gap:18px;
+
+}
+
+/*=========================================================
+    RIGHT EMPTY SPACE
+=========================================================*/
+
+.preview-hero-container::after{
+
+    content:"";
+
+    flex:1;
+
+}
+
+/*=========================================================
+    GPU PERFORMANCE
+=========================================================*/
+
+.preview-hero,
+
+.preview-hero *{
+
+    backface-visibility:hidden;
+
+    transform-style:preserve-3d;
+
+}
+/*=========================================================
+    BADGE
+=========================================================*/
+
+.preview-hero-badge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    height:34px;
+
+    padding:0 18px;
+
+    border-radius:999px;
+
+    background:
+        rgba(229,9,20,.14);
+
+    border:
+        1px solid rgba(229,9,20,.28);
+
+    color:#ff5d66;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    letter-spacing:2px;
+
+    text-transform:uppercase;
+
+    backdrop-filter:blur(14px);
+
+}
+
+/*=========================================================
+    TITLE
+=========================================================*/
+
+.preview-title-row{
+
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:18px;
+
+    width:100%;
+
+}
+
+.preview-title{
+
+    margin:0;
+
+    flex:1;
+
+    color:#fff;
+
+    font-size:50px;
+
+    line-height:1.05;
+
+    font-weight:900;
+
+    letter-spacing:-1.4px;
+
+    text-wrap:balance;
+
+    word-break:break-word;
+
+    text-shadow:
+
+        0 10px 35px rgba(0,0,0,.45);
+
+}
+
+.preview-age{
+
+    flex-shrink:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    min-width:48px;
+
+    height:42px;
+
+    padding:0 14px;
+
+    border-radius:12px;
+
+    background:
+        rgba(255,255,255,.08);
+
+    border:
+        1px solid rgba(255,255,255,.12);
+
+    color:#fff;
+
+    font-size:14px;
+
+    font-weight:700;
+
+}
+
+/*=========================================================
+    META
+=========================================================*/
+
+.preview-meta{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    align-items:center;
+
+    gap:12px;
+
+    margin-top:2px;
+
+}
+
+.preview-meta-item{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    height:42px;
+
+    padding:0 16px;
+
+    border-radius:999px;
+
+    background:
+        rgba(255,255,255,.06);
+
+    border:
+        1px solid rgba(255,255,255,.08);
+
+    color:#ececec;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    backdrop-filter:blur(14px);
+
+    transition:.35s;
+
+}
+
+.preview-meta-item:hover{
+
+    background:
+        rgba(255,255,255,.10);
+
+    transform:
+        translateY(-2px);
+
+}
+
+.preview-meta-item svg{
+
+    flex-shrink:0;
+
+}
+
+/*=========================================================
+    DESCRIPTION
+=========================================================*/
+
+.preview-description{
+
+    width:100%;
+
+    max-width:520px;
+
+    margin:8px 0 4px;
+
+    color:rgba(255,255,255,.82);
+
+    font-size:16px;
+
+    line-height:1.9;
+
+    font-weight:400;
+
+    display:-webkit-box;
+
+    -webkit-line-clamp:4;
+
+    -webkit-box-orient:vertical;
+
+    overflow:hidden;
+
+}
+
+/*=========================================================
+    EXTRA INFO
+=========================================================*/
+
+.preview-extra-info{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:14px;
+
+    width:100%;
+
+    margin-top:6px;
+
+}
+
+.preview-info-row{
+
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:18px;
+
+}
+
+.preview-info-label{
+
+    width:90px;
+
+    flex-shrink:0;
+
+    color:
+
+        rgba(255,255,255,.46);
+
+    font-size:14px;
+
+    font-weight:600;
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+
+}
+
+.preview-info-value{
+
+    color:#f5f5f5;
+
+    font-size:15px;
+
+    line-height:1.8;
+
+    font-weight:500;
+
+}
+
+/*=========================================================
+    GENRES
+=========================================================*/
+
+.preview-genre-list{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:10px;
+
+}
+
+.preview-genre-chip{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    height:34px;
+
+    padding:0 15px;
+
+    border-radius:999px;
+
+    background:
+
+        rgba(255,255,255,.06);
+
+    border:
+
+        1px solid rgba(255,255,255,.08);
+
+    color:#fff;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    transition:.35s;
+
+}
+
+.preview-genre-chip:hover{
+
+    background:
+
+        rgba(229,9,20,.16);
+
+    border-color:
+
+        rgba(229,9,20,.45);
+
+    transform:
+
+        translateY(-2px);
+
+}
+/*=========================================================
+    ACTION BUTTONS
+=========================================================*/
+
+.preview-action-group{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+    margin-top:12px;
+
+}
+
+.preview-book-btn,
+.preview-trailer-btn{
+
+    position:relative;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:12px;
+
+    height:58px;
+
+    padding:0 32px;
+
+    border:none;
+
+    border-radius:16px;
+
+    cursor:pointer;
+
+    overflow:hidden;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    letter-spacing:.4px;
+
+    transition:
+        transform .45s cubic-bezier(.22,.61,.36,1),
+        box-shadow .45s,
+        background .45s;
+
+}
+
+/*=========================================================
+    BOOK BUTTON
+=========================================================*/
+
+.preview-book-btn{
+
+    color:#fff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ea1824,
+            #b80710
+        );
+
+    box-shadow:
+        0 15px 35px rgba(229,9,20,.30);
+
+}
+
+.preview-book-btn:hover{
+
+    transform:
+        translateY(-4px);
+
+    box-shadow:
+        0 22px 48px rgba(229,9,20,.45);
+
+}
+
+.preview-book-btn:active{
+
+    transform:
+        scale(.97);
+
+}
+
+/* Shine */
+
+.preview-book-btn::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:-120%;
+
+    left:-30%;
+
+    width:28%;
+
+    height:320%;
+
+    background:
+
+        rgba(255,255,255,.30);
+
+    transform:
+
+        rotate(26deg);
+
+    transition:left .9s;
+
+}
+
+.preview-book-btn:hover::before{
+
+    left:130%;
+
+}
+
+/*=========================================================
+    TRAILER BUTTON
+=========================================================*/
+
+.preview-trailer-btn{
+
+    color:#fff;
+
+    background:
+
+        rgba(255,255,255,.06);
+
+    border:
+
+        1px solid rgba(255,255,255,.12);
+
+    backdrop-filter:blur(18px);
+
+}
+
+.preview-trailer-btn:hover{
+
+    background:
+
+        rgba(255,255,255,.12);
+
+    transform:
+
+        translateY(-4px);
+
+    box-shadow:
+
+        0 18px 38px rgba(0,0,0,.25);
+
+}
+
+.preview-trailer-btn:active{
+
+    transform:
+
+        scale(.97);
+
+}
+
+/*=========================================================
+    ICON EFFECT
+=========================================================*/
+
+.preview-book-btn svg,
+.preview-trailer-btn svg{
+
+    transition:
+        transform .35s ease;
+
+}
+
+.preview-book-btn:hover svg,
+.preview-trailer-btn:hover svg{
+
+    transform:
+
+        scale(1.15);
+
+}
+
+/*=========================================================
+    HERO APPEAR
+=========================================================*/
+
+.preview-hero{
+
+    animation:
+
+        previewHeroReveal
+
+        .8s
+
+        cubic-bezier(.22,.61,.36,1);
+
+}
+
+.preview-hero-content>*{
+
+    opacity:0;
+
+    transform:
+
+        translateX(-35px);
+
+    animation:
+
+        heroContentReveal
+
+        .7s
+
+        forwards;
+
+}
+
+/*=========================================================
+    STAGGER
+=========================================================*/
+
+.preview-hero-badge{
+
+    animation-delay:.05s;
+
+}
+
+.preview-title-row{
+
+    animation-delay:.12s;
+
+}
+
+.preview-meta{
+
+    animation-delay:.20s;
+
+}
+
+.preview-description{
+
+    animation-delay:.28s;
+
+}
+
+.preview-extra-info{
+
+    animation-delay:.36s;
+
+}
+
+.preview-action-group{
+
+    animation-delay:.44s;
+
+}
+
+/*=========================================================
+    BACKDROP EFFECT
+=========================================================*/
+
+.preview-hero-backdrop{
+
+    animation:
+
+        backdropReveal
+
+        1s
+
+        cubic-bezier(.22,.61,.36,1);
+
+}
+
+/*=========================================================
+    KEYFRAMES
+=========================================================*/
+
+@keyframes previewHeroReveal{
+
+    from{
+
+        opacity:0;
+
+    }
+
+    to{
+
+        opacity:1;
+
+    }
+
+}
+
+@keyframes heroContentReveal{
+
+    from{
+
+        opacity:0;
+
+        transform:
+
+            translateX(-40px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+
+            translateX(0);
+
+    }
+
+}
+
+@keyframes backdropReveal{
+
+    from{
+
+        transform:
+
+            scale(1.08);
+
+        filter:
+
+            blur(6px)
+
+            brightness(.78);
+
+    }
+
+    to{
+
+        transform:
+
+            scale(1);
+
+        filter:
+
+            blur(0)
+
+            brightness(1);
+
+    }
+
+}
+/*=========================================================
+    ACTION BUTTONS
+=========================================================*/
+
+.preview-action-group{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+    margin-top:12px;
+
+}
+
+.preview-book-btn,
+.preview-trailer-btn{
+
+    position:relative;
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:12px;
+
+    height:58px;
+
+    padding:0 32px;
+
+    border:none;
+
+    border-radius:16px;
+
+    cursor:pointer;
+
+    overflow:hidden;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    letter-spacing:.4px;
+
+    transition:
+        transform .45s cubic-bezier(.22,.61,.36,1),
+        box-shadow .45s,
+        background .45s;
+
+}
+
+/*=========================================================
+    BOOK BUTTON
+=========================================================*/
+
+.preview-book-btn{
+
+    color:#fff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ea1824,
+            #b80710
+        );
+
+    box-shadow:
+        0 15px 35px rgba(229,9,20,.30);
+
+}
+
+.preview-book-btn:hover{
+
+    transform:
+        translateY(-4px);
+
+    box-shadow:
+        0 22px 48px rgba(229,9,20,.45);
+
+}
+
+.preview-book-btn:active{
+
+    transform:
+        scale(.97);
+
+}
+
+/* Shine */
+
+.preview-book-btn::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:-120%;
+
+    left:-30%;
+
+    width:28%;
+
+    height:320%;
+
+    background:
+
+        rgba(255,255,255,.30);
+
+    transform:
+
+        rotate(26deg);
+
+    transition:left .9s;
+
+}
+
+.preview-book-btn:hover::before{
+
+    left:130%;
+
+}
+
+/*=========================================================
+    TRAILER BUTTON
+=========================================================*/
+
+.preview-trailer-btn{
+
+    color:#fff;
+
+    background:
+
+        rgba(255,255,255,.06);
+
+    border:
+
+        1px solid rgba(255,255,255,.12);
+
+    backdrop-filter:blur(18px);
+
+}
+
+.preview-trailer-btn:hover{
+
+    background:
+
+        rgba(255,255,255,.12);
+
+    transform:
+
+        translateY(-4px);
+
+    box-shadow:
+
+        0 18px 38px rgba(0,0,0,.25);
+
+}
+
+.preview-trailer-btn:active{
+
+    transform:
+
+        scale(.97);
+
+}
+
+/*=========================================================
+    ICON EFFECT
+=========================================================*/
+
+.preview-book-btn svg,
+.preview-trailer-btn svg{
+
+    transition:
+        transform .35s ease;
+
+}
+
+.preview-book-btn:hover svg,
+.preview-trailer-btn:hover svg{
+
+    transform:
+
+        scale(1.15);
+
+}
+
+/*=========================================================
+    HERO APPEAR
+=========================================================*/
+
+.preview-hero{
+
+    animation:
+
+        previewHeroReveal
+
+        .8s
+
+        cubic-bezier(.22,.61,.36,1);
+
+}
+
+.preview-hero-content>*{
+
+    opacity:0;
+
+    transform:
+
+        translateX(-35px);
+
+    animation:
+
+        heroContentReveal
+
+        .7s
+
+        forwards;
+
+}
+
+/*=========================================================
+    STAGGER
+=========================================================*/
+
+.preview-hero-badge{
+
+    animation-delay:.05s;
+
+}
+
+.preview-title-row{
+
+    animation-delay:.12s;
+
+}
+
+.preview-meta{
+
+    animation-delay:.20s;
+
+}
+
+.preview-description{
+
+    animation-delay:.28s;
+
+}
+
+.preview-extra-info{
+
+    animation-delay:.36s;
+
+}
+
+.preview-action-group{
+
+    animation-delay:.44s;
+
+}
+
+/*=========================================================
+    BACKDROP EFFECT
+=========================================================*/
+
+.preview-hero-backdrop{
+
+    animation:
+
+        backdropReveal
+
+        1s
+
+        cubic-bezier(.22,.61,.36,1);
+
+}
+
+/*=========================================================
+    KEYFRAMES
+=========================================================*/
+
+@keyframes previewHeroReveal{
+
+    from{
+
+        opacity:0;
+
+    }
+
+    to{
+
+        opacity:1;
+
+    }
+
+}
+
+@keyframes heroContentReveal{
+
+    from{
+
+        opacity:0;
+
+        transform:
+
+            translateX(-40px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+
+            translateX(0);
+
+    }
+
+}
+
+@keyframes backdropReveal{
+
+    from{
+
+        transform:
+
+            scale(1.08);
+
+        filter:
+
+            blur(6px)
+
+            brightness(.78);
+
+    }
+
+    to{
+
+        transform:
+
+            scale(1);
+
+        filter:
+
+            blur(0)
+
+            brightness(1);
+
+    }
+
+}

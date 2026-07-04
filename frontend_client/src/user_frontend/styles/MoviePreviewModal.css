@@ -1,315 +1,976 @@
-/* =========================================================
-   MOVIE PREVIEW MODAL - SYNC WITH GLOBAL MODAL THEME
-========================================================= */
+/*=========================================================
+    HERO SHOWROOM STAGE
+=========================================================*/
 
-/* =========================
-   WRAPPER INSIDE MODAL
-========================= */
+.preview-hero-stage{
 
-.preview-scroll-wrapper {
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scroll-behavior: smooth;
+    position:relative;
+    width:100%;
+    height:auto;
+    overflow:hidden;
+    background:#000;
 
-    display: flex;
-    flex-direction: column;
+    isolation:isolate;
 
-    /* match modal tone */
-    background: transparent;
 }
 
-/* =========================
-   MOVIE STRIP SECTION
-========================= */
+.preview-hero-layer{
 
-.preview-movie-strip {
-    width: 100%;
-    padding: 40px 45px 50px;
-    flex-shrink: 0;
+    position:absolute;
+    inset:0;
 
-    /* đồng bộ nền modal */
-    background: transparent;
+    width:100%;
+    height:100%;
+
+    will-change:
+        transform,
+        opacity;
+
+    backface-visibility:hidden;
+
+    transform:translate3d(0,0,0);
+
 }
 
-/* header */
-.preview-strip-header {
-    margin-bottom: 28px;
+.preview-hero-layer.current{
+
+    position:relative;
+    z-index:1;
+
 }
 
-.preview-strip-title {
-    margin: 0;
-    font-size: 26px;
-    font-weight: 800;
-    color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.preview-hero-layer.next{
+
+    z-index:2;
+
 }
 
-.preview-strip-subtitle {
-    margin-top: 8px;
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.55);
+/*=========================================================
+    SHOWROOM ANIMATION
+=========================================================*/
+
+.hero-slide-out{
+
+    animation:
+        heroSlideOut
+        700ms
+        cubic-bezier(.22,.61,.36,1)
+        forwards;
+
 }
 
-/* =========================
-   SLIDER
-========================= */
+.hero-slide-in{
 
-.preview-strip-wrapper {
-    position: relative;
-    width: 100%;
+    animation:
+        heroSlideIn
+        700ms
+        cubic-bezier(.22,.61,.36,1)
+        forwards;
+
 }
 
-.preview-strip-slider {
-    width: 100%;
-    overflow: hidden;
+/*=========================================================
+    HERO PERFORMANCE
+=========================================================*/
+
+.preview-hero-stage,
+.preview-hero-layer,
+.preview-hero-layer *{
+
+    transform-style:preserve-3d;
+
+    will-change:
+        transform,
+        opacity;
+
 }
 
-.preview-strip-track {
-    display: flex;
-    gap: 14px;
-    transition: transform 0.45s ease;
-    transform: translateX(calc(var(--slider-index, 0) * -16.6667%));
-    will-change: transform;
+/*=========================================================
+    KEYFRAMES
+=========================================================*/
+
+@keyframes heroSlideOut{
+
+    0%{
+
+        opacity:1;
+
+        transform:
+            translateX(0)
+            scale(1);
+
+        filter:blur(0);
+
+    }
+
+    40%{
+
+        opacity:.95;
+
+        transform:
+            translateX(2%)
+            scale(1.01);
+
+    }
+
+    100%{
+
+        opacity:0;
+
+        transform:
+            translateX(100%)
+            scale(1.03);
+
+        filter:blur(2px);
+
+    }
+
 }
 
-/* =========================
-   CARD (MATCH DARK SILVER STYLE)
-========================= */
+@keyframes heroSlideIn{
 
-.preview-strip-card {
-    position: relative;
-    flex: 0 0 calc((100% - 80px) / 6);
+    0%{
 
-    border-radius: 18px;
-    overflow: hidden;
-    cursor: pointer;
+        opacity:.9;
 
-    /* đồng bộ modal dark silver */
-    background: rgba(255, 255, 255, 0.03);
+        transform:
+            translateX(-100%)
+            scale(1.03);
 
-    border: 1px solid rgba(255, 255, 255, 0.06);
+        filter:blur(2px);
 
-    transition: 0.3s;
+    }
+
+    60%{
+
+        opacity:1;
+
+        transform:
+            translateX(-4%)
+            scale(1.01);
+
+    }
+
+    100%{
+
+        opacity:1;
+
+        transform:
+            translateX(0)
+            scale(1);
+
+        filter:blur(0);
+
+    }
+
+}
+/*=========================================================
+    HERO SHOWROOM ENHANCEMENT
+=========================================================*/
+
+.preview-hero-stage .cinema-hero-banner{
+
+    width:100%;
+    overflow:hidden;
+
 }
 
-.preview-strip-card:hover {
-    transform: translateY(-6px);
+.preview-hero-stage .banner-horizontal-img{
 
-    border-color: rgba(229, 9, 20, 0.55);
+    will-change:
+        transform,
+        filter;
+
+    transform-origin:center;
+
+    animation:
+        heroBackdropZoom
+        900ms
+        cubic-bezier(.22,.61,.36,1);
+
+}
+
+.preview-hero-stage .banner-gradient-overlay{
+
+    animation:
+        heroOverlayFade
+        700ms
+        ease;
+
+}
+
+.preview-hero-stage .hero-content-wrapper{
+
+    position:relative;
+    z-index:5;
+
+    animation:
+        heroContentIn
+        850ms
+        cubic-bezier(.22,.61,.36,1);
+
+}
+
+/*=========================================================
+    TEXT STAGGER
+=========================================================*/
+
+.preview-hero-stage .hero-title-row{
+
+    animation:
+        heroTextUp
+        .65s
+        .08s
+        both;
+
+}
+
+.preview-hero-stage .hero-rating-row{
+
+    animation:
+        heroTextUp
+        .65s
+        .16s
+        both;
+
+}
+
+.preview-hero-stage .hero-description{
+
+    animation:
+        heroTextUp
+        .65s
+        .24s
+        both;
+
+}
+
+.preview-hero-stage .hero-info-list{
+
+    animation:
+        heroTextUp
+        .65s
+        .32s
+        both;
+
+}
+
+.preview-hero-stage .hero-action-group{
+
+    animation:
+        heroTextUp
+        .65s
+        .40s
+        both;
+
+}
+
+/*=========================================================
+    SHOWROOM KEYFRAMES
+=========================================================*/
+
+@keyframes heroBackdropZoom{
+
+    from{
+
+        transform:scale(1.08);
+
+        filter:
+            brightness(.82)
+            blur(3px);
+
+    }
+
+    to{
+
+        transform:scale(1);
+
+        filter:
+            brightness(1)
+            blur(0);
+
+    }
+
+}
+
+@keyframes heroOverlayFade{
+
+    from{
+
+        opacity:.4;
+
+    }
+
+    to{
+
+        opacity:1;
+
+    }
+
+}
+
+@keyframes heroContentIn{
+
+    from{
+
+        opacity:0;
+
+    }
+
+    to{
+
+        opacity:1;
+
+    }
+
+}
+
+@keyframes heroTextUp{
+
+    from{
+
+        opacity:0;
+
+        transform:
+            translateX(-40px)
+            translateY(12px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+            translateX(0)
+            translateY(0);
+
+    }
+
+}
+/*=========================================================
+    PREMIUM MOVIE STRIP
+=========================================================*/
+
+.preview-movie-strip{
+
+    position:relative;
+
+    width:100%;
+
+    padding:48px 45px 55px;
+
+    background:
+        linear-gradient(
+            to bottom,
+            rgba(5,5,5,.98),
+            #000
+        );
+
+    overflow:hidden;
+
+}
+
+.preview-movie-strip::before{
+
+    content:"";
+
+    position:absolute;
+
+    left:0;
+    right:0;
+    top:0;
+
+    height:1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.08),
+            transparent
+        );
+
+}
+
+/*=========================================================
+    HEADER
+=========================================================*/
+
+.preview-strip-header{
+
+    margin-bottom:32px;
+
+}
+
+.preview-strip-title{
+
+    margin:0;
+
+    font-size:28px;
+
+    font-weight:800;
+
+    letter-spacing:1px;
+
+    color:#fff;
+
+}
+
+.preview-strip-subtitle{
+
+    margin-top:8px;
+
+    color:rgba(255,255,255,.55);
+
+    font-size:14px;
+
+}
+
+/*=========================================================
+    SLIDER
+=========================================================*/
+
+.preview-strip-wrapper{
+
+    position:relative;
+
+}
+
+.preview-strip-slider{
+
+    overflow:hidden;
+
+    width:100%;
+
+}
+
+.preview-strip-track{
+
+    display:flex;
+
+    gap:16px;
+
+    transition:
+        transform
+        .55s
+        cubic-bezier(.22,.61,.36,1);
+
+    transform:
+        translate3d(
+            calc(var(--slider-index,0) * -16.6667%),
+            0,
+            0
+        );
+
+    will-change:transform;
+
+}
+
+/*=========================================================
+    CARD
+=========================================================*/
+
+.preview-strip-card{
+
+    position:relative;
+
+    flex:0 0 calc((100% - 80px)/6);
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+    cursor:pointer;
+
+    background:
+        rgba(255,255,255,.03);
+
+    border:
+        1px solid
+        rgba(255,255,255,.06);
+
+    transition:
+        transform .45s cubic-bezier(.22,.61,.36,1),
+        box-shadow .45s,
+        border-color .45s;
+
+    transform:
+        translateY(0);
+
+}
+
+.preview-strip-card:hover{
+
+    transform:
+
+        translateY(-10px)
+
+        scale(1.03);
+
+    border-color:
+
+        rgba(229,9,20,.65);
 
     box-shadow:
-        0 18px 40px rgba(0, 0, 0, 0.55),
-        0 0 25px rgba(229, 9, 20, 0.18);
+
+        0 25px 55px rgba(0,0,0,.6),
+
+        0 0 30px rgba(229,9,20,.18);
+
 }
 
-.preview-strip-card.active {
-    border-color: #e50914;
+.preview-strip-card.active{
+
+    border-color:#e50914;
 
     box-shadow:
-        0 0 0 1px rgba(229, 9, 20, 0.35),
-        0 0 28px rgba(229, 9, 20, 0.22);
+
+        0 0 0 1px rgba(229,9,20,.45),
+
+        0 0 35px rgba(229,9,20,.22);
+
 }
 
-/* image */
-.preview-strip-image {
-    width: 100%;
-    aspect-ratio: 2 / 3;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.4s;
+/*=========================================================
+    IMAGE
+=========================================================*/
+
+.preview-strip-image{
+
+    width:100%;
+
+    aspect-ratio:2/3;
+
+    object-fit:cover;
+
+    display:block;
+
+    transition:
+
+        transform .6s cubic-bezier(.22,.61,.36,1),
+
+        filter .5s;
+
 }
 
-.preview-strip-card:hover .preview-strip-image {
-    transform: scale(1.06);
+.preview-strip-card:hover
+.preview-strip-image{
+
+    transform:
+
+        scale(1.08);
+
+    filter:
+
+        brightness(1.05);
+
 }
 
-/* gradient (GIẢM ĐEN) */
-.preview-strip-gradient {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 45%;
+/*=========================================================
+    GRADIENT
+=========================================================*/
 
-    /* nhẹ hơn, không bị “đen cứng” */
-    background: linear-gradient(
-        transparent,
-        rgba(0, 0, 0, 0.65)
-    );
+.preview-strip-gradient{
+
+    position:absolute;
+
+    inset:auto 0 0 0;
+
+    height:45%;
+
+    background:
+
+        linear-gradient(
+
+            transparent,
+
+            rgba(0,0,0,.75)
+
+        );
+
 }
 
-/* text */
-.preview-strip-info {
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
+/*=========================================================
+    INFO
+=========================================================*/
+
+.preview-strip-info{
+
+    position:absolute;
+
+    left:14px;
+
+    right:14px;
+
+    bottom:14px;
+
 }
 
-.preview-strip-name {
-    font-size: 13px;
-    font-weight: 700;
-    color: #fff;
+.preview-strip-name{
 
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    color:#fff;
+
+    font-size:13px;
+
+    font-weight:700;
+
+    line-height:1.5;
+
+    display:-webkit-box;
+
+    -webkit-line-clamp:2;
+
+    -webkit-box-orient:vertical;
+
+    overflow:hidden;
+
+}
+/*=========================================================
+    PREMIUM SLIDER BUTTON
+=========================================================*/
+
+.preview-slider-btn{
+
+    position:absolute;
+
+    top:50%;
+
+    transform:translateY(-50%);
+
+    width:58px;
+    height:58px;
+
+    border:none;
+
+    border-radius:50%;
+
+    cursor:pointer;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#fff;
+
+    background:
+        rgba(255,255,255,.05);
+
+    backdrop-filter:blur(16px);
+
+    -webkit-backdrop-filter:blur(16px);
+
+    border:
+        1px solid
+        rgba(255,255,255,.08);
+
+    transition:
+        all .45s cubic-bezier(.22,.61,.36,1);
+
+    z-index:30;
+
 }
 
-/* =========================
-   SLIDER BUTTONS (MATCH MODAL STYLE)
-========================= */
+.preview-slider-btn::before{
 
-.preview-slider-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    content:"";
 
-    width: 54px;
-    height: 54px;
+    position:absolute;
 
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    inset:0;
 
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
+    border-radius:50%;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background:
 
-    cursor: pointer;
-    color: #fff;
+        radial-gradient(
 
-    transition: 0.3s;
-    z-index: 10;
+            circle,
+
+            rgba(255,255,255,.18),
+
+            transparent 70%
+
+        );
+
+    opacity:0;
+
+    transition:.45s;
+
 }
 
-.preview-slider-btn:hover:not(:disabled) {
-    background: rgba(229, 9, 20, 0.9);
-    transform: translateY(-50%) scale(1.06);
+.preview-slider-btn:hover:not(:disabled){
+
+    background:
+
+        rgba(229,9,20,.92);
+
+    transform:
+
+        translateY(-50%)
+
+        scale(1.08);
+
+    box-shadow:
+
+        0 12px 35px rgba(229,9,20,.35),
+
+        0 0 35px rgba(229,9,20,.18);
+
 }
 
-.preview-slider-btn:disabled {
-    opacity: 0.3;
+.preview-slider-btn:hover::before{
+
+    opacity:1;
+
 }
 
-.preview-slider-left {
-    left: -30px;
+.preview-slider-btn:active{
+
+    transform:
+
+        translateY(-50%)
+
+        scale(.95);
+
 }
 
-.preview-slider-right {
-    right: -30px;
+.preview-slider-btn:disabled{
+
+    opacity:.28;
+
+    cursor:not-allowed;
+
 }
 
-/* =========================
-   TRAILER OVERLAY (FIX MAIN ISSUE)
-========================= */
+.preview-slider-left{
 
-.preview-trailer-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 100000;
+    left:-30px;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 24px;
-
-    /* 🔥 MATCH MODAL STYLE */
-    background: rgba(0, 0, 0, 0.55);
-
-    backdrop-filter: blur(10px);
 }
 
-/* modal trailer box */
-.preview-trailer-modal {
-    position: relative;
-    width: min(1100px, 92vw);
-    aspect-ratio: 16 / 9;
+.preview-slider-right{
 
-    background: #000;
-    border-radius: 16px;
-    overflow: hidden;
+    right:-30px;
 
-    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.75);
 }
 
-.preview-trailer-modal iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
+/*=========================================================
+    TRAILER
+=========================================================*/
+
+.preview-trailer-overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:30px;
+
+    z-index:99999;
+
+    background:
+
+        rgba(0,0,0,.72);
+
+    backdrop-filter:blur(14px);
+
+    animation:
+
+        trailerFade .35s ease;
+
 }
 
-/* close */
-.preview-trailer-close {
-    position: absolute;
-    top: 12px;
-    right: 12px;
+.preview-trailer-modal{
 
-    width: 44px;
-    height: 44px;
+    position:relative;
 
-    border: none;
-    border-radius: 50%;
+    width:min(1180px,92vw);
 
-    cursor: pointer;
+    aspect-ratio:16/9;
 
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
+    overflow:hidden;
 
-    backdrop-filter: blur(10px);
+    border-radius:20px;
 
-    transition: 0.3s;
+    background:#000;
+
+    box-shadow:
+
+        0 40px 90px rgba(0,0,0,.8);
+
+    animation:
+
+        trailerZoom .45s cubic-bezier(.22,.61,.36,1);
+
 }
 
-.preview-trailer-close:hover {
-    background: #e50914;
-    transform: rotate(90deg);
+.preview-trailer-modal iframe{
+
+    width:100%;
+
+    height:100%;
+
+    border:none;
+
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
+.preview-trailer-close{
 
-@media (max-width: 1200px) {
-    .preview-strip-card {
-        flex: 0 0 calc((100% - 60px) / 4);
+    position:absolute;
+
+    top:18px;
+
+    right:18px;
+
+    width:48px;
+
+    height:48px;
+
+    border:none;
+
+    border-radius:50%;
+
+    cursor:pointer;
+
+    color:#fff;
+
+    background:
+
+        rgba(255,255,255,.08);
+
+    backdrop-filter:blur(12px);
+
+    transition:.4s;
+
+}
+
+.preview-trailer-close:hover{
+
+    background:#e50914;
+
+    transform:
+
+        rotate(90deg)
+
+        scale(1.08);
+
+}
+
+/*=========================================================
+    RESPONSIVE
+=========================================================*/
+
+@media(max-width:1200px){
+
+    .preview-strip-card{
+
+        flex:0 0 calc((100% - 48px)/4);
+
     }
+
 }
 
-@media (max-width: 992px) {
-    .preview-strip-card {
-        flex: 0 0 calc((100% - 40px) / 3);
+@media(max-width:992px){
+
+    .preview-movie-strip{
+
+        padding:34px 24px;
+
     }
 
-    .preview-movie-strip {
-        padding: 30px 20px;
+    .preview-strip-card{
+
+        flex:0 0 calc((100% - 32px)/3);
+
     }
+
 }
 
-@media (max-width: 768px) {
-    .preview-strip-card {
-        flex: 0 0 calc((100% - 20px) / 2);
+@media(max-width:768px){
+
+    .preview-strip-card{
+
+        flex:0 0 calc((100% - 18px)/2);
+
     }
 
-    .preview-slider-btn {
-        width: 44px;
-        height: 44px;
+    .preview-slider-btn{
+
+        width:48px;
+
+        height:48px;
+
     }
+
 }
 
-@media (max-width: 480px) {
-    .preview-strip-card {
-        flex: 0 0 160px;
+@media(max-width:480px){
+
+    .preview-strip-card{
+
+        flex:0 0 170px;
+
     }
 
-    .preview-strip-title {
-        font-size: 20px;
+    .preview-strip-title{
+
+        font-size:22px;
+
     }
+
+}
+
+/*=========================================================
+    EXTRA KEYFRAMES
+=========================================================*/
+
+@keyframes trailerFade{
+
+    from{
+
+        opacity:0;
+
+    }
+
+    to{
+
+        opacity:1;
+
+    }
+
+}
+
+@keyframes trailerZoom{
+
+    from{
+
+        opacity:0;
+
+        transform:
+
+            scale(.92)
+
+            translateY(25px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+
+            scale(1)
+
+            translateY(0);
+
+    }
+
 }

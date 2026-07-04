@@ -788,18 +788,18 @@ const banners = [
 
             <div className="cinema-grid">
 
-  {cinemaNews.map((news) => (
+            {cinemaNews.map((news) => (
 
-    <CinemaCard
-      key={news.blog_id}
-      type="news"
-      image={`${blogCinemaImageUrl}${news.image_url}`}
-      title={news.title}
-      buttonText="Đọc thêm"
-      link={`/blog-cinema/${news.slug}`}
-    />
+              <CinemaCard
+                key={news.blog_id}
+                type="news"
+                image={`${blogCinemaImageUrl}${news.image_url}`}
+                title={news.title}
+                buttonText="Đọc thêm"
+                link={`/blog-cinema/${news.slug}`}
+              />
 
-  ))}
+            ))}
 
 </div>
 

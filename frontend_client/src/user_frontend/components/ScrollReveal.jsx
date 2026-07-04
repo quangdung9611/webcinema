@@ -4,72 +4,44 @@ const ScrollReveal = ({
     children,
     direction = "up",
     delay = 0,
-    duration = 2.8   // ⬅️ CHẬM HƠN
+    duration = 0.8   // 👈 giảm lại (2.8 quá nặng)
 }) => {
 
     const variants = {
-        up: {
-            opacity: 0,
-            y: 50,
-            scale: 0.98,
-            filter: "blur(6px)"
-        },
-
-        left: {
-            opacity: 0,
-            x: -50,
-            scale: 0.98,
-            filter: "blur(6px)"
-        },
-
-        right: {
-            opacity: 0,
-            x: 50,
-            scale: 0.98,
-            filter: "blur(6px)"
-        },
-
-        zoom: {
-            opacity: 0,
-            scale: 0.92,
-            filter: "blur(8px)"
-        },
-
-        rotate: {
-            opacity: 0,
-            y: 30,
-            scale: 0.97,
-            rotate: -1,
-            filter: "blur(6px)"
-        }
+        up: { opacity: 0, y: 25 },
+        left: { opacity: 0, x: -25 },
+        right: { opacity: 0, x: 25 },
+        zoom: { opacity: 0, scale: 0.98 },
+        rotate: { opacity: 0, y: 20 }
     };
 
     return (
-        <motion.div
-            initial={variants[direction] || variants.up}
-            whileInView={{
-                opacity: 1,
-                x: 0,
-                y: 0,
-                scale: 1,
-                rotate: 0,
-                filter: "blur(0px)"
-            }}
-            viewport={{
-                once: true,
-                amount: 0.25   // ⬅️ vào sâu hơn mới trigger
-            }}
-            transition={{
-                duration,
-                delay,
-                ease: [0.25, 0.8, 0.25, 1] // ⬅️ mượt + “lụi”
-            }}
-            style={{
-                willChange: "transform, opacity, filter"
-            }}
-        >
-            {children}
-        </motion.div>
+        <div style={{ overflow: "visible" }}>
+            <motion.div
+                initial={variants[direction] || variants.up}
+                whileInView={{
+                    opacity: 1,
+                    x: 0,
+                    y: 0,
+                    scale: 1,
+                    rotate: 0
+                }}
+                viewport={{
+                    once: true,
+                    amount: 0.2
+                }}
+                transition={{
+                    duration,
+                    delay,
+                    ease: "easeOut"
+                }}
+                style={{
+                    willChange: "opacity, transform"
+                }}
+            >
+                {children}
+            </motion.div>
+        </div>
     );
 };
 

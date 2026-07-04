@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, CheckCircle2, XCircle, AlertTriangle, Info } from "lucide-react";
 
@@ -16,17 +16,21 @@ const Modal = ({
     className = ""
 }) => {
 
+    const [visible, setVisible] = useState(open);
+    const [animate, setAnimate] = useState(false);
+
     useEffect(() => {
-        if (!open) return;
-
-        document.body.style.overflow = "hidden";
-
-        return () => {
-            document.body.style.overflow = "";
-        };
+        if (open) {
+            setVisible(true);
+            requestAnimationFrame(() => setAnimate(true));
+        } else {
+            setAnimate(false);
+            const timer = setTimeout(() => setVisible(false), 300);
+            return () => clearTimeout(timer);
+        }
     }, [open]);
 
-    if (!open) return null;
+    if (!visible) return null;
 
     const renderIcon = () => {
         switch (type) {
@@ -38,8 +42,8 @@ const Modal = ({
         }
     };
 
-    const modal = (
-        <div className="modal-overlay" onClick={onClose}>
+    return createPortal(
+        <div className={`modal-overlay ${animate ? "open" : "close"}`} onClick={onClose}>
 
             <div
                 className={`modal-container ${size} ${type} ${className}`}
@@ -59,10 +63,7 @@ const Modal = ({
                 )}
 
                 {showCloseButton && (
-                    <button
-                        className="modal-close-btn"
-                        onClick={onClose}
-                    >
+                    <button className="modal-close-btn" onClick={onClose}>
                         <X size={22} />
                     </button>
                 )}
@@ -72,10 +73,9 @@ const Modal = ({
                 </div>
 
             </div>
-        </div>
+        </div>,
+        document.body
     );
-
-    return createPortal(modal, document.body);
 };
 
 export default Modal;

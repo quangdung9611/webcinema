@@ -1026,6 +1026,10 @@ HOVER BONUS
     }
 
 }
+.movie-card.is-opening {
+    z-index: 999;
+    pointer-events: none;
+}
 
 /*============================================================
 1200

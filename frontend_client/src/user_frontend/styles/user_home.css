@@ -361,16 +361,17 @@ IMAGE
 /*==========================================================
 CONTENT
 ==========================================================*/
-
 .banner-inner{
     position:absolute;
     inset:0;
     z-index:5;
 
-    /* display:flex;
-    align-items:center; */
-    padding-left: 7%;
-    margin-top: 3%;
+    display:flex;
+    align-items:center;
+
+    padding-inline:7%;
+
+    margin-top:0;
 }
 
 /* ==========================================================
@@ -1242,8 +1243,9 @@ ANIMATION
    LARGE TABLET
 ========================================================= */
 
-@media (max-width: 1200px) {
-     /*=========================
+@media (max-width:1200px){
+
+    /*=========================
       HERO BANNER
     =========================*/
 
@@ -1254,7 +1256,6 @@ ANIMATION
         gap:26px;
 
         transform:translateY(-18px);
-
     }
 
     .banner-eyebrow{
@@ -1262,13 +1263,11 @@ ANIMATION
         font-size:1.05rem;
 
         letter-spacing:4px;
-
     }
 
     .banner-title{
 
         font-size:clamp(5.6rem,6vw,7rem);
-
     }
 
     .banner-title::after{
@@ -1276,13 +1275,11 @@ ANIMATION
         width:72%;
 
         bottom:-18px;
-
     }
 
     .banner-title::before{
 
         bottom:-24px;
-
     }
 
     .banner-subtitle{
@@ -1292,7 +1289,6 @@ ANIMATION
         font-size:1.35rem;
 
         line-height:1.8;
-
     }
 
     .banner-btn{
@@ -1304,346 +1300,613 @@ ANIMATION
         font-size:1.75rem;
 
         margin-top:10px;
-
     }
 
     /* Feature */
-    .features-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
+
+    .features-grid{
+
+        grid-template-columns:repeat(4,1fr);
+
+        gap:20px;
     }
 
     /* Quick Booking */
-    .quick-booking-content {
-        width: 95%;
-        padding: 24px;
+
+    .quick-booking-content{
+
+        width:95%;
+
+        padding:24px;
     }
 
     .home-features-section,
     .movie-container,
     .promotions-section,
-    .cinema-corner-section {
-        margin-top: 40px;
+    .cinema-corner-section{
+
+        margin-top:40px;
     }
 
-    .cinema-corner-section {
-        margin-bottom: 24px;
+    .cinema-corner-section{
+
+        margin-bottom:24px;
     }
 
-    .section-header {
-        margin-bottom: 24px;
+    .section-header{
+
+        margin-bottom:24px;
     }
 
-    .home-container {
-        padding-bottom: 20px;
+    .home-container{
+
+        padding-bottom:20px;
     }
 }
+
 
 /* =========================================================
    TABLET
 ========================================================= */
 
-@media (max-width: 992px) {
-    /*=========================
-      HERO BANNER
-    =========================*/
+@media (max-width:992px){
 
-   .banner-inner{
-    padding-inline:6%;
-}
-
-.banner-text{
-    width:min(620px,100%);
-    gap:22px;
-}
-
-.banner-title{
-    font-size:clamp(5rem,6vw,6.8rem);
-}
-
-.banner-subtitle{
-    font-size:1.3rem;
-}
-
-.banner-btn{
-    width:330px;
-    height:76px;
-}
-
-    /* Feature 4 -> 2 */
-    .features-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-    }
-
-    /* Quick Booking */
-    .quick-booking-content {
-        width: 95%;
-        padding: 22px;
-
-        display: flex;
-        flex-direction: column;
-
-        gap: 16px;
-    }
-
-    .quick-booking-selects {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
-    }
-
-    .quick-booking-selects select {
-        height: 54px;
-    }
-
-    .btn-quick-booking {
-        width: 100%;
-        min-width: unset;
-        height: 54px;
-    }
-
-    .home-features-section,
-    .movie-container,
-    .promotions-section,
-    .cinema-corner-section {
-        margin-top: 32px;
-    }
-
-    .cinema-corner-section {
-        margin-bottom: 20px;
-    }
-
-    .section-header {
-        margin-bottom: 20px;
-    }
-
-    .home-container {
-        padding-bottom: 16px;
-    }
-}
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 768px) {
     /*=========================
       HERO BANNER
     =========================*/
 
     .banner-inner{
-    padding-inline:5%;
-}
 
-.banner-text{
-    width:min(560px,100%);
-    gap:20px;
-}
+        padding-inline:6%;
+    }
 
-.banner-title{
-    font-size:clamp(4.5rem,6vw,5.8rem);
-}
+    .banner-text{
 
-.banner-subtitle{
-    font-size:1.15rem;
-}
+        width:min(620px,100%);
 
-.banner-btn{
-    width:300px;
-    height:70px;
-}
-    /* Feature 2 -> 1 */
-    .features-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
+        gap:22px;
+    }
+
+    .banner-title{
+
+        font-size:clamp(5rem,6vw,6.8rem);
+    }
+
+    .banner-subtitle{
+
+        font-size:1.3rem;
+    }
+
+    .banner-btn{
+
+        width:330px;
+
+        height:76px;
+    }
+
+    /* Feature */
+
+    .features-grid{
+
+        grid-template-columns:repeat(2,1fr);
+
+        gap:20px;
     }
 
     /* Quick Booking */
-    .quick-booking-container {
-        margin-top: -30px;
+
+    .quick-booking-content{
+
+        width:95%;
+
+        padding:22px;
+
+        display:flex;
+
+        flex-direction:column;
+
+        gap:16px;
     }
 
-    .quick-booking-content {
-        width: 100%;
-        max-width: none;
+    .quick-booking-selects{
 
-        padding: 16px;
+        grid-template-columns:repeat(2,1fr);
 
-        display: flex;
-        flex-direction: column;
-
-        gap: 14px;
-
-        border-radius: 22px;
+        gap:14px;
     }
 
-    .quick-booking-selects {
-        width: 100%;
+    .quick-booking-selects select{
 
-        grid-template-columns: repeat(4, 1fr);
-
-        gap: 8px;
+        height:54px;
     }
 
-    .quick-booking-selects select {
+    .btn-quick-booking{
 
-        width: 100%;
+        width:100%;
 
-        height: 50px;
+        min-width:unset;
 
-        padding: 0 12px;
-
-        font-size: .85rem;
-
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-    }
-
-    .btn-quick-booking {
-
-        width: 100%;
-
-        min-width: unset;
-
-        height: 52px;
-
-        font-size: .9rem;
+        height:54px;
     }
 
     .home-features-section,
     .movie-container,
     .promotions-section,
-    .cinema-corner-section {
-        margin-top: 24px;
+    .cinema-corner-section{
+
+        margin-top:32px;
     }
 
-    .cinema-corner-section {
-        margin-bottom: 14px;
+    .cinema-corner-section{
+
+        margin-bottom:20px;
     }
 
-    .section-header {
-        margin-bottom: 18px;
+    .section-header{
+
+        margin-bottom:20px;
     }
 
-    .home-container {
-        padding-bottom: 12px;
+    .home-container{
+
+        padding-bottom:16px;
     }
 }
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width:768px){
+
+    /*=========================
+      HERO BANNER
+    =========================*/
+
+    .banner-premium{
+
+        width:100%;
+
+        aspect-ratio:900/1500;
+
+        max-height:450px;
+    }
+    /*=========================================
+BANNER OVERLAY
+=========================================*/
+
+.banner-media::before{
+
+    background:linear-gradient(
+
+        90deg,
+
+        rgba(0,0,0,.94) 0%,
+
+        rgba(0,0,0,.82) 25%,
+
+        rgba(0,0,0,.58) 48%,
+
+        rgba(0,0,0,.28) 72%,
+
+        transparent 100%
+    );
+}
+
+.banner-media::after{
+
+    background:linear-gradient(
+
+        to top,
+
+        rgba(0,0,0,.96) 0%,
+
+        rgba(0,0,0,.78) 16%,
+
+        rgba(0,0,0,.50) 34%,
+
+        rgba(0,0,0,.20) 55%,
+
+        transparent 72%
+    );
+}
+
+.banner-img{
+
+    filter:
+
+        brightness(.78)
+
+        contrast(1.08)
+
+        saturate(1.05);
+}
+    .banner-inner{
+
+        inset:0;
+
+        padding-inline:24px;
+
+        margin-top:0;
+    }
+
+    .banner-text{
+
+        width:100%;
+
+        max-width:420px;
+
+        gap:20px;
+
+        transform:none;
+
+        align-items:flex-start;
+
+        text-align:left;
+    }
+
+    .banner-eyebrow{
+
+        font-size:.95rem;
+
+        letter-spacing:3px;
+    }
+
+    .banner-title{
+
+        width:100%;
+
+        white-space:normal;
+
+        font-size:clamp(4rem,7vw,5rem);
+
+        line-height:1;
+    }
+
+    .banner-title::after{
+
+        width:70%;
+    }
+
+   .banner-subtitle{
+
+    width:100%;
+    max-width:100%;
+
+    color:#fff;
+
+    font-size:1rem;
+
+    line-height:1.8;
+
+    text-align:justify;
+    text-justify:inter-word;
+
+    text-wrap:pretty;
+
+    overflow-wrap:break-word;
+
+    hyphens:auto;
+}
+
+    .banner-btn{
+
+        width:260px;
+
+        height:60px;
+
+        margin-top:0;
+
+        font-size:1rem;
+    }
+
+    /*=========================
+      FEATURES
+    =========================*/
+
+    .features-grid{
+
+        grid-template-columns:1fr;
+
+        gap:16px;
+    }
+
+    /*=========================
+      QUICK BOOKING
+    =========================*/
+
+    .quick-booking-container{
+
+        margin-top:-30px;
+    }
+
+    .quick-booking-content{
+
+        width:100%;
+
+        max-width:none;
+
+        padding:16px;
+
+        display:flex;
+
+        flex-direction:column;
+
+        gap:14px;
+
+        border-radius:22px;
+    }
+
+    .quick-booking-selects{
+
+        width:100%;
+
+        grid-template-columns:repeat(4,1fr);
+
+        gap:8px;
+    }
+
+    .quick-booking-selects select{
+
+        width:100%;
+
+        height:50px;
+
+        padding:0 12px;
+
+        font-size:.85rem;
+
+        min-width:0;
+    }
+
+    .btn-quick-booking{
+
+        width:100%;
+
+        min-width:unset;
+
+        height:52px;
+
+        font-size:.9rem;
+    }
+    
+    .home-features-section,
+    .movie-container,
+    .promotions-section,
+    .cinema-corner-section{
+
+        margin-top:24px;
+    }
+
+    .cinema-corner-section{
+
+        margin-bottom:14px;
+    }
+
+    .section-header{
+
+        margin-bottom:18px;
+    }
+
+    .home-container{
+
+        padding-bottom:12px;
+    }
+}
+
 
 /* =========================================================
    SMALL MOBILE
 ========================================================= */
 
-@media (max-width: 480px) {
+@media (max-width:480px){
+
     /*=========================
       HERO BANNER
     =========================*/
 
-   .banner-inner{
+    .banner-premium{
 
-        padding-inline:28px;
+        width:100%;
+
+        aspect-ratio:900/1500;
+
+        max-height:300px;
+    }
+    /*=========================================
+BANNER OVERLAY
+=========================================*/
+
+.banner-media::before{
+
+    background:linear-gradient(
+
+        90deg,
+
+        rgba(0,0,0,.96) 0%,
+
+        rgba(0,0,0,.86) 30%,
+
+        rgba(0,0,0,.65) 52%,
+
+        rgba(0,0,0,.35) 76%,
+
+        transparent 100%
+    );
+}
+
+.banner-media::after{
+
+    background:linear-gradient(
+
+        to top,
+
+        rgba(0,0,0,.98) 0%,
+
+        rgba(0,0,0,.84) 18%,
+
+        rgba(0,0,0,.58) 38%,
+
+        rgba(0,0,0,.25) 60%,
+
+        transparent 78%
+    );
+}
+
+.banner-img{
+
+    filter:
+
+        brightness(.72)
+
+        contrast(1.06)
+
+        saturate(1.02);
+}
+    .banner-inner{
+
+        padding-inline:18px;
     }
 
-.banner-text{
+    .banner-text{
+
+        width:100%;
+
+        max-width:100%;
+
+        gap:18px;
+
+        transform:none;
+
+        align-items:flex-start;
+
+        text-align:left;
+    }
+
+    .banner-eyebrow{
+
+        font-size:.85rem;
+
+        letter-spacing:2px;
+    }
+
+    .banner-title{
+
+        width:100%;
+
+        white-space:normal;
+
+        font-size:clamp(3rem,9vw,4rem);
+
+        line-height:1;
+    }
+
+    .banner-subtitle{
 
     width:100%;
 
-    align-items:center;
+    font-size:.95rem;
 
-    text-align:center;
+    line-height:1.65;
 
-    gap:18px;
+    text-align:justify;
+    text-justify:inter-word;
+
+    text-wrap:pretty;
+
+    overflow-wrap:break-word;
+
+    word-break:normal;
+
+    hyphens:auto;
 }
+    .banner-btn{
 
-.banner-title{
+        width:220px;
 
-    width:100%;
+        height:54px;
 
-    white-space:normal;
-
-    font-size:clamp(3rem,8vw,4.8rem);
-
-    text-align:center;
-}
-
-.banner-subtitle{
-
-    max-width:560px;
-
-    text-align:center;
-
-    font-size:1rem;
-}
-
-.banner-btn{
-
-    width:280px;
-    height:64px;
-}
-
-    .quick-booking-container {
-        width: 100%;
-        padding: 0 10px;
+        font-size:.9rem;
     }
 
-    .quick-booking-content {
-        width: 100%;
-        padding: 14px;
-        gap: 12px;
-        border-radius: 18px;
+    /*=========================
+      QUICK BOOKING
+    =========================*/
+
+    .quick-booking-container{
+
+        width:100%;
+
+        padding:0 10px;
     }
 
-    .quick-booking-selects {
-        width: 100%;
+    .quick-booking-content{
 
-        grid-template-columns: repeat(4, 1fr);
+        width:100%;
 
-        gap: 6px;
+        padding:14px;
+
+        gap:12px;
+
+        border-radius:18px;
     }
 
-    .quick-booking-selects select {
+    .quick-booking-selects{
 
-        height: 46px;
+        width:100%;
 
-        padding: 0 4px;
+        grid-template-columns:repeat(4,1fr);
 
-        font-size: .7rem;
-
-        border-radius: 12px;
-
-        min-width: 0;
+        gap:6px;
     }
 
-    .btn-quick-booking {
+    .quick-booking-selects select{
 
-        width: 100%;
+        height:46px;
 
-        min-width: unset;
+        padding:0 4px;
 
-        height: 48px;
+        font-size:.7rem;
 
-        font-size: .85rem;
+        border-radius:12px;
 
-        border-radius: 12px;
+        min-width:0;
+    }
+
+    .btn-quick-booking{
+
+        width:100%;
+
+        min-width:unset;
+
+        height:48px;
+
+        font-size:.85rem;
+
+        border-radius:12px;
     }
 
     .home-features-section,
     .movie-container,
     .promotions-section,
-    .cinema-corner-section {
-        margin-top: 20px;
+    .cinema-corner-section{
+
+        margin-top:20px;
     }
 
-    .cinema-corner-section {
-        margin-bottom: 10px;
+    .cinema-corner-section{
+
+        margin-bottom:10px;
     }
 
-    .section-header {
-        margin-bottom: 14px;
+    .section-header{
+
+        margin-bottom:14px;
     }
 
-    .home-container {
-        padding-bottom: 6px;
+    .home-container{
+
+        padding-bottom:6px;
     }
 }
