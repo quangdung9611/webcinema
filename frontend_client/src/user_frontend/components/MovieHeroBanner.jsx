@@ -46,32 +46,34 @@ const MovieHeroBanner = ({
                         >
                             {movie.title}
                         </h1>
-                        <span className="hero-age-badge">
-                            T16
-                        </span>
+                    
                     </div>
 
                     {/* RATING / META */}
                     <div className="hero-rating-row">
 
-                        <div className="hero-rating-item">
-                            <Star size={18} fill="#f5b50a" color="#f5b50a" />
-                            <span>{movie.avg_rating || "0.0"} / 10</span>
-                        </div>
+                            <div className="hero-age-badge">
+                                {movie.age_rating ? `T${movie.age_rating}` : "P"}
+                            </div>
 
-                        <div className="hero-rating-item">
-                            <Clock size={18} />
-                            <span>{movie.duration} phút</span>
-                        </div>
+                            <div className="hero-rating-item">
+                                <Star size={18} fill="#f5b50a" color="#f5b50a" />
+                                <span>{movie.avg_rating || "0.0"} / 10</span>
+                            </div>
 
-                        <div className="hero-rating-item">
-                            <Calendar size={18} />
-                            <span>
-                                {movie.release_date
-                                    ? new Date(movie.release_date).toLocaleDateString("vi-VN")
-                                    : "Đang cập nhật"}
-                            </span>
-                        </div>
+                            <div className="hero-rating-item">
+                                <Clock size={18} />
+                                <span>{movie.duration} phút</span>
+                            </div>
+
+                            <div className="hero-rating-item">
+                                <Calendar size={18} />
+                                <span>
+                                    {movie.release_date
+                                        ? new Date(movie.release_date).toLocaleDateString("vi-VN")
+                                        : "Đang cập nhật"}
+                                </span>
+                            </div>
 
                     </div>
 

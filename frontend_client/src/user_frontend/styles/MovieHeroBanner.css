@@ -183,25 +183,18 @@
 
     pointer-events:none;
 
-    background:
-        linear-gradient(
+  background:
+linear-gradient(
+    90deg,
 
-            90deg,
-
-            rgba(0,0,0,.78) 0%,
-
-            rgba(0,0,0,.65) 14%,
-
-            rgba(0,0,0,.45) 30%,
-
-            rgba(0,0,0,.25) 46%,
-
-            rgba(0,0,0,.10) 62%,
-
-            transparent 82%
-
-        );
-
+    #000 0%,
+    rgba(0,0,0,.90) 12%,
+    rgba(0,0,0,.72) 28%,
+    rgba(0,0,0,.48) 45%,
+    rgba(0,0,0,.25) 60%,
+    rgba(0,0,0,.10) 72%,
+    transparent 88%
+);
 }
 
 /*=========================================================
