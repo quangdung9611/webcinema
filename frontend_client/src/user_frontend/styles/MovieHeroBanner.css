@@ -1,86 +1,44 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
 
 /*=========================================================
-    MOVIE HERO BANNER V7
-    CINEMATIC EDITION
+    MOVIE HERO BANNER V8
+    PREMIUM CINEMATIC
 =========================================================*/
 
 .cinema-hero-banner{
+
     position:relative;
+
     width:100%;
+
     height:82vh;
+
     min-height:760px;
+
     overflow:hidden;
+
     background:#000;
+
+    isolation:isolate;
+
 }
 
 /*=========================================================
     ANIMATIONS
 =========================================================*/
 
-@keyframes cinematicMove{
-    0%{
-        transform:
-            scale(1)
-            translateX(0)
-            translateY(0);
-    }
-
-    25%{
-        transform:
-            scale(1.02)
-            translateX(-8px)
-            translateY(-4px);
-    }
-
-    50%{
-        transform:
-            scale(1.03)
-            translateX(-14px)
-            translateY(-8px);
-    }
-
-    75%{
-        transform:
-            scale(1.02)
-            translateX(-6px)
-            translateY(-2px);
-    }
-
-    100%{
-        transform:
-            scale(1)
-            translateX(0)
-            translateY(0);
-    }
-}
-
-@keyframes heroScale{
+@keyframes heroReveal{
 
     0%{
 
         opacity:0;
 
         transform:
-            scale(.90);
+            scale(1.08);
 
         filter:
-            blur(14px)
-            brightness(.75)
-            saturate(1.15);
-
-    }
-
-    30%{
-
-        opacity:.45;
-
-        transform:
-            scale(.95);
-
-        filter:
-            blur(8px)
-            brightness(.88);
+            blur(18px)
+            brightness(.45);
 
     }
 
@@ -92,15 +50,8 @@
             scale(1.03);
 
         filter:
-            blur(2px)
-            brightness(1.08);
-
-    }
-
-    80%{
-
-        transform:
-            scale(1.015);
+            blur(4px)
+            brightness(.75);
 
     }
 
@@ -113,285 +64,412 @@
 
         filter:
             blur(0)
-            brightness(1);
+            brightness(.72);
 
     }
 
 }
-@keyframes redGlowMove{
+
+@keyframes heroMove{
 
     0%{
 
-        opacity:.15;
-
         transform:
-            translate(-80px,-30px)
-            scale(.8);
+            scale(1)
+            translate3d(0,0,0);
 
     }
 
     25%{
 
-        opacity:.35;
-
         transform:
-            translate(-30px,-10px)
-            scale(1);
+            scale(1.03)
+            translate3d(-12px,-4px,0);
 
     }
 
     50%{
 
-        opacity:.55;
-
         transform:
-            translate(20px,15px)
-            scale(1.15);
+            scale(1.05)
+            translate3d(-20px,-10px,0);
 
     }
 
     75%{
 
-        opacity:.30;
-
         transform:
-            translate(-20px,5px)
-            scale(.95);
+            scale(1.03)
+            translate3d(-8px,-2px,0);
 
     }
 
     100%{
 
-        opacity:.15;
-
         transform:
-            translate(-80px,-30px)
-            scale(.8);
+            scale(1)
+            translate3d(0,0,0);
 
     }
 
 }
-@keyframes redPulse{
+
+@keyframes blurPulse{
 
     0%,100%{
 
-        filter:
-            brightness(1)
-            saturate(1.08);
+        opacity:.95;
 
     }
 
     50%{
 
-        filter:
-            brightness(1.08)
-            saturate(1.18)
-            drop-shadow(0 0 35px rgba(255,40,40,.18));
+        opacity:.82;
 
     }
 
 }
+
 /*=========================================================
-    BACKGROUND IMAGE
+    BACKDROP IMAGE
 =========================================================*/
 
 .banner-horizontal-img{
+
     position:absolute;
+
     inset:0;
 
+    z-index:0;
+
     width:100%;
+
     height:100%;
 
     object-fit:cover;
-    object-position:center center;
 
- 
+    object-position:center;
 
-   animation:
-        heroScale 1.8s cubic-bezier(.22,.61,.36,1),
-        cinematicMove 18s ease-in-out infinite .75s,
-        redPulse 4s ease-in-out infinite 2s;
-    will-change:transform;
+    animation:
+
+        heroReveal 1.4s cubic-bezier(.22,.61,.36,1),
+
+        heroMove 18s ease-in-out infinite;
+
     filter:
-        brightness(1)
-        saturate(1.08)
-        contrast(1.03);
 
-    transition:
-        filter .8s ease;
+        brightness(.82)
+
+        contrast(1.08)
+
+        saturate(1.08);
+
+    will-change:transform;
+
 }
 
 /*=========================================================
-    OVERLAY V7.5
-=========================================================*/
-
-.banner-gradient-overlay{
-    position:absolute;
-    inset:0;
-    z-index:1;
-
-    background:
-
-        /* Horizontal Overlay */
-        linear-gradient(
-            90deg,
-            rgba(0,0,0,.82) 0%,
-            rgba(0,0,0,.65) 18%,
-            rgba(0,0,0,.45) 40%,
-            rgba(0,0,0,.18) 68%,
-            rgba(0,0,0,.06) 85%,
-            transparent 100%
-        ),
-
-        /* Bottom Overlay */
-        linear-gradient(
-            180deg,
-            rgba(0,0,0,.10) 0%,
-            transparent 30%,
-            rgba(0,0,0,.60) 100%
-        );
-}
-
-/*=========================================================
-    VIGNETTE
+    LEFT SHADOW
 =========================================================*/
 
 .cinema-hero-banner::before{
+
     content:"";
 
     position:absolute;
+    inset:0;
+
+    z-index:1;
+
+    pointer-events:none;
+
+    background:
+        linear-gradient(
+
+            90deg,
+
+            rgba(0,0,0,.78) 0%,
+
+            rgba(0,0,0,.65) 14%,
+
+            rgba(0,0,0,.45) 30%,
+
+            rgba(0,0,0,.25) 46%,
+
+            rgba(0,0,0,.10) 62%,
+
+            transparent 82%
+
+        );
+
+}
+
+/*=========================================================
+    BOTTOM VIGNETTE
+=========================================================*/
+
+.cinema-hero-banner::after{
+
+    content:"";
+
+    position:absolute;
+
     inset:0;
 
     z-index:2;
 
-    background:
-        radial-gradient(
-            circle at 80% center,
-            transparent 35%,
-            rgba(0,0,0,.42)
-        );
-
-    pointer-events:none;
-}
-.cinema-hero-banner::after{
-    content:"";
-
-    position:absolute;
-    inset:-20%;
-
-    z-index:1;
     pointer-events:none;
 
     background:
-        radial-gradient(
-            circle at 25% 45%,
-            rgba(255,35,35,.55) 0%,
-            rgba(255,35,35,.22) 18%,
-            rgba(255,35,35,.08) 35%,
-            transparent 60%
+
+        linear-gradient(
+
+            to top,
+
+            rgba(0,0,0,.96) 0%,
+
+            rgba(0,0,0,.82) 10%,
+
+            rgba(0,0,0,.58) 22%,
+
+            rgba(0,0,0,.22) 42%,
+
+            transparent 68%
+
         );
 
-    filter:
-        blur(80px);
-
-    mix-blend-mode:screen;
-
-    animation:
-        redGlowMove 9s ease-in-out infinite;
 }
+
 /*=========================================================
     CONTENT WRAPPER
 =========================================================*/
 
 .hero-content-wrapper{
+
     position:relative;
-    z-index:5;
+
+    z-index:10;
+
+    width:100%;
 
     max-width:1500px;
+
     height:100%;
 
     margin:auto;
+
     padding:0 90px;
 
     display:flex;
+
     align-items:center;
+
 }
 
+/*=========================================================
+    GLASS BLUR AREA
+=========================================================*/
+
+.hero-content-wrapper::before{
+
+    content:"";
+
+    position:absolute;
+
+    left:-140px;
+
+    top:-12%;
+
+    width:52%;
+
+    height:124%;
+
+    z-index:-1;
+
+    pointer-events:none;
+
+    backdrop-filter:
+
+        blur(16px);
+
+      
+
+    -webkit-backdrop-filter:
+
+        blur(16px);
+
+
+    mask-image:
+
+        linear-gradient(
+
+            90deg,
+
+            black 0%,
+
+            black 42%,
+
+            rgba(0,0,0,.75) 60%,
+
+            transparent 100%
+
+        );
+
+    -webkit-mask-image:
+
+        linear-gradient(
+
+            90deg,
+
+            black 0%,
+
+            black 42%,
+
+            rgba(0,0,0,.75) 60%,
+
+            transparent 100%
+
+        );
+
+    animation:
+
+        blurPulse 8s ease-in-out infinite;
+
+}
+
+/*=========================================================
+    LEFT CONTENT
+=========================================================*/
+
 .hero-info-side{
+
     width:720px;
+
+    max-width:100%;
+
 }
 /*=========================================================
     ENTRANCE ANIMATIONS
 =========================================================*/
 
 .hero-title-row{
+
+    display:flex;
+
+    align-items:flex-start;
+
+    justify-content:flex-start;
+
+    gap:18px;
+
+    margin-bottom:24px;
+
     opacity:0;
+
     animation:fadeUp .8s ease forwards;
+
     animation-delay:.2s;
+
 }
 
 .hero-rating-row{
+
+    display:flex;
+
+    align-items:center;
+
+    flex-wrap:wrap;
+
+    gap:16px;
+
+    margin-bottom:34px;
+
     opacity:0;
+
     animation:fadeUp .8s ease forwards;
-    animation-delay:.5s;
+
+    animation-delay:.45s;
+
 }
 
 .hero-description{
+
     opacity:0;
+
     animation:fadeUp .8s ease forwards;
-    animation-delay:.8s;
+
+    animation-delay:.7s;
+
 }
 
 .hero-info-list{
+
     opacity:0;
+
     animation:fadeUp .8s ease forwards;
-    animation-delay:1.1s;
+
+    animation-delay:.95s;
+
 }
 
 /*=========================================================
-    TITLE
+    MOVIE TITLE
 =========================================================*/
 
-.hero-title-row{
-    display:flex;
-    align-items:center;
-    gap:24px;
-
-    margin-bottom:35px;
-}
-
 .hero-movie-title{
+
     margin:0;
 
-    max-width:100%;
-
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+    max-width:620px;
 
     font-family:'Cinzel',serif;
-    font-size:clamp(4rem,5vw,6rem);
+
     font-weight:900;
-    line-height:1;
-    letter-spacing:3px;
+
+    line-height:.92;
+
+    letter-spacing:1.5px;
+
     text-transform:uppercase;
 
+    word-break:break-word;
+
+    overflow-wrap:anywhere;
+
+    text-wrap:balance;
+
+    transition:font-size .25s ease;
+
     background:linear-gradient(
+
         180deg,
+
         #ffffff 0%,
-        #ffeaea 15%,
-        #ffbcbc 35%,
-        #ff5b5b 55%,
-        #d30000 80%,
-        #850000 100%
+
+        #ffe9e9 18%,
+
+        #ffc1c1 36%,
+
+        #ff6666 58%,
+
+        #d50000 82%,
+
+        #8d0000 100%
+
     );
 
     -webkit-background-clip:text;
+
+    background-clip:text;
+
     -webkit-text-fill-color:transparent;
 
     text-shadow:
-        0 0 15px rgba(255,0,0,.15),
-        0 8px 25px rgba(0,0,0,.85);
+
+        0 0 18px rgba(255,0,0,.12),
+
+        0 8px 30px rgba(0,0,0,.9);
+
 }
 
 /*=========================================================
@@ -399,174 +477,242 @@
 =========================================================*/
 
 .hero-age-badge{
-    width:88px;
-    height:72px;
 
     flex-shrink:0;
 
     display:flex;
+
     align-items:center;
+
     justify-content:center;
 
-    border-radius:18px;
+    width:62px;
 
-    font-size:30px;
+    height:62px;
+
+    margin-top:10px;
+
+    border-radius:16px;
+
+    font-size:22px;
+
     font-weight:900;
+
     color:#fff;
 
-    background:linear-gradient(
-        180deg,
-        #ff4d4d,
-        #d00000
-    );
+    background:
+
+        linear-gradient(
+
+            180deg,
+
+            #ff6666,
+
+            #c40000
+
+        );
+
+    border:1px solid rgba(255,255,255,.15);
 
     box-shadow:
-        0 10px 30px rgba(255,0,0,.35);
 
-    transition:.3s;
+        0 10px 24px rgba(229,9,20,.35);
+
+    transition:.35s;
+
 }
 
 .hero-age-badge:hover{
+
     transform:translateY(-3px);
 
     box-shadow:
-        0 18px 40px rgba(255,0,0,.45);
+
+        0 18px 34px rgba(229,9,20,.45);
+
 }
 
 /*=========================================================
-    RATING
+    META INFO
 =========================================================*/
 
-.hero-rating-row{
-    display:flex;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:18px;
-
-    margin-bottom:35px;
-}
-
 .hero-rating-item{
-    display:flex;
-    align-items:center;
-    gap:12px;
 
-    padding:16px 26px;
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    padding:14px 22px;
+
+    border-radius:16px;
 
     border:1px solid rgba(255,255,255,.08);
-    border-radius:18px;
 
-    background:rgba(15,15,15,.72);
+    background:rgba(255,255,255,.05);
 
-    color:#fff;
-    font-size:17px;
-    font-weight:700;
+    backdrop-filter:blur(10px);
 
-    transition:.35s ease;
-}
+    -webkit-backdrop-filter:blur(10px);
 
-.hero-rating-item svg{
-    width:20px;
-    height:20px;
-}
+    transition:.35s;
 
-.hero-rating-item span{
-    white-space:nowrap;
 }
 
 .hero-rating-item:hover{
+
     transform:translateY(-4px);
 
-    border-color:rgba(255,40,40,.45);
+    border-color:rgba(255,80,80,.35);
 
-    box-shadow:
-        0 12px 28px rgba(255,0,0,.12);
+    background:rgba(255,255,255,.08);
+
 }
+
+.hero-rating-item svg{
+
+    width:19px;
+
+    height:19px;
+
+    flex-shrink:0;
+
+}
+
+.hero-rating-item span{
+
+    color:#fff;
+
+    font-size:16px;
+
+    font-weight:700;
+
+    white-space:nowrap;
+
+}
+
 /*=========================================================
     DESCRIPTION
 =========================================================*/
 
 .hero-description{
-    max-width:670px;
-    margin-bottom:40px;
+
+    max-width:600px;
+
+    margin:0 0 42px;
 
     color:rgba(255,255,255,.92);
 
     font-size:18px;
-    font-weight:500;
-    line-height:1.9;
+
+    font-weight:400;
+
+    line-height:1.8;
+
+    letter-spacing:.2px;
+
 }
 
 /*=========================================================
-    INFO LIST
+    MOVIE INFO
 =========================================================*/
 
 .hero-info-list{
+
     display:flex;
+
     flex-direction:column;
+
     gap:18px;
+
 }
 
 .hero-info-list::before{
+
     content:"";
 
-    display:block;
+    width:90px;
 
-    width:80px;
     height:3px;
 
-    margin-bottom:10px;
+    margin-bottom:12px;
 
-    border-radius:50px;
+    border-radius:999px;
 
-    background:linear-gradient(
-        90deg,
-        #ff3b3b,
-        #8f0000
-    );
+    background:
+
+        linear-gradient(
+
+            90deg,
+
+            #ff4a4a,
+
+            #780000
+
+        );
+
 }
 
 .hero-info-line{
+
     display:flex;
+
     align-items:flex-start;
+
     gap:18px;
+
 }
 
 .hero-info-line strong{
-    min-width:140px;
 
-    color:#ff4242;
+    min-width:130px;
 
-    font-size:18px;
-    font-weight:800;
+    color:rgba(255,255,255,.65);
+
+    font-size:16px;
+
+    font-weight:700;
+
+    letter-spacing:.3px;
+
 }
 
 .hero-info-line span{
+
     flex:1;
 
     color:#fff;
 
-    font-size:17px;
-    font-weight:600;
-    line-height:1.8;
-}
+    font-size:16px;
 
+    font-weight:600;
+
+    line-height:1.8;
+
+}
 /*=========================================================
-    ACTION BUTTON GROUP
+    ACTION GROUP
 =========================================================*/
 
 .hero-action-group{
-    display:flex;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:22px;
 
-    margin-top:45px;
+    display:flex;
+
+    align-items:center;
+
+    flex-wrap:wrap;
+
+    gap:20px;
+
+    margin-top:52px;
 
     opacity:0;
 
     animation:fadeUp .8s ease forwards;
-    animation-delay:1.4s;
+
+    animation-delay:1.2s;
+
 }
 
 /*=========================================================
@@ -574,18 +720,27 @@
 =========================================================*/
 
 .hero-book-btn{
+
     position:relative;
+
     overflow:hidden;
 
     display:flex;
+
     align-items:center;
+
     justify-content:center;
+
     gap:14px;
 
-    height:70px;
+    min-width:235px;
+
+    height:68px;
+
     padding:0 42px;
 
     border:none;
+
     border-radius:18px;
 
     cursor:pointer;
@@ -593,62 +748,107 @@
     color:#fff;
 
     font-size:16px;
+
     font-weight:800;
-    letter-spacing:.5px;
+
+    letter-spacing:.6px;
+
     text-transform:uppercase;
 
-    background:linear-gradient(
-        180deg,
-        #ff5050,
-        #d60000
-    );
+    background:
+        linear-gradient(
+            180deg,
+            #ff5d5d 0%,
+            #e50914 55%,
+            #b10000 100%
+        );
 
     box-shadow:
-        0 15px 35px rgba(229,9,20,.35);
+        0 14px 32px rgba(229,9,20,.32);
 
-    transition:all .35s ease;
+    transition:
+        transform .35s ease,
+        box-shadow .35s ease,
+        filter .35s ease;
+
 }
 
 .hero-book-btn::before{
+
     content:"";
 
     position:absolute;
-    top:0;
-    left:-120%;
 
-    width:80%;
-    height:100%;
+    inset:0;
 
-    background:linear-gradient(
-        120deg,
-        transparent,
-        rgba(255,255,255,.45),
-        transparent
-    );
+    background:
 
-    transform:skewX(-25deg);
+        linear-gradient(
 
-    transition:.7s;
+            120deg,
+
+            transparent 20%,
+
+            rgba(255,255,255,.45) 50%,
+
+            transparent 80%
+
+        );
+
+    transform:
+
+        translateX(-160%)
+
+        skewX(-22deg);
+
+    transition:transform .8s ease;
+
 }
 
 .hero-book-btn:hover{
-    transform:translateY(-4px);
+
+    transform:
+
+        translateY(-5px)
+
+        scale(1.02);
+
+    filter:brightness(1.05);
 
     box-shadow:
-        0 22px 45px rgba(229,9,20,.45);
+
+        0 22px 46px rgba(229,9,20,.45);
+
 }
 
 .hero-book-btn:hover::before{
-    left:180%;
+
+    transform:
+
+        translateX(180%)
+
+        skewX(-22deg);
+
+}
+
+.hero-book-btn:active{
+
+    transform:scale(.97);
+
 }
 
 .hero-book-btn svg{
+
     width:20px;
+
     height:20px;
+
 }
 
 .hero-book-btn span{
+
     white-space:nowrap;
+
 }
 
 /*=========================================================
@@ -656,47 +856,170 @@
 =========================================================*/
 
 .hero-trailer-btn{
+
+    position:relative;
+
+    overflow:hidden;
+
     display:flex;
+
     align-items:center;
+
     justify-content:center;
+
     gap:14px;
 
-    height:70px;
+    min-width:220px;
+
+    height:68px;
+
     padding:0 40px;
 
-    border:1px solid rgba(255,255,255,.12);
     border-radius:18px;
 
     cursor:pointer;
 
-    background:rgba(255,255,255,.04);
-
     color:#fff;
 
     font-size:16px;
+
     font-weight:700;
 
-    transition:all .35s ease;
+    letter-spacing:.4px;
+
+    background:
+
+        rgba(255,255,255,.05);
+
+    border:
+
+        1px solid rgba(255,255,255,.12);
+
+    backdrop-filter:blur(12px);
+
+    -webkit-backdrop-filter:blur(12px);
+
+    transition:
+
+        all .35s ease;
+
+}
+
+.hero-trailer-btn::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    opacity:0;
+
+    background:
+
+        linear-gradient(
+
+            180deg,
+
+            rgba(255,255,255,.10),
+
+            transparent
+
+        );
+
+    transition:.35s;
+
 }
 
 .hero-trailer-btn:hover{
-    transform:translateY(-4px);
 
-    background:rgba(255,255,255,.08);
+    transform:
 
-    border-color:rgba(255,255,255,.22);
+        translateY(-5px);
+
+    border-color:
+
+        rgba(255,255,255,.28);
+
+    background:
+
+        rgba(255,255,255,.10);
 
     box-shadow:
-        0 12px 30px rgba(0,0,0,.25);
+
+        0 18px 38px rgba(0,0,0,.35);
+
+}
+
+.hero-trailer-btn:hover::before{
+
+    opacity:1;
+
+}
+
+.hero-trailer-btn:active{
+
+    transform:scale(.97);
+
 }
 
 .hero-trailer-btn svg{
+
     width:20px;
+
     height:20px;
+
 }
 
 .hero-trailer-btn span{
+
     white-space:nowrap;
+
+}
+
+/*=========================================================
+    BUTTON FOCUS
+=========================================================*/
+
+.hero-book-btn:focus-visible,
+.hero-trailer-btn:focus-visible{
+
+    outline:none;
+
+    box-shadow:
+
+        0 0 0 4px rgba(255,255,255,.12),
+
+        0 0 0 8px rgba(229,9,20,.28);
+
+}
+
+/*=========================================================
+    FADE UP
+=========================================================*/
+
+@keyframes fadeUp{
+
+    0%{
+
+        opacity:0;
+
+        transform:
+
+            translateY(40px);
+
+    }
+
+    100%{
+
+        opacity:1;
+
+        transform:
+
+            translateY(0);
+
+    }
+
 }
 /*=========================================================
     RESPONSIVE
@@ -709,15 +1032,21 @@
 @media (max-width:1400px){
 
     .hero-content-wrapper{
+
         padding:0 70px;
+
     }
 
     .hero-info-side{
+
         width:650px;
+
     }
 
-    .hero-movie-title{
-        font-size:clamp(3.5rem,5vw,5rem);
+    .hero-description{
+
+        max-width:560px;
+
     }
 
 }
@@ -729,28 +1058,45 @@
 @media (max-width:1200px){
 
     .cinema-hero-banner{
+
         min-height:700px;
+
     }
 
     .hero-content-wrapper{
-        padding:0 50px;
+
+        padding:0 55px;
+
     }
 
     .hero-info-side{
+
         width:100%;
+
         max-width:620px;
+
     }
 
-    .hero-movie-title{
-        font-size:4rem;
+    .hero-title-row{
+
+        gap:16px;
+
     }
 
-    .hero-description{
-        font-size:17px;
+    .hero-age-badge{
+
+        width:58px;
+
+        height:58px;
+
+        font-size:20px;
+
     }
 
     .hero-rating-item{
-        padding:14px 20px;
+
+        padding:13px 18px;
+
     }
 
 }
@@ -762,50 +1108,71 @@
 @media (max-width:992px){
 
     .cinema-hero-banner{
-        height:75vh;
+
         min-height:680px;
+
+        height:75vh;
+
     }
 
     .hero-content-wrapper{
+
         padding:0 35px;
+
     }
 
-    .hero-info-side{
-        max-width:100%;
+    .hero-content-wrapper::before{
+
+        width:68%;
+
+        left:-90px;
+
     }
 
     .hero-title-row{
-        gap:18px;
+
+        gap:15px;
+
+        margin-bottom:22px;
+
     }
 
-    .hero-movie-title{
-        font-size:3.4rem;
-        letter-spacing:2px;
-    }
+    .hero-rating-row{
 
-    .hero-age-badge{
-        width:74px;
-        height:60px;
-        font-size:24px;
+        gap:12px;
+
+        margin-bottom:28px;
+
     }
 
     .hero-description{
+
         max-width:100%;
+
         font-size:16px;
-        line-height:1.8;
+
     }
 
     .hero-info-line strong{
+
         min-width:120px;
-        font-size:16px;
+
+        font-size:15px;
+
     }
 
     .hero-info-line span{
+
         font-size:15px;
+
     }
 
     .hero-action-group{
+
+        margin-top:42px;
+
         gap:16px;
+
     }
 
 }
@@ -817,86 +1184,129 @@
 @media (max-width:768px){
 
     .cinema-hero-banner{
+
+        min-height:760px;
+
         height:auto;
-        min-height:720px;
+
+    }
+
+    .banner-horizontal-img{
+
+        object-position:72% center;
+
+    }
+
+    .cinema-hero-banner::before{
+
+        background:
+
+            linear-gradient(
+
+                90deg,
+
+                rgba(0,0,0,.94) 0%,
+
+                rgba(0,0,0,.82) 38%,
+
+                rgba(0,0,0,.52) 65%,
+
+                transparent 100%
+
+            );
+
     }
 
     .hero-content-wrapper{
-        padding:120px 25px 60px;
+
+        padding:120px 24px 60px;
+
         align-items:flex-end;
+
+    }
+
+    .hero-content-wrapper::before{
+
+        display:none;
+
     }
 
     .hero-info-side{
+
         width:100%;
+
     }
 
     .hero-title-row{
-        flex-wrap:wrap;
-        gap:15px;
-        margin-bottom:25px;
-    }
 
-    .hero-movie-title{
-        font-size:2.7rem;
-        line-height:1.1;
-        letter-spacing:1px;
-        white-space:normal;
+        flex-wrap:wrap;
+
+        align-items:center;
+
+        gap:14px;
+
     }
 
     .hero-age-badge{
-        width:65px;
-        height:55px;
-        font-size:22px;
-        border-radius:14px;
+
+        margin-top:0;
+
     }
 
     .hero-rating-row{
-        gap:12px;
-        margin-bottom:25px;
+
+        gap:10px;
+
     }
 
     .hero-rating-item{
-        padding:12px 18px;
+
+        padding:12px 16px;
+
         font-size:14px;
+
     }
 
     .hero-description{
-        margin-bottom:30px;
-        font-size:15px;
-        line-height:1.8;
-    }
 
-    .hero-info-list{
-        gap:14px;
+        font-size:15px;
+
+        line-height:1.75;
+
+        margin-bottom:32px;
+
     }
 
     .hero-info-line{
+
         flex-direction:column;
-        gap:5px;
+
+        gap:4px;
+
     }
 
     .hero-info-line strong{
-        min-width:auto;
-        font-size:15px;
-    }
 
-    .hero-info-line span{
-        font-size:14px;
-        line-height:1.7;
+        min-width:auto;
+
     }
 
     .hero-action-group{
+
         flex-direction:column;
+
         align-items:stretch;
-        gap:15px;
-        margin-top:35px;
+
     }
 
     .hero-book-btn,
+
     .hero-trailer-btn{
+
         width:100%;
-        height:64px;
-        justify-content:center;
+
+        min-width:100%;
+
     }
 
 }
@@ -908,37 +1318,45 @@
 @media (max-width:576px){
 
     .cinema-hero-banner{
-        min-height:680px;
+
+        min-height:700px;
+
     }
 
     .hero-content-wrapper{
-        padding:110px 20px 50px;
+
+        padding:105px 18px 45px;
+
     }
 
-    .hero-movie-title{
-        font-size:2.2rem;
+    .banner-horizontal-img{
+
+        object-position:74% center;
+
     }
 
     .hero-rating-item{
-        gap:8px;
-        padding:10px 15px;
-        font-size:13px;
-    }
 
-    .hero-rating-item svg{
-        width:18px;
-        height:18px;
+        width:100%;
+
+        justify-content:center;
+
     }
 
     .hero-description{
+
         font-size:14px;
+
     }
 
     .hero-book-btn,
+
     .hero-trailer-btn{
+
         height:60px;
-        padding:0 20px;
+
         font-size:14px;
+
     }
 
 }
@@ -949,46 +1367,58 @@
 
 @media (max-width:480px){
 
-    .hero-movie-title{
-        font-size:2rem;
+    .hero-title-row{
+
+        margin-bottom:18px;
+
     }
 
     .hero-age-badge{
-        width:58px;
-        height:48px;
+
+        width:54px;
+
+        height:54px;
+
         font-size:18px;
+
     }
 
     .hero-rating-row{
-        gap:10px;
-    }
 
-    .hero-rating-item{
-        width:100%;
-        justify-content:center;
+        margin-bottom:22px;
+
     }
 
     .hero-description{
+
         font-size:13px;
-        line-height:1.75;
+
+        line-height:1.7;
+
     }
 
     .hero-info-line strong{
+
         font-size:14px;
+
     }
 
     .hero-info-line span{
+
         font-size:13px;
+
     }
 
-    .hero-book-btn{
-        height:58px;
-        font-size:13px;
-    }
+    .hero-book-btn,
 
     .hero-trailer-btn{
-        height:58px;
+
+        height:56px;
+
+        border-radius:16px;
+
         font-size:13px;
+
     }
 
 }
@@ -1000,21 +1430,25 @@
 @media (max-width:375px){
 
     .hero-content-wrapper{
-        padding:100px 15px 45px;
-    }
 
-    .hero-movie-title{
-        font-size:1.8rem;
+        padding:95px 15px 40px;
+
     }
 
     .hero-description{
+
         font-size:12px;
+
     }
 
     .hero-book-btn,
+
     .hero-trailer-btn{
-        height:55px;
+
+        height:54px;
+
         font-size:12px;
+
     }
 
 }

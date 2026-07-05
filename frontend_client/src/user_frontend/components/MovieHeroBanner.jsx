@@ -7,8 +7,20 @@ const MovieHeroBanner = ({
     onBook,
     onTrailer
 }) => {
-    if (!movie) return null;
+   if (!movie) return null;
+  const getTitleSize = (title) => {
 
+    const len = title.trim().length;
+
+    if (len <= 12) return 80;
+
+    if (len <= 25) return 60;
+
+    if (len <= 40) return 45;
+
+    return 30;
+
+};
     return (
         <div className="cinema-hero-banner">
 
@@ -19,10 +31,6 @@ const MovieHeroBanner = ({
                 className="banner-horizontal-img"
             />
 
-            {/* OVERLAY */}
-
-            <div className="banner-gradient-overlay"></div>
-
             {/* CONTENT */}
             <div className="hero-content-wrapper">
 
@@ -30,10 +38,14 @@ const MovieHeroBanner = ({
 
                     {/* TITLE */}
                     <div className="hero-title-row">
-                        <h1 className="hero-movie-title">
+                        <h1
+                            className="hero-movie-title"
+                            style={{
+                                fontSize: `${getTitleSize(movie.title)}px`
+                            }}
+                        >
                             {movie.title}
                         </h1>
-
                         <span className="hero-age-badge">
                             T16
                         </span>
