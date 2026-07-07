@@ -1,696 +1,276 @@
-const bcrypt = require('bcryptjs');
-const db = require('../Config/db');
-const MailServiceTicket =
-    require('../Services/MailServiceTicket');
-/**
- * ==========================================
- * HÀM HỖ TRỢ (HELPER FUNCTIONS)
- * ==========================================
- */
+/*=========================================================
+    DEPENDENCIES
+=========================================================*/
 
-// Hàm kiểm tra định dạng dữ liệu đầu vào (Validation)
-const validateUserData = (data, isUpdate = false) => {
-    const { username, full_name, email, password, phone,address,role } = data;
+const UserService = require("../Services/UserService");
 
-    // 1. Kiểm tra các trường bắt buộc khi thêm mới
-    if (!isUpdate && (!username || !full_name || !email || !password || !phone)) {
-        return { error: "Vui lòng nhập đầy đủ thông tin bắt buộc" };
-    }
+/*=========================================================
+    ADMIN - GET ALL USERS
+=========================================================*/
 
-    // 2. Kiểm tra độ dài họ tên (> 8 ký tự)
-    if (full_name && full_name.length < 8) {
-        return { field: 'full_name', error: "Họ tên phải từ 8 ký tự trở lên" };
-    }
-
-    // 3. Kiểm tra định dạng số điện thoại (10 số)
-    if (phone && !/^[0-9]{10}$/.test(phone)) {
-        return { field: 'phone', error: "Số điện thoại phải đúng 10 chữ số" };
-    }
-
-    // 4. Kiểm tra độ mạnh mật khẩu (Chỉ kiểm tra nếu có nhập password)
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    if (password && !passwordRegex.test(password)) {
-        return { 
-            field: 'password', 
-            error: "Mật khẩu yếu! Cần ít nhất 8 ký tự, bao gồm chữ hoa, thường, số và ký tự đặc biệt" 
-        };
-    }
-    // 5. Kiểm tra địa chỉ (Bổ sung phần Quang Dũng nhắc)
-    if (address !== undefined && address.trim().length < 5) {
-        return { field: 'address', error: "Địa chỉ quá ngắn, vui lòng nhập chi tiết hơn" };
-    }
-
-    // 6. Kiểm tra vai trò
-    if (role && !['admin', 'customer'].includes(role)) {
-        return { field: 'role', error: "Vai trò không hợp lệ" };
-    }
-    return null; // Trả về null nếu mọi thứ hợp lệ
-};
-
-/**
- * ==========================================
- * CÁC HÀM XỬ LÝ CHÍNH (CONTROLLERS)
- * ==========================================
- */
-
-// 1. Lấy danh sách tất cả người dùng (Hiển thị đầy đủ address và role trên bảng Admin)
 exports.getAllUsers = async (req, res) => {
     try {
-        const [rows] = await db.query(
-            'SELECT user_id, username, full_name, email, phone, role, address, points FROM users ORDER BY user_id DESC'
-        );
-        res.status(200).json(rows);
-    } catch (error) {
-        console.error("Get All Users Error:", error);
-        res.status(500).json({ error: "Lỗi hệ thống khi lấy danh sách người dùng" });
+        const data = await UserService.getAllUsers();
+        return res.status(200).json({
+            success: true,
+            data
+        });
+    } catch (err) {
+        console.error("Get All Users Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
     }
 };
 
-// 2. Thêm mới người dùng
+/*=========================================================
+    ADMIN - GET USER BY ID
+=========================================================*/
+
+exports.getUserById = async (req, res) => {
+    try {
+        const { user_id } = req.params;
+        const user = await UserService.getUserById(user_id);
+        return res.status(200).json({
+            success: true,
+            data: user
+        });
+    } catch (err) {
+        console.error("Get User By ID Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    ADMIN - CREATE USER
+=========================================================*/
+
 exports.createUser = async (req, res) => {
     try {
-        const { username, full_name, email, password, phone, role, address } = req.body;
-
-        const validationError = validateUserData(req.body);
-        if (validationError) return res.status(400).json(validationError);
-
-        // Kiểm tra trùng lặp
-        const [existing] = await db.query(
-            'SELECT username, email, phone FROM users WHERE username = ? OR email = ? OR phone = ?',
-            [username, email, phone]
-        );
-
-        if (existing.length > 0) {
-            const user = existing[0];
-            const field = user.username === username ? 'username' : (user.email === email ? 'email' : 'phone');
-            return res.status(400).json({ field, error: `${field} này đã tồn tại trong hệ thống` });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Mặc định là customer nếu không chọn role
-        const finalRole = role || 'customer';
-
-        const sql = `INSERT INTO users (username, full_name, email, password, phone, role, address) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`;
-        
-        const [result] = await db.query(sql, [username, full_name, email, hashedPassword, phone, finalRole, address || null]);
-
-        res.status(201).json({ 
-            message: "Thêm người dùng thành công", 
-            user_id: result.insertId 
+        const userId = await UserService.createUser(req.body);
+        return res.status(201).json({
+            success: true,
+            message: "Tạo user thành công",
+            data: { user_id: userId }
         });
-
     } catch (err) {
         console.error("Create User Error:", err);
-        res.status(500).json({ error: "Lỗi hệ thống khi tạo người dùng" });
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            field: err.field || null,
+            message: err.message || "Lỗi máy chủ"
+        });
     }
 };
 
-// 3. Cập nhật thông tin người dùng (Quan trọng cho Form Admin)
+/*=========================================================
+    ADMIN - UPDATE USER
+=========================================================*/
+
 exports.updateUser = async (req, res) => {
-
-    const { user_id } = req.params;
-
-    const {
-        username,
-        full_name,
-        phone,
-        email,
-        role,
-        address,
-        password
-    } = req.body;
-
     try {
-
-        const validationError =
-            validateUserData(req.body, true);
-
-        if (validationError) {
-            return res.status(400).json(validationError);
-        }
-
-        /* ==========================================
-            CHECK TRÙNG USERNAME / EMAIL / PHONE
-        ========================================== */
-
-        const [existing] = await db.query(
-            `
-            SELECT username, email, phone
-            FROM users
-            WHERE (
-                username = ?
-                OR email = ?
-                OR phone = ?
-            )
-            AND user_id != ?
-            `,
-            [
-                username,
-                email,
-                phone,
-                user_id
-            ]
-        );
-
-        if (existing.length > 0) {
-
-            const user = existing[0];
-
-            const field =
-                user.username === username
-                    ? 'username'
-                    : (
-                        user.email === email
-                            ? 'email'
-                            : 'phone'
-                    );
-
-            return res.status(400).json({
-                field,
-                error: `${field} đã tồn tại trong hệ thống`
-            });
-
-        }
-
-        /* ==========================================
-            UPDATE QUERY
-        ========================================== */
-
-        let sql = `
-            UPDATE users
-            SET
-                username = ?,
-                full_name = ?,
-                phone = ?,
-                email = ?,
-                role = ?,
-                address = ?
-        `;
-
-        let params = [
-            username,
-            full_name,
-            phone,
-            email,
-            role,
-            address
-        ];
-
-        /* PASSWORD */
-
-        if (password && password.trim() !== '') {
-
-            const hashedPassword =
-                await bcrypt.hash(password, 10);
-
-            sql += `, password = ?`;
-
-            params.push(hashedPassword);
-
-        }
-
-        sql += ` WHERE user_id = ?`;
-
-        params.push(user_id);
-
-        const [result] = await db.query(
-            sql,
-            params
-        );
-
-        if (result.affectedRows === 0) {
-
-            return res.status(404).json({
-                error: 'Không tìm thấy người dùng'
-            });
-
-        }
-
-        res.status(200).json({
-            message: 'Cập nhật thành công'
+        const { user_id } = req.params;
+        await UserService.updateUser(user_id, req.body);
+        return res.status(200).json({
+            success: true,
+            message: "Cập nhật user thành công"
         });
-
     } catch (err) {
-
-        console.error(
-            'Update User Error:',
-            err
-        );
-
-        res.status(500).json({
-            error: 'Lỗi hệ thống khi cập nhật'
+        console.error("Update User Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            field: err.field || null,
+            message: err.message || "Lỗi máy chủ"
         });
-
     }
-
 };
-// 4. Xóa người dùng
-exports.deleteUser = async (req, res) => {
-    const { user_id } = req.params;
+
+/*=========================================================
+    ADMIN - UPDATE USER STATUS
+=========================================================*/
+
+exports.updateUserStatus = async (req, res) => {
     try {
-        const [result] = await db.query('DELETE FROM users WHERE user_id = ?', [user_id]);
-        
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Không tìm thấy người dùng" });
+        const { user_id } = req.params;
+        const { status } = req.body;
+
+        if (!status || !["active", "banned"].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Status phải là "active" hoặc "banned"'
+            });
         }
-        
-        res.status(200).json({ message: "Đã xóa người dùng thành công" });
+
+        await UserService.updateUserStatus(user_id, status);
+        return res.status(200).json({
+            success: true,
+            message: `Cập nhật trạng thái user thành công: ${status}`
+        });
+    } catch (err) {
+        console.error("Update User Status Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    ADMIN - UPDATE USER ROLE
+=========================================================*/
+
+exports.updateUserRole = async (req, res) => {
+    try {
+        const { user_id } = req.params;
+        const { role } = req.body;
+
+        if (!role || !["admin", "customer"].includes(role)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Role phải là "admin" hoặc "customer"'
+            });
+        }
+
+        await UserService.updateUserRole(user_id, role);
+        return res.status(200).json({
+            success: true,
+            message: `Cập nhật role user thành công: ${role}`
+        });
+    } catch (err) {
+        console.error("Update User Role Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    ADMIN - DELETE USER
+=========================================================*/
+
+exports.deleteUser = async (req, res) => {
+    try {
+        const { user_id } = req.params;
+        await UserService.deleteUser(user_id);
+        return res.status(200).json({
+            success: true,
+            message: "Xóa user thành công"
+        });
     } catch (err) {
         console.error("Delete User Error:", err);
-        res.status(500).json({ error: "Không thể xóa (Người dùng có dữ liệu liên quan)" });
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
     }
 };
-// Lấy thông tin cá nhân dựa trên user_id từ Token
+
+/*=========================================================
+    USER - GET MY PROFILE
+=========================================================*/
+
 exports.getUserProfile = async (req, res) => {
-    // Lưu ý: user_id này lấy từ middleware xác thực (req.user)
-    const userId = req.user.user_id; 
-
     try {
-        const [rows] = await db.query(
-            'SELECT user_id, username, full_name, email, phone, address, role, points FROM users WHERE user_id = ?',
-            [userId]
-        );
-
-        if (rows.length === 0) {
-            return res.status(404).json({ error: "Không tìm thấy người dùng" });
-        }
-
-        res.status(200).json(rows[0]);
-    } catch (error) {
-        console.error("Get Profile Error:", error);
-        res.status(500).json({ error: "Lỗi hệ thống khi lấy thông tin cá nhân" });
+        const user = await UserService.getProfile(req.user.user_id);
+        return res.status(200).json({
+            success: true,
+            data: user
+        });
+    } catch (err) {
+        console.error("Get Profile Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
     }
 };
-// 6. Người dùng tự cập nhật thông tin
+
+/*=========================================================
+    USER - UPDATE MY PROFILE
+=========================================================*/
+
 exports.updateUserProfile = async (req, res) => {
-    const userId = req.user.user_id;
-    const { full_name, phone, email, address, oldPassword, newPassword } = req.body;
-
     try {
-        const validationError = validateUserData({ 
-            full_name, 
-            phone, 
-            email, 
-            address, 
-            password: newPassword 
-        }, true);
-        
-        if (validationError) return res.status(400).json(validationError);
-
-        let hashedPassword = null;
-        if (newPassword && newPassword.trim() !== "") {
-            if (!oldPassword) {
-                return res.status(400).json({ field: 'oldPassword', error: "Vui lòng nhập mật khẩu cũ" });
-            }
-
-            const [rows] = await db.query('SELECT password FROM users WHERE user_id = ?', [userId]);
-            const isMatch = await bcrypt.compare(oldPassword, rows[0].password);
-            
-            if (!isMatch) {
-                return res.status(400).json({ field: 'oldPassword', error: "Mật khẩu cũ không đúng" });
-            }
-            hashedPassword = await bcrypt.hash(newPassword, 10);
-        }
-
-        let fields = ["full_name = ?", "phone = ?", "email = ?", "address = ?"];
-        let params = [full_name, phone, email, address];
-
-        if (hashedPassword) {
-            fields.push("password = ?");
-            params.push(hashedPassword);
-        }
-
-        params.push(userId);
-        const sql = `UPDATE users SET ${fields.join(", ")} WHERE user_id = ?`;
-        await db.query(sql, params);
-
-        // Lấy lại dữ liệu mới nhất để trả về Frontend
-        const [updatedUser] = await db.query(
-            'SELECT user_id, username, full_name, email, phone, address, role, points FROM users WHERE user_id = ?',
-            [userId]
+        const result = await UserService.updateProfile(
+            req.user.user_id,
+            req.body
         );
-
-        res.status(200).json({ 
-            message: "Cập nhật thành công!",
-            user: updatedUser[0] 
+        return res.status(200).json({
+            success: true,
+            message: "Cập nhật hồ sơ thành công",
+            data: result
         });
     } catch (err) {
-        res.status(500).json({ error: "Lỗi máy chủ: " + err.message });
+        console.error("Update Profile Error:", err);
+        return res.status(err.statusCode || 400).json({
+            success: false,
+            field: err.field || null,
+            message: err.message || "Lỗi máy chủ"
+        });
     }
 };
 
-// 7. Lấy lịch sử giao dịch
-exports.getBookingHistory = async (req, res) => {
-    const userId = req.user.user_id;
+/*=========================================================
+    USER - GET MY BOOKINGS
+=========================================================*/
 
-    const sql = `
-    SELECT 
-        b.booking_id AS bookingId,
-        m.title AS movieTitle,
-        m.poster_url AS moviePoster,
-        c.cinema_name AS cinemaName,
-        r.room_name AS roomName,
-
-        DATE_FORMAT(
-            b.created_at,
-            '%d/%m/%Y %H:%i'
-        ) AS bookingDateFull,
-
-        DATE_FORMAT(
-            s.start_time,
-            '%d/%m/%Y'
-        ) AS selectedDate,
-
-        TIME_FORMAT(
-            s.start_time,
-            '%H:%i'
-        ) AS startTime,
-
-        GROUP_CONCAT(
-            bd.item_name
-            SEPARATOR ', '
-        ) AS seatDisplay,
-
-        b.total_amount AS total_amount,
-        b.status,
-        b.memo AS ticketPIN
-
-    FROM bookings b
-
-    JOIN showtimes s
-        ON b.showtime_id = s.showtime_id
-
-    JOIN movies m
-        ON s.movie_id = m.movie_id
-
-    JOIN rooms r
-        ON s.room_id = r.room_id
-
-    JOIN cinemas c
-        ON s.cinema_id = c.cinema_id
-
-    LEFT JOIN booking_details bd
-        ON b.booking_id = bd.booking_id
-
-    WHERE b.user_id = ?
-
-    GROUP BY b.booking_id
-
-    ORDER BY b.created_at DESC
-    `;
-
+exports.getMyBookings = async (req, res) => {
     try {
-
-        const [rows] =
-            await db.query(
-                sql,
-                [userId]
-            );
-
-        res.status(200).json({
-            bookings: rows
+        const bookings = await UserService.getUserBookings(req.user.user_id);
+        return res.status(200).json({
+            success: true,
+            data: bookings
         });
-
-    } catch (error) {
-
-        console.error(
-            "Booking History Error:",
-            error
-        );
-
-        res.status(500).json({
-            error:
-                "Lỗi khi lấy lịch sử giao dịch"
+    } catch (err) {
+        console.error("Get My Bookings Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
         });
     }
 };
-// 8. Xóa sạch lịch sử đặt vé và Reset điểm của User
+
+/*=========================================================
+    USER - CLEAR BOOKING HISTORY
+=========================================================*/
+
 exports.clearBookingHistory = async (req, res) => {
-    const userId = req.user.user_id; 
-    const connection = await db.getConnection();
-    await connection.beginTransaction();
-
     try {
-        // 1. Tìm tất cả booking_id của user này
-        const [userBookings] = await connection.query(
-            'SELECT booking_id FROM bookings WHERE user_id = ?', 
-            [userId]
-        );
-        
-        if (userBookings.length > 0) {
-            const bookingIds = userBookings.map(b => b.booking_id);
-            
-            // 2. Xóa chi tiết hóa đơn
-            await connection.query('DELETE FROM booking_details WHERE booking_id IN (?)', [bookingIds]);
-            
-            // 3. Xóa vé
-            await connection.query('DELETE FROM tickets WHERE booking_id IN (?)', [bookingIds]);
-            
-            // 4. Xóa bảng bookings
-            await connection.query('DELETE FROM bookings WHERE user_id = ?', [userId]);
-        }
-
-        // --- BƯỚC FIX LỖI Ở ĐÂY ---
-        // Chỉ update trường points vì database của Dũng chỉ có trường này
-        await connection.query(
-            'UPDATE users SET points = 0 WHERE user_id = ?', 
-            [userId]
-        );
-
-        await connection.commit();
-        res.status(200).json({ 
-            success: true, 
-            message: "Đã xóa lịch sử và reset điểm thành công!" 
+        await UserService.clearHistory(req.user.user_id);
+        return res.status(200).json({
+            success: true,
+            message: "Đã xóa lịch sử đặt vé"
         });
-
-    } catch (error) {
-        if (connection) await connection.rollback();
-        console.error("Lỗi xóa lịch sử:", error);
-        res.status(500).json({ error: "Lỗi hệ thống: " + error.message });
-    } finally {
-        if (connection) connection.release();
+    } catch (err) {
+        console.error("Clear History Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
     }
 };
 
-exports.sendResetOTP = async (req, res) => {
+/*=========================================================
+    USER - RESET MY POINTS (Optional)
+=========================================================*/
 
-    const { email } = req.body;
-
+exports.resetMyPoints = async (req, res) => {
     try {
-
-        const [users] = await db.query(
-            `
-            SELECT user_id
-            FROM users
-            WHERE email = ?
-            `,
-            [email]
-        );
-
-        if (users.length === 0) {
-
-            return res.status(200).json({
-                message: 'Nếu email tồn tại trong hệ thống, mã OTP đã được gửi.'
-            });
-
-        }
-
-        const otp =
-            Math.floor(
-                100000 + Math.random() * 900000
-            ).toString();
-
-        otpStorage[email] = {
-
-            otp,
-
-            expiresAt:
-                Date.now() +
-                5 * 60 * 1000
-
-        };
-
-        await MailServiceTicket
-            .sendResetPasswordOTP(
-                email,
-                otp
-            );
-
-        res.status(200).json({
-
-            message:
-                'OTP đã được gửi'
-
+        await UserService.resetPoints(req.user.user_id);
+        return res.status(200).json({
+            success: true,
+            message: "Đã reset điểm thành công"
         });
-
     } catch (err) {
-
-        console.error(err);
-
-        res.status(500).json({
-
-            message:
-                'Lỗi gửi OTP'
-
+        console.error("Reset Points Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
         });
-
     }
-
-};
-
-exports.verifyResetOTP = async (req, res) => {
-
-    const {
-        email,
-        otp
-    } = req.body;
-
-    try {
-
-        const savedOtp =
-            otpStorage[email];
-
-        if (!savedOtp) {
-
-            return res.status(400).json({
-
-                message:
-                    'OTP không tồn tại'
-
-            });
-
-        }
-
-        if (
-            Date.now() >
-            savedOtp.expiresAt
-        ) {
-
-            delete otpStorage[email];
-
-            return res.status(400).json({
-
-                message:
-                    'OTP đã hết hạn'
-
-            });
-
-        }
-
-        if (
-            savedOtp.otp !== otp
-        ) {
-
-            return res.status(400).json({
-
-                message:
-                    'OTP không chính xác'
-
-            });
-
-        }
-
-        res.status(200).json({
-
-            message:
-                'OTP hợp lệ'
-
-        });
-
-    } catch (err) {
-
-        console.error(err);
-
-        res.status(500).json({
-
-            message:
-                'Lỗi xác thực OTP'
-
-        });
-
-    }
-
-};
-
-exports.resetPassword = async (req, res) => {
-
-    const {
-
-        email,
-        otp,
-        password
-
-    } = req.body;
-
-    try {
-
-        const savedOtp =
-            otpStorage[email];
-
-        if (!savedOtp) {
-
-            return res.status(400).json({
-
-                message:
-                    'OTP không hợp lệ'
-
-            });
-
-        }
-
-        if (
-            savedOtp.otp !== otp
-        ) {
-
-            return res.status(400).json({
-
-                message:
-                    'OTP không chính xác'
-
-            });
-
-        }
-
-        const hashedPassword =
-            await bcrypt.hash(
-                password,
-                10
-            );
-
-        await db.query(
-            `
-            UPDATE users
-            SET password = ?
-            WHERE email = ?
-            `,
-            [
-                hashedPassword,
-                email
-            ]
-        );
-
-        delete otpStorage[email];
-
-        res.status(200).json({
-
-            message:
-                'Đổi mật khẩu thành công'
-
-        });
-
-    } catch (err) {
-
-        console.error(err);
-
-        res.status(500).json({
-
-            message:
-                'Lỗi cập nhật mật khẩu'
-
-        });
-
-    }
-
 };

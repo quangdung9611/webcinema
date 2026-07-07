@@ -1,172 +1,633 @@
-const express = require('express'); 
-const app = express(); 
-const cors = require('cors');
-const path = require('path');
-const db = require('./Config/db'); 
-const cookieParser = require('cookie-parser'); 
-const axios = require('axios'); 
-require('dotenv').config();
+/*=========================================================
+    DEPENDENCIES
+=========================================================*/
 
-// --- TÍCH HỢP MAILER VỚI TRY-CATCH ---
+require("dotenv").config();
+
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const cookieParser = require("cookie-parser");
+const axios = require("axios");
+
+const http = require("http");
+const { Server } = require("socket.io");
+
+const db = require("./Config/db");
+
+/*=========================================================
+    👇 THÊM REDIS
+=========================================================*/
+
+const RedisService = require("./Services/RedisService");
+
+/*=========================================================
+    MAILER
+=========================================================*/
+
 try {
-    require('./Config/mailer');
+
+    require("./Config/mailer");
+
     console.log("✅ Mailer module loaded successfully!");
-} catch (err) {
-    console.error("❌ Failed to load mailer module:", err);
+
 }
 
-// --- THÊM SOCKET.IO ---
-const http = require('http');
-const { Server } = require("socket.io");
-const server = http.createServer(app); 
+catch (error) {
 
-// IMPORT CÁC ROUTERS
-const authRoutes = require('./Routers/UserAuthRouter');
-const adminAuthRoutes = require('./Routers/AdminAuthRouter');
-const userRoutes = require('./Routers/UserRouter');
-const genreRoutes = require('./Routers/GenreRouter');
-const movieRoutes = require('./Routers/MovieRouter');
-const seatRoutes = require('./Routers/SeatRouter'); 
-const cinemaRoutes = require('./Routers/CinemaRouter'); 
-const roomRoutes = require('./Routers/RoomRouter'); 
-const ticketRoutes = require('./Routers/TicketRouter'); 
-const foodRoutes = require('./Routers/FoodRouter');
-const paymentRoutes = require('./Routers/PaymentRouter'); 
-const bankAppRoutes = require('./Routers/BankAppRouter');
-const momoRoutes = require('./Routers/MomoRouter');
-const actorRoutes = require('./Routers/ActorRouter');
-const reviewRoutes = require('./Routers/ReviewRouter');
-const showtimeRoutes = require('./Routers/ShowTimeRouter'); 
-const adminRouter = require('./Routers/AdminRouter');
-const bookingRoutes = require('./Routers/BookingRouter');
-const couponRoutes = require('./Routers/CouponRouter'); 
-const movieGenreRoutes = require('./Routers/MovieGenreRouter');
-const movieActorRoutes = require('./Routers/MovieActorRouter');
-const newsRoutes = require('./Routers/NewRouter');
-const forgotPasswordRoutes =require('./Routers/ForgotPassRouter');
-const promotionRoutes = require('./Routers/PromotionRouter');
+    console.error("❌ Failed to load mailer module:", error);
 
-const blogCinemaRoutes = require('./Routers/BlogCinemaRouter');
-// ===========================================================
-// 1. CẤU HÌNH HỆ THỐNG & CORS
-// ===========================================================
-app.set('trust proxy', 1); 
-app.use(cookieParser()); 
+}
+
+/*=========================================================
+    EXPRESS
+=========================================================*/
+
+const app = express();
+
+const server = http.createServer(app);
+
+/*=========================================================
+    ROUTERS
+=========================================================*/
+
+const authRoutes = require("./Routers/AuthRouter");
+
+const userRoutes = require("./Routers/UserRouter");
+
+const genreRoutes = require("./Routers/GenreRouter");
+
+const movieRoutes = require("./Routers/MovieRouter");
+
+const seatRoutes = require("./Routers/SeatRouter");
+
+const cinemaRoutes = require("./Routers/CinemaRouter");
+
+const roomRoutes = require("./Routers/RoomRouter");
+
+const ticketRoutes = require("./Routers/TicketRouter");
+
+const foodRoutes = require("./Routers/FoodRouter");
+
+const paymentRoutes = require("./Routers/PaymentRouter");
+
+const bankAppRoutes = require("./Routers/BankAppRouter");
+
+const momoRoutes = require("./Routers/MomoRouter");
+
+const actorRoutes = require("./Routers/ActorRouter");
+
+const reviewRoutes = require("./Routers/ReviewRouter");
+
+const showtimeRoutes = require("./Routers/ShowTimeRouter");
+
+const bookingRoutes = require("./Routers/BookingRouter");
+
+const couponRoutes = require("./Routers/CouponRouter");
+
+const movieGenreRoutes = require("./Routers/MovieGenreRouter");
+
+const movieActorRoutes = require("./Routers/MovieActorRouter");
+
+const newsRoutes = require("./Routers/NewRouter");
+
+const promotionRoutes = require("./Routers/PromotionRouter");
+
+const blogCinemaRoutes = require("./Routers/BlogCinemaRouter");
+
+const forgotPasswordRoutes = require("./Routers/ForgotPassRouter");
+
+const adminRouter = require("./Routers/AdminRouter");
+
+/*=========================================================
+    TRUST PROXY
+=========================================================*/
+
+app.set("trust proxy", 1);
+
+/*=========================================================
+    MIDDLEWARE
+=========================================================*/
+
+app.use(cookieParser());
+
+app.use(express.json());
+
+app.use(
+
+    express.urlencoded({
+
+        extended: true
+
+    })
+
+);
+
+app.use(
+
+    "/uploads",
+
+    express.static(
+
+        path.join(
+
+            __dirname,
+
+            "uploads"
+
+        )
+
+    )
+
+);
+
+/*=========================================================
+    CORS
+=========================================================*/
 
 const corsOptions = {
-  origin: [
-    'https://quangdungcinema.id.vn',  
-    'https://www.quangdungcinema.id.vn',  
-    'https://admin.quangdungcinema.id.vn', 
-    'http://localhost:3000',               
-    'http://localhost:5173',
-    /\.vercel\.app$/ 
-  ], 
-  credentials: true,
-  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+
+    origin: [
+
+        "https://quangdungcinema.id.vn",
+
+        "https://www.quangdungcinema.id.vn",
+
+        "https://admin.quangdungcinema.id.vn",
+
+        "http://localhost:3000",
+
+        "http://localhost:5173",
+
+        /\.vercel\.app$/
+
+    ],
+
+    credentials: true,
+
+    methods: [
+
+        "GET",
+
+        "POST",
+
+        "PUT",
+
+        "PATCH",
+
+        "DELETE",
+
+        "OPTIONS",
+
+        "HEAD"
+
+    ],
+
+    allowedHeaders: [
+
+        "Content-Type",
+
+        "Authorization",
+
+        "Accept",
+
+        "X-Requested-With"
+
+    ]
+
 };
 
-app.use(cors(corsOptions));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(
 
-// --- KHỞI TẠO SOCKET.IO ---
-const io = new Server(server, {
-  cors: corsOptions, 
-  transports: ['websocket', 'polling'] 
-});
+    cors(corsOptions)
 
-let holdingSeats = []; 
+);
 
-io.on('connection', (socket) => {
-    console.log('⚡ Socket connected:', socket.id);
-    socket.emit('server-gui-danh-sach-dang-giu', holdingSeats);
+/*=========================================================
+    SOCKET.IO
+=========================================================*/
 
-    socket.on('client-chon-ghe', (data) => {
-        holdingSeats = holdingSeats.filter(s => 
-            !(Number(s.seatId) === Number(data.seatId) && Number(s.showtimeId) === Number(data.showtimeId))
-        );
-        holdingSeats.push({ ...data, socketId: socket.id });
-        socket.broadcast.emit('server-khoa-ghe', data);
-    });
+const io = new Server(
 
-    socket.on('client-huy-chon-ghe', (data) => {
-        holdingSeats = holdingSeats.filter(s => 
-            !(Number(s.seatId) === Number(data.seatId) && Number(s.showtimeId) === Number(data.showtimeId))
-        );
-        socket.broadcast.emit('server-mo-khoa-ghe', data);
-    });
+    server,
 
-    socket.on('disconnect', () => {
-        const seatsToRelease = holdingSeats.filter(s => s.socketId === socket.id);
-        seatsToRelease.forEach(s => {
-            socket.broadcast.emit('server-mo-khoa-ghe', { 
-                seatId: s.seatId, 
-                showtimeId: s.showtimeId 
-            });
-        });
-        holdingSeats = holdingSeats.filter(s => s.socketId !== socket.id);
-    });
-});
+    {
 
-// ===========================================================
-// 2. ROUTES
-// ===========================================================
-app.get('/api', (req, res) => {
-  res.send('🚀 Cinema Backend is flying!');
-});
+        cors: corsOptions,
 
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/genres', genreRoutes);
-app.use('/api/movies', movieRoutes);
-app.use('/api/seats', seatRoutes);
-app.use('/api/cinemas', cinemaRoutes);
-app.use('/api/rooms', roomRoutes);
-app.use('/api/tickets', ticketRoutes);
-app.use('/api/foods', foodRoutes);
-app.use('/api/payment', paymentRoutes);
-app.use('/api/bank', bankAppRoutes);
-app.use('/api/momo', momoRoutes);
-app.use('/api/actors', actorRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/showtimes', showtimeRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/coupons', couponRoutes);
-app.use('/api/movie-genres', movieGenreRoutes);
-app.use('/api/movie-actors', movieActorRoutes);
-app.use('/api/news', newsRoutes);
-app.use( '/api/promotions', promotionRoutes);
-app.use('/api/blog-cinema',blogCinemaRoutes);
-app.use('/admin/api/auth', adminAuthRoutes);
-app.use('/admin/api/manage', adminRouter); 
-app.use('/api/forgot-password', forgotPasswordRoutes);
+        transports: [
 
-// ===========================================================
-// 3. KHỞI CHẠY SERVER
-// ===========================================================
-const PORT = process.env.PORT || 5000; 
+            "websocket",
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port: ${PORT}`);
-  
-  const SELF_URL = process.env.BACKEND_URL || 'https://api.quangdungcinema.id.vn';
-  setInterval(async () => {
-    try {
-      await axios.get(`${SELF_URL}/api?t=${Date.now()}`);
-    } catch (err) {
-      // Giữ im lặng khi server đang thức
+            "polling"
+
+        ]
+
     }
-  }, 300000); 
 
-  db.getConnection()
-    .then(conn => {
-      console.log("✅ Database Cinema connected!");
-      conn.release();
-    })
-    .catch(err => console.log("❌ DB Error:", err.message));
+);
+
+/*=========================================================
+    HOLDING SEATS
+=========================================================*/
+
+let holdingSeats = [];
+/*=========================================================
+    SOCKET EVENTS
+=========================================================*/
+
+io.on("connection", (socket) => {
+
+    console.log("⚡ Socket connected:", socket.id);
+
+    socket.emit(
+
+        "server-gui-danh-sach-dang-giu",
+
+        holdingSeats
+
+    );
+
+    /*=====================================================
+        CLIENT HOLD SEAT
+    =====================================================*/
+
+    socket.on(
+
+        "client-chon-ghe",
+
+        (data) => {
+
+            holdingSeats = holdingSeats.filter(
+
+                seat =>
+
+                    !(
+
+                        Number(seat.seatId) === Number(data.seatId)
+
+                        &&
+
+                        Number(seat.showtimeId) === Number(data.showtimeId)
+
+                    )
+
+            );
+
+            holdingSeats.push({
+
+                ...data,
+
+                socketId: socket.id
+
+            });
+
+            socket.broadcast.emit(
+
+                "server-khoa-ghe",
+
+                data
+
+            );
+
+        }
+
+    );
+
+    /*=====================================================
+        CLIENT RELEASE SEAT
+    =====================================================*/
+
+    socket.on(
+
+        "client-huy-chon-ghe",
+
+        (data) => {
+
+            holdingSeats = holdingSeats.filter(
+
+                seat =>
+
+                    !(
+
+                        Number(seat.seatId) === Number(data.seatId)
+
+                        &&
+
+                        Number(seat.showtimeId) === Number(data.showtimeId)
+
+                    )
+
+            );
+
+            socket.broadcast.emit(
+
+                "server-mo-khoa-ghe",
+
+                data
+
+            );
+
+        }
+
+    );
+
+    /*=====================================================
+        DISCONNECT
+    =====================================================*/
+
+    socket.on(
+
+        "disconnect",
+
+        () => {
+
+            const releasedSeats =
+
+                holdingSeats.filter(
+
+                    seat =>
+
+                        seat.socketId === socket.id
+
+                );
+
+            releasedSeats.forEach(
+
+                seat => {
+
+                    socket.broadcast.emit(
+
+                        "server-mo-khoa-ghe",
+
+                        {
+
+                            seatId: seat.seatId,
+
+                            showtimeId: seat.showtimeId
+
+                        }
+
+                    );
+
+                }
+
+            );
+
+            holdingSeats = holdingSeats.filter(
+
+                seat =>
+
+                    seat.socketId !== socket.id
+
+            );
+
+        }
+
+    );
+
 });
 
-module.exports = app;
+/*=========================================================
+    API
+=========================================================*/
+
+app.get(
+
+    "/api",
+
+    (req, res) => {
+
+        res.send(
+
+            "🚀 Cinema Backend is flying!"
+
+        );
+
+    }
+
+);
+
+/*=========================================================
+    AUTH
+=========================================================*/
+
+app.use(
+
+    "/api/auth",
+
+    authRoutes
+
+);
+
+/*=========================================================
+    USER
+=========================================================*/
+
+app.use("/api/users", userRoutes);
+
+app.use("/api/genres", genreRoutes);
+
+app.use("/api/movies", movieRoutes);
+
+app.use("/api/seats", seatRoutes);
+
+app.use("/api/cinemas", cinemaRoutes);
+
+app.use("/api/rooms", roomRoutes);
+
+app.use("/api/tickets", ticketRoutes);
+
+app.use("/api/foods", foodRoutes);
+
+app.use("/api/payment", paymentRoutes);
+
+app.use("/api/bank", bankAppRoutes);
+
+app.use("/api/momo", momoRoutes);
+
+app.use("/api/actors", actorRoutes);
+
+app.use("/api/reviews", reviewRoutes);
+
+app.use("/api/showtimes", showtimeRoutes);
+
+app.use("/api/bookings", bookingRoutes);
+
+app.use("/api/coupons", couponRoutes);
+
+app.use("/api/movie-genres", movieGenreRoutes);
+
+app.use("/api/movie-actors", movieActorRoutes);
+
+app.use("/api/news", newsRoutes);
+
+app.use("/api/promotions", promotionRoutes);
+
+app.use("/api/blog-cinema", blogCinemaRoutes);
+
+app.use(
+
+    "/api/forgot-password",
+
+    forgotPasswordRoutes
+
+);
+
+/*=========================================================
+    ADMIN
+=========================================================*/
+
+app.use(
+
+    "/admin/api/manage",
+
+    adminRouter
+
+);
+
+/*=========================================================
+    HEALTH CHECK (THÊM MỚI)
+=========================================================*/
+
+app.get("/api/health", async (req, res) => {
+    try {
+        // Check database
+        const conn = await db.getConnection();
+        conn.release();
+
+        // Check Redis
+        const redisHealthy = await RedisService.ping();
+
+        res.status(200).json({
+            status: "ok",
+            timestamp: new Date().toISOString(),
+            database: "connected",
+            redis: redisHealthy ? "connected" : "disconnected",
+            uptime: process.uptime()
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: error.message
+        });
+    }
+});
+
+/*=========================================================
+    SERVER
+=========================================================*/
+
+const PORT =
+    process.env.PORT || 5000;
+
+server.listen(
+
+    PORT,
+
+    "0.0.0.0",
+
+    async () => {
+
+        console.log(
+
+            `🚀 Server running on port ${PORT}`
+
+        );
+
+        /*=================================================
+            DATABASE
+        =================================================*/
+
+        try {
+
+            const conn =
+                await db.getConnection();
+
+            console.log(
+                "✅ Database Cinema connected!"
+            );
+
+            conn.release();
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "❌ Database Error:",
+                error.message
+            );
+
+        }
+
+        /*=================================================
+            👇 THÊM REDIS CHECK
+        =================================================*/
+
+        try {
+            const redisHealthy = await RedisService.ping();
+            if (redisHealthy) {
+                console.log("✅ Redis connected successfully!");
+            } else {
+                console.warn("⚠️ Redis connection failed!");
+            }
+        } catch (error) {
+            console.error("❌ Redis Error:", error.message);
+        }
+
+        /*=================================================
+            KEEP RENDER ALIVE
+        =================================================*/
+
+        const SELF_URL =
+
+            process.env.BACKEND_URL ||
+
+            "https://api.quangdungcinema.id.vn";
+
+        setInterval(
+
+            async () => {
+
+                try {
+
+                    await axios.get(
+
+                        `${SELF_URL}/api?t=${Date.now()}`
+
+                    );
+
+                }
+
+                catch (error) {
+
+                    /**
+                     * Ignore
+                     */
+
+                }
+
+            },
+
+            5 * 60 * 1000
+
+        );
+
+    }
+
+);
+
+/*=========================================================
+    EXPORT
+=========================================================*/
+
+module.exports = {
+
+    app,
+
+    server,
+
+    io
+
+};

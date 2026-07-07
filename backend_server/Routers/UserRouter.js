@@ -1,62 +1,146 @@
-const express = require('express');
+/*=========================================================
+    DEPENDENCIES
+=========================================================*/
+
+const express = require("express");
 const router = express.Router();
-const userController = require('../Controllers/UserController');
+
+const UserController = require("../Controllers/UserController");
+const AuthMiddleware = require("../Middleware/AuthMiddleware");
+
+/*=========================================================
+    USER ROUTES (Cần xác thực)
+=========================================================*/
 
 /**
- * ==========================================
- * NHÓM ROUTE DÀNH CHO NGƯỜI DÙNG (CUSTOMER)
- * ==========================================
+ * Lấy thông tin cá nhân
+ * GET /api/users/profile
  */
-
-// 1. Lấy thông tin cá nhân (Profile)
-router.get('/profile', userController.getUserProfile);
-
-// 2. Tự cập nhật thông tin cá nhân
-router.put('/profile/update', userController.updateUserProfile);
-
-// 3. Lấy lịch sử giao dịch
-router.get('/booking-history', userController.getBookingHistory);
-
-// 4. Gửi OTP quên mật khẩu
-router.post(
-    '/send-reset-otp',
-    userController.sendResetOTP
-);
-
-// 5. Xác thực OTP
-router.post(
-    '/verify-reset-otp',
-    userController.verifyResetOTP
-);
-
-// 6. Đặt lại mật khẩu
-router.post(
-    '/reset-password',
-    userController.resetPassword
-);
-
-// 7. Xóa sạch lịch sử và Reset điểm
-router.post(
-    '/clear-history',
-    userController.clearBookingHistory
+router.get(
+    "/profile",
+    AuthMiddleware.authenticate,
+    UserController.getUserProfile
 );
 
 /**
- * ==========================================
- * NHÓM ROUTE QUẢN TRỊ (ADMIN)
- * ==========================================
+ * Cập nhật thông tin cá nhân
+ * PUT /api/users/profile/update
  */
+router.put(
+    "/profile/update",
+    AuthMiddleware.authenticate,
+    UserController.updateUserProfile
+);
 
-// 8. Lấy danh sách tất cả user
-router.get('/', userController.getAllUsers);
+/**
+ * Lấy lịch sử đặt vé
+ * GET /api/users/booking-history
+ */
+router.get(
+    "/booking-history",
+    AuthMiddleware.authenticate,
+    UserController.getMyBookings
+);
 
-// 9. Thêm mới user trực tiếp từ Admin
-router.post('/add', userController.createUser);
+/**
+ * Xóa lịch sử đặt vé
+ * DELETE /api/users/clear-history
+ */
+router.delete(
+    "/clear-history",
+    AuthMiddleware.authenticate,
+    UserController.clearBookingHistory
+);
 
-// 10. Cập nhật user theo ID
-router.put('/update/:user_id', userController.updateUser);
+/**
+ * Reset điểm của user
+ * POST /api/users/reset-points
+ */
+router.post(
+    "/reset-points",
+    AuthMiddleware.authenticate,
+    UserController.resetMyPoints
+);
 
-// 11. Xóa user khỏi hệ thống
-router.delete('/delete/:user_id', userController.deleteUser);
+/*=========================================================
+    ADMIN ROUTES (Cần xác thực + quyền admin)
+=========================================================*/
+
+/**
+ * Lấy danh sách tất cả user
+ * GET /api/users
+ */
+router.get(
+    "/",
+    AuthMiddleware.authenticate,
+    AuthMiddleware.authorize("admin"),
+    UserController.getAllUsers
+);
+
+/**
+ * Lấy chi tiết user theo ID
+ * GET /api/users/:user_id
+ */
+router.get(
+    "/:user_id",
+    AuthMiddleware.authenticate,
+    AuthMiddleware.authorize("admin"),
+    UserController.getUserById
+);
+
+/**
+ * Tạo user mới (Admin)
+ * POST /api/users
+ */
+router.post(
+    "/",
+    AuthMiddleware.authenticate,
+    AuthMiddleware.authorize("admin"),
+    UserController.createUser
+);
+
+/**
+ * Cập nhật user theo ID
+ * PUT /api/users/:user_id
+ */
+router.put(
+    "/:user_id",
+    AuthMiddleware.authenticate,
+    AuthMiddleware.authorize("admin"),
+    UserController.updateUser
+);
+
+/**
+ * Cập nhật trạng thái user (active/banned)
+ * PATCH /api/users/:user_id/status
+ */
+router.patch(
+    "/:user_id/status",
+    AuthMiddleware.authenticate,
+    AuthMiddleware.authorize("admin"),
+    UserController.updateUserStatus
+);
+
+/**
+ * Cập nhật role user (admin/customer)
+ * PATCH /api/users/:user_id/role
+ */
+router.patch(
+    "/:user_id/role",
+    AuthMiddleware.authenticate,
+    AuthMiddleware.authorize("admin"),
+    UserController.updateUserRole
+);
+
+/**
+ * Xóa user
+ * DELETE /api/users/:user_id
+ */
+router.delete(
+    "/:user_id",
+    AuthMiddleware.authenticate,
+    AuthMiddleware.authorize("admin"),
+    UserController.deleteUser
+);
 
 module.exports = router;

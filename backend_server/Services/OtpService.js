@@ -1,312 +1,194 @@
 const db = require('../Config/db');
+const Otp = require('../utils/Otp');
 
-/**
- * Sinh OTP 6 số
- */
-exports.generateOTP = () => {
-    return Math.floor(
-        100000 + Math.random() * 900000
-    ).toString();
-};
+class OtpService {
 
-/**
- * Tạo OTP mới
- */
-exports.createOTP = async (
-    email,
-    purpose = 'PAYMENT'
-) => {
+    /* =========================================================
+        CREATE OTP
+    ========================================================= */
+    static async createOTP(email, purpose = 'PAYMENT') {
 
-    const otp = exports.generateOTP();
+        const otp = Otp.generate6();
 
-    const expiresAt = new Date(
-        Date.now() + 5 * 60 * 1000
-    );
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    await db.execute(
-        `
-        INSERT INTO otp_logs
-        (
-            email,
-            otp,
-            purpose,
-            expires_at,
-            send_count,
-            failed_attempts
-        )
-        VALUES (?, ?, ?, ?, 1, 0)
-        `,
-        [
-            email,
-            otp,
-            purpose,
-            expiresAt
-        ]
-    );
-
-    return otp;
-};
-
-/**
- * Gửi lại OTP
- */
-exports.resendOTP = async (
-    email,
-    purpose = 'PAYMENT'
-) => {
-
-    const [rows] = await db.execute(
-        `
-        SELECT *
-        FROM otp_logs
-        WHERE email = ?
-        AND purpose = ?
-        AND is_used = 0
-        ORDER BY otp_id DESC
-        LIMIT 1
-        `,
-        [
-            email,
-            purpose
-        ]
-    );
-
-    if (!rows.length) {
-        throw new Error(
-            'Không tìm thấy OTP để gửi lại.'
-        );
-    }
-
-    const otpRecord = rows[0];
-
-    const diff =
-        Date.now() -
-        new Date(
-            otpRecord.updated_at ||
-            otpRecord.created_at
-        ).getTime();
-
-    // Chống spam 30 giây
-    if (diff < 30000) {
-
-        throw new Error(
-            'Vui lòng đợi 30 giây trước khi gửi lại OTP.'
+        await db.execute(
+            `
+            INSERT INTO otp_logs
+            (
+                email,
+                otp,
+                purpose,
+                expires_at,
+                send_count,
+                failed_attempts
+            )
+            VALUES (?, ?, ?, ?, 1, 0)
+            `,
+            [email, otp, purpose, expiresAt]
         );
 
+        return otp;
     }
 
-    // Tối đa 3 lần gửi
-    if (otpRecord.send_count >= 3) {
+    /* =========================================================
+        RESEND OTP
+    ========================================================= */
+    static async resendOTP(email, purpose = 'PAYMENT') {
 
-        throw new Error(
-            'Bạn đã vượt quá số lần gửi OTP.'
+        const [rows] = await db.execute(
+            `
+            SELECT *
+            FROM otp_logs
+            WHERE email = ? AND purpose = ? AND is_used = 0
+            ORDER BY otp_id DESC
+            LIMIT 1
+            `,
+            [email, purpose]
         );
 
-    }
+        if (!rows.length) {
+            throw new Error('Không tìm thấy OTP để gửi lại.');
+        }
 
-    const newOTP =
-        exports.generateOTP();
+        const record = rows[0];
 
-    const expiresAt =
-        new Date(
-            Date.now() +
-            5 * 60 * 1000
-        );
+        const diff = Date.now() - new Date(record.updated_at || record.created_at).getTime();
 
-    await db.execute(
-        `
-        UPDATE otp_logs
-        SET
-            otp = ?,
-            expires_at = ?,
-            send_count = send_count + 1,
-            failed_attempts = 0,
-            updated_at = NOW()
-        WHERE otp_id = ?
-        `,
-        [
-            newOTP,
-            expiresAt,
-            otpRecord.otp_id
-        ]
-    );
+        if (diff < 30000) {
+            throw new Error('Vui lòng đợi 30 giây trước khi gửi lại OTP.');
+        }
 
-    return newOTP;
-};
+        if (record.send_count >= 3) {
+            throw new Error('Bạn đã vượt quá số lần gửi OTP.');
+        }
 
-/**
- * Xác thực OTP
- */
-exports.verifyOTP = async (
-    email,
-    otp,
-    purpose = 'PAYMENT'
-) => {
-
-    const [rows] = await db.execute(
-        `
-        SELECT *
-        FROM otp_logs
-        WHERE email = ?
-        AND purpose = ?
-        AND is_used = 0
-        ORDER BY otp_id DESC
-        LIMIT 1
-        `,
-        [
-            email,
-            purpose
-        ]
-    );
-
-    if (!rows.length) {
-
-        return {
-            success: false,
-            message:
-                'Không tìm thấy OTP.'
-        };
-
-    }
-
-    const otpRecord = rows[0];
-
-    // OTP hết hạn
-    if (
-        new Date(
-            otpRecord.expires_at
-        ) < new Date()
-    ) {
-
-        return {
-            success: false,
-            code: 'OTP_EXPIRED',
-            message:
-                'OTP đã hết hạn.'
-        };
-
-    }
-
-    // OTP bị khóa
-    if (
-        otpRecord.failed_attempts >= 5
-    ) {
-
-        return {
-            success: false,
-            code: 'OTP_LOCKED',
-            message:
-                'OTP đã bị khóa do nhập sai quá nhiều lần.'
-        };
-
-    }
-
-    // OTP sai
-    if (
-        otpRecord.otp !== otp
-    ) {
+        const newOTP = Otp.generate6();
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
         await db.execute(
             `
             UPDATE otp_logs
-            SET failed_attempts =
-                failed_attempts + 1
+            SET
+                otp = ?,
+                expires_at = ?,
+                send_count = send_count + 1,
+                failed_attempts = 0,
+                updated_at = NOW()
             WHERE otp_id = ?
             `,
-            [
-                otpRecord.otp_id
-            ]
+            [newOTP, expiresAt, record.otp_id]
         );
 
-        return {
-            success: false,
-            code: 'OTP_INVALID',
-            message:
-                'OTP không chính xác.'
-        };
-
+        return newOTP;
     }
 
-    return {
-        success: true,
-        data: otpRecord
-    };
-};
+    /* =========================================================
+        VERIFY OTP
+    ========================================================= */
+    static async verifyOTP(email, otp, purpose = 'PAYMENT') {
 
-/**
- * Đánh dấu OTP đã dùng
- */
-exports.markUsed = async (
-    otpId
-) => {
+        const [rows] = await db.execute(
+            `
+            SELECT *
+            FROM otp_logs
+            WHERE email = ? AND purpose = ? AND is_used = 0
+            ORDER BY otp_id DESC
+            LIMIT 1
+            `,
+            [email, purpose]
+        );
 
-    await db.execute(
-        `
-        UPDATE otp_logs
-        SET
-            is_used = 1,
-            updated_at = NOW()
-        WHERE otp_id = ?
-        `,
-        [otpId]
-    );
+        if (!rows.length) {
+            return { success: false, message: 'Không tìm thấy OTP.' };
+        }
 
-};
+        const record = rows[0];
 
-/**
- * Xóa OTP theo email
- */
-exports.deleteOTP = async (
-    email,
-    purpose = 'PAYMENT'
-) => {
+        if (new Date(record.expires_at) < new Date()) {
+            return { success: false, code: 'OTP_EXPIRED', message: 'OTP đã hết hạn.' };
+        }
 
-    await db.execute(
-        `
-        DELETE FROM otp_logs
-        WHERE email = ?
-        AND purpose = ?
-        `,
-        [
-            email,
-            purpose
-        ]
-    );
+        if (record.failed_attempts >= 5) {
+            return { success: false, code: 'OTP_LOCKED', message: 'OTP đã bị khóa.' };
+        }
 
-};
+        if (record.otp !== otp) {
 
-/**
- * Xóa OTP đã hết hạn
- */
-exports.clearExpiredOTP =
-    async () => {
+            await db.execute(
+                `
+                UPDATE otp_logs
+                SET failed_attempts = failed_attempts + 1
+                WHERE otp_id = ?
+                `,
+                [record.otp_id]
+            );
 
-    await db.execute(
-        `
-        DELETE FROM otp_logs
-        WHERE expires_at < NOW()
-        `
-    );
+            return { success: false, code: 'OTP_INVALID', message: 'OTP không đúng.' };
+        }
 
-};
+        return {
+            success: true,
+            data: record
+        };
+    }
 
-/* =========================================================
-MARK OTP VERIFIED
-========================================================= */
+    /* =========================================================
+        MARK USED
+    ========================================================= */
+    static async markUsed(otpId) {
 
-exports.markVerified = async (
-    otpId
-) => {
+        await db.execute(
+            `
+            UPDATE otp_logs
+            SET is_used = 1, updated_at = NOW()
+            WHERE otp_id = ?
+            `,
+            [otpId]
+        );
+    }
 
-    await db.execute(
-        `
-        UPDATE otp_logs
-        SET
-            verified = 1,
-            updated_at = NOW()
-        WHERE otp_id = ?
-        `,
-        [otpId]
-    );
+    /* =========================================================
+        MARK VERIFIED
+    ========================================================= */
+    static async markVerified(otpId) {
 
-};
+        await db.execute(
+            `
+            UPDATE otp_logs
+            SET verified = 1, updated_at = NOW()
+            WHERE otp_id = ?
+            `,
+            [otpId]
+        );
+    }
+
+    /* =========================================================
+        DELETE OTP
+    ========================================================= */
+    static async deleteOTP(email, purpose = 'PAYMENT') {
+
+        await db.execute(
+            `
+            DELETE FROM otp_logs
+            WHERE email = ? AND purpose = ?
+            `,
+            [email, purpose]
+        );
+    }
+
+    /* =========================================================
+        CLEAN EXPIRED OTP
+    ========================================================= */
+    static async clearExpiredOTP() {
+
+        await db.execute(
+            `
+            DELETE FROM otp_logs
+            WHERE expires_at < NOW()
+            `
+        );
+    }
+}
+
+module.exports = OtpService;

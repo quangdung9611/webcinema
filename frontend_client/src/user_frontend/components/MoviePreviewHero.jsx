@@ -52,12 +52,13 @@ const MoviePreviewHero = ({
                     <div className="preview-title-row">
                         <h1 className="preview-title">{movie.title}</h1>
 
-                        <span className="preview-age">
-                            T16
-                        </span>
+                      
                     </div>
 
                     <div className="preview-meta">
+                          <span className="preview-age">
+                            {movie.age_rating ? `T${movie.age_rating}` : "P"}
+                        </span>
                         <div className="preview-meta-item">
                             <Star size={17} fill="#FFC107" color="#FFC107" />
                             <span>{movie.avg_rating || "0.0"}</span>

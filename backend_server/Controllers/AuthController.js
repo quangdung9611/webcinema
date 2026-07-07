@@ -1,143 +1,222 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const db = require('../Config/db');
+/*=========================================================
+    DEPENDENCIES
+=========================================================*/
 
-const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
+const AuthService = require("../Services/AuthService");
 
-/**
- * 🔥 HÀM TẠO CẤU HÌNH COOKIE CHUẨN HIỆN ĐẠI
- * Bỏ domain thủ công để tránh lỗi "Invalid Domain" (Tam giác vàng)
- */
-const getCookieConfig = (req) => {
-    return {
-        httpOnly: true,
-        secure: true,      // Bắt buộc phải có khi dùng SameSite: 'None'
-        sameSite: 'None',  // 🔥 QUAN TRỌNG: Cho phép API và Web khác domain vẫn nhận được nhau
-        path: '/',
-        // ❌ KHÔNG set domain ở đây nữa. Trình duyệt sẽ tự gán cho api.quangdungcinema.id.vn
-    };
-};
+/*=========================================================
+    REGISTER
+=========================================================*/
 
-// -----------------------------------------------------------
-// 1. REGISTER (Giữ nguyên logic của ông)
-// -----------------------------------------------------------
 exports.register = async (req, res) => {
-    const { username, full_name, phone, address, email, password, role } = req.body;
     try {
-        if (!full_name || full_name.length < 8) {
-            return res.status(400).json({ field: 'full_name', message: "Họ tên phải từ 8 ký tự trở lên" });
-        }
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-        if (!passwordRegex.test(password)) {
-            return res.status(400).json({ field: 'password', message: "Mật khẩu yếu!" });
-        }
-        const [existing] = await db.query(
-            'SELECT username, email, phone FROM users WHERE username = ? OR email = ? OR phone = ?',
-            [username, email, phone]
-        );
-        if (existing.length > 0) {
-            const user = existing[0];
-            const field = user.username === username ? 'username' : user.email === email ? 'email' : 'phone';
-            return res.status(400).json({ field, message: `${field} đã tồn tại` });
-        }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const finalRole = role || 'customer';
-        const [result] = await db.query(
-            `INSERT INTO users (username, full_name, phone, address, email, password, role)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [username, full_name, phone, address || '', email, hashedPassword, finalRole]
-        );
-        res.status(201).json({ message: "Đăng ký thành công", userId: result.insertId });
-    } catch (err) {
-        console.error("Register Error:", err);
-        res.status(500).json({ error: "Lỗi hệ thống" });
-    }
-};
-
-// -----------------------------------------------------------
-// 2. LOGIN (Tách biệt Token bằng Tên thay vì Domain)
-// -----------------------------------------------------------
-exports.login = async (req, res) => {
-    const { email, password, role_input } = req.body;
-    try {
-        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-        if (users.length === 0) return res.status(401).json({ message: "Sai thông tin" });
-
-        const user = users[0];
-        if (role_input && user.role !== role_input) {
-            return res.status(403).json({ message: "Sai quyền truy cập" });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(401).json({ message: "Sai thông tin" });
-
-        const token = jwt.sign(
-            { user_id: user.user_id, role: user.role },
-            SECRET_KEY,
-            { expiresIn: '24h' }
-        );
-
-                // --- Trong AuthController.js (Hàm login) ---
-
-        const cookieConfig = getCookieConfig(req);
-        const origin = req.get('origin') || "";
-
-        if (origin.includes('admin.')) {
-            // 🟢 Chỉ cấp thêm admintoken
-            res.cookie('admintoken', token, {
-                ...cookieConfig,
-                maxAge: 24 * 60 * 60 * 1000
-            });
-            // ❌ XÓA BỎ dòng res.clearCookie('usertoken', ...) ở đây
-        } else {
-            // 🔵 Chỉ cấp thêm usertoken
-            res.cookie('usertoken', token, {
-                ...cookieConfig,
-                maxAge: 24 * 60 * 60 * 1000
-            });
-            // ❌ XÓA BỎ dòng res.clearCookie('admintoken', ...) ở đây
-        }
-
-        const roleKey = user.role === 'admin' ? 'admin' : 'customer';
-        res.json({
-            success: true,
-            message: "Đăng nhập thành công",
-            role: user.role,
-            [roleKey]: {
-                user_id: user.user_id,
-                username: user.username,
-                full_name: user.full_name,
-                email: user.email,
-                role: user.role
-            }
+        const result = await AuthService.register(req.body);
+        return res.status(201).json(result);
+    } catch (error) {
+        console.error("Register Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
         });
-    } catch (err) {
-        console.error("Login Error:", err);
-        res.status(500).json({ success: false, error: "Lỗi server" });
     }
 };
 
-// -----------------------------------------------------------
-// 3. GET ME & 4. LOGOUT (Giữ nguyên logic của ông nhưng dùng config mới)
-// -----------------------------------------------------------
+/*=========================================================
+    LOGIN
+=========================================================*/
+
+exports.login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const result = await AuthService.login(email, password, req, res);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Login Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    GET ME
+=========================================================*/
+
 exports.getMe = async (req, res) => {
     try {
-        const userId = req.user ? req.user.user_id : null;
-        if (!userId) return res.status(401).json({ success: false, message: "Chưa xác thực" });
-        const [users] = await db.query(
-            'SELECT user_id, username, full_name, phone, address, email, role, points FROM users WHERE user_id = ?',
-            [userId]
-        );
-        if (users.length === 0) return res.status(404).json({ success: false, message: "Không tìm thấy user" });
-        res.json({ success: true, user: users[0] });
-    } catch (err) {
-        res.status(500).json({ success: false, error: "Lỗi server" });
+        const result = await AuthService.getMe(req.user.user_id);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("GetMe Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
+        });
     }
 };
 
-exports.logout = (req, res) => {
-    const config = getCookieConfig(req);
-    res.clearCookie('usertoken', config);
-    res.clearCookie('admintoken', config);
-    res.json({ success: true, message: "Đăng xuất thành công" });
+/*=========================================================
+    REFRESH TOKEN
+=========================================================*/
+
+exports.refreshToken = async (req, res) => {
+    try {
+        const result = await AuthService.refreshToken(req, res);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Refresh Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    LOGOUT
+=========================================================*/
+
+exports.logout = async (req, res) => {
+    try {
+        const result = await AuthService.logout(req, res);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Logout Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    LOGOUT ALL DEVICES
+=========================================================*/
+
+exports.logoutAllDevices = async (req, res) => {
+    try {
+        const result = await AuthService.logoutAllDevices(req.user.user_id, res);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Logout All Devices Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    CHANGE PASSWORD
+=========================================================*/
+
+exports.changePassword = async (req, res) => {
+    try {
+        const result = await AuthService.changePassword(req.user.user_id, req.body);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Change Password Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    FORGOT PASSWORD - SEND OTP
+=========================================================*/
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const result = await AuthService.forgotPassword(email, req);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Forgot Password Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    VERIFY RESET OTP
+=========================================================*/
+
+exports.verifyResetOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        const result = await AuthService.verifyResetOTP(email, otp);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Verify Reset OTP Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    RESET PASSWORD
+=========================================================*/
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { resetToken, newPassword } = req.body;
+        const result = await AuthService.resetPassword(resetToken, newPassword);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Reset Password Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    SEND VERIFICATION EMAIL
+=========================================================*/
+
+exports.sendVerificationEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const result = await AuthService.sendVerificationEmail(email);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Send Verification Email Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    VERIFY EMAIL
+=========================================================*/
+
+exports.verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.query;
+        const result = await AuthService.verifyEmail(token);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Verify Email Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
 };
