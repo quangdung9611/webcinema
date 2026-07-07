@@ -149,9 +149,21 @@ exports.register = async (userData) => {
         user_agent: null
     });
 
+    // Gửi email xác thực sau khi đăng ký
+    try {
+        const verifyToken = Jwt.generateEmailVerifyToken({
+            user_id: userId,
+            email: email
+        });
+        await MailService.sendEmailVerification(email, verifyToken, full_name);
+    } catch (error) {
+        console.error("Không thể gửi email xác thực:", error.message);
+        // Không throw lỗi, vẫn cho đăng ký thành công
+    }
+
     return {
         success: true,
-        message: "Đăng ký thành công",
+        message: "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.",
         userId
     };
 };
@@ -204,14 +216,9 @@ exports.login = async (email, password, req, res) => {
         req?.ip || req?.connection?.remoteAddress || null
     );
 
-    // ✅ Set cookies theo role
-    if (user.role === 'admin') {
-        Cookie.setAdminAccessToken(res, accessToken);
-        Cookie.setAdminRefreshToken(res, refreshToken);
-    } else {
-        Cookie.setUserAccessToken(res, accessToken);
-        Cookie.setUserRefreshToken(res, refreshToken);
-    }
+    // Set cookies (dùng chung cho cả user và admin)
+    Cookie.setAccessToken(res, accessToken);
+    Cookie.setRefreshToken(res, refreshToken);
 
     return {
         success: true,
@@ -230,6 +237,7 @@ exports.login = async (email, password, req, res) => {
         refreshToken
     };
 };
+
 /*=========================================================
     GET CURRENT USER
 =========================================================*/
@@ -255,32 +263,21 @@ exports.getMe = async (userId) => {
 =========================================================*/
 
 exports.logout = async (req, res) => {
-    // ✅ Lấy refresh token theo role
-    let refreshToken = Cookie.getAdminRefreshToken(req);
-    let role = 'admin';
-
-    if (!refreshToken) {
-        refreshToken = Cookie.getUserRefreshToken(req);
-        role = 'user';
-    }
+    const refreshToken = Cookie.getRefreshToken(req);
 
     if (refreshToken) {
         const tokenHash = Jwt.hashRefreshToken(refreshToken);
         await RefreshTokenRepository.revoke(tokenHash, "Logout");
     }
 
-    // ✅ Clear cookie theo role
-    if (role === 'admin') {
-        Cookie.clearAdminCookies(res);
-    } else {
-        Cookie.clearUserCookies(res);
-    }
+    Cookie.clearAuthCookies(res);
 
     return {
         success: true,
         message: "Đăng xuất thành công"
     };
 };
+
 /*=========================================================
     LOGOUT ALL DEVICES
 =========================================================*/

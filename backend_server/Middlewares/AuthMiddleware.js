@@ -11,14 +11,8 @@ const Cookie = require("../utils/Cookie");
 
 const authenticate = (req, res, next) => {
     try {
-        // ✅ Thử lấy admin token trước, nếu không có thì lấy user token
-        let accessToken = Cookie.getAdminAccessToken(req);
-        let tokenType = 'admin';
-
-        if (!accessToken) {
-            accessToken = Cookie.getUserAccessToken(req);
-            tokenType = 'user';
-        }
+        // Lấy access token từ cookie (dùng chung)
+        const accessToken = Cookie.getAccessToken(req);
 
         if (!accessToken) {
             return res.status(401).json({
@@ -29,7 +23,7 @@ const authenticate = (req, res, next) => {
 
         const payload = Jwt.verifyAccessToken(accessToken);
         if (!payload) {
-            Cookie.clearAllCookies(res);
+            Cookie.clearAuthCookies(res);
             return res.status(401).json({
                 success: false,
                 message: "Token không hợp lệ."
@@ -37,11 +31,10 @@ const authenticate = (req, res, next) => {
         }
 
         req.user = payload;
-        req.tokenType = tokenType; // Lưu loại token để biết
-
         next();
+
     } catch (error) {
-        Cookie.clearAllCookies(res);
+        Cookie.clearAuthCookies(res);
         return res.status(401).json({
             success: false,
             message: "Phiên đăng nhập đã hết hạn."
@@ -55,39 +48,47 @@ const authenticate = (req, res, next) => {
 
 const authenticateAdmin = (req, res, next) => {
     try {
-        const accessToken = Cookie.getAdminAccessToken(req);
+        // Vẫn lấy token chung, nhưng kiểm tra role admin
+        const accessToken = Cookie.getAccessToken(req);
 
         if (!accessToken) {
             return res.status(401).json({
                 success: false,
-                message: "Vui lòng đăng nhập với tài khoản admin."
+                message: "Vui lòng đăng nhập."
             });
         }
 
         const payload = Jwt.verifyAccessToken(accessToken);
         if (!payload) {
-            Cookie.clearAdminCookies(res);
+            Cookie.clearAuthCookies(res);
             return res.status(401).json({
                 success: false,
-                message: "Token admin không hợp lệ."
+                message: "Token không hợp lệ."
+            });
+        }
+
+        // ✅ Kiểm tra role admin
+        if (payload.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: "Yêu cầu quyền quản trị viên."
             });
         }
 
         req.user = payload;
-        req.tokenType = 'admin';
-
         next();
+
     } catch (error) {
-        Cookie.clearAdminCookies(res);
+        Cookie.clearAuthCookies(res);
         return res.status(401).json({
             success: false,
-            message: "Phiên đăng nhập admin đã hết hạn."
+            message: "Phiên đăng nhập đã hết hạn."
         });
     }
 };
 
 /*=========================================================
-    AUTHORIZE
+    AUTHORIZE - Phân quyền theo role
 =========================================================*/
 
 const authorize = (...roles) => {
@@ -111,15 +112,12 @@ const authorize = (...roles) => {
 };
 
 /*=========================================================
-    OPTIONAL AUTH
+    OPTIONAL AUTH - Xác thực tùy chọn (không bắt buộc)
 =========================================================*/
 
 const optionalAuth = (req, res, next) => {
     try {
-        let accessToken = Cookie.getAdminAccessToken(req);
-        if (!accessToken) {
-            accessToken = Cookie.getUserAccessToken(req);
-        }
+        const accessToken = Cookie.getAccessToken(req);
 
         if (accessToken) {
             const payload = Jwt.verifyAccessToken(accessToken);
