@@ -208,21 +208,22 @@ exports.login = async (email, password, req, res) => {
     Cookie.setAccessToken(res, accessToken);
     Cookie.setRefreshToken(res, refreshToken);
 
-    return {
-        success: true,
-        message: "Đăng nhập thành công",
-        user: {
-            user_id: user.user_id,
-            username: user.username,
-            full_name: user.full_name,
-            email: user.email,
-            phone: user.phone,
-            role: user.role,
-            points: user.points
-        },
-        accessToken,
-        refreshToken
-    };
+   return {
+    success: true,
+    message: "Đăng nhập thành công",
+    user: {
+        user_id: user.user_id,
+        username: user.username,
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        points: user.points,
+        email_verified: user.email_verified || 0  // ✅ XỬ LÝ NULL
+    },
+    accessToken,
+    refreshToken
+};
 };
 
 /*=========================================================
