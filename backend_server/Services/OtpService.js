@@ -3,7 +3,7 @@
 =========================================================*/
 
 const RedisService = require("./RedisService");
-const Otp = require("../Utils/Otp");
+const Otp = require("../utils/Otp");
 const OtpRepository = require("../Repositories/OtpRepository");
 
 /*=========================================================
