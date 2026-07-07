@@ -2,7 +2,7 @@
     DEPENDENCIES
 =========================================================*/
 
-const Password = require("../Utils/Password");
+const Password = require("../utils/Password");
 const UserRepository = require("../Repositories/UserRepository");
 
 /*=========================================================
