@@ -1,129 +1,138 @@
-const ACCESS_COOKIE_NAME =
-    process.env.ACCESS_COOKIE_NAME || "access_token";
+/*=========================================================
+    DEPENDENCIES
+=========================================================*/
 
-const REFRESH_COOKIE_NAME =
-    process.env.REFRESH_COOKIE_NAME || "refresh_token";
+/*=========================================================
+    COOKIE NAMES
+=========================================================*/
+
+const USER_ACCESS_COOKIE_NAME =
+    process.env.USER_ACCESS_COOKIE_NAME || "user_access_token";
+
+const USER_REFRESH_COOKIE_NAME =
+    process.env.USER_REFRESH_COOKIE_NAME || "user_refresh_token";
+
+const ADMIN_ACCESS_COOKIE_NAME =
+    process.env.ADMIN_ACCESS_COOKIE_NAME || "admin_access_token";
+
+const ADMIN_REFRESH_COOKIE_NAME =
+    process.env.ADMIN_REFRESH_COOKIE_NAME || "admin_refresh_token";
 
 /*=========================================================
     DEFAULT COOKIE OPTIONS
 =========================================================*/
 
 const DEFAULT_COOKIE_OPTIONS = {
-
     httpOnly: true,
-
-    secure:
-        process.env.NODE_ENV === "production",
-
-    sameSite:
-        process.env.NODE_ENV === "production"
-            ? "None"
-            : "Lax",
-
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/"
-
 };
+
+/*=========================================================
+    COOKIE CLASS
+=========================================================*/
 
 class Cookie {
 
-    /*=========================================================
-        SET ACCESS TOKEN
-    =========================================================*/
+    /*=====================================================
+        USER TOKENS
+    =====================================================*/
 
-    setAccessToken(res, token) {
-
+    setUserAccessToken(res, token) {
         res.cookie(
-            ACCESS_COOKIE_NAME,
+            USER_ACCESS_COOKIE_NAME,
             token,
             {
                 ...DEFAULT_COOKIE_OPTIONS,
-
-                maxAge:
-                    Number(process.env.ACCESS_COOKIE_MAX_AGE)
-                    || 15 * 60 * 1000
+                maxAge: Number(process.env.USER_ACCESS_COOKIE_MAX_AGE) || 15 * 60 * 1000
             }
         );
-
     }
 
-    /*=========================================================
-        SET REFRESH TOKEN
-    =========================================================*/
-
-    setRefreshToken(res, token) {
-
+    setUserRefreshToken(res, token) {
         res.cookie(
-            REFRESH_COOKIE_NAME,
+            USER_REFRESH_COOKIE_NAME,
             token,
             {
                 ...DEFAULT_COOKIE_OPTIONS,
-
-                maxAge:
-                    Number(process.env.REFRESH_COOKIE_MAX_AGE)
-                    || 7 * 24 * 60 * 60 * 1000
+                maxAge: Number(process.env.USER_REFRESH_COOKIE_MAX_AGE) || 7 * 24 * 60 * 60 * 1000
             }
         );
-
     }
 
-    /*=========================================================
-        GET ACCESS TOKEN
-    =========================================================*/
-
-    getAccessToken(req) {
-
-        return req.cookies?.[ACCESS_COOKIE_NAME];
-
+    getUserAccessToken(req) {
+        return req.cookies?.[USER_ACCESS_COOKIE_NAME];
     }
 
-    /*=========================================================
-        GET REFRESH TOKEN
-    =========================================================*/
-
-    getRefreshToken(req) {
-
-        return req.cookies?.[REFRESH_COOKIE_NAME];
-
+    getUserRefreshToken(req) {
+        return req.cookies?.[USER_REFRESH_COOKIE_NAME];
     }
 
-    /*=========================================================
-        CLEAR ACCESS TOKEN
-    =========================================================*/
+    clearUserCookies(res) {
+        res.clearCookie(USER_ACCESS_COOKIE_NAME, DEFAULT_COOKIE_OPTIONS);
+        res.clearCookie(USER_REFRESH_COOKIE_NAME, DEFAULT_COOKIE_OPTIONS);
+    }
 
-    clearAccessToken(res) {
+    /*=====================================================
+        ADMIN TOKENS
+    =====================================================*/
 
-        res.clearCookie(
-            ACCESS_COOKIE_NAME,
-            DEFAULT_COOKIE_OPTIONS
+    setAdminAccessToken(res, token) {
+        res.cookie(
+            ADMIN_ACCESS_COOKIE_NAME,
+            token,
+            {
+                ...DEFAULT_COOKIE_OPTIONS,
+                maxAge: Number(process.env.ADMIN_ACCESS_COOKIE_MAX_AGE) || 15 * 60 * 1000
+            }
         );
-
     }
 
-    /*=========================================================
-        CLEAR REFRESH TOKEN
-    =========================================================*/
-
-    clearRefreshToken(res) {
-
-        res.clearCookie(
-            REFRESH_COOKIE_NAME,
-            DEFAULT_COOKIE_OPTIONS
+    setAdminRefreshToken(res, token) {
+        res.cookie(
+            ADMIN_REFRESH_COOKIE_NAME,
+            token,
+            {
+                ...DEFAULT_COOKIE_OPTIONS,
+                maxAge: Number(process.env.ADMIN_REFRESH_COOKIE_MAX_AGE) || 7 * 24 * 60 * 60 * 1000
+            }
         );
-
     }
 
-    /*=========================================================
-        CLEAR ALL AUTH COOKIE
-    =========================================================*/
-
-    clearAuthCookies(res) {
-
-        this.clearAccessToken(res);
-
-        this.clearRefreshToken(res);
-
+    getAdminAccessToken(req) {
+        return req.cookies?.[ADMIN_ACCESS_COOKIE_NAME];
     }
 
+    getAdminRefreshToken(req) {
+        return req.cookies?.[ADMIN_REFRESH_COOKIE_NAME];
+    }
+
+    clearAdminCookies(res) {
+        res.clearCookie(ADMIN_ACCESS_COOKIE_NAME, DEFAULT_COOKIE_OPTIONS);
+        res.clearCookie(ADMIN_REFRESH_COOKIE_NAME, DEFAULT_COOKIE_OPTIONS);
+    }
+
+    /*=====================================================
+        CLEAR ALL COOKIES
+    =====================================================*/
+
+    clearAllCookies(res) {
+        this.clearUserCookies(res);
+        this.clearAdminCookies(res);
+    }
+
+    /*=====================================================
+        KIỂM TRA TOKEN TỒN TẠI
+    =====================================================*/
+
+    hasUserAccessToken(req) {
+        return !!this.getUserAccessToken(req);
+    }
+
+    hasAdminAccessToken(req) {
+        return !!this.getAdminAccessToken(req);
+    }
 }
 
 module.exports = new Cookie();

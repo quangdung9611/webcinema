@@ -8,11 +8,8 @@ const BASE_URL = 'https://api.quangdungcinema.id.vn';
 // 1. Khởi tạo Axios instance
 const api = axios.create({
     baseURL: BASE_URL,
-    withCredentials: true // 🔥 BẮT BUỘC: Để gửi kèm admintoken/usertoken tự động
+    withCredentials: true // 🔥 BẮT BUỘC: Để gửi kèm cookie tự động
 });
-
-// Loại bỏ Interceptor ép Origin vì trình duyệt sẽ tự gửi Origin chuẩn của nó
-// Điều này giúp tránh lỗi "CORS preflight" phức tạp.
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);    
@@ -24,17 +21,16 @@ export const AuthProvider = ({ children }) => {
         const hostname = window.location.hostname;
         const isAdminDomain = hostname.startsWith('admin.');
 
-        // Chọn đúng "cửa" để xác thực dựa trên trang đang đứng
-        const endpoint = isAdminDomain 
-            ? '/admin/api/auth/me'  
-            : '/api/auth/me';        
+        // ✅ SỬA: Dùng chung endpoint /api/auth/me cho cả admin và user
+        // Phân biệt qua role trong response
+        const endpoint = '/api/auth/me';
 
         try {
             const res = await api.get(endpoint);
             const userData = res.data?.user;
 
             if (isAdminDomain) {
-                // Ở trang admin thì chỉ tin tưởng dữ liệu có role admin
+                // Ở trang admin: chỉ cho phép nếu role === 'admin'
                 if (userData && userData.role === 'admin') {
                     setAdmin(userData);
                     setUser(null); 
@@ -43,7 +39,8 @@ export const AuthProvider = ({ children }) => {
                     setUser(null);
                 }
             } else {
-                // Ở trang chủ thì nhận diện user bình thường
+                // Ở trang user: nhận diện user bình thường (không cần check email_verified ở đây)
+                // ProtectedRoute sẽ kiểm tra email_verified
                 setUser(userData || null);
                 setAdmin(null);
             }
@@ -60,6 +57,18 @@ export const AuthProvider = ({ children }) => {
         setAdmin(null);
     }, []);
 
+    // ✅ THÊM: Hàm logout dùng chung
+    const logout = useCallback(async () => {
+        try {
+            await api.post('/api/auth/logout');
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            clearAuth();
+            window.dispatchEvent(new Event('authChange'));
+        }
+    }, [clearAuth]);
+
     useEffect(() => {
         checkAuth();
         
@@ -71,7 +80,16 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{ 
-            user, admin, setUser, setAdmin, loading, checkAuth, clearAuth, BASE_URL, api 
+            user, 
+            admin, 
+            setUser, 
+            setAdmin, 
+            loading, 
+            checkAuth, 
+            clearAuth,
+            logout, // ✅ THÊM logout
+            BASE_URL, 
+            api 
         }}>
             {children}
         </AuthContext.Provider>

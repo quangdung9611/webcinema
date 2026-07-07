@@ -6,59 +6,84 @@ const Jwt = require("../utils/Jwt");
 const Cookie = require("../utils/Cookie");
 
 /*=========================================================
-    AUTHENTICATE
+    AUTHENTICATE - Dùng chung cho user và admin
 =========================================================*/
 
 const authenticate = (req, res, next) => {
-
     try {
-
-        /*==============================================
-            GET ACCESS TOKEN
-        ==============================================*/
-
-        const accessToken =
-            Cookie.getAccessToken(req);
+        // ✅ Thử lấy admin token trước, nếu không có thì lấy user token
+        let accessToken = Cookie.getAdminAccessToken(req);
+        let tokenType = 'admin';
 
         if (!accessToken) {
-
-            return res.status(401).json({
-
-                success: false,
-
-                message: "Vui lòng đăng nhập."
-
-            });
-
+            accessToken = Cookie.getUserAccessToken(req);
+            tokenType = 'user';
         }
 
-        /*==============================================
-            VERIFY ACCESS TOKEN
-        ==============================================*/
+        if (!accessToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Vui lòng đăng nhập."
+            });
+        }
 
-        const payload =
-            Jwt.verifyAccessToken(accessToken);
+        const payload = Jwt.verifyAccessToken(accessToken);
+        if (!payload) {
+            Cookie.clearAllCookies(res);
+            return res.status(401).json({
+                success: false,
+                message: "Token không hợp lệ."
+            });
+        }
 
         req.user = payload;
+        req.tokenType = tokenType; // Lưu loại token để biết
 
         next();
-
-    }
-
-    catch (error) {
-
-        Cookie.clearAuthCookies(res);
-
+    } catch (error) {
+        Cookie.clearAllCookies(res);
         return res.status(401).json({
-
             success: false,
-
             message: "Phiên đăng nhập đã hết hạn."
-
         });
-
     }
+};
 
+/*=========================================================
+    AUTHENTICATE ADMIN - Chỉ cho admin
+=========================================================*/
+
+const authenticateAdmin = (req, res, next) => {
+    try {
+        const accessToken = Cookie.getAdminAccessToken(req);
+
+        if (!accessToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Vui lòng đăng nhập với tài khoản admin."
+            });
+        }
+
+        const payload = Jwt.verifyAccessToken(accessToken);
+        if (!payload) {
+            Cookie.clearAdminCookies(res);
+            return res.status(401).json({
+                success: false,
+                message: "Token admin không hợp lệ."
+            });
+        }
+
+        req.user = payload;
+        req.tokenType = 'admin';
+
+        next();
+    } catch (error) {
+        Cookie.clearAdminCookies(res);
+        return res.status(401).json({
+            success: false,
+            message: "Phiên đăng nhập admin đã hết hạn."
+        });
+    }
 };
 
 /*=========================================================
@@ -66,37 +91,23 @@ const authenticate = (req, res, next) => {
 =========================================================*/
 
 const authorize = (...roles) => {
-
     return (req, res, next) => {
-
         if (!req.user) {
-
             return res.status(401).json({
-
                 success: false,
-
                 message: "Vui lòng đăng nhập."
-
             });
-
         }
 
         if (!roles.includes(req.user.role)) {
-
             return res.status(403).json({
-
                 success: false,
-
                 message: "Bạn không có quyền truy cập."
-
             });
-
         }
 
         next();
-
     };
-
 };
 
 /*=========================================================
@@ -104,33 +115,22 @@ const authorize = (...roles) => {
 =========================================================*/
 
 const optionalAuth = (req, res, next) => {
-
     try {
-
-        const accessToken =
-            Cookie.getAccessToken(req);
-
+        let accessToken = Cookie.getAdminAccessToken(req);
         if (!accessToken) {
-
-            return next();
-
+            accessToken = Cookie.getUserAccessToken(req);
         }
 
-        const payload =
-            Jwt.verifyAccessToken(accessToken);
-
-        req.user = payload;
-
-    }
-
-    catch {
-
+        if (accessToken) {
+            const payload = Jwt.verifyAccessToken(accessToken);
+            req.user = payload;
+        } else {
+            req.user = null;
+        }
+    } catch {
         req.user = null;
-
     }
-
     next();
-
 };
 
 /*=========================================================
@@ -138,11 +138,8 @@ const optionalAuth = (req, res, next) => {
 =========================================================*/
 
 module.exports = {
-
     authenticate,
-
+    authenticateAdmin,
     authorize,
-
     optionalAuth
-
 };
