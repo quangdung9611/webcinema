@@ -2,8 +2,8 @@
     DEPENDENCIES
 =========================================================*/
 
-const Jwt = require("../Utils/Jwt");
-const Cookie = require("../Utils/Cookie");
+const Jwt = require("../utils/Jwt");
+const Cookie = require("../utils/Cookie");
 
 /*=========================================================
     AUTHENTICATE
