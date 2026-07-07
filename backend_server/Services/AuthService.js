@@ -2,10 +2,10 @@
     DEPENDENCIES
 =========================================================*/
 
-const Jwt = require("../Utils/Jwt");
-const Cookie = require("../Utils/Cookie");
-const Password = require("../Utils/Password");
-const Otp = require("../Utils/Otp");
+const Jwt = require("../utils/Jwt");
+const Cookie = require("../utils/Cookie");
+const Password = require("../utils/Password");
+const Otp = require("../utils/Otp");
 
 const UserRepository = require("../Repositories/UserRepository");
 const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
