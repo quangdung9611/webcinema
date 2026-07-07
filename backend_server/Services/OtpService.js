@@ -1,193 +1,176 @@
-const db = require('../Config/db');
-const Otp = require('../utils/Otp');
+/*=========================================================
+    DEPENDENCIES
+=========================================================*/
+
+const RedisService = require("./RedisService");
+const Otp = require("../Utils/Otp");
+const OtpRepository = require("../Repositories/OtpRepository");
+
+/*=========================================================
+    OTP SERVICE (Dùng chung Redis)
+=========================================================*/
 
 class OtpService {
 
-    /* =========================================================
-        CREATE OTP
-    ========================================================= */
-    static async createOTP(email, purpose = 'PAYMENT') {
-
-        const otp = Otp.generate6();
-
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-
-        await db.execute(
-            `
-            INSERT INTO otp_logs
-            (
-                email,
-                otp,
-                purpose,
-                expires_at,
-                send_count,
-                failed_attempts
-            )
-            VALUES (?, ?, ?, ?, 1, 0)
-            `,
-            [email, otp, purpose, expiresAt]
-        );
-
-        return otp;
-    }
-
-    /* =========================================================
-        RESEND OTP
-    ========================================================= */
-    static async resendOTP(email, purpose = 'PAYMENT') {
-
-        const [rows] = await db.execute(
-            `
-            SELECT *
-            FROM otp_logs
-            WHERE email = ? AND purpose = ? AND is_used = 0
-            ORDER BY otp_id DESC
-            LIMIT 1
-            `,
-            [email, purpose]
-        );
-
-        if (!rows.length) {
-            throw new Error('Không tìm thấy OTP để gửi lại.');
+    /*=========================================================
+        CREATE OTP - Dùng cho thanh toán/booking
+    =========================================================*/
+    static async createPaymentOTP(email, purpose = "PAYMENT") {
+        // 1. Check rate limit
+        const rateLimit = await RedisService.checkRateLimit(email, purpose, 3, 60);
+        if (!rateLimit.allowed) {
+            throw {
+                statusCode: 429,
+                message: rateLimit.message
+            };
         }
 
-        const record = rows[0];
+        // 2. Generate OTP
+        const otpCode = Otp.generate6();
 
-        const diff = Date.now() - new Date(record.updated_at || record.created_at).getTime();
+        // 3. Lưu vào Redis (TTL 5 phút)
+        await RedisService.saveOTP(email, purpose, otpCode, 300);
 
-        if (diff < 30000) {
-            throw new Error('Vui lòng đợi 30 giây trước khi gửi lại OTP.');
-        }
-
-        if (record.send_count >= 3) {
-            throw new Error('Bạn đã vượt quá số lần gửi OTP.');
-        }
-
-        const newOTP = Otp.generate6();
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-
-        await db.execute(
-            `
-            UPDATE otp_logs
-            SET
-                otp = ?,
-                expires_at = ?,
-                send_count = send_count + 1,
-                failed_attempts = 0,
-                updated_at = NOW()
-            WHERE otp_id = ?
-            `,
-            [newOTP, expiresAt, record.otp_id]
-        );
-
-        return newOTP;
-    }
-
-    /* =========================================================
-        VERIFY OTP
-    ========================================================= */
-    static async verifyOTP(email, otp, purpose = 'PAYMENT') {
-
-        const [rows] = await db.execute(
-            `
-            SELECT *
-            FROM otp_logs
-            WHERE email = ? AND purpose = ? AND is_used = 0
-            ORDER BY otp_id DESC
-            LIMIT 1
-            `,
-            [email, purpose]
-        );
-
-        if (!rows.length) {
-            return { success: false, message: 'Không tìm thấy OTP.' };
-        }
-
-        const record = rows[0];
-
-        if (new Date(record.expires_at) < new Date()) {
-            return { success: false, code: 'OTP_EXPIRED', message: 'OTP đã hết hạn.' };
-        }
-
-        if (record.failed_attempts >= 5) {
-            return { success: false, code: 'OTP_LOCKED', message: 'OTP đã bị khóa.' };
-        }
-
-        if (record.otp !== otp) {
-
-            await db.execute(
-                `
-                UPDATE otp_logs
-                SET failed_attempts = failed_attempts + 1
-                WHERE otp_id = ?
-                `,
-                [record.otp_id]
-            );
-
-            return { success: false, code: 'OTP_INVALID', message: 'OTP không đúng.' };
-        }
+        // 4. Log vào MySQL (lịch sử)
+        await OtpRepository.create({
+            email,
+            purpose: purpose,
+            status: "sent",
+            ip_address: null,
+            user_agent: null
+        });
 
         return {
             success: true,
-            data: record
+            otp: otpCode
         };
     }
 
-    /* =========================================================
-        MARK USED
-    ========================================================= */
-    static async markUsed(otpId) {
+    /*=========================================================
+        VERIFY OTP - Dùng cho thanh toán/booking
+    =========================================================*/
+    static async verifyPaymentOTP(email, otp, purpose = "PAYMENT") {
+        // 1. Check locked
+        const isLocked = await RedisService.isOTPLocked(email, purpose, 5);
+        if (isLocked) {
+            return {
+                success: false,
+                code: "OTP_LOCKED",
+                message: "OTP đã bị khóa do nhập sai quá nhiều lần"
+            };
+        }
 
-        await db.execute(
-            `
-            UPDATE otp_logs
-            SET is_used = 1, updated_at = NOW()
-            WHERE otp_id = ?
-            `,
-            [otpId]
-        );
+        // 2. Get OTP từ Redis
+        const savedOTP = await RedisService.getOTP(email, purpose);
+        if (!savedOTP) {
+            return {
+                success: false,
+                code: "OTP_NOT_FOUND",
+                message: "OTP không tồn tại hoặc đã hết hạn"
+            };
+        }
+
+        // 3. Verify OTP
+        if (savedOTP !== otp) {
+            const attempts = await RedisService.incrementOTPAttempts(email, purpose, 300);
+            return {
+                success: false,
+                code: "OTP_INVALID",
+                message: `OTP không đúng. Còn ${5 - attempts} lần thử`
+            };
+        }
+
+        // 4. Xóa OTP khỏi Redis (dùng 1 lần)
+        await RedisService.deleteOTP(email, purpose);
+
+        // 5. Log vào MySQL
+        await OtpRepository.create({
+            email,
+            purpose: purpose,
+            status: "verified",
+            ip_address: null,
+            user_agent: null
+        });
+
+        return {
+            success: true,
+            message: "Xác thực OTP thành công"
+        };
     }
 
-    /* =========================================================
-        MARK VERIFIED
-    ========================================================= */
-    static async markVerified(otpId) {
-
-        await db.execute(
-            `
-            UPDATE otp_logs
-            SET verified = 1, updated_at = NOW()
-            WHERE otp_id = ?
-            `,
-            [otpId]
-        );
+    /*=========================================================
+        VERIFY OTP - Dùng chung cho mọi purpose
+    =========================================================*/
+    static async verifyOTP(email, otp, purpose = "PAYMENT") {
+        return await this.verifyPaymentOTP(email, otp, purpose);
     }
 
-    /* =========================================================
+    /*=========================================================
+        RESEND OTP - Dùng cho thanh toán/booking
+    =========================================================*/
+    static async resendOTP(email, purpose = "PAYMENT") {
+        // 1. Check cooldown (30s)
+        const cooldownKey = `otp:${email}:${purpose}:cooldown`;
+        const lastSent = await RedisService.get(cooldownKey);
+        
+        if (lastSent) {
+            const diff = Date.now() - parseInt(lastSent);
+            if (diff < 30000) {
+                throw {
+                    statusCode: 429,
+                    message: "Vui lòng đợi 30 giây trước khi gửi lại OTP"
+                };
+            }
+        }
+
+        // 2. Check resend count (tối đa 3 lần)
+        const countKey = `otp:${email}:${purpose}:resend_count`;
+        const count = await RedisService.get(countKey) || 0;
+        
+        if (parseInt(count) >= 3) {
+            throw {
+                statusCode: 429,
+                message: "Bạn đã vượt quá số lần gửi OTP"
+            };
+        }
+
+        // 3. Generate OTP mới
+        const newOTP = Otp.generate6();
+
+        // 4. Lưu vào Redis
+        await RedisService.saveOTP(email, purpose, newOTP, 300);
+        await RedisService.set(cooldownKey, Date.now().toString(), 30);
+        await RedisService.increment(countKey);
+        await RedisService.expire(countKey, 3600);
+
+        // 5. Log vào MySQL
+        await OtpRepository.create({
+            email,
+            purpose: purpose,
+            status: "resent",
+            ip_address: null,
+            user_agent: null
+        });
+
+        return {
+            success: true,
+            otp: newOTP
+        };
+    }
+
+    /*=========================================================
         DELETE OTP
-    ========================================================= */
-    static async deleteOTP(email, purpose = 'PAYMENT') {
-
-        await db.execute(
-            `
-            DELETE FROM otp_logs
-            WHERE email = ? AND purpose = ?
-            `,
-            [email, purpose]
-        );
-    }
-
-    /* =========================================================
-        CLEAN EXPIRED OTP
-    ========================================================= */
-    static async clearExpiredOTP() {
-
-        await db.execute(
-            `
-            DELETE FROM otp_logs
-            WHERE expires_at < NOW()
-            `
-        );
+    =========================================================*/
+    static async deleteOTP(email, purpose = "PAYMENT") {
+        await RedisService.deleteOTP(email, purpose);
+        
+        await OtpRepository.create({
+            email,
+            purpose: purpose,
+            status: "deleted",
+            ip_address: null,
+            user_agent: null
+        });
     }
 }
 

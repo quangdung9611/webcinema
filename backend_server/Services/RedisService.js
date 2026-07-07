@@ -2,7 +2,7 @@
     DEPENDENCIES
 =========================================================*/
 
-const redis = require("../Config/Redis");
+const redis = require("../Config/redis");
 
 /*=========================================================
     REDIS SERVICE
