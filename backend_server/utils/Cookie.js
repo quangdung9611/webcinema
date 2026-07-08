@@ -10,13 +10,12 @@ const ADMIN_REFRESH_COOKIE_NAME = process.env.ADMIN_REFRESH_COOKIE_NAME || "admi
 /*=========================================================
     DEFAULT COOKIE OPTIONS
 =========================================================*/
-
 const DEFAULT_COOKIE_OPTIONS = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    secure: false,  // ✅ TẠM THỜI SET FALSE ĐỂ TEST
+    sameSite: "Lax",
     path: "/",
-    domain: process.env.NODE_ENV === "production" ? ".quangdungcinema.id.vn" : undefined
+    domain: ".quangdungcinema.id.vn"
 };
 
 /*=========================================================
