@@ -1,12 +1,13 @@
 /* =========================================================
-   ADMIN LAYOUT
+   ADMIN LAYOUT - DARK MODE NEON
 ========================================================= */
 
 .admin-layout {
     min-height: 100vh;
-
     display: flex;
     flex-direction: column;
+    background-color: #0B0E14; /* Nền chính: đen xanh than */
+    color: #E8EDF2; /* Chữ trắng xám nhẹ */
 }
 
 /* =========================================================
@@ -15,10 +16,9 @@
 
 .admin-body {
     flex: 1;
-
     display: flex;
-
     min-height: calc(100vh - 72px);
+    background-color: #0B0E14;
 }
 
 /* =========================================================
@@ -27,13 +27,11 @@
 
 .admin-content {
     flex: 1;
-
     min-width: 0;
-
     overflow-x: hidden;
     overflow-y: auto;
-
     -webkit-overflow-scrolling: touch;
+    background-color: #0F131A; /* Nền content hơi sáng hơn sidebar tí */
 }
 
 /* =========================================================
@@ -51,9 +49,8 @@
 .admin-overlay {
     position: fixed;
     inset: 0;
-
-    background: rgba(0,0,0,0.6);
-
+    background: rgba(0, 0, 0, 0.7); /* Overlay đậm hơn cho dark mode */
+    backdrop-filter: blur(2px); /* Thêm hiệu ứng mờ cho đẹp */
     z-index: 1200;
 }
 
@@ -62,11 +59,9 @@
 ========================================================= */
 
 @media screen and (max-width: 1023px) {
-
     .admin-page-wrapper {
         padding: 20px;
     }
-
 }
 
 /* =========================================================
@@ -74,9 +69,29 @@
 ========================================================= */
 
 @media screen and (max-width: 739px) {
-
     .admin-page-wrapper {
         padding: 16px;
     }
+}
 
+/* =========================================================
+   CUSTOM SCROLLBAR CHO DARK MODE
+========================================================= */
+
+.admin-content::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.admin-content::-webkit-scrollbar-track {
+    background: #0B0E14;
+}
+
+.admin-content::-webkit-scrollbar-thumb {
+    background: #2A3A4A;
+    border-radius: 4px;
+}
+
+.admin-content::-webkit-scrollbar-thumb:hover {
+    background: #00E5FF; /* Neon khi hover */
 }

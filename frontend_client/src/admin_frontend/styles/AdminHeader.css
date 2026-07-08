@@ -1,5 +1,5 @@
 /* =========================================================
-   ADMIN HEADER
+   ADMIN HEADER - DARK NEON THEME
 ========================================================= */
 
 .admin-header-main {
@@ -16,9 +16,11 @@
 
     z-index: 1300;
 
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(14px);
 
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(11, 14, 20, 0.92);
+
+    border-bottom: 1px solid rgba(0, 229, 255, 0.06);
 }
 
 /* =========================================================
@@ -51,7 +53,7 @@
 
     background: transparent;
 
-    color: #ffffff;
+    color: #E8EDF2;
 
     border-radius: 12px;
 
@@ -61,23 +63,48 @@
 }
 
 .admin-hamburger-trigger:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(0, 229, 255, 0.06);
+    color: #00E5FF;
 }
 
 /* =========================================================
-   LOGO
+   LOGO - KHÔNG VIỀN, KHÔNG TRÒN
 ========================================================= */
 
 .admin-brand-logo { 
     display: flex; 
     align-items: center; 
-    border-radius: none !important; 
     text-decoration: none; 
-} .admin-logo-image { 
-    height: 90px; 
-    width: auto; 
-    object-fit: contain; 
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 0;
 }
+
+.admin-logo-image { 
+    height: 50px; 
+    width: auto; 
+    object-fit: contain;
+    display: block;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 0;
+}
+
+/* Nếu logo là text thì style thế này */
+.admin-brand-text {
+    color: #00E5FF;
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.admin-brand-text span {
+    color: #E8EDF2;
+    font-weight: 300;
+}
+
 /* =========================================================
    PAGE TITLE
 ========================================================= */
@@ -86,11 +113,15 @@
     font-size: 1.1rem;
     font-weight: 700;
 
-    color: #ffffff;
+    color: #E8EDF2;
+}
+
+.admin-page-title span {
+    color: #00E5FF;
 }
 
 /* =========================================================
-   SEARCH
+   SEARCH - NEON BORDER
 ========================================================= */
 
 .admin-header-search-wrapper {
@@ -104,13 +135,20 @@
     display: flex;
     align-items: center;
 
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(0, 229, 255, 0.08);
 
     border-radius: 14px;
 
     overflow: hidden;
 
     margin: 0 30px;
+
+    transition: border-color 0.3s ease;
+}
+
+.admin-header-search-wrapper:focus-within {
+    border-color: rgba(0, 229, 255, 0.4);
+    box-shadow: 0 0 24px rgba(0, 229, 255, 0.04);
 }
 
 .admin-search-icon {
@@ -118,7 +156,12 @@
 
     left: 16px;
 
-    color: #9ca3af;
+    color: #4A6A7A;
+    transition: color 0.3s ease;
+}
+
+.admin-header-search-wrapper:focus-within .admin-search-icon {
+    color: #00E5FF;
 }
 
 .admin-search-input {
@@ -132,13 +175,13 @@
 
     padding: 0 18px 0 46px;
 
-    color: #ffffff;
+    color: #E8EDF2;
 
     font-size: 0.95rem;
 }
 
 .admin-search-input::placeholder {
-    color: #9ca3af;
+    color: #4A6A7A;
 }
 
 /* =========================================================
@@ -175,7 +218,7 @@
 
     border-radius: 12px;
 
-    color: #ffffff;
+    color: #8A9BB0;
 
     cursor: pointer;
 
@@ -183,7 +226,8 @@
 }
 
 .admin-notification-btn:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(0, 229, 255, 0.06);
+    color: #00E5FF;
 }
 
 .admin-notification-badge {
@@ -201,12 +245,12 @@
     align-items: center;
     justify-content: center;
 
-    background: #a855f7;
+    background: #00E5FF;
 
-    color: #ffffff;
+    color: #0B0E14;
 
-    font-size: 0.7rem;
-    font-weight: 700;
+    font-size: 0.65rem;
+    font-weight: 800;
 }
 
 /* =========================================================
@@ -220,45 +264,65 @@
     gap: 12px;
 
     cursor: pointer;
+
+    padding: 4px 8px 4px 4px;
+
+    border-radius: 50px;
+
+    transition: 0.25s ease;
+}
+
+.admin-user-dropdown:hover {
+    background: rgba(0, 229, 255, 0.04);
+}
+
+.admin-user-avatar {
+    width: 46px;
+    height: 46px;
+
+    flex-shrink: 0;
 }
 
 .admin-user-avatar img {
-    width: 46px;
-    height: 46px;
+    width: 100%;
+    height: 100%;
 
     border-radius: 50%;
 
     object-fit: cover;
 
-    border: 2px solid rgba(255,255,255,0.08);
+    border: 2px solid rgba(0, 229, 255, 0.1);
 
-    background: rgba(255,255,255,0.04);
+    background: rgba(0, 229, 255, 0.04);
 
     padding: 2px;
 }
+
 .admin-user-info {
     display: flex;
     flex-direction: column;
 }
 
 .admin-user-greeting {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
 
-    color: #9ca3af;
+    color: #4A6A7A;
 }
 
 .admin-user-name {
-    color: #ffffff;
+    color: #E8EDF2;
 
     font-weight: 700;
+    font-size: 0.95rem;
 }
 
 .admin-user-arrow {
-    color: #9ca3af;
+    color: #4A6A7A;
+    margin-left: 4px;
 }
 
 /* =========================================================
-   LOGOUT
+   LOGOUT BUTTON - NEON
 ========================================================= */
 
 .admin-logout-btn {
@@ -268,11 +332,11 @@
 
     border-radius: 12px;
 
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(0, 229, 255, 0.06);
 
     background: transparent;
 
-    color: #ffffff;
+    color: #8A9BB0;
 
     display: flex;
     align-items: center;
@@ -285,7 +349,10 @@
 }
 
 .admin-logout-btn:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(0, 229, 255, 0.06);
+    border-color: rgba(0, 229, 255, 0.12);
+    color: #00E5FF;
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.04);
 }
 
 /* =========================================================
@@ -325,7 +392,7 @@
     }
 
     .admin-logo-image {
-        height: 58px;
+        height: 40px;
     }
 
     .admin-header-search-wrapper {
@@ -349,4 +416,8 @@
         justify-content: center;
     }
 
+    .admin-user-avatar img {
+        width: 40px;
+        height: 40px;
+    }
 }

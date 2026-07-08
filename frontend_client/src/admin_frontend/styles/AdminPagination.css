@@ -1,5 +1,5 @@
 /* =========================================================
-    PAGINATION WRAPPER (RED - BLACK THEME)
+    PAGINATION WRAPPER - DARK NEON THEME
 ========================================================= */
 
 .admin-pagination {
@@ -15,16 +15,15 @@
 
     padding: 28px;
 
-    border-top: 1px solid rgba(255, 71, 71, 0.15);
+    border-top: 1px solid rgba(0, 229, 255, 0.06);
 
-    background:
-        linear-gradient(
-            145deg,
-            rgba(10, 10, 12, 0.98),
-            rgba(20, 0, 0, 0.92)
-        );
+    background: linear-gradient(
+        145deg,
+        rgba(11, 14, 20, 0.98),
+        rgba(15, 19, 26, 0.95)
+    );
 
-    box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
 }
 
 /* =========================================================
@@ -46,7 +45,7 @@
     min-width: 46px;
     height: 46px;
 
-    border: 1px solid rgba(255, 71, 71, 0.15);
+    border: 1px solid rgba(0, 229, 255, 0.06);
     outline: none;
 
     border-radius: 14px;
@@ -55,9 +54,9 @@
     align-items: center;
     justify-content: center;
 
-    background: rgba(20, 0, 0, 0.55);
+    background: rgba(0, 229, 255, 0.02);
 
-    color: #ffffff;
+    color: #8A9BB0;
 
     font-size: 14px;
     font-weight: 700;
@@ -74,35 +73,29 @@
 ========================================================= */
 
 .admin-pagination-btn:hover {
-    background: rgba(255, 71, 71, 0.15);
-
-    border-color: rgba(255, 71, 71, 0.45);
-
+    background: rgba(0, 229, 255, 0.06);
+    border-color: rgba(0, 229, 255, 0.15);
+    color: #E8EDF2;
     transform: translateY(-2px);
-
-    box-shadow:
-        0 10px 25px rgba(255, 0, 0, 0.25),
-        0 0 18px rgba(255, 0, 0, 0.15);
+    box-shadow: 0 10px 25px rgba(0, 229, 255, 0.08);
 }
 
 /* =========================================================
-    ACTIVE
+    ACTIVE - NEON CYAN
 ========================================================= */
 
 .admin-pagination-btn.active {
     background: linear-gradient(
         135deg,
-        #ff3b3b,
-        #b30000
+        #00C8E5,
+        #0088AA
     );
 
     color: #ffffff;
 
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(0, 229, 255, 0.2);
 
-    box-shadow:
-        0 12px 28px rgba(255, 0, 0, 0.35),
-        0 0 22px rgba(255, 0, 0, 0.25);
+    box-shadow: 0 12px 28px rgba(0, 229, 255, 0.25);
 }
 
 /* =========================================================
@@ -110,17 +103,12 @@
 ========================================================= */
 
 .admin-pagination-btn.disabled {
-    opacity: 0.3;
-
+    opacity: 0.25;
     cursor: not-allowed;
-
     pointer-events: none;
-
     transform: none;
-
     box-shadow: none;
-
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.03);
 }
 
 /* =========================================================
@@ -135,7 +123,7 @@
     align-items: center;
     justify-content: center;
 
-    color: rgba(255, 71, 71, 0.6);
+    color: rgba(0, 229, 255, 0.3);
 
     font-size: 16px;
     font-weight: 700;
@@ -153,14 +141,14 @@
 
     margin-top: 4px;
 
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.35);
 
     font-size: 14px;
     font-weight: 500;
 }
 
 .admin-pagination-info span {
-    color: #ff3b3b;
+    color: #00E5FF;
     font-weight: 700;
     margin: 0 4px;
 }
