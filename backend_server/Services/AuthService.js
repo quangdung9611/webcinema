@@ -93,16 +93,6 @@ const validateLogin = (email, password) => {
 };
 
 /*=========================================================
-    GENERATE REFRESH EXPIRES
-=========================================================*/
-
-const generateRefreshExpires = () => {
-    const expires = new Date();
-    expires.setDate(expires.getDate() + Number(process.env.REFRESH_TOKEN_DAYS || 7));
-    return expires;
-};
-
-/*=========================================================
     PUBLIC METHODS
 =========================================================*/
 
@@ -192,37 +182,14 @@ exports.login = async (email, password, req, res) => {
         throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
     }
 
-    // Generate tokens
+    // Generate token
     const accessToken = Jwt.generateAccessToken(user);
-    const refreshToken = Jwt.generateRefreshToken(user);
 
-    // Hash refresh token
-    const tokenHash = Jwt.hashRefreshToken(refreshToken);
-    const expiresAt = generateRefreshExpires();
-
-    // Save refresh token to DB
-    await RefreshTokenRepository.create({
-        user_id: user.user_id,
-        token_hash: tokenHash,
-        expires_at: expiresAt,
-        ip_address: req?.ip || req?.connection?.remoteAddress || null,
-        user_agent: req?.headers?.["user-agent"] || null,
-        device_name: req?.headers?.["sec-ch-ua-platform"] || "Unknown Device"
-    });
-
-    // Update last login
-    await UserRepository.updateLastLogin(
-        user.user_id,
-        req?.ip || req?.connection?.remoteAddress || null
-    );
-
-    // ✅ FIX: Set cookies theo role - DÙNG accessToken và refreshToken
+    // Set cookies theo role - CHỈ 1 TOKEN
     if (user.role === 'admin') {
         Cookie.setAdminAccessToken(res, accessToken);
-        Cookie.setAdminRefreshToken(res, refreshToken);
     } else {
         Cookie.setUserAccessToken(res, accessToken);
-        Cookie.setUserRefreshToken(res, refreshToken);
     }
 
     return {
@@ -237,9 +204,7 @@ exports.login = async (email, password, req, res) => {
             role: user.role,
             points: user.points,
             email_verified: user.email_verified || 0
-        },
-        accessToken,
-        refreshToken
+        }
     };
 };
 
@@ -268,21 +233,16 @@ exports.getMe = async (userId) => {
 =========================================================*/
 
 exports.logout = async (req, res) => {
-    // Lấy refresh token theo role
-    let refreshToken = Cookie.getAdminRefreshToken(req);
+    // Lấy access token theo role
+    let accessToken = Cookie.getAdminAccessToken(req);
     let role = 'admin';
 
-    if (!refreshToken) {
-        refreshToken = Cookie.getUserRefreshToken(req);
+    if (!accessToken) {
+        accessToken = Cookie.getUserAccessToken(req);
         role = 'user';
     }
 
-    if (refreshToken) {
-        const tokenHash = Jwt.hashRefreshToken(refreshToken);
-        await RefreshTokenRepository.revoke(tokenHash, "Logout");
-    }
-
-    // Clear cookie theo role
+    // Clear cookie theo role - CHỈ 1 TOKEN
     if (role === 'admin') {
         Cookie.clearAdminCookies(res);
     } else {
@@ -300,114 +260,11 @@ exports.logout = async (req, res) => {
 =========================================================*/
 
 exports.logoutAllDevices = async (userId, res) => {
-    await RefreshTokenRepository.revokeByUser(userId, "Logout All Devices");
-    Cookie.clearAuthCookies(res);
+    Cookie.clearAllCookies(res);
 
     return {
         success: true,
         message: "Đã đăng xuất tất cả thiết bị"
-    };
-};
-
-/*=========================================================
-    REFRESH TOKEN
-=========================================================*/
-
-exports.refreshToken = async (req, res) => {
-    // Lấy refresh token theo role
-    let refreshToken = Cookie.getAdminRefreshToken(req);
-    let role = 'admin';
-
-    if (!refreshToken) {
-        refreshToken = Cookie.getUserRefreshToken(req);
-        role = 'user';
-    }
-
-    if (!refreshToken) {
-        throw { statusCode: 401, message: "Refresh Token không tồn tại" };
-    }
-
-    // Verify JWT
-    let payload;
-    try {
-        payload = Jwt.verifyRefreshToken(refreshToken);
-    } catch (error) {
-        if (role === 'admin') {
-            Cookie.clearAdminCookies(res);
-        } else {
-            Cookie.clearUserCookies(res);
-        }
-        throw { statusCode: 401, message: "Refresh Token đã hết hạn hoặc không hợp lệ" };
-    }
-
-    // Check token in database
-    const tokenHash = Jwt.hashRefreshToken(refreshToken);
-    const tokenData = await RefreshTokenRepository.findValidTokenHash(tokenHash);
-
-    if (!tokenData) {
-        if (role === 'admin') {
-            Cookie.clearAdminCookies(res);
-        } else {
-            Cookie.clearUserCookies(res);
-        }
-        throw { statusCode: 401, message: "Refresh Token không hợp lệ" };
-    }
-
-    // Find user
-    const user = await UserRepository.findBasicById(payload.user_id);
-    if (!user) {
-        await RefreshTokenRepository.revoke(tokenHash, "User not found");
-        if (role === 'admin') {
-            Cookie.clearAdminCookies(res);
-        } else {
-            Cookie.clearUserCookies(res);
-        }
-        throw { statusCode: 401, message: "Người dùng không tồn tại" };
-    }
-
-    // Check user status
-    if (user.status === "banned") {
-        await RefreshTokenRepository.revoke(tokenHash, "User banned");
-        if (role === 'admin') {
-            Cookie.clearAdminCookies(res);
-        } else {
-            Cookie.clearUserCookies(res);
-        }
-        throw { statusCode: 403, message: "Tài khoản đã bị khóa" };
-    }
-
-    // Rotate tokens
-    const newAccessToken = Jwt.generateAccessToken(user);
-    const newRefreshToken = Jwt.generateRefreshToken(user);
-
-    // Revoke old token
-    await RefreshTokenRepository.revoke(tokenHash, "Rotated");
-
-    // Save new token
-    const newTokenHash = Jwt.hashRefreshToken(newRefreshToken);
-    await RefreshTokenRepository.create({
-        user_id: user.user_id,
-        token_hash: newTokenHash,
-        expires_at: generateRefreshExpires(),
-        ip_address: req?.ip || req?.connection?.remoteAddress || null,
-        user_agent: req?.headers?.["user-agent"] || null,
-        device_name: req?.headers?.["sec-ch-ua-platform"] || "Unknown Device"
-    });
-
-    // Set new cookies theo role
-    if (user.role === 'admin') {
-        Cookie.setAdminAccessToken(res, newAccessToken);
-        Cookie.setAdminRefreshToken(res, newRefreshToken);
-    } else {
-        Cookie.setUserAccessToken(res, newAccessToken);
-        Cookie.setUserRefreshToken(res, newRefreshToken);
-    }
-
-    return {
-        success: true,
-        message: "Refresh Token thành công",
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken
     };
 };
 
@@ -449,9 +306,6 @@ exports.changePassword = async (userId, passwordData) => {
 
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(userId, hashedPassword);
-
-    // Revoke all refresh tokens
-    await RefreshTokenRepository.revokeByUser(userId, "Password changed");
 
     return {
         success: true,
@@ -616,9 +470,6 @@ exports.resetPassword = async (resetToken, newPassword) => {
     // Update password
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(user.user_id, hashedPassword);
-
-    // Revoke all refresh tokens
-    await RefreshTokenRepository.revokeByUser(user.user_id, "Password reset");
 
     // Log
     await OtpRepository.create({
