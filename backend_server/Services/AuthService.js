@@ -97,25 +97,30 @@ const validateLogin = (email, password) => {
 =========================================================*/
 
 const generateAndSetTokens = (user, res, rememberMe = false) => {
-    const accessToken = Jwt.generateAccessToken(user);
-    
-    // Set cookie với rememberMe
-    const maxAge = rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 7 ngày / 1 ngày
-    
-    const cookieOptions = {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-        maxAge: maxAge
-    };
 
-    // Set cookie theo role
-    const cookieName = user.role === 'admin' ? 'admin_token' : 'user_token';
-    res.cookie(cookieName, accessToken, cookieOptions);
+    const accessToken = Jwt.generateAccessToken(user);
+
+    if (user.role === "admin") {
+
+        Cookie.setAdminAccessToken(
+            res,
+            accessToken,
+            rememberMe
+        );
+
+    } else {
+
+        Cookie.setUserAccessToken(
+            res,
+            accessToken,
+            rememberMe
+        );
+
+    }
 
     return accessToken;
-};
 
+};
 /*=========================================================
     PUBLIC METHODS
 =========================================================*/

@@ -75,15 +75,17 @@ class Cookie {
 
     clearUserCookies(res) {
 
-        res.clearCookie(
+    res.clearCookie(USER_ACCESS_COOKIE_NAME, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite:
+            process.env.NODE_ENV === "production"
+                ? "None"
+                : "Lax",
+        path: "/"
+    });
 
-            USER_ACCESS_COOKIE_NAME,
-
-            this.getCookieOptions()
-
-        );
-
-    }
+}
 
     /*=====================================================
         ADMIN TOKEN
@@ -121,16 +123,17 @@ class Cookie {
 
     clearAdminCookies(res) {
 
-        res.clearCookie(
+    res.clearCookie(ADMIN_ACCESS_COOKIE_NAME, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite:
+            process.env.NODE_ENV === "production"
+                ? "None"
+                : "Lax",
+        path: "/"
+    });
 
-            ADMIN_ACCESS_COOKIE_NAME,
-
-            this.getCookieOptions()
-
-        );
-
-    }
-
+}
     /*=====================================================
         CLEAR ALL
     =====================================================*/
