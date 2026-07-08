@@ -216,9 +216,14 @@ exports.login = async (email, password, req, res) => {
         req?.ip || req?.connection?.remoteAddress || null
     );
 
-    // Set cookies (dùng chung cho cả user và admin)
-    Cookie.setAccessToken(res, accessToken);
-    Cookie.setRefreshToken(res, refreshToken);
+   // Set cookies theo role
+    if (user.role === 'admin') {
+        Cookie.setAdminAccessToken(res, accessToken);
+        Cookie.setAdminRefreshToken(res, refreshToken);
+    } else {
+        Cookie.setUserAccessToken(res, accessToken);
+        Cookie.setUserRefreshToken(res, refreshToken);
+    }
 
     return {
         success: true,
@@ -261,16 +266,27 @@ exports.getMe = async (userId) => {
 /*=========================================================
     LOGOUT
 =========================================================*/
-
 exports.logout = async (req, res) => {
-    const refreshToken = Cookie.getRefreshToken(req);
+    // Lấy refresh token theo role
+    let refreshToken = Cookie.getAdminRefreshToken(req);
+    let role = 'admin';
+
+    if (!refreshToken) {
+        refreshToken = Cookie.getUserRefreshToken(req);
+        role = 'user';
+    }
 
     if (refreshToken) {
         const tokenHash = Jwt.hashRefreshToken(refreshToken);
         await RefreshTokenRepository.revoke(tokenHash, "Logout");
     }
 
-    Cookie.clearAuthCookies(res);
+    // Clear cookie theo role
+    if (role === 'admin') {
+        Cookie.clearAdminCookies(res);
+    } else {
+        Cookie.clearUserCookies(res);
+    }
 
     return {
         success: true,

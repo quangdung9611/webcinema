@@ -21,28 +21,30 @@ export const AuthProvider = ({ children }) => {
         const hostname = window.location.hostname;
         const isAdminDomain = hostname.startsWith('admin.');
 
-        // ✅ SỬA: Dùng chung endpoint /api/auth/me cho cả admin và user
-        // Phân biệt qua role trong response
-        const endpoint = '/api/auth/me';
-
         try {
-            const res = await api.get(endpoint);
+            const res = await api.get('/api/auth/me');
             const userData = res.data?.user;
 
             if (isAdminDomain) {
-                // Ở trang admin: chỉ cho phép nếu role === 'admin'
+                // ✅ Domain admin: CHỈ chấp nhận role admin
                 if (userData && userData.role === 'admin') {
                     setAdmin(userData);
                     setUser(null); 
                 } else {
+                    // ❌ Nếu không phải admin thì clear hết
                     setAdmin(null);
                     setUser(null);
                 }
             } else {
-                // Ở trang user: nhận diện user bình thường (không cần check email_verified ở đây)
-                // ProtectedRoute sẽ kiểm tra email_verified
-                setUser(userData || null);
-                setAdmin(null);
+                // ✅ Domain user: CHỈ chấp nhận role customer
+                if (userData && userData.role === 'customer') {
+                    setUser(userData);
+                    setAdmin(null);
+                } else {
+                    // ❌ Nếu không phải customer thì clear hết
+                    setUser(null);
+                    setAdmin(null);
+                }
             }
         } catch (err) {
             setAdmin(null);
@@ -57,7 +59,6 @@ export const AuthProvider = ({ children }) => {
         setAdmin(null);
     }, []);
 
-    // ✅ THÊM: Hàm logout dùng chung
     const logout = useCallback(async () => {
         try {
             await api.post('/api/auth/logout');
@@ -87,7 +88,7 @@ export const AuthProvider = ({ children }) => {
             loading, 
             checkAuth, 
             clearAuth,
-            logout, // ✅ THÊM logout
+            logout,
             BASE_URL, 
             api 
         }}>

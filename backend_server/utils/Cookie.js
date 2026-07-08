@@ -2,14 +2,10 @@
     DEPENDENCIES
 =========================================================*/
 
-/*=========================================================
-    COOKIE NAMES
-=========================================================*/
-
-// Dùng chung 1 tên cookie cho cả user và admin
-// Vì domain đã phân biệt: quangdungcinema.id.vn và admin.quangdungcinema.id.vn
-const ACCESS_COOKIE_NAME = process.env.ACCESS_COOKIE_NAME || "access_token";
-const REFRESH_COOKIE_NAME = process.env.REFRESH_COOKIE_NAME || "refresh_token";
+const USER_ACCESS_COOKIE_NAME = process.env.USER_ACCESS_COOKIE_NAME || "user_access_token";
+const USER_REFRESH_COOKIE_NAME = process.env.USER_REFRESH_COOKIE_NAME || "user_refresh_token";
+const ADMIN_ACCESS_COOKIE_NAME = process.env.ADMIN_ACCESS_COOKIE_NAME || "admin_access_token";
+const ADMIN_REFRESH_COOKIE_NAME = process.env.ADMIN_REFRESH_COOKIE_NAME || "admin_refresh_token";
 
 /*=========================================================
     DEFAULT COOKIE OPTIONS
@@ -20,7 +16,6 @@ const DEFAULT_COOKIE_OPTIONS = {
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
-    // Tự động lấy domain gốc, cookie sẽ hoạt động trên cả subdomain
     domain: process.env.NODE_ENV === "production" ? ".quangdungcinema.id.vn" : undefined
 };
 
@@ -31,115 +26,74 @@ const DEFAULT_COOKIE_OPTIONS = {
 class Cookie {
 
     /*=====================================================
-        SET TOKENS
+        USER TOKENS
     =====================================================*/
 
-    setAccessToken(res, token) {
-        res.cookie(
-            ACCESS_COOKIE_NAME,
-            token,
-            {
-                ...DEFAULT_COOKIE_OPTIONS,
-                maxAge: Number(process.env.ACCESS_COOKIE_MAX_AGE) || 15 * 60 * 1000
-            }
-        );
-    }
-
-    setRefreshToken(res, token) {
-        res.cookie(
-            REFRESH_COOKIE_NAME,
-            token,
-            {
-                ...DEFAULT_COOKIE_OPTIONS,
-                maxAge: Number(process.env.REFRESH_COOKIE_MAX_AGE) || 7 * 24 * 60 * 60 * 1000
-            }
-        );
-    }
-
-    /*=====================================================
-        GET TOKENS
-    =====================================================*/
-
-    getAccessToken(req) {
-        return req.cookies?.[ACCESS_COOKIE_NAME];
-    }
-
-    getRefreshToken(req) {
-        return req.cookies?.[REFRESH_COOKIE_NAME];
-    }
-
-    /*=====================================================
-        CLEAR TOKENS
-    =====================================================*/
-
-    clearAccessToken(res) {
-        res.clearCookie(ACCESS_COOKIE_NAME, DEFAULT_COOKIE_OPTIONS);
-    }
-
-    clearRefreshToken(res) {
-        res.clearCookie(REFRESH_COOKIE_NAME, DEFAULT_COOKIE_OPTIONS);
-    }
-
-    clearAuthCookies(res) {
-        this.clearAccessToken(res);
-        this.clearRefreshToken(res);
-    }
-
-    /*=====================================================
-        COMPATIBILITY (GIỮ CÁC TÊN HÀM CŨ ĐỂ KHÔNG LỖI)
-    =====================================================*/
-
-    // Các hàm này giữ nguyên tên nhưng gọi lại hàm chính
     setUserAccessToken(res, token) {
-        this.setAccessToken(res, token);
+        res.cookie(USER_ACCESS_COOKIE_NAME, token, {
+            ...DEFAULT_COOKIE_OPTIONS,
+            maxAge: Number(process.env.USER_ACCESS_COOKIE_MAX_AGE) || 15 * 60 * 1000
+        });
     }
 
     setUserRefreshToken(res, token) {
-        this.setRefreshToken(res, token);
+        res.cookie(USER_REFRESH_COOKIE_NAME, token, {
+            ...DEFAULT_COOKIE_OPTIONS,
+            maxAge: Number(process.env.USER_REFRESH_COOKIE_MAX_AGE) || 7 * 24 * 60 * 60 * 1000
+        });
     }
 
     getUserAccessToken(req) {
-        return this.getAccessToken(req);
+        return req.cookies?.[USER_ACCESS_COOKIE_NAME];
     }
 
     getUserRefreshToken(req) {
-        return this.getRefreshToken(req);
+        return req.cookies?.[USER_REFRESH_COOKIE_NAME];
     }
 
     clearUserCookies(res) {
-        this.clearAuthCookies(res);
+        res.clearCookie(USER_ACCESS_COOKIE_NAME, DEFAULT_COOKIE_OPTIONS);
+        res.clearCookie(USER_REFRESH_COOKIE_NAME, DEFAULT_COOKIE_OPTIONS);
     }
 
+    /*=====================================================
+        ADMIN TOKENS
+    =====================================================*/
+
     setAdminAccessToken(res, token) {
-        this.setAccessToken(res, token);
+        res.cookie(ADMIN_ACCESS_COOKIE_NAME, token, {
+            ...DEFAULT_COOKIE_OPTIONS,
+            maxAge: Number(process.env.ADMIN_ACCESS_COOKIE_MAX_AGE) || 15 * 60 * 1000
+        });
     }
 
     setAdminRefreshToken(res, token) {
-        this.setRefreshToken(res, token);
+        res.cookie(ADMIN_REFRESH_COOKIE_NAME, token, {
+            ...DEFAULT_COOKIE_OPTIONS,
+            maxAge: Number(process.env.ADMIN_REFRESH_COOKIE_MAX_AGE) || 7 * 24 * 60 * 60 * 1000
+        });
     }
 
     getAdminAccessToken(req) {
-        return this.getAccessToken(req);
+        return req.cookies?.[ADMIN_ACCESS_COOKIE_NAME];
     }
 
     getAdminRefreshToken(req) {
-        return this.getRefreshToken(req);
+        return req.cookies?.[ADMIN_REFRESH_COOKIE_NAME];
     }
 
     clearAdminCookies(res) {
-        this.clearAuthCookies(res);
+        res.clearCookie(ADMIN_ACCESS_COOKIE_NAME, DEFAULT_COOKIE_OPTIONS);
+        res.clearCookie(ADMIN_REFRESH_COOKIE_NAME, DEFAULT_COOKIE_OPTIONS);
     }
+
+    /*=====================================================
+        CLEAR ALL
+    =====================================================*/
 
     clearAllCookies(res) {
-        this.clearAuthCookies(res);
-    }
-
-    hasUserAccessToken(req) {
-        return !!this.getAccessToken(req);
-    }
-
-    hasAdminAccessToken(req) {
-        return !!this.getAccessToken(req);
+        this.clearUserCookies(res);
+        this.clearAdminCookies(res);
     }
 }
 
