@@ -1,20 +1,12 @@
 /*=========================================================
-    DEPENDENCIES
+    COOKIE NAMES
 =========================================================*/
 
-const USER_ACCESS_COOKIE_NAME = process.env.USER_ACCESS_COOKIE_NAME || "user_token";
-const ADMIN_ACCESS_COOKIE_NAME = process.env.ADMIN_ACCESS_COOKIE_NAME || "admin_token";
+const USER_ACCESS_COOKIE_NAME =
+    process.env.USER_ACCESS_COOKIE_NAME || "user_token";
 
-/*=========================================================
-    DEFAULT COOKIE OPTIONS
-=========================================================*/
-const DEFAULT_COOKIE_OPTIONS = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    path: "/"
-    // ✅ BỎ domain: ".quangdungcinema.id.vn" - Cookie sẽ tự động gắn theo domain hiện tại
-};
+const ADMIN_ACCESS_COOKIE_NAME =
+    process.env.ADMIN_ACCESS_COOKIE_NAME || "admin_token";
 
 /*=========================================================
     COOKIE CLASS
@@ -23,41 +15,120 @@ const DEFAULT_COOKIE_OPTIONS = {
 class Cookie {
 
     /*=====================================================
-        USER TOKENS
+        PRIVATE
     =====================================================*/
 
-    setUserAccessToken(res, token) {
-        res.cookie(USER_ACCESS_COOKIE_NAME, token, {
-            ...DEFAULT_COOKIE_OPTIONS,
-            maxAge: Number(process.env.USER_ACCESS_COOKIE_MAX_AGE) || 24 * 60 * 60 * 1000
-        });
-    }
+    getCookieOptions(maxAge = 24 * 60 * 60 * 1000) {
 
-    getUserAccessToken(req) {
-        return req.cookies?.[USER_ACCESS_COOKIE_NAME];
-    }
+        return {
 
-    clearUserCookies(res) {
-        res.clearCookie(USER_ACCESS_COOKIE_NAME, DEFAULT_COOKIE_OPTIONS);
+            httpOnly: true,
+
+            secure: process.env.NODE_ENV === "production",
+
+            sameSite:
+                process.env.NODE_ENV === "production"
+                    ? "None"
+                    : "Lax",
+
+            path: "/",
+
+            maxAge
+
+        };
+
     }
 
     /*=====================================================
-        ADMIN TOKENS
+        USER TOKEN
     =====================================================*/
 
-    setAdminAccessToken(res, token) {
-        res.cookie(ADMIN_ACCESS_COOKIE_NAME, token, {
-            ...DEFAULT_COOKIE_OPTIONS,
-            maxAge: Number(process.env.ADMIN_ACCESS_COOKIE_MAX_AGE) || 24 * 60 * 60 * 1000
-        });
+    setUserAccessToken(
+        res,
+        token,
+        rememberMe = false
+    ) {
+
+        const maxAge = rememberMe
+
+            ? 7 * 24 * 60 * 60 * 1000
+
+            : 24 * 60 * 60 * 1000;
+
+        res.cookie(
+
+            USER_ACCESS_COOKIE_NAME,
+
+            token,
+
+            this.getCookieOptions(maxAge)
+
+        );
+
+    }
+
+    getUserAccessToken(req) {
+
+        return req.cookies?.[USER_ACCESS_COOKIE_NAME] || null;
+
+    }
+
+    clearUserCookies(res) {
+
+        res.clearCookie(
+
+            USER_ACCESS_COOKIE_NAME,
+
+            this.getCookieOptions()
+
+        );
+
+    }
+
+    /*=====================================================
+        ADMIN TOKEN
+    =====================================================*/
+
+    setAdminAccessToken(
+        res,
+        token,
+        rememberMe = false
+    ) {
+
+        const maxAge = rememberMe
+
+            ? 7 * 24 * 60 * 60 * 1000
+
+            : 24 * 60 * 60 * 1000;
+
+        res.cookie(
+
+            ADMIN_ACCESS_COOKIE_NAME,
+
+            token,
+
+            this.getCookieOptions(maxAge)
+
+        );
+
     }
 
     getAdminAccessToken(req) {
-        return req.cookies?.[ADMIN_ACCESS_COOKIE_NAME];
+
+        return req.cookies?.[ADMIN_ACCESS_COOKIE_NAME] || null;
+
     }
 
     clearAdminCookies(res) {
-        res.clearCookie(ADMIN_ACCESS_COOKIE_NAME, DEFAULT_COOKIE_OPTIONS);
+
+        res.clearCookie(
+
+            ADMIN_ACCESS_COOKIE_NAME,
+
+            this.getCookieOptions()
+
+        );
+
     }
 
     /*=====================================================
@@ -65,9 +136,13 @@ class Cookie {
     =====================================================*/
 
     clearAllCookies(res) {
+
         this.clearUserCookies(res);
+
         this.clearAdminCookies(res);
+
     }
+
 }
 
 module.exports = new Cookie();
