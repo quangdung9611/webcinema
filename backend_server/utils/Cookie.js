@@ -12,10 +12,10 @@ const ADMIN_REFRESH_COOKIE_NAME = process.env.ADMIN_REFRESH_COOKIE_NAME || "admi
 =========================================================*/
 const DEFAULT_COOKIE_OPTIONS = {
     httpOnly: true,
-    secure: false,  // ✅ TẠM THỜI SET FALSE ĐỂ TEST
-    sameSite: "Lax",
-    path: "/",
-    domain: ".quangdungcinema.id.vn"
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    path: "/"
+    // ✅ BỎ domain: ".quangdungcinema.id.vn" - Cookie sẽ tự động gắn theo domain hiện tại
 };
 
 /*=========================================================

@@ -216,13 +216,13 @@ exports.login = async (email, password, req, res) => {
         req?.ip || req?.connection?.remoteAddress || null
     );
 
-   // Set cookies theo role
+    // Set new cookies theo role
     if (user.role === 'admin') {
-        Cookie.setAdminAccessToken(res, accessToken);
-        Cookie.setAdminRefreshToken(res, refreshToken);
+        Cookie.setAdminAccessToken(res, newAccessToken);
+        Cookie.setAdminRefreshToken(res, newRefreshToken);
     } else {
-        Cookie.setUserAccessToken(res, accessToken);
-        Cookie.setUserRefreshToken(res, refreshToken);
+        Cookie.setUserAccessToken(res, newAccessToken);
+        Cookie.setUserRefreshToken(res, newRefreshToken);
     }
 
     return {
@@ -313,7 +313,14 @@ exports.logoutAllDevices = async (userId, res) => {
 =========================================================*/
 
 exports.refreshToken = async (req, res) => {
-    const refreshToken = Cookie.getRefreshToken(req);
+    // Lấy refresh token theo role
+    let refreshToken = Cookie.getAdminRefreshToken(req);
+    let role = 'admin';
+
+    if (!refreshToken) {
+        refreshToken = Cookie.getUserRefreshToken(req);
+        role = 'user';
+    }
 
     if (!refreshToken) {
         throw { statusCode: 401, message: "Refresh Token không tồn tại" };
@@ -324,7 +331,11 @@ exports.refreshToken = async (req, res) => {
     try {
         payload = Jwt.verifyRefreshToken(refreshToken);
     } catch (error) {
-        Cookie.clearAuthCookies(res);
+        if (role === 'admin') {
+            Cookie.clearAdminCookies(res);
+        } else {
+            Cookie.clearUserCookies(res);
+        }
         throw { statusCode: 401, message: "Refresh Token đã hết hạn hoặc không hợp lệ" };
     }
 
@@ -333,7 +344,11 @@ exports.refreshToken = async (req, res) => {
     const tokenData = await RefreshTokenRepository.findValidTokenHash(tokenHash);
 
     if (!tokenData) {
-        Cookie.clearAuthCookies(res);
+        if (role === 'admin') {
+            Cookie.clearAdminCookies(res);
+        } else {
+            Cookie.clearUserCookies(res);
+        }
         throw { statusCode: 401, message: "Refresh Token không hợp lệ" };
     }
 
@@ -341,14 +356,22 @@ exports.refreshToken = async (req, res) => {
     const user = await UserRepository.findBasicById(payload.user_id);
     if (!user) {
         await RefreshTokenRepository.revoke(tokenHash, "User not found");
-        Cookie.clearAuthCookies(res);
+        if (role === 'admin') {
+            Cookie.clearAdminCookies(res);
+        } else {
+            Cookie.clearUserCookies(res);
+        }
         throw { statusCode: 401, message: "Người dùng không tồn tại" };
     }
 
     // Check user status
     if (user.status === "banned") {
         await RefreshTokenRepository.revoke(tokenHash, "User banned");
-        Cookie.clearAuthCookies(res);
+        if (role === 'admin') {
+            Cookie.clearAdminCookies(res);
+        } else {
+            Cookie.clearUserCookies(res);
+        }
         throw { statusCode: 403, message: "Tài khoản đã bị khóa" };
     }
 
@@ -370,9 +393,14 @@ exports.refreshToken = async (req, res) => {
         device_name: req?.headers?.["sec-ch-ua-platform"] || "Unknown Device"
     });
 
-    // Set new cookies
-    Cookie.setAccessToken(res, newAccessToken);
-    Cookie.setRefreshToken(res, newRefreshToken);
+    // Set new cookies theo role
+    if (user.role === 'admin') {
+        Cookie.setAdminAccessToken(res, newAccessToken);
+        Cookie.setAdminRefreshToken(res, newRefreshToken);
+    } else {
+        Cookie.setUserAccessToken(res, newAccessToken);
+        Cookie.setUserRefreshToken(res, newRefreshToken);
+    }
 
     return {
         success: true,
@@ -381,7 +409,6 @@ exports.refreshToken = async (req, res) => {
         refreshToken: newRefreshToken
     };
 };
-
 /*=========================================================
     CHANGE PASSWORD
 =========================================================*/
