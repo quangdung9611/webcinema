@@ -1,100 +1,215 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import axios from 'axios';
+import React, {
+    createContext,
+    useState,
+    useEffect,
+    useContext,
+    useCallback
+} from "react";
+
+import axios from "axios";
 
 const AuthContext = createContext();
 
-const BASE_URL = 'https://api.quangdungcinema.id.vn';
+const BASE_URL = "https://api.quangdungcinema.id.vn";
 
-// 1. Khởi tạo Axios instance
 const api = axios.create({
+
     baseURL: BASE_URL,
-    withCredentials: true // 🔥 BẮT BUỘC: Để gửi kèm cookie tự động
+
+    withCredentials: true
+
 });
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);    
-    const [admin, setAdmin] = useState(null);  
+
+    const [user, setUser] = useState(null);
+
+    const [admin, setAdmin] = useState(null);
+
     const [loading, setLoading] = useState(true);
 
+    /*=====================================================
+        CHECK AUTH
+    =====================================================*/
+
     const checkAuth = useCallback(async () => {
+
         setLoading(true);
-        const hostname = window.location.hostname;
-        const isAdminDomain = hostname.startsWith('admin.');
+
+        const isAdminDomain =
+            window.location.hostname.startsWith("admin.");
 
         try {
-            const res = await api.get('/api/auth/me');
-            const userData = res.data?.user;
+
+            const url = isAdminDomain
+
+                ? "/api/admin/auth/me"
+
+                : "/api/auth/me";
+
+            const res = await api.get(url);
+
+            const account = res.data.user;
 
             if (isAdminDomain) {
-                // ✅ Domain admin: CHỈ chấp nhận role admin
-                if (userData && userData.role === 'admin') {
-                    setAdmin(userData);
-                    setUser(null); 
-                } else {
-                    // ❌ Nếu không phải admin thì clear hết
-                    setAdmin(null);
-                    setUser(null);
-                }
-            } else {
-                // ✅ Domain user: CHỈ chấp nhận role customer
-                if (userData && userData.role === 'customer') {
-                    setUser(userData);
-                    setAdmin(null);
-                } else {
-                    // ❌ Nếu không phải customer thì clear hết
-                    setUser(null);
-                    setAdmin(null);
-                }
+
+                setAdmin(account);
+
+                setUser(null);
+
             }
-        } catch (err) {
-            setAdmin(null);
-            setUser(null);
-        } finally {
-            setLoading(false);
+
+            else {
+
+                setUser(account);
+
+                setAdmin(null);
+
+            }
+
         }
+
+        catch (error) {
+
+            setUser(null);
+
+            setAdmin(null);
+
+        }
+
+        finally {
+
+            setLoading(false);
+
+        }
+
     }, []);
+
+    /*=====================================================
+        CLEAR AUTH
+    =====================================================*/
 
     const clearAuth = useCallback(() => {
+
         setUser(null);
+
         setAdmin(null);
+
     }, []);
 
+    /*=====================================================
+        LOGOUT
+    =====================================================*/
+
     const logout = useCallback(async () => {
+
+        const isAdminDomain =
+            window.location.hostname.startsWith("admin.");
+
         try {
-            await api.post('/api/auth/logout');
-        } catch (error) {
-            console.error('Logout error:', error);
-        } finally {
-            clearAuth();
-            window.dispatchEvent(new Event('authChange'));
+
+            const url = isAdminDomain
+
+                ? "/api/admin/auth/logout"
+
+                : "/api/auth/logout";
+
+            await api.post(url);
+
         }
+
+        catch (error) {
+
+            console.error(error);
+
+        }
+
+        finally {
+
+            clearAuth();
+
+            window.dispatchEvent(
+
+                new Event("authChange")
+
+            );
+
+        }
+
     }, [clearAuth]);
 
+    /*=====================================================
+        INIT
+    =====================================================*/
+
     useEffect(() => {
+
         checkAuth();
-        
-        const handleAuthChange = () => checkAuth();
-        window.addEventListener('authChange', handleAuthChange);
-        
-        return () => window.removeEventListener('authChange', handleAuthChange);
+
+        const handleAuthChange = () => {
+
+            checkAuth();
+
+        };
+
+        window.addEventListener(
+
+            "authChange",
+
+            handleAuthChange
+
+        );
+
+        return () => {
+
+            window.removeEventListener(
+
+                "authChange",
+
+                handleAuthChange
+
+            );
+
+        };
+
     }, [checkAuth]);
 
     return (
-        <AuthContext.Provider value={{ 
-            user, 
-            admin, 
-            setUser, 
-            setAdmin, 
-            loading, 
-            checkAuth, 
-            clearAuth,
-            logout,
-            BASE_URL, 
-            api 
-        }}>
+
+        <AuthContext.Provider
+
+            value={{
+
+                user,
+
+                admin,
+
+                setUser,
+
+                setAdmin,
+
+                loading,
+
+                checkAuth,
+
+                clearAuth,
+
+                logout,
+
+                api,
+
+                BASE_URL
+
+            }}
+
+        >
+
             {children}
+
         </AuthContext.Provider>
+
     );
+
 };
 
 export const useAuth = () => useContext(AuthContext);

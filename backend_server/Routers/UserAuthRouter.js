@@ -6,7 +6,7 @@ const express = require("express");
 const router = express.Router();
 
 const AuthController = require("../Controllers/AuthController");
-const AuthMiddleware = require("../Middlewares/UserAuthMiddleware");
+const authenticateUser = require("../Middlewares/UserAuthMiddleware");
 
 /*=========================================================
     PUBLIC ROUTES
@@ -14,79 +14,83 @@ const AuthMiddleware = require("../Middlewares/UserAuthMiddleware");
 
 /**
  * Đăng ký
- * POST /api/auth/register
  */
 router.post("/register", AuthController.register);
 
 /**
  * Đăng nhập
- * POST /api/auth/login
  */
 router.post("/login", AuthController.login);
 
 /**
- * Refresh Access Token
- * POST /api/auth/refresh
+ * Refresh Token
  */
 router.post("/refresh", AuthController.refreshToken);
 
 /**
- * Quên mật khẩu - Gửi OTP
- * POST /api/auth/forgot-password
+ * Quên mật khẩu
  */
 router.post("/forgot-password", AuthController.forgotPassword);
 
 /**
- * Xác thực OTP quên mật khẩu
- * POST /api/auth/verify-reset-otp
+ * Verify OTP
  */
 router.post("/verify-reset-otp", AuthController.verifyResetOTP);
 
 /**
- * Đặt lại mật khẩu
- * POST /api/auth/reset-password
+ * Reset Password
  */
 router.post("/reset-password", AuthController.resetPassword);
 
 /**
  * Gửi email xác thực
- * POST /api/auth/send-verification
  */
 router.post("/send-verification", AuthController.sendVerificationEmail);
 
 /**
- * Xác thực email
- * GET /api/auth/verify-email?token=xxx
+ * Verify Email
  */
 router.get("/verify-email", AuthController.verifyEmail);
 
 /*=========================================================
-    PRIVATE ROUTES (Cần xác thực)
+    PRIVATE ROUTES
 =========================================================*/
 
 /**
- * Thông tin tài khoản hiện tại
- * GET /api/auth/me
+ * Thông tin User
  */
-router.get("/me", AuthMiddleware.authenticate, AuthController.getMe);
+router.get(
+    "/me",
+    authenticateUser,
+    AuthController.getMe
+);
 
 /**
  * Đổi mật khẩu
- * PATCH /api/auth/change-password
  */
-router.patch("/change-password", AuthMiddleware.authenticate, AuthController.changePassword);
+router.patch(
+    "/change-password",
+    authenticateUser,
+    AuthController.changePassword
+);
 
 /**
  * Đăng xuất
- * POST /api/auth/logout
  */
-router.post("/logout", AuthMiddleware.authenticate, AuthController.logout);
+router.post(
+    "/logout",
+    authenticateUser,
+    AuthController.logout
+);
 
 /**
  * Đăng xuất tất cả thiết bị
- * POST /api/auth/logout-all
  */
-router.post("/logout-all", AuthMiddleware.authenticate, AuthController.logoutAllDevices);
+router.post(
+    "/logout-all",
+    authenticateUser,
+    AuthController.logoutAllDevices
+);
 
 /*=========================================================
     EXPORT
