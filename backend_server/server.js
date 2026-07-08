@@ -7,7 +7,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const cookieParser = require("cookieParser");
+const cookieParser = require("cookie-parser");
 const axios = require("axios");
 
 const http = require("http");
@@ -154,19 +154,18 @@ io.on("connection", (socket) => {
 });
 
 /*=========================================================
-    API ROUTES
+    API ROUTES - CHỈ KHAI BÁO 1 LẦN DUY NHẤT
 =========================================================*/
 
-// 🔥 ROOT ROUTE - ĐÃ THÊM
+// Root route - Thêm vào sau app.get("/api", ...)
 app.get("/", (req, res) => {
     res.send("🚀 Cinema Backend is flying!");
 });
 
-// API Routes
-app.get("/api", (req, res) => {
-    res.send("🚀 Cinema Backend is flying!");
+// Hoặc redirect về /api
+app.get("/", (req, res) => {
+    res.redirect("/api");
 });
-
 // Health Check
 app.get("/api/health", async (req, res) => {
     try {
@@ -249,14 +248,19 @@ server.listen(PORT, "0.0.0.0", async () => {
         console.error("❌ Redis Error:", error.message);
     }
 
-    // KEEP RENDER ALIVE
+    /*=============================================
+        KEEP RENDER ALIVE - ĐÃ SỬA
+    =============================================*/
+
     const SELF_URL = process.env.BACKEND_URL || "https://api.quangdungcinema.id.vn";
 
     setInterval(async () => {
         try {
+            // ✅ SỬA: Ping /api/health thay vì /api
             await axios.get(`${SELF_URL}/api/health?t=${Date.now()}`);
             console.log('✅ Keep-alive ping thành công');
         } catch (error) {
+            // Chỉ log khi thực sự có lỗi
             if (error.code !== 'ECONNREFUSED') {
                 console.error('❌ Keep-alive ping thất bại:', error.message);
             }
