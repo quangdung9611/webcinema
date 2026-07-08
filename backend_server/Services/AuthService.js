@@ -216,13 +216,13 @@ exports.login = async (email, password, req, res) => {
         req?.ip || req?.connection?.remoteAddress || null
     );
 
-    // Set new cookies theo role
+    // ✅ FIX: Set cookies theo role - DÙNG accessToken và refreshToken
     if (user.role === 'admin') {
-        Cookie.setAdminAccessToken(res, newAccessToken);
-        Cookie.setAdminRefreshToken(res, newRefreshToken);
+        Cookie.setAdminAccessToken(res, accessToken);
+        Cookie.setAdminRefreshToken(res, refreshToken);
     } else {
-        Cookie.setUserAccessToken(res, newAccessToken);
-        Cookie.setUserRefreshToken(res, newRefreshToken);
+        Cookie.setUserAccessToken(res, accessToken);
+        Cookie.setUserRefreshToken(res, refreshToken);
     }
 
     return {
@@ -266,6 +266,7 @@ exports.getMe = async (userId) => {
 /*=========================================================
     LOGOUT
 =========================================================*/
+
 exports.logout = async (req, res) => {
     // Lấy refresh token theo role
     let refreshToken = Cookie.getAdminRefreshToken(req);
@@ -409,6 +410,7 @@ exports.refreshToken = async (req, res) => {
         refreshToken: newRefreshToken
     };
 };
+
 /*=========================================================
     CHANGE PASSWORD
 =========================================================*/
