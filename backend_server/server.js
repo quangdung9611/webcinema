@@ -16,7 +16,7 @@ const { Server } = require("socket.io");
 const db = require("./Config/db");
 
 /*=========================================================
-    👇 THÊM REDIS
+    REDIS
 =========================================================*/
 
 const RedisService = require("./Services/RedisService");
@@ -51,7 +51,23 @@ const server = http.createServer(app);
     ROUTERS
 =========================================================*/
 
-const authRoutes = require("./Routers/AuthRouter");
+/*==========================
+    USER AUTH
+==========================*/
+
+const userAuthRoutes =
+    require("./Routers/UserAuthRouter");
+
+/*==========================
+    ADMIN AUTH
+==========================*/
+
+const adminAuthRoutes =
+    require("./Routers/AdminAuthRouter");
+
+/*==========================
+    USER API
+==========================*/
 
 const userRoutes = require("./Routers/UserRouter");
 
@@ -95,9 +111,15 @@ const promotionRoutes = require("./Routers/PromotionRouter");
 
 const blogCinemaRoutes = require("./Routers/BlogCinemaRouter");
 
-const forgotPasswordRoutes = require("./Routers/ForgotPassRouter");
+const forgotPasswordRoutes =
+    require("./Routers/ForgotPassRouter");
 
-const adminRouter = require("./Routers/AdminRouter");
+/*==========================
+    ADMIN API
+==========================*/
+
+const adminRouter =
+    require("./Routers/AdminRouter");
 
 /*=========================================================
     TRUST PROXY
@@ -409,19 +431,31 @@ app.get(
 );
 
 /*=========================================================
-    AUTH
+    USER AUTH
 =========================================================*/
 
 app.use(
 
     "/api/auth",
 
-    authRoutes
+    userAuthRoutes
 
 );
 
 /*=========================================================
-    USER
+    ADMIN AUTH
+=========================================================*/
+
+app.use(
+
+    "/admin/api/auth",
+
+    adminAuthRoutes
+
+);
+
+/*=========================================================
+    USER API
 =========================================================*/
 
 app.use("/api/users", userRoutes);
@@ -475,7 +509,7 @@ app.use(
 );
 
 /*=========================================================
-    ADMIN
+    ADMIN API
 =========================================================*/
 
 app.use(
@@ -487,31 +521,194 @@ app.use(
 );
 
 /*=========================================================
-    HEALTH CHECK (THÊM MỚI)
+    HEALTH CHECK
+=========================================================*/
+
+app.get(
+
+    "/api/health",
+
+    async (req, res) => {
+
+        try {
+
+            const conn = await db.getConnection();
+
+            conn.release();
+
+            const redisHealthy =
+
+                await RedisService.ping();
+
+            res.status(200).json({
+
+                status: "ok",
+
+                timestamp: new Date().toISOString(),
+
+                database: "connected",
+
+                redis: redisHealthy
+
+                    ? "connected"
+
+                    : "disconnected",
+
+                uptime: process.uptime()
+
+            });
+
+        }
+
+        catch (error) {
+
+            res.status(500).json({
+
+                status: "error",
+
+                message: error.message
+
+            });
+
+        }
+
+    }
+
+);
+/*=========================================================
+    API
+=========================================================*/
+
+app.get("/api", (req, res) => {
+
+    res.send("🚀 Cinema Backend is flying!");
+
+});
+
+/*=========================================================
+    USER AUTH
+=========================================================*/
+
+app.use(
+    "/api/auth",
+    userAuthRoutes
+);
+
+/*=========================================================
+    ADMIN AUTH
+=========================================================*/
+
+app.use(
+    "/admin/api/auth",
+    adminAuthRoutes
+);
+
+/*=========================================================
+    USER ROUTES
+=========================================================*/
+
+app.use("/api/users", userRoutes);
+
+app.use("/api/genres", genreRoutes);
+
+app.use("/api/movies", movieRoutes);
+
+app.use("/api/seats", seatRoutes);
+
+app.use("/api/cinemas", cinemaRoutes);
+
+app.use("/api/rooms", roomRoutes);
+
+app.use("/api/tickets", ticketRoutes);
+
+app.use("/api/foods", foodRoutes);
+
+app.use("/api/payment", paymentRoutes);
+
+app.use("/api/bank", bankAppRoutes);
+
+app.use("/api/momo", momoRoutes);
+
+app.use("/api/actors", actorRoutes);
+
+app.use("/api/reviews", reviewRoutes);
+
+app.use("/api/showtimes", showtimeRoutes);
+
+app.use("/api/bookings", bookingRoutes);
+
+app.use("/api/coupons", couponRoutes);
+
+app.use("/api/movie-genres", movieGenreRoutes);
+
+app.use("/api/movie-actors", movieActorRoutes);
+
+app.use("/api/news", newsRoutes);
+
+app.use("/api/promotions", promotionRoutes);
+
+app.use("/api/blog-cinema", blogCinemaRoutes);
+
+app.use(
+    "/api/forgot-password",
+    forgotPasswordRoutes
+);
+
+/*=========================================================
+    ADMIN ROUTES
+=========================================================*/
+
+app.use(
+    "/admin/api/manage",
+    adminRouter
+);
+
+/*=========================================================
+    HEALTH CHECK
 =========================================================*/
 
 app.get("/api/health", async (req, res) => {
+
     try {
-        // Check database
+
         const conn = await db.getConnection();
+
         conn.release();
 
-        // Check Redis
-        const redisHealthy = await RedisService.ping();
+        const redisHealthy =
+            await RedisService.ping();
 
         res.status(200).json({
+
             status: "ok",
+
             timestamp: new Date().toISOString(),
+
             database: "connected",
-            redis: redisHealthy ? "connected" : "disconnected",
+
+            redis:
+                redisHealthy
+                    ? "connected"
+                    : "disconnected",
+
             uptime: process.uptime()
+
         });
-    } catch (error) {
-        res.status(500).json({
-            status: "error",
-            message: error.message
-        });
+
     }
+
+    catch (error) {
+
+        res.status(500).json({
+
+            status: "error",
+
+            message: error.message
+
+        });
+
+    }
+
 });
 
 /*=========================================================
@@ -530,14 +727,12 @@ server.listen(
     async () => {
 
         console.log(
-
             `🚀 Server running on port ${PORT}`
-
         );
 
-        /*=================================================
+        /*=============================================
             DATABASE
-        =================================================*/
+        =============================================*/
 
         try {
 
@@ -561,29 +756,48 @@ server.listen(
 
         }
 
-        /*=================================================
-            👇 THÊM REDIS CHECK
-        =================================================*/
+        /*=============================================
+            REDIS
+        =============================================*/
 
         try {
-            const redisHealthy = await RedisService.ping();
+
+            const redisHealthy =
+                await RedisService.ping();
+
             if (redisHealthy) {
-                console.log("✅ Redis connected successfully!");
-            } else {
-                console.warn("⚠️ Redis connection failed!");
+
+                console.log(
+                    "✅ Redis connected successfully!"
+                );
+
             }
-        } catch (error) {
-            console.error("❌ Redis Error:", error.message);
+
+            else {
+
+                console.warn(
+                    "⚠️ Redis connection failed!"
+                );
+
+            }
+
         }
 
-        /*=================================================
+        catch (error) {
+
+            console.error(
+                "❌ Redis Error:",
+                error.message
+            );
+
+        }
+
+        /*=============================================
             KEEP RENDER ALIVE
-        =================================================*/
+        =============================================*/
 
         const SELF_URL =
-
             process.env.BACKEND_URL ||
-
             "https://api.quangdungcinema.id.vn";
 
         setInterval(
@@ -593,18 +807,14 @@ server.listen(
                 try {
 
                     await axios.get(
-
                         `${SELF_URL}/api?t=${Date.now()}`
-
                     );
 
                 }
 
-                catch (error) {
+                catch {
 
-                    /**
-                     * Ignore
-                     */
+                    // Ignore
 
                 }
 
