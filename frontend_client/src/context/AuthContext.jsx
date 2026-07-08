@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }) => {
 
             const url = isAdminDomain
 
-                ? "/admin/admin/auth/logout"
+                ? "/admin/api/auth/logout"
 
                 : "/api/auth/logout";
 

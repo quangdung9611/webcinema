@@ -21,15 +21,14 @@ exports.register = async (req, res) => {
         });
     }
 };
-
 /*=========================================================
     LOGIN
 =========================================================*/
 
 exports.login = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const result = await AuthService.login(email, password, req, res);
+        const { email, password, rememberMe } = req.body; // 👈 Lấy rememberMe từ body
+        const result = await AuthService.login(email, password, rememberMe, req, res); // 👈 Truyền thêm rememberMe
         return res.status(200).json(result);
     } catch (error) {
         console.error("Login Error:", error);

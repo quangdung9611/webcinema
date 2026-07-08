@@ -93,6 +93,30 @@ const validateLogin = (email, password) => {
 };
 
 /*=========================================================
+    GENERATE TOKEN & SET COOKIE
+=========================================================*/
+
+const generateAndSetTokens = (user, res, rememberMe = false) => {
+    const accessToken = Jwt.generateAccessToken(user);
+    
+    // Set cookie với rememberMe
+    const maxAge = rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 7 ngày / 1 ngày
+    
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        maxAge: maxAge
+    };
+
+    // Set cookie theo role
+    const cookieName = user.role === 'admin' ? 'admin_token' : 'user_token';
+    res.cookie(cookieName, accessToken, cookieOptions);
+
+    return accessToken;
+};
+
+/*=========================================================
     PUBLIC METHODS
 =========================================================*/
 
@@ -162,36 +186,31 @@ exports.register = async (userData) => {
     LOGIN
 =========================================================*/
 
-exports.login = async (email, password, req, res) => {
+exports.login = async (email, password, rememberMe = false, req, res) => {
+    // 1. Validate
     validateLogin(email, password);
 
-    // Find user
+    // 2. Find user
     const user = await UserRepository.findByEmail(email);
     if (!user) {
         throw { statusCode: 401, field: "email", message: "Email không tồn tại" };
     }
 
-    // Check status
+    // 3. Check status
     if (user.status === "banned") {
         throw { statusCode: 403, message: "Tài khoản đã bị khóa" };
     }
 
-    // Check password
+    // 4. Check password
     const matched = await Password.compare(password, user.password);
     if (!matched) {
         throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
     }
 
-    // Generate token
-    const accessToken = Jwt.generateAccessToken(user);
+    // 5. Generate token và set cookie với rememberMe
+    generateAndSetTokens(user, res, rememberMe);
 
-    // Set cookies theo role - CHỈ 1 TOKEN
-    if (user.role === 'admin') {
-        Cookie.setAdminAccessToken(res, accessToken);
-    } else {
-        Cookie.setUserAccessToken(res, accessToken);
-    }
-
+    // 6. Return user info (không trả token)
     return {
         success: true,
         message: "Đăng nhập thành công",
@@ -242,7 +261,7 @@ exports.logout = async (req, res) => {
         role = 'user';
     }
 
-    // Clear cookie theo role - CHỈ 1 TOKEN
+    // Clear cookie theo role
     if (role === 'admin') {
         Cookie.clearAdminCookies(res);
     } else {
