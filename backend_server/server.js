@@ -253,7 +253,7 @@ server.listen(PORT, "0.0.0.0", async () => {
     setInterval(async () => {
         try {
             // ✅ SỬA: Ping /api/health thay vì /api
-            await axios.get(`${SELF_URL}/health?t=${Date.now()}`);
+            await axios.get(`${SELF_URL}/api/health?t=${Date.now()}`);
             console.log('✅ Keep-alive ping thành công');
         } catch (error) {
             // Chỉ log khi thực sự có lỗi
