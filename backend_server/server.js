@@ -154,18 +154,19 @@ io.on("connection", (socket) => {
 });
 
 /*=========================================================
-    API ROUTES - CHỈ KHAI BÁO 1 LẦN DUY NHẤT
+    API ROUTES
 =========================================================*/
 
-// Root route - Thêm vào sau app.get("/api", ...)
+// ✅ ROOT ROUTE (CHỈ 1 LẦN)
 app.get("/", (req, res) => {
     res.send("🚀 Cinema Backend is flying!");
 });
 
-// Hoặc redirect về /api
-app.get("/", (req, res) => {
-    res.redirect("/api");
+// API Routes
+app.get("/api", (req, res) => {
+    res.send("🚀 Cinema Backend is flying!");
 });
+
 // Health Check
 app.get("/api/health", async (req, res) => {
     try {
@@ -248,19 +249,14 @@ server.listen(PORT, "0.0.0.0", async () => {
         console.error("❌ Redis Error:", error.message);
     }
 
-    /*=============================================
-        KEEP RENDER ALIVE - ĐÃ SỬA
-    =============================================*/
-
+    // KEEP RENDER ALIVE
     const SELF_URL = process.env.BACKEND_URL || "https://api.quangdungcinema.id.vn";
 
     setInterval(async () => {
         try {
-            // ✅ SỬA: Ping /api/health thay vì /api
             await axios.get(`${SELF_URL}/api/health?t=${Date.now()}`);
             console.log('✅ Keep-alive ping thành công');
         } catch (error) {
-            // Chỉ log khi thực sự có lỗi
             if (error.code !== 'ECONNREFUSED') {
                 console.error('❌ Keep-alive ping thất bại:', error.message);
             }
