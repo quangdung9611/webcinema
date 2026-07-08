@@ -6,7 +6,8 @@ const express = require("express");
 const router = express.Router();
 
 const AuthController = require("../Controllers/AuthController");
-const authenticateUser = require("../Middlewares/UserAuthMiddleware");
+const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
+// ✅ Đúng: authenticateUser = function
 
 /*=========================================================
     PUBLIC ROUTES
