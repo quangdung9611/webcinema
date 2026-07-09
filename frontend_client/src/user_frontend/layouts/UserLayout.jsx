@@ -10,23 +10,21 @@ const UserLayout = () => {
 
     const fetchUserData = async () => {
         try {
-            // Chỉ cần gọi endpoint ngắn gọn vì đã có baseURL ở App.js
-            const res = await axios.get('/api/auth/me');
+            // 🔥 THÊM withCredentials: true
+            const res = await axios.get('/api/auth/me', {
+                withCredentials: true
+            });
             
-            // Backend trả về { success: true, user: { ... } }
             if (res.data && res.data.user) {
                 setUser(res.data.user);
             }
         } catch (err) {
-            // Khi lỗi 401 (chưa đăng nhập), xóa trắng user state
             setUser(null);
         }
     };
 
     useEffect(() => {
         fetchUserData();
-        
-        // Cơ chế này của Dũng rất hay để cập nhật UI ngay lập tức khi Login thành công
         window.addEventListener('authChange', fetchUserData);
         return () => window.removeEventListener('authChange', fetchUserData);
     }, []);
@@ -34,12 +32,10 @@ const UserLayout = () => {
     return (
         <div className="user-site-container">
             <header className="user-header-section">
-                {/* Truyền cả user và setUser xuống để Header xử lý Đăng xuất */}
                 <UserHeader user={user} setUser={setUser} />
             </header>
 
             <main className="user-main-content">
-                {/* Truyền fetchUserData qua context để các trang con (như Profile) có thể gọi lại */}
                 <Outlet context={{ fetchUserData, user }} />
             </main>
 

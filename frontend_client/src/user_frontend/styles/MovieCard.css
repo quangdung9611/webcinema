@@ -1,1288 +1,254 @@
 /* ============================================================
-   MOVIE CARD - PREMIUM GAME STYLE
-   PART 1
+   MOVIE CARD - TỐI GIẢN (NO ANIMATION, NO HOVER EFFECT)
 ============================================================ */
 
-.movie-card{
-    position:relative;
-    width:100%;
-    height:100%;
-    cursor:pointer;
-
-    perspective:1800px;
-    transform-style:preserve-3d;
-
-    animation:cinemaFloat 8s ease-in-out infinite;
-
-    will-change:transform;
+.movie-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
 }
 
 /*============================================================
-INNER
+INNER - TĨNH
 ============================================================*/
 
-.movie-inner{
+.movie-inner {
+    position: relative;
+    overflow: hidden;
 
-    position:relative;
+    display: flex;
+    flex-direction: column;
 
-    overflow:hidden;
+    width: 100%;
+    height: 100%;
 
-    isolation:isolate;
+    border-radius: 16px;
 
-    display:flex;
-
-    flex-direction:column;
-
-    width:100%;
-    height:100%;
-
-    border-radius:26px;
-
-    background:var(--cinema-card-bg);
-
-    border:1px solid rgba(255,255,255,.08);
-
-    box-shadow:
-        0 15px 35px rgba(0,0,0,.45),
-        0 0 0 1px rgba(255,255,255,.05);
-
-    transform-style:preserve-3d;
-
-    transition:
-        transform .65s cubic-bezier(.22,.61,.36,1),
-        box-shadow .65s cubic-bezier(.22,.61,.36,1),
-        border-color .5s ease;
-}
-
-.movie-card:hover .movie-inner{
-
-    transform:
-        translateY(-10px)
-        rotateX(2deg)
-        rotateY(-2deg)
-        scale(1.025);
-
-    border-color:
-        rgba(255,80,80,.35);
-
-    box-shadow:
-
-        0 35px 70px rgba(0,0,0,.55),
-
-        0 0 35px rgba(255,40,40,.20),
-
-        0 0 90px rgba(255,40,40,.10);
-
+    background: var(--cinema-card-bg);
+    border: 1px solid rgba(255, 255, 255, .06);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
 }
 
 /*============================================================
-RGB BORDER
+GLOW - TẮT HẲN
 ============================================================*/
 
-.movie-inner::before{
-
-    content:"";
-
-    position:absolute;
-
-    inset:0;
-
-    padding:2px;
-
-    border-radius:inherit;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff2d55,
-            #ff9838,
-            #ffd54f,
-            #ff2d55
-        );
-
-    background-size:300% 300%;
-
-    animation:
-        cinemaBorderFlow 6s linear infinite;
-
-    -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-
-    -webkit-mask-composite:xor;
-
-    mask-composite:exclude;
-
-    pointer-events:none;
-
-    z-index:20;
+.card-glow {
+    display: none;
 }
 
 /*============================================================
-DARK LAYER
+POSTER - TĨNH
 ============================================================*/
 
-.movie-inner::after{
-
-    content:"";
-
-    position:absolute;
-
-    inset:0;
-
-    border-radius:inherit;
-
-    background:
-
-        linear-gradient(
-
-            180deg,
-
-            rgba(20,20,20,.05),
-
-            rgba(0,0,0,.20),
-
-            rgba(0,0,0,.72),
-
-            rgba(0,0,0,.95)
-
-        );
-
-    pointer-events:none;
-
-    z-index:2;
+.movie-poster {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 2/3;
+    z-index: 1;
 }
 
-/*============================================================
-GLOW
-============================================================*/
-
-.card-glow{
-
-    position:absolute;
-
-    inset:-35px;
-
-    border-radius:40px;
-
-    background:
-
-        radial-gradient(
-
-            circle,
-
-            rgba(255,40,40,.30),
-
-            rgba(255,40,40,.08),
-
-            transparent 72%
-
-        );
-
-    filter:blur(45px);
-
-    opacity:.45;
-
-    transform:scale(.95);
-
-    transition:
-
-        opacity .6s ease,
-
-        transform .6s ease;
-
-    animation:
-        cinemaGlow 6s ease-in-out infinite;
-
-    z-index:0;
+.movie-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
-.movie-card:hover .card-glow{
-
-    opacity:.9;
-
-    transform:scale(1.08);
-
-}
-
-/*============================================================
-POSTER
-============================================================*/
-
-.movie-poster{
-
-    position:relative;
-
-    overflow:hidden;
-
-    width:100%;
-
-    aspect-ratio:2/3;
-
-    transform-style:preserve-3d;
-
-    z-index:3;
-}
-@keyframes kenBurns{
-
-    0%{
-
-        transform:
-            scale(1.08)
-            translate(0,0);
-
-    }
-
-    25%{
-
-        transform:
-            scale(1.12)
-            translate(-12px,-8px);
-
-    }
-
-    50%{
-
-        transform:
-            scale(1.16)
-            translate(8px,-5px);
-
-    }
-
-    75%{
-
-        transform:
-            scale(1.13)
-            translate(10px,8px);
-
-    }
-
-    100%{
-
-        transform:
-            scale(1.08)
-            translate(0,0);
-
-    }
-
-}
-/*============================================================
-IMAGE
-============================================================*/
-
-.movie-poster img{
-    animation:
-        kenBurns 16s linear infinite;
-    width:100%;
-    height:100%;
-
-    object-fit:cover;
-
-    transform:
-
-        scale(1.05)
-
-        translateZ(0);
-
-    transition:
-
-        transform .9s cubic-bezier(.22,.61,.36,1),
-
-        filter .8s ease,
-
-        opacity .6s ease;
-
-    will-change:
-
-        transform,
-
-        filter;
-}
-
-.movie-card:hover .movie-poster img{
-
-    transform:
-
-        scale(1.12)
-
-        rotate(.4deg);
-
-    filter:
-
-        brightness(1.08)
-
-        saturate(1.15)
-
-        contrast(1.08);
-
-}
-
-/*============================================================
-POSTER SHADOW
-============================================================*/
-
-.movie-poster::before{
-
-    content:"";
-
-    position:absolute;
-
-    inset:0;
-
-    background:
-
-        radial-gradient(
-
-            circle at 50% 20%,
-
-            rgba(255,255,255,.15),
-
-            transparent 45%
-
-        );
-
-    opacity:0;
-
-    transition:opacity .6s ease;
-
-    mix-blend-mode:screen;
-
-    z-index:2;
-}
-
-.movie-card:hover .movie-poster::before{
-
-    opacity:1;
-
-}
-
-/*============================================================
-POSTER OVERLAY
-============================================================*/
-
-.movie-poster::after{
-
-    content:"";
-
-    position:absolute;
-
-    inset:0;
-
-    background:
-
-        linear-gradient(
-
-            to top,
-
-            rgba(0,0,0,.95),
-
-            rgba(0,0,0,.35),
-
-            rgba(0,0,0,.05),
-
-            transparent
-
-        );
-
-    z-index:3;
-}
-/* ============================================================
-   MOVIE CARD - PREMIUM GAME STYLE
-   PART 2
-============================================================ */
-
-/*============================================================
-SHINE EFFECT
-============================================================*/
-
-.shine-effect{
-
-    position:absolute;
-
-    inset:-40%;
-
-    z-index:8;
-
-    pointer-events:none;
-
-    background:
-
-        linear-gradient(
-
-            120deg,
-
-            transparent 20%,
-
-            rgba(255,255,255,.10) 40%,
-
-            rgba(255,255,255,.40) 50%,
-
-            rgba(255,255,255,.10) 60%,
-
-            transparent 80%
-
-        );
-
-    transform:
-        translateX(-180%)
-        rotate(18deg);
-
-    transition:
-        transform 1.2s cubic-bezier(.22,.61,.36,1);
-
-}
-
-.movie-card:hover .shine-effect{
-
-    transform:
-        translateX(180%)
-        rotate(18deg);
-
-}
-
-/*============================================================
-LIGHT SWEEP
-============================================================*/
-
-.movie-light-sweep{
-
-    position:absolute;
-
-    inset:0;
-
-    pointer-events:none;
-
-    opacity:0;
-
-    z-index:9;
-
-    background:
-
-        linear-gradient(
-
-            110deg,
-
-            transparent,
-
-            rgba(255,255,255,.10),
-
-            rgba(255,255,255,.18),
-
-            rgba(255,255,255,.10),
-
-            transparent
-
-        );
-
-    transform:translateX(-170%);
-
-}
-
-.movie-card:hover .movie-light-sweep{
-
-    opacity:1;
-
-    animation:cinemaSweep 1.6s linear;
-
-}
-
-/*============================================================
-OVERLAY
-============================================================*/
-
-.movie-overlay{
-
-    position:absolute;
-
-    inset:0;
-
-    z-index:15;
-
-    display:flex;
-
-    flex-direction:column;
-
-    justify-content:center;
-
-    align-items:center;
-
-    gap:14px;
-
-    background:
-
-        linear-gradient(
-
-            rgba(0,0,0,.15),
-
-            rgba(0,0,0,.72)
-
-        );
-
-    backdrop-filter:blur(4px);
-
-    opacity:0;
-
-    visibility:hidden;
-
-    transform:
-
-        translateY(20px)
-
-        scale(.95);
-
-    transition:
-
-        opacity .45s ease,
-
-        transform .45s cubic-bezier(.22,.61,.36,1),
-
-        visibility .45s;
-
-}
-
-.movie-card:hover .movie-overlay{
-
-    opacity:1;
-
-    visibility:visible;
-
-    transform:
-
-        translateY(0)
-
-        scale(1);
-
-}
-
-/*============================================================
-BUTTON
-============================================================*/
-
-.movie-detail-btn,
-.movie-book-btn{
-
-    width:165px;
-
-    height:48px;
-
-    border-radius:999px;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    gap:8px;
-
-    cursor:pointer;
-
-    font-size:13px;
-
-    font-weight:700;
-
-    letter-spacing:.8px;
-
-    transition:
-
-        transform .35s,
-
-        box-shadow .35s,
-
-        background .35s;
-
-}
-
-.movie-detail-btn{
-
-    border:none;
-
-    color:#fff;
-
-    background:
-
-        linear-gradient(
-
-            135deg,
-
-            #ff2f52,
-
-            #ff7b29
-
-        );
-
-    box-shadow:
-
-        0 8px 25px rgba(255,70,70,.35);
-
-}
-
-.movie-detail-btn:hover{
-
-    transform:
-
-        translateY(-4px)
-
-        scale(1.04);
-
-    box-shadow:
-
-        0 18px 35px rgba(255,60,60,.45);
-
-}
-
-.movie-book-btn{
-
-    color:#fff;
-
-    border:1px solid rgba(255,255,255,.12);
-
-    background:rgba(255,255,255,.08);
-
-    backdrop-filter:blur(18px);
-
-}
-
-.movie-book-btn:hover{
-
-    transform:
-
-        translateY(-4px)
-
-        scale(1.04);
-
-    background:
-
-        rgba(255,255,255,.14);
-
+/* Poster shadow overlay */
+.movie-poster::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, .75) 0%,
+        rgba(0, 0, 0, .20) 40%,
+        transparent 100%
+    );
+    z-index: 2;
+    pointer-events: none;
 }
 
 /*============================================================
 AGE BADGE
 ============================================================*/
 
-.movie-age-badge{
+.movie-age-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
 
-    position:absolute;
-
-    top:16px;
-
-    right:16px;
-
-    z-index:25;
-
-    padding:6px 12px;
-
-    border-radius:999px;
-
-    color:#fff;
-
-    font-size:11px;
-
-    font-weight:800;
-
-    letter-spacing:.5px;
-
-    background:
-
-        linear-gradient(
-
-            135deg,
-
-            #ff2d55,
-
-            #ff9838
-
-        );
-
-    box-shadow:
-
-        0 8px 18px rgba(255,80,80,.35);
-
-    transition:
-
-        transform .45s,
-
-        box-shadow .45s;
-
-}
-
-.movie-card:hover .movie-age-badge{
-
-    transform:
-
-        translateY(-3px)
-
-        scale(1.08);
-
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .5px;
 }
 
 /*============================================================
 INFO
 ============================================================*/
 
-.movie-info{
-
-    position:relative;
-
-    z-index:6;
-
-    display:flex;
-
-    flex-direction:column;
-
-    align-items:center;
-
-    padding:20px 18px;
-
-    transition:
-
-        transform .45s ease;
-
+.movie-info {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 14px 18px;
 }
 
-.movie-card:hover .movie-info{
-
-    transform:
-
-        translateY(-3px);
-
-}
-
-.movie-name{
-
-    font-size:16px;
-
-    font-weight:700;
-
-    line-height:1.5;
-
-    text-align:center;
-
-    color:#fff;
-
-    margin-bottom:12px;
-
-    display:-webkit-box;
-
-    -webkit-line-clamp:2;
-
-    -webkit-box-orient:vertical;
-
-    overflow:hidden;
-
-    transition:
-
-        color .35s,
-
-        text-shadow .35s;
-
-}
-
-.movie-card:hover .movie-name{
-
-    color:#FFE08A;
-
-    text-shadow:
-
-        0 0 12px rgba(255,210,80,.35);
-
+.movie-name {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 /*============================================================
 STARS
 ============================================================*/
 
-.movie-stars{
-
-    display:flex;
-
-    gap:3px;
-
-    margin-bottom:10px;
-
+.movie-stars {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 6px;
 }
 
-.movie-stars svg{
-
-    transition:
-
-        transform .35s,
-
-        filter .35s;
-
-}
-
-.movie-card:hover .movie-stars svg{
-
-    transform:
-
-        translateY(-2px)
-
-        scale(1.12);
-
-    filter:
-
-        drop-shadow(0 0 8px rgba(255,210,90,.6));
-
+.movie-stars svg {
+    width: 14px;
+    height: 14px;
 }
 
 /*============================================================
 META
 ============================================================*/
 
-.movie-meta{
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    flex-wrap:wrap;
-
-    gap:10px;
-
-    margin-bottom:8px;
-
+.movie-meta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
-.movie-score{
-
-    color:#fff;
-
-    font-size:14px;
-
-    font-weight:700;
-
+.movie-score {
+    color: #fbbf24;
+    font-size: 13px;
+    font-weight: 700;
 }
 
-.movie-review-count{
-
-    color:#bdbdbd;
-
-    font-size:13px;
-
+.movie-review-count {
+    color: #777;
+    font-size: 12px;
 }
 
-.movie-extra{
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    gap:8px;
-
-    color:#9c9c9c;
-
-    font-size:13px;
-
+.movie-extra {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    color: #666;
+    font-size: 12px;
 }
 
-.movie-dot{
-
-    opacity:.35;
-
-}
-/* ============================================================
-   MOVIE CARD - PREMIUM GAME STYLE
-   PART 3
-============================================================ */
-
-/*============================================================
-ANIMATION
-============================================================*/
-
-@keyframes cinemaFloat{
-
-    0%{
-        transform:translateY(0);
-    }
-
-    50%{
-        transform:translateY(-8px);
-    }
-
-    100%{
-        transform:translateY(0);
-    }
-
-}
-
-@keyframes cinemaGlow{
-
-    0%{
-
-        opacity:.35;
-
-        transform:scale(.96);
-
-    }
-
-    50%{
-
-        opacity:.85;
-
-        transform:scale(1.08);
-
-    }
-
-    100%{
-
-        opacity:.35;
-
-        transform:scale(.96);
-
-    }
-
-}
-
-@keyframes cinemaSweep{
-
-    from{
-
-        transform:translateX(-180%);
-
-    }
-
-    to{
-
-        transform:translateX(180%);
-
-    }
-
-}
-
-@keyframes cinemaBorderFlow{
-
-    0%{
-
-        background-position:0% 50%;
-
-    }
-
-    100%{
-
-        background-position:300% 50%;
-
-    }
-
+.movie-dot {
+    opacity: .3;
 }
 
 /*============================================================
-HOVER BONUS
+RESPONSIVE - GIỮ NGUYÊN
 ============================================================*/
 
-.movie-card:hover{
-
-    z-index:30;
-
+@media (max-width: 1200px) {
+    .movie-inner {
+        border-radius: 14px;
+    }
+    .movie-info {
+        padding: 12px 12px 16px;
+    }
+    .movie-name {
+        font-size: 14px;
+    }
 }
 
-.movie-card:hover .movie-inner{
-
-    backface-visibility:hidden;
-
+@media (max-width: 992px) {
+    .movie-inner {
+        border-radius: 12px;
+    }
+    .movie-name {
+        font-size: 13px;
+    }
+    .movie-stars svg {
+        width: 12px;
+        height: 12px;
+    }
 }
 
-.movie-card:hover .movie-poster{
-
-    transform:translateZ(20px);
-
+@media (max-width: 768px) {
+    .movie-info {
+        padding: 10px 10px 14px;
+    }
+    .movie-name {
+        font-size: 13px;
+    }
+    .movie-age-badge {
+        top: 8px;
+        right: 8px;
+        font-size: 9px;
+        padding: 3px 8px;
+    }
+    .movie-score {
+        font-size: 12px;
+    }
+    .movie-review-count {
+        font-size: 11px;
+    }
+    .movie-extra {
+        font-size: 11px;
+    }
 }
 
-.movie-card:hover img{
-
-    will-change:transform;
-
-}
-
-.movie-card:hover .movie-detail-btn,
-
-.movie-card:hover .movie-book-btn{
-
-    animation:buttonFloat .55s ease forwards;
-
-}
-
-@keyframes buttonFloat{
-
-    from{
-
-        transform:translateY(10px);
-
-        opacity:0;
-
+@media (max-width: 480px) {
+    .movie-inner {
+        border-radius: 10px;
     }
-
-    to{
-
-        transform:translateY(0);
-
-        opacity:1;
-
+    .movie-info {
+        padding: 8px 8px 12px;
     }
-
-}
-.movie-card.is-opening {
-    z-index: 999;
-    pointer-events: none;
-}
-
-/*============================================================
-1200
-============================================================*/
-
-@media (max-width:1200px){
-
-    .movie-inner{
-
-        border-radius:22px;
-
+    .movie-name {
+        font-size: 12px;
+        -webkit-line-clamp: 2;
     }
-
-    .movie-info{
-
-        padding:18px 16px;
-
+    .movie-stars svg {
+        width: 10px;
+        height: 10px;
     }
-
-    .movie-name{
-
-        font-size:15px;
-
+    .movie-score {
+        font-size: 11px;
     }
-
-    .movie-detail-btn,
-
-    .movie-book-btn{
-
-        width:145px;
-
-        height:46px;
-
+    .movie-review-count {
+        font-size: 10px;
     }
-
-}
-
-/*============================================================
-992
-============================================================*/
-
-@media (max-width:992px){
-
-    .movie-card{
-
-        animation:none;
-
+    .movie-extra {
+        font-size: 10px;
     }
-
-    .card-glow{
-
-        display:none;
-
+    .movie-age-badge {
+        top: 6px;
+        right: 6px;
+        font-size: 8px;
+        padding: 2px 7px;
     }
-
-    .movie-inner{
-
-        border-radius:18px;
-
-    }
-
-    .movie-name{
-
-        font-size:14px;
-
-    }
-
-    .movie-detail-btn,
-
-    .movie-book-btn{
-
-        width:135px;
-
-        height:44px;
-
-        font-size:12px;
-
-    }
-
-    .movie-stars svg{
-
-        width:11px;
-
-        height:11px;
-
-    }
-
-}
-
-/*============================================================
-768
-============================================================*/
-
-@media (max-width:768px){
-
-    .movie-card:hover .movie-inner{
-
-        transform:none;
-
-    }
-
-    .movie-card:hover .movie-poster img{
-
-        transform:scale(1.03);
-
-    }
-
-    .movie-overlay{
-
-        opacity:1;
-
-        visibility:visible;
-
-        position:relative;
-
-        inset:auto;
-
-        padding-top:12px;
-
-        background:transparent;
-
-        backdrop-filter:none;
-
-        transform:none;
-
-    }
-
-    .movie-light-sweep{
-
-        display:none;
-
-    }
-
-    .shine-effect{
-
-        display:none;
-
-    }
-
-    .movie-info{
-
-        padding:15px;
-
-    }
-
-    .movie-detail-btn,
-
-    .movie-book-btn{
-
-        width:130px;
-
-        height:42px;
-
-    }
-
-}
-
-/*============================================================
-480
-============================================================*/
-
-@media (max-width:480px){
-
-    .movie-inner{
-
-        border-radius:15px;
-
-    }
-
-    .movie-info{
-
-        padding:14px;
-
-    }
-
-    .movie-name{
-
-        font-size:13px;
-
-        line-height:1.4;
-
-    }
-
-    .movie-meta{
-
-        flex-direction:column;
-
-        gap:5px;
-
-    }
-
-    .movie-extra{
-
-        flex-direction:column;
-
-        gap:4px;
-
-    }
-
-    .movie-detail-btn,
-
-    .movie-book-btn{
-
-        width:118px;
-
-        height:38px;
-
-        font-size:11px;
-
-    }
-
-    .movie-age-badge{
-
-        top:10px;
-
-        right:10px;
-
-        font-size:10px;
-
-        padding:5px 9px;
-
-    }
-
-}
-
-/*============================================================
-PERFORMANCE
-============================================================*/
-
-.movie-inner,
-
-.movie-poster,
-
-.movie-poster img,
-
-.movie-info,
-
-.movie-overlay,
-
-.movie-age-badge,
-
-.movie-detail-btn,
-
-.movie-book-btn{
-
-    will-change:
-
-        transform,
-
-        opacity;
-
-    backface-visibility:hidden;
-
-    transform-style:preserve-3d;
-
 }

@@ -1,74 +1,81 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
 :root {
 
     /* ========================================
        1. BACKGROUND SYSTEM
     ======================================== */
 
+    /* ✅ FIX: Đổi sang đen sâu + ánh đỏ cực nhẹ (Netflix Style) */
     --main-background:
-        radial-gradient(circle at top center, rgba(180,20,30,0.18) 0%, rgba(35,8,10,0.75) 35%, transparent 75%),
-        radial-gradient(circle at left center, rgba(140,15,25,0.10) 0%, transparent 30%),
-        radial-gradient(circle at bottom left, rgba(120,10,20,0.08) 0%, transparent 35%),
-        radial-gradient(circle at right center, rgba(100,0,0,0.06) 0%, transparent 30%),
-        linear-gradient(180deg, #151515 0%, #1b1112 25%, #171010 55%, #111 80%, #090909 100%);
+        radial-gradient(circle at 30% 20%, rgba(220, 38, 38, 0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(220, 38, 38, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.01) 0%, transparent 60%),
+        linear-gradient(180deg, #0a0a0a 0%, #0d0d0d 30%, #0a0a0a 60%, #080808 100%);
 
     /*=========================================
     TYPOGRAPHY SYSTEM
-            =========================================*/
+    =========================================*/
 
-            --font-primary:
-            'Plus Jakarta Sans',
-            sans-serif;
+    --font-primary:
+        'Plus Jakarta Sans',
+        sans-serif;
 
+    --font-heading:
+        'Plus Jakarta Sans',
+        sans-serif;
 
-            --font-heading:
-            'Plus Jakarta Sans',
-            sans-serif;
+    --font-size-base:
+        16px;
 
+    --line-height-base:
+        1.6;
 
-            --font-size-base:
-            16px;
-
-
-            --line-height-base:
-            1.6;
     /* ========================================
-       2. COLOR SYSTEM
+       2. COLOR SYSTEM - ✅ FIX
     ======================================== */
 
-    --color-primary: #ff2d2d;
-    --color-primary-hover: #ff4d4d;
-    --color-primary-dark: #d31f1f;
+    /* Đỏ Netflix - đẹp hơn, không chói */
+    --color-primary: #dc2626;
+    --color-primary-hover: #ef4444;
+    --color-primary-dark: #b91c1c;
+
+    /* Vàng cho rating */
+    --color-gold: #fbbf24;
+    --color-gold-dark: #d97706;
 
     --color-accent: #8b0000;
 
+    /* ✅ FIX: Chữ trắng sáng hơn */
     --text-white: #ffffff;
-    --text-primary: #d1d1d1;
-    --text-secondary: #aaaaaa;
-    --text-muted: #777777;
+    --text-primary: #e8e8e8;
+    --text-secondary: #999999;
+    --text-muted: #666666;
 
+    /* ✅ FIX: Border đỏ mờ thay vì đỏ chói */
+    --border-red: 1px solid rgba(220, 38, 38, 0.08);
+    --border-red-hover: 1px solid rgba(220, 38, 38, 0.2);
 
     /* ========================================
-       3. CINEMA CARD SYSTEM (GLOBAL UI BASE)
+       3. CINEMA CARD SYSTEM (GLOBAL UI BASE) - ✅ FIX
     ======================================== */
 
     --cinema-card-bg:
-        linear-gradient(180deg, rgba(25,25,25,.95), rgba(17,17,17,.98));
+        linear-gradient(180deg, rgba(20,20,20,.95), rgba(14,14,14,.98));
 
-    --cinema-card-border: 1px solid rgba(255,255,255,.06);
-    --cinema-card-border-hover: 1px solid rgba(255,60,60,.55);
+    --cinema-card-border: 1px solid rgba(255,255,255,.04);
+    --cinema-card-border-hover: 1px solid rgba(220,38,38,.25);
 
-    --cinema-card-shadow: 0 10px 28px rgba(0,0,0,.32);
-    --cinema-card-shadow-soft: 0 6px 18px rgba(0,0,0,.25);
+    --cinema-card-shadow: 0 10px 28px rgba(0,0,0,.5);
+    --cinema-card-shadow-soft: 0 6px 18px rgba(0,0,0,.35);
 
     --cinema-card-glow:
-        0 0 20px rgba(255,40,40,.12);
+        0 0 20px rgba(220,38,38,.05);
 
     --cinema-card-glow-hover:
-        0 0 0 1px rgba(255,40,40,.15),
-        0 0 20px rgba(255,25,25,.25),
-        0 0 45px rgba(185,28,28,.2),
-        0 0 80px rgba(255,0,0,.12);
+        0 0 0 1px rgba(220,38,38,.1),
+        0 0 30px rgba(220,38,38,.08),
+        0 0 60px rgba(185,28,28,.04);
 
 
     /* ========================================
@@ -123,18 +130,17 @@
 
 
     /* ========================================
-       8. CINEMA EFFECT SYSTEM
+       8. CINEMA EFFECT SYSTEM - ✅ FIX
     ======================================== */
 
     --cinema-border-gradient:
         linear-gradient(
             120deg,
-            #ff0000,
-            #ff7300,
-            #ffd000,
-            #ff3c3c,
-            #ffb300,
-            #ff0000
+            #dc2626,
+            #fbbf24,
+            #dc2626,
+            #ef4444,
+            #dc2626
         );
 
     --cinema-border-speed: 3s;
@@ -167,6 +173,7 @@
     0% { background-position: 0% 50%; }
     100% { background-position: 300% 50%; }
 }
+
 /* ==========================================
    2. GLOBAL RESET
 ========================================== */
@@ -180,7 +187,7 @@
 }
 
 /* ==========================================
-   3. HTML & BODY
+   3. HTML & BODY - ✅ FIX
 ========================================== */
 
 html {
@@ -206,9 +213,6 @@ body {
     background-repeat: no-repeat;
     background-attachment: fixed;
     background-size: cover;
-
-    box-shadow:
-    var(--shadow-body);
 
     color: var(--text-white);
 
@@ -490,7 +494,7 @@ footer {
 }
 
 /* ==========================================
-   14. CUSTOM SCROLLBAR
+   14. CUSTOM SCROLLBAR - ✅ FIX
 ========================================== */
 
 ::-webkit-scrollbar {
@@ -498,17 +502,17 @@ footer {
 }
 
 ::-webkit-scrollbar-track {
-    background: #1b1d27;
+    background: #0a0a0a;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #3b3f52;
+    background: rgba(220, 38, 38, 0.2);
     border-radius: 10px;
+    transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background:
-    var(--primary-color);
+    background: rgba(220, 38, 38, 0.4);
 }
 
 /* ==========================================
@@ -547,4 +551,3 @@ footer {
         font-size: 12px;
     }
 }
-
