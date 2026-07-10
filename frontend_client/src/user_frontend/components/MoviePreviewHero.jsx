@@ -10,14 +10,16 @@ import {
 import "../styles/MoviePreviewHero.css";
 import { useNavigate } from "react-router-dom";
 
+// 🔥 BIẾN API CỐ ĐỊNH
+const IMAGE_BASE_URL = "https://api.quangdungcinema.id.vn/uploads";
+
 const MoviePreviewHero = ({
     movie,
-    imageBaseUrl,
     onBook,
     onTrailer
 }) => {
 
-    const navigate = useNavigate(); // ✅ phải nằm trong component
+    const navigate = useNavigate();
 
     if (!movie) return null;
 
@@ -29,14 +31,23 @@ const MoviePreviewHero = ({
         navigate(`/booking/${movie.slug || movie.movie_slug}`);
     };
 
+    // 🔥 BACKDROP - HÌNH NGANG
+    const backdropSrc = movie.backdrop_url 
+        ? `${IMAGE_BASE_URL}/backdrops/${movie.backdrop_url}`
+        : `${IMAGE_BASE_URL}/posters/${movie.poster_url}`;
+
     return (
         <section className="preview-hero">
 
-            {/* BACKDROP */}
+            {/* BACKDROP - HÌNH NGANG */}
             <img
                 className="preview-hero-backdrop"
-                src={`${imageBaseUrl}/backdrops/${movie.backdrop_url || movie.poster_url}`}
+                src={backdropSrc}
                 alt={movie.title}
+                onError={(e) => {
+                    console.log("❌ Lỗi backdrop, dùng poster thay thế");
+                    e.target.src = `${IMAGE_BASE_URL}/posters/${movie.poster_url}`;
+                }}
             />
 
             <div className="preview-hero-overlay"></div>
@@ -51,12 +62,10 @@ const MoviePreviewHero = ({
 
                     <div className="preview-title-row">
                         <h1 className="preview-title">{movie.title}</h1>
-
-                      
                     </div>
 
                     <div className="preview-meta">
-                          <span className="preview-age">
+                        <span className="preview-age">
                             {movie.age_rating ? `T${movie.age_rating}` : "P"}
                         </span>
                         <div className="preview-meta-item">
@@ -66,7 +75,7 @@ const MoviePreviewHero = ({
 
                         <div className="preview-meta-item">
                             <Clock size={17} />
-                            <span>{movie.duration} phút</span>
+                            <span>{movie.duration || "120"} phút</span>
                         </div>
 
                         <div className="preview-meta-item">
@@ -87,7 +96,7 @@ const MoviePreviewHero = ({
                     <p className="preview-description">
                         {movie.description
                             ?.replace(/<[^>]*>?/gm, "")
-                            ?.replace(/&nbsp;/g, " ")}
+                            ?.replace(/&nbsp;/g, " ") || "Đang cập nhật thông tin..."}
                     </p>
 
                     <div className="preview-extra-info">

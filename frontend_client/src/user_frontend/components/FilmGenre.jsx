@@ -11,7 +11,7 @@ import {
     AnimatePresence
 } from "framer-motion";
 
-import MovieCard from "../components/MovieCard";
+import MovieSlider from "../components/MovieSlider";
 import MoviePreviewModal from "../components/MoviePreviewModal";
 import "../styles/FilmGenre.css";
 
@@ -64,16 +64,13 @@ const FilmGenre = () => {
     const [activeGenre, setActiveGenre] =
         useState("");
     const [previewOpen, setPreviewOpen] = useState(false);
+    const [selectedMovie, setSelectedMovie] = useState(null);
 
-const [selectedMovie, setSelectedMovie] = useState(null);
+    const handlePreview = (movie) => {
+        setSelectedMovie(movie);
+        setPreviewOpen(true);
+    };
 
-        const handlePreview = (movie) => {
-
-            setSelectedMovie(movie);
-
-            setPreviewOpen(true);
-
-        };
     /* ==========================
        FETCH MOVIES
     ========================== */
@@ -155,6 +152,18 @@ const [selectedMovie, setSelectedMovie] = useState(null);
 
     }, [activeGenre, fetchMovies]);
 
+    /* ==========================
+       CHIA PHIM THEO TRẠNG THÁI
+    ========================== */
+
+    const showingMovies = movies.filter(
+        movie => movie.status === "Đang chiếu"
+    );
+
+    const comingMovies = movies.filter(
+        movie => movie.status === "Sắp chiếu"
+    );
+
     return (
 
         <div className="film-genre-page">
@@ -201,16 +210,6 @@ const [selectedMovie, setSelectedMovie] = useState(null);
             {/* MOVIES */}
             <div className="filmgenre-container">
 
-                <div className="filmgenre-section-header">
-
-                    <h2>
-                        DANH SÁCH PHIM
-                    </h2>
-
-                    <div className="filmgenre-line" />
-
-                </div>
-
                 {loading ? (
 
                     <div className="loading-movies">
@@ -226,38 +225,46 @@ const [selectedMovie, setSelectedMovie] = useState(null);
                 ) : (
 
                     <motion.div
-                        className="genre-movies-grid"
-                        variants={
-                            containerVariants
-                        }
+                        className="filmgenre-content"
+                        variants={containerVariants}
                         initial="hidden"
                         animate="show"
                     >
 
                         <AnimatePresence>
 
-                            {movies.map(
-                                (movie) => (
+                            {/* PHIM ĐANG CHIẾU */}
+                            {showingMovies.length > 0 && (
+                                <motion.div
+                                    key="showing"
+                                    variants={cardVariants}
+                                    layout
+                                    className="filmgenre-slider-wrapper"
+                                >
+                                    <MovieSlider
+                                        title="PHIM ĐANG CHIẾU"
+                                        movies={showingMovies}
+                                        baseUrl={BASE_URL}
+                                        onClickMovie={handlePreview}
+                                    />
+                                </motion.div>
+                            )}
 
-                                    <motion.div
-                                        key={
-                                            movie.movie_id
-                                        }
-                                        variants={
-                                            cardVariants
-                                        }
-                                        layout
-                                    >
-
-                                        <MovieCard
-                                            movie={movie}
-                                            baseUrl={BASE_URL}
-                                            onPreview={handlePreview}
-                                        />
-
-                                    </motion.div>
-
-                                )
+                            {/* PHIM SẮP CHIẾU */}
+                            {comingMovies.length > 0 && (
+                                <motion.div
+                                    key="coming"
+                                    variants={cardVariants}
+                                    layout
+                                    className="filmgenre-slider-wrapper"
+                                >
+                                    <MovieSlider
+                                        title="PHIM SẮP CHIẾU"
+                                        movies={comingMovies}
+                                        baseUrl={BASE_URL}
+                                        onClickMovie={handlePreview}
+                                    />
+                                </motion.div>
                             )}
 
                         </AnimatePresence>
@@ -267,13 +274,15 @@ const [selectedMovie, setSelectedMovie] = useState(null);
                 )}
 
             </div>
-                <MoviePreviewModal
-                    open={previewOpen}
-                    onClose={() => setPreviewOpen(false)}
-                    movies={movies}
-                    selectedMovie={selectedMovie}
-                    imageBaseUrl="https://api.quangdungcinema.id.vn/uploads"
-                />
+
+            <MoviePreviewModal
+                open={previewOpen}
+                onClose={() => setPreviewOpen(false)}
+                movies={movies}
+                selectedMovie={selectedMovie}
+                imageBaseUrl="https://api.quangdungcinema.id.vn/uploads"
+            />
+
         </div>
 
     );
