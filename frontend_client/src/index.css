@@ -5,179 +5,203 @@
     /* ========================================
        1. BACKGROUND SYSTEM
     ======================================== */
-
-    /* ✅ FIX: Đổi sang đen sâu + ánh đỏ cực nhẹ (Netflix Style) */
     --main-background:
         radial-gradient(circle at 30% 20%, rgba(220, 38, 38, 0.04) 0%, transparent 50%),
         radial-gradient(circle at 80% 80%, rgba(220, 38, 38, 0.03) 0%, transparent 50%),
         radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.01) 0%, transparent 60%),
         linear-gradient(180deg, #0a0a0a 0%, #0d0d0d 30%, #0a0a0a 60%, #080808 100%);
 
-    /*=========================================
-    TYPOGRAPHY SYSTEM
-    =========================================*/
+    /* ========================================
+       2. TYPOGRAPHY SYSTEM
+    ======================================== */
+    --font-primary:   'Plus Jakarta Sans', sans-serif;
+    --font-heading:   'Plus Jakarta Sans', sans-serif;
+    --font-size-base: 16px;
+    --line-height-base: 1.6;
 
-    --font-primary:
-        'Plus Jakarta Sans',
-        sans-serif;
+    /* ----- FONT SIZE SCALE (dùng cho mọi thành phần) ----- */
+    --font-size-xs:   0.75rem;   /* 12px */
+    --font-size-sm:   0.875rem;  /* 14px */
+    --font-size-base: 1rem;      /* 16px */
+    --font-size-md:   1.125rem;  /* 18px */
+    --font-size-lg:   1.25rem;   /* 20px */
+    --font-size-xl:   1.5rem;    /* 24px */
+    --font-size-2xl:  2rem;      /* 32px */
+    --font-size-3xl:  2.5rem;    /* 40px */
+    --font-size-4xl:  3rem;      /* 48px */
+    --font-size-5xl:  4rem;      /* 64px */
+    --font-size-6xl:  5rem;      /* 80px */
 
-    --font-heading:
-        'Plus Jakarta Sans',
-        sans-serif;
-
-    --font-size-base:
-        16px;
-
-    --line-height-base:
-        1.6;
+    /* ----- KÍCH THƯỚC TIÊU ĐỀ (có thể dùng clamp cho responsive) ----- */
+    --font-size-h1: clamp(2.8rem, 6vw, 5rem);
+    --font-size-h2: clamp(2rem, 4vw, 3rem);
+    --font-size-h3: clamp(1.4rem, 2vw, 1.8rem);
+    --font-size-h4: 1.3rem;
+    --font-size-h5: 1.1rem;
+    --font-size-h6: 1rem;
 
     /* ========================================
-       2. COLOR SYSTEM - ✅ FIX
+       3. COLOR SYSTEM – VÀNG KIM + TRẮNG
     ======================================== */
-
-    /* Đỏ Netflix - đẹp hơn, không chói */
-    --color-primary: #dc2626;
-    --color-primary-hover: #ef4444;
-    --color-primary-dark: #b91c1c;
-
-    /* Vàng cho rating */
-    --color-gold: #fbbf24;
-    --color-gold-dark: #d97706;
-
-    --color-accent: #8b0000;
-
-    /* ✅ FIX: Chữ trắng sáng hơn */
-    --text-white: #ffffff;
-    --text-primary: #e8e8e8;
-    --text-secondary: #999999;
-    --text-muted: #666666;
-
-    /* ✅ FIX: Border đỏ mờ thay vì đỏ chói */
-    --border-red: 1px solid rgba(220, 38, 38, 0.08);
-    --border-red-hover: 1px solid rgba(220, 38, 38, 0.2);
+    /* Vàng cao cấp (từ logo banner) */
+    --gold-premium:         #C9A84C;
+    --gold-premium-light:   #E8C84A;
+    --gold-premium-pale:    #F5DEB3;
+    
+    /* Đen sang trọng */
+    --black-premium:        #0A0A0A;
+    --black-soft:           #1A1A1A;
+    
+    /* Trắng cao cấp */
+    --white-premium:        #FFFFFF;
+    --white-silver:         #D4D4D4;
+    --white-smoke:          #ECECEC;
+    
+    /* Gradient vàng (hiệu ứng kim loại) */
+    --gold-gradient:
+        linear-gradient(
+            135deg,
+            #C9A84C 0%,
+            #E8C84A 40%,
+            #C9A84C 60%,
+            #B8923A 100%
+        );
+    
+    /* Alias cho hệ thống hiện tại */
+    --gold-primary:   var(--gold-premium);      /* tiêu đề chính */
+    --gold-hover:     var(--gold-premium-light);/* hover sáng hơn */
+    --gold-dark:      #B8923A;
+    
+    --text-white:     var(--white-premium);
+    --text-primary:   var(--white-premium);
+    --text-secondary: var(--white-silver);
+    --text-muted:     #999999;
+    
+    --border-gold:       1px solid rgba(201, 168, 76, 0.25);
+    --border-gold-hover: 1px solid rgba(201, 168, 76, 0.5);
 
     /* ========================================
-       3. CINEMA CARD SYSTEM (GLOBAL UI BASE) - ✅ FIX
+       4. CINEMA CARD SYSTEM
     ======================================== */
-
     --cinema-card-bg:
         linear-gradient(180deg, rgba(20,20,20,.95), rgba(14,14,14,.98));
-
-    --cinema-card-border: 1px solid rgba(255,255,255,.04);
-    --cinema-card-border-hover: 1px solid rgba(220,38,38,.25);
-
-    --cinema-card-shadow: 0 10px 28px rgba(0,0,0,.5);
-    --cinema-card-shadow-soft: 0 6px 18px rgba(0,0,0,.35);
-
-    --cinema-card-glow:
-        0 0 20px rgba(220,38,38,.05);
-
+    --cinema-card-border:       1px solid rgba(255,255,255,.04);
+    --cinema-card-border-hover: 1px solid rgba(205,127,50,.35);
+    --cinema-card-shadow:       0 10px 28px rgba(0,0,0,.5);
+    --cinema-card-shadow-soft:  0 6px 18px rgba(0,0,0,.35);
+    --cinema-card-glow:         0 0 20px rgba(205,127,50,.08);
     --cinema-card-glow-hover:
-        0 0 0 1px rgba(220,38,38,.1),
-        0 0 30px rgba(220,38,38,.08),
-        0 0 60px rgba(185,28,28,.04);
-
+        0 0 0 1px rgba(205,127,50,.15),
+        0 0 30px rgba(205,127,50,.10),
+        0 0 60px rgba(184,134,11,.05);
 
     /* ========================================
-       4. MOTION SYSTEM (CINEMATIC)
+       5. MOTION SYSTEM
     ======================================== */
-
     --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
-    --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
-
+    --ease-smooth:  cubic-bezier(0.22, 1, 0.36, 1);
     --cinema-transition:
         transform .4s var(--ease-smooth),
-        box-shadow .4s var(--ease-smooth),
+        box-shadow  .4s var(--ease-smooth),
         border-color .4s var(--ease-smooth);
-
-    --cinema-hover-transform:
-        translateY(-10px) scale(1.03);
-
-    --cinema-hover-fast-transform:
-        translateY(-6px) scale(1.02);
-
+    --cinema-hover-transform:       translateY(-10px) scale(1.03);
+    --cinema-hover-fast-transform:  translateY(-6px)  scale(1.02);
 
     /* ========================================
-       5. BORDER / RADIUS SYSTEM
+       6. BORDER / RADIUS
     ======================================== */
-
-    --radius-xs: 4px;
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 18px;
-    --radius-xl: 24px;
+    --radius-xs:    4px;
+    --radius-sm:    8px;
+    --radius-md:   12px;
+    --radius-lg:   18px;
+    --radius-xl:   24px;
     --radius-round: 999px;
 
-
     /* ========================================
-       6. SPACING SYSTEM
+       7. SPACING
     ======================================== */
-
-    --space-xs: 4px;
-    --space-sm: 8px;
-    --space-md: 16px;
-    --space-lg: 24px;
-    --space-xl: 32px;
+    --space-xs:   4px;
+    --space-sm:   8px;
+    --space-md:  16px;
+    --space-lg:  24px;
+    --space-xl:  32px;
     --space-2xl: 48px;
-
-
-    /* ========================================
-       7. LAYOUT
-    ======================================== */
-
-    --container-width: 1200px;
-    --container-padding: 20px;
-
+    --space-3xl: 64px;
 
     /* ========================================
-       8. CINEMA EFFECT SYSTEM - ✅ FIX
+       8. LAYOUT
     ======================================== */
+    --container-width:    1200px;
+    --container-padding:  20px;
 
+    /* ========================================
+       9. CINEMA EFFECTS
+    ======================================== */
     --cinema-border-gradient:
         linear-gradient(
             120deg,
-            #dc2626,
+            #cd7f32,
             #fbbf24,
-            #dc2626,
-            #ef4444,
-            #dc2626
+            #cd7f32,
+            #d4af37,
+            #cd7f32
         );
-
     --cinema-border-speed: 3s;
+    --cinema-sweep-speed:  2.2s;
 
-    --cinema-sweep-speed: 2.2s;
+    /* ========================================
+       10. TRANSITION SPEEDS
+    ======================================== */
+    --transition-fast:   0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow:   0.5s ease;
 
+    /* ========================================
+       11. FONT WEIGHTS
+    ======================================== */
+    --fw-regular:   400;
+    --fw-medium:    500;
+    --fw-semibold:  600;
+    --fw-bold:      700;
+    --fw-extrabold: 800;
+    --fw-black:     900;
+
+    /* ========================================
+       12. OVERLAY & SHADOW
+    ======================================== */
+    --overlay-dark:  rgba(0, 0, 0, 0.72);
+    --overlay-light: rgba(255, 255, 255, 0.06);
+
+    --shadow-sm:  0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-lg:  0 20px 50px rgba(0, 0, 0, 0.5);
+    --shadow-gold: 0 0 30px rgba(205, 127, 50, 0.15);
 }
 
 
 /* ========================================
-   9. GLOBAL KEYFRAMES
+   13. KEYFRAMES
 ======================================== */
-
 @keyframes cinemaFloat {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
+    50%      { transform: translateY(-6px); }
 }
-
 @keyframes cinemaSweep {
-    0% { transform: translateX(-140%); }
+    0%   { transform: translateX(-140%); }
     100% { transform: translateX(140%); }
 }
-
 @keyframes cinemaGlow {
     0%, 100% { opacity: 0.4; transform: scale(0.98); }
-    50% { opacity: 1; transform: scale(1.03); }
+    50%      { opacity: 1;   transform: scale(1.03); }
 }
-
 @keyframes cinemaBorderFlow {
-    0% { background-position: 0% 50%; }
+    0%   { background-position: 0% 50%; }
     100% { background-position: 300% 50%; }
 }
 
-/* ==========================================
-   2. GLOBAL RESET
-========================================== */
 
+/* ==========================================
+   14. GLOBAL RESET
+========================================== */
 *,
 *::before,
 *::after {
@@ -187,11 +211,10 @@
 }
 
 /* ==========================================
-   3. HTML & BODY - ✅ FIX
+   15. HTML & BODY
 ========================================== */
-
 html {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     width: 100%;
     height: 100%;
     overflow-y: auto !important;
@@ -205,42 +228,29 @@ body {
     height: auto !important;
 
     background: var(--main-background);
-    background-blend-mode:
-    screen,
-    normal,
-    normal;
-
+    background-blend-mode: screen, normal, normal;
     background-repeat: no-repeat;
     background-attachment: fixed;
     background-size: cover;
 
     color: var(--text-white);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-regular);
+    line-height: var(--line-height-base);
 
-    font-family:
-    var(--font-primary);
-
-    font-size: 1rem;
-    font-weight: 400;
-    line-height: 1.6;
-
-    -webkit-font-smoothing:
-    antialiased;
-
-    -moz-osx-font-smoothing:
-    grayscale;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 
     display: flex;
     flex-direction: column;
-
     overflow-x: hidden;
-    -webkit-overflow-scrolling:
-    touch;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* ==========================================
-   4. ROOT APP
+   16. ROOT APP
 ========================================== */
-
 #root,
 .app-wrapper {
     display: flex;
@@ -250,304 +260,242 @@ body {
 }
 
 /* ==========================================
-   5. MAIN CONTENT
+   17. MAIN CONTENT
 ========================================== */
-
 main,
 .main-content {
     flex: 1 0 auto;
 }
 
 /* ==========================================
-   6. TYPOGRAPHY
+   18. TYPOGRAPHY – SỬ DỤNG BIẾN FONT SIZE
 ========================================== */
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    font-family:
-    var(--font-heading);
-
-    font-weight: 900;
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: var(--fw-black);
     line-height: 1.2;
     letter-spacing: -0.02em;
-
-    color:
-    var(--text-white);
-
+    color: var(--gold-primary);
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
 
-h1 {
-    font-size:
-    clamp(2.8rem, 6vw, 5rem);
+h1 { font-size: var(--font-size-h1); text-transform: uppercase; }
+h2 { font-size: var(--font-size-h2); text-transform: uppercase; }
+h3 { font-size: var(--font-size-h3); }
+h4 { font-size: var(--font-size-h4); }
+h5 { font-size: var(--font-size-h5); }
+h6 { font-size: var(--font-size-h6); }
 
-    text-transform:
-    uppercase;
-}
-
-h2 {
-    font-size:
-    clamp(2rem, 4vw, 3rem);
-
-    text-transform:
-    uppercase;
-}
-
-h3 {
-    font-size:
-    clamp(1.4rem, 2vw, 1.8rem);
-}
-
-h4 {
-    font-size: 1.3rem;
-}
-
-h5 {
-    font-size: 1.1rem;
-}
-
-h6 {
-    font-size: 1rem;
-}
-
-p,
-span,
-div,
-a,
-li,
-label,
-input,
-textarea,
-select,
-button {
-    font-size: 1rem;
-    color: var(--text-primary);
+/* Tất cả văn bản thường dùng font-size-base */
+p, span, div, a, li, label,
+input, textarea, select, button {
+    font-size: var(--font-size-base);
+    color: var(--text-white);
 }
 
 small {
-    font-size: .875rem;
+    font-size: var(--font-size-sm);
 }
 
 /* ==========================================
-   7. FORM ELEMENTS
+   19. FORM ELEMENTS
 ========================================== */
-
-button,
-input,
-select,
-textarea {
+button, input, select, textarea {
     font-family: inherit;
     outline: none;
     border: none;
 }
-
 button {
     cursor: pointer;
 }
 
 /* ==========================================
-   8. MEDIA
+   20. MEDIA
 ========================================== */
-
-img,
-picture,
-video,
-canvas,
-svg {
+img, picture, video, canvas, svg {
     display: block;
     max-width: 100%;
 }
-
 img {
     height: auto;
     object-fit: cover;
     user-select: none;
     -webkit-user-drag: none;
 }
-
 video {
     width: 100%;
     height: auto;
     object-fit: cover;
-    border-radius:
-    var(--radius-md);
+    border-radius: var(--radius-md);
 }
-
-/* Utility */
 
 .poster-image {
     width: 100%;
     aspect-ratio: 2 / 3;
     object-fit: cover;
-    border-radius:
-    var(--radius-lg);
+    border-radius: var(--radius-lg);
 }
-
 .banner-image {
     width: 100%;
     aspect-ratio: 16 / 9;
     object-fit: cover;
 }
-
 .thumbnail-image {
     width: 100%;
     aspect-ratio: 16 / 9;
     object-fit: cover;
-    border-radius:
-    var(--radius-md);
+    border-radius: var(--radius-md);
 }
 
 /* ==========================================
-   9. LINKS
+   21. LINKS & BUTTON – HOVER VÀNG
 ========================================== */
-
 a {
     text-decoration: none;
     color: inherit;
-    transition:
-    opacity
-    var(--transition-fast);
+    transition: color var(--transition-fast), opacity var(--transition-fast);
 }
-
-a:hover {
-    opacity: .85;
+a:hover,
+button:hover,
+.hover-gold:hover {
+    color: var(--gold-hover) !important;
+    opacity: 1;
 }
 
 /* ==========================================
-   10. LIST
+   22. LIST
 ========================================== */
-
 ul {
     list-style: none;
 }
 
 /* ==========================================
-   11. CONTAINER
+   23. CONTAINER
 ========================================== */
-
 .container {
     width: 100%;
-    max-width:
-    var(--container-width);
-
+    max-width: var(--container-width);
     margin: 0 auto;
-
-    padding:
-    0
-    var(--container-padding);
+    padding: 0 var(--container-padding);
 }
 
 /* ==========================================
-   12. FOOTER
+   24. FOOTER
 ========================================== */
-
 footer {
     flex-shrink: 0;
     margin-top: auto;
-    padding: 60px 0;
-
-    border-top:
-    var(--border-primary);
+    padding: var(--space-2xl) 0;
+    border-top: var(--border-gold);
 }
 
 /* ==========================================
-   13. GLOBAL CARD
+   25. GLOBAL CARD
 ========================================== */
-
 .card {
-    background:
-    var(--card-bg);
-
-    border:
-    var(--border-primary);
-
-    border-radius:
-    var(--radius-lg);
-
-    box-shadow:
-    var(--shadow-card);
-
-    transition:
-    transform
-    var(--transition-normal),
-    box-shadow
-    var(--transition-normal),
-    border
-    var(--transition-normal);
+    background: var(--cinema-card-bg);
+    border: var(--cinema-card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--cinema-card-shadow);
+    transition: var(--cinema-transition);
 }
-
 .card:hover {
-    border:
-    var(--border-glow);
-
-    box-shadow:
-    var(--shadow-card),
-    var(--shadow-glow-hover);
-
-    transform:
-    translateY(-3px);
+    border: var(--cinema-card-border-hover);
+    box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
+    transform: translateY(-3px);
 }
 
 /* ==========================================
-   14. CUSTOM SCROLLBAR - ✅ FIX
+   26. CUSTOM SCROLLBAR
 ========================================== */
-
 ::-webkit-scrollbar {
     width: 8px;
 }
-
 ::-webkit-scrollbar-track {
-    background: #0a0a0a;
+    background: var(--black-premium);
 }
-
 ::-webkit-scrollbar-thumb {
-    background: rgba(220, 38, 38, 0.2);
+    background: rgba(205, 127, 50, 0.3);
     border-radius: 10px;
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
 }
-
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(220, 38, 38, 0.4);
+    background: rgba(205, 127, 50, 0.6);
 }
 
 /* ==========================================
-   15. RESPONSIVE
+   27. RESPONSIVE (chỉ điều chỉnh font-size gốc)
 ========================================== */
-
 @media (max-width: 1200px) {
-
-    html {
-        font-size: 15px;
-    }
-
-    .container {
-        max-width: 1140px;
-        padding: 0 24px;
-    }
+    html { font-size: 15px; }
+    .container { max-width: 1140px; padding: 0 24px; }
 }
-
 @media (max-width: 992px) {
-
-    html {
-        font-size: 14px;
-    }
+    html { font-size: 14px; }
 }
-
 @media (max-width: 768px) {
-
-    html {
-        font-size: 13px;
-    }
+    html { font-size: 13px; }
 }
-
 @media (max-width: 480px) {
-
-    html {
-        font-size: 12px;
-    }
+    html { font-size: 12px; }
 }
+
+/* ==========================================
+   28. UTILITY CLASSES
+========================================== */
+/* Màu sắc */
+.text-gold    {
+     color: var(--gold-primary); 
+}
+.text-white   { 
+    color: var(--text-white); 
+}
+.text-secondary {
+     color: var(--text-secondary); 
+}
+.text-muted   {
+     color: var(--text-muted); 
+}
+
+/* Nền */
+.bg-dark      {
+     background: var(--cinema-card-bg); 
+}
+.bg-gold      { 
+    background: var(--gold-primary); 
+}
+.bg-transparent { 
+    background: transparent; 
+}
+
+/* Border */
+.border-gold     { border: var(--border-gold); }
+.border-gold-hover:hover { border: var(--border-gold-hover); }
+.border-white    { border: 1px solid var(--overlay-light); }
+
+/* Shadow */
+.shadow-gold  { box-shadow: var(--shadow-gold); }
+.shadow-card  { box-shadow: var(--cinema-card-shadow); }
+
+/* Bo góc */
+.rounded-sm   { border-radius: var(--radius-sm); }
+.rounded-md   { border-radius: var(--radius-md); }
+.rounded-lg   { border-radius: var(--radius-lg); }
+.rounded-xl   { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-round); }
+
+/* Transition */
+.transition      { transition: var(--transition-normal); }
+.transition-fast { transition: var(--transition-fast); }
+.transition-slow { transition: var(--transition-slow); }
+
+/* Hover */
+.hover-gold:hover   { color: var(--gold-hover) !important; }
+.hover-scale:hover  { transform: scale(1.05); }
+.hover-lift:hover   { transform: translateY(-4px); }
+
+/* Căn chỉnh */
+.text-center    { text-align: center; }
+.text-uppercase { text-transform: uppercase; }
+.flex-center    { display: flex; align-items: center; justify-content: center; }

@@ -5,800 +5,591 @@
 /* ==========================================================
    PAGE
 ========================================================== */
-
 .cinema-detail-page {
-    width: 100%;
-    overflow: hidden;
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+  width: 100%;
+  overflow: hidden;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
 }
-
-.cinema-content,
-.cinema-hero-content {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-/* ==========================================================
-   LOADING
-========================================================== */
-
-.cinema-loading,
-.cinema-error {
-    min-height: 60vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 16px;
-    color: #fff;
-}
-
-.spin-icon {
-    color: #D4AF37; /* ✅ Vàng Gold */
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* ==========================================================
-   HERO
-========================================================== */
-
-.cinema-hero {
-    position: relative;
-    min-height: 650px;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-}
-
-/* ==========================================================
-   HERO BACKGROUND
-========================================================== */
-
-.hero-bg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    animation: heroMove 10s ease-in-out infinite alternate;
-}
-
-@keyframes heroMove {
-    0% { transform: scale(1.03) translate(0, 0); }
-    50% { transform: scale(1.06) translate(-12px, -6px); }
-    100% { transform: scale(1.08) translate(12px, 6px); }
-}
-
-/* ==========================================================
-   OVERLAY - ĐEN VÀNG
-========================================================== */
-
-.cinema-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background:
-        linear-gradient(
-            90deg,
-            rgba(0, 0, 0, 0.75) 0%,
-            rgba(0, 0, 0, 0.25) 45%,
-            rgba(0, 0, 0, 0.35) 100%
-        ),
-        linear-gradient(
-            180deg,
-            rgba(0, 0, 0, 0.05),
-            rgba(0, 0, 0, 0.45)
-        );
-    backdrop-filter: blur(1px);
-}
-
-/* ==========================================================
-   SHINE - VÀNG
-========================================================== */
-
-.hero-light {
-    position: absolute;
-    top: 0;
-    left: -40%;
-    width: 18%;
-    height: 100%;
-    z-index: 2;
-    opacity: 0.4;
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            rgba(212, 175, 55, 0.15),
-            transparent
-        );
-    transform: skewX(-25deg);
-    animation: shineMove 12s ease-in-out infinite;
-}
-
-@keyframes shineMove {
-    0% { left: -40%; opacity: 0; }
-    20% { opacity: 0.3; }
-    50% { opacity: 0.6; }
-    100% { left: 140%; opacity: 0; }
-}
-
-/* ==========================================================
-   PARTICLES - VÀNG
-========================================================== */
-
-.cinema-particles {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    opacity: 0.12;
-    background-image:
-        radial-gradient(
-            rgba(212, 175, 55, 0.4) 1px,
-            transparent 1px
-        );
-    background-size: 180px 180px;
-    animation: particleMove 25s linear infinite;
-}
-
-@keyframes particleMove {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-180px); }
-}
-
-/* ==========================================================
-   HERO CONTENT
-========================================================== */
-
-.cinema-hero-content {
-    position: relative;
-    z-index: 5;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 80px;
-    padding-top: 80px;
-    padding-bottom: 40px;
-}
-
-/* ==========================================================
-   HERO LEFT
-========================================================== */
-
-.hero-left {
-    flex: 1;
-    max-width: 700px;
-}
-
-/* ---------- LABEL ---------- */
-
-.hero-label {
-    display: inline-flex;
-    align-items: center;
-    padding: 12px 26px;
-    margin-bottom: 30px;
-    border-radius: 999px;
-    background: rgba(212, 175, 55, 0.08);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    color: #D4AF37;
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: 2px;
-}
-
-/* ---------- TITLE ---------- */
-
-.hero-left h1 {
-    font-size: 64px;
-    font-weight: 900;
-    line-height: 1;
-    letter-spacing: -2px;
-    text-transform: uppercase;
-    color: #fff;
-    margin-bottom: 24px;
-    text-shadow:
-        0 2px 5px rgba(0, 0, 0, 0.6),
-        0 0 30px rgba(212, 175, 55, 0.08);
-}
-
-/* ---------- DIVIDER - VÀNG ---------- */
-
-.hero-divider {
-    width: 220px;
-    height: 4px;
-    border-radius: 999px;
-    margin-bottom: 32px;
-    background:
-        linear-gradient(
-            90deg,
-            #D4AF37,
-            #F5D76E,
-            transparent
-        );
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
-}
-
-/* ---------- INFO ---------- */
-
-.hero-info {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.hero-info-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    color: #fff;
-    font-size: 20px;
-    font-weight: 700;
-}
-
-.hero-info-item svg {
-    color: #D4AF37;
-}
-
-/* ---------- MAP LINK ---------- */
-
-.map-link {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    width: fit-content;
-    text-decoration: none;
-    color: #fff;
-    font-size: 18px;
-    font-weight: 700;
-    transition: 0.35s ease;
-}
-
-.map-link svg {
-    color: #D4AF37;
-}
-
-.map-link:hover {
-    color: #F5D76E;
-    transform: translateX(5px);
-}
-
-/* ==========================================================
-   HERO RIGHT
-========================================================== */
-
-.hero-right {
-    width: 290px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-}
-
-.hero-select {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 20px 24px;
-    border-radius: 24px;
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    transition: 0.35s ease;
-}
-
-.hero-select:hover {
-    transform: translateY(-3px);
-    background: rgba(212, 175, 55, 0.06);
-    border-color: rgba(212, 175, 55, 0.25);
-}
-
-.hero-select svg {
-    color: #D4AF37;
-}
-
-.hero-select span {
-    color: #fff;
-    font-size: 18px;
-    font-weight: 700;
-}
-
-/* ==========================================================
-   CONTENT
-========================================================== */
 
 .cinema-content {
-    padding: 60px 0 80px;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg) var(--space-3xl);
 }
 
 /* ==========================================================
-   SECTION TITLE - VÀNG
+   LOADING / ERROR
 ========================================================== */
+.cinema-loading,
+.cinema-error {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-md);
+  color: var(--text-white);
+}
+.spin-icon {
+  color: var(--gold-primary);
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
+/* ==========================================================
+   HERO - BANNER SWIPER (CHỈ ẢNH)
+========================================================== */
+.cinema-hero {
+  position: relative;
+  width: 100%;
+  min-height: 450px;
+  overflow: hidden;
+}
+
+/* Swiper full container */
+.hero-swiper {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+.hero-swiper .swiper-slide {
+  width: 100%;
+  height: 100%;
+}
+
+.hero-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Overlay – nhẹ hơn, không che ảnh quá nhiều */
+.cinema-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  pointer-events: none;
+}
+
+/* Shine & particles – giữ nguyên */
+.hero-light {
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 18%;
+  height: 100%;
+  z-index: 2;
+  opacity: 0.4;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.15), transparent);
+  transform: skewX(-25deg);
+  animation: shineMove 12s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes shineMove {
+  0% { left: -40%; opacity: 0; }
+  20% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+  100% { left: 140%; opacity: 0; }
+}
+
+.cinema-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image: radial-gradient(rgba(212, 175, 55, 0.4) 1px, transparent 1px);
+  background-size: 180px 180px;
+  animation: particleMove 25s linear infinite;
+}
+@keyframes particleMove {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-180px); }
+}
+
+/* ==========================================================
+   THÔNG TIN RẠP (phía dưới banner)
+========================================================== */
+.cinema-info-block {
+  margin-bottom: var(--space-3xl);
+  padding-top: var(--space-2xl);
+}
+
+.cinema-label {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-md);
+  margin-bottom: var(--space-sm);
+  border-radius: var(--radius-round);
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  color: var(--gold-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--fw-extrabold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.cinema-name {
+  font-size: var(--font-size-5xl);
+  font-weight: var(--fw-black);
+  line-height: 1;
+  letter-spacing: -2px;
+  text-transform: uppercase;
+  color: var(--text-white);
+  margin: 0 0 var(--space-md) 0;
+}
+
+.cinema-divider {
+  width: 220px;
+  height: 4px;
+  border-radius: var(--radius-round);
+  margin-bottom: var(--space-lg);
+  background: linear-gradient(90deg, var(--gold-primary), var(--gold-hover), transparent);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+}
+
+.cinema-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--text-white);
+  font-size: var(--font-size-md);
+  font-weight: var(--fw-medium);
+}
+.info-item svg {
+  color: var(--gold-primary);
+}
+
+.cinema-map-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: fit-content;
+  text-decoration: none;
+  color: var(--text-white);
+  font-size: var(--font-size-md);
+  font-weight: var(--fw-bold);
+  transition: var(--transition-normal);
+  margin-top: var(--space-xs);
+}
+.cinema-map-link svg {
+  color: var(--gold-primary);
+}
+.cinema-map-link:hover {
+  color: var(--gold-hover);
+  transform: translateX(5px);
+}
+
+/* ==========================================================
+   SECTION TITLE
+========================================================== */
 .section-title {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 36px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
 }
-
 .section-title svg {
-    color: #D4AF37;
-    filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.3));
+  color: var(--gold-primary);
+  filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.3));
 }
-
 .section-title h2 {
-    color: #fff;
-    font-size: 32px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+  color: var(--text-white);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--fw-extrabold);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 /* ==========================================================
    DATE WRAPPER
 ========================================================== */
-
 .date-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    margin-bottom: 45px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-2xl);
 }
-
-/* ==========================================================
-   DATE NAV - VÀNG
-========================================================== */
-
 .date-nav {
-    width: 52px;
-    height: 52px;
-    border: none;
-    cursor: pointer;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    transition: 0.3s ease;
+  width: 52px;
+  height: 52px;
+  border: none;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-white);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  border: var(--border-gold);
+  transition: var(--transition-normal);
 }
-
 .date-nav svg {
-    width: 18px;
-    height: 18px;
+  width: 18px;
+  height: 18px;
 }
-
 .date-nav:hover {
-    color: #D4AF37;
-    transform: scale(1.08);
-    background: rgba(212, 175, 55, 0.08);
-    border-color: rgba(212, 175, 55, 0.35);
-    box-shadow: 0 0 25px rgba(212, 175, 55, 0.12);
+  color: var(--gold-primary);
+  transform: scale(1.08);
+  background: rgba(212, 175, 55, 0.08);
+  border-color: var(--border-gold-hover);
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.12);
 }
-
-/* ==========================================================
-   DATE LIST
-========================================================== */
-
 .date-list {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 16px;
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--space-md);
 }
-
-/* ==========================================================
-   DATE CARD - VÀNG
-========================================================== */
-
 .date-card {
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-    border: none;
-    outline: none;
-    padding: 18px 14px;
-    border-radius: 22px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: #fff;
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    transition: 0.35s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  padding: var(--space-md) var(--space-sm);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  color: var(--text-white);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: var(--border-gold);
+  transition: var(--transition-normal);
 }
-
-/* Shine Vàng */
 .date-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 50%;
-    height: 100%;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(212, 175, 55, 0.06),
-        transparent
-    );
-    transform: skewX(-25deg);
-    transition: 0.6s;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.06), transparent);
+  transform: skewX(-25deg);
+  transition: 0.6s;
 }
-
 .date-card:hover::before {
-    left: 180%;
+  left: 180%;
 }
-
 .date-card:hover {
-    transform: translateY(-5px);
-    background: rgba(212, 175, 55, 0.06);
-    border-color: rgba(212, 175, 55, 0.25);
-    box-shadow:
-        0 10px 25px rgba(0, 0, 0, 0.25),
-        0 0 20px rgba(212, 175, 55, 0.08);
+  transform: translateY(-5px);
+  background: rgba(212, 175, 55, 0.06);
+  border-color: var(--border-gold-hover);
+  box-shadow: var(--cinema-card-shadow), 0 0 20px rgba(212, 175, 55, 0.08);
 }
-
-/* Active - Vàng Gold */
 .date-card.active {
-    background: linear-gradient(135deg, #D4AF37, #B8860B);
-    border-color: transparent;
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+  background: var(--gold-gradient);
+  border-color: transparent;
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
 }
-
 .date-card.active::before {
-    display: none;
+  display: none;
 }
-
 .date-day {
-    font-size: 15px;
-    font-weight: 700;
-    color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-white);
 }
-
 .date-number {
-    font-size: 13px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.75);
+  font-size: var(--font-size-sm);
+  font-weight: var(--fw-medium);
+  color: rgba(255, 255, 255, 0.75);
 }
-
 .date-card.active .date-day,
 .date-card.active .date-number {
-    color: #fff;
+  color: var(--text-white);
 }
-
-/* Scrollbar */
 .date-list::-webkit-scrollbar {
-    height: 5px;
+  height: 5px;
 }
-
 .date-list::-webkit-scrollbar-thumb {
-    background: #D4AF37;
-    border-radius: 20px;
+  background: var(--gold-primary);
+  border-radius: var(--radius-round);
 }
-
 .date-list::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 /* ==========================================================
    MOVIE GRID
 ========================================================== */
-
 .movie-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 28px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-xl);
 }
-
-/* ==========================================================
-   MOVIE CARD
-========================================================== */
-
 .movie-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: 28px;
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    transition: 0.35s ease;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: var(--border-gold);
+  transition: var(--cinema-transition);
 }
-
 .movie-card:hover {
-    transform: translateY(-8px);
-    border-color: rgba(212, 175, 55, 0.3);
-    box-shadow:
-        0 15px 35px rgba(0, 0, 0, 0.4),
-        0 0 30px rgba(212, 175, 55, 0.06);
+  transform: var(--cinema-hover-fast-transform);
+  border-color: var(--border-gold-hover);
+  box-shadow: var(--cinema-card-shadow), 0 0 30px rgba(212, 175, 55, 0.06);
 }
-
-/* ==========================================================
-   POSTER
-========================================================== */
-
 .movie-poster {
-    position: relative;
-    overflow: hidden;
-    aspect-ratio: 2 / 3;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 2 / 3;
 }
-
 .movie-poster img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.5s ease;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--transition-normal);
 }
-
 .movie-card:hover img {
-    transform: scale(1.06);
+  transform: scale(1.06);
 }
-
-/* ==========================================================
-   MOVIE OVERLAY
-========================================================== */
-
 .movie-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    visibility: hidden;
-    background: linear-gradient(
-        to top,
-        rgba(0, 0, 0, 0.9),
-        rgba(0, 0, 0, 0.3)
-    );
-    transition: 0.35s ease;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.3));
+  transition: var(--transition-normal);
 }
-
 .movie-card:hover .movie-overlay {
-    opacity: 1;
-    visibility: visible;
+  opacity: 1;
+  visibility: visible;
 }
-
-/* ==========================================================
-   BOOKING BUTTON - VÀNG
-========================================================== */
-
 .booking-btn {
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 14px 30px;
-    border-radius: 999px;
-    color: #000;
-    font-size: 14px;
-    font-weight: 700;
-    background: linear-gradient(135deg, #D4AF37, #B8860B);
-    transition: 0.3s ease;
-    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.2);
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-round);
+  color: var(--black-premium);
+  font-size: var(--font-size-sm);
+  font-weight: var(--fw-bold);
+  background: var(--gold-gradient);
+  transition: var(--transition-normal);
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.2);
 }
-
 .booking-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.35);
+  transform: scale(1.05);
+  box-shadow: var(--shadow-gold);
 }
-
-/* ==========================================================
-   MOVIE INFO
-========================================================== */
-
 .movie-info {
-    padding: 22px;
+  padding: var(--space-lg);
 }
-
 .movie-info h3 {
-    color: #fff;
-    font-size: 20px;
-    font-weight: 700;
-    line-height: 1.4;
-    min-height: 56px;
-    margin-bottom: 18px;
+  color: var(--text-white);
+  font-size: var(--font-size-lg);
+  font-weight: var(--fw-bold);
+  line-height: 1.4;
+  min-height: 56px;
+  margin-bottom: var(--space-md);
 }
-
-/* ==========================================================
-   MOVIE META - VÀNG
-========================================================== */
-
 .movie-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
 }
-
 .movie-meta div {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #d1d5db;
-    font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
 }
-
 .movie-meta svg {
-    color: #D4AF37;
+  color: var(--gold-primary);
 }
-
-/* ==========================================================
-   SHOWTIME - VÀNG
-========================================================== */
-
 .showtime-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
 }
-
 .showtime-btn {
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 10px 14px;
-    border-radius: 14px;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    transition: 0.3s ease;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  color: var(--text-white);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  border: var(--border-gold);
+  transition: var(--transition-normal);
 }
-
 .showtime-btn:hover {
-    transform: translateY(-2px);
-    background: rgba(212, 175, 55, 0.06);
-    border-color: rgba(212, 175, 55, 0.25);
-    color: #F5D76E;
+  transform: translateY(-2px);
+  background: rgba(212, 175, 55, 0.06);
+  border-color: var(--border-gold-hover);
+  color: var(--gold-hover);
 }
-
 .showtime-btn svg {
-    color: #D4AF37;
+  color: var(--gold-primary);
 }
 
 /* ==========================================================
    EMPTY STATE
 ========================================================== */
-
 .empty-box {
-    min-height: 320px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 14px;
-    border-radius: 30px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-sm);
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.03);
+  border: var(--border-gold);
 }
-
 .empty-box svg {
-    color: #D4AF37;
+  color: var(--gold-primary);
 }
-
 .empty-box h3 {
-    color: #fff;
-    font-size: 28px;
-    font-weight: 800;
+  color: var(--text-white);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--fw-extrabold);
 }
-
 .empty-box p {
-    color: #9ca3af;
+  color: var(--text-secondary);
 }
 
 /* ==========================================================
    MAP SECTION
 ========================================================== */
-
 .map-section {
-    margin-top: 70px;
+  margin-top: var(--space-2xl);
 }
-
 .map-wrapper {
-    overflow: hidden;
-    border-radius: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  border: var(--border-gold);
+  box-shadow: var(--cinema-card-shadow);
 }
-
 .map-wrapper iframe {
-    display: block;
-    width: 100%;
+  display: block;
+  width: 100%;
 }
 
 /* ==========================================================
    RESPONSIVE
 ========================================================== */
-
 @media (max-width: 1200px) {
-    .movie-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    .date-list {
-        grid-template-columns: repeat(4, 1fr);
-    }
+  .movie-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .date-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .cinema-name {
+    font-size: var(--font-size-4xl);
+  }
 }
 
 @media (max-width: 992px) {
-    .cinema-hero {
-        min-height: auto;
-        padding: 90px 0;
-    }
-    .cinema-hero-content {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 50px;
-    }
-    .hero-right {
-        width: 100%;
-    }
-    .hero-left h1 {
-        font-size: 52px;
-    }
-    .movie-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+  .cinema-hero {
+    min-height: 350px;
+  }
+  .cinema-name {
+    font-size: var(--font-size-4xl);
+  }
+  .movie-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
-    .hero-left h1 {
-        font-size: 40px;
-    }
-    .section-title h2 {
-        font-size: 26px;
-    }
-    .date-nav {
-        display: none;
-    }
-    .date-list {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .movie-grid {
-        grid-template-columns: 1fr;
-    }
-    .movie-card {
-        max-width: 420px;
-        margin: auto;
-    }
+  .cinema-hero {
+    min-height: 250px;
+  }
+  .cinema-name {
+    font-size: var(--font-size-3xl);
+  }
+  .cinema-divider {
+    width: 140px;
+  }
+  .section-title h2 {
+    font-size: var(--font-size-2xl);
+  }
+  .date-nav {
+    display: none;
+  }
+  .date-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .movie-grid {
+    grid-template-columns: 1fr;
+  }
+  .movie-card {
+    max-width: 420px;
+    margin: auto;
+  }
+  .cinema-info-block {
+    padding-top: var(--space-xl);
+  }
 }
 
 @media (max-width: 480px) {
-    .cinema-content,
-    .cinema-hero-content {
-        padding: 0 14px;
-    }
-    .hero-left h1 {
-        font-size: 32px;
-    }
-    .hero-select {
-        padding: 18px;
-    }
-    .hero-select span {
-        font-size: 16px;
-    }
-    .movie-card {
-        max-width: 100%;
-    }
-    .date-card {
-        border-radius: 18px;
-    }
+  .cinema-content {
+    padding: 0 var(--space-sm) var(--space-2xl);
+  }
+  .cinema-hero {
+    min-height: 200px;
+  }
+  .cinema-name {
+    font-size: var(--font-size-2xl);
+  }
+  .cinema-label {
+    font-size: var(--font-size-xs);
+    padding: var(--space-xs) var(--space-sm);
+  }
+  .info-item {
+    font-size: var(--font-size-sm);
+  }
+  .movie-card {
+    max-width: 100%;
+  }
+  .date-card {
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-xs);
+  }
+  .date-day {
+    font-size: var(--font-size-xs);
+  }
+  .date-number {
+    font-size: var(--font-size-xs);
+  }
 }

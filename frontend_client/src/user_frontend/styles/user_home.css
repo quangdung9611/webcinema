@@ -9,7 +9,7 @@
 @keyframes fadeUp {
     from {
         opacity: 0;
-        transform: translateY(40px);
+        transform: translateY(var(--space-2xl));
     }
     to {
         opacity: 1;
@@ -25,18 +25,6 @@
         left: 120%;
     }
 }
-
-/* @keyframes pulseGlow {
-    0% {
-        box-shadow: 0 0 0 rgba(220, 38, 38, 0);
-    }
-    50% {
-        box-shadow: 0 0 30px rgba(220, 38, 38, .18);
-    }
-    100% {
-        box-shadow: 0 0 0 rgba(220, 38, 38, 0);
-    }
-} */
 
 @keyframes particleMove {
     0%   { transform: translateY(0); }
@@ -55,7 +43,7 @@
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 32px 120px;
+    padding: 0 var(--space-xl) var(--space-3xl);
 }
 
 /* ==========================================================
@@ -68,38 +56,9 @@
 .cinema-corner-section {
     position: relative;
     width: 100%;
-    margin-top: 40px;
-    animation: fadeUp .8s ease;
+    margin-top: var(--space-xl);
+    animation: fadeUp var(--transition-slow) ease;
 }
-
-/* .section-header {
-    position: relative;
-    margin-bottom: 50px;
-}
-
-.section-title {
-    position: relative;
-    display: inline-block;
-    color: var(--text-white, #fff);
-    font-size: clamp(2rem, 3vw, 2.8rem);
-    font-weight: 900;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-
-.section-title::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -14px;
-    width: 100%;
-    height: 3px;
-    background: linear-gradient(90deg, #dc2626, transparent);
-}
-
-.title-underline {
-    display: none;
-} */
 
 /* ==========================================================
    BANNER PREMIUM (CHỈ ẢNH, KHÔNG SHADOW TRÁI, KHÔNG ZOOM)
@@ -116,7 +75,6 @@
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
-   
 }
 
 .premiumSwiper,
@@ -129,38 +87,15 @@
     position: relative;
     width: 100%;
     height: 100%;
-  
 }
 
-/* ✅ ĐÃ XÓA shadow trái (::before) */
-
-/* ---- Shadow dưới (cinematic) - GIỮ LẠI ---- */
-/* .banner-media::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    background: linear-gradient(
-        to top,
-        rgba(0,0,0,.95) 0%,
-        rgba(0,0,0,.72) 12%,
-        rgba(0,0,0,.45) 24%,
-        rgba(0,0,0,.20) 38%,
-        transparent 58%
-    );
-} */
-
-/* ---- Ảnh - ĐÃ BỎ ZOOM + CHUYỂN ĐỘNG ---- */
 .banner-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
-  
 }
 
-/* ---- Particles - GIỮ LẠI ---- */
 .banner-particles {
     position: absolute;
     inset: 0;
@@ -188,14 +123,14 @@
     position: relative;
     display: flex;
     align-items: center;
-    gap: 20px;
-    padding: 28px;
-    border-radius: 28px;
+    gap: var(--space-lg);
+    padding: var(--space-xl);
+    border-radius: var(--radius-xl);
     background: rgba(15,15,15,.92);
     backdrop-filter: blur(25px);
-    border: 1px solid rgba(255,255,255,.08);
-    box-shadow: 0 20px 60px rgba(0,0,0,.45);
-    transition: .4s ease;
+    border: var(--border-gold);
+    box-shadow: var(--cinema-card-shadow);
+    transition: var(--transition-normal);
 }
 
 .quick-booking-content::before {
@@ -210,39 +145,39 @@
 }
 
 .quick-booking-content:hover {
-    border: 1px solid rgba(220,38,38,.25);
-    box-shadow: 0 25px 70px rgba(0,0,0,.55), 0 0 25px rgba(220,38,38,.12);
+    border: var(--border-gold-hover);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
 }
 
 .quick-booking-selects {
     flex: 1;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: var(--space-md);
 }
 
 .quick-booking-selects select {
     width: 100%;
     height: 60px;
-    padding: 0 20px;
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,.08);
+    padding: 0 var(--space-lg);
+    border-radius: var(--radius-lg);
+    border: var(--border-gold);
     background: rgba(255,255,255,.03);
-    color: var(--text-white, #fff);
-    font-size: .95rem;
-    font-weight: 600;
+    color: var(--text-white);
+    font-size: var(--font-size-md);
+    font-weight: var(--fw-semibold);
     outline: none;
     cursor: pointer;
-    transition: .3s ease;
+    transition: var(--transition-fast);
 }
 
 .quick-booking-selects select:hover:not(:disabled) {
-    border: 1px solid rgba(220,38,38,.30);
+    border: var(--border-gold-hover);
     background: rgba(255,255,255,.05);
 }
 
 .quick-booking-selects select:focus {
-    border: 1px solid #dc2626;
+    border: var(--border-gold-hover);
     box-shadow: 0 0 0 4px rgba(220,38,38,.10);
 }
 
@@ -253,7 +188,7 @@
 
 .quick-booking-selects option {
     background: #121212;
-    color: #fff;
+    color: var(--text-white);
 }
 
 .btn-quick-booking {
@@ -262,20 +197,20 @@
     min-width: 220px;
     height: 60px;
     border: none;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
-    color: #fff;
-    font-size: .95rem;
-    font-weight: 800;
+    border-radius: var(--radius-lg);
+    background: var(--gold-gradient);
+    color: var(--text-white);
+    font-size: var(--font-size-md);
+    font-weight: var(--fw-extrabold);
     letter-spacing: 1px;
     cursor: pointer;
-    transition: .35s ease;
-    box-shadow: 0 15px 35px rgba(220,38,38,.20);
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-gold);
 }
 
 .btn-quick-booking:hover {
     transform: translateY(-4px);
-    box-shadow: 0 25px 45px rgba(220,38,38,.30);
+    box-shadow: var(--shadow-gold), 0 25px 45px rgba(201,168,76,.25);
 }
 
 .btn-quick-booking::before {
@@ -299,7 +234,7 @@
 .features-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
+    gap: var(--space-lg);
 }
 
 .feature-item {
@@ -307,14 +242,14 @@
     overflow: hidden;
     display: flex;
     align-items: center;
-    gap: 18px;
-    padding: 26px;
-    border-radius: 24px;
+    gap: var(--space-lg);
+    padding: var(--space-xl);
+    border-radius: var(--radius-xl);
     background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-    border: 1px solid rgba(255,255,255,.08);
+    border: var(--border-gold);
     backdrop-filter: blur(15px);
-    transition: all .45s ease;
-    box-shadow: 0 10px 25px rgba(0,0,0,.18);
+    transition: var(--cinema-transition);
+    box-shadow: var(--shadow-sm);
 }
 
 .feature-item::before {
@@ -337,8 +272,8 @@
 
 .feature-item:hover {
     transform: translateY(-10px);
-    border: 1px solid rgba(220,38,38,.30);
-    box-shadow: 0 20px 40px rgba(0,0,0,.35), 0 0 25px rgba(220,38,38,.12), 0 0 45px rgba(220,38,38,.08);
+    border: var(--border-gold-hover);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
 }
 
 .feature-icon-wrapper {
@@ -348,36 +283,35 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 20px;
-    background: linear-gradient(135deg, rgba(220,38,38,.15), rgba(220,38,38,.05));
-    border: 1px solid rgba(220,38,38,.15);
-    color: #dc2626;
-    transition: all .35s ease;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(201,168,76,.15), rgba(201,168,76,.05));
+    border: 1px solid rgba(201,168,76,.15);
+    color: var(--gold-primary);
+    transition: var(--cinema-transition);
 }
 
 .feature-item:hover .feature-icon-wrapper {
     transform: scale(1.12) rotate(-3deg);
-    box-shadow: 0 0 20px rgba(220,38,38,.25), 0 0 40px rgba(220,38,38,.12);
-    animation: pulseGlow 1.8s infinite;
+    box-shadow: 0 0 20px rgba(201,168,76,.25), 0 0 40px rgba(201,168,76,.12);
 }
 
 .feature-text h4 {
-    color: #fff;
-    font-size: 1rem;
-    font-weight: 800;
-    margin-bottom: 6px;
-    transition: .35s ease;
+    color: var(--text-white);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-extrabold);
+    margin-bottom: var(--space-xs);
+    transition: var(--transition-fast);
 }
 
 .feature-item:hover .feature-text h4 {
-    color: #dc2626;
+    color: var(--gold-primary);
 }
 
 .feature-text p {
     color: rgba(255,255,255,.65);
-    font-size: .9rem;
+    font-size: var(--font-size-sm);
     line-height: 1.7;
-    transition: .35s ease;
+    transition: var(--transition-fast);
 }
 
 .feature-item:hover .feature-text p {
@@ -391,7 +325,7 @@
 .cinema-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
+    gap: var(--space-lg);
 }
 
 /* ==========================================================
@@ -401,34 +335,34 @@
 @media (max-width: 1200px) {
     .features-grid {
         grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
+        gap: var(--space-lg);
     }
     .cinema-grid {
         grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
+        gap: var(--space-lg);
     }
     .quick-booking-content {
-        padding: 24px;
+        padding: var(--space-lg);
     }
 }
 
 @media (max-width: 992px) {
     .features-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
+        gap: var(--space-lg);
     }
     .cinema-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
+        gap: var(--space-lg);
     }
     .quick-booking-content {
         flex-direction: column;
-        padding: 22px;
-        gap: 16px;
+        padding: var(--space-lg);
+        gap: var(--space-md);
     }
     .quick-booking-selects {
         grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
+        gap: var(--space-sm);
     }
     .quick-booking-selects select {
         height: 54px;
@@ -442,10 +376,7 @@
     .movie-container,
     .promotions-section,
     .cinema-corner-section {
-        margin-top: 32px;
-    }
-    .section-header {
-        margin-bottom: 20px;
+        margin-top: var(--space-xl);
     }
 }
 
@@ -454,63 +385,49 @@
         aspect-ratio: 16 / 9;
         max-height: 450px;
     }
-    /* ✅ ĐÃ XÓA shadow trái, chỉ giữ shadow dưới */
-    .banner-media::after {
-        background: linear-gradient(
-            to top,
-            rgba(0,0,0,.96) 0%,
-            rgba(0,0,0,.78) 16%,
-            rgba(0,0,0,.50) 34%,
-            rgba(0,0,0,.20) 55%,
-            transparent 72%
-        );
-    }
     .banner-img {
         filter: brightness(.82) contrast(1.06) saturate(1.04);
     }
 
     .features-grid {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: var(--space-md);
     }
     .cinema-grid {
         grid-template-columns: 1fr 1fr;
-        gap: 16px;
+        gap: var(--space-md);
     }
     .quick-booking-container {
         margin-top: -30px;
-        padding: 0 10px;
+        padding: 0 var(--space-sm);
     }
     .quick-booking-content {
-        padding: 16px;
-        border-radius: 22px;
-        gap: 14px;
+        padding: var(--space-md);
+        border-radius: var(--radius-lg);
+        gap: var(--space-sm);
     }
     .quick-booking-selects {
         grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
+        gap: var(--space-xs);
     }
     .quick-booking-selects select {
         height: 50px;
-        font-size: .85rem;
-        padding: 0 12px;
+        font-size: var(--font-size-sm);
+        padding: 0 var(--space-sm);
     }
     .btn-quick-booking {
         height: 52px;
-        font-size: .9rem;
+        font-size: var(--font-size-sm);
     }
 
     .home-container {
-        padding: 0 16px 60px;
+        padding: 0 var(--space-md) var(--space-2xl);
     }
     .home-features-section,
     .movie-container,
     .promotions-section,
     .cinema-corner-section {
-        margin-top: 24px;
-    }
-    .section-header {
-        margin-bottom: 18px;
+        margin-top: var(--space-lg);
     }
 }
 
@@ -519,54 +436,44 @@
         aspect-ratio: 16 / 9;
         max-height: 300px;
     }
-    .banner-media::after {
-        background: linear-gradient(
-            to top,
-            rgba(0,0,0,.98) 0%,
-            rgba(0,0,0,.84) 18%,
-            rgba(0,0,0,.58) 38%,
-            rgba(0,0,0,.25) 60%,
-            transparent 78%
-        );
-    }
     .banner-img {
         filter: brightness(.78) contrast(1.04) saturate(1.02);
     }
 
     .cinema-grid {
         grid-template-columns: 1fr 1fr;
-        gap: 12px;
+        gap: var(--space-sm);
     }
     .quick-booking-container {
-        padding: 0 6px;
+        padding: 0 var(--space-xs);
     }
     .quick-booking-content {
-        padding: 14px;
-        border-radius: 18px;
-        gap: 12px;
+        padding: var(--space-sm);
+        border-radius: var(--radius-lg);
+        gap: var(--space-sm);
     }
     .quick-booking-selects {
         grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
+        gap: var(--space-xs);
     }
     .quick-booking-selects select {
         height: 46px;
-        font-size: .7rem;
-        padding: 0 4px;
-        border-radius: 12px;
+        font-size: var(--font-size-xs);
+        padding: 0 var(--space-xs);
+        border-radius: var(--radius-sm);
     }
     .btn-quick-booking {
         height: 48px;
-        font-size: .85rem;
-        border-radius: 12px;
+        font-size: var(--font-size-sm);
+        border-radius: var(--radius-sm);
     }
 
     .home-container {
-        padding: 0 12px 40px;
+        padding: 0 var(--space-sm) var(--space-xl);
     }
     .feature-item {
-        padding: 20px;
-        gap: 14px;
+        padding: var(--space-lg);
+        gap: var(--space-sm);
     }
     .feature-icon-wrapper {
         width: 56px;
@@ -574,27 +481,24 @@
         min-width: 56px;
     }
     .feature-text h4 {
-        font-size: .9rem;
+        font-size: var(--font-size-sm);
     }
     .feature-text p {
-        font-size: .8rem;
+        font-size: var(--font-size-xs);
     }
 }
 
 @media (max-width: 360px) {
     .quick-booking-selects select {
-        font-size: .6rem;
+        font-size: var(--font-size-xs);
         height: 40px;
-        padding: 0 2px;
+        padding: 0 var(--space-xs);
     }
     .btn-quick-booking {
         height: 42px;
-        font-size: .75rem;
+        font-size: var(--font-size-xs);
     }
     .cinema-grid {
-        gap: 8px;
-    }
-    .section-title {
-        font-size: 1.2rem;
+        gap: var(--space-xs);
     }
 }
