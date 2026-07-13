@@ -28,7 +28,7 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
     }), [movie, baseUrl]);
 
     /* ==============================
-        CLICK HANDLER (CINEMATIC CORE)
+        CLICK HANDLER
     ============================== */
 
     const handleOpen = () => {
@@ -37,10 +37,8 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
 
         setIsOpening(true);
 
-        // trigger parent modal open
         onClick?.(movie);
 
-        // reset state after animation (sync modal timing)
         setTimeout(() => {
             setIsOpening(false);
         }, 900);
@@ -58,7 +56,7 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
     return (
 
         <Tilt
-            className={`movie-card ${isOpening ? "is-opening" : ""}`}
+            className={`film-card ${isOpening ? "film-card--opening" : ""}`}
             tiltMaxAngleX={8}
             tiltMaxAngleY={8}
             perspective={1200}
@@ -71,17 +69,17 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
         >
 
             <div
-                className="movie-inner"
+                className="film-card__inner"
                 onClick={handleOpen}
                 data-movie-id={movie?.id}
             >
 
-                {/* GLOW */}
-                <span className="card-glow" />
+                {/* GLOW - TẮT */}
+                <span className="film-card__glow" />
 
                 {/* POSTER */}
                 <div
-                    className="movie-poster"
+                    className="film-card__poster"
                     onClick={handlePreview}
                 >
 
@@ -92,11 +90,11 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
                         loading="lazy"
                     />
 
-                    <span className="shine-effect" />
-                    <span className="movie-light-sweep" />
+                    <span className="film-card__shine" />
+                    <span className="film-card__sweep" />
 
                     {/* AGE */}
-                    <div className="movie-age-badge">
+                    <div className="film-card__age">
                         {movieData.ageRating}
                     </div>
 
@@ -104,16 +102,16 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
 
                 {/* INFO */}
                 <div
-                    className="movie-info"
+                    className="film-card__info"
                     onClick={handlePreview}
                 >
 
-                    <h3 className="movie-name">
+                    <h3 className="film-card__title">
                         {movieData.title}
                     </h3>
 
                     {/* STARS */}
-                    <div className="movie-stars">
+                    <div className="film-card__stars">
 
                         {[...Array(movieData.totalStars)].map((_, i) => (
 
@@ -134,26 +132,26 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
                     </div>
 
                     {/* META */}
-                    <div className="movie-meta">
+                    <div className="film-card__meta">
 
-                        <span className="movie-score">
+                        <span className="film-card__score">
                             {movieData.rating.toFixed(1)}
                         </span>
 
-                        <span className="movie-dot">•</span>
+                        <span className="film-card__dot">•</span>
 
-                        <span className="movie-review-count">
+                        <span className="film-card__reviews">
                             {movieData.reviewCount} đánh giá
                         </span>
 
                     </div>
 
                     {/* EXTRA */}
-                    <div className="movie-extra">
+                    <div className="film-card__extra">
 
                         <span>{movieData.ageRating}</span>
 
-                        <span className="movie-dot">•</span>
+                        <span className="film-card__dot">•</span>
 
                         <span>{movieData.language}</span>
 

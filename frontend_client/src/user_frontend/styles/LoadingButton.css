@@ -1,0 +1,103 @@
+/* styles/LoadingButton.css */
+
+.loading-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 14px 28px;
+    border: none;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 160px;
+    min-height: 52px;
+    font-family: inherit;
+}
+
+.loading-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35);
+}
+
+.loading-btn:disabled {
+    opacity: 0.85;
+    cursor: not-allowed;
+}
+
+.loading-btn.loading {
+    background: linear-gradient(135deg, #b91c1c, #991111);
+    cursor: wait;
+    gap: 14px;
+}
+
+/* =========================================
+   DOTS SPINNER - 8 chấm tròn quay đều
+========================================= */
+
+.spinner-dots-container {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    animation: spinCircle 1.2s linear infinite;
+}
+
+.spinner-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    opacity: 0.9;
+    transform-origin: center center;
+}
+
+@keyframes spinCircle {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================
+   TEXT
+========================================= */
+
+.loading-btn-text {
+    display: inline-block;
+    line-height: 1;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 480px) {
+    .loading-btn {
+        padding: 12px 20px;
+        font-size: 14px;
+        min-height: 44px;
+        min-width: 120px;
+        gap: 12px;
+    }
+
+    .spinner-dots-container {
+        width: 26px;
+        height: 26px;
+    }
+
+    .spinner-dot {
+        width: 5px;
+        height: 5px;
+        transform: rotate(0deg) translateX(9px);
+    }
+}

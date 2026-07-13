@@ -5,6 +5,7 @@ import axios from 'axios';
 // COMPONENTS
 import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
+import LoadingButton from '../components/LoadingButton'; // ✅ Import LoadingButton
 
 // STYLES
 import '../styles/Payment.css';
@@ -45,6 +46,7 @@ const Payment = () => {
     const [isTimerActive, setIsTimerActive] = useState(false);
 
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isApplyingCoupon, setIsApplyingCoupon] = useState(false); // ✅ Loading coupon
 
     const [userInfo, setUserInfo] = useState({
         user_id: user?.user_id || '',
@@ -205,6 +207,8 @@ const Payment = () => {
                 return;
             }
 
+            setIsApplyingCoupon(true); // ✅ Bật loading coupon
+
             try {
 
                 const res =
@@ -248,6 +252,8 @@ const Payment = () => {
                         ?.message ||
                         'Mã không hợp lệ.'
                 );
+            } finally {
+                setIsApplyingCoupon(false); // ✅ Tắt loading coupon
             }
         };
 
@@ -502,15 +508,21 @@ const Payment = () => {
                                         e.target.value
                                     )
                                 }
+                                disabled={isApplyingCoupon}
                             />
 
-                            <button
-                                onClick={
-                                    handleApplyCoupon
-                                }
+                            {/* ✅ Nút áp dụng mã - có loading */}
+                            <LoadingButton
+                                type="button"
+                                loading={isApplyingCoupon}
+                                loadingText="Đang áp dụng..."
+                                onClick={handleApplyCoupon}
+                                disabled={isApplyingCoupon}
+                                className="coupon-btn"
+                                spinnerColor="#ffffff"
                             >
                                 ÁP DỤNG
-                            </button>
+                            </LoadingButton>
                         </div>
                     </div>
 
@@ -636,20 +648,18 @@ const Payment = () => {
                             </label>
                         </div>
 
-                        {/* BTN */}
-                        <button
+                        {/* ✅ Nút thanh toán - LoadingButton */}
+                        <LoadingButton
+                            type="button"
+                            loading={isProcessing}
+                            loadingText="Đang xử lý..."
+                            onClick={handleProceed}
+                            disabled={isProcessing}
                             className="btn-next"
-                            onClick={
-                                handleProceed
-                            }
-                            disabled={
-                                isProcessing
-                            }
+                            spinnerColor="#ffffff"
                         >
-                            {isProcessing
-                                ? 'ĐANG XỬ LÝ...'
-                                : 'XÁC NHẬN THANH TOÁN'}
-                        </button>
+                            XÁC NHẬN THANH TOÁN
+                        </LoadingButton>
 
                         <button
                             className="btn-back"
@@ -657,7 +667,7 @@ const Payment = () => {
                                 navigate(-1)
                             }
                         >
-                            QuAY LẠI
+                            QUAY LẠI
                         </button>
                     </div>
                 </section>

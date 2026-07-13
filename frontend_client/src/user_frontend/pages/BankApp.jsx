@@ -13,6 +13,7 @@ import axios from 'axios';
 
 import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
+import LoadingButton from '../components/LoadingButton'; // ✅ Import LoadingButton
 
 import '../styles/BankApp.css';
 
@@ -466,19 +467,18 @@ const BankApp = () => {
 
                         </div>
 
-                        <button
+                        {/* ✅ THAY BẰNG LOADINGBUTTON */}
+                        <LoadingButton
+                            type="button"
+                            loading={loading}
+                            loadingText="Đang xác nhận..."
+                            onClick={handleVerifyPayment}
+                            disabled={loading}
                             className="btn-confirm-payment"
-                            onClick={
-                                handleVerifyPayment
-                            }
-                            disabled={
-                                loading
-                            }
+                            spinnerColor="#ffffff"
                         >
-                            {loading
-                                ? 'ĐANG XỬ LÝ...'
-                                : 'XÁC NHẬN THANH TOÁN'}
-                        </button>
+                            XÁC NHẬN THANH TOÁN
+                        </LoadingButton>
 
                     </div>
 

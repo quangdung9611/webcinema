@@ -5,6 +5,7 @@ import axios from 'axios';
 // Components
 import CountdownTimer from './CountdownTimer';
 import BookingSidebar from '../components/BookingSidebar';
+import LoadingButton from '../components/LoadingButton'; // ✅ Import LoadingButton
 // Styles
 import '../styles/Food.css';
 import '../styles/Booking.css';
@@ -25,6 +26,8 @@ const Food = () => {
     const [foods, setFoods] = useState([]);
     const [selectedFoods, setSelectedFoods] = useState({});
     const [isTimerActive, setIsTimerActive] = useState(false);
+    const [loading, setLoading] = useState(false); // ✅ Thêm state loading
+    const [loadingFoods, setLoadingFoods] = useState(false); // ✅ Loading foods
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -40,14 +43,13 @@ const Food = () => {
             navigate('/');
         }
 
-       const fetchFoods = async () => {
+        const fetchFoods = async () => {
+            setLoadingFoods(true); // ✅ Bật loading foods
             try {
                 const res = await axios.get(
                     'https://api.quangdungcinema.id.vn/api/foods'
                 );
                 
-                // Kiểm tra dữ liệu: API của bạn trả về object có thuộc tính 'data'
-                // Nên phải dùng res.data.data để lấy danh sách món ăn
                 if (res.data && Array.isArray(res.data.data)) {
                     setFoods(res.data.data);
                 } else {
@@ -57,6 +59,8 @@ const Food = () => {
             } catch (err) {
                 console.error('Lỗi tải thức ăn:', err);
                 setFoods([]);
+            } finally {
+                setLoadingFoods(false); // ✅ Tắt loading foods
             }
         };
 
@@ -117,7 +121,8 @@ const Food = () => {
     // =============================
     // CONTINUE PAYMENT
     // =============================
-        const handleContinue = () => {
+    const handleContinue = () => {
+        setLoading(true); // ✅ Bật loading
 
         const finalFoods = foods
             .filter(f => (selectedFoods[f.product_id] || 0) > 0)
@@ -131,7 +136,7 @@ const Food = () => {
         const finalBookingData = {
             ...location.state,
 
-            selectedFoods: finalFoods, // ✔ chuẩn array
+            selectedFoods: finalFoods,
 
             totalTicketPrice,
             totalFoodPrice,
@@ -143,35 +148,103 @@ const Food = () => {
             JSON.stringify(finalBookingData)
         );
 
+        // ✅ Điều hướng sau khi setLoading
         navigate('/payment', {
             state: finalBookingData
         });
     };
 
+    // =============================
+    // RENDER FOODS
+    // =============================
+    const renderFoods = () => {
+        if (loadingFoods) {
+            return (
+                <div className="food-loading">
+                    <LoadingButton
+                        loading={true}
+                        loadingText="Đang tải đồ ăn..."
+                        className="food-loading-btn"
+                        spinnerColor="#ffffff"
+                    />
+                </div>
+            );
+        }
+
+        if (foods.length === 0) {
+            return (
+                <div className="food-empty">
+                    <p>Hiện chưa có combo bắp nước nào</p>
+                </div>
+            );
+        }
+
+        return foods.map(item => (
+            <div
+                key={item.product_id}
+                className="food-card"
+            >
+                <div className="food-image">
+                    <img
+                        src={`https://api.quangdungcinema.id.vn/uploads/foods/${item.food_image}`}
+                        alt={item.product_name}
+                    />
+                </div>
+
+                <div className="food-content">
+                    <div>
+                        <h3>{item.product_name}</h3>
+                        <p className="food-price">
+                            {Number(item.price).toLocaleString()}₫
+                        </p>
+                    </div>
+
+                    <div className="food-actions">
+                        <button
+                            className="qty-btn"
+                            onClick={() => updateQty(item.product_id, -1)}
+                        >
+                            −
+                        </button>
+                        <span className="food-qty">
+                            {selectedFoods[item.product_id] || 0}
+                        </span>
+                        <button
+                            className="qty-btn"
+                            onClick={() => updateQty(item.product_id, 1)}
+                        >
+                            +
+                        </button>
+                    </div>
+                </div>
+            </div>
+        ));
+    };
+
+    // =============================
+    // RENDER
+    // =============================
     return (
         <div className="booking-wrapper">
             <div className="booking-container">
 
-               {/* ================= SIDEBAR ================= */}
+                {/* ================= SIDEBAR ================= */}
                 <BookingSidebar
                     movie={movie}
                     showtimeDetail={showtimeDetail}
                     selectedCinema={selectedCinema}
                     selectedDate={selectedDate}
                     selectedShowtime={selectedShowtime}
-
                     selectedSeats={
                         Array.isArray(selectedSeats)
                             ? selectedSeats
                             : []
                     }
-
                     foods={
                         Array.isArray(foods)
                             ? foods
                             : []
                     }
-
                     selectedFoods={
                         foods
                             .filter(
@@ -186,7 +259,6 @@ const Food = () => {
                                     ]
                             }))
                     }
-
                     totalTicketPrice={totalTicketPrice}
                     totalFoodPrice={totalFoodPrice}
                     grandTotal={grandTotal}
@@ -199,14 +271,11 @@ const Food = () => {
                     onContinue={handleContinue}
                     onBack={() => navigate(-1)}
                 />
+
                 {/* ================= MAIN ================= */}
                 <section className="main-booking-area">
-
                     <div className="food-page-header">
-                        <h2>
-                            COMBO BẮP NƯỚC
-                        </h2>
-
+                        <h2>COMBO BẮP NƯỚC</h2>
                         <p>
                             Chọn combo yêu thích để có
                             trải nghiệm xem phim tuyệt vời hơn
@@ -214,74 +283,22 @@ const Food = () => {
                     </div>
 
                     <div className="food-grid">
+                        {renderFoods()}
+                    </div>
 
-                        {foods.map(item => (
-                            <div
-                                key={item.product_id}
-                                className="food-card"
-                            >
-
-                                <div className="food-image">
-                                    <img
-                                        src={`https://api.quangdungcinema.id.vn/uploads/foods/${item.food_image}`}
-                                        alt={
-                                            item.product_name
-                                        }
-                                    />
-                                </div>
-
-                                <div className="food-content">
-
-                                    <div>
-                                        <h3>
-                                            {
-                                                item.product_name
-                                            }
-                                        </h3>
-
-                                        <p className="food-price">
-                                            {Number(
-                                                item.price
-                                            ).toLocaleString()}
-                                            ₫
-                                        </p>
-                                    </div>
-
-                                    <div className="food-actions">
-
-                                        <button
-                                            className="qty-btn"
-                                            onClick={() =>
-                                                updateQty(
-                                                    item.product_id,
-                                                    -1
-                                                )
-                                            }
-                                        >
-                                            −
-                                        </button>
-
-                                        <span className="food-qty">
-                                            {selectedFoods[
-                                                item.product_id
-                                            ] || 0}
-                                        </span>
-
-                                        <button
-                                            className="qty-btn"
-                                            onClick={() =>
-                                                updateQty(
-                                                    item.product_id,
-                                                    1
-                                                )
-                                            }
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                    {/* ✅ Nút hành động dưới cùng (cho mobile) */}
+                    <div className="food-footer-actions">
+                        <LoadingButton
+                            type="button"
+                            loading={loading}
+                            loadingText="Đang xử lý..."
+                            onClick={handleContinue}
+                            disabled={loading}
+                            className="btn-next"
+                            spinnerColor="#ffffff"
+                        >
+                            TIẾP TỤC THANH TOÁN
+                        </LoadingButton>
                     </div>
                 </section>
             </div>

@@ -168,7 +168,6 @@ const MovieSlider = ({ title, movies = [] }) => {
                                         transition: isCenter ? 'transform 0.1s ease-out' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
                                     }}
                                 >
-                                    {/* 🔥 POSTER - HÌNH DỌC */}
                                     <img
                                         src={`${IMAGE_BASE_URL}/posters/${movie.poster_url}`}
                                         alt={movie.title}

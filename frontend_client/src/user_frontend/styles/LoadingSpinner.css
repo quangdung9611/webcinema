@@ -1,0 +1,95 @@
+/* =========================================
+   LOADING SPINNER - DASH (NÉT ĐỨT)
+========================================= */
+
+/* 1. OVERLAY */
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    animation: overlayFadeIn 0.3s ease;
+}
+
+.loading-overlay-blur {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.45);
+}
+
+@keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 2. NỘI DUNG */
+.loading-overlay-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* 3. SPINNER DASH */
+.spinner-dash {
+    animation: spin 1s linear infinite;
+}
+
+.spinner-dash-circle {
+    animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dasharray: 1, 150;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -124;
+    }
+}
+
+/* 4. MESSAGE */
+.loading-message {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    margin: 0;
+    text-align: center;
+    animation: fadeInOut 1.5s ease-in-out infinite;
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+/* 5. RESPONSIVE */
+@media (max-width: 480px) {
+    .loading-overlay {
+        background: rgba(0, 0, 0, 0.65);
+    }
+    .loading-overlay-blur {
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        background: rgba(0, 0, 0, 0.55);
+    }
+    .loading-message {
+        font-size: 14px;
+    }
+}

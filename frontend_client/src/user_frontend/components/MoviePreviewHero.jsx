@@ -4,11 +4,14 @@ import {
     Calendar,
     Globe,
     Ticket,
-    ArrowRight
+    ArrowRight,
+    Play,
+    Heart
 } from "lucide-react";
 
 import "../styles/MoviePreviewHero.css";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 // 🔥 BIẾN API CỐ ĐỊNH
 const IMAGE_BASE_URL = "https://api.quangdungcinema.id.vn/uploads";
@@ -20,6 +23,7 @@ const MoviePreviewHero = ({
 }) => {
 
     const navigate = useNavigate();
+    const [isLiked, setIsLiked] = useState(false);
 
     if (!movie) return null;
 
@@ -39,7 +43,7 @@ const MoviePreviewHero = ({
     return (
         <section className="preview-hero">
 
-            {/* BACKDROP - HÌNH NGANG */}
+            {/* BACKDROP */}
             <img
                 className="preview-hero-backdrop"
                 src={backdropSrc}
@@ -50,36 +54,46 @@ const MoviePreviewHero = ({
                 }}
             />
 
+            {/* LỚP PHỦ */}
             <div className="preview-hero-overlay"></div>
             <div className="preview-hero-shadow"></div>
+            <div className="preview-hero-glow"></div>
+
+            {/* BADGE NỔI BẬT */}
+            <div className="preview-hero-badge-wrapper">
+                <span className="preview-hero-badge">
+                    <span className="badge-dot"></span>
+                    ĐANG CHIẾU
+                </span>
+                <span className="preview-hero-badge premium-badge">
+                    <Star size={12} fill="#ffd700" color="#ffd700" />
+                    {movie.avg_rating || "0.0"}
+                </span>
+            </div>
 
             <div className="preview-hero-container">
                 <div className="preview-hero-content">
 
-                    <div className="preview-hero-badge">
-                        ĐANG CHIẾU
-                    </div>
-
                     <div className="preview-title-row">
                         <h1 className="preview-title">{movie.title}</h1>
-                    </div>
-
-                    <div className="preview-meta">
                         <span className="preview-age">
                             {movie.age_rating ? `T${movie.age_rating}` : "P"}
                         </span>
+                    </div>
+
+                    <div className="preview-meta">
                         <div className="preview-meta-item">
-                            <Star size={17} fill="#FFC107" color="#FFC107" />
+                            <Star size={16} fill="#FFC107" color="#FFC107" />
                             <span>{movie.avg_rating || "0.0"}</span>
                         </div>
 
                         <div className="preview-meta-item">
-                            <Clock size={17} />
+                            <Clock size={16} />
                             <span>{movie.duration || "120"} phút</span>
                         </div>
 
                         <div className="preview-meta-item">
-                            <Calendar size={17} />
+                            <Calendar size={16} />
                             <span>
                                 {movie.release_date
                                     ? new Date(movie.release_date).toLocaleDateString("vi-VN")
@@ -88,7 +102,7 @@ const MoviePreviewHero = ({
                         </div>
 
                         <div className="preview-meta-item">
-                            <Globe size={17} />
+                            <Globe size={16} />
                             <span>{movie.country || "Việt Nam"}</span>
                         </div>
                     </div>
@@ -103,7 +117,6 @@ const MoviePreviewHero = ({
 
                         <div className="preview-info-row">
                             <span className="preview-info-label">Thể loại</span>
-
                             <div className="preview-genre-list">
                                 {movie.genres?.length ? (
                                     movie.genres.map((genre) => (
@@ -152,8 +165,16 @@ const MoviePreviewHero = ({
                             className="preview-trailer-btn"
                             onClick={handleViewDetail}
                         >
-                            <ArrowRight size={18} />
+                            <Play size={18} />
                             <span>XEM CHI TIẾT</span>
+                        </button>
+
+                        <button
+                            className={`preview-like-btn ${isLiked ? "liked" : ""}`}
+                            onClick={() => setIsLiked(!isLiked)}
+                            aria-label="Yêu thích"
+                        >
+                            <Heart size={20} />
                         </button>
 
                     </div>

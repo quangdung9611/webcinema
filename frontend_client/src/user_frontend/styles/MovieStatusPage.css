@@ -3,7 +3,9 @@
     color: var(--text-primary);
 }
 
-/* HERO */
+/* ============================================================
+   HERO BANNER
+   ============================================================ */
 
 .movie-status-hero {
     width: 100%;
@@ -24,19 +26,15 @@
         saturate(.96);
 }
 
-/* WRAPPER */
+/* ============================================================
+   TABS
+   ============================================================ */
 
-.status-tabs-wrapper,
-.movie-grid {
+.status-tabs-wrapper {
     width: 100%;
     max-width: 1320px;
     margin: 0 auto;
     padding-inline: 24px;
-}
-
-/* TABS */
-
-.status-tabs-wrapper {
     margin-bottom: 52px;
 }
 
@@ -55,8 +53,7 @@
 
     padding: 14px 28px;
 
-    border-radius:
-        var(--radius-round);
+    border-radius: var(--radius-round);
 
     font-size: .92rem;
     font-weight: 700;
@@ -98,20 +95,76 @@
         var(--shadow-glow-hover);
 }
 
-/* GRID */
+/* ============================================================
+   MOVIE LIST - MẶC ĐỊNH 4 CỘT TRÊN PC (>= 768px)
+   ============================================================ */
 
-.movie-grid {
+.movie-list {
     display: grid;
-
-    grid-template-columns:
-        repeat(4, 1fr);
-
-    gap: 30px;
-
-    padding-bottom: 80px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    padding: 0 24px 80px;
+    max-width: 1320px;
+    margin: 0 auto;
 }
 
-/* LOADING */
+/* ============================================================
+   RESPONSIVE - DƯỚI 768px CHUYỂN 2 CỘT
+   ============================================================ */
+
+@media (max-width: 767px) {
+    .movie-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        padding: 0 16px 60px;
+    }
+
+    .status-tabs-wrapper {
+        padding-inline: 16px;
+        margin-bottom: 36px;
+    }
+
+    .status-tabs {
+        gap: 12px;
+    }
+
+    .status-tab {
+        padding: 12px 24px;
+        font-size: .85rem;
+    }
+}
+
+/* ============================================================
+   MOBILE NHỎ (<= 480px) - VẪN GIỮ 2 CỘT
+   ============================================================ */
+
+@media (max-width: 480px) {
+    .movie-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 0 12px 40px;
+    }
+
+    .status-tabs-wrapper {
+        padding-inline: 12px;
+        margin-bottom: 28px;
+    }
+
+    .status-tab {
+        padding: 10px 16px;
+        font-size: .78rem;
+        width: 100%;
+    }
+
+    .status-tabs {
+        flex-direction: column;
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   LOADING & EMPTY STATE
+   ============================================================ */
 
 .loading-state,
 .empty-results {
@@ -131,39 +184,4 @@
 
 .loading-state {
     min-height: 50vh;
-}
-
-/* RESPONSIVE */
-
-@media (max-width:1200px) {
-
-    .movie-grid {
-        grid-template-columns:
-            repeat(3,1fr);
-    }
-}
-
-@media (max-width:992px) {
-
-    .movie-grid {
-        grid-template-columns:
-            repeat(2,1fr);
-    }
-}
-
-@media (max-width:480px) {
-
-    .movie-grid {
-        grid-template-columns:
-            1fr;
-        gap: 18px;
-    }
-
-    .status-tabs {
-        flex-direction: column;
-    }
-
-    .status-tab {
-        width: 100%;
-    }
 }

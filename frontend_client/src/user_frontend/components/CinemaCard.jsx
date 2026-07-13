@@ -7,7 +7,6 @@ const CinemaCard = ({
     image,
     title,
     badge,
-    buttonText,
     link,
     onClick
 }) => {
@@ -19,16 +18,29 @@ const CinemaCard = ({
         if (link) navigate(link);
     };
 
+    const handleImageError = (e) => {
+        e.target.src = "https://via.placeholder.com/300x450/1a1a2e/ffffff?text=No+Image";
+    };
+
     return (
         <div
             className={`cinema-card ${type}`}
             onClick={handleClick}
+            role="button"
+            tabIndex={0}
+            aria-label={title}
         >
             <div className="cinema-card-inner">
 
                 {/* IMAGE */}
                 <div className="cinema-card-image">
-                    <img src={image} alt={title} />
+                    <img 
+                        src={image} 
+                        alt={title} 
+                        loading="lazy"
+                        onError={handleImageError}
+                        draggable={false}
+                    />
                 </div>
 
                 {/* BADGE */}
@@ -38,20 +50,11 @@ const CinemaCard = ({
                     </div>
                 )}
 
-                {/* CONTENT */}
+                {/* CONTENT - CHỈ CÓ TITLE */}
                 <div className="cinema-card-content">
-
                     <h3 className="cinema-card-title">
                         {title}
                     </h3>
-
-                    {/* BUTTON OPTIONAL */}
-                    {buttonText && (
-                        <button className="cinema-card-btn">
-                            {buttonText}
-                        </button>
-                    )}
-
                 </div>
 
                 {/* EFFECT */}

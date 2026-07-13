@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
+import LoadingButton from '../components/LoadingButton'; // ✅ Import LoadingButton
 import { QRCodeCanvas } from 'qrcode.react'; 
 import '../styles/Profile.css';
 import { 
@@ -14,6 +15,7 @@ const Profile = () => {
     const { user, checkAuth } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [loadingClear, setLoadingClear] = useState(false); // ✅ Thêm state loading cho xóa
     
     const [formData, setFormData] = useState({ 
         full_name: '', email: '', phone: '', address: '', username: '', points: 0 
@@ -58,54 +60,53 @@ const Profile = () => {
         }
     }, [user]);
 
-   
-            // --- HÀM XỬ LÝ XÓA LỊCH SỬ (DŨNG DÙNG BẢN NÀY ĐỂ FIX TRIỆT ĐỂ) ---
-        const handleClearHistory = async () => {
-            try {
-                const res = await axios.post('https://api.quangdungcinema.id.vn/api/users/clear-history', {}, { withCredentials: true });
-                
-                if (res.data.success) {
-                    // 1. Cập nhật giao diện cục bộ ngay lập tức
-                    setBookingHistory([]); 
-                    setFormData(prev => ({ 
-                        ...prev, 
-                        points: 0 
-                    })); 
+    // --- HÀM XỬ LÝ XÓA LỊCH SỬ ---
+    const handleClearHistory = async () => {
+        setLoadingClear(true); // ✅ Bật loading
+        try {
+            const res = await axios.post('https://api.quangdungcinema.id.vn/api/users/clear-history', {}, { withCredentials: true });
+            
+            if (res.data.success) {
+                setBookingHistory([]); 
+                setFormData(prev => ({ 
+                    ...prev, 
+                    points: 0 
+                })); 
 
-                    // 2. Thông báo thành công
-                    setModal({ 
-                        show: true, 
-                        type: 'success', 
-                        title: 'Thành công', 
-                        message: 'Đã xóa sạch lịch sử và điểm thưởng!',
-                        onConfirm: () => {
-                            setModal(prev => ({ ...prev, show: false }));
-                            // 3. Đợi đóng modal xong thì đồng bộ lại toàn bộ hệ thống từ server
-                            checkAuth(); 
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error("Lỗi xóa:", error);
                 setModal({ 
                     show: true, 
-                    type: 'error', 
-                    title: 'Lỗi', 
-                    message: 'Không thể xóa lịch sử lúc này.',
-                    onConfirm: () => setModal(prev => ({ ...prev, show: false }))
+                    type: 'success', 
+                    title: 'Thành công', 
+                    message: 'Đã xóa sạch lịch sử và điểm thưởng!',
+                    onConfirm: () => {
+                        setModal(prev => ({ ...prev, show: false }));
+                        checkAuth(); 
+                    }
                 });
             }
-        };
-
-        const confirmClearHistory = () => {
-            setModal({
-                show: true,
-                type: 'warning',
-                title: 'Xác nhận xóa',
-                message: 'Dũng có chắc muốn xóa sạch lịch sử và đưa điểm về 0 không?',
-                onConfirm: () => handleClearHistory() // Bọc vào arrow function cho chắc
+        } catch (error) {
+            console.error("Lỗi xóa:", error);
+            setModal({ 
+                show: true, 
+                type: 'error', 
+                title: 'Lỗi', 
+                message: 'Không thể xóa lịch sử lúc này.',
+                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
             });
-        };
+        } finally {
+            setLoadingClear(false); // ✅ Tắt loading
+        }
+    };
+
+    const confirmClearHistory = () => {
+        setModal({
+            show: true,
+            type: 'warning',
+            title: 'Xác nhận xóa',
+            message: 'Dũng có chắc muốn xóa sạch lịch sử và đưa điểm về 0 không?',
+            onConfirm: () => handleClearHistory()
+        });
+    };
 
     const handleInput = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handlePass = (e) => setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
@@ -157,7 +158,6 @@ const Profile = () => {
                                 <span>Tổng chi tiêu 2026</span>
                                 <Info size={14} />
                             </div>
-                            {/* Chỗ này sẽ tự về 0 khi xóa lịch sử nhờ setFormData ở trên */}
                             <div className="spending-value">{Number(formData.points).toLocaleString()} đ</div>
                         </div>
 
@@ -232,22 +232,49 @@ const Profile = () => {
                                         ) : (
                                             <>
                                                 <button type="button" className="btn-cancel" onClick={() => setIsEditing(false)}>Hủy</button>
-                                                <button type="submit" className="btn-submit-galaxy" disabled={loading}>
-                                                    {loading ? 'Đang lưu...' : 'Cập nhật'}
-                                                </button>
+                                                {/* ✅ THAY NÚT CẬP NHẬT BẰNG LOADINGBUTTON */}
+                                                <LoadingButton
+                                                    type="submit"
+                                                    loading={loading}
+                                                    loadingText="Đang lưu..."
+                                                    disabled={loading}
+                                                    className="btn-submit-galaxy"
+                                                    spinnerColor="#ffffff"
+                                                >
+                                                    Cập nhật
+                                                </LoadingButton>
                                             </>
                                         )}
                                     </div>
                                 </form>
                             ) : (
                                 <div className="history-tab-content">
-                                    {/* NÚT XÓA LỊCH SỬ (MỚI) */}
+                                    {/* NÚT XÓA LỊCH SỬ - DÙNG LOADINGBUTTON */}
                                     {bookingHistory.length > 0 && (
                                         <div className="history-action-bar" style={{ textAlign: 'right', marginBottom: '15px' }}>
-                                            <button className="btn-clear-history" onClick={confirmClearHistory} 
-                                                style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto', background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer', fontSize: '14px' }}>
+                                            <LoadingButton
+                                                type="button"
+                                                loading={loadingClear}
+                                                loadingText="Đang xóa..."
+                                                onClick={confirmClearHistory}
+                                                disabled={loadingClear}
+                                                className="btn-clear-history"
+                                                spinnerColor="#ffffff"
+                                                style={{ 
+                                                    display: 'inline-flex', 
+                                                    alignItems: 'center', 
+                                                    gap: '5px', 
+                                                    background: '#ff4d4f', 
+                                                    border: 'none', 
+                                                    color: '#fff', 
+                                                    cursor: 'pointer', 
+                                                    fontSize: '14px',
+                                                    padding: '8px 16px',
+                                                    borderRadius: '6px'
+                                                }}
+                                            >
                                                 <Trash2 size={16} /> Xóa lịch sử và điểm
-                                            </button>
+                                            </LoadingButton>
                                         </div>
                                     )}
 

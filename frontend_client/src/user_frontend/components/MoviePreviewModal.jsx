@@ -36,15 +36,36 @@ const MoviePreviewModal = ({
     const [selectedMovie, setSelectedMovie] = useState(null);
     const [incomingMovie, setIncomingMovie] = useState(null);
     const [isHeroSliding, setIsHeroSliding] = useState(false);
+    const [isCinematicTransition, setIsCinematicTransition] = useState(false);
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [sliderIndex, setSliderIndex] = useState(0);
 
     const [showTrailer, setShowTrailer] = useState(false);
+    
+    // 🔥 STATE CHO HIỆU ỨNG SPOTLIGHT
+    const [isSpotlightActive, setIsSpotlightActive] = useState(false);
 
     const scrollRef = useRef(null);
     const trackRef = useRef(null);
     const animationRef = useRef(null);
+
+    // 🔥 KHI MODAL MỞ: KÍCH HOẠT SPOTLIGHT
+    useEffect(() => {
+        if (open && defaultMovie) {
+            setIsSpotlightActive(false);
+            setIsCinematicTransition(true);
+            
+            setTimeout(() => {
+                setIsSpotlightActive(true);
+            }, 50);
+
+            // Tắt cinematic transition sau 1.5s
+            setTimeout(() => {
+                setIsCinematicTransition(false);
+            }, 1500);
+        }
+    }, [open, defaultMovie]);
 
     useEffect(() => {
         if (!defaultMovie) return;
@@ -95,6 +116,9 @@ const MoviePreviewModal = ({
             return;
         }
 
+        // 🔥 BẬT HIỆU ỨNG CHUYỂN CẢNH
+        setIsCinematicTransition(true);
+
         const index = movies.findIndex(item => item.movie_id === movie.movie_id);
         if (index !== -1) {
             setCurrentIndex(index);
@@ -115,6 +139,10 @@ const MoviePreviewModal = ({
             setSelectedMovie(movie);
             setIncomingMovie(null);
             setIsHeroSliding(false);
+            // 🔥 TẮT HIỆU ỨNG CHUYỂN CẢNH SAU KHI HOÀN TẤT
+            setTimeout(() => {
+                setIsCinematicTransition(false);
+            }, 300);
         }, HERO_DURATION);
     };
 
@@ -173,6 +201,8 @@ const MoviePreviewModal = ({
                         <div
                             className={`preview-hero-layer current ${
                                 isHeroSliding ? "hero-slide-out" : ""
+                            } ${
+                                isCinematicTransition ? "cinematic-transition" : ""
                             }`}
                         >
                             <MoviePreviewHero
@@ -216,7 +246,6 @@ const MoviePreviewModal = ({
                                 <div ref={trackRef} className="preview-strip-track">
                                     {movies.map((movie) => {
                                         const active = selectedMovie.movie_id === movie.movie_id;
-                                        // 🔥 POSTER - HÌNH DỌC
                                         const posterSrc = `${IMAGE_BASE_URL}/posters/${movie.poster_url}`;
                                         return (
                                             <div

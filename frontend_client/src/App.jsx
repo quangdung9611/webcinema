@@ -1,245 +1,623 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from './context/AuthContext'; 
+import React, {
+    Suspense,
+    lazy
+} from "react";
 
-// --- CẤU HÌNH QUAN TRỌNG ---
+import {
+    BrowserRouter as Router,
+    Routes,
+    Route,
+    Navigate,
+    useNavigate
+} from "react-router-dom";
+
+import axios from "axios";
+
+// ==========================================================
+// CONTEXT
+// ==========================================================
+
+import { useAuth } from "./context/AuthContext";
+
+import {
+    RouteLoadingProvider,
+    useRouteLoading
+} from "./context/RouteLoadingContext";
+
+// ==========================================================
+// GLOBAL CONFIG
+// ==========================================================
+
 axios.defaults.withCredentials = true;
 
-// --- LAYOUTS & PROTECTION ---
-import AdminLayout from './admin_frontend/layouts/AdminLayout';
-import UserLayout from './user_frontend/layouts/UserLayout'; 
-import ProtectedRoute from './admin_frontend/components/ProtectedRoute';
+// ==========================================================
+// GLOBAL COMPONENTS
+// ==========================================================
 
-// --- PAGES USER ---
-import UserHome from './user_frontend/pages/UserHome';
-import UserLogin from './user_frontend/pages/UserLogin';
-import UserRegister from './user_frontend/pages/UserRegister';
-import MovieDetail from './user_frontend/pages/MovieDetail';
-import Actor from './user_frontend/pages/Actor'; 
-import ActorDetail from './user_frontend/pages/ActorDetail'; 
-import Booking from './user_frontend/pages/Booking';
-import Food from './user_frontend/pages/Food';
-import Payment from './user_frontend/pages/Payment';
-import ConfirmSuccess from './user_frontend/pages/ConfirmSuccess';
-import BankApp from './user_frontend/pages/BankApp';
-import MomoApp from './user_frontend/pages/MomoApp';
-import MovieStatusPage from './user_frontend/pages/MovieStatusPage';
-import CinemaDetail from './user_frontend/pages/CinemaDetail';
-import CinemaGenre from './user_frontend/pages/CinemaGenre';
-import FilmReview from './user_frontend/pages/FilmReview';
-import FilmReviewDetail from './user_frontend/pages/FilmReviewDetail';
-import Profile from './user_frontend/pages/Profile';
+import LoadingSpinner from "./user_frontend/components/LoadingSpinner";
 
-// --- PAGES ADMIN ---
-import AdminLogin from './admin_frontend/pages/Auth/AdminLogin';
-import AdminDashboard from './admin_frontend/pages/Admin/AdminDashboard';
-// import UserList from './admin_frontend/pages/Admin/Users/UserList';
-// import UserAdd from './admin_frontend/pages/Admin/Users/UserAdd';
-// import UserUpdate from './admin_frontend/pages/Admin/Users/UserUpdate';
-import UserPage from './admin_frontend/pages/Admin/Users/UserPage';
-import GenresPage from './admin_frontend/pages/Admin/Genres/GenresPage';
-// import GenresList from './admin_frontend/pages/Admin/Genres/GenresList';
-// import GenresAdd from './admin_frontend/pages/Admin/Genres/GenresAdd';
-// import GenresUpdate from './admin_frontend/pages/Admin/Genres/GenresUpdate';
-import CinemaPage from './admin_frontend/pages/Admin/Cinema/CinemaPage';
-// import CinemaList from './admin_frontend/pages/Admin/Cinema/CinemaList';
-// import CinemaAdd from './admin_frontend/pages/Admin/Cinema/CinemaAdd';
-// import CinemaUpdate from './admin_frontend/pages/Admin/Cinema/CinemaUpdate';
-import RoomPage from './admin_frontend/pages/Admin/Room/RoomPage';
-// import RoomList from './admin_frontend/pages/Admin/Room/RoomList';
-// import RoomAdd from './admin_frontend/pages/Admin/Room/RoomAdd';
-// import RoomUpdate from './admin_frontend/pages/Admin/Room/RoomUpdate';
-import MoviePage from './admin_frontend/pages/Admin/Movie/MoviePage';
-// import MovieList from './admin_frontend/pages/Admin/Movie/MovieList';
-// import MovieAdd from './admin_frontend/pages/Admin/Movie/MovieAdd';
-// import MovieUpdate from './admin_frontend/pages/Admin/Movie/MovieUpdate';
-import SeatList from './admin_frontend/pages/Admin/Seat/SeatList';
-import TicketList from './admin_frontend/pages/Admin/Ticket/TicketList';
-import ActorPage from './admin_frontend/pages/Admin/Actor/ActorPage';
-// import ActorList from './admin_frontend/pages/Admin/Actor/ActorList';
-// import ActorAdd from './admin_frontend/pages/Admin/Actor/ActorAdd';
-// import ActorUpdate from './admin_frontend/pages/Admin/Actor/ActorUpdate';
-import CouponPage from './admin_frontend/pages/Admin/Coupon/CouponPage';
-// import CouponList from './admin_frontend/pages/Admin/Coupon/CouponList';
-// import CouponAdd from './admin_frontend/pages/Admin/Coupon/CouponAdd';
-// import CouponUpdate from './admin_frontend/pages/Admin/Coupon/CouponUpdate';
-import BookingPage from './admin_frontend/pages/Admin/Booking/BookingPage';
-// import BookingList from './admin_frontend/pages/Admin/Booking/BookingList';
-// import BookingDetail from './admin_frontend/pages/Admin/Booking/BookingDetail';
-import MovieGenrePage from './admin_frontend/pages/Admin/MovieGenre/MovieGenrePage';
-// import MovieGenreList from './admin_frontend/pages/Admin/MovieGenre/MovieGenreList';
-import MovieActorPage from './admin_frontend/pages/Admin/MovieActor/MovieActorPage';
-// import MovieActorList from './admin_frontend/pages/Admin/MovieActor/MovieActorList';
-import ShowTimePage from './admin_frontend/pages/Admin/Showtime/ShowTimePage';
-// import ShowTimeList from './admin_frontend/pages/Admin/Showtime/ShowTimeList';
-// import ShowtimeAdd from './admin_frontend/pages/Admin/Showtime/ShowTimeAdd';
-// import ShowtimeUpdate from './admin_frontend/pages/Admin/Showtime/ShowTimeUpdate';
-import NewsPage from './admin_frontend/pages/Admin/News/NewsPage';
-// import NewsList from './admin_frontend/pages/Admin/News/NewsList';
-// import NewsAdd from './admin_frontend/pages/Admin/News/NewsAdd';
-// import NewsUpdate from './admin_frontend/pages/Admin/News/NewsUpdate';
-import FoodPage from './admin_frontend/pages/Admin/Food/FoodPage';
-import BlogCinemaPage from './admin_frontend/pages/Admin/BlogCinema/BlogCinemaPage';
-import PromotionPage from './admin_frontend/pages/Admin/Promotion/PromotionPage';
-const AdminLayoutWrapper = () => (
-    <ProtectedRoute>
-        <AdminLayout />
-    </ProtectedRoute>
+// ==========================================================
+// LAYOUT
+// ==========================================================
+
+import UserLayout from "./user_frontend/layouts/UserLayout";
+
+import AdminLayout from "./admin_frontend/layouts/AdminLayout";
+
+import ProtectedRoute from "./admin_frontend/components/ProtectedRoute";
+
+// ==========================================================
+// USER PAGES (LAZY)
+// ==========================================================
+
+const UserHome = lazy(() =>
+    import("./user_frontend/pages/UserHome")
 );
 
-function App() {
-    const { loading } = useAuth();
-    const hostname = window.location.hostname;
-    const isAdminDomain = hostname === 'admin.quangdungcinema.id.vn';
+const UserLogin = lazy(() =>
+    import("./user_frontend/pages/UserLogin")
+);
 
-    if (loading) {
+const UserRegister = lazy(() =>
+    import("./user_frontend/pages/UserRegister")
+);
+
+const MovieDetail = lazy(() =>
+    import("./user_frontend/pages/MovieDetail")
+);
+
+const Actor = lazy(() =>
+    import("./user_frontend/pages/Actor")
+);
+
+const ActorDetail = lazy(() =>
+    import("./user_frontend/pages/ActorDetail")
+);
+
+const Booking = lazy(() =>
+    import("./user_frontend/pages/Booking")
+);
+
+const Food = lazy(() =>
+    import("./user_frontend/pages/Food")
+);
+
+const Payment = lazy(() =>
+    import("./user_frontend/pages/Payment")
+);
+
+const ConfirmSuccess = lazy(() =>
+    import("./user_frontend/pages/ConfirmSuccess")
+);
+
+const BankApp = lazy(() =>
+    import("./user_frontend/pages/BankApp")
+);
+
+const MomoApp = lazy(() =>
+    import("./user_frontend/pages/MomoApp")
+);
+
+const MovieStatusPage = lazy(() =>
+    import("./user_frontend/pages/MovieStatusPage")
+);
+
+const CinemaDetail = lazy(() =>
+    import("./user_frontend/pages/CinemaDetail")
+);
+
+const CinemaGenre = lazy(() =>
+    import("./user_frontend/pages/CinemaGenre")
+);
+
+const FilmReview = lazy(() =>
+    import("./user_frontend/pages/FilmReview")
+);
+
+const FilmReviewDetail = lazy(() =>
+    import("./user_frontend/pages/FilmReviewDetail")
+);
+
+// ✅ ĐÃ SỬA
+const Profile = lazy(() =>
+    import("./user_frontend/pages/Profile")
+);
+
+// ==========================================================
+// ADMIN PAGES (LAZY)
+// ==========================================================
+
+const AdminLogin = lazy(() =>
+    import("./admin_frontend/pages/Auth/AdminLogin")
+);
+
+const AdminDashboard = lazy(() =>
+    import("./admin_frontend/pages/Admin/AdminDashboard")
+);
+
+const UserPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/Users/UserPage")
+);
+
+const GenresPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/Genres/GenresPage")
+);
+
+const CinemaPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/Cinema/CinemaPage")
+);
+
+const RoomPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/Room/RoomPage")
+);
+
+const MoviePage = lazy(() =>
+    import("./admin_frontend/pages/Admin/Movie/MoviePage")
+);
+
+const SeatList = lazy(() =>
+    import("./admin_frontend/pages/Admin/Seat/SeatList")
+);
+
+const TicketList = lazy(() =>
+    import("./admin_frontend/pages/Admin/Ticket/TicketList")
+);
+
+const ActorPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/Actor/ActorPage")
+);
+
+const CouponPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/Coupon/CouponPage")
+);
+
+const BookingPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/Booking/BookingPage")
+);
+
+const MovieGenrePage = lazy(() =>
+    import("./admin_frontend/pages/Admin/MovieGenre/MovieGenrePage")
+);
+
+const MovieActorPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/MovieActor/MovieActorPage")
+);
+
+const ShowTimePage = lazy(() =>
+    import("./admin_frontend/pages/Admin/Showtime/ShowTimePage")
+);
+
+const NewsPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/News/NewsPage")
+);
+
+const FoodPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/Food/FoodPage")
+);
+
+const BlogCinemaPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/BlogCinema/BlogCinemaPage")
+);
+
+// ✅ ĐÃ SỬA
+const PromotionPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/Promotion/PromotionPage")
+);
+
+// ==========================================================
+// ADMIN LAYOUT
+// ==========================================================
+
+const AdminLayoutWrapper = () => (
+
+    <ProtectedRoute>
+
+        <AdminLayout />
+
+    </ProtectedRoute>
+
+);
+
+// ==========================================================
+// SUSPENSE LOADING
+// ==========================================================
+
+const SuspenseLoading = () => (
+
+    <LoadingSpinner
+        size={72}
+        color="#dc2626"
+        message="Đang tải trang..."
+        blur={true}
+        zIndex={9999}
+    />
+
+);
+
+// ==========================================================
+// APP CONTENT
+// ==========================================================
+
+function AppContent() {
+
+    const { loading: authLoading } = useAuth();
+
+    const { loading: routeLoading } = useRouteLoading();
+
+    const hostname = window.location.hostname;
+
+    const isAdminDomain =
+        hostname === "admin.quangdungcinema.id.vn";
+
+    if (authLoading) {
+
         return (
-            <div style={{ 
-                height: '100vh', display: 'flex', justifyContent: 'center', 
-                alignItems: 'center', background: '#000', color: '#ffcc00' 
-            }}>
-                ĐANG TẢI CINEMA STAR...
-            </div>
+
+            <LoadingSpinner
+                size={72}
+                color="#dc2626"
+                message="Đang tải Cinema Star..."
+                blur={true}
+                zIndex={9999}
+            />
+
         );
+
     }
 
     return (
-        <Router>
+
+        <>
+
+            {routeLoading && (
+
+                <LoadingSpinner
+                    size={72}
+                    color="#dc2626"
+                    message="Đang chuyển trang..."
+                    blur={true}
+                    zIndex={10000}
+                />
+
+            )}
+
             <div className="app-wrapper">
-                <Routes>
-                    {isAdminDomain ? (
-                        /* --- ROUTE CHO DOMAIN ADMIN --- */
-                        <Route path="/">
-                            {/* Trang đăng nhập: admin.quangdungcinema.id.vn/login */}
-                            <Route path="login" element={<AdminLogin />} />
 
-                            {/* Bọc bảo mật cho các trang nội bộ */}
-                            <Route element={<AdminLayoutWrapper />}>
-                                {/* 🔥 THAY ĐỔI CHÍNH: Trang chủ domain chính là Dashboard */}
-                                <Route index element={<AdminDashboard />} />
-                                
-                                {/* Nếu user gõ /dashboard thì đá về trang chủ / cho đồng nhất */}
-                                <Route path="dashboard" element={<Navigate to="/" replace />} />
+                <Suspense
+                    fallback={<SuspenseLoading />}
+                >
 
-                                {/* <Route path="users">
-                                    <Route index element={<UserList />} />
-                                    <Route path="add" element={<UserAdd />} />
-                                    <Route path="update/:user_id" element={<UserUpdate />} />
-                                </Route> */}
-                                <Route path="users" element={<UserPage />} />
-                                {/* <Route path="movies">
-                                    <Route index element={<MovieList />} />
-                                    <Route path="add" element={<MovieAdd />} />
-                                    <Route path="update/:id" element={<MovieUpdate />} />
-                                </Route> */}
-                                <Route path="movies" element={<MoviePage />} />
-                                <Route path="rooms" element={<RoomPage />} />
-                                {/* <Route path="rooms">
-                                    <Route index element={<RoomList />} />
-                                    <Route path="add" element={<RoomAdd />} />
-                                    <Route path="update/:room_id" element={<RoomUpdate />} />
-                                </Route> */}
+                    <Routes>
+                         {isAdminDomain ? (
 
-                                {/* <Route path="news">
-                                    <Route index element={<NewsList />} />
-                                    <Route path="add" element={<NewsAdd />} />
-                                    <Route path="update/:news_id" element={<NewsUpdate />} />
-                                </Route> */}
-                                <Route path="news" element={<NewsPage />} />
-                                <Route path="blog-cinema" element={<BlogCinemaPage />} />
-                                <Route path="promotions" element={<PromotionPage />} />
-                                <Route path="coupons" element={<CouponPage />} />
-                                {/* <Route path="coupons">
-                                    <Route index element={<CouponList />} />
-                                    <Route path="add" element={<CouponAdd />} />
-                                    <Route path="update/:coupon_id" element={<CouponUpdate />} />
-                                </Route> */}
-                                <Route path="genres" element={<GenresPage />} />
-                                {/* <Route path="genres">
-                                    <Route index element={<GenresList />} />
-                                    <Route path="add" element={<GenresAdd />} />
-                                    <Route path="update/:genre_id" element={<GenresUpdate />} />
-                                </Route> */}
-                                <Route path="cinemas" element={<CinemaPage />} />
-                                {/* <Route path="cinemas">
-                                    <Route index element={<CinemaList />} />
-                                    <Route path="add" element={<CinemaAdd />} />
-                                    <Route path="update/:cinema_id" element={<CinemaUpdate />} />
-                                </Route> */}
-                                <Route path="showtimes" element={<ShowTimePage />} />
-                                {/* <Route path="showtimes">
-                                    <Route index element={<ShowTimeList />} />
-                                    <Route path="add" element={<ShowtimeAdd />} />
-                                    <Route path="update/:showtime_id" element={<ShowtimeUpdate />} />
-                                </Route> */}
+                            /* ==========================================================
+                               ADMIN ROUTES
+                            ========================================================== */
 
-                                <Route path="seats" element={<SeatList />} />
-                                {/* <Route path="movie-genres" element={<MovieGenreList />} /> */}
-                                <Route path="movie-genres" element={<MovieGenrePage />} />
-                                {/* <Route path="movie-actors" element={<MovieActorList />} /> */}
-                                <Route path="movie-actors" element={<MovieActorPage />} />
-                                <Route path="bookings" element={<BookingPage />} />
-                                {/* <Route path="bookings" element={<BookingList />} />
-                                <Route path="bookings/:id" element={<BookingDetail />} /> */}
-                                <Route path="tickets" element={<TicketList />} />
-                                <Route path="actors" element={<ActorPage />} />
-                                <Route path="foods" element={<FoodPage />} />
-                                
-                                {/* <Route path="actors">
-                                    <Route index element={<ActorList/>} />
-                                    <Route path="add" element={<ActorAdd />} />
-                                    <Route path="update/:id" element={<ActorUpdate/>} />
-                                </Route> */}
+                            <Route path="/">
+
+                                {/* LOGIN */}
+
+                                <Route
+                                    path="login"
+                                    element={<AdminLogin />}
+                                />
+
+                                {/* PROTECTED */}
+
+                                <Route
+                                    element={<AdminLayoutWrapper />}
+                                >
+
+                                    <Route
+                                        index
+                                        element={<AdminDashboard />}
+                                    />
+
+                                    <Route
+                                        path="dashboard"
+                                        element={<Navigate to="/" replace />}
+                                    />
+
+                                    <Route
+                                        path="users"
+                                        element={<UserPage />}
+                                    />
+
+                                    <Route
+                                        path="movies"
+                                        element={<MoviePage />}
+                                    />
+
+                                    <Route
+                                        path="rooms"
+                                        element={<RoomPage />}
+                                    />
+
+                                    <Route
+                                        path="news"
+                                        element={<NewsPage />}
+                                    />
+
+                                    <Route
+                                        path="blog-cinema"
+                                        element={<BlogCinemaPage />}
+                                    />
+
+                                    <Route
+                                        path="promotions"
+                                        element={<PromotionPage />}
+                                    />
+
+                                    <Route
+                                        path="coupons"
+                                        element={<CouponPage />}
+                                    />
+
+                                    <Route
+                                        path="genres"
+                                        element={<GenresPage />}
+                                    />
+
+                                    <Route
+                                        path="cinemas"
+                                        element={<CinemaPage />}
+                                    />
+
+                                    <Route
+                                        path="showtimes"
+                                        element={<ShowTimePage />}
+                                    />
+
+                                    <Route
+                                        path="seats"
+                                        element={<SeatList />}
+                                    />
+
+                                    <Route
+                                        path="movie-genres"
+                                        element={<MovieGenrePage />}
+                                    />
+
+                                    <Route
+                                        path="movie-actors"
+                                        element={<MovieActorPage />}
+                                    />
+
+                                    <Route
+                                        path="bookings"
+                                        element={<BookingPage />}
+                                    />
+
+                                    <Route
+                                        path="tickets"
+                                        element={<TicketList />}
+                                    />
+
+                                    <Route
+                                        path="actors"
+                                        element={<ActorPage />}
+                                    />
+
+                                    <Route
+                                        path="foods"
+                                        element={<FoodPage />}
+                                    />
+
+                                </Route>
+
+                                {/* 404 */}
+
+                                <Route
+                                    path="*"
+                                    element={<NotFoundPage />}
+                                />
+
                             </Route>
-                            <Route path="*" element={<NotFoundPage />} />
-                        </Route>
-                    ) : (
-                        /* --- ROUTE CHO DOMAIN USER --- */
-                        <Route path="/">
-                            <Route element={<UserLayout />}>
-                                <Route index element={<UserHome />} />
-                                <Route path="movies/status/:statusSlug" element={<MovieStatusPage />} />
-                                <Route path="movies/detail/:slug" element={<MovieDetail />} />
-                                <Route path="actors" element={<Actor />} />
-                                <Route path="actor/:slug" element={<ActorDetail />} /> 
-                                <Route path="cinema/:slug" element={<CinemaDetail />} /> 
-                                <Route path="booking/:slug" element={<Booking />} />
-                                <Route path="foods" element={<Food />} />
-                                <Route path="cinema-genre" element={<CinemaGenre />} />
-                                <Route path="payment" element={<Payment />} />
-                                <Route path="film-review" element={<FilmReview />} />
-                                <Route path="film-review/:slug" element={<FilmReviewDetail />} />
-                                <Route path="bank-app" element={<BankApp />} />
-                                <Route path="momo-app" element={<MomoApp />} />
-                                <Route path="confirm-success" element={<ConfirmSuccess />} />
-                                <Route path="login" element={<UserLogin />} />
-                                <Route path="register" element={<UserRegister />} />
-                                <Route path="profile" element={<Profile />} />
+
+                        ) : (
+                                                    /* ==========================================================
+                               USER ROUTES
+                            ========================================================== */
+
+                            <Route path="/">
+
+                                <Route
+                                    element={<UserLayout />}
+                                >
+
+                                    <Route
+                                        index
+                                        element={<UserHome />}
+                                    />
+
+                                    <Route
+                                        path="movies/status/:statusSlug"
+                                        element={<MovieStatusPage />}
+                                    />
+
+                                    <Route
+                                        path="movies/detail/:slug"
+                                        element={<MovieDetail />}
+                                    />
+
+                                    <Route
+                                        path="actors"
+                                        element={<Actor />}
+                                    />
+
+                                    <Route
+                                        path="actor/:slug"
+                                        element={<ActorDetail />}
+                                    />
+
+                                    <Route
+                                        path="cinema/:slug"
+                                        element={<CinemaDetail />}
+                                    />
+
+                                    <Route
+                                        path="booking/:slug"
+                                        element={<Booking />}
+                                    />
+
+                                    <Route
+                                        path="foods"
+                                        element={<Food />}
+                                    />
+
+                                    <Route
+                                        path="cinema-genre"
+                                        element={<CinemaGenre />}
+                                    />
+
+                                    <Route
+                                        path="payment"
+                                        element={<Payment />}
+                                    />
+
+                                    <Route
+                                        path="film-review"
+                                        element={<FilmReview />}
+                                    />
+
+                                    <Route
+                                        path="film-review/:slug"
+                                        element={<FilmReviewDetail />}
+                                    />
+
+                                    <Route
+                                        path="bank-app"
+                                        element={<BankApp />}
+                                    />
+
+                                    <Route
+                                        path="momo-app"
+                                        element={<MomoApp />}
+                                    />
+
+                                    <Route
+                                        path="confirm-success"
+                                        element={<ConfirmSuccess />}
+                                    />
+
+                                    <Route
+                                        path="login"
+                                        element={<UserLogin />}
+                                    />
+
+                                    <Route
+                                        path="register"
+                                        element={<UserRegister />}
+                                    />
+
+                                    <Route
+                                        path="profile"
+                                        element={<Profile />}
+                                    />
+
+                                </Route>
+
+                                <Route
+                                    path="admin/*"
+                                    element={<Navigate to="/" replace />}
+                                />
+
+                                <Route
+                                    path="*"
+                                    element={<NotFoundPage />}
+                                />
+
                             </Route>
-                            {/* Chặn truy cập /admin từ domain chính */}
-                            <Route path="admin/*" element={<Navigate to="/" replace />} />
-                            <Route path="*" element={<NotFoundPage />} />
-                        </Route>
-                    )}
-                </Routes>
+
+                        )}
+
+                    </Routes>
+
+                </Suspense>
+
             </div>
-        </Router>
+
+        </>
+
     );
+
 }
 
-const NotFoundPage = () => (
-    <div className="not-found-container" style={{ textAlign: 'center', marginTop: '50px' }}>
-        <h1 className="not-found-title" style={{ fontSize: '100px', margin: 0 }}>404</h1>
-        <h2 className="not-found-subtitle">Opps! Trang bạn tìm kiếm không tồn tại</h2>
-        <button 
-            className="not-found-button"
-            style={{ padding: '10px 20px', cursor: 'pointer', marginTop: '20px' }}
-            onClick={() => window.location.href = '/'}
+// ==========================================================
+// NOT FOUND PAGE
+// ==========================================================
+
+const NotFoundPage = () => {
+
+    const navigate = useNavigate();
+
+    return (
+
+        <div
+            className="not-found-container"
+            style={{
+                textAlign: "center",
+                marginTop: "50px"
+            }}
         >
-            QUAY LẠI TRANG CHỦ
-        </button>
-    </div>
-);
+
+            <h1
+                className="not-found-title"
+                style={{
+                    fontSize: "100px",
+                    margin: 0
+                }}
+            >
+                404
+            </h1>
+
+            <h2 className="not-found-subtitle">
+                Opps! Trang bạn tìm kiếm không tồn tại
+            </h2>
+
+            <button
+                className="not-found-button"
+                style={{
+                    padding: "10px 20px",
+                    cursor: "pointer",
+                    marginTop: "20px"
+                }}
+                onClick={() => navigate("/")}
+            >
+                QUAY LẠI TRANG CHỦ
+            </button>
+
+        </div>
+
+    );
+
+};
+
+// ==========================================================
+// APP
+// ==========================================================
+
+function App() {
+
+    return (
+
+        <Router>
+
+            <RouteLoadingProvider>
+
+                <AppContent />
+
+            </RouteLoadingProvider>
+
+        </Router>
+
+    );
+
+}
+
+// ==========================================================
+// EXPORT
+// ==========================================================
 
 export default App;

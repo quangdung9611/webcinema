@@ -12,9 +12,9 @@ import axios from 'axios';
 
 // COMPONENT
 import BookingSidebar from '../components/BookingSidebar';
+import LoadingSpinner from '../components/LoadingSpinner'; // ✅ Import LoadingSpinner
 
 // CSS
-// import '../styles/Booking.css';
 import '../styles/MomoApp.css';
 
 const MomoApp = () => {
@@ -271,11 +271,14 @@ const MomoApp = () => {
 
                                     <div className="confirm-overlay">
 
-                                        <div className="loader"></div>
-
-                                        <p>
-                                            Đang kiểm tra giao dịch...
-                                        </p>
+                                        {/* ✅ SỬ DỤNG LOADINGSPINNER CHUYÊN NGHIỆP */}
+                                        <LoadingSpinner
+                                            size={48}
+                                            color="#dc2626"
+                                            message="Đang kiểm tra giao dịch..."
+                                            blur={false}
+                                            overlay={false}
+                                        />
 
                                     </div>
 

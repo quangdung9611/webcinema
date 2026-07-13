@@ -22,34 +22,26 @@ const Modal = ({
     useEffect(() => {
         if (open) {
             setVisible(true);
-            requestAnimationFrame(() => setAnimate(true));
+            requestAnimationFrame(() => {
+                setAnimate(true);
+            });
         } else {
             setAnimate(false);
-            const timer = setTimeout(() => setVisible(false), 300);
+            const timer = setTimeout(() => {
+                setVisible(false);
+            }, 800); // 👈 KHỚP VỚI filmReelOut 0.7s
             return () => clearTimeout(timer);
         }
     }, [open]);
 
     if (!visible) return null;
 
-    const renderIcon = () => {
-        switch (type) {
-            case "success": return <CheckCircle2 size={64} />;
-            case "error": return <XCircle size={64} />;
-            case "warning": return <AlertTriangle size={64} />;
-            case "info": return <Info size={64} />;
-            default: return null;
-        }
-    };
-
     return createPortal(
         <div className={`modal-overlay ${animate ? "open" : "close"}`} onClick={onClose}>
-
             <div
                 className={`modal-container ${size} ${type} ${className}`}
                 onClick={(e) => e.stopPropagation()}
             >
-
                 {type !== "default" && (
                     <div className={`modal-icon ${type}`}>
                         {renderIcon()}
@@ -71,7 +63,6 @@ const Modal = ({
                 <div className="modal-body">
                     {children}
                 </div>
-
             </div>
         </div>,
         document.body

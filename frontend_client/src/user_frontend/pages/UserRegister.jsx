@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 
 import Modal from '../components/Modal';
+import LoadingButton from '../components/LoadingButton'; // ✅ Import LoadingButton
 import '../styles/UserAuth.css';
 
 // API URL từ env
@@ -285,18 +286,17 @@ const UserRegister = () => {
                         />
                     </div>
 
-                    {/* SUBMIT */}
-                    <button
+                    {/* ✅ SUBMIT - DÙNG LOADINGBUTTON */}
+                    <LoadingButton
                         type="submit"
-                        className="btn-user"
+                        loading={loading}
+                        loadingText="Đang tạo tài khoản..."
                         disabled={loading}
+                        className="btn-user"
+                        spinnerColor="#ffffff"
                     >
-                        {loading ? (
-                            <span className="loading-spinner">⏳ ĐANG XỬ LÝ...</span>
-                        ) : (
-                            'ĐĂNG KÝ NGAY'
-                        )}
-                    </button>
+                        ĐĂNG KÝ NGAY
+                    </LoadingButton>
                 </form>
 
                 {/* FOOTER */}
@@ -307,6 +307,8 @@ const UserRegister = () => {
                     </Link>
                 </div>
             </div>
+
+            {/* ✅ ĐÃ BỎ LOADING SPINNER OVERLAY */}
 
             {/* MODAL */}
             <Modal

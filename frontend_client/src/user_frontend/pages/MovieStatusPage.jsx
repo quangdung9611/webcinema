@@ -21,17 +21,14 @@ const MovieStatusPage = () => {
         "phim-sap-chieu": "Sắp chiếu",
     };
 
-    const activeStatus =
-        statusMap[statusSlug] || "Đang chiếu";
+    const activeStatus = statusMap[statusSlug] || "Đang chiếu";
 
     useEffect(() => {
         const fetchMovies = async () => {
             try {
                 setLoading(true);
 
-                const res = await axios.get(
-                    `${API_URL}/movies`
-                );
+                const res = await axios.get(`${API_URL}/movies`);
 
                 setMovies(res.data || []);
             } catch (error) {
@@ -86,26 +83,18 @@ const MovieStatusPage = () => {
 
                     <button
                         className={`status-tab ${
-                            statusSlug === "phim-dang-chieu"
-                                ? "active"
-                                : ""
+                            statusSlug === "phim-dang-chieu" ? "active" : ""
                         }`}
-                        onClick={() =>
-                            handleTabChange("phim-dang-chieu")
-                        }
+                        onClick={() => handleTabChange("phim-dang-chieu")}
                     >
                         PHIM ĐANG CHIẾU
                     </button>
 
                     <button
                         className={`status-tab ${
-                            statusSlug === "phim-sap-chieu"
-                                ? "active"
-                                : ""
+                            statusSlug === "phim-sap-chieu" ? "active" : ""
                         }`}
-                        onClick={() =>
-                            handleTabChange("phim-sap-chieu")
-                        }
+                        onClick={() => handleTabChange("phim-sap-chieu")}
                     >
                         PHIM SẮP CHIẾU
                     </button>
@@ -114,21 +103,21 @@ const MovieStatusPage = () => {
             </section>
 
             {/* MOVIES */}
-            <section className="movie-grid">
+            <section className="movie-list">
                 {displayedMovies.length > 0 ? (
                     displayedMovies.map((movie) => (
                         <MovieCard
                             key={movie.movie_id}
                             movie={movie}
                             baseUrl={BASE_URL}
+                            onPreview={() => {}}
+                            onClick={() => {}}
                         />
                     ))
                 ) : (
                     <div className="empty-results">
                         <Film size={40} />
-                        <p>
-                            Hiện chưa có phim ở mục này...
-                        </p>
+                        <p>Hiện chưa có phim ở mục này...</p>
                     </div>
                 )}
             </section>

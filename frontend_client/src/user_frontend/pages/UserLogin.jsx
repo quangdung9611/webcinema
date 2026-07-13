@@ -5,6 +5,7 @@ import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 import { useAuth } from '../../context/AuthContext';
 import ForgotPassword from '../components/ForgotPassword';
+import LoadingButton from '../components/LoadingButton'; // ✅ Import LoadingButton
 
 import '../styles/UserAuth.css';
 
@@ -136,120 +137,123 @@ const UserLogin = () => {
     };
 
     return (
-        <div className="auth-container">
-            <div className="auth-card">
-                <h2>ĐĂNG NHẬP</h2>
-                <p className="auth-subtitle">
-                    Chào mừng bạn quay trở lại Cinema Star
-                </p>
+        <>
+            {/* ✅ ĐÃ BỎ LoadingSpinner OVERLAY - CHỈ DÙNG LoadingButton */}
 
-                {serverError && (
-                    <div className="error-message">
-                        <AlertCircle size={18} />
-                        <span>{serverError}</span>
-                    </div>
-                )}
+            <div className="auth-container">
+                <div className="auth-card">
+                    <h2>ĐĂNG NHẬP</h2>
+                    <p className="auth-subtitle">
+                        Chào mừng bạn quay trở lại Cinema Star
+                    </p>
 
-                <form onSubmit={handleLogin} noValidate>
-                    {/* EMAIL */}
-                    <div className="form-group">
-                        <label>Email address</label>
-                        <input
-                            type="email"
-                            name="email"
-                            placeholder="example@gmail.com"
-                            className={`auth-input ${errors.email ? 'input-error' : ''}`}
-                            value={formData.email}
-                            onChange={handleChange}
-                            autoComplete="email"
-                            disabled={loading}
-                        />
-                        {errors.email && (
-                            <span className="error-text">{errors.email}</span>
-                        )}
-                    </div>
+                    {serverError && (
+                        <div className="error-message">
+                            <AlertCircle size={18} />
+                            <span>{serverError}</span>
+                        </div>
+                    )}
 
-                    {/* PASSWORD */}
-                    <div className="form-group">
-                        <label>Password</label>
-                        <div className="password-wrapper">
+                    <form onSubmit={handleLogin} noValidate>
+                        {/* EMAIL */}
+                        <div className="form-group">
+                            <label>Email address</label>
                             <input
-                                type={showPassword ? 'text' : 'password'}
-                                name="password"
-                                placeholder="••••••••"
-                                className={`auth-input ${errors.password ? 'input-error' : ''}`}
-                                value={formData.password}
+                                type="email"
+                                name="email"
+                                placeholder="example@gmail.com"
+                                className={`auth-input ${errors.email ? 'input-error' : ''}`}
+                                value={formData.email}
                                 onChange={handleChange}
-                                autoComplete="current-password"
+                                autoComplete="email"
                                 disabled={loading}
                             />
+                            {errors.email && (
+                                <span className="error-text">{errors.email}</span>
+                            )}
+                        </div>
+
+                        {/* PASSWORD */}
+                        <div className="form-group">
+                            <label>Password</label>
+                            <div className="password-wrapper">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    name="password"
+                                    placeholder="••••••••"
+                                    className={`auth-input ${errors.password ? 'input-error' : ''}`}
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    autoComplete="current-password"
+                                    disabled={loading}
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-password"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    tabIndex="-1"
+                                >
+                                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                </button>
+                            </div>
+                            {errors.password && (
+                                <span className="error-text">{errors.password}</span>
+                            )}
+                        </div>
+
+                        {/* OPTIONS */}
+                        <div className="form-options">
+                            <label className="remember-me">
+                                <input
+                                    type="checkbox"
+                                    name="rememberMe"
+                                    checked={formData.rememberMe}
+                                    onChange={handleChange}
+                                    disabled={loading}
+                                />
+                                Remember me
+                            </label>
+
                             <button
                                 type="button"
-                                className="toggle-password"
-                                onClick={() => setShowPassword(!showPassword)}
-                                tabIndex="-1"
+                                className="forgot-link"
+                                onClick={() => setShowForgotModal(true)}
+                                disabled={loading}
                             >
-                                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                Forgot password?
                             </button>
                         </div>
-                        {errors.password && (
-                            <span className="error-text">{errors.password}</span>
-                        )}
-                    </div>
 
-                    {/* OPTIONS */}
-                    <div className="form-options">
-                        <label className="remember-me">
-                            <input
-                                type="checkbox"
-                                name="rememberMe"
-                                checked={formData.rememberMe}
-                                onChange={handleChange}
-                                disabled={loading}
-                            />
-                            Remember me
-                        </label>
-
-                        <button
-                            type="button"
-                            className="forgot-link"
-                            onClick={() => setShowForgotModal(true)}
+                        {/* ✅ SUBMIT - DÙNG LOADINGBUTTON */}
+                        <LoadingButton
+                            type="submit"
+                            loading={loading}
+                            loadingText="Đang đăng nhập..."
                             disabled={loading}
+                            className="btn-user"
+                            spinnerColor="#ffffff"
                         >
-                            Forgot password?
-                        </button>
+                            SIGN IN
+                        </LoadingButton>
+                    </form>
+
+                    {/* FOOTER */}
+                    <div className="auth-footer">
+                        <span>Chưa có tài khoản?</span>
+                        <Link to="/register" className="btn-link">
+                            Đăng ký ngay
+                        </Link>
                     </div>
-
-                    {/* SUBMIT */}
-                    <button
-                        type="submit"
-                        className="btn-user"
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <span className="loading-spinner">⏳</span>
-                        ) : (
-                            'SIGN IN'
-                        )}
-                    </button>
-                </form>
-
-                {/* FOOTER */}
-                <div className="auth-footer">
-                    <span>Chưa có tài khoản?</span>
-                    <Link to="/register" className="btn-link">
-                        Đăng ký ngay
-                    </Link>
                 </div>
-            </div>
 
-            {/* FORGOT PASSWORD MODAL */}
-            {showForgotModal && (
-                <ForgotPassword
-                    onClose={() => setShowForgotModal(false)}
-                />
-            )}
-        </div>
+                {/* FORGOT PASSWORD MODAL */}
+                {showForgotModal && (
+                    <ForgotPassword
+                        onClose={() => setShowForgotModal(false)}
+                    />
+                )}
+            </div>
+        </>
     );
 };
 
