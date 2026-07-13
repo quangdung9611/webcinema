@@ -1,18 +1,16 @@
 /* ==========================================================
    USER HOME PREMIUM CINEMA
-   PART 1 - FIXED COLOR 🎨
-========================================================== */
+   ========================================================= */
 
 /* ==========================================================
-   ANIMATION
+   ANIMATIONS
 ========================================================== */
-/* @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Inter:wght@400;600&display=swap'); */
+
 @keyframes fadeUp {
     from {
         opacity: 0;
         transform: translateY(40px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -23,27 +21,26 @@
     from {
         left: -120%;
     }
-
     to {
         left: 120%;
     }
 }
 
-@keyframes pulseGlow {
+/* @keyframes pulseGlow {
     0% {
-        box-shadow:
-            0 0 0 rgba(220, 38, 38, 0);
+        box-shadow: 0 0 0 rgba(220, 38, 38, 0);
     }
-
     50% {
-        box-shadow:
-            0 0 30px rgba(220, 38, 38, .18);
+        box-shadow: 0 0 30px rgba(220, 38, 38, .18);
     }
-
     100% {
-        box-shadow:
-            0 0 0 rgba(220, 38, 38, 0);
+        box-shadow: 0 0 0 rgba(220, 38, 38, 0);
     }
+} */
+
+@keyframes particleMove {
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(-180px); }
 }
 
 /* ==========================================================
@@ -51,20 +48,14 @@
 ========================================================== */
 
 .user-home {
-    /* min-height: 100vh; */
-
     overflow: hidden;
 }
 
 .home-container {
     width: 100%;
     max-width: 1400px;
-
     margin: 0 auto;
-
-    padding:
-        0 32px
-        120px;
+    padding: 0 32px 120px;
 }
 
 /* ==========================================================
@@ -76,730 +67,118 @@
 .promotions-section,
 .cinema-corner-section {
     position: relative;
-
     width: 100%;
-
     margin-top: 40px;
-
-    animation:
-        fadeUp .8s ease;
+    animation: fadeUp .8s ease;
 }
 
-.section-header {
+/* .section-header {
     position: relative;
-
     margin-bottom: 50px;
 }
 
 .section-title {
     position: relative;
-
     display: inline-block;
-
-    color: var(--text-white);
-
-    font-size:
-        clamp(
-            2rem,
-            3vw,
-            2.8rem
-        );
-
+    color: var(--text-white, #fff);
+    font-size: clamp(2rem, 3vw, 2.8rem);
     font-weight: 900;
-
     letter-spacing: 2px;
-
     text-transform: uppercase;
 }
 
 .section-title::after {
     content: "";
-
     position: absolute;
-
     left: 0;
     bottom: -14px;
-
     width: 100%;
     height: 3px;
-
-    background:
-        linear-gradient(
-            90deg,
-            var(--color-primary),
-            transparent
-        );
+    background: linear-gradient(90deg, #dc2626, transparent);
 }
 
 .title-underline {
     display: none;
-}
+} */
 
 /* ==========================================================
-   FULL BANNER
+   BANNER PREMIUM (CHỈ ẢNH, KHÔNG SHADOW TRÁI, KHÔNG ZOOM)
 ========================================================== */
 
 .carousel-full-wrapper {
     position: relative;
-
     width: 100%;
-
     overflow: hidden;
-
     line-height: 0;
 }
 
-.mySwiper {
-    width: 100%;
-
-    aspect-ratio:
-        2048 / 850;
-}
-
-.banner-full-item {
+.banner-premium {
     position: relative;
-
     width: 100%;
-    height: 100%;
-
-    overflow: hidden;
-}
-
-.banner-img-fade-zoom {
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
-
-    display: block;
-
-    transform: scale(1);
-
-    transition:
-        transform 8s ease;
-
-    filter:
-        brightness(.85)
-        contrast(1.05)
-        saturate(.95);
-}
-
-.swiper-slide-active
-.banner-img-fade-zoom {
-    transform:
-        scale(1.08);
-}
-
-
-/* ==========================================================
-   PREMIUM BANNER WRAPPER
-========================================================== */
-
-.banner-premium{
-    position:relative;
-    width:100%;
-    overflow:hidden;
-    aspect-ratio: 16/9;
-    max-height:550px;
+    aspect-ratio: 16 / 9;
+   
 }
 
 .premiumSwiper,
-.banner-slide{
-    width:100%;
-    height:100%;
+.banner-slide {
+    width: 100%;
+    height: 100%;
 }
 
-/* ==========================================================
-   IMAGE
-========================================================== */
-
-.banner-media{
-    position:relative;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-}
-
-/*=========================================
-LEFT CINEMATIC SHADOW
-=========================================*/
-
-.banner-media::before{
-
-    content:"";
-
-    position:absolute;
-    inset:0;
-
-    z-index:2;
-
-    pointer-events:none;
-  background:linear-gradient(
-    90deg,
-
-    rgba(0,0,0,.88) 0%,
-    rgba(0,0,0,.72) 20%,
-    rgba(0,0,0,.45) 45%,
-
-    rgba(0,0,0,.20) 60%,
-    rgba(0,0,0,.12) 75%,
-
-    transparent 90%
-);
-}
-
-/*=========================================
-BOTTOM CINEMATIC SHADOW
-=========================================*/
-
-.banner-media::after{
-
-    content:"";
-
-    position:absolute;
-    inset:0;
-
-    z-index:2;
-
-    pointer-events:none;
-
-    background:
-        linear-gradient(
-
-            to top,
-
-            rgba(0,0,0,.95) 0%,
-
-            rgba(0,0,0,.72) 12%,
-
-            rgba(0,0,0,.45) 24%,
-
-            rgba(0,0,0,.20) 38%,
-
-            transparent 58%
-
-        );
-         
-
-}
-
-/*=========================================
-IMAGE
-=========================================*/
-
-.banner-img{
-
-    width:100%;
-    height:100%;
-
-    object-fit:cover;
-
-    filter:
-        brightness(.84)
-        contrast(1.12)
-        saturate(1.08);
-
-    animation:
-        bannerZoom 1.4s ease-out forwards,
-        cinematicDrift 18s ease-in-out infinite;
-
-}
-@keyframes bannerZoom{
-
-    from{
-        opacity:0;
-        transform:scale(1.1);
-        filter:blur(5px);
-    }
-
-    to{
-        opacity:1;
-        transform:scale(1);
-        filter:blur(0);
-    }
-
-}
-
-@keyframes cinematicDrift{
-
-    0%{
-        transform:scale(1.05) translate3d(0,0,0);
-    }
-
-    25%{
-        transform:scale(1.08) translate3d(-15px,-8px,0);
-    }
-
-    50%{
-        transform:scale(1.1) translate3d(12px,-10px,0);
-    }
-
-    75%{
-        transform:scale(1.08) translate3d(-10px,6px,0);
-    }
-
-    100%{
-        transform:scale(1.05) translate3d(0,0,0);
-    }
-
-}
-
-
-
-@keyframes screenGlow{
-
-    0%,100%{
-        opacity:.45;
-    }
-
-    50%{
-        opacity:.9;
-    }
-
-}
-
-/*==========================================================
-CONTENT
-==========================================================*/
-.banner-inner{
-    position:absolute;
-    inset:0;
-    z-index:5;
-
-    display:flex;
-    align-items:center;
-
-    padding-inline:7%;
-
-    margin-top:0;
-}
-
-/* ==========================================================
-   ANIMATION
-========================================================== */
-
-@keyframes fadeDownSoft{
-
-    from{
-
-        opacity:0;
-        transform:translateY(-40px);
-        filter:blur(6px);
-
-    }
-
-    to{
-
-        opacity:1;
-        transform:translateY(0);
-        filter:blur(0);
-
-    }
-
-}
-
-/* ==========================================================
-   RESET
-========================================================== */
-
-.banner-title,
-.banner-subtitle,
-.banner-btn{
-    opacity:0;
-    margin:0;
-}
-
-/*==========================================================
-TEXT
-==========================================================*/
-
-.banner-text{
-
-    display:flex;
-    flex-direction:column;
-    align-items:flex-start;
-    justify-content:center;
-
-     max-width:700px;
-    width:100%;
-    gap:26px;
-
-}
-
-/*==========================================================
-PREMIUM EYEBROW - FIXED ✅
-==========================================================*/
-
-.banner-eyebrow{
-   
-  display:inline-block;
-  font-size:clamp(1.2rem,1.5vw,1.5rem);
-    font-weight:700;
-    letter-spacing:5px;
-
-    color: #dc2626;
-
-    line-height:1;
-     text-transform:uppercase;
-
-    background:linear-gradient(
-
-        180deg,
-
-        #dc2626 0%,
-
-        #ef4444 35%,
-
-        #dc2626 70%,
-
-        #7f1d1d 100%
-
-    );
-
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-
-    text-shadow:
-
-        0 0 6px rgba(220,38,38,.12);
-
-    opacity:0;
-
-    animation:fadeDownSoft .9s forwards;
-}
-
-/* ==========================================================
-   TITLE - FIXED ✅ (Thêm vàng)
-========================================================== */
-.banner-title{
-
-    position:relative;
-
-    display:inline-block;
-
-    width:max-content;
-
-    white-space:nowrap;
-
-    /* font-family:'Cinzel',serif; */
-
-  font-size: clamp(6rem, 6.5vw, 7.2rem);
-    font-weight:900;
-
- line-height:1.3;
-
-    letter-spacing:2px;
-
-    text-transform:uppercase;
-
-      background:linear-gradient(
-        180deg,
-        #ffc3c3 0%,
-        #ff8f8f 22%,
-        #dc2626 50%,
-        #b91c1c 75%,
-        #7f1d1d 100%
-    );
-
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-
-    text-shadow:
-        0 2px 3px rgba(0,0,0,.25),
-        0 0 10px rgba(220,38,38,.12),
-        0 8px 16px rgba(0,0,0,.4);
-    animation:fadeDownSoft 1s ease forwards;
-
-}
-
-/*==========================================================
-TITLE GLOW LINE - FIXED ✅
-==========================================================*/
-
-.banner-title::after{
-
-    content:"";
-
-    position:absolute;
-
-    left:0;
-
-    bottom:-20px;
-
-    width:82%;
-
-    height:2px;
-
-    border-radius:999px;
-
-    background:linear-gradient(
-        90deg,
-
-        transparent 0%,
-
-        rgba(220,38,38,.08) 10%,
-
-        rgba(220,38,38,.45) 25%,
-
-        #dc2626 50%,
-
-        rgba(220,38,38,.45) 75%,
-
-        rgba(220,38,38,.08) 90%,
-
-        transparent 100%
-
-    );
-
-    box-shadow:
-
-        0 0 6px rgba(220,38,38,.18),
-
-        0 0 14px rgba(220,38,38,.12);
-
-    animation:redLinePulse 4s ease-in-out infinite;
-
-}
-
-/*==========================================================
-LIGHT SWEEP - FIXED ✅
-==========================================================*/
-
-.banner-title::before{
-
-    content:"";
-
-    position:absolute;
-
-    left:-20%;
-
-    bottom:-24px;
-
-    width:20%;
-
-    height:10px;
-
-    border-radius:999px;
-
-    background:
-
-        radial-gradient(
-
-            ellipse at center,
-
-            rgba(239,68,68,.70) 0%,
-
-            rgba(220,38,38,.38) 40%,
-
-            rgba(220,38,38,0) 100%
-
-        );
-
-    filter:blur(5px);
-
-    animation:lightSweep 4s linear infinite;
-
-}
-
-/* ==========================================================
-   SUBTITLE
-========================================================== */
-
-.banner-subtitle{
-
-    width:100%;
+.banner-media {
+    position: relative;
+    width: 100%;
+    height: 100%;
   
-    font-size:clamp(1rem,1.3vw,1.2rem);
-
-    line-height:1.8;
-    font-weight:400;
-    letter-spacing:.15px;
-
-    color:#ffffff;
-
-    opacity:.95;
-
-    text-transform:none;
-
-    text-align:justify;
-    text-justify:inter-word;
-
-    text-wrap:pretty;
-
-    overflow-wrap:break-word;
-
-    animation:fadeDownSoft 1s ease .2s forwards;
 }
 
-/* ==========================================================
-   BUTTON - FIXED ✅
-========================================================== */
+/* ✅ ĐÃ XÓA shadow trái (::before) */
 
-.banner-btn{
-
-    width:430px;
-    height:96px;
-
-    margin-top:18px;
-
-    border:none;
-    border-radius:999px;
-
-    cursor:pointer;
-
-    /* font-family:'Cinzel',serif; */
-
-    font-size:2.15rem;
-
-    font-weight:900;
-
-    letter-spacing:3px;
-
-    text-transform:uppercase;
-
-   color:#ffffff;
-
-    background:linear-gradient(
-        180deg,
-        #dc2626 0%,
-        #b91c1c 45%,
-        #991b1b 75%,
-        #7f1d1d 100%
+/* ---- Shadow dưới (cinematic) - GIỮ LẠI ---- */
+/* .banner-media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+        to top,
+        rgba(0,0,0,.95) 0%,
+        rgba(0,0,0,.72) 12%,
+        rgba(0,0,0,.45) 24%,
+        rgba(0,0,0,.20) 38%,
+        transparent 58%
     );
+} */
 
-    box-shadow:
-
-        inset 0 1px 0 rgba(255,255,255,.15),
-
-        0 12px 28px rgba(0,0,0,.45),
-
-        0 4px 18px rgba(220,38,38,.22);
-
-    transition:
-        transform .35s,
-        box-shadow .35s,
-        filter .35s;
-
-    animation:fadeDownSoft 1s ease .4s forwards;
+/* ---- Ảnh - ĐÃ BỎ ZOOM + CHUYỂN ĐỘNG ---- */
+.banner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  
 }
 
-.banner-btn:hover{
-
-    transform:
-        translateY(-6px)
-        scale(1.04);
-
-    filter:brightness(1.08);
-
-    box-shadow:
-        inset 0 4px 8px rgba(255,255,255,.55),
-        0 24px 48px rgba(0,0,0,.48),
-        0 0 36px rgba(220,38,38,.32);
+/* ---- Particles - GIỮ LẠI ---- */
+.banner-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    opacity: .08;
+    background-image: radial-gradient(rgba(255,255,255,.2) 1px, transparent 1px);
+    background-size: 180px 180px;
+    animation: particleMove 25s linear infinite;
 }
 
-
-/*==========================================================
-ANIMATION
-==========================================================*/
-
-@keyframes goldLinePulse{
-
-    0%{
-
-        opacity:.55;
-
-        transform:scaleX(.96);
-
-    }
-
-    50%{
-
-        opacity:1;
-
-        transform:scaleX(1);
-
-    }
-
-    100%{
-
-        opacity:.55;
-
-        transform:scaleX(.96);
-
-    }
-
-}
-
-@keyframes lightSweep{
-
-    0%{
-
-        left:-18%;
-        opacity:0;
-
-    }
-
-    8%{
-
-        opacity:1;
-
-    }
-
-    50%{
-
-        left:38%;
-        opacity:1;
-
-    }
-
-    92%{
-
-        opacity:1;
-
-    }
-
-    100%{
-
-        left:82%;
-        opacity:0;
-
-    }
-
-}
-/* =========================
-   ACTIVE SLIDE ANIMATION
-   (Mỗi lần slider đổi sẽ chạy lại)
-========================= */
-
-.slide-active .banner-title {
-  animation:
-    fadeDownSoft 1.9s
-    cubic-bezier(.22,.61,.36,1)
-    forwards;
-}
-
-.slide-active .banner-subtitle {
-  animation:
-    fadeDownSoft 1.9s
-    cubic-bezier(.22,.61,.36,1)
-    .55s forwards;
-}
-
-.slide-active .banner-desc {
-  animation:
-    fadeDownSoft 1.9s
-    cubic-bezier(.22,.61,.36,1)
-    1s forwards;
-}
 /* ==========================================================
-   QUICK BOOKING - FIXED ✅
+   QUICK BOOKING
 ========================================================== */
 
 .quick-booking-container {
     position: relative;
-
     z-index: 100;
-
     width: 100%;
     max-width: 1250px;
     margin: 0px auto;
@@ -807,132 +186,64 @@ ANIMATION
 
 .quick-booking-content {
     position: relative;
-
-    /* overflow: hidden; */
-
     display: flex;
     align-items: center;
-
     gap: 20px;
-
     padding: 28px;
-
     border-radius: 28px;
-
-    background:
-        rgba(15,15,15,.92);
-
-    backdrop-filter:
-        blur(25px);
-
-    border:
-        1px solid
-        rgba(255,255,255,.08);
-
-    box-shadow:
-        0 20px 60px
-        rgba(0,0,0,.45);
-
-    transition:
-        .4s ease;
+    background: rgba(15,15,15,.92);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    transition: .4s ease;
 }
 
 .quick-booking-content::before {
     content: "";
-
     position: absolute;
-
     top: 0;
     left: -120%;
-
     width: 100px;
     height: 100%;
-
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            rgba(255,255,255,.12),
-            transparent
-        );
-
-    animation:
-        shine 7s linear infinite;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
+    animation: shine 7s linear infinite;
 }
 
 .quick-booking-content:hover {
-    border:
-        1px solid
-        rgba(220,38,38,.25);
-
-    box-shadow:
-        0 25px 70px rgba(0,0,0,.55),
-        0 0 25px rgba(220,38,38,.12);
+    border: 1px solid rgba(220,38,38,.25);
+    box-shadow: 0 25px 70px rgba(0,0,0,.55), 0 0 25px rgba(220,38,38,.12);
 }
 
 .quick-booking-selects {
     flex: 1;
-
     display: grid;
-
-    grid-template-columns:
-        repeat(4, 1fr);
-
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
 }
-
-/* ==========================================================
-   SELECT BOX - FIXED ✅
-========================================================== */
 
 .quick-booking-selects select {
     width: 100%;
     height: 60px;
-
-    padding:
-        0 20px;
-
-    border-radius:
-        18px;
-
-    border:
-        1px solid
-        rgba(255,255,255,.08);
-
-    background:
-        rgba(255,255,255,.03);
-
-    color:
-        var(--text-white);
-
+    padding: 0 20px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.03);
+    color: var(--text-white, #fff);
     font-size: .95rem;
     font-weight: 600;
-
     outline: none;
-
     cursor: pointer;
-
-    transition:
-        .3s ease;
+    transition: .3s ease;
 }
 
 .quick-booking-selects select:hover:not(:disabled) {
-    border:
-        1px solid
-        rgba(220,38,38,.30);
-
-    background:
-        rgba(255,255,255,.05);
+    border: 1px solid rgba(220,38,38,.30);
+    background: rgba(255,255,255,.05);
 }
 
 .quick-booking-selects select:focus {
-    border:
-        1px solid
-        var(--color-primary);
-
-    box-shadow:
-        0 0 0 4px
-        rgba(220,38,38,.10);
+    border: 1px solid #dc2626;
+    box-shadow: 0 0 0 4px rgba(220,38,38,.10);
 }
 
 .quick-booking-selects select:disabled {
@@ -941,92 +252,48 @@ ANIMATION
 }
 
 .quick-booking-selects option {
-    background:
-        #121212;
-
-    color:
-        #fff;
+    background: #121212;
+    color: #fff;
 }
-
-/* ==========================================================
-   QUICK BOOK BUTTON - FIXED ✅
-========================================================== */
 
 .btn-quick-booking {
     position: relative;
-
     overflow: hidden;
-
     min-width: 220px;
-
     height: 60px;
-
     border: none;
-
-    border-radius:
-        18px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #dc2626,
-            #b91c1c
-        );
-
-    color:
-        #fff;
-
+    border-radius: 18px;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: #fff;
     font-size: .95rem;
     font-weight: 800;
-
     letter-spacing: 1px;
-
     cursor: pointer;
-
-    transition:
-        .35s ease;
-
-    box-shadow:
-        0 15px 35px
-        rgba(220,38,38,.20);
+    transition: .35s ease;
+    box-shadow: 0 15px 35px rgba(220,38,38,.20);
 }
 
 .btn-quick-booking:hover {
-    transform:
-        translateY(-4px);
-
-    box-shadow:
-        0 25px 45px
-        rgba(220,38,38,.30);
+    transform: translateY(-4px);
+    box-shadow: 0 25px 45px rgba(220,38,38,.30);
 }
 
 .btn-quick-booking::before {
     content: "";
-
     position: absolute;
-
     top: 0;
     left: -120%;
-
     width: 70px;
     height: 100%;
-
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            rgba(255,255,255,.35),
-            transparent
-        );
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
 }
 
 .btn-quick-booking:hover::before {
-    animation:
-        shine .8s ease;
+    animation: shine .8s ease;
 }
 
 /* ==========================================================
-   FEATURES SECTION - FIXED ✅
+   FEATURES
 ========================================================== */
 
 .features-grid {
@@ -1037,62 +304,30 @@ ANIMATION
 
 .feature-item {
     position: relative;
-
     overflow: hidden;
-
     display: flex;
     align-items: center;
-
     gap: 18px;
-
     padding: 26px;
-
     border-radius: 24px;
-
-    background: linear-gradient(
-        180deg,
-        rgba(255,255,255,.04),
-        rgba(255,255,255,.02)
-    );
-
+    background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
     border: 1px solid rgba(255,255,255,.08);
-
     backdrop-filter: blur(15px);
-
     transition: all .45s ease;
-
-    box-shadow:
-        0 10px 25px rgba(0,0,0,.18);
+    box-shadow: 0 10px 25px rgba(0,0,0,.18);
 }
-
-/* ==========================================================
-   SHINE EFFECT
-========================================================== */
 
 .feature-item::before {
     content: "";
-
     position: absolute;
-
     top: -50%;
     left: -150%;
-
     width: 90px;
     height: 220%;
-
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255,255,255,.8),
-        transparent
-    );
-
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent);
     transform: rotate(25deg);
-
     transition: .9s ease;
-
     z-index: 2;
-
     pointer-events: none;
 }
 
@@ -1100,75 +335,37 @@ ANIMATION
     left: 150%;
 }
 
-/* ==========================================================
-   CARD HOVER - FIXED ✅
-========================================================== */
-
 .feature-item:hover {
     transform: translateY(-10px);
-
     border: 1px solid rgba(220,38,38,.30);
-
-    box-shadow:
-        0 20px 40px rgba(0,0,0,.35),
-        0 0 25px rgba(220,38,38,.12),
-        0 0 45px rgba(220,38,38,.08);
+    box-shadow: 0 20px 40px rgba(0,0,0,.35), 0 0 25px rgba(220,38,38,.12), 0 0 45px rgba(220,38,38,.08);
 }
-
-/* ==========================================================
-   ICON - FIXED ✅
-========================================================== */
 
 .feature-icon-wrapper {
     width: 72px;
     height: 72px;
-
     min-width: 72px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     border-radius: 20px;
-
-    background: linear-gradient(
-        135deg,
-        rgba(220,38,38,.15),
-        rgba(220,38,38,.05)
-    );
-
+    background: linear-gradient(135deg, rgba(220,38,38,.15), rgba(220,38,38,.05));
     border: 1px solid rgba(220,38,38,.15);
-
-    color: var(--color-primary);
-
+    color: #dc2626;
     transition: all .35s ease;
 }
 
 .feature-item:hover .feature-icon-wrapper {
-    transform:
-        scale(1.12)
-        rotate(-3deg);
-
-    box-shadow:
-        0 0 20px rgba(220,38,38,.25),
-        0 0 40px rgba(220,38,38,.12);
-
-    animation:
-        pulseGlow 1.8s infinite;
+    transform: scale(1.12) rotate(-3deg);
+    box-shadow: 0 0 20px rgba(220,38,38,.25), 0 0 40px rgba(220,38,38,.12);
+    animation: pulseGlow 1.8s infinite;
 }
-
-/* ==========================================================
-   TEXT - FIXED ✅
-========================================================== */
 
 .feature-text h4 {
     color: #fff;
-
     font-size: 1rem;
     font-weight: 800;
-
     margin-bottom: 6px;
-
     transition: .35s ease;
 }
 
@@ -1178,11 +375,8 @@ ANIMATION
 
 .feature-text p {
     color: rgba(255,255,255,.65);
-
     font-size: .9rem;
-
     line-height: 1.7;
-
     transition: .35s ease;
 }
 
@@ -1190,729 +384,217 @@ ANIMATION
     color: rgba(255,255,255,.85);
 }
 
-/* =========================================================
-   PROMOTIONS
-========================================================= */
+/* ==========================================================
+   CINEMA GRID (cho promotions & cinema corner)
+========================================================== */
 
-.promotions-section {
-    position: relative;
+.cinema-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
 }
 
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
 
-/* =========================================================
-   CINEMA NEWS
-========================================================= */
-
-.cinema-corner-section {
-    position: relative;
-}
-
-
-/* =========================================================
-   GLOBAL ANIMATIONS - FIXED ✅
-========================================================= */
-
-@keyframes fadeUp {
-
-    from {
-        opacity: 0;
-        transform:
-            translateY(40px);
+@media (max-width: 1200px) {
+    .features-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
     }
-
-    to {
-        opacity: 1;
-        transform:
-            translateY(0);
+    .cinema-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+    .quick-booking-content {
+        padding: 24px;
     }
 }
 
-@keyframes glowPulse {
-
-    0% {
-        box-shadow:
-            0 0 0 rgba(220,38,38,0);
+@media (max-width: 992px) {
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
     }
-
-    50% {
-        box-shadow:
-            0 0 30px rgba(220,38,38,.18);
+    .cinema-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
     }
-
-    100% {
-        box-shadow:
-            0 0 0 rgba(220,38,38,0);
+    .quick-booking-content {
+        flex-direction: column;
+        padding: 22px;
+        gap: 16px;
     }
-}
-
-/* =========================================================
-   LARGE TABLET
-========================================================= */
-
-@media (max-width:1200px){
-
-    /*=========================
-      HERO BANNER
-    =========================*/
-
-    .banner-text{
-
-        max-width:620px;
-
-        gap:26px;
-
-        transform:translateY(-18px);
+    .quick-booking-selects {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
     }
-
-    .banner-eyebrow{
-
-        font-size:1.05rem;
-
-        letter-spacing:4px;
+    .quick-booking-selects select {
+        height: 54px;
     }
-
-    .banner-title{
-
-        font-size:clamp(5.6rem,6vw,7rem);
+    .btn-quick-booking {
+        width: 100%;
+        min-width: unset;
+        height: 54px;
     }
-
-    .banner-title::after{
-
-        width:72%;
-
-        bottom:-18px;
-    }
-
-    .banner-title::before{
-
-        bottom:-24px;
-    }
-
-    .banner-subtitle{
-
-        max-width:600px;
-
-        font-size:1.35rem;
-
-        line-height:1.8;
-    }
-
-    .banner-btn{
-
-        width:360px;
-
-        height:82px;
-
-        font-size:1.75rem;
-
-        margin-top:10px;
-    }
-
-    /* Feature */
-
-    .features-grid{
-
-        grid-template-columns:repeat(4,1fr);
-
-        gap:20px;
-    }
-
-    /* Quick Booking */
-
-    .quick-booking-content{
-
-        width:95%;
-
-        padding:24px;
-    }
-
     .home-features-section,
     .movie-container,
     .promotions-section,
-    .cinema-corner-section{
-
-        margin-top:40px;
+    .cinema-corner-section {
+        margin-top: 32px;
     }
-
-    .cinema-corner-section{
-
-        margin-bottom:24px;
-    }
-
-    .section-header{
-
-        margin-bottom:24px;
-    }
-
-    .home-container{
-
-        padding-bottom:20px;
+    .section-header {
+        margin-bottom: 20px;
     }
 }
 
-
-/* =========================================================
-   TABLET
-========================================================= */
-
-@media (max-width:992px){
-
-    /*=========================
-      HERO BANNER
-    =========================*/
-
-    .banner-inner{
-
-        padding-inline:6%;
+@media (max-width: 768px) {
+    .banner-premium {
+        aspect-ratio: 16 / 9;
+        max-height: 450px;
+    }
+    /* ✅ ĐÃ XÓA shadow trái, chỉ giữ shadow dưới */
+    .banner-media::after {
+        background: linear-gradient(
+            to top,
+            rgba(0,0,0,.96) 0%,
+            rgba(0,0,0,.78) 16%,
+            rgba(0,0,0,.50) 34%,
+            rgba(0,0,0,.20) 55%,
+            transparent 72%
+        );
+    }
+    .banner-img {
+        filter: brightness(.82) contrast(1.06) saturate(1.04);
     }
 
-    .banner-text{
-
-        width:min(620px,100%);
-
-        gap:22px;
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .cinema-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    .quick-booking-container {
+        margin-top: -30px;
+        padding: 0 10px;
+    }
+    .quick-booking-content {
+        padding: 16px;
+        border-radius: 22px;
+        gap: 14px;
+    }
+    .quick-booking-selects {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+    }
+    .quick-booking-selects select {
+        height: 50px;
+        font-size: .85rem;
+        padding: 0 12px;
+    }
+    .btn-quick-booking {
+        height: 52px;
+        font-size: .9rem;
     }
 
-    .banner-title{
-
-        font-size:clamp(5rem,6vw,6.8rem);
+    .home-container {
+        padding: 0 16px 60px;
     }
-
-    .banner-subtitle{
-
-        font-size:1.3rem;
-    }
-
-    .banner-btn{
-
-        width:330px;
-
-        height:76px;
-    }
-
-    /* Feature */
-
-    .features-grid{
-
-        grid-template-columns:repeat(2,1fr);
-
-        gap:20px;
-    }
-
-    /* Quick Booking */
-
-    .quick-booking-content{
-
-        width:95%;
-
-        padding:22px;
-
-        display:flex;
-
-        flex-direction:column;
-
-        gap:16px;
-    }
-
-    .quick-booking-selects{
-
-        grid-template-columns:repeat(2,1fr);
-
-        gap:14px;
-    }
-
-    .quick-booking-selects select{
-
-        height:54px;
-    }
-
-    .btn-quick-booking{
-
-        width:100%;
-
-        min-width:unset;
-
-        height:54px;
-    }
-
     .home-features-section,
     .movie-container,
     .promotions-section,
-    .cinema-corner-section{
-
-        margin-top:32px;
+    .cinema-corner-section {
+        margin-top: 24px;
     }
-
-    .cinema-corner-section{
-
-        margin-bottom:20px;
-    }
-
-    .section-header{
-
-        margin-bottom:20px;
-    }
-
-    .home-container{
-
-        padding-bottom:16px;
+    .section-header {
+        margin-bottom: 18px;
     }
 }
 
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width:768px){
-
-    /*=========================
-      HERO BANNER
-    =========================*/
-
-    .banner-premium{
-
-        width:100%;
-
-        aspect-ratio:900/1500;
-
-        max-height:450px;
+@media (max-width: 480px) {
+    .banner-premium {
+        aspect-ratio: 16 / 9;
+        max-height: 300px;
     }
-    /*=========================================
-BANNER OVERLAY
-=========================================*/
-
-.banner-media::before{
-
-    background:linear-gradient(
-
-        90deg,
-
-        rgba(0,0,0,.94) 0%,
-
-        rgba(0,0,0,.82) 25%,
-
-        rgba(0,0,0,.58) 48%,
-
-        rgba(0,0,0,.28) 72%,
-
-        transparent 100%
-    );
-}
-
-.banner-media::after{
-
-    background:linear-gradient(
-
-        to top,
-
-        rgba(0,0,0,.96) 0%,
-
-        rgba(0,0,0,.78) 16%,
-
-        rgba(0,0,0,.50) 34%,
-
-        rgba(0,0,0,.20) 55%,
-
-        transparent 72%
-    );
-}
-
-.banner-img{
-
-    filter:
-
-        brightness(.78)
-
-        contrast(1.08)
-
-        saturate(1.05);
-}
-    .banner-inner{
-
-        inset:0;
-
-        padding-inline:24px;
-
-        margin-top:0;
+    .banner-media::after {
+        background: linear-gradient(
+            to top,
+            rgba(0,0,0,.98) 0%,
+            rgba(0,0,0,.84) 18%,
+            rgba(0,0,0,.58) 38%,
+            rgba(0,0,0,.25) 60%,
+            transparent 78%
+        );
+    }
+    .banner-img {
+        filter: brightness(.78) contrast(1.04) saturate(1.02);
     }
 
-    .banner-text{
-
-        width:100%;
-
-        max-width:420px;
-
-        gap:20px;
-
-        transform:none;
-
-        align-items:flex-start;
-
-        text-align:left;
+    .cinema-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .quick-booking-container {
+        padding: 0 6px;
+    }
+    .quick-booking-content {
+        padding: 14px;
+        border-radius: 18px;
+        gap: 12px;
+    }
+    .quick-booking-selects {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+    .quick-booking-selects select {
+        height: 46px;
+        font-size: .7rem;
+        padding: 0 4px;
+        border-radius: 12px;
+    }
+    .btn-quick-booking {
+        height: 48px;
+        font-size: .85rem;
+        border-radius: 12px;
     }
 
-    .banner-eyebrow{
-
-        font-size:.95rem;
-
-        letter-spacing:3px;
+    .home-container {
+        padding: 0 12px 40px;
     }
-
-    .banner-title{
-
-        width:100%;
-
-        white-space:normal;
-
-        font-size:clamp(4rem,7vw,5rem);
-
-        line-height:1;
+    .feature-item {
+        padding: 20px;
+        gap: 14px;
     }
-
-    .banner-title::after{
-
-        width:70%;
+    .feature-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        min-width: 56px;
     }
-
-   .banner-subtitle{
-
-    width:100%;
-    max-width:100%;
-
-    color:#fff;
-
-    font-size:1rem;
-
-    line-height:1.8;
-
-    text-align:justify;
-    text-justify:inter-word;
-
-    text-wrap:pretty;
-
-    overflow-wrap:break-word;
-
-    hyphens:auto;
-}
-
-    .banner-btn{
-
-        width:260px;
-
-        height:60px;
-
-        margin-top:0;
-
-        font-size:1rem;
+    .feature-text h4 {
+        font-size: .9rem;
     }
-
-    /*=========================
-      FEATURES
-    =========================*/
-
-    .features-grid{
-
-        grid-template-columns:1fr;
-
-        gap:16px;
-    }
-
-    /*=========================
-      QUICK BOOKING
-    =========================*/
-
-    .quick-booking-container{
-
-        margin-top:-30px;
-    }
-
-    .quick-booking-content{
-
-        width:100%;
-
-        max-width:none;
-
-        padding:16px;
-
-        display:flex;
-
-        flex-direction:column;
-
-        gap:14px;
-
-        border-radius:22px;
-    }
-
-    .quick-booking-selects{
-
-        width:100%;
-
-        grid-template-columns:repeat(4,1fr);
-
-        gap:8px;
-    }
-
-    .quick-booking-selects select{
-
-        width:100%;
-
-        height:50px;
-
-        padding:0 12px;
-
-        font-size:.85rem;
-
-        min-width:0;
-    }
-
-    .btn-quick-booking{
-
-        width:100%;
-
-        min-width:unset;
-
-        height:52px;
-
-        font-size:.9rem;
-    }
-    
-    .home-features-section,
-    .movie-container,
-    .promotions-section,
-    .cinema-corner-section{
-
-        margin-top:24px;
-    }
-
-    .cinema-corner-section{
-
-        margin-bottom:14px;
-    }
-
-    .section-header{
-
-        margin-bottom:18px;
-    }
-
-    .home-container{
-
-        padding-bottom:12px;
+    .feature-text p {
+        font-size: .8rem;
     }
 }
 
-
-/* =========================================================
-   SMALL MOBILE
-========================================================= */
-
-@media (max-width:480px){
-
-    /*=========================
-      HERO BANNER
-    =========================*/
-
-    .banner-premium{
-
-        width:100%;
-
-        aspect-ratio:900/1500;
-
-        max-height:300px;
+@media (max-width: 360px) {
+    .quick-booking-selects select {
+        font-size: .6rem;
+        height: 40px;
+        padding: 0 2px;
     }
-    /*=========================================
-BANNER OVERLAY
-=========================================*/
-
-.banner-media::before{
-
-    background:linear-gradient(
-
-        90deg,
-
-        rgba(0,0,0,.96) 0%,
-
-        rgba(0,0,0,.86) 30%,
-
-        rgba(0,0,0,.65) 52%,
-
-        rgba(0,0,0,.35) 76%,
-
-        transparent 100%
-    );
-}
-
-.banner-media::after{
-
-    background:linear-gradient(
-
-        to top,
-
-        rgba(0,0,0,.98) 0%,
-
-        rgba(0,0,0,.84) 18%,
-
-        rgba(0,0,0,.58) 38%,
-
-        rgba(0,0,0,.25) 60%,
-
-        transparent 78%
-    );
-}
-
-.banner-img{
-
-    filter:
-
-        brightness(.72)
-
-        contrast(1.06)
-
-        saturate(1.02);
-}
-    .banner-inner{
-
-        padding-inline:18px;
+    .btn-quick-booking {
+        height: 42px;
+        font-size: .75rem;
     }
-
-    .banner-text{
-
-        width:100%;
-
-        max-width:100%;
-
-        gap:18px;
-
-        transform:none;
-
-        align-items:flex-start;
-
-        text-align:left;
+    .cinema-grid {
+        gap: 8px;
     }
-
-    .banner-eyebrow{
-
-        font-size:.85rem;
-
-        letter-spacing:2px;
-    }
-
-    .banner-title{
-
-        width:100%;
-
-        white-space:normal;
-
-        font-size:clamp(3rem,9vw,4rem);
-
-        line-height:1;
-    }
-
-    .banner-subtitle{
-
-    width:100%;
-
-    font-size:.95rem;
-
-    line-height:1.65;
-
-    text-align:justify;
-    text-justify:inter-word;
-
-    text-wrap:pretty;
-
-    overflow-wrap:break-word;
-
-    word-break:normal;
-
-    hyphens:auto;
-}
-    .banner-btn{
-
-        width:220px;
-
-        height:54px;
-
-        font-size:.9rem;
-    }
-
-    /*=========================
-      QUICK BOOKING
-    =========================*/
-
-    .quick-booking-container{
-
-        width:100%;
-
-        padding:0 10px;
-    }
-
-    .quick-booking-content{
-
-        width:100%;
-
-        padding:14px;
-
-        gap:12px;
-
-        border-radius:18px;
-    }
-
-    .quick-booking-selects{
-
-        width:100%;
-
-        grid-template-columns:repeat(4,1fr);
-
-        gap:6px;
-    }
-
-    .quick-booking-selects select{
-
-        height:46px;
-
-        padding:0 4px;
-
-        font-size:.7rem;
-
-        border-radius:12px;
-
-        min-width:0;
-    }
-
-    .btn-quick-booking{
-
-        width:100%;
-
-        min-width:unset;
-
-        height:48px;
-
-        font-size:.85rem;
-
-        border-radius:12px;
-    }
-
-    .home-features-section,
-    .movie-container,
-    .promotions-section,
-    .cinema-corner-section{
-
-        margin-top:20px;
-    }
-
-    .cinema-corner-section{
-
-        margin-bottom:10px;
-    }
-
-    .section-header{
-
-        margin-bottom:14px;
-    }
-
-    .home-container{
-
-        padding-bottom:6px;
+    .section-title {
+        font-size: 1.2rem;
     }
 }
