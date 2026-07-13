@@ -68,14 +68,7 @@ const MovieStatusPage = () => {
     return (
         <main className="movie-status-page">
 
-            {/* HERO */}
-            <section className="movie-status-hero">
-                <img
-                    src="https://api.quangdungcinema.id.vn/uploads/status_film/banner_herro.png"
-                    alt="Movie Status Banner"
-                    className="movie-status-banner-img"
-                />
-            </section>
+         
 
             {/* TABS */}
             <section className="status-tabs-wrapper">

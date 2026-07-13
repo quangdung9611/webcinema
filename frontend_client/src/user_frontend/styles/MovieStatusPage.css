@@ -11,7 +11,7 @@
     width: 100%;
     overflow: hidden;
     position: relative;
-    margin-bottom: 42px;
+    margin-bottom: var(--space-2xl);
 }
 
 .movie-status-banner-img {
@@ -19,11 +19,7 @@
     height: auto;
     display: block;
     object-fit: cover;
-
-    filter:
-        brightness(.92)
-        contrast(1.04)
-        saturate(.96);
+    filter: brightness(.92) contrast(1.04) saturate(.96);
 }
 
 /* ============================================================
@@ -34,8 +30,8 @@
     width: 100%;
     max-width: 1320px;
     margin: 0 auto;
-    padding-inline: 24px;
-    margin-bottom: 52px;
+    padding-inline: var(--space-lg);
+    margin-bottom: var(--space-3xl);
 }
 
 .status-tabs {
@@ -43,56 +39,40 @@
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: var(--space-md);
 }
 
 .status-tab {
-    border: var(--border-primary);
-    background: var(--card-bg);
+    border: var(--border-gold);
+    background: var(--cinema-card-bg);
     color: var(--text-secondary);
 
-    padding: 14px 28px;
+    padding: var(--space-sm) var(--space-xl);
 
     border-radius: var(--radius-round);
 
-    font-size: .92rem;
-    font-weight: 700;
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
 
     cursor: pointer;
 
-    transition:
-        transform var(--transition-slow),
-        box-shadow var(--transition-slow),
-        border-color var(--transition-slow);
+    transition: transform var(--transition-slow),
+                box-shadow var(--transition-slow),
+                border-color var(--transition-slow);
 }
 
 .status-tab:hover {
     transform: translateY(-2px);
-
-    border: var(--border-glow);
-
+    border: var(--border-gold-hover);
     color: var(--text-white);
-
-    box-shadow:
-        var(--shadow-card),
-        var(--shadow-glow-hover);
+    box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
 }
 
 .status-tab.active {
-    background:
-        linear-gradient(
-            135deg,
-            var(--primary-color),
-            var(--primary-dark)
-        );
-
+    background: var(--gold-gradient);
     color: var(--text-white);
-
-    border: var(--border-glow);
-
-    box-shadow:
-        var(--shadow-card),
-        var(--shadow-glow-hover);
+    border: var(--border-gold-hover);
+    box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
 }
 
 /* ============================================================
@@ -102,8 +82,8 @@
 .movie-list {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-    padding: 0 24px 80px;
+    gap: var(--space-lg);
+    padding: 0 var(--space-lg) var(--space-3xl);
     max-width: 1320px;
     margin: 0 auto;
 }
@@ -115,22 +95,22 @@
 @media (max-width: 767px) {
     .movie-list {
         grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-        padding: 0 16px 60px;
+        gap: var(--space-md);
+        padding: 0 var(--space-md) var(--space-2xl);
     }
 
     .status-tabs-wrapper {
-        padding-inline: 16px;
-        margin-bottom: 36px;
+        padding-inline: var(--space-md);
+        margin-bottom: var(--space-2xl);
     }
 
     .status-tabs {
-        gap: 12px;
+        gap: var(--space-sm);
     }
 
     .status-tab {
-        padding: 12px 24px;
-        font-size: .85rem;
+        padding: var(--space-sm) var(--space-lg);
+        font-size: var(--font-size-sm);
     }
 }
 
@@ -141,18 +121,18 @@
 @media (max-width: 480px) {
     .movie-list {
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        padding: 0 12px 40px;
+        gap: var(--space-sm);
+        padding: 0 var(--space-sm) var(--space-xl);
     }
 
     .status-tabs-wrapper {
-        padding-inline: 12px;
-        margin-bottom: 28px;
+        padding-inline: var(--space-sm);
+        margin-bottom: var(--space-xl);
     }
 
     .status-tab {
-        padding: 10px 16px;
-        font-size: .78rem;
+        padding: var(--space-xs) var(--space-md);
+        font-size: var(--font-size-xs);
         width: 100%;
     }
 
@@ -173,11 +153,11 @@
     justify-content: center;
     align-items: center;
 
-    gap: 14px;
+    gap: var(--space-sm);
 
     text-align: center;
 
-    padding: 100px 20px;
+    padding: var(--space-3xl) var(--space-lg);
 
     color: var(--text-muted);
 }
