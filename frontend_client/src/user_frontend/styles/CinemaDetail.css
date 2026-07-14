@@ -41,16 +41,19 @@
 }
 
 /* ==========================================================
-   HERO - BANNER SWIPER (CHỈ ẢNH)
+   HERO - BANNER SWIPER TỶ LỆ 2.5:1
 ========================================================== */
 .cinema-hero {
   position: relative;
   width: 100%;
-  min-height: 450px;
+  max-width: 2000px;
+  margin: 0 auto;
+  aspect-ratio: 2.5 / 1;
   overflow: hidden;
+  background-color: #0a0a0a;
+  border-radius: var(--radius-lg);
 }
 
-/* Swiper full container */
 .hero-swiper {
   width: 100%;
   height: 100%;
@@ -78,7 +81,7 @@
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0.15) 0%,
-    rgba(0, 0, 0, 0.55) 100%
+    rgba(0, 0, 0, 0.45) 100%
   );
   pointer-events: none;
 }
@@ -91,16 +94,16 @@
   width: 18%;
   height: 100%;
   z-index: 2;
-  opacity: 0.4;
-  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.15), transparent);
+  opacity: 0.3;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.12), transparent);
   transform: skewX(-25deg);
   animation: shineMove 12s ease-in-out infinite;
   pointer-events: none;
 }
 @keyframes shineMove {
   0% { left: -40%; opacity: 0; }
-  20% { opacity: 0.3; }
-  50% { opacity: 0.6; }
+  20% { opacity: 0.25; }
+  50% { opacity: 0.5; }
   100% { left: 140%; opacity: 0; }
 }
 
@@ -109,16 +112,15 @@
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  opacity: 0.12;
-  background-image: radial-gradient(rgba(212, 175, 55, 0.4) 1px, transparent 1px);
-  background-size: 180px 180px;
+  opacity: 0.08;
+  background-image: radial-gradient(rgba(212, 175, 55, 0.3) 1px, transparent 1px);
+  background-size: 160px 160px;
   animation: particleMove 25s linear infinite;
 }
 @keyframes particleMove {
   0% { transform: translateY(0); }
   100% { transform: translateY(-180px); }
 }
-
 /* ==========================================================
    THÔNG TIN RẠP (phía dưới banner)
 ========================================================== */
