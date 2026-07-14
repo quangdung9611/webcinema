@@ -37,10 +37,10 @@ const CinemaDetail = () => {
 
   // ✅ Mảng ảnh cinema (giống UserHome)
   const cinemaImages = [
-    "cinema1.jpg",
-    "cinema2.jpg",
-    "cinema3.jpg",
-    "cinema4.jpg"
+    "cinema1.png",
+    "cinema2.png",
+    "cinema3.png",
+    "cinema4.png"
   ];
 
   const cinemaBaseUrl = "https://api.quangdungcinema.id.vn/uploads/cinema_map/";
