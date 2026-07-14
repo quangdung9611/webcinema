@@ -61,7 +61,7 @@
 }
 
 /* ==========================================================
-   BANNER PREMIUM (CHỈ ẢNH, KHÔNG SHADOW TRÁI, KHÔNG ZOOM)
+   BANNER PREMIUM - TỈ LỆ 2.5:1 (2000x800)
 ========================================================== */
 
 .carousel-full-wrapper {
@@ -74,7 +74,7 @@
 .banner-premium {
     position: relative;
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 2.5 / 1; /* ✅ Đã sửa từ 16/9 thành 2.5/1 */
 }
 
 .premiumSwiper,
@@ -382,7 +382,7 @@
 
 @media (max-width: 768px) {
     .banner-premium {
-        aspect-ratio: 16 / 9;
+        aspect-ratio: 2.5 / 1; /* ✅ giữ nguyên tỷ lệ 2.5/1 trên mobile */
         max-height: 450px;
     }
     .banner-img {
@@ -433,7 +433,7 @@
 
 @media (max-width: 480px) {
     .banner-premium {
-        aspect-ratio: 16 / 9;
+        aspect-ratio: 2.5 / 1; /* ✅ giữ nguyên tỷ lệ 2.5/1 trên mobile nhỏ */
         max-height: 300px;
     }
     .banner-img {
