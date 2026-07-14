@@ -14,7 +14,7 @@
 .film-review-hero {
     position: relative;
     width: 100%;
-    aspect-ratio: 3/1;
+    aspect-ratio: 2.5/1;
     overflow: visible;           
 }
 
