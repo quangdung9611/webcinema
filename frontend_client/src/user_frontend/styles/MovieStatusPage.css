@@ -1,17 +1,23 @@
+/* ============================================================
+   MOVIE STATUS PAGE – CINEMA GOLD
+   ============================================================ */
+
 .movie-status-page {
     width: 100%;
+    background: var(--main-background);
     color: var(--text-primary);
+    min-height: 100vh;
 }
 
 /* ============================================================
-   HERO BANNER
+   BANNER
    ============================================================ */
 
 .movie-status-hero {
     width: 100%;
     overflow: hidden;
     position: relative;
-    margin-bottom: var(--space-2xl);
+    margin-bottom: var(--space-3xl);
 }
 
 .movie-status-banner-img {
@@ -19,64 +25,59 @@
     height: auto;
     display: block;
     object-fit: cover;
-    filter: brightness(.92) contrast(1.04) saturate(.96);
+    filter: brightness(0.92) contrast(1.04) saturate(0.96);
 }
 
 /* ============================================================
-   TABS
+   TABS (nút nhỏ gọn, đặt bên phải header)
    ============================================================ */
-
-.status-tabs-wrapper {
-    width: 100%;
-    max-width: 1320px;
-    margin: 0 auto;
-    padding-inline: var(--space-lg);
-    margin-bottom: var(--space-3xl);
-}
 
 .status-tabs {
     display: flex;
-    justify-content: center;
     align-items: center;
-    flex-wrap: wrap;
-    gap: var(--space-md);
+    gap: var(--space-sm);
+    flex-shrink: 0;
 }
 
 .status-tab {
     border: var(--border-gold);
-    background: var(--cinema-card-bg);
+    background: transparent;
     color: var(--text-secondary);
-
     padding: var(--space-sm) var(--space-xl);
-
     border-radius: var(--radius-round);
-
     font-size: var(--font-size-sm);
-    font-weight: var(--fw-bold);
-
+    font-weight: var(--fw-semibold);
     cursor: pointer;
-
-    transition: transform var(--transition-slow),
-                box-shadow var(--transition-slow),
-                border-color var(--transition-slow);
+    transition: all var(--transition-normal);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    min-width: 120px;
+    text-align: center;
 }
 
 .status-tab:hover {
     transform: translateY(-2px);
-    border: var(--border-gold-hover);
+    border-color: var(--gold-primary);
     color: var(--text-white);
-    box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
+    background: rgba(201, 168, 76, 0.06);
+    box-shadow: var(--shadow-gold);
 }
 
 .status-tab.active {
     background: var(--gold-gradient);
-    color: var(--text-white);
-    border: var(--border-gold-hover);
-    box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
+    color: var(--black-premium);
+    border-color: var(--gold-primary);
+    box-shadow: var(--shadow-gold);
+    font-weight: var(--fw-bold);
+}
+
+.status-tab.active:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(201, 168, 76, 0.3);
 }
 
 /* ============================================================
-   MOVIE LIST - MẶC ĐỊNH 4 CỘT TRÊN PC (>= 768px)
+   MOVIE LIST – 4 CỘT MẶC ĐỊNH (>= 768px)
    ============================================================ */
 
 .movie-list {
@@ -85,60 +86,65 @@
     gap: var(--space-lg);
     padding: 0 var(--space-lg) var(--space-3xl);
     max-width: 1320px;
-    margin: 0 auto;
+    margin: var(--space-2xl) auto 0; /* 👈 THÊM margin-top */
 }
 
 /* ============================================================
-   RESPONSIVE - DƯỚI 768px CHUYỂN 2 CỘT
+   RESPONSIVE – DƯỚI 768px CHUYỂN 2 CỘT
    ============================================================ */
 
-@media (max-width: 767px) {
-    .movie-list {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-md);
-        padding: 0 var(--space-md) var(--space-2xl);
-    }
-
-    .status-tabs-wrapper {
-        padding-inline: var(--space-md);
+@media (max-width: 768px) {
+    .movie-status-hero {
         margin-bottom: var(--space-2xl);
     }
 
     .status-tabs {
-        gap: var(--space-sm);
+        width: 100%;
+        justify-content: flex-start;
+        gap: var(--space-xs);
     }
 
     .status-tab {
-        padding: var(--space-sm) var(--space-lg);
-        font-size: var(--font-size-sm);
+        flex: 1;
+        padding: var(--space-xs) var(--space-lg);
+        font-size: var(--font-size-xs);
+        min-width: 100px;
+        letter-spacing: 0.02em;
+    }
+
+    .movie-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-md);
+        padding: 0 var(--space-md) var(--space-2xl);
+        margin-top: var(--space-xl); /* 👈 THÊM margin-top trên tablet */
     }
 }
 
 /* ============================================================
-   MOBILE NHỎ (<= 480px) - VẪN GIỮ 2 CỘT
+   MOBILE NHỎ (<= 480px) – VẪN 2 CỘT
    ============================================================ */
 
 @media (max-width: 480px) {
-    .movie-list {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-sm);
-        padding: 0 var(--space-sm) var(--space-xl);
+    .movie-status-hero {
+        margin-bottom: var(--space-xl);
     }
 
-    .status-tabs-wrapper {
-        padding-inline: var(--space-sm);
-        margin-bottom: var(--space-xl);
+    .status-tabs {
+        gap: var(--space-xs);
     }
 
     .status-tab {
         padding: var(--space-xs) var(--space-md);
         font-size: var(--font-size-xs);
-        width: 100%;
+        min-width: 70px;
+        flex: 1;
     }
 
-    .status-tabs {
-        flex-direction: column;
-        width: 100%;
+    .movie-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-sm);
+        padding: 0 var(--space-sm) var(--space-xl);
+        margin-top: var(--space-lg); /* 👈 THÊM margin-top trên mobile */
     }
 }
 
@@ -146,22 +152,50 @@
    LOADING & EMPTY STATE
    ============================================================ */
 
-.loading-state,
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-md);
+    min-height: 50vh;
+    color: var(--text-muted);
+    font-size: var(--font-size-base);
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(201, 168, 76, 0.1);
+    border-top-color: var(--gold-primary);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .empty-results {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-
     gap: var(--space-sm);
-
     text-align: center;
-
     padding: var(--space-3xl) var(--space-lg);
-
+    grid-column: 1 / -1;
     color: var(--text-muted);
 }
 
-.loading-state {
-    min-height: 50vh;
+.empty-results svg {
+    color: var(--text-muted);
+    opacity: 0.3;
+}
+
+.empty-results p {
+    font-size: var(--font-size-base);
+    color: var(--text-muted);
 }

@@ -157,7 +157,10 @@ const BookingGuide = lazy(() =>
 const ContactSupport = lazy(() =>
     import("./user_frontend/pages/ContactSupport")
 );
-
+// Import (thêm vào phần USER PAGES)
+const MemberShip = lazy(() =>
+    import("./user_frontend/pages/MemberShip")
+);
 // ==========================================================
 // ADMIN PAGES (LAZY)
 // ==========================================================
@@ -586,7 +589,7 @@ function AppContent() {
                                         path="contact"
                                         element={<ContactSupport />}
                                     />
-
+                                    <Route path="membership" element={<MemberShip />} />
                                 </Route>
 
                                 <Route

@@ -147,6 +147,7 @@ const UserHeader = () => {
                     </li>
 
                     <li><Link to="/promotion" onClick={closeMobileMenu}>Khuyến mãi</Link></li>
+                    <li><Link to="/blog-cinema" onClick={closeMobileMenu}>Blog Điện Ảnh</Link></li>
                 </ul>
 
                 <div className="user-menu" ref={dropdownRef}>

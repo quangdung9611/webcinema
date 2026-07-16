@@ -1,9 +1,10 @@
 /* ==========================================================
-   USER HOME - TỐI GIẢN & ĐỒNG BỘ VỚI GLOBAL
+   USER HOME - CINEMA GOLD PREMIUM
+   Gạch dưới chạy hết chiều dài chữ (::after)
 ========================================================== */
 
 /* ==========================================================
-   ANIMATIONS RIÊNG CHO USER HOME
+   ANIMATIONS
 ========================================================== */
 
 @keyframes fadeUp {
@@ -64,30 +65,54 @@
     animation: fadeUp 0.8s ease both;
 }
 
+/* ==========================================================
+   SECTION HEADER (TIÊU ĐỀ + GẠCH DƯỚI)
+========================================================== */
+
 .section-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: center;
     gap: var(--space-lg);
     margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
 }
 
 .section-header-left {
     display: flex;
     flex-direction: column;
+    flex: 1;
 }
 
+/* ===== TIÊU ĐỀ + GẠCH DƯỚI ===== */
 .section-title {
+    display: inline-block;  /* quan trọng: để co dãn theo nội dung */
+    position: relative;
     margin: 0;
     color: var(--text-white);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--fw-extrabold);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding-bottom: 8px;    /* tạo khoảng cách cho gạch dưới */
 }
 
-.title-underline {
-    width: 70px;
+/* Gạch dưới – chạy hết độ dài chữ */
+.section-title::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;           /* 👈 BẰNG CHIỀU RỘNG CỦA CHỮ */
     height: 4px;
-    margin-top: 10px;
     border-radius: 999px;
     background: var(--gold-gradient);
+    transition: width 0.4s ease;
+}
+
+/* Khi hover vào header, gạch dưới giãn ra một chút (thú vị hơn) */
+.section-header:hover .section-title::after {
+    width: 105%;           /* giãn ra một chút cho hiệu ứng */
 }
 
 /* ==========================================================
@@ -349,70 +374,69 @@
     font-size: var(--font-size-sm);
     line-height: 1.6;
 }
+
 /* ==========================================================
-   BUTTON VIEW ALL – CINEMA GOLD
-   ========================================================== */
+   BUTTON VIEW ALL
+========================================================== */
 
 .btn-view-all {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 24px;
-  border-radius: 999px;
-  text-decoration: none;
-  border: 2px solid rgba(201, 168, 76, 0.3);
-  color: var(--gold-primary);
-  background: rgba(255, 255, 255, 0.02);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  font-size: var(--font-size-sm);
-  font-weight: var(--fw-semibold);
-  white-space: nowrap;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 999px;
+    text-decoration: none;
+    border: 2px solid rgba(201, 168, 76, 0.3);
+    color: var(--gold-primary);
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-semibold);
+    white-space: nowrap;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
 }
 
-/* Viền gradient khi hover */
 .btn-view-all::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  padding: 2px;
-  background: var(--gold-gradient);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.4s ease;
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    padding: 2px;
+    background: var(--gold-gradient);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
 }
 
 .btn-view-all:hover::before {
-  opacity: 1;
+    opacity: 1;
 }
 
 .btn-view-all:hover {
-  color: #0a0a0a;
-  background: var(--gold-gradient);
-  border-color: transparent;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(201, 168, 76, 0.35);
+    color: #0a0a0a;
+    background: var(--gold-gradient);
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(201, 168, 76, 0.35);
 }
 
 .btn-view-all:active {
-  transform: scale(0.96);
+    transform: scale(0.96);
 }
 
-/* Icon mũi tên chạy sang phải khi hover */
 .btn-view-all svg {
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  flex-shrink: 0;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    flex-shrink: 0;
 }
 
 .btn-view-all:hover svg {
-  transform: translateX(6px);
+    transform: translateX(6px);
 }
 
 /* ==========================================================
@@ -426,7 +450,6 @@
     align-items: start;
 }
 
-/* Card trong grid luôn full chiều cao */
 .promotions-section .cinema-card,
 .cinema-corner-section .cinema-card {
     height: 100%;
@@ -490,21 +513,47 @@
 }
 
 /* ==========================================================
-   RESPONSIVE - CHỈ 3 BREAKPOINT CHÍNH
+   RESPONSIVE
 ========================================================== */
 
-/* 1. 1024px - Laptop / Tablet ngang (feature về 2 cột) */
+/* ----- 1024px: Feature về 2 cột ----- */
 @media (max-width: 1024px) {
     .features-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-/* 2. 768px - Tablet dọc - VẪN GIỮ 4 CỘT, nhưng điều chỉnh layout */
+/* ----- 768px: Vẫn giữ 4 cột, nhưng layout co lại ----- */
 @media (max-width: 768px) {
     .cinema-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: var(--space-lg);
+    }
+
+    .section-header {
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .section-header-left {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .section-title {
+        font-size: var(--font-size-xl);
+        padding-bottom: 6px;
+    }
+
+    .section-title::after {
+        height: 3px;
+    }
+
+    .btn-view-all {
+        padding: 8px 18px;
+        font-size: var(--font-size-xs);
+        flex-shrink: 0;
     }
 
     .quick-booking-content {
@@ -530,16 +579,6 @@
         height: 52px;
     }
 
-    .section-header {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: var(--space-md);
-    }
-
-    .btn-view-all {
-        align-self: flex-start;
-    }
-
     .feature-item {
         padding: var(--space-md);
         gap: 14px;
@@ -560,7 +599,7 @@
     }
 }
 
-/* 3. 425px - Mobile - XUỐNG 2 CỘT, thu nhỏ toàn bộ */
+/* ----- 425px: Xuống 2 cột cho card ----- */
 @media (max-width: 425px) {
     .cinema-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -568,7 +607,22 @@
     }
 
     .home-container {
-        padding: 0 16px;
+        padding: 0 16px var(--space-3xl);
+    }
+
+    .section-title {
+        font-size: var(--font-size-lg);
+        padding-bottom: 4px;
+    }
+
+    .section-title::after {
+        height: 3px;
+    }
+
+    .btn-view-all {
+        padding: 6px 14px;
+        font-size: 11px;
+        gap: 4px;
     }
 
     .quick-booking-content {
@@ -612,20 +666,6 @@
     }
 
     .feature-text p {
-        font-size: 11px;
-    }
-
-    .section-title {
-        font-size: var(--font-size-xl);
-    }
-
-    .title-underline {
-        width: 50px;
-        height: 3px;
-    }
-
-    .btn-view-all {
-        padding: 8px 16px;
         font-size: 11px;
     }
 }

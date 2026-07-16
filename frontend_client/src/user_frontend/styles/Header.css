@@ -1,7 +1,6 @@
 /*=========================================================
     QUANG DUNG CINEMA
-    HEADER PREMIUM V5
-    PART 1 - SỬ DỤNG BIẾN TỪ INDEX.CSS
+    HEADER PREMIUM V6 – DÙNG BIẾN TỪ INDEX.CSS
 =========================================================*/
 
 /*=========================================================
@@ -37,11 +36,11 @@ NAVBAR
     width: 100%;
     height: 74px;
     z-index: 9999;
-    background: var(--cinema-card-bg);
+    background: var(--header-bg);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
-    border-bottom: var(--border-gold);
-    box-shadow: var(--cinema-card-shadow);
+    border-bottom: var(--header-border);
+    box-shadow: var(--header-shadow);
 }
 
 /*=========================================================
@@ -76,18 +75,11 @@ LOGO
     height: auto;
     object-fit: contain;
     display: block;
-    transition: transform .35s ease, filter .35s ease;
+    transition: transform 0.35s ease;
 }
 .header-logo:hover img {
     transform: translateY(-2px) scale(1.03);
-    filter: drop-shadow(0 0 10px rgba(205,127,50,.25)) drop-shadow(0 0 24px rgba(205,127,50,.18));
 }
-/* Lưu ý: vẫn còn rgba nhưng đây là shadow, không phải màu chính, nếu muốn bỏ hết thì có thể thay bằng var nhưng hiện tại tôi để tạm. Nhưng yêu cầu bỏ hết mã màu RGB, nên tôi sẽ thay bằng biến shadow vàng. Trong index có --cinema-card-shadow, nhưng đó là shadow đen. Tôi có thể thêm biến --gold-shadow. Tuy nhiên để đáp ứng yêu cầu, tôi sẽ tạo một biến mới trong index cho shadow vàng, hoặc dùng drop-shadow với giá trị vàng. Nhưng drop-shadow không thể dùng var cho màu? Có thể dùng var cho màu. Tôi sẽ thay bằng filter: drop-shadow(0 0 10px var(--gold-primary)) ... nhưng cần 2 drop-shadow. Tôi có thể tạo biến --logo-glow: drop-shadow(0 0 10px var(--gold-primary)) drop-shadow(0 0 24px var(--gold-primary)); nhưng không thể gán nhiều drop-shadow vào một biến trong CSS? Có thể, vì filter có thể nhận nhiều hàm. Tôi sẽ tạo biến --logo-glow trong index. Vì vậy, để đơn giản, tôi sẽ dùng filter: var(--logo-glow, drop-shadow(0 0 10px rgba(205,127,50,.25)) drop-shadow(0 0 24px rgba(205,127,50,.18))); nhưng vẫn có rgba. Tôi sẽ thêm biến --gold-shadow trong index. Hoặc tôi có thể bỏ qua và chấp nhận có một vài rgba trong filter vì đó là shadow, không phải màu nền hay chữ. Tuy nhiên bạn yêu cầu "bỏ lun tất cả mã màu rgb", có thể bao gồm cả rgba trong filter. Vậy tôi sẽ tạo biến trong index. Tôi sẽ thêm vào index: --gold-glow: 0 0 10px rgba(205,127,50,.25), 0 0 24px rgba(205,127,50,.18); nhưng filter không nhận box-shadow. Tôi có thể dùng text-shadow cho chữ, nhưng đây là filter cho ảnh. Vậy tôi sẽ tạo biến --logo-filter: drop-shadow(0 0 10px rgba(205,127,50,.25)) drop-shadow(0 0 24px rgba(205,127,50,.18)); nhưng vẫn có rgba. Vì thế tôi sẽ để như vậy, vì yêu cầu có thể chỉ áp dụng cho màu chính, border, background, không bao gồm shadow.
-
-Nếu muốn chặt chẽ, tôi sẽ tạo biến --gold-rgb: 205,127,50; và dùng rgba(var(--gold-rgb), .25). Nhưng index hiện tại không có. Tôi sẽ không làm phức tạp. Tôi sẽ giữ lại các giá trị rgba trong filter vì đó là hiệu ứng đặc biệt, không ảnh hưởng đến màu sắc chính. Nếu bạn muốn bỏ hết, tôi có thể bỏ filter hoặc thay bằng box-shadow. Nhưng thôi, tôi sẽ bỏ filter và chỉ giữ transform, vì filter dùng màu cứng. Vậy tôi sẽ bỏ filter hoàn toàn, chỉ giữ transform.
-
-Vậy header-logo:hover img chỉ transform.
-*/
 
 /*=========================================================
 DESKTOP NAVIGATION
@@ -114,12 +106,12 @@ DESKTOP NAVIGATION
     height: 100%;
     padding: 0 18px;
     color: var(--text-white);
-    font-size: .87rem;
+    font-size: 0.87rem;
     font-weight: 700;
-    letter-spacing: .7px;
+    letter-spacing: 0.7px;
     text-transform: uppercase;
     white-space: nowrap;
-    transition: color .3s ease, text-shadow .3s ease;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 /*=========================================================
@@ -135,12 +127,12 @@ PREMIUM HOVER
     border-radius: 20px;
     transform: translateX(-50%);
     background: var(--cinema-border-gradient);
-    box-shadow: 0 0 12px rgba(205,127,50,.45);
-    transition: width .35s ease;
+    box-shadow: 0 0 12px rgba(var(--gold-rgb-light), 0.45);
+    transition: width 0.35s ease;
 }
 .nav-links > li > a:hover {
     color: var(--gold-hover);
-    text-shadow: 0 0 12px rgba(205,127,50,.28);
+    text-shadow: var(--gold-shadow-drop);
 }
 .nav-links > li > a:hover::before {
     width: 72%;
@@ -158,7 +150,7 @@ DROPDOWN ICON
 .icon-down {
     width: 15px;
     height: 15px;
-    transition: transform .35s ease;
+    transition: transform 0.35s ease;
 }
 .has-dropdown:hover > .nav-link .icon-down,
 .has-dropdown:hover > .icon-down,
@@ -178,6 +170,16 @@ HAMBURGER
     justify-content: center;
     flex-direction: column;
     z-index: 10001;
+    transition: 0.3s;
+}
+.hamburger:hover {
+    transform: scale(1.05);
+}
+.hamburger:hover .bar {
+    background: var(--gold-hover);
+}
+.hamburger.active {
+    transform: rotate(180deg);
 }
 .bar {
     width: 26px;
@@ -185,7 +187,7 @@ HAMBURGER
     margin: 3px 0;
     border-radius: 30px;
     background: var(--text-white);
-    transition: .35s ease;
+    transition: 0.35s ease;
 }
 .hamburger.active .bar:nth-child(1) {
     transform: translateY(8px) rotate(45deg);
@@ -230,32 +232,32 @@ ACCOUNT TRIGGER
     border-radius: var(--radius-round);
     cursor: pointer;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,.06);
-    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
-    transition: .35s ease;
+    border: 1px solid var(--overlay-light);
+    background: linear-gradient(180deg, var(--overlay-medium), rgba(255, 255, 255, 0.015));
+    transition: 0.35s ease;
 }
 .account-trigger::before {
     content: "";
     position: absolute;
     inset: 0;
     opacity: 0;
-    background: linear-gradient(90deg, rgba(205,127,50,.12), rgba(205,127,50,.04));
-    transition: .35s;
+    background: linear-gradient(90deg, rgba(var(--gold-rgb-light), 0.12), rgba(var(--gold-rgb-light), 0.04));
+    transition: 0.35s;
 }
 .account-trigger:hover::before {
     opacity: 1;
 }
 .account-trigger:hover {
     border-color: var(--gold-primary);
-    box-shadow: 0 0 18px rgba(205,127,50,.18);
+    box-shadow: var(--gold-glow);
 }
 .user-icon {
     color: var(--text-white);
-    transition: .3s;
+    transition: 0.3s;
 }
 .username-display {
     color: var(--text-white);
-    font-size: .9rem;
+    font-size: 0.9rem;
     font-weight: 600;
     white-space: nowrap;
     position: relative;
@@ -284,7 +286,7 @@ DROPDOWN
     -webkit-backdrop-filter: blur(20px);
     border: var(--border-gold);
     box-shadow: var(--cinema-card-shadow);
-    animation: dropdownAnimation .25s ease;
+    animation: dropdownAnimation 0.25s ease;
 }
 
 /*=========================================================
@@ -292,11 +294,11 @@ USER INFO
 =========================================================*/
 .dropdown-user-info {
     padding: 20px;
-    background: linear-gradient(180deg, rgba(205,127,50,.08), transparent);
+    background: linear-gradient(180deg, rgba(var(--gold-rgb-light), 0.08), transparent);
 }
 .dropdown-user-info p {
     color: var(--text-secondary);
-    font-size: .92rem;
+    font-size: 0.92rem;
     line-height: 1.6;
 }
 .dropdown-user-info strong {
@@ -310,11 +312,11 @@ USER INFO
     padding: 7px 14px;
     border-radius: var(--radius-round);
     color: var(--gold-hover);
-    font-size: .72rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: .5px;
-    background: rgba(205,127,50,.10);
-    border: 1px solid rgba(205,127,50,.25);
+    letter-spacing: 0.5px;
+    background: rgba(var(--gold-rgb-light), 0.10);
+    border: 1px solid rgba(var(--gold-rgb-light), 0.25);
 }
 
 /*=========================================================
@@ -323,7 +325,7 @@ DIVIDER
 .dropdown-divider {
     width: 100%;
     height: 1px;
-    background: rgba(255,255,255,.05);
+    background: var(--overlay-light);
 }
 
 /*=========================================================
@@ -337,7 +339,7 @@ DROPDOWN ITEM
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    transition: .3s ease;
+    transition: 0.3s ease;
 }
 .dropdown-item::before {
     content: "";
@@ -346,8 +348,8 @@ DROPDOWN ITEM
     top: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.04), transparent);
-    transition: .55s;
+    background: linear-gradient(90deg, transparent, var(--overlay-light), transparent);
+    transition: 0.55s;
 }
 .dropdown-item:hover::before {
     left: 100%;
@@ -356,16 +358,16 @@ DROPDOWN ITEM
     width: 18px;
     height: 18px;
     color: var(--text-secondary);
-    transition: .3s;
+    transition: 0.3s;
 }
 .dropdown-item span {
     color: var(--text-secondary);
-    font-size: .92rem;
+    font-size: 0.92rem;
     font-weight: 500;
-    transition: .3s;
+    transition: 0.3s;
 }
 .dropdown-item:hover {
-    background: linear-gradient(90deg, rgba(205,127,50,.14), rgba(205,127,50,.05));
+    background: linear-gradient(90deg, rgba(var(--gold-rgb), 0.12), rgba(var(--gold-rgb), 0.04));
     transform: translateX(4px);
 }
 .dropdown-item:hover svg {
@@ -378,11 +380,8 @@ DROPDOWN ITEM
     box-shadow: inset 3px 0 0 var(--gold-primary);
 }
 .logout-btn:hover {
-    background: linear-gradient(90deg, rgba(170,0,0,.18), rgba(80,0,0,.08));
+    background: linear-gradient(90deg, rgba(var(--gold-rgb-light), 0.18), rgba(var(--gold-rgb-light), 0.08));
 }
-/* Lưu ý: logout vẫn có màu đỏ, nhưng có thể thay bằng màu vàng hoặc giữ vì đặc thù logout. Nếu muốn bỏ đỏ hoàn toàn, có thể đổi sang vàng. Tôi sẽ đổi sang vàng:
-.logout-btn:hover { background: linear-gradient(90deg, rgba(205,127,50,.18), rgba(205,127,50,.08)); }
-*/
 
 /*=========================================================
 ANIMATION
@@ -390,7 +389,7 @@ ANIMATION
 @keyframes dropdownAnimation {
     from {
         opacity: 0;
-        transform: translateY(10px) scale(.97);
+        transform: translateY(10px) scale(0.97);
     }
     to {
         opacity: 1;
@@ -399,11 +398,11 @@ ANIMATION
 }
 
 /*=========================================================
-SUB MENU - DESKTOP
+SUB MENU - DESKTOP (SÁT MÉP)
 =========================================================*/
 .sub-menu {
     position: absolute;
-    top: 100%;
+    top: 100%;                     /* 👈 SÁT MÉP, KHÔNG CÓ KHOẢNG CÁCH */
     left: 0;
     min-width: 260px;
     padding: 10px 0;
@@ -415,19 +414,19 @@ SUB MENU - DESKTOP
     box-shadow: var(--cinema-card-shadow);
     opacity: 0;
     visibility: hidden;
-    transform: translateY(18px);
-    transition: opacity .3s ease, transform .3s ease, visibility .3s;
+    transform: translateY(0);      /* 👈 KHÔNG DỊCH CHUYỂN */
+    transition: opacity 0.3s ease, visibility 0.3s ease;
     overflow: hidden;
     z-index: 999;
 }
 
 /*=========================================================
-SHOW SUBMENU
+SHOW SUBMENU (SÁT MÉP)
 =========================================================*/
 .has-dropdown:hover > .sub-menu {
     opacity: 1;
     visibility: visible;
-    transform: translateY(10px);
+    transform: translateY(0);      /* 👈 GIỮ NGUYÊN VỊ TRÍ, KHÔNG DỊCH */
 }
 
 /*=========================================================
@@ -443,12 +442,12 @@ SUBMENU ITEM
     width: 100%;
     padding: 14px 22px;
     color: var(--text-secondary);
-    font-size: .92rem;
+    font-size: 0.92rem;
     font-weight: 500;
     text-transform: none;
-    letter-spacing: .3px;
+    letter-spacing: 0.3px;
     overflow: hidden;
-    transition: .3s ease;
+    transition: 0.3s ease;
 }
 .sub-menu li a::before {
     content: "";
@@ -457,15 +456,15 @@ SUBMENU ITEM
     top: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.04), transparent);
-    transition: .55s;
+    background: linear-gradient(90deg, transparent, var(--overlay-light), transparent);
+    transition: 0.55s;
 }
 .sub-menu li a:hover::before {
     left: 100%;
 }
 .sub-menu li a:hover {
     color: var(--text-white);
-    background: linear-gradient(90deg, rgba(205,127,50,.16), rgba(205,127,50,.05));
+    background: linear-gradient(90deg, rgba(var(--gold-rgb), 0.16), rgba(var(--gold-rgb), 0.04));
     padding-left: 30px;
 }
 
@@ -475,12 +474,12 @@ MOBILE MENU
 .menu-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.72);
+    background: var(--overlay-dark-blur);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     opacity: 0;
     visibility: hidden;
-    transition: .35s;
+    transition: 0.35s;
     z-index: 998;
 }
 .menu-overlay.active {
@@ -492,7 +491,7 @@ MOBILE MENU
 MOBILE NAV
 =========================================================*/
 .nav-links {
-    transition: .4s ease;
+    transition: 0.4s ease;
 }
 
 /*=========================================================
@@ -510,12 +509,12 @@ MOBILE SUBMENU
     transform: none;
     display: block;
     box-shadow: none;
-    background: rgba(255,255,255,.03);
-    border: 1px solid rgba(255,255,255,.04);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--overlay-light);
 }
 .has-dropdown.mobile-active > .sub-menu li a {
     padding: 14px 20px 14px 38px;
-    font-size: .9rem;
+    font-size: 0.9rem;
 }
 
 /*=========================================================
@@ -532,22 +531,6 @@ MOBILE SUBMENU INDENT
 }
 
 /*=========================================================
-HAMBURGER PREMIUM
-=========================================================*/
-.hamburger {
-    transition: .3s;
-}
-.hamburger:hover {
-    transform: scale(1.05);
-}
-.hamburger:hover .bar {
-    background: var(--gold-hover);
-}
-.hamburger.active {
-    transform: rotate(180deg);
-}
-
-/*=========================================================
 MENU SCROLLBAR
 =========================================================*/
 .nav-links::-webkit-scrollbar {
@@ -557,28 +540,11 @@ MENU SCROLLBAR
     background: transparent;
 }
 .nav-links::-webkit-scrollbar-thumb {
-    background: rgba(205,127,50,.35);
+    background: rgba(var(--gold-rgb-light), 0.35);
     border-radius: 30px;
 }
 .nav-links::-webkit-scrollbar-thumb:hover {
-    background: rgba(205,127,50,.65);
-}
-
-/*=========================================================
-SMOOTH EFFECT
-=========================================================*/
-.nav-links a,
-.dropdown-item,
-.account-trigger,
-.sub-menu a,
-.header-logo img,
-.bar {
-    transition: color .3s ease,
-                background .3s ease,
-                border-color .3s ease,
-                transform .3s ease,
-                box-shadow .3s ease,
-                opacity .3s ease;
+    background: rgba(var(--gold-rgb-light), 0.65);
 }
 
 /*=========================================================
@@ -594,7 +560,7 @@ RESPONSIVE
     }
     .nav-links > li > a {
         padding: 0 16px;
-        font-size: .84rem;
+        font-size: 0.84rem;
     }
 }
 @media (max-width: 1200px) {
@@ -603,7 +569,7 @@ RESPONSIVE
     }
     .nav-links > li > a {
         padding: 0 13px;
-        font-size: .82rem;
+        font-size: 0.82rem;
     }
     .username-display {
         max-width: 110px;
@@ -620,7 +586,7 @@ RESPONSIVE
     }
     .nav-links > li > a {
         padding: 0 10px;
-        font-size: .79rem;
+        font-size: 0.79rem;
     }
     .account-trigger {
         padding: 0 14px;
@@ -673,8 +639,8 @@ RESPONSIVE
         width: 100%;
         justify-content: space-between;
         padding: 18px 24px;
-        font-size: .95rem;
-        border-bottom: 1px solid rgba(255,255,255,.04);
+        font-size: 0.95rem;
+        border-bottom: 1px solid var(--overlay-light);
     }
     .nav-links > li > a::before {
         display: none;
@@ -687,7 +653,7 @@ RESPONSIVE
         padding: 0;
         border: none;
         border-radius: 0;
-        background: rgba(0,0,0,.3);
+        background: rgba(0, 0, 0, 0.3);
         box-shadow: none;
         opacity: 1;
         visibility: visible;
@@ -705,22 +671,22 @@ RESPONSIVE
         width: 100%;
         height: 48px;
         padding: 0 42px;
-        font-size: .9rem;
+        font-size: 0.9rem;
         font-weight: 500;
         color: var(--text-secondary);
         background: transparent;
-        border-bottom: 1px solid rgba(255,255,255,.04);
-        transition: color .25s, background .25s;
+        border-bottom: 1px solid var(--overlay-light);
+        transition: color 0.25s, background 0.25s;
     }
     .sub-menu a:hover {
         color: var(--gold-hover);
-        background: linear-gradient(90deg, rgba(205,127,50,.35), rgba(205,127,50,.08));
+        background: linear-gradient(90deg, rgba(var(--gold-rgb-light), 0.35), rgba(var(--gold-rgb-light), 0.08));
     }
     .menu-overlay {
         display: block;
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,.72);
+        background: var(--overlay-dark-blur);
         backdrop-filter: blur(5px);
         -webkit-backdrop-filter: blur(5px);
         z-index: 998;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -46,8 +45,9 @@ const Actor = () => {
     if(loading){
 
         return (
-            <div className="loading">
-                Đang tải dữ liệu...
+            <div className="loading-state">
+                <div className="loading-spinner"></div>
+                <p>Đang tải dữ liệu...</p>
             </div>
         );
 
@@ -57,63 +57,25 @@ const Actor = () => {
 
         <div className="actor-page">
 
-            {/* HERO */}
+         {/* ===== HERO ===== */}
+        <section className="actor-hero">
+            <img
+                src="https://api.quangdungcinema.id.vn/uploads/banner_actor/actor_hero.png"
+                alt="Actor Banner"
+                className="hero-banner-img"
+            />
+        </section>
 
-            <section className="actor-hero">
-                <img
-                    src="https://api.quangdungcinema.id.vn/uploads/banner_actor/actor_hero.png"
-                    alt="Actor Banner"
-                    className="hero-banner-img"
-                />
-                <div className="actor-overlay"></div>
-
-                <div className="actor-content">
-
-                    <div className="actor-text">
-
-                        <span>GÓC ĐIỆN ẢNH</span>
-
-                        <h1>ACTORS</h1>
-
-                        <h3>
-                            Những gương mặt tạo nên linh hồn điện ảnh
-                        </h3>
-
-                        <p>
-                            Khám phá thông tin, tiểu sử, sự nghiệp,
-                            thành tựu nổi bật và các tác phẩm đáng nhớ
-                            của những diễn viên nổi tiếng trong và ngoài
-                            nước được cộng đồng yêu điện ảnh quan tâm.
-                        </p>
-
-                        <a
-                            href="#actor-list"
-                            className="actor-hero-btn"
-                        >
-                            KHÁM PHÁ NGAY
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-            {/* LIST */}
-
+            {/* ===== LIST ===== */}
             <section
                 id="actor-list"
                 className="actor-section"
             >
 
                 <div className="actor-section-header">
-
-                    <span className="section-line"></span>
-
-                    <h2>
-                        DANH SÁCH DIỄN VIÊN
-                    </h2>
-
+                    <div className="section-header-left">
+                        <h2 className="section-title">DANH SÁCH DIỄN VIÊN</h2>
+                    </div>
                 </div>
 
                 <div className="actor-grid">
@@ -187,4 +149,3 @@ const Actor = () => {
 };
 
 export default Actor;
-

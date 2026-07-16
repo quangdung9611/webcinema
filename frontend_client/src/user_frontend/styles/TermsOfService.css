@@ -5,17 +5,20 @@
 .terms-page {
   width: 100%;
   padding: 40px 0 60px;
-  background: var(--main-background, #0a0a0a);
+  background: var(--main-background);
   min-height: 70vh;
 }
 
 .terms-container {
-  max-width: 1200px;
+  max-width: var(--container-width);
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--container-padding);
 }
 
-/* ----- HEADER ----- */
+/* ==========================================================
+   HEADER
+   ========================================================== */
+
 .terms-header {
   text-align: center;
   padding: 20px 0 32px;
@@ -28,109 +31,113 @@
   width: 88px;
   height: 88px;
   border-radius: 50%;
-  background: rgba(201, 168, 76, 0.08);
-  border: 1px solid rgba(201, 168, 76, 0.15);
-  color: #C9A84C;
+  background: rgba(var(--gold-rgb), 0.08);
+  border: 1px solid rgba(var(--gold-rgb), 0.15);
+  color: var(--gold-primary);
   margin-bottom: 16px;
 }
 
 .terms-header h1 {
-  font-size: 38px;
-  font-weight: 800;
-  color: #ffffff;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--fw-extrabold);
+  color: var(--text-white);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin: 0 0 6px;
 }
 
 .terms-header p {
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 14px;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
   margin: 0;
 }
 
 .terms-header-line {
   width: 80px;
   height: 3px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #C9A84C, #E8C84A);
+  border-radius: var(--radius-round);
+  background: var(--gold-gradient);
   margin: 16px auto 0;
 }
 
-/* ----- BREADCRUMB ----- */
+/* ==========================================================
+   BREADCRUMB
+   ========================================================== */
+
 .terms-breadcrumb {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 16px 0 28px;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--overlay-light);
   margin-bottom: 32px;
 }
 
 .terms-breadcrumb a {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary);
   text-decoration: none;
   transition: color 0.3s ease;
 }
-
 .terms-breadcrumb a:hover {
-  color: #C9A84C;
+  color: var(--gold-primary);
 }
-
 .terms-breadcrumb .current {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-white);
 }
 
-/* ----- CONTENT ----- */
+/* ==========================================================
+   CONTENT
+   ========================================================== */
+
 .terms-content {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: var(--space-2xl);
 }
 
 .terms-section {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 14px;
-  padding: 28px 32px;
+  background: var(--overlay-medium);
+  border: 1px solid var(--overlay-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl) var(--space-2xl);
   transition: all 0.3s ease;
 }
 
 .terms-section:hover {
-  border-color: rgba(201, 168, 76, 0.12);
+  border-color: rgba(var(--gold-rgb), 0.12);
   background: rgba(255, 255, 255, 0.03);
 }
 
 .terms-section h2 {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 22px;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0 0 16px;
+  gap: var(--space-sm);
+  font-size: var(--font-size-xl);
+  font-weight: var(--fw-bold);
+  color: var(--text-white);
+  margin: 0 0 var(--space-md);
   letter-spacing: 0.02em;
 }
 
 .terms-section h2 svg {
-  color: #C9A84C;
+  color: var(--gold-primary);
   flex-shrink: 0;
 }
 
 .terms-section h3 {
-  font-size: 17px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
-  margin: 16px 0 10px;
+  font-size: var(--font-size-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-white);
+  margin: var(--space-md) 0 var(--space-sm);
 }
 
 .terms-section p {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 15px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
   line-height: 1.8;
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-sm);
 }
 
 .terms-section p:last-child {
@@ -140,14 +147,14 @@
 .terms-section ul {
   list-style: none;
   padding: 0;
-  margin: 8px 0 0;
+  margin: var(--space-sm) 0 0;
 }
 
 .terms-section ul li {
   position: relative;
   padding: 6px 0 6px 22px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 15px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
   line-height: 1.8;
 }
 
@@ -159,18 +166,18 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #C9A84C;
+  background: var(--gold-primary);
   opacity: 0.4;
 }
 
 .terms-section ul li strong {
-  color: rgba(255, 255, 255, 0.85);
-  font-weight: 600;
+  color: var(--text-white);
+  font-weight: var(--fw-semibold);
 }
 
 .terms-section strong {
-  color: rgba(255, 255, 255, 0.85);
-  font-weight: 600;
+  color: var(--text-white);
+  font-weight: var(--fw-semibold);
 }
 
 /* ==========================================================
@@ -179,11 +186,10 @@
 
 @media (max-width: 1024px) {
   .terms-container {
-    padding: 0 20px;
+    padding: 0 var(--space-lg);
   }
-
   .terms-section {
-    padding: 24px 24px;
+    padding: var(--space-lg);
   }
 }
 
@@ -191,33 +197,26 @@
   .terms-page {
     padding: 30px 0 40px;
   }
-
   .terms-header h1 {
-    font-size: 28px;
+    font-size: var(--font-size-2xl);
   }
-
   .terms-header-icon {
     width: 72px;
     height: 72px;
   }
-
   .terms-section {
-    padding: 20px 20px;
+    padding: var(--space-lg);
   }
-
   .terms-section h2 {
-    font-size: 19px;
+    font-size: var(--font-size-lg);
   }
-
   .terms-section h3 {
-    font-size: 16px;
+    font-size: var(--font-size-base);
   }
-
   .terms-section p,
   .terms-section ul li {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
-
   .terms-section ul li::before {
     top: 12px;
   }
@@ -225,51 +224,41 @@
 
 @media (max-width: 480px) {
   .terms-container {
-    padding: 0 16px;
+    padding: 0 var(--space-md);
   }
-
   .terms-header h1 {
-    font-size: 24px;
+    font-size: var(--font-size-xl);
   }
-
   .terms-header-icon {
     width: 64px;
     height: 64px;
   }
-
   .terms-header-icon svg {
     width: 32px;
     height: 32px;
   }
-
   .terms-section {
-    padding: 16px 16px;
-    border-radius: 12px;
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
   }
-
   .terms-section h2 {
-    font-size: 17px;
-    gap: 10px;
+    font-size: var(--font-size-md);
+    gap: var(--space-sm);
   }
-
   .terms-section h2 svg {
     width: 20px;
     height: 20px;
   }
-
   .terms-section h3 {
-    font-size: 15px;
+    font-size: var(--font-size-sm);
   }
-
   .terms-section p,
   .terms-section ul li {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
-
   .terms-section ul li {
     padding: 4px 0 4px 18px;
   }
-
   .terms-section ul li::before {
     top: 11px;
     width: 5px;
