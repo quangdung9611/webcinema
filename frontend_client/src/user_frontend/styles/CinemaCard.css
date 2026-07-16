@@ -1,192 +1,346 @@
-/* =========================================
-   CINEMA CARD
-   ========================================= */
+/* ==========================================================
+   CINEMA CARD – GOLD PREMIUM EDITION
+   Phiên bản 3.0 – Sang trọng, hiện đại, đậm chất điện ảnh
+   ========================================================== */
 
-.cinema-card{
-    position:relative;
-    width:100%;
-    cursor:pointer;
+.cinema-card {
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.cinema-card-inner{
-    position:relative;
-    overflow:hidden;
-
-    display:flex;
-    flex-direction:column;
-
-    width:100%;
-    height:100%;
-
-    border-radius:var(--radius-md);
-
-    background:var(--cinema-card-bg);
-    border:var(--cinema-card-border);
-
-    box-shadow:var(--cinema-card-shadow);
-
-    transition:var(--cinema-transition);
+/* ----- CARD INNER ----- */
+.cinema-card-inner {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-md);
+    background: var(--cinema-card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.5s ease;
+    will-change: transform;
 }
 
-.cinema-card:hover .cinema-card-inner{
-    transform:var(--cinema-hover-fast-transform);
-    border:var(--cinema-card-border-hover);
-
-    box-shadow:
-        var(--cinema-card-shadow),
-        var(--cinema-card-glow-hover);
+.cinema-card:hover .cinema-card-inner {
+    transform: translateY(-8px);
+    border-color: rgba(201, 168, 76, 0.35);
+    box-shadow: 
+        0 16px 48px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(201, 168, 76, 0.10),
+        0 0 40px rgba(201, 168, 76, 0.05);
 }
 
-/* =========================================
-   IMAGE
-   ========================================= */
-
-.cinema-card-image{
-    position:relative;
-    width:100%;
-    aspect-ratio:2/3;
-    overflow:hidden;
-    background:var(--black-premium);
+/* ----- HIỆU ỨNG VIỀN ÁNH SÁNG (CHẠY QUANH CARD) ----- */
+.cinema-card-inner::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: var(--radius-md);
+    padding: 1px;
+    background: linear-gradient(135deg, 
+        transparent 30%, 
+        rgba(201, 168, 76, 0.15) 50%, 
+        transparent 70%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    z-index: 10;
 }
 
-.cinema-card-image img{
-    width:100%;
-    height:100%;
-    display:block;
-    object-fit:cover;
-
-    transition:
-        transform var(--cinema-transition),
-        filter var(--transition-normal);
+.cinema-card:hover .cinema-card-inner::before {
+    opacity: 1;
+    animation: borderGlow 2.5s ease-in-out infinite;
 }
 
-.cinema-card:hover .cinema-card-image img{
-    transform:scale(1.08);
-    filter:brightness(1.05) contrast(1.06);
+@keyframes borderGlow {
+    0%, 100% { 
+        background: linear-gradient(135deg, transparent 30%, rgba(201, 168, 76, 0.15) 50%, transparent 70%);
+    }
+    50% { 
+        background: linear-gradient(135deg, transparent 20%, rgba(201, 168, 76, 0.30) 50%, transparent 80%);
+    }
 }
 
-.cinema-card-image::before{
-    content:"";
-    position:absolute;
-    inset:0;
+/* ==========================================================
+   IMAGE – VỚI HIỆU ỨNG ÁNH SÁNG MÀN CHIẾU
+   ========================================================== */
 
-    background:linear-gradient(
+.cinema-card-image {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    background: var(--black-premium);
+}
+
+.cinema-card-image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                filter 0.5s ease;
+    will-change: transform;
+}
+
+.cinema-card:hover .cinema-card-image img {
+    transform: scale(1.06);
+    filter: brightness(1.05) contrast(1.03) saturate(1.02);
+}
+
+/* ----- OVERLAY (LỚP PHỦ) ----- */
+.cinema-card-image::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
         to top,
-        rgba(0,0,0,.85) 0%,
-        rgba(30,30,40,.30) 50%,
-        transparent 80%
+        rgba(0, 0, 0, 0.75) 0%,
+        rgba(30, 30, 40, 0.20) 45%,
+        transparent 75%
     );
-
-    z-index:1;
-    pointer-events:none;
-
-    transition:var(--transition-normal);
+    z-index: 1;
+    pointer-events: none;
+    transition: background 0.6s ease;
 }
 
-.cinema-card:hover .cinema-card-image::before{
-    background:linear-gradient(
+.cinema-card:hover .cinema-card-image::before {
+    background: linear-gradient(
         to top,
-        rgba(0,0,0,.92) 0%,
-        rgba(201,168,76,.12) 50%,
-        transparent 80%
+        rgba(0, 0, 0, 0.85) 0%,
+        rgba(30, 30, 40, 0.15) 40%,
+        rgba(201, 168, 76, 0.04) 70%,
+        transparent 85%
     );
 }
 
-/* =========================================
-   BADGE
-   ========================================= */
-
-.cinema-card-badge{
-    position:absolute;
-    top:12px;
-    right:12px;
-    z-index:5;
-
-    padding:6px 12px;
-
-    border-radius:999px;
-
-    font-size:12px;
-    font-weight:700;
-    letter-spacing:.5px;
-    text-transform:uppercase;
-
-    color:var(--text-white);
-
-    background:var(--gold-gradient);
-
-    box-shadow:var(--shadow-gold);
-
-    backdrop-filter:blur(4px);
-
-    transition:
-        transform var(--transition-fast),
-        box-shadow var(--transition-fast);
+/* ----- HIỆU ỨNG ÁNH SÁNG MÀN CHIẾU (TỪ DƯỚI LÊN) ----- */
+.cinema-card-image::after {
+    content: '';
+    position: absolute;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    height: 60%;
+    background: linear-gradient(
+        to top,
+        rgba(201, 168, 76, 0.08) 0%,
+        transparent 100%
+    );
+    z-index: 1;
+    pointer-events: none;
+    transition: bottom 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.cinema-card:hover .cinema-card-badge{
-    transform:scale(1.05);
-
-    box-shadow:
-        var(--shadow-gold),
-        0 6px 24px rgba(201,168,76,.6);
+.cinema-card:hover .cinema-card-image::after {
+    bottom: 0;
 }
 
-/* =========================================
-   CONTENT
-   ========================================= */
+/* ==========================================================
+   BADGE – LUNG LINH, HIỆU ỨNG PHẢN QUANG
+   ========================================================== */
 
-.cinema-card-content{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    padding:16px;
-
-    background:var(--cinema-card-bg);
+.cinema-card-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-white);
+    background: linear-gradient(135deg, #C9A84C, #D4AF37, #C9A84C);
+    background-size: 200% 200%;
+    box-shadow: 0 4px 16px rgba(201, 168, 76, 0.25);
+    backdrop-filter: blur(4px);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.4s ease;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* =========================================
-   TITLE
-   ========================================= */
-
-.cinema-card-title{
-    margin:0;
-
-    font-size:var(--font-size-md);
-    font-weight:var(--fw-bold);
-    line-height:1.4;
-
-    text-align:center;
-
-    color:var(--text-white);
-
-    display:-webkit-box;
-    -webkit-box-orient:vertical;
-    -webkit-line-clamp:2;
-
-    overflow:hidden;
-
-    transition:color var(--transition-fast);
+.cinema-card:hover .cinema-card-badge {
+    transform: scale(1.05);
+    box-shadow: 0 6px 28px rgba(201, 168, 76, 0.4);
+    background-position: 100% 100%;
+    animation: badgeShine 2s ease-in-out infinite;
 }
 
-.cinema-card:hover .cinema-card-title{
-
-    color:var(--gold-primary);
-
-    background:var(--gold-gradient);
-
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    background-clip:text;
-
+@keyframes badgeShine {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
-/* =========================================
-   EFFECT
-   ========================================= */
+/* ==========================================================
+   CONTENT – NỀN TỐI, MỀM MẠI
+   ========================================================== */
 
-.cinema-card-sweep,
-.cinema-card-glow{
-    display:none;
+.cinema-card-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 14px 16px;
+    background: var(--cinema-card-bg);
+    flex: 1;
+    border-top: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+/* ==========================================================
+   TITLE – CHUYỂN MÀU MƯỢT, CÓ GẠCH CHÂN KHI HOVER
+   ========================================================== */
+
+.cinema-card-title {
+    margin: 0;
+    font-size: var(--font-size-md);
+    font-weight: var(--fw-bold);
+    line-height: 1.4;
+    text-align: center;
+    color: var(--text-white);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    transition: color 0.4s ease;
+    position: relative;
+}
+
+/* Gạch chân vàng khi hover */
+.cinema-card-title::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--gold-gradient);
+    border-radius: 999px;
+    transform: translateX(-50%);
+    transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cinema-card:hover .cinema-card-title::after {
+    width: 60%;
+}
+
+.cinema-card:hover .cinema-card-title {
+    color: var(--gold-primary);
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ==========================================================
+   HIỆU ỨNG VỆT SÁNG (SHINE SWEEP) – MỚI, MỀM MẠI
+   ========================================================== */
+
+.cinema-card-sweep {
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.06) 30%,
+        rgba(255, 255, 255, 0.12) 50%,
+        rgba(255, 255, 255, 0.06) 70%,
+        transparent 100%
+    );
+    transform: skewX(-25deg);
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.cinema-card:hover .cinema-card-sweep {
+    opacity: 1;
+    animation: sweep 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes sweep {
+    0% {
+        left: -120%;
+        opacity: 0;
+    }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% {
+        left: 120%;
+        opacity: 0;
+    }
+}
+
+/* ==========================================================
+   GLOW – ÁNH SÁNG VIỀN MỀM PHÍA NGOÀI
+   ========================================================== */
+
+.cinema-card-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-md);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+
+.cinema-card:hover .cinema-card-glow {
+    opacity: 1;
+    box-shadow: inset 0 0 60px rgba(201, 168, 76, 0.04);
+}
+
+/* ==========================================================
+   RESPONSIVE – GIỮ NGUYÊN
+   ========================================================== */
+
+@media (max-width: 768px) {
+    .cinema-card-title {
+        font-size: var(--font-size-sm);
+    }
+    .cinema-card-title::after {
+        display: none;
+    }
+    .cinema-card-badge {
+        font-size: 10px;
+        padding: 4px 10px;
+        top: 8px;
+        right: 8px;
+    }
+    .cinema-card-content {
+        padding: 14px 10px 12px;
+    }
+    .cinema-card:hover .cinema-card-inner {
+        transform: translateY(-4px);
+    }
+}
+
+@media (max-width: 480px) {
+    .cinema-card-title {
+        font-size: var(--font-size-xs);
+    }
+    .cinema-card-content {
+        padding: 12px 8px 10px;
+    }
+    .cinema-card-badge {
+        font-size: 9px;
+        padding: 3px 8px;
+        top: 6px;
+        right: 6px;
+    }
 }
