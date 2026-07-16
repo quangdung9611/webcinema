@@ -7,7 +7,6 @@ import FilmGenre from '../components/FilmGenre';
 import ScrollReveal from '../components/ScrollReveal';
 import CinemaCard from '../components/CinemaCard';
 
-// SWIPER
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade, Navigation, Pagination } from 'swiper/modules';
 
@@ -15,7 +14,8 @@ import {
   Ticket,
   Star,
   CreditCard,
-  Monitor
+  Monitor,
+  ChevronRight
 } from 'lucide-react';
 
 import 'swiper/css';
@@ -29,7 +29,6 @@ const UserHome = () => {
 
   const navigate = useNavigate();
 
-  // ✅ Chỉ còn tên ảnh, không có text
   const bannerImages = [
     "banner1.png",
     "banner2.png",
@@ -41,10 +40,6 @@ const UserHome = () => {
   const bannerDocUrl = "https://api.quangdungcinema.id.vn/uploads/banner_doc/";
   const promotionImageUrl = "https://api.quangdungcinema.id.vn/uploads/promotions/";
   const blogCinemaImageUrl = "https://api.quangdungcinema.id.vn/uploads/blog_cinema/";
-
-  // =========================
-  // STATE
-  // =========================
 
   const [swiperInstance, setSwiperInstance] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -58,7 +53,6 @@ const UserHome = () => {
   const [promotions, setPromotions] = useState([]);
   const [cinemaNews, setCinemaNews] = useState([]);
 
-  // QUICK BOOKING
   const [quickData, setQuickData] = useState({
     movies: [],
     cinemas: []
@@ -73,10 +67,6 @@ const UserHome = () => {
 
   const [availableDates, setAvailableDates] = useState([]);
   const [availableShowtimes, setAvailableShowtimes] = useState([]);
-
-  // =========================
-  // MODAL
-  // =========================
 
   const [modal, setModal] = useState({
     show: false,
@@ -94,16 +84,9 @@ const UserHome = () => {
     });
   };
 
-  // =========================
-  // LOAD DATA
-  // =========================
-
   useEffect(() => {
-
     const fetchInitialData = async () => {
-
       setLoading(true);
-
       try {
         const [
           statusRes,
@@ -124,7 +107,6 @@ const UserHome = () => {
         });
         setPromotions(promotionRes.data || []);
         setCinemaNews(blogRes.data || []);
-
       } catch (error) {
         console.error("Lỗi khi load data:", error);
         setModal({
@@ -139,13 +121,9 @@ const UserHome = () => {
     };
 
     fetchInitialData();
-
   }, []);
 
-  // =========================
-  // CHỌN PHIM → LOAD RẠP
-  // =========================
-
+  // ===== Quick Booking logic =====
   useEffect(() => {
     if (!selectedQuick.movie) {
       setQuickData(prev => ({ ...prev, cinemas: [] }));
@@ -175,10 +153,6 @@ const UserHome = () => {
     fetchCinemas();
   }, [selectedQuick.movie]);
 
-  // =========================
-  // CHỌN RẠP → LOAD NGÀY
-  // =========================
-
   useEffect(() => {
     if (!selectedQuick.movie || !selectedQuick.cinema) {
       setAvailableDates([]);
@@ -207,10 +181,6 @@ const UserHome = () => {
     fetchDates();
   }, [selectedQuick.movie, selectedQuick.cinema]);
 
-  // =========================
-  // CHỌN NGÀY → LOAD SUẤT
-  // =========================
-
   useEffect(() => {
     if (!selectedQuick.movie || !selectedQuick.cinema || !selectedQuick.date) {
       setAvailableShowtimes([]);
@@ -237,10 +207,6 @@ const UserHome = () => {
 
     fetchShowtimes();
   }, [selectedQuick.movie, selectedQuick.cinema, selectedQuick.date]);
-
-  // =========================
-  // HANDLE QUICK BOOK
-  // =========================
 
   const handleQuickBook = async () => {
     if (!selectedQuick.movie) {
@@ -288,13 +254,8 @@ const UserHome = () => {
     }
   };
 
-  // =========================
-  // RENDER
-  // =========================
-
   return (
     <>
-      {/* MODAL */}
       <Modal
         show={modal.show}
         type={modal.type}
@@ -306,9 +267,7 @@ const UserHome = () => {
 
       <div className="user-home">
 
-        {/* ================================ */}
-        {/* BANNER - CHỈ ẢNH, KHÔNG TEXT */}
-        {/* ================================ */}
+        {/* ===== BANNER ===== */}
         <div className="carousel-full-wrapper banner-premium">
           <Swiper
             modules={[Autoplay, EffectFade, Navigation, Pagination]}
@@ -337,20 +296,17 @@ const UserHome = () => {
                       alt="Cinema Banner"
                     />
                   </picture>
-                  {/* <div className="banner-particles"></div> */}
-                  {/* ✅ KHÔNG CÓ TEXT OVERLAY */}
                 </div>
               </SwiperSlide>
             ))}
           </Swiper>
         </div>
 
-        {/* QUICK BOOKING */}
-        <ScrollReveal>
+        {/* ===== QUICK BOOKING ===== */}
+        <ScrollReveal curtain curtainTexture="velvet" curtainSpeed={0.6} curtainFolds={3} direction="up" delay={0.05}>
           <section className="quick-booking-container">
             <div className="quick-booking-content">
               <div className="quick-booking-selects">
-                {/* PHIM */}
                 <select
                   value={selectedQuick.movie}
                   onChange={(e) =>
@@ -368,7 +324,6 @@ const UserHome = () => {
                   ))}
                 </select>
 
-                {/* RẠP */}
                 <select
                   disabled={!selectedQuick.movie}
                   value={selectedQuick.cinema}
@@ -387,7 +342,6 @@ const UserHome = () => {
                   ))}
                 </select>
 
-                {/* NGÀY */}
                 <select
                   disabled={!selectedQuick.cinema || !availableDates.length}
                   value={selectedQuick.date}
@@ -405,7 +359,6 @@ const UserHome = () => {
                   ))}
                 </select>
 
-                {/* SUẤT */}
                 <select
                   disabled={!selectedQuick.date}
                   value={selectedQuick.showtime}
@@ -432,11 +385,11 @@ const UserHome = () => {
           </section>
         </ScrollReveal>
 
-        {/* CONTENT */}
+        {/* ===== CONTENT ===== */}
         <div className="home-container">
 
           {/* FEATURES */}
-          <ScrollReveal delay={0.1}>
+          <ScrollReveal curtain curtainColor="#F5C842" curtainTexture="silk" curtainSpeed={0.8} curtainFolds={5} blur scale direction="up" delay={0.1}>
             <section className="home-features-section">
               <div className="features-grid">
                 <div className="feature-item">
@@ -472,21 +425,32 @@ const UserHome = () => {
           </ScrollReveal>
 
           {/* FILM GENRE */}
-          <ScrollReveal delay={0.2}>
+          <ScrollReveal curtain curtainColor="#C9A84C" curtainTexture="velvet" curtainSpeed={0.6} curtainFolds={4} blur direction="up" delay={0.15}>
             <div className="movie-container">
               <FilmGenre />
             </div>
           </ScrollReveal>
 
-          {/* PROMOTIONS */}
-          <ScrollReveal delay={0.3}>
+          {/* PROMOTIONS – CÓ NÚT "XEM TẤT CẢ" */}
+          <ScrollReveal curtain curtainColor="#FFD700" curtainTexture="gold" curtainSpeed={0.9} curtainFolds={6} blur scale direction="up" delay={0.2}>
             <section className="promotions-section">
               <div className="section-header">
-                <h2 className="section-title">ƯU ĐÃI HẤP DẪN</h2>
-                <div className="title-underline"></div>
+                <div className="section-header-left">
+                  <h3 className="section-title">ƯU ĐÃI HẤP DẪN</h3>
+                  <div className="title-underline"></div>
+                </div>
+            
+                  <button 
+                    className="btn-view-all" 
+                    onClick={() => navigate('/promotion')}
+                  >
+                    Xem tất cả
+                    <ChevronRight size={18} />
+                  </button>
+                
               </div>
               <div className="cinema-grid">
-                {promotions?.map((promo) => (
+                {promotions?.slice(0, 4).map((promo) => (
                   <CinemaCard
                     key={promo.promotion_id}
                     type="promotion"
@@ -500,15 +464,26 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
-          {/* CINEMA CORNER */}
-          <ScrollReveal direction="zoom" delay={0.4}>
+          {/* CINEMA CORNER – CÓ NÚT "XEM TẤT CẢ" */}
+          <ScrollReveal curtain curtainColor="#E8C84A" curtainTexture="silk" curtainSpeed={0.7} curtainFolds={4} scale direction="up" delay={0.25}>
             <section className="cinema-corner-section">
               <div className="section-header">
-                <h2 className="section-title">GÓC ĐIỆN ẢNH</h2>
-                <div className="title-underline"></div>
+                <div className="section-header-left">
+                  <h3 className="section-title">GÓC ĐIỆN ẢNH</h3>
+                  <div className="title-underline"></div>
+                </div>
+            
+                  <button 
+                    className="btn-view-all" 
+                    onClick={() => navigate('/blog-cinema')}
+                  >
+                    Xem tất cả
+                    <ChevronRight size={18} />
+                  </button>
+               
               </div>
               <div className="cinema-grid">
-                {cinemaNews.map((news) => (
+                {cinemaNews?.slice(0, 4).map((news) => (
                   <CinemaCard
                     key={news.blog_id}
                     type="news"

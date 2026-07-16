@@ -52,9 +52,6 @@ const ActorDetail = () => {
                                         src={`https://api.quangdungcinema.id.vn/uploads/actors/${actor.avatar}`} 
                                         alt={actor.name} 
                                         className="actor-img"
-                                        onError={(e) => { 
-                                            e.target.style.display = 'none'; 
-                                        }}
                                     />
                                 ) : (
                                     <div className="no-avatar-placeholder">No Image</div>
@@ -100,7 +97,6 @@ const ActorDetail = () => {
                                                 <img 
                                                     src={`https://api.quangdungcinema.id.vn/uploads/posters/${movie.poster_url}`} 
                                                     alt={movie.title}
-                                                    onError={(e) => { e.target.style.visibility = 'hidden'; }}
                                                 />
                                             </div>
                                             <div className="actor-movie-info">

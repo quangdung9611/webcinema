@@ -139,9 +139,6 @@ const CinemaDetail = () => {
                 src={`${cinemaBaseUrl}${img}`}
                 alt={`Cinema ${idx + 1}`}
                 className="hero-bg"
-                onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/1600x600/1a1a1a/666?text=No+Image';
-                }}
               />
             </SwiperSlide>
           ))}

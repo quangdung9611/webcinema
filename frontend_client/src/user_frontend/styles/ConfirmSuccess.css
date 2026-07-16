@@ -1,17 +1,17 @@
 /* ======================================================
-   CONFIRM SUCCESS PAGE
+   CONFIRM SUCCESS PAGE - GOLD PREMIUM THEME
+   (Dùng biến từ index.css)
 ====================================================== */
 
 .confirm-success-page {
     position: relative;
     min-height: 100vh;
     overflow: hidden;
-
-    padding: 40px 20px;
-
+    padding: var(--space-2xl) var(--space-md);
     display: flex;
     align-items: center;
     justify-content: center;
+    background: var(--main-background);
 }
 
 /* ======================================================
@@ -31,10 +31,8 @@
 .success-container {
     position: relative;
     z-index: 5;
-
     width: 100%;
     max-width: 1250px;
-
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -46,65 +44,57 @@
 
 .success-top {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: var(--space-2xl);
 }
 
 .success-icon {
     width: 110px;
     height: 110px;
-
     margin: auto;
-
     border-radius: 50%;
-
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 4px solid var(--gold-premium);
+    box-shadow: 0 0 20px rgba(201, 168, 76, 0.5), 0 0 60px rgba(201, 168, 76, 0.2);
+}
 
-    border: 4px solid #1cff81;
-
-    box-shadow:
-        0 0 20px rgba(28, 255, 129, 0.5),
-        0 0 60px rgba(28, 255, 129, 0.2);
+.success-icon svg {
+    color: var(--gold-premium);
 }
 
 .success-top h1 {
-    margin-top: 22px;
-    font-weight: 900;
+    margin-top: var(--space-lg);
+    font-weight: var(--fw-black);
     letter-spacing: 1px;
+    color: var(--gold-primary);
 }
 
 .success-top p {
-    margin-top: 10px;
-    font-weight: 500;
+    margin-top: var(--space-sm);
+    font-weight: var(--fw-medium);
+    color: var(--text-secondary);
 }
 
 .success-top p span {
-    color: #34ff91;
-    font-weight: 700;
+    color: var(--gold-premium-light);
+    font-weight: var(--fw-bold);
 }
 
 .order-badge {
-    margin-top: 22px;
-
+    margin-top: var(--space-lg);
     width: fit-content;
-
-    padding: 12px 28px;
-
-    border-radius: 999px;
-
-    border:
-        1px solid rgba(255,255,255,0.12);
-
-    font-weight: 700;
-
-    box-shadow:
-        0 10px 30px rgba(0,0,0,0.35);
+    padding: var(--space-sm) var(--space-xl);
+    border-radius: var(--radius-round);
+    border: var(--border-gold);
+    font-weight: var(--fw-bold);
+    color: var(--text-secondary);
+    box-shadow: var(--cinema-card-shadow);
 }
 
 .order-badge span {
-    color: #ff8b1d;
-    margin-left: 8px;
+    color: var(--gold-premium);
+    margin-left: var(--space-xs);
 }
 
 /* ======================================================
@@ -113,19 +103,12 @@
 
 .cinema-ticket {
     width: 100%;
-
     display: flex;
-
     overflow: hidden;
-
-    border-radius: 32px;
-
-    border:
-        1px solid rgba(255,255,255,0.08);
-
-    box-shadow:
-        0 0 40px rgba(0,0,0,0.45),
-        0 0 25px rgba(0, 132, 255, 0.12);
+    border-radius: var(--radius-xl);
+    border: var(--border-gold);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
+    background: var(--cinema-card-bg);
 }
 
 /* ======================================================
@@ -134,12 +117,9 @@
 
 .ticket-left {
     flex: 1.8;
-
     display: flex;
-
-    gap: 38px;
-
-    padding: 38px;
+    gap: var(--space-2xl);
+    padding: var(--space-2xl);
 }
 
 .poster-box {
@@ -150,85 +130,70 @@
 .poster-box img {
     width: 240px;
     height: 100%;
-
     min-height: 360px;
-
     object-fit: cover;
-
-    border-radius: 22px;
-
-    box-shadow:
-        0 15px 35px rgba(0,0,0,0.5);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--cinema-card-shadow);
 }
 
 .no-poster {
     width: 240px;
     min-height: 360px;
-
-    border-radius: 22px;
-
+    border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted);
 }
 
 .ticket-info {
     flex: 1;
-
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
 .ticket-info h2 {
-    margin-bottom: 32px;
-
-    color: #ff3636;
-
-    font-weight: 900;
-
+    margin-bottom: var(--space-2xl);
+    color: var(--gold-primary);
+    font-weight: var(--fw-black);
     text-transform: uppercase;
-
     letter-spacing: 1px;
 }
 
 .ticket-detail {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: var(--space-md);
 }
 
 .detail-row {
     display: grid;
-
     grid-template-columns: 24px 140px 1fr;
-
     align-items: center;
-
-    gap: 16px;
-
-    padding-bottom: 16px;
-
-    border-bottom:
-        1px solid rgba(255,255,255,0.08);
+    gap: var(--space-md);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--overlay-light);
 }
 
 .detail-row svg {
-    color: #7ea6ff;
+    color: var(--gold-premium);
 }
 
 .label {
-    color: #c9d2e3;
-    font-weight: 500;
+    color: var(--text-secondary);
+    font-weight: var(--fw-medium);
 }
 
 .value {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
+    color: var(--text-white);
 }
 
 .seat-value {
-    color: #ff8420;
-    font-weight: 800;
+    color: var(--gold-premium-light);
+    font-weight: var(--fw-extrabold);
 }
 
 /* ======================================================
@@ -237,9 +202,7 @@
 
 .ticket-divider {
     position: relative;
-
     width: 42px;
-
     display: flex;
     align-items: center;
     justify-content: center;
@@ -248,23 +211,19 @@
 .dash-line {
     width: 2px;
     height: 90%;
-
-    border-left:
-        2px dashed rgba(255,255,255,0.2);
+    border-left: 2px dashed var(--overlay-light);
 }
 
 .circle-top,
 .circle-bottom {
     position: absolute;
-
     left: 50%;
-
     width: 40px;
     height: 40px;
-
     border-radius: 50%;
-
     transform: translateX(-50%);
+    background: var(--black-premium);
+    border: var(--border-gold);
 }
 
 .circle-top {
@@ -281,41 +240,43 @@
 
 .ticket-right {
     width: 350px;
-
-    padding: 40px 30px;
-
+    padding: var(--space-2xl) var(--space-xl);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    background: rgba(255, 255, 255, 0.02);
+    border-left: 1px solid var(--overlay-light);
 }
 
 .pin-title {
-    font-weight: 800;
-    margin-bottom: 12px;
+    font-weight: var(--fw-extrabold);
+    margin-bottom: var(--space-sm);
     letter-spacing: 1px;
+    color: var(--text-secondary);
 }
 
 .pin-code {
-    font-weight: 900;
+    font-weight: var(--fw-black);
     line-height: 1;
-    margin-bottom: 24px;
+    margin-bottom: var(--space-lg);
+    color: var(--gold-primary);
+    font-size: var(--font-size-2xl);
 }
 
 .qr-wrapper {
-    background: #ffffff;
-
-    padding: 14px;
-
-    border-radius: 18px;
+    background: var(--white-premium);
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    box-shadow: var(--cinema-card-shadow);
 }
 
 .qr-note {
-    margin-top: 18px;
-
+    margin-top: var(--space-md);
     text-align: center;
-
     line-height: 1.5;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
 }
 
 /* ======================================================
@@ -324,37 +285,37 @@
 
 .email-box {
     width: 100%;
-
-    margin-top: 32px;
-
-    padding: 24px 28px;
-
-    border-radius: 24px;
-
-    border:
-        1px solid rgba(255,255,255,0.06);
-
+    margin-top: var(--space-2xl);
+    padding: var(--space-lg) var(--space-xl);
+    border-radius: var(--radius-lg);
+    border: var(--border-gold);
     display: flex;
     align-items: center;
     justify-content: space-between;
-
     backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .email-left {
     display: flex;
     align-items: center;
-
-    gap: 18px;
+    gap: var(--space-md);
 }
 
 .email-left p {
-    margin-bottom: 6px;
+    margin-bottom: var(--space-xs);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
 }
 
 .email-left h4 {
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     letter-spacing: 0.5px;
+    color: var(--text-white);
+}
+
+.email-left svg {
+    color: var(--gold-premium);
 }
 
 /* ======================================================
@@ -362,32 +323,23 @@
 ====================================================== */
 
 .success-actions {
-    margin-top: 35px;
-
+    margin-top: var(--space-2xl);
     display: flex;
-
-    gap: 28px;
+    gap: var(--space-xl);
 }
 
 .success-actions button {
     border: none;
-
     min-width: 300px;
-
-    padding: 20px 40px;
-
-    border-radius: 24px;
-
+    padding: var(--space-md) var(--space-2xl);
+    border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-
-    font-weight: 700;
-
+    gap: var(--space-sm);
+    font-weight: var(--fw-bold);
     cursor: pointer;
-
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
 }
 
 .success-actions button:hover {
@@ -399,56 +351,43 @@
 ====================================================== */
 
 .print-time {
-    margin-top: 25px;
+    margin-top: var(--space-lg);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
 }
+
+/* ======================================================
+   BUTTON VARIANTS
+====================================================== */
+
 .home-btn {
-    background:
-        linear-gradient(
-            135deg,
-            #0a56ff,
-            #0037a6
-        );
-
-    color: #ffffff;
-
-    border:
-        1px solid rgba(82, 145, 255, 0.45);
-
-    box-shadow:
-        0 10px 30px rgba(0, 89, 255, 0.35);
+    background: var(--gold-gradient);
+    color: var(--black-premium);
+    border: 1px solid rgba(201, 168, 76, 0.45);
+    box-shadow: var(--shadow-gold);
 }
 
 .download-btn {
-    background:
-        linear-gradient(
-            135deg,
-            #ff9b2f,
-            #ff5a00
-        );
-
-    color: #ffffff;
-
-    border:
-        1px solid rgba(255, 170, 70, 0.3);
-
-    box-shadow:
-        0 10px 30px rgba(255, 106, 0, 0.4);
+    background: var(--gold-gradient);
+    color: var(--black-premium);
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    box-shadow: var(--shadow-gold);
 }
 
 .home-btn:hover,
 .download-btn:hover {
     transform: translateY(-4px) scale(1.02);
-
     filter: brightness(1.08);
 }
+
 /* ======================================================
-   RESPONSIVE
+   RESPONSIVE (1200, 992, 768, 480)
 ====================================================== */
 
-@media (max-width: 1100px) {
-
+/* --- 1200px --- */
+@media (max-width: 1200px) {
     .ticket-left {
-        gap: 24px;
+        gap: var(--space-lg);
     }
 
     .poster-box img,
@@ -456,10 +395,14 @@
         width: 200px;
         min-height: 320px;
     }
+
+    .ticket-right {
+        width: 300px;
+    }
 }
 
+/* --- 992px --- */
 @media (max-width: 992px) {
-
     .cinema-ticket {
         flex-direction: column;
     }
@@ -467,22 +410,19 @@
     .ticket-divider {
         width: 100%;
         height: 42px;
+        padding: 0 var(--space-xl);
     }
 
     .dash-line {
         width: 90%;
         height: 2px;
-
         border-left: none;
-
-        border-top:
-            2px dashed rgba(255,255,255,0.2);
+        border-top: 2px dashed var(--overlay-light);
     }
 
     .circle-top,
     .circle-bottom {
         top: 50%;
-
         transform: translateY(-50%);
     }
 
@@ -497,14 +437,22 @@
 
     .ticket-right {
         width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--overlay-light);
+    }
+
+    .ticket-left {
+        flex-direction: row;
     }
 }
 
+/* --- 768px --- */
 @media (max-width: 768px) {
-
     .ticket-left {
         flex-direction: column;
         align-items: center;
+        padding: var(--space-lg);
+        gap: var(--space-md);
     }
 
     .ticket-info {
@@ -513,6 +461,8 @@
 
     .ticket-info h2 {
         text-align: center;
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--space-lg);
     }
 
     .poster-box img,
@@ -521,40 +471,111 @@
         min-height: 320px;
     }
 
+    .ticket-right {
+        padding: var(--space-lg);
+    }
+
     .email-box {
         flex-direction: column;
-
-        gap: 20px;
-
+        gap: var(--space-md);
         align-items: flex-start;
     }
 
     .success-actions {
         width: 100%;
-
         flex-direction: column;
+        gap: var(--space-md);
     }
 
     .success-actions button {
         width: 100%;
-    }
-}
-
-@media (max-width: 576px) {
-
-    .poster-box img,
-    .no-poster {
-        width: 180px;
-        min-height: 280px;
+        min-width: unset;
     }
 
     .detail-row {
         grid-template-columns: 22px 90px 1fr;
-        gap: 10px;
+        gap: var(--space-sm);
+    }
+
+    .success-top h1 {
+        font-size: var(--font-size-2xl);
+    }
+
+    .success-icon {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+/* --- 480px --- */
+@media (max-width: 480px) {
+    .confirm-success-page {
+        padding: var(--space-md) var(--space-sm);
+    }
+
+    .ticket-left {
+        padding: var(--space-md);
+    }
+
+    .poster-box img,
+    .no-poster {
+        width: 160px;
+        min-height: 240px;
+    }
+
+    .detail-row {
+        grid-template-columns: 20px 70px 1fr;
+        gap: var(--space-xs);
+        font-size: var(--font-size-sm);
+    }
+
+    .label {
+        font-size: var(--font-size-sm);
+    }
+
+    .value {
+        font-size: var(--font-size-sm);
+    }
+
+    .ticket-info h2 {
+        font-size: var(--font-size-lg);
+    }
+
+    .ticket-right {
+        padding: var(--space-md);
+    }
+
+    .pin-code {
+        font-size: var(--font-size-xl);
+    }
+
+    .email-box {
+        padding: var(--space-md);
     }
 
     .email-left h4 {
+        font-size: var(--font-size-sm);
         word-break: break-all;
+    }
+
+    .success-actions button {
+        padding: var(--space-md);
+        font-size: var(--font-size-sm);
+    }
+
+    .success-top h1 {
+        font-size: var(--font-size-xl);
+    }
+
+    .order-badge {
+        font-size: var(--font-size-sm);
+        padding: var(--space-xs) var(--space-md);
+    }
+
+    .circle-top,
+    .circle-bottom {
+        width: 30px;
+        height: 30px;
     }
 }
 
@@ -563,7 +584,6 @@
 ====================================================== */
 
 @media print {
-
     body * {
         visibility: hidden;
     }
@@ -575,10 +595,30 @@
 
     .cinema-ticket {
         position: absolute;
-
         top: 0;
         left: 0;
-
         width: 100%;
+        border: 1px solid #ccc;
+        box-shadow: none;
+    }
+
+    .ticket-right {
+        border-left: 1px solid #ccc;
+    }
+
+    .ticket-divider .dash-line {
+        border-top: 2px dashed #ccc;
+    }
+
+    .circle-top,
+    .circle-bottom {
+        border: 1px solid #ccc;
+    }
+
+    .success-actions,
+    .email-box,
+    .order-badge,
+    .print-time {
+        display: none !important;
     }
 }

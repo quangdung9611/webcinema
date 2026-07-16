@@ -1,5 +1,6 @@
 /*=========================================================
-    MOVIE PREVIEW HERO - PREMIUM CINEMA VERSION
+    MOVIE PREVIEW HERO - GOLD PREMIUM THEME
+    (Dùng biến từ index.css)
 =========================================================*/
 
 .preview-hero {
@@ -8,8 +9,8 @@
     max-width: 1200px;
     height: 650px;
     overflow: hidden;
-    border-radius: 22px;
-    background: #050505;
+    border-radius: var(--radius-lg);
+    background: var(--black-premium);
     isolation: isolate;
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
 }
@@ -67,8 +68,8 @@
     pointer-events: none;
     background: radial-gradient(
         ellipse at 30% 50%,
-        rgba(229, 9, 20, 0.15) 0%,
-        rgba(229, 9, 20, 0.05) 30%,
+        rgba(201, 168, 76, 0.15) 0%,
+        rgba(201, 168, 76, 0.05) 30%,
         transparent 60%
     );
     opacity: 0.6;
@@ -96,37 +97,37 @@
 
 .preview-hero-badge-wrapper {
     position: absolute;
-    top: 24px;
-    right: 28px;
+    top: var(--space-lg);
+    right: var(--space-xl);
     z-index: 15;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-sm);
 }
 
 .preview-hero-badge {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-xs);
     height: 34px;
-    padding: 0 18px;
-    border-radius: 999px;
-    background: rgba(229, 9, 20, 0.18);
-    border: 1px solid rgba(229, 9, 20, 0.35);
-    color: #ff6b6b;
-    font-size: 11px;
-    font-weight: 700;
+    padding: 0 var(--space-md);
+    border-radius: var(--radius-round);
+    background: rgba(201, 168, 76, 0.18);
+    border: 1px solid rgba(201, 168, 76, 0.35);
+    color: var(--gold-premium-light);
+    font-size: var(--font-size-xs);
+    font-weight: var(--fw-bold);
     letter-spacing: 2px;
     text-transform: uppercase;
     backdrop-filter: blur(14px);
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
 }
 
 .badge-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #ff2d2d;
+    background: var(--gold-premium);
     animation: dotPulse 1.5s ease-in-out infinite;
 }
 
@@ -136,9 +137,9 @@
 }
 
 .preview-hero-badge.premium-badge {
-    background: rgba(255, 215, 0, 0.12);
-    border-color: rgba(255, 215, 0, 0.25);
-    color: #ffd700;
+    background: rgba(201, 168, 76, 0.12);
+    border-color: rgba(201, 168, 76, 0.25);
+    color: var(--gold-premium);
 }
 
 /*=========================================================
@@ -164,7 +165,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-    gap: 18px;
+    gap: var(--space-md);
 }
 
 .preview-hero-container::after {
@@ -179,9 +180,10 @@
 .preview-title-row {
     display: flex;
     align-items: flex-start;
-    gap: 18px;
+    gap: var(--space-md);
     width: 100%;
 }
+
 /*=========================================================
     TITLE - SIÊU TO
 =========================================================*/
@@ -189,11 +191,11 @@
 .preview-title {
     margin: 0;
     flex: 1;
-    color: #fff;
-    font-size: clamp(2.2rem, 8vw, 6.5rem);  /* MIN: 35px, PREF: 8vw, MAX: 104px */
+    color: var(--text-white);
+    font-size: clamp(2.2rem, 8vw, 6.5rem);
     line-height: 1.05;
-    font-weight: 900;
-    letter-spacing: clamp(0.08rem, 0.25vw, 0.3rem);  /* RỘNG HƠN */
+    font-weight: var(--fw-black);
+    letter-spacing: clamp(0.08rem, 0.25vw, 0.3rem);
     text-wrap: balance;
     word-break: break-word;
     text-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
@@ -203,19 +205,20 @@
 .preview-title::after {
     content: '';
     display: block;
-    width: clamp(3.5rem, 7vw, 7rem);  /* DÀI HƠN */
+    width: clamp(3.5rem, 7vw, 7rem);
     height: 0.3rem;
     margin-top: clamp(0.8rem, 1.5vw, 1.2rem);
-    background: linear-gradient(90deg, #e50914, #ff6b6b);
-    border-radius: 4px;
-    box-shadow: 0 0 30px rgba(229, 9, 20, 0.4);
+    background: var(--gold-gradient);
+    border-radius: var(--radius-xs);
+    box-shadow: var(--shadow-gold);
 }
 
 .preview-hero:hover .preview-title {
     text-shadow: 
         0 10px 40px rgba(0, 0, 0, 0.5),
-        0 0 100px rgba(229, 9, 20, 0.2);
+        0 0 100px rgba(201, 168, 76, 0.2);
 }
+
 .preview-age {
     flex-shrink: 0;
     display: flex;
@@ -223,27 +226,13 @@
     justify-content: center;
     min-width: 48px;
     height: 42px;
-    padding: 0 14px;
-    border-radius: 12px;
+    padding: 0 var(--space-sm);
+    border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #fff;
-    font-size: 14px;
-    font-weight: 700;
-}
-
-/*=========================================================
-    HIỆU ỨNG TITLE GLOW KHI HOVER
-=========================================================*/
-
-.preview-title {
-    transition: text-shadow 0.5s ease;
-}
-
-.preview-hero:hover .preview-title {
-    text-shadow: 
-        0 10px 40px rgba(0, 0, 0, 0.5),
-        0 0 60px rgba(229, 9, 20, 0.1);
+    border: 1px solid var(--overlay-light);
+    color: var(--text-white);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
 }
 
 /*=========================================================
@@ -254,24 +243,24 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
-    margin-top: 2px;
+    gap: var(--space-sm);
+    margin-top: var(--space-xs);
 }
 
 .preview-meta-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-xs);
     height: 38px;
-    padding: 0 16px;
-    border-radius: 999px;
+    padding: 0 var(--space-md);
+    border-radius: var(--radius-round);
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 13px;
-    font-weight: 600;
+    border: 1px solid var(--overlay-light);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--fw-semibold);
     backdrop-filter: blur(14px);
-    transition: all 0.35s ease;
+    transition: var(--transition-normal);
 }
 
 .preview-meta-item:hover {
@@ -286,11 +275,11 @@
 .preview-description {
     width: 100%;
     max-width: 520px;
-    margin: 6px 0 2px;
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 16px;
+    margin: var(--space-xs) 0 var(--space-xs);
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
     line-height: 1.9;
-    font-weight: 400;
+    font-weight: var(--fw-regular);
     display: -webkit-box;
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
@@ -304,38 +293,38 @@
 .preview-extra-info {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-sm);
     width: 100%;
-    margin-top: 4px;
+    margin-top: var(--space-xs);
 }
 
 .preview-info-row {
     display: flex;
     align-items: flex-start;
-    gap: 18px;
+    gap: var(--space-md);
 }
 
 .preview-info-label {
     width: 90px;
     flex-shrink: 0;
-    color: rgba(255, 255, 255, 0.45);
-    font-size: 13px;
-    font-weight: 600;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--fw-semibold);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
 .preview-info-value {
-    color: #f5f5f5;
-    font-size: 15px;
+    color: var(--text-white);
+    font-size: var(--font-size-sm);
     line-height: 1.8;
-    font-weight: 500;
+    font-weight: var(--fw-medium);
 }
 
 .preview-genre-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-xs);
 }
 
 .preview-genre-chip {
@@ -343,19 +332,19 @@
     align-items: center;
     justify-content: center;
     height: 30px;
-    padding: 0 14px;
-    border-radius: 999px;
+    padding: 0 var(--space-sm);
+    border-radius: var(--radius-round);
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 600;
-    transition: all 0.35s ease;
+    border: 1px solid var(--overlay-light);
+    color: var(--text-white);
+    font-size: var(--font-size-xs);
+    font-weight: var(--fw-semibold);
+    transition: var(--transition-normal);
 }
 
 .preview-genre-chip:hover {
-    background: rgba(229, 9, 20, 0.16);
-    border-color: rgba(229, 9, 20, 0.45);
+    background: rgba(201, 168, 76, 0.16);
+    border-color: rgba(201, 168, 76, 0.45);
     transform: translateY(-2px);
 }
 
@@ -366,8 +355,8 @@
 .preview-action-group {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-top: 8px;
+    gap: var(--space-sm);
+    margin-top: var(--space-xs);
 }
 
 .preview-book-btn,
@@ -377,29 +366,29 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: var(--space-sm);
     height: 54px;
-    padding: 0 30px;
+    padding: 0 var(--space-xl);
     border: none;
-    border-radius: 14px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     overflow: hidden;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
     letter-spacing: 0.4px;
     transition: all 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 /* BOOK BUTTON */
 .preview-book-btn {
-    color: #fff;
-    background: linear-gradient(135deg, #ea1824, #b80710);
-    box-shadow: 0 15px 35px rgba(229, 9, 20, 0.3);
+    color: var(--black-premium);
+    background: var(--gold-gradient);
+    box-shadow: var(--shadow-gold);
 }
 
 .preview-book-btn:hover {
     transform: translateY(-4px);
-    box-shadow: 0 22px 50px rgba(229, 9, 20, 0.45);
+    box-shadow: 0 22px 50px rgba(201, 168, 76, 0.45);
 }
 
 .preview-book-btn:active {
@@ -424,9 +413,9 @@
 
 /* TRAILER BUTTON */
 .preview-trailer-btn {
-    color: #fff;
+    color: var(--text-white);
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--overlay-light);
     backdrop-filter: blur(18px);
 }
 
@@ -447,10 +436,10 @@
     padding: 0;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--overlay-light);
+    color: var(--text-secondary);
     backdrop-filter: blur(18px);
-    transition: all 0.35s ease;
+    transition: var(--transition-normal);
 }
 
 .preview-like-btn:hover {
@@ -459,9 +448,9 @@
 }
 
 .preview-like-btn.liked {
-    color: #ff2d2d;
-    background: rgba(229, 9, 20, 0.15);
-    border-color: rgba(229, 9, 20, 0.3);
+    color: var(--gold-premium);
+    background: rgba(201, 168, 76, 0.15);
+    border-color: rgba(201, 168, 76, 0.3);
     animation: likeBounce 0.5s ease;
 }
 
@@ -519,12 +508,12 @@
 @media (max-width: 992px) {
     .preview-hero {
         height: 580px;
-        border-radius: 18px;
+        border-radius: var(--radius-md);
     }
     .preview-hero-content {
         width: 55%;
         min-width: 300px;
-        padding-right: 20px;
+        padding-right: var(--space-md);
     }
     .preview-title {
         font-size: 44px;
@@ -541,7 +530,7 @@
 @media (max-width: 768px) {
     .preview-hero {
         height: 520px;
-        border-radius: 16px;
+        border-radius: var(--radius-md);
     }
     .preview-hero-content {
         width: 100%;
@@ -549,7 +538,7 @@
         padding-right: 0;
     }
     .preview-hero-container {
-        padding: 30px 25px 25px;
+        padding: var(--space-xl) var(--space-lg) var(--space-lg);
     }
     .preview-hero-container::after {
         display: none;
@@ -569,16 +558,16 @@
     .preview-title::after {
         width: 45px;
         height: 3px;
-        margin-top: 10px;
+        margin-top: var(--space-sm);
     }
     .preview-description {
-        font-size: 14px;
+        font-size: var(--font-size-sm);
         -webkit-line-clamp: 3;
     }
     .preview-meta-item {
         height: 32px;
-        font-size: 12px;
-        padding: 0 12px;
+        font-size: var(--font-size-xs);
+        padding: 0 var(--space-sm);
     }
     .preview-action-group {
         flex-wrap: wrap;
@@ -586,31 +575,31 @@
     .preview-book-btn,
     .preview-trailer-btn {
         height: 46px;
-        padding: 0 20px;
-        font-size: 13px;
+        padding: 0 var(--space-md);
+        font-size: var(--font-size-xs);
     }
     .preview-like-btn {
         width: 46px;
         height: 46px;
     }
     .preview-hero-badge-wrapper {
-        top: 16px;
-        right: 18px;
+        top: var(--space-md);
+        right: var(--space-md);
     }
     .preview-hero-badge {
         height: 28px;
-        font-size: 10px;
-        padding: 0 14px;
+        font-size: var(--font-size-xs);
+        padding: 0 var(--space-sm);
     }
 }
 
 @media (max-width: 576px) {
     .preview-hero {
         height: 480px;
-        border-radius: 14px;
+        border-radius: var(--radius-sm);
     }
     .preview-hero-container {
-        padding: 20px 18px 20px;
+        padding: var(--space-md) var(--space-md) var(--space-md);
     }
     .preview-title {
         font-size: 28px;
@@ -619,26 +608,26 @@
     .preview-title::after {
         width: 35px;
         height: 3px;
-        margin-top: 8px;
+        margin-top: var(--space-xs);
     }
     .preview-hero-content {
-        gap: 12px;
+        gap: var(--space-sm);
     }
     .preview-extra-info {
         display: none;
     }
     .preview-description {
-        font-size: 13px;
+        font-size: var(--font-size-xs);
         -webkit-line-clamp: 2;
     }
     .preview-meta {
-        gap: 6px;
+        gap: var(--space-xs);
     }
     .preview-meta-item {
         height: 28px;
-        font-size: 11px;
-        padding: 0 10px;
-        gap: 4px;
+        font-size: var(--font-size-xs);
+        padding: 0 var(--space-sm);
+        gap: var(--space-xs);
     }
     .preview-meta-item svg {
         width: 14px;
@@ -647,9 +636,9 @@
     .preview-book-btn,
     .preview-trailer-btn {
         height: 40px;
-        padding: 0 16px;
-        font-size: 12px;
-        border-radius: 10px;
+        padding: 0 var(--space-md);
+        font-size: var(--font-size-xs);
+        border-radius: var(--radius-sm);
     }
     .preview-like-btn {
         width: 40px;
@@ -662,17 +651,17 @@
     .preview-age {
         min-width: 36px;
         height: 32px;
-        font-size: 12px;
+        font-size: var(--font-size-xs);
     }
     .preview-hero-badge-wrapper {
-        top: 12px;
-        right: 14px;
-        gap: 8px;
+        top: var(--space-sm);
+        right: var(--space-sm);
+        gap: var(--space-xs);
     }
     .preview-hero-badge {
         height: 24px;
-        font-size: 9px;
-        padding: 0 10px;
+        font-size: var(--font-size-xs);
+        padding: 0 var(--space-sm);
         letter-spacing: 1px;
     }
     .badge-dot {

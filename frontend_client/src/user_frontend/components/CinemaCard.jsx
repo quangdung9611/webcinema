@@ -18,10 +18,6 @@ const CinemaCard = ({
         if (link) navigate(link);
     };
 
-    const handleImageError = (e) => {
-        e.target.src = "https://via.placeholder.com/300x450/1a1a2e/ffffff?text=No+Image";
-    };
-
     return (
         <div
             className={`cinema-card ${type}`}
@@ -38,7 +34,6 @@ const CinemaCard = ({
                         src={image} 
                         alt={title} 
                         loading="lazy"
-                        onError={handleImageError}
                         draggable={false}
                     />
                 </div>

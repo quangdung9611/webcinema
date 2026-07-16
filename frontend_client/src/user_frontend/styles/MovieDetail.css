@@ -1,66 +1,49 @@
+/* =========================================================
+   MOVIE DETAIL - GOLD PREMIUM THEME
+   (Dùng biến từ index.css)
+========================================================= */
+
 .cinema-main-content-container {
     max-width: 1300px;
     margin: 0px auto;
-  }
+}
 
 /* =========================================================
    PHIM LIÊN QUAN - PREMIUM TITLE STYLE
 ========================================================= */
 
 .filmgenre-container {
-    margin-top: 40px;
+    margin-top: var(--space-2xl);
 }
 
 /* Header container */
 .filmgenre-section-header {
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin-bottom: 20px;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
 }
 
 /* Title PHIM LIÊN QUAN */
 .filmgenre-section-header h2 {
-    font-size: 26px;
-    font-weight: 900;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--fw-black);
     letter-spacing: 2px;
     text-transform: uppercase;
-
-    color: #E50914;
-
+    color: var(--gold-primary);
     position: relative;
-
     display: flex;
     align-items: center;
-    gap: 14px;
-
+    gap: var(--space-sm);
     margin: 0;
-}
-
-/* Line nhỏ bên trái chữ (accent mạnh) */
-.filmgenre-section-header h2::before {
-    content: "";
-    width: 6px;
-    height: 22px;
-    background: #E50914;
-    border-radius: 3px;
-    display: none !important;
 }
 
 /* Line dài chạy bên phải title */
 .filmgenre-line {
     flex: 1;
     height: 2px;
-
-    background: linear-gradient(
-        90deg,
-        rgba(229, 9, 20, 0.9),
-        rgba(229, 9, 20, 0.2),
-        transparent
-    );
-
-    border-radius: 999px;
-
+    background: linear-gradient(90deg, rgba(201, 168, 76, 0.9), rgba(201, 168, 76, 0.2), transparent);
+    border-radius: var(--radius-round);
     position: relative;
     overflow: hidden;
 }
@@ -71,594 +54,349 @@
     position: absolute;
     top: 0;
     left: -40%;
-
     width: 40%;
     height: 100%;
-
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255,255,255,0.5),
-        transparent
-    );
-
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
     animation: filmLineMove 2.5s linear infinite;
 }
 
-/* animation */
 @keyframes filmLineMove {
-    0% {
-        left: -40%;
-    }
-    100% {
-        left: 100%;
-    }
+    0% { left: -40%; }
+    100% { left: 100%; }
 }
+
 /* ==========================================================================
-   4. CHUNG CHO CÁC KHỐI SECTION BLOCK
+   CHUNG CHO CÁC KHỐI SECTION BLOCK
    ========================================================================== */
+
 .cinema-section-block {
-    margin-top: 30px;
+    margin-top: var(--space-xl);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: var(--space-md);
 }
 
 .section-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
 }
 
 .section-title-label {
-  font-size: 26px;
-    font-weight: 900;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--fw-black);
     letter-spacing: 2px;
     text-transform: uppercase;
-
-    color: #E50914;
-
+    color: var(--gold-primary);
     position: relative;
-
     display: flex;
     align-items: center;
-    gap: 14px;
-
+    gap: var(--space-sm);
     margin: 0;
 }
 
-.section-title-label::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 18px;
-  background-color: #ff4d4f;
-  border-radius: 2px;
-  display: none; /* Thay đổi từ none thành block để hiện gạch dọc */
+.view-all-link-gold {
+    font-size: var(--font-size-sm);
+    color: var(--gold-premium);
+    cursor: pointer;
+    font-weight: var(--fw-semibold);
+    transition: var(--transition-fast);
 }
 
-.view-all-link-red {
-  font-size: 14px;
-  color: #ff4d4f;
-  cursor: pointer;
-  font-weight: 600;
-}
-/*==================================================
-SECTION DIỄN VIÊN
-==================================================*/
-
-.cast-avatars-horizontal-list{
-    display:grid;
-    grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:24px;
-    width:100%;
-    
+.view-all-link-gold:hover {
+    color: var(--gold-premium-light);
 }
 
-/*==================================================
-CARD
-==================================================*/
+/* ==================================================
+   SECTION DIỄN VIÊN
+   ================================================== */
 
-.actor-circle-card{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    cursor:pointer;
-    transition:.45s ease;
+.cast-avatars-horizontal-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-lg);
+    width: 100%;
 }
 
-.actor-circle-card:hover{
-    transform:translateY(-8px);
+/* ==================================================
+   CARD
+   ================================================== */
+
+.actor-circle-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: var(--cinema-transition);
 }
 
-
-/*==================================================
-AVATAR
-==================================================*/
-
-.actor-avatar-frame{
-    position:relative;
-
-    width:100%;
-
-    aspect-ratio:3/2;
-
-    overflow:hidden;
-
-    border-radius:20px;
-
-    background:#111;
-
-    border:1px solid rgba(255,255,255,.08);
-
-    box-shadow:
-        0 10px 30px rgba(0,0,0,.35);
-
-    transition:.45s;
+.actor-circle-card:hover {
+    transform: translateY(-8px);
 }
 
+/* ==================================================
+   AVATAR
+   ================================================== */
 
-.actor-circle-card:hover .actor-avatar-frame{
-
-    border-color:#E50914;
-
-    box-shadow:
-        0 18px 45px rgba(229,9,20,.25),
-        0 8px 25px rgba(0,0,0,.45);
-
+.actor-avatar-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/2;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--black-soft);
+    border: var(--border-gold);
+    box-shadow: var(--cinema-card-shadow);
+    transition: var(--cinema-transition);
 }
 
-
-
-/*==================================================
-OVERLAY
-==================================================*/
-
-.actor-avatar-frame::before{
-
-    content:"";
-
-    position:absolute;
-
-    inset:0;
-
-    background:linear-gradient(
-        to top,
-        rgba(0,0,0,.7),
-        transparent 45%
-    );
-
-    z-index:2;
-
-    pointer-events:none;
+.actor-circle-card:hover .actor-avatar-frame {
+    border-color: var(--border-gold-hover);
+    box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
 }
 
+/* ==================================================
+   OVERLAY
+   ================================================== */
 
-
-/*==================================================
-SHINE
-==================================================*/
-
-.actor-avatar-frame::after{
-
-    content:"";
-
-    position:absolute;
-
-    top:0;
-    left:-170%;
-
-    width:45%;
-    height:100%;
-
-    background:linear-gradient(
-        120deg,
-        transparent,
-        rgba(255,255,255,.25),
-        transparent
-    );
-
-    transform:skewX(-25deg);
-
-    transition:1s;
-
-    z-index:3;
+.actor-avatar-frame::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent 45%);
+    z-index: 2;
+    pointer-events: none;
 }
 
+/* ==================================================
+   SHINE
+   ================================================== */
 
-.actor-circle-card:hover .actor-avatar-frame::after{
-    left:170%;
+.actor-avatar-frame::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -170%;
+    width: 45%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+    transform: skewX(-25deg);
+    transition: 1s;
+    z-index: 3;
 }
 
-
-
-/*==================================================
-IMAGE
-==================================================*/
-
-.actor-real-img{
-
-    width:100%;
-    height:100%;
-
-    object-fit:cover;
-
-    display:block;
-
-    transition:.8s;
+.actor-circle-card:hover .actor-avatar-frame::after {
+    left: 170%;
 }
 
+/* ==================================================
+   IMAGE
+   ================================================== */
 
-.actor-circle-card:hover .actor-real-img{
-    transform:scale(1.08);
+.actor-real-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: var(--transition-slow);
 }
 
-
-
-/*==================================================
-NAME
-==================================================*/
-
-.actor-real-name{
-
-    margin-top:16px;
-
-    color:#fff;
-
-    font-size:17px;
-
-    font-weight:700;
-
-    line-height:1.5;
-
-    text-align:center;
-
-    transition:.35s;
-
-    display:-webkit-box;
-
-    -webkit-line-clamp:2;
-
-    -webkit-box-orient:vertical;
-
-    overflow:hidden;
+.actor-circle-card:hover .actor-real-img {
+    transform: scale(1.08);
 }
 
+/* ==================================================
+   NAME
+   ================================================== */
 
-.actor-circle-card:hover .actor-real-name{
-
-    color:#ff4d4f;
-
-    text-shadow:
-        0 0 12px rgba(255,77,79,.45);
+.actor-real-name {
+    margin-top: var(--space-md);
+    color: var(--text-white);
+    font-size: var(--font-size-md);
+    font-weight: var(--fw-bold);
+    line-height: 1.5;
+    text-align: center;
+    transition: var(--transition-normal);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
-
-
-/*==================================================
-ROLE
-==================================================*/
-
-.actor-character-name{
-
-    margin-top:4px;
-
-    color:#999;
-
-    font-size:13px;
-
-    font-weight:500;
-
-    letter-spacing:.3px;
-
-    text-align:center;
-}
-/*==================================================
-TRAILER KHÁC
-==================================================*/
-.other-trailers-grid{
-
-    display:grid;
-
-    grid-template-columns:
-        repeat(4,1fr);
-
-    gap:24px;
-
-    width:100%;
-
-    margin-top:24px;
-
-}
-/*==================================================
-CARD
-==================================================*/
-
-.other-trailer-card{
-
-    cursor:pointer;
-
-    transition:.45s ease;
-
+.actor-circle-card:hover .actor-real-name {
+    color: var(--gold-primary);
+    text-shadow: var(--shadow-gold);
 }
 
+/* ==================================================
+   ROLE
+   ================================================== */
 
-.other-trailer-card:hover{
-
-    transform:
-    translateY(-8px);
-
-}
-.other-trailer-thumb{
-
-    position:relative;
-
-    width:100%;
-
-    aspect-ratio:3/2;
-
-    overflow:hidden;
-
-    border-radius:20px;
-
-    background:#111;
-
-    border:1px solid rgba(255,255,255,.08);
-
-    box-shadow:
-        0 10px 30px rgba(0,0,0,.35);
-
-    transition:.45s ease;
-
-}
-.other-trailer-card:hover
-.other-trailer-thumb{
-
-    border-color:#E50914;
-
-    box-shadow:
-
-    0 18px 45px rgba(229,9,20,.25),
-
-    0 8px 25px rgba(0,0,0,.45);
-
+.actor-character-name {
+    margin-top: var(--space-xs);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--fw-medium);
+    letter-spacing: 0.3px;
+    text-align: center;
 }
 
+/* ==================================================
+   TRAILER KHÁC
+   ================================================== */
 
-
-/*==================================================
-IMAGE
-==================================================*/
-
-.other-trailer-thumb img{
-
-    width:100%;
-    height:100%;
-
-    display:block;
-
-    object-fit:cover;
-
-    transition:.8s ease;
-
+.other-trailers-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-lg);
+    width: 100%;
+    margin-top: var(--space-lg);
 }
 
+/* ==================================================
+   CARD
+   ================================================== */
 
-.other-trailer-card:hover
-.other-trailer-thumb img{
-
-    transform:scale(1.08);
-
+.other-trailer-card {
+    cursor: pointer;
+    transition: var(--cinema-transition);
 }
 
-
-
-/*==================================================
-GRADIENT
-==================================================*/
-
-.other-trailer-thumb::before{
-
-    content:"";
-
-    position:absolute;
-
-    inset:0;
-
-    background:
-
-    linear-gradient(
-
-        to top,
-
-        rgba(0,0,0,.75),
-
-        transparent 45%
-
-    );
-
-    z-index:2;
-
+.other-trailer-card:hover {
+    transform: translateY(-8px);
 }
 
-
-
-/*==================================================
-SHINE
-==================================================*/
-
-.other-trailer-thumb::after{
-
-    content:"";
-
-    position:absolute;
-
-    top:0;
-    left:-180%;
-
-    width:45%;
-    height:100%;
-
-    background:
-
-    linear-gradient(
-
-        120deg,
-
-        transparent,
-
-        rgba(255,255,255,.25),
-
-        transparent
-
-    );
-
-    transform:skewX(-25deg);
-
-    z-index:3;
-
-    transition:1s;
-
+.other-trailer-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/2;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--black-soft);
+    border: var(--border-gold);
+    box-shadow: var(--cinema-card-shadow);
+    transition: var(--cinema-transition);
 }
 
-
-.other-trailer-card:hover
-.other-trailer-thumb::after{
-
-    left:180%;
-
+.other-trailer-card:hover .other-trailer-thumb {
+    border-color: var(--border-gold-hover);
+    box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
 }
 
+/* ==================================================
+   IMAGE
+   ================================================== */
 
-
-/*==================================================
-PLAY
-==================================================*/
-
-.other-trailer-overlay{
-
-    position:absolute;
-
-    inset:0;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    z-index:5;
-
+.other-trailer-thumb img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    transition: var(--transition-slow);
 }
 
-
-
-.other-trailer-overlay::before{
-
-    content:"";
-
-    position:absolute;
-
-    width:72px;
-    height:72px;
-
-    border-radius:50%;
-
-    border:2px solid rgba(255,255,255,.9);
-
-    background:
-
-    rgba(0,0,0,.35);
-
-    backdrop-filter:blur(6px);
-
-    transition:.35s;
-
+.other-trailer-card:hover .other-trailer-thumb img {
+    transform: scale(1.08);
 }
 
+/* ==================================================
+   GRADIENT
+   ================================================== */
 
-
-.other-trailer-overlay svg{
-
-    position:relative;
-
-    z-index:10;
-
-    color:white;
-
-    transition:.35s;
-
+.other-trailer-thumb::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent 45%);
+    z-index: 2;
 }
 
+/* ==================================================
+   SHINE
+   ================================================== */
 
-
-.other-trailer-card:hover
-.other-trailer-overlay::before{
-
-    transform:scale(1.1);
-
-    border-color:#E50914;
-
+.other-trailer-thumb::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -180%;
+    width: 45%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+    transform: skewX(-25deg);
+    z-index: 3;
+    transition: 1s;
 }
 
-
-
-.other-trailer-card:hover
-.other-trailer-overlay svg{
-
-    transform:scale(1.15);
-
+.other-trailer-card:hover .other-trailer-thumb::after {
+    left: 180%;
 }
 
+/* ==================================================
+   PLAY
+   ================================================== */
 
-
-/*==================================================
-TITLE
-==================================================*/
-
-.other-trailer-title{
-
-    margin-top:16px;
-
-    color:white;
-
-    font-size:17px;
-
-    font-weight:700;
-
-    line-height:1.5;
-
-    text-align:center;
-
-    transition:.35s;
-
-
-    display:-webkit-box;
-
-    -webkit-line-clamp:2;
-
-    -webkit-box-orient:vertical;
-
-    overflow:hidden;
-
+.other-trailer-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
 }
 
-
-
-.other-trailer-card:hover
-.other-trailer-title{
-
-    color:#ff4d4f;
-
-    text-shadow:
-
-    0 0 12px rgba(255,77,79,.4);
-
+.other-trailer-overlay::before {
+    content: "";
+    position: absolute;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(6px);
+    transition: var(--transition-normal);
 }
 
+.other-trailer-overlay svg {
+    position: relative;
+    z-index: 10;
+    color: var(--text-white);
+    transition: var(--transition-normal);
+}
+
+.other-trailer-card:hover .other-trailer-overlay::before {
+    transform: scale(1.1);
+    border-color: var(--gold-premium);
+}
+
+.other-trailer-card:hover .other-trailer-overlay svg {
+    transform: scale(1.15);
+}
+
+/* ==================================================
+   TITLE
+   ================================================== */
+
+.other-trailer-title {
+    margin-top: var(--space-md);
+    color: var(--text-white);
+    font-size: var(--font-size-md);
+    font-weight: var(--fw-bold);
+    line-height: 1.5;
+    text-align: center;
+    transition: var(--transition-normal);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.other-trailer-card:hover .other-trailer-title {
+    color: var(--gold-primary);
+    text-shadow: var(--shadow-gold);
+}
 
 /* ==========================================================================
    REVIEW SECTION
@@ -666,26 +404,15 @@ TITLE
 
 .reviews-section-fullwidth {
     width: 100%;
-
-    margin-top: 40px;
+    margin-top: var(--space-2xl);
 }
 
 .split-right-column-box {
-    padding: 32px;
-
-    border-radius: 24px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(15,15,15,0.98),
-            rgba(25,25,25,0.98)
-        );
-
-    border: 1px solid rgba(255,255,255,0.06);
-
-    box-shadow:
-        0 20px 60px rgba(0,0,0,0.35);
+    padding: var(--space-2xl);
+    border-radius: var(--radius-lg);
+    background: var(--cinema-card-bg);
+    border: var(--border-gold);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
 }
 
 /* ==========================================================================
@@ -694,14 +421,10 @@ TITLE
 
 .section-header-row {
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
-
-    gap: 20px;
-
-    margin-bottom: 30px;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
 }
 
 /* ==========================================================================
@@ -710,36 +433,21 @@ TITLE
 
 .btn-write-review-small {
     border: none;
-
     outline: none;
-
     cursor: pointer;
-
-    color: #fff;
-
-    font-size: 14px;
-
-    font-weight: 700;
-
-    padding: 12px 20px;
-
-    border-radius: 999px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff4d4f,
-            #ff2d55
-        );
-
-    transition: all .3s ease;
+    color: var(--black-premium);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-round);
+    background: var(--gold-gradient);
+    box-shadow: var(--shadow-gold);
+    transition: var(--transition-normal);
 }
 
 .btn-write-review-small:hover {
     transform: translateY(-2px);
-
-    box-shadow:
-        0 12px 30px rgba(255,77,79,0.35);
+    box-shadow: 0 12px 30px rgba(201, 168, 76, 0.35);
 }
 
 /* ==========================================================================
@@ -748,12 +456,9 @@ TITLE
 
 .rating-statistics-dashboard {
     display: grid;
-
     grid-template-columns: 260px 1fr;
-
-    gap: 40px;
-
-    margin-bottom: 32px;
+    gap: var(--space-2xl);
+    margin-bottom: var(--space-2xl);
 }
 
 /* ==========================================================================
@@ -762,48 +467,35 @@ TITLE
 
 .dashboard-big-score-left {
     display: flex;
-
     flex-direction: column;
-
     align-items: center;
-
     justify-content: center;
 }
 
 .huge-number {
-    font-size: 72px;
-
-    font-weight: 900;
-
+    font-size: var(--font-size-6xl);
+    font-weight: var(--fw-black);
     line-height: 1;
-
-    color: #fff;
+    color: var(--gold-primary);
 }
 
 .slash-ten {
-    margin-top: 4px;
-
-    color: #9f9f9f;
-
-    font-size: 18px;
-
-    font-weight: 500;
+    margin-top: var(--space-xs);
+    color: var(--text-muted);
+    font-size: var(--font-size-md);
+    font-weight: var(--fw-medium);
 }
 
 .stars-row-display {
     display: flex;
-
-    gap: 4px;
-
-    margin-top: 12px;
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
 }
 
 .total-votes-count-txt {
-    margin-top: 10px;
-
-    color: #9c9c9c;
-
-    font-size: 14px;
+    margin-top: var(--space-sm);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
 }
 
 /* ==========================================================================
@@ -812,69 +504,45 @@ TITLE
 
 .dashboard-progress-bars-right {
     display: flex;
-
     flex-direction: column;
-
     justify-content: center;
-
-    gap: 12px;
+    gap: var(--space-sm);
 }
 
 .progress-bar-line-row {
     display: flex;
-
     align-items: center;
-
-    gap: 12px;
+    gap: var(--space-sm);
 }
 
 .star-line-label {
     width: 40px;
-
-    color: #fff;
-
-    font-weight: 600;
-
-    font-size: 14px;
+    color: var(--text-white);
+    font-weight: var(--fw-semibold);
+    font-size: var(--font-size-sm);
 }
 
 .progress-track-bg {
     flex: 1;
-
     height: 10px;
-
     overflow: hidden;
-
-    border-radius: 999px;
-
-    background: rgba(255,255,255,0.08);
+    border-radius: var(--radius-round);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .progress-fill-active {
     height: 100%;
-
-    border-radius: 999px;
-
-    background:
-        linear-gradient(
-            90deg,
-            #ff4d4f,
-            #ff8a65
-        );
-
-    transition: width .6s ease;
+    border-radius: var(--radius-round);
+    background: var(--gold-gradient);
+    transition: width 0.6s ease;
 }
 
 .progress-percent-text {
     width: 50px;
-
     text-align: right;
-
-    color: #aaa;
-
-    font-size: 13px;
-
-    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--fw-medium);
 }
 
 /* ==========================================================================
@@ -883,10 +551,8 @@ TITLE
 
 .mini-comments-list-viewport {
     display: flex;
-
     flex-direction: column;
-
-    gap: 18px;
+    gap: var(--space-md);
 }
 
 /* ==========================================================================
@@ -894,25 +560,17 @@ TITLE
    ========================================================================== */
 
 .mini-comment-card {
-    padding: 18px;
-
-    border-radius: 18px;
-
-    background:
-        rgba(255,255,255,0.03);
-
-    border: 1px solid rgba(255,255,255,0.05);
-
-    transition: all .3s ease;
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--overlay-light);
+    transition: var(--cinema-transition);
 }
 
 .mini-comment-card:hover {
     transform: translateY(-3px);
-
-    border-color: rgba(255,77,79,0.35);
-
-    background:
-        rgba(255,77,79,0.05);
+    border-color: rgba(201, 168, 76, 0.35);
+    background: rgba(201, 168, 76, 0.05);
 }
 
 /* ==========================================================================
@@ -921,58 +579,39 @@ TITLE
 
 .comment-user-meta-header {
     display: flex;
-
     align-items: center;
-
-    gap: 12px;
+    gap: var(--space-sm);
 }
 
 .user-avatar-placeholder-small {
     width: 42px;
-
     height: 42px;
-
     border-radius: 50%;
-
     flex-shrink: 0;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff4d4f,
-            #ff2d55
-        );
+    background: var(--gold-gradient);
 }
 
 .user-name-title-box {
     flex: 1;
-
     display: flex;
-
     flex-direction: column;
-
-    gap: 4px;
+    gap: var(--space-xs);
 }
 
 .comment-username {
-    color: #fff;
-
-    font-size: 15px;
-
-    font-weight: 700;
+    color: var(--text-white);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
 }
 
 .user-stars-small-row {
     display: flex;
-
     gap: 2px;
 }
 
 .comment-time-ago {
-    color: #8f8f8f;
-
-    font-size: 12px;
-
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
     white-space: nowrap;
 }
 
@@ -981,24 +620,19 @@ TITLE
    ========================================================================== */
 
 .comment-content-body-text {
-    margin-top: 12px;
-
-    color: #d6d6d6;
-
-    font-size: 14px;
-
+    margin-top: var(--space-sm);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
     line-height: 1.8;
 }
 
 .empty-reviews-placeholder {
-    padding: 30px 0;
-
+    padding: var(--space-xl) 0;
     text-align: center;
-
-    color: #888;
-
-    font-size: 14px;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
 }
+
 /* ==========================================================================
    TRAILER MODAL
    ========================================================================== */
@@ -1006,22 +640,17 @@ TITLE
 .trailer-modal-overlay {
     position: fixed;
     inset: 0;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
-    background: rgba(0, 0, 0, 0.9);
+    background: var(--overlay-dark);
     backdrop-filter: blur(4px);
-
     z-index: 9999;
 }
 
 .trailer-modal-container {
     position: relative;
-
     width: min(1200px, 90vw);
-
     overflow: visible;
 }
 
@@ -1029,168 +658,190 @@ TITLE
     position: absolute;
     top: -18px;
     right: -18px;
-
     width: 44px;
     height: 44px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     border: none;
     border-radius: 50%;
-
-    background: #e50914;
-    color: #ffffff;
-
+    background: var(--gold-gradient);
+    color: var(--black-premium);
     cursor: pointer;
-
     z-index: 10001;
-
-    box-shadow: 0 8px 20px rgba(229, 9, 20, 0.4);
-
-    transition: all 0.3s ease;
+    box-shadow: var(--shadow-gold);
+    transition: var(--transition-normal);
 }
 
 .trailer-close-btn:hover {
     transform: rotate(90deg) scale(1.08);
-    background: #ff2d3b;
+    filter: brightness(1.1);
 }
 
 .modal-trailer-iframe-container {
     position: relative;
-
     width: 100%;
     padding-top: 56.25%;
-
     overflow: hidden;
-    border-radius: 20px;
-
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
 }
 
 .modal-trailer-iframe-container iframe {
     position: absolute;
     inset: 0;
-
     width: 100%;
     height: 100%;
-
     border: none;
 }
-/* ========================================================================== 
-   RESPONSIVE MINIMAL - WITHOUT HERO BANNER (SECTION 1 REMOVED)
-   ========================================================================== */
 
+/* ========================================================================== 
+   RESPONSIVE
+   ========================================================================== */
 
 /* ===================== 1200px ===================== */
 @media (max-width: 1200px) {
+    .cast-avatars-horizontal-list {
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-lg);
+    }
 
-  .cast-avatars-horizontal-list {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-  }
+    .other-trailers-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-lg);
+    }
 
-  .other-trailers-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-  }
-
-  .rating-statistics-dashboard {
-    gap: 28px;
-  }
+    .rating-statistics-dashboard {
+        gap: var(--space-xl);
+    }
 }
-
 
 /* ===================== 992px ===================== */
 @media (max-width: 992px) {
+    .cinema-main-content-container {
+        padding: 0 var(--space-md);
+    }
 
-  .cinema-main-content-container {
-    padding: 0 20px;
-  }
+    .cast-avatars-horizontal-list {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-lg);
+    }
 
-  .cast-avatars-horizontal-list {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 22px;
-  }
+    .other-trailers-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-lg);
+    }
 
-  .other-trailers-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 22px;
-  }
+    .rating-statistics-dashboard {
+        grid-template-columns: 1fr;
+        gap: var(--space-xl);
+    }
 
-  .rating-statistics-dashboard {
-    grid-template-columns: 1fr;
-    gap: 30px;
-  }
+    .dashboard-big-score-left {
+        align-items: flex-start;
+    }
 
-  .dashboard-big-score-left {
-    align-items: flex-start;
-  }
+    .section-title-label,
+    .filmgenre-section-header h2 {
+        font-size: var(--font-size-xl);
+    }
 }
-
 
 /* ===================== 768px ===================== */
 @media (max-width: 768px) {
+    .cinema-main-content-container {
+        padding: 0 var(--space-sm);
+    }
 
-  .cinema-main-content-container {
-    padding: 0 15px;
-  }
+    .cast-avatars-horizontal-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-md);
+    }
 
-  .cast-avatars-horizontal-list {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 18px;
-  }
+    .other-trailers-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-md);
+    }
 
-  .other-trailers-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 18px;
-  }
+    .split-right-column-box {
+        padding: var(--space-lg);
+    }
 
-  .split-right-column-box {
-    padding: 24px;
-  }
+    .huge-number {
+        font-size: var(--font-size-5xl);
+    }
 
-  .huge-number {
-    font-size: 58px;
-  }
+    .section-title-label,
+    .filmgenre-section-header h2 {
+        font-size: var(--font-size-lg);
+    }
+
+    .view-all-link-gold {
+        font-size: var(--font-size-xs);
+    }
 }
-
 
 /* ===================== 480px ===================== */
 @media (max-width: 480px) {
+    .cinema-main-content-container {
+        padding: 0 var(--space-xs);
+    }
 
-  .cinema-main-content-container {
-    padding: 0 15px;
-  }
+    .cast-avatars-horizontal-list {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
 
-  .cast-avatars-horizontal-list {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
+    .other-trailers-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
 
-  .other-trailers-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
+    .actor-real-name {
+        font-size: var(--font-size-base);
+    }
 
-  .actor-real-name {
-    font-size: 16px;
-  }
+    .other-trailer-title {
+        font-size: var(--font-size-sm);
+    }
 
-  .other-trailer-title {
-    font-size: 15px;
-  }
+    .split-right-column-box {
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+    }
 
-  .split-right-column-box {
-    padding: 18px;
-  }
+    .huge-number {
+        font-size: var(--font-size-4xl);
+    }
 
-  .huge-number {
-    font-size: 48px;
-  }
+    .progress-percent-text {
+        font-size: var(--font-size-xs);
+    }
 
-  .progress-percent-text {
-    font-size: 12px;
-  }
+    .section-title-label,
+    .filmgenre-section-header h2 {
+        font-size: var(--font-size-base);
+        letter-spacing: 1px;
+    }
+
+    .btn-write-review-small {
+        font-size: var(--font-size-xs);
+        padding: var(--space-xs) var(--space-sm);
+    }
+
+    .trailer-close-btn {
+        width: 36px;
+        height: 36px;
+        top: -12px;
+        right: -12px;
+    }
+
+    .comment-user-meta-header {
+        flex-wrap: wrap;
+    }
+
+    .comment-time-ago {
+        width: 100%;
+        margin-left: 52px;
+    }
 }

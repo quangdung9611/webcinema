@@ -48,10 +48,6 @@ const MoviePreviewHero = ({
                 className="preview-hero-backdrop"
                 src={backdropSrc}
                 alt={movie.title}
-                onError={(e) => {
-                    console.log("❌ Lỗi backdrop, dùng poster thay thế");
-                    e.target.src = `${IMAGE_BASE_URL}/posters/${movie.poster_url}`;
-                }}
             />
 
             {/* LỚP PHỦ */}

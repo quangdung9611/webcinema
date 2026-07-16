@@ -1,28 +1,31 @@
-/* styles/LoadingButton.css */
+/* styles/LoadingButton.css - GOLD PREMIUM THEME
+   (Dùng biến từ index.css)
+========================================================= */
 
 .loading-btn {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
-    padding: 14px 28px;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-lg);
     border: none;
-    border-radius: 999px;
-    font-size: 16px;
-    font-weight: 700;
-    color: #fff;
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    border-radius: var(--radius-round);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
+    color: var(--black-premium);
+    background: var(--gold-gradient);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
     min-width: 160px;
     min-height: 52px;
     font-family: inherit;
+    box-shadow: var(--shadow-gold);
 }
 
 .loading-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35);
+    box-shadow: 0 8px 24px rgba(201, 168, 76, 0.35);
 }
 
 .loading-btn:disabled {
@@ -31,9 +34,9 @@
 }
 
 .loading-btn.loading {
-    background: linear-gradient(135deg, #b91c1c, #991111);
+    background: linear-gradient(135deg, #b8923a, #a07d2e); /* darker gold */
     cursor: wait;
-    gap: 14px;
+    gap: var(--space-sm);
 }
 
 /* =========================================
@@ -57,6 +60,7 @@
     border-radius: 50%;
     opacity: 0.9;
     transform-origin: center center;
+    background: var(--white-premium); /* màu chấm trắng nổi bật trên nền vàng */
 }
 
 @keyframes spinCircle {
@@ -83,11 +87,11 @@
 
 @media (max-width: 480px) {
     .loading-btn {
-        padding: 12px 20px;
-        font-size: 14px;
+        padding: var(--space-sm) var(--space-md);
+        font-size: var(--font-size-sm);
         min-height: 44px;
         min-width: 120px;
-        gap: 12px;
+        gap: var(--space-sm);
     }
 
     .spinner-dots-container {

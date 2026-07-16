@@ -1,26 +1,21 @@
 /* =====================================================
    FOOTER - CINEMA STAR (GOLD EDITION)
+   V2 - Bố cục thoáng, responsive mượt
 ===================================================== */
 
 .mystic-footer {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
-
     padding-top: 0;
     padding-bottom: 0;
-
     width: 100%;
-
     flex-shrink: 0;
-
     position: relative;
     overflow: hidden;
-
     border-top: var(--border-gold);
     box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.3);
 }
 
-/* Bỏ pseudo-element cũ (không dùng) */
 .mystic-footer::before {
     display: none;
 }
@@ -32,15 +27,11 @@
 .mystic-footer-container {
     width: 100%;
     max-width: 1300px;
-
     margin: 0 auto;
-    padding: var(--space-3xl) var(--space-lg) var(--space-2xl);
-
+    padding: 70px 40px 50px;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-
-    gap: var(--space-2xl);
-
+    gap: 50px 40px;
     border-bottom: var(--border-gold);
 }
 
@@ -50,17 +41,19 @@
 
 .mystic-footer-heading h3 {
     color: var(--text-white);
-    font-size: var(--font-size-2xl);
+    font-size: 1.25rem;
     font-weight: var(--fw-extrabold);
-    margin-bottom: var(--space-sm);
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
 }
 
 .mystic-footer-heading span {
     display: block;
-    width: 80px;
+    width: 60px;
     height: 3px;
     border-radius: var(--radius-round);
     background: var(--gold-gradient);
+    margin-bottom: 20px;
 }
 
 /* =====================================================
@@ -68,17 +61,18 @@
 ===================================================== */
 
 .mystic-footer-description {
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.75);
     line-height: 1.8;
-    font-size: var(--font-size-sm);
-    margin-bottom: var(--space-lg);
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+    max-width: 320px;
 }
 
 .mystic-footer-divider {
-    width: 100px;
+    width: 80px;
     height: 2px;
-    margin-bottom: var(--space-lg);
-    background: rgba(255, 255, 255, 0.1);
+    margin-bottom: 24px;
+    background: rgba(255, 255, 255, 0.08);
 }
 
 /* =====================================================
@@ -87,44 +81,49 @@
 
 .mystic-footer-social-title {
     color: var(--text-white);
-    font-size: var(--font-size-sm);
+    font-size: 0.85rem;
     font-weight: var(--fw-bold);
-    margin-bottom: var(--space-sm);
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
 }
 
 .mystic-footer-socials {
     display: flex;
-    gap: var(--space-sm);
+    gap: 12px;
 }
 
 .mystic-footer-socials a {
-    width: 48px;
-    height: 48px;
+    width: 46px;
+    height: 46px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
     color: var(--text-white);
     border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.05);
-    border: var(--border-gold);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     transition: var(--transition-normal);
 }
 
 .mystic-footer-socials a:hover {
-    background: rgba(201, 168, 76, 0.15);
-    border-color: var(--border-gold-hover);
+    background: rgba(201, 168, 76, 0.2);
+    border-color: rgba(201, 168, 76, 0.4);
     transform: translateY(-3px);
+    box-shadow: 0 4px 16px rgba(201, 168, 76, 0.15);
 }
 
 /* =====================================================
-   LIST
+   LIST (DỊCH VỤ / HỖ TRỢ)
 ===================================================== */
 
 .mystic-footer-column ul {
     list-style: none;
     padding: 0;
     margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .mystic-footer-column ul li {
@@ -135,22 +134,39 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-xs);
-    padding: var(--space-sm) 0;
+    gap: 8px;
+    padding: 10px 0;
     text-decoration: none;
     color: rgba(255, 255, 255, 0.8);
     transition: var(--transition-normal);
+    font-size: 0.95rem;
 }
 
 .mystic-footer-column ul li a div {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 12px;
+}
+
+.mystic-footer-column ul li a div svg {
+    color: var(--gold-primary);
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+.mystic-footer-column ul li a .lucide-chevron-right {
+    color: rgba(255, 255, 255, 0.2);
+    transition: var(--transition-normal);
 }
 
 .mystic-footer-column ul li a:hover {
     color: var(--gold-primary);
-    padding-left: var(--space-xs);
+    padding-left: 6px;
+}
+
+.mystic-footer-column ul li a:hover .lucide-chevron-right {
+    color: var(--gold-primary);
+    transform: translateX(4px);
 }
 
 /* =====================================================
@@ -160,24 +176,30 @@
 .mystic-footer-contact-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: 20px;
 }
 
 .mystic-footer-contact-item {
     display: flex;
     align-items: flex-start;
-    gap: var(--space-sm);
+    gap: 14px;
 }
 
 .mystic-footer-contact-item svg {
     color: var(--gold-primary);
     flex-shrink: 0;
+    margin-top: 2px;
 }
 
 .mystic-footer-contact-item p {
     margin: 0;
     color: rgba(255, 255, 255, 0.8);
-    line-height: 1.8;
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+
+.mystic-footer-contact-item p br {
+    display: block;
 }
 
 /* =====================================================
@@ -188,19 +210,21 @@
     width: 100%;
     max-width: 1300px;
     margin: 0 auto;
-    padding: var(--space-xl) var(--space-lg);
+    padding: 28px 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-2xl);
+    gap: 60px;
     border-bottom: var(--border-gold);
 }
 
 .mystic-footer-feature {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: 10px;
     color: rgba(255, 255, 255, 0.85);
+    font-size: 0.95rem;
+    font-weight: var(--fw-medium);
 }
 
 .mystic-footer-feature svg {
@@ -215,30 +239,33 @@
     width: 100%;
     max-width: 1300px;
     margin: 0 auto;
-    padding: var(--space-xl) var(--space-lg);
+    padding: 28px 40px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--space-lg);
+    justify-content: space-between;
+    gap: 24px;
     position: relative;
 }
 
 .mystic-footer-logo {
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 .mystic-footer-logo img {
-    width: 150px;
+    width: 140px;
     object-fit: contain;
     transition: var(--transition-normal);
 }
 
 .mystic-footer-logo:hover img {
-    transform: scale(1.03);
+    transform: scale(1.04);
 }
 
 .mystic-footer-bottom p {
     color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin: 0;
 }
 
 .mystic-footer-bottom span {
@@ -247,150 +274,293 @@
 }
 
 /* =====================================================
-   SCROLL TOP
+   SCROLL TOP - Sửa hover (chữ trắng, nền vàng đậm)
 ===================================================== */
 
 .mystic-footer-scrolltop {
-    position: absolute;
-    right: var(--space-lg);
     width: 52px;
     height: 52px;
     border: none;
     cursor: pointer;
     border-radius: 50%;
-    color: var(--text-white);
+    color: #fff;
     background: var(--gold-gradient);
+    font-size: 1.5rem;
+    font-weight: var(--fw-bold);
     transition: var(--transition-normal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .mystic-footer-scrolltop:hover {
+    background: #B8923A;  /* màu vàng đậm hơn khi hover */
     transform: translateY(-4px);
-    box-shadow: var(--shadow-gold);
+    box-shadow: 0 8px 30px rgba(201, 168, 76, 0.4);
+    color: #fff;  /* chữ vẫn trắng */
 }
 
 /* =====================================================
-   RESPONSIVE
+   RESPONSIVE - 4 CỘT → 2 CỘT → 1 CỘT
 ===================================================== */
 
-@media (max-width: 992px) {
+/* --- 1200px: giữ 4 cột, thu nhỏ gap --- */
+@media (max-width: 1200px) {
     .mystic-footer-container {
-        grid-template-columns: repeat(2, 1fr);
-        padding: var(--space-3xl) var(--space-xl) var(--space-2xl);
-        gap: var(--space-xl);
+        gap: 40px 30px;
+        padding: 60px 30px 40px;
     }
     .mystic-footer-feature-bar,
     .mystic-footer-bottom {
-        padding-left: var(--space-xl);
-        padding-right: var(--space-xl);
-    }
-    .mystic-footer-feature-bar {
-        flex-wrap: wrap;
-        gap: var(--space-lg);
-    }
-    .mystic-footer-heading h3 {
-        font-size: var(--font-size-xl);
-    }
-    .mystic-footer-column ul li a,
-    .mystic-footer-contact-item p,
-    .mystic-footer-description {
-        font-size: var(--font-size-base);
+        padding-left: 30px;
+        padding-right: 30px;
     }
 }
 
-@media (max-width: 768px) {
+/* --- 1024px: vẫn 4 cột, gap nhỏ hơn --- */
+@media (max-width: 1024px) {
     .mystic-footer-container {
-        grid-template-columns: 1fr;
-        gap: var(--space-xl);
-        padding: var(--space-2xl) var(--space-xl);
+        grid-template-columns: repeat(4, 1fr);
+        gap: 30px 24px;
+        padding: 50px 24px 40px;
+    }
+    .mystic-footer-heading h3 {
+        font-size: 1.1rem;
+    }
+    .mystic-footer-description,
+    .mystic-footer-column ul li a,
+    .mystic-footer-contact-item p {
+        font-size: 0.9rem;
     }
     .mystic-footer-feature-bar,
     .mystic-footer-bottom {
-        padding-left: var(--space-xl);
-        padding-right: var(--space-xl);
+        padding-left: 24px;
+        padding-right: 24px;
+    }
+}
+
+/* --- 992px: xuống 2 cột --- */
+@media (max-width: 992px) {
+    .mystic-footer-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px 32px;
+        padding: 50px 28px 40px;
+    }
+    .mystic-footer-feature-bar {
+        flex-wrap: wrap;
+        gap: 24px 40px;
+        padding: 24px 28px;
+    }
+    .mystic-footer-bottom {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 16px;
+        padding: 24px 28px;
+    }
+    .mystic-footer-feature {
+        font-size: 0.9rem;
+    }
+    .mystic-footer-heading h3 {
+        font-size: 1.15rem;
+    }
+    .mystic-footer-description {
+        max-width: 100%;
+    }
+}
+
+/* --- 768px: 2 cột, padding giảm --- */
+@media (max-width: 768px) {
+    .mystic-footer-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 36px 24px;
+        padding: 44px 20px 36px;
+    }
+    .mystic-footer-feature-bar,
+    .mystic-footer-bottom {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    .mystic-footer-feature-bar {
+        gap: 18px 30px;
+        padding: 20px 20px;
+    }
+    .mystic-footer-bottom {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+        padding: 20px 20px;
+    }
+    .mystic-footer-scrolltop {
+        position: relative;
+        right: auto;
+    }
+    .mystic-footer-heading h3 {
+        font-size: 1.1rem;
+    }
+    .mystic-footer-heading span {
+        width: 50px;
+    }
+    .mystic-footer-socials {
+        justify-content: flex-start;
+    }
+    .mystic-footer-column ul li a {
+        padding: 8px 0;
+        font-size: 0.9rem;
+    }
+    .mystic-footer-contact-item {
+        gap: 12px;
+    }
+    .mystic-footer-description {
+        font-size: 0.9rem;
+        max-width: 100%;
+    }
+}
+
+/* --- 600px: xuống 1 cột --- */
+@media (max-width: 600px) {
+    .mystic-footer-container {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        padding: 40px 20px 32px;
+        text-align: center;
     }
     .mystic-footer-brand,
     .mystic-footer-column {
         text-align: center;
     }
-    .mystic-footer-heading h3 {
-        font-size: var(--font-size-xl);
-    }
-    .mystic-footer-description,
-    .mystic-footer-contact-item p,
-    .mystic-footer-column ul li a {
-        font-size: var(--font-size-md);
-        line-height: 1.8;
-    }
-    .mystic-footer-heading span,
-    .mystic-footer-divider {
+    .mystic-footer-heading span {
         margin-left: auto;
         margin-right: auto;
     }
     .mystic-footer-socials {
         justify-content: center;
     }
+    .mystic-footer-description {
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .mystic-footer-divider {
+        margin-left: auto;
+        margin-right: auto;
+    }
     .mystic-footer-column ul li a {
+        justify-content: center;
+        padding: 10px 0;
+    }
+    .mystic-footer-column ul li a div {
         justify-content: center;
     }
     .mystic-footer-contact-item {
         justify-content: center;
         text-align: center;
     }
+    .mystic-footer-contact-item p {
+        text-align: left;
+    }
     .mystic-footer-feature-bar {
         flex-direction: column;
-        gap: var(--space-md);
+        gap: 12px;
+        padding: 20px 20px;
     }
     .mystic-footer-feature {
-        font-size: var(--font-size-md);
+        font-size: 0.9rem;
     }
     .mystic-footer-bottom {
-        flex-direction: column;
-        text-align: center;
-        gap: var(--space-md);
-    }
-    .mystic-footer-scrolltop {
-        position: relative;
-        right: auto;
-    }
-}
-
-@media (max-width: 480px) {
-    .mystic-footer-container {
-        padding: var(--space-2xl) var(--space-lg);
-        gap: var(--space-xl);
-    }
-    .mystic-footer-feature-bar,
-    .mystic-footer-bottom {
-        padding-left: var(--space-lg);
-        padding-right: var(--space-lg);
-    }
-    .mystic-footer-heading h3 {
-        font-size: var(--font-size-lg);
-    }
-    .mystic-footer-description,
-    .mystic-footer-contact-item p,
-    .mystic-footer-column ul li a {
-        font-size: var(--font-size-sm);
-    }
-    .mystic-footer-feature {
-        font-size: var(--font-size-sm);
+        padding: 20px 20px;
+        gap: 14px;
     }
     .mystic-footer-logo img {
-        width: 130px;
+        width: 120px;
     }
     .mystic-footer-bottom p {
-        font-size: var(--font-size-sm);
-        line-height: 1.7;
+        font-size: 0.85rem;
     }
 }
 
-@media (max-width: 360px) {
+/* --- 480px: 1 cột, padding nhỏ hơn --- */
+@media (max-width: 480px) {
     .mystic-footer-container {
-        padding: var(--space-2xl) var(--space-md);
+        padding: 32px 16px 28px;
+        gap: 28px;
     }
     .mystic-footer-feature-bar,
     .mystic-footer-bottom {
-        padding-left: var(--space-md);
-        padding-right: var(--space-md);
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    .mystic-footer-feature-bar {
+        padding: 16px 16px;
+        gap: 10px;
+    }
+    .mystic-footer-feature {
+        font-size: 0.85rem;
+    }
+    .mystic-footer-heading h3 {
+        font-size: 1.05rem;
+    }
+    .mystic-footer-description,
+    .mystic-footer-column ul li a,
+    .mystic-footer-contact-item p {
+        font-size: 0.85rem;
+    }
+    .mystic-footer-column ul li a {
+        padding: 8px 0;
+    }
+    .mystic-footer-logo img {
+        width: 100px;
+    }
+    .mystic-footer-bottom p {
+        font-size: 0.8rem;
+    }
+    .mystic-footer-scrolltop {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+    }
+    .mystic-footer-socials a {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* --- 360px: tối giản --- */
+@media (max-width: 360px) {
+    .mystic-footer-container {
+        padding: 28px 12px 24px;
+        gap: 24px;
+    }
+    .mystic-footer-feature-bar,
+    .mystic-footer-bottom {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    .mystic-footer-heading h3 {
+        font-size: 1rem;
+    }
+    .mystic-footer-description,
+    .mystic-footer-column ul li a,
+    .mystic-footer-contact-item p {
+        font-size: 0.8rem;
+    }
+    .mystic-footer-contact-item {
+        gap: 10px;
+    }
+    .mystic-footer-contact-item svg {
+        width: 18px;
+        height: 18px;
+    }
+    .mystic-footer-column ul li a div svg {
+        width: 16px;
+        height: 16px;
+    }
+    .mystic-footer-socials a {
+        width: 36px;
+        height: 36px;
+    }
+    .mystic-footer-socials a svg {
+        width: 18px;
+        height: 18px;
     }
 }

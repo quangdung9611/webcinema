@@ -259,10 +259,6 @@ const MoviePreviewModal = ({
                                                     src={posterSrc}
                                                     alt={movie.title}
                                                     className="preview-strip-image"
-                                                    onError={(e) => {
-                                                        console.log("❌ Lỗi ảnh strip:", e.target.src);
-                                                        e.target.src = "https://via.placeholder.com/200x300/1a1a2e/ffffff?text=No+Image";
-                                                    }}
                                                 />
                                                 <div className="preview-strip-gradient" />
                                                 <div className="preview-strip-info">

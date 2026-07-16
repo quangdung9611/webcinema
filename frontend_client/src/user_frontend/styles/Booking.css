@@ -1,14 +1,12 @@
 /* =========================================================
-   BOOKING PAGE - CINEMA RED BLACK
+   BOOKING PAGE - GOLD PREMIUM THEME
+   (Dùng biến từ index.css – giữ nguyên màu sơ đồ ghế)
 ========================================================= */
 
 .booking-wrapper {
     min-height: 100vh;
-
-    padding: 40px 0;
-
-    color: #ffffff;
-
+    padding: var(--space-2xl) 0;
+    color: var(--text-white);
     overflow: hidden;
 }
 
@@ -19,27 +17,16 @@
 .booking-container {
     width: 100%;
     max-width: 1450px;
-
     margin: 0 auto;
-
     display: flex;
     align-items: stretch;
-
-    gap: 26px;
-
-    padding: 24px;
-
-    border-radius: 30px;
-
-    background: rgba(0, 0, 0, 0.35);
-
-    border: 1px solid rgba(255, 40, 40, 0.12);
-
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    border-radius: var(--radius-xl);
+    background: var(--cinema-card-bg);
+    border: var(--border-gold);
     backdrop-filter: blur(12px);
-
-    box-shadow:
-        0 0 30px rgba(255, 0, 0, 0.06),
-        0 20px 50px rgba(0, 0, 0, 0.45);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
 }
 
 /* =========================================================
@@ -48,12 +35,9 @@
 
 .ticket-sidebar {
     width: 285px !important;
-
     flex-shrink: 0;
-
     position: sticky;
     top: 20px;
-
     height: fit-content;
 }
 
@@ -63,29 +47,19 @@
 
 .poster-container {
     width: 100% !important;
-
     max-width: 220px;
-
-    margin: 0 auto 24px;
-
+    margin: 0 auto var(--space-lg);
     overflow: hidden;
-
-    border-radius: 18px;
-
-    box-shadow:
-        0 0 25px rgba(255, 0, 0, 0.12),
-        0 15px 40px rgba(0, 0, 0, 0.45);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-gold), var(--cinema-card-shadow);
 }
 
 .poster-container img {
     width: 100%;
     height: auto;
-
     object-fit: cover;
-
     display: block;
-
-    transition: .35s ease;
+    transition: var(--transition-normal);
 }
 
 .poster-container:hover img {
@@ -99,8 +73,7 @@
 .main-booking-area {
     flex: 1;
     min-width: 0;
-
-    padding: 6px;
+    padding: var(--space-xs);
 }
 
 /* =========================================================
@@ -109,31 +82,24 @@
 
 .booking-nav-flex {
     width: 100%;
-
     display: flex;
     align-items: stretch;
-
-    gap: 22px;
-
-    margin-bottom: 50px;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-2xl);
 }
 
 .nav-col {
     display: flex;
     flex-direction: column;
-
-    gap: 14px;
+    gap: var(--space-sm);
 }
 
 .nav-col label {
-    font-size: 0.72rem;
-    font-weight: 700;
-
+    font-size: var(--font-size-xs);
+    font-weight: var(--fw-bold);
     letter-spacing: 2px;
-
     text-transform: uppercase;
-
-    color: rgba(255,255,255,.55);
+    color: var(--text-muted);
 }
 
 /* =========================================================
@@ -147,353 +113,29 @@
 .cinema-select select {
     width: 100%;
     height: 60px;
-
-    padding: 0 18px;
-
-    border-radius: 16px;
-
-    border: 1px solid rgba(255,255,255,.08);
-
-    background: rgba(255,255,255,.04);
-
-    color: white;
-
+    padding: 0 var(--space-md);
+    border-radius: var(--radius-md);
+    border: var(--border-gold);
+    background: rgba(0,0,0,0.45);
+    color: var(--text-white);
     outline: none;
-
-    font-size: .95rem;
-    font-weight: 600;
-
-    transition: .25s ease;
-}
-
-.cinema-select select:focus {
-    border-color: rgba(255, 70, 70, .55);
-
-    box-shadow:
-        0 0 0 4px rgba(255, 0, 0, .08);
-}
-
-.cinema-select option {
-    background: #1f0908;
-}
-
-/* =========================================================
-   DATE + TIME AREA
-========================================================= */
-
-.date-slider {
-    flex: 1.6;
-    min-width: 0;
-}
-
-.time-slider {
-    flex: 1;
-    min-width: 320px;
-}
-
-.slider-controls {
-    height: 60px;
-
-    display: flex;
-    align-items: center;
-
-    gap: 12px;
-}
-
-.scroll-list {
-    flex: 1;
-
-    display: flex;
-    align-items: center;
-
-    gap: 14px;
-
-    overflow-x: auto;
-
-    scrollbar-width: none;
-
-    scroll-behavior: smooth;
-}
-
-.scroll-list::-webkit-scrollbar {
-    display: none;
-}
-
-/* =========================================================
-   ARROW BUTTON
-========================================================= */
-
-.slide-btn {
-    width: 42px;
-    height: 42px;
-
-    border: none;
-
-    border-radius: 50%;
-
-    background: rgba(255,255,255,.06);
-
-    color: white;
-
-    font-size: 1rem;
-
-    cursor: pointer;
-
-    flex-shrink: 0;
-
-    transition: .25s ease;
-}
-
-.slide-btn:hover {
-    background: #ff3434;
-
-    color: white;
-
-    box-shadow:
-        0 0 20px rgba(255,0,0,.25);
-}
-
-/* =========================================================
-   COMMON CARD
-========================================================= */
-
-.compact-card {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    flex-shrink: 0;
-
-    cursor: pointer;
-
-    transition: .25s ease;
-}
-
-/* =========================================================
-   DATE CARD
-========================================================= */
-
-.date-slider .compact-card {
-    width: 76px;
-    min-width: 76px;
-
-    height: 76px;
-
-    border-radius: 50%;
-
-    flex-direction: column;
-
-    background: rgba(255,255,255,.04);
-
-    border: 1px solid rgba(255,255,255,.06);
-
-    backdrop-filter: blur(10px);
-}
-
-.date-slider .compact-card:hover {
-    transform:
-        translateY(-3px)
-        scale(1.05);
-
-    background:
-        rgba(255,0,0,.08);
-
-    border-color:
-        rgba(255,70,70,.45);
-
-    box-shadow:
-        0 0 18px rgba(255,0,0,.15);
-}
-
-.date-slider .compact-card.active {
-    background:
-        linear-gradient(
-            180deg,
-            #ff4040,
-            #b00000
-        );
-
-    border-color:
-        rgba(255,255,255,.12);
-
-    box-shadow:
-        0 0 25px rgba(255,0,0,.25);
-}
-
-.day-txt {
-    font-size: .62rem;
-
-    font-weight: 700;
-
-    letter-spacing: 1px;
-
-    text-transform: uppercase;
-
-    margin-bottom: 4px;
-
-    opacity: .8;
-}
-
-.date-txt {
-    font-size: 1rem;
-
-    font-weight: 800;
-
-    line-height: 1;
-}
-
-.date-slider .compact-card.active .day-txt,
-.date-slider .compact-card.active .date-txt {
-    color: white;
-}
-
-/* =========================================================
-   TIME CARD
-========================================================= */
-
-.time-card {
-    min-width: 96px;
-
-    height: 60px;
-
-    border-radius: 14px;
-
-    background:
-        rgba(255,255,255,.04);
-
-    border:
-        1px solid rgba(255,255,255,.06);
-
-    font-size: .95rem;
-    font-weight: 700;
-}
-
-.time-card:hover {
-    transform: translateY(-2px);
-
-    border-color:
-        rgba(255,60,60,.45);
-
-    background:
-        rgba(255,0,0,.08);
-
-    box-shadow:
-        0 0 20px rgba(255,0,0,.15);
-}
-
-.time-card.active {
-    background:
-        linear-gradient(
-            180deg,
-            #ff2e2e,
-            #b00000
-        );
-
-    border-color:
-        rgba(255,255,255,.12);
-
-    box-shadow:
-        0 0 25px rgba(255,0,0,.25);
-}
-
-/* =========================================================
-   DISABLED
-========================================================= */
-
-.disabled-step {
-    opacity: .4;
-    pointer-events: none;
-}
-
-.no-showtimes {
-    height: 60px;
-
-    display: flex;
-    align-items: center;
-
-    color: rgba(255,255,255,.45);
-
-    font-size: .92rem;
-}
-/* =========================================================
-   STEP NAV
-========================================================= */
-
-.booking-nav-flex {
-    width: 100%;
-
-    display: flex;
-    align-items: stretch;
-
-    gap: 22px;
-
-    margin-bottom: 50px;
-}
-
-.nav-col {
-    display: flex;
-    flex-direction: column;
-
-    gap: 14px;
-}
-
-.nav-col label {
-    font-size: 0.72rem;
-
-    font-weight: 700;
-
-    letter-spacing: 2px;
-
-    text-transform: uppercase;
-
-    color: rgba(255,255,255,.55);
-}
-
-/* =========================================================
-   CINEMA SELECT
-========================================================= */
-
-.cinema-select {
-    width: 240px;
-}
-
-.cinema-select select {
-    width: 100%;
-    height: 60px;
-
-    padding: 0 18px;
-
-    border-radius: 16px;
-
-    border: 1px solid rgba(255,70,70,.15);
-
-    background: rgba(0,0,0,.45);
-
-    color: #ffffff;
-
-    outline: none;
-
-    font-size: .95rem;
-    font-weight: 600;
-
-    transition: .25s ease;
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-semibold);
+    transition: var(--transition-normal);
 }
 
 .cinema-select select:hover {
-    border-color: rgba(255,70,70,.4);
+    border-color: var(--gold-premium);
 }
 
 .cinema-select select:focus {
-    border-color: #ff4444;
-
-    box-shadow:
-        0 0 0 4px rgba(255,0,0,.12),
-        0 0 20px rgba(255,0,0,.18);
+    border-color: var(--gold-premium);
+    box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.15), var(--shadow-gold);
 }
 
 .cinema-select option {
-    background: #1a0b0b;
-    color: white;
+    background: var(--black-soft);
+    color: var(--text-white);
 }
 
 /* =========================================================
@@ -512,25 +154,18 @@
 
 .slider-controls {
     height: 60px;
-
     display: flex;
     align-items: center;
-
-    gap: 12px;
+    gap: var(--space-sm);
 }
 
 .scroll-list {
     flex: 1;
-
     display: flex;
     align-items: center;
-
-    gap: 14px;
-
+    gap: var(--space-sm);
     overflow-x: auto;
-
     scrollbar-width: none;
-
     scroll-behavior: smooth;
 }
 
@@ -539,51 +174,39 @@
 }
 
 /* =========================================================
-   ARROW BUTTON
+   ARROW BUTTON (gold)
 ========================================================= */
 
 .slide-btn {
     width: 42px;
     height: 42px;
-
     border: none;
-
     border-radius: 50%;
-
-    background: rgba(255,255,255,.05);
-
-    color: white;
-
+    background: rgba(255,255,255,0.06);
+    color: var(--text-white);
+    font-size: var(--font-size-base);
     cursor: pointer;
-
     flex-shrink: 0;
-
-    transition: .25s ease;
+    transition: var(--transition-normal);
 }
 
 .slide-btn:hover {
-    background: #ff2e2e;
-
-    color: white;
-
-    box-shadow:
-        0 0 20px rgba(255,0,0,.35);
+    background: var(--gold-premium);
+    color: var(--black-premium);
+    box-shadow: var(--shadow-gold);
 }
 
 /* =========================================================
-   CARD CHUNG
+   COMMON CARD
 ========================================================= */
 
 .compact-card {
     display: flex;
     align-items: center;
     justify-content: center;
-
     flex-shrink: 0;
-
     cursor: pointer;
-
-    transition: .25s ease;
+    transition: var(--transition-normal);
 }
 
 /* =========================================================
@@ -593,76 +216,45 @@
 .date-slider .compact-card {
     width: 76px;
     min-width: 76px;
-
     height: 76px;
-
     border-radius: 50%;
-
     flex-direction: column;
-
-    background: rgba(255,255,255,.03);
-
-    border: 1px solid rgba(255,255,255,.06);
-
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
     backdrop-filter: blur(10px);
 }
 
 .date-slider .compact-card:hover {
-    transform:
-        translateY(-3px)
-        scale(1.04);
-
-    border-color:
-        rgba(255,70,70,.35);
-
-    background:
-        rgba(255,0,0,.08);
-
-    box-shadow:
-        0 0 20px rgba(255,0,0,.15);
+    transform: translateY(-3px) scale(1.05);
+    border-color: var(--gold-premium);
+    background: rgba(201, 168, 76, 0.08);
+    box-shadow: var(--shadow-gold);
 }
 
 .date-slider .compact-card.active {
-    background:
-        linear-gradient(
-            180deg,
-            #ff3b3b,
-            #b00000
-        );
-
-    border:
-        1px solid rgba(255,255,255,.12);
-
-    box-shadow:
-        0 0 0 5px rgba(255,0,0,.10),
-        0 12px 28px rgba(255,0,0,.25);
+    background: var(--gold-gradient);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 0 0 5px rgba(201, 168, 76, 0.1), var(--shadow-gold);
 }
 
 .day-txt {
-    font-size: .62rem;
-
-    font-weight: 700;
-
+    font-size: var(--font-size-xs);
+    font-weight: var(--fw-bold);
     letter-spacing: 1px;
-
     text-transform: uppercase;
-
-    color: rgba(255,255,255,.7);
-
-    margin-bottom: 4px;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
 }
 
 .date-txt {
-    font-size: 1rem;
-
-    font-weight: 800;
-
-    color: #ffffff;
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-white);
 }
 
 .date-slider .compact-card.active .day-txt,
 .date-slider .compact-card.active .date-txt {
-    color: white;
+    color: var(--black-premium);
 }
 
 /* =========================================================
@@ -671,47 +263,30 @@
 
 .time-card {
     min-width: 96px;
-
     height: 60px;
-
-    border-radius: 14px;
-
-    background: rgba(255,255,255,.04);
-
-    border: 1px solid rgba(255,255,255,.06);
-
-    color: white;
-
-    font-size: .95rem;
-    font-weight: 700;
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    color: var(--text-white);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
 }
 
 .time-card:hover {
     transform: translateY(-2px);
-
-    border-color:
-        rgba(255,70,70,.4);
-
-    background:
-        rgba(255,0,0,.08);
-
-    box-shadow:
-        0 10px 25px rgba(255,0,0,.12);
+    border-color: var(--gold-premium);
+    background: rgba(201, 168, 76, 0.08);
+    box-shadow: var(--shadow-gold);
 }
 
 .time-card.active {
-    background:
-        linear-gradient(
-            180deg,
-            #ff3b3b,
-            #b00000
-        );
+    background: var(--gold-gradient);
+    border-color: rgba(255,255,255,0.15);
+    box-shadow: var(--shadow-gold);
+}
 
-    border-color:
-        rgba(255,255,255,.15);
-
-    box-shadow:
-        0 0 20px rgba(255,0,0,.25);
+.time-card.active {
+    color: var(--black-premium);
 }
 
 /* =========================================================
@@ -719,22 +294,20 @@
 ========================================================= */
 
 .disabled-step {
-    opacity: .4;
+    opacity: 0.4;
     pointer-events: none;
 }
 
 .no-showtimes {
     height: 60px;
-
     display: flex;
     align-items: center;
-
-    color: rgba(255,255,255,.45);
-
-    font-size: .92rem;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
 }
+
 /* =========================================================
-   SEAT AREA
+   SEAT AREA (giữ nguyên màu sơ đồ ghế)
 ========================================================= */
 
 .seat-selection-content {
@@ -743,10 +316,8 @@
 
 .seat-map-booking {
     width: 100%;
-
     display: flex;
     flex-direction: column;
-
     align-items: center;
 }
 
@@ -756,45 +327,25 @@
 
 .screen-header {
     width: 100%;
-
     text-align: center;
-
     margin-bottom: 60px;
 }
 
 .screen-line {
     width: 92%;
     height: 6px;
-
-    margin: 0 auto 14px;
-
-    border-radius: 999px;
-
-    background:
-        linear-gradient(
-            to right,
-            transparent,
-            #ff4040,
-            transparent
-        );
-
-    box-shadow:
-        0 0 20px rgba(255,0,0,.35),
-        0 0 40px rgba(255,0,0,.15);
-
-    transform:
-        perspective(500px)
-        rotateX(-45deg);
+    margin: 0 auto var(--space-sm);
+    border-radius: var(--radius-round);
+    background: linear-gradient(to right, transparent, var(--gold-premium), transparent);
+    box-shadow: var(--shadow-gold);
+    transform: perspective(500px) rotateX(-45deg);
 }
 
 .screen-header span {
-    font-size: .75rem;
-
-    font-weight: 700;
-
+    font-size: var(--font-size-xs);
+    font-weight: var(--fw-bold);
     letter-spacing: 8px;
-
-    color: rgba(255,255,255,.45);
+    color: var(--text-muted);
 }
 
 /* =========================================================
@@ -806,7 +357,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: var(--space-sm);
 }
 
 .seat-row {
@@ -814,42 +365,38 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 18px;
+    gap: var(--space-md);
 }
 
 .row-id {
     width: 22px;
     text-align: center;
-    font-size: .82rem;
-    font-weight: 700;
-    color: rgba(255,255,255,.55);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
+    color: var(--text-muted);
 }
 
 .row-items {
     display: grid;
     grid-template-columns: repeat(10, auto);
-    gap: 12px;
+    gap: var(--space-sm);
     justify-content: center;
 }
 
 /* =========================================================
-   SEAT
+   SEAT (giữ nguyên màu)
 ========================================================= */
 
 .seat {
     position: relative;
     width: 42px;
     height: 42px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     cursor: pointer;
-    transition: .22s ease;
+    transition: var(--transition-fast);
 }
-
-/* COUPLE */
 
 .seat.COUPLE {
     width: 78px;
@@ -864,258 +411,143 @@
     position: absolute;
     top: 50%;
     left: 50%;
-
     transform: translate(-50%, -48%);
-
-    font-size: .68rem;
-    font-weight: 700;
-
-    color: #ffffff;
+    font-size: var(--font-size-xs);
+    font-weight: var(--fw-bold);
+    color: var(--text-white);
     z-index: 2;
 }
 
-/* =========================================================
-   NORMAL
-========================================================= */
-
+/* --- MÀU CỐ ĐỊNH CHO GHẾ (KHÔNG ĐỔI) --- */
 .seat.NORMAL {
     color: #9ca3af;
 }
-
-/* =========================================================
-   VIP
-========================================================= */
-
 .seat.VIP {
     color: #fbbf24;
-
-    filter:
-        drop-shadow(0 0 6px rgba(251,191,36,.25));
+    filter: drop-shadow(0 0 6px rgba(251,191,36,0.25));
 }
-
-/* =========================================================
-   COUPLE
-========================================================= */
-
 .seat.COUPLE {
     color: #c026d3;
-
-    filter:
-        drop-shadow(0 0 8px rgba(192,38,211,.25));
+    filter: drop-shadow(0 0 8px rgba(192,38,211,0.25));
 }
-
-/* =========================================================
-   SELECTED
-========================================================= */
-
 .seat.selected {
     color: #ff2e2e;
-
-    filter:
-        drop-shadow(0 0 10px rgba(255,0,0,.8))
-        drop-shadow(0 0 20px rgba(255,0,0,.4))
-        drop-shadow(0 0 35px rgba(255,0,0,.2));
+    filter: drop-shadow(0 0 10px rgba(255,0,0,0.8)) drop-shadow(0 0 20px rgba(255,0,0,0.4)) drop-shadow(0 0 35px rgba(255,0,0,0.2));
 }
-
 .seat.selected .seat-number {
     color: white;
 }
-
-/* =========================================================
-   SOLD
-========================================================= */
-
 .seat.sold {
     color: #5b0a0a;
-
-    opacity: .95;
-
+    opacity: 0.95;
     cursor: not-allowed;
-
-    filter:
-        brightness(.75);
+    filter: brightness(0.75);
 }
-
-/* =========================================================
-   MAINTENANCE
-========================================================= */
-
 .seat.maintenance {
     color: #4b5563;
-
-    opacity: .45;
-
+    opacity: 0.45;
     cursor: not-allowed;
-
     filter: grayscale(1);
 }
 
-/* =========================================================
-   HOVER
-========================================================= */
-
+/* Hover (giữ nguyên) */
 .seat:hover:not(.sold):not(.maintenance) {
-    transform:
-        translateY(-3px)
-        scale(1.08);
+    transform: translateY(-3px) scale(1.08);
 }
-
 .seat:hover:not(.sold):not(.maintenance):not(.selected) {
     color: #ff6666;
-
-    filter:
-        drop-shadow(0 0 8px rgba(255,0,0,.35));
+    filter: drop-shadow(0 0 8px rgba(255,0,0,0.35));
 }
 
 /* =========================================================
-   LEGEND
+   LEGEND (giữ nguyên màu box)
 ========================================================= */
 
 .seat-legend {
     margin-top: 60px;
-
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-
-    gap: 26px;
+    gap: var(--space-lg);
 }
 
 .leg-item {
     display: flex;
     align-items: center;
-
-    gap: 10px;
-
-    font-size: .88rem;
-
-    color: rgba(255,255,255,.78);
+    gap: var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
 }
 
 .leg-item .box {
     width: 20px;
     height: 20px;
-
-    border-radius: 6px;
-
+    border-radius: var(--radius-xs);
     flex-shrink: 0;
 }
-
-/* NORMAL */
 
 .box.normal {
     background: #9ca3af;
 }
-
-/* VIP */
-
 .box.vip {
     background: #fbbf24;
-
-    box-shadow:
-        0 0 10px rgba(251,191,36,.25);
+    box-shadow: 0 0 10px rgba(251,191,36,0.25);
 }
-
-/* COUPLE */
-
 .box.couple {
     width: 38px;
-
     background: #c026d3;
-
-    box-shadow:
-        0 0 10px rgba(192,38,211,.25);
+    box-shadow: 0 0 10px rgba(192,38,211,0.25);
 }
-
-/* SELECTED */
-
 .box.selected {
     background: #ff2e2e;
-
-    box-shadow:
-        0 0 14px rgba(255,0,0,.5);
+    box-shadow: 0 0 14px rgba(255,0,0,0.5);
 }
-
-/* SOLD */
-
 .box.sold {
     background: #5b0a0a;
 }
-
-/* MAINTENANCE */
-
 .box.maintenance {
     background: #4b5563;
 }
+
 /* =========================================================
-   BUTTON ACTION
+   BUTTON ACTION (gold)
 ========================================================= */
 
 .booking-actions {
     width: 100%;
-
     display: flex;
     justify-content: center;
-
     margin-top: 60px;
 }
 
 .btn-next {
     min-width: 320px;
     height: 60px;
-
     border: none;
-
-    border-radius: 999px;
-
-    background:
-        linear-gradient(
-            180deg,
-            #ff2e2e,
-            #a80000
-        );
-
-    color: white;
-
-    font-size: .95rem;
-    font-weight: 700;
-
+    border-radius: var(--radius-round);
+    background: var(--gold-gradient);
+    color: var(--black-premium);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
     letter-spacing: 1px;
-
     cursor: pointer;
-
-    transition: .25s ease;
-
-    box-shadow:
-        0 0 20px rgba(255,0,0,.18),
-        0 15px 35px rgba(255,0,0,.22);
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-gold);
 }
 
 .btn-next:hover {
-    transform:
-        translateY(-3px)
-        scale(1.02);
-
-    box-shadow:
-        0 0 30px rgba(255,0,0,.35),
-        0 20px 45px rgba(255,0,0,.28);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 0 30px rgba(201, 168, 76, 0.35), var(--shadow-gold);
 }
 
 .btn-next:active {
-    transform:
-        translateY(0)
-        scale(.99);
+    transform: translateY(0) scale(0.99);
 }
 
 .btn-next:disabled {
-    background:
-        rgba(255,255,255,.08);
-
-    color:
-        rgba(255,255,255,.3);
-
+    background: rgba(255,255,255,0.08);
+    color: var(--text-muted);
     box-shadow: none;
-
     cursor: not-allowed;
 }
 
@@ -1125,268 +557,191 @@
 
 .placeholder-msg {
     min-height: 520px;
-
     display: flex;
     flex-direction: column;
-
     justify-content: center;
     align-items: center;
-
-    gap: 16px;
-
+    gap: var(--space-md);
     text-align: center;
-
-    color: rgba(255,255,255,.45);
+    color: var(--text-muted);
 }
 
 .placeholder-msg i {
-    font-size: 2.5rem;
-
-    color: rgba(255,0,0,.5);
+    font-size: var(--font-size-3xl);
+    color: var(--gold-premium);
 }
 
 .placeholder-msg h3 {
-    font-size: 1.15rem;
-
-    font-weight: 700;
-
-    color: rgba(255,255,255,.8);
+    font-size: var(--font-size-md);
+    font-weight: var(--fw-bold);
+    color: var(--text-secondary);
 }
 
 .placeholder-msg p {
     max-width: 400px;
-
     line-height: 1.7;
 }
 
 /* =========================================================
-   RESPONSIVE 1200
+   RESPONSIVE
 ========================================================= */
 
 @media (max-width: 1200px) {
-
     .booking-container {
-        gap: 20px;
+        gap: var(--space-md);
     }
-
     .ticket-sidebar {
         width: 280px !important;
     }
-
     .poster-container {
         max-width: 190px;
     }
-
     .row-items {
-        gap: 10px;
+        gap: var(--space-sm);
     }
-
     .seat {
         width: 38px;
         height: 38px;
     }
-
     .seat.COUPLE {
         width: 72px;
     }
 }
 
-/* =========================================================
-   RESPONSIVE 992
-========================================================= */
-
 @media (max-width: 992px) {
-
     .booking-container {
         flex-direction: column;
     }
-
     .ticket-sidebar {
         width: 100% !important;
-
         position: static;
-
         display: flex;
-
         flex-direction: row;
-
         align-items: center;
-
-        gap: 24px;
+        gap: var(--space-lg);
     }
-
     .poster-container {
         width: 180px !important;
-
         margin: 0;
     }
-
     .booking-nav-flex {
         flex-direction: column;
     }
-
     .cinema-select,
     .date-slider,
     .time-slider {
         width: 100%;
     }
-
     .time-slider {
         min-width: 100%;
     }
 }
 
-/* =========================================================
-   RESPONSIVE 768
-========================================================= */
-
 @media (max-width: 768px) {
-
     .booking-wrapper {
-        padding: 20px 0;
+        padding: var(--space-md) 0;
     }
-
     .booking-container {
-        padding: 16px;
-
-        border-radius: 20px;
+        padding: var(--space-md);
+        border-radius: var(--radius-lg);
     }
-
     .ticket-sidebar {
         flex-direction: column;
     }
-
     .poster-container {
         width: 200px !important;
-
         margin: 0 auto;
     }
-
     .date-slider .compact-card {
         width: 66px;
         min-width: 66px;
-
         height: 66px;
     }
-
     .seat {
         width: 34px;
         height: 34px;
     }
-
     .seat.COUPLE {
         width: 64px;
     }
-
     .row-items {
-        gap: 6px;
+        gap: var(--space-xs);
     }
-
     .seat-row {
-        gap: 10px;
+        gap: var(--space-sm);
     }
-
     .seat-number {
-        font-size: .6rem;
+        font-size: var(--font-size-xs);
     }
-
     .btn-next {
         width: 100%;
-
         min-width: unset;
     }
-
     .seat-legend {
-        gap: 18px;
+        gap: var(--space-md);
     }
 }
 
-/* =========================================================
-   RESPONSIVE 480
-========================================================= */
-
 @media (max-width: 480px) {
-
     .booking-container {
-        padding: 12px;
+        padding: var(--space-sm);
     }
-
     .ticket-sidebar {
-        padding: 16px;
+        padding: var(--space-md);
     }
-
     .poster-container {
         width: 150px !important;
     }
-
     .nav-col label {
-        font-size: .62rem;
+        font-size: var(--font-size-xs);
     }
-
     .date-slider .compact-card {
         width: 58px;
         min-width: 58px;
-
         height: 58px;
     }
-
     .day-txt {
-        font-size: .52rem;
+        font-size: var(--font-size-xs);
     }
-
     .date-txt {
-        font-size: .82rem;
+        font-size: var(--font-size-sm);
     }
-
     .time-card {
         min-width: 82px;
-
         height: 54px;
     }
-
     .seat {
         width: 28px;
         height: 28px;
     }
-
     .seat.COUPLE {
         width: 54px;
     }
-
     .seat-number {
-        font-size: .52rem;
+        font-size: var(--font-size-xs);
     }
-
     .row-items {
-        gap: 4px;
+        gap: var(--space-xs);
     }
-
     .screen-header {
         margin-bottom: 40px;
     }
-
     .screen-header span {
         letter-spacing: 4px;
     }
-
     .seat-legend {
-        gap: 14px;
+        gap: var(--space-sm);
     }
-
     .leg-item {
-        font-size: .78rem;
+        font-size: var(--font-size-xs);
     }
-
     .booking-actions {
         margin-top: 40px;
     }
-
     .btn-next {
         height: 54px;
-
-        font-size: .85rem;
+        font-size: var(--font-size-sm);
     }
-
     .placeholder-msg {
         min-height: 350px;
     }

@@ -1,62 +1,36 @@
 /* =========================================================
-   COUNTDOWN TIMER - RED BLACK THEME
+   COUNTDOWN TIMER - GOLD PREMIUM THEME
+   (Dùng biến từ index.css)
 ========================================================= */
 
 .countdown-wrapper {
     display: flex;
     align-items: center;
-    gap: 16px;
-
+    gap: var(--space-md);
     width: 100%;
-
-    margin-bottom: 28px;
-    padding: 18px 22px;
-
-    border-radius: 22px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(20,0,0,0.95),
-            rgba(8,0,0,0.98)
-        );
-
-    border:
-        1px solid rgba(255,50,50,0.12);
-
-    box-shadow:
-        0 10px 30px rgba(0,0,0,0.35),
-        0 0 20px rgba(255,0,0,0.08);
-
+    margin-bottom: var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-lg);
+    background: var(--cinema-card-bg);
+    border: var(--border-gold);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
     position: relative;
-
     overflow: hidden;
-
     backdrop-filter: blur(12px);
 }
 
 /* =========================================================
-   RED GLOW EFFECT
+   GOLD GLOW EFFECT
 ========================================================= */
 
 .countdown-wrapper::before {
     content: "";
-
     position: absolute;
-
     top: -90px;
     right: -70px;
-
     width: 190px;
     height: 190px;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(255,0,0,0.18),
-            transparent 70%
-        );
-
+    background: radial-gradient(circle, rgba(201, 168, 76, 0.18), transparent 70%);
     pointer-events: none;
 }
 
@@ -66,31 +40,16 @@
 
 .countdown-icon {
     flex-shrink: 0;
-
     width: 58px;
     height: 58px;
-
-    border-radius: 18px;
-
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-
-    color: #ff4d4d;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(255,0,0,0.22),
-            rgba(140,0,0,0.12)
-        );
-
-    border:
-        1px solid rgba(255,50,50,0.16);
-
-    box-shadow:
-        0 0 18px rgba(255,0,0,0.18),
-        inset 0 0 10px rgba(255,0,0,0.08);
+    color: var(--gold-premium);
+    background: linear-gradient(135deg, rgba(201, 168, 76, 0.22), rgba(184, 146, 58, 0.12));
+    border: 1px solid rgba(201, 168, 76, 0.16);
+    box-shadow: 0 0 18px rgba(201, 168, 76, 0.18), inset 0 0 10px rgba(201, 168, 76, 0.08);
 }
 
 /* =========================================================
@@ -103,67 +62,85 @@
 }
 
 .countdown-label {
-    margin: 0 0 6px;
-
-    font-size: 0.82rem;
-    font-weight: 700;
-
+    margin: 0 0 var(--space-xs);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
     letter-spacing: 1.5px;
-
-    color: rgba(255,255,255,0.58);
-
+    color: var(--text-muted);
     text-transform: uppercase;
 }
 
 .countdown-time {
-    font-size: 2rem;
-    font-weight: 900;
-
+    font-size: var(--font-size-3xl);
+    font-weight: var(--fw-black);
     line-height: 1;
-
-    color: #ff4040;
-
-    text-shadow:
-        0 0 8px rgba(255,0,0,0.35),
-        0 0 18px rgba(255,0,0,0.22);
+    color: var(--gold-primary);
+    text-shadow: var(--shadow-gold);
 }
 
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE (1200, 992, 768, 480)
 ========================================================= */
 
-@media (max-width: 768px) {
-
+/* --- 1200px --- */
+@media (max-width: 1200px) {
     .countdown-wrapper {
-        padding: 16px;
-        border-radius: 18px;
-
-        gap: 14px;
+        padding: var(--space-md) var(--space-lg);
     }
-
-    .countdown-icon {
-        width: 50px;
-        height: 50px;
-
-        border-radius: 16px;
-    }
-
     .countdown-time {
-        font-size: 1.6rem;
+        font-size: var(--font-size-2xl);
     }
 }
 
-@media (max-width: 480px) {
-
+/* --- 992px --- */
+@media (max-width: 992px) {
     .countdown-wrapper {
-        padding: 14px 16px;
+        gap: var(--space-sm);
     }
-
-    .countdown-label {
-        font-size: 0.75rem;
+    .countdown-icon {
+        width: 52px;
+        height: 52px;
     }
-
     .countdown-time {
-        font-size: 1.4rem;
+        font-size: var(--font-size-2xl);
+    }
+}
+
+/* --- 768px --- */
+@media (max-width: 768px) {
+    .countdown-wrapper {
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+        gap: var(--space-sm);
+    }
+    .countdown-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: var(--radius-sm);
+    }
+    .countdown-time {
+        font-size: var(--font-size-xl);
+    }
+    .countdown-label {
+        font-size: var(--font-size-xs);
+    }
+}
+
+/* --- 480px --- */
+@media (max-width: 480px) {
+    .countdown-wrapper {
+        padding: var(--space-sm) var(--space-md);
+        gap: var(--space-sm);
+    }
+    .countdown-label {
+        font-size: var(--font-size-xs);
+        letter-spacing: 1px;
+    }
+    .countdown-time {
+        font-size: var(--font-size-lg);
+    }
+    .countdown-icon {
+        width: 44px;
+        height: 44px;
     }
 }

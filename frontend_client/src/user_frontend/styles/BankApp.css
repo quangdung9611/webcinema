@@ -1,38 +1,39 @@
 /* ================================
-   BANK APP PAGE
+   BANK APP PAGE - GOLD PREMIUM THEME
+   (Dùng biến từ index.css)
 ================================ */
+
 .bank-checkout-page {
     min-height: 100vh;
-    padding: 40px 0 70px;
+    padding: var(--space-2xl) 0 var(--space-3xl);
+    background: var(--main-background);
 }
 
 /* ================================
    MAIN LAYOUT
 ================================ */
+
 .bank-checkout-container {
     width: 100%;
     max-width: 1300px;
-
     margin: 0 auto;
-    padding: 0 24px;
-
+    padding: 0 var(--space-lg);
     display: flex;
-    gap: 24px;
+    gap: var(--space-lg);
     align-items: flex-start;
 }
 
 /* ================================
    LEFT SIDEBAR
 ================================ */
+
 .bank-sidebar-wrapper {
     width: 390px;
     flex-shrink: 0;
-
     position: sticky;
     top: 110px;
 }
 
-/* fix sidebar full chiều ngang */
 .bank-sidebar-wrapper > * {
     width: 100%;
 }
@@ -40,9 +41,9 @@
 /* ================================
    RIGHT OTP SECTION
 ================================ */
+
 .bank-otp-section {
     flex: 1;
-
     display: flex;
     justify-content: center;
 }
@@ -50,117 +51,81 @@
 /* ================================
    OTP CARD
 ================================ */
+
 .otp-card {
     width: 100%;
     max-width: 860px;
-
     position: relative;
     overflow: hidden;
-
-    padding: 52px 44px;
-
-    border-radius: 34px;
-
-    border: 1px solid
-        rgba(255,255,255,0.08);
-
-    background:
-    rgba(255,255,255,0.03);
-
+    padding: var(--space-2xl) var(--space-2xl);
+    border-radius: var(--radius-xl);
+    border: var(--border-gold);
+    background: var(--cinema-card-bg);
     backdrop-filter: blur(20px);
-
-    box-shadow:
-        0 20px 50px rgba(0,0,0,0.35);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
 }
-/* glow */
+
+/* Glow vàng nhẹ */
 .otp-card::before {
     content: '';
-
     position: absolute;
-
     width: 320px;
     height: 320px;
-
     top: -120px;
     right: -120px;
-
     border-radius: 50%;
-
-    background:
-        rgba(220,38,38,0.10);
-
+    background: rgba(201, 168, 76, 0.10);
     filter: blur(90px);
 }
+
 /* ================================
    QR
 ================================ */
+
 .bank-qr-mini-wrapper {
     width: 240px;
     height: 240px;
-
-    margin: 0 auto 30px;
-
-    padding: 16px;
-
-    border-radius: 30px;
-
-    background: #fff;
-
+    margin: 0 auto var(--space-xl);
+    padding: var(--space-md);
+    border-radius: var(--radius-xl);
+    background: var(--white-premium);
     position: relative;
-
-    box-shadow:
-        0 12px 30px rgba(0,0,0,0.28);
+    box-shadow: var(--cinema-card-shadow);
 }
 
 .bank-qr-mini {
     width: 100%;
     height: 100%;
-
     object-fit: cover;
-    border-radius: 18px;
+    border-radius: var(--radius-md);
 }
 
 /* ================================
    QR ANIMATION
 ================================ */
+
 .qr-scan-line {
     position: absolute;
-
-    left: 16px;
-    right: 16px;
-
+    left: var(--space-md);
+    right: var(--space-md);
     height: 4px;
-
-    border-radius: 999px;
-
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            #dc2626,
-            transparent
-        );
-
-    animation:
-        scanLine 2s linear infinite;
+    border-radius: var(--radius-round);
+    background: linear-gradient(90deg, transparent, var(--gold-premium), transparent);
+    animation: scanLine 2s linear infinite;
 }
 
 @keyframes scanLine {
-
     0% {
         top: 22px;
         opacity: 0;
     }
-
     20% {
         opacity: 1;
     }
-
     50% {
         top: 110px;
         opacity: 1;
     }
-
     100% {
         top: 205px;
         opacity: 0;
@@ -170,148 +135,103 @@
 /* ================================
    TEXT
 ================================ */
+
 .otp-title {
-    font-size: 52px;
-    font-weight: 900;
-
+    font-size: var(--font-size-5xl);
+    font-weight: var(--fw-black);
     line-height: 1.1;
-
     text-align: center;
-
-    margin-bottom: 12px;
-
-    color: #fff;
+    margin-bottom: var(--space-sm);
+    color: var(--gold-primary);
 }
 
 .otp-sub {
     text-align: center;
-
-    font-size: 17px;
-    color: #a1a1aa;
-
-    margin-bottom: 34px;
+    font-size: var(--font-size-md);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-2xl);
 }
 
 .otp-sub strong {
-    color: #fff;
-    font-weight: 700;
+    color: var(--text-white);
+    font-weight: var(--fw-bold);
 }
 
 /* ================================
    OTP INPUT
 ================================ */
+
 .otp-input-wrapper {
-    margin-bottom: 28px;
+    margin-bottom: var(--space-lg);
 }
 
 .otp-field {
     width: 100%;
     height: 82px;
-
-    border-radius: 24px;
-
-    border: 2px solid
-        rgba(220,38,38,0.25);
-
-    background:
-        rgba(255,255,255,0.04);
-
-    color: #fff;
-
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--border-gold);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-white);
     text-align: center;
-
-    font-size: 40px;
-    font-weight: 800;
-
+    font-size: var(--font-size-4xl);
+    font-weight: var(--fw-extrabold);
     letter-spacing: 16px;
-
     outline: none;
-
-    transition: 0.25s ease;
+    transition: var(--transition-normal);
 }
 
 .otp-field:focus {
-    border-color: #dc2626;
-
-    background:
-        rgba(220,38,38,0.08);
-
-    box-shadow:
-        0 0 0 5px
-        rgba(220,38,38,0.12);
+    border-color: var(--gold-premium);
+    background: rgba(201, 168, 76, 0.08);
+    box-shadow: 0 0 0 5px rgba(201, 168, 76, 0.12);
 }
 
 /* ================================
    TIMER
 ================================ */
+
 .bank-timer-box {
-    margin-bottom: 28px;
-
-    padding: 22px;
-
-    border-radius: 22px;
-
+    margin-bottom: var(--space-lg);
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
     text-align: center;
-
-    background:
-        rgba(255,255,255,0.04);
-
-    border:
-        1px solid
-        rgba(255,255,255,0.08);
-
-    font-size: 15px;
-    font-weight: 600;
-
-    color: #a1a1aa;
+    background: rgba(255, 255, 255, 0.04);
+    border: var(--border-gold);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--text-secondary);
 }
 
 .bank-timer-box span {
     display: block;
-
-    margin-top: 10px;
-
-    font-size: 44px;
-    font-weight: 800;
-
-    color: #fff;
-
+    margin-top: var(--space-sm);
+    font-size: var(--font-size-4xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--gold-primary);
     letter-spacing: 4px;
 }
 
 /* ================================
    BUTTON
 ================================ */
+
 .btn-confirm-payment {
     width: 100%;
     height: 66px;
-
     border: none;
-    border-radius: 22px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #dc2626,
-            #991b1b
-        );
-
-    color: #fff;
-
-    font-size: 17px;
-    font-weight: 800;
-
+    border-radius: var(--radius-lg);
+    background: var(--gold-gradient);
+    color: var(--black-premium);
+    font-size: var(--font-size-md);
+    font-weight: var(--fw-extrabold);
     cursor: pointer;
-
-    transition: 0.25s ease;
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-gold);
 }
 
 .btn-confirm-payment:hover {
     transform: translateY(-2px);
-
-    box-shadow:
-        0 14px 28px
-        rgba(220,38,38,0.25);
+    box-shadow: 0 14px 28px rgba(201, 168, 76, 0.25);
 }
 
 .btn-confirm-payment:disabled {
@@ -321,106 +241,91 @@
 }
 
 /* ================================
-   RESPONSIVE
+   RESPONSIVE (1200, 992, 768, 480)
 ================================ */
-@media (max-width: 1200px) {
 
+/* --- 1200px --- */
+@media (max-width: 1200px) {
     .bank-sidebar-wrapper {
         width: 340px;
     }
-
     .otp-title {
-        font-size: 44px;
+        font-size: var(--font-size-4xl);
     }
 }
 
+/* --- 992px --- */
 @media (max-width: 992px) {
-
     .bank-checkout-container {
         flex-direction: column;
     }
-
     .bank-sidebar-wrapper {
         width: 100%;
         position: relative;
         top: unset;
     }
-
     .bank-otp-section {
         width: 100%;
     }
-
     .otp-card {
         max-width: 100%;
     }
 }
 
+/* --- 768px --- */
 @media (max-width: 768px) {
-
     .bank-checkout-page {
-        padding-top: 24px;
+        padding-top: var(--space-lg);
     }
-
     .bank-checkout-container {
-        padding: 0 16px;
+        padding: 0 var(--space-md);
     }
-
     .otp-card {
-        padding: 34px 22px;
-        border-radius: 28px;
+        padding: var(--space-xl) var(--space-lg);
+        border-radius: var(--radius-xl);
     }
-
     .bank-qr-mini-wrapper {
         width: 190px;
         height: 190px;
     }
-
     .otp-title {
-        font-size: 34px;
+        font-size: var(--font-size-3xl);
     }
-
     .otp-sub {
-        font-size: 14px;
+        font-size: var(--font-size-sm);
     }
-
     .otp-field {
         height: 72px;
-
-        font-size: 30px;
-
+        font-size: var(--font-size-3xl);
         letter-spacing: 8px;
     }
-
     .bank-timer-box span {
-        font-size: 34px;
+        font-size: var(--font-size-3xl);
     }
 }
 
+/* --- 480px --- */
 @media (max-width: 480px) {
-
     .bank-checkout-container {
-        padding: 0 12px;
+        padding: 0 var(--space-sm);
     }
-
     .otp-card {
-        padding: 24px 18px;
+        padding: var(--space-lg) var(--space-md);
+        border-radius: var(--radius-lg);
     }
-
     .otp-title {
-        font-size: 28px;
+        font-size: var(--font-size-2xl);
     }
-
     .otp-field {
-        font-size: 24px;
+        font-size: var(--font-size-2xl);
         letter-spacing: 4px;
+        height: 64px;
     }
-
     .btn-confirm-payment {
         height: 58px;
-        font-size: 15px;
+        font-size: var(--font-size-sm);
     }
-
     .bank-timer-box span {
-        font-size: 30px;
+        font-size: var(--font-size-2xl);
     }
 }

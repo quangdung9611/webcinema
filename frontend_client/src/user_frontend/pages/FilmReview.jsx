@@ -102,16 +102,12 @@ const FilmReview = () => {
                                 src={`${reviewBannerBaseUrl}${img}`}
                                 alt={`Review Banner ${idx + 1}`}
                                 className="review-banner-img"
-                                onError={(e) => {
-                                    e.target.src = 'https://via.placeholder.com/1600x500/1a1a1a/666?text=No+Image';
-                                }}
                             />
                         </SwiperSlide>
                     ))}
                 </Swiper>
             </div>
 
-          
             {/* =============================================
                 CONTENT
             ============================================= */}

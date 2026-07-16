@@ -1,5 +1,6 @@
 /* =========================================
-   LOADING SPINNER - DASH (NÉT ĐỨT)
+   LOADING SPINNER - DASH (NÉT ĐỨT) - GOLD PREMIUM THEME
+   (Dùng biến từ index.css)
 ========================================= */
 
 /* 1. OVERLAY */
@@ -42,6 +43,9 @@
 
 .spinner-dash-circle {
     animation: dash 1.5s ease-in-out infinite;
+    stroke: var(--gold-premium); /* vàng kim */
+    stroke-width: 4;
+    stroke-linecap: round;
 }
 
 @keyframes spin {
@@ -65,9 +69,9 @@
 
 /* 4. MESSAGE */
 .loading-message {
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 16px;
-    font-weight: 400;
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-regular);
     letter-spacing: 0.5px;
     margin: 0;
     text-align: center;
@@ -90,6 +94,6 @@
         background: rgba(0, 0, 0, 0.55);
     }
     .loading-message {
-        font-size: 14px;
+        font-size: var(--font-size-sm);
     }
 }

@@ -1,34 +1,30 @@
 /* =========================================
-   FOOD PAGE - RED BLACK CINEMA
+   FOOD PAGE - GOLD PREMIUM THEME
+   (Dùng biến từ index.css)
 ========================================= */
 
 .food-page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 20px;
-
-    margin-bottom: 32px;
+    gap: var(--space-md);
+    margin-bottom: var(--space-2xl);
     flex-wrap: wrap;
 }
 
 .food-page-header h2 {
-    margin: 0 0 8px;
-
-    font-size: 32px;
-    font-weight: 900;
+    margin: 0 0 var(--space-xs);
+    font-size: var(--font-size-3xl);
+    font-weight: var(--fw-black);
     letter-spacing: 1px;
-
-    color: #fff;
+    color: var(--gold-primary);
 }
 
 .food-page-header p {
     margin: 0;
-
-    font-size: 15px;
-    line-height: 1.6;
-
-    color: rgba(255,255,255,0.72);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-base);
+    color: var(--text-secondary);
 }
 
 /* =========================================
@@ -38,7 +34,7 @@
 .food-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
+    gap: var(--space-lg);
 }
 
 /* =========================================
@@ -47,63 +43,36 @@
 
 .food-card {
     position: relative;
-
     display: flex;
     align-items: center;
-    gap: 22px;
-
-    padding: 22px;
-
-    border-radius: 28px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(28,4,4,0.96),
-            rgba(12,0,0,0.96)
-        );
-
-    border:
-        1px solid rgba(239,68,68,0.12);
-
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    border-radius: var(--radius-xl);
+    background: var(--cinema-card-bg);
+    border: var(--border-gold);
     overflow: hidden;
-
-    transition: 0.28s ease;
-
-    box-shadow:
-        0 10px 28px rgba(0,0,0,0.28);
+    transition: var(--cinema-transition);
+    box-shadow: var(--cinema-card-shadow);
 }
 
-/* glow đỏ nhẹ */
+/* Glow vàng nhẹ */
 .food-card::before {
     content: '';
-
     position: absolute;
-
     width: 180px;
     height: 180px;
-
     top: -70px;
     right: -70px;
-
     border-radius: 50%;
-
-    background:
-        rgba(220,38,38,0.08);
-
+    background: rgba(201, 168, 76, 0.08);
     filter: blur(70px);
-
     pointer-events: none;
 }
 
 .food-card:hover {
     transform: translateY(-5px);
-
-    border-color:
-        rgba(239,68,68,0.35);
-
-    box-shadow:
-        0 18px 40px rgba(0,0,0,0.38);
+    border-color: var(--border-gold-hover);
+    box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
 }
 
 /* =========================================
@@ -113,24 +82,17 @@
 .food-image {
     width: 140px;
     height: 140px;
-
     overflow: hidden;
-
-    border-radius: 22px;
-
+    border-radius: var(--radius-lg);
     flex-shrink: 0;
-
-    border:
-        1px solid rgba(255,255,255,0.08);
+    border: 1px solid var(--overlay-light);
 }
 
 .food-image img {
     width: 100%;
     height: 100%;
-
     object-fit: cover;
-
-    transition: 0.35s ease;
+    transition: var(--transition-normal);
 }
 
 .food-card:hover .food-image img {
@@ -143,30 +105,24 @@
 
 .food-content {
     flex: 1;
-
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-
     min-height: 140px;
 }
 
 .food-content h3 {
-    margin: 0 0 10px;
-
-    font-size: 22px;
-    font-weight: 800;
-
+    margin: 0 0 var(--space-sm);
+    font-size: var(--font-size-xl);
+    font-weight: var(--fw-extrabold);
     line-height: 1.4;
-
-    color: #fff;
+    color: var(--text-white);
 }
 
 .food-price {
-    font-size: 24px;
-    font-weight: 900;
-
-    color: #ef4444;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--fw-black);
+    color: var(--gold-primary);
 }
 
 /* =========================================
@@ -176,88 +132,102 @@
 .food-actions {
     display: flex;
     align-items: center;
-    gap: 14px;
-
-    margin-top: 20px;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
 }
 
-/* NÚT + - */
+/* NÚT + / - */
 .qty-btn {
     width: 44px;
     height: 44px;
-
-    border-radius: 16px;
-
-    border:
-        1px solid rgba(255,255,255,0.08);
-
-    background:
-        rgba(255,255,255,0.05);
-
-    color: #fff;
-
-    font-size: 24px;
-    font-weight: 800;
-
+    border-radius: var(--radius-md);
+    border: var(--border-gold);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-white);
+    font-size: var(--font-size-xl);
+    font-weight: var(--fw-extrabold);
     cursor: pointer;
-
-    transition: 0.25s ease;
+    transition: var(--transition-normal);
 }
 
 .qty-btn:hover {
-    background:
-        linear-gradient(
-            135deg,
-            #ef4444,
-            #991b1b
-        );
-
-    border-color:
-        rgba(239,68,68,0.45);
-
-    box-shadow:
-        0 10px 22px
-        rgba(239,68,68,0.28);
+    background: var(--gold-gradient);
+    border-color: var(--gold-premium);
+    box-shadow: var(--shadow-gold);
+    color: var(--black-premium);
 }
 
 /* SỐ LƯỢNG */
 .food-qty {
     min-width: 34px;
-
     text-align: center;
-
-    font-size: 22px;
-    font-weight: 800;
-
-    color: #fff;
+    font-size: var(--font-size-xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-white);
 }
 
 /* =========================================
-   RESPONSIVE
+   RESPONSIVE (chuẩn 1200 – 992 – 768 – 480)
 ========================================= */
 
-@media (max-width: 1400px) {
-
+/* --- 1200px --- */
+@media (max-width: 1200px) {
     .food-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 768px) {
-
-    .food-page-header h2 {
-        font-size: 26px;
-    }
-
-    .food-page-header p {
-        font-size: 14px;
+        gap: var(--space-md);
     }
 
     .food-card {
-        padding: 18px;
-        gap: 18px;
+        padding: var(--space-md);
+        gap: var(--space-md);
+    }
 
-        border-radius: 24px;
+    .food-image {
+        width: 120px;
+        height: 120px;
+    }
+
+    .food-content h3 {
+        font-size: var(--font-size-lg);
+    }
+
+    .food-price {
+        font-size: var(--font-size-xl);
+    }
+}
+
+/* --- 992px --- */
+@media (max-width: 992px) {
+    .food-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+
+    .food-card {
+        padding: var(--space-md);
+        gap: var(--space-md);
+        border-radius: var(--radius-lg);
+    }
+
+    .food-image {
+        width: 130px;
+        height: 130px;
+    }
+}
+
+/* --- 768px --- */
+@media (max-width: 768px) {
+    .food-page-header h2 {
+        font-size: var(--font-size-2xl);
+    }
+
+    .food-page-header p {
+        font-size: var(--font-size-sm);
+    }
+
+    .food-card {
+        padding: var(--space-md);
+        gap: var(--space-md);
+        border-radius: var(--radius-lg);
     }
 
     .food-image {
@@ -266,68 +236,71 @@
     }
 
     .food-content h3 {
-        font-size: 18px;
+        font-size: var(--font-size-md);
     }
 
     .food-price {
-        font-size: 20px;
+        font-size: var(--font-size-xl);
     }
 
     .qty-btn {
         width: 40px;
         height: 40px;
-
-        font-size: 20px;
+        font-size: var(--font-size-lg);
     }
 
     .food-qty {
-        font-size: 18px;
+        font-size: var(--font-size-md);
     }
 }
 
-@media (max-width: 576px) {
-
+/* --- 480px --- */
+@media (max-width: 480px) {
     .food-page-header {
         flex-direction: column;
         align-items: flex-start;
     }
 
+    .food-page-header h2 {
+        font-size: var(--font-size-xl);
+    }
+
     .food-card {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
+        padding: var(--space-md);
+        gap: var(--space-md);
     }
 
     .food-image {
         width: 100%;
-        height: 240px;
-    }
-
-    .food-content {
-        width: 100%;
-        min-height: auto;
-    }
-
-    .food-actions {
-        margin-top: 18px;
-    }
-}
-
-@media (max-width: 420px) {
-
-    .food-card {
-        padding: 16px;
-        border-radius: 22px;
-    }
-
-    .food-page-header h2 {
-        font-size: 22px;
-    }
-
-    .food-image {
         height: 200px;
     }
 
+    .food-content {
+        min-height: auto;
+        width: 100%;
+    }
+
     .food-content h3 {
-        font-size: 17px;
+        font-size: var(--font-size-base);
+    }
+
+    .food-price {
+        font-size: var(--font-size-lg);
+    }
+
+    .food-actions {
+        margin-top: var(--space-sm);
+    }
+
+    .qty-btn {
+        width: 38px;
+        height: 38px;
+        font-size: var(--font-size-md);
+    }
+
+    .food-qty {
+        font-size: var(--font-size-base);
     }
 }

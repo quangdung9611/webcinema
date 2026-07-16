@@ -360,12 +360,6 @@ const MovieDetail = () => {
                                                 src={`${IMAGE_BASE_URL}/actors/${actor.avatar}`}
                                                 alt={actor.name}
                                                 className="actor-real-img"
-                                                onError={(e) => {
-                                                    e.target.onerror = null;
-
-                                                    e.target.src =
-                                                        'https://api.quangdungcinema.id.vn/uploads/actors/default-avatar.png';
-                                                }}
                                             />
 
                                         ) : (

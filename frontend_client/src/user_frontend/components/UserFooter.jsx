@@ -117,10 +117,10 @@ const UserFooter = () => {
                 </li>
 
                 <li>
-                    <Link to="/booking-policy">
+                    <Link to="/blog-cinema">
                         <div>
                             <FileText size={19} />
-                            <span>Quy Định Đặt Vé</span>
+                            <span>Góc Điện Ảnh</span>
                         </div>
 
                         <ChevronRight size={18} />
@@ -250,7 +250,7 @@ const UserFooter = () => {
                 </li>
 
                 <li>
-                    <Link to="/contact">
+                    <Link to="/contacts">
                         <div>
                             <Headphones size={19} />
                             <span>Liên Hệ Hỗ Trợ</span>

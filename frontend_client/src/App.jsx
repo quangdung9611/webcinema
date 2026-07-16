@@ -118,9 +118,44 @@ const FilmReviewDetail = lazy(() =>
     import("./user_frontend/pages/FilmReviewDetail")
 );
 
-// ✅ ĐÃ SỬA
 const Profile = lazy(() =>
     import("./user_frontend/pages/Profile")
+);
+
+// ==========================================================
+// PROMOTION & CINEMA CORNER PAGES
+// ==========================================================
+
+const Promotion = lazy(() =>
+    import("./user_frontend/pages/Promotion")
+);
+
+const BlogCinema = lazy(() =>
+    import("./user_frontend/pages/BlogCinema")
+);
+
+// ==========================================================
+// SUPPORT PAGES (LAZY)
+// ==========================================================
+
+const FAQ = lazy(() =>
+    import("./user_frontend/pages/FAQ")
+);
+
+const PrivacyPolicy = lazy(() =>
+    import("./user_frontend/pages/PrivacyPolicy")
+);
+
+const TermsOfService = lazy(() =>
+    import("./user_frontend/pages/TermsOfService")
+);
+
+const BookingGuide = lazy(() =>
+    import("./user_frontend/pages/BookingGuide")
+);
+
+const ContactSupport = lazy(() =>
+    import("./user_frontend/pages/ContactSupport")
 );
 
 // ==========================================================
@@ -199,7 +234,6 @@ const BlogCinemaPage = lazy(() =>
     import("./admin_frontend/pages/Admin/BlogCinema/BlogCinemaPage")
 );
 
-// ✅ ĐÃ SỬA
 const PromotionPage = lazy(() =>
     import("./admin_frontend/pages/Admin/Promotion/PromotionPage")
 );
@@ -288,7 +322,7 @@ function AppContent() {
                 >
 
                     <Routes>
-                         {isAdminDomain ? (
+                        {isAdminDomain ? (
 
                             /* ==========================================================
                                ADMIN ROUTES
@@ -416,7 +450,7 @@ function AppContent() {
                             </Route>
 
                         ) : (
-                                                    /* ==========================================================
+                            /* ==========================================================
                                USER ROUTES
                             ========================================================== */
 
@@ -514,6 +548,43 @@ function AppContent() {
                                     <Route
                                         path="profile"
                                         element={<Profile />}
+                                    />
+
+                                    {/* ===== PROMOTION & CINEMA CORNER ROUTES ===== */}
+                                    <Route
+                                        path="promotion"
+                                        element={<Promotion />}
+                                    />
+
+                                    <Route
+                                        path="blog-cinema"
+                                        element={<BlogCinema />}
+                                    />
+
+                                    {/* ===== SUPPORT ROUTES ===== */}
+                                    <Route
+                                        path="faq"
+                                        element={<FAQ />}
+                                    />
+
+                                    <Route
+                                        path="privacy-policy"
+                                        element={<PrivacyPolicy />}
+                                    />
+
+                                    <Route
+                                        path="terms"
+                                        element={<TermsOfService />}
+                                    />
+
+                                    <Route
+                                        path="booking-guide"
+                                        element={<BookingGuide />}
+                                    />
+
+                                    <Route
+                                        path="contact"
+                                        element={<ContactSupport />}
                                     />
 
                                 </Route>

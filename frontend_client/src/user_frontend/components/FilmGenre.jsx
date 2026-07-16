@@ -113,7 +113,7 @@ const FilmGenre = () => {
       {/* =============================================
           BANNER SLIDER (giống UserHome & CinemaDetail)
       ============================================= */}
-      <div className="film-genre-hero">
+      {/* <div className="film-genre-hero">
         <div className="genre-overlay"></div>
         <div className="genre-light"></div>
         <div className="genre-particles"></div>
@@ -132,14 +132,11 @@ const FilmGenre = () => {
                 src={`${genreBannerBaseUrl}${img}`}
                 alt={`Genre Banner ${idx + 1}`}
                 className="genre-banner-img"
-                onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/1600x500/1a1a1a/666?text=No+Image';
-                }}
               />
             </SwiperSlide>
           ))}
         </Swiper>
-      </div>
+      </div> */}
 
       {/* =============================================
           TABS

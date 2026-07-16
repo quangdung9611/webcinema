@@ -105,7 +105,6 @@ const MovieSlider = ({ title, movies = [] }) => {
     };
 
     const handleCardClick = (movie) => {
-        console.log("🎬 Card clicked:", movie);
         setSelectedMovie(movie);
         setIsModalOpen(true);
     };
@@ -173,10 +172,6 @@ const MovieSlider = ({ title, movies = [] }) => {
                                         alt={movie.title}
                                         loading="lazy"
                                         draggable={false}
-                                        onError={(e) => {
-                                            console.log("❌ Lỗi ảnh card:", e.target.src);
-                                            e.target.src = "https://via.placeholder.com/300x450/1a1a2e/ffffff?text=No+Image";
-                                        }}
                                     />
                                     <div className="card-overlay"></div>
                                     <div className="card-info">

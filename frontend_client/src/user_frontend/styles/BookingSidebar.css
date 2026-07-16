@@ -1,5 +1,6 @@
 /* =========================================================
-   BOOKING SIDEBAR - CINEMA RED THEME
+   BOOKING SIDEBAR - CINEMA GOLD THEME
+   Sử dụng biến từ index.css
 ========================================================= */
 
 .ticket-sidebar {
@@ -11,7 +12,7 @@
 
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: var(--space-lg);
 
     height: fit-content;
 }
@@ -24,15 +25,15 @@
     width: 100%;
 
     overflow: hidden;
-    border-radius: 22px;
+    border-radius: var(--radius-xl);
 
-    background: rgba(0,0,0,0.45);
+    background: var(--cinema-card-bg);
 
-    border: 1px solid rgba(255,50,50,0.18);
+    border: var(--border-gold);
 
     box-shadow:
-        0 0 25px rgba(255,0,0,0.08),
-        0 10px 35px rgba(0,0,0,0.45);
+        0 0 25px rgba(201, 168, 76, 0.08),
+        var(--cinema-card-shadow);
 }
 
 .poster-container img {
@@ -42,7 +43,7 @@
     object-fit: cover;
     display: block;
 
-    transition: 0.4s ease;
+    transition: transform var(--transition-normal);
 }
 
 .poster-container:hover img {
@@ -54,28 +55,24 @@
 ========================================================= */
 
 .ticket-details {
-    padding: 24px;
+    padding: var(--space-lg);
 
-    border-radius: 22px;
+    border-radius: var(--radius-xl);
 
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: var(--space-md);
 
-    background:
-        linear-gradient(
-            180deg,
-            rgba(20,0,0,0.88),
-            rgba(8,0,0,0.94)
-        );
+    background: var(--cinema-card-bg);
 
     backdrop-filter: blur(14px);
 
-    border: 1px solid rgba(255,50,50,0.15);
+    border: var(--border-gold);
 
     box-shadow:
-        0 0 25px rgba(255,0,0,0.08),
-        inset 0 0 20px rgba(255,0,0,0.04);
+        0 0 25px rgba(201, 168, 76, 0.08),
+        inset 0 0 20px rgba(201, 168, 76, 0.04),
+        var(--cinema-card-shadow);
 }
 
 /* =========================================================
@@ -85,20 +82,19 @@
 .movie-name {
     margin: 0;
 
-    font-size: 1.35rem;
-    font-weight: 800;
+    font-size: var(--font-size-lg);
+    font-weight: var(--fw-extrabold);
 
     line-height: 1.5;
 
     text-transform: uppercase;
     text-align: center;
 
-    color: #fff;
+    color: var(--gold-primary);
 
-    padding-bottom: 18px;
+    padding-bottom: var(--space-md);
 
-    border-bottom:
-        1px solid rgba(255,255,255,0.08);
+    border-bottom: var(--border-gold);
 }
 
 /* =========================================================
@@ -110,12 +106,11 @@
     justify-content: space-between;
     align-items: flex-start;
 
-    gap: 12px;
+    gap: var(--space-sm);
 
-    padding-bottom: 12px;
+    padding-bottom: var(--space-sm);
 
-    border-bottom:
-        1px dashed rgba(255,255,255,0.08);
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
 .detail-item:last-child {
@@ -123,21 +118,21 @@
 }
 
 .detail-item span {
-    color: rgba(255,255,255,0.65);
-    font-size: 0.92rem;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
 }
 
 .detail-item strong {
-    color: #fff;
+    color: var(--text-white);
 
     text-align: right;
 
-    font-size: 0.92rem;
-    font-weight: 600;
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-semibold);
 }
 
 .seats-list {
-    color: #ffcc66;
+    color: var(--gold-premium-light);
 }
 
 /* =========================================================
@@ -145,23 +140,22 @@
 ========================================================= */
 
 .food-selected-box {
-    margin-top: 6px;
-    padding-top: 16px;
+    margin-top: var(--space-xs);
+    padding-top: var(--space-md);
 
-    border-top:
-        1px solid rgba(255,255,255,0.08);
+    border-top: var(--border-gold);
 
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-sm);
 }
 
 .food-selected-title {
     margin: 0;
 
-    color: #ff5d5d;
+    color: var(--gold-premium);
 
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
 
     letter-spacing: 2px;
 
@@ -172,15 +166,15 @@
     display: flex;
     justify-content: space-between;
 
-    gap: 10px;
+    gap: var(--space-sm);
 
-    color: rgba(255,255,255,0.82);
+    color: var(--text-secondary);
 
-    font-size: 0.92rem;
+    font-size: var(--font-size-sm);
 }
 
 .food-selected-item strong {
-    color: #ffb347;
+    color: var(--gold-premium-light);
 }
 
 /* =========================================================
@@ -188,48 +182,46 @@
 ========================================================= */
 
 .total-price-box {
-    margin-top: 4px;
-    padding-top: 18px;
+    margin-top: var(--space-xs);
+    padding-top: var(--space-md);
 
-    border-top:
-        1px solid rgba(255,255,255,0.08);
+    border-top: var(--border-gold);
 
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-sm);
 }
 
 .price-row {
     display: flex;
     justify-content: space-between;
 
-    color: rgba(255,255,255,0.72);
+    color: var(--text-secondary);
 
-    font-size: 0.95rem;
+    font-size: var(--font-size-sm);
 }
 
 .price-row strong {
-    color: #fff;
+    color: var(--text-white);
 }
 
 .grand-total {
-    margin-top: 10px;
-    padding-top: 18px;
+    margin-top: var(--space-sm);
+    padding-top: var(--space-md);
 
     text-align: center;
 
-    border-top:
-        1px dashed rgba(255,255,255,0.12);
+    border-top: 1px dashed rgba(255, 255, 255, 0.12);
 }
 
 .grand-total p {
-    margin: 0 0 10px;
+    margin: 0 0 var(--space-sm);
 
-    color: rgba(255,255,255,0.5);
+    color: var(--text-muted);
 
     letter-spacing: 2px;
 
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
 
     text-transform: uppercase;
 }
@@ -237,31 +229,16 @@
 .grand-total h3 {
     margin: 0;
 
-    font-size: 2rem;
-    font-weight: 900;
+    font-size: var(--font-size-3xl);
+    font-weight: var(--fw-black);
 
-    color: #ff4040;
+    color: var(--gold-primary);
 
     text-shadow:
-        0 0 10px rgba(255,0,0,0.35),
-        0 0 20px rgba(255,0,0,0.2);
+        0 0 10px rgba(201, 168, 76, 0.35),
+        0 0 20px rgba(201, 168, 76, 0.2);
 }
-.btn-next-sidebar,
-.btn-back-food-sidebar{
-    width: 260px !important;
-    height: 54px !important;
 
-    max-width: 100% !important;
-
-    border-radius: 16px !important;
-
-    font-size: 0.95rem;
-    font-weight: 700;
-
-    cursor: pointer;
-
-    transition: 0.25s ease;
-}
 /* =========================================================
    ACTION BUTTONS
 ========================================================= */
@@ -271,64 +248,67 @@
     flex-direction: column;
     align-items: center;
 
-    gap: 12px;
-    margin-top: 18px;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
 }
 
-/* CONTINUE */
+/* Nút chung cho sidebar - sử dụng lại class .btn từ global, chỉ điều chỉnh kích thước */
+.btn-next-sidebar,
+.btn-back-food-sidebar {
+    width: 260px !important;
+    height: 54px !important;
 
+    max-width: 100% !important;
+
+    border-radius: var(--radius-md) !important;
+
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
+
+    cursor: pointer;
+
+    transition: all var(--transition-normal);
+}
+
+/* CONTINUE - sử dụng biến vàng */
 .btn-next-sidebar {
     border: none;
 
-    background:
-        linear-gradient(
-            180deg,
-            #ff2e2e,
-            #9f0000
-        );
+    background: var(--gold-gradient);
 
-    color: #fff;
+    color: var(--black-premium);
 
-    box-shadow:
-        0 0 20px rgba(255,0,0,0.22);
-    width: 260px !important;
-    min-width: 260px !important;
-    max-width: 260px !important;
+    box-shadow: var(--shadow-gold);
 }
 
 .btn-next-sidebar:hover {
     transform: translateY(-2px);
 
     box-shadow:
-        0 0 28px rgba(255,0,0,0.35);
+        0 0 28px rgba(201, 168, 76, 0.35);
 }
 
 .btn-next-sidebar:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+    transform: none;
 }
 
 /* BACK */
-
 .btn-back-food-sidebar {
-    border:
-        1px solid rgba(255,255,255,0.08);
+    border: var(--border-gold);
 
-    background:
-        rgba(255,255,255,0.04);
+    background: transparent;
 
-    color:
-        rgba(255,255,255,0.82);
+    color: var(--text-secondary);
 }
 
 .btn-back-food-sidebar:hover {
-    background:
-        rgba(255,255,255,0.08);
+    background: rgba(201, 168, 76, 0.08);
 
-    color: #fff;
-    width: 260px !important;
-    min-width: 260px !important;
-    max-width: 260px !important;
+    color: var(--text-white);
+
+    border-color: var(--border-gold-hover);
 }
 
 /* =========================================================
@@ -351,7 +331,7 @@
         display: grid;
         grid-template-columns: 260px 1fr;
 
-        gap: 24px;
+        gap: var(--space-lg);
     }
 
     .poster-container {
@@ -371,40 +351,41 @@
     }
 
     .ticket-details {
-        padding: 20px;
+        padding: var(--space-md);
     }
 
     .movie-name {
-        font-size: 1.15rem;
+        font-size: var(--font-size-md);
     }
 
     .grand-total h3 {
-        font-size: 1.7rem;
+        font-size: var(--font-size-2xl);
     }
 
-    .btn-next,
-    .btn-back-food {
-        width: 100%;
+    .btn-next-sidebar,
+    .btn-back-food-sidebar {
+        width: 100% !important;
+        height: 50px !important;
     }
 }
 
 @media (max-width: 480px) {
 
     .ticket-details {
-        padding: 18px;
+        padding: var(--space-md);
     }
 
     .detail-item {
         flex-direction: column;
-        gap: 5px;
+        gap: var(--space-xs);
     }
 
     .detail-item strong {
         text-align: left;
     }
 
-    .btn-next,
-    .btn-back-food {
-        height: 50px;
+    .btn-next-sidebar,
+    .btn-back-food-sidebar {
+        height: 48px !important;
     }
 }
