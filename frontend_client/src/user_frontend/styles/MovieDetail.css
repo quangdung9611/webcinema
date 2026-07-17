@@ -1,54 +1,62 @@
 /* =========================================================
-   MOVIE DETAIL - GOLD PREMIUM THEME
+   MOVIE DETAIL - CINEMA GOLD PREMIUM
    (Dùng biến từ index.css)
 ========================================================= */
 
-.cinema-main-content-container {
-    max-width: 1300px;
-    margin: 0px auto;
+.cinema-movie-detail-page {
+    width: 100%;
+    background: var(--main-background);
+    min-height: 100vh;
 }
 
-/* =========================================================
-   PHIM LIÊN QUAN - PREMIUM TITLE STYLE
-========================================================= */
+.cinema-main-content-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 var(--space-lg) var(--space-3xl);
+}
 
+.movie-loading-wrapper,
+.movie-error-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    color: var(--text-secondary);
+    font-size: var(--font-size-lg);
+    font-weight: var(--fw-semibold);
+}
+
+/* ===== PHIM LIÊN QUAN ===== */
 .filmgenre-container {
     margin-top: var(--space-2xl);
 }
 
-/* Header container */
 .filmgenre-section-header {
     display: flex;
     align-items: center;
     gap: var(--space-md);
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
 }
 
-/* Title PHIM LIÊN QUAN */
 .filmgenre-section-header h2 {
     font-size: var(--font-size-2xl);
     font-weight: var(--fw-black);
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--gold-primary);
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
     margin: 0;
+    white-space: nowrap;
 }
 
-/* Line dài chạy bên phải title */
 .filmgenre-line {
     flex: 1;
     height: 2px;
-    background: linear-gradient(90deg, rgba(201, 168, 76, 0.9), rgba(201, 168, 76, 0.2), transparent);
+    background: linear-gradient(90deg, var(--gold-primary), rgba(201, 168, 76, 0.2), transparent);
     border-radius: var(--radius-round);
     position: relative;
     overflow: hidden;
 }
 
-/* hiệu ứng ánh sáng chạy ngang line */
 .filmgenre-line::after {
     content: "";
     position: absolute;
@@ -65,23 +73,22 @@
     100% { left: 100%; }
 }
 
-/* ==========================================================================
-   CHUNG CHO CÁC KHỐI SECTION BLOCK
-   ========================================================================== */
+.genre-movies-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-lg);
+}
 
+/* ===== SECTION BLOCK ===== */
 .cinema-section-block {
-    margin-top: var(--space-xl);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
+    margin-top: var(--space-2xl);
 }
 
 .section-header-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: var(--space-md);
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-lg);
 }
 
 .section-title-label {
@@ -90,11 +97,8 @@
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--gold-primary);
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
     margin: 0;
+    white-space: nowrap;
 }
 
 .view-all-link-gold {
@@ -103,26 +107,19 @@
     cursor: pointer;
     font-weight: var(--fw-semibold);
     transition: var(--transition-fast);
+    white-space: nowrap;
 }
 
 .view-all-link-gold:hover {
     color: var(--gold-premium-light);
 }
 
-/* ==================================================
-   SECTION DIỄN VIÊN
-   ================================================== */
-
+/* ===== DIỄN VIÊN ===== */
 .cast-avatars-horizontal-list {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: var(--space-lg);
-    width: 100%;
 }
-
-/* ==================================================
-   CARD
-   ================================================== */
 
 .actor-circle-card {
     display: flex;
@@ -136,10 +133,6 @@
     transform: translateY(-8px);
 }
 
-/* ==================================================
-   AVATAR
-   ================================================== */
-
 .actor-avatar-frame {
     position: relative;
     width: 100%;
@@ -147,19 +140,15 @@
     overflow: hidden;
     border-radius: var(--radius-lg);
     background: var(--black-soft);
-    border: var(--border-gold);
+    border: var(--cinema-card-border);
     box-shadow: var(--cinema-card-shadow);
     transition: var(--cinema-transition);
 }
 
 .actor-circle-card:hover .actor-avatar-frame {
-    border-color: var(--border-gold-hover);
+    border-color: var(--cinema-card-border-hover);
     box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
 }
-
-/* ==================================================
-   OVERLAY
-   ================================================== */
 
 .actor-avatar-frame::before {
     content: "";
@@ -169,10 +158,6 @@
     z-index: 2;
     pointer-events: none;
 }
-
-/* ==================================================
-   SHINE
-   ================================================== */
 
 .actor-avatar-frame::after {
     content: "";
@@ -191,10 +176,6 @@
     left: 170%;
 }
 
-/* ==================================================
-   IMAGE
-   ================================================== */
-
 .actor-real-img {
     width: 100%;
     height: 100%;
@@ -207,9 +188,14 @@
     transform: scale(1.08);
 }
 
-/* ==================================================
-   NAME
-   ================================================== */
+.placeholder-avatar-bg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--black-soft);
+}
 
 .actor-real-name {
     margin-top: var(--space-md);
@@ -230,34 +216,12 @@
     text-shadow: var(--shadow-gold);
 }
 
-/* ==================================================
-   ROLE
-   ================================================== */
-
-.actor-character-name {
-    margin-top: var(--space-xs);
-    color: var(--text-muted);
-    font-size: var(--font-size-xs);
-    font-weight: var(--fw-medium);
-    letter-spacing: 0.3px;
-    text-align: center;
-}
-
-/* ==================================================
-   TRAILER KHÁC
-   ================================================== */
-
+/* ===== TRAILER KHÁC ===== */
 .other-trailers-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--space-lg);
-    width: 100%;
-    margin-top: var(--space-lg);
 }
-
-/* ==================================================
-   CARD
-   ================================================== */
 
 .other-trailer-card {
     cursor: pointer;
@@ -275,19 +239,15 @@
     overflow: hidden;
     border-radius: var(--radius-lg);
     background: var(--black-soft);
-    border: var(--border-gold);
+    border: var(--cinema-card-border);
     box-shadow: var(--cinema-card-shadow);
     transition: var(--cinema-transition);
 }
 
 .other-trailer-card:hover .other-trailer-thumb {
-    border-color: var(--border-gold-hover);
+    border-color: var(--cinema-card-border-hover);
     box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
 }
-
-/* ==================================================
-   IMAGE
-   ================================================== */
 
 .other-trailer-thumb img {
     width: 100%;
@@ -301,10 +261,6 @@
     transform: scale(1.08);
 }
 
-/* ==================================================
-   GRADIENT
-   ================================================== */
-
 .other-trailer-thumb::before {
     content: "";
     position: absolute;
@@ -312,10 +268,6 @@
     background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent 45%);
     z-index: 2;
 }
-
-/* ==================================================
-   SHINE
-   ================================================== */
 
 .other-trailer-thumb::after {
     content: "";
@@ -333,10 +285,6 @@
 .other-trailer-card:hover .other-trailer-thumb::after {
     left: 180%;
 }
-
-/* ==================================================
-   PLAY
-   ================================================== */
 
 .other-trailer-overlay {
     position: absolute;
@@ -375,10 +323,6 @@
     transform: scale(1.15);
 }
 
-/* ==================================================
-   TITLE
-   ================================================== */
-
 .other-trailer-title {
     margin-top: var(--space-md);
     color: var(--text-white);
@@ -398,10 +342,7 @@
     text-shadow: var(--shadow-gold);
 }
 
-/* ==========================================================================
-   REVIEW SECTION
-   ========================================================================== */
-
+/* ===== REVIEW SECTION ===== */
 .reviews-section-fullwidth {
     width: 100%;
     margin-top: var(--space-2xl);
@@ -415,22 +356,6 @@
     box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
 }
 
-/* ==========================================================================
-   HEADER
-   ========================================================================== */
-
-.section-header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-    margin-bottom: var(--space-xl);
-}
-
-/* ==========================================================================
-   BUTTON
-   ========================================================================== */
-
 .btn-write-review-small {
     border: none;
     outline: none;
@@ -443,6 +368,7 @@
     background: var(--gold-gradient);
     box-shadow: var(--shadow-gold);
     transition: var(--transition-normal);
+    white-space: nowrap;
 }
 
 .btn-write-review-small:hover {
@@ -450,20 +376,13 @@
     box-shadow: 0 12px 30px rgba(201, 168, 76, 0.35);
 }
 
-/* ==========================================================================
-   DASHBOARD
-   ========================================================================== */
-
+/* ===== RATING DASHBOARD ===== */
 .rating-statistics-dashboard {
     display: grid;
     grid-template-columns: 260px 1fr;
     gap: var(--space-2xl);
     margin-bottom: var(--space-2xl);
 }
-
-/* ==========================================================================
-   SCORE
-   ========================================================================== */
 
 .dashboard-big-score-left {
     display: flex;
@@ -497,10 +416,6 @@
     color: var(--text-muted);
     font-size: var(--font-size-sm);
 }
-
-/* ==========================================================================
-   PROGRESS
-   ========================================================================== */
 
 .dashboard-progress-bars-right {
     display: flex;
@@ -545,19 +460,12 @@
     font-weight: var(--fw-medium);
 }
 
-/* ==========================================================================
-   COMMENT LIST
-   ========================================================================== */
-
+/* ===== COMMENT LIST ===== */
 .mini-comments-list-viewport {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
 }
-
-/* ==========================================================================
-   COMMENT CARD
-   ========================================================================== */
 
 .mini-comment-card {
     padding: var(--space-md);
@@ -572,10 +480,6 @@
     border-color: rgba(201, 168, 76, 0.35);
     background: rgba(201, 168, 76, 0.05);
 }
-
-/* ==========================================================================
-   COMMENT HEADER
-   ========================================================================== */
 
 .comment-user-meta-header {
     display: flex;
@@ -615,10 +519,6 @@
     white-space: nowrap;
 }
 
-/* ==========================================================================
-   COMMENT CONTENT
-   ========================================================================== */
-
 .comment-content-body-text {
     margin-top: var(--space-sm);
     color: var(--text-secondary);
@@ -633,10 +533,7 @@
     font-size: var(--font-size-sm);
 }
 
-/* ==========================================================================
-   TRAILER MODAL
-   ========================================================================== */
-
+/* ===== TRAILER MODAL ===== */
 .trailer-modal-overlay {
     position: fixed;
     inset: 0;
@@ -695,153 +592,132 @@
     border: none;
 }
 
-/* ========================================================================== 
+/* =========================================================
    RESPONSIVE
-   ========================================================================== */
+========================================================= */
 
-/* ===================== 1200px ===================== */
 @media (max-width: 1200px) {
-    .cast-avatars-horizontal-list {
-        grid-template-columns: repeat(4, 1fr);
-        gap: var(--space-lg);
-    }
-
+    .genre-movies-grid,
+    .cast-avatars-horizontal-list,
     .other-trailers-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: var(--space-lg);
     }
-
     .rating-statistics-dashboard {
         gap: var(--space-xl);
     }
 }
 
-/* ===================== 992px ===================== */
 @media (max-width: 992px) {
     .cinema-main-content-container {
         padding: 0 var(--space-md);
     }
-
-    .cast-avatars-horizontal-list {
-        grid-template-columns: repeat(3, 1fr);
-        gap: var(--space-lg);
-    }
-
+    .genre-movies-grid,
+    .cast-avatars-horizontal-list,
     .other-trailers-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: var(--space-lg);
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-md);
     }
-
     .rating-statistics-dashboard {
         grid-template-columns: 1fr;
         gap: var(--space-xl);
     }
-
     .dashboard-big-score-left {
-        align-items: flex-start;
+        align-items: center;
     }
-
-    .section-title-label,
-    .filmgenre-section-header h2 {
+    .filmgenre-section-header h2,
+    .section-title-label {
         font-size: var(--font-size-xl);
     }
 }
 
-/* ===================== 768px ===================== */
 @media (max-width: 768px) {
     .cinema-main-content-container {
         padding: 0 var(--space-sm);
     }
-
-    .cast-avatars-horizontal-list {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-md);
-    }
-
+    .genre-movies-grid,
+    .cast-avatars-horizontal-list,
     .other-trailers-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-md);
+        gap: var(--space-sm);
     }
-
     .split-right-column-box {
         padding: var(--space-lg);
     }
-
     .huge-number {
         font-size: var(--font-size-5xl);
     }
-
-    .section-title-label,
-    .filmgenre-section-header h2 {
+    .filmgenre-section-header h2,
+    .section-title-label {
         font-size: var(--font-size-lg);
     }
-
     .view-all-link-gold {
         font-size: var(--font-size-xs);
     }
+    .section-header-row {
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
 }
 
-/* ===================== 480px ===================== */
 @media (max-width: 480px) {
     .cinema-main-content-container {
         padding: 0 var(--space-xs);
     }
-
-    .cast-avatars-horizontal-list {
-        grid-template-columns: 1fr;
-        gap: var(--space-md);
-    }
-
+    .genre-movies-grid,
+    .cast-avatars-horizontal-list,
     .other-trailers-grid {
         grid-template-columns: 1fr;
         gap: var(--space-md);
     }
-
-    .actor-real-name {
-        font-size: var(--font-size-base);
-    }
-
-    .other-trailer-title {
-        font-size: var(--font-size-sm);
-    }
-
-    .split-right-column-box {
-        padding: var(--space-md);
-        border-radius: var(--radius-md);
-    }
-
-    .huge-number {
-        font-size: var(--font-size-4xl);
-    }
-
-    .progress-percent-text {
-        font-size: var(--font-size-xs);
-    }
-
-    .section-title-label,
-    .filmgenre-section-header h2 {
+    .filmgenre-section-header h2,
+    .section-title-label {
         font-size: var(--font-size-base);
         letter-spacing: 1px;
     }
-
     .btn-write-review-small {
         font-size: var(--font-size-xs);
         padding: var(--space-xs) var(--space-sm);
     }
-
+    .split-right-column-box {
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+    }
+    .huge-number {
+        font-size: var(--font-size-4xl);
+    }
+    .progress-percent-text {
+        font-size: var(--font-size-xs);
+    }
     .trailer-close-btn {
         width: 36px;
         height: 36px;
         top: -12px;
         right: -12px;
     }
-
     .comment-user-meta-header {
         flex-wrap: wrap;
     }
-
     .comment-time-ago {
         width: 100%;
         margin-left: 52px;
+    }
+}
+
+@media (max-width: 360px) {
+    .genre-movies-grid,
+    .cast-avatars-horizontal-list,
+    .other-trailers-grid {
+        grid-template-columns: 1fr;
+    }
+    .filmgenre-section-header {
+        flex-wrap: wrap;
+    }
+    .filmgenre-line {
+        flex: 1 1 100%;
+        order: 2;
+    }
+    .section-header-row {
+        flex-wrap: wrap;
     }
 }

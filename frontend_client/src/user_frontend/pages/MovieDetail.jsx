@@ -34,7 +34,7 @@ const MovieDetail = () => {
     const [trailerMovies, setTrailerMovies] = useState([]);
     const [actors, setActors] = useState([]); 
     const [loading, setLoading] = useState(true);
-    const [showTrailer, setShowTrailer] = useState(false);
+    const [trailerModal, setTrailerModal] = useState({ isOpen: false, url: '' });
     // Logic Đánh giá & Bình luận
     const [userRating, setUserRating] = useState(0); 
     const [hover, setHover] = useState(0); 
@@ -107,7 +107,6 @@ const MovieDetail = () => {
 
                 setTrailerMovies(trailerFiltered);
 
-                // ĐÃ SỬA: Lấy thẳng toàn bộ danh sách diễn viên từ DB, không filter bóp nghẹt data nữa
                 setActors(resActors.data || []);
 
             } catch (error) {
@@ -121,6 +120,7 @@ const MovieDetail = () => {
     }, [slug, fetchReviews, API_BASE_URL]);
 
     const closeModal = () => setModalConfig(prev => ({ ...prev, show: false }));
+    const closeTrailerModal = () => setTrailerModal({ isOpen: false, url: '' });
 
     const handleSendReview = async () => {
         if (userRating === 0) {
@@ -188,23 +188,18 @@ const MovieDetail = () => {
 
     const openTrailerModal = () => {
         const videoId = getYoutubeID(movie.trailer_url);
-
         if (!videoId) return;
-
-        setShowTrailer(true);
+        setTrailerModal({ isOpen: true, url: movie.trailer_url });
     };
+
     const openTrailerByMovie = (movieItem) => {
-
         if (!movieItem?.trailer_url) return;
-
-        window.open(
-            movieItem.trailer_url,
-            "_blank"
-        );
-
+        setTrailerModal({ isOpen: true, url: movieItem.trailer_url });
     };
-    const renderTrailerVideo = () => {
-        const videoId = getYoutubeID(movie.trailer_url);
+
+    const renderTrailerVideo = (url) => {
+        const videoId = getYoutubeID(url);
+        if (!videoId) return <div>Không thể tải trailer</div>;
         return (
             <div className="modal-trailer-iframe-container">
                 <iframe
@@ -212,8 +207,7 @@ const MovieDetail = () => {
                     src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                >
-                </iframe>
+                />
             </div>
         );
     };
@@ -272,7 +266,6 @@ const MovieDetail = () => {
 
     const getModalMessage = () => {
         if (modalConfig.message === 'rating_mode') return renderStarRating();
-        if (modalConfig.message === 'trailer_mode') return renderTrailerVideo();
         return modalConfig.message;
     };
 
@@ -287,6 +280,18 @@ const MovieDetail = () => {
                 onCancel={closeModal}
             />
 
+            {/* TRAILER MODAL */}
+            {trailerModal.isOpen && (
+                <div className="trailer-modal-overlay" onClick={closeTrailerModal}>
+                    <div className="trailer-modal-container" onClick={(e) => e.stopPropagation()}>
+                        <button className="trailer-close-btn" onClick={closeTrailerModal}>
+                            <X size={24} />
+                        </button>
+                        {renderTrailerVideo(trailerModal.url)}
+                    </div>
+                </div>
+            )}
+
             {/* SECTION 1: HERO BANNER NGANG (BACKDROP) */}
             <MovieHeroBanner
                 movie={movie}
@@ -296,260 +301,148 @@ const MovieDetail = () => {
                 }
                 onTrailer={openTrailerModal}
             />
+
             <div className="cinema-main-content-container">
-                {/* SECTION 2: PHIM LIÊN QUAN - TÁI SỬ DỤNG COMPONENT */}
+                {/* SECTION 2: PHIM LIÊN QUAN */}
                 <div className="filmgenre-container">
                     <div className="filmgenre-section-header">
-                        <h2>  PHIM LIÊN QUAN</h2>
-                        <div className="filmgenre-line"/>
+                        <h2>PHIM LIÊN QUAN</h2>
+                        <div className="filmgenre-line" />
                     </div>
                     <div className="genre-movies-grid">
-                        {
-                            relatedMovies.map(movie => (
-                                <MovieCard
-                                    key={movie.movie_id}
-                                    movie={movie}
-                                    baseUrl={`${IMAGE_BASE_URL}/posters/`}
-                                />
-                            ))
-                        }
+                        {relatedMovies.map(movie => (
+                            <MovieCard
+                                key={movie.movie_id}
+                                movie={movie}
+                                baseUrl={`${IMAGE_BASE_URL}/posters/`}
+                            />
+                        ))}
                     </div>
                 </div>
-             {/* SECTION 3 : DIỄN VIÊN */}
 
+                {/* SECTION 3: DIỄN VIÊN */}
                 <div className="cinema-section-block">
-
                     <div className="section-header-row">
-
-                        <h3 className="section-title-label">
-                            DIỄN VIÊN
-                        </h3>
-
+                        <h3 className="section-title-label">DIỄN VIÊN</h3>
                         <div className="filmgenre-line" />
-
-                        <span
-                            className="view-all-link-red"
-                            onClick={() => navigate('/actors')}
-                        >
+                        <span className="view-all-link-gold" onClick={() => navigate('/actors')}>
                             Xem tất cả ❯
                         </span>
-
                     </div>
 
-
                     <div className="cast-avatars-horizontal-list">
-
                         {actors?.length > 0 ? (
-
                             actors.map((actor, index) => (
-
                                 <div
                                     key={actor.actor_id || index}
                                     className="actor-circle-card"
-                                    onClick={() =>
-                                        actor.slug &&
-                                        navigate(`/actor/${actor.slug}`)
-                                    }
+                                    onClick={() => actor.slug && navigate(`/actor/${actor.slug}`)}
                                 >
-
                                     <div className="actor-avatar-frame">
-
                                         {actor.avatar ? (
-
                                             <img
                                                 src={`${IMAGE_BASE_URL}/actors/${actor.avatar}`}
                                                 alt={actor.name}
                                                 className="actor-real-img"
                                             />
-
                                         ) : (
-
                                             <div className="placeholder-avatar-bg">
-
-                                                <User
-                                                    size={28}
-                                                    color="#888"
-                                                />
-
+                                                <User size={28} color="#888" />
                                             </div>
-
                                         )}
-
                                     </div>
-
-
-                                    <span className="actor-real-name">
-                                        {actor.name}
-                                    </span>
-
+                                    <span className="actor-real-name">{actor.name}</span>
                                 </div>
-
                             ))
-
                         ) : (
-
-                            movie?.cast &&
-                            movie.cast.trim() !== '' &&
-                            movie.cast.toLowerCase() !== 'đang cập nhật'
-
+                            movie?.cast && movie.cast.trim() !== '' && movie.cast.toLowerCase() !== 'đang cập nhật'
                         ) ? (
-
                             movie.cast.split(',').map((item, index) => {
-
                                 const actorName = item.trim();
-
                                 if (!actorName) return null;
-
                                 return (
-
-                                    <div
-                                        key={`cast-${index}`}
-                                        className="actor-circle-card"
-                                    >
-
+                                    <div key={`cast-${index}`} className="actor-circle-card">
                                         <div className="actor-avatar-frame">
-
                                             <div className="placeholder-avatar-bg">
-
-                                                <User
-                                                    size={28}
-                                                    color="#888"
-                                                />
-
+                                                <User size={28} color="#888" />
                                             </div>
-
                                         </div>
-
-
-                                        <span className="actor-real-name">
-
-                                            {actorName}
-
-                                        </span>
-
+                                        <span className="actor-real-name">{actorName}</span>
                                     </div>
-
                                 );
-
                             })
-
                         ) : (
-
                             <div className="empty-reviews-placeholder">
-
                                 Thông tin về dàn diễn viên của bộ phim đang được cập nhật...
-
                             </div>
-
                         )}
-
                     </div>
-
                 </div>
+
                 {/* SECTION 4: TRAILER KHÁC */}
                 <div className="cinema-section-block">
                     <div className="section-header-row">
-
-                        <h3 className="section-title-label">
-                            TRAILER KHÁC
-                        </h3>
+                        <h3 className="section-title-label">TRAILER KHÁC</h3>
                         <div className="filmgenre-line" />
                     </div>
                     <div className="other-trailers-grid">
-                        {trailerMovies.map(item => {
-                            const videoId = getYoutubeID(item.trailer_url);
-                            return (
-                                <div
-                                    key={item.movie_id}
-                                    className="other-trailer-card"
-                                    onClick={() => openTrailerByMovie(item)}
-                                >
-                                    <div className="other-trailer-thumb">
-                                        <img
-                                            src={
-                                                videoId
-                                                    ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
-                                                    : `${IMAGE_BASE_URL}/posters/${item.poster_url}`
-                                            }
-                                            alt={item.title}
-                                        />
-                                        <div className="other-trailer-overlay">
-                                            <Play
-                                                size={42}
-                                                strokeWidth={2.5}
-                                            />
-                                        </div>
-
-                                    </div>
-
-                                    <h4 className="other-trailer-title">
-                                        {item.title}
-                                    </h4>
-
-                                </div>
-                            );
-
-                        })}
-                    </div>
-
-                </div>
-               {/* SECTION 5: ĐÁNH GIÁ TỪ KHÁN GIẢ */}
-                <div className="reviews-section-fullwidth">
-                     <div className="section-header-row">
-                            <h3 className="section-title-label">ĐÁNH GIÁ TỪ KHÁN GIẢ</h3>
-                            <div className="filmgenre-line" />
-                            <button
-                                className="btn-write-review-small"
-                                onClick={openRatingModal}
+                        {trailerMovies.map(item => (
+                            <div
+                                key={item.movie_id}
+                                className="other-trailer-card"
+                                onClick={() => openTrailerByMovie(item)}
                             >
-                                Viết đánh giá
-                            </button>
-                        </div>
+                                <div className="other-trailer-thumb">
+                                    <img
+                                        src={getYoutubeID(item.trailer_url) 
+                                            ? `https://img.youtube.com/vi/${getYoutubeID(item.trailer_url)}/maxresdefault.jpg`
+                                            : `${IMAGE_BASE_URL}/posters/${item.poster_url}`}
+                                        alt={item.title}
+                                    />
+                                    <div className="other-trailer-overlay">
+                                        <Play size={42} strokeWidth={2.5} />
+                                    </div>
+                                </div>
+                                <h4 className="other-trailer-title">{item.title}</h4>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* SECTION 5: ĐÁNH GIÁ TỪ KHÁN GIẢ */}
+                <div className="reviews-section-fullwidth">
+                    <div className="section-header-row">
+                        <h3 className="section-title-label">ĐÁNH GIÁ TỪ KHÁN GIẢ</h3>
+                        <div className="filmgenre-line" />
+                        <button className="btn-write-review-small" onClick={openRatingModal}>
+                            Viết đánh giá
+                        </button>
+                    </div>
 
                     <div className="split-right-column-box">
                         <div className="rating-statistics-dashboard">
                             <div className="dashboard-big-score-left">
-                                <div className="huge-number">
-                                    {movie.avg_rating || "0.0"}
-                                </div>
-
+                                <div className="huge-number">{movie.avg_rating || "0.0"}</div>
                                 <div className="slash-ten">/10</div>
-
                                 <div className="stars-row-display">
                                     {[...Array(5)].map((_, i) => (
-                                        <Star
-                                            key={i}
-                                            size={14}
-                                            fill="#f5b50a"
-                                            color="#f5b50a"
-                                        />
+                                        <Star key={i} size={14} fill="#f5b50a" color="#f5b50a" />
                                     ))}
                                 </div>
-
-                                <div className="total-votes-count-txt">
-                                    {reviews.length} đánh giá
-                                </div>
+                                <div className="total-votes-count-txt">{reviews.length} đánh giá</div>
                             </div>
 
                             <div className="dashboard-progress-bars-right">
                                 {[5, 4, 3, 2, 1].map((stars) => (
                                     <div className="progress-bar-line-row" key={stars}>
-                                        <span className="star-line-label">
-                                            {stars} ★
-                                        </span>
-
+                                        <span className="star-line-label">{stars} ★</span>
                                         <div className="progress-track-bg">
                                             <div
                                                 className="progress-fill-active"
-                                                style={{
-                                                    width: `${starPercentages[stars] || 0}%`,
-                                                }}
+                                                style={{ width: `${starPercentages[stars] || 0}%` }}
                                             />
                                         </div>
-
-                                        <span className="progress-percent-text">
-                                            {starPercentages[stars] || 0}%
-                                        </span>
+                                        <span className="progress-percent-text">{starPercentages[stars] || 0}%</span>
                                     </div>
                                 ))}
                             </div>
@@ -564,72 +457,27 @@ const MovieDetail = () => {
                                 reviews.slice(0, 3).map((rev, index) => (
                                     <div className="mini-comment-card" key={index}>
                                         <div className="comment-user-meta-header">
-                                            <div className="user-avatar-placeholder-small"></div>
-
+                                            <div className="user-avatar-placeholder-small" />
                                             <div className="user-name-title-box">
-                                                <span className="comment-username">
-                                                    {rev.username || "Khán giả"}
-                                                </span>
-
+                                                <span className="comment-username">{rev.username || "Khán giả"}</span>
                                                 <div className="user-stars-small-row">
-                                                    {[...Array(
-                                                        Math.ceil(
-                                                            (rev.rating || 10) / 2
-                                                        )
-                                                    )].map((_, i) => (
-                                                        <Star
-                                                            key={i}
-                                                            size={10}
-                                                            fill="#f5b50a"
-                                                            color="#f5b50a"
-                                                        />
+                                                    {[...Array(Math.ceil((rev.rating || 10) / 2))].map((_, i) => (
+                                                        <Star key={i} size={10} fill="#f5b50a" color="#f5b50a" />
                                                     ))}
                                                 </div>
                                             </div>
-
-                                            <span className="comment-time-ago">
-                                                Mới đây
-                                            </span>
+                                            <span className="comment-time-ago">Mới đây</span>
                                         </div>
-
-                                        <p className="comment-content-body-text">
-                                            {rev.comment}
-                                        </p>
+                                        <p className="comment-content-body-text">{rev.comment}</p>
                                     </div>
                                 ))
                             )}
                         </div>
                     </div>
                 </div>
-               
-
             </div>
-            {/* TRAILER MODAL */}
-            {
-                showTrailer && (
-                    <div
-                        className="trailer-modal-overlay"
-                        onClick={() => setShowTrailer(false)}
-                    >
-                        <div
-                            className="trailer-modal-container"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <button
-                                className="trailer-close-btn"
-                                onClick={() => setShowTrailer(false)}
-                            >
-                                <X size={24} />
-                            </button>
-
-                            {renderTrailerVideo()}
-                        </div>
-                    </div>
-                )
-            }
         </div>
-        
     );
 };
-    
+
 export default MovieDetail;
