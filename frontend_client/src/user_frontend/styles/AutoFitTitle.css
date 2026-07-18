@@ -1,0 +1,93 @@
+.auto-fit-title {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+  position: relative;
+}
+
+.auto-fit-title .hero-movie-title {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  color: transparent;
+
+  /* ---------- 1. NỀN CHÍNH: GRADIENT ÁNH KIM ---------- */
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #f0f0f0 15%,
+    #d0d0d0 35%,
+    #a8a8a8 55%,
+    #888888 70%,
+    #a8a8a8 80%,
+    #d0d0d0 90%,
+    #ffffff 100%
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  
+
+  /* ---------- 3. VIỀN MỜ - HƠI SẦN ---------- */
+  -webkit-text-stroke: 0.6px rgba(255, 255, 255, 0.08);
+
+  
+
+  /* ---------- 5. FILTER: LÀM NHIỄU HẠT (VỠ HẠT) ---------- */
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5))
+          drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4));
+
+  /* ---------- 6. KỸ THUẬT GIẢ LẬP VỠ BẰNG CLIP-PATH ---------- */
+  /* Cắt xén một số góc để tạo cảm giác chữ bị sứt mẻ */
+  clip-path: polygon(
+    0% 0%,
+    100% 0%,
+    99% 2%,
+    100% 10%,
+    98% 20%,
+    99% 30%,
+    100% 45%,
+    98% 55%,
+    99% 70%,
+    100% 85%,
+    98% 95%,
+    100% 100%,
+    0% 100%,
+    1% 95%,
+    0% 85%,
+    2% 70%,
+    0% 55%,
+    1% 40%,
+    0% 25%,
+    1% 10%,
+    0% 5%
+  );
+
+  /* ---------- 7. TỔNG THỂ ---------- */
+
+  letter-spacing: 4px;
+  user-select: none;
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- 8. SHIMMER (ÁNH SÁNG LƯỚT) LÀM NỔI BẬT CÁC VẾT VỠ ---------- */
+@keyframes shimmerCrack {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.auto-fit-title .hero-movie-title {
+  animation: shimmerCrack 5s ease-in-out infinite alternate;
+}
