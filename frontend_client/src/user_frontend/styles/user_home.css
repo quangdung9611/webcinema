@@ -1,671 +1,618 @@
 /* ==========================================================
-   USER HOME - CINEMA GOLD PREMIUM
+   USER HOME - SILVER PREMIUM (KHÔNG SCALE, KHÔNG TRANSLATE)
    Gạch dưới chạy hết chiều dài chữ (::after)
-========================================================== */
+   ========================================================== */
 
 /* ==========================================================
    ANIMATIONS
-========================================================== */
-
+   ========================================================== */
 @keyframes fadeUp {
-    from {
-        opacity: 0;
-        transform: translateY(40px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes shine {
-    from {
-        left: -120%;
-    }
-    to {
-        left: 120%;
-    }
+  from {
+    left: -120%;
+  }
+  to {
+    left: 120%;
+  }
 }
 
 @keyframes particleMove {
-    0% {
-        transform: translateY(0);
-    }
-    100% {
-        transform: translateY(-180px);
-    }
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-180px);
+  }
 }
 
 /* ==========================================================
    PAGE WRAPPER
-========================================================== */
-
+   ========================================================== */
 .user-home {
-    position: relative;
-    overflow: hidden;
+  position: relative;
+  overflow: hidden;
 }
 
 .home-container {
-    width: 100%;
-    max-width: var(--container-width);
-    margin: 0 auto;
-    padding: 0 var(--container-padding) var(--space-3xl);
+  width: 100%;
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding) var(--space-3xl);
 }
 
 /* ==========================================================
-   COMMON SECTION
-========================================================== */
-
+   COMMON SECTION – CHỈ FADE KHI SCROLL (BỎ ANIMATION TỰ ĐỘNG)
+   ========================================================== */
 .home-features-section,
 .movie-container,
 .promotions-section,
 .cinema-corner-section {
-    width: 100%;
-    margin-top: var(--space-3xl);
-    animation: fadeUp 0.8s ease both;
+  width: 100%;
+  margin-top: var(--space-3xl);
 }
 
 /* ==========================================================
-   SECTION HEADER (TIÊU ĐỀ + GẠCH DƯỚI)
-========================================================== */
-
+   SECTION HEADER (TIÊU ĐỀ + GẠCH DƯỚI BẠC)
+   ========================================================== */
 .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--space-lg);
-    margin-bottom: var(--space-xl);
-    flex-wrap: wrap;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
 }
 
 .section-header-left {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
-/* ===== TIÊU ĐỀ + GẠCH DƯỚI ===== */
 .section-title {
-    display: inline-block;  /* quan trọng: để co dãn theo nội dung */
-    position: relative;
-    margin: 0;
-    color: var(--text-white);
-    font-size: var(--font-size-2xl);
-    font-weight: var(--fw-extrabold);
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    padding-bottom: 8px;    /* tạo khoảng cách cho gạch dưới */
+  display: inline-block;
+  position: relative;
+  margin: 0;
+  color: var(--silver-primary) !important;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--fw-black) !important;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding-bottom: 8px;
+  text-shadow: 0 0 15px rgba(232, 232, 232, 0.08);
 }
 
-/* Gạch dưới – chạy hết độ dài chữ */
 .section-title::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 100%;           /* 👈 BẰNG CHIỀU RỘNG CỦA CHỮ */
-    height: 4px;
-    border-radius: 999px;
-    background: var(--gold-gradient);
-    transition: width 0.4s ease;
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--cinema-border-gradient);
+  transition: width 0.3s ease;
 }
 
-/* Khi hover vào header, gạch dưới giãn ra một chút (thú vị hơn) */
 .section-header:hover .section-title::after {
-    width: 105%;           /* giãn ra một chút cho hiệu ứng */
+  width: 105%;
 }
 
 /* ==========================================================
    BANNER (FULL WIDTH)
-========================================================== */
-
+   ========================================================== */
 .carousel-full-wrapper {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    line-height: 0;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
 }
 
 .banner-premium {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 2.5 / 1;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2.5 / 1;
 }
 
 .premiumSwiper,
 .banner-slide {
-    width: 100%;
-    height: 100%;
+  width: 100%;
+  height: 100%;
 }
 
 .banner-media {
-    position: relative;
-    width: 100%;
-    height: 100%;
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .banner-img {
-    width: 100%;
-    height: 100%;
-    display: block;
-    object-fit: cover;
-    user-select: none;
-    -webkit-user-drag: none;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .banner-particles {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.08;
-    background-image: radial-gradient(rgba(255, 255, 255, 0.25) 1px, transparent 1px);
-    background-size: 180px 180px;
-    animation: particleMove 25s linear infinite;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 200px 200px;
+  animation: particleMove 30s linear infinite;
 }
 
 /* ==========================================================
-   QUICK BOOKING
-========================================================== */
-
+   QUICK BOOKING – CHỈ ĐỔI MÀU, KHÔNG DỊCH CHUYỂN
+   ========================================================== */
 .quick-booking-container {
-    position: relative;
-    z-index: 10;
-    width: 100%;
-    max-width: var(--container-width);
-    margin: 0 auto;
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: var(--container-width);
+  margin: 0 auto;
 }
 
 .quick-booking-content {
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    gap: var(--space-lg);
-    padding: var(--space-xl);
-    border-radius: var(--radius-xl);
-    background: rgba(15, 15, 15, 0.92);
-    backdrop-filter: blur(20px);
-    border: var(--border-gold);
-    box-shadow: var(--cinema-card-shadow);
-    transition: var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  border-radius: var(--radius-xl);
+  background: rgba(15, 15, 15, 0.95);
+  border: var(--border-silver);
+  box-shadow: var(--cinema-card-shadow);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .quick-booking-content::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -120%;
-    width: 80px;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
-    animation: shine 7s linear infinite;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 80px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.quick-booking-content:hover::before {
+  opacity: 1;
+  animation: shine 0.8s ease forwards;
 }
 
 .quick-booking-content:hover {
-    border: var(--border-gold-hover);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
+  border: var(--border-silver-hover);
+  box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
 }
 
 .quick-booking-selects {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-md);
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
 }
 
 .quick-booking-selects select {
-    width: 100%;
-    height: 58px;
-    padding: 0 var(--space-md);
-    border: none;
-    outline: none;
-    cursor: pointer;
-    border-radius: var(--radius-lg);
-    border: var(--border-gold);
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--text-white);
-    font-size: var(--font-size-md);
-    font-weight: var(--fw-semibold);
-    transition: var(--transition-fast);
+  width: 100%;
+  height: 58px;
+  padding: 0 var(--space-md);
+  border: none;
+  outline: none;
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  border: var(--border-silver);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-body);
+  font-size: var(--font-size-md);
+  font-weight: var(--fw-semibold);
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .quick-booking-selects select:hover:not(:disabled) {
-    border: var(--border-gold-hover);
-    background: rgba(255, 255, 255, 0.05);
+  border: var(--border-silver-hover);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .quick-booking-selects select:focus {
-    border: var(--border-gold-hover);
-    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.10);
+  border: var(--border-silver-hover);
+  box-shadow: 0 0 0 3px rgba(232, 232, 232, 0.08);
 }
 
 .quick-booking-selects select:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .quick-booking-selects option {
-    background: #121212;
-    color: #fff;
+  background: #121212;
+  color: var(--text-body);
 }
 
 .btn-quick-booking {
-    position: relative;
-    overflow: hidden;
-    min-width: 220px;
-    height: 58px;
-    border: none;
-    cursor: pointer;
-    border-radius: var(--radius-lg);
-    background: var(--gold-gradient);
-    color: #fff;
-    font-size: var(--font-size-md);
-    font-weight: var(--fw-bold);
-    letter-spacing: 0.5px;
-    box-shadow: var(--shadow-gold);
-    transition: var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+  min-width: 220px;
+  height: 58px;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  background: var(--cinema-border-gradient);
+  color: var(--black-premium);
+  font-size: var(--font-size-md);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-silver);
+  transition: box-shadow 0.25s ease; /* bỏ transform, chỉ giữ box-shadow */
 }
 
 .btn-quick-booking:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-gold), 0 20px 40px rgba(201, 168, 76, 0.25);
-}
-
-.btn-quick-booking::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -120%;
-    width: 80px;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-}
-
-.btn-quick-booking:hover::before {
-    animation: shine 0.8s ease;
+  /* ĐÃ XÓA transform: translateY(-2px); */
+  box-shadow: var(--shadow-silver), 0 8px 24px rgba(232, 232, 232, 0.15);
 }
 
 /* ==========================================================
-   FEATURES
-========================================================== */
-
+   FEATURES – KHÔNG DỊCH CHUYỂN KHI HOVER
+   ========================================================== */
 .features-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--space-md);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-md);
 }
 
 .feature-item {
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-lg);
-    border-radius: var(--radius-xl);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
-    border: var(--border-gold);
-    backdrop-filter: blur(15px);
-    transition: var(--cinema-transition);
-    box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+  border: var(--border-silver);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .feature-item::before {
-    content: "";
-    position: absolute;
-    top: -50%;
-    left: -160%;
-    width: 90px;
-    height: 220%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
-    transform: rotate(25deg);
-    transition: 0.9s;
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -160%;
+  width: 90px;
+  height: 220%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  transform: rotate(25deg); /* Giữ vì đây là pseudo-element, không ảnh hưởng layout chính */
+  transition: left 0.6s ease;
+  pointer-events: none;
 }
 
 .feature-item:hover::before {
-    left: 160%;
+  left: 160%;
 }
 
 .feature-item:hover {
-    transform: translateY(-8px);
-    border: var(--border-gold-hover);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
+  border: var(--border-silver-hover);
+  box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+  /* KHÔNG translateY */
 }
 
 .feature-icon-wrapper {
-    width: 72px;
-    height: 72px;
-    min-width: 72px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, rgba(201, 168, 76, 0.15), rgba(201, 168, 76, 0.05));
-    border: 1px solid rgba(201, 168, 76, 0.15);
-    color: var(--gold-primary);
-    transition: var(--cinema-transition);
+  width: 72px;
+  height: 72px;
+  min-width: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: rgba(232, 232, 232, 0.08);
+  border: 1px solid rgba(232, 232, 232, 0.15);
+  color: var(--silver-primary);
+  transition: box-shadow 0.25s ease;
 }
 
 .feature-item:hover .feature-icon-wrapper {
-    transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(201, 168, 76, 0.20), 0 0 40px rgba(201, 168, 76, 0.10);
+  box-shadow: 0 0 20px rgba(232, 232, 232, 0.10);
+  /* KHÔNG scale */
 }
 
 .feature-text {
-    flex: 1;
+  flex: 1;
 }
 
 .feature-text h4 {
-    margin: 0 0 var(--space-sm);
-    color: var(--text-white);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-bold);
-    line-height: 1.4;
-    transition: var(--transition-fast);
+  margin: 0 0 var(--space-sm);
+  color: var(--text-body);
+  font-size: var(--font-size-base);
+  font-weight: var(--fw-bold);
+  line-height: 1.4;
+  transition: color 0.25s ease;
 }
 
 .feature-item:hover h4 {
-    color: var(--gold-primary);
+  color: var(--silver-primary);
 }
 
 .feature-text p {
-    margin: 0;
-    color: rgba(255, 255, 255, 0.65);
-    font-size: var(--font-size-sm);
-    line-height: 1.6;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
 }
 
 /* ==========================================================
-   BUTTON VIEW ALL
-========================================================== */
-
+   BUTTON VIEW ALL – KHÔNG DỊCH CHUYỂN
+   ========================================================== */
 .btn-view-all {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 24px;
-    border-radius: 999px;
-    text-decoration: none;
-    border: 2px solid rgba(201, 168, 76, 0.3);
-    color: var(--gold-primary);
-    background: rgba(255, 255, 255, 0.02);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    font-size: var(--font-size-sm);
-    font-weight: var(--fw-semibold);
-    white-space: nowrap;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.btn-view-all::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 999px;
-    padding: 2px;
-    background: var(--gold-gradient);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0;
-    transition: opacity 0.4s ease;
-}
-
-.btn-view-all:hover::before {
-    opacity: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  text-decoration: none;
+  border: 2px solid rgba(232, 232, 232, 0.25);
+  color: var(--silver-primary);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+  font-size: var(--font-size-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .btn-view-all:hover {
-    color: #0a0a0a;
-    background: var(--gold-gradient);
-    border-color: transparent;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(201, 168, 76, 0.35);
+  color: var(--black-premium);
+  background: var(--cinema-border-gradient);
+  border-color: transparent;
+  /* ĐÃ XÓA transform: translateY(-2px); */
+  box-shadow: 0 4px 16px rgba(232, 232, 232, 0.20);
 }
 
 .btn-view-all:active {
-    transform: scale(0.96);
+  /* ĐÃ XÓA transform: scale(0.96); */
 }
 
 .btn-view-all svg {
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    flex-shrink: 0;
+  transition: none; /* bỏ transition transform */
+  /* Không có transform: translateX khi hover */
 }
 
 .btn-view-all:hover svg {
-    transform: translateX(6px);
+  /* ĐÃ XÓA transform: translateX(6px); */
 }
 
 /* ==========================================================
-   CINEMA GRID
-========================================================== */
-
+   CINEMA GRID – CARD KHÔNG DỊCH CHUYỂN KHI HOVER
+   ========================================================== */
 .cinema-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--space-md);
-    align-items: start;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-md);
+  align-items: start;
 }
 
 .promotions-section .cinema-card,
 .cinema-corner-section .cinema-card {
-    height: 100%;
-    width: 100%;
+  height: 100%;
+  width: 100%;
 }
 
 .promotions-section .cinema-card .cinema-card-inner,
 .cinema-corner-section .cinema-card .cinema-card-inner {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.promotions-section .cinema-card,
-.cinema-corner-section .cinema-card {
-    transition: transform 0.35s ease;
-}
-
-.promotions-section .cinema-card:hover,
-.cinema-corner-section .cinema-card:hover {
-    transform: translateY(-6px);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ==========================================================
    SPACING
-========================================================== */
-
+   ========================================================== */
 .home-features-section {
-    margin-top: var(--space-3xl);
+  margin-top: var(--space-3xl);
 }
 
 .movie-container {
-    margin-top: var(--space-3xl);
+  margin-top: var(--space-3xl);
 }
 
 .promotions-section {
-    margin-top: var(--space-3xl);
+  margin-top: var(--space-3xl);
 }
 
 .cinema-corner-section {
-    margin-top: var(--space-3xl);
-    padding-bottom: var(--space-lg);
+  margin-top: var(--space-3xl);
+  padding-bottom: var(--space-lg);
 }
 
 /* ==========================================================
-   PERFORMANCE
-========================================================== */
-
+   PERFORMANCE – BỎ will-change GÂY TỐN MEMORY
+   ========================================================== */
 .feature-item,
 .cinema-card,
 .quick-booking-content {
-    backface-visibility: hidden;
-    transform: translateZ(0);
-}
-
-.home-features-section,
-.movie-container,
-.promotions-section,
-.cinema-corner-section {
-    will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 /* ==========================================================
    RESPONSIVE
-========================================================== */
+   ========================================================== */
 
-/* ----- 1024px: Feature về 2 cột ----- */
+/* ----- 1024px: Feature về 2 cột, grid card 3 cột ----- */
 @media (max-width: 1024px) {
-    .features-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  .features-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cinema-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
-/* ----- 768px: Vẫn giữ 4 cột, nhưng layout co lại ----- */
+/* ----- 768px: 2 cột cho card ----- */
 @media (max-width: 768px) {
-    .cinema-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: var(--space-lg);
-    }
+  .banner-premium {
+    aspect-ratio: 3 / 1;
+    object-fit: cover;
+  }
+  .cinema-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-lg);
+  }
 
-    .section-header {
-        flex-direction: row;
-        align-items: center;
-        flex-wrap: wrap;
-    }
+  .section-header {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
 
-    .section-header-left {
-        flex: 1;
-        min-width: 0;
-    }
+  .section-header-left {
+    flex: 1;
+    min-width: 0;
+  }
 
-    .section-title {
-        font-size: var(--font-size-xl);
-        padding-bottom: 6px;
-    }
+  .section-title {
+    font-size: var(--font-size-xl);
+    padding-bottom: 6px;
+  }
 
-    .section-title::after {
-        height: 3px;
-    }
+  .section-title::after {
+    height: 3px;
+  }
 
-    .btn-view-all {
-        padding: 8px 18px;
-        font-size: var(--font-size-xs);
-        flex-shrink: 0;
-    }
+  .btn-view-all {
+    padding: 8px 18px;
+    font-size: var(--font-size-xs);
+    flex-shrink: 0;
+  }
 
-    .quick-booking-content {
-        flex-direction: column;
-        padding: var(--space-lg);
-        gap: var(--space-md);
-    }
+  .quick-booking-content {
+    flex-direction: column;
+    padding: var(--space-lg);
+    gap: var(--space-md);
+  }
 
-    .quick-booking-selects {
-        width: 100%;
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-md);
-    }
+  .quick-booking-selects {
+    width: 100%;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
 
-    .quick-booking-selects select {
-        height: 52px;
-        font-size: var(--font-size-sm);
-    }
+  .quick-booking-selects select {
+    height: 52px;
+    font-size: var(--font-size-sm);
+  }
 
-    .btn-quick-booking {
-        width: 100%;
-        min-width: unset;
-        height: 52px;
-    }
+  .btn-quick-booking {
+    width: 100%;
+    min-width: unset;
+    height: 52px;
+  }
 
-    .feature-item {
-        padding: var(--space-md);
-        gap: 14px;
-    }
+  .feature-item {
+    padding: var(--space-md);
+    gap: 14px;
+  }
 
-    .feature-icon-wrapper {
-        width: 60px;
-        height: 60px;
-        min-width: 60px;
-    }
+  .feature-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    min-width: 60px;
+  }
 
-    .feature-text h4 {
-        font-size: var(--font-size-sm);
-    }
+  .feature-text h4 {
+    font-size: var(--font-size-sm);
+  }
 
-    .feature-text p {
-        font-size: var(--font-size-xs);
-    }
+  .feature-text p {
+    font-size: var(--font-size-xs);
+  }
 }
 
-/* ----- 425px: Xuống 2 cột cho card ----- */
+/* ----- 425px: Giữ 2 cột cho card ----- */
 @media (max-width: 425px) {
-    .cinema-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
-    }
+  .cinema-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px;
+  }
 
-    .home-container {
-        padding: 0 16px var(--space-3xl);
-    }
+  .home-container {
+    padding: 0 16px var(--space-3xl);
+  }
 
-    .section-title {
-        font-size: var(--font-size-lg);
-        padding-bottom: 4px;
-    }
+  .section-title {
+    font-size: var(--font-size-lg);
+    padding-bottom: 4px;
+  }
 
-    .section-title::after {
-        height: 3px;
-    }
+  .section-title::after {
+    height: 3px;
+  }
 
-    .btn-view-all {
-        padding: 6px 14px;
-        font-size: 11px;
-        gap: 4px;
-    }
+  .btn-view-all {
+    padding: 6px 14px;
+    font-size: 11px;
+    gap: 4px;
+  }
 
-    .quick-booking-content {
-        padding: var(--space-md);
-        gap: 14px;
-    }
+  .quick-booking-content {
+    padding: var(--space-md);
+    gap: 14px;
+  }
 
-    .quick-booking-selects {
-        gap: 14px;
-    }
+  .quick-booking-selects {
+    gap: 14px;
+  }
 
-    .quick-booking-selects select {
-        height: 48px;
-        font-size: var(--font-size-sm);
-        padding: 0 14px;
-    }
+  .quick-booking-selects select {
+    height: 48px;
+    font-size: var(--font-size-sm);
+    padding: 0 14px;
+  }
 
-    .btn-quick-booking {
-        height: 48px;
-        font-size: var(--font-size-sm);
-    }
+  .btn-quick-booking {
+    height: 48px;
+    font-size: var(--font-size-sm);
+  }
 
-    .features-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-    }
+  .features-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
 
-    .feature-item {
-        padding: 14px;
-        gap: 12px;
-    }
+  .feature-item {
+    padding: 14px;
+    gap: 12px;
+  }
 
-    .feature-icon-wrapper {
-        width: 48px;
-        height: 48px;
-        min-width: 48px;
-    }
+  .feature-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+  }
 
-    .feature-text h4 {
-        font-size: var(--font-size-xs);
-    }
+  .feature-text h4 {
+    font-size: var(--font-size-xs);
+  }
 
-    .feature-text p {
-        font-size: 11px;
-    }
+  .feature-text p {
+    font-size: 11px;
+  }
 }

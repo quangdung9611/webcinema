@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/CinemaCard.css";
+import "../styles/CinemaCard.css"; // <-- ĐẢM BẢO ĐƯỜNG DẪN ĐÚNG
 
 const CinemaCard = ({
     type = "movie",
@@ -52,10 +52,7 @@ const CinemaCard = ({
                     </h3>
                 </div>
 
-                {/* EFFECT */}
-                <span className="cinema-card-sweep"></span>
-                <span className="cinema-card-glow"></span>
-
+              
             </div>
         </div>
     );

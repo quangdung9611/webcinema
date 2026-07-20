@@ -1,574 +1,134 @@
 /*==========================================================
-    GOOGLE FONT
+    GOOGLE FONT (nếu cần)
 ==========================================================*/
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
 
 /*==========================================================
-    HERO BANNER
+    BANNER
 ==========================================================*/
 .cinema-hero-banner {
     position: relative;
     width: 100%;
     aspect-ratio: 2.5 / 1;
     overflow: hidden;
-    isolation: isolate;
     border-radius: 24px;
-    background: #000;
+    background: #0a0a0a;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /*==========================================================
-    BACKDROP IMAGE
+    ẢNH NỀN
 ==========================================================*/
-.banner-horizontal-img {
+.banner-image {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
-    z-index: 1;
-    filter: brightness(0.48) contrast(1.15) saturate(1.1);
-    animation: heroFade 1.2s ease, heroZoom 18s ease-in-out infinite alternate;
+    object-position: center 20%;
+    filter: brightness(0.7); /* Làm tối nhẹ để nút nổi bật */
+    animation: heroFade 1.2s ease, heroZoom 20s ease-in-out infinite alternate;
 }
 
 /*==========================================================
-    OVERLAY – mờ nhẹ bên trái
+    NÚT PLAY Ở GIỮA
 ==========================================================*/
-.hero-overlay-dark {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    background: linear-gradient(
-        90deg,
-        rgba(0, 0, 0, 0.25) 0%,
-        rgba(0, 0, 0, 0.08) 40%,
-        transparent 70%
-    );
-}
-
-/*==========================================================
-    CONTENT
-==========================================================*/
-.hero-content-wrapper {
+.hero-play-btn {
     position: relative;
-    z-index: 20;
-    width: 100%;
-    height: 100%;
-    padding: 20px 80px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-}
-
-.hero-info-side {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/*==========================================================
-    TITLE BOX – GIỮ CHỮ KHÔNG XUỐNG DÒNG
-==========================================================*/
-.hero-title-box {
-    width: 55%;
-    height: 45%;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    overflow: hidden;
-    margin-bottom: 40px;
-}
-
-.auto-fit-title {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    overflow: hidden;
-}
-
-/*==========================================================
-    MOVIE TITLE – Ánh kim, bóng đổ mạnh
-==========================================================*/
-.hero-movie-title {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    font-family: 'Anton', sans-serif;
-    font-weight: 400;
-    text-transform: uppercase;
-    color: transparent;
-    background: linear-gradient(
-        180deg,
-        #ffffff 0%,
-        #f0f0f0 15%,
-        #d0d0d0 35%,
-        #a8a8a8 55%,
-        #888888 70%,
-        #ffffff 100%
-    );
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  
-    user-select: none;
-    transition: 0.35s;
-    /* QUAN TRỌNG: giữ chữ không xuống dòng */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-     word-break: break-word;
-}
-
-
-
-/*==========================================================
-    RATING ROW
-==========================================================*/
-.hero-rating-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 18px;
-    margin-bottom: 40px;
-}
-
-/*==========================================================
-    AGE BADGE
-==========================================================*/
-.hero-age-badge {
-    width: 72px;
-    height: 72px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 18px;
-    background: var(--gold-gradient-bright, linear-gradient(135deg, #C9A84C, #E8C84A));
-    color: #111;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 24px;
-    font-weight: 900;
-    box-shadow: 0 12px 28px rgba(201, 168, 76, 0.35);
-    transition: transform 0.35s, box-shadow 0.35s;
-}
-
-.hero-age-badge:hover {
-    transform: translateY(-6px) rotate(-3deg);
-    box-shadow: 0 18px 36px rgba(201, 168, 76, 0.45);
-}
-
-/*==========================================================
-    RATING ITEM
-==========================================================*/
-.hero-rating-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 22px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    transition: transform 0.35s, background 0.35s, border-color 0.35s, box-shadow 0.35s;
-}
-
-.hero-rating-item:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.10);
-    border-color: rgba(255, 255, 255, 0.18);
-    box-shadow: 0 16px 35px rgba(0, 0, 0, 0.35);
-}
-
-.hero-rating-item svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    color: var(--gold-premium, #C9A84C);
-    transition: transform 0.35s;
-}
-
-.hero-rating-item:hover svg {
-    transform: scale(1.15);
-}
-
-.hero-rating-item span {
-    color: #fff;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    white-space: nowrap;
-    letter-spacing: 0.3px;
-}
-
-/*==========================================================
-    ACTION GROUP
-==========================================================*/
-.hero-action-group {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 22px;
-    margin-top: 16px;
-    margin-bottom: 10px;
-}
-
-/*==========================================================
-    BOOK BUTTON
-==========================================================*/
-.hero-book-btn {
-    position: relative;
-    overflow: hidden;
-    min-width: 230px;
-    height: 66px;
-    padding: 0 34px;
+    z-index: 10;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
     border: none;
     outline: none;
     cursor: pointer;
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
-    background: var(--gold-gradient-bright, linear-gradient(135deg, #C9A84C, #E8C84A));
-    color: #111;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 16px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 15px 35px rgba(201, 168, 76, 0.35);
-    transition: transform 0.35s, box-shadow 0.35s, background 0.35s;
+    transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
 }
 
-.hero-book-btn svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
+.hero-play-btn svg {
+    margin-left: 6px; /* Căn chỉnh icon Play cho đẹp */
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 }
 
-.hero-book-btn:hover {
-    transform: translateY(-6px);
-    background: var(--gold-premium-light, #E8C84A);
-    box-shadow: 0 22px 45px rgba(201, 168, 76, 0.5);
+.hero-play-btn:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 60px rgba(255, 255, 255, 0.15);
 }
 
-.hero-book-btn:active {
-    transform: scale(0.96);
-}
-
-.hero-book-btn::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -120%;
-    width: 70%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
-    transform: skewX(-25deg);
-    transition: left 0.8s;
-}
-
-.hero-book-btn:hover::before {
-    left: 150%;
+.hero-play-btn:active {
+    transform: scale(0.92);
 }
 
 /*==========================================================
-    TRAILER BUTTON
+    KEYFRAMES
 ==========================================================*/
-.hero-trailer-btn {
-    position: relative;
-    overflow: hidden;
-    min-width: 220px;
-    height: 66px;
-    padding: 0 34px;
-    border-radius: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    color: #fff;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    text-transform: uppercase;
-    transition: transform 0.35s, background 0.35s, border-color 0.35s, box-shadow 0.35s;
-}
-
-.hero-trailer-btn svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-}
-
-.hero-trailer-btn:hover {
-    transform: translateY(-6px);
-    background: rgba(201, 168, 76, 0.15);
-    border-color: var(--gold-premium, #C9A84C);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-}
-
-.hero-trailer-btn:active {
-    transform: scale(0.96);
-}
-
-/*==========================================================
-    ANIMATIONS
-==========================================================*/
-.hero-info-side {
-    animation: heroContentIn 1s cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-.hero-title-box {
-    animation: heroTitleIn 0.9s 0.15s both;
-}
-.hero-rating-row {
-    animation: heroFadeUp 0.9s 0.35s both;
-}
-.hero-action-group {
-    animation: heroFadeUp 0.9s 0.55s both;
-}
-
 @keyframes heroFade {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 @keyframes heroZoom {
     from { transform: scale(1); }
-    to { transform: scale(1.08); }
-}
-@keyframes heroContentIn {
-    from { opacity: 0; transform: translateX(-60px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-@keyframes heroTitleIn {
-    from { opacity: 0; transform: translateY(45px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-@keyframes heroFadeUp {
-    from { opacity: 0; transform: translateY(35px); }
-    to { opacity: 1; transform: translateY(0); }
+    to { transform: scale(1.06); }
 }
 
 /*==========================================================
-    RESPONSIVE – GIỮ CHỮ KHÔNG XUỐNG DÒNG
+    RESPONSIVE
 ==========================================================*/
-
-/* >= 1600px */
-@media (max-width: 1600px) {
-    .hero-content-wrapper { padding: 18px 65px; }
-}
-
-/* 1400px */
-@media (max-width: 1400px) {
-    .hero-content-wrapper { padding: 16px 50px; }
-}
-
-/* 1200px */
-@media (max-width: 1200px) {
-    .hero-content-wrapper { padding: 14px 42px; }
-    .hero-title-box {
-        width: 60%;
-        height: 40%;
-        margin-bottom: 32px;
-    }
-    .hero-rating-row {
-        gap: 14px;
-        margin-bottom: 32px;
-    }
-    .hero-action-group { margin-top: 12px; }
-}
-
-/* 992px – Tablet ngang */
 @media (max-width: 992px) {
     .cinema-hero-banner {
         aspect-ratio: auto;
-        min-height: 700px;
-        border-radius: 20px;
+        min-height: 500px;
+        border-radius: 18px;
     }
-    .hero-content-wrapper {
-        padding: 16px 32px;
+    .hero-play-btn {
+        width: 80px;
+        height: 80px;
     }
-    .hero-title-box {
-        width: 70%;
-        height: 35%;
-        margin-bottom: 28px;
+    .hero-play-btn svg {
+        width: 36px;
+        height: 36px;
     }
-    .hero-rating-row {
-        gap: 12px;
-        margin-bottom: 28px;
-    }
-    .hero-rating-item {
-        padding: 12px 18px;
-    }
-    .hero-rating-item span {
-        font-size: 14px;
-    }
-    .hero-book-btn,
-    .hero-trailer-btn {
-        min-width: 210px;
-        height: 60px;
-        font-size: 15px;
-    }
-    .hero-action-group { margin-top: 10px; }
 }
 
-/* 768px – Tablet dọc */
 @media (max-width: 768px) {
-    .hero-content-wrapper {
-        padding: 14px 28px;
+    .cinema-hero-banner {
+        min-height: 380px;
+        border-radius: 16px;
     }
-    .hero-title-box {
-        width: 80%;
-        height: 30%;
-        margin-bottom: 24px;
-    }
-    .hero-rating-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 24px;
-    }
-    .hero-age-badge {
+    .hero-play-btn {
         width: 64px;
         height: 64px;
-        font-size: 22px;
     }
-    .hero-rating-item {
-        width: 100%;
-        justify-content: flex-start;
-        padding: 10px 18px;
-    }
-    .hero-rating-item span {
-        font-size: 14px;
-    }
-    .hero-action-group {
-        flex-direction: column;
-        width: 100%;
-        margin-top: 8px;
-        gap: 16px;
-    }
-    .hero-book-btn,
-    .hero-trailer-btn {
-        width: 100%;
-        min-width: unset;
-        height: 56px;
-        font-size: 14px;
+    .hero-play-btn svg {
+        width: 28px;
+        height: 28px;
     }
 }
 
-/* 576px – Điện thoại lớn */
-@media (max-width: 576px) {
-    .cinema-hero-banner {
-        border-radius: 18px;
-        min-height: 500px;
-    }
-    .hero-content-wrapper {
-        padding: 12px 20px;
-    }
-    .hero-title-box {
-        width: 90%;
-        height: 28%;
-        margin-bottom: 20px;
-    }
-    .hero-age-badge {
-        width: 58px;
-        height: 58px;
-        font-size: 20px;
-    }
-    .hero-rating-item {
-        padding: 8px 14px;
-        gap: 8px;
-    }
-    .hero-rating-item svg {
-        width: 16px;
-        height: 16px;
-    }
-    .hero-rating-item span {
-        font-size: 13px;
-    }
-    .hero-rating-row {
-        gap: 10px;
-        margin-bottom: 20px;
-    }
-    .hero-action-group {
-        gap: 14px;
-        margin-top: 6px;
-        margin-bottom: 4px;
-    }
-    .hero-book-btn,
-    .hero-trailer-btn {
-        height: 50px;
-        font-size: 13px;
-        padding: 0 20px;
-        gap: 10px;
-    }
-    .hero-book-btn svg,
-    .hero-trailer-btn svg {
-        width: 18px;
-        height: 18px;
-    }
-}
-
-/* 480px – Điện thoại nhỏ */
 @media (max-width: 480px) {
     .cinema-hero-banner {
-        min-height: 420px;
+        min-height: 280px;
         border-radius: 14px;
     }
-    .hero-content-wrapper {
-        padding: 10px 16px;
+    .hero-play-btn {
+        width: 52px;
+        height: 52px;
     }
-    .hero-title-box {
-        width: 100%;
-        height: 25%;
-        margin-bottom: 16px;
-    }
-    .hero-age-badge {
-        width: 48px;
-        height: 48px;
-        font-size: 16px;
-        border-radius: 12px;
-    }
-    .hero-rating-item {
-        padding: 6px 12px;
-        gap: 6px;
-    }
-    .hero-rating-item svg {
-        width: 14px;
-        height: 14px;
-    }
-    .hero-rating-item span {
-        font-size: 12px;
-    }
-    .hero-rating-row {
-        gap: 8px;
-        margin-bottom: 16px;
-    }
-    .hero-action-group {
-        gap: 12px;
-        margin-top: 4px;
-        margin-bottom: 0;
-    }
-    .hero-book-btn,
-    .hero-trailer-btn {
-        height: 44px;
-        font-size: 12px;
-        padding: 0 16px;
-        gap: 8px;
-        border-radius: 12px;
-    }
-    .hero-book-btn svg,
-    .hero-trailer-btn svg {
-        width: 16px;
-        height: 16px;
+    .hero-play-btn svg {
+        width: 22px;
+        height: 22px;
     }
 }

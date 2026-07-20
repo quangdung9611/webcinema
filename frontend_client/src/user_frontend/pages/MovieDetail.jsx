@@ -1,24 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { 
-    Star, 
-    Calendar, 
-    Clock, 
-    Film, 
-    Globe, 
-    MessageSquare, 
-    ChevronLeft, 
-    ChevronRight, 
+import {
+    Star,
+    Calendar,
+    Clock,
+    Film,
     User,
     Ticket,
     Play,
-    Heart,
-    Share2,
-    X 
+    X
 } from 'lucide-react';
 import Modal from '../components/Modal';
 import MovieCard from "../components/MovieCard";
+import MoviePreviewModal from "../components/MoviePreviewModal"; // 👈 Import
 import MovieHeroBanner from '../components/MovieHeroBanner';
 import { useAuth } from '../../context/AuthContext';
 import "../styles/MovieDetail.css";
@@ -28,27 +23,30 @@ const MovieDetail = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuth();
-    
+
     const [movie, setMovie] = useState(null);
     const [relatedMovies, setRelatedMovies] = useState([]);
     const [trailerMovies, setTrailerMovies] = useState([]);
-    const [actors, setActors] = useState([]); 
+    const [actors, setActors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [trailerModal, setTrailerModal] = useState({ isOpen: false, url: '' });
-    // Logic Đánh giá & Bình luận
-    const [userRating, setUserRating] = useState(0); 
-    const [hover, setHover] = useState(0); 
-    const [reviewComment, setReviewComment] = useState(""); 
+    const [userRating, setUserRating] = useState(0);
+    const [hover, setHover] = useState(0);
+    const [reviewComment, setReviewComment] = useState("");
     const [reviews, setReviews] = useState([]);
-    const [isExpanded, setIsExpanded] = useState(false); 
-    
-    // Trạng thái điều khiển Modal chung (Thông báo, Form Đánh giá, Xem Trailer)
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [showReviewModal, setShowReviewModal] = useState(false);
+
+    // 👇 State cho MoviePreviewModal
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedMovie, setSelectedMovie] = useState(null);
+
     const [modalConfig, setModalConfig] = useState({
-        show: false, 
-        type: '', 
-        title: '', 
-        message: null, 
-        onConfirm: null 
+        show: false,
+        type: '',
+        title: '',
+        message: null,
+        onConfirm: null
     });
 
     const API_BASE_URL = "https://api.quangdungcinema.id.vn/api";
@@ -61,10 +59,23 @@ const MovieDetail = () => {
         return (match && match[2].length === 11) ? match[2] : null;
     };
 
+    // 👇 Hàm mở modal giống MovieStatus
+    const handleMovieClick = (movie) => {
+        setSelectedMovie(movie);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setTimeout(() => {
+            setSelectedMovie(null);
+        }, 850);
+    };
+
     const fetchReviews = useCallback(async (movieId) => {
         try {
             const res = await axios.get(`${API_BASE_URL}/reviews/${movieId}`);
-            const sortedReviews = res.data.sort((a, b) => 
+            const sortedReviews = res.data.sort((a, b) =>
                 new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
             );
             setReviews(sortedReviews);
@@ -86,12 +97,12 @@ const MovieDetail = () => {
 
                 const movieData = resMovie.data;
                 setMovie(movieData);
-                
+
                 if (movieData?.movie_id) {
                     fetchReviews(movieData.movie_id);
                 }
 
-               const filtered = resRelated.data.filter(
+                const filtered = resRelated.data.filter(
                     m => m.slug !== slug
                 );
 
@@ -121,15 +132,21 @@ const MovieDetail = () => {
 
     const closeModal = () => setModalConfig(prev => ({ ...prev, show: false }));
     const closeTrailerModal = () => setTrailerModal({ isOpen: false, url: '' });
+    const closeReviewModal = () => {
+        setShowReviewModal(false);
+        setUserRating(0);
+        setReviewComment("");
+        setHover(0);
+    };
 
     const handleSendReview = async () => {
         if (userRating === 0) {
-            setModalConfig(prev => ({ 
-                ...prev, 
-                show: true, 
-                type: 'error', 
-                title: 'Thông báo', 
-                message: 'Bạn ơi, chọn số sao đã nhé!' 
+            setModalConfig(prev => ({
+                ...prev,
+                show: true,
+                type: 'error',
+                title: 'Thông báo',
+                message: 'Bạn ơi, chọn số sao đã nhé!'
             }));
             return;
         }
@@ -138,24 +155,25 @@ const MovieDetail = () => {
                 movie_id: movie.movie_id,
                 user_id: user.user_id,
                 rating: userRating,
-                comment: reviewComment 
+                comment: reviewComment
             });
             setUserRating(0);
             setReviewComment("");
             const response = await axios.get(`${API_BASE_URL}/movies/${slug}`);
             setMovie(response.data);
             fetchReviews(movie.movie_id);
+            closeReviewModal();
             setModalConfig({
-                show: true, 
-                type: 'success', 
+                show: true,
+                type: 'success',
                 title: 'Gửi thành công!',
                 message: 'Cảm ơn bạn đã dành thời gian đánh giá phim nhé!',
-                onConfirm: closeModal 
+                onConfirm: closeModal
             });
         } catch (error) {
             setModalConfig({
-                show: true, 
-                type: 'error', 
+                show: true,
+                type: 'error',
                 title: 'Opps! Có lỗi rồi',
                 message: 'Gửi đánh giá thất bại, thử lại sau nhé!',
                 onConfirm: closeModal
@@ -166,8 +184,8 @@ const MovieDetail = () => {
     const openRatingModal = () => {
         if (!user) {
             setModalConfig({
-                show: true, 
-                type: 'confirm', 
+                show: true,
+                type: 'confirm',
                 title: 'Yêu cầu đăng nhập',
                 message: 'Bạn cần đăng nhập để thực hiện đánh giá.',
                 onConfirm: () => {
@@ -177,13 +195,7 @@ const MovieDetail = () => {
             });
             return;
         }
-        setModalConfig({
-            show: true, 
-            type: 'confirm', 
-            title: `Đánh giá phim: ${movie.title}`,
-            message: 'rating_mode', 
-            onConfirm: handleSendReview
-        });
+        setShowReviewModal(true);
     };
 
     const openTrailerModal = () => {
@@ -236,7 +248,7 @@ const MovieDetail = () => {
             <textarea
                 placeholder="Phim hay không? Nhập đánh giá ở đây nha..."
                 className="modal-review-textarea"
-                value={reviewComment} 
+                value={reviewComment}
                 onChange={(e) => setReviewComment(e.target.value)}
             />
         </div>
@@ -245,7 +257,7 @@ const MovieDetail = () => {
     const getStarPercentages = () => {
         const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
         if (reviews.length === 0) return distribution;
-        
+
         reviews.forEach(r => {
             const mappedStar = Math.ceil(r.rating / 2);
             if (distribution[mappedStar] !== undefined) {
@@ -271,9 +283,10 @@ const MovieDetail = () => {
 
     return (
         <div className="cinema-movie-detail-page">
-            <Modal 
-                show={modalConfig.show} 
-                type={modalConfig.type} 
+            {/* Modal chung (thông báo, xác nhận) */}
+            <Modal
+                show={modalConfig.show}
+                type={modalConfig.type}
                 title={modalConfig.title}
                 message={getModalMessage()}
                 onConfirm={modalConfig.message === 'rating_mode' ? handleSendReview : (modalConfig.onConfirm || closeModal)}
@@ -292,6 +305,31 @@ const MovieDetail = () => {
                 </div>
             )}
 
+            {/* REVIEW MODAL – hiện 10 sao + textarea cùng lúc */}
+            {showReviewModal && (
+                <div className="review-modal-overlay" onClick={closeReviewModal}>
+                    <div className="review-modal-container" onClick={(e) => e.stopPropagation()}>
+                        <button className="review-close-btn" onClick={closeReviewModal}>
+                            <X size={24} />
+                        </button>
+                        <div className="review-modal-header">
+                            <h3>Đánh giá phim: {movie.title}</h3>
+                        </div>
+                        <div className="review-modal-body">
+                            {renderStarRating()}
+                        </div>
+                        <div className="review-modal-footer">
+                            <button className="btn-cancel-review" onClick={closeReviewModal}>
+                                Hủy
+                            </button>
+                            <button className="btn-submit-review" onClick={handleSendReview}>
+                                Gửi đánh giá
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* SECTION 1: HERO BANNER NGANG (BACKDROP) */}
             <MovieHeroBanner
                 movie={movie}
@@ -302,7 +340,111 @@ const MovieDetail = () => {
                 onTrailer={openTrailerModal}
             />
 
+            {/* CONTAINER CHÍNH */}
             <div className="cinema-main-content-container">
+                {/* SECTION 1.5: THÔNG TIN PHIM CHI TIẾT */}
+                <div className="movie-info-section">
+                    <div className="movie-info-container">
+                        <div className="movie-poster-col">
+                            <img
+                                src={`${IMAGE_BASE_URL}/posters/${movie.poster_url}`}
+                                alt={movie.title}
+                                className="movie-poster-img"
+                            />
+                        </div>
+
+                        <div className="movie-info-content">
+                            <div className="info-header-row">
+                                <h1 className="movie-detail-title">{movie.title}</h1>
+                                <div className="info-rating-compact">
+                                    <span className="rating-big-number">{movie.avg_rating || "0.0"}</span>
+                                    <div className="rating-stars-compact">
+                                        <div className="stars-row">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star
+                                                    key={i}
+                                                    size={16}
+                                                    fill={i < Math.round((movie.avg_rating || 0) / 2) ? "#f5b50a" : "none"}
+                                                    color="#f5b50a"
+                                                />
+                                            ))}
+                                        </div>
+                                        <span className="rating-count-text">({reviews.length} đánh giá)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="info-meta-row">
+                                <span className="meta-tag">
+                                    <Film size={16} />
+                                    {movie.genre || "Đang cập nhật"}
+                                </span>
+                                <span className="meta-tag">
+                                    <Calendar size={16} />
+                                    {movie.release_date ? new Date(movie.release_date).getFullYear() : "N/A"}
+                                </span>
+                                <span className="meta-tag">
+                                    <Clock size={16} />
+                                    {movie.duration || "--"} phút
+                                </span>
+                                <span className="meta-tag age-tag">
+                                    <span className="age-badge">{movie.age_rating ? `T${movie.age_rating}` : "P"}</span>
+                                </span>
+                            </div>
+
+                            <div className="info-detail-row">
+                                <div className="info-description-col">
+                                    <div
+                                        className={`desc-text ${isExpanded ? 'expanded' : 'collapsed'}`}
+                                        dangerouslySetInnerHTML={{
+                                            __html: movie.description || "Nội dung phim đang được cập nhật..."
+                                        }}
+                                    />
+                                    {movie.description && movie.description.length > 150 && (
+                                        <button className="desc-toggle-btn" onClick={() => setIsExpanded(!isExpanded)}>
+                                            {isExpanded ? 'Thu gọn' : 'Xem thêm'}
+                                            <span className="toggle-icon">{isExpanded ? '▲' : '▼'}</span>
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="info-meta-col">
+                                    <div className="meta-item">
+                                        <span className="meta-label">Đạo diễn</span>
+                                        <span className="meta-value">{movie.director || "Đang cập nhật"}</span>
+                                    </div>
+                                    <div className="meta-item">
+                                        <span className="meta-label">Diễn viên</span>
+                                        <span className="meta-value">{movie.cast || "Đang cập nhật"}</span>
+                                    </div>
+                                    <div className="meta-item">
+                                        <span className="meta-label">Ngôn ngữ</span>
+                                        <span className="meta-value">{movie.language || "Đang cập nhật"}</span>
+                                    </div>
+                                    <div className="meta-item">
+                                        <span className="meta-label">Quốc gia</span>
+                                        <span className="meta-value">{movie.country || "Đang cập nhật"}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="info-actions-row">
+                                <button className="btn-book-now" onClick={() => navigate(`/booking/${movie.slug || movie.movie_slug}`)}>
+                                    <Ticket size={20} />
+                                    Đặt vé ngay
+                                </button>
+                                <button className="btn-watch-trailer" onClick={openTrailerModal}>
+                                    <Play size={20} />
+                                    Xem trailer
+                                </button>
+                                <button className="btn-review" onClick={openRatingModal}>
+                                    <Star size={20} fill="none" />
+                                    Đánh giá
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* SECTION 2: PHIM LIÊN QUAN */}
                 <div className="filmgenre-container">
                     <div className="filmgenre-section-header">
@@ -315,6 +457,7 @@ const MovieDetail = () => {
                                 key={movie.movie_id}
                                 movie={movie}
                                 baseUrl={`${IMAGE_BASE_URL}/posters/`}
+                                onClick={handleMovieClick} // 👈 Truyền handler mở modal
                             />
                         ))}
                     </div>
@@ -394,7 +537,7 @@ const MovieDetail = () => {
                             >
                                 <div className="other-trailer-thumb">
                                     <img
-                                        src={getYoutubeID(item.trailer_url) 
+                                        src={getYoutubeID(item.trailer_url)
                                             ? `https://img.youtube.com/vi/${getYoutubeID(item.trailer_url)}/maxresdefault.jpg`
                                             : `${IMAGE_BASE_URL}/posters/${item.poster_url}`}
                                         alt={item.title}
@@ -476,6 +619,14 @@ const MovieDetail = () => {
                     </div>
                 </div>
             </div>
+
+            {/* 👇 MoviePreviewModal – giống MovieStatusPage */}
+            <MoviePreviewModal
+                open={isModalOpen}
+                onClose={handleCloseModal}
+                movies={relatedMovies}
+                selectedMovie={selectedMovie}
+            />
         </div>
     );
 };

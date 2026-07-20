@@ -1,20 +1,16 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { Star } from "lucide-react";
-import Tilt from "react-parallax-tilt";
 
 import "../styles/MovieCard.css";
 
-const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
-
-    /* ==============================
-        STATE CINEMATIC
-    ============================== */
+const MovieCard = React.memo(({
+    movie,
+    baseUrl,
+    onPreview,
+    onClick
+}) => {
 
     const [isOpening, setIsOpening] = useState(false);
-
-    /* ==============================
-        MOVIE DATA
-    ============================== */
 
     const movieData = useMemo(() => ({
         rating: Number(movie?.average_rating) || 0,
@@ -27,11 +23,8 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
         language: movie?.language || "Phụ đề"
     }), [movie, baseUrl]);
 
-    /* ==============================
-        CLICK HANDLER
-    ============================== */
-
-    const handleOpen = () => {
+    const handleOpen = useCallback(() => {
+        console.log("CLICK CARD", movie);
 
         if (isOpening) return;
 
@@ -42,47 +35,31 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
         setTimeout(() => {
             setIsOpening(false);
         }, 900);
-    };
+    }, [isOpening, movie, onClick]);
 
-    const handlePreview = (e) => {
-        e.stopPropagation();
-        onPreview?.(movie);
-    };
-
-    /* ==============================
-        RENDER
-    ============================== */
+    const handleKeyDown = useCallback((e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleOpen();
+        }
+    }, [handleOpen]);
 
     return (
-
-        <Tilt
-            className={`film-card ${isOpening ? "film-card--opening" : ""}`}
-            tiltMaxAngleX={8}
-            tiltMaxAngleY={8}
-            perspective={1200}
-            transitionSpeed={600}
-            scale={1.02}
-            glareEnable={true}
-            glareMaxOpacity={0.08}
-            glareBorderRadius="20px"
-            gyroscope={false}
+        <div
+            className={`film-card ${
+                isOpening ? "film-card--opening" : ""
+            }`}
         >
-
             <div
                 className="film-card__inner"
                 onClick={handleOpen}
-                data-movie-id={movie?.id}
+                onKeyDown={handleKeyDown}
+                data-movie-id={movie?.movie_id}
+                role="button"
+                tabIndex={0}
+                aria-label={movieData.title}
             >
-
-                {/* GLOW - TẮT */}
-                <span className="film-card__glow" />
-
-                {/* POSTER */}
-                <div
-                    className="film-card__poster"
-                    onClick={handlePreview}
-                >
-
+                <div className="film-card__poster">
                     <img
                         src={movieData.poster}
                         alt={movieData.title}
@@ -93,28 +70,18 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
                     <span className="film-card__shine" />
                     <span className="film-card__sweep" />
 
-                    {/* AGE */}
                     <div className="film-card__age">
                         {movieData.ageRating}
                     </div>
-
                 </div>
 
-                {/* INFO */}
-                <div
-                    className="film-card__info"
-                    onClick={handlePreview}
-                >
-
+                <div className="film-card__info">
                     <h3 className="film-card__title">
                         {movieData.title}
                     </h3>
 
-                    {/* STARS */}
                     <div className="film-card__stars">
-
                         {[...Array(movieData.totalStars)].map((_, i) => (
-
                             <Star
                                 key={i}
                                 size={12}
@@ -126,14 +93,10 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
                                 }
                                 color="#E5C46B"
                             />
-
                         ))}
-
                     </div>
 
-                    {/* META */}
                     <div className="film-card__meta">
-
                         <span className="film-card__score">
                             {movieData.rating.toFixed(1)}
                         </span>
@@ -143,28 +106,19 @@ const MovieCard = ({ movie, baseUrl, onPreview, onClick }) => {
                         <span className="film-card__reviews">
                             {movieData.reviewCount} đánh giá
                         </span>
-
                     </div>
 
-                    {/* EXTRA */}
                     <div className="film-card__extra">
-
                         <span>{movieData.ageRating}</span>
 
                         <span className="film-card__dot">•</span>
 
                         <span>{movieData.language}</span>
-
                     </div>
-
                 </div>
-
             </div>
-
-        </Tilt>
-
+        </div>
     );
-
-};
+});
 
 export default MovieCard;

@@ -1,5 +1,5 @@
 /* =========================================
-   LOADING SPINNER - DASH (NÉT ĐỨT) - GOLD PREMIUM THEME
+   LOADING SPINNER - DASH (NÉT ĐỨT) - SILVER PREMIUM THEME
    (Dùng biến từ index.css)
 ========================================= */
 
@@ -43,7 +43,7 @@
 
 .spinner-dash-circle {
     animation: dash 1.5s ease-in-out infinite;
-    stroke: var(--gold-premium); /* vàng kim */
+    stroke: var(--silver-primary); /* bạc sáng từ index.css */
     stroke-width: 4;
     stroke-linecap: round;
 }

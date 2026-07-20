@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Film } from "lucide-react";
 
 import MovieCard from "../components/MovieCard";
+import MoviePreviewModal from "../components/MoviePreviewModal";
+
 import "../styles/MovieStatusPage.css";
-import "../styles/user_home.css"; // 👈 Thêm để dùng class section-header
+import "../styles/user_home.css";
 
 const API_URL = "https://api.quangdungcinema.id.vn/api";
 const BASE_URL = "https://api.quangdungcinema.id.vn/uploads/posters/";
+
+const statusMap = {
+    "phim-dang-chieu": "Đang chiếu",
+    "phim-sap-chieu": "Sắp chiếu",
+};
 
 const MovieStatusPage = () => {
     const { statusSlug } = useParams();
@@ -16,22 +23,32 @@ const MovieStatusPage = () => {
 
     const [movies, setMovies] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const statusMap = {
-        "phim-dang-chieu": "Đang chiếu",
-        "phim-sap-chieu": "Sắp chiếu",
-    };
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedMovie, setSelectedMovie] = useState(null);
 
-    const activeStatus = statusMap[statusSlug] || "Đang chiếu";
+    const activeStatus = useMemo(() => {
+        return statusMap[statusSlug] || "Đang chiếu";
+    }, [statusSlug]);
 
     useEffect(() => {
         const fetchMovies = async () => {
             try {
                 setLoading(true);
+                setError(null);
+
                 const res = await axios.get(`${API_URL}/movies`);
+
                 setMovies(res.data || []);
-            } catch (error) {
-                console.error("Lỗi lấy phim:", error);
+            } catch (err) {
+                console.error("Lỗi lấy danh sách phim:", err);
+
+                setError(
+                    "Không thể tải danh sách phim. Vui lòng thử lại sau."
+                );
+
                 setMovies([]);
             } finally {
                 setLoading(false);
@@ -46,88 +63,145 @@ const MovieStatusPage = () => {
         });
     }, [statusSlug]);
 
-    const filteredMovies = movies.filter(
-        (movie) => movie.status === activeStatus
-    );
+    const filteredMovies = useMemo(() => {
+        return movies.filter(
+            (movie) => movie.status === activeStatus
+        );
+    }, [movies, activeStatus]);
 
-    const displayedMovies = filteredMovies.slice(0, 8);
+    // Mở modal giống MovieSlider
+    const handleMovieClick = (movie) => {
+        setSelectedMovie(movie);
+        setIsModalOpen(true);
+    };
 
-    const handleTabChange = (slug) => {
-        navigate(`/movies/status/${slug}`);
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+
+        setTimeout(() => {
+            setSelectedMovie(null);
+        }, 850);
     };
 
     if (loading) {
         return (
             <div className="loading-state">
-                <div className="loading-spinner"></div>
+                <div className="loading-spinner" />
                 <p>Đang tải phim...</p>
             </div>
         );
     }
 
-    // Lấy tên tab hiển thị
-    const currentTabLabel = statusSlug === "phim-dang-chieu" ? "Phim Đang Chiếu" : "Phim Sắp Chiếu";
+    if (error) {
+        return (
+            <div className="empty-results error-state">
+                <Film size={48} />
+                <p>{error}</p>
+
+                <button
+                    className="retry-btn"
+                    onClick={() => window.location.reload()}
+                >
+                    Thử lại
+                </button>
+            </div>
+        );
+    }
+
+    const currentTabLabel =
+        statusSlug === "phim-sap-chieu"
+            ? "PHIM SẮP CHIẾU"
+            : "PHIM ĐANG CHIẾU";
 
     return (
         <main className="movie-status-page">
-
-            {/* ===== BANNER ===== */}
+            {/* Banner */}
             <div className="movie-status-hero">
                 <img
                     src="https://api.quangdungcinema.id.vn/uploads/banners/banner1.png"
-                    alt="Movie Status Banner"
+                    alt="Movie Banner"
                     className="movie-status-banner-img"
                 />
             </div>
 
-            {/* ===== HEADER + TABS (giống UserHome) ===== */}
-            <div className="section-header" style={{ maxWidth: '1320px', margin: '0 auto', paddingInline: 'var(--space-lg)' }}>
+            {/* Header */}
+            <div
+                className="section-header"
+                style={{
+                    maxWidth: "1320px",
+                    margin: "0 auto",
+                    paddingInline: "var(--space-lg)",
+                }}
+            >
                 <div className="section-header-left">
-                    <h2 className="section-title">{currentTabLabel}</h2>
-                    <div className="title-underline"></div>
+                    <h2 className="section-title">
+                        {currentTabLabel}
+                    </h2>
+
+                    <div className="title-underline" />
                 </div>
 
                 <div className="status-tabs">
                     <button
                         className={`status-tab ${
-                            statusSlug === "phim-dang-chieu" ? "active" : ""
+                            statusSlug === "phim-dang-chieu"
+                                ? "active"
+                                : ""
                         }`}
-                        onClick={() => handleTabChange("phim-dang-chieu")}
+                        onClick={() =>
+                            navigate(
+                                "/movies/status/phim-dang-chieu"
+                            )
+                        }
                     >
                         Đang chiếu
                     </button>
 
                     <button
                         className={`status-tab ${
-                            statusSlug === "phim-sap-chieu" ? "active" : ""
+                            statusSlug === "phim-sap-chieu"
+                                ? "active"
+                                : ""
                         }`}
-                        onClick={() => handleTabChange("phim-sap-chieu")}
+                        onClick={() =>
+                            navigate(
+                                "/movies/status/phim-sap-chieu"
+                            )
+                        }
                     >
                         Sắp chiếu
                     </button>
                 </div>
             </div>
 
-            {/* ===== MOVIES ===== */}
+            {/* Movie Grid */}
             <section className="movie-list">
-                {displayedMovies.length > 0 ? (
-                    displayedMovies.map((movie) => (
+                {filteredMovies.length > 0 ? (
+                    filteredMovies.map((movie) => (
                         <MovieCard
                             key={movie.movie_id}
                             movie={movie}
                             baseUrl={BASE_URL}
-                            onPreview={() => {}}
-                            onClick={() => {}}
+                            onClick={handleMovieClick}
                         />
                     ))
                 ) : (
                     <div className="empty-results">
                         <Film size={40} />
-                        <p>Hiện chưa có phim ở mục này...</p>
+                        <p>
+                            Hiện chưa có phim ở danh mục này...
+                        </p>
                     </div>
                 )}
             </section>
 
+            {/* Modal giống MovieSlider */}
+            <MoviePreviewModal
+                open={isModalOpen}
+                onClose={handleCloseModal}
+                movies={filteredMovies}
+                selectedMovie={selectedMovie}
+            />
         </main>
     );
 };

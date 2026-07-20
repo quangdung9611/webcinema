@@ -303,7 +303,12 @@ const UserHome = () => {
         </div>
 
         {/* ===== QUICK BOOKING ===== */}
-        <ScrollReveal curtain curtainTexture="velvet" curtainSpeed={0.6} curtainFolds={3} direction="up" delay={0.05}>
+        <ScrollReveal
+          direction="up"
+          duration={0.9}
+          delay={0.05}
+          amount={0.2}
+        >
           <section className="quick-booking-container">
             <div className="quick-booking-content">
               <div className="quick-booking-selects">
@@ -389,7 +394,12 @@ const UserHome = () => {
         <div className="home-container">
 
           {/* FEATURES */}
-          <ScrollReveal curtain curtainColor="#F5C842" curtainTexture="silk" curtainSpeed={0.8} curtainFolds={5} blur scale direction="up" delay={0.1}>
+          <ScrollReveal
+            direction="up"
+            duration={0.9}
+            delay={0.1}
+            amount={0.2}
+          >
             <section className="home-features-section">
               <div className="features-grid">
                 <div className="feature-item">
@@ -425,29 +435,37 @@ const UserHome = () => {
           </ScrollReveal>
 
           {/* FILM GENRE */}
-          <ScrollReveal curtain curtainColor="#C9A84C" curtainTexture="velvet" curtainSpeed={0.6} curtainFolds={4} blur direction="up" delay={0.15}>
+          <ScrollReveal
+            direction="up"
+            duration={0.9}
+            delay={0.15}
+            amount={0.2}
+          >
             <div className="movie-container">
               <FilmGenre />
             </div>
           </ScrollReveal>
 
           {/* PROMOTIONS – CÓ NÚT "XEM TẤT CẢ" */}
-          <ScrollReveal curtain curtainColor="#FFD700" curtainTexture="gold" curtainSpeed={0.9} curtainFolds={6} blur scale direction="up" delay={0.2}>
+          <ScrollReveal
+            direction="up"
+            duration={0.9}
+            delay={0.2}
+            amount={0.2}
+          >
             <section className="promotions-section">
               <div className="section-header">
                 <div className="section-header-left">
                   <h3 className="section-title">ƯU ĐÃI HẤP DẪN</h3>
                   <div className="title-underline"></div>
                 </div>
-            
-                  <button 
-                    className="btn-view-all" 
-                    onClick={() => navigate('/promotion')}
-                  >
-                    Xem tất cả
-                    <ChevronRight size={18} />
-                  </button>
-                
+                <button
+                  className="btn-view-all"
+                  onClick={() => navigate('/promotion')}
+                >
+                  Xem tất cả
+                  <ChevronRight size={18} />
+                </button>
               </div>
               <div className="cinema-grid">
                 {promotions?.slice(0, 4).map((promo) => (
@@ -465,22 +483,25 @@ const UserHome = () => {
           </ScrollReveal>
 
           {/* CINEMA CORNER – CÓ NÚT "XEM TẤT CẢ" */}
-          <ScrollReveal curtain curtainColor="#E8C84A" curtainTexture="silk" curtainSpeed={0.7} curtainFolds={4} scale direction="up" delay={0.25}>
+          <ScrollReveal
+            direction="up"
+            duration={0.9}
+            delay={0.25}
+            amount={0.2}
+          >
             <section className="cinema-corner-section">
               <div className="section-header">
                 <div className="section-header-left">
                   <h3 className="section-title">GÓC ĐIỆN ẢNH</h3>
                   <div className="title-underline"></div>
                 </div>
-            
-                  <button 
-                    className="btn-view-all" 
-                    onClick={() => navigate('/blog-cinema')}
-                  >
-                    Xem tất cả
-                    <ChevronRight size={18} />
-                  </button>
-               
+                <button
+                  className="btn-view-all"
+                  onClick={() => navigate('/blog-cinema')}
+                >
+                  Xem tất cả
+                  <ChevronRight size={18} />
+                </button>
               </div>
               <div className="cinema-grid">
                 {cinemaNews?.slice(0, 4).map((news) => (

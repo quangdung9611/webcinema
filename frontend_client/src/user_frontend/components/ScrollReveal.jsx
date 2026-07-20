@@ -5,34 +5,34 @@ const ScrollReveal = ({
     children,
     direction = "up",
     delay = 0,
-    duration = 0.8,
+    duration = 1.0,               // chậm hơn, mượt hơn
     blur = false,
     scale = false,
     className = "",
     amount = 0.2,
     once = true,
 
-    // ---- HIỆU ỨNG RÈM RẠP CHIẾU PHIM ----
-    curtain = false,                // bật hiệu ứng rèm
-    curtainColor = "#C9A84C",       // màu rèm (vàng)
-    curtainTexture = "velvet",      // chất liệu rèm: "velvet", "silk", "gold"
-    curtainSpeed = 0.8,             // tốc độ kéo rèm
-    curtainFolds = 5,               // số nếp gấp
+    // ---- HIỆU ỨNG RÈM RẠP CHIẾU PHIM (BẠC) ----
+    curtain = false,
+    curtainColor = "#E8E8E8",      // bạc chính
+    curtainTexture = "silk",       // chất liệu mềm mại
+    curtainSpeed = 1.2,            // rèm kéo chậm, sang trọng
+    curtainFolds = 5,
     ...rest
 }) => {
     const ref = useRef(null);
     const isInView = useInView(ref, { once, amount });
 
-    // Hiệu ứng cho nội dung chính
+    // Hiệu ứng nội dung chính
     const getInitialPos = () => {
         switch (direction) {
-            case "up": return { y: 30, x: 0 };
-            case "down": return { y: -30, x: 0 };
-            case "left": return { x: -30, y: 0 };
-            case "right": return { x: 30, y: 0 };
-            case "zoom": return { scale: 0.85, y: 0, x: 0 };
+            case "up": return { y: 40, x: 0 };
+            case "down": return { y: -40, x: 0 };
+            case "left": return { x: -40, y: 0 };
+            case "right": return { x: 40, y: 0 };
+            case "zoom": return { scale: 0.9, y: 0, x: 0 };
             case "fade": return { opacity: 0, y: 0, x: 0 };
-            default: return { y: 30, x: 0 };
+            default: return { y: 40, x: 0 };
         }
     };
 
@@ -41,8 +41,8 @@ const ScrollReveal = ({
     const contentInitial = {
         opacity: 0,
         ...initialPos,
-        scale: scale ? 0.85 : (direction === "zoom" ? 0.85 : 1),
-        filter: blur ? "blur(8px)" : "blur(0px)",
+        scale: scale ? 0.85 : (direction === "zoom" ? 0.9 : 1),
+        filter: blur ? "blur(6px)" : "blur(0px)",
     };
 
     const contentAnimate = {
@@ -53,57 +53,62 @@ const ScrollReveal = ({
         filter: "blur(0px)",
     };
 
-    // ---- RÈM RẠP CHIẾU PHIM ----
+    // ---- RÈM BẠC ----
     let curtainElement = null;
 
     if (curtain) {
-        // Tạo các nếp gấp cho rèm (để rèm trông có chiều sâu)
+        // Nếp gấp cho rèm (tông bạc)
         const foldGradients = [];
         for (let i = 0; i < curtainFolds; i++) {
             const pos = i / curtainFolds;
-            const dark = `rgba(0,0,0,${0.15 + 0.1 * Math.sin(pos * Math.PI)})`;
-            const light = `rgba(255,255,255,${0.05 + 0.05 * Math.cos(pos * Math.PI)})`;
+            const dark = `rgba(0,0,0,${0.06 + 0.04 * Math.sin(pos * Math.PI)})`;
+            const light = `rgba(255,255,255,${0.04 + 0.04 * Math.cos(pos * Math.PI)})`;
             foldGradients.push(
                 `${dark} ${pos * 100 - 2}%, ${light} ${pos * 100}%, ${dark} ${pos * 100 + 2}%`
             );
         }
 
-        // Gradient chất liệu
+        // Gradient chất liệu (silk mềm mại)
         let textureGradient = "";
         if (curtainTexture === "velvet") {
             textureGradient = `
                 linear-gradient(180deg, 
-                    rgba(0,0,0,0.05) 0%, 
-                    rgba(255,255,255,0.03) 20%, 
-                    rgba(0,0,0,0.08) 40%, 
-                    rgba(255,255,255,0.02) 60%, 
-                    rgba(0,0,0,0.06) 80%, 
-                    rgba(255,255,255,0.03) 100%
+                    rgba(0,0,0,0.03) 0%, 
+                    rgba(255,255,255,0.04) 20%, 
+                    rgba(0,0,0,0.05) 40%, 
+                    rgba(255,255,255,0.03) 60%, 
+                    rgba(0,0,0,0.04) 80%, 
+                    rgba(255,255,255,0.02) 100%
                 )
             `;
         } else if (curtainTexture === "silk") {
             textureGradient = `
                 linear-gradient(135deg, 
-                    rgba(255,255,255,0.08) 0%, 
-                    rgba(0,0,0,0.04) 25%, 
-                    rgba(255,255,255,0.06) 50%, 
-                    rgba(0,0,0,0.03) 75%, 
-                    rgba(255,255,255,0.07) 100%
+                    rgba(255,255,255,0.06) 0%, 
+                    rgba(0,0,0,0.02) 25%, 
+                    rgba(255,255,255,0.05) 50%, 
+                    rgba(0,0,0,0.02) 75%, 
+                    rgba(255,255,255,0.06) 100%
                 )
             `;
         } else {
-            // gold
+            // gold (vẫn giữ fallback nhưng không dùng)
             textureGradient = `
                 linear-gradient(45deg, 
-                    rgba(255,215,0,0.1) 0%, 
-                    rgba(255,200,0,0.05) 30%, 
-                    rgba(255,215,0,0.08) 60%, 
-                    rgba(255,200,0,0.04) 100%
+                    rgba(255,215,0,0.03) 0%, 
+                    rgba(255,200,0,0.02) 30%, 
+                    rgba(255,215,0,0.04) 60%, 
+                    rgba(255,200,0,0.02) 100%
                 )
             `;
         }
 
-        // Rèm bên trái và bên phải
+        // Màu bạc sáng, nhẹ nhàng
+        const silverLight = "#F5F5F5";
+        const silverMid = "#E8E8E8";
+        const silverDark = "#D0D0D0";
+
+        // Rèm trái
         const leftCurtain = (
             <motion.div
                 style={{
@@ -116,16 +121,16 @@ const ScrollReveal = ({
                     background: `
                         ${textureGradient},
                         linear-gradient(90deg, 
-                            ${curtainColor}DD 0%, 
-                            ${curtainColor}99 20%, 
-                            ${curtainColor}BB 40%, 
-                            ${curtainColor}88 60%, 
-                            ${curtainColor}AA 80%, 
-                            ${curtainColor}77 100%
+                            ${silverLight}DD 0%, 
+                            ${silverMid}99 20%, 
+                            ${silverLight}BB 40%, 
+                            ${silverMid}88 60%, 
+                            ${silverDark}AA 80%, 
+                            ${silverMid}77 100%
                         )
                     `,
-                    boxShadow: "8px 0 30px rgba(0,0,0,0.5), inset -10px 0 30px rgba(0,0,0,0.2)",
-                    borderRadius: "0 30px 30px 0",
+                    boxShadow: "6px 0 25px rgba(0,0,0,0.25), inset -8px 0 20px rgba(0,0,0,0.1)",
+                    borderRadius: "0 20px 20px 0",
                     transformOrigin: "left center",
                     display: "flex",
                     alignItems: "center",
@@ -135,33 +140,32 @@ const ScrollReveal = ({
                 }}
                 initial={{ scaleX: 1 }}
                 animate={{ scaleX: isInView ? 0 : 1 }}
-                transition={{ duration: curtainSpeed, delay, ease: "easeInOut" }}
+                transition={{ 
+                    duration: curtainSpeed, 
+                    delay, 
+                    ease: [0.25, 0.1, 0.15, 1]   // mượt, chậm rãi
+                }}
             >
-                {/* Nếp gấp dọc cho rèm trái */}
                 <div style={{
                     position: "absolute",
                     inset: 0,
-                    background: `
-                        linear-gradient(90deg, 
-                            ${foldGradients.join(', ')}
-                        )
-                    `,
-                    opacity: 0.6,
+                    background: `linear-gradient(90deg, ${foldGradients.join(', ')})`,
+                    opacity: 0.4,
                 }} />
-                {/* Đường viền vàng sáng */}
                 <div style={{
                     position: "absolute",
                     right: 0,
                     top: 0,
                     bottom: 0,
-                    width: "4px",
-                    background: "linear-gradient(180deg, #FFD700, #C9A84C, #FFD700)",
-                    boxShadow: "0 0 20px rgba(255,215,0,0.3)",
-                    opacity: 0.6,
+                    width: "3px",
+                    background: "linear-gradient(180deg, #F5F5F5, #D0D0D0, #F5F5F5)",
+                    boxShadow: "0 0 15px rgba(245,245,245,0.15)",
+                    opacity: 0.5,
                 }} />
             </motion.div>
         );
 
+        // Rèm phải
         const rightCurtain = (
             <motion.div
                 style={{
@@ -174,16 +178,16 @@ const ScrollReveal = ({
                     background: `
                         ${textureGradient},
                         linear-gradient(270deg, 
-                            ${curtainColor}DD 0%, 
-                            ${curtainColor}99 20%, 
-                            ${curtainColor}BB 40%, 
-                            ${curtainColor}88 60%, 
-                            ${curtainColor}AA 80%, 
-                            ${curtainColor}77 100%
+                            ${silverLight}DD 0%, 
+                            ${silverMid}99 20%, 
+                            ${silverLight}BB 40%, 
+                            ${silverMid}88 60%, 
+                            ${silverDark}AA 80%, 
+                            ${silverMid}77 100%
                         )
                     `,
-                    boxShadow: "-8px 0 30px rgba(0,0,0,0.5), inset 10px 0 30px rgba(0,0,0,0.2)",
-                    borderRadius: "30px 0 0 30px",
+                    boxShadow: "-6px 0 25px rgba(0,0,0,0.25), inset 8px 0 20px rgba(0,0,0,0.1)",
+                    borderRadius: "20px 0 0 20px",
                     transformOrigin: "right center",
                     display: "flex",
                     alignItems: "center",
@@ -193,34 +197,32 @@ const ScrollReveal = ({
                 }}
                 initial={{ scaleX: 1 }}
                 animate={{ scaleX: isInView ? 0 : 1 }}
-                transition={{ duration: curtainSpeed, delay, ease: "easeInOut" }}
+                transition={{ 
+                    duration: curtainSpeed, 
+                    delay, 
+                    ease: [0.25, 0.1, 0.15, 1]
+                }}
             >
-                {/* Nếp gấp dọc cho rèm phải */}
                 <div style={{
                     position: "absolute",
                     inset: 0,
-                    background: `
-                        linear-gradient(90deg, 
-                            ${foldGradients.reverse().join(', ')}
-                        )
-                    `,
-                    opacity: 0.6,
+                    background: `linear-gradient(90deg, ${foldGradients.reverse().join(', ')})`,
+                    opacity: 0.4,
                 }} />
-                {/* Đường viền vàng sáng */}
                 <div style={{
                     position: "absolute",
                     left: 0,
                     top: 0,
                     bottom: 0,
-                    width: "4px",
-                    background: "linear-gradient(180deg, #FFD700, #C9A84C, #FFD700)",
-                    boxShadow: "0 0 20px rgba(255,215,0,0.3)",
-                    opacity: 0.6,
+                    width: "3px",
+                    background: "linear-gradient(180deg, #F5F5F5, #D0D0D0, #F5F5F5)",
+                    boxShadow: "0 0 15px rgba(245,245,245,0.15)",
+                    opacity: 0.5,
                 }} />
             </motion.div>
         );
 
-        // Thanh kéo rèm phía trên
+        // Thanh kéo rèm (bạc)
         const curtainRod = (
             <motion.div
                 style={{
@@ -228,44 +230,44 @@ const ScrollReveal = ({
                     top: 0,
                     left: 0,
                     right: 0,
-                    height: "12px",
+                    height: "10px",
                     zIndex: 6,
                     background: `
                         linear-gradient(180deg, 
-                            #FFD700 0%, 
-                            #D4AF37 30%, 
-                            #C9A84C 50%, 
-                            #D4AF37 70%, 
-                            #FFD700 100%
+                            #F5F5F5 0%, 
+                            #E0E0E0 30%, 
+                            #D4D4D4 50%, 
+                            #E0E0E0 70%, 
+                            #F5F5F5 100%
                         )
                     `,
-                    boxShadow: "0 4px 20px rgba(201,168,76,0.3), 0 2px 10px rgba(0,0,0,0.3)",
-                    borderRadius: "0 0 6px 6px",
-                    opacity: 0.8,
+                    boxShadow: "0 3px 15px rgba(200,200,200,0.2), 0 2px 8px rgba(0,0,0,0.15)",
+                    borderRadius: "0 0 4px 4px",
+                    opacity: 0.6,
                     pointerEvents: "none",
                 }}
                 initial={{ opacity: 0 }}
-                animate={{ opacity: isInView ? 0.8 : 0 }}
+                animate={{ opacity: isInView ? 0.6 : 0 }}
                 transition={{ duration: 0.3 }}
             />
         );
 
-        // Viền vàng phía trên và dưới
+        // Viền sáng bạc trên cùng
         const borderTop = (
             <motion.div
                 style={{
                     position: "absolute",
-                    top: 12,
+                    top: 10,
                     left: 0,
                     right: 0,
-                    height: "2px",
-                    background: "linear-gradient(90deg, transparent, #FFD700, #C9A84C, #FFD700, transparent)",
+                    height: "1px",
+                    background: "linear-gradient(90deg, transparent, #F5F5F5, #D0D0D0, #F5F5F5, transparent)",
                     zIndex: 4,
-                    opacity: 0.4,
+                    opacity: 0.3,
                     pointerEvents: "none",
                 }}
                 initial={{ opacity: 0 }}
-                animate={{ opacity: isInView ? 0.4 : 0 }}
+                animate={{ opacity: isInView ? 0.3 : 0 }}
                 transition={{ duration: 0.3 }}
             />
         );
@@ -298,8 +300,8 @@ const ScrollReveal = ({
                 animate={isInView ? contentAnimate : contentInitial}
                 transition={{
                     duration: duration,
-                    delay: delay + (curtain ? 0.1 : 0),
-                    ease: "easeOut",
+                    delay: delay + (curtain ? 0.15 : 0),
+                    ease: [0.25, 0.1, 0.15, 1],   // easing mượt
                 }}
                 style={{
                     position: "relative",

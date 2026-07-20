@@ -13,12 +13,12 @@ import {
 
 import { useNavigate } from "react-router-dom";
 
-import Modal from "../components/Modal";
-import MoviePreviewHero from "../components/MoviePreviewHero";
+import Modal from "./Modal";
+import MoviePreviewHero from "./MoviePreviewHero";
 
 import "../styles/MoviePreviewModal.css";
+import "../styles/Modal.css";
 
-// 🔥 BIẾN API CỐ ĐỊNH
 const IMAGE_BASE_URL = "https://api.quangdungcinema.id.vn/uploads";
 
 const MoviePreviewModal = ({
@@ -33,7 +33,7 @@ const MoviePreviewModal = ({
     const VISIBLE_POSTERS = 6;
     const HERO_DURATION = 650;
 
-    const [selectedMovie, setSelectedMovie] = useState(null);
+    const [selectedMovie, setSelectedMovie] = useState(defaultMovie);
     const [incomingMovie, setIncomingMovie] = useState(null);
     const [isHeroSliding, setIsHeroSliding] = useState(false);
     const [isCinematicTransition, setIsCinematicTransition] = useState(false);
@@ -43,14 +43,21 @@ const MoviePreviewModal = ({
 
     const [showTrailer, setShowTrailer] = useState(false);
     
-    // 🔥 STATE CHO HIỆU ỨNG SPOTLIGHT
     const [isSpotlightActive, setIsSpotlightActive] = useState(false);
 
     const scrollRef = useRef(null);
     const trackRef = useRef(null);
     const animationRef = useRef(null);
 
-    // 🔥 KHI MODAL MỞ: KÍCH HOẠT SPOTLIGHT
+    // Đồng bộ defaultMovie
+    useEffect(() => {
+        if (defaultMovie) {
+            setSelectedMovie(defaultMovie);
+            setIncomingMovie(null);
+            setIsHeroSliding(false);
+        }
+    }, [defaultMovie]);
+
     useEffect(() => {
         if (open && defaultMovie) {
             setIsSpotlightActive(false);
@@ -60,19 +67,11 @@ const MoviePreviewModal = ({
                 setIsSpotlightActive(true);
             }, 50);
 
-            // Tắt cinematic transition sau 1.5s
             setTimeout(() => {
                 setIsCinematicTransition(false);
             }, 1500);
         }
     }, [open, defaultMovie]);
-
-    useEffect(() => {
-        if (!defaultMovie) return;
-        setSelectedMovie(defaultMovie);
-        setIncomingMovie(null);
-        setIsHeroSliding(false);
-    }, [defaultMovie]);
 
     useEffect(() => {
         if (!selectedMovie) return;
@@ -116,7 +115,6 @@ const MoviePreviewModal = ({
             return;
         }
 
-        // 🔥 BẬT HIỆU ỨNG CHUYỂN CẢNH
         setIsCinematicTransition(true);
 
         const index = movies.findIndex(item => item.movie_id === movie.movie_id);
@@ -139,7 +137,6 @@ const MoviePreviewModal = ({
             setSelectedMovie(movie);
             setIncomingMovie(null);
             setIsHeroSliding(false);
-            // 🔥 TẮT HIỆU ỨNG CHUYỂN CẢNH SAU KHI HOÀN TẤT
             setTimeout(() => {
                 setIsCinematicTransition(false);
             }, 300);
@@ -183,9 +180,8 @@ const MoviePreviewModal = ({
         return getYoutubeID(selectedMovie?.trailer_url);
     }, [selectedMovie]);
 
-    if (!selectedMovie) {
-        return null;
-    }
+    // Chỉ return null khi cả open và selectedMovie đều không có
+    if (!selectedMovie && !open) return null;
 
     return (
         <>
@@ -245,7 +241,7 @@ const MoviePreviewModal = ({
                             <div className="preview-strip-slider">
                                 <div ref={trackRef} className="preview-strip-track">
                                     {movies.map((movie) => {
-                                        const active = selectedMovie.movie_id === movie.movie_id;
+                                        const active = selectedMovie && selectedMovie.movie_id === movie.movie_id;
                                         const posterSrc = `${IMAGE_BASE_URL}/posters/${movie.poster_url}`;
                                         return (
                                             <div

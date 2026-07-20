@@ -1,5 +1,5 @@
 /* =====================================================
-   FOOTER - CINEMA STAR (GOLD EDITION)
+   FOOTER - CINEMA STAR (SILVER EDITION)
    V2 - Bố cục thoáng, responsive mượt
 ===================================================== */
 
@@ -12,7 +12,7 @@
     flex-shrink: 0;
     position: relative;
     overflow: hidden;
-    border-top: var(--border-gold);
+    border-top: var(--border-silver);
     box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.3);
 }
 
@@ -32,7 +32,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 50px 40px;
-    border-bottom: var(--border-gold);
+    border-bottom: var(--border-silver);
 }
 
 /* =====================================================
@@ -40,7 +40,7 @@
 ===================================================== */
 
 .mystic-footer-heading h3 {
-    color: var(--text-white);
+    color: var(--text-body);
     font-size: 1.25rem;
     font-weight: var(--fw-extrabold);
     margin-bottom: 12px;
@@ -52,7 +52,7 @@
     width: 60px;
     height: 3px;
     border-radius: var(--radius-round);
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     margin-bottom: 20px;
 }
 
@@ -80,7 +80,7 @@
 ===================================================== */
 
 .mystic-footer-social-title {
-    color: var(--text-white);
+    color: var(--text-body);
     font-size: 0.85rem;
     font-weight: var(--fw-bold);
     margin-bottom: 12px;
@@ -99,7 +99,7 @@
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    color: var(--text-white);
+    color: var(--text-body);
     border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -107,10 +107,10 @@
 }
 
 .mystic-footer-socials a:hover {
-    background: rgba(201, 168, 76, 0.2);
-    border-color: rgba(201, 168, 76, 0.4);
+    background: rgba(232, 232, 232, 0.15);
+    border-color: rgba(232, 232, 232, 0.4);
     transform: translateY(-3px);
-    box-shadow: 0 4px 16px rgba(201, 168, 76, 0.15);
+    box-shadow: 0 4px 16px rgba(232, 232, 232, 0.12);
 }
 
 /* =====================================================
@@ -149,7 +149,7 @@
 }
 
 .mystic-footer-column ul li a div svg {
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     opacity: 0.7;
     flex-shrink: 0;
 }
@@ -160,12 +160,12 @@
 }
 
 .mystic-footer-column ul li a:hover {
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     padding-left: 6px;
 }
 
 .mystic-footer-column ul li a:hover .lucide-chevron-right {
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     transform: translateX(4px);
 }
 
@@ -186,7 +186,7 @@
 }
 
 .mystic-footer-contact-item svg {
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     flex-shrink: 0;
     margin-top: 2px;
 }
@@ -215,7 +215,7 @@
     align-items: center;
     justify-content: center;
     gap: 60px;
-    border-bottom: var(--border-gold);
+    border-bottom: var(--border-silver);
 }
 
 .mystic-footer-feature {
@@ -228,7 +228,7 @@
 }
 
 .mystic-footer-feature svg {
-    color: var(--gold-primary);
+    color: var(--silver-primary);
 }
 
 /* =====================================================
@@ -269,12 +269,12 @@
 }
 
 .mystic-footer-bottom span {
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     font-weight: var(--fw-bold);
 }
 
 /* =====================================================
-   SCROLL TOP - Sửa hover (chữ trắng, nền vàng đậm)
+   SCROLL TOP - HOVER (chữ trắng, nền bạc đậm)
 ===================================================== */
 
 .mystic-footer-scrolltop {
@@ -283,8 +283,8 @@
     border: none;
     cursor: pointer;
     border-radius: 50%;
-    color: #fff;
-    background: var(--gold-gradient);
+    color: var(--black-premium);
+    background: var(--cinema-border-gradient);
     font-size: 1.5rem;
     font-weight: var(--fw-bold);
     transition: var(--transition-normal);
@@ -295,17 +295,17 @@
 }
 
 .mystic-footer-scrolltop:hover {
-    background: #B8923A;  /* màu vàng đậm hơn khi hover */
+    background: var(--silver-dark);
     transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(201, 168, 76, 0.4);
-    color: #fff;  /* chữ vẫn trắng */
+    box-shadow: 0 8px 30px rgba(232, 232, 232, 0.3);
+    color: var(--black-premium);
 }
 
 /* =====================================================
    RESPONSIVE - 4 CỘT → 2 CỘT → 1 CỘT
 ===================================================== */
 
-/* --- 1200px: giữ 4 cột, thu nhỏ gap --- */
+/* --- 1200px --- */
 @media (max-width: 1200px) {
     .mystic-footer-container {
         gap: 40px 30px;
@@ -318,7 +318,7 @@
     }
 }
 
-/* --- 1024px: vẫn 4 cột, gap nhỏ hơn --- */
+/* --- 1024px --- */
 @media (max-width: 1024px) {
     .mystic-footer-container {
         grid-template-columns: repeat(4, 1fr);
@@ -369,7 +369,7 @@
     }
 }
 
-/* --- 768px: 2 cột, padding giảm --- */
+/* --- 768px --- */
 @media (max-width: 768px) {
     .mystic-footer-container {
         grid-template-columns: repeat(2, 1fr);
@@ -479,7 +479,7 @@
     }
 }
 
-/* --- 480px: 1 cột, padding nhỏ hơn --- */
+/* --- 480px --- */
 @media (max-width: 480px) {
     .mystic-footer-container {
         padding: 32px 16px 28px;
@@ -525,7 +525,7 @@
     }
 }
 
-/* --- 360px: tối giản --- */
+/* --- 360px --- */
 @media (max-width: 360px) {
     .mystic-footer-container {
         padding: 28px 12px 24px;
