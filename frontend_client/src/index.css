@@ -1,92 +1,77 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 
 /* ==========================================================
-   CINEMA SILVER – MINIMAL ANIMATION, MAX IMPACT
-   (KHÔNG SCALE, KHÔNG TRANSLATE KHI HOVER)
-   ========================================================== */
-
-/* ==========================================================
-   1. ROOT VARIABLES
+   ROOT VARIABLES – TỐI GIẢN CHO TOÀN DỰ ÁN
    ========================================================== */
 :root {
+  /* Background */
   --main-background: radial-gradient(circle at 30% 20%, rgba(232,232,232,0.04) 0%, transparent 40%), radial-gradient(circle at 70% 80%, rgba(232,232,232,0.03) 0%, transparent 40%), radial-gradient(circle at 50% 50%, rgba(255,255,255,0.01) 0%, transparent 60%), linear-gradient(180deg, #0a0a0a 0%, #0d0d0d 30%, #0a0a0a 60%, #080808 100%);
+
+  /* Fonts */
   --font-primary: 'Plus Jakarta Sans', sans-serif;
   --font-heading: 'Plus Jakarta Sans', var(--font-primary);
   --font-size-base: 16px;
   --line-height-base: 1.6;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-md: 1.125rem;
-  --font-size-lg: 1.25rem;
-  --font-size-xl: 1.5rem;
-  --font-size-2xl: 2rem;
-  --font-size-3xl: 2.5rem;
-  --font-size-4xl: 3rem;
-  --font-size-5xl: 4rem;
-  --font-size-6xl: 5rem;
-  --font-size-h1: clamp(2.8rem, 6vw, 5rem);
-  --font-size-h2: clamp(2rem, 4vw, 3rem);
-  --font-size-h3: clamp(1.4rem, 2vw, 1.8rem);
-  --font-size-h4: 1.3rem;
-  --font-size-h5: 1.1rem;
-  --font-size-h6: 1rem;
+ /* Heading sizes – TO HƠN, VẪN DÙNG CLAMP */
+  --font-size-h1: clamp(2.6rem, 5vw, 4.2rem);
+  --font-size-h2: clamp(1.9rem, 3vw, 3.2rem);
+  --font-size-h3: clamp(1.2rem, 1.5vw, 1.6rem);
+  --font-size-h4: 1.15rem;
+  --font-size-h5: 1.05rem;
+  --font-size-h6: 0.95rem;
 
-  /* SILVER */
+  /* Colors – Silver */
   --silver-primary: #E8E8E8;
   --silver-light: #F5F5F5;
   --silver-dark: #B0B0B0;
   --silver-muted: #999999;
 
-  /* GOLD (THÊM MỚI – DỰ PHÒNG CHO ĐIỂM NHẤN) */
+  /* Colors – Gold (điểm nhấn) */
   --gold-primary: #C9A84C;
   --gold-light: #E8C84A;
   --gold-gradient: linear-gradient(135deg, var(--gold-primary), var(--gold-light));
 
-  /* WHITE & BLACK */
+  /* White & Black */
   --white-soft: #F5F5F5;
   --white-pure: #FFFFFF;
   --black-premium: #0A0A0A;
   --black-soft: #1A1A1A;
 
-  /* TEXT */
+  /* Text */
   --text-heading: var(--silver-primary);
   --text-body: var(--white-soft);
   --text-secondary: var(--silver-dark);
   --text-muted: var(--silver-muted);
 
-  /* BORDER */
+  /* Border */
   --border-silver: 1px solid rgba(232,232,232,0.15);
   --border-silver-hover: 1px solid rgba(245,245,245,0.4);
   --border-light: 1px solid rgba(255,255,255,0.05);
 
-  /* CARD */
+  /* Card */
   --cinema-card-bg: linear-gradient(180deg, rgba(20,20,20,0.95), rgba(14,14,14,0.98));
   --cinema-card-border: 2px solid rgba(232,232,232,0.08);
-  --cinema-card-border-hover: 1px solid rgba(245,245,245,0.4); /* giữ để dùng nếu cần */
   --cinema-card-shadow: 0 10px 28px rgba(0,0,0,0.6);
-  --cinema-card-glow-hover: 0 0 50px rgba(245,245,245,0.04);
 
-  /* SHADOW & GLOW */
+  /* Shadows */
   --shadow-silver: 0 0 40px rgba(232,232,232,0.06);
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
   --shadow-lg: 0 20px 50px rgba(0,0,0,0.5);
 
-  /* OVERLAY */
+  /* Overlay */
   --overlay-dark: rgba(0,0,0,0.72);
 
-  /* HOVER */
+  /* Hover */
   --hover-bg: rgba(255,255,255,0.04);
-  --card-hover-translate: -6px; /* THÊM MỚI – dùng chung cho card nổi */
 
-  /* EASING & TRANSITION */
+  /* Transitions */
   --ease-premium: cubic-bezier(0.16,1,0.3,1);
   --ease-smooth: cubic-bezier(0.22,1,0.36,1);
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
   --transition-slow: 0.5s ease;
 
-  /* RADIUS */
+  /* Radius */
   --radius-xs: 4px;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -94,7 +79,7 @@
   --radius-xl: 24px;
   --radius-round: 999px;
 
-  /* SPACING */
+  /* Spacing */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
@@ -103,14 +88,14 @@
   --space-2xl: 48px;
   --space-3xl: 64px;
 
-  /* CONTAINER */
+  /* Container */
   --container-width: 1200px;
   --container-padding: 20px;
 
-  /* GRADIENT */
+  /* Gradient đặc biệt */
   --cinema-border-gradient: linear-gradient(120deg, #E8E8E8, #F5F5F5, #E8E8E8, #B0B0B0, #E8E8E8);
 
-  /* FONT WEIGHT */
+  /* Font weights */
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-semibold: 600;
@@ -120,47 +105,7 @@
 }
 
 /* ==========================================================
-   2. KEYFRAMES
-   ========================================================== */
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes sweep {
-  0% {
-    left: -150%;
-    opacity: 0;
-  }
-  15% {
-    opacity: 1;
-  }
-  85% {
-    opacity: 1;
-  }
-  100% {
-    left: 120%;
-    opacity: 0;
-  }
-}
-
-@keyframes particleMove {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-180px);
-  }
-}
-
-/* ==========================================================
-   3. RESET & BASE
+   RESET & BASE
    ========================================================== */
 * {
   margin: 0;
@@ -197,72 +142,37 @@ body {
 }
 
 /* ==========================================================
-   4. TYPOGRAPHY
+   TYPOGRAPHY
    ========================================================== */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: var(--fw-black) !important;
   line-height: 1.2;
   letter-spacing: -0.02em;
   color: var(--text-heading) !important;
   word-wrap: break-word;
-  text-shadow: 0 0 15px rgba(232, 232, 232, 0.1);
-  transition: text-shadow 0.3s ease;
+  text-shadow: 0 0 15px rgba(232,232,232,0.1);
+  transition: text-shadow var(--transition-normal);
 }
 
-h1 {
-  font-size: var(--font-size-h1);
-  text-transform: uppercase;
-}
-h2 {
-  font-size: var(--font-size-h2);
-  text-transform: uppercase;
-}
-h3 {
-  font-size: var(--font-size-h3);
-}
-h4 {
-  font-size: var(--font-size-h4);
-}
-h5 {
-  font-size: var(--font-size-h5);
-}
-h6 {
-  font-size: var(--font-size-h6);
+h1 { font-size: var(--font-size-h1); text-transform: uppercase; }
+h2 { font-size: var(--font-size-h2); text-transform: uppercase; }
+h3 { font-size: var(--font-size-h3); }
+h4 { font-size: var(--font-size-h4); }
+h5 { font-size: var(--font-size-h5); }
+h6 { font-size: var(--font-size-h6); }
+
+h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover {
+  text-shadow: 0 0 30px rgba(232,232,232,0.25), 0 0 60px rgba(232,232,232,0.08);
 }
 
-h1:hover,
-h2:hover,
-h3:hover,
-h4:hover,
-h5:hover,
-h6:hover {
-  text-shadow: 0 0 30px rgba(232, 232, 232, 0.25), 0 0 60px rgba(232, 232, 232, 0.08);
-}
-
-p,
-span,
-div,
-a,
-li,
-label,
-input,
-textarea,
-select,
-button {
+p, span, div, a, li, label, input, textarea, select, button {
   font-size: var(--font-size-base);
   font-weight: var(--fw-regular);
   color: var(--text-body);
 }
 
-small {
-  font-size: var(--font-size-sm);
-}
+small { font-size: 0.875rem; }
 
 ::selection {
   background: var(--silver-primary);
@@ -275,188 +185,24 @@ small {
 }
 
 /* ==========================================================
-   5. LINKS & BUTTONS
+   LINKS & BUTTONS (CƠ BẢN)
    ========================================================== */
 a {
   text-decoration: none;
   color: inherit;
-  transition: color 0.2s;
+  transition: color var(--transition-fast);
 }
+a:hover, button:hover { color: var(--silver-light); }
 
-a:hover,
-button:hover {
-  color: var(--silver-light);
-}
-
-button,
-input,
-select,
-textarea {
+button, input, select, textarea {
   font-family: inherit;
   outline: none;
   border: none;
 }
-
-button {
-  cursor: pointer;
-  background: none;
-  color: inherit;
-}
+button { cursor: pointer; background: none; color: inherit; }
 
 /* ==========================================================
-   6. BUTTON VARIANTS
-   ========================================================== */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  padding: 0.7rem 1.8rem;
-  border-radius: var(--radius-round);
-  font-weight: var(--fw-bold);
-  font-size: var(--font-size-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-  background: transparent;
-  color: var(--silver-primary);
-  border: 2px solid var(--silver-primary);
-  cursor: pointer;
-  box-shadow: none;
-}
-
-.btn:hover {
-  border-color: var(--silver-light);
-  background: var(--hover-bg);
-  box-shadow: var(--shadow-silver);
-}
-
-.btn:active {
-  /* không scale */
-}
-
-.btn-primary {
-  background: transparent;
-  color: var(--silver-primary);
-  border-color: var(--silver-primary);
-}
-.btn-primary:hover {
-  background: var(--hover-bg);
-  border-color: var(--silver-light);
-  box-shadow: var(--shadow-silver);
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--silver-primary);
-  border-color: var(--silver-primary);
-}
-.btn-outline:hover {
-  background: var(--hover-bg);
-  border-color: var(--silver-light);
-  box-shadow: var(--shadow-silver);
-}
-
-.btn-ghost {
-  color: var(--silver-dark);
-  border-color: transparent;
-  background: transparent;
-}
-.btn-ghost:hover {
-  color: var(--silver-primary);
-  background: var(--hover-bg);
-  box-shadow: none;
-}
-
-.btn-quick-booking {
-  background: transparent;
-  color: var(--silver-primary);
-  border: 2px solid var(--silver-primary);
-  padding: 0.8rem 2rem;
-  font-weight: var(--fw-extrabold);
-  font-size: var(--font-size-md);
-  border-radius: var(--radius-lg);
-  transition: border-color 0.25s, box-shadow 0.25s;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.btn-quick-booking:hover {
-  border-color: var(--silver-light);
-  box-shadow: var(--shadow-silver), 0 8px 30px rgba(232, 232, 232, 0.08);
-}
-.btn-quick-booking:active {
-  /* không scale */
-}
-
-/* ==========================================================
-   7. FORM ELEMENTS
-   ========================================================== */
-input,
-textarea,
-select {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(232, 232, 232, 0.15);
-  border-radius: var(--radius-md);
-  padding: 0.75rem 1rem;
-  color: var(--text-body);
-  transition: border-color 0.2s, box-shadow 0.2s;
-  width: 100%;
-}
-input:focus,
-textarea:focus,
-select:focus {
-  border-color: var(--silver-primary);
-  box-shadow: 0 0 0 3px rgba(232, 232, 232, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-}
-input::placeholder,
-textarea::placeholder {
-  color: var(--text-muted);
-}
-
-/* ==========================================================
-   8. MEDIA
-   ========================================================== */
-img,
-picture,
-video,
-canvas,
-svg {
-  display: block;
-  max-width: 100%;
-}
-img {
-  height: auto;
-  object-fit: cover;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-video {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-}
-.poster-image {
-  width: 100%;
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-  border-radius: var(--radius-lg);
-}
-.banner-image {
-  width: 100%;
-  aspect-ratio: 2.5 / 1;
-  object-fit: cover;
-}
-.thumbnail-image {
-  width: 100%;
-  aspect-ratio: 2.5 / 1;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-}
-
-/* ==========================================================
-   9. LAYOUT
+   LAYOUT
    ========================================================== */
 .container {
   width: 100%;
@@ -464,77 +210,24 @@ video {
   margin: 0 auto;
   padding: 0 var(--container-padding);
 }
-#root,
-.app-wrapper {
+
+#root, .app-wrapper {
   display: flex;
   flex-direction: column;
   flex: 1;
   width: 100%;
 }
-main,
-.main-content {
-  flex: 1 0 auto;
-}
+main, .main-content { flex: 1 0 auto; }
 footer {
   flex-shrink: 0;
   margin-top: auto;
   padding: var(--space-2xl) 0;
   border-top: var(--border-silver);
 }
-ul {
-  list-style: none;
-}
+ul { list-style: none; }
 
 /* ==========================================================
-   10. GLOBAL CARD (GIỮ NGUYÊN)
-   ========================================================== */
-.card {
-  overflow: hidden;
-  border: var(--cinema-card-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--cinema-card-shadow);
-  background: var(--cinema-card-bg);
-  transition: border-color 0.4s ease, box-shadow 0.4s ease;
-}
-
-.card:hover {
-  border: 2px solid rgba(245, 245, 245, 0.7);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 80px rgba(245,245,245,0.06);
-}
-
-.card img,
-.card .poster-image,
-.card .banner-image,
-.card .thumbnail-image {
-  transition: filter 0.4s ease;
-  filter: brightness(1);
-}
-.card:hover img,
-.card:hover .poster-image,
-.card:hover .banner-image,
-.card:hover .thumbnail-image {
-  filter: brightness(1.06) contrast(1.02);
-}
-
-/* ==========================================================
-   11. SCROLLBAR
-   ========================================================== */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--black-premium);
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(232, 232, 232, 0.2);
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(232, 232, 232, 0.5);
-}
-
-/* ==========================================================
-   12. UTILITY CLASSES
+   UTILITY CLASSES
    ========================================================== */
 .sr-only {
   position: absolute;
@@ -543,7 +236,7 @@ ul {
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip: rect(0,0,0,0);
   border: 0;
 }
 .hidden { display: none !important; }
@@ -570,9 +263,9 @@ ul {
 .gap-md { gap: var(--space-md); }
 .gap-lg { gap: var(--space-lg); }
 .gap-xl { gap: var(--space-xl); }
-.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-cols-2 { grid-template-columns: repeat(2,1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3,1fr); }
+.grid-cols-4 { grid-template-columns: repeat(4,1fr); }
 .p-xs { padding: var(--space-xs); }
 .p-sm { padding: var(--space-sm); }
 .p-md { padding: var(--space-md); }
@@ -608,10 +301,10 @@ ul {
 .font-bold { font-weight: var(--fw-bold); }
 .font-extrabold { font-weight: var(--fw-extrabold); }
 .font-black { font-weight: var(--fw-black); }
-.text-sm { font-size: var(--font-size-sm); }
-.text-base { font-size: var(--font-size-base); }
-.text-lg { font-size: var(--font-size-lg); }
-.text-xl { font-size: var(--font-size-xl); }
+.text-sm { font-size: 0.875rem; }
+.text-base { font-size: 1rem; }
+.text-lg { font-size: 1.25rem; }
+.text-xl { font-size: 1.5rem; }
 .leading-none { line-height: 1; }
 .leading-tight { line-height: 1.2; }
 .leading-normal { line-height: var(--line-height-base); }
@@ -631,16 +324,12 @@ ul {
 .rounded-xl { border-radius: var(--radius-xl); }
 .rounded-full { border-radius: var(--radius-round); }
 .shadow-silver { box-shadow: var(--shadow-silver); }
-.shadow-card { box-shadow: var(--cinema-card-shadow); }
 .shadow-sm { box-shadow: var(--shadow-sm); }
 .shadow-lg { box-shadow: var(--shadow-lg); }
 .shadow-none { box-shadow: none; }
 .transition { transition: var(--transition-normal); }
 .transition-fast { transition: var(--transition-fast); }
 .transition-slow { transition: var(--transition-slow); }
-.animate-fade-in { animation: fadeUp 0.6s var(--ease-premium) both; }
-.hover-silver:hover { color: var(--silver-light); }
-.hover-glow-silver:hover { box-shadow: var(--shadow-silver); }
 .cursor-pointer { cursor: pointer; }
 .cursor-default { cursor: default; }
 .cursor-not-allowed { cursor: not-allowed; }
@@ -666,7 +355,7 @@ ul {
 .object-contain { object-fit: contain; }
 
 /* ==========================================================
-   13. RESPONSIVE
+   RESPONSIVE
    ========================================================== */
 @media (max-width: 1200px) {
   html { font-size: 15px; }
@@ -674,39 +363,19 @@ ul {
 }
 @media (max-width: 1024px) {
   html { font-size: 14.5px; }
-  .grid-cols-4 { grid-template-columns: repeat(3, 1fr); }
+  .grid-cols-4 { grid-template-columns: repeat(3,1fr); }
 }
 @media (max-width: 992px) {
   html { font-size: 14px; }
 }
 @media (max-width: 768px) {
   html { font-size: 13px; }
-  .grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
-  .grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
+  .grid-cols-4 { grid-template-columns: repeat(2,1fr); }
+  .grid-cols-3 { grid-template-columns: repeat(2,1fr); }
   .container { padding: 0 16px; }
-  .btn { padding: 0.6rem 1.4rem; font-size: var(--font-size-xs); }
-  .btn-quick-booking { padding: 0.6rem 1.4rem; font-size: var(--font-size-sm); }
 }
 @media (max-width: 480px) {
   html { font-size: 12px; }
   .grid-cols-4, .grid-cols-3, .grid-cols-2 { grid-template-columns: 1fr !important; }
   .container { padding: 0 12px; }
-  .btn { padding: 0.5rem 1.2rem; font-size: 11px; }
-  .btn-quick-booking { padding: 0.5rem 1.2rem; font-size: 12px; }
-}
-
-
-
-/* ==========================================================
-   14. PRINT STYLES
-   ========================================================== */
-@media print {
-  * {
-    background: transparent !important;
-    color: #000 !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-  }
-  body { background: #fff; }
-  .no-print { display: none !important; }
 }

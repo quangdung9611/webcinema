@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/CinemaCard.css"; // <-- ĐẢM BẢO ĐƯỜNG DẪN ĐÚNG
+import "../styles/CinemaCard.css";
 
 const CinemaCard = ({
     type = "movie",
@@ -38,21 +38,16 @@ const CinemaCard = ({
                     />
                 </div>
 
-                {/* BADGE */}
+                {/* BADGE - dùng h4 */}
                 {badge && (
-                    <div className="cinema-card-badge">
+                    <h4 className="cinema-card-badge">
                         {badge}
-                    </div>
+                    </h4>
                 )}
 
-                {/* CONTENT - CHỈ CÓ TITLE */}
-                <div className="cinema-card-content">
-                    <h3 className="cinema-card-title">
-                        {title}
-                    </h3>
-                </div>
+                {/* TITLE - dùng h3, không có div thừa */}
+                <h3 className="cinema-card-title">{title}</h3>
 
-              
             </div>
         </div>
     );

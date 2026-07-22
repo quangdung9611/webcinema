@@ -1,5 +1,5 @@
 /* ==========================================================
-   CINEMA DETAIL - GOLD & BLACK PREMIUM EDITION
+   CINEMA DETAIL - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
    ========================================================= */
 
 /* ==========================================================
@@ -29,7 +29,7 @@
   justify-content: center;
   flex-direction: column;
   gap: var(--space-md);
-  color: var(--text-white);
+  color: var(--text-body);
 }
 .spin-icon {
   color: var(--gold-primary);
@@ -50,7 +50,7 @@
   margin: 0 auto;
   aspect-ratio: 2.5 / 1;
   overflow: hidden;
-  background-color: #0a0a0a;
+  background-color: var(--black-premium);
   border-radius: var(--radius-lg);
 }
 
@@ -95,7 +95,7 @@
   height: 100%;
   z-index: 2;
   opacity: 0.3;
-  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.12), transparent);
+  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.12), transparent);
   transform: skewX(-25deg);
   animation: shineMove 12s ease-in-out infinite;
   pointer-events: none;
@@ -113,7 +113,7 @@
   z-index: 2;
   pointer-events: none;
   opacity: 0.08;
-  background-image: radial-gradient(rgba(212, 175, 55, 0.3) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(201, 168, 76, 0.3) 1px, transparent 1px);
   background-size: 160px 160px;
   animation: particleMove 25s linear infinite;
 }
@@ -121,6 +121,7 @@
   0% { transform: translateY(0); }
   100% { transform: translateY(-180px); }
 }
+
 /* ==========================================================
    THÔNG TIN RẠP (phía dưới banner)
 ========================================================== */
@@ -135,10 +136,10 @@
   padding: var(--space-xs) var(--space-md);
   margin-bottom: var(--space-sm);
   border-radius: var(--radius-round);
-  background: rgba(212, 175, 55, 0.08);
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: rgba(201, 168, 76, 0.08);
+  border: 1px solid rgba(201, 168, 76, 0.2);
   color: var(--gold-primary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--fw-extrabold);
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -146,12 +147,12 @@
 }
 
 .cinema-name {
-  font-size: var(--font-size-5xl);
+  font-size: var(--font-size-h1);
   font-weight: var(--fw-black);
   line-height: 1;
   letter-spacing: -2px;
   text-transform: uppercase;
-  color: var(--text-white);
+  color: var(--text-body);
   margin: 0 0 var(--space-md) 0;
 }
 
@@ -160,8 +161,8 @@
   height: 4px;
   border-radius: var(--radius-round);
   margin-bottom: var(--space-lg);
-  background: linear-gradient(90deg, var(--gold-primary), var(--gold-hover), transparent);
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+  background: linear-gradient(90deg, var(--gold-primary), var(--gold-light), transparent);
+  box-shadow: 0 0 20px rgba(201, 168, 76, 0.25);
 }
 
 .cinema-info-list {
@@ -174,8 +175,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  color: var(--text-white);
-  font-size: var(--font-size-md);
+  color: var(--text-body);
+  font-size: var(--font-size-base);
   font-weight: var(--fw-medium);
 }
 .info-item svg {
@@ -188,17 +189,17 @@
   gap: var(--space-sm);
   width: fit-content;
   text-decoration: none;
-  color: var(--text-white);
-  font-size: var(--font-size-md);
+  color: var(--text-body);
+  font-size: var(--font-size-base);
   font-weight: var(--fw-bold);
-  transition: var(--transition-normal);
+  transition: all var(--transition-normal);
   margin-top: var(--space-xs);
 }
 .cinema-map-link svg {
   color: var(--gold-primary);
 }
 .cinema-map-link:hover {
-  color: var(--gold-hover);
+  color: var(--gold-light);
   transform: translateX(5px);
 }
 
@@ -213,11 +214,11 @@
 }
 .section-title svg {
   color: var(--gold-primary);
-  filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.3));
+  filter: drop-shadow(0 0 12px rgba(201, 168, 76, 0.3));
 }
 .section-title h2 {
-  color: var(--text-white);
-  font-size: var(--font-size-3xl);
+  color: var(--text-body);
+  font-size: var(--font-size-h2);
   font-weight: var(--fw-extrabold);
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -241,11 +242,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-white);
+  color: var(--text-body);
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(10px);
-  border: var(--border-gold);
-  transition: var(--transition-normal);
+  border: var(--border-silver);
+  transition: all var(--transition-normal);
 }
 .date-nav svg {
   width: 18px;
@@ -254,9 +255,9 @@
 .date-nav:hover {
   color: var(--gold-primary);
   transform: scale(1.08);
-  background: rgba(212, 175, 55, 0.08);
-  border-color: var(--border-gold-hover);
-  box-shadow: 0 0 25px rgba(212, 175, 55, 0.12);
+  background: rgba(201, 168, 76, 0.08);
+  border-color: var(--border-silver-hover);
+  box-shadow: 0 0 25px rgba(201, 168, 76, 0.12);
 }
 .date-list {
   flex: 1;
@@ -277,11 +278,11 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
-  color: var(--text-white);
+  color: var(--text-body);
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(10px);
-  border: var(--border-gold);
-  transition: var(--transition-normal);
+  border: var(--border-silver);
+  transition: all var(--transition-normal);
 }
 .date-card::before {
   content: "";
@@ -290,7 +291,7 @@
   left: -100%;
   width: 50%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.06), transparent);
+  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.06), transparent);
   transform: skewX(-25deg);
   transition: 0.6s;
 }
@@ -299,31 +300,31 @@
 }
 .date-card:hover {
   transform: translateY(-5px);
-  background: rgba(212, 175, 55, 0.06);
-  border-color: var(--border-gold-hover);
-  box-shadow: var(--cinema-card-shadow), 0 0 20px rgba(212, 175, 55, 0.08);
+  background: rgba(201, 168, 76, 0.06);
+  border-color: var(--border-silver-hover);
+  box-shadow: var(--cinema-card-shadow), 0 0 20px rgba(201, 168, 76, 0.08);
 }
 .date-card.active {
   background: var(--gold-gradient);
   border-color: transparent;
-  box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 0 30px rgba(201, 168, 76, 0.3);
 }
 .date-card.active::before {
   display: none;
 }
 .date-day {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--fw-bold);
-  color: var(--text-white);
+  color: var(--text-body);
 }
 .date-number {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--fw-medium);
   color: rgba(255, 255, 255, 0.75);
 }
 .date-card.active .date-day,
 .date-card.active .date-number {
-  color: var(--text-white);
+  color: var(--text-body);
 }
 .date-list::-webkit-scrollbar {
   height: 5px;
@@ -350,13 +351,13 @@
   border-radius: var(--radius-xl);
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(12px);
-  border: var(--border-gold);
-  transition: var(--cinema-transition);
+  border: var(--border-silver);
+  transition: all var(--transition-normal);
 }
 .movie-card:hover {
-  transform: var(--cinema-hover-fast-transform);
-  border-color: var(--border-gold-hover);
-  box-shadow: var(--cinema-card-shadow), 0 0 30px rgba(212, 175, 55, 0.06);
+  transform: translateY(-6px);
+  border-color: var(--border-silver-hover);
+  box-shadow: var(--cinema-card-shadow), 0 0 30px rgba(201, 168, 76, 0.06);
 }
 .movie-poster {
   position: relative;
@@ -382,7 +383,7 @@
   opacity: 0;
   visibility: hidden;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.3));
-  transition: var(--transition-normal);
+  transition: all var(--transition-normal);
 }
 .movie-card:hover .movie-overlay {
   opacity: 1;
@@ -395,22 +396,22 @@
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-round);
   color: var(--black-premium);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--fw-bold);
   background: var(--gold-gradient);
-  transition: var(--transition-normal);
-  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.2);
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 20px rgba(201, 168, 76, 0.2);
 }
 .booking-btn:hover {
   transform: scale(1.05);
-  box-shadow: var(--shadow-gold);
+  box-shadow: var(--shadow-silver);
 }
 .movie-info {
   padding: var(--space-lg);
 }
 .movie-info h3 {
-  color: var(--text-white);
-  font-size: var(--font-size-lg);
+  color: var(--text-body);
+  font-size: var(--font-size-h4);
   font-weight: var(--fw-bold);
   line-height: 1.4;
   min-height: 56px;
@@ -428,7 +429,7 @@
   align-items: center;
   gap: var(--space-xs);
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
 }
 .movie-meta svg {
   color: var(--gold-primary);
@@ -444,20 +445,20 @@
   cursor: pointer;
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-sm);
-  color: var(--text-white);
+  color: var(--text-body);
   display: flex;
   align-items: center;
   gap: var(--space-xs);
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(10px);
-  border: var(--border-gold);
-  transition: var(--transition-normal);
+  border: var(--border-silver);
+  transition: all var(--transition-normal);
 }
 .showtime-btn:hover {
   transform: translateY(-2px);
-  background: rgba(212, 175, 55, 0.06);
-  border-color: var(--border-gold-hover);
-  color: var(--gold-hover);
+  background: rgba(201, 168, 76, 0.06);
+  border-color: var(--border-silver-hover);
+  color: var(--gold-light);
 }
 .showtime-btn svg {
   color: var(--gold-primary);
@@ -475,14 +476,14 @@
   gap: var(--space-sm);
   border-radius: var(--radius-xl);
   background: rgba(255, 255, 255, 0.03);
-  border: var(--border-gold);
+  border: var(--border-silver);
 }
 .empty-box svg {
   color: var(--gold-primary);
 }
 .empty-box h3 {
-  color: var(--text-white);
-  font-size: var(--font-size-2xl);
+  color: var(--text-body);
+  font-size: var(--font-size-h3);
   font-weight: var(--fw-extrabold);
 }
 .empty-box p {
@@ -498,7 +499,7 @@
 .map-wrapper {
   overflow: hidden;
   border-radius: var(--radius-xl);
-  border: var(--border-gold);
+  border: var(--border-silver);
   box-shadow: var(--cinema-card-shadow);
 }
 .map-wrapper iframe {
@@ -517,7 +518,7 @@
     grid-template-columns: repeat(4, 1fr);
   }
   .cinema-name {
-    font-size: var(--font-size-4xl);
+    font-size: var(--font-size-h2);
   }
 }
 
@@ -526,7 +527,7 @@
     min-height: 350px;
   }
   .cinema-name {
-    font-size: var(--font-size-4xl);
+    font-size: var(--font-size-h2);
   }
   .movie-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -538,13 +539,13 @@
     min-height: 250px;
   }
   .cinema-name {
-    font-size: var(--font-size-3xl);
+    font-size: var(--font-size-h3);
   }
   .cinema-divider {
     width: 140px;
   }
   .section-title h2 {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-h3);
   }
   .date-nav {
     display: none;
@@ -572,14 +573,14 @@
     min-height: 200px;
   }
   .cinema-name {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-h4);
   }
   .cinema-label {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-base);
     padding: var(--space-xs) var(--space-sm);
   }
   .info-item {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .movie-card {
     max-width: 100%;
@@ -589,9 +590,9 @@
     padding: var(--space-sm) var(--space-xs);
   }
   .date-day {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-base);
   }
   .date-number {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-base);
   }
 }

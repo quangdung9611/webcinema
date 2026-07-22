@@ -1,13 +1,12 @@
 /* =========================
-   ACTOR PAGE - CINEMA GOLD
-   (Dùng biến từ index.css)
+   ACTOR PAGE - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
 ========================= */
 
 .actor-page {
     width: 100%;
     min-height: 100vh;
     background: var(--main-background);
-    color: var(--text-primary);
+    color: var(--text-body);
 }
 
 /* ==========================================================
@@ -62,8 +61,8 @@
     display: inline-block;
     position: relative;
     margin: 0;
-    color: var(--text-white);
-    font-size: var(--font-size-2xl);
+    color: var(--text-body);
+    font-size: var(--font-size-h2);
     font-weight: var(--fw-extrabold);
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -77,9 +76,9 @@
     bottom: 0;
     width: 100%;
     height: 4px;
-    border-radius: 999px;
+    border-radius: var(--radius-round);
     background: var(--gold-gradient);
-    transition: width 0.4s ease;
+    transition: width var(--transition-normal);
 }
 
 .actor-section-header:hover .section-title::after {
@@ -108,13 +107,13 @@
     background: var(--cinema-card-bg);
     border: var(--cinema-card-border);
     backdrop-filter: blur(12px);
-    transition: var(--cinema-transition);
+    transition: all var(--transition-normal);
 }
 
 .actor-card:hover {
     transform: translateY(-10px);
-    border-color: var(--cinema-card-border-hover);
-    box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
+    border-color: var(--border-silver-hover);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
 }
 
 /* =========================
@@ -127,11 +126,11 @@
     inset: 0;
     border-radius: var(--radius-lg);
     padding: 1px;
-    background: linear-gradient(135deg, var(--gold-premium), var(--gold-premium-light), transparent);
+    background: linear-gradient(135deg, var(--gold-primary), var(--gold-light), transparent);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     opacity: 0;
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
     pointer-events: none;
 }
 
@@ -175,7 +174,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: var(--transition-slow);
+    transition: all var(--transition-slow);
 }
 
 .actor-image::before {
@@ -185,7 +184,7 @@
     z-index: 2;
     background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.35));
     opacity: 0;
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
 }
 
 .actor-card:hover .actor-image::before {
@@ -212,16 +211,16 @@
     display: block;
     margin-bottom: var(--space-sm);
     text-decoration: none;
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-h3);
     font-weight: var(--fw-extrabold);
     line-height: 1.4;
-    color: var(--text-white);
-    transition: var(--transition-normal);
+    color: var(--text-body);
+    transition: all var(--transition-normal);
 }
 
 .actor-card:hover .actor-title {
     color: var(--gold-primary);
-    text-shadow: var(--shadow-gold);
+    text-shadow: var(--shadow-silver);
 }
 
 /* =========================
@@ -233,8 +232,8 @@
     align-items: center;
     gap: var(--space-xs);
     margin-bottom: var(--space-md);
-    color: var(--gold-premium);
-    font-size: var(--font-size-sm);
+    color: var(--gold-primary);
+    font-size: var(--font-size-base);
     font-weight: var(--fw-semibold);
 }
 
@@ -247,7 +246,7 @@
 ========================= */
 
 .actor-info p {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     line-height: 1.9;
     color: var(--text-secondary);
     text-align: justify;
@@ -295,7 +294,7 @@
         gap: var(--space-lg);
     }
     .section-title {
-        font-size: var(--font-size-3xl);
+        font-size: var(--font-size-h2);
     }
 }
 
@@ -309,7 +308,7 @@
         padding: 90px var(--space-lg);
     }
     .section-title {
-        font-size: var(--font-size-2xl);
+        font-size: var(--font-size-h2);
     }
 }
 
@@ -326,14 +325,14 @@
         margin-bottom: var(--space-2xl);
     }
     .section-title {
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-h3);
         padding-bottom: 6px;
     }
     .section-title::after {
         height: 3px;
     }
     .actor-title {
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-h4);
     }
 }
 
@@ -346,7 +345,7 @@
         padding: 60px var(--space-md);
     }
     .section-title {
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-h4);
         padding-bottom: 4px;
     }
     .section-title::after {
@@ -356,12 +355,12 @@
         padding: var(--space-md);
     }
     .actor-title {
-        font-size: var(--font-size-md);
+        font-size: var(--font-size-h5);
     }
     .actor-info p {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-base);
     }
     .actor-meta {
-        font-size: var(--font-size-xs);
+        font-size: var(--font-size-base);
     }
 }

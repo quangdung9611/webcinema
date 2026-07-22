@@ -1,622 +1,601 @@
-/*==========================================================
-AUTH CONTAINER - SILVER PREMIUM THEME
-(Dùng biến từ index.css)
-==========================================================*/
+/* ==========================================================
+   USER HOME - SILVER PREMIUM (KHÔNG SCALE, KHÔNG TRANSLATE)
+   Gạch dưới chạy hết chiều dài chữ (::after)
+   ========================================================== */
 
-.auth-container {
-    min-height: 100vh;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    padding: var(--space-2xl) 180px var(--space-2xl) 220px;
-    overflow: hidden;
-    position: relative;
-    isolation: isolate;
-    background-image: url("../../assets/background_login.png");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+/* ==========================================================
+   ANIMATIONS
+   ========================================================== */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/*==========================================================
-BACKGROUND DARK OVERLAY
-==========================================================*/
-
-.auth-container::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        90deg,
-        rgba(0, 0, 0, 0.72) 0%,
-        rgba(0, 0, 0, 0.55) 25%,
-        rgba(0, 0, 0, 0.30) 55%,
-        rgba(0, 0, 0, 0.10) 100%
-    );
-    z-index: -2;
+@keyframes shine {
+  from {
+    left: -120%;
+  }
+  to {
+    left: 120%;
+  }
 }
 
-/*==========================================================
-SILVER AMBIENT LIGHT
-==========================================================*/
-
-.auth-container::after {
-    content: "";
-    position: absolute;
-    left: -250px;
-    top: -180px;
-    width: 700px;
-    height: 700px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(232, 232, 232, 0.15), transparent 70%);
-    filter: blur(70px);
-    animation: ambientMove 18s ease-in-out infinite;
-    z-index: -1;
+@keyframes particleMove {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-180px);
+  }
 }
 
-/*==========================================================
-AUTH CARD
-==========================================================*/
-
-.auth-card {
-    position: relative;
-    z-index: 5;
-    width: 100%;
-    max-width: 520px;
-    padding: var(--space-2xl);
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    background: var(--cinema-card-bg);
-    backdrop-filter: blur(26px) saturate(135%);
-    -webkit-backdrop-filter: blur(26px) saturate(135%);
-    border: var(--border-silver);
-    box-shadow:
-        var(--cinema-card-shadow),
-        0 0 45px rgba(232, 232, 232, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    transition: border-color 0.45s ease, box-shadow 0.45s ease;
+/* ==========================================================
+   PAGE WRAPPER
+   ========================================================== */
+.user-home {
+  position: relative;
+  overflow: hidden;
 }
 
-.auth-card:hover {
-    border: var(--border-silver-hover);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+.home-container {
+  width: 100%;
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding) var(--space-3xl);
 }
 
-/*==========================================================
-TOP LIGHT
-==========================================================*/
-
-.auth-card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.015) 20%, transparent 55%),
-        radial-gradient(circle at top left, rgba(232, 232, 232, 0.06), transparent 45%);
+/* ==========================================================
+   COMMON SECTION – CHỈ FADE KHI SCROLL (BỎ ANIMATION TỰ ĐỘNG)
+   ========================================================== */
+.home-features-section,
+.movie-container,
+.promotions-section,
+.cinema-corner-section {
+  width: 100%;
+  margin-top: var(--space-3xl);
 }
 
-/*==========================================================
-BORDER LIGHT
-==========================================================*/
-
-.auth-card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    padding: 1px;
-    border-radius: inherit;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.18),
-        rgba(255, 255, 255, 0.05) 30%,
-        rgba(232, 232, 232, 0.20) 60%,
-        rgba(255, 255, 255, 0.10) 100%
-    );
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
+/* ==========================================================
+   SECTION HEADER (TIÊU ĐỀ + GẠCH DƯỚI BẠC)
+   ========================================================== */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
 }
 
-/*==========================================================
-SILVER GLOW UNDER CARD
-==========================================================*/
-
-.auth-card .card-glow {
-    position: absolute;
-    width: 280px;
-    height: 280px;
-    left: -90px;
-    bottom: -120px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(232, 232, 232, 0.15), transparent 70%);
-    filter: blur(60px);
-    z-index: -1;
+.section-header-left {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
-/*==========================================================
-TITLE
-==========================================================*/
-
-.auth-card h2 {
-    margin: 0;
-    color: var(--silver-primary);
-    font-size: var(--font-size-5xl);
-    font-weight: var(--fw-black);
-    text-align: center;
-    letter-spacing: 1px;
-    text-shadow: 0 0 30px rgba(232, 232, 232, 0.15);
+.section-title {
+  display: inline-block;
+  position: relative;
+  margin: 0;
+  color: var(--silver-primary) !important;
+  font-size: var(--font-size-h2); /* sửa từ --font-size-2xl */
+  font-weight: var(--fw-black) !important;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding-bottom: 8px;
+  text-shadow: 0 0 15px rgba(232, 232, 232, 0.08);
 }
 
-.auth-subtitle {
-    margin-top: var(--space-sm);
-    margin-bottom: var(--space-2xl);
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: var(--font-size-base);
-    line-height: 1.7;
+.section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--cinema-border-gradient);
+  transition: width 0.3s ease;
 }
 
-/*==========================================================
-ANIMATION
-==========================================================*/
-
-@keyframes ambientMove {
-    0% { transform: translate(0, 0); }
-    50% { transform: translate(120px, 60px); }
-    100% { transform: translate(0, 0); }
+.section-header:hover .section-title::after {
+  width: 105%;
 }
 
-/*==========================================================
-FORM GROUP
-==========================================================*/
-
-.form-group {
-    margin-bottom: var(--space-lg);
+/* ==========================================================
+   BANNER (FULL WIDTH)
+   ========================================================== */
+.carousel-full-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: var(--space-sm);
-    color: var(--text-body);
-    font-size: var(--font-size-sm);
-    font-weight: var(--fw-semibold);
-    letter-spacing: 0.3px;
+.banner-premium {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2.5 / 1;
 }
 
-/*==========================================================
-INPUT
-==========================================================*/
-
-.auth-input {
-    width: 100% !important;
-    height: 62px !important;
-    padding: 0 var(--space-lg) !important;
-    border-radius: var(--radius-md) !important;
-    outline: none !important;
-    color: var(--text-body) !important;
-    font-size: var(--font-size-sm) !important;
-    font-weight: var(--fw-medium) !important;
-    background: var(--black-soft) !important;
-    backdrop-filter: blur(14px) !important;
-    -webkit-backdrop-filter: blur(14px) !important;
-    border: 1px solid rgba(232, 232, 232, 0.12) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 -1px 0 rgba(0, 0, 0, 0.45) !important;
-    transition: var(--transition-normal) !important;
+.premiumSwiper,
+.banner-slide {
+  width: 100%;
+  height: 100%;
 }
 
-/*==========================================================
-PLACEHOLDER
-==========================================================*/
-
-.auth-input::placeholder {
-    color: var(--text-muted) !important;
-    transition: var(--transition-normal);
+.banner-media {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
-/*==========================================================
-HOVER
-==========================================================*/
-
-.auth-input:hover {
-    background: rgba(35, 35, 38, 0.92) !important;
-    border-color: rgba(232, 232, 232, 0.25) !important;
+.banner-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-/*==========================================================
-FOCUS
-==========================================================*/
-
-.auth-input:focus {
-    background: rgba(40, 40, 43, 0.96) !important;
-    border-color: var(--silver-primary) !important;
-    box-shadow:
-        0 0 0 4px rgba(232, 232, 232, 0.08),
-        0 12px 30px rgba(232, 232, 232, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+.banner-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 200px 200px;
+  animation: particleMove 30s linear infinite;
 }
 
-/*==========================================================
-ERROR INPUT
-==========================================================*/
-
-.input-error {
-    border-color: rgba(255, 90, 90, 0.55) !important;
-    box-shadow: 0 0 0 4px rgba(255, 0, 0, 0.08) !important;
+/* ==========================================================
+   QUICK BOOKING – CHỈ ĐỔI MÀU, KHÔNG DỊCH CHUYỂN
+   ========================================================== */
+.quick-booking-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: var(--container-width);
+  margin: 0 auto;
 }
 
-.error-text {
-    margin-top: var(--space-xs);
-    padding-left: var(--space-xs);
-    color: #ff8d8d;
-    font-size: var(--font-size-sm);
-    font-weight: var(--fw-medium);
+.quick-booking-content {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  border-radius: var(--radius-xl);
+  background: rgba(15, 15, 15, 0.95);
+  border: var(--border-silver);
+  box-shadow: var(--cinema-card-shadow);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/*==========================================================
-ERROR MESSAGE
-==========================================================*/
-
-.error-message {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    margin-bottom: var(--space-lg);
-    border-radius: var(--radius-md);
-    color: #ff9d9d;
-    background: rgba(255, 40, 40, 0.08);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 90, 90, 0.15);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    animation: shake 0.35s ease;
+.quick-booking-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 80px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
-/*==========================================================
-PASSWORD
-==========================================================*/
-
-.password-wrapper {
-    position: relative;
+.quick-booking-content:hover::before {
+  opacity: 1;
+  animation: shine 0.8s ease forwards;
 }
 
-.toggle-password {
-    position: absolute;
-    right: var(--space-md);
-    top: 50%;
-    transform: translateY(-50%);
-    width: 42px;
-    height: 42px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: var(--transition-normal);
+.quick-booking-content:hover {
+  border: var(--border-silver-hover);
+  box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
 }
 
-.toggle-password:hover {
-    color: var(--text-body);
-    background: rgba(255, 255, 255, 0.08);
+.quick-booking-selects {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
 }
 
-.toggle-password:active {
-    transform: translateY(-50%) scale(0.95);
+.quick-booking-selects select {
+  width: 100%;
+  height: 58px;
+  padding: 0 var(--space-md);
+  border: none;
+  outline: none;
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  border: var(--border-silver);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-body);
+  font-size: var(--font-size-base); /* sửa từ --font-size-md */
+  font-weight: var(--fw-semibold);
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
-/*==========================================================
-OPTIONS
-==========================================================*/
-
-.form-options {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-    margin-top: -4px;
-    margin-bottom: var(--space-2xl);
+.quick-booking-selects select:hover:not(:disabled) {
+  border: var(--border-silver-hover);
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.remember-me {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    cursor: pointer;
-    user-select: none;
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-    transition: var(--transition-normal);
+.quick-booking-selects select:focus {
+  border: var(--border-silver-hover);
+  box-shadow: 0 0 0 3px rgba(232, 232, 232, 0.08);
 }
 
-.remember-me:hover {
-    color: var(--text-body);
+.quick-booking-selects select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
-.remember-me input {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--silver-primary);
-    cursor: pointer;
+.quick-booking-selects option {
+  background: #121212;
+  color: var(--text-body);
 }
 
-.forgot-link {
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: var(--font-size-sm);
-    font-weight: var(--fw-medium);
-    transition: var(--transition-normal);
+.btn-quick-booking {
+  position: relative;
+  overflow: hidden;
+  min-width: 220px;
+  height: 58px;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  background: var(--cinema-border-gradient);
+  color: var(--black-premium);
+  font-size: var(--font-size-base); /* sửa từ --font-size-md */
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-silver);
+  transition: box-shadow 0.25s ease;
 }
 
-.forgot-link:hover {
-    color: var(--silver-primary);
-    text-shadow: 0 0 20px rgba(232, 232, 232, 0.15);
+.btn-quick-booking:hover {
+  box-shadow: var(--shadow-silver), 0 8px 24px rgba(232, 232, 232, 0.15);
 }
 
-/*==========================================================
-BUTTON
-==========================================================*/
-
-.btn-user {
-    position: relative;
-    width: 100%;
-    height: 62px;
-    border: none;
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    cursor: pointer;
-    color: var(--black-premium);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-bold);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    background: var(--cinema-border-gradient);
-    box-shadow: var(--shadow-silver);
-    transition: var(--transition-normal);
+/* ==========================================================
+   FEATURES – KHÔNG DỊCH CHUYỂN KHI HOVER
+   ========================================================== */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-md);
 }
 
-/*==========================================================
-BUTTON SHINE
-==========================================================*/
-
-.btn-user::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -130%;
-    width: 55%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
-    transform: skewX(-25deg);
-    transition: 0.8s;
+.feature-item {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+  border: var(--border-silver);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.btn-user:hover::before {
-    left: 150%;
+.feature-item::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -160%;
+  width: 90px;
+  height: 220%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  transform: rotate(25deg);
+  transition: left 0.6s ease;
+  pointer-events: none;
 }
 
-/*==========================================================
-BUTTON HOVER
-==========================================================*/
-
-.btn-user:hover:not(:disabled) {
-    transform: translateY(-3px);
-    box-shadow:
-        0 25px 50px rgba(232, 232, 232, 0.20),
-        0 0 24px rgba(232, 232, 232, 0.10);
-    background: linear-gradient(135deg, var(--silver-light), var(--silver-dark));
+.feature-item:hover::before {
+  left: 160%;
 }
 
-/*==========================================================
-BUTTON ACTIVE
-==========================================================*/
-
-.btn-user:active {
-    transform: scale(0.98);
+.feature-item:hover {
+  border: var(--border-silver-hover);
+  box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
 }
 
-.btn-user:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.feature-icon-wrapper {
+  width: 72px;
+  height: 72px;
+  min-width: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: rgba(232, 232, 232, 0.08);
+  border: 1px solid rgba(232, 232, 232, 0.15);
+  color: var(--silver-primary);
+  transition: box-shadow 0.25s ease;
 }
 
-/*==========================================================
-FOOTER
-==========================================================*/
-
-.auth-footer {
-    margin-top: var(--space-2xl);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: var(--space-xs);
-    flex-wrap: wrap;
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+.feature-item:hover .feature-icon-wrapper {
+  box-shadow: 0 0 20px rgba(232, 232, 232, 0.10);
 }
 
-.btn-link {
-    color: var(--silver-primary);
-    text-decoration: none;
-    font-weight: var(--fw-bold);
-    transition: var(--transition-normal);
+.feature-text {
+  flex: 1;
 }
 
-.btn-link:hover {
-    color: var(--silver-light);
-    text-shadow: 0 0 20px rgba(232, 232, 232, 0.15);
+.feature-text h4 {
+  margin: 0 0 var(--space-sm);
+  color: var(--text-body);
+  font-size: var(--font-size-h4); /* sửa từ --font-size-base */
+  font-weight: var(--fw-bold);
+  line-height: 1.4;
+  transition: color 0.25s ease;
 }
 
-/*==========================================================
-SHAKE
-==========================================================*/
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-4px); }
-    50% { transform: translateX(4px); }
-    75% { transform: translateX(-3px); }
+.feature-item:hover h4 {
+  color: var(--silver-primary);
 }
 
-/*==========================================================
-AUTO-FILL
-==========================================================*/
-
-.auth-input:-webkit-autofill,
-.auth-input:-webkit-autofill:hover,
-.auth-input:-webkit-autofill:focus,
-.auth-input:-webkit-autofill:active {
-    -webkit-text-fill-color: var(--text-body) !important;
-    -webkit-box-shadow: 0 0 0 1000px #1d1d1f inset !important;
-    box-shadow: 0 0 0 1000px #1d1d1f inset !important;
-    transition: background-color 500000s ease-in-out 0s !important;
-    caret-color: var(--text-body) !important;
+.feature-text p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem; /* sửa từ --font-size-sm */
+  line-height: 1.6;
 }
 
-/*==========================================================
-RESPONSIVE
-==========================================================*/
-
-@media (max-width: 1400px) {
-    .auth-container {
-        padding: var(--space-2xl) 80px;
-    }
+/* ==========================================================
+   BUTTON VIEW ALL – KHÔNG DỊCH CHUYỂN
+   ========================================================== */
+.btn-view-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  text-decoration: none;
+  border: 2px solid rgba(232, 232, 232, 0.25);
+  color: var(--silver-primary);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+  font-size: var(--font-size-base); /* sửa từ --font-size-sm */
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
-@media (max-width: 1200px) {
-    .auth-container {
-        padding: var(--space-2xl) 60px;
-    }
-    .auth-card {
-        max-width: 500px;
-        padding: var(--space-2xl);
-    }
+.btn-view-all:hover {
+  color: var(--black-premium);
+  background: var(--cinema-border-gradient);
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(232, 232, 232, 0.20);
 }
 
-@media (max-width: 992px) {
-    .auth-container {
-        justify-content: center;
-        padding: var(--space-2xl);
-    }
-    .auth-card {
-        max-width: 480px;
-        padding: var(--space-2xl);
-    }
-    .auth-card h2 {
-        font-size: var(--font-size-4xl);
-    }
-    .auth-input {
-        height: 58px;
-    }
-    .btn-user {
-        height: 58px;
-    }
+/* ==========================================================
+   CINEMA GRID – CARD KHÔNG DỊCH CHUYỂN KHI HOVER
+   ========================================================== */
+.cinema-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-md);
+  align-items: start;
 }
 
+.promotions-section .cinema-card,
+.cinema-corner-section .cinema-card {
+  height: 100%;
+  width: 100%;
+}
+
+.promotions-section .cinema-card .cinema-card-inner,
+.cinema-corner-section .cinema-card .cinema-card-inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================
+   SPACING
+   ========================================================== */
+.home-features-section {
+  margin-top: var(--space-3xl);
+}
+
+.movie-container {
+  margin-top: var(--space-3xl);
+}
+
+.promotions-section {
+  margin-top: var(--space-3xl);
+}
+
+.cinema-corner-section {
+  margin-top: var(--space-3xl);
+  padding-bottom: var(--space-lg);
+}
+
+/* ==========================================================
+   PERFORMANCE – BỎ will-change GÂY TỐN MEMORY
+   ========================================================== */
+.feature-item,
+.cinema-card,
+.quick-booking-content {
+  backface-visibility: hidden;
+}
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+/* ----- 1024px: Feature về 2 cột, grid card 3 cột ----- */
+@media (max-width: 1024px) {
+  .features-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cinema-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ----- 768px: 2 cột cho card ----- */
 @media (max-width: 768px) {
-    .auth-container {
-        justify-content: center;
-        padding: var(--space-xl) var(--space-md);
-        background-position: 65% center;
-    }
-    .auth-card {
-        width: 100%;
-        max-width: 100%;
-        padding: var(--space-2xl) var(--space-xl);
-        border-radius: var(--radius-xl);
-    }
-    .auth-card h2 {
-        font-size: var(--font-size-3xl);
-    }
-    .auth-subtitle {
-        font-size: var(--font-size-sm);
-        margin-bottom: var(--space-xl);
-    }
-    .form-options {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-md);
-    }
-    .auth-input {
-        height: 56px;
-        font-size: var(--font-size-sm);
-    }
-    .btn-user {
-        height: 56px;
-    }
+  .banner-premium {
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+  }
+  .cinema-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .section-header {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .section-header-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .section-title {
+    font-size: var(--font-size-h3); /* sửa từ --font-size-xl (vì h3 tương đương) */
+    padding-bottom: 6px;
+  }
+
+  .section-title::after {
+    height: 3px;
+  }
+
+  .btn-view-all {
+    padding: 8px 18px;
+    font-size: 0.875rem; /* sửa từ --font-size-xs */
+    flex-shrink: 0;
+  }
+
+  .quick-booking-content {
+    flex-direction: column;
+    padding: var(--space-lg);
+    gap: var(--space-md);
+  }
+
+  .quick-booking-selects {
+    width: 100%;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+
+  .quick-booking-selects select {
+    height: 52px;
+    font-size: var(--font-size-base); /* sửa từ --font-size-sm */
+  }
+
+  .btn-quick-booking {
+    width: 100%;
+    min-width: unset;
+    height: 52px;
+  }
+
+  .feature-item {
+    padding: var(--space-md);
+    gap: 14px;
+  }
+
+  .feature-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    min-width: 60px;
+  }
+
+  .feature-text h4 {
+    font-size: var(--font-size-h4); /* giữ nguyên */
+  }
+
+  .feature-text p {
+    font-size: 0.75rem; /* sửa từ --font-size-xs */
+  }
 }
 
-@media (max-width: 576px) {
-    .auth-container {
-        padding: var(--space-md) var(--space-sm);
-        background-position: 70% center;
-    }
-    .auth-card {
-        padding: var(--space-xl) var(--space-lg);
-        border-radius: var(--radius-lg);
-    }
-    .auth-card h2 {
-        font-size: var(--font-size-2xl);
-    }
-    .auth-subtitle {
-        font-size: var(--font-size-sm);
-        margin-bottom: var(--space-lg);
-    }
-    .form-group {
-        margin-bottom: var(--space-md);
-    }
-    .form-group label {
-        font-size: var(--font-size-sm);
-    }
-    .auth-input {
-        height: 54px;
-        padding: 0 var(--space-md);
-        border-radius: var(--radius-sm);
-        font-size: var(--font-size-sm);
-    }
-    .btn-user {
-        height: 54px;
-        border-radius: var(--radius-sm);
-        font-size: var(--font-size-sm);
-    }
-    .auth-footer {
-        margin-top: var(--space-lg);
-        font-size: var(--font-size-sm);
-    }
-}
+/* ----- 425px: Giữ 2 cột cho card ----- */
+@media (max-width: 425px) {
+  .cinema-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px;
+  }
 
-@media (max-width: 420px) {
-    .auth-container {
-        padding: var(--space-md);
-    }
-    .auth-card {
-        padding: var(--space-lg) var(--space-md);
-        border-radius: var(--radius-lg);
-    }
-    .auth-card h2 {
-        font-size: var(--font-size-xl);
-    }
-    .auth-subtitle {
-        font-size: var(--font-size-sm);
-    }
-    .auth-input {
-        height: 52px;
-        font-size: var(--font-size-sm);
-    }
-    .btn-user {
-        height: 52px;
-        font-size: var(--font-size-sm);
-    }
-    .remember-me,
-    .forgot-link,
-    .btn-link,
-    .auth-footer {
-        font-size: var(--font-size-sm);
-    }
+  .home-container {
+    padding: 0 16px var(--space-3xl);
+  }
+
+  .section-title {
+    font-size: var(--font-size-h4); /* sửa từ --font-size-lg */
+    padding-bottom: 4px;
+  }
+
+  .section-title::after {
+    height: 3px;
+  }
+
+  .btn-view-all {
+    padding: 6px 14px;
+    font-size: 0.75rem; /* sửa từ 11px */
+    gap: 4px;
+  }
+
+  .quick-booking-content {
+    padding: var(--space-md);
+    gap: 14px;
+  }
+
+  .quick-booking-selects {
+    gap: 14px;
+  }
+
+  .quick-booking-selects select {
+    height: 48px;
+    font-size: var(--font-size-base); /* sửa từ --font-size-sm */
+    padding: 0 14px;
+  }
+
+  .btn-quick-booking {
+    height: 48px;
+    font-size: var(--font-size-base); /* sửa từ --font-size-sm */
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .feature-item {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .feature-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+  }
+
+  .feature-text h4 {
+    font-size: var(--font-size-h4); /* giữ nguyên */
+  }
+
+  .feature-text p {
+    font-size: 0.75rem; /* sửa từ 11px */
+  }
 }

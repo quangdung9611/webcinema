@@ -11,8 +11,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.55);
-    animation: overlayFadeIn 0.3s ease;
+    background: var(--overlay-dark);
+    animation: overlayFadeIn var(--transition-normal) ease;
 }
 
 .loading-overlay-blur {
@@ -32,8 +32,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 20px;
-    padding: 20px;
+    gap: var(--space-xl);
+    padding: var(--space-xl);
 }
 
 /* 3. SPINNER DASH */
@@ -43,7 +43,7 @@
 
 .spinner-dash-circle {
     animation: dash 1.5s ease-in-out infinite;
-    stroke: var(--silver-primary); /* bạc sáng từ index.css */
+    stroke: var(--silver-primary);
     stroke-width: 4;
     stroke-linecap: round;
 }

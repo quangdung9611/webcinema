@@ -1,6 +1,5 @@
 /* ======================================================
-   CONFIRM SUCCESS PAGE - GOLD PREMIUM THEME
-   (Dùng biến từ index.css)
+   CONFIRM SUCCESS PAGE - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
 ====================================================== */
 
 .confirm-success-page {
@@ -55,12 +54,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 4px solid var(--gold-premium);
+    border: 4px solid var(--gold-primary);
     box-shadow: 0 0 20px rgba(201, 168, 76, 0.5), 0 0 60px rgba(201, 168, 76, 0.2);
 }
 
 .success-icon svg {
-    color: var(--gold-premium);
+    color: var(--gold-primary);
 }
 
 .success-top h1 {
@@ -77,7 +76,7 @@
 }
 
 .success-top p span {
-    color: var(--gold-premium-light);
+    color: var(--gold-light);
     font-weight: var(--fw-bold);
 }
 
@@ -86,14 +85,14 @@
     width: fit-content;
     padding: var(--space-sm) var(--space-xl);
     border-radius: var(--radius-round);
-    border: var(--border-gold);
+    border: var(--border-silver);
     font-weight: var(--fw-bold);
     color: var(--text-secondary);
     box-shadow: var(--cinema-card-shadow);
 }
 
 .order-badge span {
-    color: var(--gold-premium);
+    color: var(--gold-primary);
     margin-left: var(--space-xs);
 }
 
@@ -106,8 +105,8 @@
     display: flex;
     overflow: hidden;
     border-radius: var(--radius-xl);
-    border: var(--border-gold);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
+    border: var(--border-silver);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
     background: var(--cinema-card-bg);
 }
 
@@ -174,11 +173,11 @@
     align-items: center;
     gap: var(--space-md);
     padding-bottom: var(--space-md);
-    border-bottom: 1px solid var(--overlay-light);
+    border-bottom: var(--border-light);
 }
 
 .detail-row svg {
-    color: var(--gold-premium);
+    color: var(--gold-primary);
 }
 
 .label {
@@ -188,11 +187,11 @@
 
 .value {
     font-weight: var(--fw-semibold);
-    color: var(--text-white);
+    color: var(--text-body);
 }
 
 .seat-value {
-    color: var(--gold-premium-light);
+    color: var(--gold-light);
     font-weight: var(--fw-extrabold);
 }
 
@@ -211,7 +210,7 @@
 .dash-line {
     width: 2px;
     height: 90%;
-    border-left: 2px dashed var(--overlay-light);
+    border-left: 2px dashed rgba(255, 255, 255, 0.1);
 }
 
 .circle-top,
@@ -223,7 +222,7 @@
     border-radius: 50%;
     transform: translateX(-50%);
     background: var(--black-premium);
-    border: var(--border-gold);
+    border: var(--border-silver);
 }
 
 .circle-top {
@@ -246,7 +245,7 @@
     align-items: center;
     justify-content: center;
     background: rgba(255, 255, 255, 0.02);
-    border-left: 1px solid var(--overlay-light);
+    border-left: var(--border-light);
 }
 
 .pin-title {
@@ -261,11 +260,11 @@
     line-height: 1;
     margin-bottom: var(--space-lg);
     color: var(--gold-primary);
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-h3);
 }
 
 .qr-wrapper {
-    background: var(--white-premium);
+    background: var(--white-pure);
     padding: var(--space-sm);
     border-radius: var(--radius-md);
     box-shadow: var(--cinema-card-shadow);
@@ -276,7 +275,7 @@
     text-align: center;
     line-height: 1.5;
     color: var(--text-muted);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
 }
 
 /* ======================================================
@@ -288,7 +287,7 @@
     margin-top: var(--space-2xl);
     padding: var(--space-lg) var(--space-xl);
     border-radius: var(--radius-lg);
-    border: var(--border-gold);
+    border: var(--border-silver);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -305,17 +304,17 @@
 .email-left p {
     margin-bottom: var(--space-xs);
     color: var(--text-muted);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
 }
 
 .email-left h4 {
     font-weight: var(--fw-bold);
     letter-spacing: 0.5px;
-    color: var(--text-white);
+    color: var(--text-body);
 }
 
 .email-left svg {
-    color: var(--gold-premium);
+    color: var(--gold-primary);
 }
 
 /* ======================================================
@@ -339,7 +338,7 @@
     gap: var(--space-sm);
     font-weight: var(--fw-bold);
     cursor: pointer;
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
 }
 
 .success-actions button:hover {
@@ -353,7 +352,7 @@
 .print-time {
     margin-top: var(--space-lg);
     color: var(--text-muted);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
 }
 
 /* ======================================================
@@ -364,14 +363,14 @@
     background: var(--gold-gradient);
     color: var(--black-premium);
     border: 1px solid rgba(201, 168, 76, 0.45);
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--shadow-silver);
 }
 
 .download-btn {
     background: var(--gold-gradient);
     color: var(--black-premium);
     border: 1px solid rgba(201, 168, 76, 0.3);
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--shadow-silver);
 }
 
 .home-btn:hover,
@@ -381,7 +380,7 @@
 }
 
 /* ======================================================
-   RESPONSIVE (1200, 992, 768, 480)
+   RESPONSIVE
 ====================================================== */
 
 /* --- 1200px --- */
@@ -389,13 +388,11 @@
     .ticket-left {
         gap: var(--space-lg);
     }
-
     .poster-box img,
     .no-poster {
         width: 200px;
         min-height: 320px;
     }
-
     .ticket-right {
         width: 300px;
     }
@@ -406,41 +403,34 @@
     .cinema-ticket {
         flex-direction: column;
     }
-
     .ticket-divider {
         width: 100%;
         height: 42px;
         padding: 0 var(--space-xl);
     }
-
     .dash-line {
         width: 90%;
         height: 2px;
         border-left: none;
-        border-top: 2px dashed var(--overlay-light);
+        border-top: 2px dashed rgba(255, 255, 255, 0.1);
     }
-
     .circle-top,
     .circle-bottom {
         top: 50%;
         transform: translateY(-50%);
     }
-
     .circle-top {
         left: -18px;
     }
-
     .circle-bottom {
         left: auto;
         right: -18px;
     }
-
     .ticket-right {
         width: 100%;
         border-left: none;
-        border-top: 1px solid var(--overlay-light);
+        border-top: var(--border-light);
     }
-
     .ticket-left {
         flex-direction: row;
     }
@@ -454,53 +444,43 @@
         padding: var(--space-lg);
         gap: var(--space-md);
     }
-
     .ticket-info {
         width: 100%;
     }
-
     .ticket-info h2 {
         text-align: center;
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-h4);
         margin-bottom: var(--space-lg);
     }
-
     .poster-box img,
     .no-poster {
         width: 220px;
         min-height: 320px;
     }
-
     .ticket-right {
         padding: var(--space-lg);
     }
-
     .email-box {
         flex-direction: column;
         gap: var(--space-md);
         align-items: flex-start;
     }
-
     .success-actions {
         width: 100%;
         flex-direction: column;
         gap: var(--space-md);
     }
-
     .success-actions button {
         width: 100%;
         min-width: unset;
     }
-
     .detail-row {
         grid-template-columns: 22px 90px 1fr;
         gap: var(--space-sm);
     }
-
     .success-top h1 {
-        font-size: var(--font-size-2xl);
+        font-size: var(--font-size-h3);
     }
-
     .success-icon {
         width: 80px;
         height: 80px;
@@ -512,66 +492,52 @@
     .confirm-success-page {
         padding: var(--space-md) var(--space-sm);
     }
-
     .ticket-left {
         padding: var(--space-md);
     }
-
     .poster-box img,
     .no-poster {
         width: 160px;
         min-height: 240px;
     }
-
     .detail-row {
         grid-template-columns: 20px 70px 1fr;
         gap: var(--space-xs);
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-base);
     }
-
     .label {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-base);
     }
-
     .value {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-base);
     }
-
     .ticket-info h2 {
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-h5);
     }
-
     .ticket-right {
         padding: var(--space-md);
     }
-
     .pin-code {
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-h4);
     }
-
     .email-box {
         padding: var(--space-md);
     }
-
     .email-left h4 {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-base);
         word-break: break-all;
     }
-
     .success-actions button {
         padding: var(--space-md);
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-base);
     }
-
     .success-top h1 {
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-h4);
     }
-
     .order-badge {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-base);
         padding: var(--space-xs) var(--space-md);
     }
-
     .circle-top,
     .circle-bottom {
         width: 30px;
@@ -587,12 +553,10 @@
     body * {
         visibility: hidden;
     }
-
     .cinema-ticket,
     .cinema-ticket * {
         visibility: visible;
     }
-
     .cinema-ticket {
         position: absolute;
         top: 0;
@@ -601,20 +565,16 @@
         border: 1px solid #ccc;
         box-shadow: none;
     }
-
     .ticket-right {
         border-left: 1px solid #ccc;
     }
-
     .ticket-divider .dash-line {
         border-top: 2px dashed #ccc;
     }
-
     .circle-top,
     .circle-bottom {
         border: 1px solid #ccc;
     }
-
     .success-actions,
     .email-box,
     .order-badge,

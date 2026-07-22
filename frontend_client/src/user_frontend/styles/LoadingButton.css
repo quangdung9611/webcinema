@@ -1,4 +1,4 @@
-/* styles/LoadingButton.css - GOLD PREMIUM THEME
+/* styles/LoadingButton.css - SILVER EDITION
    (Dùng biến từ index.css)
 ========================================================= */
 
@@ -16,11 +16,11 @@
     color: var(--black-premium);
     background: var(--gold-gradient);
     cursor: pointer;
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
     min-width: 160px;
     min-height: 52px;
     font-family: inherit;
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--shadow-silver);
 }
 
 .loading-btn:hover:not(:disabled) {
@@ -34,9 +34,10 @@
 }
 
 .loading-btn.loading {
-    background: linear-gradient(135deg, #b8923a, #a07d2e); /* darker gold */
+    background: var(--gold-gradient);
     cursor: wait;
     gap: var(--space-sm);
+    filter: brightness(0.85);
 }
 
 /* =========================================
@@ -60,7 +61,7 @@
     border-radius: 50%;
     opacity: 0.9;
     transform-origin: center center;
-    background: var(--white-premium); /* màu chấm trắng nổi bật trên nền vàng */
+    background: var(--white-pure);
 }
 
 @keyframes spinCircle {
@@ -88,7 +89,7 @@
 @media (max-width: 480px) {
     .loading-btn {
         padding: var(--space-sm) var(--space-md);
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-base);
         min-height: 44px;
         min-width: 120px;
         gap: var(--space-sm);

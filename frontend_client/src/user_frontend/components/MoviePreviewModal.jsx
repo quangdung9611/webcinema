@@ -1,6 +1,7 @@
 import React, {
     useState,
     useEffect,
+    useLayoutEffect,
     useMemo,
     useRef
 } from "react";
@@ -8,18 +9,28 @@ import React, {
 import {
     X,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Star,
+    Clock,
+    Calendar,
+    Play,
+    Info
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
 
 import Modal from "./Modal";
-import MoviePreviewHero from "./MoviePreviewHero";
-
 import "../styles/MoviePreviewModal.css";
 import "../styles/Modal.css";
 
 const IMAGE_BASE_URL = "https://api.quangdungcinema.id.vn/uploads";
+
+const decodeHtmlEntities = (text) => {
+    if (!text) return '';
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = text;
+    return textarea.value;
+};
 
 const MoviePreviewModal = ({
     open,
@@ -30,24 +41,34 @@ const MoviePreviewModal = ({
 
     const navigate = useNavigate();
 
-    const VISIBLE_POSTERS = 6;
-    const HERO_DURATION = 650;
-
     const [selectedMovie, setSelectedMovie] = useState(defaultMovie);
     const [incomingMovie, setIncomingMovie] = useState(null);
     const [isHeroSliding, setIsHeroSliding] = useState(false);
     const [isCinematicTransition, setIsCinematicTransition] = useState(false);
-
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [sliderIndex, setSliderIndex] = useState(0);
-
     const [showTrailer, setShowTrailer] = useState(false);
-    
-    const [isSpotlightActive, setIsSpotlightActive] = useState(false);
 
     const scrollRef = useRef(null);
+    const sliderRef = useRef(null);
     const trackRef = useRef(null);
     const animationRef = useRef(null);
+
+    // === LỌC CÁC PHIM KHÁC (KHÔNG BAO GỒM PHIM ĐANG CHỌN) ===
+    const otherMovies = useMemo(() => {
+        return movies.filter(movie => movie.movie_id !== selectedMovie?.movie_id);
+    }, [movies, selectedMovie]);
+
+    // Cuộn lên đầu modal
+    useLayoutEffect(() => {
+        if (open && scrollRef.current) {
+            const timer = setTimeout(() => {
+                if (scrollRef.current) {
+                    scrollRef.current.scrollTop = 0;
+                }
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [open]);
 
     // Đồng bộ defaultMovie
     useEffect(() => {
@@ -60,37 +81,32 @@ const MoviePreviewModal = ({
 
     useEffect(() => {
         if (open && defaultMovie) {
-            setIsSpotlightActive(false);
             setIsCinematicTransition(true);
-            
-            setTimeout(() => {
-                setIsSpotlightActive(true);
-            }, 50);
-
             setTimeout(() => {
                 setIsCinematicTransition(false);
             }, 1500);
         }
     }, [open, defaultMovie]);
 
+    // Khi selectedMovie thay đổi, cuộn đến card tương ứng trong danh sách otherMovies
     useEffect(() => {
-        if (!selectedMovie) return;
-        const index = movies.findIndex(
+        if (!selectedMovie || !sliderRef.current || otherMovies.length === 0) return;
+        
+        const index = otherMovies.findIndex(
             movie => movie.movie_id === selectedMovie.movie_id
         );
         if (index === -1) return;
         setCurrentIndex(index);
-        if (index >= VISIBLE_POSTERS) {
-            setSliderIndex(index - VISIBLE_POSTERS + 1);
-        } else {
-            setSliderIndex(0);
-        }
-    }, [selectedMovie, movies]);
 
-    useEffect(() => {
-        if (!trackRef.current) return;
-        trackRef.current.style.setProperty("--slider-index", sliderIndex);
-    }, [sliderIndex]);
+        const container = sliderRef.current;
+        requestAnimationFrame(() => {
+            const cardWidth = container.querySelector('.preview-strip-card')?.offsetWidth || 0;
+            const gap = window.innerWidth <= 768 ? 12 : 16;
+            const cardsPerView = window.innerWidth <= 768 ? 2 : 4;
+            const scrollAmount = Math.floor(index / cardsPerView) * (cardWidth + gap) * cardsPerView;
+            container.scrollTo({ left: scrollAmount, behavior: 'smooth' });
+        });
+    }, [selectedMovie, otherMovies]);
 
     useEffect(() => {
         if (!open) return;
@@ -117,16 +133,6 @@ const MoviePreviewModal = ({
 
         setIsCinematicTransition(true);
 
-        const index = movies.findIndex(item => item.movie_id === movie.movie_id);
-        if (index !== -1) {
-            setCurrentIndex(index);
-            if (index < sliderIndex) {
-                setSliderIndex(index);
-            } else if (index >= sliderIndex + VISIBLE_POSTERS) {
-                setSliderIndex(index - VISIBLE_POSTERS + 1);
-            }
-        }
-
         setIncomingMovie(movie);
         setIsHeroSliding(true);
 
@@ -140,7 +146,7 @@ const MoviePreviewModal = ({
             setTimeout(() => {
                 setIsCinematicTransition(false);
             }, 300);
-        }, HERO_DURATION);
+        }, 650);
     };
 
     const handleBooking = (movie) => {
@@ -160,13 +166,61 @@ const MoviePreviewModal = ({
         );
     };
 
-    const prevMovie = () => {
-        setSliderIndex(prev => Math.max(prev - 1, 0));
+    const getCardsPerView = () => {
+        if (window.innerWidth <= 768) return 2;
+        return 4;
     };
 
-    const nextMovie = () => {
-        const maxIndex = Math.max(movies.length - VISIBLE_POSTERS, 0);
-        setSliderIndex(prev => Math.min(prev + 1, maxIndex));
+    // === NÚT ĐIỀU HƯỚNG VÔ HẠN (LOOP) ===
+    const scrollLeft = () => {
+        const container = sliderRef.current;
+        if (!container) return;
+        
+        const firstCard = container.querySelector('.preview-strip-card');
+        if (!firstCard) return;
+        
+        const cardWidth = firstCard.offsetWidth;
+        const gap = window.innerWidth <= 768 ? 12 : 16;
+        const cardsPerView = getCardsPerView();
+        const scrollAmount = (cardWidth + gap) * cardsPerView;
+        
+        const currentScroll = container.scrollLeft;
+        const maxScroll = container.scrollWidth - container.clientWidth;
+
+        // Nếu không có đủ card để cuộn (1 hoặc 0), thì không làm gì
+        if (maxScroll === 0) return;
+
+        if (currentScroll <= 0) {
+            container.scrollTo({ left: maxScroll, behavior: 'smooth' });
+        } else {
+            const newScroll = Math.max(0, currentScroll - scrollAmount);
+            container.scrollTo({ left: newScroll, behavior: 'smooth' });
+        }
+    };
+
+    const scrollRight = () => {
+        const container = sliderRef.current;
+        if (!container) return;
+        
+        const firstCard = container.querySelector('.preview-strip-card');
+        if (!firstCard) return;
+        
+        const cardWidth = firstCard.offsetWidth;
+        const gap = window.innerWidth <= 768 ? 12 : 16;
+        const cardsPerView = getCardsPerView();
+        const scrollAmount = (cardWidth + gap) * cardsPerView;
+        
+        const currentScroll = container.scrollLeft;
+        const maxScroll = container.scrollWidth - container.clientWidth;
+
+        if (maxScroll === 0) return;
+
+        if (currentScroll >= maxScroll) {
+            container.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+            const newScroll = Math.min(maxScroll, currentScroll + scrollAmount);
+            container.scrollTo({ left: newScroll, behavior: 'smooth' });
+        }
     };
 
     const getYoutubeID = (url) => {
@@ -180,7 +234,31 @@ const MoviePreviewModal = ({
         return getYoutubeID(selectedMovie?.trailer_url);
     }, [selectedMovie]);
 
-    // Chỉ return null khi cả open và selectedMovie đều không có
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN', {
+            day: 'numeric',
+            month: 'numeric',
+            year: 'numeric'
+        });
+    };
+
+    const formatRuntime = (minutes) => {
+        if (!minutes) return '';
+        return `${minutes} phút`;
+    };
+
+    const cleanText = (text) => {
+        if (!text) return 'Đang cập nhật';
+        return decodeHtmlEntities(text);
+    };
+
+    const getDescriptionText = () => {
+        if (!selectedMovie?.description) return 'Đang cập nhật...';
+        return decodeHtmlEntities(selectedMovie.description);
+    };
+
     if (!selectedMovie && !open) return null;
 
     return (
@@ -193,6 +271,12 @@ const MoviePreviewModal = ({
                 title=""
             >
                 <div className="preview-scroll-wrapper" ref={scrollRef}>
+                    
+                    <button className="preview-close-btn" onClick={onClose}>
+                        <X size={24} />
+                    </button>
+
+                    {/* BANNER HERO */}
                     <div className="preview-hero-stage">
                         <div
                             className={`preview-hero-layer current ${
@@ -201,11 +285,13 @@ const MoviePreviewModal = ({
                                 isCinematicTransition ? "cinematic-transition" : ""
                             }`}
                         >
-                            <MoviePreviewHero
-                                movie={selectedMovie}
-                                onBook={handleBooking}
-                                onTrailer={() => setShowTrailer(true)}
-                            />
+                            <div className="cinema-hero-banner">
+                                <img
+                                    src={`${IMAGE_BASE_URL}/backdrops/${selectedMovie?.backdrop_url || selectedMovie?.poster_url}`}
+                                    alt={selectedMovie?.title}
+                                    className="banner-horizontal-img"
+                                />
+                            </div>
                         </div>
 
                         {incomingMovie && (
@@ -214,33 +300,132 @@ const MoviePreviewModal = ({
                                     isHeroSliding ? "hero-slide-in" : ""
                                 }`}
                             >
-                                <MoviePreviewHero
-                                    movie={incomingMovie}
-                                    onBook={handleBooking}
-                                    onTrailer={() => setShowTrailer(true)}
-                                />
+                                <div className="cinema-hero-banner">
+                                    <img
+                                        src={`${IMAGE_BASE_URL}/backdrops/${incomingMovie.backdrop_url || incomingMovie.poster_url}`}
+                                        alt={incomingMovie.title}
+                                        className="banner-horizontal-img"
+                                    />
+                                </div>
                             </div>
                         )}
                     </div>
 
+                    {/* INFO SECTION */}
+                    <div className="preview-info-section">
+                        <div className="preview-info-content">
+                            <div className="preview-info-row">
+                                <div className="preview-poster-wrapper">
+                                    <img
+                                        src={`${IMAGE_BASE_URL}/posters/${selectedMovie?.poster_url}`}
+                                        alt={selectedMovie?.title}
+                                        className="preview-poster-img"
+                                    />
+                                </div>
+
+                                <div className="preview-info-details">
+                                    <h2>
+                                        {selectedMovie?.title}
+                                        {selectedMovie?.age_rating && (
+                                            <span className="age-badge">
+                                                {selectedMovie.age_rating}
+                                            </span>
+                                        )}
+                                    </h2>
+
+                                    <div className="preview-meta-row">
+                                        {selectedMovie?.rating && (
+                                            <span className="preview-rating">
+                                                <Star size={14} />
+                                                {selectedMovie.rating}
+                                            </span>
+                                        )}
+                                        <span className="preview-meta-item">
+                                            <Clock size={16} className="icon" />
+                                            {formatRuntime(selectedMovie?.runtime)}
+                                        </span>
+                                        <span className="preview-meta-divider" />
+                                        <span className="preview-meta-item">
+                                            <Calendar size={16} className="icon" />
+                                            {formatDate(selectedMovie?.release_date)}
+                                        </span>
+                                        <span className="preview-meta-divider" />
+                                        <span className="preview-meta-item">
+                                            {cleanText(selectedMovie?.genre)}
+                                        </span>
+                                    </div>
+
+                                    <div className="preview-description-wrapper">
+                                        <div 
+                                            className="preview-description-scroll"
+                                            dangerouslySetInnerHTML={{ __html: getDescriptionText() }}
+                                        />
+                                    </div>
+
+                                    <div className="preview-details">
+                                        <div className="preview-detail">
+                                            <span className="preview-detail-label">Đạo diễn</span>
+                                            <span className="preview-detail-value">
+                                                {cleanText(selectedMovie?.director)}
+                                            </span>
+                                        </div>
+                                        <div className="preview-detail">
+                                            <span className="preview-detail-label">Diễn viên</span>
+                                            <span className="preview-detail-value">
+                                                {cleanText(selectedMovie?.cast)}
+                                            </span>
+                                        </div>
+                                        <div className="preview-detail">
+                                            <span className="preview-detail-label">Thể loại</span>
+                                            <span className="preview-detail-value">
+                                                {cleanText(selectedMovie?.genre)}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="preview-actions">
+                                        <button
+                                            className="preview-btn-primary"
+                                            onClick={() => handleBooking(selectedMovie)}
+                                        >
+                                            <Play size={18} />
+                                            Đặt vé ngay
+                                        </button>
+                                        <button
+                                            className="preview-btn-secondary"
+                                            onClick={() => navigate(`/movies/detail/${selectedMovie?.slug}`)}
+                                        >
+                                            <Info size={18} />
+                                            Xem chi tiết
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* MOVIE STRIP - SLIDER (chỉ hiển thị các phim khác) */}
                     <div className="preview-movie-strip">
                         <div className="preview-strip-header">
-                            <h2 className="preview-strip-title">PHIM ĐANG CHIẾU</h2>
-                            <p className="preview-strip-subtitle">Chọn phim để xem nhanh thông tin</p>
+                            <h2 className="preview-strip-title">
+                                PHIM ĐANG CHIẾU
+                            </h2>
+                            <p className="preview-strip-subtitle">
+                                Chọn phim để xem nhanh thông tin
+                            </p>
                         </div>
 
                         <div className="preview-strip-wrapper">
                             <button
                                 className="preview-slider-btn preview-slider-left"
-                                onClick={prevMovie}
-                                disabled={sliderIndex === 0}
+                                onClick={scrollLeft}
                             >
                                 <ChevronLeft size={26} />
                             </button>
 
-                            <div className="preview-strip-slider">
-                                <div ref={trackRef} className="preview-strip-track">
-                                    {movies.map((movie) => {
+                            <div className="preview-strip-slider" ref={sliderRef}>
+                                <div className="preview-strip-track" ref={trackRef}>
+                                    {otherMovies.map((movie) => {
                                         const active = selectedMovie && selectedMovie.movie_id === movie.movie_id;
                                         const posterSrc = `${IMAGE_BASE_URL}/posters/${movie.poster_url}`;
                                         return (
@@ -270,18 +455,17 @@ const MoviePreviewModal = ({
 
                             <button
                                 className="preview-slider-btn preview-slider-right"
-                                onClick={nextMovie}
-                                disabled={
-                                    sliderIndex >= Math.max(movies.length - VISIBLE_POSTERS, 0)
-                                }
+                                onClick={scrollRight}
                             >
                                 <ChevronRight size={26} />
                             </button>
                         </div>
                     </div>
+
                 </div>
             </Modal>
 
+            {/* Trailer Modal */}
             {showTrailer && videoId && (
                 <div
                     className="preview-trailer-overlay"

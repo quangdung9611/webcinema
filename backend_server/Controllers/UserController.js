@@ -216,6 +216,40 @@ exports.updateUserProfile = async (req, res) => {
 };
 
 /*=========================================================
+    USER - UPLOAD AVATAR (MỚI)
+=========================================================*/
+
+exports.uploadAvatar = async (req, res) => {
+    try {
+        // Kiểm tra file từ multer
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "Vui lòng chọn file ảnh"
+            });
+        }
+
+        // Gọi service xử lý upload và cập nhật DB
+        const avatarUrl = await UserService.updateAvatar(
+            req.user.user_id,
+            req.file
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Cập nhật ảnh đại diện thành công",
+            data: { avatar: avatarUrl }
+        });
+    } catch (err) {
+        console.error("Upload Avatar Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
     USER - GET MY BOOKINGS
 =========================================================*/
 

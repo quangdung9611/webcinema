@@ -1,6 +1,5 @@
 /* =========================================================
-   COUNTDOWN TIMER - GOLD PREMIUM THEME
-   (Dùng biến từ index.css)
+   COUNTDOWN TIMER - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
 ========================================================= */
 
 .countdown-wrapper {
@@ -12,8 +11,8 @@
     padding: var(--space-md) var(--space-lg);
     border-radius: var(--radius-lg);
     background: var(--cinema-card-bg);
-    border: var(--border-gold);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
+    border: var(--border-silver);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(12px);
@@ -46,7 +45,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--gold-premium);
+    color: var(--gold-primary);
     background: linear-gradient(135deg, rgba(201, 168, 76, 0.22), rgba(184, 146, 58, 0.12));
     border: 1px solid rgba(201, 168, 76, 0.16);
     box-shadow: 0 0 18px rgba(201, 168, 76, 0.18), inset 0 0 10px rgba(201, 168, 76, 0.08);
@@ -63,7 +62,7 @@
 
 .countdown-label {
     margin: 0 0 var(--space-xs);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     letter-spacing: 1.5px;
     color: var(--text-muted);
@@ -71,15 +70,15 @@
 }
 
 .countdown-time {
-    font-size: var(--font-size-3xl);
+    font-size: var(--font-size-h2);
     font-weight: var(--fw-black);
     line-height: 1;
     color: var(--gold-primary);
-    text-shadow: var(--shadow-gold);
+    text-shadow: var(--shadow-silver);
 }
 
 /* =========================================================
-   RESPONSIVE (1200, 992, 768, 480)
+   RESPONSIVE
 ========================================================= */
 
 /* --- 1200px --- */
@@ -88,7 +87,7 @@
         padding: var(--space-md) var(--space-lg);
     }
     .countdown-time {
-        font-size: var(--font-size-2xl);
+        font-size: var(--font-size-h3);
     }
 }
 
@@ -102,7 +101,7 @@
         height: 52px;
     }
     .countdown-time {
-        font-size: var(--font-size-2xl);
+        font-size: var(--font-size-h3);
     }
 }
 
@@ -119,10 +118,10 @@
         border-radius: var(--radius-sm);
     }
     .countdown-time {
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-h4);
     }
     .countdown-label {
-        font-size: var(--font-size-xs);
+        font-size: var(--font-size-base);
     }
 }
 
@@ -133,11 +132,11 @@
         gap: var(--space-sm);
     }
     .countdown-label {
-        font-size: var(--font-size-xs);
+        font-size: var(--font-size-base);
         letter-spacing: 1px;
     }
     .countdown-time {
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-h5);
     }
     .countdown-icon {
         width: 44px;

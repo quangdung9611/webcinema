@@ -1,32 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
-import LoadingButton from '../components/LoadingButton'; // ✅ Import LoadingButton
-import { QRCodeCanvas } from 'qrcode.react'; 
+import LoadingButton from '../components/LoadingButton';
+import { QRCodeCanvas } from 'qrcode.react';
 import '../styles/Profile.css';
-import { 
-    User, ClipboardList, Bell, Pencil, ShieldCheck, Star, Info, 
-    ChevronRight, Camera, Calendar, Clock, MapPin, ReceiptText, Armchair, Trash2 
+import {
+    User, ClipboardList, Bell, Pencil, ShieldCheck, Star, Info,
+    ChevronRight, Camera, Calendar, Clock, MapPin, ReceiptText, Armchair, Trash2
 } from 'lucide-react';
 
 const Profile = () => {
     const { user, checkAuth } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [loadingClear, setLoadingClear] = useState(false); // ✅ Thêm state loading cho xóa
-    
-    const [formData, setFormData] = useState({ 
-        full_name: '', email: '', phone: '', address: '', username: '', points: 0 
+    const [loadingClear, setLoadingClear] = useState(false);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false); // loading upload avatar
+
+    const [formData, setFormData] = useState({
+        full_name: '',
+        email: '',
+        phone: '',
+        address: '',
+        username: '',
+        points: 0,
+        avatar: '' // thêm avatar
     });
-    
+
     const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
     const [modal, setModal] = useState({ show: false, type: '', title: '', message: '', onConfirm: null });
     const [activeTab, setActiveTab] = useState('orders');
 
     const [bookingHistory, setBookingHistory] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
+
+    // Ref cho input file ẩn
+    const fileInputRef = useRef(null);
+    const [avatarPreview, setAvatarPreview] = useState(''); // preview URL
 
     // Hàm fetch lịch sử giao dịch
     const fetchHistory = async () => {
@@ -55,46 +66,47 @@ const Profile = () => {
                 phone: user.phone || '',
                 address: user.address || '',
                 username: user.username || '',
-                points: user.points || 0
+                points: user.points || 0,
+                avatar: user.avatar || '' // lấy avatar từ user
             });
         }
     }, [user]);
 
     // --- HÀM XỬ LÝ XÓA LỊCH SỬ ---
     const handleClearHistory = async () => {
-        setLoadingClear(true); // ✅ Bật loading
+        setLoadingClear(true);
         try {
             const res = await axios.post('https://api.quangdungcinema.id.vn/api/users/clear-history', {}, { withCredentials: true });
-            
-            if (res.data.success) {
-                setBookingHistory([]); 
-                setFormData(prev => ({ 
-                    ...prev, 
-                    points: 0 
-                })); 
 
-                setModal({ 
-                    show: true, 
-                    type: 'success', 
-                    title: 'Thành công', 
+            if (res.data.success) {
+                setBookingHistory([]);
+                setFormData(prev => ({
+                    ...prev,
+                    points: 0
+                }));
+
+                setModal({
+                    show: true,
+                    type: 'success',
+                    title: 'Thành công',
                     message: 'Đã xóa sạch lịch sử và điểm thưởng!',
                     onConfirm: () => {
                         setModal(prev => ({ ...prev, show: false }));
-                        checkAuth(); 
+                        checkAuth();
                     }
                 });
             }
         } catch (error) {
             console.error("Lỗi xóa:", error);
-            setModal({ 
-                show: true, 
-                type: 'error', 
-                title: 'Lỗi', 
+            setModal({
+                show: true,
+                type: 'error',
+                title: 'Lỗi',
                 message: 'Không thể xóa lịch sử lúc này.',
                 onConfirm: () => setModal(prev => ({ ...prev, show: false }))
             });
         } finally {
-            setLoadingClear(false); // ✅ Tắt loading
+            setLoadingClear(false);
         }
     };
 
@@ -108,30 +120,146 @@ const Profile = () => {
         });
     };
 
+    // --- HÀM XỬ LÝ UPLOAD AVATAR ---
+    const openFileSelector = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleAvatarChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Kiểm tra định dạng
+        if (!file.type.startsWith('image/')) {
+            setModal({
+                show: true,
+                type: 'error',
+                title: 'Sai định dạng',
+                message: 'Vui lòng chọn file ảnh.',
+                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
+            });
+            return;
+        }
+
+        // Kiểm tra kích thước (tối đa 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            setModal({
+                show: true,
+                type: 'error',
+                title: 'Kích thước quá lớn',
+                message: 'Ảnh không được vượt quá 5MB.',
+                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
+            });
+            return;
+        }
+
+        // Tạo preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setAvatarPreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+
+        // Upload lên server
+        setUploadingAvatar(true);
+        const formDataUpload = new FormData();
+        formDataUpload.append('avatar', file);
+
+        try {
+            const res = await axios.post(
+                'https://api.quangdungcinema.id.vn/api/users/avatar',
+                formDataUpload,
+                {
+                    withCredentials: true,
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                }
+            );
+
+            if (res.data.success) {
+                // Cập nhật state local
+                setFormData(prev => ({ ...prev, avatar: res.data.data.avatar }));
+                // Refresh user context để cập nhật header
+                await checkAuth();
+                setModal({
+                    show: true,
+                    type: 'success',
+                    title: 'Thành công',
+                    message: 'Đã cập nhật ảnh đại diện!',
+                    onConfirm: () => setModal(prev => ({ ...prev, show: false }))
+                });
+                // Xóa preview sau khi thành công
+                setAvatarPreview('');
+            }
+        } catch (error) {
+            console.error('Upload avatar error:', error);
+            setModal({
+                show: true,
+                type: 'error',
+                title: 'Lỗi',
+                message: error.response?.data?.message || 'Không thể tải ảnh lên.',
+                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
+            });
+            // Xóa preview nếu thất bại
+            setAvatarPreview('');
+        } finally {
+            setUploadingAvatar(false);
+            // Reset input để có thể chọn cùng file lần sau
+            e.target.value = '';
+        }
+    };
+
+    // --- XỬ LÝ FORM ---
     const handleInput = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handlePass = (e) => setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (passwordData.newPassword && passwordData.newPassword !== passwordData.confirmPassword) {
-            return setModal({ show: true, type: 'error', title: 'Lỗi', message: 'Mật khẩu xác nhận không khớp!', onConfirm: () => setModal({ ...modal, show: false }) });
+            return setModal({
+                show: true,
+                type: 'error',
+                title: 'Lỗi',
+                message: 'Mật khẩu xác nhận không khớp!',
+                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
+            });
         }
         setLoading(true);
         try {
-            await axios.put('https://api.quangdungcinema.id.vn/api/users/profile/update', 
-                { ...formData, ...passwordData }, { withCredentials: true });
-            setModal({ show: true, type: 'success', title: 'Thành công', message: 'Hồ sơ đã được cập nhật!', onConfirm: () => setModal({ ...modal, show: false }) });
+            // Gọi API update profile (đúng endpoint PUT /api/users/profile)
+            await axios.put(
+                'https://api.quangdungcinema.id.vn/api/users/profile',
+                { ...formData, ...passwordData },
+                { withCredentials: true }
+            );
+            setModal({
+                show: true,
+                type: 'success',
+                title: 'Thành công',
+                message: 'Hồ sơ đã được cập nhật!',
+                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
+            });
             setIsEditing(false);
             setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
-            await checkAuth(); 
+            await checkAuth();
         } catch (error) {
-            setModal({ show: true, type: 'error', title: 'Thất bại', message: error.response?.data?.error || 'Có lỗi xảy ra!', onConfirm: () => setModal({ ...modal, show: false }) });
+            setModal({
+                show: true,
+                type: 'error',
+                title: 'Thất bại',
+                message: error.response?.data?.message || 'Có lỗi xảy ra!',
+                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
+            });
         } finally {
             setLoading(false);
         }
     };
 
     if (!user) return <div className="loader">Đang tải...</div>;
+
+    // Lấy URL avatar (ưu tiên preview, sau đó từ formData.avatar)
+    const avatarUrl = avatarPreview || (formData.avatar ? `https://api.quangdungcinema.id.vn/uploads/avatars/${formData.avatar}` : '');
 
     return (
         <div className="galaxy-profile-wrapper">
@@ -140,9 +268,24 @@ const Profile = () => {
                     {/* SIDEBAR BÊN TRÁI */}
                     <aside className="galaxy-sidebar">
                         <div className="user-card-top">
-                            <div className="avatar-wrapper">
-                                <div className="avatar-main">{formData.full_name?.charAt(0).toUpperCase()}</div>
-                                <div className="camera-icon"><Camera size={14} /></div>
+                            <div className="avatar-wrapper" onClick={openFileSelector} style={{ cursor: 'pointer' }}>
+                                {avatarUrl ? (
+                                    <img
+                                        src={avatarUrl}
+                                        alt="avatar"
+                                        className="avatar-img"
+                                        style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                                    />
+                                ) : (
+                                    <div className="avatar-main">{formData.full_name?.charAt(0).toUpperCase()}</div>
+                                )}
+                                <div className="camera-icon">
+                                    {uploadingAvatar ? (
+                                        <span className="spinner-small"></span>
+                                    ) : (
+                                        <Camera size={14} />
+                                    )}
+                                </div>
                             </div>
                             <div className="user-titles">
                                 <h3>{formData.full_name}</h3>
@@ -163,7 +306,7 @@ const Profile = () => {
 
                         <div className="star-progress-container">
                             <div className="progress-bar-track">
-                                <div className="progress-fill" style={{width: `${Math.min((formData.points / 4000000) * 100, 100)}%`}}></div>
+                                <div className="progress-fill" style={{ width: `${Math.min((formData.points / 4000000) * 100, 100)}%` }}></div>
                                 <div className="dot d-0 active"></div>
                                 <div className="dot d-2"></div>
                                 <div className="dot d-4"></div>
@@ -176,8 +319,8 @@ const Profile = () => {
                         </div>
 
                         <nav className="galaxy-nav-menu">
-                            <div className="nav-link">HOTLINE: 19002224 <ChevronRight size={16}/></div>
-                            <div className="nav-link">Email: hotro@galaxystudio.vn <ChevronRight size={16}/></div>
+                            <div className="nav-link">HOTLINE: 19002224 <ChevronRight size={16} /></div>
+                            <div className="nav-link">Email: hotro@galaxystudio.vn <ChevronRight size={16} /></div>
                         </nav>
                     </aside>
 
@@ -217,7 +360,7 @@ const Profile = () => {
 
                                     {isEditing && (
                                         <div className="password-change-section">
-                                            <h4><ShieldCheck size={18}/> Đổi mật khẩu</h4>
+                                            <h4><ShieldCheck size={18} /> Đổi mật khẩu</h4>
                                             <div className="form-grid-2col">
                                                 <input type="password" name="oldPassword" placeholder="Mật khẩu cũ" onChange={handlePass} />
                                                 <input type="password" name="newPassword" placeholder="Mật khẩu mới" onChange={handlePass} />
@@ -232,7 +375,6 @@ const Profile = () => {
                                         ) : (
                                             <>
                                                 <button type="button" className="btn-cancel" onClick={() => setIsEditing(false)}>Hủy</button>
-                                                {/* ✅ THAY NÚT CẬP NHẬT BẰNG LOADINGBUTTON */}
                                                 <LoadingButton
                                                     type="submit"
                                                     loading={loading}
@@ -249,7 +391,6 @@ const Profile = () => {
                                 </form>
                             ) : (
                                 <div className="history-tab-content">
-                                    {/* NÚT XÓA LỊCH SỬ - DÙNG LOADINGBUTTON */}
                                     {bookingHistory.length > 0 && (
                                         <div className="history-action-bar" style={{ textAlign: 'right', marginBottom: '15px' }}>
                                             <LoadingButton
@@ -260,14 +401,14 @@ const Profile = () => {
                                                 disabled={loadingClear}
                                                 className="btn-clear-history"
                                                 spinnerColor="#ffffff"
-                                                style={{ 
-                                                    display: 'inline-flex', 
-                                                    alignItems: 'center', 
-                                                    gap: '5px', 
-                                                    background: '#ff4d4f', 
-                                                    border: 'none', 
-                                                    color: '#fff', 
-                                                    cursor: 'pointer', 
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '5px',
+                                                    background: '#ff4d4f',
+                                                    border: 'none',
+                                                    color: '#fff',
+                                                    cursor: 'pointer',
                                                     fontSize: '14px',
                                                     padding: '8px 16px',
                                                     borderRadius: '6px'
@@ -287,7 +428,7 @@ const Profile = () => {
                                                     <div className="ticket-thumb">
                                                         <img src={item.moviePoster?.startsWith('http') ? item.moviePoster : `https://api.quangdungcinema.id.vn/uploads/posters/${item.moviePoster}`} alt="poster" />
                                                     </div>
-                                                    
+
                                                     <div className="ticket-main-info">
                                                         <h4 className="movie-title-history">{item.movieTitle}</h4>
                                                         <div className="info-row">
@@ -295,17 +436,17 @@ const Profile = () => {
                                                             <span>Ngày đặt: <strong>{item.bookingDateFull}</strong></span>
                                                         </div>
                                                         <div className="info-row">
-                                                            <MapPin size={14}/> 
+                                                            <MapPin size={14} />
                                                             <span>{item.cinemaName} | {item.roomName}</span>
                                                         </div>
                                                         <div className="info-row highlight">
-                                                            <Calendar size={14}/> 
+                                                            <Calendar size={14} />
                                                             <span>{item.selectedDate}</span>
-                                                            <Clock size={14} style={{marginLeft: '15px'}}/> 
+                                                            <Clock size={14} style={{ marginLeft: '15px' }} />
                                                             <span>{item.startTime}</span>
                                                         </div>
                                                         <div className="seat-text">
-                                                            <Armchair size={14} /> 
+                                                            <Armchair size={14} />
                                                             <span><strong>{item.seatDisplay}</strong></span>
                                                         </div>
                                                         <p className="price-text">Tổng tiền: <span>{Number(item.total_amount).toLocaleString()} đ</span></p>
@@ -337,12 +478,21 @@ const Profile = () => {
                 </div>
             </div>
 
-            <Modal 
-                show={modal.show} 
-                type={modal.type} 
-                title={modal.title} 
-                message={modal.message} 
-                onConfirm={modal.onConfirm || (() => setModal({ ...modal, show: false }))} 
+            {/* Input file ẩn */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleAvatarChange}
+            />
+
+            <Modal
+                show={modal.show}
+                type={modal.type}
+                title={modal.title}
+                message={modal.message}
+                onConfirm={modal.onConfirm || (() => setModal(prev => ({ ...prev, show: false })))}
             />
         </div>
     );

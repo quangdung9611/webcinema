@@ -1,19 +1,15 @@
 /* =========================================================
-   BOOKING SIDEBAR - CINEMA GOLD THEME
-   Sử dụng biến từ index.css
+   BOOKING SIDEBAR - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
 ========================================================= */
 
 .ticket-sidebar {
     width: 340px;
     flex-shrink: 0;
-
     position: sticky;
     top: 20px;
-
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
-
     height: fit-content;
 }
 
@@ -23,26 +19,18 @@
 
 .poster-container {
     width: 100%;
-
     overflow: hidden;
     border-radius: var(--radius-xl);
-
     background: var(--cinema-card-bg);
-
-    border: var(--border-gold);
-
-    box-shadow:
-        0 0 25px rgba(201, 168, 76, 0.08),
-        var(--cinema-card-shadow);
+    border: var(--border-silver);
+    box-shadow: 0 0 25px rgba(201, 168, 76, 0.08), var(--cinema-card-shadow);
 }
 
 .poster-container img {
     width: 100%;
     aspect-ratio: 2 / 3;
-
     object-fit: cover;
     display: block;
-
     transition: transform var(--transition-normal);
 }
 
@@ -56,23 +44,14 @@
 
 .ticket-details {
     padding: var(--space-lg);
-
     border-radius: var(--radius-xl);
-
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
-
     background: var(--cinema-card-bg);
-
     backdrop-filter: blur(14px);
-
-    border: var(--border-gold);
-
-    box-shadow:
-        0 0 25px rgba(201, 168, 76, 0.08),
-        inset 0 0 20px rgba(201, 168, 76, 0.04),
-        var(--cinema-card-shadow);
+    border: var(--border-silver);
+    box-shadow: 0 0 25px rgba(201, 168, 76, 0.08), inset 0 0 20px rgba(201, 168, 76, 0.04), var(--cinema-card-shadow);
 }
 
 /* =========================================================
@@ -81,20 +60,14 @@
 
 .movie-name {
     margin: 0;
-
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h4);
     font-weight: var(--fw-extrabold);
-
     line-height: 1.5;
-
     text-transform: uppercase;
     text-align: center;
-
     color: var(--gold-primary);
-
     padding-bottom: var(--space-md);
-
-    border-bottom: var(--border-gold);
+    border-bottom: var(--border-silver);
 }
 
 /* =========================================================
@@ -105,11 +78,8 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-
     gap: var(--space-sm);
-
     padding-bottom: var(--space-sm);
-
     border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
@@ -119,20 +89,18 @@
 
 .detail-item span {
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
 }
 
 .detail-item strong {
-    color: var(--text-white);
-
+    color: var(--text-body);
     text-align: right;
-
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     font-weight: var(--fw-semibold);
 }
 
 .seats-list {
-    color: var(--gold-premium-light);
+    color: var(--gold-light);
 }
 
 /* =========================================================
@@ -142,9 +110,7 @@
 .food-selected-box {
     margin-top: var(--space-xs);
     padding-top: var(--space-md);
-
-    border-top: var(--border-gold);
-
+    border-top: var(--border-silver);
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
@@ -152,29 +118,22 @@
 
 .food-selected-title {
     margin: 0;
-
-    color: var(--gold-premium);
-
-    font-size: var(--font-size-xs);
-
+    color: var(--gold-primary);
+    font-size: var(--font-size-base);
     letter-spacing: 2px;
-
     text-transform: uppercase;
 }
 
 .food-selected-item {
     display: flex;
     justify-content: space-between;
-
     gap: var(--space-sm);
-
     color: var(--text-secondary);
-
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
 }
 
 .food-selected-item strong {
-    color: var(--gold-premium-light);
+    color: var(--gold-light);
 }
 
 /* =========================================================
@@ -184,9 +143,7 @@
 .total-price-box {
     margin-top: var(--space-xs);
     padding-top: var(--space-md);
-
-    border-top: var(--border-gold);
-
+    border-top: var(--border-silver);
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
@@ -195,48 +152,35 @@
 .price-row {
     display: flex;
     justify-content: space-between;
-
     color: var(--text-secondary);
-
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
 }
 
 .price-row strong {
-    color: var(--text-white);
+    color: var(--text-body);
 }
 
 .grand-total {
     margin-top: var(--space-sm);
     padding-top: var(--space-md);
-
     text-align: center;
-
     border-top: 1px dashed rgba(255, 255, 255, 0.12);
 }
 
 .grand-total p {
     margin: 0 0 var(--space-sm);
-
     color: var(--text-muted);
-
     letter-spacing: 2px;
-
-    font-size: var(--font-size-xs);
-
+    font-size: var(--font-size-base);
     text-transform: uppercase;
 }
 
 .grand-total h3 {
     margin: 0;
-
-    font-size: var(--font-size-3xl);
+    font-size: var(--font-size-h2);
     font-weight: var(--fw-black);
-
     color: var(--gold-primary);
-
-    text-shadow:
-        0 0 10px rgba(201, 168, 76, 0.35),
-        0 0 20px rgba(201, 168, 76, 0.2);
+    text-shadow: 0 0 10px rgba(201, 168, 76, 0.35), 0 0 20px rgba(201, 168, 76, 0.2);
 }
 
 /* =========================================================
@@ -247,45 +191,34 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-
     gap: var(--space-sm);
     margin-top: var(--space-md);
 }
 
-/* Nút chung cho sidebar - sử dụng lại class .btn từ global, chỉ điều chỉnh kích thước */
+/* Nút chung cho sidebar */
 .btn-next-sidebar,
 .btn-back-food-sidebar {
     width: 260px !important;
     height: 54px !important;
-
     max-width: 100% !important;
-
     border-radius: var(--radius-md) !important;
-
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
-
     cursor: pointer;
-
     transition: all var(--transition-normal);
 }
 
-/* CONTINUE - sử dụng biến vàng */
+/* CONTINUE - sử dụng gradient vàng */
 .btn-next-sidebar {
     border: none;
-
     background: var(--gold-gradient);
-
     color: var(--black-premium);
-
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--shadow-silver);
 }
 
 .btn-next-sidebar:hover {
     transform: translateY(-2px);
-
-    box-shadow:
-        0 0 28px rgba(201, 168, 76, 0.35);
+    box-shadow: 0 0 28px rgba(201, 168, 76, 0.35);
 }
 
 .btn-next-sidebar:disabled {
@@ -296,19 +229,15 @@
 
 /* BACK */
 .btn-back-food-sidebar {
-    border: var(--border-gold);
-
+    border: var(--border-silver);
     background: transparent;
-
     color: var(--text-secondary);
 }
 
 .btn-back-food-sidebar:hover {
     background: rgba(201, 168, 76, 0.08);
-
-    color: var(--text-white);
-
-    border-color: var(--border-gold-hover);
+    color: var(--text-body);
+    border-color: var(--border-silver-hover);
 }
 
 /* =========================================================
@@ -322,46 +251,35 @@
 }
 
 @media (max-width: 992px) {
-
     .ticket-sidebar {
         width: 100%;
-
         position: static;
-
         display: grid;
         grid-template-columns: 260px 1fr;
-
         gap: var(--space-lg);
     }
-
     .poster-container {
         max-width: 260px;
     }
 }
 
 @media (max-width: 768px) {
-
     .ticket-sidebar {
         grid-template-columns: 1fr;
     }
-
     .poster-container {
         max-width: 240px;
         margin: 0 auto;
     }
-
     .ticket-details {
         padding: var(--space-md);
     }
-
     .movie-name {
-        font-size: var(--font-size-md);
+        font-size: var(--font-size-base);
     }
-
     .grand-total h3 {
-        font-size: var(--font-size-2xl);
+        font-size: var(--font-size-h3);
     }
-
     .btn-next-sidebar,
     .btn-back-food-sidebar {
         width: 100% !important;
@@ -370,20 +288,16 @@
 }
 
 @media (max-width: 480px) {
-
     .ticket-details {
         padding: var(--space-md);
     }
-
     .detail-item {
         flex-direction: column;
         gap: var(--space-xs);
     }
-
     .detail-item strong {
         text-align: left;
     }
-
     .btn-next-sidebar,
     .btn-back-food-sidebar {
         height: 48px !important;

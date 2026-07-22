@@ -2,20 +2,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { 
-    ChevronDown, 
-    UserCircle, 
-    IdCard, 
-    LogOut, 
-    LogIn, 
+import {
+    ChevronDown,
+    UserCircle,
+    IdCard,
+    LogOut,
+    LogIn,
     UserPlus,
-    LayoutDashboard 
-} from 'lucide-react'; 
+    LayoutDashboard,
+} from 'lucide-react';
 import '../styles/Header.css';
 
 const UserHeader = () => {
     const navigate = useNavigate();
-    const { user, clearAuth } = useAuth(); 
+    const { user, clearAuth } = useAuth();
     const [showDropdown, setShowDropdown] = useState(false);
     const [cinemas, setCinemas] = useState([]);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,30 +23,39 @@ const UserHeader = () => {
     const dropdownRef = useRef(null);
     const navRef = useRef(null);
 
+    // Đóng dropdown/submenu khi click ra ngoài
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setShowDropdown(false);
-            }
-            if (navRef.current && !navRef.current.contains(event.target)) {
-                setActiveSubMenu(null);
-            }
+            // Nếu click vào bên trong nav hoặc dropdown thì không đóng
+            if (navRef.current && navRef.current.contains(event.target)) return;
+            if (dropdownRef.current && dropdownRef.current.contains(event.target)) return;
+            // Ngoài ra thì đóng tất cả
+            setActiveSubMenu(null);
+            setShowDropdown(false);
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // -----------------------------------------------------------
-    // 1. SỬA HÀM FETCH CINEMAS (THÊM withCredentials)
-    // -----------------------------------------------------------
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth > 768) {
+                setIsMenuOpen(false);
+                setActiveSubMenu(null);
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     const fetchCinemas = async () => {
         try {
             const res = await axios.get('https://api.quangdungcinema.id.vn/api/cinemas', {
-                withCredentials: true // 🔥 PHẢI CÓ để gửi/nhận cookie
+                withCredentials: true,
             });
             setCinemas(res.data);
-        } catch (err) { 
-            console.error("Lỗi lấy dữ liệu rạp:", err); 
+        } catch (err) {
+            console.error('Lỗi lấy dữ liệu rạp:', err);
         }
     };
 
@@ -56,14 +65,15 @@ const UserHeader = () => {
 
     const handleLogout = async () => {
         try {
-            // Bước 1: Gọi API xóa Cookie (withCredentials cực kỳ quan trọng ở đây)
-            await axios.post('https://api.quangdungcinema.id.vn/api/auth/logout', {}, { 
-                withCredentials: true 
-            });
+            await axios.post(
+                'https://api.quangdungcinema.id.vn/api/auth/logout',
+                {},
+                { withCredentials: true }
+            );
         } catch (err) {
-            console.error("Lỗi khi logout:", err);
+            console.error('Lỗi khi logout:', err);
         } finally {
-            clearAuth(); 
+            clearAuth();
             setShowDropdown(false);
             window.dispatchEvent(new Event('authChange'));
             navigate('/');
@@ -77,23 +87,23 @@ const UserHeader = () => {
 
     const toggleSubMenu = (menuName, e) => {
         e.preventDefault();
-        e.stopPropagation(); 
+        e.stopPropagation();
         setActiveSubMenu(activeSubMenu === menuName ? null : menuName);
     };
 
     return (
         <nav className="user-navbar">
             <div className="nav-container">
-                <button 
-                    className={`hamburger ${isMenuOpen ? 'active' : ''}`} 
+                <button
+                    className={`hamburger ${isMenuOpen ? 'active' : ''}`}
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    aria-label="Toggle menu"
                 >
                     <span className="bar"></span>
                     <span className="bar"></span>
                     <span className="bar"></span>
                 </button>
 
-                {/* THAY THẾ PHẦN LOGO CHỮ BẰNG ẢNH */}
                 <div
                     className="header-logo"
                     onClick={() => {
@@ -106,55 +116,104 @@ const UserHeader = () => {
                         alt="Cinema Star Logo"
                     />
                 </div>
-                                
-                {isMenuOpen && <div className="menu-overlay" onClick={closeMobileMenu}></div>}
+
+                <div
+                    className={`menu-overlay ${isMenuOpen ? 'active' : ''}`}
+                    onClick={closeMobileMenu}
+                />
 
                 <ul ref={navRef} className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
-                    <li><Link to="/" onClick={closeMobileMenu}>Trang chủ</Link></li>
-                    
-                    <li className={`has-dropdown ${activeSubMenu === 'phim' ? 'mobile-active' : ''}`}>
-                        <Link to="#" onClick={(e) => toggleSubMenu('phim', e)}>
-                            Phim <ChevronDown size={14} className="icon-down" />
+                    <li>
+                        <Link to="/" onClick={closeMobileMenu} className="menu-link">
+                            Trang chủ
                         </Link>
+                    </li>
+
+                    <li className={`has-dropdown ${activeSubMenu === 'phim' ? 'mobile-active' : ''}`}>
+                        <div className="menu-link mobile-parent" onClick={(e) => toggleSubMenu('phim', e)}>
+                            <span>Phim</span>
+                            <ChevronDown size={18} className="icon-down" />
+                        </div>
                         <ul className="sub-menu">
-                            <li><Link to="/movies/status/phim-dang-chieu" onClick={closeMobileMenu}>Phim đang chiếu</Link></li>
-                            <li><Link to="/movies/status/phim-sap-chieu" onClick={closeMobileMenu}>Phim sắp chiếu</Link></li>
+                            <li>
+                                <Link to="/movies/status/phim-dang-chieu" onClick={closeMobileMenu}>
+                                    Phim đang chiếu
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/movies/status/phim-sap-chieu" onClick={closeMobileMenu}>
+                                    Phim sắp chiếu
+                                </Link>
+                            </li>
                         </ul>
                     </li>
 
                     <li className={`has-dropdown ${activeSubMenu === 'rap' ? 'mobile-active' : ''}`}>
-                        <Link to="#" onClick={(e) => toggleSubMenu('rap', e)}>
-                            Rạp <ChevronDown size={14} className="icon-down" />
-                        </Link>
+                        <div className="menu-link mobile-parent" onClick={(e) => toggleSubMenu('rap', e)}>
+                            <span>Rạp</span>
+                            <ChevronDown size={18} className="icon-down" />
+                        </div>
                         <ul className="sub-menu">
                             {cinemas.map((cinema) => (
                                 <li key={cinema.cinema_id}>
-                                    <Link to={`/cinema/${cinema.slug}`} onClick={closeMobileMenu}>{cinema.cinema_name}</Link>
+                                    <Link to={`/cinema/${cinema.slug}`} onClick={closeMobileMenu}>
+                                        {cinema.cinema_name}
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
                     </li>
 
                     <li className={`has-dropdown ${activeSubMenu === 'goc' ? 'mobile-active' : ''}`}>
-                        <Link to="#" onClick={(e) => toggleSubMenu('goc', e)}>
-                            Góc Điện Ảnh <ChevronDown size={14} className="icon-down" />
-                        </Link>
+                        <div className="menu-link mobile-parent" onClick={(e) => toggleSubMenu('goc', e)}>
+                            <span>Góc Điện Ảnh</span>
+                            <ChevronDown size={18} className="icon-down" />
+                        </div>
                         <ul className="sub-menu">
-                            <li><Link to="/cinema-genre" onClick={closeMobileMenu}>Thể Loại Phim</Link></li>
-                            <li><Link to="/actors" onClick={closeMobileMenu}>Diễn Viên</Link></li>
-                            <li><Link to="/film-review" onClick={closeMobileMenu}>Bình Luận Phim</Link></li>
+                            <li>
+                                <Link to="/cinema-genre" onClick={closeMobileMenu}>
+                                    Thể Loại Phim
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/actors" onClick={closeMobileMenu}>
+                                    Diễn Viên
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/film-review" onClick={closeMobileMenu}>
+                                    Bình Luận Phim
+                                </Link>
+                            </li>
                         </ul>
                     </li>
 
-                    <li><Link to="/promotion" onClick={closeMobileMenu}>Khuyến mãi</Link></li>
-                    <li><Link to="/blog-cinema" onClick={closeMobileMenu}>Blog Điện Ảnh</Link></li>
+                    <li>
+                        <Link to="/promotion" onClick={closeMobileMenu} className="menu-link">
+                            Khuyến mãi
+                        </Link>
+                    </li>
+
+                    <li>
+                        <Link to="/blog-cinema" onClick={closeMobileMenu} className="menu-link">
+                            Blog Điện Ảnh
+                        </Link>
+                    </li>
                 </ul>
 
                 <div className="user-menu" ref={dropdownRef}>
-                    <div className="account-trigger" onClick={() => setShowDropdown(!showDropdown)}>
+                    <div
+                        className="account-trigger"
+                        onClick={() => setShowDropdown(!showDropdown)}
+                    >
                         <UserCircle size={22} className="user-icon" />
-                        <span className="username-display">{user ? (user.username || user.full_name) : "Tài khoản"}</span>
-                        <ChevronDown size={14} className={showDropdown ? 'rotate' : ''} />
+                        <span className="username-display">
+                            {user ? user.username || user.full_name : 'Tài khoản'}
+                        </span>
+                        <ChevronDown
+                            size={14}
+                            className={showDropdown ? 'rotate' : ''}
+                        />
                     </div>
 
                     {showDropdown && (
@@ -162,31 +221,64 @@ const UserHeader = () => {
                             {user ? (
                                 <>
                                     <div className="dropdown-user-info">
-                                        <p>Chào, <strong>{user.username || user.full_name}</strong></p>
-                                        {user.role === 'admin' && <span className="admin-badge">Quản trị viên</span>}
+                                        <p>
+                                            Chào, <strong>{user.username || user.full_name}</strong>
+                                        </p>
+                                        {user.role === 'admin' && (
+                                            <span className="admin-badge">Quản trị viên</span>
+                                        )}
                                     </div>
                                     <div className="dropdown-divider"></div>
-                                    
+
                                     {user.role === 'admin' && (
-                                        <div className="dropdown-item admin-link" onClick={() => {navigate('/admin'); setShowDropdown(false);}}>
-                                            <LayoutDashboard size={18} /> <span>Trang Quản Trị</span>
+                                        <div
+                                            className="dropdown-item admin-link"
+                                            onClick={() => {
+                                                navigate('/admin');
+                                                setShowDropdown(false);
+                                            }}
+                                        >
+                                            <LayoutDashboard size={18} />
+                                            <span>Trang Quản Trị</span>
                                         </div>
                                     )}
 
-                                    <div className="dropdown-item" onClick={() => {navigate('/profile'); setShowDropdown(false);}}>
-                                        <IdCard size={18} /> <span>Hồ sơ</span>
+                                    <div
+                                        className="dropdown-item"
+                                        onClick={() => {
+                                            navigate('/profile');
+                                            setShowDropdown(false);
+                                        }}
+                                    >
+                                        <IdCard size={18} />
+                                        <span>Hồ sơ</span>
                                     </div>
                                     <div className="dropdown-item logout-btn" onClick={handleLogout}>
-                                        <LogOut size={18} /> <span>Đăng xuất</span>
+                                        <LogOut size={18} />
+                                        <span>Đăng xuất</span>
                                     </div>
                                 </>
                             ) : (
                                 <>
-                                    <div className="dropdown-item" onClick={() => {navigate('/login'); setShowDropdown(false);}}>
-                                        <LogIn size={18} /> <span>Đăng nhập</span>
+                                    <div
+                                        className="dropdown-item"
+                                        onClick={() => {
+                                            navigate('/login');
+                                            setShowDropdown(false);
+                                        }}
+                                    >
+                                        <LogIn size={18} />
+                                        <span>Đăng nhập</span>
                                     </div>
-                                    <div className="dropdown-item" onClick={() => {navigate('/register'); setShowDropdown(false);}}>
-                                        <UserPlus size={18} /> <span>Đăng Ký</span>
+                                    <div
+                                        className="dropdown-item"
+                                        onClick={() => {
+                                            navigate('/register');
+                                            setShowDropdown(false);
+                                        }}
+                                    >
+                                        <UserPlus size={18} />
+                                        <span>Đăng Ký</span>
                                     </div>
                                 </>
                             )}

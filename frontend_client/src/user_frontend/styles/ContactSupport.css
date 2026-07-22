@@ -1,10 +1,10 @@
 /* ==========================================================
-   CONTACT SUPPORT PAGE – CINEMA GOLD
+   CONTACT SUPPORT PAGE – SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
    ========================================================== */
 
 .contact-page {
   width: 100%;
-  padding: 40px 0 60px;
+  padding: var(--space-2xl) 0 var(--space-3xl);
   background: var(--main-background);
   min-height: 70vh;
 }
@@ -21,7 +21,7 @@
 
 .contact-header {
   text-align: center;
-  padding: 20px 0 32px;
+  padding: var(--space-xl) 0 var(--space-xl);
 }
 
 .contact-header-icon {
@@ -31,24 +31,24 @@
   width: 88px;
   height: 88px;
   border-radius: 50%;
-  background: rgba(var(--gold-rgb), 0.08);
-  border: 1px solid rgba(var(--gold-rgb), 0.15);
+  background: rgba(201, 168, 76, 0.08);
+  border: 1px solid rgba(201, 168, 76, 0.15);
   color: var(--gold-primary);
-  margin-bottom: 16px;
+  margin-bottom: var(--space-md);
 }
 
 .contact-header h1 {
-  font-size: var(--font-size-3xl);
+  font-size: var(--font-size-h2);
   font-weight: var(--fw-extrabold);
-  color: var(--text-white);
+  color: var(--text-body);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-sm);
 }
 
 .contact-header p {
   color: var(--text-secondary);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base);
   margin: 0;
 }
 
@@ -57,7 +57,7 @@
   height: 3px;
   border-radius: var(--radius-round);
   background: var(--gold-gradient);
-  margin: 16px auto 0;
+  margin: var(--space-md) auto 0;
 }
 
 /* ==========================================================
@@ -67,24 +67,24 @@
 .contact-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 16px 0 28px;
+  gap: var(--space-sm);
+  padding: var(--space-md) 0 var(--space-xl);
   color: var(--text-muted);
-  font-size: var(--font-size-sm);
-  border-bottom: 1px solid var(--overlay-light);
-  margin-bottom: 32px;
+  font-size: var(--font-size-base);
+  border-bottom: var(--border-light);
+  margin-bottom: var(--space-xl);
 }
 
 .contact-breadcrumb a {
   color: var(--text-secondary);
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color var(--transition-fast);
 }
 .contact-breadcrumb a:hover {
   color: var(--gold-primary);
 }
 .contact-breadcrumb .current {
-  color: var(--text-white);
+  color: var(--text-body);
 }
 
 /* ==========================================================
@@ -99,16 +99,16 @@
 }
 
 .contact-info-card {
-  background: var(--overlay-medium);
-  border: 1px solid var(--overlay-light);
+  background: rgba(255, 255, 255, 0.02);
+  border: var(--border-light);
   border-radius: var(--radius-lg);
   padding: var(--space-lg) var(--space-lg);
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 }
 
 .contact-info-card:hover {
-  border-color: rgba(var(--gold-rgb), 0.15);
+  border-color: rgba(201, 168, 76, 0.15);
   background: rgba(255, 255, 255, 0.03);
   transform: translateY(-4px);
 }
@@ -120,27 +120,27 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: rgba(var(--gold-rgb), 0.06);
+  background: rgba(201, 168, 76, 0.06);
   color: var(--gold-primary);
   margin-bottom: var(--space-sm);
 }
 
 .contact-info-card h3 {
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base);
   font-weight: var(--fw-bold);
-  color: var(--text-white);
+  color: var(--text-body);
   margin: 0 0 var(--space-sm);
 }
 
 .contact-info-card p {
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  line-height: 1.6;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
   margin: 0;
 }
 
 .contact-info-card p strong {
-  color: var(--text-white);
+  color: var(--text-body);
   font-weight: var(--fw-semibold);
 }
 
@@ -149,17 +149,17 @@
    ========================================================== */
 
 .contact-form-wrapper {
-  background: var(--overlay-medium);
-  border: 1px solid var(--overlay-light);
+  background: rgba(255, 255, 255, 0.02);
+  border: var(--border-light);
   border-radius: var(--radius-lg);
   padding: var(--space-2xl) var(--space-3xl);
   margin-bottom: var(--space-xl);
 }
 
 .contact-form-wrapper h2 {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-h3);
   font-weight: var(--fw-bold);
-  color: var(--text-white);
+  color: var(--text-body);
   margin: 0 0 var(--space-sm);
 }
 
@@ -192,7 +192,7 @@
   align-items: center;
   gap: var(--space-sm);
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--fw-semibold);
 }
 
@@ -203,12 +203,12 @@
 .contact-form-group input,
 .contact-form-group textarea {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--overlay-light);
+  border: var(--border-light);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
-  color: var(--text-white);
+  color: var(--text-body);
   font-size: var(--font-size-base);
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   outline: none;
   font-family: inherit;
   width: 100%;
@@ -221,9 +221,9 @@
 
 .contact-form-group input:focus,
 .contact-form-group textarea:focus {
-  border-color: rgba(var(--gold-rgb), 0.3);
+  border-color: rgba(201, 168, 76, 0.3);
   background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 0 4px rgba(var(--gold-rgb), 0.04);
+  box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.04);
 }
 
 .contact-form-group textarea {
@@ -242,15 +242,15 @@
   background: var(--gold-gradient);
   color: var(--black-premium);
   font-weight: var(--fw-bold);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   align-self: flex-start;
 }
 
 .contact-submit-btn:hover {
   transform: translateY(-3px);
-  box-shadow: var(--shadow-gold);
+  box-shadow: var(--shadow-silver);
 }
 
 /* ==========================================================
@@ -268,9 +268,9 @@
 }
 
 .contact-success h3 {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-h4);
   font-weight: var(--fw-bold);
-  color: var(--text-white);
+  color: var(--text-body);
   margin: 0 0 var(--space-sm);
 }
 
@@ -285,8 +285,8 @@
    ========================================================== */
 
 .contact-quick-faq {
-  background: var(--overlay-medium);
-  border: 1px solid var(--overlay-light);
+  background: rgba(255, 255, 255, 0.02);
+  border: var(--border-light);
   border-radius: var(--radius-lg);
   padding: var(--space-lg) var(--space-2xl);
   display: flex;
@@ -297,7 +297,7 @@
 }
 
 .contact-quick-faq h3 {
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base);
   font-weight: var(--fw-semibold);
   color: var(--text-secondary);
   margin: 0;
@@ -314,18 +314,18 @@
   align-items: center;
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--overlay-light);
+  border: var(--border-light);
   border-radius: var(--radius-round);
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 }
 
 .contact-quick-link:hover {
-  border-color: rgba(var(--gold-rgb), 0.2);
+  border-color: rgba(201, 168, 76, 0.2);
   color: var(--gold-primary);
-  background: rgba(var(--gold-rgb), 0.04);
+  background: rgba(201, 168, 76, 0.04);
 }
 
 .contact-quick-link svg {
@@ -356,13 +356,13 @@
 
 @media (max-width: 768px) {
   .contact-page {
-    padding: 30px 0 40px;
+    padding: var(--space-xl) 0 var(--space-2xl);
   }
   .contact-header h1 {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-h3);
   }
   .contact-header p {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .contact-header-icon {
     width: 72px;
@@ -384,16 +384,16 @@
     height: 24px;
   }
   .contact-info-card h3 {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .contact-info-card p {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .contact-form-wrapper {
     padding: var(--space-lg) var(--space-lg);
   }
   .contact-form-wrapper h2 {
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-h4);
   }
   .contact-form-row {
     grid-template-columns: 1fr;
@@ -423,7 +423,7 @@
     padding: 0 var(--space-md);
   }
   .contact-header h1 {
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-h4);
   }
   .contact-header-icon {
     width: 64px;
@@ -444,37 +444,37 @@
     padding: var(--space-lg) var(--space-md);
   }
   .contact-form-wrapper h2 {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h5);
   }
   .contact-form-wrapper > p {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .contact-form-group label {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .contact-form-group input,
   .contact-form-group textarea {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     padding: var(--space-sm) var(--space-sm);
   }
   .contact-submit-btn {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     padding: var(--space-sm) var(--space-lg);
   }
   .contact-success h3 {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h5);
   }
   .contact-success p {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .contact-quick-faq {
     padding: var(--space-md);
   }
   .contact-quick-faq h3 {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .contact-quick-link {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     padding: var(--space-sm) var(--space-sm);
   }
 }

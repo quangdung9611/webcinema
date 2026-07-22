@@ -1,10 +1,10 @@
 /* ==========================================================
-   PRIVACY POLICY PAGE – CINEMA GOLD
+   PRIVACY POLICY PAGE – SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
    ========================================================== */
 
 .policy-page {
   width: 100%;
-  padding: 40px 0 60px;
+  padding: var(--space-2xl) 0 var(--space-3xl);
   background: var(--main-background);
   min-height: 70vh;
 }
@@ -21,7 +21,7 @@
 
 .policy-header {
   text-align: center;
-  padding: 20px 0 32px;
+  padding: var(--space-xl) 0 var(--space-xl);
 }
 
 .policy-header-icon {
@@ -31,24 +31,24 @@
   width: 88px;
   height: 88px;
   border-radius: 50%;
-  background: rgba(var(--gold-rgb), 0.08);
-  border: 1px solid rgba(var(--gold-rgb), 0.15);
+  background: rgba(201, 168, 76, 0.08);
+  border: 1px solid rgba(201, 168, 76, 0.15);
   color: var(--gold-primary);
-  margin-bottom: 16px;
+  margin-bottom: var(--space-md);
 }
 
 .policy-header h1 {
-  font-size: var(--font-size-3xl);
+  font-size: var(--font-size-h2);
   font-weight: var(--fw-extrabold);
-  color: var(--text-white);
+  color: var(--text-body);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  margin: 0 0 6px;
+  margin: 0 0 var(--space-xs);
 }
 
 .policy-header p {
   color: var(--text-muted);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   margin: 0;
 }
 
@@ -57,7 +57,7 @@
   height: 3px;
   border-radius: var(--radius-round);
   background: var(--gold-gradient);
-  margin: 16px auto 0;
+  margin: var(--space-md) auto 0;
 }
 
 /* ==========================================================
@@ -67,24 +67,24 @@
 .policy-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 16px 0 28px;
+  gap: var(--space-sm);
+  padding: var(--space-md) 0 var(--space-xl);
   color: var(--text-muted);
-  font-size: var(--font-size-sm);
-  border-bottom: 1px solid var(--overlay-light);
-  margin-bottom: 32px;
+  font-size: var(--font-size-base);
+  border-bottom: var(--border-light);
+  margin-bottom: var(--space-xl);
 }
 
 .policy-breadcrumb a {
   color: var(--text-secondary);
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color var(--transition-fast);
 }
 .policy-breadcrumb a:hover {
   color: var(--gold-primary);
 }
 .policy-breadcrumb .current {
-  color: var(--text-white);
+  color: var(--text-body);
 }
 
 /* ==========================================================
@@ -98,15 +98,15 @@
 }
 
 .policy-section {
-  background: var(--overlay-medium);
-  border: 1px solid var(--overlay-light);
+  background: rgba(255, 255, 255, 0.02);
+  border: var(--border-light);
   border-radius: var(--radius-lg);
   padding: var(--space-xl) var(--space-2xl);
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 }
 
 .policy-section:hover {
-  border-color: rgba(var(--gold-rgb), 0.12);
+  border-color: rgba(201, 168, 76, 0.12);
   background: rgba(255, 255, 255, 0.03);
 }
 
@@ -114,9 +114,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-h4);
   font-weight: var(--fw-bold);
-  color: var(--text-white);
+  color: var(--text-body);
   margin: 0 0 var(--space-md);
   letter-spacing: 0.02em;
 }
@@ -127,16 +127,16 @@
 }
 
 .policy-section h3 {
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base);
   font-weight: var(--fw-semibold);
-  color: var(--text-white);
+  color: var(--text-body);
   margin: var(--space-md) 0 var(--space-sm);
 }
 
 .policy-section p {
   color: var(--text-secondary);
   font-size: var(--font-size-base);
-  line-height: 1.8;
+  line-height: var(--line-height-base);
   margin: 0 0 var(--space-sm);
 }
 
@@ -152,10 +152,10 @@
 
 .policy-section ul li {
   position: relative;
-  padding: 6px 0 6px 22px;
+  padding: var(--space-xs) 0 var(--space-xs) var(--space-xl);
   color: var(--text-secondary);
   font-size: var(--font-size-base);
-  line-height: 1.8;
+  line-height: var(--line-height-base);
 }
 
 .policy-section ul li::before {
@@ -171,12 +171,12 @@
 }
 
 .policy-section ul li strong {
-  color: var(--text-white);
+  color: var(--text-body);
   font-weight: var(--fw-semibold);
 }
 
 .policy-section strong {
-  color: var(--text-white);
+  color: var(--text-body);
   font-weight: var(--fw-semibold);
 }
 
@@ -195,10 +195,10 @@
 
 @media (max-width: 768px) {
   .policy-page {
-    padding: 30px 0 40px;
+    padding: var(--space-xl) 0 var(--space-2xl);
   }
   .policy-header h1 {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-h3);
   }
   .policy-header-icon {
     width: 72px;
@@ -208,14 +208,14 @@
     padding: var(--space-lg);
   }
   .policy-section h2 {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h5);
   }
   .policy-section h3 {
     font-size: var(--font-size-base);
   }
   .policy-section p,
   .policy-section ul li {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .policy-section ul li::before {
     top: 12px;
@@ -227,7 +227,7 @@
     padding: 0 var(--space-md);
   }
   .policy-header h1 {
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-h4);
   }
   .policy-header-icon {
     width: 64px;
@@ -242,7 +242,7 @@
     border-radius: var(--radius-md);
   }
   .policy-section h2 {
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-base);
     gap: var(--space-sm);
   }
   .policy-section h2 svg {
@@ -250,14 +250,14 @@
     height: 20px;
   }
   .policy-section h3 {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .policy-section p,
   .policy-section ul li {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .policy-section ul li {
-    padding: 4px 0 4px 18px;
+    padding: var(--space-xs) 0 var(--space-xs) var(--space-lg);
   }
   .policy-section ul li::before {
     top: 11px;

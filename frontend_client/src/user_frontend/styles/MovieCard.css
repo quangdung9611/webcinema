@@ -26,7 +26,7 @@
     height: 100%;
     border-radius: var(--radius-md);
     background: var(--cinema-card-bg);
-    border: var(--cinema-card-border); /* 2px solid rgba(232,232,232,0.08) */
+    border: var(--cinema-card-border);
     box-shadow: var(--cinema-card-shadow);
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
                 box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1),
@@ -36,7 +36,7 @@
 /* HOVER: Nổi nhẹ + viền sáng bạc + shadow đậm */
 .film-card:hover .film-card__inner {
     transform: translateY(-6px);
-    border-color: var(--silver-primary); /* #E8E8E8 */
+    border-color: var(--silver-primary);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6),
                 0 0 0 2px rgba(232, 232, 232, 0.15),
                 0 0 40px rgba(232, 232, 232, 0.06);
@@ -107,7 +107,7 @@
 }
 
 /* ============================================================
-   SHINE & SWEEP – GIỮ NGUYÊN (nếu bạn muốn)
+   SHINE & SWEEP – GIỮ NGUYÊN
    ============================================================ */
 .film-card__sweep {
     position: absolute;
@@ -183,7 +183,7 @@
 }
 
 /* ============================================================
-   AGE BADGE – DÙNG BIẾN MÀU TỪ INDEX
+   AGE BADGE – Giữ màu đỏ đặc trưng
    ============================================================ */
 .film-card__age {
     position: absolute;
@@ -192,9 +192,9 @@
     z-index: 5;
     padding: 4px 10px;
     border-radius: var(--radius-round);
-    background: #dc2626; /* Giữ màu đỏ đặc trưng */
+    background: #dc2626;
     color: var(--white-pure);
-    font-size: 10px;
+    font-size: 0.625rem; /* 10px */
     font-weight: var(--fw-bold);
     letter-spacing: 0.5px;
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
@@ -221,7 +221,7 @@
 }
 
 .film-card__title {
-    font-size: 15px;
+    font-size: 0.9375rem; /* 15px */
     font-weight: var(--fw-bold);
     line-height: 1.4;
     text-align: center;
@@ -234,7 +234,7 @@
     transition: color 0.4s ease;
 }
 
-/* Hover title chuyển sang gradient bạc (giống vàng nhưng dùng silver) */
+/* Hover title chuyển sang gradient bạc */
 .film-card:hover .film-card__title {
     background: linear-gradient(135deg, var(--silver-primary), var(--silver-light));
     -webkit-background-clip: text;
@@ -254,7 +254,7 @@
 .film-card__stars svg {
     width: 14px;
     height: 14px;
-    color: var(--silver-primary); /* màu sao bạc thay vì vàng */
+    color: var(--silver-primary);
 }
 
 /* ============================================================
@@ -270,13 +270,13 @@
 
 .film-card__score {
     color: var(--silver-primary);
-    font-size: 13px;
+    font-size: 0.8125rem; /* 13px */
     font-weight: var(--fw-bold);
 }
 
 .film-card__reviews {
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 0.75rem; /* 12px */
 }
 
 .film-card__extra {
@@ -285,7 +285,7 @@
     align-items: center;
     gap: 6px;
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 0.75rem; /* 12px */
     margin-top: 4px;
 }
 
@@ -294,7 +294,7 @@
 }
 
 /* ============================================================
-   RESPONSIVE – DÙNG BIẾN
+   RESPONSIVE – DÙNG BIẾN VÀ REM
    ============================================================ */
 @media (max-width: 768px) {
     .film-card__inner {
@@ -306,7 +306,7 @@
     }
 
     .film-card__title {
-        font-size: 13px;
+        font-size: 0.8125rem; /* 13px */
     }
 
     .film-card__stars svg {
@@ -315,21 +315,21 @@
     }
 
     .film-card__score {
-        font-size: 12px;
+        font-size: 0.75rem; /* 12px */
     }
 
     .film-card__reviews {
-        font-size: 11px;
+        font-size: 0.6875rem; /* 11px */
     }
 
     .film-card__extra {
-        font-size: 11px;
+        font-size: 0.6875rem; /* 11px */
     }
 
     .film-card__age {
         top: 8px;
         right: 8px;
-        font-size: 9px;
+        font-size: 0.5625rem; /* 9px */
         padding: 3px 8px;
     }
 }
@@ -344,7 +344,7 @@
     }
 
     .film-card__title {
-        font-size: 12px;
+        font-size: 0.75rem; /* 12px */
     }
 
     .film-card__stars svg {
@@ -353,21 +353,21 @@
     }
 
     .film-card__score {
-        font-size: 11px;
+        font-size: 0.6875rem; /* 11px */
     }
 
     .film-card__reviews {
-        font-size: 10px;
+        font-size: 0.625rem; /* 10px */
     }
 
     .film-card__extra {
-        font-size: 10px;
+        font-size: 0.625rem; /* 10px */
     }
 
     .film-card__age {
         top: 6px;
         right: 6px;
-        font-size: 8px;
+        font-size: 0.5rem; /* 8px */
         padding: 2px 7px;
     }
 }

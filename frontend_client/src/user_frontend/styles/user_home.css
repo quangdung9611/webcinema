@@ -84,7 +84,7 @@
   position: relative;
   margin: 0;
   color: var(--silver-primary) !important;
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-h2); /* thay --font-size-2xl */
   font-weight: var(--fw-black) !important;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -221,7 +221,7 @@
   border: var(--border-silver);
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-body);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base); /* thay --font-size-md */
   font-weight: var(--fw-semibold);
   transition: border-color 0.2s ease, background 0.2s ease;
 }
@@ -256,15 +256,14 @@
   border-radius: var(--radius-lg);
   background: var(--cinema-border-gradient);
   color: var(--black-premium);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base); /* thay --font-size-md */
   font-weight: var(--fw-bold);
   letter-spacing: 0.5px;
   box-shadow: var(--shadow-silver);
-  transition: box-shadow 0.25s ease; /* bỏ transform, chỉ giữ box-shadow */
+  transition: box-shadow 0.25s ease;
 }
 
 .btn-quick-booking:hover {
-  /* ĐÃ XÓA transform: translateY(-2px); */
   box-shadow: var(--shadow-silver), 0 8px 24px rgba(232, 232, 232, 0.15);
 }
 
@@ -299,7 +298,7 @@
   width: 90px;
   height: 220%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
-  transform: rotate(25deg); /* Giữ vì đây là pseudo-element, không ảnh hưởng layout chính */
+  transform: rotate(25deg);
   transition: left 0.6s ease;
   pointer-events: none;
 }
@@ -311,7 +310,6 @@
 .feature-item:hover {
   border: var(--border-silver-hover);
   box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
-  /* KHÔNG translateY */
 }
 
 .feature-icon-wrapper {
@@ -330,7 +328,6 @@
 
 .feature-item:hover .feature-icon-wrapper {
   box-shadow: 0 0 20px rgba(232, 232, 232, 0.10);
-  /* KHÔNG scale */
 }
 
 .feature-text {
@@ -340,7 +337,7 @@
 .feature-text h4 {
   margin: 0 0 var(--space-sm);
   color: var(--text-body);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-base); /* thay --font-size-base (vốn là 1rem) */
   font-weight: var(--fw-bold);
   line-height: 1.4;
   transition: color 0.25s ease;
@@ -353,7 +350,7 @@
 .feature-text p {
   margin: 0;
   color: rgba(255, 255, 255, 0.6);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base); /* thay --font-size-sm (0.875rem) -> dùng base (1rem) */
   line-height: 1.6;
 }
 
@@ -372,7 +369,7 @@
   color: var(--silver-primary);
   background: rgba(255, 255, 255, 0.02);
   transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base); /* thay --font-size-sm */
   font-weight: var(--fw-semibold);
   white-space: nowrap;
   cursor: pointer;
@@ -383,21 +380,7 @@
   color: var(--black-premium);
   background: var(--cinema-border-gradient);
   border-color: transparent;
-  /* ĐÃ XÓA transform: translateY(-2px); */
   box-shadow: 0 4px 16px rgba(232, 232, 232, 0.20);
-}
-
-.btn-view-all:active {
-  /* ĐÃ XÓA transform: scale(0.96); */
-}
-
-.btn-view-all svg {
-  transition: none; /* bỏ transition transform */
-  /* Không có transform: translateX khi hover */
-}
-
-.btn-view-all:hover svg {
-  /* ĐÃ XÓA transform: translateX(6px); */
 }
 
 /* ==========================================================
@@ -469,7 +452,7 @@
 /* ----- 768px: 2 cột cho card ----- */
 @media (max-width: 768px) {
   .banner-premium {
-    aspect-ratio: 3 / 1;
+    aspect-ratio: 3 / 2;
     object-fit: cover;
   }
   .cinema-grid {
@@ -489,7 +472,7 @@
   }
 
   .section-title {
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-h3); /* thay --font-size-xl */
     padding-bottom: 6px;
   }
 
@@ -499,7 +482,7 @@
 
   .btn-view-all {
     padding: 8px 18px;
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-base); /* thay --font-size-xs */
     flex-shrink: 0;
   }
 
@@ -517,7 +500,7 @@
 
   .quick-booking-selects select {
     height: 52px;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base); /* thay --font-size-sm */
   }
 
   .btn-quick-booking {
@@ -538,11 +521,11 @@
   }
 
   .feature-text h4 {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base); /* thay --font-size-sm */
   }
 
   .feature-text p {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-base); /* thay --font-size-xs */
   }
 }
 
@@ -558,7 +541,7 @@
   }
 
   .section-title {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h4); /* thay --font-size-lg */
     padding-bottom: 4px;
   }
 
@@ -568,7 +551,7 @@
 
   .btn-view-all {
     padding: 6px 14px;
-    font-size: 11px;
+    font-size: var(--font-size-base); /* thay 11px */
     gap: 4px;
   }
 
@@ -583,13 +566,13 @@
 
   .quick-booking-selects select {
     height: 48px;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base); /* thay --font-size-sm */
     padding: 0 14px;
   }
 
   .btn-quick-booking {
     height: 48px;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base); /* thay --font-size-sm */
   }
 
   .features-grid {
@@ -609,10 +592,10 @@
   }
 
   .feature-text h4 {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-base); /* thay --font-size-xs */
   }
 
   .feature-text p {
-    font-size: 11px;
+    font-size: var(--font-size-base); /* thay 11px */
   }
 }

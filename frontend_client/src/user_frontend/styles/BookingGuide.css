@@ -1,10 +1,10 @@
 /* ==========================================================
-   BOOKING GUIDE PAGE – CINEMA GOLD
+   BOOKING GUIDE PAGE – SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
    ========================================================== */
 
 .guide-page {
   width: 100%;
-  padding: 40px 0 60px;
+  padding: var(--space-2xl) 0 var(--space-3xl);
   background: var(--main-background);
   min-height: 70vh;
 }
@@ -18,7 +18,7 @@
 /* ===== HEADER ===== */
 .guide-header {
   text-align: center;
-  padding: 20px 0 32px;
+  padding: var(--space-xl) 0 var(--space-xl);
 }
 
 .guide-header-icon {
@@ -28,24 +28,24 @@
   width: 88px;
   height: 88px;
   border-radius: 50%;
-  background: rgba(var(--gold-rgb), 0.08);
-  border: 1px solid rgba(var(--gold-rgb), 0.15);
+  background: rgba(201, 168, 76, 0.08);
+  border: 1px solid rgba(201, 168, 76, 0.15);
   color: var(--gold-primary);
-  margin-bottom: 16px;
+  margin-bottom: var(--space-md);
 }
 
 .guide-header h1 {
-  font-size: var(--font-size-3xl);
+  font-size: var(--font-size-h2);
   font-weight: var(--fw-extrabold);
-  color: var(--text-white);
+  color: var(--text-body);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-sm);
 }
 
 .guide-header p {
   color: var(--text-secondary);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base);
   margin: 0;
 }
 
@@ -54,37 +54,37 @@
   height: 3px;
   border-radius: var(--radius-round);
   background: var(--gold-gradient);
-  margin: 16px auto 0;
+  margin: var(--space-md) auto 0;
 }
 
 /* ===== BREADCRUMB ===== */
 .guide-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 16px 0 28px;
+  gap: var(--space-sm);
+  padding: var(--space-md) 0 var(--space-xl);
   color: var(--text-muted);
-  font-size: var(--font-size-sm);
-  border-bottom: 1px solid var(--overlay-light);
-  margin-bottom: 32px;
+  font-size: var(--font-size-base);
+  border-bottom: var(--border-light);
+  margin-bottom: var(--space-xl);
 }
 
 .guide-breadcrumb a {
   color: var(--text-secondary);
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color var(--transition-fast);
 }
 .guide-breadcrumb a:hover {
   color: var(--gold-primary);
 }
 .guide-breadcrumb .current {
-  color: var(--text-white);
+  color: var(--text-body);
 }
 
 /* ===== INTRO ===== */
 .guide-intro {
-  background: rgba(var(--gold-rgb), 0.04);
-  border: 1px solid rgba(var(--gold-rgb), 0.12);
+  background: rgba(201, 168, 76, 0.04);
+  border: 1px solid rgba(201, 168, 76, 0.12);
   border-radius: var(--radius-lg);
   padding: var(--space-xl) var(--space-2xl);
   margin-bottom: var(--space-xl);
@@ -92,8 +92,8 @@
 
 .guide-intro p {
   color: var(--text-secondary);
-  font-size: var(--font-size-md);
-  line-height: 1.8;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
   margin: 0 0 var(--space-sm);
 }
 
@@ -102,10 +102,10 @@
   align-items: center;
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-lg);
-  background: rgba(var(--gold-rgb), 0.08);
+  background: rgba(201, 168, 76, 0.08);
   border-radius: var(--radius-round);
-  color: var(--text-white);
-  font-size: var(--font-size-sm);
+  color: var(--text-body);
+  font-size: var(--font-size-base);
 }
 
 .guide-highlight-icon {
@@ -119,16 +119,16 @@
 .guide-step {
   display: flex;
   gap: var(--space-lg);
-  background: var(--overlay-medium);
-  border: 1px solid var(--overlay-light);
+  background: rgba(255, 255, 255, 0.02);
+  border: var(--border-light);
   border-radius: var(--radius-lg);
   padding: var(--space-xl) var(--space-2xl);
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   margin-bottom: var(--space-md);
 }
 
 .guide-step:hover {
-  border-color: rgba(var(--gold-rgb), 0.12);
+  border-color: rgba(201, 168, 76, 0.12);
   background: rgba(255, 255, 255, 0.03);
 }
 
@@ -142,7 +142,7 @@
   border-radius: 50%;
   background: var(--gold-gradient);
   color: var(--black-premium);
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-h4);
   font-weight: var(--fw-extrabold);
 }
 
@@ -151,16 +151,16 @@
 }
 
 .guide-step-content h2 {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-h4);
   font-weight: var(--fw-bold);
-  color: var(--text-white);
+  color: var(--text-body);
   margin: 0 0 var(--space-sm);
 }
 
 .guide-step-content p {
   color: var(--text-secondary);
   font-size: var(--font-size-base);
-  line-height: 1.8;
+  line-height: var(--line-height-base);
   margin: 0 0 var(--space-sm);
 }
 
@@ -172,24 +172,24 @@
 
 .guide-step-content ul li {
   position: relative;
-  padding: 4px 0 4px 22px;
+  padding: var(--space-xs) 0 var(--space-xs) var(--space-xl);
   color: var(--text-secondary);
   font-size: var(--font-size-base);
-  line-height: 1.8;
+  line-height: var(--line-height-base);
 }
 
 .guide-step-content ul li::before {
   content: '›';
   position: absolute;
   left: 0;
-  top: 4px;
+  top: var(--space-xs);
   color: var(--gold-primary);
   font-size: 20px;
   font-weight: var(--fw-bold);
 }
 
 .guide-step-content ul li strong {
-  color: var(--text-white);
+  color: var(--text-body);
   font-weight: var(--fw-semibold);
 }
 
@@ -198,12 +198,12 @@
   align-items: flex-start;
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
-  background: rgba(var(--gold-rgb), 0.04);
+  background: rgba(201, 168, 76, 0.04);
   border-left: 3px solid var(--gold-primary);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  line-height: 1.6;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
 }
 
 .guide-tip span {
@@ -218,8 +218,8 @@
 
 /* ===== EXTRA ===== */
 .guide-extra {
-  background: var(--overlay-medium);
-  border: 1px solid var(--overlay-light);
+  background: rgba(255, 255, 255, 0.02);
+  border: var(--border-light);
   border-radius: var(--radius-lg);
   padding: var(--space-xl) var(--space-2xl);
   margin-top: var(--space-md);
@@ -229,9 +229,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-h4);
   font-weight: var(--fw-bold);
-  color: var(--text-white);
+  color: var(--text-body);
   margin: 0 0 var(--space-md);
 }
 .guide-extra h3 svg {
@@ -246,33 +246,33 @@
 
 .guide-extra ul li {
   position: relative;
-  padding: 6px 0 6px 22px;
+  padding: var(--space-xs) 0 var(--space-xs) var(--space-xl);
   color: var(--text-secondary);
   font-size: var(--font-size-base);
-  line-height: 1.8;
+  line-height: var(--line-height-base);
 }
 
 .guide-extra ul li::before {
   content: '!';
   position: absolute;
   left: 0;
-  top: 6px;
+  top: var(--space-xs);
   color: var(--gold-primary);
   font-weight: var(--fw-bold);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-base);
 }
 
 .guide-extra ul li strong {
-  color: var(--text-white);
+  color: var(--text-body);
   font-weight: var(--fw-semibold);
 }
 .guide-extra ul li a {
   color: var(--gold-primary);
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color var(--transition-fast);
 }
 .guide-extra ul li a:hover {
-  color: var(--gold-premium-light);
+  color: var(--gold-light);
 }
 
 /* ===== SUPPORT CTA ===== */
@@ -280,15 +280,15 @@
   margin-top: var(--space-xl);
   padding: var(--space-2xl) var(--space-3xl);
   text-align: center;
-  background: var(--overlay-medium);
-  border: 1px solid var(--overlay-light);
+  background: rgba(255, 255, 255, 0.02);
+  border: var(--border-light);
   border-radius: var(--radius-lg);
 }
 
 .guide-support h3 {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-h4);
   font-weight: var(--fw-bold);
-  color: var(--text-white);
+  color: var(--text-body);
   margin: 0 0 var(--space-sm);
 }
 
@@ -315,25 +315,25 @@
   background: var(--gold-gradient);
   color: var(--black-premium);
   font-weight: var(--fw-bold);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 }
 
 .guide-support-btn:hover {
   transform: translateY(-3px);
-  box-shadow: var(--shadow-gold);
+  box-shadow: var(--shadow-silver);
   color: var(--black-premium);
 }
 
 .guide-support-btn.outline {
   background: transparent;
-  border: 1px solid rgba(var(--gold-rgb), 0.3);
+  border: 1px solid rgba(201, 168, 76, 0.3);
   color: var(--gold-primary);
 }
 
 .guide-support-btn.outline:hover {
-  background: rgba(var(--gold-rgb), 0.08);
+  background: rgba(201, 168, 76, 0.08);
   border-color: var(--gold-primary);
   color: var(--gold-primary);
   transform: translateY(-3px);
@@ -360,13 +360,13 @@
 
 @media (max-width: 768px) {
   .guide-page {
-    padding: 30px 0 40px;
+    padding: var(--space-xl) 0 var(--space-2xl);
   }
   .guide-header h1 {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-h3);
   }
   .guide-header p {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .guide-header-icon {
     width: 72px;
@@ -380,14 +380,14 @@
   .guide-step-number {
     width: 40px;
     height: 40px;
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-base);
   }
   .guide-step-content h2 {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h5);
   }
   .guide-step-content p,
   .guide-step-content ul li {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .guide-intro,
   .guide-extra {
@@ -397,16 +397,16 @@
     font-size: var(--font-size-base);
   }
   .guide-extra h3 {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h5);
   }
   .guide-extra ul li {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .guide-support {
     padding: var(--space-lg);
   }
   .guide-support h3 {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h5);
   }
   .guide-support-links {
     flex-direction: column;
@@ -423,7 +423,7 @@
     padding: 0 var(--space-md);
   }
   .guide-header h1 {
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-h4);
   }
   .guide-header-icon {
     width: 64px;
@@ -438,15 +438,15 @@
     border-radius: var(--radius-md);
   }
   .guide-step-content h2 {
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-base);
   }
   .guide-step-content p,
   .guide-step-content ul li {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .guide-step-content ul li::before {
     top: 2px;
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-base);
   }
   .guide-intro,
   .guide-extra {
@@ -454,30 +454,30 @@
     border-radius: var(--radius-md);
   }
   .guide-intro p {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .guide-extra h3 {
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-base);
   }
   .guide-extra ul li {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .guide-support {
     padding: var(--space-md);
     border-radius: var(--radius-lg);
   }
   .guide-support h3 {
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-base);
   }
   .guide-support p {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
   .guide-support-btn {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     padding: var(--space-sm) var(--space-lg);
   }
   .guide-tip {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     padding: var(--space-sm) var(--space-md);
   }
 }

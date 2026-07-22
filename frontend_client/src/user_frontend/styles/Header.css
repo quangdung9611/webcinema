@@ -1,750 +1,427 @@
-/*=========================================================
-    QUANG DUNG CINEMA
-    HEADER PREMIUM V6 – DÙNG BIẾN TỪ INDEX.CSS
-=========================================================*/
+/* ==========================================
+   HEADER - SỬ DỤNG BIẾN TỪ INDEX.CSS
+========================================== */
 
-/*=========================================================
-RESET
-=========================================================*/
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-.user-navbar * {
-    box-sizing: border-box;
-}
-.user-navbar ul {
-    list-style: none;
-}
 .user-navbar a {
     text-decoration: none;
 }
-.user-navbar button {
-    border: none;
-    outline: none;
-    background: none;
+
+.user-navbar ul {
+    list-style: none;
 }
 
-/*=========================================================
-NAVBAR
-=========================================================*/
+/* ===== Navbar ===== */
 .user-navbar {
     position: sticky;
     top: 0;
-    left: 0;
+    z-index: 9999;
     width: 100%;
     height: 74px;
-    z-index: 9999;
-    background: var(--header-bg);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border-bottom: var(--header-border);
-    box-shadow: var(--header-shadow);
+    backdrop-filter: blur(20px);
+    background: rgba(10, 10, 18, 0.9);
+    border-bottom: var(--border-silver);
 }
 
-/*=========================================================
-CONTAINER
-=========================================================*/
 .nav-container {
+    max-width: 1400px;
     width: 100%;
-    max-width: 1380px;
     height: 100%;
     margin: auto;
-    padding: 0 28px;
+    padding: 0 var(--space-lg);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    position: relative;
 }
 
-/*=========================================================
-LOGO
-=========================================================*/
+/* ===== Logo ===== */
 .header-logo {
+    cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    cursor: pointer;
-    user-select: none;
-    z-index: 50;
-}
-.header-logo img {
-    width: 180px;
-    height: auto;
-    object-fit: contain;
-    display: block;
-    transition: transform 0.35s ease;
-}
-.header-logo:hover img {
-    transform: translateY(-2px) scale(1.03);
 }
 
-/*=========================================================
-DESKTOP NAVIGATION
-=========================================================*/
+.header-logo img {
+    width: 180px;
+    display: block;
+    transition: var(--transition-normal);
+}
+
+.header-logo:hover img {
+    transform: scale(1.03);
+}
+
+/* ===== Menu Desktop ===== */
 .nav-links {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
+    gap: var(--space-xs);
     height: 100%;
 }
+
 .nav-links > li {
     position: relative;
+    height: 100%;
     display: flex;
     align-items: center;
-    height: 100%;
 }
-.nav-links > li > a {
-    position: relative;
+
+/* ----- CLASS CHUNG CHO TẤT CẢ CÁC MỤC MENU ----- */
+.menu-link {
+    height: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
-    height: 100%;
-    padding: 0 18px;
-    color: var(--text-white);
-    font-size: 0.87rem;
-    font-weight: 700;
-    letter-spacing: 0.7px;
+    gap: var(--space-xs);
+    padding: 0 var(--space-lg);
+    color: var(--text-heading);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
     text-transform: uppercase;
-    white-space: nowrap;
-    transition: color 0.3s ease, text-shadow 0.3s ease;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+    letter-spacing: 0.5px;
 }
 
-/*=========================================================
-PREMIUM HOVER
-=========================================================*/
-.nav-links > li > a::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    bottom: 14px;
-    width: 0;
-    height: 2px;
-    border-radius: 20px;
-    transform: translateX(-50%);
-    background: var(--cinema-border-gradient);
-    box-shadow: 0 0 12px rgba(var(--gold-rgb-light), 0.45);
-    transition: width 0.35s ease;
-}
-.nav-links > li > a:hover {
-    color: var(--gold-hover);
-    text-shadow: var(--gold-shadow-drop);
-}
-.nav-links > li > a:hover::before {
-    width: 72%;
-}
-.nav-links > li > a.active {
-    color: var(--gold-hover);
-}
-.nav-links > li > a.active::before {
-    width: 72%;
+.menu-link:hover {
+    color: var(--gold-primary);
 }
 
-/*=========================================================
-DROPDOWN ICON
-=========================================================*/
+/* Icon mũi tên */
 .icon-down {
-    width: 15px;
-    height: 15px;
-    transition: transform 0.35s ease;
+    transition: transform var(--transition-fast);
 }
-.has-dropdown:hover > .nav-link .icon-down,
-.has-dropdown:hover > .icon-down,
+
 .has-dropdown:hover .icon-down {
     transform: rotate(180deg);
 }
 
-/*=========================================================
-HAMBURGER
-=========================================================*/
-.hamburger {
-    display: none;
-    width: 46px;
-    height: 46px;
-    cursor: pointer;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    z-index: 10001;
-    transition: 0.3s;
-}
-.hamburger:hover {
-    transform: scale(1.05);
-}
-.hamburger:hover .bar {
-    background: var(--gold-hover);
-}
-.hamburger.active {
-    transform: rotate(180deg);
-}
-.bar {
-    width: 26px;
-    height: 2px;
-    margin: 3px 0;
-    border-radius: 30px;
-    background: var(--text-white);
-    transition: 0.35s ease;
-}
-.hamburger.active .bar:nth-child(1) {
-    transform: translateY(8px) rotate(45deg);
-}
-.hamburger.active .bar:nth-child(2) {
+/* ===== Submenu Desktop ===== */
+.sub-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 260px;
+    background: var(--cinema-card-bg);
+    border: var(--border-silver);
+    border-radius: var(--radius-lg);
+    padding: var(--space-sm) 0;
     opacity: 0;
-}
-.hamburger.active .bar:nth-child(3) {
-    transform: translateY(-8px) rotate(-45deg);
-}
-
-/*=========================================================
-OVERLAY
-=========================================================*/
-.menu-overlay {
-    display: none;
-}
-
-/*=========================================================
-USER MENU
-=========================================================*/
-.user-menu {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-normal), visibility var(--transition-normal), transform var(--transition-normal);
+    transform: translateY(4px);
     z-index: 1000;
 }
 
-/*=========================================================
-ACCOUNT TRIGGER
-=========================================================*/
-.account-trigger {
+.has-dropdown:hover > .sub-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.sub-menu li a {
+    display: flex;
+    padding: var(--space-md) var(--space-xl);
+    color: var(--text-secondary);
+    transition: color var(--transition-fast), background var(--transition-fast), padding-left var(--transition-fast);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-medium);
+    text-transform: none;
+}
+
+.sub-menu li a:hover {
+    color: var(--white-pure);
+    background: rgba(201, 168, 76, 0.08);
+    padding-left: var(--space-2xl);
+}
+
+/* ===== Account ===== */
+.user-menu {
     position: relative;
+}
+
+.account-trigger {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-height: 46px;
-    padding: 0 18px;
+    gap: var(--space-sm);
+    height: 46px;
+    padding: 0 var(--space-lg);
     border-radius: var(--radius-round);
     cursor: pointer;
-    overflow: hidden;
-    border: 1px solid var(--overlay-light);
-    background: linear-gradient(180deg, var(--overlay-medium), rgba(255, 255, 255, 0.015));
-    transition: 0.35s ease;
+    color: var(--white-pure);
+    border: var(--border-light);
+    background: rgba(255, 255, 255, 0.03);
+    transition: border-color var(--transition-fast), background var(--transition-fast);
 }
-.account-trigger::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    background: linear-gradient(90deg, rgba(var(--gold-rgb-light), 0.12), rgba(var(--gold-rgb-light), 0.04));
-    transition: 0.35s;
-}
-.account-trigger:hover::before {
-    opacity: 1;
-}
+
 .account-trigger:hover {
     border-color: var(--gold-primary);
-    box-shadow: var(--gold-glow);
 }
+
 .user-icon {
-    color: var(--text-white);
-    transition: 0.3s;
+    color: var(--white-pure);
 }
+
 .username-display {
-    color: var(--text-white);
-    font-size: 0.9rem;
-    font-weight: 600;
-    white-space: nowrap;
-    position: relative;
-    z-index: 2;
+    color: var(--white-pure);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-semibold);
 }
-.account-trigger:hover .user-icon,
-.account-trigger:hover .username-display {
-    color: var(--gold-hover);
-}
+
 .rotate {
     transform: rotate(180deg);
 }
 
-/*=========================================================
-DROPDOWN
-=========================================================*/
+/* ===== Dropdown account ===== */
 .dropdown-content {
     position: absolute;
-    top: calc(100% + 14px);
+    top: calc(100% + var(--space-sm));
     right: 0;
     width: 270px;
     overflow: hidden;
     border-radius: var(--radius-lg);
     background: var(--cinema-card-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: var(--border-gold);
-    box-shadow: var(--cinema-card-shadow);
-    animation: dropdownAnimation 0.25s ease;
+    border: var(--border-silver);
+    animation: dropdown var(--transition-normal) ease;
 }
 
-/*=========================================================
-USER INFO
-=========================================================*/
 .dropdown-user-info {
-    padding: 20px;
-    background: linear-gradient(180deg, rgba(var(--gold-rgb-light), 0.08), transparent);
+    padding: var(--space-lg);
 }
+
 .dropdown-user-info p {
     color: var(--text-secondary);
-    font-size: 0.92rem;
-    line-height: 1.6;
 }
+
 .dropdown-user-info strong {
-    color: var(--text-white);
+    color: var(--white-pure);
 }
+
 .admin-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 14px;
-    padding: 7px 14px;
+    display: inline-block;
+    margin-top: var(--space-sm);
+    padding: var(--space-xs) var(--space-md);
     border-radius: var(--radius-round);
-    color: var(--gold-hover);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    background: rgba(var(--gold-rgb-light), 0.10);
-    border: 1px solid rgba(var(--gold-rgb-light), 0.25);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
+    color: var(--gold-primary);
+    background: rgba(201, 168, 76, 0.1);
 }
 
-/*=========================================================
-DIVIDER
-=========================================================*/
 .dropdown-divider {
-    width: 100%;
     height: 1px;
-    background: var(--overlay-light);
+    background: rgba(255, 255, 255, 0.08);
 }
 
-/*=========================================================
-DROPDOWN ITEM
-=========================================================*/
 .dropdown-item {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 15px 20px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-xl);
     cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    transition: 0.3s ease;
+    transition: background var(--transition-fast), color var(--transition-fast);
 }
-.dropdown-item::before {
-    content: "";
-    position: absolute;
-    left: -100%;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, var(--overlay-light), transparent);
-    transition: 0.55s;
-}
-.dropdown-item:hover::before {
-    left: 100%;
-}
+
 .dropdown-item svg {
-    width: 18px;
-    height: 18px;
     color: var(--text-secondary);
-    transition: 0.3s;
 }
+
 .dropdown-item span {
     color: var(--text-secondary);
-    font-size: 0.92rem;
-    font-weight: 500;
-    transition: 0.3s;
 }
+
 .dropdown-item:hover {
-    background: linear-gradient(90deg, rgba(var(--gold-rgb), 0.12), rgba(var(--gold-rgb), 0.04));
-    transform: translateX(4px);
+    background: rgba(201, 168, 76, 0.08);
 }
-.dropdown-item:hover svg {
-    color: var(--gold-hover);
-}
+
+.dropdown-item:hover svg,
 .dropdown-item:hover span {
-    color: var(--text-white);
+    color: var(--white-pure);
 }
+
 .admin-link:hover {
-    box-shadow: inset 3px 0 0 var(--gold-primary);
+    border-left: 3px solid var(--gold-primary);
 }
+
 .logout-btn:hover {
-    background: linear-gradient(90deg, rgba(var(--gold-rgb-light), 0.18), rgba(var(--gold-rgb-light), 0.08));
+    background: rgba(201, 168, 76, 0.12);
 }
 
-/*=========================================================
-ANIMATION
-=========================================================*/
-@keyframes dropdownAnimation {
-    from {
-        opacity: 0;
-        transform: translateY(10px) scale(0.97);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-/*=========================================================
-SUB MENU - DESKTOP (SÁT MÉP)
-=========================================================*/
-.sub-menu {
-    position: absolute;
-    top: 100%;                     /* 👈 SÁT MÉP, KHÔNG CÓ KHOẢNG CÁCH */
-    left: 0;
-    min-width: 260px;
-    padding: 10px 0;
-    border-radius: var(--radius-lg);
-    background: var(--cinema-card-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: var(--border-gold);
-    box-shadow: var(--cinema-card-shadow);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(0);      /* 👈 KHÔNG DỊCH CHUYỂN */
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    overflow: hidden;
-    z-index: 999;
-}
-
-/*=========================================================
-SHOW SUBMENU (SÁT MÉP)
-=========================================================*/
-.has-dropdown:hover > .sub-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);      /* 👈 GIỮ NGUYÊN VỊ TRÍ, KHÔNG DỊCH */
-}
-
-/*=========================================================
-SUBMENU ITEM
-=========================================================*/
-.sub-menu li {
-    width: 100%;
-}
-.sub-menu li a {
-    position: relative;
-    display: flex;
+/* ===== Hamburger ===== */
+.hamburger {
+    display: none;
+    width: 44px;
+    height: 44px;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    width: 100%;
-    padding: 14px 22px;
-    color: var(--text-secondary);
-    font-size: 0.92rem;
-    font-weight: 500;
-    text-transform: none;
-    letter-spacing: 0.3px;
-    overflow: hidden;
-    transition: 0.3s ease;
-}
-.sub-menu li a::before {
-    content: "";
-    position: absolute;
-    left: -100%;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, var(--overlay-light), transparent);
-    transition: 0.55s;
-}
-.sub-menu li a:hover::before {
-    left: 100%;
-}
-.sub-menu li a:hover {
-    color: var(--text-white);
-    background: linear-gradient(90deg, rgba(var(--gold-rgb), 0.16), rgba(var(--gold-rgb), 0.04));
-    padding-left: 30px;
+    cursor: pointer;
+    background: transparent;
+    border: none;
 }
 
-/*=========================================================
-MOBILE MENU
-=========================================================*/
+.bar {
+    width: 24px;
+    height: 2px;
+    margin: 3px 0;
+    background: var(--white-pure);
+    transition: all var(--transition-fast);
+}
+
+.hamburger.active .bar:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger.active .bar:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger.active .bar:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+/* ===== Overlay ===== */
 .menu-overlay {
     position: fixed;
     inset: 0;
-    background: var(--overlay-dark-blur);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(0, 0, 0, 0.6);
     opacity: 0;
     visibility: hidden;
-    transition: 0.35s;
-    z-index: 998;
+    transition: opacity var(--transition-normal), visibility var(--transition-normal);
+    z-index: 999;
 }
+
 .menu-overlay.active {
     opacity: 1;
     visibility: visible;
 }
 
-/*=========================================================
-MOBILE NAV
-=========================================================*/
-.nav-links {
-    transition: 0.4s ease;
+/* ===== Animation ===== */
+@keyframes dropdown {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/*=========================================================
-MOBILE SUBMENU
-=========================================================*/
-.has-dropdown.mobile-active > .sub-menu {
-    position: relative;
-    top: auto;
-    left: auto;
-    min-width: 100%;
-    margin-top: 8px;
-    border-radius: var(--radius-md);
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-    display: block;
-    box-shadow: none;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--overlay-light);
-}
-.has-dropdown.mobile-active > .sub-menu li a {
-    padding: 14px 20px 14px 38px;
-    font-size: 0.9rem;
-}
-
-/*=========================================================
-MOBILE SUBMENU INDENT
-=========================================================*/
-.has-dropdown.mobile-active > .sub-menu li a::after {
-    content: "";
-    position: absolute;
-    left: 20px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--gold-primary);
-}
-
-/*=========================================================
-MENU SCROLLBAR
-=========================================================*/
-.nav-links::-webkit-scrollbar {
-    width: 5px;
-}
-.nav-links::-webkit-scrollbar-track {
-    background: transparent;
-}
-.nav-links::-webkit-scrollbar-thumb {
-    background: rgba(var(--gold-rgb-light), 0.35);
-    border-radius: 30px;
-}
-.nav-links::-webkit-scrollbar-thumb:hover {
-    background: rgba(var(--gold-rgb-light), 0.65);
-}
-
-/*=========================================================
-RESPONSIVE
-=========================================================*/
-@media (max-width: 1400px) {
-    .nav-container {
-        max-width: 1240px;
-        padding: 0 22px;
-    }
-    .header-logo img {
-        width: 170px;
-    }
-    .nav-links > li > a {
-        padding: 0 16px;
-        font-size: 0.84rem;
-    }
-}
-@media (max-width: 1200px) {
-    .header-logo img {
-        width: 160px;
-    }
-    .nav-links > li > a {
-        padding: 0 13px;
-        font-size: 0.82rem;
-    }
-    .username-display {
-        max-width: 110px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-}
-@media (max-width: 992px) {
-    .nav-container {
-        padding: 0 18px;
-    }
-    .header-logo img {
-        width: 150px;
-    }
-    .nav-links > li > a {
-        padding: 0 10px;
-        font-size: 0.79rem;
-    }
-    .account-trigger {
-        padding: 0 14px;
-    }
-    .username-display {
-        display: none;
-    }
-}
+/* ==========================================
+   MOBILE (≤ 768px)
+========================================== */
 @media (max-width: 768px) {
-    .user-navbar {
-        height: 70px;
-    }
     .hamburger {
         display: flex;
+        z-index: 1001;
     }
+
     .header-logo {
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
+        z-index: 1001;
     }
+
     .header-logo img {
-        width: 145px;
+        width: 140px;
     }
+
+    .username-display {
+        display: none;
+    }
+
     .nav-links {
         position: fixed;
         top: 0;
         left: -100%;
-        width: 300px;
+        width: 320px;
+        max-width: 85vw;
         height: 100vh;
-        padding: 90px 0 30px;
-        overflow-y: auto;
+        background: var(--black-soft);
         flex-direction: column;
-        align-items: flex-start;
-        justify-content: flex-start;
+        align-items: stretch;
+        padding-top: 80px;
+        transition: left var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+        z-index: 1000;
         gap: 0;
-        background: var(--cinema-card-bg);
-        border-right: var(--border-gold);
-        box-shadow: var(--cinema-card-shadow);
-        z-index: 999;
     }
+
     .nav-links.active {
         left: 0;
     }
+
     .nav-links > li {
         width: 100%;
         height: auto;
         display: block;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
-    .nav-links > li > a {
+
+    .menu-link {
         width: 100%;
+        padding: var(--space-lg) var(--space-xl);
+        height: auto;
         justify-content: space-between;
-        padding: 18px 24px;
-        font-size: 0.95rem;
-        border-bottom: 1px solid var(--overlay-light);
+        font-size: var(--font-size-base);
+        font-weight: var(--fw-semibold);
+        text-transform: none;
+        border-bottom: none;
     }
-    .nav-links > li > a::before {
-        display: none;
-    }
+
+    /* Submenu mobile */
     .sub-menu {
         position: static;
-        display: none;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-        border: none;
-        border-radius: 0;
-        background: rgba(0, 0, 0, 0.3);
-        box-shadow: none;
         opacity: 1;
         visibility: visible;
+        max-height: 0;
+        overflow: hidden;
+        border: none;
+        border-radius: 0;
+        background: transparent;
+        padding: 0;
+        transition: max-height var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: none;
         transform: none;
     }
-    .has-dropdown.mobile-active > .sub-menu {
-        display: block;
+
+    .has-dropdown.mobile-active .sub-menu {
+        max-height: 800px;
     }
-    .sub-menu li {
-        width: 100%;
+
+    .sub-menu li a {
+        padding: var(--space-md) var(--space-xl) var(--space-md) calc(var(--space-xl) * 2);
+        font-size: var(--font-size-base);
+        font-weight: var(--fw-medium);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     }
-    .sub-menu a {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        height: 48px;
-        padding: 0 42px;
-        font-size: 0.9rem;
-        font-weight: 500;
-        color: var(--text-secondary);
-        background: transparent;
-        border-bottom: 1px solid var(--overlay-light);
-        transition: color 0.25s, background 0.25s;
+
+    .sub-menu li a:hover {
+        background: rgba(201, 168, 76, 0.05);
+        padding-left: calc(var(--space-xl) * 2 + var(--space-sm));
     }
-    .sub-menu a:hover {
-        color: var(--gold-hover);
-        background: linear-gradient(90deg, rgba(var(--gold-rgb-light), 0.35), rgba(var(--gold-rgb-light), 0.08));
+
+    .has-dropdown.mobile-active .icon-down {
+        transform: rotate(180deg);
     }
-    .menu-overlay {
-        display: block;
-        position: fixed;
-        inset: 0;
-        background: var(--overlay-dark-blur);
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
-        z-index: 998;
-    }
-    .user-menu {
-        margin-left: auto;
-    }
+
     .dropdown-content {
         width: 250px;
-        right: 0;
+        right: -10px;
+        top: calc(100% + var(--space-sm));
     }
 }
-@media (max-width: 576px) {
-    .nav-container {
-        padding: 0 14px;
+
+/* ==========================================
+   TABLET & NHỎ (769px – 1024px)
+========================================== */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .menu-link {
+        padding: 0 var(--space-md);
+        font-size: var(--font-size-base);
     }
+
     .header-logo img {
-        width: 130px;
-    }
-    .nav-links {
-        width: 285px;
-    }
-    .dropdown-content {
-        width: 225px;
-    }
-    .dropdown-user-info {
-        padding: 18px;
-    }
-    .dropdown-item {
-        padding: 14px 18px;
-    }
-}
-@media (max-width: 420px) {
-    .header-logo img {
-        width: 118px;
-    }
-    .nav-links {
-        width: 265px;
-    }
-    .account-trigger {
-        padding: 0 10px;
-        min-height: 42px;
-    }
-    .dropdown-content {
-        width: 210px;
-    }
-}
-@media (max-width: 360px) {
-    .nav-container {
-        padding: 0 10px;
-    }
-    .header-logo img {
-        width: 110px;
-    }
-    .nav-links {
-        width: 250px;
-    }
-    .dropdown-content {
-        width: 200px;
+        width: 150px;
     }
 }

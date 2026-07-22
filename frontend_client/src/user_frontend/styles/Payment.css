@@ -1,6 +1,5 @@
 /* =========================================
-   PAYMENT PAGE - GOLD PREMIUM THEME
-   (Dùng biến từ index.css)
+   PAYMENT PAGE - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
 ========================================= */
 
 .main-booking-area {
@@ -18,14 +17,14 @@
     position: relative;
     overflow: hidden;
     background: var(--cinema-card-bg);
-    border: var(--border-gold);
+    border: var(--border-silver);
     border-radius: var(--radius-xl);
     padding: var(--space-xl);
     backdrop-filter: blur(18px);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
 }
 
-/* Glow vàng nhẹ */
+/* Glow vàng nhẹ (giữ nguyên màu vàng) */
 .payment-card::before {
     content: '';
     position: absolute;
@@ -41,9 +40,9 @@
 
 .payment-card h3 {
     margin: 0 0 var(--space-lg);
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-base);
     font-weight: var(--fw-extrabold);
-    color: var(--text-white);
+    color: var(--text-body);
     letter-spacing: 1px;
 }
 
@@ -56,17 +55,17 @@
     height: 56px;
     padding: 0 var(--space-md);
     border-radius: var(--radius-md);
-    border: 1px solid var(--overlay-light);
+    border: var(--border-light);
     background: rgba(255, 255, 255, 0.04);
-    color: var(--text-white);
-    font-size: var(--font-size-sm);
+    color: var(--text-body);
+    font-size: 0.875rem;
     font-weight: var(--fw-medium);
     outline: none;
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
 }
 
 .payment-card input:focus {
-    border-color: var(--gold-premium);
+    border-color: var(--gold-primary);
     background: rgba(201, 168, 76, 0.05);
     box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.12);
 }
@@ -103,11 +102,11 @@
     border-radius: var(--radius-md);
     background: var(--gold-gradient);
     color: var(--black-premium);
-    font-size: var(--font-size-sm);
+    font-size: 0.875rem;
     font-weight: var(--fw-extrabold);
     cursor: pointer;
-    transition: var(--transition-normal);
-    box-shadow: var(--shadow-gold);
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-silver);
 }
 
 .coupon-group button:hover {
@@ -132,10 +131,10 @@
     gap: var(--space-sm);
     padding: var(--space-md) var(--space-md);
     border-radius: var(--radius-lg);
-    border: 1px solid var(--overlay-light);
+    border: var(--border-light);
     background: rgba(255, 255, 255, 0.03);
     cursor: pointer;
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
 }
 
 .payment-method:hover {
@@ -146,7 +145,7 @@
 
 /* ACTIVE */
 .payment-method.active {
-    border-color: var(--gold-premium);
+    border-color: var(--gold-primary);
     background: linear-gradient(135deg, rgba(201, 168, 76, 0.14), rgba(184, 146, 58, 0.16));
     box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.2), 0 10px 26px rgba(201, 168, 76, 0.14);
 }
@@ -154,11 +153,11 @@
 .payment-method input {
     width: 18px;
     height: 18px;
-    accent-color: var(--gold-premium);
+    accent-color: var(--gold-primary);
 }
 
 .payment-method span {
-    color: var(--text-white);
+    color: var(--text-body);
     font-weight: var(--fw-bold);
     letter-spacing: 0.4px;
 }
@@ -174,11 +173,11 @@
     border-radius: var(--radius-lg);
     background: var(--gold-gradient);
     color: var(--black-premium);
-    font-size: var(--font-size-sm);
+    font-size: 0.875rem;
     font-weight: var(--fw-extrabold);
     cursor: pointer;
-    transition: var(--transition-normal);
-    box-shadow: var(--shadow-gold);
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-silver);
 }
 
 .btn-next:hover {
@@ -197,22 +196,22 @@
     height: 54px;
     margin-top: var(--space-sm);
     border-radius: var(--radius-md);
-    border: var(--border-gold);
+    border: var(--border-silver);
     background: rgba(255, 255, 255, 0.04);
     color: var(--text-secondary);
     font-weight: var(--fw-bold);
     cursor: pointer;
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
 }
 
 .btn-back:hover {
     background: rgba(201, 168, 76, 0.06);
-    border-color: var(--border-gold-hover);
-    color: var(--text-white);
+    border-color: var(--border-silver-hover);
+    color: var(--text-body);
 }
 
 /* =========================================
-   RESPONSIVE (1200, 992, 768, 480)
+   RESPONSIVE
 ========================================= */
 
 /* --- 1200px --- */
@@ -262,13 +261,13 @@
 
     .payment-card input {
         height: 52px;
-        font-size: var(--font-size-sm);
+        font-size: 0.875rem;
     }
 
     .btn-next,
     .btn-back {
         height: 50px;
-        font-size: var(--font-size-sm);
+        font-size: 0.875rem;
     }
 
     .payment-method {

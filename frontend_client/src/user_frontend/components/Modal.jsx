@@ -48,11 +48,11 @@ const Modal = ({
                     </div>
                 )}
 
-                {showHeader && (
+                {/* {showHeader && (
                     <div className="modal-header">
                         <h2 className="modal-title">{title}</h2>
                     </div>
-                )}
+                )} */}
 
                 {showCloseButton && (
                     <button className="modal-close-btn" onClick={onClose}>

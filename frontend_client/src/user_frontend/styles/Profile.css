@@ -1,6 +1,5 @@
 /* =========================================================
-   PROFILE LAYOUT - GOLD PREMIUM THEME
-   (Dùng biến từ index.css)
+   PROFILE LAYOUT - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
 ========================================================= */
 
 .galaxy-profile-wrapper {
@@ -32,8 +31,8 @@
     padding: var(--space-xl);
     overflow: hidden;
     background: var(--cinema-card-bg);
-    border: var(--border-gold);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
+    border: var(--border-silver);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
     backdrop-filter: blur(20px);
 }
 
@@ -60,7 +59,7 @@
     gap: var(--space-md);
     padding-bottom: var(--space-lg);
     margin-bottom: var(--space-lg);
-    border-bottom: 1px solid var(--overlay-light);
+    border-bottom: var(--border-light);
 }
 
 .avatar-wrapper {
@@ -77,9 +76,9 @@
     justify-content: center;
     background: var(--gold-gradient);
     color: var(--black-premium);
-    font-size: var(--font-size-3xl);
+    font-size: var(--font-size-h2);
     font-weight: var(--fw-extrabold);
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--shadow-silver);
 }
 
 .camera-icon {
@@ -92,7 +91,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--gold-premium);
+    background: var(--gold-primary);
     color: var(--black-premium);
     border: 2px solid var(--black-premium);
 }
@@ -104,8 +103,8 @@
 
 .user-titles h3 {
     margin: 0 0 var(--space-sm);
-    color: var(--text-white);
-    font-size: var(--font-size-md);
+    color: var(--text-body);
+    font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     line-height: 1.4;
     word-break: break-word;
@@ -119,8 +118,8 @@
     border-radius: var(--radius-round);
     background: rgba(201, 168, 76, 0.12);
     border: 1px solid rgba(201, 168, 76, 0.15);
-    color: var(--gold-premium-light);
-    font-size: var(--font-size-sm);
+    color: var(--gold-light);
+    font-size: 0.875rem;
     font-weight: var(--fw-semibold);
 }
 
@@ -133,7 +132,7 @@
     padding: var(--space-lg);
     border-radius: var(--radius-lg);
     background: linear-gradient(180deg, rgba(201, 168, 76, 0.08), rgba(255, 255, 255, 0.02));
-    border: 1px solid var(--overlay-light);
+    border: var(--border-light);
 }
 
 .spending-header {
@@ -142,14 +141,14 @@
     align-items: center;
     margin-bottom: var(--space-sm);
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: 0.875rem;
 }
 
 .spending-value {
-    font-size: var(--font-size-3xl);
+    font-size: var(--font-size-h2);
     font-weight: var(--fw-extrabold);
     color: var(--gold-primary);
-    text-shadow: var(--shadow-gold);
+    text-shadow: var(--shadow-silver);
 }
 
 /* =========================================================
@@ -164,7 +163,7 @@
     position: relative;
     height: 8px;
     border-radius: var(--radius-round);
-    background: var(--overlay-light);
+    background: rgba(255, 255, 255, 0.06);
     overflow: hidden;
 }
 
@@ -172,7 +171,7 @@
     height: 100%;
     border-radius: inherit;
     background: var(--gold-gradient);
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--shadow-silver);
 }
 
 .dot {
@@ -183,13 +182,13 @@
     border-radius: 50%;
     transform: translateY(-50%);
     background: var(--black-soft);
-    border: 2px solid var(--overlay-light);
+    border: 2px solid rgba(255, 255, 255, 0.06);
 }
 
 .dot.active {
-    background: var(--gold-premium);
-    border-color: var(--gold-premium);
-    box-shadow: var(--shadow-gold);
+    background: var(--gold-primary);
+    border-color: var(--gold-primary);
+    box-shadow: var(--shadow-silver);
 }
 
 .d-0 {
@@ -208,7 +207,7 @@
     justify-content: space-between;
     margin-top: var(--space-sm);
     color: var(--text-muted);
-    font-size: var(--font-size-xs);
+    font-size: 0.75rem;
 }
 
 /* =========================================================
@@ -228,11 +227,11 @@
     padding: var(--space-md) var(--space-md);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--overlay-light);
+    border: var(--border-light);
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: 0.875rem;
     font-weight: var(--fw-medium);
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
     cursor: pointer;
 }
 
@@ -240,7 +239,7 @@
     transform: translateY(-2px);
     background: rgba(201, 168, 76, 0.08);
     border-color: rgba(201, 168, 76, 0.15);
-    color: var(--text-white);
+    color: var(--text-body);
 }
 
 /* =========================================================
@@ -251,8 +250,8 @@
     overflow: hidden;
     border-radius: var(--radius-xl);
     background: var(--cinema-card-bg);
-    border: var(--border-gold);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-gold);
+    border: var(--border-silver);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
 }
 
 /* =========================================================
@@ -263,7 +262,7 @@
     display: flex;
     align-items: center;
     overflow-x: auto;
-    border-bottom: 1px solid var(--overlay-light);
+    border-bottom: var(--border-light);
     background: rgba(255, 255, 255, 0.02);
 }
 
@@ -274,15 +273,15 @@
     padding: var(--space-lg) var(--space-xl);
     background: transparent;
     color: var(--text-muted);
-    font-size: var(--font-size-sm);
+    font-size: 0.875rem;
     font-weight: var(--fw-bold);
     white-space: nowrap;
     cursor: pointer;
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
 }
 
 .tabs-header button:hover {
-    color: var(--text-white);
+    color: var(--text-body);
 }
 
 .tabs-header button.active {
@@ -330,7 +329,7 @@
 .input-box label {
     margin-bottom: var(--space-sm);
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: 0.875rem;
     font-weight: var(--fw-semibold);
 }
 
@@ -342,11 +341,11 @@
     border-radius: var(--radius-md);
     outline: none;
     background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--overlay-light);
-    color: var(--text-white);
-    font-size: var(--font-size-sm);
+    border: var(--border-light);
+    color: var(--text-body);
+    font-size: 0.875rem;
     font-weight: var(--fw-medium);
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
     box-sizing: border-box;
 }
 
@@ -357,7 +356,7 @@
 
 .input-box input:focus,
 .password-change-section input:focus {
-    border-color: var(--gold-premium);
+    border-color: var(--gold-primary);
     background: rgba(201, 168, 76, 0.05);
     box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.08);
 }
@@ -382,15 +381,15 @@
     top: 50%;
     right: var(--space-md);
     transform: translateY(-50%);
-    color: var(--gold-premium);
-    font-size: var(--font-size-sm);
+    color: var(--gold-primary);
+    font-size: 0.875rem;
     font-weight: var(--fw-semibold);
     cursor: pointer;
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
 }
 
 .action-link:hover {
-    color: var(--gold-premium-light);
+    color: var(--gold-light);
 }
 
 /* =========================================================
@@ -400,7 +399,7 @@
 .password-change-section {
     margin-top: var(--space-2xl);
     padding-top: var(--space-xl);
-    border-top: 1px dashed var(--overlay-light);
+    border-top: 1px dashed rgba(255, 255, 255, 0.06);
 }
 
 .password-change-section h4 {
@@ -409,362 +408,12 @@
     gap: var(--space-sm);
     margin: 0 0 var(--space-lg);
     color: var(--gold-primary);
-    font-size: var(--font-size-base);
+    font-size: 1rem;
     font-weight: var(--fw-bold);
 }
 
 /* =========================================================
    BUTTON ACTIONS
-========================================================= */
-
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--space-sm);
-    margin-top: var(--space-2xl);
-}
-
-/* edit */
-
-.btn-edit-mode {
-    border: none;
-    min-width: 220px;
-    height: 56px;
-    padding: 0 var(--space-lg);
-    border-radius: var(--radius-md);
-    background: var(--gold-gradient);
-    color: var(--black-premium);
-    font-size: var(--font-size-sm);
-    font-weight: var(--fw-bold);
-    cursor: pointer;
-    transition: var(--transition-normal);
-    box-shadow: var(--shadow-gold);
-}
-
-.btn-edit-mode:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 28px rgba(201, 168, 76, 0.35);
-}
-
-/* cancel */
-
-.btn-cancel {
-    border: var(--border-gold);
-    min-width: 150px;
-    height: 56px;
-    padding: 0 var(--space-lg);
-    border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-    font-weight: var(--fw-semibold);
-    cursor: pointer;
-    transition: var(--transition-normal);
-}
-
-.btn-cancel:hover {
-    background: rgba(201, 168, 76, 0.08);
-    color: var(--text-white);
-    border-color: var(--border-gold-hover);
-}
-
-/* submit */
-
-.btn-submit-galaxy {
-    border: none;
-    min-width: 180px;
-    height: 56px;
-    padding: 0 var(--space-lg);
-    border-radius: var(--radius-md);
-    background: var(--gold-gradient);
-    color: var(--black-premium);
-    font-size: var(--font-size-sm);
-    font-weight: var(--fw-bold);
-    cursor: pointer;
-    transition: var(--transition-normal);
-    box-shadow: var(--shadow-gold);
-}
-
-.btn-submit-galaxy:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 30px rgba(201, 168, 76, 0.35);
-}
-
-.btn-submit-galaxy:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* =========================================================
-   LOADING
-========================================================= */
-
-.loading-text,
-.loader {
-    text-align: center;
-    color: var(--text-secondary);
-    padding: var(--space-2xl) 0;
-    font-size: var(--font-size-sm);
-}
-
-/* =========================================================
-   HISTORY TAB
-========================================================= */
-
-.history-tab-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-}
-
-/* =========================================================
-   CLEAR HISTORY BUTTON
-========================================================= */
-
-.history-action-bar {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.btn-clear-history {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    border: none;
-    outline: none;
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-sm);
-    background: rgba(201, 168, 76, 0.08);
-    border: 1px solid rgba(201, 168, 76, 0.12);
-    color: var(--gold-premium);
-    font-size: var(--font-size-sm);
-    font-weight: var(--fw-semibold);
-    cursor: pointer;
-    transition: var(--transition-normal);
-}
-
-.btn-clear-history:hover {
-    transform: translateY(-2px);
-    background: rgba(201, 168, 76, 0.14);
-    color: var(--text-white);
-}
-
-/* =========================================================
-   TICKET LIST
-========================================================= */
-
-.ticket-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-}
-
-/* =========================================================
-   TICKET CARD
-========================================================= */
-
-.history-ticket-item {
-    display: flex;
-    align-items: stretch;
-    overflow: hidden;
-    border-radius: var(--radius-xl);
-    background: var(--cinema-card-bg);
-    border: var(--border-gold);
-    box-shadow: var(--cinema-card-shadow);
-    transition: var(--cinema-transition);
-}
-
-.history-ticket-item:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
-}
-
-/* =========================================================
-   POSTER
-========================================================= */
-
-.ticket-thumb {
-    width: 180px;
-    min-width: 180px;
-    overflow: hidden;
-    background: var(--black-premium);
-}
-
-.ticket-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: var(--transition-normal);
-}
-
-.history-ticket-item:hover .ticket-thumb img {
-    transform: scale(1.05);
-}
-
-/* =========================================================
-   CENTER INFO
-========================================================= */
-
-.ticket-main-info {
-    flex: 1;
-    padding: var(--space-lg);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: var(--space-sm);
-}
-
-.movie-title-history {
-    margin: 0 0 var(--space-xs);
-    color: var(--text-white);
-    font-size: var(--font-size-xl);
-    font-weight: var(--fw-extrabold);
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.info-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-}
-
-.info-row svg {
-    color: var(--gold-premium);
-    flex-shrink: 0;
-}
-
-.info-row.highlight {
-    color: var(--gold-premium-light);
-    font-weight: var(--fw-semibold);
-}
-
-/* =========================================================
-   SEAT
-========================================================= */
-
-.seat-text {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    width: fit-content;
-    margin-top: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-sm);
-    background: rgba(201, 168, 76, 0.08);
-    border: 1px solid rgba(201, 168, 76, 0.12);
-    color: var(--gold-premium-light);
-    font-size: var(--font-size-sm);
-    font-weight: var(--fw-semibold);
-}
-
-.price-text {
-    margin: var(--space-xs) 0 0;
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-}
-
-.price-text span {
-    color: var(--gold-primary);
-    font-size: var(--font-size-md);
-    font-weight: var(--fw-extrabold);
-}
-
-/* =========================================================
-   QR SIDE
-========================================================= */
-
-.ticket-qr-side {
-    width: 190px;
-    min-width: 190px;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-sm);
-    padding: var(--space-lg);
-    border-left: 1px dashed var(--overlay-light);
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.ticket-qr-side::before,
-.ticket-qr-side::after {
-    content: "";
-    position: absolute;
-    left: -12px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--black-premium);
-}
-
-.ticket-qr-side::before {
-    top: -12px;
-}
-.ticket-qr-side::after {
-    bottom: -12px;
-}
-
-.status-label {
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-round);
-    font-size: var(--font-size-xs);
-    font-weight: var(--fw-bold);
-    text-transform: uppercase;
-}
-
-.status-label.paid {
-    background: rgba(0, 255, 120, 0.12);
-    border: 1px solid rgba(0, 255, 120, 0.18);
-    color: #63ff9d;
-}
-
-.status-label.pending {
-    background: rgba(255, 180, 0, 0.12);
-    border: 1px solid rgba(255, 180, 0, 0.18);
-    color: #ffc95a;
-}
-
-.qr-container-mini {
-    padding: var(--space-sm);
-    border-radius: var(--radius-md);
-    background: var(--white-premium);
-}
-
-.pin-text {
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px dashed var(--overlay-light);
-    color: var(--text-white);
-    font-size: var(--font-size-sm);
-    font-weight: var(--fw-bold);
-    letter-spacing: 1px;
-}
-
-/* =========================================================
-   EMPTY HISTORY
-========================================================= */
-
-.empty-history {
-    text-align: center;
-    padding: 80px var(--space-md);
-    color: var(--text-muted);
-}
-
-.empty-history p {
-    margin: var(--space-md) 0;
-    font-size: var(--font-size-base);
-}
-/* =========================================================
-   BUTTON ACTIONS - ĐỒNG BỘ VỚI GLOBAL
 ========================================================= */
 
 .form-actions {
@@ -789,13 +438,13 @@
     border-radius: var(--radius-round);
     background: var(--gold-gradient);
     color: var(--black-premium);
-    font-size: var(--font-size-sm);
+    font-size: 0.875rem;
     font-weight: var(--fw-bold);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     cursor: pointer;
     transition: all var(--transition-normal);
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--shadow-silver);
     position: relative;
     overflow: hidden;
 }
@@ -827,11 +476,11 @@
     padding: 0 1.5rem;
     height: 54px;
     min-width: 140px;
-    border: 2px solid var(--border-gold);
+    border: 2px solid var(--border-silver);
     border-radius: var(--radius-round);
     background: transparent;
     color: var(--gold-primary);
-    font-size: var(--font-size-sm);
+    font-size: 0.875rem;
     font-weight: var(--fw-bold);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -844,7 +493,7 @@
     color: var(--black-premium);
     border-color: transparent;
     transform: translateY(-3px);
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--shadow-silver);
 }
 
 /* ----- Nút Clear History (Ghost) ----- */
@@ -857,7 +506,7 @@
     border-radius: var(--radius-round);
     background: transparent;
     color: var(--text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: 0.875rem;
     font-weight: var(--fw-semibold);
     cursor: pointer;
     transition: all var(--transition-normal);
@@ -866,7 +515,7 @@
 }
 
 .btn-clear-history:hover {
-    color: var(--gold-hover);
+    color: var(--gold-light);
     background: rgba(201, 168, 76, 0.08);
     border-color: rgba(201, 168, 76, 0.3);
     transform: translateY(-2px);
@@ -885,14 +534,14 @@
     border-radius: var(--radius-round);
     background: var(--gold-gradient);
     color: var(--black-premium);
-    font-size: var(--font-size-sm);
+    font-size: 0.875rem;
     font-weight: var(--fw-bold);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     text-decoration: none;
     cursor: pointer;
     transition: all var(--transition-normal);
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--shadow-silver);
 }
 
 .btn-book-now:hover {
@@ -902,7 +551,252 @@
 }
 
 /* =========================================================
-   RESPONSIVE (1200, 992, 768, 480)
+   HISTORY TAB
+========================================================= */
+
+.history-tab-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+/* =========================================================
+   CLEAR HISTORY BUTTON
+========================================================= */
+
+.history-action-bar {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* =========================================================
+   TICKET LIST
+========================================================= */
+
+.ticket-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+/* =========================================================
+   TICKET CARD
+========================================================= */
+
+.history-ticket-item {
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    background: var(--cinema-card-bg);
+    border: var(--border-silver);
+    box-shadow: var(--cinema-card-shadow);
+    transition: all var(--transition-normal);
+}
+
+.history-ticket-item:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+}
+
+/* =========================================================
+   POSTER
+========================================================= */
+
+.ticket-thumb {
+    width: 180px;
+    min-width: 180px;
+    overflow: hidden;
+    background: var(--black-premium);
+}
+
+.ticket-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: all var(--transition-normal);
+}
+
+.history-ticket-item:hover .ticket-thumb img {
+    transform: scale(1.05);
+}
+
+/* =========================================================
+   CENTER INFO
+========================================================= */
+
+.ticket-main-info {
+    flex: 1;
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.movie-title-history {
+    margin: 0 0 var(--space-xs);
+    color: var(--text-body);
+    font-size: var(--font-size-h4);
+    font-weight: var(--fw-extrabold);
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.info-row svg {
+    color: var(--gold-primary);
+    flex-shrink: 0;
+}
+
+.info-row.highlight {
+    color: var(--gold-light);
+    font-weight: var(--fw-semibold);
+}
+
+/* =========================================================
+   SEAT
+========================================================= */
+
+.seat-text {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    width: fit-content;
+    margin-top: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    background: rgba(201, 168, 76, 0.08);
+    border: 1px solid rgba(201, 168, 76, 0.12);
+    color: var(--gold-light);
+    font-size: 0.875rem;
+    font-weight: var(--fw-semibold);
+}
+
+.price-text {
+    margin: var(--space-xs) 0 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.price-text span {
+    color: var(--gold-primary);
+    font-size: 1rem;
+    font-weight: var(--fw-extrabold);
+}
+
+/* =========================================================
+   QR SIDE
+========================================================= */
+
+.ticket-qr-side {
+    width: 190px;
+    min-width: 190px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    border-left: 1px dashed rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.ticket-qr-side::before,
+.ticket-qr-side::after {
+    content: "";
+    position: absolute;
+    left: -12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--black-premium);
+}
+
+.ticket-qr-side::before {
+    top: -12px;
+}
+.ticket-qr-side::after {
+    bottom: -12px;
+}
+
+.status-label {
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-round);
+    font-size: 0.75rem;
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+}
+
+.status-label.paid {
+    background: rgba(0, 255, 120, 0.12);
+    border: 1px solid rgba(0, 255, 120, 0.18);
+    color: #63ff9d;
+}
+
+.status-label.pending {
+    background: rgba(255, 180, 0, 0.12);
+    border: 1px solid rgba(255, 180, 0, 0.18);
+    color: #ffc95a;
+}
+
+.qr-container-mini {
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    background: var(--white-pure);
+}
+
+.pin-text {
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px dashed rgba(255, 255, 255, 0.06);
+    color: var(--text-body);
+    font-size: 0.875rem;
+    font-weight: var(--fw-bold);
+    letter-spacing: 1px;
+}
+
+/* =========================================================
+   EMPTY HISTORY
+========================================================= */
+
+.empty-history {
+    text-align: center;
+    padding: 80px var(--space-md);
+    color: var(--text-muted);
+}
+
+.empty-history p {
+    margin: var(--space-md) 0;
+    font-size: 1rem;
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.loading-text,
+.loader {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: var(--space-2xl) 0;
+    font-size: 0.875rem;
+}
+
+/* =========================================================
+   RESPONSIVE
 ========================================================= */
 
 /* --- 1200px --- */
@@ -938,7 +832,7 @@
         width: 100%;
         min-width: 100%;
         border-left: none;
-        border-top: 1px dashed var(--overlay-light);
+        border-top: 1px dashed rgba(255, 255, 255, 0.06);
     }
     .ticket-qr-side::before,
     .ticket-qr-side::after {
@@ -956,7 +850,7 @@
     }
     .tabs-header button {
         padding: var(--space-md) var(--space-md);
-        font-size: var(--font-size-sm);
+        font-size: 0.875rem;
     }
     .tab-body {
         padding: var(--space-lg);
@@ -970,7 +864,7 @@
         width: 100%;
     }
     .movie-title-history {
-        font-size: var(--font-size-md);
+        font-size: var(--font-size-base);
     }
 }
 
