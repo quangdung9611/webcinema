@@ -96,7 +96,7 @@ class UserService {
     }
 
     /*=========================================================
-        UPDATE USER
+        UPDATE USER (Admin)
     =========================================================*/
     async updateUser(userId, data) {
         const user = await UserRepository.findById(userId);
@@ -286,6 +286,36 @@ class UserService {
 
         // Update profile
         return await UserRepository.updateProfile(userId, data);
+    }
+
+    /*=========================================================
+        UPDATE AVATAR (MỚI)
+    =========================================================*/
+    async updateAvatar(userId, file) {
+        // Kiểm tra user tồn tại
+        const user = await UserRepository.findById(userId);
+        if (!user) {
+            throw {
+                statusCode: 404,
+                message: "Không tìm thấy người dùng"
+            };
+        }
+
+        // file.filename là tên file đã được multer đặt
+        const avatarFileName = file.filename;
+
+        // Cập nhật vào database
+        const affectedRows = await UserRepository.updateAvatar(userId, avatarFileName);
+
+        if (affectedRows === 0) {
+            throw {
+                statusCode: 500,
+                message: "Không thể cập nhật ảnh đại diện"
+            };
+        }
+
+        // Trả về tên file để frontend ghép URL
+        return avatarFileName;
     }
 
     /*=========================================================
