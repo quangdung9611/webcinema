@@ -16,16 +16,14 @@ const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [loadingClear, setLoadingClear] = useState(false);
-    const [uploadingAvatar, setUploadingAvatar] = useState(false); // loading upload avatar
+
+    // state cho avatar
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [avatarPreview, setAvatarPreview] = useState('');
+    const fileInputRef = useRef(null);
 
     const [formData, setFormData] = useState({
-        full_name: '',
-        email: '',
-        phone: '',
-        address: '',
-        username: '',
-        points: 0,
-        avatar: '' // thêm avatar
+        full_name: '', email: '', phone: '', address: '', username: '', points: 0, avatar: ''
     });
 
     const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
@@ -34,10 +32,6 @@ const Profile = () => {
 
     const [bookingHistory, setBookingHistory] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
-
-    // Ref cho input file ẩn
-    const fileInputRef = useRef(null);
-    const [avatarPreview, setAvatarPreview] = useState(''); // preview URL
 
     // Hàm fetch lịch sử giao dịch
     const fetchHistory = async () => {
@@ -67,7 +61,7 @@ const Profile = () => {
                 address: user.address || '',
                 username: user.username || '',
                 points: user.points || 0,
-                avatar: user.avatar || '' // lấy avatar từ user
+                avatar: user.avatar || ''
             });
         }
     }, [user]);
@@ -131,7 +125,6 @@ const Profile = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Kiểm tra định dạng
         if (!file.type.startsWith('image/')) {
             setModal({
                 show: true,
@@ -143,7 +136,6 @@ const Profile = () => {
             return;
         }
 
-        // Kiểm tra kích thước (tối đa 5MB)
         if (file.size > 5 * 1024 * 1024) {
             setModal({
                 show: true,
@@ -155,14 +147,12 @@ const Profile = () => {
             return;
         }
 
-        // Tạo preview
         const reader = new FileReader();
         reader.onloadend = () => {
             setAvatarPreview(reader.result);
         };
         reader.readAsDataURL(file);
 
-        // Upload lên server
         setUploadingAvatar(true);
         const formDataUpload = new FormData();
         formDataUpload.append('avatar', file);
@@ -178,9 +168,7 @@ const Profile = () => {
             );
 
             if (res.data.success) {
-                // Cập nhật state local
                 setFormData(prev => ({ ...prev, avatar: res.data.data.avatar }));
-                // Refresh user context để cập nhật header
                 await checkAuth();
                 setModal({
                     show: true,
@@ -189,7 +177,6 @@ const Profile = () => {
                     message: 'Đã cập nhật ảnh đại diện!',
                     onConfirm: () => setModal(prev => ({ ...prev, show: false }))
                 });
-                // Xóa preview sau khi thành công
                 setAvatarPreview('');
             }
         } catch (error) {
@@ -201,56 +188,32 @@ const Profile = () => {
                 message: error.response?.data?.message || 'Không thể tải ảnh lên.',
                 onConfirm: () => setModal(prev => ({ ...prev, show: false }))
             });
-            // Xóa preview nếu thất bại
             setAvatarPreview('');
         } finally {
             setUploadingAvatar(false);
-            // Reset input để có thể chọn cùng file lần sau
             e.target.value = '';
         }
     };
 
-    // --- XỬ LÝ FORM ---
+    // --- CÁC HÀM KHÁC ---
     const handleInput = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handlePass = (e) => setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (passwordData.newPassword && passwordData.newPassword !== passwordData.confirmPassword) {
-            return setModal({
-                show: true,
-                type: 'error',
-                title: 'Lỗi',
-                message: 'Mật khẩu xác nhận không khớp!',
-                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
-            });
+            return setModal({ show: true, type: 'error', title: 'Lỗi', message: 'Mật khẩu xác nhận không khớp!', onConfirm: () => setModal({ ...modal, show: false }) });
         }
         setLoading(true);
         try {
-            // Gọi API update profile (đúng endpoint PUT /api/users/profile)
-            await axios.put(
-                'https://api.quangdungcinema.id.vn/api/users/profile',
-                { ...formData, ...passwordData },
-                { withCredentials: true }
-            );
-            setModal({
-                show: true,
-                type: 'success',
-                title: 'Thành công',
-                message: 'Hồ sơ đã được cập nhật!',
-                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
-            });
+            await axios.put('https://api.quangdungcinema.id.vn/api/users/profile/update',
+                { ...formData, ...passwordData }, { withCredentials: true });
+            setModal({ show: true, type: 'success', title: 'Thành công', message: 'Hồ sơ đã được cập nhật!', onConfirm: () => setModal({ ...modal, show: false }) });
             setIsEditing(false);
             setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
             await checkAuth();
         } catch (error) {
-            setModal({
-                show: true,
-                type: 'error',
-                title: 'Thất bại',
-                message: error.response?.data?.message || 'Có lỗi xảy ra!',
-                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
-            });
+            setModal({ show: true, type: 'error', title: 'Thất bại', message: error.response?.data?.error || 'Có lỗi xảy ra!', onConfirm: () => setModal({ ...modal, show: false }) });
         } finally {
             setLoading(false);
         }
@@ -258,7 +221,6 @@ const Profile = () => {
 
     if (!user) return <div className="loader">Đang tải...</div>;
 
-    // Lấy URL avatar (ưu tiên preview, sau đó từ formData.avatar)
     const avatarUrl = avatarPreview || (formData.avatar ? `https://api.quangdungcinema.id.vn/uploads/avatars/${formData.avatar}` : '');
 
     return (
@@ -274,7 +236,7 @@ const Profile = () => {
                                         src={avatarUrl}
                                         alt="avatar"
                                         className="avatar-img"
-                                        style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                                      
                                     />
                                 ) : (
                                     <div className="avatar-main">{formData.full_name?.charAt(0).toUpperCase()}</div>
@@ -478,7 +440,6 @@ const Profile = () => {
                 </div>
             </div>
 
-            {/* Input file ẩn */}
             <input
                 type="file"
                 ref={fileInputRef}

@@ -26,10 +26,8 @@ const UserHeader = () => {
     // Đóng dropdown/submenu khi click ra ngoài
     useEffect(() => {
         const handleClickOutside = (event) => {
-            // Nếu click vào bên trong nav hoặc dropdown thì không đóng
             if (navRef.current && navRef.current.contains(event.target)) return;
             if (dropdownRef.current && dropdownRef.current.contains(event.target)) return;
-            // Ngoài ra thì đóng tất cả
             setActiveSubMenu(null);
             setShowDropdown(false);
         };
@@ -90,6 +88,11 @@ const UserHeader = () => {
         e.stopPropagation();
         setActiveSubMenu(activeSubMenu === menuName ? null : menuName);
     };
+
+    // Xây dựng URL avatar nếu có
+    const avatarUrl = user?.avatar
+        ? `https://api.quangdungcinema.id.vn/uploads/avatars/${user.avatar}`
+        : null;
 
     return (
         <nav className="user-navbar">
@@ -206,7 +209,23 @@ const UserHeader = () => {
                         className="account-trigger"
                         onClick={() => setShowDropdown(!showDropdown)}
                     >
-                        <UserCircle size={22} className="user-icon" />
+                        {/* 👇 Thay đổi ở đây: hiển thị avatar nếu có, ngược lại vẫn icon */}
+                        {avatarUrl ? (
+                            <img
+                                src={avatarUrl}
+                                alt="avatar"
+                                className="header-avatar"
+                                style={{
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '50%',
+                                    objectFit: 'cover',
+                                    marginRight: '8px',
+                                }}
+                            />
+                        ) : (
+                            <UserCircle size={22} className="user-icon" />
+                        )}
                         <span className="username-display">
                             {user ? user.username || user.full_name : 'Tài khoản'}
                         </span>
