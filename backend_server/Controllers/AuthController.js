@@ -3,6 +3,7 @@
 =========================================================*/
 
 const AuthService = require("../Services/AuthService");
+const Cookie = require("../utils/Cookie"); // 👈 Thêm để set cookie
 
 /*=========================================================
     REGISTER
@@ -21,17 +22,72 @@ exports.register = async (req, res) => {
         });
     }
 };
+
 /*=========================================================
-    LOGIN
+    LOGIN (CHUNG - DÙNG CHO CẢ CUSTOMER VÀ ADMIN)
 =========================================================*/
 
 exports.login = async (req, res) => {
     try {
-        const { email, password, rememberMe } = req.body; // 👈 Lấy rememberMe từ body
-        const result = await AuthService.login(email, password, rememberMe, req, res); // 👈 Truyền thêm rememberMe
-        return res.status(200).json(result);
+        const { email, password, rememberMe } = req.body;
+        // AuthService.login trả về { user, accessToken }
+        const result = await AuthService.login(email, password);
+
+        // Phân biệt role để set cookie
+        if (result.user.role === 'admin') {
+            Cookie.setAdminAccessToken(res, result.accessToken, rememberMe);
+        } else {
+            Cookie.setUserAccessToken(res, result.accessToken, rememberMe);
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Đăng nhập thành công",
+            data: {
+                user: result.user,
+                accessToken: result.accessToken // Có thể trả về token nếu cần
+            }
+        });
     } catch (error) {
         console.error("Login Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    LOGIN ADMIN (RIÊNG)
+=========================================================*/
+
+exports.adminLogin = async (req, res) => {
+    try {
+        const { email, password, rememberMe } = req.body;
+        const result = await AuthService.login(email, password);
+
+        // Kiểm tra role phải là admin
+        if (result.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: "Tài khoản không có quyền quản trị."
+            });
+        }
+
+        // Set admin_token
+        Cookie.setAdminAccessToken(res, result.accessToken, rememberMe);
+
+        return res.status(200).json({
+            success: true,
+            message: "Đăng nhập admin thành công",
+            data: {
+                user: result.user,
+                accessToken: result.accessToken
+            }
+        });
+    } catch (error) {
+        console.error("Admin Login Error:", error);
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
@@ -63,8 +119,19 @@ exports.getMe = async (req, res) => {
 
 exports.refreshToken = async (req, res) => {
     try {
-        const result = await AuthService.refreshToken(req, res);
-        return res.status(200).json(result);
+        const result = await AuthService.refreshToken(req, res); // Service trả về { user, accessToken }
+
+        // Set cookie mới theo role
+        if (result.user.role === 'admin') {
+            Cookie.setAdminAccessToken(res, result.accessToken, false);
+        } else {
+            Cookie.setUserAccessToken(res, result.accessToken, false);
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: { accessToken: result.accessToken }
+        });
     } catch (error) {
         console.error("Refresh Error:", error);
         return res.status(error.statusCode || 500).json({
@@ -80,6 +147,13 @@ exports.refreshToken = async (req, res) => {
 
 exports.logout = async (req, res) => {
     try {
+        // Xóa cookie dựa trên role của user hiện tại
+        if (req.user.role === 'admin') {
+            Cookie.clearAdminCookies(res);
+        } else {
+            Cookie.clearUserCookies(res);
+        }
+
         const result = await AuthService.logout(req, res);
         return res.status(200).json(result);
     } catch (error) {
@@ -98,6 +172,12 @@ exports.logout = async (req, res) => {
 exports.logoutAllDevices = async (req, res) => {
     try {
         const result = await AuthService.logoutAllDevices(req.user.user_id, res);
+        // Xóa cookie tương ứng
+        if (req.user.role === 'admin') {
+            Cookie.clearAdminCookies(res);
+        } else {
+            Cookie.clearUserCookies(res);
+        }
         return res.status(200).json(result);
     } catch (error) {
         console.error("Logout All Devices Error:", error);

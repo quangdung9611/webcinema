@@ -1,6 +1,6 @@
 const db = require('../Config/db');
 
-const AdminController = {
+const DashboardController = {
     // 1. Lấy thống kê tổng quan (Thẻ card ở trên cùng)
     getDashboardStats: async (req, res) => {
         try {
@@ -27,13 +27,10 @@ const AdminController = {
         }
     },
 
-    // 2. Lấy dữ liệu biểu đồ (Có bộ lọc ngày y hệt ACB ONE)
+    // 2. Lấy dữ liệu biểu đồ (Có bộ lọc ngày)
     getRevenueChartData: async (req, res) => {
         try {
-            // Lấy tham số startDate và endDate từ query string (VD: ?startDate=2026-03-01&endDate=2026-03-14)
             const { startDate, endDate } = req.query;
-
-            // Nếu không có ngày truyền lên, mặc định lấy 7 ngày gần nhất
             const start = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             const end = endDate || new Date().toISOString().split('T')[0];
 
@@ -63,8 +60,7 @@ const AdminController = {
                 ORDER BY value DESC
             `, [start, end]);
 
-            // C. BIỂU ĐỒ CỘT (MỚI): CHI TIẾT SỐ LƯỢNG VÉ BÁN RA (Giống chi tiết giao dịch)
-            // Giúp Dũng biết phim nào "đắt khách" nhất trong ngày/tháng đó
+            // C. Biểu đồ cột: Số lượng vé bán ra theo phim
             const [ticketDetails] = await db.query(`
                 SELECT 
                     m.title AS movieName,
@@ -83,7 +79,7 @@ const AdminController = {
                 success: true,
                 dailyData: dailyRevenue,
                 movieData: movieRevenue,
-                ticketData: ticketDetails // Dữ liệu cho biểu đồ cột chi tiết
+                ticketData: ticketDetails
             });
 
         } catch (error) {
@@ -97,4 +93,4 @@ const AdminController = {
     }
 };
 
-module.exports = AdminController;
+module.exports = DashboardController;

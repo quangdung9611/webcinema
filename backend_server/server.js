@@ -71,8 +71,8 @@ const promotionRoutes = require("./Routers/PromotionRouter");
 const blogCinemaRoutes = require("./Routers/BlogCinemaRouter");
 const forgotPasswordRoutes = require("./Routers/ForgotPassRouter");
 
-// ADMIN API
-const adminRouter = require("./Routers/AdminRouter");
+// ADMIN API - DASHBOARD
+const dashboardRouter = require("./Routers/DashboardRouter"); // ✅ Đổi tên
 
 /*=========================================================
     TRUST PROXY
@@ -193,7 +193,7 @@ app.use("/api/auth", userAuthRoutes);
 app.use("/admin/api/auth", adminAuthRoutes);
 
 // USER API
-app.use("/api/users", userRoutes);
+app.use("/api/admin/users", userRoutes);
 app.use("/api/genres", genreRoutes);
 app.use("/api/movies", movieRoutes);
 app.use("/api/seats", seatRoutes);
@@ -216,8 +216,8 @@ app.use("/api/promotions", promotionRoutes);
 app.use("/api/blog-cinema", blogCinemaRoutes);
 app.use("/api/forgot-password", forgotPasswordRoutes);
 
-// ADMIN API
-app.use("/admin/api/manage", adminRouter);
+// ADMIN API - DASHBOARD
+app.use("/admin/api/manage", dashboardRouter);
 
 /*=========================================================
     SERVER

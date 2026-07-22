@@ -6,95 +6,46 @@ const express = require("express");
 const router = express.Router();
 
 const AuthController = require("../Controllers/AuthController");
+const UserController = require("../Controllers/UserController");
 const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
-// ✅ Đúng: authenticateUser = function
+const upload = require("../Middlewares/UploadMiddleware");
 
 /*=========================================================
-    PUBLIC ROUTES
+    AUTH - PUBLIC (không cần middleware)
 =========================================================*/
 
-/**
- * Đăng ký
- */
 router.post("/register", AuthController.register);
-
-/**
- * Đăng nhập
- */
 router.post("/login", AuthController.login);
-
-/**
- * Refresh Token
- */
 router.post("/refresh", AuthController.refreshToken);
-
-/**
- * Quên mật khẩu
- */
 router.post("/forgot-password", AuthController.forgotPassword);
-
-/**
- * Verify OTP
- */
 router.post("/verify-reset-otp", AuthController.verifyResetOTP);
-
-/**
- * Reset Password
- */
 router.post("/reset-password", AuthController.resetPassword);
-
-/**
- * Gửi email xác thực
- */
 router.post("/send-verification", AuthController.sendVerificationEmail);
-
-/**
- * Verify Email
- */
 router.get("/verify-email", AuthController.verifyEmail);
 
 /*=========================================================
-    PRIVATE ROUTES
+    AUTH - PRIVATE (cần authenticateUser)
 =========================================================*/
 
-/**
- * Thông tin User
- */
-router.get(
-    "/me",
-    authenticateUser,
-    AuthController.getMe
-);
-
-/**
- * Đổi mật khẩu
- */
-router.patch(
-    "/change-password",
-    authenticateUser,
-    AuthController.changePassword
-);
-
-/**
- * Đăng xuất
- */
-router.post(
-    "/logout",
-    authenticateUser,
-    AuthController.logout
-);
-
-/**
- * Đăng xuất tất cả thiết bị
- */
-router.post(
-    "/logout-all",
-    authenticateUser,
-    AuthController.logoutAllDevices
-);
+router.get("/me", authenticateUser, AuthController.getMe);
+router.patch("/change-password", authenticateUser, AuthController.changePassword);
+router.post("/logout", authenticateUser, AuthController.logout);
+router.post("/logout-all", authenticateUser, AuthController.logoutAllDevices);
 
 /*=========================================================
-    EXPORT
+    PROFILE
 =========================================================*/
+
+router.get("/profile", authenticateUser, UserController.getUserProfile);
+router.put("/profile", authenticateUser, UserController.updateUserProfile);
+router.post("/avatar", authenticateUser, upload.single("avatar"), UserController.uploadAvatar);
+
+/*=========================================================
+    BOOKING HISTORY
+=========================================================*/
+
+router.get("/booking-history", authenticateUser, UserController.getMyBookings);
+router.delete("/booking-history", authenticateUser, UserController.clearBookingHistory);
+router.post("/reset-points", authenticateUser, UserController.resetMyPoints);
 
 module.exports = router;

@@ -15,7 +15,7 @@ const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 /**
  * Đăng nhập Admin
  */
-router.post("/login", AuthController.login);
+router.post("/login", AuthController.adminLogin); // 👈 SỬA THÀNH adminLogin
 
 /**
  * Refresh Token
@@ -29,41 +29,21 @@ router.post("/refresh", AuthController.refreshToken);
 /**
  * Thông tin Admin
  */
-router.get(
-    "/me",
-    authenticateAdmin,
-    AuthController.getMe
-);
+router.get("/me", authenticateAdmin, AuthController.getMe);
 
 /**
  * Đổi mật khẩu
  */
-router.patch(
-    "/change-password",
-    authenticateAdmin,
-    AuthController.changePassword
-);
+router.patch("/change-password", authenticateAdmin, AuthController.changePassword);
 
 /**
  * Đăng xuất
  */
-router.post(
-    "/logout",
-    authenticateAdmin,
-    AuthController.logout
-);
+router.post("/logout", authenticateAdmin, AuthController.logout);
 
 /**
  * Đăng xuất tất cả thiết bị
  */
-router.post(
-    "/logout-all",
-    authenticateAdmin,
-    AuthController.logoutAllDevices
-);
-
-/*=========================================================
-    EXPORT
-=========================================================*/
+router.post("/logout-all", authenticateAdmin, AuthController.logoutAllDevices);
 
 module.exports = router;
