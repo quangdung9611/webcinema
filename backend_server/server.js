@@ -193,7 +193,7 @@ app.use("/api/auth", userAuthRoutes);
 app.use("/admin/api/auth", adminAuthRoutes);
 
 // USER API
-app.use("/api/admin/users", userRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/genres", genreRoutes);
 app.use("/api/movies", movieRoutes);
 app.use("/api/seats", seatRoutes);
