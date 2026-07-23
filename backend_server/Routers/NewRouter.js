@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const NewsController = require('../Controllers/NewsController');
-const upload = require('../Middlewares/UploadMiddleware'); 
+const upload = require('../Middlewares/UploadMiddleware');
 
 /* ==========================================================
     1. NHÓM ADMIN (Lấy danh sách tổng & Quản lý)
@@ -11,13 +11,13 @@ const upload = require('../Middlewares/UploadMiddleware');
 router.get('/', NewsController.getAllNewsAdmin);
 
 // Lấy chi tiết bài viết theo ID để đổ vào form Update
-router.get('/detail/:id', NewsController.getNewsById); 
+router.get('/detail/:id', NewsController.getNewsById);
 
-// Thêm mới bài viết (Dùng key: newsImage)
-router.post('/', upload.single('newsImage'), NewsController.createNews);
+// ✅ Thêm mới bài viết - Đã sửa field name thành news_image
+router.post('/', upload.single('news_image'), NewsController.createNews);
 
-// Cập nhật bài viết
-router.put('/update/:news_id', upload.single('newsImage'), NewsController.updateNews);
+// ✅ Cập nhật bài viết - Đã sửa field name thành news_image
+router.put('/update/:news_id', upload.single('news_image'), NewsController.updateNews);
 
 // Xóa bài viết
 router.delete('/:id', NewsController.deleteNews);

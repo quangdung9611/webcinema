@@ -13,7 +13,7 @@ class UserRepository {
                 username,
                 full_name,
                 email,
-                avatar,
+                user_avatar,
                 phone,
                 role,
                 status,
@@ -42,7 +42,7 @@ class UserRepository {
                 username,
                 full_name,
                 email,
-                avatar,
+                user_avatar,
                 phone,
                 address,
                 password,
@@ -74,7 +74,7 @@ class UserRepository {
                 username,
                 full_name,
                 email,
-                avatar,
+                user_avatar,
                 phone,
                 address,
                 role,
@@ -105,7 +105,7 @@ class UserRepository {
                 username,
                 full_name,
                 email,
-                avatar,
+                user_avatar,
                 password,
                 phone,
                 address,
@@ -135,7 +135,7 @@ class UserRepository {
                 username,
                 full_name,
                 email,
-                avatar,
+                user_avatar,
                 password,
                 phone,
                 address,
@@ -155,7 +155,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        FIND BASIC USER (không cần avatar)
+        FIND BASIC USER (không cần user_avatar)
     =========================================================*/
     async findBasicById(userId) {
         const [rows] = await db.query(
@@ -176,7 +176,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        CHECK USER EXISTS (không cần avatar)
+        CHECK USER EXISTS (không cần user_avatar)
     =========================================================*/
     async exists(username, email, phone) {
         const [rows] = await db.query(
@@ -246,7 +246,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        CREATE USER (thêm avatar mặc định null)
+        CREATE USER (user_avatar mặc định NULL)
     =========================================================*/
     async create(user) {
         const [result] = await db.query(
@@ -283,7 +283,7 @@ class UserRepository {
     }
 
     /*=========================================================
-        UPDATE PROFILE (bao gồm avatar)
+        UPDATE PROFILE (bao gồm user_avatar)
     =========================================================*/
     async updateProfile(userId, data) {
         const [result] = await db.query(
@@ -295,7 +295,7 @@ class UserRepository {
                 phone = ?,
                 address = ?,
                 email = ?,
-                avatar = ?,
+                user_avatar = ?,
                 updated_at = NOW()
             WHERE user_id = ?
             `,
@@ -305,7 +305,7 @@ class UserRepository {
                 data.phone,
                 data.address,
                 data.email,
-                data.avatar || null,
+                data.user_avatar || null,   // ✅ đổi tên
                 userId
             ]
         );
@@ -319,7 +319,7 @@ class UserRepository {
         const [result] = await db.query(
             `
             UPDATE users
-            SET avatar = ?, updated_at = NOW()
+            SET user_avatar = ?, updated_at = NOW()
             WHERE user_id = ?
             `,
             [avatarUrl, userId]

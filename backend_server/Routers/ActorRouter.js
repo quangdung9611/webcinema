@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const actorController = require('../Controllers/ActorController');
-const upload = require('../Middlewares/UploadMiddleware'); 
+const upload = require('../Middlewares/UploadMiddleware');
 
 /* ==========================================================
     1. NHÓM PUBLIC (Người dùng xem)
@@ -21,12 +21,11 @@ router.get('/:slug', actorController.getActorBySlug);
 // Lấy thông tin diễn viên theo ID để đổ vào Form sửa
 router.get('/id/:id', actorController.getActorById);
 
-// Thêm diễn viên mới (Bắt buộc có upload.single)
-// Lưu ý: Key 'actorImage' phải khớp với key trong FormData từ React
-router.post('/add', upload.single('actorImage'), actorController.addActor);
+// ✅ Thêm diễn viên mới - Đã sửa field name thành actor_avatar
+router.post('/add', upload.single('actor_avatar'), actorController.addActor);
 
-// Cập nhật diễn viên (Bắt buộc có upload.single để xử lý nếu đổi ảnh mới)
-router.put('/update/:id', upload.single('actorImage'), actorController.updateActor);
+// ✅ Cập nhật diễn viên - Đã sửa field name thành actor_avatar
+router.put('/update/:id', upload.single('actor_avatar'), actorController.updateActor);
 
 // Xóa diễn viên
 router.delete('/delete/:id', actorController.deleteActor);

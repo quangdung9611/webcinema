@@ -4,8 +4,7 @@ import {
     Users,
     Edit,
     Trash2,
-    Loader2,
-    Camera
+    Loader2
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -23,7 +22,6 @@ const initialFormData = {
     email: '',
     password: '',
     role: 'customer'
-    // ❌ Đã xóa avatar khỏi form
 };
 
 const UserPage = () => {
@@ -35,15 +33,8 @@ const UserPage = () => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
+    const [userAvatarFile, setUserAvatarFile] = useState(null); // ✅ đúng tên cột
     const [formErrors, setFormErrors] = useState({});
-
-    // State cho modal upload avatar
-    const [avatarModal, setAvatarModal] = useState({
-        open: false,
-        userId: null,
-        file: null,
-        uploading: false
-    });
 
     // =============================================
     // ALERT MODAL
@@ -157,6 +148,7 @@ const UserPage = () => {
     const handleOpenAdd = () => {
         setEditingUser(null);
         setFormData(initialFormData);
+        setUserAvatarFile(null);
         setFormErrors({});
         setIsFormOpen(true);
     };
@@ -164,6 +156,7 @@ const UserPage = () => {
     const handleOpenEdit = (user) => {
         setEditingUser(user);
         setFormErrors({});
+        setUserAvatarFile(null);
         setFormData({
             username: user.username || '',
             full_name: user.full_name || '',
@@ -177,71 +170,18 @@ const UserPage = () => {
     };
 
     // =============================================
-    // UPLOAD AVATAR MODAL
-    // =============================================
-
-    const openAvatarModal = (userId) => {
-        setAvatarModal({
-            open: true,
-            userId,
-            file: null,
-            uploading: false
-        });
-    };
-
-    const closeAvatarModal = () => {
-        setAvatarModal({
-            open: false,
-            userId: null,
-            file: null,
-            uploading: false
-        });
-    };
-
-    const handleAvatarFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setAvatarModal(prev => ({ ...prev, file }));
-        }
-    };
-
-    const handleUploadAvatar = async () => {
-        if (!avatarModal.file) {
-            showAlert('Lỗi', 'Vui lòng chọn file ảnh.', 'error');
-            return;
-        }
-
-        setAvatarModal(prev => ({ ...prev, uploading: true }));
-
-        const formData = new FormData();
-        formData.append('avatar', avatarModal.file);
-
-        try {
-            await axios.post(
-                `${API_URL}/avatar`,
-                formData,
-                {
-                    withCredentials: true,
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                }
-            );
-
-            showAlert('Thành công', 'Đã cập nhật ảnh đại diện.', 'success');
-            closeAvatarModal();
-            fetchUsers(); // Refresh list
-        } catch (error) {
-            showAlert('Lỗi', 'Không thể tải ảnh lên.', 'error');
-        } finally {
-            setAvatarModal(prev => ({ ...prev, uploading: false }));
-        }
-    };
-
-    // =============================================
     // SUBMIT FORM
     // =============================================
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, files } = e.target;
+
+        // Xử lý file user_avatar (giống MoviePage)
+        if (name === 'user_avatar') {
+            setUserAvatarFile(files[0]);
+            return;
+        }
+
         setFormData(prev => ({ ...prev, [name]: value }));
         setFormErrors(prev => ({ ...prev, [name]: '' }));
     };
@@ -259,11 +199,24 @@ const UserPage = () => {
             setSubmitLoading(true);
             setFormErrors({});
 
+            const submitData = new FormData();
+            Object.entries(formData).forEach(([key, value]) => {
+                submitData.append(key, value);
+            });
+
+            if (userAvatarFile) {
+                submitData.append('user_avatar', userAvatarFile); // ✅ đúng tên cột
+            }
+
             if (editingUser) {
-                await axios.put(`${API_URL}/${editingUser.user_id}`, formData);
+                await axios.put(`${API_URL}/${editingUser.user_id}`, submitData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
                 showAlert('Thành công', 'Cập nhật người dùng thành công.', 'success');
             } else {
-                await axios.post(`${API_URL}`, formData);
+                await axios.post(`${API_URL}`, submitData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
                 showAlert('Thành công', 'Thêm người dùng thành công.', 'success');
             }
 
@@ -333,37 +286,22 @@ const UserPage = () => {
         },
         {
             title: 'Avatar',
-            key: 'avatar',
+            key: 'user_avatar',
             render: (row) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {row.avatar ? (
-                        <img
-                            src={`https://api.quangdungcinema.id.vn/uploads/avatars/${row.avatar}`}
-                            alt="avatar"
-                            style={{
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%',
-                                objectFit: 'cover'
-                            }}
-                        />
-                    ) : (
-                        <span style={{ color: '#888' }}>—</span>
-                    )}
-                    <button
-                        onClick={() => openAvatarModal(row.user_id)}
+                row.user_avatar ? (
+                    <img
+                        src={`https://api.quangdungcinema.id.vn/uploads/avatars/${row.user_avatar}`}
+                        alt="avatar"
                         style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: '#aaa',
-                            padding: '4px'
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            objectFit: 'cover'
                         }}
-                        title="Đổi avatar"
-                    >
-                        <Camera size={16} />
-                    </button>
-                </div>
+                    />
+                ) : (
+                    <span style={{ color: '#888' }}>—</span>
+                )
             )
         },
         { title: 'Username', key: 'username' },
@@ -397,7 +335,7 @@ const UserPage = () => {
     ];
 
     // =============================================
-    // FORM FIELDS (đã xóa avatar)
+    // FORM FIELDS (đúng tên user_avatar)
     // =============================================
 
     const formFields = [
@@ -420,7 +358,8 @@ const UserPage = () => {
                 { label: 'Quản trị viên', value: 'admin' }
             ]
         },
-        { label: 'Địa chỉ', name: 'address', type: 'textarea', placeholder: 'Nhập địa chỉ' }
+        { label: 'Địa chỉ', name: 'address', type: 'textarea', placeholder: 'Nhập địa chỉ' },
+        { label: 'Avatar', name: 'user_avatar', type: 'file' } // ✅ đúng tên cột
     ];
 
     // =============================================
@@ -468,43 +407,6 @@ const UserPage = () => {
                         {getPasswordStrength(formData.password).text}
                     </div>
                 )}
-            </AdminModal>
-
-            {/* AVATAR UPLOAD MODAL */}
-            <AdminModal
-                open={avatarModal.open}
-                onClose={closeAvatarModal}
-                title="Đổi ảnh đại diện"
-            >
-                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleAvatarFileChange}
-                        disabled={avatarModal.uploading}
-                    />
-                    {avatarModal.file && (
-                        <div style={{ fontSize: '14px', color: '#aaa' }}>
-                            Đã chọn: {avatarModal.file.name}
-                        </div>
-                    )}
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                        <button
-                            onClick={closeAvatarModal}
-                            style={{ padding: '8px 20px', background: '#333', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' }}
-                            disabled={avatarModal.uploading}
-                        >
-                            Hủy
-                        </button>
-                        <button
-                            onClick={handleUploadAvatar}
-                            style={{ padding: '8px 20px', background: '#e8e8e8', border: 'none', borderRadius: '6px', color: '#000', cursor: 'pointer' }}
-                            disabled={avatarModal.uploading || !avatarModal.file}
-                        >
-                            {avatarModal.uploading ? 'Đang tải...' : 'Cập nhật'}
-                        </button>
-                    </div>
-                </div>
             </AdminModal>
 
             {/* ALERT MODAL */}

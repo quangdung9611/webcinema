@@ -77,7 +77,7 @@ const validateActorData = (data, file, isUpdate = false) => {
         return "Vui lòng điền tiểu sử của diễn viên.";
     }
 
-    // 6. Kiểm tra ảnh đại diện khi thêm mới (Đã đồng bộ sang trường avatar)
+    // 6. Kiểm tra ảnh đại diện khi thêm mới (cột actor_avatar)
     if (!isUpdate && !file) {
         return "Vui lòng upload ảnh đại diện cho diễn viên.";
     }
@@ -120,7 +120,19 @@ const deleteActorFile = (fileName) => {
 exports.getAllActors = async (req, res) => {
     try {
         const [rows] = await db.query(
-            "SELECT * FROM actors ORDER BY actor_id DESC"
+            `SELECT 
+                actor_id,
+                name,
+                gender,
+                nationality,
+                actor_avatar,
+                biography,
+                birthday,
+                slug,
+                created_at,
+                updated_at
+             FROM actors 
+             ORDER BY actor_id DESC`
         );
         res.status(200).json(rows);
     } catch (error) {
@@ -135,7 +147,19 @@ exports.getAllActors = async (req, res) => {
 exports.getActorById = async (req, res) => {
     try {
         const [rows] = await db.query(
-            "SELECT * FROM actors WHERE actor_id = ?", 
+            `SELECT 
+                actor_id,
+                name,
+                gender,
+                nationality,
+                actor_avatar,
+                biography,
+                birthday,
+                slug,
+                created_at,
+                updated_at
+             FROM actors 
+             WHERE actor_id = ?`, 
             [req.params.id]
         );
         if (rows.length === 0) {
@@ -157,7 +181,19 @@ exports.getActorBySlug = async (req, res) => {
         const { slug } = req.params;
 
         const [actorRows] = await db.query(
-            "SELECT * FROM actors WHERE slug = ?", 
+            `SELECT 
+                actor_id,
+                name,
+                gender,
+                nationality,
+                actor_avatar,
+                biography,
+                birthday,
+                slug,
+                created_at,
+                updated_at
+             FROM actors 
+             WHERE slug = ?`, 
             [slug]
         );
         const actor = actorRows[0];
@@ -206,7 +242,7 @@ exports.addActor = async (req, res) => {
     const errorMsg = validateActorData(req.body, req.file, false);
     if (errorMsg) {
         if (req.file) {
-            deleteActorFile(req.file.filename); // ĐÃ SỬA: Dùng filename sạch
+            deleteActorFile(req.file.filename);
         }
         return res.status(400).json({ 
             error: errorMsg 
@@ -230,7 +266,7 @@ exports.addActor = async (req, res) => {
 
         if (existingActor.length > 0) {
             if (req.file) {
-                deleteActorFile(req.file.filename); // ĐÃ SỬA: Dùng filename sạch
+                deleteActorFile(req.file.filename);
             }
             await connection.rollback();
             return res.status(400).json({ 
@@ -238,7 +274,7 @@ exports.addActor = async (req, res) => {
             });
         }
 
-        const avatar = req.file.filename; // ĐÃ SỬA: Lấy tên file đã xử lý qua middleware
+        const actorAvatar = req.file.filename; // Tên file ảnh đã được middleware xử lý
 
         // Kiểm tra trùng tên file vật lý trên server để tránh ghi đè ảnh người khác
         const checkPath = path.join(
@@ -246,7 +282,7 @@ exports.addActor = async (req, res) => {
             '..', 
             'uploads', 
             'actors', 
-            avatar
+            actorAvatar
         );
         if (fs.existsSync(checkPath)) {
             if (req.file) {
@@ -254,7 +290,7 @@ exports.addActor = async (req, res) => {
             }
             await connection.rollback();
             return res.status(400).json({ 
-                error: `Tên file ảnh "${avatar}" đã tồn tại trên máy chủ. Vui lòng đổi lại tên file ảnh trên máy của bạn rồi upload lại nhé!` 
+                error: `Tên file ảnh "${actorAvatar}" đã tồn tại trên máy chủ. Vui lòng đổi lại tên file ảnh trên máy của bạn rồi upload lại nhé!` 
             });
         }
 
@@ -264,7 +300,7 @@ exports.addActor = async (req, res) => {
                 slug, 
                 gender, 
                 nationality, 
-                avatar, 
+                actor_avatar, 
                 biography, 
                 birthday
              ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -273,7 +309,7 @@ exports.addActor = async (req, res) => {
                 actorSlug, 
                 gender, 
                 nationality.trim(), 
-                avatar, 
+                actorAvatar, 
                 biography.trim(), 
                 birthday
             ]
@@ -286,7 +322,7 @@ exports.addActor = async (req, res) => {
     } catch (error) {
         await connection.rollback();
         if (req.file) {
-            deleteActorFile(req.file.filename); // ĐÃ SỬA: Dùng filename sạch
+            deleteActorFile(req.file.filename);
         }
         res.status(500).json({ 
             error: error.message 
@@ -311,7 +347,7 @@ exports.updateActor = async (req, res) => {
     const errorMsg = validateActorData(req.body, req.file, true);
     if (errorMsg) {
         if (req.file) {
-            deleteActorFile(req.file.filename); // ĐÃ SỬA: Dùng filename sạch
+            deleteActorFile(req.file.filename);
         }
         return res.status(400).json({ 
             error: errorMsg 
@@ -324,7 +360,7 @@ exports.updateActor = async (req, res) => {
 
         // 2. Kiểm tra diễn viên mục tiêu có tồn tại hay không
         const [old] = await connection.query(
-            "SELECT avatar FROM actors WHERE actor_id = ?", 
+            "SELECT actor_avatar FROM actors WHERE actor_id = ?", 
             [id]
         );
         if (old.length === 0) {
@@ -351,7 +387,7 @@ exports.updateActor = async (req, res) => {
 
         if (duplicateActor.length > 0) {
             if (req.file) {
-                deleteActorFile(req.file.filename); // ĐÃ SỬA: Dùng filename sạch
+                deleteActorFile(req.file.filename);
             }
             await connection.rollback();
             return res.status(400).json({ 
@@ -359,16 +395,16 @@ exports.updateActor = async (req, res) => {
             });
         }
 
-        // ĐỐI ỨNG LOGIC AN TOÀN: Khởi tạo biến hứng tên ảnh, mặc định là ảnh cũ
-        let newAvatar = old[0].avatar;
+        // Khởi tạo biến hứng tên ảnh, mặc định là ảnh cũ
+        let newAvatar = old[0].actor_avatar;
 
         // Nếu người dùng có upload ảnh mới
         if (req.file) {
-            const avatarName = req.file.filename; // Tên file sạch từ middleware
+            const avatarName = req.file.filename;
 
             // Chỉ thực hiện xóa file cũ khi tên file mới KHÁC tên file cũ
-            if (avatarName !== old[0].avatar) {
-                deleteActorFile(old[0].avatar); // Xóa file ảnh cũ thực tế trên server
+            if (avatarName !== old[0].actor_avatar) {
+                deleteActorFile(old[0].actor_avatar); // Xóa file ảnh cũ thực tế trên server
             }
             newAvatar = avatarName; // Cập nhật tên mới vào biến gánh
         }
@@ -379,7 +415,7 @@ exports.updateActor = async (req, res) => {
                 slug = ?, 
                 gender = ?, 
                 nationality = ?, 
-                avatar = ?, 
+                actor_avatar = ?, 
                 biography = ?, 
                 birthday = ? 
              WHERE actor_id = ?`,
@@ -402,7 +438,7 @@ exports.updateActor = async (req, res) => {
     } catch (error) {
         await connection.rollback();
         if (req.file) {
-            deleteActorFile(req.file.filename); // ĐÃ SỬA: Dùng filename sạch
+            deleteActorFile(req.file.filename);
         }
         res.status(500).json({ 
             error: "Lỗi server: " + error.message 
@@ -429,11 +465,11 @@ exports.deleteActor = async (req, res) => {
 
         // 1. Lấy thông tin ảnh để xóa file vật lý
         const [actor] = await connection.query(
-            "SELECT avatar FROM actors WHERE actor_id = ?", 
+            "SELECT actor_avatar FROM actors WHERE actor_id = ?", 
             [id]
         );
         if (actor.length > 0) {
-            deleteActorFile(actor[0].avatar);
+            deleteActorFile(actor[0].actor_avatar);
         }
 
         // 2. Xóa trong database

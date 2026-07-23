@@ -34,22 +34,22 @@ router.patch('/view/:id', movieController.incrementViews);
     3. ADMIN ROUTES (CRUD MOVIE)
    ========================================================== */
 
-// Thêm phim
+// Thêm phim - Đã sửa tên field thành movie_poster và movie_backdrop
 router.post(
     '/add',
     upload.fields([
-        { name: 'posters', maxCount: 1 },
-        { name: 'backdrop_url', maxCount: 1 }
+        { name: 'movie_poster', maxCount: 1 },
+        { name: 'movie_backdrop', maxCount: 1 }
     ]),
     movieController.addMovie
 );
 
-// Cập nhật phim
+// Cập nhật phim - Đã sửa tên field thành movie_poster và movie_backdrop
 router.put(
     '/update/:id',
     upload.fields([
-        { name: 'posters', maxCount: 1 },
-        { name: 'backdrop_url', maxCount: 1 }
+        { name: 'movie_poster', maxCount: 1 },
+        { name: 'movie_backdrop', maxCount: 1 }
     ]),
     movieController.updateMovie
 );

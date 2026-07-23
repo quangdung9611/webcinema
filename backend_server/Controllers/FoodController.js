@@ -1,4 +1,29 @@
 const db = require('../Config/db');
+const fs = require('fs');
+const path = require('path');
+
+/* =====================================================
+    HELPERS
+===================================================== */
+
+/**
+ * Xóa file vật lý trong thư mục uploads/foods
+ */
+const deleteFoodImage = (fileName) => {
+    if (!fileName) return;
+
+    const pureFileName = path.basename(fileName);
+    const filePath = path.join(__dirname, '..', 'uploads', 'foods', pureFileName);
+
+    try {
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log(`✅ Đã xóa file food: ${pureFileName}`);
+        }
+    } catch (err) {
+        console.error('❌ Lỗi xóa file food:', err.message);
+    }
+};
 
 /* =====================================================
     GET ALL FOODS
@@ -29,7 +54,6 @@ exports.getAllFoods = async (req, res) => {
 
     } catch (err) {
         console.error('❌ Lỗi getAllFoods:', err.message);
-
         return res.status(500).json({
             success: false,
             message: 'Lỗi server',
@@ -75,7 +99,6 @@ exports.getFoodById = async (req, res) => {
 
     } catch (err) {
         console.error('❌ Lỗi getFoodById:', err.message);
-
         return res.status(500).json({
             success: false,
             message: 'Lỗi server',
@@ -93,13 +116,16 @@ exports.createFood = async (req, res) => {
         const {
             product_name,
             price,
-            food_image,
             category,
             status
         } = req.body;
 
+        // Lấy file từ multer
+        const file = req.file;
+
         // VALIDATE
         if (!product_name || !product_name.trim()) {
+            if (file) deleteFoodImage(file.filename);
             return res.status(400).json({
                 success: false,
                 message: 'Tên món ăn không được để trống'
@@ -107,9 +133,17 @@ exports.createFood = async (req, res) => {
         }
 
         if (!price || Number(price) <= 0) {
+            if (file) deleteFoodImage(file.filename);
             return res.status(400).json({
                 success: false,
                 message: 'Giá món ăn phải lớn hơn 0'
+            });
+        }
+
+        if (!file) {
+            return res.status(400).json({
+                success: false,
+                message: 'Vui lòng upload hình ảnh sản phẩm'
             });
         }
 
@@ -124,6 +158,7 @@ exports.createFood = async (req, res) => {
         );
 
         if (duplicateFood.length > 0) {
+            deleteFoodImage(file.filename);
             return res.status(409).json({
                 success: false,
                 message: 'Tên món ăn đã tồn tại'
@@ -145,7 +180,7 @@ exports.createFood = async (req, res) => {
         const [result] = await db.query(query, [
             name,
             price,
-            food_image || null,
+            file.filename,
             category || 'Other',
             status ?? 1
         ]);
@@ -158,7 +193,7 @@ exports.createFood = async (req, res) => {
 
     } catch (err) {
         console.error('❌ Lỗi createFood:', err.message);
-
+        if (req.file) deleteFoodImage(req.file.filename);
         return res.status(500).json({
             success: false,
             message: 'Lỗi server',
@@ -174,24 +209,25 @@ exports.createFood = async (req, res) => {
 exports.updateFood = async (req, res) => {
     try {
         const { id } = req.params;
-
         const {
             product_name,
             price,
-            food_image,
             category,
             status
         } = req.body;
 
+        const file = req.file;
+
         // CHECK EXIST
         const [foodExists] = await db.query(
-            `SELECT product_id 
+            `SELECT product_id, food_image 
              FROM product_menu 
              WHERE product_id = ?`,
             [id]
         );
 
         if (!foodExists.length) {
+            if (file) deleteFoodImage(file.filename);
             return res.status(404).json({
                 success: false,
                 message: 'Món ăn không tồn tại'
@@ -200,6 +236,7 @@ exports.updateFood = async (req, res) => {
 
         // VALIDATE
         if (!product_name || !product_name.trim()) {
+            if (file) deleteFoodImage(file.filename);
             return res.status(400).json({
                 success: false,
                 message: 'Tên món ăn không được để trống'
@@ -207,6 +244,7 @@ exports.updateFood = async (req, res) => {
         }
 
         if (!price || Number(price) <= 0) {
+            if (file) deleteFoodImage(file.filename);
             return res.status(400).json({
                 success: false,
                 message: 'Giá món ăn phải lớn hơn 0'
@@ -225,10 +263,22 @@ exports.updateFood = async (req, res) => {
         );
 
         if (duplicateFood.length > 0) {
+            if (file) deleteFoodImage(file.filename);
             return res.status(409).json({
                 success: false,
                 message: 'Tên món ăn đã tồn tại'
             });
+        }
+
+        // XỬ LÝ ẢNH
+        let food_image = foodExists[0].food_image; // ảnh cũ
+
+        if (file) {
+            // Xóa ảnh cũ nếu có
+            if (food_image) {
+                deleteFoodImage(food_image);
+            }
+            food_image = file.filename;
         }
 
         // UPDATE
@@ -246,7 +296,7 @@ exports.updateFood = async (req, res) => {
         await db.query(query, [
             name,
             price,
-            food_image || null,
+            food_image,
             category || 'Other',
             status ?? 1,
             id
@@ -259,7 +309,7 @@ exports.updateFood = async (req, res) => {
 
     } catch (err) {
         console.error('❌ Lỗi updateFood:', err.message);
-
+        if (req.file) deleteFoodImage(req.file.filename);
         return res.status(500).json({
             success: false,
             message: 'Lỗi server',
@@ -276,9 +326,9 @@ exports.deleteFood = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // CHECK EXIST
+        // CHECK EXIST & LẤY ẢNH
         const [foodExists] = await db.query(
-            `SELECT product_id 
+            `SELECT product_id, food_image 
              FROM product_menu 
              WHERE product_id = ?`,
             [id]
@@ -289,6 +339,11 @@ exports.deleteFood = async (req, res) => {
                 success: false,
                 message: 'Món ăn không tồn tại'
             });
+        }
+
+        // Xóa file ảnh
+        if (foodExists[0].food_image) {
+            deleteFoodImage(foodExists[0].food_image);
         }
 
         // DELETE
@@ -304,7 +359,6 @@ exports.deleteFood = async (req, res) => {
 
     } catch (err) {
         console.error('❌ Lỗi deleteFood:', err.message);
-
         return res.status(500).json({
             success: false,
             message: 'Lỗi server',
