@@ -7,4 +7,10 @@ cloudinary.config({
     secure: true
 });
 
+// Log để debug (có thể xóa sau)
+console.log('☁️ Cloudinary configured with:');
+console.log('  Cloud Name:', process.env.CLOUDINARY_CLOUD_NAME);
+console.log('  API Key:', process.env.CLOUDINARY_API_KEY ? '✅ exists' : '❌ missing');
+console.log('  API Secret:', process.env.CLOUDINARY_API_SECRET ? '✅ exists' : '❌ missing');
+
 module.exports = cloudinary;
