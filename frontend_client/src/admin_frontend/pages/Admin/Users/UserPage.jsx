@@ -4,7 +4,8 @@ import {
     Users,
     Edit,
     Trash2,
-    Loader2
+    Loader2,
+    Camera
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -21,15 +22,11 @@ const initialFormData = {
     address: '',
     email: '',
     password: '',
-    role: 'customer',
-    avatar: ''
+    role: 'customer'
+    // ❌ Đã xóa avatar khỏi form
 };
 
 const UserPage = () => {
-
-    /* =====================================================
-        STATES
-    ===================================================== */
 
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -40,9 +37,17 @@ const UserPage = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [formErrors, setFormErrors] = useState({});
 
-    /* =====================================================
-        ALERT MODAL
-    ===================================================== */
+    // State cho modal upload avatar
+    const [avatarModal, setAvatarModal] = useState({
+        open: false,
+        userId: null,
+        file: null,
+        uploading: false
+    });
+
+    // =============================================
+    // ALERT MODAL
+    // =============================================
 
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -54,41 +59,26 @@ const UserPage = () => {
     });
 
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({
-            open: true,
-            title,
-            message,
-            type,
-            onConfirm,
-            onCancel
-        });
+        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
 
     const closeAlert = () => {
-        setAlertModal(prev => ({
-            ...prev,
-            open: false
-        }));
+        setAlertModal(prev => ({ ...prev, open: false }));
     };
 
-    /* =====================================================
-        FETCH USERS
-    ===================================================== */
+    // =============================================
+    // FETCH USERS
+    // =============================================
 
     const fetchUsers = async () => {
         setLoading(true);
         try {
             const res = await axios.get(API_URL);
-            // ✅ Lấy đúng mảng users từ response
             const usersData = res.data?.data || res.data || [];
-            setUsers(usersData);
+            setUsers(Array.isArray(usersData) ? usersData : []);
         } catch (error) {
-            showAlert(
-                'Lỗi',
-                'Không thể tải danh sách người dùng.',
-                'error'
-            );
-            setUsers([]); // Đảm bảo luôn là mảng
+            showAlert('Lỗi', 'Không thể tải danh sách người dùng.', 'error');
+            setUsers([]);
         } finally {
             setLoading(false);
         }
@@ -98,24 +88,22 @@ const UserPage = () => {
         fetchUsers();
     }, []);
 
-    /* =====================================================
-        PASSWORD STRENGTH
-    ===================================================== */
+    // =============================================
+    // PASSWORD STRENGTH
+    // =============================================
 
     const getPasswordStrength = (password) => {
         if (!password) return { text: '', className: '' };
-        if (password.length < 6) {
-            return { text: 'Mật khẩu yếu', className: 'weak' };
-        }
+        if (password.length < 6) return { text: 'Mật khẩu yếu', className: 'weak' };
         if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/.test(password)) {
             return { text: 'Mật khẩu mạnh', className: 'strong' };
         }
         return { text: 'Mật khẩu trung bình', className: 'medium' };
     };
 
-    /* =====================================================
-        VALIDATE FORM
-    ===================================================== */
+    // =============================================
+    // VALIDATE FORM
+    // =============================================
 
     const validateForm = () => {
         const errors = {};
@@ -162,9 +150,9 @@ const UserPage = () => {
         return errors;
     };
 
-    /* =====================================================
-        OPEN ADD
-    ===================================================== */
+    // =============================================
+    // OPEN ADD / EDIT
+    // =============================================
 
     const handleOpenAdd = () => {
         setEditingUser(null);
@@ -172,10 +160,6 @@ const UserPage = () => {
         setFormErrors({});
         setIsFormOpen(true);
     };
-
-    /* =====================================================
-        OPEN EDIT
-    ===================================================== */
 
     const handleOpenEdit = (user) => {
         setEditingUser(user);
@@ -187,31 +171,80 @@ const UserPage = () => {
             address: user.address || '',
             email: user.email || '',
             password: '',
-            role: user.role || 'customer',
-            avatar: user.avatar || ''
+            role: user.role || 'customer'
         });
         setIsFormOpen(true);
     };
 
-    /* =====================================================
-        CHANGE FORM
-    ===================================================== */
+    // =============================================
+    // UPLOAD AVATAR MODAL
+    // =============================================
+
+    const openAvatarModal = (userId) => {
+        setAvatarModal({
+            open: true,
+            userId,
+            file: null,
+            uploading: false
+        });
+    };
+
+    const closeAvatarModal = () => {
+        setAvatarModal({
+            open: false,
+            userId: null,
+            file: null,
+            uploading: false
+        });
+    };
+
+    const handleAvatarFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setAvatarModal(prev => ({ ...prev, file }));
+        }
+    };
+
+    const handleUploadAvatar = async () => {
+        if (!avatarModal.file) {
+            showAlert('Lỗi', 'Vui lòng chọn file ảnh.', 'error');
+            return;
+        }
+
+        setAvatarModal(prev => ({ ...prev, uploading: true }));
+
+        const formData = new FormData();
+        formData.append('avatar', avatarModal.file);
+
+        try {
+            await axios.post(
+                `${API_URL}/avatar`,
+                formData,
+                {
+                    withCredentials: true,
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                }
+            );
+
+            showAlert('Thành công', 'Đã cập nhật ảnh đại diện.', 'success');
+            closeAvatarModal();
+            fetchUsers(); // Refresh list
+        } catch (error) {
+            showAlert('Lỗi', 'Không thể tải ảnh lên.', 'error');
+        } finally {
+            setAvatarModal(prev => ({ ...prev, uploading: false }));
+        }
+    };
+
+    // =============================================
+    // SUBMIT FORM
+    // =============================================
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-        setFormErrors(prev => ({
-            ...prev,
-            [name]: ''
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormErrors(prev => ({ ...prev, [name]: '' }));
     };
-
-    /* =====================================================
-        SUBMIT
-    ===================================================== */
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -227,16 +260,10 @@ const UserPage = () => {
             setFormErrors({});
 
             if (editingUser) {
-                await axios.put(
-                    `${API_URL}/${editingUser.user_id}`, // 👈 Sửa: không dùng /update/
-                    formData
-                );
+                await axios.put(`${API_URL}/${editingUser.user_id}`, formData);
                 showAlert('Thành công', 'Cập nhật người dùng thành công.', 'success');
             } else {
-                await axios.post(
-                    `${API_URL}`, // 👈 Sửa: không dùng /add
-                    formData
-                );
+                await axios.post(`${API_URL}`, formData);
                 showAlert('Thành công', 'Thêm người dùng thành công.', 'success');
             }
 
@@ -247,9 +274,7 @@ const UserPage = () => {
             const backendError = error.response?.data?.error;
 
             if (backendField) {
-                setFormErrors({
-                    [backendField]: backendError
-                });
+                setFormErrors({ [backendField]: backendError });
                 return;
             }
 
@@ -259,9 +284,9 @@ const UserPage = () => {
         }
     };
 
-    /* =====================================================
-        DELETE USER
-    ===================================================== */
+    // =============================================
+    // DELETE USER
+    // =============================================
 
     const handleDelete = (user) => {
         showAlert(
@@ -270,9 +295,7 @@ const UserPage = () => {
             'warning',
             async () => {
                 try {
-                    await axios.delete(
-                        `${API_URL}/${user.user_id}` // 👈 Sửa: không dùng /delete/
-                    );
+                    await axios.delete(`${API_URL}/${user.user_id}`);
                     closeAlert();
                     fetchUsers();
                     showAlert('Thành công', 'Xóa người dùng thành công.', 'success');
@@ -284,9 +307,9 @@ const UserPage = () => {
         );
     };
 
-    /* =====================================================
-        FILTER USERS
-    ===================================================== */
+    // =============================================
+    // FILTER USERS
+    // =============================================
 
     const filteredUsers = (users || []).filter(user => {
         const keyword = search.toLowerCase();
@@ -298,9 +321,9 @@ const UserPage = () => {
         );
     });
 
-    /* =====================================================
-        TABLE COLUMNS
-    ===================================================== */
+    // =============================================
+    // TABLE COLUMNS
+    // =============================================
 
     const columns = [
         {
@@ -312,43 +335,42 @@ const UserPage = () => {
             title: 'Avatar',
             key: 'avatar',
             render: (row) => (
-                row.avatar ? (
-                    <img
-                        src={`https://api.quangdungcinema.id.vn/uploads/avatars/${row.avatar}`}
-                        alt="avatar"
-                        className="admin-avatar-thumb"
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {row.avatar ? (
+                        <img
+                            src={`https://api.quangdungcinema.id.vn/uploads/avatars/${row.avatar}`}
+                            alt="avatar"
+                            style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                objectFit: 'cover'
+                            }}
+                        />
+                    ) : (
+                        <span style={{ color: '#888' }}>—</span>
+                    )}
+                    <button
+                        onClick={() => openAvatarModal(row.user_id)}
                         style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '50%',
-                            objectFit: 'cover'
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#aaa',
+                            padding: '4px'
                         }}
-                    />
-                ) : (
-                    <span className="no-avatar" style={{ color: '#888' }}>—</span>
-                )
+                        title="Đổi avatar"
+                    >
+                        <Camera size={16} />
+                    </button>
+                </div>
             )
         },
-        {
-            title: 'Username',
-            key: 'username'
-        },
-        {
-            title: 'Họ tên',
-            key: 'full_name'
-        },
-        {
-            title: 'Email',
-            key: 'email'
-        },
-        {
-            title: 'Số điện thoại',
-            key: 'phone'
-        },
-        {
-            title: 'Điểm',
-            key: 'points'
-        },
+        { title: 'Username', key: 'username' },
+        { title: 'Họ tên', key: 'full_name' },
+        { title: 'Email', key: 'email' },
+        { title: 'Số điện thoại', key: 'phone' },
+        { title: 'Điểm', key: 'points' },
         {
             title: 'Vai trò',
             key: 'role',
@@ -363,16 +385,10 @@ const UserPage = () => {
             key: 'actions',
             render: (row) => (
                 <div className="admin-table-actions">
-                    <button
-                        className="admin-action-btn edit-btn"
-                        onClick={() => handleOpenEdit(row)}
-                    >
+                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
                         <Edit size={16} />
                     </button>
-                    <button
-                        className="admin-action-btn delete-btn"
-                        onClick={() => handleDelete(row)}
-                    >
+                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -380,42 +396,20 @@ const UserPage = () => {
         }
     ];
 
-    /* =====================================================
-        FORM FIELDS
-    ===================================================== */
+    // =============================================
+    // FORM FIELDS (đã xóa avatar)
+    // =============================================
 
     const formFields = [
-        {
-            label: 'Username',
-            name: 'username',
-            type: 'text',
-            placeholder: 'Nhập username'
-        },
-        {
-            label: 'Họ tên',
-            name: 'full_name',
-            type: 'text',
-            placeholder: 'Nhập họ tên'
-        },
-        {
-            label: 'Email',
-            name: 'email',
-            type: 'email',
-            placeholder: 'example@gmail.com'
-        },
-        {
-            label: 'Số điện thoại',
-            name: 'phone',
-            type: 'text',
-            placeholder: '09xxxxxxxx'
-        },
+        { label: 'Username', name: 'username', type: 'text', placeholder: 'Nhập username' },
+        { label: 'Họ tên', name: 'full_name', type: 'text', placeholder: 'Nhập họ tên' },
+        { label: 'Email', name: 'email', type: 'email', placeholder: 'example@gmail.com' },
+        { label: 'Số điện thoại', name: 'phone', type: 'text', placeholder: '09xxxxxxxx' },
         {
             label: 'Mật khẩu',
             name: 'password',
             type: 'password',
-            placeholder: editingUser
-                ? 'Để trống nếu không đổi mật khẩu'
-                : 'Nhập mật khẩu'
+            placeholder: editingUser ? 'Để trống nếu không đổi mật khẩu' : 'Nhập mật khẩu'
         },
         {
             label: 'Vai trò',
@@ -426,23 +420,12 @@ const UserPage = () => {
                 { label: 'Quản trị viên', value: 'admin' }
             ]
         },
-        {
-            label: 'Ảnh đại diện (URL)',
-            name: 'avatar',
-            type: 'text',
-            placeholder: 'https://example.com/avatar.jpg'
-        },
-        {
-            label: 'Địa chỉ',
-            name: 'address',
-            type: 'textarea',
-            placeholder: 'Nhập địa chỉ'
-        }
+        { label: 'Địa chỉ', name: 'address', type: 'textarea', placeholder: 'Nhập địa chỉ' }
     ];
 
-    /* =====================================================
-        RENDER
-    ===================================================== */
+    // =============================================
+    // RENDER
+    // =============================================
 
     return (
         <>
@@ -461,10 +444,7 @@ const UserPage = () => {
                         <span>Đang tải dữ liệu...</span>
                     </div>
                 ) : (
-                    <AdminTable
-                        columns={columns}
-                        data={filteredUsers}
-                    />
+                    <AdminTable columns={columns} data={filteredUsers} />
                 )}
             </AdminPage>
 
@@ -483,14 +463,48 @@ const UserPage = () => {
                     loading={submitLoading}
                     submitText={editingUser ? 'Lưu thay đổi' : 'Thêm người dùng'}
                 />
-
                 {formData.password && (
-                    <div
-                        className={`password-strength ${getPasswordStrength(formData.password).className}`}
-                    >
+                    <div className={`password-strength ${getPasswordStrength(formData.password).className}`}>
                         {getPasswordStrength(formData.password).text}
                     </div>
                 )}
+            </AdminModal>
+
+            {/* AVATAR UPLOAD MODAL */}
+            <AdminModal
+                open={avatarModal.open}
+                onClose={closeAvatarModal}
+                title="Đổi ảnh đại diện"
+            >
+                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarFileChange}
+                        disabled={avatarModal.uploading}
+                    />
+                    {avatarModal.file && (
+                        <div style={{ fontSize: '14px', color: '#aaa' }}>
+                            Đã chọn: {avatarModal.file.name}
+                        </div>
+                    )}
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                        <button
+                            onClick={closeAvatarModal}
+                            style={{ padding: '8px 20px', background: '#333', border: 'none', borderRadius: '6px', color: '#fff', cursor: 'pointer' }}
+                            disabled={avatarModal.uploading}
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            onClick={handleUploadAvatar}
+                            style={{ padding: '8px 20px', background: '#e8e8e8', border: 'none', borderRadius: '6px', color: '#000', cursor: 'pointer' }}
+                            disabled={avatarModal.uploading || !avatarModal.file}
+                        >
+                            {avatarModal.uploading ? 'Đang tải...' : 'Cập nhật'}
+                        </button>
+                    </div>
+                </div>
             </AdminModal>
 
             {/* ALERT MODAL */}
@@ -505,17 +519,11 @@ const UserPage = () => {
                     <p>{alertModal.message}</p>
                     <div className="admin-alert-actions">
                         {alertModal.onCancel && (
-                            <button
-                                className="admin-cancel-btn"
-                                onClick={alertModal.onCancel}
-                            >
+                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
                                 Hủy
                             </button>
                         )}
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={alertModal.onConfirm || closeAlert}
-                        >
+                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
                             Xác nhận
                         </button>
                     </div>
