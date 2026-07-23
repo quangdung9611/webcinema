@@ -2,8 +2,39 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+// Đường dẫn tuyệt đối tới thư mục gốc uploads (dựa vào vị trí file hiện tại)
+const UPLOAD_DIR = path.resolve(__dirname, '../uploads');
+
+// Tạo thư mục uploads gốc nếu chưa có
+if (!fs.existsSync(UPLOAD_DIR)) {
+    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
 // ==============================================
-// XÁC ĐỊNH THƯ MỤC DỰA TRÊN FIELDNAME & URL
+// HÀM TẠO TÊN FILE DUY NHẤT
+// ==============================================
+const generateUniqueName = (req, file, subDir) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const baseName = path.basename(file.originalname, ext)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
+        .replace(/\s+/g, '-')
+        .replace(/[^\w-]/g, '');
+    const timestamp = Date.now();
+
+    // Với avatar user: thêm userId để dễ quản lý
+    if (file.fieldname === 'avatar' && subDir === 'avatars') {
+        const userId = req.user?.user_id || 'unknown';
+        return `avatar-${userId}-${timestamp}${ext}`;
+    }
+
+    // Các file khác: thêm timestamp để tránh trùng
+    return `${baseName}-${timestamp}${ext}`;
+};
+
+// ==============================================
+// XÁC ĐỊNH THƯ MỤC ĐÍCH (TRẢ VỀ ĐƯỜNG DẪN TUYỆT ĐỐI)
 // ==============================================
 const getDestination = (req, file) => {
     const field = file.fieldname;
@@ -13,47 +44,48 @@ const getDestination = (req, file) => {
     console.log('  fieldname:', field);
     console.log('  originalUrl:', url);
 
+    let subDir = 'posters'; // mặc định
+
     // ---- AVATAR USER ----
     if (field === 'avatar' && (url.includes('/users/') || url.includes('/user/'))) {
-        console.log('  ✅ Lưu vào: uploads/avatars/');
-        return 'uploads/avatars/';
+        subDir = 'avatars';
+        console.log('  ✅ AVATAR USER -> uploads/avatars/');
     }
-
     // ---- AVATAR ACTOR ----
-    if (field === 'avatar') {
-        console.log('  ✅ Lưu vào: uploads/actors/');
-        return 'uploads/actors/';
+    else if (field === 'avatar') {
+        subDir = 'actors';
+        console.log('  ✅ AVATAR ACTOR -> uploads/actors/');
     }
-
     // ---- BACKDROP ----
-    if (field === 'backdrop_url') {
-        console.log('  ✅ Lưu vào: uploads/backdrops/');
-        return 'uploads/backdrops/';
+    else if (field === 'backdrop_url') {
+        subDir = 'backdrops';
+        console.log('  ✅ BACKDROP -> uploads/backdrops/');
     }
-
     // ---- IMAGE_URL (Foods / Promotions) ----
-    if (field === 'image_url') {
-        if (url.includes('promotion')) {
-            console.log('  ✅ Lưu vào: uploads/promotions/');
-            return 'uploads/promotions/';
-        }
-        console.log('  ✅ Lưu vào: uploads/foods/');
-        return 'uploads/foods/';
+    else if (field === 'image_url') {
+        subDir = url.includes('promotion') ? 'promotions' : 'foods';
+        console.log(`  ✅ IMAGE_URL -> uploads/${subDir}/`);
     }
-
     // ---- IMAGE (News / Blog Cinema) ----
-    if (field === 'image') {
-        if (url.includes('blog-cinema')) {
-            console.log('  ✅ Lưu vào: uploads/blog_cinema/');
-            return 'uploads/blog_cinema/';
-        }
-        console.log('  ✅ Lưu vào: uploads/news/');
-        return 'uploads/news/';
+    else if (field === 'image') {
+        subDir = url.includes('blog-cinema') ? 'blog_cinema' : 'news';
+        console.log(`  ✅ IMAGE -> uploads/${subDir}/`);
+    }
+    // ---- MẶC ĐỊNH ----
+    else {
+        console.log('  ✅ MẶC ĐỊNH -> uploads/posters/');
     }
 
-    // ---- MẶC ĐỊNH: POSTERS ----
-    console.log('  ✅ Lưu vào: uploads/posters/ (mặc định)');
-    return 'uploads/posters/';
+    const fullPath = path.join(UPLOAD_DIR, subDir);
+    console.log(`  📁 Đường dẫn tuyệt đối: ${fullPath}`);
+
+    // Tạo thư mục nếu chưa tồn tại (có thể gọi ở đây để đảm bảo)
+    if (!fs.existsSync(fullPath)) {
+        fs.mkdirSync(fullPath, { recursive: true });
+        console.log(`  📁 Đã tạo thư mục: ${fullPath}`);
+    }
+
+    return fullPath;
 };
 
 // ==============================================
@@ -63,48 +95,32 @@ const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         try {
             const dir = getDestination(req, file);
-
-            // Tạo thư mục nếu chưa tồn tại
-            if (!fs.existsSync(dir)) {
-                fs.mkdirSync(dir, { recursive: true });
-                console.log(`📁 Đã tạo thư mục: ${dir}`);
-            }
-
             cb(null, dir);
         } catch (error) {
-            console.error('❌ Lỗi khi tạo thư mục:', error);
-            cb(error, 'uploads/posters/'); // fallback
+            console.error('❌ Lỗi khi xác định thư mục:', error);
+            // Fallback an toàn
+            const fallbackDir = path.join(UPLOAD_DIR, 'posters');
+            if (!fs.existsSync(fallbackDir)) {
+                fs.mkdirSync(fallbackDir, { recursive: true });
+            }
+            cb(null, fallbackDir);
         }
     },
 
     filename: (req, file, cb) => {
-        const url = req.originalUrl || '';
-        const isUserAvatar = file.fieldname === 'avatar' &&
-            (url.includes('/users/') || url.includes('/user/'));
-
-        // Lấy tên file gốc và đuôi
-        const ext = path.extname(file.originalname).toLowerCase();
-        const baseName = path.basename(file.originalname, ext)
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[đĐ]/g, 'd')
-            .replace(/\s+/g, '-')
-            .replace(/[^\w-]/g, '');
-
-        // ---- AVATAR USER: TÊN DUY NHẤT ----
-        if (isUserAvatar) {
-            const userId = req.user?.user_id || Date.now();
-            const timestamp = Date.now();
-            const uniqueName = `avatar-${userId}-${timestamp}${ext}`;
-            console.log(`  📸 Tên file avatar: ${uniqueName}`);
-            return cb(null, uniqueName);
+        try {
+            // Xác định thư mục con để biết cách đặt tên
+            const dir = getDestination(req, file);
+            const subDir = path.basename(dir);
+            const uniqueName = generateUniqueName(req, file, subDir);
+            console.log(`  📄 Tên file: ${uniqueName}`);
+            cb(null, uniqueName);
+        } catch (error) {
+            console.error('❌ Lỗi khi tạo tên file:', error);
+            // Fallback: dùng timestamp + tên gốc
+            const fallbackName = `${Date.now()}-${file.originalname}`;
+            cb(null, fallbackName);
         }
-
-        // ---- CÁC LOẠI KHÁC: GIỮ TÊN GỐC (NHƯNG THÊM TIMESTAMP ĐỂ TRÁNH TRÙNG) ----
-        const timestamp = Date.now();
-        const uniqueName = `${baseName}-${timestamp}${ext}`;
-        console.log(`  📄 Tên file: ${uniqueName}`);
-        cb(null, uniqueName);
     }
 });
 
