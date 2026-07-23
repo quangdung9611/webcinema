@@ -97,21 +97,12 @@ const validateLogin = (email, password) => {
 =========================================================*/
 
 const generateAndSetTokens = (user, res, rememberMe = false) => {
-    // Tạo payload đúng cho JWT
-    const payload = {
-        user_id: user.user_id,
-        role: user.role
-    };
-
-    const accessToken = Jwt.generateAccessToken(payload);
-
-    // Set cookie dựa trên role
+    const accessToken = Jwt.generateAccessToken(user);
     if (user.role === "admin") {
         Cookie.setAdminAccessToken(res, accessToken, rememberMe);
     } else {
         Cookie.setUserAccessToken(res, accessToken, rememberMe);
     }
-
     return accessToken;
 };
 
@@ -162,7 +153,7 @@ exports.register = async (userData) => {
         user_agent: null
     });
 
-    // Gửi email xác thực
+    // Gửi email xác thực sau khi đăng ký
     try {
         const verifyToken = Jwt.generateEmailVerifyToken({
             user_id: userId,
@@ -182,7 +173,7 @@ exports.register = async (userData) => {
 };
 
 /*=========================================================
-    LOGIN
+    LOGIN (CHÍNH)
 =========================================================*/
 
 exports.login = async (email, password, rememberMe = false, req, res) => {
@@ -207,9 +198,9 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     }
 
     // 5. Generate token và set cookie
-    const accessToken = generateAndSetTokens(user, res, rememberMe);
+    generateAndSetTokens(user, res, rememberMe);
 
-    // 6. Return user info
+    // 6. Trả về thông tin user (không trả token)
     return {
         success: true,
         message: "Đăng nhập thành công",
@@ -247,54 +238,19 @@ exports.getMe = async (userId) => {
 };
 
 /*=========================================================
-    REFRESH TOKEN (MỚI)
-=========================================================*/
-
-exports.refreshToken = async (req, res) => {
-    // Lấy token từ cookie dựa trên role
-    let accessToken = Cookie.getAdminAccessToken(req) || Cookie.getUserAccessToken(req);
-
-    if (!accessToken) {
-        throw { statusCode: 401, message: "Không tìm thấy token" };
-    }
-
-    try {
-        const payload = Jwt.verifyAccessToken(accessToken);
-        // Tạo token mới
-        const newPayload = { user_id: payload.user_id, role: payload.role };
-        const newAccessToken = Jwt.generateAccessToken(newPayload);
-
-        // Set cookie mới theo role
-        if (payload.role === 'admin') {
-            Cookie.setAdminAccessToken(res, newAccessToken, false);
-        } else {
-            Cookie.setUserAccessToken(res, newAccessToken, false);
-        }
-
-        return {
-            success: true,
-            message: "Refresh token thành công",
-            user: { user_id: payload.user_id, role: payload.role }
-        };
-    } catch (error) {
-        throw { statusCode: 401, message: "Token không hợp lệ hoặc đã hết hạn" };
-    }
-};
-
-/*=========================================================
-    LOGOUT
+    LOGOUT (NHẬN req VÀ res)
 =========================================================*/
 
 exports.logout = async (req, res) => {
-    // Dựa vào req.user để biết role
-    if (!req.user) {
-        throw { statusCode: 401, message: "Chưa đăng nhập" };
-    }
-
-    if (req.user.role === 'admin') {
+    // Lấy token từ cookie (ưu tiên admin_token)
+    let token = Cookie.getAdminAccessToken(req);
+    if (token) {
         Cookie.clearAdminCookies(res);
     } else {
-        Cookie.clearUserCookies(res);
+        token = Cookie.getUserAccessToken(req);
+        if (token) {
+            Cookie.clearUserCookies(res);
+        }
     }
 
     return {
@@ -304,14 +260,14 @@ exports.logout = async (req, res) => {
 };
 
 /*=========================================================
-    LOGOUT ALL DEVICES
+    LOGOUT ALL DEVICES (NHẬN userId VÀ res)
 =========================================================*/
 
 exports.logoutAllDevices = async (userId, res) => {
+    // Xóa tất cả cookie
     Cookie.clearAllCookies(res);
 
-    // Có thể thêm logic xóa tất cả refresh token trong DB nếu cần
-    // await RefreshTokenRepository.deleteAllByUserId(userId);
+    // TODO: Xóa tất cả refresh token của user trong DB (nếu có)
 
     return {
         success: true,
