@@ -19,6 +19,19 @@ import AdminForm from '../../../components/AdminForm';
 
 const API_URL = 'https://api.quangdungcinema.id.vn/api/movies';
 
+// =============================================
+// HELPER: LẤY URL POSTER (HỖ TRỢ CLOUDINARY + LOCAL)
+// =============================================
+const getPosterUrl = (poster) => {
+    if (!poster) return '';
+    // Nếu là URL đầy đủ (http:// hoặc https://) thì dùng trực tiếp
+    if (poster.startsWith('http://') || poster.startsWith('https://')) {
+        return poster;
+    }
+    // Ngược lại, ghép với base URL (cho dữ liệu cũ)
+    return `https://api.quangdungcinema.id.vn/uploads/posters/${poster}`;
+};
+
 const initialFormData = {
     title: '',
     slug: '',
@@ -45,8 +58,8 @@ const MoviePage = () => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingMovie, setEditingMovie] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
-    const [moviePosterFile, setMoviePosterFile] = useState(null);   // ✅ đúng tên cột
-    const [movieBackdropFile, setMovieBackdropFile] = useState(null); // ✅ đúng tên cột
+    const [moviePosterFile, setMoviePosterFile] = useState(null);
+    const [movieBackdropFile, setMovieBackdropFile] = useState(null);
     const [formErrors, setFormErrors] = useState({});
 
     /* =====================================================
@@ -120,7 +133,7 @@ const MoviePage = () => {
         }
 
         if (!editingMovie && !moviePosterFile) {
-            errors.movie_poster = 'Vui lòng chọn file hình ảnh cho Poster.'; // ✅ key đúng
+            errors.movie_poster = 'Vui lòng chọn file hình ảnh cho Poster.';
         }
 
         setFormErrors(errors);
@@ -193,13 +206,11 @@ const MoviePage = () => {
             setFormErrors(prev => ({ ...prev, [name]: '' }));
         }
 
-        // ✅ Xử lý file poster với tên trường movie_poster
         if (name === 'movie_poster') {
             setMoviePosterFile(files[0]);
             return;
         }
 
-        // ✅ Xử lý file backdrop với tên trường movie_backdrop
         if (name === 'movie_backdrop') {
             setMovieBackdropFile(files[0]);
             return;
@@ -237,7 +248,6 @@ const MoviePage = () => {
                 submitData.append(key, value);
             });
 
-            // ✅ Append file với tên cột đúng
             if (moviePosterFile) {
                 submitData.append('movie_poster', moviePosterFile);
             }
@@ -312,18 +322,21 @@ const MoviePage = () => {
         {
             title: 'Poster',
             key: 'movie_poster',
-            render: (row) => (
-                <img
-                    src={`https://api.quangdungcinema.id.vn/uploads/posters/${row.movie_poster}`}
-                    alt={row.title}
-                    style={{
-                        width: '70px',
-                        height: '100px',
-                        objectFit: 'cover',
-                        borderRadius: '10px'
-                    }}
-                />
-            )
+            render: (row) => {
+                const posterUrl = getPosterUrl(row.movie_poster);
+                return (
+                    <img
+                        src={posterUrl}
+                        alt={row.title}
+                        style={{
+                            width: '70px',
+                            height: '100px',
+                            objectFit: 'cover',
+                            borderRadius: '10px'
+                        }}
+                    />
+                );
+            }
         },
         {
             title: 'Tên phim',
@@ -444,12 +457,12 @@ const MoviePage = () => {
         },
         {
             label: 'Poster',
-            name: 'movie_poster', // ✅ đúng tên cột
+            name: 'movie_poster',
             type: 'file'
         },
         {
             label: 'Backdrop',
-            name: 'movie_backdrop', // ✅ đúng tên cột
+            name: 'movie_backdrop',
             type: 'file'
         },
         {

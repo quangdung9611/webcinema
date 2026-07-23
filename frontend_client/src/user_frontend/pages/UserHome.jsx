@@ -25,6 +25,19 @@ import 'swiper/css/pagination';
 
 import '../styles/user_home.css';
 
+// =============================================
+// HELPER: LẤY URL ẢNH (HỖ TRỢ CLOUDINARY + LOCAL)
+// =============================================
+const getImageUrl = (url, baseUrl = '') => {
+  if (!url) return '';
+  // Nếu là URL đầy đủ (http:// hoặc https://) thì dùng trực tiếp
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // Ngược lại, ghép với baseUrl (cho dữ liệu cũ)
+  return baseUrl + url;
+};
+
 const UserHome = () => {
 
   const navigate = useNavigate();
@@ -38,8 +51,6 @@ const UserHome = () => {
 
   const bannerBaseUrl = "https://api.quangdungcinema.id.vn/uploads/banners/";
   const bannerDocUrl = "https://api.quangdungcinema.id.vn/uploads/banner_doc/";
-  const promotionImageUrl = "https://api.quangdungcinema.id.vn/uploads/promotions/";
-  const blogCinemaImageUrl = "https://api.quangdungcinema.id.vn/uploads/blog_cinema/";
 
   const [swiperInstance, setSwiperInstance] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -468,16 +479,21 @@ const UserHome = () => {
                 </button>
               </div>
               <div className="cinema-grid">
-                {promotions?.slice(0, 4).map((promo) => (
-                  <CinemaCard
-                    key={promo.promotion_id}
-                    type="promotion"
-                    image={`${promotionImageUrl}${promo.image_url}`}
-                    title={promo.title}
-                    buttonText="Xem chi tiết"
-                    link={`/promotion/${promo.slug}`}
-                  />
-                ))}
+                {promotions?.slice(0, 4).map((promo) => {
+                  // ✅ Hỗ trợ cả 2 tên trường: promotion_image (mới) và image_url (cũ)
+                  const imageField = promo.promotion_image || promo.image_url;
+                  const imageUrl = getImageUrl(imageField, 'https://api.quangdungcinema.id.vn/uploads/promotions/');
+                  return (
+                    <CinemaCard
+                      key={promo.promotion_id}
+                      type="promotion"
+                      image={imageUrl}
+                      title={promo.title}
+                      buttonText="Xem chi tiết"
+                      link={`/promotion/${promo.slug}`}
+                    />
+                  );
+                })}
               </div>
             </section>
           </ScrollReveal>
@@ -504,16 +520,21 @@ const UserHome = () => {
                 </button>
               </div>
               <div className="cinema-grid">
-                {cinemaNews?.slice(0, 4).map((news) => (
-                  <CinemaCard
-                    key={news.blog_id}
-                    type="news"
-                    image={`${blogCinemaImageUrl}${news.image_url}`}
-                    title={news.title}
-                    buttonText="Đọc thêm"
-                    link={`/blog-cinema/${news.slug}`}
-                  />
-                ))}
+                {cinemaNews?.slice(0, 4).map((news) => {
+                  // ✅ Hỗ trợ cả 2 tên trường: blog_image (mới) và image_url (cũ)
+                  const imageField = news.blog_image || news.image_url;
+                  const imageUrl = getImageUrl(imageField, 'https://api.quangdungcinema.id.vn/uploads/blog_cinema/');
+                  return (
+                    <CinemaCard
+                      key={news.blog_id}
+                      type="news"
+                      image={imageUrl}
+                      title={news.title}
+                      buttonText="Đọc thêm"
+                      link={`/blog-cinema/${news.slug}`}
+                    />
+                  );
+                })}
               </div>
             </section>
           </ScrollReveal>

@@ -19,7 +19,12 @@ const MovieCard = React.memo(({
         reviewCount: movie?.total_reviews || 0,
         ageRating: movie?.age_rating || "T18",
         title: movie?.title || "Đang cập nhật",
-        poster: `${baseUrl}${movie?.poster_url}`,
+        // ✅ SỬA: hỗ trợ cả URL Cloudinary và tên file local
+        poster: movie?.poster_url
+            ? (movie.poster_url.startsWith('http') 
+                ? movie.poster_url 
+                : `${baseUrl}${movie.poster_url}`)
+            : `${baseUrl}default-poster.jpg`,
         language: movie?.language || "Phụ đề"
     }), [movie, baseUrl]);
 
@@ -65,6 +70,10 @@ const MovieCard = React.memo(({
                         alt={movieData.title}
                         draggable={false}
                         loading="lazy"
+                        onError={(e) => {
+                            // Fallback nếu ảnh lỗi
+                            e.target.src = `${baseUrl}default-poster.jpg`;
+                        }}
                     />
 
                     <span className="film-card__shine" />
