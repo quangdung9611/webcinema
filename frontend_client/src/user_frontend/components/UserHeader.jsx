@@ -89,10 +89,22 @@ const UserHeader = () => {
         setActiveSubMenu(activeSubMenu === menuName ? null : menuName);
     };
 
-    // Xây dựng URL avatar nếu có
-    const avatarUrl = user?.avatar
-        ? `https://api.quangdungcinema.id.vn/uploads/avatars/${user.avatar}`
-        : null;
+    // ================================================
+    // ✅ SỬA: XỬ LÝ AVATAR URL (HỖ TRỢ CLOUDINARY + LOCAL)
+    // ================================================
+    const getAvatarUrl = (avatar) => {
+        if (!avatar) return null;
+        // Nếu là URL Cloudinary (bắt đầu bằng http), dùng trực tiếp
+        if (avatar.startsWith('http')) {
+            return avatar;
+        }
+        // Ngược lại, ghép với domain cũ (hỗ trợ tên file)
+        return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
+    };
+
+    // Ưu tiên user.user_avatar (mới), fallback user.avatar (cũ)
+    const avatarSource = user?.user_avatar || user?.avatar;
+    const avatarUrl = avatarSource ? getAvatarUrl(avatarSource) : null;
 
     return (
         <nav className="user-navbar">
@@ -209,7 +221,6 @@ const UserHeader = () => {
                         className="account-trigger"
                         onClick={() => setShowDropdown(!showDropdown)}
                     >
-                        {/* 👇 Thay đổi ở đây: hiển thị avatar nếu có, ngược lại vẫn icon */}
                         {avatarUrl ? (
                             <img
                                 src={avatarUrl}

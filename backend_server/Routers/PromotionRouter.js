@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 
 const PromotionController = require('../Controllers/PromotionController');
-const upload = require('../Middlewares/UploadMiddleware');
+
+// ✅ Đã sửa: dùng MulterMiddleware thay vì UploadMiddleware cũ
+const upload = require('../Middlewares/MulterMiddleware');
 
 /* ==========================================================
     1. NHÓM ADMIN
@@ -14,10 +16,10 @@ router.get('/', PromotionController.getAllPromotionsAdmin);
 // Lấy chi tiết promotion theo ID
 router.get('/detail/:id', PromotionController.getPromotionById);
 
-// ✅ Tạo promotion mới - Đã sửa field name thành promotion_image
+// Tạo promotion mới - field: promotion_image
 router.post('/', upload.single('promotion_image'), PromotionController.createPromotion);
 
-// ✅ Update promotion - Đã sửa field name thành promotion_image
+// Update promotion - field: promotion_image
 router.put('/update/:id', upload.single('promotion_image'), PromotionController.updatePromotion);
 
 // Delete promotion

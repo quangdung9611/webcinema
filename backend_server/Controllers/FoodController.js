@@ -1,28 +1,20 @@
 const db = require('../Config/db');
-const fs = require('fs');
-const path = require('path');
 
-/* =====================================================
-    HELPERS
-===================================================== */
+// =====================================================
+// IMPORT CLOUDINARY HELPERS
+// =====================================================
+const { uploadToCloudinary, deleteFromCloudinary } = require('../Middlewares/UploadCloudinary');
 
 /**
- * Xóa file vật lý trong thư mục uploads/foods
+ * Trích xuất public_id từ URL Cloudinary
  */
-const deleteFoodImage = (fileName) => {
-    if (!fileName) return;
-
-    const pureFileName = path.basename(fileName);
-    const filePath = path.join(__dirname, '..', 'uploads', 'foods', pureFileName);
-
-    try {
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            console.log(`✅ Đã xóa file food: ${pureFileName}`);
-        }
-    } catch (err) {
-        console.error('❌ Lỗi xóa file food:', err.message);
-    }
+const extractPublicId = (url) => {
+    if (!url) return null;
+    const parts = url.split('/');
+    const uploadIndex = parts.indexOf('upload');
+    if (uploadIndex === -1) return null;
+    const publicId = parts.slice(uploadIndex + 1).join('/').split('.')[0];
+    return publicId;
 };
 
 /* =====================================================
@@ -108,7 +100,7 @@ exports.getFoodById = async (req, res) => {
 };
 
 /* =====================================================
-    CREATE FOOD
+    CREATE FOOD (CLOUDINARY)
 ===================================================== */
 
 exports.createFood = async (req, res) => {
@@ -120,12 +112,10 @@ exports.createFood = async (req, res) => {
             status
         } = req.body;
 
-        // Lấy file từ multer
         const file = req.file;
 
         // VALIDATE
         if (!product_name || !product_name.trim()) {
-            if (file) deleteFoodImage(file.filename);
             return res.status(400).json({
                 success: false,
                 message: 'Tên món ăn không được để trống'
@@ -133,7 +123,6 @@ exports.createFood = async (req, res) => {
         }
 
         if (!price || Number(price) <= 0) {
-            if (file) deleteFoodImage(file.filename);
             return res.status(400).json({
                 success: false,
                 message: 'Giá món ăn phải lớn hơn 0'
@@ -158,11 +147,17 @@ exports.createFood = async (req, res) => {
         );
 
         if (duplicateFood.length > 0) {
-            deleteFoodImage(file.filename);
             return res.status(409).json({
                 success: false,
                 message: 'Tên món ăn đã tồn tại'
             });
+        }
+
+        // Upload ảnh lên Cloudinary
+        let food_image = null;
+        if (file) {
+            const result = await uploadToCloudinary(file, 'cinema_shop/foods');
+            food_image = result.url;
         }
 
         // INSERT
@@ -180,7 +175,7 @@ exports.createFood = async (req, res) => {
         const [result] = await db.query(query, [
             name,
             price,
-            file.filename,
+            food_image,
             category || 'Other',
             status ?? 1
         ]);
@@ -193,7 +188,6 @@ exports.createFood = async (req, res) => {
 
     } catch (err) {
         console.error('❌ Lỗi createFood:', err.message);
-        if (req.file) deleteFoodImage(req.file.filename);
         return res.status(500).json({
             success: false,
             message: 'Lỗi server',
@@ -203,7 +197,7 @@ exports.createFood = async (req, res) => {
 };
 
 /* =====================================================
-    UPDATE FOOD
+    UPDATE FOOD (CLOUDINARY)
 ===================================================== */
 
 exports.updateFood = async (req, res) => {
@@ -227,7 +221,6 @@ exports.updateFood = async (req, res) => {
         );
 
         if (!foodExists.length) {
-            if (file) deleteFoodImage(file.filename);
             return res.status(404).json({
                 success: false,
                 message: 'Món ăn không tồn tại'
@@ -236,7 +229,6 @@ exports.updateFood = async (req, res) => {
 
         // VALIDATE
         if (!product_name || !product_name.trim()) {
-            if (file) deleteFoodImage(file.filename);
             return res.status(400).json({
                 success: false,
                 message: 'Tên món ăn không được để trống'
@@ -244,7 +236,6 @@ exports.updateFood = async (req, res) => {
         }
 
         if (!price || Number(price) <= 0) {
-            if (file) deleteFoodImage(file.filename);
             return res.status(400).json({
                 success: false,
                 message: 'Giá món ăn phải lớn hơn 0'
@@ -263,22 +254,24 @@ exports.updateFood = async (req, res) => {
         );
 
         if (duplicateFood.length > 0) {
-            if (file) deleteFoodImage(file.filename);
             return res.status(409).json({
                 success: false,
                 message: 'Tên món ăn đã tồn tại'
             });
         }
 
-        // XỬ LÝ ẢNH
+        // XỬ LÝ ẢNH VỚI CLOUDINARY
         let food_image = foodExists[0].food_image; // ảnh cũ
 
         if (file) {
-            // Xóa ảnh cũ nếu có
+            // Xóa ảnh cũ trên Cloudinary
             if (food_image) {
-                deleteFoodImage(food_image);
+                const publicId = extractPublicId(food_image);
+                await deleteFromCloudinary(publicId);
             }
-            food_image = file.filename;
+            // Upload ảnh mới
+            const result = await uploadToCloudinary(file, 'cinema_shop/foods');
+            food_image = result.url;
         }
 
         // UPDATE
@@ -309,7 +302,6 @@ exports.updateFood = async (req, res) => {
 
     } catch (err) {
         console.error('❌ Lỗi updateFood:', err.message);
-        if (req.file) deleteFoodImage(req.file.filename);
         return res.status(500).json({
             success: false,
             message: 'Lỗi server',
@@ -319,7 +311,7 @@ exports.updateFood = async (req, res) => {
 };
 
 /* =====================================================
-    DELETE FOOD
+    DELETE FOOD (CLOUDINARY)
 ===================================================== */
 
 exports.deleteFood = async (req, res) => {
@@ -341,9 +333,10 @@ exports.deleteFood = async (req, res) => {
             });
         }
 
-        // Xóa file ảnh
+        // Xóa ảnh trên Cloudinary
         if (foodExists[0].food_image) {
-            deleteFoodImage(foodExists[0].food_image);
+            const publicId = extractPublicId(foodExists[0].food_image);
+            await deleteFromCloudinary(publicId);
         }
 
         // DELETE

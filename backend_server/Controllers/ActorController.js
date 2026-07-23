@@ -2,6 +2,11 @@ const db = require('../Config/db');
 const fs = require('fs');
 const path = require('path');
 
+// ==========================================================
+// IMPORT CLOUDINARY HELPERS
+// ==========================================================
+const { uploadToCloudinary, deleteFromCloudinary } = require('../Middlewares/UploadCloudinary');
+
 /* ==========================================================
     1. HELPERS & VALIDATION UTILS
    ========================================================== */
@@ -86,30 +91,15 @@ const validateActorData = (data, file, isUpdate = false) => {
 };
 
 /**
- * Xóa file vật lý trên server (Thư mục uploads/actors)
+ * Trích xuất public_id từ URL Cloudinary
  */
-const deleteActorFile = (fileName) => {
-    if (!fileName) {
-        return;
-    }
-
-    const pureFileName = path.basename(fileName);
-    const filePath = path.join(
-        __dirname, 
-        '..', 
-        'uploads', 
-        'actors', 
-        pureFileName
-    ); 
-
-    try {
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            console.log("✅ Đã xóa ảnh diễn viên thành công:", pureFileName);
-        }
-    } catch (err) {
-        console.error("❌ Lỗi khi xóa ảnh diễn viên:", err.message);
-    }
+const extractPublicId = (url) => {
+    if (!url) return null;
+    const parts = url.split('/');
+    const uploadIndex = parts.indexOf('upload');
+    if (uploadIndex === -1) return null;
+    const publicId = parts.slice(uploadIndex + 1).join('/').split('.')[0];
+    return publicId;
 };
 
 /* ==========================================================
@@ -209,7 +199,7 @@ exports.getActorBySlug = async (req, res) => {
                 m.movie_id, 
                 m.title, 
                 m.slug, 
-                m.poster_url, 
+                m.movie_poster, 
                 m.release_date
             FROM movies m
             JOIN movie_actors ma ON m.movie_id = ma.movie_id
@@ -228,7 +218,7 @@ exports.getActorBySlug = async (req, res) => {
     }
 };
 
-// [POST] /api/actors/add - Thêm diễn viên mới
+// [POST] /api/actors/add - Thêm diễn viên mới (CLOUDINARY)
 exports.addActor = async (req, res) => {
     const { 
         name, 
@@ -241,9 +231,6 @@ exports.addActor = async (req, res) => {
     // 1. Validate dữ liệu
     const errorMsg = validateActorData(req.body, req.file, false);
     if (errorMsg) {
-        if (req.file) {
-            deleteActorFile(req.file.filename);
-        }
         return res.status(400).json({ 
             error: errorMsg 
         });
@@ -265,33 +252,17 @@ exports.addActor = async (req, res) => {
         );
 
         if (existingActor.length > 0) {
-            if (req.file) {
-                deleteActorFile(req.file.filename);
-            }
             await connection.rollback();
             return res.status(400).json({ 
                 error: "Tên hoặc slug của diễn viên này đã tồn tại trong hệ thống." 
             });
         }
 
-        const actorAvatar = req.file.filename; // Tên file ảnh đã được middleware xử lý
-
-        // Kiểm tra trùng tên file vật lý trên server để tránh ghi đè ảnh người khác
-        const checkPath = path.join(
-            __dirname, 
-            '..', 
-            'uploads', 
-            'actors', 
-            actorAvatar
-        );
-        if (fs.existsSync(checkPath)) {
-            if (req.file) {
-                deleteActorFile(req.file.filename);
-            }
-            await connection.rollback();
-            return res.status(400).json({ 
-                error: `Tên file ảnh "${actorAvatar}" đã tồn tại trên máy chủ. Vui lòng đổi lại tên file ảnh trên máy của bạn rồi upload lại nhé!` 
-            });
+        // Upload avatar lên Cloudinary
+        let actorAvatar = null;
+        if (req.file) {
+            const result = await uploadToCloudinary(req.file, 'cinema_shop/actors');
+            actorAvatar = result.url;
         }
 
         await connection.query(
@@ -321,9 +292,7 @@ exports.addActor = async (req, res) => {
         });
     } catch (error) {
         await connection.rollback();
-        if (req.file) {
-            deleteActorFile(req.file.filename);
-        }
+        console.error("❌ Add actor error:", error);
         res.status(500).json({ 
             error: error.message 
         });
@@ -332,7 +301,7 @@ exports.addActor = async (req, res) => {
     }
 };
 
-// [PUT] /api/actors/update/:id - Cập nhật thông tin diễn viên
+// [PUT] /api/actors/update/:id - Cập nhật thông tin diễn viên (CLOUDINARY)
 exports.updateActor = async (req, res) => {
     const { id } = req.params;
     const { 
@@ -346,9 +315,6 @@ exports.updateActor = async (req, res) => {
     // 1. Validate dữ liệu cơ bản
     const errorMsg = validateActorData(req.body, req.file, true);
     if (errorMsg) {
-        if (req.file) {
-            deleteActorFile(req.file.filename);
-        }
         return res.status(400).json({ 
             error: errorMsg 
         });
@@ -364,9 +330,6 @@ exports.updateActor = async (req, res) => {
             [id]
         );
         if (old.length === 0) {
-            if (req.file) {
-                deleteActorFile(req.file.filename);
-            }
             await connection.rollback();
             return res.status(404).json({ 
                 error: "Diễn viên không tồn tại." 
@@ -386,27 +349,24 @@ exports.updateActor = async (req, res) => {
         );
 
         if (duplicateActor.length > 0) {
-            if (req.file) {
-                deleteActorFile(req.file.filename);
-            }
             await connection.rollback();
             return res.status(400).json({ 
                 error: "Tên hoặc đường dẫn slug của diễn viên đã bị trùng với một diễn viên khác." 
             });
         }
 
-        // Khởi tạo biến hứng tên ảnh, mặc định là ảnh cũ
+        // Xử lý ảnh với Cloudinary
         let newAvatar = old[0].actor_avatar;
 
-        // Nếu người dùng có upload ảnh mới
         if (req.file) {
-            const avatarName = req.file.filename;
-
-            // Chỉ thực hiện xóa file cũ khi tên file mới KHÁC tên file cũ
-            if (avatarName !== old[0].actor_avatar) {
-                deleteActorFile(old[0].actor_avatar); // Xóa file ảnh cũ thực tế trên server
+            // Xóa ảnh cũ trên Cloudinary
+            if (old[0].actor_avatar) {
+                const publicId = extractPublicId(old[0].actor_avatar);
+                await deleteFromCloudinary(publicId);
             }
-            newAvatar = avatarName; // Cập nhật tên mới vào biến gánh
+            // Upload ảnh mới
+            const result = await uploadToCloudinary(req.file, 'cinema_shop/actors');
+            newAvatar = result.url;
         }
 
         await connection.query(
@@ -437,9 +397,7 @@ exports.updateActor = async (req, res) => {
         });
     } catch (error) {
         await connection.rollback();
-        if (req.file) {
-            deleteActorFile(req.file.filename);
-        }
+        console.error("❌ Update actor error:", error);
         res.status(500).json({ 
             error: "Lỗi server: " + error.message 
         });
@@ -448,10 +406,10 @@ exports.updateActor = async (req, res) => {
     }
 };
 
-// [DELETE] /api/actors/delete/:id - Xóa diễn viên
+// [DELETE] /api/actors/delete/:id - Xóa diễn viên (CLOUDINARY)
 exports.deleteActor = async (req, res) => {
     const { id } = req.params;
-    const { token } = req.body; // Dùng usertoken của Quang Dũng
+    const { token } = req.body;
 
     const connection = await db.getConnection();
     try {
@@ -463,13 +421,14 @@ exports.deleteActor = async (req, res) => {
 
         await connection.beginTransaction();
 
-        // 1. Lấy thông tin ảnh để xóa file vật lý
+        // 1. Lấy thông tin ảnh để xóa trên Cloudinary
         const [actor] = await connection.query(
             "SELECT actor_avatar FROM actors WHERE actor_id = ?", 
             [id]
         );
-        if (actor.length > 0) {
-            deleteActorFile(actor[0].actor_avatar);
+        if (actor.length > 0 && actor[0].actor_avatar) {
+            const publicId = extractPublicId(actor[0].actor_avatar);
+            await deleteFromCloudinary(publicId);
         }
 
         // 2. Xóa trong database

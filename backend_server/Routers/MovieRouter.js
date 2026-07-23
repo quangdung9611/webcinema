@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 
 const movieController = require('../Controllers/MovieController');
-const upload = require('../Middlewares/UploadMiddleware');
+
+// ✅ Đã sửa: dùng MulterMiddleware thay vì UploadMiddleware cũ
+const upload = require('../Middlewares/MulterMiddleware');
 
 /* ==========================================================
     1. PUBLIC ROUTES (Cấu trúc tĩnh - Đặt lên đầu)
@@ -34,7 +36,7 @@ router.patch('/view/:id', movieController.incrementViews);
     3. ADMIN ROUTES (CRUD MOVIE)
    ========================================================== */
 
-// Thêm phim - Đã sửa tên field thành movie_poster và movie_backdrop
+// Thêm phim - field: movie_poster và movie_backdrop
 router.post(
     '/add',
     upload.fields([
@@ -44,7 +46,7 @@ router.post(
     movieController.addMovie
 );
 
-// Cập nhật phim - Đã sửa tên field thành movie_poster và movie_backdrop
+// Cập nhật phim - field: movie_poster và movie_backdrop
 router.put(
     '/update/:id',
     upload.fields([

@@ -2,6 +2,23 @@ const db = require('../Config/db');
 const fs = require('fs');
 const path = require('path');
 
+// ==========================================================
+// IMPORT CLOUDINARY HELPERS
+// ==========================================================
+const { uploadToCloudinary, deleteFromCloudinary } = require('../Middlewares/UploadCloudinary');
+
+/**
+ * Trích xuất public_id từ URL Cloudinary
+ */
+const extractPublicId = (url) => {
+    if (!url) return null;
+    const parts = url.split('/');
+    const uploadIndex = parts.indexOf('upload');
+    if (uploadIndex === -1) return null;
+    const publicId = parts.slice(uploadIndex + 1).join('/').split('.')[0];
+    return publicId;
+};
+
 /* =========================================================
  * 1. HELPERS & VALIDATION
  * =========================================================
@@ -59,23 +76,6 @@ const validateNewsData = (data, file, isUpdate = false) => {
     }
 
     return null;
-};
-
-/**
- * Xóa file vật lý (thư mục news)
- */
-const deleteFile = (fileName) => {
-    if (!fileName) return;
-    const pureFileName = path.basename(fileName);
-    const filePath = path.join(__dirname, '..', 'uploads', 'news', pureFileName);
-    try {
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            console.log(`✅ Đã xóa file: ${pureFileName}`);
-        }
-    } catch (err) {
-        console.error('❌ Lỗi xóa file news:', err.message);
-    }
 };
 
 /* =========================================================
@@ -150,7 +150,7 @@ exports.getNewsById = async (req, res) => {
 };
 
 /* =========================================================
- * 5. CREATE NEWS
+ * 5. CREATE NEWS (CLOUDINARY)
  * =========================================================
  */
 exports.createNews = async (req, res) => {
@@ -158,13 +158,12 @@ exports.createNews = async (req, res) => {
     const file = req.file;
 
     try {
-        // Validate nhanh (có thể dùng validateNewsData để đầy đủ)
+        // Validate nhanh
         if (!title || !content) {
             return res.status(400).json({ message: 'Thiếu dữ liệu bài viết' });
         }
 
         const slug = createSlug(title);
-        const news_image = file ? file.filename : null;
 
         // Check duplicate
         const [duplicate] = await db.query(
@@ -172,8 +171,14 @@ exports.createNews = async (req, res) => {
             [title.trim(), slug]
         );
         if (duplicate.length > 0) {
-            if (file) deleteFile(file.filename);
             return res.status(400).json({ message: 'Tiêu đề đã tồn tại' });
+        }
+
+        // Upload ảnh lên Cloudinary
+        let news_image = null;
+        if (file) {
+            const result = await uploadToCloudinary(file, 'cinema_shop/news');
+            news_image = result.url;
         }
 
         await db.query(
@@ -193,13 +198,13 @@ exports.createNews = async (req, res) => {
             message: 'Tạo bài viết thành công'
         });
     } catch (error) {
-        if (file) deleteFile(file.filename);
+        console.error('❌ Create news error:', error);
         return res.status(500).json({ message: 'Lỗi khi tạo bài viết' });
     }
 };
 
 /* =========================================================
- * 6. UPDATE NEWS
+ * 6. UPDATE NEWS (CLOUDINARY)
  * =========================================================
  */
 exports.updateNews = async (req, res) => {
@@ -209,7 +214,6 @@ exports.updateNews = async (req, res) => {
 
     const errorMsg = validateNewsData(req.body, file, true);
     if (errorMsg) {
-        if (file) deleteFile(file.filename);
         return res.status(400).json({ message: errorMsg });
     }
 
@@ -223,7 +227,6 @@ exports.updateNews = async (req, res) => {
             [news_id]
         );
         if (oldNews.length === 0) {
-            if (file) deleteFile(file.filename);
             await connection.rollback();
             return res.status(404).json({ message: 'Bài viết không tồn tại' });
         }
@@ -236,19 +239,22 @@ exports.updateNews = async (req, res) => {
             [title.trim(), slug, news_id]
         );
         if (duplicate.length > 0) {
-            if (file) deleteFile(file.filename);
             await connection.rollback();
             return res.status(400).json({ message: 'Tiêu đề hoặc slug đã tồn tại' });
         }
 
-        // IMAGE HANDLE
+        // XỬ LÝ ẢNH VỚI CLOUDINARY
         let news_image = oldNews[0].news_image;
+
         if (file) {
-            const newFileName = file.filename;
-            if (oldNews[0].news_image && oldNews[0].news_image !== newFileName) {
-                deleteFile(oldNews[0].news_image);
+            // Xóa ảnh cũ trên Cloudinary
+            if (oldNews[0].news_image) {
+                const publicId = extractPublicId(oldNews[0].news_image);
+                await deleteFromCloudinary(publicId);
             }
-            news_image = newFileName;
+            // Upload ảnh mới
+            const result = await uploadToCloudinary(file, 'cinema_shop/news');
+            news_image = result.url;
         }
 
         // UPDATE
@@ -278,7 +284,7 @@ exports.updateNews = async (req, res) => {
         });
     } catch (error) {
         await connection.rollback();
-        if (file) deleteFile(file.filename);
+        console.error('❌ Update news error:', error);
         return res.status(500).json({
             message: 'Lỗi cập nhật bài viết: ' + error.message
         });
@@ -288,7 +294,7 @@ exports.updateNews = async (req, res) => {
 };
 
 /* =========================================================
- * 7. DELETE NEWS
+ * 7. DELETE NEWS (CLOUDINARY)
  * =========================================================
  */
 exports.deleteNews = async (req, res) => {
@@ -308,8 +314,10 @@ exports.deleteNews = async (req, res) => {
             `SELECT news_image FROM news WHERE news_id = ?`,
             [id]
         );
-        if (news.length > 0) {
-            deleteFile(news[0].news_image);
+        if (news.length > 0 && news[0].news_image) {
+            // Xóa ảnh trên Cloudinary
+            const publicId = extractPublicId(news[0].news_image);
+            await deleteFromCloudinary(publicId);
         }
 
         // DELETE
@@ -321,6 +329,7 @@ exports.deleteNews = async (req, res) => {
         });
     } catch (error) {
         await connection.rollback();
+        console.error('❌ Delete news error:', error);
         return res.status(500).json({ message: 'Lỗi khi xóa bài viết.' });
     } finally {
         connection.release();

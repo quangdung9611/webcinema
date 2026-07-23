@@ -2,6 +2,11 @@ const db = require('../Config/db');
 const fs = require('fs');
 const path = require('path');
 
+// ==========================================================
+// IMPORT CLOUDINARY HELPERS
+// ==========================================================
+const { uploadToCloudinary, deleteFromCloudinary } = require('../Middlewares/UploadCloudinary');
+
 /* ==========================================================
     1. HELPERS & VALIDATION UTILS
 ========================================================== */
@@ -61,20 +66,15 @@ const validateBlogData = (data, file, isUpdate = false) => {
 };
 
 /**
- * Xóa file vật lý (thư mục blog_cinema)
+ * Trích xuất public_id từ URL Cloudinary
  */
-const deleteFile = (fileName) => {
-    if (!fileName) return;
-    const pureFileName = path.basename(fileName);
-    const filePath = path.join(__dirname, '..', 'uploads', 'blog_cinema', pureFileName);
-    try {
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            console.log(`✅ Đã xóa file blog: ${pureFileName}`);
-        }
-    } catch (err) {
-        console.error('❌ Lỗi xóa file blog:', err.message);
-    }
+const extractPublicId = (url) => {
+    if (!url) return null;
+    const parts = url.split('/');
+    const uploadIndex = parts.indexOf('upload');
+    if (uploadIndex === -1) return null;
+    const publicId = parts.slice(uploadIndex + 1).join('/').split('.')[0];
+    return publicId;
 };
 
 /* ==========================================================
@@ -214,7 +214,7 @@ exports.getBlogById = async (req, res) => {
 };
 
 /**
- * CREATE BLOG
+ * CREATE BLOG - CLOUDINARY
  */
 exports.createBlog = async (req, res) => {
     const { title, description, likes } = req.body;
@@ -222,13 +222,11 @@ exports.createBlog = async (req, res) => {
 
     const errorMsg = validateBlogData(req.body, file, false);
     if (errorMsg) {
-        if (file) deleteFile(file.filename);
         return res.status(400).json({ message: errorMsg });
     }
 
     try {
         const slug = createSlug(title);
-        const blog_image = file ? file.filename : null;
 
         // Check duplicate
         const [duplicate] = await db.query(
@@ -236,8 +234,14 @@ exports.createBlog = async (req, res) => {
             [title.trim(), slug]
         );
         if (duplicate.length > 0) {
-            if (file) deleteFile(file.filename);
             return res.status(400).json({ message: 'Tiêu đề hoặc slug đã tồn tại' });
+        }
+
+        // Upload ảnh lên Cloudinary
+        let blog_image = null;
+        if (file) {
+            const result = await uploadToCloudinary(file, 'cinema_shop/blog_cinema');
+            blog_image = result.url;
         }
 
         await db.query(
@@ -254,13 +258,13 @@ exports.createBlog = async (req, res) => {
 
         return res.status(201).json({ success: true, message: 'Tạo blog thành công!' });
     } catch (error) {
-        if (file) deleteFile(file.filename);
+        console.error('❌ Create blog error:', error);
         return res.status(500).json({ message: 'Lỗi server khi tạo blog' });
     }
 };
 
 /**
- * UPDATE BLOG
+ * UPDATE BLOG - CLOUDINARY
  */
 exports.updateBlog = async (req, res) => {
     const { id } = req.params;
@@ -269,7 +273,6 @@ exports.updateBlog = async (req, res) => {
 
     const errorMsg = validateBlogData(req.body, file, true);
     if (errorMsg) {
-        if (file) deleteFile(file.filename);
         return res.status(400).json({ message: errorMsg });
     }
 
@@ -283,7 +286,6 @@ exports.updateBlog = async (req, res) => {
             [id]
         );
         if (oldBlog.length === 0) {
-            if (file) deleteFile(file.filename);
             await connection.rollback();
             return res.status(404).json({ message: 'Blog không tồn tại' });
         }
@@ -295,19 +297,21 @@ exports.updateBlog = async (req, res) => {
             [title.trim(), slug, id]
         );
         if (duplicate.length > 0) {
-            if (file) deleteFile(file.filename);
             await connection.rollback();
             return res.status(400).json({ message: 'Tiêu đề hoặc slug đã tồn tại' });
         }
 
-        // Image handling
+        // Xử lý ảnh với Cloudinary
         let blog_image = oldBlog[0].blog_image;
         if (file) {
-            const newFileName = file.filename;
-            if (oldBlog[0].blog_image && oldBlog[0].blog_image !== newFileName) {
-                deleteFile(oldBlog[0].blog_image);
+            // Xóa ảnh cũ
+            if (oldBlog[0].blog_image) {
+                const publicId = extractPublicId(oldBlog[0].blog_image);
+                await deleteFromCloudinary(publicId);
             }
-            blog_image = newFileName;
+            // Upload ảnh mới
+            const result = await uploadToCloudinary(file, 'cinema_shop/blog_cinema');
+            blog_image = result.url;
         }
 
         // Update
@@ -330,7 +334,7 @@ exports.updateBlog = async (req, res) => {
         return res.status(200).json({ success: true, message: 'Cập nhật blog thành công!' });
     } catch (error) {
         await connection.rollback();
-        if (file) deleteFile(file.filename);
+        console.error('❌ Update blog error:', error);
         return res.status(500).json({ message: 'Lỗi cập nhật blog: ' + error.message });
     } finally {
         connection.release();
@@ -338,7 +342,7 @@ exports.updateBlog = async (req, res) => {
 };
 
 /**
- * DELETE BLOG
+ * DELETE BLOG - CLOUDINARY
  */
 exports.deleteBlog = async (req, res) => {
     const { id } = req.params;
@@ -356,8 +360,10 @@ exports.deleteBlog = async (req, res) => {
             return res.status(404).json({ message: 'Không tìm thấy blog' });
         }
 
+        // Xóa ảnh trên Cloudinary
         if (blog[0].blog_image) {
-            deleteFile(blog[0].blog_image);
+            const publicId = extractPublicId(blog[0].blog_image);
+            await deleteFromCloudinary(publicId);
         }
 
         await connection.query(`DELETE FROM blog_cinema WHERE blog_id = ?`, [id]);
@@ -365,6 +371,7 @@ exports.deleteBlog = async (req, res) => {
         return res.status(200).json({ success: true, message: 'Đã xóa blog thành công.' });
     } catch (error) {
         await connection.rollback();
+        console.error('❌ Delete blog error:', error);
         return res.status(500).json({ message: 'Lỗi khi xóa blog.' });
     } finally {
         connection.release();

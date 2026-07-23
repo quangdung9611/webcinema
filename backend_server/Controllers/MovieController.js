@@ -2,6 +2,11 @@ const db = require('../Config/db');
 const fs = require('fs');
 const path = require('path');
 
+// ==========================================================
+// IMPORT CLOUDINARY HELPERS
+// ==========================================================
+const { uploadToCloudinary, deleteFromCloudinary } = require('../Middlewares/UploadCloudinary');
+
 /* ==========================================================
     1. HELPERS & VALIDATION UTILS
 ========================================================== */
@@ -78,20 +83,16 @@ const validateMovieData = (data, files, isUpdate = false) => {
 };
 
 /**
- * Xóa file vật lý trên server
+ * Trích xuất public_id từ URL Cloudinary
+ * Ví dụ: https://res.cloudinary.com/.../cinema_shop/posters/abc.jpg → cinema_shop/posters/abc
  */
-const deleteFile = (fileName, subFolder = 'posters') => {
-    if (!fileName || fileName === 'null' || fileName === 'undefined') return;
-    const pureFileName = path.basename(fileName);
-    const filePath = path.join(__dirname, '..', 'uploads', subFolder, pureFileName);
-    try {
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            console.log(`✅ Đã xóa file cũ trong ${subFolder}:`, pureFileName);
-        }
-    } catch (err) {
-        console.error(`❌ Lỗi xóa file ${subFolder}:`, err.message);
-    }
+const extractPublicId = (url) => {
+    if (!url) return null;
+    const parts = url.split('/');
+    const uploadIndex = parts.indexOf('upload');
+    if (uploadIndex === -1) return null;
+    const publicId = parts.slice(uploadIndex + 1).join('/').split('.')[0];
+    return publicId;
 };
 
 /* ==========================================================
@@ -201,7 +202,7 @@ exports.getMovieById = async (req, res) => {
 };
 
 /* ==========================================================
-    5. ADD MOVIE
+    5. ADD MOVIE (CLOUDINARY)
 ========================================================== */
 exports.addMovie = async (req, res) => {
     const {
@@ -222,8 +223,8 @@ exports.addMovie = async (req, res) => {
     // VALIDATE
     const errorMsg = validateMovieData(req.body, files, false);
     if (errorMsg) {
-        if (files['movie_poster']?.[0]?.filename) deleteFile(files['movie_poster'][0].filename, 'posters');
-        if (files['movie_backdrop']?.[0]?.filename) deleteFile(files['movie_backdrop'][0].filename, 'backdrops');
+        // Nếu có file upload nhưng validate lỗi, xóa file tạm (Multer đã lưu vào temp)
+        // Không cần xóa vì MulterMiddleware sẽ tự xóa sau khi upload lên Cloudinary thất bại
         return res.status(400).json({ error: errorMsg });
     }
 
@@ -239,15 +240,25 @@ exports.addMovie = async (req, res) => {
             [title.trim(), slug]
         );
         if (dup.length > 0) {
-            if (files['movie_poster']?.[0]?.filename) deleteFile(files['movie_poster'][0].filename, 'posters');
-            if (files['movie_backdrop']?.[0]?.filename) deleteFile(files['movie_backdrop'][0].filename, 'backdrops');
             await connection.rollback();
             return res.status(400).json({ error: "Phim này đã tồn tại trong hệ thống (trùng tên hoặc slug)." });
         }
 
+        // UPLOAD POSTER LÊN CLOUDINARY
+        let movie_poster = null;
+        if (files['movie_poster']?.[0]) {
+            const result = await uploadToCloudinary(files['movie_poster'][0], 'cinema_shop/posters');
+            movie_poster = result.url; // Lưu URL Cloudinary
+        }
+
+        // UPLOAD BACKDROP LÊN CLOUDINARY
+        let movie_backdrop = null;
+        if (files['movie_backdrop']?.[0]) {
+            const result = await uploadToCloudinary(files['movie_backdrop'][0], 'cinema_shop/backdrops');
+            movie_backdrop = result.url; // Lưu URL Cloudinary
+        }
+
         const cleanDate = release_date ? release_date.substring(0, 10) : null;
-        const movie_poster = files['movie_poster']?.[0]?.filename || null;
-        const movie_backdrop = files['movie_backdrop']?.[0]?.filename || null;
 
         const sql = `
             INSERT INTO movies (
@@ -276,8 +287,7 @@ exports.addMovie = async (req, res) => {
         return res.status(201).json({ success: true, message: "Thêm phim thành công!" });
     } catch (error) {
         await connection.rollback();
-        if (files['movie_poster']?.[0]?.filename) deleteFile(files['movie_poster'][0].filename, 'posters');
-        if (files['movie_backdrop']?.[0]?.filename) deleteFile(files['movie_backdrop'][0].filename, 'backdrops');
+        console.error("❌ Add movie error:", error);
         return res.status(500).json({ error: error.message });
     } finally {
         connection.release();
@@ -285,7 +295,7 @@ exports.addMovie = async (req, res) => {
 };
 
 /* ==========================================================
-    6. UPDATE MOVIE
+    6. UPDATE MOVIE (CLOUDINARY)
 ========================================================== */
 exports.updateMovie = async (req, res) => {
     const { id } = req.params;
@@ -307,8 +317,6 @@ exports.updateMovie = async (req, res) => {
     // VALIDATE
     const errorMsg = validateMovieData(req.body, files, true);
     if (errorMsg) {
-        if (files['movie_poster']?.[0]?.filename) deleteFile(files['movie_poster'][0].filename, 'posters');
-        if (files['movie_backdrop']?.[0]?.filename) deleteFile(files['movie_backdrop'][0].filename, 'backdrops');
         return res.status(400).json({ error: errorMsg });
     }
 
@@ -322,8 +330,6 @@ exports.updateMovie = async (req, res) => {
             [id]
         );
         if (old.length === 0) {
-            if (files['movie_poster']?.[0]?.filename) deleteFile(files['movie_poster'][0].filename, 'posters');
-            if (files['movie_backdrop']?.[0]?.filename) deleteFile(files['movie_backdrop'][0].filename, 'backdrops');
             await connection.rollback();
             return res.status(404).json({ error: "Phim không tồn tại." });
         }
@@ -336,30 +342,32 @@ exports.updateMovie = async (req, res) => {
             [title.trim(), slug, id]
         );
         if (dup.length > 0) {
-            if (files['movie_poster']?.[0]?.filename) deleteFile(files['movie_poster'][0].filename, 'posters');
-            if (files['movie_backdrop']?.[0]?.filename) deleteFile(files['movie_backdrop'][0].filename, 'backdrops');
             await connection.rollback();
             return res.status(400).json({ error: "Tên phim hoặc slug đã trùng với phim khác." });
         }
 
-        // HANDLE POSTER
+        // HANDLE POSTER (Cloudinary)
         let finalPoster = old[0].movie_poster;
-        if (files['movie_poster']) {
-            const newPosterName = files['movie_poster'][0].filename;
-            if (newPosterName !== old[0].movie_poster) {
-                deleteFile(old[0].movie_poster, 'posters');
+        if (files['movie_poster']?.[0]) {
+            // Xóa ảnh cũ trên Cloudinary
+            if (old[0].movie_poster) {
+                const publicId = extractPublicId(old[0].movie_poster);
+                await deleteFromCloudinary(publicId);
             }
-            finalPoster = newPosterName;
+            // Upload ảnh mới
+            const result = await uploadToCloudinary(files['movie_poster'][0], 'cinema_shop/posters');
+            finalPoster = result.url;
         }
 
-        // HANDLE BACKDROP
+        // HANDLE BACKDROP (Cloudinary)
         let finalBackdrop = old[0].movie_backdrop;
-        if (files['movie_backdrop']) {
-            const newBackdropName = files['movie_backdrop'][0].filename;
-            if (newBackdropName !== old[0].movie_backdrop) {
-                deleteFile(old[0].movie_backdrop, 'backdrops');
+        if (files['movie_backdrop']?.[0]) {
+            if (old[0].movie_backdrop) {
+                const publicId = extractPublicId(old[0].movie_backdrop);
+                await deleteFromCloudinary(publicId);
             }
-            finalBackdrop = newBackdropName;
+            const result = await uploadToCloudinary(files['movie_backdrop'][0], 'cinema_shop/backdrops');
+            finalBackdrop = result.url;
         }
 
         // UPDATE DB
@@ -402,8 +410,7 @@ exports.updateMovie = async (req, res) => {
         return res.status(200).json({ success: true, message: "Cập nhật thông tin phim thành công!" });
     } catch (error) {
         await connection.rollback();
-        if (files['movie_poster']?.[0]?.filename) deleteFile(files['movie_poster'][0].filename, 'posters');
-        if (files['movie_backdrop']?.[0]?.filename) deleteFile(files['movie_backdrop'][0].filename, 'backdrops');
+        console.error("❌ Update movie error:", error);
         return res.status(500).json({ error: error.message });
     } finally {
         connection.release();
@@ -411,7 +418,7 @@ exports.updateMovie = async (req, res) => {
 };
 
 /* ==========================================================
-    7. DELETE MOVIE
+    7. DELETE MOVIE (CLOUDINARY)
 ========================================================== */
 exports.deleteMovie = async (req, res) => {
     const { id } = req.params;
@@ -425,20 +432,31 @@ exports.deleteMovie = async (req, res) => {
 
         await connection.beginTransaction();
 
+        // Lấy thông tin ảnh
         const [movie] = await connection.query(
             `SELECT movie_poster, movie_backdrop FROM movies WHERE movie_id = ?`,
             [id]
         );
         if (movie.length > 0) {
-            deleteFile(movie[0].movie_poster, 'posters');
-            deleteFile(movie[0].movie_backdrop, 'backdrops');
+            // Xóa poster trên Cloudinary
+            if (movie[0].movie_poster) {
+                const posterPublicId = extractPublicId(movie[0].movie_poster);
+                await deleteFromCloudinary(posterPublicId);
+            }
+            // Xóa backdrop trên Cloudinary
+            if (movie[0].movie_backdrop) {
+                const backdropPublicId = extractPublicId(movie[0].movie_backdrop);
+                await deleteFromCloudinary(backdropPublicId);
+            }
         }
 
+        // Xóa record trong DB
         await connection.query(`DELETE FROM movies WHERE movie_id = ?`, [id]);
         await connection.commit();
         return res.status(200).json({ success: true, message: "Đã xóa phim và ảnh thành công." });
     } catch (error) {
         await connection.rollback();
+        console.error("❌ Delete movie error:", error);
         return res.status(500).json({ error: "Lỗi khi xóa phim." });
     } finally {
         connection.release();

@@ -61,7 +61,7 @@ const Profile = () => {
                 address: user.address || '',
                 username: user.username || '',
                 points: user.points || 0,
-                user_avatar: user.user_avatar || ''   // ✅ đổi thành user_avatar
+                user_avatar: user.user_avatar || ''
             });
         }
     }, [user]);
@@ -155,7 +155,7 @@ const Profile = () => {
 
         setUploadingAvatar(true);
         const formDataUpload = new FormData();
-        formDataUpload.append('user_avatar', file);   // ✅ SỬA: đúng tên field
+        formDataUpload.append('user_avatar', file);
 
         try {
             const res = await axios.post(
@@ -206,7 +206,6 @@ const Profile = () => {
         }
         setLoading(true);
         try {
-            // ✅ SỬA: route đúng là /profile (không /profile/update)
             await axios.put('https://api.quangdungcinema.id.vn/api/users/profile',
                 { ...formData, ...passwordData }, { withCredentials: true });
             setModal({ show: true, type: 'success', title: 'Thành công', message: 'Hồ sơ đã được cập nhật!', onConfirm: () => setModal({ ...modal, show: false }) });
@@ -222,7 +221,10 @@ const Profile = () => {
 
     if (!user) return <div className="loader">Đang tải...</div>;
 
-    const avatarUrl = avatarPreview || (formData.user_avatar ? `https://api.quangdungcinema.id.vn/uploads/avatars/${formData.user_avatar}` : '');
+    // ✅ SỬA: xử lý avatar URL - hỗ trợ cả Cloudinary và tên file cũ
+    const avatarUrl = avatarPreview || (formData.user_avatar ? 
+        (formData.user_avatar.startsWith('http') ? formData.user_avatar : `https://api.quangdungcinema.id.vn/uploads/avatars/${formData.user_avatar}`) 
+        : '');
 
     return (
         <div className="galaxy-profile-wrapper">

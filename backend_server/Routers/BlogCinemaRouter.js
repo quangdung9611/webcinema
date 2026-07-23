@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 
 const BlogCinemaController = require('../Controllers/BlogCinemaController');
-const upload = require('../Middlewares/UploadMiddleware');
+
+// ✅ Đã sửa: dùng MulterMiddleware thay vì UploadMiddleware cũ
+const upload = require('../Middlewares/MulterMiddleware');
 
 /* ==========================================================
     1. NHÓM ADMIN
@@ -14,10 +16,10 @@ router.get('/', BlogCinemaController.getAllBlogsAdmin);
 // Lấy chi tiết blog theo ID
 router.get('/detail/:id', BlogCinemaController.getBlogById);
 
-// ✅ Tạo blog mới - Đã sửa field name thành blog_image
+// ✅ Tạo blog mới - field: blog_image
 router.post('/', upload.single('blog_image'), BlogCinemaController.createBlog);
 
-// ✅ Update blog - Đã sửa field name thành blog_image
+// ✅ Update blog - field: blog_image
 router.put('/update/:id', upload.single('blog_image'), BlogCinemaController.updateBlog);
 
 // Delete blog
