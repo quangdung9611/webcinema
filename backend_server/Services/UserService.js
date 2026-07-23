@@ -289,7 +289,7 @@ class UserService {
     }
 
     /*=========================================================
-        UPDATE AVATAR (MỚI)
+        UPDATE AVATAR
     =========================================================*/
     async updateAvatar(userId, file) {
         // Kiểm tra user tồn tại
@@ -319,26 +319,21 @@ class UserService {
     }
 
     /*=========================================================
-        GET USER BOOKINGS
+        GET USER BOOKINGS (ĐÃ SỬA)
     =========================================================*/
     async getUserBookings(userId) {
-        // TODO: Implement when BookingService is ready
-        // return await BookingRepository.findByUser(userId);
-        return {
-            message: "Chức năng đang phát triển",
-            bookings: []
-        };
+        // Tạm thời trả về mảng rỗng cho đến khi có BookingService
+        // TODO: Thay bằng truy vấn thực tế từ database khi có BookingService
+        return [];
     }
 
     /*=========================================================
-        CLEAR BOOKING HISTORY
+        CLEAR BOOKING HISTORY (ĐÃ SỬA)
     =========================================================*/
     async clearHistory(userId) {
-        // TODO: Implement when BookingService is ready
-        // return await BookingRepository.deleteByUser(userId);
-        return {
-            message: "Chức năng đang phát triển"
-        };
+        // Tạm thời luôn trả về true
+        // TODO: Thêm logic xóa booking khi có BookingService
+        return true;
     }
 
     /*=========================================================

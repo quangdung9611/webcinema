@@ -216,7 +216,7 @@ exports.updateUserProfile = async (req, res) => {
 };
 
 /*=========================================================
-    USER - UPLOAD AVATAR (MỚI)
+    USER - UPLOAD AVATAR
 =========================================================*/
 
 exports.uploadAvatar = async (req, res) => {
@@ -250,7 +250,7 @@ exports.uploadAvatar = async (req, res) => {
 };
 
 /*=========================================================
-    USER - GET MY BOOKINGS
+    USER - GET MY BOOKINGS (ĐÃ SỬA)
 =========================================================*/
 
 exports.getMyBookings = async (req, res) => {
@@ -258,7 +258,7 @@ exports.getMyBookings = async (req, res) => {
         const bookings = await UserService.getUserBookings(req.user.user_id);
         return res.status(200).json({
             success: true,
-            data: bookings
+            bookings   // ← QUAN TRỌNG: trả về key 'bookings' để client đọc đúng
         });
     } catch (err) {
         console.error("Get My Bookings Error:", err);
@@ -270,7 +270,7 @@ exports.getMyBookings = async (req, res) => {
 };
 
 /*=========================================================
-    USER - CLEAR BOOKING HISTORY
+    USER - CLEAR BOOKING HISTORY (ĐÃ SỬA)
 =========================================================*/
 
 exports.clearBookingHistory = async (req, res) => {
@@ -290,7 +290,7 @@ exports.clearBookingHistory = async (req, res) => {
 };
 
 /*=========================================================
-    USER - RESET MY POINTS (Optional)
+    USER - RESET MY POINTS
 =========================================================*/
 
 exports.resetMyPoints = async (req, res) => {

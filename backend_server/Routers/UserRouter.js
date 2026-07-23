@@ -28,10 +28,7 @@ router.delete("/:user_id", authenticateAdmin, UserController.deleteUser);
 
 router.get("/profile", authenticateUser, UserController.getUserProfile);
 router.put("/profile", authenticateUser, UserController.updateUserProfile);
-
-// ✅ Đã sửa field name từ "avatar" → "user_avatar" để khớp với bảng users và middleware upload
 router.post("/avatar", authenticateUser, upload.single("user_avatar"), UserController.uploadAvatar);
-
 router.get("/booking-history", authenticateUser, UserController.getMyBookings);
 router.delete("/booking-history", authenticateUser, UserController.clearBookingHistory);
 router.post("/reset-points", authenticateUser, UserController.resetMyPoints);

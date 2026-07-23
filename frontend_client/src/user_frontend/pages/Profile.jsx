@@ -23,7 +23,7 @@ const Profile = () => {
     const fileInputRef = useRef(null);
 
     const [formData, setFormData] = useState({
-        full_name: '', email: '', phone: '', address: '', username: '', points: 0, avatar: ''
+        full_name: '', email: '', phone: '', address: '', username: '', points: 0, user_avatar: ''
     });
 
     const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
@@ -61,16 +61,16 @@ const Profile = () => {
                 address: user.address || '',
                 username: user.username || '',
                 points: user.points || 0,
-                avatar: user.avatar || ''
+                user_avatar: user.user_avatar || ''   // ✅ đổi thành user_avatar
             });
         }
     }, [user]);
 
-    // --- HÀM XỬ LÝ XÓA LỊCH SỬ ---
+    // --- HÀM XỬ LÝ XÓA LỊCH SỬ (DÙNG DELETE /booking-history) ---
     const handleClearHistory = async () => {
         setLoadingClear(true);
         try {
-            const res = await axios.post('https://api.quangdungcinema.id.vn/api/users/clear-history', {}, { withCredentials: true });
+            const res = await axios.delete('https://api.quangdungcinema.id.vn/api/users/booking-history', { withCredentials: true });
 
             if (res.data.success) {
                 setBookingHistory([]);
@@ -114,7 +114,7 @@ const Profile = () => {
         });
     };
 
-    // --- HÀM XỬ LÝ UPLOAD AVATAR ---
+    // --- HÀM XỬ LÝ UPLOAD AVATAR (field name: user_avatar) ---
     const openFileSelector = () => {
         if (fileInputRef.current) {
             fileInputRef.current.click();
@@ -155,7 +155,7 @@ const Profile = () => {
 
         setUploadingAvatar(true);
         const formDataUpload = new FormData();
-        formDataUpload.append('avatar', file);
+        formDataUpload.append('user_avatar', file);   // ✅ SỬA: đúng tên field
 
         try {
             const res = await axios.post(
@@ -168,7 +168,7 @@ const Profile = () => {
             );
 
             if (res.data.success) {
-                setFormData(prev => ({ ...prev, avatar: res.data.data.avatar }));
+                setFormData(prev => ({ ...prev, user_avatar: res.data.data.avatar }));
                 await checkAuth();
                 setModal({
                     show: true,
@@ -206,7 +206,8 @@ const Profile = () => {
         }
         setLoading(true);
         try {
-            await axios.put('https://api.quangdungcinema.id.vn/api/users/profile/update',
+            // ✅ SỬA: route đúng là /profile (không /profile/update)
+            await axios.put('https://api.quangdungcinema.id.vn/api/users/profile',
                 { ...formData, ...passwordData }, { withCredentials: true });
             setModal({ show: true, type: 'success', title: 'Thành công', message: 'Hồ sơ đã được cập nhật!', onConfirm: () => setModal({ ...modal, show: false }) });
             setIsEditing(false);
@@ -221,7 +222,7 @@ const Profile = () => {
 
     if (!user) return <div className="loader">Đang tải...</div>;
 
-    const avatarUrl = avatarPreview || (formData.avatar ? `https://api.quangdungcinema.id.vn/uploads/avatars/${formData.avatar}` : '');
+    const avatarUrl = avatarPreview || (formData.user_avatar ? `https://api.quangdungcinema.id.vn/uploads/avatars/${formData.user_avatar}` : '');
 
     return (
         <div className="galaxy-profile-wrapper">
@@ -236,7 +237,6 @@ const Profile = () => {
                                         src={avatarUrl}
                                         alt="avatar"
                                         className="avatar-img"
-                                      
                                     />
                                 ) : (
                                     <div className="avatar-main">{formData.full_name?.charAt(0).toUpperCase()}</div>
