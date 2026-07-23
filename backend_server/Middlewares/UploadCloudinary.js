@@ -1,4 +1,4 @@
-const cloudinary = require('../Config/Cloudinary');
+const cloudinary = require('../Config/cloudinary');
 const fs = require('fs');
 
 const uploadToCloudinary = async (file, folder = 'cinema_shop') => {
