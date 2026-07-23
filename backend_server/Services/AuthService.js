@@ -97,30 +97,24 @@ const validateLogin = (email, password) => {
 =========================================================*/
 
 const generateAndSetTokens = (user, res, rememberMe = false) => {
+    // Tạo payload đúng cho JWT
+    const payload = {
+        user_id: user.user_id,
+        role: user.role
+    };
 
-    const accessToken = Jwt.generateAccessToken(user);
+    const accessToken = Jwt.generateAccessToken(payload);
 
+    // Set cookie dựa trên role
     if (user.role === "admin") {
-
-        Cookie.setAdminAccessToken(
-            res,
-            accessToken,
-            rememberMe
-        );
-
+        Cookie.setAdminAccessToken(res, accessToken, rememberMe);
     } else {
-
-        Cookie.setUserAccessToken(
-            res,
-            accessToken,
-            rememberMe
-        );
-
+        Cookie.setUserAccessToken(res, accessToken, rememberMe);
     }
 
     return accessToken;
-
 };
+
 /*=========================================================
     PUBLIC METHODS
 =========================================================*/
@@ -168,7 +162,7 @@ exports.register = async (userData) => {
         user_agent: null
     });
 
-    // Gửi email xác thực sau khi đăng ký
+    // Gửi email xác thực
     try {
         const verifyToken = Jwt.generateEmailVerifyToken({
             user_id: userId,
@@ -212,10 +206,10 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
     }
 
-    // 5. Generate token và set cookie với rememberMe
-    generateAndSetTokens(user, res, rememberMe);
+    // 5. Generate token và set cookie
+    const accessToken = generateAndSetTokens(user, res, rememberMe);
 
-    // 6. Return user info (không trả token)
+    // 6. Return user info
     return {
         success: true,
         message: "Đăng nhập thành công",
@@ -253,21 +247,51 @@ exports.getMe = async (userId) => {
 };
 
 /*=========================================================
+    REFRESH TOKEN (MỚI)
+=========================================================*/
+
+exports.refreshToken = async (req, res) => {
+    // Lấy token từ cookie dựa trên role
+    let accessToken = Cookie.getAdminAccessToken(req) || Cookie.getUserAccessToken(req);
+
+    if (!accessToken) {
+        throw { statusCode: 401, message: "Không tìm thấy token" };
+    }
+
+    try {
+        const payload = Jwt.verifyAccessToken(accessToken);
+        // Tạo token mới
+        const newPayload = { user_id: payload.user_id, role: payload.role };
+        const newAccessToken = Jwt.generateAccessToken(newPayload);
+
+        // Set cookie mới theo role
+        if (payload.role === 'admin') {
+            Cookie.setAdminAccessToken(res, newAccessToken, false);
+        } else {
+            Cookie.setUserAccessToken(res, newAccessToken, false);
+        }
+
+        return {
+            success: true,
+            message: "Refresh token thành công",
+            user: { user_id: payload.user_id, role: payload.role }
+        };
+    } catch (error) {
+        throw { statusCode: 401, message: "Token không hợp lệ hoặc đã hết hạn" };
+    }
+};
+
+/*=========================================================
     LOGOUT
 =========================================================*/
 
 exports.logout = async (req, res) => {
-    // Lấy access token theo role
-    let accessToken = Cookie.getAdminAccessToken(req);
-    let role = 'admin';
-
-    if (!accessToken) {
-        accessToken = Cookie.getUserAccessToken(req);
-        role = 'user';
+    // Dựa vào req.user để biết role
+    if (!req.user) {
+        throw { statusCode: 401, message: "Chưa đăng nhập" };
     }
 
-    // Clear cookie theo role
-    if (role === 'admin') {
+    if (req.user.role === 'admin') {
         Cookie.clearAdminCookies(res);
     } else {
         Cookie.clearUserCookies(res);
@@ -285,6 +309,9 @@ exports.logout = async (req, res) => {
 
 exports.logoutAllDevices = async (userId, res) => {
     Cookie.clearAllCookies(res);
+
+    // Có thể thêm logic xóa tất cả refresh token trong DB nếu cần
+    // await RefreshTokenRepository.deleteAllByUserId(userId);
 
     return {
         success: true,

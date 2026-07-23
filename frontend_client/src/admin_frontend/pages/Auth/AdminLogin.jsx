@@ -90,22 +90,22 @@ const AdminLogin = () => {
         setLoading(true);
 
         try {
-            // ✅ Gọi API login với cookie (withCredentials: true)
+            // ✅ Gọi API login ADMIN (khác với user)
             const response = await axios.post(
-                `${API_URL}/api/auth/login`,
+                `${API_URL}/admin/api/auth/login`, // 👈 ĐÚNG ENDPOINT
                 {
                     email: email,
                     password: password
                 },
                 {
-                    withCredentials: true,
+                    withCredentials: true, // 👈 Gửi cookie (admin_token sẽ được set)
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 }
             );
 
-            // ✅ Kiểm tra role admin
+            // ✅ Kiểm tra role admin (dự phòng, backend đã check)
             if (response.data?.user?.role !== 'admin') {
                 setModalConfig({
                     show: true,
@@ -131,7 +131,7 @@ const AdminLogin = () => {
                 message: 'Chào mừng quản trị viên hệ thống.',
                 onConfirm: () => {
                     setModalConfig(prev => ({ ...prev, show: false }));
-                    navigate('/', { replace: true });
+                    navigate('/admin/dashboard', { replace: true }); // 👈 Redirect đến admin dashboard
                 }
             });
 
