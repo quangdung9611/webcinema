@@ -248,67 +248,70 @@ class UserRepository {
     /*=========================================================
         CREATE USER (user_avatar mặc định NULL)
     =========================================================*/
-    async create(user) {
-        const [result] = await db.query(
-            `
-            INSERT INTO users
-            (
-                username,
-                full_name,
-                phone,
-                address,
-                email,
-                password,
-                role,
-                status,
-                email_verified,
-                points
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `,
-            [
-                user.username,
-                user.full_name,
-                user.phone,
-                user.address || "",
-                user.email,
-                user.password,
-                user.role || "customer",
-                user.status || "active",
-                user.email_verified || 0,
-                user.points || 0
-            ]
-        );
-        return result.insertId;
-    }
+   async create(user) {
+    const [result] = await db.query(
+        `
+        INSERT INTO users
+        (
+            username,
+            full_name,
+            phone,
+            address,
+            email,
+            password,
+            user_avatar,
+            role,
+            status,
+            email_verified,
+            points
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+            user.username,
+            user.full_name,
+            user.phone,
+            user.address || "",
+            user.email,
+            user.password,
+            user.user_avatar || null,
+            user.role || "customer",
+            user.status || "active",
+            user.email_verified || 0,
+            user.points || 0
+        ]
+    );
+
+    return result.insertId;
+}
 
     /*=========================================================
         UPDATE PROFILE (bao gồm user_avatar)
     =========================================================*/
     async updateProfile(userId, data) {
         const [result] = await db.query(
-            `
-            UPDATE users
-            SET
-                username = ?,
-                full_name = ?,
-                phone = ?,
-                address = ?,
-                email = ?,
-                user_avatar = ?,
-                updated_at = NOW()
-            WHERE user_id = ?
-            `,
-            [
-                data.username,
-                data.full_name,
-                data.phone,
-                data.address,
-                data.email,
-                data.user_avatar || null,   // ✅ đổi tên
-                userId
-            ]
-        );
+    `
+    UPDATE users
+    SET
+        username = ?,
+        full_name = ?,
+        phone = ?,
+        address = ?,
+        email = ?,
+        user_avatar = COALESCE(?, user_avatar),
+        updated_at = NOW()
+    WHERE user_id = ?
+    `,
+    [
+        data.username,
+        data.full_name,
+        data.phone,
+        data.address,
+        data.email,
+        data.user_avatar,
+        userId
+    ]
+);
         return result.affectedRows;
     }
 

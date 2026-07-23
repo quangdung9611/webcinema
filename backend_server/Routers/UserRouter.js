@@ -70,12 +70,14 @@ router.get(
 router.post(
     "/",
     authenticateAdmin,
+    upload.single("user_avatar"),
     UserController.createUser
 );
 
 router.put(
     "/:user_id",
     authenticateAdmin,
+    upload.single("user_avatar"),
     UserController.updateUser
 );
 

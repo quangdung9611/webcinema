@@ -46,109 +46,131 @@ class UserService {
         return user;
     }
 
-    /*=========================================================
-        CREATE USER
-    =========================================================*/
-    async createUser(data) {
-        const { username, email, phone, password, full_name, address, role } = data;
+   async createUser(data, file) {
 
-        // Check exists
-        const existed = await UserRepository.exists(username, email, phone);
-        if (existed) {
-            if (existed.username === username) {
-                throw {
-                    statusCode: 400,
-                    field: "username",
-                    message: "Tên đăng nhập đã tồn tại"
-                };
-            }
-            if (existed.email === email) {
-                throw {
-                    statusCode: 400,
-                    field: "email",
-                    message: "Email đã tồn tại"
-                };
-            }
-            if (existed.phone === phone) {
-                throw {
-                    statusCode: 400,
-                    field: "phone",
-                    message: "Số điện thoại đã tồn tại"
-                };
-            }
-        }
+    const {
+        username,
+        email,
+        phone,
+        password,
+        full_name,
+        address,
+        role
+    } = data;
 
-        // Hash password
-        const hashedPassword = await Password.hash(password);
+    const existed = await UserRepository.exists(
+        username,
+        email,
+        phone
+    );
 
-        return await UserRepository.create({
-            username,
-            full_name,
-            phone,
-            address: address || "",
-            email,
-            password: hashedPassword,
-            role: role || "customer",
-            status: "active",
-            email_verified: 0,
-            points: 0
-        });
-    }
+    if (existed) {
 
-    /*=========================================================
-        UPDATE USER (Admin)
-    =========================================================*/
-    async updateUser(userId, data) {
-        const user = await UserRepository.findById(userId);
-        if (!user) {
+        if (existed.username === username) {
             throw {
-                statusCode: 404,
-                message: "Không tìm thấy người dùng"
+                statusCode: 400,
+                field: "username",
+                message: "Tên đăng nhập đã tồn tại"
             };
         }
 
-        // Check if updating email/phone/username is already taken
-        if (data.email && data.email !== user.email) {
-            const exists = await UserRepository.existsByEmail(data.email);
-            if (exists) {
-                throw {
-                    statusCode: 400,
-                    field: "email",
-                    message: "Email đã tồn tại"
-                };
-            }
+        if (existed.email === email) {
+            throw {
+                statusCode: 400,
+                field: "email",
+                message: "Email đã tồn tại"
+            };
         }
 
-        if (data.phone && data.phone !== user.phone) {
-            const exists = await UserRepository.existsByPhone(data.phone);
-            if (exists) {
-                throw {
-                    statusCode: 400,
-                    field: "phone",
-                    message: "Số điện thoại đã tồn tại"
-                };
-            }
+        if (existed.phone === phone) {
+            throw {
+                statusCode: 400,
+                field: "phone",
+                message: "Số điện thoại đã tồn tại"
+            };
         }
-
-        if (data.username && data.username !== user.username) {
-            const exists = await UserRepository.existsByUsername(data.username);
-            if (exists) {
-                throw {
-                    statusCode: 400,
-                    field: "username",
-                    message: "Tên đăng nhập đã tồn tại"
-                };
-            }
-        }
-
-        // Remove password from update data
-        delete data.password;
-        delete data.newPassword;
-        delete data.oldPassword;
-
-        return await UserRepository.updateProfile(userId, data);
     }
 
+    const hashedPassword =
+        await Password.hash(password);
+
+    const avatarFileName =
+        file
+            ? file.filename
+            : null;
+
+   return await UserRepository.create({
+    username,
+    full_name,
+    phone,
+    address: address || "",
+    email,
+    password: hashedPassword,
+    user_avatar: file ? file.filename : null,
+    role: role || "customer",
+    status: "active",
+    email_verified: 0,
+    points: 0
+});
+}
+   async updateUser(userId, data, file) {
+    const user = await UserRepository.findById(userId);
+
+    if (!user) {
+        throw {
+            statusCode: 404,
+            message: "Không tìm thấy người dùng"
+        };
+    }
+
+    // Check email
+    if (data.email && data.email !== user.email) {
+        const exists = await UserRepository.existsByEmail(data.email);
+        if (exists) {
+            throw {
+                statusCode: 400,
+                field: "email",
+                message: "Email đã tồn tại"
+            };
+        }
+    }
+
+    // Check phone
+    if (data.phone && data.phone !== user.phone) {
+        const exists = await UserRepository.existsByPhone(data.phone);
+        if (exists) {
+            throw {
+                statusCode: 400,
+                field: "phone",
+                message: "Số điện thoại đã tồn tại"
+            };
+        }
+    }
+
+    // Check username
+    if (data.username && data.username !== user.username) {
+        const exists = await UserRepository.existsByUsername(data.username);
+        if (exists) {
+            throw {
+                statusCode: 400,
+                field: "username",
+                message: "Tên đăng nhập đã tồn tại"
+            };
+        }
+    }
+
+    // Avatar mới
+    if (file) {
+        data.user_avatar = file.filename;
+    }
+
+    // Không cho sửa password ở API này
+    delete data.password;
+    delete data.newPassword;
+    delete data.oldPassword;
+
+    return await UserRepository.updateProfile(userId, data);
+}
     /*=========================================================
         UPDATE USER STATUS
     =========================================================*/

@@ -51,14 +51,24 @@ exports.getUserById = async (req, res) => {
 
 exports.createUser = async (req, res) => {
     try {
-        const userId = await UserService.createUser(req.body);
+
+        const userId = await UserService.createUser(
+            req.body,
+            req.file
+        );
+
         return res.status(201).json({
             success: true,
             message: "Tạo user thành công",
-            data: { user_id: userId }
+            data: {
+                user_id: userId
+            }
         });
+
     } catch (err) {
+
         console.error("Create User Error:", err);
+
         return res.status(err.statusCode || 500).json({
             success: false,
             field: err.field || null,
@@ -73,14 +83,24 @@ exports.createUser = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
     try {
+
         const { user_id } = req.params;
-        await UserService.updateUser(user_id, req.body);
+
+        await UserService.updateUser(
+            user_id,
+            req.body,
+            req.file
+        );
+
         return res.status(200).json({
             success: true,
             message: "Cập nhật user thành công"
         });
+
     } catch (err) {
+
         console.error("Update User Error:", err);
+
         return res.status(err.statusCode || 500).json({
             success: false,
             field: err.field || null,
@@ -88,7 +108,6 @@ exports.updateUser = async (req, res) => {
         });
     }
 };
-
 /*=========================================================
     ADMIN - UPDATE USER STATUS
 =========================================================*/
