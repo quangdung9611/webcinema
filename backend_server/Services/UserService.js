@@ -4,6 +4,7 @@
 
 const Password = require("../utils/Password");
 const UserRepository = require("../Repositories/UserRepository");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../Middlewares/UploadCloudinary");
 
 /*=========================================================
     USER SERVICE
@@ -46,131 +47,119 @@ class UserService {
         return user;
     }
 
-   async createUser(data, file) {
+    /*=========================================================
+        CREATE USER (có upload avatar lên Cloudinary)
+    =========================================================*/
+    async createUser(data, file) {
+        const {
+            username,
+            email,
+            phone,
+            password,
+            full_name,
+            address,
+            role
+        } = data;
 
-    const {
-        username,
-        email,
-        phone,
-        password,
-        full_name,
-        address,
-        role
-    } = data;
-
-    const existed = await UserRepository.exists(
-        username,
-        email,
-        phone
-    );
-
-    if (existed) {
-
-        if (existed.username === username) {
-            throw {
-                statusCode: 400,
-                field: "username",
-                message: "Tên đăng nhập đã tồn tại"
-            };
+        // Check exists
+        const existed = await UserRepository.exists(username, email, phone);
+        if (existed) {
+            if (existed.username === username) {
+                throw { statusCode: 400, field: "username", message: "Tên đăng nhập đã tồn tại" };
+            }
+            if (existed.email === email) {
+                throw { statusCode: 400, field: "email", message: "Email đã tồn tại" };
+            }
+            if (existed.phone === phone) {
+                throw { statusCode: 400, field: "phone", message: "Số điện thoại đã tồn tại" };
+            }
         }
 
-        if (existed.email === email) {
-            throw {
-                statusCode: 400,
-                field: "email",
-                message: "Email đã tồn tại"
-            };
+        // Hash password
+        const hashedPassword = await Password.hash(password);
+
+        // Upload avatar lên Cloudinary nếu có file
+        let avatarUrl = null;
+        if (file) {
+            const result = await uploadToCloudinary(file, 'cinema_shop/avatars');
+            avatarUrl = result.url;
         }
 
-        if (existed.phone === phone) {
-            throw {
-                statusCode: 400,
-                field: "phone",
-                message: "Số điện thoại đã tồn tại"
-            };
+        return await UserRepository.create({
+            username,
+            full_name,
+            phone,
+            address: address || "",
+            email,
+            password: hashedPassword,
+            user_avatar: avatarUrl, // Lưu URL Cloudinary
+            role: role || "customer",
+            status: "active",
+            email_verified: 0,
+            points: 0
+        });
+    }
+
+    /*=========================================================
+        UPDATE USER (Admin) - có upload avatar
+    =========================================================*/
+    async updateUser(userId, data, file) {
+        const user = await UserRepository.findById(userId);
+        if (!user) {
+            throw { statusCode: 404, message: "Không tìm thấy người dùng" };
         }
-    }
 
-    const hashedPassword =
-        await Password.hash(password);
-
-    const avatarFileName =
-        file
-            ? file.filename
-            : null;
-
-   return await UserRepository.create({
-    username,
-    full_name,
-    phone,
-    address: address || "",
-    email,
-    password: hashedPassword,
-    user_avatar: file ? file.filename : null,
-    role: role || "customer",
-    status: "active",
-    email_verified: 0,
-    points: 0
-});
-}
-   async updateUser(userId, data, file) {
-    const user = await UserRepository.findById(userId);
-
-    if (!user) {
-        throw {
-            statusCode: 404,
-            message: "Không tìm thấy người dùng"
-        };
-    }
-
-    // Check email
-    if (data.email && data.email !== user.email) {
-        const exists = await UserRepository.existsByEmail(data.email);
-        if (exists) {
-            throw {
-                statusCode: 400,
-                field: "email",
-                message: "Email đã tồn tại"
-            };
+        // Check email
+        if (data.email && data.email !== user.email) {
+            const exists = await UserRepository.existsByEmail(data.email);
+            if (exists) {
+                throw { statusCode: 400, field: "email", message: "Email đã tồn tại" };
+            }
         }
-    }
 
-    // Check phone
-    if (data.phone && data.phone !== user.phone) {
-        const exists = await UserRepository.existsByPhone(data.phone);
-        if (exists) {
-            throw {
-                statusCode: 400,
-                field: "phone",
-                message: "Số điện thoại đã tồn tại"
-            };
+        // Check phone
+        if (data.phone && data.phone !== user.phone) {
+            const exists = await UserRepository.existsByPhone(data.phone);
+            if (exists) {
+                throw { statusCode: 400, field: "phone", message: "Số điện thoại đã tồn tại" };
+            }
         }
-    }
 
-    // Check username
-    if (data.username && data.username !== user.username) {
-        const exists = await UserRepository.existsByUsername(data.username);
-        if (exists) {
-            throw {
-                statusCode: 400,
-                field: "username",
-                message: "Tên đăng nhập đã tồn tại"
-            };
+        // Check username
+        if (data.username && data.username !== user.username) {
+            const exists = await UserRepository.existsByUsername(data.username);
+            if (exists) {
+                throw { statusCode: 400, field: "username", message: "Tên đăng nhập đã tồn tại" };
+            }
         }
+
+        // Xử lý avatar mới
+        let avatarUrl = user.user_avatar;
+        if (file) {
+            // Xóa ảnh cũ trên Cloudinary (nếu có)
+            if (user.user_avatar) {
+                // Lấy public_id từ URL Cloudinary
+                const urlParts = user.user_avatar.split('/');
+                const publicId = urlParts.slice(7).join('/').split('.')[0];
+                await deleteFromCloudinary(publicId);
+            }
+            // Upload ảnh mới
+            const result = await uploadToCloudinary(file, 'cinema_shop/avatars');
+            avatarUrl = result.url;
+        }
+
+        // Không cho sửa password ở API này
+        delete data.password;
+        delete data.newPassword;
+        delete data.oldPassword;
+
+        // Cập nhật profile với avatar mới
+        return await UserRepository.updateProfile(userId, {
+            ...data,
+            user_avatar: avatarUrl
+        });
     }
 
-    // Avatar mới
-    if (file) {
-        data.user_avatar = file.filename;
-    }
-
-    // Không cho sửa password ở API này
-    delete data.password;
-    delete data.newPassword;
-    delete data.oldPassword;
-
-    return await UserRepository.updateProfile(userId, data);
-}
     /*=========================================================
         UPDATE USER STATUS
     =========================================================*/
@@ -182,7 +171,6 @@ class UserService {
                 message: "Không tìm thấy người dùng"
             };
         }
-
         return await UserRepository.updateStatus(userId, status);
     }
 
@@ -197,7 +185,6 @@ class UserService {
                 message: "Không tìm thấy người dùng"
             };
         }
-
         if (!["admin", "customer"].includes(role)) {
             throw {
                 statusCode: 400,
@@ -205,7 +192,6 @@ class UserService {
                 message: "Role phải là 'admin' hoặc 'customer'"
             };
         }
-
         return await UserRepository.updateRole(userId, role);
     }
 
@@ -220,7 +206,12 @@ class UserService {
                 message: "Không tìm thấy người dùng"
             };
         }
-
+        // Nên xóa cả ảnh trên Cloudinary trước khi xóa user
+        if (user.user_avatar) {
+            const urlParts = user.user_avatar.split('/');
+            const publicId = urlParts.slice(7).join('/').split('.')[0];
+            await deleteFromCloudinary(publicId);
+        }
         return await UserRepository.delete(userId);
     }
 
@@ -311,10 +302,9 @@ class UserService {
     }
 
     /*=========================================================
-        UPDATE AVATAR
+        UPDATE AVATAR (User tự upload)
     =========================================================*/
     async updateAvatar(userId, file) {
-        // Kiểm tra user tồn tại
         const user = await UserRepository.findById(userId);
         if (!user) {
             throw {
@@ -323,11 +313,19 @@ class UserService {
             };
         }
 
-        // file.filename là tên file đã được multer đặt
-        const avatarFileName = file.filename;
+        // Xóa ảnh cũ trên Cloudinary (nếu có)
+        if (user.user_avatar) {
+            const urlParts = user.user_avatar.split('/');
+            const publicId = urlParts.slice(7).join('/').split('.')[0];
+            await deleteFromCloudinary(publicId);
+        }
+
+        // Upload ảnh mới lên Cloudinary
+        const result = await uploadToCloudinary(file, 'cinema_shop/avatars');
+        const avatarUrl = result.url;
 
         // Cập nhật vào database
-        const affectedRows = await UserRepository.updateAvatar(userId, avatarFileName);
+        const affectedRows = await UserRepository.updateAvatar(userId, avatarUrl);
 
         if (affectedRows === 0) {
             throw {
@@ -336,15 +334,14 @@ class UserService {
             };
         }
 
-        // Trả về tên file để frontend ghép URL
-        return avatarFileName;
+        // Trả về URL Cloudinary
+        return avatarUrl;
     }
 
     /*=========================================================
         GET USER BOOKINGS (ĐÃ SỬA)
     =========================================================*/
     async getUserBookings(userId) {
-        // Tạm thời trả về mảng rỗng cho đến khi có BookingService
         // TODO: Thay bằng truy vấn thực tế từ database khi có BookingService
         return [];
     }
@@ -353,7 +350,6 @@ class UserService {
         CLEAR BOOKING HISTORY (ĐÃ SỬA)
     =========================================================*/
     async clearHistory(userId) {
-        // Tạm thời luôn trả về true
         // TODO: Thêm logic xóa booking khi có BookingService
         return true;
     }
@@ -369,7 +365,6 @@ class UserService {
                 message: "Không tìm thấy người dùng"
             };
         }
-
         return await UserRepository.resetPoints(userId);
     }
 }

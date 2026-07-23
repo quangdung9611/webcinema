@@ -33,7 +33,7 @@ const UserPage = () => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
-    const [userAvatarFile, setUserAvatarFile] = useState(null); // ✅ đúng tên cột
+    const [userAvatarFile, setUserAvatarFile] = useState(null);
     const [formErrors, setFormErrors] = useState({});
 
     // =============================================
@@ -176,7 +176,6 @@ const UserPage = () => {
     const handleChange = (e) => {
         const { name, value, files } = e.target;
 
-        // Xử lý file user_avatar (giống MoviePage)
         if (name === 'user_avatar') {
             setUserAvatarFile(files[0]);
             return;
@@ -205,7 +204,7 @@ const UserPage = () => {
             });
 
             if (userAvatarFile) {
-                submitData.append('user_avatar', userAvatarFile); // ✅ đúng tên cột
+                submitData.append('user_avatar', userAvatarFile);
             }
 
             if (editingUser) {
@@ -287,10 +286,18 @@ const UserPage = () => {
         {
             title: 'Avatar',
             key: 'user_avatar',
-            render: (row) => (
-                row.user_avatar ? (
+            render: (row) => {
+                if (!row.user_avatar) {
+                    return <span style={{ color: '#888' }}>—</span>;
+                }
+                // ✅ Nếu là URL Cloudinary (https://...) thì dùng trực tiếp
+                const avatarSrc = row.user_avatar.startsWith('http')
+                    ? row.user_avatar
+                    : `https://api.quangdungcinema.id.vn/uploads/avatars/${row.user_avatar}`;
+
+                return (
                     <img
-                        src={`https://api.quangdungcinema.id.vn/uploads/avatars/${row.user_avatar}`}
+                        src={avatarSrc}
                         alt="avatar"
                         style={{
                             width: '40px',
@@ -299,10 +306,8 @@ const UserPage = () => {
                             objectFit: 'cover'
                         }}
                     />
-                ) : (
-                    <span style={{ color: '#888' }}>—</span>
-                )
-            )
+                );
+            }
         },
         { title: 'Username', key: 'username' },
         { title: 'Họ tên', key: 'full_name' },
@@ -335,7 +340,7 @@ const UserPage = () => {
     ];
 
     // =============================================
-    // FORM FIELDS (đúng tên user_avatar)
+    // FORM FIELDS
     // =============================================
 
     const formFields = [
@@ -359,7 +364,7 @@ const UserPage = () => {
             ]
         },
         { label: 'Địa chỉ', name: 'address', type: 'textarea', placeholder: 'Nhập địa chỉ' },
-        { label: 'Avatar', name: 'user_avatar', type: 'file' } // ✅ đúng tên cột
+        { label: 'Avatar', name: 'user_avatar', type: 'file' }
     ];
 
     // =============================================
