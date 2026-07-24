@@ -65,7 +65,9 @@ class ActorService {
     return actor;
   }
 
-  // ✅ TẠO DIỄN VIÊN (nhận slug từ frontend)
+  // ==========================================================
+  // CREATE ACTOR (NHẬN SLUG TỪ FRONTEND)
+  // ==========================================================
   async createActor(data, file) {
     const { name, gender, nationality, biography, birthday, slug: providedSlug } = data;
 
@@ -76,7 +78,7 @@ class ActorService {
       throw err;
     }
 
-    // ✅ Ưu tiên dùng slug từ frontend, nếu không có mới tự tạo
+    // ✅ Ưu tiên dùng slug từ frontend, nếu không có hoặc rỗng thì tự tạo
     const slug = providedSlug && providedSlug.trim() ? providedSlug.trim() : createSlug(name);
 
     const dup = await ActorRepository.findByNameOrSlug(name.trim(), slug);
@@ -103,7 +105,9 @@ class ActorService {
     });
   }
 
-  // ✅ CẬP NHẬT DIỄN VIÊN (nhận slug từ frontend)
+  // ==========================================================
+  // UPDATE ACTOR (NHẬN SLUG TỪ FRONTEND)
+  // ==========================================================
   async updateActor(actorId, data, file) {
     const existing = await ActorRepository.findById(actorId);
     if (!existing) {
@@ -120,9 +124,10 @@ class ActorService {
       throw err;
     }
 
-    // ✅ Ưu tiên dùng slug từ frontend, nếu không có mới tự tạo
+    // ✅ Ưu tiên dùng slug từ frontend, nếu không có hoặc rỗng thì tự tạo
     const slug = providedSlug && providedSlug.trim() ? providedSlug.trim() : createSlug(name);
 
+    // Kiểm tra trùng lặp (loại trừ chính nó)
     const dup = await ActorRepository.findByNameOrSlug(name.trim(), slug, actorId);
     if (dup) {
       const err = new Error("Tên hoặc slug đã trùng với diễn viên khác");
