@@ -1,78 +1,174 @@
 const BlogCinemaService = require("../Services/BlogCinemaService");
 
+/* ==========================================================
+   GET ALL BLOGS (PUBLIC)
+========================================================== */
 exports.getAllBlogs = async (req, res) => {
-  try {
-    const data = await BlogCinemaService.getAllBlogs(true);
-    res.status(200).json(data);
-  } catch (err) {
-    res.status(err.statusCode || 500).json({ success: false, message: err.message });
-  }
+    try {
+        const blogs = await BlogCinemaService.getAllBlogs(true);
+
+        return res.status(200).json(blogs);
+    } catch (err) {
+        console.error("getAllBlogs error:", err);
+
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
 };
 
+/* ==========================================================
+   GET ALL BLOGS (ADMIN)
+========================================================== */
 exports.getAllBlogsAdmin = async (req, res) => {
-  try {
-    const data = await BlogCinemaService.getAllBlogs(false);
-    res.status(200).json(data);
-  } catch (err) {
-    res.status(err.statusCode || 500).json({ success: false, message: err.message });
-  }
+    try {
+        const blogs = await BlogCinemaService.getAllBlogs(false);
+
+        return res.status(200).json(blogs);
+    } catch (err) {
+        console.error("getAllBlogsAdmin error:", err);
+
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
 };
 
+/* ==========================================================
+   GET BLOG BY ID (ADMIN)
+========================================================== */
 exports.getBlogById = async (req, res) => {
-  try {
-    const { blog_id } = req.params; // ✅ sửa
-    const data = await BlogCinemaService.getBlogById(blog_id);
-    res.status(200).json(data);
-  } catch (err) {
-    res.status(err.statusCode || 500).json({ success: false, message: err.message });
-  }
+    try {
+        const { blog_id } = req.params;
+
+        const blog = await BlogCinemaService.getBlogById(blog_id);
+
+        return res.status(200).json(blog);
+    } catch (err) {
+        console.error("getBlogById error:", err);
+
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
 };
 
+/* ==========================================================
+   GET BLOG BY SLUG (PUBLIC)
+========================================================== */
 exports.getBlogBySlug = async (req, res) => {
-  try {
-    const { slug } = req.params;
-    const data = await BlogCinemaService.getBlogBySlug(slug);
-    res.status(200).json(data);
-  } catch (err) {
-    res.status(err.statusCode || 500).json({ success: false, message: err.message });
-  }
+    try {
+        const { slug } = req.params;
+
+        const blog = await BlogCinemaService.getBlogBySlug(slug);
+
+        return res.status(200).json(blog);
+    } catch (err) {
+        console.error("getBlogBySlug error:", err);
+
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
 };
 
-exports.increaseLike = async (req, res) => {
-  try {
-    const { blog_id } = req.params; // ✅ sửa
-    await BlogCinemaService.likeBlog(blog_id);
-    res.status(200).json({ success: true, message: "Like +1 thành công" });
-  } catch (err) {
-    res.status(err.statusCode || 500).json({ success: false, message: err.message });
-  }
-};
-
+/* ==========================================================
+   CREATE BLOG (ADMIN)
+========================================================== */
 exports.createBlog = async (req, res) => {
-  try {
-    const blogId = await BlogCinemaService.createBlog(req.body, req.file);
-    res.status(201).json({ success: true, message: "Tạo blog thành công!", data: { blog_id: blogId } });
-  } catch (err) {
-    res.status(err.statusCode || 400).json({ success: false, message: err.message });
-  }
+    try {
+        const blogId = await BlogCinemaService.createBlog(req.body, req.file);
+
+        return res.status(201).json({
+            success: true,
+            message: "Thêm blog thành công!",
+            data: {
+                blog_id: blogId
+            }
+        });
+    } catch (err) {
+        console.error("createBlog error:", err);
+
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
 };
 
+/* ==========================================================
+   UPDATE BLOG (ADMIN)
+========================================================== */
 exports.updateBlog = async (req, res) => {
-  try {
-    const { blog_id } = req.params; // ✅ sửa
-    await BlogCinemaService.updateBlog(blog_id, req.body, req.file);
-    res.status(200).json({ success: true, message: "Cập nhật blog thành công!" });
-  } catch (err) {
-    res.status(err.statusCode || 400).json({ success: false, message: err.message });
-  }
+    try {
+        const { blog_id } = req.params;
+
+        await BlogCinemaService.updateBlog(
+            blog_id,
+            req.body,
+            req.file
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Cập nhật blog thành công!"
+        });
+    } catch (err) {
+        console.error("updateBlog error:", err);
+
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
 };
 
+/* ==========================================================
+   DELETE BLOG (ADMIN)
+========================================================== */
 exports.deleteBlog = async (req, res) => {
-  try {
-    const { blog_id } = req.params; // ✅ sửa
-    await BlogCinemaService.deleteBlog(blog_id);
-    res.status(200).json({ success: true, message: "Đã xóa blog thành công." });
-  } catch (err) {
-    res.status(err.statusCode || 500).json({ success: false, message: err.message });
-  }
+    try {
+        const { blog_id } = req.params;
+
+        await BlogCinemaService.deleteBlog(blog_id);
+
+        return res.status(200).json({
+            success: true,
+            message: "Đã xóa blog thành công."
+        });
+    } catch (err) {
+        console.error("deleteBlog error:", err);
+
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/* ==========================================================
+   LIKE BLOG
+========================================================== */
+exports.likeBlog = async (req, res) => {
+    try {
+        const { blog_id } = req.params;
+
+        await BlogCinemaService.likeBlog(blog_id);
+
+        return res.status(200).json({
+            success: true,
+            message: "Đã tăng lượt thích!"
+        });
+    } catch (err) {
+        console.error("likeBlog error:", err);
+
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
 };

@@ -8,17 +8,33 @@ const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
 // PUBLIC ROUTES (không cần auth)
 // ==========================================================
 
+// Lấy danh sách blog (ai cũng xem)
 router.get('/', BlogCinemaController.getAllBlogsAdmin);
-router.get('/:slug', BlogCinemaController.getBlogBySlug);
-router.post('/like/:blog_id', BlogCinemaController.increaseLike); // ✅ sửa
+
+// Tăng lượt thích
+router.post('/like/:blog_id', BlogCinemaController.increaseLike);
 
 // ==========================================================
 // ADMIN ROUTES (cần auth)
 // ==========================================================
 
-router.get('/admin/:blog_id', authenticateAdmin, BlogCinemaController.getBlogById); // ✅ sửa
+// Lấy chi tiết blog theo ID (admin) - đặt trước /:slug
+router.get('/:blog_id', authenticateAdmin, BlogCinemaController.getBlogById);
+
+// Tạo blog mới
 router.post('/', authenticateAdmin, upload.single('blog_image'), BlogCinemaController.createBlog);
-router.put('/:blog_id', authenticateAdmin, upload.single('blog_image'), BlogCinemaController.updateBlog); // ✅ sửa
-router.delete('/:blog_id', authenticateAdmin, BlogCinemaController.deleteBlog); // ✅ sửa
+
+// Cập nhật blog
+router.put('/:blog_id', authenticateAdmin, upload.single('blog_image'), BlogCinemaController.updateBlog);
+
+// Xóa blog
+router.delete('/:blog_id', authenticateAdmin, BlogCinemaController.deleteBlog);
+
+// ==========================================================
+// PUBLIC DETAIL (phải đặt CUỐI CÙNG)
+// ==========================================================
+
+// Lấy chi tiết blog theo slug (khách hàng xem)
+router.get('/:slug', BlogCinemaController.getBlogBySlug);
 
 module.exports = router;

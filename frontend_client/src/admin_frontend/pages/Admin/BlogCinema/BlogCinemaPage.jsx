@@ -100,7 +100,7 @@ const BlogCinemaPage = () => {
     const fetchBlogs = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL);
+            const res = await axios.get(API_URL); // GET /
             setBlogs(res.data);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách blog từ máy chủ.', 'error');
@@ -250,10 +250,11 @@ const BlogCinemaPage = () => {
             };
 
             if (editingBlog) {
-                // ✅ SỬA: bỏ /update/ để khớp với router mới
+                // ✅ PUT /:blog_id (khớp router)
                 await axios.put(`${API_URL}/${editingBlog.blog_id}`, submitData, config);
                 showAlert('Thành công', 'Cập nhật blog thành công.', 'success');
             } else {
+                // ✅ POST / (khớp router)
                 await axios.post(API_URL, submitData, config);
                 showAlert('Thành công', 'Tạo blog mới thành công.', 'success');
             }
@@ -287,6 +288,7 @@ const BlogCinemaPage = () => {
                             ...(token && { Authorization: `Bearer ${token}` })
                         }
                     };
+                    // ✅ DELETE /:blog_id (khớp router)
                     await axios.delete(`${API_URL}/${item.blog_id}`, config);
                     closeAlert();
                     fetchBlogs();
