@@ -6,17 +6,17 @@ const upload = require("../Middlewares/MulterMiddleware");
 const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
 /* ==========================================================
-   PUBLIC ROUTES
+   PUBLIC ROUTES (Không cần auth)
 ========================================================== */
 
 // Lấy tất cả diễn viên
 router.get("/", ActorController.getAllActors);
 
-// Lấy chi tiết diễn viên theo Slug (phải đặt sau các route tĩnh)
+// Lấy chi tiết diễn viên theo Slug (đặt cuối)
 router.get("/:slug", ActorController.getActorBySlug);
 
 /* ==========================================================
-   ADMIN ROUTES
+   ADMIN ROUTES (Chỉ admin mới được thêm/sửa/xóa)
 ========================================================== */
 
 // Lấy thông tin diễn viên theo ID (để edit)
