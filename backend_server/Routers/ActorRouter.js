@@ -6,39 +6,29 @@ const upload = require("../Middlewares/MulterMiddleware");
 const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
 /* ==========================================================
-   PUBLIC ROUTES (Không cần auth)
+   PUBLIC ROUTES (không cần auth)
 ========================================================== */
 
-// Lấy tất cả diễn viên
+// Lấy danh sách tất cả diễn viên
 router.get("/", ActorController.getAllActors);
 
-// Lấy chi tiết diễn viên theo Slug (đặt cuối)
+// Lấy chi tiết diễn viên theo Slug (phải đặt cuối cùng)
 router.get("/:slug", ActorController.getActorBySlug);
 
 /* ==========================================================
-   ADMIN ROUTES (Chỉ admin mới được thêm/sửa/xóa)
+   ADMIN ROUTES (cần auth) - GIỐNG USER
 ========================================================== */
 
-// Lấy thông tin diễn viên theo ID (để edit)
-router.get("/admin/:id", authenticateAdmin, ActorController.getActorById);
+// Lấy chi tiết diễn viên theo ID (admin)
+router.get("/:id", authenticateAdmin, ActorController.getActorById);
 
-// Thêm diễn viên mới - field: actor_avatar
-router.post(
-  "/admin",
-  authenticateAdmin,
-  upload.single("actor_avatar"),
-  ActorController.addActor
-);
+// Thêm diễn viên mới
+router.post("/", authenticateAdmin, upload.single("actor_avatar"), ActorController.addActor);
 
-// Cập nhật diễn viên - field: actor_avatar
-router.put(
-  "/admin/:id",
-  authenticateAdmin,
-  upload.single("actor_avatar"),
-  ActorController.updateActor
-);
+// Cập nhật diễn viên
+router.put("/:id", authenticateAdmin, upload.single("actor_avatar"), ActorController.updateActor);
 
 // Xóa diễn viên
-router.delete("/admin/:id", authenticateAdmin, ActorController.deleteActor);
+router.delete("/:id", authenticateAdmin, ActorController.deleteActor);
 
 module.exports = router;

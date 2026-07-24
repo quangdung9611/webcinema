@@ -18,9 +18,7 @@ import AdminForm from '../../../components/AdminForm';
 
 const API_URL = 'https://api.quangdungcinema.id.vn/api/actors';
 
-// =============================================
-// HELPER: LẤY URL ẢNH (HỖ TRỢ CLOUDINARY + LOCAL)
-// =============================================
+// Hàm lấy URL ảnh
 const getImageUrl = (image) => {
     if (!image) return '';
     if (image.startsWith('http://') || image.startsWith('https://')) {
@@ -34,7 +32,6 @@ const DEFAULT_AVATAR =
 
 const initialFormData = {
     name: '',
-    slug: '',
     gender: 'Nam',
     nationality: 'Việt Nam',
     birthday: '',
@@ -42,11 +39,6 @@ const initialFormData = {
 };
 
 const ActorPage = () => {
-
-    /* =====================================================
-        STATES
-    ===================================================== */
-
     const [actors, setActors] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -55,13 +47,9 @@ const ActorPage = () => {
     const [editingActor, setEditingActor] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
     const [actorAvatarFile, setActorAvatarFile] = useState(null);
-    const [preview, setPreview] = useState(null);
-    const [errorText, setErrorText] = useState('');
+    const [formErrors, setFormErrors] = useState({});
 
-    /* =====================================================
-        ALERT MODAL
-    ===================================================== */
-
+    // Alert Modal
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -74,15 +62,11 @@ const ActorPage = () => {
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
-
     const closeAlert = () => {
         setAlertModal(prev => ({ ...prev, open: false }));
     };
 
-    /* =====================================================
-        FETCH ACTORS
-    ===================================================== */
-
+    // Fetch actors
     const fetchActors = async () => {
         setLoading(true);
         try {
@@ -99,10 +83,7 @@ const ActorPage = () => {
         fetchActors();
     }, []);
 
-    /* =====================================================
-        GENERATE SLUG
-    ===================================================== */
-
+    // Tạo slug tự động từ name
     const generateSlug = (str) => {
         if (!str) return '';
         return str
@@ -116,132 +97,128 @@ const ActorPage = () => {
             .trim();
     };
 
-    /* =====================================================
-        OPEN ADD
-    ===================================================== */
-
     const handleOpenAdd = () => {
         setEditingActor(null);
         setFormData(initialFormData);
         setActorAvatarFile(null);
-        setPreview(null);
-        setErrorText('');
+        setFormErrors({});
         setIsFormOpen(true);
     };
-
-    /* =====================================================
-        OPEN EDIT
-    ===================================================== */
 
     const handleOpenEdit = (actor) => {
         setEditingActor(actor);
         setFormData({
             name: actor.name || '',
-            slug: actor.slug || '',
             gender: actor.gender || 'Nam',
             nationality: actor.nationality || 'Việt Nam',
             birthday: actor.birthday ? actor.birthday.substring(0, 10) : '',
             biography: actor.biography || ''
         });
-
-        setPreview(
-            actor.actor_avatar ? getImageUrl(actor.actor_avatar) : DEFAULT_AVATAR
-        );
-
         setActorAvatarFile(null);
-        setErrorText('');
+        setFormErrors({});
         setIsFormOpen(true);
     };
-
-    /* =====================================================
-        HANDLE CHANGE
-    ===================================================== */
 
     const handleChange = (e) => {
         const { name, value, files } = e.target;
 
-        if (errorText) setErrorText('');
-
         if (name === 'actor_avatar') {
-            const file = files[0];
-            setActorAvatarFile(file);
-            if (file) {
-                setPreview(URL.createObjectURL(file));
-            }
-            return;
-        }
-
-        if (name === 'name') {
-            setFormData(prev => ({
-                ...prev,
-                name: value,
-                slug: generateSlug(value)
-            }));
+            setActorAvatarFile(files[0]);
             return;
         }
 
         setFormData(prev => ({ ...prev, [name]: value }));
+        setFormErrors(prev => ({ ...prev, [name]: '' }));
     };
 
-    /* =====================================================
-        SUBMIT
-    ===================================================== */
+    // Validate form
+    const validateForm = () => {
+        const errors = {};
+        if (!formData.name.trim()) {
+            errors.name = 'Vui lòng nhập tên diễn viên';
+        } else if (formData.name.trim().length < 2) {
+            errors.name = 'Tên diễn viên phải từ 2 ký tự';
+        }
+        if (!formData.gender) {
+            errors.gender = 'Vui lòng chọn giới tính';
+        }
+        if (!formData.nationality.trim()) {
+            errors.nationality = 'Vui lòng nhập quốc tịch';
+        }
+        if (!formData.birthday) {
+            errors.birthday = 'Vui lòng chọn ngày sinh';
+        }
+        if (!formData.biography.trim()) {
+            errors.biography = 'Vui lòng nhập tiểu sử';
+        } else if (formData.biography.trim().length < 5) {
+            errors.biography = 'Tiểu sử quá ngắn';
+        }
+        return errors;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setErrorText('');
+        const errors = validateForm();
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            return;
+        }
 
         try {
             setSubmitLoading(true);
+            setFormErrors({});
 
-            const token = sessionStorage.getItem('usertoken');
             const submitData = new FormData();
-
-            submitData.append('name', formData.name);
-            submitData.append('slug', formData.slug);
+            submitData.append('name', formData.name.trim());
             submitData.append('gender', formData.gender);
-            submitData.append('nationality', formData.nationality);
+            submitData.append('nationality', formData.nationality.trim());
             submitData.append('birthday', formData.birthday);
-            submitData.append('biography', formData.biography);
-
-            if (token) {
-                submitData.append('token', token);
-            }
+            submitData.append('biography', formData.biography.trim());
 
             if (actorAvatarFile) {
                 submitData.append('actor_avatar', actorAvatarFile);
-            } else if (editingActor && editingActor.actor_avatar) {
-                submitData.append('actor_avatar', editingActor.actor_avatar);
             }
+
+            let url = API_URL;
+            let method = 'post';
 
             if (editingActor) {
-                await axios.put(`${API_URL}/update/${editingActor.actor_id}`, submitData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                setIsFormOpen(false);
-                showAlert('Thành công', 'Cập nhật diễn viên thành công.', 'success');
+                url = `${API_URL}/${editingActor.actor_id}`;
+                method = 'put';
             } else {
-                await axios.post(`${API_URL}/add`, submitData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                setIsFormOpen(false);
-                showAlert('Thành công', 'Thêm diễn viên thành công.', 'success');
+                url = API_URL;
+                method = 'post';
             }
 
-            fetchActors();
+            // Thêm slug sẽ do backend tự tạo, nên không gửi lên
+            // (nếu muốn có thể gửi slug nhưng không cần)
 
+            const response = await axios({
+                method,
+                url,
+                data: submitData,
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            setIsFormOpen(false);
+            showAlert(
+                'Thành công',
+                editingActor ? 'Cập nhật diễn viên thành công.' : 'Thêm diễn viên thành công.',
+                'success'
+            );
+            fetchActors();
         } catch (error) {
-            const msg = error.response?.data?.error || 'Đã xảy ra lỗi.';
-            setErrorText(msg);
-            showAlert('Lỗi', msg, 'error');
+            const backendError = error.response?.data?.message || error.response?.data?.error || 'Đã xảy ra lỗi.';
+            // Nếu có field lỗi trả về, có thể gán vào formErrors
+            if (error.response?.data?.field) {
+                setFormErrors({ [error.response.data.field]: backendError });
+            } else {
+                showAlert('Lỗi', backendError, 'error');
+            }
         } finally {
             setSubmitLoading(false);
         }
     };
-
-    /* =====================================================
-        DELETE ACTOR
-    ===================================================== */
 
     const handleDelete = (actor) => {
         showAlert(
@@ -250,10 +227,7 @@ const ActorPage = () => {
             'warning',
             async () => {
                 try {
-                    const token = sessionStorage.getItem('usertoken');
-                    await axios.delete(`${API_URL}/delete/${actor.actor_id}`, {
-                        data: { token }
-                    });
+                    await axios.delete(`${API_URL}/${actor.actor_id}`);
                     closeAlert();
                     fetchActors();
                     showAlert('Thành công', 'Xóa diễn viên thành công.', 'success');
@@ -265,23 +239,16 @@ const ActorPage = () => {
         );
     };
 
-    /* =====================================================
-        FILTER ACTORS
-    ===================================================== */
-
+    // Filter
     const filteredActors = actors.filter(actor => {
         const keyword = search.toLowerCase();
         return (
             actor.name?.toLowerCase().includes(keyword) ||
-            actor.slug?.toLowerCase().includes(keyword) ||
             actor.nationality?.toLowerCase().includes(keyword)
         );
     });
 
-    /* =====================================================
-        TABLE COLUMNS
-    ===================================================== */
-
+    // Columns
     const columns = [
         {
             title: 'Avatar',
@@ -303,14 +270,7 @@ const ActorPage = () => {
                 />
             )
         },
-        {
-            title: 'Họ tên',
-            key: 'name'
-        },
-        {
-            title: 'Slug',
-            key: 'slug'
-        },
+        { title: 'Họ tên', key: 'name' },
         {
             title: 'Giới tính',
             key: 'gender',
@@ -320,10 +280,7 @@ const ActorPage = () => {
                 </span>
             )
         },
-        {
-            title: 'Quốc tịch',
-            key: 'nationality'
-        },
+        { title: 'Quốc tịch', key: 'nationality' },
         {
             title: 'Ngày sinh',
             key: 'birthday',
@@ -349,23 +306,13 @@ const ActorPage = () => {
         }
     ];
 
-    /* =====================================================
-        FORM FIELDS
-    ===================================================== */
-
+    // Form fields
     const formFields = [
         {
             label: 'Họ tên',
             name: 'name',
             type: 'text',
             placeholder: 'Nhập tên diễn viên'
-        },
-        {
-            label: 'Slug',
-            name: 'slug',
-            type: 'text',
-            placeholder: 'Slug tự động',
-            disabled: true
         },
         {
             label: 'Giới tính',
@@ -401,10 +348,6 @@ const ActorPage = () => {
         }
     ];
 
-    /* =====================================================
-        ALERT ICON
-    ===================================================== */
-
     const renderAlertIcon = () => {
         switch (alertModal.type) {
             case 'success':
@@ -417,10 +360,6 @@ const ActorPage = () => {
                 return <Info size={58} color="#3b82f6" />;
         }
     };
-
-    /* =====================================================
-        RENDER
-    ===================================================== */
 
     return (
         <>
@@ -443,19 +382,30 @@ const ActorPage = () => {
                 )}
             </AdminPage>
 
-            {/* =================================================
-                FORM MODAL
-            ================================================= */}
-
+            {/* Form Modal */}
             <AdminModal
                 open={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
                 title={editingActor ? 'Cập nhật diễn viên' : 'Thêm diễn viên'}
             >
-                <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-                    {preview && (
+                {actorAvatarFile && (
+                    <div style={{ marginBottom: '20px', textAlign: 'center' }}>
                         <img
-                            src={preview}
+                            src={URL.createObjectURL(actorAvatarFile)}
+                            alt="preview"
+                            style={{
+                                width: '140px',
+                                height: '140px',
+                                objectFit: 'cover',
+                                borderRadius: '50%'
+                            }}
+                        />
+                    </div>
+                )}
+                {editingActor && !actorAvatarFile && editingActor.actor_avatar && (
+                    <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+                        <img
+                            src={getImageUrl(editingActor.actor_avatar)}
                             alt="preview"
                             style={{
                                 width: '140px',
@@ -468,30 +418,12 @@ const ActorPage = () => {
                                 e.target.src = DEFAULT_AVATAR;
                             }}
                         />
-                    )}
-                </div>
-
-                {errorText && (
-                    <div
-                        className="admin-form-error"
-                        style={{
-                            color: '#ef4444',
-                            backgroundColor: '#fef2f2',
-                            border: '1px solid #fee2e2',
-                            padding: '10px 14px',
-                            borderRadius: '6px',
-                            marginBottom: '16px',
-                            fontSize: '14px',
-                            fontWeight: '500'
-                        }}
-                    >
-                        {errorText}
                     </div>
                 )}
-
                 <AdminForm
                     fields={formFields}
                     formData={formData}
+                    errors={formErrors}
                     onChange={handleChange}
                     onSubmit={handleSubmit}
                     loading={submitLoading}
@@ -499,10 +431,7 @@ const ActorPage = () => {
                 />
             </AdminModal>
 
-            {/* =================================================
-                ALERT MODAL
-            ================================================= */}
-
+            {/* Alert Modal */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
