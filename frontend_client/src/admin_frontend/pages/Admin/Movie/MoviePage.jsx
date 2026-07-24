@@ -19,16 +19,12 @@ import AdminForm from '../../../components/AdminForm';
 
 const API_URL = 'https://api.quangdungcinema.id.vn/api/movies';
 
-// =============================================
-// HELPER: LẤY URL POSTER (HỖ TRỢ CLOUDINARY + LOCAL)
-// =============================================
+// Helper lấy URL poster (Cloudinary hoặc local)
 const getPosterUrl = (poster) => {
     if (!poster) return '';
-    // Nếu là URL đầy đủ (http:// hoặc https://) thì dùng trực tiếp
     if (poster.startsWith('http://') || poster.startsWith('https://')) {
         return poster;
     }
-    // Ngược lại, ghép với base URL (cho dữ liệu cũ)
     return `https://api.quangdungcinema.id.vn/uploads/posters/${poster}`;
 };
 
@@ -47,10 +43,6 @@ const initialFormData = {
 
 const MoviePage = () => {
 
-    /* =====================================================
-        STATES
-    ===================================================== */
-
     const [movies, setMovies] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -61,10 +53,6 @@ const MoviePage = () => {
     const [moviePosterFile, setMoviePosterFile] = useState(null);
     const [movieBackdropFile, setMovieBackdropFile] = useState(null);
     const [formErrors, setFormErrors] = useState({});
-
-    /* =====================================================
-        ALERT MODAL
-    ===================================================== */
 
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -83,10 +71,6 @@ const MoviePage = () => {
         setAlertModal(prev => ({ ...prev, open: false }));
     };
 
-    /* =====================================================
-        FETCH MOVIES
-    ===================================================== */
-
     const fetchMovies = async () => {
         setLoading(true);
         try {
@@ -103,46 +87,23 @@ const MoviePage = () => {
         fetchMovies();
     }, []);
 
-    /* =====================================================
-        VALIDATE FORM
-    ===================================================== */
-
     const validateForm = () => {
         const errors = {};
-
-        if (!formData.title.trim()) {
-            errors.title = 'Vui lòng nhập tên phim.';
-        }
-
-        if (!formData.director.trim()) {
-            errors.director = 'Vui lòng nhập tên đạo diễn.';
-        }
-
-        if (!formData.nation.trim()) {
-            errors.nation = 'Vui lòng nhập quốc gia sản xuất.';
-        }
-
+        if (!formData.title.trim()) errors.title = 'Vui lòng nhập tên phim.';
+        if (!formData.director.trim()) errors.director = 'Vui lòng nhập tên đạo diễn.';
+        if (!formData.nation.trim()) errors.nation = 'Vui lòng nhập quốc gia sản xuất.';
         if (!formData.duration) {
             errors.duration = 'Vui lòng nhập thời lượng phim.';
         } else if (Number(formData.duration) <= 0) {
             errors.duration = 'Thời lượng phim phải lớn hơn 0 phút.';
         }
-
-        if (!formData.release_date) {
-            errors.release_date = 'Vui lòng chọn ngày phát hành.';
-        }
-
+        if (!formData.release_date) errors.release_date = 'Vui lòng chọn ngày phát hành.';
         if (!editingMovie && !moviePosterFile) {
             errors.movie_poster = 'Vui lòng chọn file hình ảnh cho Poster.';
         }
-
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
-
-    /* =====================================================
-        GENERATE SLUG
-    ===================================================== */
 
     const generateSlug = (str) => {
         if (!str) return '';
@@ -157,10 +118,6 @@ const MoviePage = () => {
             .trim();
     };
 
-    /* =====================================================
-        OPEN ADD
-    ===================================================== */
-
     const handleOpenAdd = () => {
         setEditingMovie(null);
         setFormData(initialFormData);
@@ -169,10 +126,6 @@ const MoviePage = () => {
         setFormErrors({});
         setIsFormOpen(true);
     };
-
-    /* =====================================================
-        OPEN EDIT
-    ===================================================== */
 
     const handleOpenEdit = (movie) => {
         setEditingMovie(movie);
@@ -188,34 +141,25 @@ const MoviePage = () => {
             trailer_url: movie.trailer_url || '',
             description: movie.description || ''
         });
-
         setMoviePosterFile(null);
         setMovieBackdropFile(null);
         setFormErrors({});
         setIsFormOpen(true);
     };
 
-    /* =====================================================
-        CHANGE FORM
-    ===================================================== */
-
     const handleChange = (e) => {
         const { name, value, files } = e.target;
-
         if (formErrors[name]) {
             setFormErrors(prev => ({ ...prev, [name]: '' }));
         }
-
         if (name === 'movie_poster') {
             setMoviePosterFile(files[0]);
             return;
         }
-
         if (name === 'movie_backdrop') {
             setMovieBackdropFile(files[0]);
             return;
         }
-
         if (name === 'title') {
             setFormData(prev => ({
                 ...prev,
@@ -224,38 +168,24 @@ const MoviePage = () => {
             }));
             return;
         }
-
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    /* =====================================================
-        SUBMIT
-    ===================================================== */
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (!validateForm()) {
-            return;
-        }
-
+        if (!validateForm()) return;
         try {
             setSubmitLoading(true);
-
             const submitData = new FormData();
-
             Object.entries(formData).forEach(([key, value]) => {
                 submitData.append(key, value);
             });
-
             if (moviePosterFile) {
                 submitData.append('movie_poster', moviePosterFile);
             }
-
             if (movieBackdropFile) {
                 submitData.append('movie_backdrop', movieBackdropFile);
             }
-
             if (editingMovie) {
                 await axios.put(`${API_URL}/update/${editingMovie.movie_id}`, submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
@@ -267,20 +197,14 @@ const MoviePage = () => {
                 });
                 showAlert('Thành công', 'Thêm phim thành công.', 'success');
             }
-
             setIsFormOpen(false);
             fetchMovies();
-
         } catch (error) {
             showAlert('Lỗi', error.response?.data?.error || 'Đã xảy ra lỗi.', 'error');
         } finally {
             setSubmitLoading(false);
         }
     };
-
-    /* =====================================================
-        DELETE MOVIE
-    ===================================================== */
 
     const handleDelete = (movie) => {
         showAlert(
@@ -301,10 +225,6 @@ const MoviePage = () => {
         );
     };
 
-    /* =====================================================
-        FILTER MOVIES
-    ===================================================== */
-
     const filteredMovies = movies.filter(movie => {
         const keyword = search.toLowerCase();
         return (
@@ -313,10 +233,6 @@ const MoviePage = () => {
             movie.nation?.toLowerCase().includes(keyword)
         );
     });
-
-    /* =====================================================
-        TABLE COLUMNS
-    ===================================================== */
 
     const columns = [
         {
@@ -338,27 +254,13 @@ const MoviePage = () => {
                 );
             }
         },
-        {
-            title: 'Tên phim',
-            key: 'title'
-        },
-        {
-            title: 'Đạo diễn',
-            key: 'director'
-        },
-        {
-            title: 'Thời lượng',
-            key: 'duration',
-            render: (row) => `${row.duration} phút`
-        },
+        { title: 'Tên phim', key: 'title' },
+        { title: 'Đạo diễn', key: 'director' },
+        { title: 'Thời lượng', key: 'duration', render: (row) => `${row.duration} phút` },
         {
             title: 'Trạng thái',
             key: 'status',
-            render: (row) => (
-                <span className={`status-badge ${row.status}`}>
-                    {row.status}
-                </span>
-            )
+            render: (row) => <span className={`status-badge ${row.status}`}>{row.status}</span>
         },
         {
             title: 'Trailer',
@@ -387,47 +289,13 @@ const MoviePage = () => {
         }
     ];
 
-    /* =====================================================
-        FORM FIELDS
-    ===================================================== */
-
     const formFields = [
-        {
-            label: 'Tên phim',
-            name: 'title',
-            type: 'text',
-            placeholder: 'Nhập tên phim'
-        },
-        {
-            label: 'Slug',
-            name: 'slug',
-            type: 'text',
-            placeholder: 'Slug tự động',
-            disabled: true
-        },
-        {
-            label: 'Đạo diễn',
-            name: 'director',
-            type: 'text',
-            placeholder: 'Tên đạo diễn'
-        },
-        {
-            label: 'Quốc gia',
-            name: 'nation',
-            type: 'text',
-            placeholder: 'Việt Nam, Mỹ...'
-        },
-        {
-            label: 'Thời lượng',
-            name: 'duration',
-            type: 'number',
-            placeholder: '120'
-        },
-        {
-            label: 'Ngày phát hành',
-            name: 'release_date',
-            type: 'date'
-        },
+        { label: 'Tên phim', name: 'title', type: 'text', placeholder: 'Nhập tên phim' },
+        { label: 'Slug', name: 'slug', type: 'text', placeholder: 'Slug tự động', disabled: true },
+        { label: 'Đạo diễn', name: 'director', type: 'text', placeholder: 'Tên đạo diễn' },
+        { label: 'Quốc gia', name: 'nation', type: 'text', placeholder: 'Việt Nam, Mỹ...' },
+        { label: 'Thời lượng', name: 'duration', type: 'number', placeholder: '120' },
+        { label: 'Ngày phát hành', name: 'release_date', type: 'date' },
         {
             label: 'Độ tuổi',
             name: 'age_rating',
@@ -449,50 +317,20 @@ const MoviePage = () => {
                 { label: 'Ngừng chiếu', value: 'Ngừng chiếu' }
             ]
         },
-        {
-            label: 'Trailer URL',
-            name: 'trailer_url',
-            type: 'text',
-            placeholder: 'https://youtube.com/...'
-        },
-        {
-            label: 'Poster',
-            name: 'movie_poster',
-            type: 'file'
-        },
-        {
-            label: 'Backdrop',
-            name: 'movie_backdrop',
-            type: 'file'
-        },
-        {
-            label: 'Mô tả',
-            name: 'description',
-            type: 'textarea',
-            placeholder: 'Nhập mô tả phim'
-        }
+        { label: 'Trailer URL', name: 'trailer_url', type: 'text', placeholder: 'https://youtube.com/...' },
+        { label: 'Poster', name: 'movie_poster', type: 'file' },
+        { label: 'Backdrop', name: 'movie_backdrop', type: 'file' },
+        { label: 'Mô tả', name: 'description', type: 'textarea', placeholder: 'Nhập mô tả phim' }
     ];
-
-    /* =====================================================
-        ALERT ICON
-    ===================================================== */
 
     const renderAlertIcon = () => {
         switch (alertModal.type) {
-            case 'success':
-                return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error':
-                return <XCircle size={58} color="#ef4444" />;
-            case 'warning':
-                return <AlertTriangle size={58} color="#f59e0b" />;
-            default:
-                return <Info size={58} color="#3b82f6" />;
+            case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
+            case 'error': return <XCircle size={58} color="#ef4444" />;
+            case 'warning': return <AlertTriangle size={58} color="#f59e0b" />;
+            default: return <Info size={58} color="#3b82f6" />;
         }
     };
-
-    /* =====================================================
-        RENDER
-    ===================================================== */
 
     return (
         <>
@@ -515,10 +353,6 @@ const MoviePage = () => {
                 )}
             </AdminPage>
 
-            {/* =================================================
-                FORM MODAL
-            ================================================= */}
-
             <AdminModal
                 open={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
@@ -535,10 +369,6 @@ const MoviePage = () => {
                 />
             </AdminModal>
 
-            {/* =================================================
-                ALERT MODAL
-            ================================================= */}
-
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
@@ -553,9 +383,7 @@ const MoviePage = () => {
                     <p>{alertModal.message}</p>
                     <div className="admin-alert-actions">
                         {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy
-                            </button>
+                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>Hủy</button>
                         )}
                         <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
                             Xác nhận

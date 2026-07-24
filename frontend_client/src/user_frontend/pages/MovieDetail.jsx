@@ -13,10 +13,15 @@ import {
 } from 'lucide-react';
 import Modal from '../components/Modal';
 import MovieCard from "../components/MovieCard";
-import MoviePreviewModal from "../components/MoviePreviewModal"; // 👈 Import
+import MoviePreviewModal from "../components/MoviePreviewModal";
 import MovieHeroBanner from '../components/MovieHeroBanner';
 import { useAuth } from '../../context/AuthContext';
 import "../styles/MovieDetail.css";
+
+const DEFAULT_POSTER =
+    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg";
+const DEFAULT_BACKDROP =
+    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-backdrop.jpg";
 
 const MovieDetail = () => {
     const { slug } = useParams();
@@ -37,7 +42,6 @@ const MovieDetail = () => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
 
-    // 👇 State cho MoviePreviewModal
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState(null);
 
@@ -50,7 +54,6 @@ const MovieDetail = () => {
     });
 
     const API_BASE_URL = "https://api.quangdungcinema.id.vn/api";
-    const IMAGE_BASE_URL = "https://api.quangdungcinema.id.vn/uploads";
 
     const getYoutubeID = (url) => {
         if (!url) return null;
@@ -59,7 +62,6 @@ const MovieDetail = () => {
         return (match && match[2].length === 11) ? match[2] : null;
     };
 
-    // 👇 Hàm mở modal giống MovieStatus
     const handleMovieClick = (movie) => {
         setSelectedMovie(movie);
         setIsModalOpen(true);
@@ -283,7 +285,7 @@ const MovieDetail = () => {
 
     return (
         <div className="cinema-movie-detail-page">
-            {/* Modal chung (thông báo, xác nhận) */}
+            {/* Modal chung */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}
@@ -305,7 +307,7 @@ const MovieDetail = () => {
                 </div>
             )}
 
-            {/* REVIEW MODAL – hiện 10 sao + textarea cùng lúc */}
+            {/* REVIEW MODAL */}
             {showReviewModal && (
                 <div className="review-modal-overlay" onClick={closeReviewModal}>
                     <div className="review-modal-container" onClick={(e) => e.stopPropagation()}>
@@ -330,13 +332,9 @@ const MovieDetail = () => {
                 </div>
             )}
 
-            {/* SECTION 1: HERO BANNER NGANG (BACKDROP) */}
+            {/* SECTION 1: HERO BANNER NGANG */}
             <MovieHeroBanner
                 movie={movie}
-                imageBaseUrl={IMAGE_BASE_URL}
-                onBook={() =>
-                    navigate(`/booking/${movie.slug || movie.movie_slug}`)
-                }
                 onTrailer={openTrailerModal}
             />
 
@@ -347,9 +345,13 @@ const MovieDetail = () => {
                     <div className="movie-info-container">
                         <div className="movie-poster-col">
                             <img
-                                src={`${IMAGE_BASE_URL}/posters/${movie.poster_url}`}
+                                src={movie.poster_url || movie.movie_poster || DEFAULT_POSTER}
                                 alt={movie.title}
                                 className="movie-poster-img"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = DEFAULT_POSTER;
+                                }}
                             />
                         </div>
 
@@ -456,8 +458,7 @@ const MovieDetail = () => {
                             <MovieCard
                                 key={movie.movie_id}
                                 movie={movie}
-                                baseUrl={`${IMAGE_BASE_URL}/posters/`}
-                                onClick={handleMovieClick} // 👈 Truyền handler mở modal
+                                onClick={handleMovieClick}
                             />
                         ))}
                     </div>
@@ -482,11 +483,15 @@ const MovieDetail = () => {
                                     onClick={() => actor.slug && navigate(`/actor/${actor.slug}`)}
                                 >
                                     <div className="actor-avatar-frame">
-                                        {actor.avatar ? (
+                                        {actor.actor_avatar ? (
                                             <img
-                                                src={`${IMAGE_BASE_URL}/actors/${actor.avatar}`}
+                                                src={actor.actor_avatar}
                                                 alt={actor.name}
                                                 className="actor-real-img"
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = DEFAULT_POSTER;
+                                                }}
                                             />
                                         ) : (
                                             <div className="placeholder-avatar-bg">
@@ -539,8 +544,12 @@ const MovieDetail = () => {
                                     <img
                                         src={getYoutubeID(item.trailer_url)
                                             ? `https://img.youtube.com/vi/${getYoutubeID(item.trailer_url)}/maxresdefault.jpg`
-                                            : `${IMAGE_BASE_URL}/posters/${item.poster_url}`}
+                                            : (item.poster_url || item.movie_poster || DEFAULT_POSTER)}
                                         alt={item.title}
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = DEFAULT_POSTER;
+                                        }}
                                     />
                                     <div className="other-trailer-overlay">
                                         <Play size={42} strokeWidth={2.5} />
@@ -620,7 +629,7 @@ const MovieDetail = () => {
                 </div>
             </div>
 
-            {/* 👇 MoviePreviewModal – giống MovieStatusPage */}
+            {/* MoviePreviewModal */}
             <MoviePreviewModal
                 open={isModalOpen}
                 onClose={handleCloseModal}

@@ -13,8 +13,8 @@ import "../styles/MoviePreviewHero.css";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-// 🔥 BIẾN API CỐ ĐỊNH
-const IMAGE_BASE_URL = "https://api.quangdungcinema.id.vn/uploads";
+const DEFAULT_BACKDROP =
+    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-backdrop.jpg";
 
 const MoviePreviewHero = ({
     movie,
@@ -35,10 +35,8 @@ const MoviePreviewHero = ({
         navigate(`/booking/${movie.slug || movie.movie_slug}`);
     };
 
-    // 🔥 BACKDROP - HÌNH NGANG
-    const backdropSrc = movie.backdrop_url 
-        ? `${IMAGE_BASE_URL}/backdrops/${movie.backdrop_url}`
-        : `${IMAGE_BASE_URL}/posters/${movie.poster_url}`;
+    // ✅ Dùng trực tiếp URL Cloudinary từ database (không ghép URL)
+    const backdropSrc = movie.backdrop_url || movie.movie_backdrop || movie.poster_url || DEFAULT_BACKDROP;
 
     return (
         <section className="preview-hero">
@@ -48,6 +46,10 @@ const MoviePreviewHero = ({
                 className="preview-hero-backdrop"
                 src={backdropSrc}
                 alt={movie.title}
+                onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = DEFAULT_BACKDROP;
+                }}
             />
 
             {/* LỚP PHỦ */}

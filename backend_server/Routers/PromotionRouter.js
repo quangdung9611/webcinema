@@ -13,17 +13,17 @@ const upload = require('../Middlewares/MulterMiddleware');
 // Lấy toàn bộ promotions (admin)
 router.get('/', PromotionController.getAllPromotionsAdmin);
 
-// Lấy chi tiết promotion theo ID
-router.get('/detail/:id', PromotionController.getPromotionById);
+// Lấy chi tiết promotion theo ID - ĐÃ SỬA: dùng promotion_id
+router.get('/detail/:promotion_id', PromotionController.getPromotionById);
 
 // Tạo promotion mới - field: promotion_image
 router.post('/', upload.single('promotion_image'), PromotionController.createPromotion);
 
-// Update promotion - field: promotion_image
-router.put('/update/:id', upload.single('promotion_image'), PromotionController.updatePromotion);
+// Update promotion - ĐÃ SỬA: dùng promotion_id
+router.put('/update/:promotion_id', upload.single('promotion_image'), PromotionController.updatePromotion);
 
-// Delete promotion
-router.delete('/:id', PromotionController.deletePromotion);
+// Delete promotion - ĐÃ SỬA: dùng promotion_id
+router.delete('/:promotion_id', PromotionController.deletePromotion);
 
 /* ==========================================================
     2. NHÓM PUBLIC (PHẢI ĐẶT CUỐI CÙNG)

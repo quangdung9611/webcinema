@@ -23,7 +23,10 @@ import Modal from "./Modal";
 import "../styles/MoviePreviewModal.css";
 import "../styles/Modal.css";
 
-const IMAGE_BASE_URL = "https://api.quangdungcinema.id.vn/uploads";
+const DEFAULT_POSTER =
+    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg";
+const DEFAULT_BACKDROP =
+    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-backdrop.jpg";
 
 const decodeHtmlEntities = (text) => {
     if (!text) return '';
@@ -187,7 +190,6 @@ const MoviePreviewModal = ({
         const currentScroll = container.scrollLeft;
         const maxScroll = container.scrollWidth - container.clientWidth;
 
-        // Nếu không có đủ card để cuộn (1 hoặc 0), thì không làm gì
         if (maxScroll === 0) return;
 
         if (currentScroll <= 0) {
@@ -287,9 +289,13 @@ const MoviePreviewModal = ({
                         >
                             <div className="cinema-hero-banner">
                                 <img
-                                    src={`${IMAGE_BASE_URL}/backdrops/${selectedMovie?.backdrop_url || selectedMovie?.poster_url}`}
+                                    src={selectedMovie?.backdrop_url || selectedMovie?.movie_backdrop || selectedMovie?.poster_url || DEFAULT_BACKDROP}
                                     alt={selectedMovie?.title}
                                     className="banner-horizontal-img"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = DEFAULT_BACKDROP;
+                                    }}
                                 />
                             </div>
                         </div>
@@ -302,9 +308,13 @@ const MoviePreviewModal = ({
                             >
                                 <div className="cinema-hero-banner">
                                     <img
-                                        src={`${IMAGE_BASE_URL}/backdrops/${incomingMovie.backdrop_url || incomingMovie.poster_url}`}
+                                        src={incomingMovie.backdrop_url || incomingMovie.movie_backdrop || incomingMovie.poster_url || DEFAULT_BACKDROP}
                                         alt={incomingMovie.title}
                                         className="banner-horizontal-img"
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = DEFAULT_BACKDROP;
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -317,9 +327,13 @@ const MoviePreviewModal = ({
                             <div className="preview-info-row">
                                 <div className="preview-poster-wrapper">
                                     <img
-                                        src={`${IMAGE_BASE_URL}/posters/${selectedMovie?.poster_url}`}
+                                        src={selectedMovie?.poster_url || selectedMovie?.movie_poster || DEFAULT_POSTER}
                                         alt={selectedMovie?.title}
                                         className="preview-poster-img"
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = DEFAULT_POSTER;
+                                        }}
                                     />
                                 </div>
 
@@ -427,7 +441,7 @@ const MoviePreviewModal = ({
                                 <div className="preview-strip-track" ref={trackRef}>
                                     {otherMovies.map((movie) => {
                                         const active = selectedMovie && selectedMovie.movie_id === movie.movie_id;
-                                        const posterSrc = `${IMAGE_BASE_URL}/posters/${movie.poster_url}`;
+                                        const posterSrc = movie.poster_url || movie.movie_poster || DEFAULT_POSTER;
                                         return (
                                             <div
                                                 key={movie.movie_id}
@@ -440,6 +454,10 @@ const MoviePreviewModal = ({
                                                     src={posterSrc}
                                                     alt={movie.title}
                                                     className="preview-strip-image"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = DEFAULT_POSTER;
+                                                    }}
                                                 />
                                                 <div className="preview-strip-gradient" />
                                                 <div className="preview-strip-info">

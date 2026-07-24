@@ -3,10 +3,11 @@ import { Star } from "lucide-react";
 
 import "../styles/MovieCard.css";
 
+const DEFAULT_POSTER =
+    "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/default-poster.jpg";
+
 const MovieCard = React.memo(({
     movie,
-    baseUrl,
-    onPreview,
     onClick
 }) => {
 
@@ -19,18 +20,14 @@ const MovieCard = React.memo(({
         reviewCount: movie?.total_reviews || 0,
         ageRating: movie?.age_rating || "T18",
         title: movie?.title || "Đang cập nhật",
-        // ✅ SỬA: hỗ trợ cả URL Cloudinary và tên file local
-        poster: movie?.poster_url
-            ? (movie.poster_url.startsWith('http') 
-                ? movie.poster_url 
-                : `${baseUrl}${movie.poster_url}`)
-            : `${baseUrl}default-poster.jpg`,
+
+        // Cloudinary URL từ database
+        poster: movie?.movie_poster || DEFAULT_POSTER,
+
         language: movie?.language || "Phụ đề"
-    }), [movie, baseUrl]);
+    }), [movie]);
 
     const handleOpen = useCallback(() => {
-        console.log("CLICK CARD", movie);
-
         if (isOpening) return;
 
         setIsOpening(true);
@@ -68,11 +65,11 @@ const MovieCard = React.memo(({
                     <img
                         src={movieData.poster}
                         alt={movieData.title}
-                        draggable={false}
                         loading="lazy"
+                        draggable={false}
                         onError={(e) => {
-                            // Fallback nếu ảnh lỗi
-                            e.target.src = `${baseUrl}default-poster.jpg`;
+                            e.target.onerror = null;
+                            e.target.src = DEFAULT_POSTER;
                         }}
                     />
 
@@ -90,13 +87,13 @@ const MovieCard = React.memo(({
                     </h3>
 
                     <div className="film-card__stars">
-                        {[...Array(movieData.totalStars)].map((_, i) => (
+                        {[...Array(movieData.totalStars)].map((_, index) => (
                             <Star
-                                key={i}
+                                key={index}
                                 size={12}
                                 strokeWidth={1.8}
                                 fill={
-                                    i < movieData.filledStars
+                                    index < movieData.filledStars
                                         ? "#E5C46B"
                                         : "transparent"
                                 }
@@ -110,7 +107,9 @@ const MovieCard = React.memo(({
                             {movieData.rating.toFixed(1)}
                         </span>
 
-                        <span className="film-card__dot">•</span>
+                        <span className="film-card__dot">
+                            •
+                        </span>
 
                         <span className="film-card__reviews">
                             {movieData.reviewCount} đánh giá
@@ -118,16 +117,24 @@ const MovieCard = React.memo(({
                     </div>
 
                     <div className="film-card__extra">
-                        <span>{movieData.ageRating}</span>
+                        <span>
+                            {movieData.ageRating}
+                        </span>
 
-                        <span className="film-card__dot">•</span>
+                        <span className="film-card__dot">
+                            •
+                        </span>
 
-                        <span>{movieData.language}</span>
+                        <span>
+                            {movieData.language}
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
     );
 });
+
+MovieCard.displayName = "MovieCard";
 
 export default MovieCard;

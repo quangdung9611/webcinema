@@ -10,7 +10,9 @@ import "../styles/MovieStatusPage.css";
 import "../styles/user_home.css";
 
 const API_URL = "https://api.quangdungcinema.id.vn/api";
-const BASE_URL = "https://api.quangdungcinema.id.vn/uploads/posters/";
+
+const DEFAULT_BANNER =
+    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-banner.jpg";
 
 const statusMap = {
     "phim-dang-chieu": "Đang chiếu",
@@ -115,12 +117,16 @@ const MovieStatusPage = () => {
 
     return (
         <main className="movie-status-page">
-            {/* Banner */}
+            {/* Banner - dùng trực tiếp URL Cloudinary */}
             <div className="movie-status-hero">
                 <img
-                    src="https://api.quangdungcinema.id.vn/uploads/banners/banner1.png"
+                    src={DEFAULT_BANNER}
                     alt="Movie Banner"
                     className="movie-status-banner-img"
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = DEFAULT_BANNER;
+                    }}
                 />
             </div>
 
@@ -174,14 +180,13 @@ const MovieStatusPage = () => {
                 </div>
             </div>
 
-            {/* Movie Grid */}
+            {/* Movie Grid - MovieCard đã tự xử lý ảnh */}
             <section className="movie-list">
                 {filteredMovies.length > 0 ? (
                     filteredMovies.map((movie) => (
                         <MovieCard
                             key={movie.movie_id}
                             movie={movie}
-                            baseUrl={BASE_URL}
                             onClick={handleMovieClick}
                         />
                     ))
@@ -195,7 +200,7 @@ const MovieStatusPage = () => {
                 )}
             </section>
 
-            {/* Modal giống MovieSlider */}
+            {/* Modal - MoviePreviewModal đã tự xử lý ảnh */}
             <MoviePreviewModal
                 open={isModalOpen}
                 onClose={handleCloseModal}
