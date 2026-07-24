@@ -21,6 +21,21 @@ import AdminForm from '../../../components/AdminForm';
 
 const API_URL = 'https://api.quangdungcinema.id.vn/api/promotions';
 
+// =============================================
+// HELPER: LẤY URL ẢNH (HỖ TRỢ CLOUDINARY + LOCAL)
+// GIỐNG MovieCard
+// =============================================
+const getImageUrl = (image) => {
+    if (!image) return '';
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+        return image;
+    }
+    return `https://api.quangdungcinema.id.vn/uploads/promotions/${image}`;
+};
+
+const DEFAULT_IMAGE =
+    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-promotion.jpg';
+
 /* ==========================================
     INITIAL DATA (chỉ các trường có trong DB)
 ========================================== */
@@ -42,7 +57,7 @@ const PromotionPage = () => {
     const [editingPromotion, setEditingPromotion] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
-    const [promotionImageFile, setPromotionImageFile] = useState(null); // ✅ đúng tên cột
+    const [promotionImageFile, setPromotionImageFile] = useState(null);
     const [preview, setPreview] = useState(null);
 
     /* ==========================================
@@ -136,10 +151,9 @@ const PromotionPage = () => {
             is_active: item.is_active ?? 1
         });
 
+        // ✅ Dùng helper getImageUrl để hỗ trợ Cloudinary + local
         setPreview(
-            item.promotion_image
-                ? `https://api.quangdungcinema.id.vn/uploads/promotions/${item.promotion_image}`
-                : null
+            item.promotion_image ? getImageUrl(item.promotion_image) : DEFAULT_IMAGE
         );
         setPromotionImageFile(null);
         setErrors({});
@@ -156,7 +170,6 @@ const PromotionPage = () => {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
 
-        // ✅ Xử lý file với tên promotion_image
         if (name === 'promotion_image') {
             const file = files[0];
             setPromotionImageFile(file);
@@ -193,7 +206,6 @@ const PromotionPage = () => {
             newErrors.title = 'Tiêu đề phải từ 5 ký tự trở lên.';
         }
 
-        // ✅ Bỏ validate content vì không có trong DB
         if (!editingPromotion && !promotionImageFile) {
             newErrors.promotion_image = 'Vui lòng chọn ảnh khuyến mãi.';
         }
@@ -220,7 +232,7 @@ const PromotionPage = () => {
             submitData.append('is_active', formData.is_active);
 
             if (promotionImageFile) {
-                submitData.append('promotion_image', promotionImageFile); // ✅ đúng tên cột
+                submitData.append('promotion_image', promotionImageFile);
             }
 
             const token = sessionStorage.getItem('usertoken');
@@ -293,13 +305,17 @@ const PromotionPage = () => {
             key: 'promotion_image',
             render: (row) => (
                 <img
-                    src={`https://api.quangdungcinema.id.vn/uploads/promotions/${row.promotion_image}`}
+                    src={getImageUrl(row.promotion_image) || DEFAULT_IMAGE}
                     alt="promotion"
                     style={{
                         width: '120px',
                         height: '70px',
                         objectFit: 'cover',
                         borderRadius: '10px'
+                    }}
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = DEFAULT_IMAGE;
                     }}
                 />
             )
@@ -373,7 +389,7 @@ const PromotionPage = () => {
     ];
 
     /* ==========================================
-        FORM FIELDS (chỉ các trường có trong DB)
+        FORM FIELDS
     ========================================== */
     const formFields = [
         {
@@ -394,7 +410,7 @@ const PromotionPage = () => {
         },
         {
             label: 'Hình ảnh',
-            name: 'promotion_image', // ✅ đúng tên cột
+            name: 'promotion_image',
             type: 'file'
         },
         {
@@ -468,6 +484,10 @@ const PromotionPage = () => {
                                 height: '220px',
                                 objectFit: 'cover',
                                 borderRadius: '12px'
+                            }}
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = DEFAULT_IMAGE;
                             }}
                         />
                     </div>

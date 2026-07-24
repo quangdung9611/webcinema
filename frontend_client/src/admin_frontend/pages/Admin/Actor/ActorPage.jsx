@@ -18,6 +18,20 @@ import AdminForm from '../../../components/AdminForm';
 
 const API_URL = 'https://api.quangdungcinema.id.vn/api/actors';
 
+// =============================================
+// HELPER: LẤY URL ẢNH (HỖ TRỢ CLOUDINARY + LOCAL)
+// =============================================
+const getImageUrl = (image) => {
+    if (!image) return '';
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+        return image;
+    }
+    return `https://api.quangdungcinema.id.vn/uploads/actors/${image}`;
+};
+
+const DEFAULT_AVATAR =
+    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-avatar.jpg';
+
 const initialFormData = {
     name: '',
     slug: '',
@@ -40,7 +54,7 @@ const ActorPage = () => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingActor, setEditingActor] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
-    const [actorAvatarFile, setActorAvatarFile] = useState(null); // ✅ đổi tên
+    const [actorAvatarFile, setActorAvatarFile] = useState(null);
     const [preview, setPreview] = useState(null);
     const [errorText, setErrorText] = useState('');
 
@@ -130,11 +144,8 @@ const ActorPage = () => {
             biography: actor.biography || ''
         });
 
-        // ✅ Hiển thị preview từ actor_avatar
         setPreview(
-            actor.actor_avatar
-                ? `https://api.quangdungcinema.id.vn/uploads/actors/${actor.actor_avatar}`
-                : null
+            actor.actor_avatar ? getImageUrl(actor.actor_avatar) : DEFAULT_AVATAR
         );
 
         setActorAvatarFile(null);
@@ -151,7 +162,6 @@ const ActorPage = () => {
 
         if (errorText) setErrorText('');
 
-        // ✅ Xử lý file với tên field actor_avatar
         if (name === 'actor_avatar') {
             const file = files[0];
             setActorAvatarFile(file);
@@ -198,11 +208,9 @@ const ActorPage = () => {
                 submitData.append('token', token);
             }
 
-            // ✅ Gửi file với key 'actor_avatar' (đồng bộ với backend)
             if (actorAvatarFile) {
                 submitData.append('actor_avatar', actorAvatarFile);
             } else if (editingActor && editingActor.actor_avatar) {
-                // Nếu không upload mới, vẫn gửi tên ảnh cũ để backend giữ nguyên
                 submitData.append('actor_avatar', editingActor.actor_avatar);
             }
 
@@ -280,13 +288,17 @@ const ActorPage = () => {
             key: 'actor_avatar',
             render: (row) => (
                 <img
-                    src={`https://api.quangdungcinema.id.vn/uploads/actors/${row.actor_avatar}`}
+                    src={getImageUrl(row.actor_avatar) || DEFAULT_AVATAR}
                     alt={row.name}
                     style={{
                         width: '80px',
                         height: '80px',
                         objectFit: 'cover',
                         borderRadius: '50%'
+                    }}
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = DEFAULT_AVATAR;
                     }}
                 />
             )
@@ -378,7 +390,7 @@ const ActorPage = () => {
         },
         {
             label: 'Avatar',
-            name: 'actor_avatar', // ✅ đúng tên cột
+            name: 'actor_avatar',
             type: 'file'
         },
         {
@@ -450,6 +462,10 @@ const ActorPage = () => {
                                 height: '140px',
                                 objectFit: 'cover',
                                 borderRadius: '50%'
+                            }}
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = DEFAULT_AVATAR;
                             }}
                         />
                     )}

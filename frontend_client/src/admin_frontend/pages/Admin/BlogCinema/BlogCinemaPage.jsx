@@ -21,6 +21,20 @@ import AdminForm from '../../../components/AdminForm';
 
 const API_URL = 'https://api.quangdungcinema.id.vn/api/blog-cinema';
 
+// =============================================
+// HELPER: LẤY URL ẢNH (HỖ TRỢ CLOUDINARY + LOCAL)
+// =============================================
+const getImageUrl = (image) => {
+    if (!image) return '';
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+        return image;
+    }
+    return `https://api.quangdungcinema.id.vn/uploads/blog_cinema/${image}`;
+};
+
+const DEFAULT_IMAGE =
+    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-blog.jpg';
+
 /* =====================================================
     INITIAL FORM DATA (chỉ các trường có trong DB)
 ===================================================== */
@@ -46,7 +60,7 @@ const BlogCinemaPage = () => {
     const [editingBlog, setEditingBlog] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
-    const [blogImageFile, setBlogImageFile] = useState(null); // ✅ đúng tên cột
+    const [blogImageFile, setBlogImageFile] = useState(null);
     const [preview, setPreview] = useState(null);
 
     /* =====================================================
@@ -142,9 +156,7 @@ const BlogCinemaPage = () => {
         });
         setErrors({});
         setPreview(
-            item.blog_image
-                ? `https://api.quangdungcinema.id.vn/uploads/blog_cinema/${item.blog_image}`
-                : null
+            item.blog_image ? getImageUrl(item.blog_image) : DEFAULT_IMAGE
         );
         setBlogImageFile(null);
         setIsFormOpen(true);
@@ -160,7 +172,6 @@ const BlogCinemaPage = () => {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
 
-        // ✅ Xử lý file với tên đúng cột blog_image
         if (name === 'blog_image') {
             const file = files[0];
             setBlogImageFile(file);
@@ -227,7 +238,7 @@ const BlogCinemaPage = () => {
             submitData.append('is_active', formData.is_active);
 
             if (blogImageFile) {
-                submitData.append('blog_image', blogImageFile); // ✅ đúng tên cột
+                submitData.append('blog_image', blogImageFile);
             }
 
             const token = sessionStorage.getItem('usertoken');
@@ -311,13 +322,17 @@ const BlogCinemaPage = () => {
             key: 'blog_image',
             render: (row) => (
                 <img
-                    src={`https://api.quangdungcinema.id.vn/uploads/blog_cinema/${row.blog_image}`}
+                    src={getImageUrl(row.blog_image) || DEFAULT_IMAGE}
                     alt="blog"
                     style={{
                         width: '120px',
                         height: '70px',
                         objectFit: 'cover',
                         borderRadius: '10px'
+                    }}
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = DEFAULT_IMAGE;
                     }}
                 />
             )
@@ -412,7 +427,7 @@ const BlogCinemaPage = () => {
         },
         {
             label: 'Hình ảnh Blog',
-            name: 'blog_image', // ✅ đúng tên cột
+            name: 'blog_image',
             type: 'file'
         },
         {
@@ -490,6 +505,10 @@ const BlogCinemaPage = () => {
                                 height: '220px',
                                 objectFit: 'cover',
                                 borderRadius: '12px'
+                            }}
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = DEFAULT_IMAGE;
                             }}
                         />
                     </div>
