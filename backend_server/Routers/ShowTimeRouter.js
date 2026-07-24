@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const ShowtimeController = require("../Controllers/ShowTimeController");
+const ShowtimeController = require("../Controllers/ShowtimeController");
 const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
 // PUBLIC (không cần auth)
