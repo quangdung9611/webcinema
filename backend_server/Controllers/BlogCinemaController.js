@@ -153,7 +153,7 @@ exports.deleteBlog = async (req, res) => {
 /* ==========================================================
    LIKE BLOG
 ========================================================== */
-exports.likeBlog = async (req, res) => {
+exports.increaseLike = async (req, res) => {
     try {
         const { blog_id } = req.params;
 
@@ -164,7 +164,7 @@ exports.likeBlog = async (req, res) => {
             message: "Đã tăng lượt thích!"
         });
     } catch (err) {
-        console.error("likeBlog error:", err);
+        console.error("increaseLike error:", err);
 
         return res.status(err.statusCode || 500).json({
             success: false,

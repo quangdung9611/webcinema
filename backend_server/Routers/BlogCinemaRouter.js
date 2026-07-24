@@ -14,12 +14,12 @@ router.get('/', BlogCinemaController.getAllBlogsAdmin);
 // Tăng lượt thích
 router.post('/like/:blog_id', BlogCinemaController.increaseLike);
 
+// Lấy chi tiết blog theo ID (ai cũng xem) - đặt trước /:slug
+router.get('/:blog_id', BlogCinemaController.getBlogById); // ✅ bỏ auth
+
 // ==========================================================
 // ADMIN ROUTES (cần auth)
 // ==========================================================
-
-// Lấy chi tiết blog theo ID (admin) - đặt trước /:slug
-router.get('/:blog_id', authenticateAdmin, BlogCinemaController.getBlogById);
 
 // Tạo blog mới
 router.post('/', authenticateAdmin, upload.single('blog_image'), BlogCinemaController.createBlog);
