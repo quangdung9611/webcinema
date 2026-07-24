@@ -35,10 +35,11 @@ exports.getAllCoupons = async (req, res) => {
 
 exports.createCoupon = async (req, res) => {
   try {
-    await CouponService.createCoupon(req.body);
+    const couponId = await CouponService.createCoupon(req.body);
     return res.status(201).json({
       success: true,
-      message: "Thêm mã giảm giá thành công!"
+      message: "Thêm mã giảm giá thành công!",
+      data: { coupon_id: couponId }
     });
   } catch (err) {
     console.error("createCoupon error:", err);
@@ -52,8 +53,8 @@ exports.createCoupon = async (req, res) => {
 
 exports.updateCoupon = async (req, res) => {
   try {
-    const { id } = req.params;
-    await CouponService.updateCoupon(id, req.body);
+    const { coupon_id } = req.params; // ✅ sửa
+    await CouponService.updateCoupon(coupon_id, req.body);
     return res.status(200).json({
       success: true,
       message: "Cập nhật mã giảm giá thành công!"
@@ -70,8 +71,8 @@ exports.updateCoupon = async (req, res) => {
 
 exports.deleteCoupon = async (req, res) => {
   try {
-    const { id } = req.params;
-    await CouponService.deleteCoupon(id);
+    const { coupon_id } = req.params; // ✅ sửa
+    await CouponService.deleteCoupon(coupon_id);
     return res.status(200).json({
       success: true,
       message: "Xóa mã giảm giá thành công!"

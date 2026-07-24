@@ -2,7 +2,7 @@ const PromotionService = require("../Services/PromotionService");
 
 exports.getAllPromotions = async (req, res) => {
   try {
-    const data = await PromotionService.getAllPromotions(true); // chỉ active
+    const data = await PromotionService.getAllPromotions(true);
     return res.status(200).json(data);
   } catch (err) {
     return res.status(err.statusCode || 500).json({
@@ -14,7 +14,7 @@ exports.getAllPromotions = async (req, res) => {
 
 exports.getAllPromotionsAdmin = async (req, res) => {
   try {
-    const data = await PromotionService.getAllPromotions(false); // tất cả
+    const data = await PromotionService.getAllPromotions(false);
     return res.status(200).json(data);
   } catch (err) {
     return res.status(err.statusCode || 500).json({
@@ -100,8 +100,8 @@ exports.deletePromotion = async (req, res) => {
 
 exports.increaseLike = async (req, res) => {
   try {
-    const { id } = req.params;
-    await PromotionService.likePromotion(id);
+    const { promotion_id } = req.params; // ✅ sửa
+    await PromotionService.likePromotion(promotion_id);
     return res.status(200).json({
       success: true,
       message: "Like +1 thành công",
@@ -116,8 +116,8 @@ exports.increaseLike = async (req, res) => {
 
 exports.togglePromotionStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const newStatus = await PromotionService.toggleStatus(id);
+    const { promotion_id } = req.params; // ✅ sửa
+    const newStatus = await PromotionService.toggleStatus(promotion_id);
     return res.status(200).json({
       success: true,
       message: "Cập nhật trạng thái thành công",

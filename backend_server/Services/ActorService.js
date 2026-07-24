@@ -1,10 +1,6 @@
 const ActorRepository = require("../Repositories/ActorRepository");
 const { uploadToCloudinary, deleteFromCloudinary } = require("../Middlewares/UploadCloudinary");
 
-/* ==========================================================
-   HELPERS
-========================================================== */
-
 const createSlug = (name) => {
   if (!name) return "";
   return name
@@ -31,97 +27,118 @@ const validateActorData = (data, file, isUpdate = false) => {
 
   if (!name || name.trim() === "") return "Vui lòng nhập tên diễn viên.";
   if (name.trim().length < 2) return "Tên diễn viên phải từ 2 ký tự trở lên.";
-  if (!gender || gender.trim() === "") return "Vui lòng chọn giới tính cho diễn viên.";
-  const validGenders = ["Nam", "Nữ", "Khác"];
-  if (!validGenders.includes(gender)) return "Giới tính không hợp lệ (Nam, Nữ, Khác).";
-  if (!nationality || nationality.trim() === "") return "Vui lòng nhập quốc tịch của diễn viên.";
-  if (!birthday || birthday.trim() === "") return "Vui lòng chọn ngày sinh của diễn viên.";
+  if (!gender || !["Nam", "Nữ", "Khác"].includes(gender)) {
+    return "Giới tính không hợp lệ (Nam, Nữ, Khác).";
+  }
+  if (!nationality || nationality.trim() === "") return "Vui lòng nhập quốc tịch.";
+  if (!birthday) return "Vui lòng chọn ngày sinh.";
   const inputDate = new Date(birthday);
-  const today = new Date();
   if (isNaN(inputDate.getTime())) return "Định dạng ngày sinh không hợp lệ.";
-  if (inputDate > today) return "Ngày sinh không thể lớn hơn ngày hiện tại.";
-  if (!biography || biography.trim() === "") return "Vui lòng điền tiểu sử của diễn viên.";
-  if (!isUpdate && !file) return "Vui lòng upload ảnh đại diện cho diễn viên.";
-
+  if (inputDate > new Date()) return "Ngày sinh không được lớn hơn ngày hiện tại.";
+  if (!biography || biography.trim() === "") return "Vui lòng điền tiểu sử.";
+  if (!isUpdate && !file) return "Vui lòng upload ảnh đại diện.";
   return null;
 };
 
-/* ==========================================================
-   ACTOR SERVICE
-========================================================== */
-
 class ActorService {
-  // ==========================================================
-  // LẤY DANH SÁCH
-  // ==========================================================
   async getAllActors() {
     return await ActorRepository.findAll();
   }
 
-  // ==========================================================
-  // LẤY CHI TIẾT THEO ID
-  // ==========================================================
-  async getActorById(id) {
-    const actor = await ActorRepository.findById(id);
+  async getActorById(actorId) { // ✅ đổi tên tham số
+    const actor = await ActorRepository.findById(actorId);
     if (!actor) {
-      const error = new Error("Không tìm thấy diễn viên.");
-      error.statusCode = 404;
-      throw error;
+      const err = new Error("Không tìm thấy diễn viên");
+      err.statusCode = 404;
+      throw err;
     }
     return actor;
   }
 
-  // ==========================================================
-  // LẤY CHI TIẾT THEO SLUG (kèm phim)
-  // ==========================================================
   async getActorBySlug(slug) {
     const actor = await ActorRepository.findBySlugWithMovies(slug);
     if (!actor) {
-      const error = new Error("Không tìm thấy diễn viên");
-      error.statusCode = 404;
-      throw error;
+      const err = new Error("Không tìm thấy diễn viên");
+      err.statusCode = 404;
+      throw err;
     }
     return actor;
   }
 
-  // ==========================================================
-  // THÊM DIỄN VIÊN (có upload Cloudinary + transaction)
-  // ==========================================================
   async createActor(data, file) {
-    // 1. Validate
-    const errorMsg = validateActorData(data, file, false);
-    if (errorMsg) {
-      const error = new Error(errorMsg);
-      error.statusCode = 400;
-      throw error;
+    const { name, gender, nationality, biography, birthday } = data;
+
+    const error = validateActorData(data, file, false);
+    if (error) {
+      const err = new Error(error);
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const slug = createSlug(name);
+    const dup = await ActorRepository.findByNameOrSlug(name.trim(), slug);
+    if (dup) {
+      const err = new Error("Tên hoặc slug đã tồn tại");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    let actorAvatar = null;
+    if (file) {
+      const result = await uploadToCloudinary(file, "cinema_shop/actors");
+      actorAvatar = result.url;
+    }
+
+    return await ActorRepository.create({
+      name: name.trim(),
+      slug,
+      gender,
+      nationality: nationality.trim(),
+      actor_avatar: actorAvatar,
+      biography: biography.trim(),
+      birthday,
+    });
+  }
+
+  async updateActor(actorId, data, file) { // ✅ đổi tên tham số
+    const existing = await ActorRepository.findById(actorId);
+    if (!existing) {
+      const err = new Error("Diễn viên không tồn tại");
+      err.statusCode = 404;
+      throw err;
     }
 
     const { name, gender, nationality, biography, birthday } = data;
+    const error = validateActorData(data, file, true);
+    if (error) {
+      const err = new Error(error);
+      err.statusCode = 400;
+      throw err;
+    }
 
-    const connection = await ActorRepository.getConnection();
+    const slug = createSlug(name);
+    const dup = await ActorRepository.findByNameOrSlug(name.trim(), slug, actorId);
+    if (dup) {
+      const err = new Error("Tên hoặc slug đã trùng với diễn viên khác");
+      err.statusCode = 400;
+      throw err;
+    }
 
+    const conn = await ActorRepository.getConnection();
     try {
-      await ActorRepository.beginTransaction(connection);
+      await ActorRepository.beginTransaction(conn);
 
-      const slug = createSlug(name);
-
-      // 2. Check duplicate
-      const existed = await ActorRepository.findByNameOrSlug(name.trim(), slug);
-      if (existed) {
-        const error = new Error("Tên hoặc slug của diễn viên này đã tồn tại trong hệ thống.");
-        error.statusCode = 400;
-        throw error;
-      }
-
-      // 3. Upload avatar
-      let actorAvatar = null;
+      let actorAvatar = existing.actor_avatar;
       if (file) {
+        if (existing.actor_avatar) {
+          const publicId = extractPublicId(existing.actor_avatar);
+          await deleteFromCloudinary(publicId);
+        }
         const result = await uploadToCloudinary(file, "cinema_shop/actors");
         actorAvatar = result.url;
       }
 
-      // 4. Insert DB
-      const actorId = await ActorRepository.createWithConnection(connection, {
+      await ActorRepository.updateWithConnection(conn, actorId, {
         name: name.trim(),
         slug,
         gender,
@@ -131,120 +148,41 @@ class ActorService {
         birthday,
       });
 
-      await ActorRepository.commit(connection);
-      return actorId;
-    } catch (error) {
-      await ActorRepository.rollback(connection);
-      throw error;
-    } finally {
-      connection.release();
-    }
-  }
-
-  // ==========================================================
-  // CẬP NHẬT DIỄN VIÊN (có upload Cloudinary + transaction)
-  // ==========================================================
-  async updateActor(id, data, file) {
-    // 1. Kiểm tra tồn tại
-    const existing = await ActorRepository.findById(id);
-    if (!existing) {
-      const error = new Error("Diễn viên không tồn tại.");
-      error.statusCode = 404;
-      throw error;
-    }
-
-    // 2. Validate
-    const errorMsg = validateActorData(data, file, true);
-    if (errorMsg) {
-      const error = new Error(errorMsg);
-      error.statusCode = 400;
-      throw error;
-    }
-
-    const { name, gender, nationality, biography, birthday } = data;
-
-    const connection = await ActorRepository.getConnection();
-
-    try {
-      await ActorRepository.beginTransaction(connection);
-
-      const slug = createSlug(name);
-
-      // 3. Check duplicate (trừ chính nó)
-      const existed = await ActorRepository.findByNameOrSlug(name.trim(), slug, id);
-      if (existed) {
-        const error = new Error("Tên hoặc slug của diễn viên đã bị trùng với một diễn viên khác.");
-        error.statusCode = 400;
-        throw error;
-      }
-
-      // 4. Xử lý avatar
-      let newAvatar = existing.actor_avatar;
-      if (file) {
-        // Xóa ảnh cũ
-        if (existing.actor_avatar) {
-          const publicId = extractPublicId(existing.actor_avatar);
-          await deleteFromCloudinary(publicId);
-        }
-        // Upload ảnh mới
-        const result = await uploadToCloudinary(file, "cinema_shop/actors");
-        newAvatar = result.url;
-      }
-
-      // 5. Update DB
-      await ActorRepository.updateWithConnection(connection, id, {
-        name: name.trim(),
-        slug,
-        gender,
-        nationality: nationality.trim(),
-        actor_avatar: newAvatar,
-        biography: biography.trim(),
-        birthday,
-      });
-
-      await ActorRepository.commit(connection);
+      await ActorRepository.commit(conn);
       return true;
-    } catch (error) {
-      await ActorRepository.rollback(connection);
-      throw error;
+    } catch (err) {
+      await ActorRepository.rollback(conn);
+      throw err;
     } finally {
-      connection.release();
+      conn.release();
     }
   }
 
-  // ==========================================================
-  // XÓA DIỄN VIÊN (có xóa ảnh Cloudinary + transaction)
-  // ==========================================================
-  async deleteActor(id) {
-    // 1. Kiểm tra tồn tại
-    const existing = await ActorRepository.findById(id);
+  async deleteActor(actorId) { // ✅ đổi tên tham số
+    const existing = await ActorRepository.findById(actorId);
     if (!existing) {
-      const error = new Error("Diễn viên không tồn tại.");
-      error.statusCode = 404;
-      throw error;
+      const err = new Error("Diễn viên không tồn tại");
+      err.statusCode = 404;
+      throw err;
     }
 
-    const connection = await ActorRepository.getConnection();
-
+    const conn = await ActorRepository.getConnection();
     try {
-      await ActorRepository.beginTransaction(connection);
+      await ActorRepository.beginTransaction(conn);
 
-      // 2. Xóa ảnh trên Cloudinary
       if (existing.actor_avatar) {
         const publicId = extractPublicId(existing.actor_avatar);
         await deleteFromCloudinary(publicId);
       }
 
-      // 3. Xóa DB record
-      await ActorRepository.deleteWithConnection(connection, id);
-
-      await ActorRepository.commit(connection);
+      await ActorRepository.deleteWithConnection(conn, actorId);
+      await ActorRepository.commit(conn);
       return true;
-    } catch (error) {
-      await ActorRepository.rollback(connection);
-      throw error;
+    } catch (err) {
+      await ActorRepository.rollback(conn);
+      throw err;
     } finally {
-      connection.release();
+      conn.release();
     }
   }
 }

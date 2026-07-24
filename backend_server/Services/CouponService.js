@@ -23,8 +23,8 @@ class CouponService {
     return await CouponRepository.findAll();
   }
 
-  async getCouponById(id) {
-    const coupon = await CouponRepository.findById(id);
+  async getCouponById(couponId) { // ✅ sửa
+    const coupon = await CouponRepository.findById(couponId);
     if (!coupon) {
       const err = new Error("Không tìm thấy mã giảm giá");
       err.statusCode = 404;
@@ -80,8 +80,8 @@ class CouponService {
     return await CouponRepository.create(data);
   }
 
-  async updateCoupon(id, data) {
-    const existing = await CouponRepository.findById(id);
+  async updateCoupon(couponId, data) { // ✅ sửa
+    const existing = await CouponRepository.findById(couponId);
     if (!existing) {
       const err = new Error("Không tìm thấy mã giảm giá");
       err.statusCode = 404;
@@ -96,7 +96,7 @@ class CouponService {
       throw err;
     }
 
-    const duplicate = await CouponRepository.findByCodeExcludingId(data.coupon_code, id);
+    const duplicate = await CouponRepository.findByCodeExcludingId(data.coupon_code, couponId);
     if (duplicate) {
       const err = new Error("Mã giảm giá đã tồn tại");
       err.field = "coupon_code";
@@ -104,7 +104,7 @@ class CouponService {
       throw err;
     }
 
-    const affected = await CouponRepository.update(id, data);
+    const affected = await CouponRepository.update(couponId, data);
     if (affected === 0) {
       const err = new Error("Không thể cập nhật mã giảm giá");
       err.statusCode = 500;
@@ -114,15 +114,15 @@ class CouponService {
     return true;
   }
 
-  async deleteCoupon(id) {
-    const existing = await CouponRepository.findById(id);
+  async deleteCoupon(couponId) { // ✅ sửa
+    const existing = await CouponRepository.findById(couponId);
     if (!existing) {
       const err = new Error("Không tìm thấy mã giảm giá");
       err.statusCode = 404;
       throw err;
     }
 
-    const affected = await CouponRepository.delete(id);
+    const affected = await CouponRepository.delete(couponId);
     if (affected === 0) {
       const err = new Error("Không thể xóa mã giảm giá");
       err.statusCode = 500;

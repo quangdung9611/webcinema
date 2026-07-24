@@ -6,11 +6,11 @@ const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 // PUBLIC (không cần auth)
 router.get("/cinema/:cinema_id", RoomController.getRoomsByCinema);
 
-// ADMIN (cần auth)
+// ADMIN (cần auth) - RESTful chuẩn
 router.get("/", authenticateAdmin, RoomController.getAllRooms);
-router.get("/:id", authenticateAdmin, RoomController.getRoomById);
-router.post("/add", authenticateAdmin, RoomController.createRoom);
-router.put("/update/:id", authenticateAdmin, RoomController.updateRoom);
-router.delete("/delete/:id", authenticateAdmin, RoomController.deleteRoom);
+router.get("/:room_id", authenticateAdmin, RoomController.getRoomById);
+router.post("/", authenticateAdmin, RoomController.createRoom);
+router.put("/:room_id", authenticateAdmin, RoomController.updateRoom);
+router.delete("/:room_id", authenticateAdmin, RoomController.deleteRoom);
 
 module.exports = router;

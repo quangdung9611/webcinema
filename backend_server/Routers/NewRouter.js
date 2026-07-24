@@ -5,35 +5,21 @@ const upload = require("../Middlewares/MulterMiddleware");
 const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
 // ==========================================================
-// PUBLIC ROUTES (Không cần auth - ai cũng xem được)
+// PUBLIC ROUTES (Không cần auth)
 // ==========================================================
 
-// Lấy danh sách tin tức (admin và khách đều xem được)
 router.get("/", NewsController.getAllNewsAdmin);
-
-// Lấy chi tiết tin tức theo ID (public)
-router.get("/detail/:id", NewsController.getNewsById);
-
-// Lấy danh sách tin tức cho client (alias)
 router.get("/all", NewsController.getAllNews);
-
-// Tăng lượt thích (public)
-router.post("/like/:id", NewsController.increaseLike);
-
-// Lấy chi tiết tin tức theo slug (public) - ĐẶT CUỐI CÙNG
-router.get("/:slug", NewsController.getNewsBySlug);
+router.post("/like/:news_id", NewsController.increaseLike);
+router.get("/:slug", NewsController.getNewsBySlug); // ĐẶT CUỐI CÙNG
 
 // ==========================================================
-// ADMIN ROUTES (Chỉ admin mới được thêm/sửa/xóa)
+// ADMIN ROUTES (Chỉ admin)
 // ==========================================================
 
-// Tạo tin tức mới (admin)
+router.get("/:news_id", authenticateAdmin, NewsController.getNewsById);
 router.post("/", authenticateAdmin, upload.single("news_image"), NewsController.createNews);
-
-// Cập nhật tin tức (admin)
-router.put("/update/:news_id", authenticateAdmin, upload.single("news_image"), NewsController.updateNews);
-
-// Xóa tin tức (admin)
-router.delete("/:id", authenticateAdmin, NewsController.deleteNews);
+router.put("/:news_id", authenticateAdmin, upload.single("news_image"), NewsController.updateNews);
+router.delete("/:news_id", authenticateAdmin, NewsController.deleteNews);
 
 module.exports = router;

@@ -7,10 +7,10 @@ const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
 router.get('/', cinemaController.getAllCinemas);
 router.get('/:slug', cinemaController.getCinemaBySlug);
 
-// ADMIN (cần auth)
-router.get('/id/:cinema_id', authenticateAdmin, cinemaController.getCinemaById);
-router.post('/add', authenticateAdmin, cinemaController.createCinema);
-router.put('/update/:cinema_id', authenticateAdmin, cinemaController.updateCinema);
-router.delete('/delete/:cinema_id', authenticateAdmin, cinemaController.deleteCinema);
+// ADMIN (cần auth) - GIỐNG USER/ACTOR
+router.get('/:cinema_id', authenticateAdmin, cinemaController.getCinemaById);
+router.post('/', authenticateAdmin, cinemaController.createCinema);
+router.put('/:cinema_id', authenticateAdmin, cinemaController.updateCinema);
+router.delete('/:cinema_id', authenticateAdmin, cinemaController.deleteCinema);
 
 module.exports = router;

@@ -26,9 +26,9 @@ class ActorRepository {
   }
 
   // ==========================================================
-  // TÌM DIỄN VIÊN THEO ID
+  // TÌM DIỄN VIÊN THEO ACTOR_ID
   // ==========================================================
-  async findById(id) {
+  async findById(actorId) { // ✅ đổi tên tham số
     const [rows] = await db.query(
       `
       SELECT
@@ -46,7 +46,7 @@ class ActorRepository {
       WHERE actor_id = ?
       LIMIT 1
       `,
-      [id]
+      [actorId]
     );
     return rows[0] || null;
   }
@@ -113,10 +113,10 @@ class ActorRepository {
   // ==========================================================
   // LẤY ẢNH CỦA DIỄN VIÊN (để xóa trên Cloudinary)
   // ==========================================================
-  async getAvatar(id) {
+  async getAvatar(actorId) { // ✅ đổi tên tham số
     const [rows] = await db.query(
       `SELECT actor_avatar FROM actors WHERE actor_id = ?`,
-      [id]
+      [actorId]
     );
     return rows[0] || null;
   }
@@ -155,7 +155,7 @@ class ActorRepository {
     return result.insertId;
   }
 
-  async update(id, data) {
+  async update(actorId, data) { // ✅ đổi tên tham số
     const {
       name,
       slug,
@@ -187,16 +187,16 @@ class ActorRepository {
         actor_avatar || null,
         biography.trim(),
         birthday,
-        id,
+        actorId,
       ]
     );
     return result.affectedRows;
   }
 
-  async delete(id) {
+  async delete(actorId) { // ✅ đổi tên tham số
     const [result] = await db.query(
       `DELETE FROM actors WHERE actor_id = ?`,
-      [id]
+      [actorId]
     );
     return result.affectedRows;
   }
@@ -252,7 +252,7 @@ class ActorRepository {
     return result.insertId;
   }
 
-  async updateWithConnection(connection, id, data) {
+  async updateWithConnection(connection, actorId, data) { // ✅ đổi tên tham số
     const {
       name,
       slug,
@@ -284,16 +284,16 @@ class ActorRepository {
         actor_avatar || null,
         biography.trim(),
         birthday,
-        id,
+        actorId,
       ]
     );
     return result.affectedRows;
   }
 
-  async deleteWithConnection(connection, id) {
+  async deleteWithConnection(connection, actorId) { // ✅ đổi tên tham số
     const [result] = await connection.query(
       `DELETE FROM actors WHERE actor_id = ?`,
-      [id]
+      [actorId]
     );
     return result.affectedRows;
   }

@@ -12,7 +12,11 @@ import {
     CircleDollarSign,
     CircleCheck,
     CircleX,
-    UtensilsCrossed
+    UtensilsCrossed,
+    CheckCircle2,
+    XCircle,
+    AlertTriangle,
+    Info
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -21,6 +25,18 @@ import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
 const API_URL = 'https://api.quangdungcinema.id.vn/api/foods';
+
+// Helper lấy URL ảnh (hỗ trợ Cloudinary và local)
+const getImageUrl = (image) => {
+    if (!image) return '';
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+        return image;
+    }
+    return `https://api.quangdungcinema.id.vn/uploads/foods/${image}`;
+};
+
+const DEFAULT_IMAGE =
+    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-food.jpg';
 
 const initialFormData = {
     product_name: '',
@@ -47,12 +63,13 @@ const FoodPage = () => {
         open: false,
         title: '',
         message: '',
+        type: 'default',
         onConfirm: null,
         onCancel: null
     });
 
-    const showAlert = (title, message, onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, onConfirm, onCancel });
+    const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
+        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
 
     const closeAlert = () => {
@@ -66,7 +83,7 @@ const FoodPage = () => {
             const res = await axios.get(API_URL);
             setFoods(res.data.data || []);
         } catch (error) {
-            showAlert('Lỗi', 'Không thể tải danh sách đồ ăn.');
+            showAlert('Lỗi', 'Không thể tải danh sách đồ ăn.', 'error');
         } finally {
             setLoading(false);
         }
@@ -125,11 +142,7 @@ const FoodPage = () => {
             category: food.category || 'Popcorn',
             status: String(food.status ?? '1')
         });
-        setPreview(
-            food.food_image
-                ? `https://api.quangdungcinema.id.vn/uploads/foods/${food.food_image}`
-                : null
-        );
+        setPreview(getImageUrl(food.food_image) || DEFAULT_IMAGE);
         setFoodImage(null);
         setFormErrors({});
         setIsFormOpen(true);
@@ -175,21 +188,28 @@ const FoodPage = () => {
             }
 
             if (editingFood) {
-                await axios.put(`${API_URL}/update/${editingFood.product_id}`, submitData, {
+                // ✅ Sửa: bỏ /update, dùng RESTful
+                await axios.put(`${API_URL}/${editingFood.product_id}`, submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                showAlert('Thành công', 'Cập nhật sản phẩm thành công.');
+                showAlert('Thành công', 'Cập nhật sản phẩm thành công.', 'success');
             } else {
-                await axios.post(`${API_URL}/create`, submitData, {
+                // ✅ Sửa: bỏ /create
+                await axios.post(API_URL, submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                showAlert('Thành công', 'Thêm sản phẩm thành công.');
+                showAlert('Thành công', 'Thêm sản phẩm thành công.', 'success');
             }
 
             setIsFormOpen(false);
             fetchFoods();
         } catch (error) {
-            showAlert('Lỗi', error.response?.data?.message || 'Đã xảy ra lỗi hệ thống.');
+            const backendError = error.response?.data?.message || 'Đã xảy ra lỗi hệ thống.';
+            if (error.response?.data?.field) {
+                setFormErrors({ [error.response.data.field]: backendError });
+                return;
+            }
+            showAlert('Lỗi', backendError, 'error');
         } finally {
             setSubmitLoading(false);
         }
@@ -200,13 +220,16 @@ const FoodPage = () => {
         showAlert(
             'Xác nhận xóa',
             `Bạn có chắc muốn xóa "${food.product_name}"?`,
+            'warning',
             async () => {
                 try {
-                    await axios.delete(`${API_URL}/delete/${food.product_id}`);
+                    // ✅ Sửa: bỏ /delete
+                    await axios.delete(`${API_URL}/${food.product_id}`);
                     closeAlert();
                     fetchFoods();
+                    showAlert('Thành công', 'Xóa sản phẩm thành công.', 'success');
                 } catch (error) {
-                    showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa sản phẩm.');
+                    showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa sản phẩm.', 'error');
                 }
             },
             closeAlert
@@ -234,7 +257,7 @@ const FoodPage = () => {
             key: 'food_image',
             render: (row) => (
                 <img
-                    src={`https://api.quangdungcinema.id.vn/uploads/foods/${row.food_image}`}
+                    src={getImageUrl(row.food_image) || DEFAULT_IMAGE}
                     alt={row.product_name}
                     style={{
                         width: '72px',
@@ -242,6 +265,10 @@ const FoodPage = () => {
                         objectFit: 'cover',
                         borderRadius: '14px',
                         border: '2px solid rgba(255,255,255,0.08)'
+                    }}
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = DEFAULT_IMAGE;
                     }}
                 />
             )
@@ -361,6 +388,16 @@ const FoodPage = () => {
         }
     ];
 
+    // Alert icon
+    const renderAlertIcon = () => {
+        switch (alertModal.type) {
+            case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
+            case 'error': return <XCircle size={58} color="#ef4444" />;
+            case 'warning': return <AlertTriangle size={58} color="#f59e0b" />;
+            default: return <Info size={58} color="#3b82f6" />;
+        }
+    };
+
     // Render
     return (
         <>
@@ -400,6 +437,10 @@ const FoodPage = () => {
                                 borderRadius: '16px',
                                 border: '3px solid rgba(255,255,255,0.08)'
                             }}
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = DEFAULT_IMAGE;
+                            }}
                         />
                     </div>
                 )}
@@ -418,8 +459,13 @@ const FoodPage = () => {
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
+                type={alertModal.type}
+                size="sm"
             >
                 <div className="admin-alert-content">
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
+                        {renderAlertIcon()}
+                    </div>
                     <p>{alertModal.message}</p>
                     <div className="admin-alert-actions">
                         {alertModal.onCancel && (

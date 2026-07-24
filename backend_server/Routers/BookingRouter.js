@@ -5,8 +5,8 @@ const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
 // Tất cả đều cần admin
 router.get("/", authenticateAdmin, bookingController.getAllBookings);
-router.get("/detail/:id", authenticateAdmin, bookingController.getBookingDetails);
-router.put("/update/:id/status", authenticateAdmin, bookingController.updateBookingStatus);
-router.delete("/delete/:id", authenticateAdmin, bookingController.deleteBooking);
+router.get("/detail/:booking_id", authenticateAdmin, bookingController.getBookingDetails);
+router.put("/update/:booking_id/status", authenticateAdmin, bookingController.updateBookingStatus);
+router.delete("/delete/:booking_id", authenticateAdmin, bookingController.deleteBooking);
 
 module.exports = router;

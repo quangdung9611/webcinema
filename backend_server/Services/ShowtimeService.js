@@ -18,8 +18,8 @@ class ShowtimeService {
     return await ShowtimeRepository.findAll();
   }
 
-  async getShowtimeDetail(id) {
-    const showtime = await ShowtimeRepository.findById(id);
+  async getShowtimeDetail(showtimeId) {
+    const showtime = await ShowtimeRepository.findById(showtimeId);
     if (!showtime) {
       const err = new Error("Không tìm thấy suất chiếu");
       err.statusCode = 404;
@@ -71,10 +71,10 @@ class ShowtimeService {
     });
   }
 
-  async updateShowtime(id, data) {
+  async updateShowtime(showtimeId, data) {
     let { movie_id, cinema_id, room_id, start_time } = data;
 
-    const existing = await ShowtimeRepository.findById(id);
+    const existing = await ShowtimeRepository.findById(showtimeId);
     if (!existing) {
       const err = new Error("Không tìm thấy suất chiếu");
       err.statusCode = 404;
@@ -101,7 +101,7 @@ class ShowtimeService {
       throw err;
     }
 
-    const conflict = await ShowtimeRepository.findConflict(room_id, start_time, id);
+    const conflict = await ShowtimeRepository.findConflict(room_id, start_time, showtimeId);
     if (conflict) {
       const err = new Error("Phòng này đã có lịch chiếu giờ đó");
       err.statusCode = 400;
@@ -109,7 +109,7 @@ class ShowtimeService {
       throw err;
     }
 
-    const affected = await ShowtimeRepository.update(id, {
+    const affected = await ShowtimeRepository.update(showtimeId, {
       movie_id,
       cinema_id,
       room_id,
@@ -125,22 +125,22 @@ class ShowtimeService {
     return true;
   }
 
-  async deleteShowtime(id) {
-    const existing = await ShowtimeRepository.findById(id);
+  async deleteShowtime(showtimeId) {
+    const existing = await ShowtimeRepository.findById(showtimeId);
     if (!existing) {
       const err = new Error("Không tìm thấy suất chiếu");
       err.statusCode = 404;
       throw err;
     }
 
-    const hasTickets = await ShowtimeRepository.hasTickets(id);
+    const hasTickets = await ShowtimeRepository.hasTickets(showtimeId);
     if (hasTickets) {
       const err = new Error("Suất chiếu này đã có vé bán, không thể xóa");
       err.statusCode = 400;
       throw err;
     }
 
-    const affected = await ShowtimeRepository.delete(id);
+    const affected = await ShowtimeRepository.delete(showtimeId);
     if (affected === 0) {
       const err = new Error("Không thể xóa suất chiếu");
       err.statusCode = 500;

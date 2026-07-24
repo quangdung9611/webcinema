@@ -20,7 +20,7 @@ class ShowtimeRepository {
     return rows;
   }
 
-  async findById(id) {
+  async findById(showtimeId) {
     const [rows] = await db.query(`
       SELECT
         s.showtime_id,
@@ -40,7 +40,7 @@ class ShowtimeRepository {
       JOIN rooms r ON s.room_id = r.room_id
       JOIN cinemas c ON s.cinema_id = c.cinema_id
       WHERE s.showtime_id = ?
-    `, [id]);
+    `, [showtimeId]);
     return rows[0] || null;
   }
 
@@ -61,7 +61,7 @@ class ShowtimeRepository {
     return rows;
   }
 
-  async findConflict(roomId, startTime, excludeId = null) {
+  async findConflict(roomId, startTime, excludeShowtimeId = null) {
     let sql = `
       SELECT showtime_id
       FROM showtimes
@@ -69,9 +69,9 @@ class ShowtimeRepository {
       AND DATE_FORMAT(start_time, '%Y-%m-%d %H:%i') = ?
     `;
     const params = [roomId, startTime];
-    if (excludeId) {
+    if (excludeShowtimeId) {
       sql += ` AND showtime_id != ?`;
-      params.push(excludeId);
+      params.push(excludeShowtimeId);
     }
     const [rows] = await db.query(sql, params);
     return rows[0] || null;
@@ -176,21 +176,21 @@ class ShowtimeRepository {
     return result.insertId;
   }
 
-  async update(id, data) {
+  async update(showtimeId, data) {
     const { movie_id, cinema_id, room_id, start_time } = data;
     const [result] = await db.query(`
       UPDATE showtimes
       SET movie_id = ?, cinema_id = ?, room_id = ?,
           start_time = STR_TO_DATE(?, '%Y-%m-%d %H:%i')
       WHERE showtime_id = ?
-    `, [movie_id, cinema_id, room_id, start_time, id]);
+    `, [movie_id, cinema_id, room_id, start_time, showtimeId]);
     return result.affectedRows;
   }
 
-  async delete(id) {
+  async delete(showtimeId) {
     const [result] = await db.query(
       `DELETE FROM showtimes WHERE showtime_id = ?`,
-      [id]
+      [showtimeId]
     );
     return result.affectedRows;
   }

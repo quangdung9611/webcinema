@@ -36,8 +36,8 @@ class BlogCinemaService {
     return await BlogCinemaRepository.findAll(onlyActive);
   }
 
-  async getBlogById(id) {
-    const blog = await BlogCinemaRepository.findById(id);
+  async getBlogById(blogId) { // ✅ sửa tham số
+    const blog = await BlogCinemaRepository.findById(blogId);
     if (!blog) { const err = new Error("Không tìm thấy blog"); err.statusCode = 404; throw err; }
     return blog;
   }
@@ -45,15 +45,14 @@ class BlogCinemaService {
   async getBlogBySlug(slug) {
     const blog = await BlogCinemaRepository.findBySlug(slug);
     if (!blog) { const err = new Error("Không tìm thấy blog"); err.statusCode = 404; throw err; }
-    // Tăng view
     await BlogCinemaRepository.incrementViews(blog.blog_id);
     return blog;
   }
 
-  async likeBlog(id) {
-    const blog = await BlogCinemaRepository.findById(id);
+  async likeBlog(blogId) { // ✅ sửa tham số
+    const blog = await BlogCinemaRepository.findById(blogId);
     if (!blog) { const err = new Error("Không tìm thấy blog"); err.statusCode = 404; throw err; }
-    await BlogCinemaRepository.incrementLikes(id);
+    await BlogCinemaRepository.incrementLikes(blogId);
     return true;
   }
 
@@ -89,19 +88,19 @@ class BlogCinemaService {
     }
   }
 
-  async updateBlog(id, data, file) {
+  async updateBlog(blogId, data, file) { // ✅ sửa tham số
     const { title, description, likes, is_active } = data;
     const errorMsg = validateBlogData(data, file, true);
     if (errorMsg) { const err = new Error(errorMsg); err.statusCode = 400; throw err; }
 
-    const existing = await BlogCinemaRepository.findById(id);
+    const existing = await BlogCinemaRepository.findById(blogId);
     if (!existing) { const err = new Error("Blog không tồn tại"); err.statusCode = 404; throw err; }
 
     const connection = await BlogCinemaRepository.getConnection();
     try {
       await BlogCinemaRepository.beginTransaction(connection);
       const slug = createSlug(title);
-      const dup = await BlogCinemaRepository.findByTitleOrSlug(title.trim(), slug, id);
+      const dup = await BlogCinemaRepository.findByTitleOrSlug(title.trim(), slug, blogId);
       if (dup) { throw Object.assign(new Error("Tiêu đề hoặc slug đã trùng với blog khác"), { statusCode: 400 }); }
 
       let blogImage = existing.blog_image;
@@ -114,7 +113,7 @@ class BlogCinemaService {
         blogImage = result.url;
       }
 
-      await BlogCinemaRepository.update(id, {
+      await BlogCinemaRepository.update(blogId, {
         title: title.trim(), slug, description: description.trim(),
         blog_image: blogImage, likes: parseInt(likes,10)||0,
         is_active: (is_active !== undefined) ? parseInt(is_active,10) : existing.is_active
@@ -129,8 +128,8 @@ class BlogCinemaService {
     }
   }
 
-  async deleteBlog(id) {
-    const blog = await BlogCinemaRepository.getImage(id);
+  async deleteBlog(blogId) { // ✅ sửa tham số
+    const blog = await BlogCinemaRepository.getImage(blogId);
     if (!blog) { const err = new Error("Blog không tồn tại"); err.statusCode = 404; throw err; }
 
     const connection = await BlogCinemaRepository.getConnection();
@@ -140,7 +139,7 @@ class BlogCinemaService {
         const publicId = extractPublicId(blog.blog_image);
         await deleteFromCloudinary(publicId);
       }
-      await BlogCinemaRepository.delete(id);
+      await BlogCinemaRepository.delete(blogId);
       await BlogCinemaRepository.commit(connection);
       return true;
     } catch (error) {

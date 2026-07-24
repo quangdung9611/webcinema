@@ -88,10 +88,11 @@ class BookingRepository {
     );
   }
 
-  async delete(id) {
+  // ✅ sửa tham số từ id → bookingId
+  async delete(bookingId) {
     const [result] = await db.execute(
       `DELETE FROM bookings WHERE booking_id = ?`,
-      [id]
+      [bookingId]
     );
     return result.affectedRows;
   }

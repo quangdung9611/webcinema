@@ -28,8 +28,8 @@ exports.getAllNewsAdmin = async (req, res) => {
 
 exports.getNewsById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const data = await NewsService.getNewsById(id);
+    const { news_id } = req.params;
+    const data = await NewsService.getNewsById(news_id);
     return res.status(200).json(data);
   } catch (err) {
     console.error("Get news by id error:", err);
@@ -90,8 +90,8 @@ exports.updateNews = async (req, res) => {
 
 exports.deleteNews = async (req, res) => {
   try {
-    const { id } = req.params;
-    await NewsService.deleteNews(id);
+    const { news_id } = req.params;
+    await NewsService.deleteNews(news_id);
     return res.status(200).json({
       success: true,
       message: "Đã xóa bài viết thành công.",
@@ -107,8 +107,8 @@ exports.deleteNews = async (req, res) => {
 
 exports.increaseLike = async (req, res) => {
   try {
-    const { id } = req.params;
-    await NewsService.likeNews(id);
+    const { news_id } = req.params;
+    await NewsService.likeNews(news_id);
     return res.status(200).json({
       success: true,
       message: "Like +1 thành công",

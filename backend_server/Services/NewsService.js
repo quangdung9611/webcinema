@@ -41,15 +41,15 @@ const validateNews = (data, file, isUpdate = false) => {
 
 class NewsService {
   async getAllNews() {
-    return await NewsRepository.findAll(true); // chỉ lấy tin đang hoạt động nếu có
+    return await NewsRepository.findAll(true);
   }
 
   async getAllNewsAdmin() {
     return await NewsRepository.findAllAdmin();
   }
 
-  async getNewsById(id) {
-    const news = await NewsRepository.findById(id);
+  async getNewsById(newsId) {
+    const news = await NewsRepository.findById(newsId);
     if (!news) {
       const err = new Error("Không tìm thấy bài viết");
       err.statusCode = 404;
@@ -65,7 +65,6 @@ class NewsService {
       err.statusCode = 404;
       throw err;
     }
-    // Tăng view
     await NewsRepository.incrementViews(news.news_id);
     return news;
   }
@@ -103,8 +102,8 @@ class NewsService {
     });
   }
 
-  async updateNews(id, data, file) {
-    const existing = await NewsRepository.findById(id);
+  async updateNews(newsId, data, file) {
+    const existing = await NewsRepository.findById(newsId);
     if (!existing) {
       const err = new Error("Bài viết không tồn tại");
       err.statusCode = 404;
@@ -121,7 +120,7 @@ class NewsService {
     }
 
     const slug = createSlug(title);
-    const dup = await NewsRepository.findByTitleOrSlug(title.trim(), slug, id);
+    const dup = await NewsRepository.findByTitleOrSlug(title.trim(), slug, newsId);
     if (dup) {
       const err = new Error("Tiêu đề hoặc slug đã tồn tại");
       err.statusCode = 400;
@@ -142,7 +141,7 @@ class NewsService {
         news_image = result.url;
       }
 
-      await NewsRepository.update(conn, id, {
+      await NewsRepository.update(conn, newsId, {
         title: title.trim(),
         slug,
         content: content.trim(),
@@ -160,8 +159,8 @@ class NewsService {
     }
   }
 
-  async deleteNews(id) {
-    const existing = await NewsRepository.findById(id);
+  async deleteNews(newsId) {
+    const existing = await NewsRepository.findById(newsId);
     if (!existing) {
       const err = new Error("Bài viết không tồn tại");
       err.statusCode = 404;
@@ -177,7 +176,7 @@ class NewsService {
         await deleteFromCloudinary(publicId);
       }
 
-      await NewsRepository.delete(conn, id);
+      await NewsRepository.delete(conn, newsId);
       await NewsRepository.commit(conn);
       return true;
     } catch (err) {
@@ -188,8 +187,8 @@ class NewsService {
     }
   }
 
-  async likeNews(id) {
-    const affected = await NewsRepository.incrementLikes(id);
+  async likeNews(newsId) {
+    const affected = await NewsRepository.incrementLikes(newsId);
     if (affected === 0) {
       const err = new Error("Không tìm thấy bài viết");
       err.statusCode = 404;

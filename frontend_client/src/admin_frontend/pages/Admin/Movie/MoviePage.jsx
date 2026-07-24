@@ -186,13 +186,16 @@ const MoviePage = () => {
             if (movieBackdropFile) {
                 submitData.append('movie_backdrop', movieBackdropFile);
             }
+
             if (editingMovie) {
-                await axios.put(`${API_URL}/update/${editingMovie.movie_id}`, submitData, {
+                // ✅ Sửa: PUT /:movie_id (bỏ /update)
+                await axios.put(`${API_URL}/${editingMovie.movie_id}`, submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 showAlert('Thành công', 'Cập nhật phim thành công.', 'success');
             } else {
-                await axios.post(`${API_URL}/add`, submitData, {
+                // ✅ Sửa: POST / (bỏ /add)
+                await axios.post(API_URL, submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 showAlert('Thành công', 'Thêm phim thành công.', 'success');
@@ -213,6 +216,7 @@ const MoviePage = () => {
             'warning',
             async () => {
                 try {
+                    // ✅ Sửa: DELETE /:movie_id (đã đúng, không prefix admin)
                     await axios.delete(`${API_URL}/${movie.movie_id}`);
                     closeAlert();
                     fetchMovies();

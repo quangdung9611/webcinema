@@ -11,10 +11,10 @@ class CinemaRepository {
     return rows;
   }
 
-  async findById(id) {
+  async findById(cinemaId) {
     const [rows] = await db.query(
       `SELECT * FROM cinemas WHERE cinema_id = ? LIMIT 1`,
-      [id]
+      [cinemaId]
     );
     return rows[0] || null;
   }
@@ -27,23 +27,23 @@ class CinemaRepository {
     return rows[0] || null;
   }
 
-  async findByName(name, excludeId = null) {
+  async findByName(name, excludeCinemaId = null) {
     let sql = `SELECT cinema_id FROM cinemas WHERE cinema_name = ?`;
     const params = [name.trim()];
-    if (excludeId) {
+    if (excludeCinemaId) {
       sql += ` AND cinema_id != ?`;
-      params.push(excludeId);
+      params.push(excludeCinemaId);
     }
     const [rows] = await db.query(sql, params);
     return rows[0] || null;
   }
 
-  async findByHotline(hotline, excludeId = null) {
+  async findByHotline(hotline, excludeCinemaId = null) {
     let sql = `SELECT cinema_id FROM cinemas WHERE hotline = ?`;
     const params = [hotline];
-    if (excludeId) {
+    if (excludeCinemaId) {
       sql += ` AND cinema_id != ?`;
-      params.push(excludeId);
+      params.push(excludeCinemaId);
     }
     const [rows] = await db.query(sql, params);
     return rows[0] || null;
@@ -66,7 +66,7 @@ class CinemaRepository {
     return result.insertId;
   }
 
-  async update(id, data) {
+  async update(cinemaId, data) {
     const { cinema_name, slug, address, city, hotline, map_link } = data;
     const [result] = await db.query(
       `UPDATE cinemas
@@ -79,16 +79,16 @@ class CinemaRepository {
         city.trim(),
         hotline.trim(),
         map_link.trim(),
-        id
+        cinemaId
       ]
     );
     return result.affectedRows;
   }
 
-  async delete(id) {
+  async delete(cinemaId) {
     const [result] = await db.query(
       `DELETE FROM cinemas WHERE cinema_id = ?`,
-      [id]
+      [cinemaId]
     );
     return result.affectedRows;
   }

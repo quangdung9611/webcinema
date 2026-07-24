@@ -24,38 +24,27 @@ router.get("/category/:statusSlug", MovieController.getMoviesByStatusSlug);
 // Danh sách tất cả phim
 router.get("/", MovieController.getAllMovies);
 
-// Lấy chi tiết phim theo slug (trang user) - ĐẶT CUỐI CÙNG
-router.get("/:slug", MovieController.getMovieBySlug);
-
 /* ==========================================================
-   USER ROUTES (Cần đăng nhập) - Like / View
+   ADMIN ROUTES (Cần quyền admin) - RESTful chuẩn
 ========================================================== */
 
-// Có thể dùng authenticateUser để tracking user sau này
-router.patch("/like/:id", authenticateUser, MovieController.likeMovie);
-router.patch("/view/:id", authenticateUser, MovieController.incrementViews);
-
-/* ==========================================================
-   ADMIN ROUTES (Cần quyền admin)
-========================================================== */
-
-// Lấy chi tiết phim theo ID (dùng để edit)
-router.get("/admin/detail/:id", authenticateAdmin, MovieController.getMovieById);
+// Lấy chi tiết phim theo ID (admin)
+router.get("/:movie_id", authenticateAdmin, MovieController.getMovieById);
 
 // Thêm phim
 router.post(
-  "/admin",
+  "/",
   authenticateAdmin,
   upload.fields([
     { name: "movie_poster", maxCount: 1 },
     { name: "movie_backdrop", maxCount: 1 },
   ]),
-    MovieController.createMovie
+  MovieController.createMovie
 );
 
 // Cập nhật phim
 router.put(
-  "/admin/:id",
+  "/:movie_id",
   authenticateAdmin,
   upload.fields([
     { name: "movie_poster", maxCount: 1 },
@@ -65,6 +54,21 @@ router.put(
 );
 
 // Xóa phim
-router.delete("/admin/:id", authenticateAdmin, MovieController.deleteMovie);
+router.delete("/:movie_id", authenticateAdmin, MovieController.deleteMovie);
+
+/* ==========================================================
+   USER ROUTES (Cần đăng nhập) - Like / View
+========================================================== */
+
+router.patch("/like/:movie_id", authenticateUser, MovieController.likeMovie);
+router.patch("/view/:movie_id", authenticateUser, MovieController.incrementViews);
+
+/* ==========================================================
+   PUBLIC DETAIL ROUTE (ĐẶT CUỐI CÙNG)
+========================================================== */
+
+// Lấy chi tiết phim theo slug (trang user) - ĐẶT CUỐI CÙNG
+// để tránh xung đột với /:movie_id (vì movie_id là số, slug là chữ)
+router.get("/:slug", MovieController.getMovieBySlug);
 
 module.exports = router;

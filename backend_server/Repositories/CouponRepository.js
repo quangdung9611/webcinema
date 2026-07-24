@@ -10,10 +10,10 @@ class CouponRepository {
     return rows;
   }
 
-  async findById(id) {
+  async findById(couponId) { // ✅ sửa
     const [rows] = await db.query(
       `SELECT * FROM coupons WHERE coupon_id = ? LIMIT 1`,
-      [id]
+      [couponId]
     );
     return rows[0] || null;
   }
@@ -37,11 +37,11 @@ class CouponRepository {
     return rows[0] || null;
   }
 
-  async findByCodeExcludingId(code, excludeId) {
+  async findByCodeExcludingId(code, excludeCouponId) { // ✅ sửa
     const [rows] = await db.query(
       `SELECT coupon_id FROM coupons 
        WHERE LOWER(coupon_code) = LOWER(?) AND coupon_id != ?`,
-      [code.trim(), excludeId]
+      [code.trim(), excludeCouponId]
     );
     return rows[0] || null;
   }
@@ -56,21 +56,21 @@ class CouponRepository {
     return result.insertId;
   }
 
-  async update(id, data) {
+  async update(couponId, data) { // ✅ sửa
     const { coupon_code, discount_value, expiry_date } = data;
     const [result] = await db.query(
       `UPDATE coupons 
        SET coupon_code = ?, discount_value = ?, expiry_date = ?
        WHERE coupon_id = ?`,
-      [coupon_code.trim().toUpperCase(), discount_value, expiry_date, id]
+      [coupon_code.trim().toUpperCase(), discount_value, expiry_date, couponId]
     );
     return result.affectedRows;
   }
 
-  async delete(id) {
+  async delete(couponId) { // ✅ sửa
     const [result] = await db.query(
       `DELETE FROM coupons WHERE coupon_id = ?`,
-      [id]
+      [couponId]
     );
     return result.affectedRows;
   }

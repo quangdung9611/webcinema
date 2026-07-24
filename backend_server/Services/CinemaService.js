@@ -39,8 +39,8 @@ class CinemaService {
     return await CinemaRepository.findAll();
   }
 
-  async getCinemaById(id) {
-    const cinema = await CinemaRepository.findById(id);
+  async getCinemaById(cinemaId) {
+    const cinema = await CinemaRepository.findById(cinemaId);
     if (!cinema) {
       const err = new Error("Không tìm thấy rạp");
       err.statusCode = 404;
@@ -56,9 +56,7 @@ class CinemaService {
       err.statusCode = 404;
       throw err;
     }
-    // Lấy thêm danh sách phim đang chiếu tại rạp
     const movies = await CinemaRepository.getMoviesByCinema(cinema.cinema_id);
-    // Nhóm phim theo movie_id
     const map = {};
     movies.forEach(row => {
       if (!map[row.movie_id]) {
@@ -92,7 +90,6 @@ class CinemaService {
 
     const name = cinema_name.trim();
 
-    // Check duplicate name
     const dupName = await CinemaRepository.findByName(name);
     if (dupName) {
       const err = new Error("Tên rạp này đã tồn tại");
@@ -101,7 +98,6 @@ class CinemaService {
       throw err;
     }
 
-    // Check duplicate hotline
     const dupHotline = await CinemaRepository.findByHotline(hotline);
     if (dupHotline) {
       const err = new Error("Số hotline này đã tồn tại");
@@ -122,8 +118,8 @@ class CinemaService {
     });
   }
 
-  async updateCinema(id, data) {
-    const existing = await CinemaRepository.findById(id);
+  async updateCinema(cinemaId, data) {
+    const existing = await CinemaRepository.findById(cinemaId);
     if (!existing) {
       const err = new Error("Rạp không tồn tại");
       err.statusCode = 404;
@@ -141,8 +137,7 @@ class CinemaService {
 
     const name = cinema_name.trim();
 
-    // Check duplicate name (exclude self)
-    const dupName = await CinemaRepository.findByName(name, id);
+    const dupName = await CinemaRepository.findByName(name, cinemaId);
     if (dupName) {
       const err = new Error("Tên rạp này đã được sử dụng");
       err.statusCode = 400;
@@ -150,7 +145,7 @@ class CinemaService {
       throw err;
     }
 
-    const dupHotline = await CinemaRepository.findByHotline(hotline, id);
+    const dupHotline = await CinemaRepository.findByHotline(hotline, cinemaId);
     if (dupHotline) {
       const err = new Error("Số hotline đã được sử dụng");
       err.statusCode = 400;
@@ -160,7 +155,7 @@ class CinemaService {
 
     const slug = createSlug(name);
 
-    await CinemaRepository.update(id, {
+    await CinemaRepository.update(cinemaId, {
       cinema_name: name,
       slug,
       address,
@@ -172,14 +167,14 @@ class CinemaService {
     return true;
   }
 
-  async deleteCinema(id) {
-    const existing = await CinemaRepository.findById(id);
+  async deleteCinema(cinemaId) {
+    const existing = await CinemaRepository.findById(cinemaId);
     if (!existing) {
       const err = new Error("Không tìm thấy rạp");
       err.statusCode = 404;
       throw err;
     }
-    const affected = await CinemaRepository.delete(id);
+    const affected = await CinemaRepository.delete(cinemaId);
     if (affected === 0) {
       const err = new Error("Không thể xóa rạp (có thể đang liên kết dữ liệu)");
       err.statusCode = 400;

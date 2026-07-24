@@ -244,7 +244,7 @@ const PromotionPage = () => {
             };
 
             if (editingPromotion) {
-                await axios.put(`${API_URL}/update/${editingPromotion.promotion_id}`, submitData, config);
+              await axios.put(`${API_URL}/${editingPromotion.promotion_id}`, submitData, config);
                 showAlert('Thành công', 'Cập nhật khuyến mãi thành công.', 'success');
             } else {
                 await axios.post(API_URL, submitData, config);

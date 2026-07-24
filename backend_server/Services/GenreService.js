@@ -32,8 +32,8 @@ class GenreService {
     return await GenreRepository.findAll();
   }
 
-  async getGenreById(id) {
-    const genre = await GenreRepository.findById(id);
+  async getGenreById(genreId) { // ✅ sửa
+    const genre = await GenreRepository.findById(genreId);
     if (!genre) {
       const err = new Error("Không tìm thấy thể loại");
       err.statusCode = 404;
@@ -65,10 +65,10 @@ class GenreService {
     return await GenreRepository.create({ genre_name: name, slug });
   }
 
-  async updateGenre(id, data) {
+  async updateGenre(genreId, data) { // ✅ sửa
     const { genre_name, slug: providedSlug } = data;
 
-    const existing = await GenreRepository.findById(id);
+    const existing = await GenreRepository.findById(genreId);
     if (!existing) {
       const err = new Error("Không tìm thấy thể loại");
       err.statusCode = 404;
@@ -85,14 +85,14 @@ class GenreService {
     const name = genre_name.trim();
     const slug = providedSlug || createSlug(name);
 
-    const dup = await GenreRepository.findByNameWithSlug(name, slug, id);
+    const dup = await GenreRepository.findByNameWithSlug(name, slug, genreId);
     if (dup) {
       const err = new Error("Tên thể loại này đã tồn tại ở mục khác.");
       err.statusCode = 400;
       throw err;
     }
 
-    const affected = await GenreRepository.update(id, { genre_name: name, slug });
+    const affected = await GenreRepository.update(genreId, { genre_name: name, slug });
     if (affected === 0) {
       const err = new Error("Không thể cập nhật thể loại");
       err.statusCode = 500;
@@ -102,22 +102,22 @@ class GenreService {
     return true;
   }
 
-  async deleteGenre(id) {
-    const existing = await GenreRepository.findById(id);
+  async deleteGenre(genreId) { // ✅ sửa
+    const existing = await GenreRepository.findById(genreId);
     if (!existing) {
       const err = new Error("Không tìm thấy thể loại");
       err.statusCode = 404;
       throw err;
     }
 
-    const linked = await GenreRepository.checkLinked(id);
+    const linked = await GenreRepository.checkLinked(genreId);
     if (linked) {
       const err = new Error("Không thể xóa vì thể loại đang được sử dụng trong phim.");
       err.statusCode = 400;
       throw err;
     }
 
-    const affected = await GenreRepository.delete(id);
+    const affected = await GenreRepository.delete(genreId);
     if (affected === 0) {
       const err = new Error("Không thể xóa thể loại");
       err.statusCode = 500;

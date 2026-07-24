@@ -250,7 +250,8 @@ const BlogCinemaPage = () => {
             };
 
             if (editingBlog) {
-                await axios.put(`${API_URL}/update/${editingBlog.blog_id}`, submitData, config);
+                // ✅ SỬA: bỏ /update/ để khớp với router mới
+                await axios.put(`${API_URL}/${editingBlog.blog_id}`, submitData, config);
                 showAlert('Thành công', 'Cập nhật blog thành công.', 'success');
             } else {
                 await axios.post(API_URL, submitData, config);

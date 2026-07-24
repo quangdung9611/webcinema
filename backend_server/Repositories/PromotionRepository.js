@@ -15,10 +15,10 @@ class PromotionRepository {
     return rows;
   }
 
-  async findById(id) {
+  async findById(promotionId) {
     const [rows] = await db.query(
       `SELECT * FROM promotions WHERE promotion_id = ? LIMIT 1`,
-      [id]
+      [promotionId]
     );
     return rows[0] || null;
   }
@@ -31,12 +31,12 @@ class PromotionRepository {
     return rows[0] || null;
   }
 
-  async findByTitleOrSlug(title, slug, excludeId = null) {
+  async findByTitleOrSlug(title, slug, excludePromotionId = null) {
     let sql = `SELECT promotion_id FROM promotions WHERE (title = ? OR slug = ?)`;
     const params = [title.trim(), slug];
-    if (excludeId) {
+    if (excludePromotionId) {
       sql += ` AND promotion_id != ?`;
-      params.push(excludeId);
+      params.push(excludePromotionId);
     }
     const [rows] = await db.query(sql, params);
     return rows[0] || null;
@@ -62,7 +62,7 @@ class PromotionRepository {
     return result.insertId;
   }
 
-  async update(id, data) {
+  async update(promotionId, data) {
     const {
       title, slug, description, promotion_image,
       likes, is_active
@@ -79,54 +79,54 @@ class PromotionRepository {
         promotion_image || null,
         parseInt(likes, 10) || 0,
         is_active,
-        id
+        promotionId
       ]
     );
     return result.affectedRows;
   }
 
-  async delete(id) {
+  async delete(promotionId) {
     const [result] = await db.query(
       `DELETE FROM promotions WHERE promotion_id = ?`,
-      [id]
+      [promotionId]
     );
     return result.affectedRows;
   }
 
-  async getImage(id) {
+  async getImage(promotionId) {
     const [rows] = await db.query(
       `SELECT promotion_image FROM promotions WHERE promotion_id = ?`,
-      [id]
+      [promotionId]
     );
     return rows[0] || null;
   }
 
-  async incrementLikes(id) {
+  async incrementLikes(promotionId) {
     const [result] = await db.query(
       `UPDATE promotions SET likes = likes + 1 WHERE promotion_id = ?`,
-      [id]
+      [promotionId]
     );
     return result.affectedRows;
   }
 
-  async incrementViews(id) {
+  async incrementViews(promotionId) {
     const [result] = await db.query(
       `UPDATE promotions SET views = views + 1 WHERE promotion_id = ?`,
-      [id]
+      [promotionId]
     );
     return result.affectedRows;
   }
 
-  async toggleStatus(id) {
+  async toggleStatus(promotionId) {
     const [rows] = await db.query(
       `SELECT is_active FROM promotions WHERE promotion_id = ?`,
-      [id]
+      [promotionId]
     );
     if (rows.length === 0) return null;
     const newStatus = rows[0].is_active ? 0 : 1;
     await db.query(
       `UPDATE promotions SET is_active = ? WHERE promotion_id = ?`,
-      [newStatus, id]
+      [newStatus, promotionId]
     );
     return newStatus;
   }

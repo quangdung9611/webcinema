@@ -11,16 +11,9 @@ const extractPublicId = (url) => {
 
 const validateFood = (data, file, isUpdate = false) => {
   const { product_name, price } = data;
-
-  if (!product_name || product_name.trim() === "") {
-    return "Tên món ăn không được để trống";
-  }
-  if (!price || Number(price) <= 0) {
-    return "Giá món ăn phải lớn hơn 0";
-  }
-  if (!isUpdate && !file) {
-    return "Vui lòng upload hình ảnh sản phẩm";
-  }
+  if (!product_name || product_name.trim() === "") return "Tên món ăn không được để trống";
+  if (!price || Number(price) <= 0) return "Giá món ăn phải lớn hơn 0";
+  if (!isUpdate && !file) return "Vui lòng upload hình ảnh sản phẩm";
   return null;
 };
 
@@ -29,8 +22,8 @@ class FoodService {
     return await FoodRepository.findAll();
   }
 
-  async getFoodById(id) {
-    const food = await FoodRepository.findById(id);
+  async getFoodById(productId) { // ✅ sửa
+    const food = await FoodRepository.findById(productId);
     if (!food) {
       const err = new Error("Không tìm thấy món ăn");
       err.statusCode = 404;
@@ -72,8 +65,8 @@ class FoodService {
     });
   }
 
-  async updateFood(id, data, file) {
-    const existing = await FoodRepository.findById(id);
+  async updateFood(productId, data, file) { // ✅ sửa
+    const existing = await FoodRepository.findById(productId);
     if (!existing) {
       const err = new Error("Món ăn không tồn tại");
       err.statusCode = 404;
@@ -90,14 +83,13 @@ class FoodService {
     }
 
     const name = product_name.trim();
-    const dup = await FoodRepository.findByName(name, id);
+    const dup = await FoodRepository.findByName(name, productId);
     if (dup) {
       const err = new Error("Tên món ăn đã tồn tại");
       err.statusCode = 409;
       throw err;
     }
 
-    // Xử lý ảnh
     let food_image = existing.food_image;
     if (file) {
       if (existing.food_image) {
@@ -108,7 +100,7 @@ class FoodService {
       food_image = result.url;
     }
 
-    await FoodRepository.update(id, {
+    await FoodRepository.update(productId, {
       product_name: name,
       price: Number(price),
       food_image,
@@ -119,8 +111,8 @@ class FoodService {
     return true;
   }
 
-  async deleteFood(id) {
-    const existing = await FoodRepository.findById(id);
+  async deleteFood(productId) { // ✅ sửa
+    const existing = await FoodRepository.findById(productId);
     if (!existing) {
       const err = new Error("Món ăn không tồn tại");
       err.statusCode = 404;
@@ -132,7 +124,7 @@ class FoodService {
       await deleteFromCloudinary(publicId);
     }
 
-    await FoodRepository.delete(id);
+    await FoodRepository.delete(productId);
     return true;
   }
 }

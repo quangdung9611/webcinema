@@ -12,16 +12,16 @@ const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
 // Lấy danh sách khuyến mãi (admin và khách đều xem được)
 router.get('/', PromotionController.getAllPromotionsAdmin);
 
-// Lấy chi tiết khuyến mãi theo ID (ai cũng xem được)
-router.get('/detail/:promotion_id', PromotionController.getPromotionById);
-
-// Lấy danh sách khuyến mãi cho client (alias - có thể giữ hoặc bỏ)
+// Lấy danh sách khuyến mãi cho client (alias)
 router.get('/all', PromotionController.getAllPromotions);
 
 // Tăng lượt thích (public)
-router.post('/like/:id', PromotionController.increaseLike);
+router.post('/like/:promotion_id', PromotionController.increaseLike);
 
-// Lấy chi tiết khuyến mãi theo slug (public)
+// Lấy chi tiết khuyến mãi theo ID (public)
+router.get('/:promotion_id', PromotionController.getPromotionById);
+
+// Lấy chi tiết khuyến mãi theo slug (public) - ĐẶT CUỐI CÙNG
 router.get('/:slug', PromotionController.getPromotionBySlug);
 
 /* ==========================================================
@@ -32,7 +32,7 @@ router.get('/:slug', PromotionController.getPromotionBySlug);
 router.post('/', authenticateAdmin, upload.single('promotion_image'), PromotionController.createPromotion);
 
 // Cập nhật khuyến mãi (admin)
-router.put('/update/:promotion_id', authenticateAdmin, upload.single('promotion_image'), PromotionController.updatePromotion);
+router.put('/:promotion_id', authenticateAdmin, upload.single('promotion_image'), PromotionController.updatePromotion);
 
 // Xóa khuyến mãi (admin)
 router.delete('/:promotion_id', authenticateAdmin, PromotionController.deletePromotion);

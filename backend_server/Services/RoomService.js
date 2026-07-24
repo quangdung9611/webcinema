@@ -24,8 +24,8 @@ class RoomService {
     return await RoomRepository.findAll();
   }
 
-  async getRoomById(id) {
-    const room = await RoomRepository.findById(id);
+  async getRoomById(roomId) { // ✅ sửa
+    const room = await RoomRepository.findById(roomId);
     if (!room) {
       const err = new Error("Không tìm thấy phòng");
       err.statusCode = 404;
@@ -51,7 +51,6 @@ class RoomService {
 
     const name = room_name.trim();
 
-    // Check duplicate
     const dup = await RoomRepository.findByNameInCinema(name, cinema_id);
     if (dup) {
       const err = new Error("Tên phòng này đã tồn tại trong rạp này rồi");
@@ -63,10 +62,10 @@ class RoomService {
     return await RoomRepository.create({ room_name: name, cinema_id, room_type });
   }
 
-  async updateRoom(id, data) {
+  async updateRoom(roomId, data) { // ✅ sửa
     const { room_name, cinema_id, room_type } = data;
 
-    const existing = await RoomRepository.findById(id);
+    const existing = await RoomRepository.findById(roomId);
     if (!existing) {
       const err = new Error("Không tìm thấy phòng");
       err.statusCode = 404;
@@ -83,8 +82,7 @@ class RoomService {
 
     const name = room_name.trim();
 
-    // Check duplicate (exclude current)
-    const dup = await RoomRepository.findByNameInCinema(name, cinema_id, id);
+    const dup = await RoomRepository.findByNameInCinema(name, cinema_id, roomId);
     if (dup) {
       const err = new Error("Tên phòng này đã tồn tại trong rạp này rồi");
       err.statusCode = 400;
@@ -92,7 +90,7 @@ class RoomService {
       throw err;
     }
 
-    const affected = await RoomRepository.update(id, { room_name: name, cinema_id, room_type });
+    const affected = await RoomRepository.update(roomId, { room_name: name, cinema_id, room_type });
     if (affected === 0) {
       const err = new Error("Không thể cập nhật phòng");
       err.statusCode = 500;
@@ -102,8 +100,8 @@ class RoomService {
     return true;
   }
 
-  async deleteRoom(id) {
-    const existing = await RoomRepository.findById(id);
+  async deleteRoom(roomId) { // ✅ sửa
+    const existing = await RoomRepository.findById(roomId);
     if (!existing) {
       const err = new Error("Không tìm thấy phòng");
       err.statusCode = 404;
@@ -111,7 +109,7 @@ class RoomService {
     }
 
     try {
-      const affected = await RoomRepository.delete(id);
+      const affected = await RoomRepository.delete(roomId);
       if (affected === 0) {
         const err = new Error("Xóa phòng thất bại");
         err.statusCode = 400;

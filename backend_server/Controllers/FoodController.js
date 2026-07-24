@@ -19,8 +19,8 @@ exports.getAllFoods = async (req, res) => {
 
 exports.getFoodById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const data = await FoodService.getFoodById(id);
+    const { product_id } = req.params; // ✅ sửa
+    const data = await FoodService.getFoodById(product_id);
     return res.status(200).json({
       success: true,
       data,
@@ -53,8 +53,8 @@ exports.createFood = async (req, res) => {
 
 exports.updateFood = async (req, res) => {
   try {
-    const { id } = req.params;
-    await FoodService.updateFood(id, req.body, req.file);
+    const { product_id } = req.params; // ✅ sửa
+    await FoodService.updateFood(product_id, req.body, req.file);
     return res.status(200).json({
       success: true,
       message: "Cập nhật món ăn thành công",
@@ -70,8 +70,8 @@ exports.updateFood = async (req, res) => {
 
 exports.deleteFood = async (req, res) => {
   try {
-    const { id } = req.params;
-    await FoodService.deleteFood(id);
+    const { product_id } = req.params; // ✅ sửa
+    await FoodService.deleteFood(product_id);
     return res.status(200).json({
       success: true,
       message: "Xóa món ăn thành công",

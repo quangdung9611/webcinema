@@ -39,8 +39,8 @@ class PromotionService {
     return await PromotionRepository.findAll(onlyActive);
   }
 
-  async getPromotionById(id) {
-    const p = await PromotionRepository.findById(id);
+  async getPromotionById(promotionId) {
+    const p = await PromotionRepository.findById(promotionId);
     if (!p) {
       const err = new Error("Không tìm thấy khuyến mãi");
       err.statusCode = 404;
@@ -94,8 +94,8 @@ class PromotionService {
     });
   }
 
-  async updatePromotion(id, data, file) {
-    const existing = await PromotionRepository.findById(id);
+  async updatePromotion(promotionId, data, file) {
+    const existing = await PromotionRepository.findById(promotionId);
     if (!existing) {
       const err = new Error("Khuyến mãi không tồn tại");
       err.statusCode = 404;
@@ -111,7 +111,7 @@ class PromotionService {
     }
 
     const slug = createSlug(title);
-    const dup = await PromotionRepository.findByTitleOrSlug(title.trim(), slug, id);
+    const dup = await PromotionRepository.findByTitleOrSlug(title.trim(), slug, promotionId);
     if (dup) {
       const err = new Error("Tiêu đề hoặc slug đã trùng với khuyến mãi khác");
       err.statusCode = 400;
@@ -132,7 +132,7 @@ class PromotionService {
         promotionImage = result.url;
       }
 
-      await PromotionRepository.update(conn, id, {
+      await PromotionRepository.update(conn, promotionId, {
         title: title.trim(),
         slug,
         description: description || "",
@@ -151,8 +151,8 @@ class PromotionService {
     }
   }
 
-  async deletePromotion(id) {
-    const existing = await PromotionRepository.findById(id);
+  async deletePromotion(promotionId) {
+    const existing = await PromotionRepository.findById(promotionId);
     if (!existing) {
       const err = new Error("Khuyến mãi không tồn tại");
       err.statusCode = 404;
@@ -168,7 +168,7 @@ class PromotionService {
         await deleteFromCloudinary(publicId);
       }
 
-      await PromotionRepository.delete(conn, id);
+      await PromotionRepository.delete(conn, promotionId);
       await PromotionRepository.commit(conn);
       return true;
     } catch (err) {
@@ -179,8 +179,8 @@ class PromotionService {
     }
   }
 
-  async toggleStatus(id) {
-    const newStatus = await PromotionRepository.toggleStatus(id);
+  async toggleStatus(promotionId) {
+    const newStatus = await PromotionRepository.toggleStatus(promotionId);
     if (newStatus === null) {
       const err = new Error("Không tìm thấy khuyến mãi");
       err.statusCode = 404;
@@ -189,8 +189,8 @@ class PromotionService {
     return newStatus;
   }
 
-  async likePromotion(id) {
-    const affected = await PromotionRepository.incrementLikes(id);
+  async likePromotion(promotionId) {
+    const affected = await PromotionRepository.incrementLikes(promotionId);
     if (affected === 0) {
       const err = new Error("Không tìm thấy khuyến mãi");
       err.statusCode = 404;

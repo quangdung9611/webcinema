@@ -41,8 +41,8 @@ exports.getActorBySlug = async (req, res) => {
 
 exports.getActorById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const actor = await ActorService.getActorById(id);
+    const { actor_id } = req.params; // ✅ sửa
+    const actor = await ActorService.getActorById(actor_id);
     return res.status(200).json(actor);
   } catch (err) {
     console.error("Get Actor By ID Error:", err);
@@ -80,8 +80,8 @@ exports.addActor = async (req, res) => {
 
 exports.updateActor = async (req, res) => {
   try {
-    const { id } = req.params;
-    await ActorService.updateActor(id, req.body, req.file);
+    const { actor_id } = req.params; // ✅ sửa
+    await ActorService.updateActor(actor_id, req.body, req.file);
     return res.status(200).json({
       success: true,
       message: "Cập nhật diễn viên thành công!",
@@ -101,8 +101,8 @@ exports.updateActor = async (req, res) => {
 
 exports.deleteActor = async (req, res) => {
   try {
-    const { id } = req.params;
-    await ActorService.deleteActor(id);
+    const { actor_id } = req.params; // ✅ sửa
+    await ActorService.deleteActor(actor_id);
     return res.status(200).json({
       success: true,
       message: "Đã xóa diễn viên và ảnh thành công.",

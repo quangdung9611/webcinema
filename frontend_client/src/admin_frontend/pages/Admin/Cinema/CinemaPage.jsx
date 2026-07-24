@@ -16,10 +16,6 @@ import {
     Phone,
     Map,
 
-    // =====================================================
-    // ALERT ICONS
-    // =====================================================
-
     CheckCircle2,
     XCircle,
     AlertTriangle,
@@ -45,83 +41,42 @@ const initialFormData = {
 
 const CinemaPage = () => {
 
-    /* =====================================================
-        STATES
-    ===================================================== */
-
     const [cinemas, setCinemas] = useState([]);
-
     const [loading, setLoading] = useState(false);
-
-    const [submitLoading, setSubmitLoading] =
-        useState(false);
-
+    const [submitLoading, setSubmitLoading] = useState(false);
     const [search, setSearch] = useState('');
-
     const [isFormOpen, setIsFormOpen] = useState(false);
+    const [editingCinema, setEditingCinema] = useState(null);
+    const [formData, setFormData] = useState(initialFormData);
+    const [formErrors, setFormErrors] = useState({});
 
-    const [editingCinema, setEditingCinema] =
-        useState(null);
-
-    const [formData, setFormData] =
-        useState(initialFormData);
-
-    /* =====================================================
-        FORM ERRORS
-    ===================================================== */
-
-    const [formErrors, setFormErrors] =
-        useState({});
-
-    /* =====================================================
-        ALERT MODAL
-    ===================================================== */
-
-    const [alertModal, setAlertModal] =
-        useState({
-            open: false,
-            title: '',
-            message: '',
-            type: 'default',
-            onConfirm: null,
-            onCancel: null
-        });
+    const [alertModal, setAlertModal] = useState({
+        open: false,
+        title: '',
+        message: '',
+        type: 'default',
+        onConfirm: null,
+        onCancel: null
+    });
 
     /* =====================================================
         FETCH CINEMAS
     ===================================================== */
 
     const fetchCinemas = async () => {
-
         setLoading(true);
-
         try {
-
-            const res =
-                await axios.get(API_URL);
-
+            const res = await axios.get(API_URL);
             setCinemas(res.data);
-
         } catch (error) {
-
-            showAlert(
-                'Lỗi',
-                'Không thể tải danh sách rạp.',
-                'error'
-            );
-
+            showAlert('Lỗi', 'Không thể tải danh sách rạp.', 'error');
         } finally {
-
             setLoading(false);
-
         }
-
     };
 
     useEffect(() => {
-
         fetchCinemas();
-
     }, []);
 
     /* =====================================================
@@ -135,7 +90,6 @@ const CinemaPage = () => {
         onConfirm = null,
         onCancel = null
     ) => {
-
         setAlertModal({
             open: true,
             title,
@@ -144,49 +98,18 @@ const CinemaPage = () => {
             onConfirm,
             onCancel
         });
-
     };
 
     const closeAlert = () => {
-
-        setAlertModal(prev => ({
-            ...prev,
-            open: false
-        }));
-
+        setAlertModal(prev => ({ ...prev, open: false }));
     };
 
-    /* =====================================================
-        ALERT CONFIG
-    ===================================================== */
-
     const alertConfig = {
-
-        success: {
-            icon: <CheckCircle2 size={52} />,
-            iconClass: 'success'
-        },
-
-        error: {
-            icon: <XCircle size={52} />,
-            iconClass: 'error'
-        },
-
-        warning: {
-            icon: <AlertTriangle size={52} />,
-            iconClass: 'warning'
-        },
-
-        info: {
-            icon: <Info size={52} />,
-            iconClass: 'info'
-        },
-
-        default: {
-            icon: <Info size={52} />,
-            iconClass: 'default'
-        }
-
+        success: { icon: <CheckCircle2 size={52} />, iconClass: 'success' },
+        error: { icon: <XCircle size={52} />, iconClass: 'error' },
+        warning: { icon: <AlertTriangle size={52} />, iconClass: 'warning' },
+        info: { icon: <Info size={52} />, iconClass: 'info' },
+        default: { icon: <Info size={52} />, iconClass: 'default' }
     };
 
     /* =====================================================
@@ -194,9 +117,7 @@ const CinemaPage = () => {
     ===================================================== */
 
     const generateSlug = (str) => {
-
         if (!str) return '';
-
         return str
             .toLowerCase()
             .normalize('NFD')
@@ -206,7 +127,6 @@ const CinemaPage = () => {
             .replace(/(\s+)/g, '-')
             .replace(/-+/g, '-')
             .trim();
-
     };
 
     /* =====================================================
@@ -214,131 +134,62 @@ const CinemaPage = () => {
     ===================================================== */
 
     const validateForm = () => {
-
         const errors = {};
 
-        /* TÊN RẠP */
-
         if (!formData.cinema_name.trim()) {
-
-            errors.cinema_name =
-                'Vui lòng nhập tên rạp';
-
-        } else if (
-            formData.cinema_name.trim().length < 5
-        ) {
-
-            errors.cinema_name =
-                'Tên rạp phải từ 5 ký tự trở lên';
-
+            errors.cinema_name = 'Vui lòng nhập tên rạp';
+        } else if (formData.cinema_name.trim().length < 5) {
+            errors.cinema_name = 'Tên rạp phải từ 5 ký tự trở lên';
         }
-
-        /* THÀNH PHỐ */
 
         if (!formData.city.trim()) {
-
-            errors.city =
-                'Vui lòng nhập thành phố';
-
-        } else if (
-            formData.city.trim().length < 2
-        ) {
-
-            errors.city =
-                'Tên thành phố quá ngắn';
-
+            errors.city = 'Vui lòng nhập thành phố';
+        } else if (formData.city.trim().length < 2) {
+            errors.city = 'Tên thành phố quá ngắn';
         }
-
-        /* ĐỊA CHỈ */
 
         if (!formData.address.trim()) {
-
-            errors.address =
-                'Vui lòng nhập địa chỉ';
-
-        } else if (
-            formData.address.trim().length < 5
-        ) {
-
-            errors.address =
-                'Địa chỉ phải từ 5 ký tự trở lên';
-
+            errors.address = 'Vui lòng nhập địa chỉ';
+        } else if (formData.address.trim().length < 5) {
+            errors.address = 'Địa chỉ phải từ 5 ký tự trở lên';
         }
-
-        /* HOTLINE */
 
         if (!formData.hotline.trim()) {
-
-            errors.hotline =
-                'Vui lòng nhập hotline';
-
-        } else if (
-            !/^[0-9]{9,11}$/.test(
-                formData.hotline.trim()
-            )
-        ) {
-
-            errors.hotline =
-                'Hotline không hợp lệ';
-
+            errors.hotline = 'Vui lòng nhập hotline';
+        } else if (!/^[0-9]{9,11}$/.test(formData.hotline.trim())) {
+            errors.hotline = 'Hotline không hợp lệ';
         }
 
-        /* MAP LINK */
-
         if (!formData.map_link.trim()) {
-
-            errors.map_link =
-                'Vui lòng nhập link Google Map';
-
+            errors.map_link = 'Vui lòng nhập link Google Map';
         }
 
         return errors;
-
     };
 
     /* =====================================================
-        OPEN ADD
+        OPEN ADD / EDIT
     ===================================================== */
 
     const handleOpenAdd = () => {
-
         setEditingCinema(null);
-
         setFormData(initialFormData);
-
         setFormErrors({});
-
         setIsFormOpen(true);
-
     };
 
-    /* =====================================================
-        OPEN EDIT
-    ===================================================== */
-
     const handleOpenEdit = (cinema) => {
-
         setEditingCinema(cinema);
-
         setFormErrors({});
-
         setFormData({
-            cinema_name:
-                cinema.cinema_name || '',
-            address:
-                cinema.address || '',
-            city:
-                cinema.city || '',
-            slug:
-                cinema.slug || '',
-            hotline:
-                cinema.hotline || '',
-            map_link:
-                cinema.map_link || ''
+            cinema_name: cinema.cinema_name || '',
+            address: cinema.address || '',
+            city: cinema.city || '',
+            slug: cinema.slug || '',
+            hotline: cinema.hotline || '',
+            map_link: cinema.map_link || ''
         });
-
         setIsFormOpen(true);
-
     };
 
     /* =====================================================
@@ -346,140 +197,43 @@ const CinemaPage = () => {
     ===================================================== */
 
     const handleChange = (e) => {
-
-        const {
-            name,
-            value
-        } = e.target;
-
-        /* =================================================
-            AUTO GENERATE SLUG
-        ================================================= */
+        const { name, value } = e.target;
 
         if (name === 'cinema_name') {
-
             setFormData(prev => ({
                 ...prev,
                 cinema_name: value,
                 slug: generateSlug(value)
             }));
-
         } else {
-
-            setFormData(prev => ({
-                ...prev,
-                [name]: value
-            }));
-
+            setFormData(prev => ({ ...prev, [name]: value }));
         }
 
-        /* =================================================
-            REALTIME VALIDATION
-        ================================================= */
-
+        // Realtime validation
         let errorMessage = '';
-
         switch (name) {
-
             case 'cinema_name':
-
-                if (!value.trim()) {
-
-                    errorMessage =
-                        'Vui lòng nhập tên rạp';
-
-                } else if (
-                    value.trim().length < 5
-                ) {
-
-                    errorMessage =
-                        'Tên rạp phải từ 5 ký tự trở lên';
-
-                }
-
+                if (!value.trim()) errorMessage = 'Vui lòng nhập tên rạp';
+                else if (value.trim().length < 5) errorMessage = 'Tên rạp phải từ 5 ký tự trở lên';
                 break;
-
             case 'city':
-
-                if (!value.trim()) {
-
-                    errorMessage =
-                        'Vui lòng nhập thành phố';
-
-                } else if (
-                    value.trim().length < 2
-                ) {
-
-                    errorMessage =
-                        'Tên thành phố quá ngắn';
-
-                }
-
+                if (!value.trim()) errorMessage = 'Vui lòng nhập thành phố';
+                else if (value.trim().length < 2) errorMessage = 'Tên thành phố quá ngắn';
                 break;
-
             case 'address':
-
-                if (!value.trim()) {
-
-                    errorMessage =
-                        'Vui lòng nhập địa chỉ';
-
-                } else if (
-                    value.trim().length < 5
-                ) {
-
-                    errorMessage =
-                        'Địa chỉ phải từ 5 ký tự trở lên';
-
-                }
-
+                if (!value.trim()) errorMessage = 'Vui lòng nhập địa chỉ';
+                else if (value.trim().length < 5) errorMessage = 'Địa chỉ phải từ 5 ký tự trở lên';
                 break;
-
             case 'hotline':
-
-                if (!value.trim()) {
-
-                    errorMessage =
-                        'Vui lòng nhập hotline';
-
-                } else if (
-                    !/^[0-9]{9,11}$/.test(
-                        value.trim()
-                    )
-                ) {
-
-                    errorMessage =
-                        'Hotline không hợp lệ';
-
-                }
-
+                if (!value.trim()) errorMessage = 'Vui lòng nhập hotline';
+                else if (!/^[0-9]{9,11}$/.test(value.trim())) errorMessage = 'Hotline không hợp lệ';
                 break;
-
             case 'map_link':
-
-                if (!value.trim()) {
-
-                    errorMessage =
-                        'Vui lòng nhập link Google Map';
-
-                }
-
+                if (!value.trim()) errorMessage = 'Vui lòng nhập link Google Map';
                 break;
-
-            default:
-                break;
-
+            default: break;
         }
-
-        /* =================================================
-            SET ERRORS
-        ================================================= */
-
-        setFormErrors(prev => ({
-            ...prev,
-            [name]: errorMessage
-        }));
-
+        setFormErrors(prev => ({ ...prev, [name]: errorMessage }));
     };
 
     /* =====================================================
@@ -487,91 +241,43 @@ const CinemaPage = () => {
     ===================================================== */
 
     const handleSubmit = async (e) => {
-
         e.preventDefault();
 
         const errors = validateForm();
-
-        if (
-            Object.keys(errors).length > 0
-        ) {
-
+        if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
-
             return;
-
         }
 
         try {
-
             setSubmitLoading(true);
-
             setFormErrors({});
 
             if (editingCinema) {
-
-                await axios.put(
-                    `${API_URL}/update/${editingCinema.cinema_id}`,
-                    formData
-                );
-
-                showAlert(
-                    'Thành công',
-                    'Cập nhật rạp thành công.',
-                    'success'
-                );
-
+                // ✅ SỬA: bỏ /update
+                await axios.put(`${API_URL}/${editingCinema.cinema_id}`, formData);
+                showAlert('Thành công', 'Cập nhật rạp thành công.', 'success');
             } else {
-
-                await axios.post(
-                    `${API_URL}/add`,
-                    formData
-                );
-
-                showAlert(
-                    'Thành công',
-                    'Thêm rạp thành công.',
-                    'success'
-                );
-
+                // ✅ SỬA: bỏ /add
+                await axios.post(API_URL, formData);
+                showAlert('Thành công', 'Thêm rạp thành công.', 'success');
             }
 
             setIsFormOpen(false);
-
             fetchCinemas();
-
         } catch (error) {
-
-            const backendField =
-                error.response?.data?.field;
-
-            const backendError =
-                error.response?.data?.error;
+            const backendField = error.response?.data?.field;
+            const backendError = error.response?.data?.error;
 
             if (backendField) {
-
-                setFormErrors({
-                    [backendField]:
-                        backendError
-                });
-
+                setFormErrors({ [backendField]: backendError });
                 return;
-
             }
 
-            showAlert(
-                'Lỗi',
-                backendError ||
-                'Đã xảy ra lỗi.',
-                'error'
-            );
-
+            showAlert('Lỗi', backendError || 'Đã xảy ra lỗi.', 'error');
         } finally {
-
             setSubmitLoading(false);
-
         }
-
     };
 
     /* =====================================================
@@ -579,247 +285,122 @@ const CinemaPage = () => {
     ===================================================== */
 
     const handleDelete = (cinema) => {
-
         showAlert(
             'Xác nhận xóa',
             `Bạn có chắc muốn xóa "${cinema.cinema_name}"?`,
             'warning',
-
             async () => {
-
                 try {
-
-                    await axios.delete(
-                        `${API_URL}/delete/${cinema.cinema_id}`
-                    );
-
+                    // ✅ SỬA: bỏ /delete
+                    await axios.delete(`${API_URL}/${cinema.cinema_id}`);
                     closeAlert();
-
                     fetchCinemas();
-
-                    showAlert(
-                        'Thành công',
-                        'Xóa rạp thành công.',
-                        'success'
-                    );
-
+                    showAlert('Thành công', 'Xóa rạp thành công.', 'success');
                 } catch (error) {
-
-                    showAlert(
-                        'Lỗi',
-                        'Không thể xóa rạp.',
-                        'error'
-                    );
-
+                    showAlert('Lỗi', 'Không thể xóa rạp.', 'error');
                 }
-
             },
-
             closeAlert
         );
-
     };
 
     /* =====================================================
         FILTER
     ===================================================== */
 
-    const filteredCinemas =
-        cinemas.filter(cinema => {
-
-            const keyword =
-                search.toLowerCase();
-
-            return (
-                cinema.cinema_name
-                    ?.toLowerCase()
-                    .includes(keyword) ||
-
-                cinema.city
-                    ?.toLowerCase()
-                    .includes(keyword) ||
-
-                cinema.address
-                    ?.toLowerCase()
-                    .includes(keyword)
-            );
-
-        });
+    const filteredCinemas = cinemas.filter(cinema => {
+        const keyword = search.toLowerCase();
+        return (
+            cinema.cinema_name?.toLowerCase().includes(keyword) ||
+            cinema.city?.toLowerCase().includes(keyword) ||
+            cinema.address?.toLowerCase().includes(keyword)
+        );
+    });
 
     /* =====================================================
         TABLE COLUMNS
     ===================================================== */
 
     const columns = [
-
         {
             title: 'Tên rạp',
             key: 'cinema_name',
-
             render: (row) => (
-
                 <div>
-                    <div
-                        style={{
-                            fontWeight: '600'
-                        }}
-                    >
-                        {row.cinema_name}
-                    </div>
-
-                    <small
-                        style={{
-                            color: '#94a3b8'
-                        }}
-                    >
-                        #{row.cinema_id}
-                    </small>
+                    <div style={{ fontWeight: '600' }}>{row.cinema_name}</div>
+                    <small style={{ color: '#94a3b8' }}>#{row.cinema_id}</small>
                 </div>
-
             )
         },
-
         {
             title: 'Địa chỉ',
             key: 'address',
-
             render: (row) => (
-
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}
-                >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <MapPin size={16} />
-
-                    <span>
-                        {row.address}
-                    </span>
+                    <span>{row.address}</span>
                 </div>
-
             )
         },
-
         {
             title: 'Hotline',
             key: 'hotline',
-
             render: (row) => (
-
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}
-                >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Phone size={16} />
-
-                    <span>
-                        {row.hotline}
-                    </span>
+                    <span>{row.hotline}</span>
                 </div>
-
             )
         },
-
         {
             title: 'Google Map',
             key: 'map_link',
-
             render: (row) => (
-
                 <a
                     href={row.map_link}
                     target="_blank"
                     rel="noreferrer"
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        color: '#60a5fa',
-                        textDecoration: 'none'
-                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#60a5fa', textDecoration: 'none' }}
                 >
                     <Map size={15} />
                     Xem map
                 </a>
-
             )
         },
-
         {
             title: 'Thành phố',
             key: 'city',
-
             render: (row) => (
-
                 <span className="status-badge used">
                     <Building2 size={14} />
-
                     {row.city}
                 </span>
-
             )
         },
-
         {
             title: 'Slug',
             key: 'slug',
-
             render: (row) => (
-
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        color: '#94a3b8'
-                    }}
-                >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8' }}>
                     <Navigation size={14} />
-
-                    <span>
-                        {row.slug}
-                    </span>
+                    <span>{row.slug}</span>
                 </div>
-
             )
         },
-
         {
             title: 'Thao tác',
             key: 'actions',
-
             render: (row) => (
-
                 <div className="admin-table-actions">
-
-                    <button
-                        className="admin-action-btn edit-btn"
-                        onClick={() =>
-                            handleOpenEdit(row)
-                        }
-                    >
+                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
                         <Edit size={16} />
                     </button>
-
-                    <button
-                        className="admin-action-btn delete-btn"
-                        onClick={() =>
-                            handleDelete(row)
-                        }
-                    >
+                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
                         <Trash2 size={16} />
                     </button>
-
                 </div>
-
             )
         }
-
     ];
 
     /* =====================================================
@@ -827,14 +408,12 @@ const CinemaPage = () => {
     ===================================================== */
 
     const formFields = [
-
         {
             label: 'Tên rạp',
             name: 'cinema_name',
             type: 'text',
             placeholder: 'Nhập tên rạp'
         },
-
         {
             label: 'Slug',
             name: 'slug',
@@ -842,35 +421,30 @@ const CinemaPage = () => {
             placeholder: 'Slug tự động',
             disabled: true
         },
-
         {
             label: 'Thành phố',
             name: 'city',
             type: 'text',
             placeholder: 'Ví dụ: Hồ Chí Minh'
         },
-
         {
             label: 'Hotline',
             name: 'hotline',
             type: 'text',
             placeholder: 'Ví dụ: 19006017'
         },
-
         {
             label: 'Google Map Link',
             name: 'map_link',
             type: 'text',
             placeholder: 'Dán link Google Map'
         },
-
         {
             label: 'Địa chỉ',
             name: 'address',
             type: 'textarea',
             placeholder: 'Nhập địa chỉ chi tiết'
         }
-
     ];
 
     /* =====================================================
@@ -878,72 +452,33 @@ const CinemaPage = () => {
     ===================================================== */
 
     return (
-
         <>
-
             <AdminPage
-
                 title="Quản lý rạp chiếu"
-
                 subtitle="Quản lý toàn bộ rạp trong hệ thống"
-
                 icon={<Tv size={30} />}
-
                 buttonText="Thêm rạp"
-
                 onAdd={handleOpenAdd}
-
                 searchValue={search}
-
                 onSearchChange={setSearch}
-
             >
-
-                {
-                    loading ? (
-
-                        <div className="admin-loading">
-
-                            <Loader2
-                                size={32}
-                                className="spin-icon"
-                            />
-
-                            <span>
-                                Đang tải dữ liệu...
-                            </span>
-
-                        </div>
-
-                    ) : (
-
-                        <AdminTable
-                            columns={columns}
-                            data={filteredCinemas}
-                        />
-
-                    )
-                }
-
+                {loading ? (
+                    <div className="admin-loading">
+                        <Loader2 size={32} className="spin-icon" />
+                        <span>Đang tải dữ liệu...</span>
+                    </div>
+                ) : (
+                    <AdminTable columns={columns} data={filteredCinemas} />
+                )}
             </AdminPage>
 
-            {/* =============================================
-                FORM MODAL
-            ============================================= */}
-
+            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
-                onClose={() =>
-                    setIsFormOpen(false)
-                }
-                title={
-                    editingCinema
-                        ? 'Cập nhật rạp'
-                        : 'Thêm rạp'
-                }
+                onClose={() => setIsFormOpen(false)}
+                title={editingCinema ? 'Cập nhật rạp' : 'Thêm rạp'}
                 type="info"
             >
-
                 <AdminForm
                     fields={formFields}
                     formData={formData}
@@ -951,79 +486,36 @@ const CinemaPage = () => {
                     onChange={handleChange}
                     onSubmit={handleSubmit}
                     loading={submitLoading}
-                    submitText={
-                        editingCinema
-                            ? 'Lưu thay đổi'
-                            : 'Thêm rạp'
-                    }
+                    submitText={editingCinema ? 'Lưu thay đổi' : 'Thêm rạp'}
                 />
-
             </AdminModal>
 
-            {/* =============================================
-                ALERT MODAL
-            ============================================= */}
-
+            {/* ALERT MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
             >
-
                 <div className="admin-alert-content">
-
-                    <div
-                        className={`admin-alert-icon ${alertConfig[alertModal.type]?.iconClass}`}
-                    >
-                        {
-                            alertConfig[
-                                alertModal.type
-                            ]?.icon
-                        }
+                    <div className={`admin-alert-icon ${alertConfig[alertModal.type]?.iconClass}`}>
+                        {alertConfig[alertModal.type]?.icon}
                     </div>
-
-                    <p>
-                        {alertModal.message}
-                    </p>
-
+                    <p>{alertModal.message}</p>
                     <div className="admin-alert-actions">
-
-                        {
-                            alertModal.onCancel && (
-
-                                <button
-                                    className="admin-cancel-btn"
-                                    onClick={
-                                        alertModal.onCancel
-                                    }
-                                >
-                                    Hủy
-                                </button>
-
-                            )
-                        }
-
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={
-                                alertModal.onConfirm ||
-                                closeAlert
-                            }
-                        >
+                        {alertModal.onCancel && (
+                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
+                                Hủy
+                            </button>
+                        )}
+                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
                             Xác nhận
                         </button>
-
                     </div>
-
                 </div>
-
             </AdminModal>
-
         </>
-
     );
-
 };
 
 export default CinemaPage;

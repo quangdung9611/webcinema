@@ -20,10 +20,10 @@ class RoomRepository {
     return rows;
   }
 
-  async findById(id) {
+  async findById(roomId) { // ✅ sửa
     const [rows] = await db.query(
       `SELECT * FROM rooms WHERE room_id = ?`,
-      [id]
+      [roomId]
     );
     return rows[0] || null;
   }
@@ -39,12 +39,12 @@ class RoomRepository {
     return rows;
   }
 
-  async findByNameInCinema(roomName, cinemaId, excludeId = null) {
+  async findByNameInCinema(roomName, cinemaId, excludeRoomId = null) { // ✅ sửa
     let sql = `SELECT room_id FROM rooms WHERE room_name = ? AND cinema_id = ?`;
     const params = [roomName.trim(), cinemaId];
-    if (excludeId) {
+    if (excludeRoomId) {
       sql += ` AND room_id != ?`;
-      params.push(excludeId);
+      params.push(excludeRoomId);
     }
     const [rows] = await db.query(sql, params);
     return rows[0] || null;
@@ -59,19 +59,19 @@ class RoomRepository {
     return result.insertId;
   }
 
-  async update(id, data) {
+  async update(roomId, data) { // ✅ sửa
     const { room_name, cinema_id, room_type } = data;
     const [result] = await db.query(
       `UPDATE rooms SET room_name = ?, cinema_id = ?, room_type = ? WHERE room_id = ?`,
-      [room_name.trim(), cinema_id, room_type, id]
+      [room_name.trim(), cinema_id, room_type, roomId]
     );
     return result.affectedRows;
   }
 
-  async delete(id) {
+  async delete(roomId) { // ✅ sửa
     const [result] = await db.query(
       `DELETE FROM rooms WHERE room_id = ?`,
-      [id]
+      [roomId]
     );
     return result.affectedRows;
   }

@@ -15,8 +15,8 @@ exports.getAllRooms = async (req, res) => {
 
 exports.getRoomById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const data = await RoomService.getRoomById(id);
+    const { room_id } = req.params; // ✅ sửa
+    const data = await RoomService.getRoomById(room_id);
     return res.status(200).json(data);
   } catch (err) {
     console.error("Get room by id error:", err);
@@ -61,8 +61,8 @@ exports.createRoom = async (req, res) => {
 
 exports.updateRoom = async (req, res) => {
   try {
-    const { id } = req.params;
-    await RoomService.updateRoom(id, req.body);
+    const { room_id } = req.params; // ✅ sửa
+    await RoomService.updateRoom(room_id, req.body);
     return res.status(200).json({
       success: true,
       message: "Cập nhật phòng thành công",
@@ -79,8 +79,8 @@ exports.updateRoom = async (req, res) => {
 
 exports.deleteRoom = async (req, res) => {
   try {
-    const { id } = req.params;
-    await RoomService.deleteRoom(id);
+    const { room_id } = req.params; // ✅ sửa
+    await RoomService.deleteRoom(room_id);
     return res.status(200).json({
       success: true,
       message: "Đã xóa phòng thành công",

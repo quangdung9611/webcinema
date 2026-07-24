@@ -8,40 +8,40 @@ class GenreRepository {
     return rows;
   }
 
-  async findById(id) {
+  async findById(genreId) { // ✅ sửa
     const [rows] = await db.query(
       `SELECT * FROM genres WHERE genre_id = ? LIMIT 1`,
-      [id]
+      [genreId]
     );
     return rows[0] || null;
   }
 
-  async findByName(name, excludeId = null) {
+  async findByName(name, excludeGenreId = null) { // ✅ sửa
     let sql = `SELECT genre_id FROM genres WHERE genre_name = ?`;
     const params = [name.trim()];
-    if (excludeId) {
+    if (excludeGenreId) {
       sql += ` AND genre_id != ?`;
-      params.push(excludeId);
+      params.push(excludeGenreId);
     }
     const [rows] = await db.query(sql, params);
     return rows[0] || null;
   }
 
-  async findByNameWithSlug(name, slug, excludeId = null) {
+  async findByNameWithSlug(name, slug, excludeGenreId = null) { // ✅ sửa
     let sql = `SELECT genre_id FROM genres WHERE genre_name = ? OR slug = ?`;
     const params = [name.trim(), slug];
-    if (excludeId) {
+    if (excludeGenreId) {
       sql += ` AND genre_id != ?`;
-      params.push(excludeId);
+      params.push(excludeGenreId);
     }
     const [rows] = await db.query(sql, params);
     return rows[0] || null;
   }
 
-  async checkLinked(id) {
+  async checkLinked(genreId) { // ✅ sửa
     const [rows] = await db.query(
       `SELECT movie_id FROM movie_genres WHERE genre_id = ? LIMIT 1`,
-      [id]
+      [genreId]
     );
     return rows[0] || null;
   }
@@ -55,19 +55,19 @@ class GenreRepository {
     return result.insertId;
   }
 
-  async update(id, data) {
+  async update(genreId, data) { // ✅ sửa
     const { genre_name, slug } = data;
     const [result] = await db.query(
       `UPDATE genres SET genre_name = ?, slug = ? WHERE genre_id = ?`,
-      [genre_name.trim(), slug, id]
+      [genre_name.trim(), slug, genreId]
     );
     return result.affectedRows;
   }
 
-  async delete(id) {
+  async delete(genreId) { // ✅ sửa
     const [result] = await db.query(
       `DELETE FROM genres WHERE genre_id = ?`,
-      [id]
+      [genreId]
     );
     return result.affectedRows;
   }

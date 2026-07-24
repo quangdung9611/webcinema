@@ -44,8 +44,9 @@ class BookingService {
     await BookingRepository.updateStatus(connection, bookingId, "Cancelled");
   }
 
-  async deleteBooking(id) {
-    return await BookingRepository.delete(id);
+  // ✅ sửa tham số từ id → bookingId
+  async deleteBooking(bookingId) {
+    return await BookingRepository.delete(bookingId);
   }
 }
 

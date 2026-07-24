@@ -15,8 +15,8 @@ exports.getAllShowtimes = async (req, res) => {
 
 exports.getShowtimeDetail = async (req, res) => {
   try {
-    const { id } = req.params;
-    const data = await ShowtimeService.getShowtimeDetail(id);
+    const { showtime_id } = req.params;
+    const data = await ShowtimeService.getShowtimeDetail(showtime_id);
     return res.status(200).json(data);
   } catch (err) {
     console.error("Get showtime detail error:", err);
@@ -61,8 +61,8 @@ exports.createShowtime = async (req, res) => {
 
 exports.updateShowtime = async (req, res) => {
   try {
-    const { id } = req.params;
-    await ShowtimeService.updateShowtime(id, req.body);
+    const { showtime_id } = req.params;
+    await ShowtimeService.updateShowtime(showtime_id, req.body);
     return res.status(200).json({
       success: true,
       message: "Cập nhật suất chiếu thành công",
@@ -79,8 +79,8 @@ exports.updateShowtime = async (req, res) => {
 
 exports.deleteShowtime = async (req, res) => {
   try {
-    const { id } = req.params;
-    await ShowtimeService.deleteShowtime(id);
+    const { showtime_id } = req.params;
+    await ShowtimeService.deleteShowtime(showtime_id);
     return res.status(200).json({
       success: true,
       message: "Đã xóa suất chiếu thành công",

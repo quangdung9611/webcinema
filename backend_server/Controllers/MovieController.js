@@ -35,12 +35,12 @@ exports.getAllMovies = async (req, res) => {
 };
 
 /* ==========================================================
-    GET MOVIE BY ID
+    GET MOVIE BY ID (ADMIN)
 ========================================================== */
 exports.getMovieById = async (req, res) => {
     try {
-        const { id } = req.params;
-        const movie = await MovieService.getMovieById(id);
+        const { movie_id } = req.params; // ✅ sửa
+        const movie = await MovieService.getMovieById(movie_id);
         return res.status(200).json(movie);
     } catch (err) {
         console.error("getMovieById error:", err);
@@ -52,7 +52,7 @@ exports.getMovieById = async (req, res) => {
 };
 
 /* ==========================================================
-    CREATE MOVIE
+    CREATE MOVIE (ADMIN)
 ========================================================== */
 exports.createMovie = async (req, res) => {
     try {
@@ -72,12 +72,12 @@ exports.createMovie = async (req, res) => {
 };
 
 /* ==========================================================
-    UPDATE MOVIE
+    UPDATE MOVIE (ADMIN)
 ========================================================== */
 exports.updateMovie = async (req, res) => {
     try {
-        const { id } = req.params;
-        await MovieService.updateMovie(id, req.body, req.files || {});
+        const { movie_id } = req.params; // ✅ sửa
+        await MovieService.updateMovie(movie_id, req.body, req.files || {});
         return res.status(200).json({
             success: true,
             message: "Cập nhật thông tin phim thành công!"
@@ -92,13 +92,12 @@ exports.updateMovie = async (req, res) => {
 };
 
 /* ==========================================================
-    DELETE MOVIE
+    DELETE MOVIE (ADMIN)
 ========================================================== */
 exports.deleteMovie = async (req, res) => {
     try {
-        const { id } = req.params;
-        // Nếu bạn cần kiểm tra token, có thể thêm vào header hoặc body
-        await MovieService.deleteMovie(id);
+        const { movie_id } = req.params; // ✅ sửa
+        await MovieService.deleteMovie(movie_id);
         return res.status(200).json({
             success: true,
             message: "Đã xóa phim thành công."
@@ -161,8 +160,8 @@ exports.getMoviesByStatusSlug = async (req, res) => {
 ========================================================== */
 exports.likeMovie = async (req, res) => {
     try {
-        const { id } = req.params;
-        await MovieService.likeMovie(id);
+        const { movie_id } = req.params; // ✅ sửa
+        await MovieService.likeMovie(movie_id);
         return res.status(200).json({
             success: true,
             message: "Đã tăng lượt thích!"
@@ -181,8 +180,8 @@ exports.likeMovie = async (req, res) => {
 ========================================================== */
 exports.incrementViews = async (req, res) => {
     try {
-        const { id } = req.params;
-        await MovieService.incrementViews(id);
+        const { movie_id } = req.params; // ✅ sửa
+        await MovieService.incrementViews(movie_id);
         return res.status(200).json({
             success: true,
             message: "Đã tăng lượt xem!"

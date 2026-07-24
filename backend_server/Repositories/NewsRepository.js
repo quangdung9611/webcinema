@@ -19,7 +19,7 @@ class NewsRepository {
     `;
     const params = [];
     if (onlyActive) {
-      sql += ` WHERE 1=1`; // Nếu có cột is_active thì thêm vào
+      sql += ` WHERE 1=1`;
     }
     sql += ` ORDER BY created_at DESC`;
     const [rows] = await db.query(sql, params);
@@ -35,10 +35,10 @@ class NewsRepository {
     return rows;
   }
 
-  async findById(id) {
+  async findById(newsId) {
     const [rows] = await db.query(
       `SELECT * FROM news WHERE news_id = ? LIMIT 1`,
-      [id]
+      [newsId]
     );
     return rows[0] || null;
   }
@@ -51,12 +51,12 @@ class NewsRepository {
     return rows[0] || null;
   }
 
-  async findByTitleOrSlug(title, slug, excludeId = null) {
+  async findByTitleOrSlug(title, slug, excludeNewsId = null) {
     let sql = `SELECT news_id FROM news WHERE (title = ? OR slug = ?)`;
     const params = [title.trim(), slug];
-    if (excludeId) {
+    if (excludeNewsId) {
       sql += ` AND news_id != ?`;
-      params.push(excludeId);
+      params.push(excludeNewsId);
     }
     const [rows] = await db.query(sql, params);
     return rows[0] || null;
@@ -72,45 +72,45 @@ class NewsRepository {
     return result.insertId;
   }
 
-  async update(id, data) {
+  async update(newsId, data) {
     const { title, slug, content, news_image, likes } = data;
     const [result] = await db.query(
       `UPDATE news
        SET title = ?, slug = ?, content = ?, news_image = ?, likes = ?
        WHERE news_id = ?`,
-      [title.trim(), slug, content.trim(), news_image || null, parseInt(likes, 10) || 0, id]
+      [title.trim(), slug, content.trim(), news_image || null, parseInt(likes, 10) || 0, newsId]
     );
     return result.affectedRows;
   }
 
-  async delete(id) {
+  async delete(newsId) {
     const [result] = await db.query(
       `DELETE FROM news WHERE news_id = ?`,
-      [id]
+      [newsId]
     );
     return result.affectedRows;
   }
 
-  async getImage(id) {
+  async getImage(newsId) {
     const [rows] = await db.query(
       `SELECT news_image FROM news WHERE news_id = ?`,
-      [id]
+      [newsId]
     );
     return rows[0] || null;
   }
 
-  async incrementLikes(id) {
+  async incrementLikes(newsId) {
     const [result] = await db.query(
       `UPDATE news SET likes = likes + 1 WHERE news_id = ?`,
-      [id]
+      [newsId]
     );
     return result.affectedRows;
   }
 
-  async incrementViews(id) {
+  async incrementViews(newsId) {
     const [result] = await db.query(
       `UPDATE news SET views = views + 1 WHERE news_id = ?`,
-      [id]
+      [newsId]
     );
     return result.affectedRows;
   }

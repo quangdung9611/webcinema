@@ -44,7 +44,7 @@ const NewsPage = () => {
     const [editingNews, setEditingNews] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
-    const [newsImageFile, setNewsImageFile] = useState(null); // ✅ đúng tên cột
+    const [newsImageFile, setNewsImageFile] = useState(null);
     const [preview, setPreview] = useState(null);
 
     /* =====================================================
@@ -156,7 +156,6 @@ const NewsPage = () => {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
 
-        // ✅ Xử lý file với tên đúng cột news_image
         if (name === 'news_image') {
             const file = files[0];
             setNewsImageFile(file);
@@ -221,7 +220,7 @@ const NewsPage = () => {
             submitData.append('content', formData.content.trim());
 
             if (newsImageFile) {
-                submitData.append('news_image', newsImageFile); // ✅ đúng tên cột
+                submitData.append('news_image', newsImageFile);
             }
 
             const token = sessionStorage.getItem('usertoken');
@@ -233,7 +232,8 @@ const NewsPage = () => {
             };
 
             if (editingNews) {
-                await axios.put(`${API_URL}/update/${editingNews.news_id}`, submitData, config);
+                // ✅ SỬA: bỏ /update, dùng /:news_id
+                await axios.put(`${API_URL}/${editingNews.news_id}`, submitData, config);
                 showAlert('Thành công', 'Cập nhật nội dung bài viết thành công.', 'success');
             } else {
                 await axios.post(API_URL, submitData, config);
@@ -274,6 +274,7 @@ const NewsPage = () => {
                             ...(token && { 'Authorization': `Bearer ${token}` })
                         }
                     };
+                    // ✅ SỬA: giữ nguyên DELETE /:news_id
                     await axios.delete(`${API_URL}/${item.news_id}`, config);
                     closeAlert();
                     fetchNews();
@@ -391,7 +392,7 @@ const NewsPage = () => {
         },
         {
             label: 'Hình ảnh đại diện bài viết',
-            name: 'news_image', // ✅ đúng tên cột
+            name: 'news_image',
             type: 'file'
         },
         {
