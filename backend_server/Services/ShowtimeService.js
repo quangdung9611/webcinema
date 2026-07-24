@@ -1,4 +1,4 @@
-const ShowtimeRepository = require("../Repositories/ShowTimeRepository");
+const ShowTimeRepository = require("../Repositories/ShowTimeRepository");
 
 const formatDateTime = (dateTime) => {
   if (!dateTime) return null;
@@ -15,11 +15,11 @@ const validateShowtime = (data) => {
 
 class ShowTimeService {
   async getAllShowtimes() {
-    return await ShowtimeRepository.findAll();
+    return await ShowTimeRepository.findAll();
   }
 
   async getShowtimeDetail(id) {
-    const showtime = await ShowtimeRepository.findById(id);
+    const showtime = await ShowTimeRepository.findById(id);
     if (!showtime) {
       const err = new Error("Không tìm thấy suất chiếu");
       err.statusCode = 404;
@@ -29,7 +29,7 @@ class ShowTimeService {
   }
 
   async getShowtimesByMovie(movieId) {
-    return await ShowtimeRepository.findByMovie(movieId);
+    return await ShowTimeRepository.findByMovie(movieId);
   }
 
   async createShowtime(data) {
@@ -47,8 +47,7 @@ class ShowTimeService {
       throw err;
     }
 
-    // Check quá khứ
-    const isPast = await ShowtimeRepository.isPastTime(start_time);
+    const isPast = await ShowTimeRepository.isPastTime(start_time);
     if (isPast) {
       const err = new Error("Không thể tạo suất chiếu trong quá khứ");
       err.statusCode = 400;
@@ -56,8 +55,7 @@ class ShowTimeService {
       throw err;
     }
 
-    // Check conflict
-    const conflict = await ShowtimeRepository.findConflict(room_id, start_time);
+    const conflict = await ShowTimeRepository.findConflict(room_id, start_time);
     if (conflict) {
       const err = new Error("Phòng này đã có lịch chiếu vào giờ đó");
       err.statusCode = 400;
@@ -65,7 +63,7 @@ class ShowTimeService {
       throw err;
     }
 
-    return await ShowtimeRepository.create({
+    return await ShowTimeRepository.create({
       movie_id,
       cinema_id,
       room_id,
@@ -76,7 +74,7 @@ class ShowTimeService {
   async updateShowtime(id, data) {
     let { movie_id, cinema_id, room_id, start_time } = data;
 
-    const existing = await ShowtimeRepository.findById(id);
+    const existing = await ShowTimeRepository.findById(id);
     if (!existing) {
       const err = new Error("Không tìm thấy suất chiếu");
       err.statusCode = 404;
@@ -95,7 +93,7 @@ class ShowTimeService {
       throw err;
     }
 
-    const isPast = await ShowtimeRepository.isPastTime(start_time);
+    const isPast = await ShowTimeRepository.isPastTime(start_time);
     if (isPast) {
       const err = new Error("Không thể cập nhật suất chiếu trong quá khứ");
       err.statusCode = 400;
@@ -103,7 +101,7 @@ class ShowTimeService {
       throw err;
     }
 
-    const conflict = await ShowtimeRepository.findConflict(room_id, start_time, id);
+    const conflict = await ShowTimeRepository.findConflict(room_id, start_time, id);
     if (conflict) {
       const err = new Error("Phòng này đã có lịch chiếu giờ đó");
       err.statusCode = 400;
@@ -111,7 +109,7 @@ class ShowTimeService {
       throw err;
     }
 
-    const affected = await ShowtimeRepository.update(id, {
+    const affected = await ShowTimeRepository.update(id, {
       movie_id,
       cinema_id,
       room_id,
@@ -128,21 +126,21 @@ class ShowTimeService {
   }
 
   async deleteShowtime(id) {
-    const existing = await ShowtimeRepository.findById(id);
+    const existing = await ShowTimeRepository.findById(id);
     if (!existing) {
       const err = new Error("Không tìm thấy suất chiếu");
       err.statusCode = 404;
       throw err;
     }
 
-    const hasTickets = await ShowtimeRepository.hasTickets(id);
+    const hasTickets = await ShowTimeRepository.hasTickets(id);
     if (hasTickets) {
       const err = new Error("Suất chiếu này đã có vé bán, không thể xóa");
       err.statusCode = 400;
       throw err;
     }
 
-    const affected = await ShowtimeRepository.delete(id);
+    const affected = await ShowTimeRepository.delete(id);
     if (affected === 0) {
       const err = new Error("Không thể xóa suất chiếu");
       err.statusCode = 500;
@@ -154,19 +152,19 @@ class ShowTimeService {
 
   async getQuickBookingData(movie_id, cinema_id, date) {
     if (!movie_id && !cinema_id && !date) {
-      return await ShowtimeRepository.getQuickBookingMovies();
+      return await ShowTimeRepository.getQuickBookingMovies();
     }
 
     if (movie_id && !cinema_id && !date) {
-      return await ShowtimeRepository.getQuickBookingCinemas(movie_id);
+      return await ShowTimeRepository.getQuickBookingCinemas(movie_id);
     }
 
     if (movie_id && cinema_id && !date) {
-      return await ShowtimeRepository.getQuickBookingDates(movie_id, cinema_id);
+      return await ShowTimeRepository.getQuickBookingDates(movie_id, cinema_id);
     }
 
     if (movie_id && cinema_id && date) {
-      return await ShowtimeRepository.getQuickBookingTimes(movie_id, cinema_id, date);
+      return await ShowTimeRepository.getQuickBookingTimes(movie_id, cinema_id, date);
     }
 
     return [];
@@ -178,7 +176,7 @@ class ShowTimeService {
       err.statusCode = 400;
       throw err;
     }
-    return await ShowtimeRepository.getShowtimesForBooking(movie_id, cinema_id, date);
+    return await ShowTimeRepository.getShowtimesForBooking(movie_id, cinema_id, date);
   }
 
   async filterShowtimes(movie_id, room_id, date) {
@@ -187,7 +185,7 @@ class ShowTimeService {
       err.statusCode = 400;
       throw err;
     }
-    return await ShowtimeRepository.filterShowtimes(movie_id, room_id, date);
+    return await ShowTimeRepository.filterShowtimes(movie_id, room_id, date);
   }
 }
 
