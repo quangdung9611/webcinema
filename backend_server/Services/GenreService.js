@@ -1,131 +1,155 @@
 const GenreRepository = require("../Repositories/GenreRepository");
 
 const createSlug = (text) => {
-  if (!text) return "";
-  return text
-    .toLowerCase()
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[đĐ]/g, "d")
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    if (!text) return "";
+
+    return text
+        .toLowerCase()
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[đĐ]/g, "d")
+        .replace(/[^\w\s-]/g, "")
+        .replace(/[\s_-]+/g, "-")
+        .replace(/^-+|-+$/g, "");
 };
 
-const validateGenre = (name) => {
-  if (!name || typeof name !== "string") {
-    return "Tên thể loại không hợp lệ.";
-  }
-  const trimmed = name.trim();
-  if (trimmed.length < 2) {
-    return "Tên thể loại phải có ít nhất 2 ký tự.";
-  }
-  if (trimmed.length > 50) {
-    return "Tên thể loại quá dài (tối đa 50 ký tự).";
-  }
-  return null;
+const validateGenre = (data) => {
+
+    const { genre_name } = data;
+
+    if (!genre_name || genre_name.trim() === "") {
+        return "Vui lòng nhập tên thể loại.";
+    }
+
+    if (genre_name.trim().length < 2) {
+        return "Tên thể loại phải từ 2 ký tự trở lên.";
+    }
+
+    if (genre_name.trim().length > 50) {
+        return "Tên thể loại không được vượt quá 50 ký tự.";
+    }
+
+    return null;
 };
 
 class GenreService {
-  async getAllGenres() {
-    return await GenreRepository.findAll();
-  }
 
-  async getGenreById(genreId) { // ✅ sửa
-    const genre = await GenreRepository.findById(genreId);
-    if (!genre) {
-      const err = new Error("Không tìm thấy thể loại");
-      err.statusCode = 404;
-      throw err;
-    }
-    return genre;
-  }
-
-  async createGenre(data) {
-    const { genre_name, slug: providedSlug } = data;
-
-    const error = validateGenre(genre_name);
-    if (error) {
-      const err = new Error(error);
-      err.statusCode = 400;
-      throw err;
+    async getAllGenres() {
+        return await GenreRepository.findAll();
     }
 
-    const name = genre_name.trim();
-    const slug = providedSlug || createSlug(name);
+    async getGenreById(genreId) {
 
-    const dup = await GenreRepository.findByNameWithSlug(name, slug);
-    if (dup) {
-      const err = new Error(`Thể loại "${name}" đã tồn tại.`);
-      err.statusCode = 400;
-      throw err;
+        const genre = await GenreRepository.findById(genreId);
+
+        if (!genre) {
+            const err = new Error("Không tìm thấy thể loại.");
+            err.statusCode = 404;
+            throw err;
+        }
+
+        return genre;
     }
 
-    return await GenreRepository.create({ genre_name: name, slug });
-  }
+    async createGenre(data) {
 
-  async updateGenre(genreId, data) { // ✅ sửa
-    const { genre_name, slug: providedSlug } = data;
+        const error = validateGenre(data);
 
-    const existing = await GenreRepository.findById(genreId);
-    if (!existing) {
-      const err = new Error("Không tìm thấy thể loại");
-      err.statusCode = 404;
-      throw err;
+        if (error) {
+            const err = new Error(error);
+            err.statusCode = 400;
+            throw err;
+        }
+
+        const slug = createSlug(data.genre_name);
+
+        const duplicate = await GenreRepository.findByNameOrSlug(
+            data.genre_name.trim(),
+            slug
+        );
+
+        if (duplicate) {
+            const err = new Error("Tên thể loại đã tồn tại.");
+            err.statusCode = 400;
+            throw err;
+        }
+
+        return await GenreRepository.create({
+            genre_name: data.genre_name.trim(),
+            slug
+        });
     }
 
-    const error = validateGenre(genre_name);
-    if (error) {
-      const err = new Error(error);
-      err.statusCode = 400;
-      throw err;
+    async updateGenre(genreId, data) {
+
+        const genre = await GenreRepository.findById(genreId);
+
+        if (!genre) {
+            const err = new Error("Không tìm thấy thể loại.");
+            err.statusCode = 404;
+            throw err;
+        }
+
+        const error = validateGenre(data);
+
+        if (error) {
+            const err = new Error(error);
+            err.statusCode = 400;
+            throw err;
+        }
+
+        const slug = createSlug(data.genre_name);
+
+        const duplicate = await GenreRepository.findByNameOrSlug(
+            data.genre_name.trim(),
+            slug,
+            genreId
+        );
+
+        if (duplicate) {
+            const err = new Error("Tên thể loại đã tồn tại.");
+            err.statusCode = 400;
+            throw err;
+        }
+
+        await GenreRepository.update(genreId, {
+            genre_name: data.genre_name.trim(),
+            slug
+        });
+
+        return true;
     }
 
-    const name = genre_name.trim();
-    const slug = providedSlug || createSlug(name);
+    async deleteGenre(genreId) {
 
-    const dup = await GenreRepository.findByNameWithSlug(name, slug, genreId);
-    if (dup) {
-      const err = new Error("Tên thể loại này đã tồn tại ở mục khác.");
-      err.statusCode = 400;
-      throw err;
+        const genre = await GenreRepository.findById(genreId);
+
+        if (!genre) {
+            const err = new Error("Không tìm thấy thể loại.");
+            err.statusCode = 404;
+            throw err;
+        }
+
+        const linked = await GenreRepository.checkLinked(genreId);
+
+        if (linked) {
+            const err = new Error("Không thể xóa vì thể loại đang được sử dụng.");
+            err.statusCode = 400;
+            throw err;
+        }
+
+        const affectedRows = await GenreRepository.delete(genreId);
+
+        if (affectedRows === 0) {
+            const err = new Error("Xóa thể loại thất bại.");
+            err.statusCode = 400;
+            throw err;
+        }
+
+        return true;
     }
 
-    const affected = await GenreRepository.update(genreId, { genre_name: name, slug });
-    if (affected === 0) {
-      const err = new Error("Không thể cập nhật thể loại");
-      err.statusCode = 500;
-      throw err;
-    }
-
-    return true;
-  }
-
-  async deleteGenre(genreId) { // ✅ sửa
-    const existing = await GenreRepository.findById(genreId);
-    if (!existing) {
-      const err = new Error("Không tìm thấy thể loại");
-      err.statusCode = 404;
-      throw err;
-    }
-
-    const linked = await GenreRepository.checkLinked(genreId);
-    if (linked) {
-      const err = new Error("Không thể xóa vì thể loại đang được sử dụng trong phim.");
-      err.statusCode = 400;
-      throw err;
-    }
-
-    const affected = await GenreRepository.delete(genreId);
-    if (affected === 0) {
-      const err = new Error("Không thể xóa thể loại");
-      err.statusCode = 500;
-      throw err;
-    }
-
-    return true;
-  }
 }
 
 module.exports = new GenreService();

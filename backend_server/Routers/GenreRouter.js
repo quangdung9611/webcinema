@@ -5,11 +5,11 @@ const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
 // PUBLIC (không cần auth)
 router.get("/", GenreController.getAllGenres);
+router.get("/:genre_id", GenreController.getGenreById); // bỏ auth
 
 // ADMIN (cần auth) - RESTful chuẩn
-router.post("/", authenticateAdmin, GenreController.addGenre);
+router.post("/", authenticateAdmin, GenreController.createGenre);
 router.put("/:genre_id", authenticateAdmin, GenreController.updateGenre);
 router.delete("/:genre_id", authenticateAdmin, GenreController.deleteGenre);
-router.get("/:genre_id", authenticateAdmin, GenreController.getGenreById);
 
 module.exports = router;
