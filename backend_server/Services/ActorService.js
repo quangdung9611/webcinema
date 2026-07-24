@@ -81,8 +81,9 @@ class ActorService {
     // ✅ Ưu tiên dùng slug từ frontend, nếu không có hoặc rỗng thì tự tạo
     const slug = providedSlug && providedSlug.trim() ? providedSlug.trim() : createSlug(name);
 
-    const dup = await ActorRepository.findByNameOrSlug(name.trim(), slug);
-    if (dup) {
+    // ✅ Dùng existsByNameOrSlug (giống Movie) thay vì findByNameOrSlug
+    const exists = await ActorRepository.existsByNameOrSlug(name.trim(), slug);
+    if (exists) {
       const err = new Error("Tên hoặc slug đã tồn tại");
       err.statusCode = 400;
       throw err;
@@ -127,9 +128,9 @@ class ActorService {
     // ✅ Ưu tiên dùng slug từ frontend, nếu không có hoặc rỗng thì tự tạo
     const slug = providedSlug && providedSlug.trim() ? providedSlug.trim() : createSlug(name);
 
-    // Kiểm tra trùng lặp (loại trừ chính nó)
-    const dup = await ActorRepository.findByNameOrSlug(name.trim(), slug, actorId);
-    if (dup) {
+    // ✅ Dùng existsByNameOrSlug (giống Movie) thay vì findByNameOrSlug
+    const exists = await ActorRepository.existsByNameOrSlug(name.trim(), slug, actorId);
+    if (exists) {
       const err = new Error("Tên hoặc slug đã trùng với diễn viên khác");
       err.statusCode = 400;
       throw err;

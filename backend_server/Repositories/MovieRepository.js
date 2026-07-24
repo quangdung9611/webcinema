@@ -78,36 +78,23 @@ class MovieRepository {
         );
         return rows;
     }
-
     async existsByTitleOrSlug(title, slug, excludeId = null) {
+        let sql = `
+            SELECT movie_id
+            FROM movies
+            WHERE (title = ? OR slug = ?)
+        `;
 
-    console.log("title =", title);
-    console.log("slug =", slug);
-    console.log("excludeId =", excludeId);
+        const params = [title, slug];
 
-    let sql = `
-        SELECT movie_id,title,slug
-        FROM movies
-        WHERE (title = ? OR slug = ?)
-    `;
+        if (excludeId != null) {
+            sql += ` AND movie_id != ?`;
+            params.push(Number(excludeId));
+        }
 
-    const params = [title, slug];
-
-    if (excludeId != null) {
-        sql += ` AND movie_id != ?`;
-        params.push(Number(excludeId));
+        const [rows] = await db.query(sql, params);
+        return rows.length > 0;
     }
-
-    console.log(sql);
-    console.log(params);
-
-    const [rows] = await db.query(sql, params);
-
-    console.log("rows =", rows);
-
-    return rows.length > 0;
-}
-
     // Tạo phim mới
     async create(movieData) {
         const {
