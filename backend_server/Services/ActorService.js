@@ -45,7 +45,7 @@ class ActorService {
     return await ActorRepository.findAll();
   }
 
-  async getActorById(actorId) { // ✅ đổi tên tham số
+  async getActorById(actorId) {
     const actor = await ActorRepository.findById(actorId);
     if (!actor) {
       const err = new Error("Không tìm thấy diễn viên");
@@ -65,8 +65,9 @@ class ActorService {
     return actor;
   }
 
+  // ✅ TẠO DIỄN VIÊN (nhận slug từ frontend)
   async createActor(data, file) {
-    const { name, gender, nationality, biography, birthday } = data;
+    const { name, gender, nationality, biography, birthday, slug: providedSlug } = data;
 
     const error = validateActorData(data, file, false);
     if (error) {
@@ -75,7 +76,9 @@ class ActorService {
       throw err;
     }
 
-    const slug = createSlug(name);
+    // ✅ Ưu tiên dùng slug từ frontend, nếu không có mới tự tạo
+    const slug = providedSlug && providedSlug.trim() ? providedSlug.trim() : createSlug(name);
+
     const dup = await ActorRepository.findByNameOrSlug(name.trim(), slug);
     if (dup) {
       const err = new Error("Tên hoặc slug đã tồn tại");
@@ -100,7 +103,8 @@ class ActorService {
     });
   }
 
-  async updateActor(actorId, data, file) { // ✅ đổi tên tham số
+  // ✅ CẬP NHẬT DIỄN VIÊN (nhận slug từ frontend)
+  async updateActor(actorId, data, file) {
     const existing = await ActorRepository.findById(actorId);
     if (!existing) {
       const err = new Error("Diễn viên không tồn tại");
@@ -108,7 +112,7 @@ class ActorService {
       throw err;
     }
 
-    const { name, gender, nationality, biography, birthday } = data;
+    const { name, gender, nationality, biography, birthday, slug: providedSlug } = data;
     const error = validateActorData(data, file, true);
     if (error) {
       const err = new Error(error);
@@ -116,7 +120,9 @@ class ActorService {
       throw err;
     }
 
-    const slug = createSlug(name);
+    // ✅ Ưu tiên dùng slug từ frontend, nếu không có mới tự tạo
+    const slug = providedSlug && providedSlug.trim() ? providedSlug.trim() : createSlug(name);
+
     const dup = await ActorRepository.findByNameOrSlug(name.trim(), slug, actorId);
     if (dup) {
       const err = new Error("Tên hoặc slug đã trùng với diễn viên khác");
@@ -158,7 +164,7 @@ class ActorService {
     }
   }
 
-  async deleteActor(actorId) { // ✅ đổi tên tham số
+  async deleteActor(actorId) {
     const existing = await ActorRepository.findById(actorId);
     if (!existing) {
       const err = new Error("Diễn viên không tồn tại");

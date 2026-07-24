@@ -30,8 +30,10 @@ const getImageUrl = (image) => {
 const DEFAULT_AVATAR =
     'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-avatar.jpg';
 
+// ✅ Thêm slug vào initialFormData
 const initialFormData = {
     name: '',
+    slug: '',          // thêm trường slug
     gender: 'Nam',
     nationality: 'Việt Nam',
     birthday: '',
@@ -109,6 +111,7 @@ const ActorPage = () => {
         setEditingActor(actor);
         setFormData({
             name: actor.name || '',
+            slug: actor.slug || '',      // ✅ lấy slug từ actor
             gender: actor.gender || 'Nam',
             nationality: actor.nationality || 'Việt Nam',
             birthday: actor.birthday ? actor.birthday.substring(0, 10) : '',
@@ -124,6 +127,17 @@ const ActorPage = () => {
 
         if (name === 'actor_avatar') {
             setActorAvatarFile(files[0]);
+            return;
+        }
+
+        // ✅ Nếu thay đổi name, tự động cập nhật slug
+        if (name === 'name') {
+            setFormData(prev => ({
+                ...prev,
+                name: value,
+                slug: generateSlug(value)
+            }));
+            setFormErrors(prev => ({ ...prev, [name]: '' }));
             return;
         }
 
@@ -175,6 +189,10 @@ const ActorPage = () => {
             submitData.append('birthday', formData.birthday);
             submitData.append('biography', formData.biography.trim());
 
+            // ✅ Gửi slug lên backend
+            const slug = formData.slug || generateSlug(formData.name.trim());
+            submitData.append('slug', slug);
+
             if (actorAvatarFile) {
                 submitData.append('actor_avatar', actorAvatarFile);
             }
@@ -190,10 +208,7 @@ const ActorPage = () => {
                 method = 'post';
             }
 
-            // Thêm slug sẽ do backend tự tạo, nên không gửi lên
-            // (nếu muốn có thể gửi slug nhưng không cần)
-
-            const response = await axios({
+            await axios({
                 method,
                 url,
                 data: submitData,
@@ -209,7 +224,6 @@ const ActorPage = () => {
             fetchActors();
         } catch (error) {
             const backendError = error.response?.data?.message || error.response?.data?.error || 'Đã xảy ra lỗi.';
-            // Nếu có field lỗi trả về, có thể gán vào formErrors
             if (error.response?.data?.field) {
                 setFormErrors({ [error.response.data.field]: backendError });
             } else {
@@ -306,13 +320,20 @@ const ActorPage = () => {
         }
     ];
 
-    // Form fields
+    // ✅ Thêm trường Slug vào formFields (giống MoviePage)
     const formFields = [
         {
             label: 'Họ tên',
             name: 'name',
             type: 'text',
             placeholder: 'Nhập tên diễn viên'
+        },
+        {
+            label: 'Slug',
+            name: 'slug',
+            type: 'text',
+            placeholder: 'Slug tự động',
+            disabled: true   // không cho chỉnh sửa
         },
         {
             label: 'Giới tính',
