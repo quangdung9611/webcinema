@@ -1,4 +1,4 @@
-const ShowtimeRepository = require("../Repositories/ShowtimeRepository");
+const ShowtimeRepository = require("../Repositories/ShowTimeRepository");
 
 const formatDateTime = (dateTime) => {
   if (!dateTime) return null;
@@ -13,7 +13,7 @@ const validateShowtime = (data) => {
   return null;
 };
 
-class ShowtimeService {
+class ShowTimeService {
   async getAllShowtimes() {
     return await ShowtimeRepository.findAll();
   }
@@ -191,4 +191,4 @@ class ShowtimeService {
   }
 }
 
-module.exports = new ShowtimeService();
+module.exports = new ShowTimeService();

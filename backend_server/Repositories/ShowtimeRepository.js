@@ -1,6 +1,6 @@
 const db = require("../Config/db");
 
-class ShowtimeRepository {
+class ShowTimeRepository {
   async findAll() {
     const [rows] = await db.query(`
       SELECT
@@ -196,4 +196,4 @@ class ShowtimeRepository {
   }
 }
 
-module.exports = new ShowtimeRepository();
+module.exports = new ShowTimeRepository();
