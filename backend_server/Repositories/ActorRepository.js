@@ -99,20 +99,26 @@ class ActorRepository {
     // ==========================================================
     // KIỂM TRA TỒN TẠI THEO TÊN HOẶC SLUG (GIỐNG MOVIE)
     // ==========================================================
-    async existsByNameOrSlug(name, slug, excludeId = null) {
-        let sql = `
-            SELECT actor_id
-            FROM actors
-            WHERE name = ? OR slug = ?
-        `;
-        const params = [name.trim(), slug];
-        if (excludeId) {
-            sql += ` AND actor_id != ?`;
-            params.push(excludeId);
-        }
-        const [rows] = await db.query(sql, params);
-        return rows.length > 0;
+   // ==========================================================
+// KIỂM TRA TỒN TẠI THEO TÊN HOẶC SLUG
+// ==========================================================
+async existsByNameOrSlug(name, slug, excludeId = null) {
+    let sql = `
+        SELECT actor_id
+        FROM actors
+        WHERE (name = ? OR slug = ?)
+    `;
+
+    const params = [name.trim(), slug];
+
+    if (excludeId != null) {
+        sql += ` AND actor_id != ?`;
+        params.push(Number(excludeId));
     }
+
+    const [rows] = await db.query(sql, params);
+    return rows.length > 0;
+}
 
     // ==========================================================
     // LẤY ẢNH CỦA DIỄN VIÊN (để xóa trên Cloudinary)

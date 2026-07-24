@@ -126,7 +126,11 @@ class ActorService {
     }
 
     // ✅ Ưu tiên dùng slug từ frontend, nếu không có hoặc rỗng thì tự tạo
-    const slug = providedSlug && providedSlug.trim() ? providedSlug.trim() : createSlug(name);
+   const slug = (
+    providedSlug && providedSlug.trim()
+        ? providedSlug.trim()
+        : createSlug(name)
+).toLowerCase();
 
     // ✅ Dùng existsByNameOrSlug (giống Movie) thay vì findByNameOrSlug
     const exists = await ActorRepository.existsByNameOrSlug(name.trim(), slug, actorId);
