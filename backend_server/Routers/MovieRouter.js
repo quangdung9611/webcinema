@@ -50,7 +50,7 @@ router.post(
     { name: "movie_poster", maxCount: 1 },
     { name: "movie_backdrop", maxCount: 1 },
   ]),
-  MovieController.addMovie
+    MovieController.createMovie
 );
 
 // Cập nhật phim
