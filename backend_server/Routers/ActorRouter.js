@@ -1,33 +1,44 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const actorController = require('../Controllers/ActorController');
-const upload = require('../Middlewares/MulterMiddleware');
-const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
+
+const ActorController = require("../Controllers/ActorController");
+const upload = require("../Middlewares/MulterMiddleware");
+const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
 /* ==========================================================
-    1. NHÓM PUBLIC (Người dùng xem)
-   ========================================================== */
+   PUBLIC ROUTES
+========================================================== */
 
 // Lấy tất cả diễn viên
-router.get('/', actorController.getAllActors);
+router.get("/", ActorController.getAllActors);
 
-// Lấy chi tiết diễn viên theo Slug
-router.get('/:slug', actorController.getActorBySlug);
+// Lấy chi tiết diễn viên theo Slug (phải đặt sau các route tĩnh)
+router.get("/:slug", ActorController.getActorBySlug);
 
 /* ==========================================================
-    2. NHÓM ADMIN (Quản lý dữ liệu)
-   ========================================================== */
+   ADMIN ROUTES
+========================================================== */
 
-// Lấy thông tin diễn viên theo ID để đổ vào Form sửa
-router.get('/id/:id', authenticateAdmin, actorController.getActorById);
+// Lấy thông tin diễn viên theo ID (để edit)
+router.get("/admin/:id", authenticateAdmin, ActorController.getActorById);
 
 // Thêm diễn viên mới - field: actor_avatar
-router.post('/add', authenticateAdmin, upload.single('actor_avatar'), actorController.addActor);
+router.post(
+  "/admin",
+  authenticateAdmin,
+  upload.single("actor_avatar"),
+  ActorController.addActor
+);
 
 // Cập nhật diễn viên - field: actor_avatar
-router.put('/update/:id', authenticateAdmin, upload.single('actor_avatar'), actorController.updateActor);
+router.put(
+  "/admin/:id",
+  authenticateAdmin,
+  upload.single("actor_avatar"),
+  ActorController.updateActor
+);
 
 // Xóa diễn viên
-router.delete('/delete/:id', authenticateAdmin, actorController.deleteActor);
+router.delete("/admin/:id", authenticateAdmin, ActorController.deleteActor);
 
 module.exports = router;

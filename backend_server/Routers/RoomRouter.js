@@ -1,23 +1,16 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const roomController = require('../Controllers/RoomController');
+const RoomController = require("../Controllers/RoomController");
+const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
-// Lấy toàn bộ danh sách phòng (cho trang RoomList)
-router.get('/', roomController.getAllRooms);
+// PUBLIC (không cần auth)
+router.get("/cinema/:cinema_id", RoomController.getRoomsByCinema);
 
-// Lấy chi tiết 1 phòng (cho trang RoomUpdate)
-router.get('/:id', roomController.getRoomById);
-
-// Lọc phòng theo rạp (Dùng cho dropdown khi thêm ghế)
-router.get('/cinema/:cinema_id', roomController.getRoomsByCinema);
-
-// Thêm phòng
-router.post('/add', roomController.createRoom);
-
-// Cập nhật phòng
-router.put('/update/:id', roomController.updateRoom);
-
-// Xóa phòng
-router.delete('/delete/:id', roomController.deleteRoom);
+// ADMIN (cần auth)
+router.get("/", authenticateAdmin, RoomController.getAllRooms);
+router.get("/:id", authenticateAdmin, RoomController.getRoomById);
+router.post("/add", authenticateAdmin, RoomController.createRoom);
+router.put("/update/:id", authenticateAdmin, RoomController.updateRoom);
+router.delete("/delete/:id", authenticateAdmin, RoomController.deleteRoom);
 
 module.exports = router;

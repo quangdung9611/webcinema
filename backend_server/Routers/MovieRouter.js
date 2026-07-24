@@ -1,73 +1,70 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
-const movieController = require('../Controllers/MovieController');
+const MovieController = require("../Controllers/MovieController");
+const upload = require("../Middlewares/MulterMiddleware");
 
-// ✅ Đã sửa: dùng MulterMiddleware thay vì UploadMiddleware cũ
-const upload = require('../Middlewares/MulterMiddleware');
+// ✅ Import middleware phân quyền
+const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
+const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
 /* ==========================================================
-    1. PUBLIC ROUTES (Cấu trúc tĩnh - Đặt lên đầu)
-   ========================================================== */
+   PUBLIC ROUTES (Không cần đăng nhập)
+========================================================== */
 
 // Lấy phim theo nhóm (mega menu)
-router.get('/status-group', movieController.getMoviesByStatusGroup);
+router.get("/status-group", MovieController.getMoviesByStatusGroup);
 
-// Lấy phim theo thể loại (Hàm mới bạn vừa yêu cầu - không phân trang)
-router.get('/with-genre', movieController.getMoviesWithGenre);
+// Lấy phim theo thể loại (query param ?genre=slug)
+router.get("/with-genre", MovieController.getMoviesWithGenre);
 
 // Lấy phim theo category (đang chiếu / sắp chiếu)
-router.get('/category/:statusSlug', movieController.getMoviesByStatusSlug);
-
-// Pagination + filter thể loại (Giữ lại để dùng sau nếu cần)
-// router.get('/pagination', movieController.getMoviesPagination);
+router.get("/category/:statusSlug", MovieController.getMoviesByStatusSlug);
 
 // Danh sách tất cả phim
-router.get('/', movieController.getAllMovies);
+router.get("/", MovieController.getAllMovies);
+
+// Lấy chi tiết phim theo slug (trang user) - ĐẶT CUỐI CÙNG
+router.get("/:slug", MovieController.getMovieBySlug);
 
 /* ==========================================================
-    2. INTERACTION ROUTES (LIKE / VIEW)
-   ========================================================== */
+   USER ROUTES (Cần đăng nhập) - Like / View
+========================================================== */
 
-router.patch('/like/:id', movieController.likeMovie);
-router.patch('/view/:id', movieController.incrementViews);
+// Có thể dùng authenticateUser để tracking user sau này
+router.patch("/like/:id", authenticateUser, MovieController.likeMovie);
+router.patch("/view/:id", authenticateUser, MovieController.incrementViews);
 
 /* ==========================================================
-    3. ADMIN ROUTES (CRUD MOVIE)
-   ========================================================== */
+   ADMIN ROUTES (Cần quyền admin)
+========================================================== */
 
-// Thêm phim - field: movie_poster và movie_backdrop
+// Lấy chi tiết phim theo ID (dùng để edit)
+router.get("/admin/detail/:id", authenticateAdmin, MovieController.getMovieById);
+
+// Thêm phim
 router.post(
-    '/add',
-    upload.fields([
-        { name: 'movie_poster', maxCount: 1 },
-        { name: 'movie_backdrop', maxCount: 1 }
-    ]),
-    movieController.addMovie
+  "/admin",
+  authenticateAdmin,
+  upload.fields([
+    { name: "movie_poster", maxCount: 1 },
+    { name: "movie_backdrop", maxCount: 1 },
+  ]),
+  MovieController.addMovie
 );
 
-// Cập nhật phim - field: movie_poster và movie_backdrop
+// Cập nhật phim
 router.put(
-    '/update/:id',
-    upload.fields([
-        { name: 'movie_poster', maxCount: 1 },
-        { name: 'movie_backdrop', maxCount: 1 }
-    ]),
-    movieController.updateMovie
+  "/admin/:id",
+  authenticateAdmin,
+  upload.fields([
+    { name: "movie_poster", maxCount: 1 },
+    { name: "movie_backdrop", maxCount: 1 },
+  ]),
+  MovieController.updateMovie
 );
 
 // Xóa phim
-router.delete('/:id', movieController.deleteMovie);
-
-// Lấy chi tiết phim theo ID (admin / edit)
-router.get('/detail/:id', movieController.getMovieById);
-
-/* ==========================================================
-    4. PUBLIC DETAIL ROUTE (PHẢI ĐẶT CUỐI CÙNG)
-   ========================================================== */
-
-// Lấy phim theo slug (trang chi tiết user)
-// Đặt cuối cùng để tránh trùng với /with-genre hoặc /status-group
-router.get('/:slug', movieController.getMovieBySlug);
+router.delete("/admin/:id", authenticateAdmin, MovieController.deleteMovie);
 
 module.exports = router;

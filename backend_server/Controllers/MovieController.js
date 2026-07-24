@@ -1,496 +1,135 @@
-const db = require('../Config/db');
-const fs = require('fs');
-const path = require('path');
-
-// ==========================================================
-// IMPORT CLOUDINARY HELPERS
-// ==========================================================
-const { uploadToCloudinary, deleteFromCloudinary } = require('../Middlewares/UploadCloudinary');
+// controllers/MovieController.js
+const MovieService = require('../Services/MovieService');
 
 /* ==========================================================
-    1. HELPERS & VALIDATION UTILS
-========================================================== */
-
-/**
- * Tạo slug từ tiêu đề phim
- */
-const createSlug = (title) => {
-    if (!title) return "";
-    return title
-        .toLowerCase()
-        .trim()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[đĐ]/g, 'd')
-        .replace(/[^\w\s-]/g, '')
-        .replace(/[\s_-]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-};
-
-/**
- * Validate dữ liệu đầu vào cho Phim
- */
-const validateMovieData = (data, files, isUpdate = false) => {
-    const { title, duration, release_date, status, director, nation, age_rating, trailer_url } = data;
-
-    // 1. TITLE
-    if (!title || title.trim() === "") return "Vui lòng nhập tiêu đề phim.";
-    if (title.trim().length < 2) return "Tiêu đề phim phải từ 2 ký tự trở lên.";
-
-    // 2. DIRECTOR
-    if (!director || director.trim() === "") return "Vui lòng nhập tên đạo diễn.";
-
-    // 3. NATION
-    if (!nation || nation.trim() === "") return "Vui lòng nhập quốc gia sản xuất.";
-
-    // 4. DURATION
-    if (!duration || isNaN(duration) || parseInt(duration, 10) <= 0) {
-        return "Thời lượng phim phải là số nguyên dương tính bằng phút.";
-    }
-
-    // 5. AGE RATING
-    if (age_rating === undefined || age_rating === null || age_rating === "") {
-        return "Vui lòng chọn giới hạn độ tuổi (C13, C16, C18, P...).";
-    }
-
-    // 6. RELEASE DATE
-    if (!release_date || release_date.trim() === "") return "Vui lòng chọn ngày phát hành phim.";
-
-    // 7. STATUS
-    const validStatuses = ['Đang chiếu', 'Sắp chiếu', 'Ngừng chiếu'];
-    if (!status || !validStatuses.includes(status)) return "Trạng thái phim không hợp lệ.";
-
-    // 8. TRAILER URL
-    if (trailer_url && trailer_url.trim() !== "") {
-        if (!trailer_url.startsWith("http://") && !trailer_url.startsWith("https://")) {
-            return "Đường dẫn Trailer không hợp lệ (phải bắt đầu bằng http:// hoặc https://).";
-        }
-    }
-
-    // 9. CHECK RELEASE DATE
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (!isUpdate && status === "Sắp chiếu" && new Date(release_date) < today) {
-        return "Phim 'Sắp chiếu' thì ngày phát hành không được ở quá khứ.";
-    }
-
-    // 10. CHECK POSTER (sử dụng tên field movie_poster)
-    if (!isUpdate && (!files || !files['movie_poster'])) {
-        return "Vui lòng upload ảnh poster cho phim.";
-    }
-
-    return null;
-};
-
-/**
- * Trích xuất public_id từ URL Cloudinary
- * Ví dụ: https://res.cloudinary.com/.../cinema_shop/posters/abc.jpg → cinema_shop/posters/abc
- */
-const extractPublicId = (url) => {
-    if (!url) return null;
-    const parts = url.split('/');
-    const uploadIndex = parts.indexOf('upload');
-    if (uploadIndex === -1) return null;
-    const publicId = parts.slice(uploadIndex + 1).join('/').split('.')[0];
-    return publicId;
-};
-
-/* ==========================================================
-    2. GET MOVIE BY SLUG
+    GET MOVIE BY SLUG
 ========================================================== */
 exports.getMovieBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
-        const [movieRows] = await db.query(
-            `
-            SELECT
-                m.*,
-                COUNT(r.review_id) AS total_reviews,
-                IFNULL(ROUND(AVG(r.rating_score), 1), 0) AS avg_rating
-            FROM movies m
-            LEFT JOIN reviews r ON m.movie_id = r.movie_id
-            WHERE m.slug = ?
-            GROUP BY m.movie_id
-            `,
-            [slug]
-        );
-        const movie = movieRows[0];
-        if (!movie) {
-            return res.status(404).json({ message: "Không tìm thấy phim" });
-        }
-
-        // Genres
-        const [genres] = await db.query(
-            `SELECT g.genre_id, g.genre_name
-             FROM genres g
-             JOIN movie_genres mg ON g.genre_id = mg.genre_id
-             WHERE mg.movie_id = ?`,
-            [movie.movie_id]
-        );
-
-        // Actors
-        const [actors] = await db.query(
-            `SELECT a.actor_id, a.name, a.actor_avatar, a.slug
-             FROM actors a
-             JOIN movie_actors ma ON a.actor_id = ma.actor_id
-             WHERE ma.movie_id = ?`,
-            [movie.movie_id]
-        );
-
-        // Showtimes
-        let showtimes = [];
-        if (movie.status === "Đang chiếu") {
-            const [rows] = await db.query(
-                `
-                SELECT s.showtime_id, s.start_time,
-                       r.room_name, r.room_type,
-                       c.cinema_name, c.address
-                FROM showtimes s
-                JOIN rooms r ON s.room_id = r.room_id
-                JOIN cinemas c ON r.cinema_id = c.cinema_id
-                WHERE s.movie_id = ? AND s.start_time >= NOW()
-                ORDER BY s.start_time ASC
-                `,
-                [movie.movie_id]
-            );
-            showtimes = rows;
-        }
-
-        movie.genres = genres;
-        movie.actors = actors;
-        movie.showtimes = showtimes;
-        delete movie.genre_name;
-
+        const movie = await MovieService.getMovieBySlug(slug);
         return res.status(200).json(movie);
-    } catch (error) {
-        console.error("Lỗi getMovieBySlug:", error);
-        return res.status(500).json({ error: error.message });
+    } catch (err) {
+        console.error("getMovieBySlug error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi server"
+        });
     }
 };
 
 /* ==========================================================
-    3. GET ALL MOVIES
+    GET ALL MOVIES
 ========================================================== */
 exports.getAllMovies = async (req, res) => {
     try {
-        const [rows] = await db.query(
-            `SELECT * FROM movies ORDER BY created_at DESC`
-        );
-        return res.status(200).json(rows);
-    } catch (error) {
-        console.error("Error getAllMovies:", error);
-        return res.status(500).json({ error: "Lỗi khi lấy danh sách phim." });
+        const movies = await MovieService.getAllMovies();
+        return res.status(200).json(movies);
+    } catch (err) {
+        console.error("getAllMovies error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Lỗi khi lấy danh sách phim"
+        });
     }
 };
 
 /* ==========================================================
-    4. GET MOVIE BY ID
+    GET MOVIE BY ID
 ========================================================== */
 exports.getMovieById = async (req, res) => {
     try {
-        const [rows] = await db.query(
-            `SELECT * FROM movies WHERE movie_id = ?`,
-            [req.params.id]
-        );
-        if (rows.length === 0) {
-            return res.status(404).json({ error: "Không tìm thấy phim." });
-        }
-        return res.status(200).json(rows[0]);
-    } catch (error) {
-        return res.status(500).json({ error: "Lỗi hệ thống." });
+        const { id } = req.params;
+        const movie = await MovieService.getMovieById(id);
+        return res.status(200).json(movie);
+    } catch (err) {
+        console.error("getMovieById error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi server"
+        });
     }
 };
 
 /* ==========================================================
-    5. ADD MOVIE (CLOUDINARY)
+    CREATE MOVIE
 ========================================================== */
-exports.addMovie = async (req, res) => {
-    const {
-        title,
-        description,
-        director,
-        nation,
-        duration,
-        age_rating,
-        release_date,
-        status,
-        trailer_url,
-        total_likes
-    } = req.body;
-
-    const files = req.files || {};
-
-    // VALIDATE
-    const errorMsg = validateMovieData(req.body, files, false);
-    if (errorMsg) {
-        // Nếu có file upload nhưng validate lỗi, xóa file tạm (Multer đã lưu vào temp)
-        // Không cần xóa vì MulterMiddleware sẽ tự xóa sau khi upload lên Cloudinary thất bại
-        return res.status(400).json({ error: errorMsg });
-    }
-
-    const connection = await db.getConnection();
+exports.createMovie = async (req, res) => {
     try {
-        await connection.beginTransaction();
-
-        const slug = createSlug(title);
-
-        // CHECK DUPLICATE
-        const [dup] = await connection.query(
-            `SELECT movie_id FROM movies WHERE title = ? OR slug = ?`,
-            [title.trim(), slug]
-        );
-        if (dup.length > 0) {
-            await connection.rollback();
-            return res.status(400).json({ error: "Phim này đã tồn tại trong hệ thống (trùng tên hoặc slug)." });
-        }
-
-        // UPLOAD POSTER LÊN CLOUDINARY
-        let movie_poster = null;
-        if (files['movie_poster']?.[0]) {
-            const result = await uploadToCloudinary(files['movie_poster'][0], 'cinema_shop/posters');
-            movie_poster = result.url; // Lưu URL Cloudinary
-        }
-
-        // UPLOAD BACKDROP LÊN CLOUDINARY
-        let movie_backdrop = null;
-        if (files['movie_backdrop']?.[0]) {
-            const result = await uploadToCloudinary(files['movie_backdrop'][0], 'cinema_shop/backdrops');
-            movie_backdrop = result.url; // Lưu URL Cloudinary
-        }
-
-        const cleanDate = release_date ? release_date.substring(0, 10) : null;
-
-        const sql = `
-            INSERT INTO movies (
-                title, slug, description, director, nation,
-                duration, age_rating, movie_poster, movie_backdrop,
-                trailer_url, release_date, status, total_likes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-        await connection.query(sql, [
-            title.trim(),
-            slug,
-            description ? description.trim() : "",
-            director.trim(),
-            nation.trim(),
-            parseInt(duration, 10),
-            age_rating,
-            movie_poster,
-            movie_backdrop,
-            trailer_url ? trailer_url.trim() : null,
-            cleanDate,
-            status,
-            parseInt(total_likes, 10) || 0
-        ]);
-
-        await connection.commit();
-        return res.status(201).json({ success: true, message: "Thêm phim thành công!" });
-    } catch (error) {
-        await connection.rollback();
-        console.error("❌ Add movie error:", error);
-        return res.status(500).json({ error: error.message });
-    } finally {
-        connection.release();
+        const movieId = await MovieService.createMovie(req.body, req.files || {});
+        return res.status(201).json({
+            success: true,
+            message: "Thêm phim thành công!",
+            data: { movie_id: movieId }
+        });
+    } catch (err) {
+        console.error("createMovie error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi server"
+        });
     }
 };
 
 /* ==========================================================
-    6. UPDATE MOVIE (CLOUDINARY)
+    UPDATE MOVIE
 ========================================================== */
 exports.updateMovie = async (req, res) => {
-    const { id } = req.params;
-    const {
-        title,
-        director,
-        nation,
-        duration,
-        age_rating,
-        release_date,
-        status,
-        description,
-        trailer_url,
-        total_likes
-    } = req.body;
-
-    const files = req.files || {};
-
-    // VALIDATE
-    const errorMsg = validateMovieData(req.body, files, true);
-    if (errorMsg) {
-        return res.status(400).json({ error: errorMsg });
-    }
-
-    const connection = await db.getConnection();
     try {
-        await connection.beginTransaction();
-
-        // CHECK MOVIE EXISTS
-        const [old] = await connection.query(
-            `SELECT movie_poster, movie_backdrop FROM movies WHERE movie_id = ?`,
-            [id]
-        );
-        if (old.length === 0) {
-            await connection.rollback();
-            return res.status(404).json({ error: "Phim không tồn tại." });
-        }
-
-        const slug = createSlug(title);
-
-        // CHECK DUPLICATE
-        const [dup] = await connection.query(
-            `SELECT movie_id FROM movies WHERE (title = ? OR slug = ?) AND movie_id != ?`,
-            [title.trim(), slug, id]
-        );
-        if (dup.length > 0) {
-            await connection.rollback();
-            return res.status(400).json({ error: "Tên phim hoặc slug đã trùng với phim khác." });
-        }
-
-        // HANDLE POSTER (Cloudinary)
-        let finalPoster = old[0].movie_poster;
-        if (files['movie_poster']?.[0]) {
-            // Xóa ảnh cũ trên Cloudinary
-            if (old[0].movie_poster) {
-                const publicId = extractPublicId(old[0].movie_poster);
-                await deleteFromCloudinary(publicId);
-            }
-            // Upload ảnh mới
-            const result = await uploadToCloudinary(files['movie_poster'][0], 'cinema_shop/posters');
-            finalPoster = result.url;
-        }
-
-        // HANDLE BACKDROP (Cloudinary)
-        let finalBackdrop = old[0].movie_backdrop;
-        if (files['movie_backdrop']?.[0]) {
-            if (old[0].movie_backdrop) {
-                const publicId = extractPublicId(old[0].movie_backdrop);
-                await deleteFromCloudinary(publicId);
-            }
-            const result = await uploadToCloudinary(files['movie_backdrop'][0], 'cinema_shop/backdrops');
-            finalBackdrop = result.url;
-        }
-
-        // UPDATE DB
-        const sql = `
-            UPDATE movies
-            SET
-                title = ?,
-                slug = ?,
-                director = ?,
-                nation = ?,
-                duration = ?,
-                age_rating = ?,
-                release_date = ?,
-                status = ?,
-                description = ?,
-                movie_poster = ?,
-                movie_backdrop = ?,
-                trailer_url = ?,
-                total_likes = ?
-            WHERE movie_id = ?
-        `;
-        await connection.query(sql, [
-            title.trim(),
-            slug,
-            director.trim(),
-            nation.trim(),
-            parseInt(duration, 10),
-            age_rating,
-            release_date?.substring(0, 10) || null,
-            status,
-            description ? description.trim() : "",
-            finalPoster,
-            finalBackdrop,
-            trailer_url ? trailer_url.trim() : null,
-            parseInt(total_likes, 10) || 0,
-            id
-        ]);
-
-        await connection.commit();
-        return res.status(200).json({ success: true, message: "Cập nhật thông tin phim thành công!" });
-    } catch (error) {
-        await connection.rollback();
-        console.error("❌ Update movie error:", error);
-        return res.status(500).json({ error: error.message });
-    } finally {
-        connection.release();
+        const { id } = req.params;
+        await MovieService.updateMovie(id, req.body, req.files || {});
+        return res.status(200).json({
+            success: true,
+            message: "Cập nhật thông tin phim thành công!"
+        });
+    } catch (err) {
+        console.error("updateMovie error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi server"
+        });
     }
 };
 
 /* ==========================================================
-    7. DELETE MOVIE (CLOUDINARY)
+    DELETE MOVIE
 ========================================================== */
 exports.deleteMovie = async (req, res) => {
-    const { id } = req.params;
-    const { token } = req.body;
-
-    const connection = await db.getConnection();
     try {
-        if (!token) {
-            return res.status(401).json({ error: "Thiếu usertoken bảo mật!" });
-        }
-
-        await connection.beginTransaction();
-
-        // Lấy thông tin ảnh
-        const [movie] = await connection.query(
-            `SELECT movie_poster, movie_backdrop FROM movies WHERE movie_id = ?`,
-            [id]
-        );
-        if (movie.length > 0) {
-            // Xóa poster trên Cloudinary
-            if (movie[0].movie_poster) {
-                const posterPublicId = extractPublicId(movie[0].movie_poster);
-                await deleteFromCloudinary(posterPublicId);
-            }
-            // Xóa backdrop trên Cloudinary
-            if (movie[0].movie_backdrop) {
-                const backdropPublicId = extractPublicId(movie[0].movie_backdrop);
-                await deleteFromCloudinary(backdropPublicId);
-            }
-        }
-
-        // Xóa record trong DB
-        await connection.query(`DELETE FROM movies WHERE movie_id = ?`, [id]);
-        await connection.commit();
-        return res.status(200).json({ success: true, message: "Đã xóa phim và ảnh thành công." });
-    } catch (error) {
-        await connection.rollback();
-        console.error("❌ Delete movie error:", error);
-        return res.status(500).json({ error: "Lỗi khi xóa phim." });
-    } finally {
-        connection.release();
+        const { id } = req.params;
+        // Nếu bạn cần kiểm tra token, có thể thêm vào header hoặc body
+        await MovieService.deleteMovie(id);
+        return res.status(200).json({
+            success: true,
+            message: "Đã xóa phim thành công."
+        });
+    } catch (err) {
+        console.error("deleteMovie error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi server"
+        });
     }
 };
 
 /* ==========================================================
-    8. GET MOVIES BY STATUS GROUP
+    GET MOVIES BY STATUS GROUP
 ========================================================== */
 exports.getMoviesByStatusGroup = async (req, res) => {
     try {
-        const [rows] = await db.query(
-            `SELECT
-                movie_id, title, slug, movie_poster, movie_backdrop,
-                status, age_rating, trailer_url, nation, total_likes
-             FROM movies
-             WHERE status != 'Ngừng chiếu'
-             ORDER BY release_date DESC`
-        );
-
-        const grouped = {
-            "Đang chiếu": rows.filter(movie => movie.status === "Đang chiếu").slice(0, 4),
-            "Sắp chiếu": rows.filter(movie => movie.status === "Sắp chiếu").slice(0, 4)
-        };
-
+        const grouped = await MovieService.getMoviesByStatusGroup();
         return res.status(200).json(grouped);
-    } catch (error) {
-        console.error("Lỗi getMoviesByStatusGroup:", error);
-        return res.status(500).json({ message: "Lỗi server" });
+    } catch (err) {
+        console.error("getMoviesByStatusGroup error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Lỗi server"
+        });
     }
 };
 
 /* ==========================================================
-    9. GET MOVIES BY STATUS SLUG
+    GET MOVIES BY STATUS SLUG
 ========================================================== */
 exports.getMoviesByStatusSlug = async (req, res) => {
     try {
@@ -501,97 +140,75 @@ exports.getMoviesByStatusSlug = async (req, res) => {
         };
         const dbStatus = statusMap[statusSlug];
         if (!dbStatus) {
-            return res.status(400).json({ message: "Đường dẫn không hợp lệ" });
+            return res.status(400).json({
+                success: false,
+                message: "Đường dẫn không hợp lệ"
+            });
         }
-
-        const [rows] = await db.query(
-            `SELECT
-                m.movie_id, m.title, m.slug, m.movie_poster, m.movie_backdrop,
-                m.status, m.age_rating, m.release_date, m.duration, m.trailer_url,
-                m.nation, m.total_likes,
-                IFNULL(ROUND(AVG(r.rating_score), 1), 0) AS average_rating
-             FROM movies m
-             LEFT JOIN reviews r ON m.movie_id = r.movie_id
-             WHERE m.status = ?
-             GROUP BY m.movie_id
-             ORDER BY m.release_date DESC`,
-            [dbStatus]
-        );
-
-        return res.status(200).json(rows);
-    } catch (error) {
-        console.error("Lỗi getMoviesByStatusSlug:", error);
-        return res.status(500).json({ message: "Lỗi server khi lấy danh sách phim" });
+        const movies = await MovieService.getMoviesByStatus(dbStatus);
+        return res.status(200).json(movies);
+    } catch (err) {
+        console.error("getMoviesByStatusSlug error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi server"
+        });
     }
 };
 
 /* ==========================================================
-    10. LIKE MOVIE
+    LIKE MOVIE
 ========================================================== */
 exports.likeMovie = async (req, res) => {
     try {
         const { id } = req.params;
-        const [result] = await db.query(
-            `UPDATE movies SET total_likes = total_likes + 1 WHERE movie_id = ?`,
-            [id]
-        );
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Phim không tồn tại" });
-        }
-        return res.status(200).json({ success: true, message: "Đã tăng lượt thích!" });
-    } catch (error) {
-        console.error("Lỗi likeMovie:", error);
-        return res.status(500).json({ error: "Lỗi hệ thống khi thích phim" });
+        await MovieService.likeMovie(id);
+        return res.status(200).json({
+            success: true,
+            message: "Đã tăng lượt thích!"
+        });
+    } catch (err) {
+        console.error("likeMovie error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi server"
+        });
     }
 };
 
 /* ==========================================================
-    11. INCREMENT VIEWS
+    INCREMENT VIEWS
 ========================================================== */
 exports.incrementViews = async (req, res) => {
     try {
         const { id } = req.params;
-        const [result] = await db.query(
-            `UPDATE movies SET views_count = views_count + 1 WHERE movie_id = ?`,
-            [id]
-        );
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Phim không tồn tại" });
-        }
-        return res.status(200).json({ success: true, message: "Đã tăng lượt xem!" });
-    } catch (error) {
-        console.error("Lỗi incrementViews:", error);
-        return res.status(500).json({ error: "Lỗi hệ thống khi cập nhật lượt xem" });
+        await MovieService.incrementViews(id);
+        return res.status(200).json({
+            success: true,
+            message: "Đã tăng lượt xem!"
+        });
+    } catch (err) {
+        console.error("incrementViews error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi server"
+        });
     }
 };
 
 /* ==========================================================
-    12. GET MOVIES WITH GENRE
+    GET MOVIES WITH GENRE
 ========================================================== */
 exports.getMoviesWithGenre = async (req, res) => {
     try {
         const { genre } = req.query;
-        const params = [];
-        let sql = `
-            SELECT DISTINCT
-                m.movie_id, m.title, m.slug, m.movie_poster,
-                m.status, m.age_rating, m.release_date, m.created_at
-            FROM movies m
-        `;
-        if (genre) {
-            sql += `
-                JOIN movie_genres mg ON m.movie_id = mg.movie_id
-                JOIN genres g ON mg.genre_id = g.genre_id
-                WHERE g.slug = ?
-            `;
-            params.push(genre);
-        }
-        sql += ` ORDER BY m.created_at DESC`;
-
-        const [movies] = await db.query(sql, params);
+        const movies = await MovieService.getMoviesByGenre(genre);
         return res.status(200).json(movies || []);
-    } catch (error) {
-        console.error("Lỗi getMoviesWithGenre:", error);
-        return res.status(500).json({ message: "Lỗi server", error: error.message });
+    } catch (err) {
+        console.error("getMoviesWithGenre error:", err);
+        return res.status(500).json({
+            success: false,
+            message: err.message || "Lỗi server"
+        });
     }
 };

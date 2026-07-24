@@ -1,382 +1,132 @@
-const db = require('../Config/db');
-const fs = require('fs');
-const path = require('path');
+const PromotionService = require("../Services/PromotionService");
 
-// ==========================================================
-// IMPORT CLOUDINARY HELPERS
-// ==========================================================
-const { uploadToCloudinary, deleteFromCloudinary } = require('../Middlewares/UploadCloudinary');
-
-/**
- * Trích xuất public_id từ URL Cloudinary
- */
-const extractPublicId = (url) => {
-    if (!url) return null;
-    const parts = url.split('/');
-    const uploadIndex = parts.indexOf('upload');
-    if (uploadIndex === -1) return null;
-    const publicId = parts.slice(uploadIndex + 1).join('/').split('.')[0];
-    return publicId;
-};
-
-/* =========================================================
- * 1. HELPERS & VALIDATION
- * =========================================================
- */
-
-/**
- * Tạo slug từ tiêu đề khuyến mãi
- */
-const createSlug = (title) => {
-    if (!title) return '';
-    return title
-        .toLowerCase()
-        .trim()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[đĐ]/g, 'd')
-        .replace(/[^\w\s-]/g, '')
-        .replace(/[\s_-]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-};
-
-/**
- * Validate dữ liệu Promotion
- */
-const validatePromotionData = (data, file, isUpdate = false) => {
-    const { title, likes } = data;
-
-    // Validate title
-    if (!title || title.trim() === '') {
-        return 'Vui lòng nhập tiêu đề khuyến mãi.';
-    }
-    if (title.trim().length < 5) {
-        return 'Tiêu đề khuyến mãi phải từ 5 ký tự trở lên.';
-    }
-
-    // Validate likes
-    if (likes !== undefined && likes !== null && likes !== '') {
-        const parsedLikes = parseInt(likes, 10);
-        if (isNaN(parsedLikes) || parsedLikes < 0) {
-            return 'Số lượt thích phải là số nguyên hợp lệ.';
-        }
-    }
-
-    // Validate image (field promotion_image)
-    if (!isUpdate && !file) {
-        return 'Vui lòng upload hình ảnh khuyến mãi.';
-    }
-
-    return null;
-};
-
-/* =========================================================
- * 2. GET ALL PROMOTIONS (USER)
- * =========================================================
- */
 exports.getAllPromotions = async (req, res) => {
-    try {
-        const sql = `
-            SELECT
-                promotion_id,
-                title,
-                slug,
-                description,
-                promotion_image,
-                views,
-                likes,
-                DATE_FORMAT(created_at, '%d/%m/%Y') AS date
-            FROM promotions
-            WHERE is_active = 1
-            ORDER BY created_at DESC
-        `;
-        const [rows] = await db.query(sql);
-        return res.status(200).json(rows);
-    } catch (error) {
-        console.error('Get All Promotions Error:', error);
-        return res.status(500).json({ message: 'Lỗi máy chủ khi lấy khuyến mãi' });
-    }
+  try {
+    const data = await PromotionService.getAllPromotions(true); // chỉ active
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ",
+    });
+  }
 };
 
-/* =========================================================
- * 3. GET ALL PROMOTIONS (ADMIN)
- * =========================================================
- */
 exports.getAllPromotionsAdmin = async (req, res) => {
-    try {
-        const sql = `
-            SELECT
-                *,
-                DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS full_date
-            FROM promotions
-            ORDER BY created_at DESC
-        `;
-        const [rows] = await db.query(sql);
-        return res.status(200).json(rows);
-    } catch (error) {
-        console.error('Get Promotions Admin Error:', error);
-        return res.status(500).json({ message: 'Lỗi máy chủ admin' });
-    }
+  try {
+    const data = await PromotionService.getAllPromotions(false); // tất cả
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ",
+    });
+  }
 };
 
-/* =========================================================
- * 4. GET PROMOTION BY ID
- * =========================================================
- */
 exports.getPromotionById = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const [rows] = await db.query(
-            `SELECT * FROM promotions WHERE promotion_id = ?`,
-            [id]
-        );
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy khuyến mãi' });
-        }
-        return res.status(200).json(rows[0]);
-    } catch (error) {
-        return res.status(500).json({ message: 'Lỗi server khi lấy chi tiết khuyến mãi' });
-    }
-};
-
-/* =========================================================
- * 5. CREATE PROMOTION (CLOUDINARY)
- * =========================================================
- */
-exports.createPromotion = async (req, res) => {
-    const { title, description, likes } = req.body;
-    const file = req.file;
-
-    try {
-        const errorMsg = validatePromotionData(req.body, file);
-        if (errorMsg) {
-            return res.status(400).json({ message: errorMsg });
-        }
-
-        const slug = createSlug(title);
-
-        // Check duplicate
-        const [duplicate] = await db.query(
-            `SELECT promotion_id FROM promotions WHERE title = ? OR slug = ?`,
-            [title.trim(), slug]
-        );
-        if (duplicate.length > 0) {
-            return res.status(400).json({ message: 'Tiêu đề hoặc slug đã tồn tại' });
-        }
-
-        // Upload ảnh lên Cloudinary
-        let promotion_image = null;
-        if (file) {
-            const result = await uploadToCloudinary(file, 'cinema_shop/promotions');
-            promotion_image = result.url;
-        }
-
-        await db.query(
-            `INSERT INTO promotions (
-                title, slug, description, promotion_image,
-                likes, views, is_active
-            ) VALUES (?, ?, ?, ?, ?, 0, 1)`,
-            [
-                title.trim(),
-                slug,
-                description || '',
-                promotion_image,
-                parseInt(likes, 10) || 0
-            ]
-        );
-
-        return res.status(201).json({ success: true, message: 'Tạo khuyến mãi thành công' });
-    } catch (error) {
-        console.error('❌ Create promotion error:', error);
-        return res.status(500).json({ message: 'Lỗi khi tạo khuyến mãi' });
-    }
-};
-
-/* =========================================================
- * 6. UPDATE PROMOTION (CLOUDINARY)
- * =========================================================
- */
-exports.updatePromotion = async (req, res) => {
+  try {
     const { promotion_id } = req.params;
-    const { title, description, likes, is_active } = req.body;
-    const file = req.file;
-
-    const errorMsg = validatePromotionData(req.body, file, true);
-    if (errorMsg) {
-        return res.status(400).json({ message: errorMsg });
-    }
-
-    const connection = await db.getConnection();
-    try {
-        await connection.beginTransaction();
-
-        // CHECK EXISTS
-        const [oldPromotion] = await connection.query(
-            `SELECT promotion_image FROM promotions WHERE promotion_id = ?`,
-            [promotion_id]
-        );
-        if (oldPromotion.length === 0) {
-            await connection.rollback();
-            return res.status(404).json({ message: 'Khuyến mãi không tồn tại' });
-        }
-
-        // CHECK DUPLICATE
-        const slug = createSlug(title);
-        const [duplicate] = await connection.query(
-            `SELECT promotion_id FROM promotions
-             WHERE (title = ? OR slug = ?) AND promotion_id != ?`,
-            [title.trim(), slug, promotion_id]
-        );
-        if (duplicate.length > 0) {
-            await connection.rollback();
-            return res.status(400).json({ message: 'Tiêu đề hoặc slug đã tồn tại' });
-        }
-
-        // XỬ LÝ ẢNH VỚI CLOUDINARY
-        let promotion_image = oldPromotion[0].promotion_image;
-
-        if (file) {
-            // Xóa ảnh cũ trên Cloudinary
-            if (oldPromotion[0].promotion_image) {
-                const publicId = extractPublicId(oldPromotion[0].promotion_image);
-                await deleteFromCloudinary(publicId);
-            }
-            // Upload ảnh mới
-            const result = await uploadToCloudinary(file, 'cinema_shop/promotions');
-            promotion_image = result.url;
-        }
-
-        // UPDATE
-        const sql = `
-            UPDATE promotions
-            SET
-                title = ?,
-                slug = ?,
-                description = ?,
-                promotion_image = ?,
-                likes = ?,
-                is_active = ?
-            WHERE promotion_id = ?
-        `;
-        await connection.query(sql, [
-            title.trim(),
-            slug,
-            description || '',
-            promotion_image,
-            parseInt(likes, 10) || 0,
-            parseInt(is_active, 10) || 0,
-            promotion_id
-        ]);
-
-        await connection.commit();
-        return res.status(200).json({ success: true, message: 'Cập nhật khuyến mãi thành công!' });
-    } catch (error) {
-        await connection.rollback();
-        console.error('❌ Update promotion error:', error);
-        return res.status(500).json({ message: 'Lỗi cập nhật khuyến mãi: ' + error.message });
-    } finally {
-        connection.release();
-    }
+    const p = await PromotionService.getPromotionById(promotion_id);
+    return res.status(200).json(p);
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ",
+    });
+  }
 };
 
-/* =========================================================
- * 7. DELETE PROMOTION (CLOUDINARY)
- * =========================================================
- */
-exports.deletePromotion = async (req, res) => {
-    const { id } = req.params;
-    const { token } = req.body;
-
-    const connection = await db.getConnection();
-    try {
-        if (!token) {
-            return res.status(401).json({ message: 'Thiếu usertoken!' });
-        }
-
-        await connection.beginTransaction();
-
-        // GET IMAGE
-        const [promotion] = await connection.query(
-            `SELECT promotion_image FROM promotions WHERE promotion_id = ?`,
-            [id]
-        );
-        if (promotion.length > 0 && promotion[0].promotion_image) {
-            // Xóa ảnh trên Cloudinary
-            const publicId = extractPublicId(promotion[0].promotion_image);
-            await deleteFromCloudinary(publicId);
-        }
-
-        // DELETE
-        await connection.query(`DELETE FROM promotions WHERE promotion_id = ?`, [id]);
-        await connection.commit();
-        return res.status(200).json({ success: true, message: 'Đã xóa khuyến mãi thành công.' });
-    } catch (error) {
-        await connection.rollback();
-        console.error('❌ Delete promotion error:', error);
-        return res.status(500).json({ message: 'Lỗi khi xóa khuyến mãi.' });
-    } finally {
-        connection.release();
-    }
-};
-
-/* =========================================================
- * 8. INCREASE LIKE
- * =========================================================
- */
-exports.increaseLike = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const [rows] = await db.query(
-            `SELECT likes FROM promotions WHERE promotion_id = ?`,
-            [id]
-        );
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy khuyến mãi' });
-        }
-        await db.query(`UPDATE promotions SET likes = likes + 1 WHERE promotion_id = ?`, [id]);
-        return res.status(200).json({ success: true, message: 'Like +1 thành công' });
-    } catch (error) {
-        return res.status(500).json({ message: 'Lỗi khi tăng like' });
-    }
-};
-
-/* =========================================================
- * 9. GET PROMOTION BY SLUG
- * =========================================================
- */
 exports.getPromotionBySlug = async (req, res) => {
+  try {
     const { slug } = req.params;
-    try {
-        const [rows] = await db.query(`SELECT * FROM promotions WHERE slug = ?`, [slug]);
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy khuyến mãi' });
-        }
-        // TĂNG VIEW
-        await db.query(`UPDATE promotions SET views = views + 1 WHERE slug = ?`, [slug]);
-        return res.status(200).json(rows[0]);
-    } catch (error) {
-        return res.status(500).json({ message: 'Lỗi server khi lấy chi tiết khuyến mãi' });
-    }
+    const p = await PromotionService.getPromotionBySlug(slug);
+    return res.status(200).json(p);
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ",
+    });
+  }
 };
 
-/* =========================================================
- * 10. TOGGLE STATUS
- * =========================================================
- */
-exports.togglePromotionStatus = async (req, res) => {
+exports.createPromotion = async (req, res) => {
+  try {
+    const id = await PromotionService.createPromotion(req.body, req.file);
+    return res.status(201).json({
+      success: true,
+      message: "Tạo khuyến mãi thành công",
+      data: { promotion_id: id },
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 400).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ",
+    });
+  }
+};
+
+exports.updatePromotion = async (req, res) => {
+  try {
+    const { promotion_id } = req.params;
+    await PromotionService.updatePromotion(promotion_id, req.body, req.file);
+    return res.status(200).json({
+      success: true,
+      message: "Cập nhật khuyến mãi thành công",
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 400).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ",
+    });
+  }
+};
+
+exports.deletePromotion = async (req, res) => {
+  try {
+    const { promotion_id } = req.params;
+    await PromotionService.deletePromotion(promotion_id);
+    return res.status(200).json({
+      success: true,
+      message: "Đã xóa khuyến mãi thành công",
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ",
+    });
+  }
+};
+
+exports.increaseLike = async (req, res) => {
+  try {
     const { id } = req.params;
-    try {
-        const [rows] = await db.query(
-            `SELECT is_active FROM promotions WHERE promotion_id = ?`,
-            [id]
-        );
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy khuyến mãi' });
-        }
-        const newStatus = rows[0].is_active ? 0 : 1;
-        await db.query(`UPDATE promotions SET is_active = ? WHERE promotion_id = ?`, [newStatus, id]);
-        return res.status(200).json({ success: true, message: 'Cập nhật trạng thái thành công' });
-    } catch (error) {
-        return res.status(500).json({ message: 'Lỗi cập nhật trạng thái' });
-    }
+    await PromotionService.likePromotion(id);
+    return res.status(200).json({
+      success: true,
+      message: "Like +1 thành công",
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ",
+    });
+  }
+};
+
+exports.togglePromotionStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const newStatus = await PromotionService.toggleStatus(id);
+    return res.status(200).json({
+      success: true,
+      message: "Cập nhật trạng thái thành công",
+      is_active: newStatus,
+    });
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ",
+    });
+  }
 };

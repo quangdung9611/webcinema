@@ -1,304 +1,107 @@
-const db = require('../Config/db');
+const TicketRepository = require("../Repositories/TicketRepository");
 
-/* =========================================================
-    CREATE TICKETS
-========================================================= */
+class TicketService {
+  // ==========================================================
+  // LẤY DANH SÁCH VÉ
+  // ==========================================================
 
-exports.createTickets = async (
-    connection,
-    bookingId
-) => {
+  async getAllTickets(connection) {
+    return await TicketRepository.findAll(connection);
+  }
 
-    const [bookingInfo] =
-        await connection.query(
-            `
-            SELECT
-                b.showtime_id,
-                s.room_id,
-                s.cinema_id
+  async getTicketsByBooking(connection, bookingId) {
+    return await TicketRepository.findByBookingId(connection, bookingId);
+  }
 
-            FROM bookings b
+  async getTicketsByShowtime(connection, showtimeId) {
+    return await TicketRepository.findByShowtimeId(connection, showtimeId);
+  }
 
-            JOIN showtimes s
-                ON b.showtime_id =
-                s.showtime_id
+  async getTicketByCode(connection, ticketCode) {
+    return await TicketRepository.findByCode(connection, ticketCode);
+  }
 
-            WHERE b.booking_id = ?
-            `,
-            [bookingId]
-        );
+  // ==========================================================
+  // SƠ ĐỒ GHẾ
+  // ==========================================================
 
-    if (!bookingInfo.length) {
+  async getTicketSeatMap(connection, showtimeId) {
+    return await TicketRepository.getSeatMapByShowtime(connection, showtimeId);
+  }
 
-        throw new Error(
-            'Không tìm thấy booking.'
-        );
+  // ==========================================================
+  // TẠO VÉ (KHI BOOKING ĐƯỢC TẠO)
+  // ==========================================================
 
+  async createTickets(connection, bookingId) {
+    // 1. Lấy thông tin showtime, room, cinema
+    const bookingInfo = await TicketRepository.getBookingInfo(connection, bookingId);
+    if (!bookingInfo) {
+      throw new Error("Không tìm thấy booking.");
     }
 
-    const {
-        showtime_id,
-        room_id,
-        cinema_id
-    } = bookingInfo[0];
+    const { showtime_id, room_id, cinema_id } = bookingInfo;
 
-    const [details] =
-        await connection.query(
-            `
-            SELECT
-                seat_id,
-                price
-
-            FROM booking_details
-
-            WHERE booking_id = ?
-            AND seat_id IS NOT NULL
-            `,
-            [bookingId]
-        );
-
-    const ticketsData =
-        details.map(item => [
-
-            bookingId,
-
-            showtime_id,
-
-            room_id,
-
-            cinema_id,
-
-            item.seat_id,
-
-            `WAIT-${bookingId}-${item.seat_id}-${Date.now()}`,
-
-            item.price,
-
-            'Reserved',
-
-            'Valid'
-        ]);
-
-    if (ticketsData.length) {
-
-        await connection.query(
-            `
-            INSERT INTO tickets
-            (
-                booking_id,
-                showtime_id,
-                room_id,
-                cinema_id,
-                seat_id,
-                ticket_code,
-                price,
-                seat_status,
-                ticket_status
-            )
-            VALUES ?
-            `,
-            [ticketsData]
-        );
-
+    // 2. Lấy danh sách ghế từ booking_details
+    const seatDetails = await TicketRepository.getSeatDetails(connection, bookingId);
+    if (!seatDetails.length) {
+      return 0; // Không có ghế thì không tạo vé
     }
 
-    return true;
+    // 3. Tạo dữ liệu vé
+    const ticketsData = seatDetails.map(item => [
+      bookingId,
+      showtime_id,
+      room_id,
+      cinema_id,
+      item.seat_id,
+      `WAIT-${bookingId}-${item.seat_id}-${Date.now()}`,
+      item.price || 0,
+      "Reserved",
+      "Valid",
+    ]);
 
-};
+    // 4. Insert bulk
+    return await TicketRepository.createBulk(connection, ticketsData);
+  }
 
-/* =========================================================
-    BOOK TICKETS
-========================================================= */
+  // ==========================================================
+  // CẬP NHẬT TRẠNG THÁI
+  // ==========================================================
 
-exports.bookTickets = async (
-    connection,
-    bookingId
-) => {
+  async bookTickets(connection, bookingId) {
+    // Chuyển trạng thái Reserved -> Booked, đổi mã WAIT -> TIC
+    const affected = await TicketRepository.updateToBooked(connection, bookingId);
+    return affected;
+  }
 
-    await connection.execute(
-        `
-        UPDATE tickets
+  async cancelTickets(connection, bookingId) {
+    // Chuyển trạng thái thành Cancelled
+    const affected = await TicketRepository.updateToCancelled(connection, bookingId);
+    return affected;
+  }
 
-        SET
-            seat_status = 'Booked',
+  async releaseTickets(connection, bookingId) {
+    // Giải phóng vé Reserved (khi hủy booking chưa xác nhận)
+    const affected = await TicketRepository.releaseReserved(connection, bookingId);
+    return affected;
+  }
 
-            ticket_code =
-                REPLACE(
-                    ticket_code,
-                    'WAIT-',
-                    'TIC-'
-                ),
+  async markTicketUsed(connection, ticketId) {
+    const affected = await TicketRepository.markUsed(connection, ticketId);
+    if (!affected) {
+      throw new Error("Không tìm thấy vé hoặc vé đã được sử dụng");
+    }
+    return affected;
+  }
 
-            updated_at = NOW()
+  // ==========================================================
+  // KIỂM TRA
+  // ==========================================================
 
-        WHERE booking_id = ?
-        AND seat_status = 'Reserved'
-        `,
-        [bookingId]
-    );
+  async hasReservedTickets(connection, bookingId) {
+    return await TicketRepository.hasReservedTickets(connection, bookingId);
+  }
+}
 
-};
-
-/* =========================================================
-    RELEASE TICKETS
-========================================================= */
-
-exports.releaseTickets = async (
-    connection,
-    bookingId
-) => {
-
-    await connection.execute(
-        `
-        UPDATE tickets
-
-        SET
-            seat_status = 'Available',
-            booking_id = NULL,
-            updated_at = NOW()
-
-        WHERE booking_id = ?
-        `,
-        [bookingId]
-    );
-
-};
-
-/* =========================================================
-    CANCEL TICKETS
-========================================================= */
-
-exports.cancelTickets = async (
-    connection,
-    bookingId
-) => {
-
-    await connection.execute(
-        `
-        UPDATE tickets
-
-        SET
-            seat_status = 'Cancelled',
-            updated_at = NOW()
-
-        WHERE booking_id = ?
-        `,
-        [bookingId]
-    );
-
-};
-
-/* =========================================================
-    GET TICKETS BY BOOKING
-========================================================= */
-
-exports.getTicketsByBooking = async (
-    connection,
-    bookingId
-) => {
-
-    const [rows] =
-        await connection.query(
-            `
-            SELECT
-                t.*,
-
-                s.seat_row,
-                s.seat_number,
-
-                s.seat_type
-
-            FROM tickets t
-
-            LEFT JOIN seats s
-                ON t.seat_id =
-                s.seat_id
-
-            WHERE t.booking_id = ?
-            `,
-            [bookingId]
-        );
-
-    return rows;
-
-};
-
-/* =========================================================
-    GET TICKET BY CODE
-========================================================= */
-
-exports.getTicketByCode = async (
-    connection,
-    ticketCode
-) => {
-
-    const [rows] =
-        await connection.query(
-            `
-            SELECT *
-
-            FROM tickets
-
-            WHERE ticket_code = ?
-
-            LIMIT 1
-            `,
-            [ticketCode]
-        );
-
-    return rows.length
-        ? rows[0]
-        : null;
-
-};
-
-/* =========================================================
-    MARK TICKET USED
-========================================================= */
-
-exports.markTicketUsed = async (
-    connection,
-    ticketId
-) => {
-
-    await connection.execute(
-        `
-        UPDATE tickets
-
-        SET
-            ticket_status = 'Used',
-            seat_status = 'Used',
-            updated_at = NOW()
-
-        WHERE ticket_id = ?
-        `,
-        [ticketId]
-    );
-
-};
-
-/* =========================================================
-    CHECK RESERVED TICKETS
-========================================================= */
-
-exports.hasReservedTickets = async (
-    connection,
-    bookingId
-) => {
-
-    const [rows] =
-        await connection.execute(
-            `
-            SELECT COUNT(*) AS total
-
-            FROM tickets
-
-            WHERE booking_id = ?
-            AND seat_status = 'Reserved'
-            `,
-            [bookingId]
-        );
-
-    return rows[0].total > 0;
-
-};
+module.exports = new TicketService();
