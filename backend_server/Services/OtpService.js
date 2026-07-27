@@ -2,12 +2,12 @@
     DEPENDENCIES
 =========================================================*/
 
-const RedisService = require("./RedisService");  // instance
+const RedisService = require("./RedisService");
 const Otp = require("../utils/Otp");
 const OtpRepository = require("../Repositories/OtpRepository");
 
 /*=========================================================
-    OTP SERVICE (Dùng instance RedisService)
+    OTP SERVICE
 =========================================================*/
 
 class OtpService {
@@ -16,7 +16,6 @@ class OtpService {
         CREATE OTP - Dùng cho thanh toán/booking
     =========================================================*/
     async createPaymentOTP(email, purpose = "PAYMENT") {
-        // 1. Check rate limit
         const rateLimit = await RedisService.checkRateLimit(email, purpose, 3, 60);
         if (!rateLimit.allowed) {
             throw {
@@ -25,13 +24,9 @@ class OtpService {
             };
         }
 
-        // 2. Generate OTP
         const otpCode = Otp.generate6();
-
-        // 3. Lưu vào Redis (TTL 5 phút)
         await RedisService.saveOTP(email, purpose, otpCode, 300);
 
-        // 4. Log vào MySQL (lịch sử)
         await OtpRepository.create({
             email,
             purpose: purpose,
@@ -47,10 +42,16 @@ class OtpService {
     }
 
     /*=========================================================
-        VERIFY OTP - Dùng cho thanh toán/booking
+        ALIAS: createOTP (giữ tương thích code cũ)
+    =========================================================*/
+    async createOTP(email, purpose = "PAYMENT") {
+        return await this.createPaymentOTP(email, purpose);
+    }
+
+    /*=========================================================
+        VERIFY OTP
     =========================================================*/
     async verifyPaymentOTP(email, otp, purpose = "PAYMENT") {
-        // 1. Check locked
         const isLocked = await RedisService.isOTPLocked(email, purpose, 5);
         if (isLocked) {
             return {
@@ -60,7 +61,6 @@ class OtpService {
             };
         }
 
-        // 2. Get OTP từ Redis
         const savedOTP = await RedisService.getOTP(email, purpose);
         if (!savedOTP) {
             return {
@@ -70,7 +70,6 @@ class OtpService {
             };
         }
 
-        // 3. Verify OTP
         if (savedOTP !== otp) {
             const attempts = await RedisService.incrementOTPAttempts(email, purpose, 300);
             return {
@@ -80,10 +79,8 @@ class OtpService {
             };
         }
 
-        // 4. Xóa OTP khỏi Redis (dùng 1 lần)
         await RedisService.deleteOTP(email, purpose);
 
-        // 5. Log vào MySQL
         await OtpRepository.create({
             email,
             purpose: purpose,
@@ -99,7 +96,7 @@ class OtpService {
     }
 
     /*=========================================================
-        VERIFY OTP - Alias
+        ALIAS: verifyOTP
     =========================================================*/
     async verifyOTP(email, otp, purpose = "PAYMENT") {
         return await this.verifyPaymentOTP(email, otp, purpose);
@@ -109,7 +106,6 @@ class OtpService {
         RESEND OTP
     =========================================================*/
     async resendOTP(email, purpose = "PAYMENT") {
-        // 1. Check cooldown (30s)
         const cooldownKey = `otp:${email}:${purpose}:cooldown`;
         const lastSent = await RedisService.get(cooldownKey);
         
@@ -123,7 +119,6 @@ class OtpService {
             }
         }
 
-        // 2. Check resend count (tối đa 3 lần)
         const countKey = `otp:${email}:${purpose}:resend_count`;
         const count = await RedisService.get(countKey) || 0;
         
@@ -134,16 +129,12 @@ class OtpService {
             };
         }
 
-        // 3. Generate OTP mới
         const newOTP = Otp.generate6();
-
-        // 4. Lưu vào Redis
         await RedisService.saveOTP(email, purpose, newOTP, 300);
         await RedisService.set(cooldownKey, Date.now().toString(), 30);
         await RedisService.increment(countKey);
         await RedisService.expire(countKey, 3600);
 
-        // 5. Log vào MySQL
         await OtpRepository.create({
             email,
             purpose: purpose,
@@ -174,4 +165,4 @@ class OtpService {
     }
 }
 
-module.exports = new OtpService(); // ✅ export instance
+module.exports = new OtpService();
