@@ -13,40 +13,23 @@ import {
 } from 'react-router-dom';
 
 import axios from 'axios';
-
 import { io } from "socket.io-client";
 
-// COMPONENTS
 import Modal from '../components/Modal';
 import CountdownTimer from './CountdownTimer';
-import LoadingButton from '../components/LoadingButton'; // ✅ Import LoadingButton
-
-import {
-    SeatNormal,
-    SeatVIP,
-    SeatCouple
-} from "../components/SeatIcon";
-
+import LoadingButton from '../components/LoadingButton';
 import Seat from "../components/Seat";
 import BookingSidebar from '../components/BookingSidebar';
 
-// STYLES
 import '../styles/Booking.css';
 
 const Booking = () => {
-
     const location = useLocation();
     const navigate = useNavigate();
     const { slug } = useParams();
 
-    // =========================================================
-    // STATE
-    // =========================================================
-
-    const [movie, setMovie] = useState(
-        location.state?.movie || null
-    );
-
+    // State...
+    const [movie, setMovie] = useState(location.state?.movie || null);
     const [cinemas, setCinemas] = useState([]);
     const [availableDates, setAvailableDates] = useState([]);
     const [availableShowtimes, setAvailableShowtimes] = useState([]);
@@ -57,7 +40,7 @@ const Booking = () => {
     const [seats, setSeats] = useState([]);
     const [showtimeDetail, setShowtimeDetail] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [isNavigating, setIsNavigating] = useState(false); // ✅ State cho nút chuyển trang
+    const [isNavigating, setIsNavigating] = useState(false);
     const [isTimerActive, setIsTimerActive] = useState(false);
 
     const [modalConfig, setModalConfig] = useState({
@@ -72,10 +55,7 @@ const Booking = () => {
     const dateRef = useRef(null);
     const timeRef = useRef(null);
 
-    // =========================================================
-    // SOCKET
-    // =========================================================
-
+    // Socket
     const socket = useMemo(() =>
         io("https://api.quangdungcinema.id.vn", {
             withCredentials: true,
@@ -83,17 +63,7 @@ const Booking = () => {
         }),
     []);
 
-    // =========================================================
-    // SHOWTIME ID
-    // =========================================================
-
-    const showtimeId =
-        selectedShowtime?.showtime_id ||
-        selectedShowtime?.id;
-
-    // =========================================================
-    // SCROLL
-    // =========================================================
+    const showtimeId = selectedShowtime?.showtime_id || selectedShowtime?.id;
 
     const scroll = (ref, offset) => {
         if (ref.current) {
@@ -101,20 +71,15 @@ const Booking = () => {
         }
     };
 
-    // =========================================================
-    // LOAD MOVIE FROM SLUG
-    // =========================================================
-
+    // Load movie from slug
     useEffect(() => {
         window.scrollTo(0, 0);
-
         const fetchMovieBySlug = async () => {
             if (movie) return;
             if (!slug) {
                 navigate('/');
                 return;
             }
-
             try {
                 setLoading(true);
                 const res = await axios.get(
@@ -128,14 +93,10 @@ const Booking = () => {
                 setLoading(false);
             }
         };
-
         fetchMovieBySlug();
     }, [slug, movie, navigate]);
 
-    // =========================================================
-    // LOAD CINEMAS + DATES
-    // =========================================================
-
+    // Load cinemas + dates
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -144,7 +105,6 @@ const Booking = () => {
                     'https://api.quangdungcinema.id.vn/api/cinemas'
                 );
                 setCinemas(res.data);
-
                 const dates = [];
                 for (let i = 0; i < 7; i++) {
                     const d = new Date();
@@ -158,24 +118,15 @@ const Booking = () => {
                 setLoading(false);
             }
         };
-
         fetchInitialData();
     }, []);
 
-    // =========================================================
-    // LOAD SHOWTIMES
-    // =========================================================
-
+    // Load showtimes
     useEffect(() => {
-        if (
-            !selectedCinema ||
-            !selectedDate ||
-            !(movie?.movie_id || movie?.id)
-        ) {
+        if (!selectedCinema || !selectedDate || !(movie?.movie_id || movie?.id)) {
             setAvailableShowtimes([]);
             return;
         }
-
         const fetchShowtimes = async () => {
             try {
                 const res = await axios.get(
@@ -194,43 +145,29 @@ const Booking = () => {
                 setAvailableShowtimes([]);
             }
         };
-
         fetchShowtimes();
     }, [selectedCinema, selectedDate, movie]);
 
-    // =========================================================
-    // FETCH SEATS
-    // =========================================================
-
+    // Fetch seats
     const fetchSeats = useCallback(async () => {
         if (!showtimeId) return;
-
         try {
             setLoading(true);
-
             const [detailRes, seatsRes] = await Promise.all([
-                axios.get(
-                    `https://api.quangdungcinema.id.vn/api/showtimes/detail/${showtimeId}`
-                ),
-                axios.get(
-                    `https://api.quangdungcinema.id.vn/api/seats/showtime/${showtimeId}`
-                )
+                axios.get(`https://api.quangdungcinema.id.vn/api/showtimes/detail/${showtimeId}`),
+                axios.get(`https://api.quangdungcinema.id.vn/api/seats/showtime/${showtimeId}`)
             ]);
-
             setShowtimeDetail(detailRes.data);
             setSeats(seatsRes.data);
 
             const savedSeats = sessionStorage.getItem('selectedSeats');
             const savedShowtime = sessionStorage.getItem('currentShowtimeId');
-
             if (savedSeats && savedShowtime === showtimeId.toString()) {
                 const parsed = JSON.parse(savedSeats);
                 setSelectedSeats(parsed);
-
                 if (sessionStorage.getItem('holdExpiresAt')) {
                     setIsTimerActive(true);
                 }
-
                 parsed.forEach(s => {
                     socket.emit('client-chon-ghe', {
                         seatId: s.seat_id,
@@ -245,23 +182,15 @@ const Booking = () => {
         }
     }, [showtimeId, socket]);
 
-    // =========================================================
-    // LOAD SEATS
-    // =========================================================
-
     useEffect(() => {
         if (showtimeId) {
             fetchSeats();
         }
     }, [showtimeId, fetchSeats]);
 
-    // =========================================================
-    // SOCKET REALTIME
-    // =========================================================
-
+    // Socket realtime
     useEffect(() => {
         if (!showtimeId) return;
-
         socket.on('server-khoa-ghe', (data) => {
             if (Number(data.showtimeId) === Number(showtimeId)) {
                 setSeats(prev =>
@@ -273,7 +202,6 @@ const Booking = () => {
                 );
             }
         });
-
         socket.on('server-mo-khoa-ghe', (data) => {
             if (Number(data.showtimeId) === Number(showtimeId)) {
                 setSeats(prev =>
@@ -285,17 +213,13 @@ const Booking = () => {
                 );
             }
         });
-
         return () => {
             socket.off('server-khoa-ghe');
             socket.off('server-mo-khoa-ghe');
         };
     }, [showtimeId, socket]);
 
-    // =========================================================
-    // CLEAR SESSION
-    // =========================================================
-
+    // Clear session
     const clearBookingSession = useCallback(() => {
         selectedSeats.forEach(s => {
             socket.emit('client-huy-chon-ghe', {
@@ -303,7 +227,6 @@ const Booking = () => {
                 showtimeId
             });
         });
-
         sessionStorage.removeItem('selectedSeats');
         sessionStorage.removeItem('holdExpiresAt');
         sessionStorage.removeItem('currentShowtimeId');
@@ -311,10 +234,7 @@ const Booking = () => {
         setSelectedSeats([]);
     }, [selectedSeats, socket, showtimeId]);
 
-    // =========================================================
-    // HANDLE SEAT CLICK
-    // =========================================================
-
+    // Handle seat click
     const handleSeatClick = (seat) => {
         if (
             seat.seat_status === 'Booked' ||
@@ -323,23 +243,14 @@ const Booking = () => {
         ) {
             return;
         }
-
-        const isSelected = selectedSeats.find(
-            s => s.seat_id === seat.seat_id
-        );
-
+        const isSelected = selectedSeats.find(s => s.seat_id === seat.seat_id);
         let updated = [];
-
         if (isSelected) {
-            updated = selectedSeats.filter(
-                s => s.seat_id !== seat.seat_id
-            );
-
+            updated = selectedSeats.filter(s => s.seat_id !== seat.seat_id);
             socket.emit('client-huy-chon-ghe', {
                 seatId: seat.seat_id,
                 showtimeId
             });
-
             if (updated.length === 0) {
                 clearBookingSession();
             }
@@ -350,40 +261,26 @@ const Booking = () => {
                     type: 'error',
                     title: 'Giới hạn ghế',
                     message: 'Bạn chỉ được chọn tối đa 8 ghế!',
-                    onConfirm: () =>
-                        setModalConfig(prev => ({ ...prev, show: false }))
+                    onConfirm: () => setModalConfig(prev => ({ ...prev, show: false }))
                 });
                 return;
             }
-
             updated = [...selectedSeats, seat];
-
             socket.emit('client-chon-ghe', {
                 seatId: seat.seat_id,
                 showtimeId
             });
-
             if (selectedSeats.length === 0) {
-                sessionStorage.setItem(
-                    'holdExpiresAt',
-                    (Date.now() + 10 * 60 * 1000).toString()
-                );
-                sessionStorage.setItem(
-                    'currentShowtimeId',
-                    showtimeId.toString()
-                );
+                sessionStorage.setItem('holdExpiresAt', (Date.now() + 10 * 60 * 1000).toString());
+                sessionStorage.setItem('currentShowtimeId', showtimeId.toString());
                 setIsTimerActive(true);
             }
         }
-
         setSelectedSeats(updated);
         sessionStorage.setItem('selectedSeats', JSON.stringify(updated));
     };
 
-    // =========================================================
-    // HANDLE CONTINUE - chuyển sang Foods
-    // =========================================================
-
+    // Continue to Foods
     const handleContinue = () => {
         setIsNavigating(true);
         navigate('/foods', {
@@ -396,69 +293,54 @@ const Booking = () => {
                 showtimeDetail
             }
         });
-        // Tự động tắt loading sau khi navigate (nếu trang chưa kịp load)
-        // Đảm bảo không bị treo nếu navigate chậm
         setTimeout(() => {
             setIsNavigating(false);
         }, 3000);
     };
 
-    // =========================================================
-    // GROUP SEATS
-    // =========================================================
-
+    // Group seats
     const groupedSeats = useMemo(() => {
         return seats.reduce((acc, seat) => {
             const row = seat.seat_row;
-            if (!acc[row]) {
-                acc[row] = [];
-            }
+            if (!acc[row]) acc[row] = [];
             acc[row].push(seat);
-            acc[row].sort(
-                (a, b) => Number(a.seat_number) - Number(b.seat_number)
-            );
+            acc[row].sort((a, b) => Number(a.seat_number) - Number(b.seat_number));
             return acc;
         }, {});
     }, [seats]);
 
     // =========================================================
-    // RENDER
+    // 🎬 MOVIE WITH POSTER – CHỈ LẤY movie_poster
     // =========================================================
+    const movieWithPoster = useMemo(() => {
+        if (!movie) return null;
+        // ✅ Chỉ lấy movie_poster, không fallback
+        const posterUrl = movie.movie_poster || null;
+        return {
+            ...movie,
+            poster: posterUrl,
+            movie_poster: posterUrl,
+        };
+    }, [movie]);
 
+    // Render
     return (
         <>
-            {/* ✅ ĐÃ BỎ LOADING SPINNER OVERLAY */}
-
             <div className="booking-wrapper">
                 <div className="booking-container">
 
-                    {/* SIDEBAR */}
                     <BookingSidebar
-                        movie={movie}
+                        movie={movieWithPoster}
                         showtimeDetail={showtimeDetail}
                         selectedCinema={selectedCinema}
                         selectedDate={selectedDate}
                         selectedShowtime={selectedShowtime}
-                        selectedSeats={
-                            Array.isArray(selectedSeats)
-                                ? selectedSeats
-                                : []
-                        }
+                        selectedSeats={Array.isArray(selectedSeats) ? selectedSeats : []}
                         foods={[]}
                         selectedFoods={[]}
-                        totalTicketPrice={
-                            selectedSeats.reduce(
-                                (sum, s) => sum + Number(s.price),
-                                0
-                            )
-                        }
+                        totalTicketPrice={selectedSeats.reduce((sum, s) => sum + Number(s.price), 0)}
                         totalFoodPrice={0}
-                        grandTotal={
-                            selectedSeats.reduce(
-                                (sum, s) => sum + Number(s.price),
-                                0
-                            )
-                        }
+                        grandTotal={selectedSeats.reduce((sum, s) => sum + Number(s.price), 0)}
                         isTimerActive={isTimerActive}
                         onExpire={() => {
                             clearBookingSession();
@@ -467,27 +349,21 @@ const Booking = () => {
                                 type: 'error',
                                 title: 'Hết thời gian giữ ghế',
                                 message: 'Ghế bạn chọn đã được mở khóa. Vui lòng chọn lại ghế.',
-                                onConfirm: () =>
-                                    setModalConfig(prev => ({ ...prev, show: false }))
+                                onConfirm: () => setModalConfig(prev => ({ ...prev, show: false }))
                             });
                         }}
                     />
 
-                    {/* MAIN */}
                     <section className="main-booking-area">
-
                         {/* NAV */}
                         <nav className="booking-nav-flex">
-
-                            {/* CINEMA */}
+                            {/* Cinema */}
                             <div className="nav-col cinema-select">
                                 <label>1. CHỌN RẠP</label>
                                 <select
                                     value={selectedCinema?.cinema_id || ''}
                                     onChange={(e) => {
-                                        const cinema = cinemas.find(
-                                            c => c.cinema_id == e.target.value
-                                        );
+                                        const cinema = cinemas.find(c => c.cinema_id == e.target.value);
                                         setSelectedCinema(cinema);
                                         setSelectedDate(null);
                                         setSelectedShowtime(null);
@@ -503,184 +379,88 @@ const Booking = () => {
                                 </select>
                             </div>
 
-                            {/* DATE */}
-                            <div
-                                className={`nav-col date-slider ${
-                                    !selectedCinema ? 'disabled-step' : ''
-                                }`}
-                            >
+                            {/* Date */}
+                            <div className={`nav-col date-slider ${!selectedCinema ? 'disabled-step' : ''}`}>
                                 <label>2. CHỌN NGÀY</label>
                                 <div className="slider-controls">
-                                    <button
-                                        className="slide-btn"
-                                        onClick={() => scroll(dateRef, -150)}
-                                        disabled={!selectedCinema}
-                                    >
-                                        ‹
-                                    </button>
+                                    <button className="slide-btn" onClick={() => scroll(dateRef, -150)} disabled={!selectedCinema}>‹</button>
                                     <div className="scroll-list" ref={dateRef}>
                                         {availableDates.map(d => (
                                             <div
                                                 key={d}
-                                                className={`compact-card ${
-                                                    selectedDate === d ? 'active' : ''
-                                                }`}
-                                                onClick={() => {
-                                                    if (selectedCinema) {
-                                                        setSelectedDate(d);
-                                                        setSelectedShowtime(null);
-                                                    }
-                                                }}
+                                                className={`compact-card ${selectedDate === d ? 'active' : ''}`}
+                                                onClick={() => { if (selectedCinema) { setSelectedDate(d); setSelectedShowtime(null); } }}
                                             >
-                                                <span className="day-txt">
-                                                    {new Date(d).toLocaleDateString(
-                                                        'vi-VN',
-                                                        { weekday: 'short' }
-                                                    )}
-                                                </span>
-                                                <span className="date-txt">
-                                                    {new Date(d).getDate()}/
-                                                    {new Date(d).getMonth() + 1}
-                                                </span>
+                                                <span className="day-txt">{new Date(d).toLocaleDateString('vi-VN', { weekday: 'short' })}</span>
+                                                <span className="date-txt">{new Date(d).getDate()}/{new Date(d).getMonth() + 1}</span>
                                             </div>
                                         ))}
                                     </div>
-                                    <button
-                                        className="slide-btn"
-                                        onClick={() => scroll(dateRef, 150)}
-                                        disabled={!selectedCinema}
-                                    >
-                                        ›
-                                    </button>
+                                    <button className="slide-btn" onClick={() => scroll(dateRef, 150)} disabled={!selectedCinema}>›</button>
                                 </div>
                             </div>
 
-                            {/* SHOWTIME */}
-                            <div
-                                className={`nav-col time-slider ${
-                                    !selectedDate ? 'disabled-step' : ''
-                                }`}
-                            >
+                            {/* Showtime */}
+                            <div className={`nav-col time-slider ${!selectedDate ? 'disabled-step' : ''}`}>
                                 <label>3. SUẤT CHIẾU</label>
                                 <div className="slider-controls">
-                                    <button
-                                        className="slide-btn"
-                                        onClick={() => scroll(timeRef, -120)}
-                                        disabled={!selectedDate}
-                                    >
-                                        ‹
-                                    </button>
+                                    <button className="slide-btn" onClick={() => scroll(timeRef, -120)} disabled={!selectedDate}>‹</button>
                                     <div className="scroll-list" ref={timeRef}>
                                         {availableShowtimes.length > 0
                                             ? availableShowtimes.map(st => (
                                                 <div
                                                     key={st.showtime_id || st.id}
-                                                    className={`compact-card time-card ${
-                                                        selectedShowtime?.showtime_id ===
-                                                            st.showtime_id ||
-                                                        selectedShowtime?.id === st.id
-                                                            ? 'active'
-                                                            : ''
-                                                    }`}
-                                                    onClick={() =>
-                                                        setSelectedShowtime(st)
-                                                    }
+                                                    className={`compact-card time-card ${selectedShowtime?.showtime_id === st.showtime_id || selectedShowtime?.id === st.id ? 'active' : ''}`}
+                                                    onClick={() => setSelectedShowtime(st)}
                                                 >
-                                                    <span className="time-txt">
-                                                        {st.start_time}
-                                                    </span>
+                                                    <span className="time-txt">{st.start_time}</span>
                                                 </div>
                                             ))
-                                            : selectedDate && (
-                                                <span className="no-showtimes">
-                                                    Hết suất
-                                                </span>
-                                            )}
+                                            : selectedDate && <span className="no-showtimes">Hết suất</span>
+                                        }
                                     </div>
-                                    <button
-                                        className="slide-btn"
-                                        onClick={() => scroll(timeRef, 120)}
-                                        disabled={!selectedDate}
-                                    >
-                                        ›
-                                    </button>
+                                    <button className="slide-btn" onClick={() => scroll(timeRef, 120)} disabled={!selectedDate}>›</button>
                                 </div>
                             </div>
-
                         </nav>
 
-                        {/* SEAT */}
+                        {/* Seat map */}
                         <div className="seat-selection-content">
-
                             {selectedShowtime ? (
-
                                 <div className="seat-map-booking">
-
-                                    {/* SCREEN */}
                                     <div className="screen-header">
                                         <div className="screen-line"></div>
                                         <span>MÀN HÌNH</span>
                                     </div>
-
-                                    {/* SEATS */}
                                     <div className="seats-layout">
-                                        {Object.keys(groupedSeats)
-                                            .sort()
-                                            .reverse()
-                                            .map(row => (
-                                                <div key={row} className="seat-row">
-                                                    <span className="row-id">{row}</span>
-                                                    <div className="row-items">
-                                                        {groupedSeats[row].map(seat => (
-                                                            <Seat
-                                                                key={seat.seat_id}
-                                                                type={seat.seat_type}
-                                                                selected={selectedSeats.some(
-                                                                    s => s.seat_id === seat.seat_id
-                                                                )}
-                                                                sold={seat.seat_status === 'Booked'}
-                                                                maintenance={Number(seat.is_active) === 0}
-                                                                locked={seat.is_locked_by_user}
-                                                                number={seat.seat_number}
-                                                                onClick={() =>
-                                                                    handleSeatClick(seat)
-                                                                }
-                                                            />
-                                                        ))}
-                                                    </div>
+                                        {Object.keys(groupedSeats).sort().reverse().map(row => (
+                                            <div key={row} className="seat-row">
+                                                <span className="row-id">{row}</span>
+                                                <div className="row-items">
+                                                    {groupedSeats[row].map(seat => (
+                                                        <Seat
+                                                            key={seat.seat_id}
+                                                            type={seat.seat_type}
+                                                            selected={selectedSeats.some(s => s.seat_id === seat.seat_id)}
+                                                            sold={seat.seat_status === 'Booked'}
+                                                            maintenance={Number(seat.is_active) === 0}
+                                                            locked={seat.is_locked_by_user}
+                                                            number={seat.seat_number}
+                                                            onClick={() => handleSeatClick(seat)}
+                                                        />
+                                                    ))}
                                                 </div>
-                                            ))}
+                                            </div>
+                                        ))}
                                     </div>
-
-                                    {/* LEGEND */}
                                     <div className="seat-legend">
-                                        <div className="leg-item">
-                                            <div className="box maintenance"></div>
-                                            Bảo trì
-                                        </div>
-                                        <div className="leg-item">
-                                            <div className="box normal"></div>
-                                            Thường
-                                        </div>
-                                        <div className="leg-item">
-                                            <div className="box vip"></div>
-                                            VIP
-                                        </div>
-                                        <div className="leg-item">
-                                            <div className="box couple"></div>
-                                            Đôi
-                                        </div>
-                                        <div className="leg-item">
-                                            <div className="box selected"></div>
-                                            Đang chọn
-                                        </div>
-                                        <div className="leg-item">
-                                            <div className="box sold"></div>
-                                            Đã bán
-                                        </div>
+                                        <div className="leg-item"><div className="box maintenance"></div>Bảo trì</div>
+                                        <div className="leg-item"><div className="box normal"></div>Thường</div>
+                                        <div className="leg-item"><div className="box vip"></div>VIP</div>
+                                        <div className="leg-item"><div className="box couple"></div>Đôi</div>
+                                        <div className="leg-item"><div className="box selected"></div>Đang chọn</div>
+                                        <div className="leg-item"><div className="box sold"></div>Đã bán</div>
                                     </div>
-
-                                    {/* ACTION - ✅ DÙNG LOADINGBUTTON */}
                                     <div className="booking-actions">
                                         <LoadingButton
                                             type="button"
@@ -694,20 +474,13 @@ const Booking = () => {
                                             TIẾP TỤC CHỌN ĐỒ ĂN
                                         </LoadingButton>
                                     </div>
-
                                 </div>
-
                             ) : (
-
                                 <div className="placeholder-msg">
                                     <i className="fas fa-info-circle"></i>
-                                    <p>
-                                        Vui lòng chọn đầy đủ thông tin ở trên để hiển thị sơ đồ ghế
-                                    </p>
+                                    <p>Vui lòng chọn đầy đủ thông tin ở trên để hiển thị sơ đồ ghế</p>
                                 </div>
                             )}
-
-                            {/* MODAL */}
                             <Modal
                                 show={modalConfig.show}
                                 type={modalConfig.type}
@@ -716,11 +489,8 @@ const Booking = () => {
                                 onConfirm={modalConfig.onConfirm}
                                 onCancel={modalConfig.onCancel}
                             />
-
                         </div>
-
                     </section>
-
                 </div>
             </div>
         </>

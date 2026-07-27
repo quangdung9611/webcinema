@@ -1,16 +1,8 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { Star } from "lucide-react";
-
 import "../styles/MovieCard.css";
 
-const DEFAULT_POSTER =
-    "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/default-poster.jpg";
-
-const MovieCard = React.memo(({
-    movie,
-    onClick
-}) => {
-
+const MovieCard = React.memo(({ movie, onClick }) => {
     const [isOpening, setIsOpening] = useState(false);
 
     const movieData = useMemo(() => ({
@@ -20,23 +12,15 @@ const MovieCard = React.memo(({
         reviewCount: movie?.total_reviews || 0,
         ageRating: movie?.age_rating || "T18",
         title: movie?.title || "Đang cập nhật",
-
-        // Cloudinary URL từ database
-        poster: movie?.movie_poster || DEFAULT_POSTER,
-
+        poster: movie?.movie_poster, // 👈 Lấy đúng link CSDL, không xử lý
         language: movie?.language || "Phụ đề"
     }), [movie]);
 
     const handleOpen = useCallback(() => {
         if (isOpening) return;
-
         setIsOpening(true);
-
         onClick?.(movie);
-
-        setTimeout(() => {
-            setIsOpening(false);
-        }, 900);
+        setTimeout(() => setIsOpening(false), 900);
     }, [isOpening, movie, onClick]);
 
     const handleKeyDown = useCallback((e) => {
@@ -47,11 +31,7 @@ const MovieCard = React.memo(({
     }, [handleOpen]);
 
     return (
-        <div
-            className={`film-card ${
-                isOpening ? "film-card--opening" : ""
-            }`}
-        >
+        <div className={`film-card ${isOpening ? "film-card--opening" : ""}`}>
             <div
                 className="film-card__inner"
                 onClick={handleOpen}
@@ -62,72 +42,48 @@ const MovieCard = React.memo(({
                 aria-label={movieData.title}
             >
                 <div className="film-card__poster">
-                    <img
-                        src={movieData.poster}
-                        alt={movieData.title}
-                        loading="lazy"
-                        draggable={false}
-                        onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = DEFAULT_POSTER;
-                        }}
-                    />
+                    {/* ✅ Chỉ hiển thị ảnh nếu có poster, không fallback */}
+                    {movieData.poster ? (
+                        <img
+                            src={movieData.poster}
+                            alt={movieData.title}
+                            loading="lazy"
+                            draggable={false}
+                        />
+                    ) : (
+                        // Nếu không có ảnh, có thể để trống hoặc hiển thị placeholder tùy ý
+                        // Bạn có thể render một div trống hoặc không render gì
+                        // Tôi để một div trống để giữ layout
+                        <div className="film-card__no-poster" />
+                    )}
 
                     <span className="film-card__shine" />
                     <span className="film-card__sweep" />
-
-                    <div className="film-card__age">
-                        {movieData.ageRating}
-                    </div>
+                    <div className="film-card__age">{movieData.ageRating}</div>
                 </div>
 
                 <div className="film-card__info">
-                    <h3 className="film-card__title">
-                        {movieData.title}
-                    </h3>
-
+                    <h3 className="film-card__title">{movieData.title}</h3>
                     <div className="film-card__stars">
                         {[...Array(movieData.totalStars)].map((_, index) => (
                             <Star
                                 key={index}
                                 size={12}
                                 strokeWidth={1.8}
-                                fill={
-                                    index < movieData.filledStars
-                                        ? "#E5C46B"
-                                        : "transparent"
-                                }
+                                fill={index < movieData.filledStars ? "#E5C46B" : "transparent"}
                                 color="#E5C46B"
                             />
                         ))}
                     </div>
-
                     <div className="film-card__meta">
-                        <span className="film-card__score">
-                            {movieData.rating.toFixed(1)}
-                        </span>
-
-                        <span className="film-card__dot">
-                            •
-                        </span>
-
-                        <span className="film-card__reviews">
-                            {movieData.reviewCount} đánh giá
-                        </span>
+                        <span className="film-card__score">{movieData.rating.toFixed(1)}</span>
+                        <span className="film-card__dot">•</span>
+                        <span className="film-card__reviews">{movieData.reviewCount} đánh giá</span>
                     </div>
-
                     <div className="film-card__extra">
-                        <span>
-                            {movieData.ageRating}
-                        </span>
-
-                        <span className="film-card__dot">
-                            •
-                        </span>
-
-                        <span>
-                            {movieData.language}
-                        </span>
+                        <span>{movieData.ageRating}</span>
+                        <span className="film-card__dot">•</span>
+                        <span>{movieData.language}</span>
                     </div>
                 </div>
             </div>

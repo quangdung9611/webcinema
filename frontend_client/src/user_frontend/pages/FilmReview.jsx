@@ -15,9 +15,7 @@ const FilmReview = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const IMAGE_BASE_URL = 'https://api.quangdungcinema.id.vn/uploads';
-
-    // Mảng ảnh banner cho FilmReview (giống các trang khác)
+    // Mảng ảnh banner cho FilmReview
     const reviewBannerImages = [
         'review1.png',
         'review2.png',
@@ -80,9 +78,7 @@ const FilmReview = () => {
     return (
         <div className="film-review-page">
 
-            {/* =============================================
-                BANNER SLIDER - CHỈ ẢNH (KHÔNG CHỮ)
-            ============================================= */}
+            {/* ===== BANNER SLIDER ===== */}
             <div className="film-review-hero">
                 <div className="review-overlay"></div>
                 <div className="review-light"></div>
@@ -108,9 +104,7 @@ const FilmReview = () => {
                 </Swiper>
             </div>
 
-            {/* =============================================
-                CONTENT
-            ============================================= */}
+            {/* ===== CONTENT ===== */}
             <div className="film-review-content">
                 <div className="review-section-header">
                     <span className="section-line"></span>
@@ -121,14 +115,15 @@ const FilmReview = () => {
                     {news.slice(0, 4).map((item) => (
                         <Link key={item.news_id} to={`/film-review/${item.slug}`} className="review-item">
                             <div className="review-image-wrapper">
-                                <img
-                                    src={
-                                        item.image_url
-                                            ? `${IMAGE_BASE_URL}/news/${item.image_url}`
-                                            : `${IMAGE_BASE_URL}/default-news.jpg`
-                                    }
-                                    alt={item.title}
-                                />
+                                {/* ✅ Chỉ lấy đúng trường news_image, không xử lý */}
+                                {item.news_image ? (
+                                    <img
+                                        src={item.news_image}
+                                        alt={item.title}
+                                    />
+                                ) : (
+                                    <div className="review-no-image" />
+                                )}
                                 <span className="review-badge">REVIEW</span>
                             </div>
                             <div className="review-content">

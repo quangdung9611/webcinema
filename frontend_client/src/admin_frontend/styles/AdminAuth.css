@@ -1,5 +1,5 @@
 /* =========================================================
-   ADMIN LOGIN – ĐỒNG BỘ VỚI INDEX.CSS (GOLD ACCENT)
+   ADMIN LOGIN – ĐỒNG BỘ VỚI INDEX.CSS (SILVER EDITION)
 ========================================================= */
 
 .admin-login-wrapper {
@@ -11,8 +11,8 @@
     justify-content: center;
     overflow: hidden;
     padding: var(--space-3xl);
-    background: radial-gradient(circle at top left, rgba(201, 168, 76, 0.08), transparent 30%),
-                radial-gradient(circle at bottom right, rgba(201, 168, 76, 0.06), transparent 35%),
+    background: radial-gradient(circle at top left, rgba(232, 232, 232, 0.08), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(232, 232, 232, 0.06), transparent 35%),
                 var(--black-premium);
 }
 
@@ -36,7 +36,7 @@
     border: var(--border-light);
     background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(5, 5, 5, 0.92));
     backdrop-filter: blur(18px);
-    box-shadow: 0 0 80px rgba(0, 0, 0, 0.55), 0 0 120px rgba(201, 168, 76, 0.04);
+    box-shadow: 0 0 80px rgba(0, 0, 0, 0.55), 0 0 120px rgba(232, 232, 232, 0.04);
 }
 
 /* ===== LEFT PANEL (GIỚI THIỆU) ===== */
@@ -50,7 +50,7 @@
     background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(5, 5, 5, 0.92));
 }
 
-/* Glow vàng nhẹ */
+/* Glow bạc nhẹ */
 .admin-login-left::before {
     content: '';
     position: absolute;
@@ -59,12 +59,12 @@
     width: 700px;
     height: 700px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.25), transparent 65%);
+    background: radial-gradient(circle, rgba(232, 232, 232, 0.25), transparent 65%);
     filter: blur(70px);
     z-index: 0;
 }
 
-/* Viền góc vàng */
+/* Viền góc bạc */
 .admin-login-left::after {
     content: '';
     position: absolute;
@@ -72,11 +72,11 @@
     left: var(--space-lg);
     width: 260px;
     height: 260px;
-    border-top: 4px solid var(--gold-primary);
-    border-left: 4px solid var(--gold-primary);
+    border-top: 4px solid var(--silver-primary);
+    border-left: 4px solid var(--silver-primary);
     border-top-left-radius: 120px;
     filter: blur(0.5px);
-    box-shadow: 0 0 20px rgba(201, 168, 76, 0.3), 0 0 60px rgba(201, 168, 76, 0.15);
+    box-shadow: 0 0 20px rgba(232, 232, 232, 0.3), 0 0 60px rgba(232, 232, 232, 0.15);
 }
 
 .admin-brand {
@@ -96,10 +96,10 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: rgba(201, 168, 76, 0.12);
-    border: 1px solid rgba(201, 168, 76, 0.2);
-    color: var(--gold-primary);
-    box-shadow: 0 0 30px rgba(201, 168, 76, 0.15);
+    background: rgba(232, 232, 232, 0.12);
+    border: 1px solid rgba(232, 232, 232, 0.2);
+    color: var(--silver-primary);
+    box-shadow: 0 0 30px rgba(232, 232, 232, 0.15);
 }
 
 .admin-brand h1 {
@@ -111,7 +111,7 @@
 }
 .admin-brand h1::after {
     content: ' STAR';
-    color: var(--gold-primary);
+    color: var(--silver-primary);
 }
 .admin-brand span {
     letter-spacing: 10px;
@@ -163,11 +163,11 @@
 }
 .admin-feature-card:hover {
     transform: translateY(-6px);
-    border-color: rgba(201, 168, 76, 0.3);
-    box-shadow: 0 0 30px rgba(201, 168, 76, 0.12);
+    border-color: rgba(232, 232, 232, 0.3);
+    box-shadow: 0 0 30px rgba(232, 232, 232, 0.12);
 }
 .admin-feature-card svg {
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     margin-bottom: var(--space-md);
 }
 .admin-feature-card strong {
@@ -213,10 +213,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--gold-primary);
-    background: rgba(201, 168, 76, 0.12);
-    border: 1px solid rgba(201, 168, 76, 0.2);
-    box-shadow: 0 0 40px rgba(201, 168, 76, 0.12);
+    color: var(--silver-primary);
+    background: rgba(232, 232, 232, 0.12);
+    border: 1px solid rgba(232, 232, 232, 0.2);
+    box-shadow: 0 0 40px rgba(232, 232, 232, 0.12);
 }
 .admin-login-header h2 {
     font-size: var(--font-size-h1);
@@ -256,8 +256,8 @@
     transition: var(--transition-normal);
 }
 .admin-input-box:focus-within {
-    border-color: var(--gold-primary);
-    box-shadow: 0 0 25px rgba(201, 168, 76, 0.08);
+    border-color: var(--silver-primary);
+    box-shadow: 0 0 25px rgba(232, 232, 232, 0.08);
 }
 .admin-input-box.error {
     border-color: #ff4d6d;
@@ -306,14 +306,15 @@
     font-size: var(--font-size-base);
     font-weight: var(--fw-extrabold);
     color: var(--black-premium);
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     transition: var(--transition-normal);
     margin-top: var(--space-sm);
-    box-shadow: 0 12px 30px rgba(201, 168, 76, 0.25);
+    box-shadow: 0 12px 30px rgba(232, 232, 232, 0.25);
 }
 .btn-admin-login:hover {
     transform: translateY(-3px);
-    box-shadow: 0 18px 40px rgba(201, 168, 76, 0.35);
+    box-shadow: 0 18px 40px rgba(232, 232, 232, 0.35);
+    color: var(--black-premium) !important; /* 🔥 BẮT BUỘC CHỮ ĐEN KHI HOVER */
 }
 .btn-admin-login:disabled {
     opacity: 0.7;
@@ -323,7 +324,7 @@
 .admin-login-footer {
     margin-top: var(--space-2xl);
     text-align: center;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6); /* thay --font-size-sm */
     color: var(--text-muted);
 }
 
@@ -376,6 +377,6 @@
         font-size: var(--font-size-base);
     }
     .admin-input-group label {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
 }

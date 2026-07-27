@@ -21,10 +21,6 @@ import AdminForm from '../../../components/AdminForm';
 
 const API_URL = 'https://api.quangdungcinema.id.vn/api/promotions';
 
-// =============================================
-// HELPER: LẤY URL ẢNH (HỖ TRỢ CLOUDINARY + LOCAL)
-// GIỐNG MovieCard
-// =============================================
 const getImageUrl = (image) => {
     if (!image) return '';
     if (image.startsWith('http://') || image.startsWith('https://')) {
@@ -36,9 +32,6 @@ const getImageUrl = (image) => {
 const DEFAULT_IMAGE =
     'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-promotion.jpg';
 
-/* ==========================================
-    INITIAL DATA (chỉ các trường có trong DB)
-========================================== */
 const initialFormData = {
     title: '',
     slug: '',
@@ -48,7 +41,6 @@ const initialFormData = {
 };
 
 const PromotionPage = () => {
-
     const [promotions, setPromotions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -58,11 +50,9 @@ const PromotionPage = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
     const [promotionImageFile, setPromotionImageFile] = useState(null);
-    const [preview, setPreview] = useState(null);
+    const [filePreviews, setFilePreviews] = useState({}); // { promotion_image: { url, name } }
 
-    /* ==========================================
-        ALERT
-    ========================================== */
+    // Alert
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -80,9 +70,7 @@ const PromotionPage = () => {
         setAlertModal(prev => ({ ...prev, open: false }));
     };
 
-    /* ==========================================
-        FETCH DATA
-    ========================================== */
+    // Fetch
     const fetchPromotions = async () => {
         try {
             setLoading(true);
@@ -99,20 +87,16 @@ const PromotionPage = () => {
         fetchPromotions();
     }, []);
 
-    /* ==========================================
-        CLEAN PREVIEW
-    ========================================== */
+    // Cleanup blob URL
     useEffect(() => {
         return () => {
-            if (preview && preview.startsWith('blob:')) {
-                URL.revokeObjectURL(preview);
+            if (filePreviews.promotion_image?.url?.startsWith('blob:')) {
+                URL.revokeObjectURL(filePreviews.promotion_image.url);
             }
         };
-    }, [preview]);
+    }, [filePreviews]);
 
-    /* ==========================================
-        SLUG
-    ========================================== */
+    // Slug
     const generateSlug = (str) => {
         if (!str) return '';
         return str
@@ -126,21 +110,16 @@ const PromotionPage = () => {
             .trim();
     };
 
-    /* ==========================================
-        OPEN ADD
-    ========================================== */
+    // Open add / edit
     const handleOpenAdd = () => {
         setEditingPromotion(null);
         setFormData(initialFormData);
         setErrors({});
         setPromotionImageFile(null);
-        setPreview(null);
+        setFilePreviews({});
         setIsFormOpen(true);
     };
 
-    /* ==========================================
-        OPEN EDIT
-    ========================================== */
     const handleOpenEdit = (item) => {
         setEditingPromotion(item);
         setFormData({
@@ -150,19 +129,22 @@ const PromotionPage = () => {
             likes: item.likes || 0,
             is_active: item.is_active ?? 1
         });
-
-        // ✅ Dùng helper getImageUrl để hỗ trợ Cloudinary + local
-        setPreview(
-            item.promotion_image ? getImageUrl(item.promotion_image) : DEFAULT_IMAGE
-        );
-        setPromotionImageFile(null);
         setErrors({});
+        setPromotionImageFile(null);
+        if (item.promotion_image) {
+            setFilePreviews({
+                promotion_image: {
+                    url: getImageUrl(item.promotion_image),
+                    name: item.promotion_image
+                }
+            });
+        } else {
+            setFilePreviews({});
+        }
         setIsFormOpen(true);
     };
 
-    /* ==========================================
-        CHANGE
-    ========================================== */
+    // Change
     const handleChange = (e) => {
         const { name, value, files } = e.target;
 
@@ -174,10 +156,15 @@ const PromotionPage = () => {
             const file = files[0];
             setPromotionImageFile(file);
             if (file) {
-                if (preview && preview.startsWith('blob:')) {
-                    URL.revokeObjectURL(preview);
+                if (filePreviews.promotion_image?.url?.startsWith('blob:')) {
+                    URL.revokeObjectURL(filePreviews.promotion_image.url);
                 }
-                setPreview(URL.createObjectURL(file));
+                const blobUrl = URL.createObjectURL(file);
+                setFilePreviews({
+                    promotion_image: { url: blobUrl, name: file.name }
+                });
+            } else {
+                setFilePreviews({});
             }
             return;
         }
@@ -194,29 +181,22 @@ const PromotionPage = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    /* ==========================================
-        VALIDATE
-    ========================================== */
+    // Validate
     const validateForm = () => {
         const newErrors = {};
-
         if (!formData.title.trim()) {
             newErrors.title = 'Vui lòng nhập tiêu đề khuyến mãi.';
         } else if (formData.title.trim().length < 5) {
             newErrors.title = 'Tiêu đề phải từ 5 ký tự trở lên.';
         }
-
         if (!editingPromotion && !promotionImageFile) {
             newErrors.promotion_image = 'Vui lòng chọn ảnh khuyến mãi.';
         }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    /* ==========================================
-        SUBMIT
-    ========================================== */
+    // Submit
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
@@ -244,7 +224,7 @@ const PromotionPage = () => {
             };
 
             if (editingPromotion) {
-              await axios.put(`${API_URL}/${editingPromotion.promotion_id}`, submitData, config);
+                await axios.put(`${API_URL}/${editingPromotion.promotion_id}`, submitData, config);
                 showAlert('Thành công', 'Cập nhật khuyến mãi thành công.', 'success');
             } else {
                 await axios.post(API_URL, submitData, config);
@@ -260,9 +240,7 @@ const PromotionPage = () => {
         }
     };
 
-    /* ==========================================
-        DELETE
-    ========================================== */
+    // Delete
     const handleDelete = (item) => {
         showAlert(
             'Xác nhận xóa',
@@ -272,7 +250,7 @@ const PromotionPage = () => {
                 try {
                     const token = sessionStorage.getItem('usertoken');
                     await axios.delete(`${API_URL}/${item.promotion_id}`, {
-                        data: { token }
+                        headers: { Authorization: `Bearer ${token}` }
                     });
                     closeAlert();
                     fetchPromotions();
@@ -285,9 +263,7 @@ const PromotionPage = () => {
         );
     };
 
-    /* ==========================================
-        FILTER
-    ========================================== */
+    // Filter
     const filteredPromotions = promotions.filter(item => {
         const keyword = search.toLowerCase();
         return (
@@ -296,9 +272,7 @@ const PromotionPage = () => {
         );
     });
 
-    /* ==========================================
-        TABLE COLUMNS
-    ========================================== */
+    // Table columns
     const columns = [
         {
             title: 'Hình ảnh',
@@ -307,40 +281,21 @@ const PromotionPage = () => {
                 <img
                     src={getImageUrl(row.promotion_image) || DEFAULT_IMAGE}
                     alt="promotion"
-                    style={{
-                        width: '120px',
-                        height: '70px',
-                        objectFit: 'cover',
-                        borderRadius: '10px'
-                    }}
-                    onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = DEFAULT_IMAGE;
-                    }}
+                    style={{ width: '120px', height: '70px', objectFit: 'cover', borderRadius: '10px' }}
+                    onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_IMAGE; }}
                 />
             )
         },
-        {
-            title: 'Tiêu đề',
-            key: 'title'
-        },
+        { title: 'Tiêu đề', key: 'title' },
         {
             title: 'Lượt xem',
             key: 'views',
-            render: (row) => (
-                <span className="status-badge">
-                    <Eye size={12} /> {row.views || 0}
-                </span>
-            )
+            render: (row) => <span className="status-badge"><Eye size={12} /> {row.views || 0}</span>
         },
         {
             title: 'Lượt thích',
             key: 'likes',
-            render: (row) => (
-                <span className="status-badge">
-                    <Heart size={12} /> {row.likes || 0}
-                </span>
-            )
+            render: (row) => <span className="status-badge"><Heart size={12} /> {row.likes || 0}</span>
         },
         {
             title: 'Trạng thái',
@@ -354,20 +309,13 @@ const PromotionPage = () => {
         {
             title: 'Ngày tạo',
             key: 'created_at',
-            render: (row) =>
-                row.full_date ||
-                new Date(row.created_at).toLocaleDateString('vi-VN')
+            render: (row) => row.full_date || new Date(row.created_at).toLocaleDateString('vi-VN')
         },
         {
             title: 'Xem',
             key: 'slug',
             render: (row) => (
-                <a
-                    href={`/promotion/${row.slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: '#06b6d4' }}
-                >
+                <a href={`/promotion/${row.slug}`} target="_blank" rel="noreferrer" style={{ color: '#06b6d4' }}>
                     <ExternalLink size={18} />
                 </a>
             )
@@ -388,36 +336,13 @@ const PromotionPage = () => {
         }
     ];
 
-    /* ==========================================
-        FORM FIELDS
-    ========================================== */
+    // Form fields
     const formFields = [
-        {
-            label: 'Tiêu đề khuyến mãi',
-            name: 'title',
-            type: 'text'
-        },
-        {
-            label: 'Slug',
-            name: 'slug',
-            type: 'text',
-            disabled: true
-        },
-        {
-            label: 'Mô tả ngắn',
-            name: 'description',
-            type: 'textarea'
-        },
-        {
-            label: 'Hình ảnh',
-            name: 'promotion_image',
-            type: 'file'
-        },
-        {
-            label: 'Likes',
-            name: 'likes',
-            type: 'number'
-        },
+        { label: 'Tiêu đề khuyến mãi', name: 'title', type: 'text' },
+        { label: 'Slug', name: 'slug', type: 'text', disabled: true },
+        { label: 'Mô tả ngắn', name: 'description', type: 'textarea' },
+        { label: 'Hình ảnh', name: 'promotion_image', type: 'file' },
+        { label: 'Likes', name: 'likes', type: 'number' },
         {
             label: 'Trạng thái',
             name: 'is_active',
@@ -429,25 +354,15 @@ const PromotionPage = () => {
         }
     ];
 
-    /* ==========================================
-        ALERT ICON
-    ========================================== */
     const renderAlertIcon = () => {
         switch (alertModal.type) {
-            case 'success':
-                return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error':
-                return <XCircle size={58} color="#ef4444" />;
-            case 'warning':
-                return <AlertTriangle size={58} color="#f59e0b" />;
-            default:
-                return <Info size={58} color="#3b82f6" />;
+            case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
+            case 'error': return <XCircle size={58} color="#ef4444" />;
+            case 'warning': return <AlertTriangle size={58} color="#f59e0b" />;
+            default: return <Info size={58} color="#3b82f6" />;
         }
     };
 
-    /* ==========================================
-        RENDER
-    ========================================== */
     return (
         <>
             <AdminPage
@@ -469,29 +384,12 @@ const PromotionPage = () => {
                 )}
             </AdminPage>
 
+            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
                 title={editingPromotion ? 'Cập nhật khuyến mãi' : 'Thêm khuyến mãi mới'}
             >
-                {preview && (
-                    <div style={{ marginBottom: '20px' }}>
-                        <img
-                            src={preview}
-                            alt="preview"
-                            style={{
-                                width: '100%',
-                                height: '220px',
-                                objectFit: 'cover',
-                                borderRadius: '12px'
-                            }}
-                            onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = DEFAULT_IMAGE;
-                            }}
-                        />
-                    </div>
-                )}
                 <AdminForm
                     fields={formFields}
                     formData={formData}
@@ -500,13 +398,16 @@ const PromotionPage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingPromotion ? 'Lưu thay đổi' : 'Tạo khuyến mãi'}
+                    filePreviews={filePreviews}   // 👈 Truyền vào đây
                 />
             </AdminModal>
 
+            {/* ALERT MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
+                type={alertModal.type}
                 size="sm"
             >
                 <div className="admin-alert-content">

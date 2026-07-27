@@ -6,22 +6,9 @@ import { ChevronRight, Gift, AlertCircle } from 'lucide-react';
 import CinemaCard from '../components/CinemaCard';
 import '../styles/Promotion.css';
 
-const DEFAULT_POSTER =
-    "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/default-poster.jpg";
-
-const getImageUrl = (imageField, baseUrl = '') => {
-    if (!imageField) return DEFAULT_POSTER;
-    if (imageField.startsWith('http://') || imageField.startsWith('https://')) {
-        return imageField;
-    }
-    return baseUrl + imageField;
-};
-
 const Promotion = () => {
     const [promotions, setPromotions] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    const promotionImageBaseUrl = "https://api.quangdungcinema.id.vn/uploads/promotions/";
 
     useEffect(() => {
         const fetchPromotions = async () => {
@@ -54,7 +41,6 @@ const Promotion = () => {
     return (
         <div className="promotion-page">
             <div className="promotion-container">
-                {/* Header */}
                 <div className="promotion-header">
                     <div className="promotion-header-icon"><Gift size={48} /></div>
                     <h1>Khuyến Mãi &amp; Ưu Đãi</h1>
@@ -62,14 +48,12 @@ const Promotion = () => {
                     <div className="promotion-header-line"></div>
                 </div>
 
-                {/* Breadcrumb */}
                 <div className="promotion-breadcrumb">
                     <Link to="/">Trang chủ</Link>
                     <ChevronRight size={14} />
                     <span>Khuyến mãi</span>
                 </div>
 
-                {/* Grid */}
                 {promotions.length === 0 ? (
                     <div className="promotion-empty">
                         <AlertCircle size={48} />
@@ -80,13 +64,13 @@ const Promotion = () => {
                 ) : (
                     <div className="promotion-grid">
                         {promotions.map((promo) => {
-                            const imageField = promo.promotion_image || promo.image_url;
-                            const imageUrl = getImageUrl(imageField, promotionImageBaseUrl);
+                            // 👇 Chỉ lấy đúng promotion_image, không xử lý gì thêm
+                            const imageUrl = promo.promotion_image || null;
                             return (
                                 <CinemaCard
                                     key={promo.promotion_id}
                                     type="promotion"
-                                    image={imageUrl}
+                                    image={imageUrl} // có thể null nếu không có
                                     title={promo.title}
                                     link={`/promotion/${promo.slug}`}
                                 />

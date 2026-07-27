@@ -1,5 +1,5 @@
 /* =========================================================
-   ADMIN HEADER – SỬ DỤNG VAR TỪ INDEX.CSS (GOLD ACCENT)
+   ADMIN HEADER – ĐỒNG BỘ VỚI INDEX.CSS (SILVER EDITION)
 ========================================================= */
 
 .admin-header-main {
@@ -12,8 +12,8 @@
     top: 0;
     z-index: 1300;
     backdrop-filter: blur(14px);
-    background: rgba(10, 10, 10, 0.92); /* tương đương black-premium với alpha */
-    border-bottom: 1px solid rgba(201, 168, 76, 0.06); /* gold với alpha */
+    background: rgba(10, 10, 10, 0.92);
+    border-bottom: 1px solid rgba(232, 232, 232, 0.06); /* bạc thay cho vàng */
 }
 
 /* =========================================================
@@ -48,7 +48,7 @@
 
 .admin-hamburger-trigger:hover {
     background: var(--hover-bg);
-    color: var(--gold-primary);
+    color: var(--silver-primary); /* bạc thay vàng */
 }
 
 /* =========================================================
@@ -78,7 +78,7 @@
 
 /* Nếu logo là text */
 .admin-brand-text {
-    color: var(--gold-primary);
+    color: var(--silver-primary); /* bạc thay vàng */
     font-size: 1.3rem;
     font-weight: var(--fw-extrabold);
     letter-spacing: 0.5px;
@@ -100,11 +100,11 @@
 }
 
 .admin-page-title span {
-    color: var(--gold-primary);
+    color: var(--silver-primary); /* bạc thay vàng */
 }
 
 /* =========================================================
-   SEARCH – GOLD BORDER
+   SEARCH – SILVER BORDER
 ========================================================= */
 
 .admin-header-search-wrapper {
@@ -114,7 +114,7 @@
     position: relative;
     display: flex;
     align-items: center;
-    border: 1px solid rgba(201, 168, 76, 0.08);
+    border: 1px solid rgba(232, 232, 232, 0.08);
     border-radius: var(--radius-md);
     overflow: hidden;
     margin: 0 var(--space-xl);
@@ -122,8 +122,8 @@
 }
 
 .admin-header-search-wrapper:focus-within {
-    border-color: rgba(201, 168, 76, 0.4);
-    box-shadow: 0 0 24px rgba(201, 168, 76, 0.04);
+    border-color: rgba(232, 232, 232, 0.4);
+    box-shadow: 0 0 24px rgba(232, 232, 232, 0.04);
 }
 
 .admin-search-icon {
@@ -134,7 +134,7 @@
 }
 
 .admin-header-search-wrapper:focus-within .admin-search-icon {
-    color: var(--gold-primary);
+    color: var(--silver-primary); /* bạc thay vàng */
 }
 
 .admin-search-input {
@@ -185,7 +185,7 @@
 
 .admin-notification-btn:hover {
     background: var(--hover-bg);
-    color: var(--gold-primary);
+    color: var(--silver-primary); /* bạc thay vàng */
 }
 
 .admin-notification-badge {
@@ -198,7 +198,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--gold-primary);
+    background: var(--silver-primary); /* bạc thay vàng */
     color: var(--black-premium);
     font-size: 0.65rem;
     font-weight: var(--fw-extrabold);
@@ -219,7 +219,7 @@
 }
 
 .admin-user-dropdown:hover {
-    background: rgba(201, 168, 76, 0.04);
+    background: rgba(232, 232, 232, 0.04);
 }
 
 .admin-user-avatar {
@@ -233,8 +233,8 @@
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid rgba(201, 168, 76, 0.1);
-    background: rgba(201, 168, 76, 0.04);
+    border: 2px solid rgba(232, 232, 232, 0.1);
+    background: rgba(232, 232, 232, 0.04);
     padding: 2px;
 }
 
@@ -244,7 +244,7 @@
 }
 
 .admin-user-greeting {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6); /* thay --font-size-sm */
     color: var(--text-muted);
 }
 
@@ -260,14 +260,14 @@
 }
 
 /* =========================================================
-   LOGOUT – GOLD
+   LOGOUT – SILVER
 ========================================================= */
 
 .admin-logout-btn {
     height: 44px;
     padding: 0 var(--space-md);
     border-radius: var(--radius-md);
-    border: 1px solid rgba(201, 168, 76, 0.06);
+    border: 1px solid rgba(232, 232, 232, 0.06);
     background: transparent;
     color: var(--text-secondary);
     display: flex;
@@ -278,10 +278,10 @@
 }
 
 .admin-logout-btn:hover {
-    background: rgba(201, 168, 76, 0.06);
-    border-color: rgba(201, 168, 76, 0.12);
-    color: var(--gold-primary);
-    box-shadow: 0 0 20px rgba(201, 168, 76, 0.04);
+    background: rgba(232, 232, 232, 0.06);
+    border-color: rgba(232, 232, 232, 0.12);
+    color: var(--silver-primary);
+    box-shadow: 0 0 20px rgba(232, 232, 232, 0.04);
 }
 
 /* =========================================================

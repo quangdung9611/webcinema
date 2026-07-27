@@ -1,5 +1,5 @@
 /* =========================================================
-   ADMIN PAGE – SỬ DỤNG VAR TỪ INDEX.CSS (GOLD ACCENT)
+   ADMIN PAGE – SỬ DỤNG VAR TỪ INDEX.CSS (SILVER EDITION)
 ========================================================= */
 
 .admin-page {
@@ -38,7 +38,7 @@
 }
 
 /* =========================================================
-   ICON BOX – GOLD
+   ICON BOX – SILVER
 ========================================================= */
 
 .admin-page-icon-box {
@@ -50,8 +50,8 @@
     justify-content: center;
     border-radius: var(--radius-lg);
     color: var(--black-premium);
-    background: var(--gold-gradient);
-    box-shadow: 0 10px 24px rgba(201, 168, 76, 0.20);
+    background: var(--cinema-border-gradient);
+    box-shadow: 0 10px 24px rgba(232, 232, 232, 0.20);
 }
 
 .admin-page-icon-box svg {
@@ -90,10 +90,10 @@
 }
 
 /* =========================================================
-   ADD BUTTON – GOLD
+   ADD BUTTON – SILVER
 ========================================================= */
 
-.admin-page-add-btn {
+.admin-page .admin-page-add-btn {
     height: 58px;
     padding: 0 var(--space-xl);
     border: none;
@@ -103,22 +103,32 @@
     justify-content: center;
     gap: var(--space-sm);
     cursor: pointer;
-    color: var(--black-premium);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
-    background: var(--gold-gradient);
-    box-shadow: 0 10px 20px rgba(201, 168, 76, 0.18);
+    background: var(--cinema-border-gradient);
+    box-shadow: 0 10px 20px rgba(232, 232, 232, 0.18);
     transition: all var(--transition-fast);
 }
 
-.admin-page-add-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 20px rgba(201, 168, 76, 0.25);
+/* ✅ CHỮ ĐEN CHO CẢ NÚT VÀ SPAN */
+.admin-page .admin-page-add-btn,
+.admin-page .admin-page-add-btn-text {
+    color: var(--black-premium) !important;
 }
 
-.admin-page-add-btn svg {
+.admin-page .admin-page-add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(232, 232, 232, 0.25);
+}
+
+.admin-page .admin-page-add-btn:hover .admin-page-add-btn-text {
+    color: var(--black-premium) !important;
+}
+
+.admin-page .admin-page-add-btn svg {
     width: 18px;
     height: 18px;
+    color: var(--black-premium) !important;
 }
 
 /* =========================================================
@@ -133,7 +143,7 @@
 }
 
 /* =========================================================
-   SEARCH – GOLD BORDER
+   SEARCH – SILVER BORDER
 ========================================================= */
 
 .admin-page-search {
@@ -149,12 +159,12 @@
 }
 
 .admin-page-search:hover {
-    border-color: rgba(201, 168, 76, 0.10);
+    border-color: rgba(232, 232, 232, 0.10);
 }
 
 .admin-page-search:focus-within {
-    border-color: rgba(201, 168, 76, 0.25);
-    box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.08);
+    border-color: rgba(232, 232, 232, 0.25);
+    box-shadow: 0 0 0 3px rgba(232, 232, 232, 0.08);
 }
 
 .admin-page-search-icon {
@@ -246,7 +256,7 @@
     .admin-page-hero-right {
         width: 100%;
     }
-    .admin-page-add-btn {
+    .admin-page .admin-page-add-btn {
         width: 100%;
     }
     .admin-page-search {
@@ -264,16 +274,16 @@
         font-size: var(--font-size-h4);
     }
     .admin-page-subtitle {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
     .admin-page-search {
         height: 52px;
     }
     .admin-page-search-input {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
-    .admin-page-add-btn {
+    .admin-page .admin-page-add-btn {
         height: 52px;
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
 }

@@ -14,7 +14,7 @@
 }
 
 /* =========================================================
-   POSTER
+   POSTER – SILVER
 ========================================================= */
 
 .poster-container {
@@ -23,7 +23,7 @@
     border-radius: var(--radius-xl);
     background: var(--cinema-card-bg);
     border: var(--border-silver);
-    box-shadow: 0 0 25px rgba(201, 168, 76, 0.08), var(--cinema-card-shadow);
+    box-shadow: 0 0 25px rgba(232, 232, 232, 0.06), var(--cinema-card-shadow);
 }
 
 .poster-container img {
@@ -39,7 +39,7 @@
 }
 
 /* =========================================================
-   DETAILS BOX
+   DETAILS BOX – SILVER
 ========================================================= */
 
 .ticket-details {
@@ -51,11 +51,11 @@
     background: var(--cinema-card-bg);
     backdrop-filter: blur(14px);
     border: var(--border-silver);
-    box-shadow: 0 0 25px rgba(201, 168, 76, 0.08), inset 0 0 20px rgba(201, 168, 76, 0.04), var(--cinema-card-shadow);
+    box-shadow: 0 0 25px rgba(232, 232, 232, 0.06), inset 0 0 20px rgba(232, 232, 232, 0.03), var(--cinema-card-shadow);
 }
 
 /* =========================================================
-   MOVIE NAME
+   MOVIE NAME – SILVER
 ========================================================= */
 
 .movie-name {
@@ -65,13 +65,13 @@
     line-height: 1.5;
     text-transform: uppercase;
     text-align: center;
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     padding-bottom: var(--space-md);
     border-bottom: var(--border-silver);
 }
 
 /* =========================================================
-   DETAIL ITEMS
+   DETAIL ITEMS – SILVER
 ========================================================= */
 
 .detail-item {
@@ -100,11 +100,11 @@
 }
 
 .seats-list {
-    color: var(--gold-light);
+    color: var(--silver-light);
 }
 
 /* =========================================================
-   FOOD SECTION
+   FOOD SECTION – SILVER
 ========================================================= */
 
 .food-selected-box {
@@ -118,7 +118,7 @@
 
 .food-selected-title {
     margin: 0;
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     font-size: var(--font-size-base);
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -133,11 +133,11 @@
 }
 
 .food-selected-item strong {
-    color: var(--gold-light);
+    color: var(--silver-light);
 }
 
 /* =========================================================
-   TOTAL
+   TOTAL – SILVER
 ========================================================= */
 
 .total-price-box {
@@ -179,12 +179,12 @@
     margin: 0;
     font-size: var(--font-size-h2);
     font-weight: var(--fw-black);
-    color: var(--gold-primary);
-    text-shadow: 0 0 10px rgba(201, 168, 76, 0.35), 0 0 20px rgba(201, 168, 76, 0.2);
+    color: var(--silver-primary);
+    text-shadow: 0 0 10px rgba(232, 232, 232, 0.25), 0 0 20px rgba(232, 232, 232, 0.12);
 }
 
 /* =========================================================
-   ACTION BUTTONS
+   ACTION BUTTONS – SILVER
 ========================================================= */
 
 .food-sidebar-actions {
@@ -208,17 +208,17 @@
     transition: all var(--transition-normal);
 }
 
-/* CONTINUE - sử dụng gradient vàng */
+/* CONTINUE – SILVER GRADIENT */
 .btn-next-sidebar {
     border: none;
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     color: var(--black-premium);
     box-shadow: var(--shadow-silver);
 }
 
 .btn-next-sidebar:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 28px rgba(201, 168, 76, 0.35);
+    box-shadow: 0 0 28px rgba(232, 232, 232, 0.25);
 }
 
 .btn-next-sidebar:disabled {
@@ -227,7 +227,7 @@
     transform: none;
 }
 
-/* BACK */
+/* BACK – SILVER BORDER */
 .btn-back-food-sidebar {
     border: var(--border-silver);
     background: transparent;
@@ -235,7 +235,7 @@
 }
 
 .btn-back-food-sidebar:hover {
-    background: rgba(201, 168, 76, 0.08);
+    background: rgba(232, 232, 232, 0.08);
     color: var(--text-body);
     border-color: var(--border-silver-hover);
 }

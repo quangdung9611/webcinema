@@ -1,12 +1,12 @@
 /* =========================================================
-   ADMIN LAYOUT – SỬ DỤNG VAR TỪ INDEX.CSS (GOLD ACCENT)
+   ADMIN LAYOUT – SỬ DỤNG VAR TỪ INDEX.CSS (SILVER EDITION)
 ========================================================= */
 
 .admin-layout {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background: var(--black-premium); /* #0A0A0A – tối giản, gần với nguyên bản */
+    background: var(--black-premium);
     color: var(--text-body);
 }
 
@@ -31,7 +31,7 @@
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    background: var(--black-soft); /* #1A1A1A – sáng hơn nền chính một chút */
+    background: var(--black-soft);
 }
 
 /* =========================================================
@@ -49,7 +49,7 @@
 .admin-overlay {
     position: fixed;
     inset: 0;
-    background: var(--overlay-dark); /* rgba(0,0,0,0.72) – đậm hơn một chút */
+    background: var(--overlay-dark);
     backdrop-filter: blur(2px);
     z-index: 1200;
 }
@@ -75,7 +75,7 @@
 }
 
 /* =========================================================
-   CUSTOM SCROLLBAR – GOLD ACCENT
+   CUSTOM SCROLLBAR – SILVER
 ========================================================= */
 
 .admin-content::-webkit-scrollbar {
@@ -93,5 +93,5 @@
 }
 
 .admin-content::-webkit-scrollbar-thumb:hover {
-    background: var(--gold-primary); /* vàng khi hover */
+    background: var(--silver-primary);
 }

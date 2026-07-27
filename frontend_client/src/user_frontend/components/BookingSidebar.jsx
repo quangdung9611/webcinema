@@ -1,7 +1,5 @@
 import React from 'react';
 import CountdownTimer from '../pages/CountdownTimer';
-
-// Styles
 import '../styles/BookingSidebar.css';
 
 const BookingSidebar = ({
@@ -30,210 +28,100 @@ const BookingSidebar = ({
     onBack = null
 }) => {
 
-    // =============================
-    // ARRAY FOOD
-    // =============================
-    const foodList = Array.isArray(selectedFoods)
-        ? selectedFoods
-        : [];
+    const foodList = Array.isArray(selectedFoods) ? selectedFoods : [];
+    const hasFood = foodList.length > 0;
+    const finalTotal = grandTotal || totalTicketPrice;
 
-    // =============================
-    // CHECK FOOD
-    // =============================
-    const hasFood =
-        foodList.length > 0;
+    // ✅ Chỉ lấy movie_poster, không fallback
+    const posterUrl = movie?.movie_poster || null;
 
-    // =============================
-    // TOTAL
-    // =============================
-    const finalTotal =
-        grandTotal || totalTicketPrice;
+    const movieTitle = showtimeDetail?.title || movie?.title || 'Đang cập nhật';
 
     return (
-
         <aside className="ticket-sidebar">
 
-            {/* ================= TIMER ================= */}
-            {isTimerActive && (
-                <CountdownTimer
-                    onExpire={onExpire}
-                />
-            )}
+            {isTimerActive && <CountdownTimer onExpire={onExpire} />}
 
-            {/* ================= POSTER ================= */}
             <div className="poster-container">
-
-                <img
-                    src={`https://api.quangdungcinema.id.vn/uploads/posters/${
-                        showtimeDetail?.poster_url ||
-                        movie?.poster_url
-                    }`}
-                    alt="Movie Poster"
-                />
+                {posterUrl ? (
+                    <img
+                        src={posterUrl}
+                        alt={movieTitle}
+                        style={{
+                            width: '100%',
+                            aspectRatio: '2 / 3',
+                            objectFit: 'cover',
+                            display: 'block',
+                        }}
+                    />
+                ) : (
+                    // Không có ảnh -> hiển thị khối trống (hoặc placeholder)
+                    <div className="poster-placeholder" />
+                )}
             </div>
 
-            {/* ================= DETAILS ================= */}
             <div className="ticket-details">
+                <h2 className="movie-name">{movieTitle}</h2>
 
-                {/* MOVIE */}
-                <h2 className="movie-name">
-                    {showtimeDetail?.title ||
-                        movie?.title}
-                </h2>
-
-                {/* CINEMA */}
                 <div className="detail-item">
-
                     <span>Rạp:</span>
-
-                    <strong>
-                        {selectedCinema?.cinema_name ||
-                            '---'}
-                    </strong>
+                    <strong>{selectedCinema?.cinema_name || '---'}</strong>
                 </div>
-
-                {/* DATE */}
                 <div className="detail-item">
-
                     <span>Ngày:</span>
-
-                    <strong>
-                        {selectedDate || '---'}
-                    </strong>
+                    <strong>{selectedDate || '---'}</strong>
                 </div>
-
-                {/* SHOWTIME */}
                 <div className="detail-item">
-
                     <span>Suất:</span>
-
-                    <strong>
-                        {selectedShowtime?.start_time ||
-                            '---'}
-                    </strong>
+                    <strong>{selectedShowtime?.start_time || '---'}</strong>
                 </div>
-
-                {/* SEATS */}
                 <div className="detail-item">
-
                     <span>Ghế:</span>
-
                     <strong className="seats-list">
-
                         {selectedSeats.length > 0
-                            ? selectedSeats
-                                  .map(
-                                      seat =>
-                                          `${seat.seat_row}${seat.seat_number}`
-                                  )
-                                  .join(', ')
+                            ? selectedSeats.map(seat => `${seat.seat_row}${seat.seat_number}`).join(', ')
                             : '---'}
                     </strong>
                 </div>
 
-                {/* ================= FOOD ================= */}
                 {showFoodSection && hasFood && (
-
                     <div className="food-selected-box">
-
-                        <h4 className="food-selected-title">
-                            THỨC ĂN ĐÃ CHỌN
-                        </h4>
-
+                        <h4 className="food-selected-title">THỨC ĂN ĐÃ CHỌN</h4>
                         {foodList.map(item => (
-
-                            <div
-                                key={item.product_id}
-                                className="food-selected-item"
-                            >
-
-                                <span>
-                                    {item.product_name} x
-                                    {item.quantity}
-                                </span>
-
-                                <strong>
-                                    {(
-                                        Number(item.price) *
-                                        Number(item.quantity)
-                                    ).toLocaleString()}
-                                    ₫
-                                </strong>
+                            <div key={item.product_id} className="food-selected-item">
+                                <span>{item.product_name} x {item.quantity}</span>
+                                <strong>{(Number(item.price) * Number(item.quantity)).toLocaleString()}₫</strong>
                             </div>
                         ))}
                     </div>
                 )}
 
-                {/* ================= TOTAL ================= */}
                 <div className="total-price-box">
-
-                    {/* TICKET */}
                     <div className="price-row">
-
                         <span>Tiền vé</span>
-
-                        <strong>
-                            {Number(
-                                totalTicketPrice
-                            ).toLocaleString()}
-                            ₫
-                        </strong>
+                        <strong>{Number(totalTicketPrice).toLocaleString()}₫</strong>
                     </div>
-
-                    {/* FOOD */}
                     {showFoodSection && hasFood && (
-
                         <div className="price-row">
-
                             <span>Thức ăn</span>
-
-                            <strong>
-                                {Number(
-                                    totalFoodPrice
-                                ).toLocaleString()}
-                                ₫
-                            </strong>
+                            <strong>{Number(totalFoodPrice).toLocaleString()}₫</strong>
                         </div>
                     )}
-
-                    {/* GRAND */}
                     <div className="grand-total">
-
                         <p>TỔNG TIỀN</p>
-
-                        <h3>
-                            {Number(
-                                finalTotal
-                            ).toLocaleString()}
-                            ₫
-                        </h3>
+                        <h3>{Number(finalTotal).toLocaleString()}₫</h3>
                     </div>
                 </div>
 
-                {/* ================= ACTIONS ================= */}
-                {(showContinueButton ||
-                    showBackButton) && (
-
+                {(showContinueButton || showBackButton) && (
                     <div className="food-sidebar-actions">
-
-                        {/* CONTINUE */}
                         {showContinueButton && (
-
-                            <button
-                                className="btn-next-sidebar"
-                                onClick={onContinue}
-                            >
+                            <button className="btn-next-sidebar" onClick={onContinue}>
                                 {continueText}
                             </button>
                         )}
-
-                        {/* BACK */}
                         {showBackButton && (
-
-                            <button
-                                className="btn-back-food-sidebar"
-                                onClick={onBack}
-                            >
+                            <button className="btn-back-food-sidebar" onClick={onBack}>
                                 Quay lại
                             </button>
                         )}

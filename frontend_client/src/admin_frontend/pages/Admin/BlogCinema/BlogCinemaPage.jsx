@@ -36,7 +36,7 @@ const DEFAULT_IMAGE =
     'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-blog.jpg';
 
 /* =====================================================
-    INITIAL FORM DATA (chỉ các trường có trong DB)
+    INITIAL FORM DATA
 ===================================================== */
 const initialFormData = {
     blog_id: '',
@@ -61,7 +61,6 @@ const BlogCinemaPage = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
     const [blogImageFile, setBlogImageFile] = useState(null);
-    const [preview, setPreview] = useState(null);
 
     /* =====================================================
         ALERT MODAL
@@ -84,23 +83,12 @@ const BlogCinemaPage = () => {
     };
 
     /* =====================================================
-        CLEANUP PREVIEW
-    ===================================================== */
-    useEffect(() => {
-        return () => {
-            if (preview && preview.startsWith('blob:')) {
-                URL.revokeObjectURL(preview);
-            }
-        };
-    }, [preview]);
-
-    /* =====================================================
         FETCH BLOGS
     ===================================================== */
     const fetchBlogs = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL); // GET /
+            const res = await axios.get(API_URL);
             setBlogs(res.data);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách blog từ máy chủ.', 'error');
@@ -137,7 +125,6 @@ const BlogCinemaPage = () => {
         setFormData(initialFormData);
         setErrors({});
         setBlogImageFile(null);
-        setPreview(null);
         setIsFormOpen(true);
     };
 
@@ -155,9 +142,6 @@ const BlogCinemaPage = () => {
             is_active: item.is_active ?? 1
         });
         setErrors({});
-        setPreview(
-            item.blog_image ? getImageUrl(item.blog_image) : DEFAULT_IMAGE
-        );
         setBlogImageFile(null);
         setIsFormOpen(true);
     };
@@ -175,12 +159,6 @@ const BlogCinemaPage = () => {
         if (name === 'blog_image') {
             const file = files[0];
             setBlogImageFile(file);
-            if (file) {
-                if (preview && preview.startsWith('blob:')) {
-                    URL.revokeObjectURL(preview);
-                }
-                setPreview(URL.createObjectURL(file));
-            }
             return;
         }
 
@@ -250,11 +228,9 @@ const BlogCinemaPage = () => {
             };
 
             if (editingBlog) {
-                // ✅ PUT /:blog_id (khớp router)
                 await axios.put(`${API_URL}/${editingBlog.blog_id}`, submitData, config);
                 showAlert('Thành công', 'Cập nhật blog thành công.', 'success');
             } else {
-                // ✅ POST / (khớp router)
                 await axios.post(API_URL, submitData, config);
                 showAlert('Thành công', 'Tạo blog mới thành công.', 'success');
             }
@@ -288,7 +264,6 @@ const BlogCinemaPage = () => {
                             ...(token && { Authorization: `Bearer ${token}` })
                         }
                     };
-                    // ✅ DELETE /:blog_id (khớp router)
                     await axios.delete(`${API_URL}/${item.blog_id}`, config);
                     closeAlert();
                     fetchBlogs();
@@ -406,7 +381,7 @@ const BlogCinemaPage = () => {
     ];
 
     /* =====================================================
-        FORM FIELDS (chỉ các trường có trong DB)
+        FORM FIELDS
     ===================================================== */
     const formFields = [
         {
@@ -449,6 +424,17 @@ const BlogCinemaPage = () => {
             ]
         }
     ];
+
+    /* =====================================================
+        FILE PREVIEWS (giống UserPage)
+    ===================================================== */
+    const filePreviews = {};
+    if (editingBlog && editingBlog.blog_image) {
+        filePreviews['blog_image'] = {
+            url: getImageUrl(editingBlog.blog_image),
+            name: editingBlog.blog_image
+        };
+    }
 
     /* =====================================================
         ALERT ICON
@@ -498,24 +484,6 @@ const BlogCinemaPage = () => {
                 onClose={() => setIsFormOpen(false)}
                 title={editingBlog ? 'Cập nhật Blog Cinema' : 'Thêm Blog Cinema mới'}
             >
-                {preview && (
-                    <div style={{ marginBottom: '20px' }}>
-                        <img
-                            src={preview}
-                            alt="preview"
-                            style={{
-                                width: '100%',
-                                height: '220px',
-                                objectFit: 'cover',
-                                borderRadius: '12px'
-                            }}
-                            onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = DEFAULT_IMAGE;
-                            }}
-                        />
-                    </div>
-                )}
                 <AdminForm
                     fields={formFields}
                     formData={formData}
@@ -524,6 +492,7 @@ const BlogCinemaPage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingBlog ? 'Lưu thay đổi Blog' : 'Đăng Blog'}
+                    filePreviews={filePreviews}   // 🔥 Truyền vào đây
                 />
             </AdminModal>
 

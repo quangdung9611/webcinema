@@ -55,7 +55,7 @@ const FoodPage = () => {
     const [editingFood, setEditingFood] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
     const [foodImage, setFoodImage] = useState(null);
-    const [preview, setPreview] = useState(null);
+    const [filePreviews, setFilePreviews] = useState({}); // { food_image: { url, name } }
     const [formErrors, setFormErrors] = useState({});
 
     // Alert Modal
@@ -93,14 +93,14 @@ const FoodPage = () => {
         fetchFoods();
     }, []);
 
-    // Cleanup preview
+    // Cleanup blob URL
     useEffect(() => {
         return () => {
-            if (preview && preview.startsWith('blob:')) {
-                URL.revokeObjectURL(preview);
+            if (filePreviews.food_image?.url?.startsWith('blob:')) {
+                URL.revokeObjectURL(filePreviews.food_image.url);
             }
         };
-    }, [preview]);
+    }, [filePreviews]);
 
     // Validate
     const validateForm = () => {
@@ -128,7 +128,7 @@ const FoodPage = () => {
         setEditingFood(null);
         setFormData(initialFormData);
         setFoodImage(null);
-        setPreview(null);
+        setFilePreviews({});
         setFormErrors({});
         setIsFormOpen(true);
     };
@@ -142,9 +142,19 @@ const FoodPage = () => {
             category: food.category || 'Popcorn',
             status: String(food.status ?? '1')
         });
-        setPreview(getImageUrl(food.food_image) || DEFAULT_IMAGE);
         setFoodImage(null);
         setFormErrors({});
+        // Set preview cho file
+        if (food.food_image) {
+            setFilePreviews({
+                food_image: {
+                    url: getImageUrl(food.food_image),
+                    name: food.food_image
+                }
+            });
+        } else {
+            setFilePreviews({});
+        }
         setIsFormOpen(true);
     };
 
@@ -160,10 +170,15 @@ const FoodPage = () => {
             const file = files[0];
             setFoodImage(file);
             if (file) {
-                if (preview && preview.startsWith('blob:')) {
-                    URL.revokeObjectURL(preview);
+                if (filePreviews.food_image?.url?.startsWith('blob:')) {
+                    URL.revokeObjectURL(filePreviews.food_image.url);
                 }
-                setPreview(URL.createObjectURL(file));
+                const blobUrl = URL.createObjectURL(file);
+                setFilePreviews({
+                    food_image: { url: blobUrl, name: file.name }
+                });
+            } else {
+                setFilePreviews({});
             }
             return;
         }
@@ -188,13 +203,11 @@ const FoodPage = () => {
             }
 
             if (editingFood) {
-                // ✅ Sửa: bỏ /update, dùng RESTful
                 await axios.put(`${API_URL}/${editingFood.product_id}`, submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 showAlert('Thành công', 'Cập nhật sản phẩm thành công.', 'success');
             } else {
-                // ✅ Sửa: bỏ /create
                 await axios.post(API_URL, submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
@@ -223,7 +236,6 @@ const FoodPage = () => {
             'warning',
             async () => {
                 try {
-                    // ✅ Sửa: bỏ /delete
                     await axios.delete(`${API_URL}/${food.product_id}`);
                     closeAlert();
                     fetchFoods();
@@ -347,21 +359,18 @@ const FoodPage = () => {
             label: 'Tên sản phẩm',
             name: 'product_name',
             type: 'text',
-            icon: <Package size={16} />,
             placeholder: 'Nhập tên đồ ăn hoặc nước uống'
         },
         {
             label: 'Giá sản phẩm',
             name: 'price',
             type: 'number',
-            icon: <BadgeDollarSign size={16} />,
             placeholder: 'Ví dụ: 79000'
         },
         {
             label: 'Danh mục',
             name: 'category',
             type: 'select',
-            icon: <Tag size={16} />,
             options: [
                 { label: 'Bắp rang', value: 'Popcorn' },
                 { label: 'Nước uống', value: 'Drink' },
@@ -374,7 +383,6 @@ const FoodPage = () => {
             label: 'Trạng thái',
             name: 'status',
             type: 'select',
-            icon: <CircleCheck size={16} />,
             options: [
                 { label: 'Đang bán', value: '1' },
                 { label: 'Ngừng bán', value: '0' }
@@ -383,8 +391,7 @@ const FoodPage = () => {
         {
             label: 'Hình ảnh sản phẩm',
             name: 'food_image',
-            type: 'file',
-            icon: <ImagePlus size={16} />
+            type: 'file'
         }
     ];
 
@@ -398,7 +405,6 @@ const FoodPage = () => {
         }
     };
 
-    // Render
     return (
         <>
             <AdminPage
@@ -425,25 +431,6 @@ const FoodPage = () => {
                 onClose={() => setIsFormOpen(false)}
                 title={editingFood ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'}
             >
-                {preview && (
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-                        <img
-                            src={preview}
-                            alt="preview"
-                            style={{
-                                width: '120px',
-                                height: '120px',
-                                objectFit: 'cover',
-                                borderRadius: '16px',
-                                border: '3px solid rgba(255,255,255,0.08)'
-                            }}
-                            onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = DEFAULT_IMAGE;
-                            }}
-                        />
-                    </div>
-                )}
                 <AdminForm
                     fields={formFields}
                     formData={formData}
@@ -452,6 +439,7 @@ const FoodPage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingFood ? 'Lưu thay đổi' : 'Thêm sản phẩm'}
+                    filePreviews={filePreviews}   // 👈 Truyền vào đây
                 />
             </AdminModal>
 

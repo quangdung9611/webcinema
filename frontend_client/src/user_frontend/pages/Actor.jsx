@@ -9,14 +9,11 @@ const Actor = () => {
     const [actors, setActors] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const IMAGE_BASE_URL =
-        'https://api.quangdungcinema.id.vn/uploads';
-
     useEffect(() => {
 
         const fetchActors = async () => {
 
-            try{
+            try {
 
                 const res = await axios.get(
                     'https://api.quangdungcinema.id.vn/api/actors'
@@ -24,11 +21,11 @@ const Actor = () => {
 
                 setActors(res.data);
 
-            }catch(error){
+            } catch (error) {
 
                 console.error(error);
 
-            }finally{
+            } finally {
 
                 setLoading(false);
 
@@ -38,11 +35,11 @@ const Actor = () => {
 
         fetchActors();
 
-        window.scrollTo(0,0);
+        window.scrollTo(0, 0);
 
-    },[]);
+    }, []);
 
-    if(loading){
+    if (loading) {
 
         return (
             <div className="loading-state">
@@ -57,20 +54,17 @@ const Actor = () => {
 
         <div className="actor-page">
 
-         {/* ===== HERO ===== */}
-        <section className="actor-hero">
-            <img
-                src="https://api.quangdungcinema.id.vn/uploads/banner_actor/actor_hero.png"
-                alt="Actor Banner"
-                className="hero-banner-img"
-            />
-        </section>
+            {/* HERO BANNER */}
+            <section className="actor-hero">
+                <img
+                    src="https://api.quangdungcinema.id.vn/uploads/banner_actor/actor_hero.png"
+                    alt="Actor Banner"
+                    className="hero-banner-img"
+                />
+            </section>
 
-            {/* ===== LIST ===== */}
-            <section
-                id="actor-list"
-                className="actor-section"
-            >
+            {/* ACTOR LIST */}
+            <section id="actor-list" className="actor-section">
 
                 <div className="actor-section-header">
                     <div className="section-header-left">
@@ -80,63 +74,55 @@ const Actor = () => {
 
                 <div className="actor-grid">
 
-                    {actors.map(actor => (
+                    {actors.map(actor => {
 
-                        <div
-                            key={actor.actor_id}
-                            className="actor-card"
-                        >
+                        // ✅ Chỉ lấy đúng trường actor_avatar (không xử lý thêm)
+                        const avatarUrl = actor.actor_avatar;
 
-                            <Link
-                                to={`/actor/${actor.slug}`}
-                                className="actor-image"
-                            >
+                        return (
+                            <div key={actor.actor_id} className="actor-card">
 
-                                <img
-                                    src={`${IMAGE_BASE_URL}/actors/${actor.avatar}`}
-                                    alt={actor.name}
-                                />
+                                <Link to={`/actor/${actor.slug}`} className="actor-image">
 
-                            </Link>
+                                    {/* Nếu có ảnh -> hiển thị, không -> div rỗng */}
+                                    {avatarUrl ? (
+                                        <img
+                                            src={avatarUrl}
+                                            alt={actor.name}
+                                        />
+                                    ) : (
+                                        <div className="actor-no-avatar" />
+                                    )}
 
-                            <div className="actor-info">
-
-                                <Link
-                                    to={`/actor/${actor.slug}`}
-                                    className="actor-title"
-                                >
-                                    {actor.name}
                                 </Link>
 
-                                <div className="actor-meta">
+                                <div className="actor-info">
 
-                                    <Eye size={14}/>
+                                    <Link to={`/actor/${actor.slug}`} className="actor-title">
+                                        {actor.name}
+                                    </Link>
 
-                                    <span>
-                                        {Math.floor(
-                                            Math.random() * 5000
-                                        )}
-                                        lượt xem
-                                    </span>
+                                    <div className="actor-meta">
+                                        <Eye size={14} />
+                                        <span>
+                                            {Math.floor(Math.random() * 5000)} lượt xem
+                                        </span>
+                                    </div>
+
+                                    <p>
+                                        {actor.biography
+                                            ? actor.biography
+                                                .replace(/<[^>]*>/g, '')
+                                                .replace(/&nbsp;/g, ' ')
+                                                .substring(0, 140) + '...'
+                                            : 'Thông tin đang cập nhật...'}
+                                    </p>
 
                                 </div>
 
-                                <p>
-
-                                    {actor.biography
-                                        ? actor.biography
-                                            .replace(/<[^>]*>/g,'')
-                                            .replace(/&nbsp;/g,' ')
-                                            .substring(0,140) + '...'
-                                        : 'Thông tin đang cập nhật...'}
-
-                                </p>
-
                             </div>
-
-                        </div>
-
-                    ))}
+                        );
+                    })}
 
                 </div>
 

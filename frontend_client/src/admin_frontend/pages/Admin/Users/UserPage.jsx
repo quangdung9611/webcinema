@@ -14,6 +14,15 @@ import AdminForm from '../../../components/AdminForm';
 
 const API_URL = 'https://api.quangdungcinema.id.vn/api/users';
 
+// Helper lấy URL avatar
+const getAvatarUrl = (avatar) => {
+    if (!avatar) return '';
+    if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+        return avatar;
+    }
+    return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
+};
+
 const initialFormData = {
     username: '',
     full_name: '',
@@ -25,7 +34,6 @@ const initialFormData = {
 };
 
 const UserPage = () => {
-
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -36,10 +44,7 @@ const UserPage = () => {
     const [userAvatarFile, setUserAvatarFile] = useState(null);
     const [formErrors, setFormErrors] = useState({});
 
-    // =============================================
-    // ALERT MODAL
-    // =============================================
-
+    // Alert Modal
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -57,10 +62,7 @@ const UserPage = () => {
         setAlertModal(prev => ({ ...prev, open: false }));
     };
 
-    // =============================================
-    // FETCH USERS
-    // =============================================
-
+    // Fetch users
     const fetchUsers = async () => {
         setLoading(true);
         try {
@@ -79,10 +81,7 @@ const UserPage = () => {
         fetchUsers();
     }, []);
 
-    // =============================================
-    // PASSWORD STRENGTH
-    // =============================================
-
+    // Password strength
     const getPasswordStrength = (password) => {
         if (!password) return { text: '', className: '' };
         if (password.length < 6) return { text: 'Mật khẩu yếu', className: 'weak' };
@@ -92,37 +91,29 @@ const UserPage = () => {
         return { text: 'Mật khẩu trung bình', className: 'medium' };
     };
 
-    // =============================================
-    // VALIDATE FORM
-    // =============================================
-
+    // Validate
     const validateForm = () => {
         const errors = {};
-
         if (!formData.username.trim()) {
             errors.username = 'Vui lòng nhập username';
         } else if (formData.username.trim().length < 6) {
             errors.username = 'Username phải từ 6 ký tự trở lên';
         }
-
         if (!formData.full_name.trim()) {
             errors.full_name = 'Vui lòng nhập họ tên';
         } else if (formData.full_name.trim().length < 8) {
             errors.full_name = 'Họ tên phải từ 8 ký tự trở lên';
         }
-
         if (!formData.email.trim()) {
             errors.email = 'Vui lòng nhập email';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             errors.email = 'Email không đúng định dạng';
         }
-
         if (!formData.phone.trim()) {
             errors.phone = 'Vui lòng nhập số điện thoại';
         } else if (!/^[0-9]{10}$/.test(formData.phone)) {
             errors.phone = 'Số điện thoại phải đúng 10 số';
         }
-
         if (!editingUser && !formData.password.trim()) {
             errors.password = 'Vui lòng nhập mật khẩu';
         } else if (
@@ -131,20 +122,15 @@ const UserPage = () => {
         ) {
             errors.password = 'Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt';
         }
-
         if (!formData.address.trim()) {
             errors.address = 'Vui lòng nhập địa chỉ';
         } else if (formData.address.trim().length < 5) {
             errors.address = 'Địa chỉ quá ngắn';
         }
-
         return errors;
     };
 
-    // =============================================
-    // OPEN ADD / EDIT
-    // =============================================
-
+    // Open add / edit
     const handleOpenAdd = () => {
         setEditingUser(null);
         setFormData(initialFormData);
@@ -169,44 +155,35 @@ const UserPage = () => {
         setIsFormOpen(true);
     };
 
-    // =============================================
-    // SUBMIT FORM
-    // =============================================
-
+    // Handle change
     const handleChange = (e) => {
         const { name, value, files } = e.target;
-
         if (name === 'user_avatar') {
             setUserAvatarFile(files[0]);
             return;
         }
-
         setFormData(prev => ({ ...prev, [name]: value }));
         setFormErrors(prev => ({ ...prev, [name]: '' }));
     };
 
+    // Submit
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         const errors = validateForm();
         if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
             return;
         }
-
         try {
             setSubmitLoading(true);
             setFormErrors({});
-
             const submitData = new FormData();
             Object.entries(formData).forEach(([key, value]) => {
                 submitData.append(key, value);
             });
-
             if (userAvatarFile) {
                 submitData.append('user_avatar', userAvatarFile);
             }
-
             if (editingUser) {
                 await axios.put(`${API_URL}/${editingUser.user_id}`, submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
@@ -218,28 +195,22 @@ const UserPage = () => {
                 });
                 showAlert('Thành công', 'Thêm người dùng thành công.', 'success');
             }
-
             setIsFormOpen(false);
             fetchUsers();
         } catch (error) {
             const backendField = error.response?.data?.field;
             const backendError = error.response?.data?.error;
-
             if (backendField) {
                 setFormErrors({ [backendField]: backendError });
                 return;
             }
-
             showAlert('Lỗi', backendError || 'Đã xảy ra lỗi.', 'error');
         } finally {
             setSubmitLoading(false);
         }
     };
 
-    // =============================================
-    // DELETE USER
-    // =============================================
-
+    // Delete
     const handleDelete = (user) => {
         showAlert(
             'Xác nhận xóa',
@@ -259,10 +230,7 @@ const UserPage = () => {
         );
     };
 
-    // =============================================
-    // FILTER USERS
-    // =============================================
-
+    // Filter
     const filteredUsers = (users || []).filter(user => {
         const keyword = search.toLowerCase();
         return (
@@ -273,10 +241,7 @@ const UserPage = () => {
         );
     });
 
-    // =============================================
-    // TABLE COLUMNS
-    // =============================================
-
+    // Table columns
     const columns = [
         {
             title: 'ID',
@@ -287,14 +252,10 @@ const UserPage = () => {
             title: 'Avatar',
             key: 'user_avatar',
             render: (row) => {
-                if (!row.user_avatar) {
-                    return <span style={{ color: '#888' }}>—</span>;
-                }
-                // ✅ Nếu là URL Cloudinary (https://...) thì dùng trực tiếp
+                if (!row.user_avatar) return <span style={{ color: '#888' }}>—</span>;
                 const avatarSrc = row.user_avatar.startsWith('http')
                     ? row.user_avatar
                     : `https://api.quangdungcinema.id.vn/uploads/avatars/${row.user_avatar}`;
-
                 return (
                     <img
                         src={avatarSrc}
@@ -339,10 +300,7 @@ const UserPage = () => {
         }
     ];
 
-    // =============================================
-    // FORM FIELDS
-    // =============================================
-
+    // Form fields
     const formFields = [
         { label: 'Username', name: 'username', type: 'text', placeholder: 'Nhập username' },
         { label: 'Họ tên', name: 'full_name', type: 'text', placeholder: 'Nhập họ tên' },
@@ -368,9 +326,19 @@ const UserPage = () => {
     ];
 
     // =============================================
+    // FILE PREVIEWS – QUAN TRỌNG
+    // =============================================
+    const filePreviews = {};
+    if (editingUser && editingUser.user_avatar) {
+        filePreviews['user_avatar'] = {
+            url: getAvatarUrl(editingUser.user_avatar),
+            name: editingUser.user_avatar
+        };
+    }
+
+    // =============================================
     // RENDER
     // =============================================
-
     return (
         <>
             <AdminPage
@@ -406,12 +374,8 @@ const UserPage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingUser ? 'Lưu thay đổi' : 'Thêm người dùng'}
+                    filePreviews={filePreviews}   // 🔥 BẮT BUỘC TRUYỀN
                 />
-                {formData.password && (
-                    <div className={`password-strength ${getPasswordStrength(formData.password).className}`}>
-                        {getPasswordStrength(formData.password).text}
-                    </div>
-                )}
             </AdminModal>
 
             {/* ALERT MODAL */}

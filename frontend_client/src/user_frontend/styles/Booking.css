@@ -125,12 +125,12 @@
 }
 
 .cinema-select select:hover {
-    border-color: var(--gold-primary);
+    border-color: var(--silver-primary);
 }
 
 .cinema-select select:focus {
-    border-color: var(--gold-primary);
-    box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.15), var(--shadow-silver);
+    border-color: var(--silver-primary);
+    box-shadow: 0 0 0 4px rgba(232, 232, 232, 0.15), var(--shadow-silver);
 }
 
 .cinema-select option {
@@ -174,7 +174,7 @@
 }
 
 /* =========================================================
-   ARROW BUTTON
+   ARROW BUTTON – SILVER
 ========================================================= */
 
 .slide-btn {
@@ -191,7 +191,7 @@
 }
 
 .slide-btn:hover {
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     color: var(--black-premium);
     box-shadow: var(--shadow-silver);
 }
@@ -210,7 +210,7 @@
 }
 
 /* =========================================================
-   DATE CARD
+   DATE CARD – SILVER
 ========================================================= */
 
 .date-slider .compact-card {
@@ -226,15 +226,15 @@
 
 .date-slider .compact-card:hover {
     transform: translateY(-3px) scale(1.05);
-    border-color: var(--gold-primary);
-    background: rgba(201, 168, 76, 0.08);
+    border-color: var(--silver-primary);
+    background: rgba(232, 232, 232, 0.08);
     box-shadow: var(--shadow-silver);
 }
 
 .date-slider .compact-card.active {
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     border: 1px solid rgba(255,255,255,0.12);
-    box-shadow: 0 0 0 5px rgba(201, 168, 76, 0.1), var(--shadow-silver);
+    box-shadow: 0 0 0 5px rgba(232, 232, 232, 0.1), var(--shadow-silver);
 }
 
 .day-txt {
@@ -258,7 +258,7 @@
 }
 
 /* =========================================================
-   TIME CARD
+   TIME CARD – SILVER
 ========================================================= */
 
 .time-card {
@@ -274,13 +274,13 @@
 
 .time-card:hover {
     transform: translateY(-2px);
-    border-color: var(--gold-primary);
-    background: rgba(201, 168, 76, 0.08);
+    border-color: var(--silver-primary);
+    background: rgba(232, 232, 232, 0.08);
     box-shadow: var(--shadow-silver);
 }
 
 .time-card.active {
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     border-color: rgba(255,255,255,0.15);
     box-shadow: var(--shadow-silver);
 }
@@ -322,7 +322,7 @@
 }
 
 /* =========================================================
-   SCREEN
+   SCREEN – SILVER
 ========================================================= */
 
 .screen-header {
@@ -336,7 +336,7 @@
     height: 6px;
     margin: 0 auto var(--space-sm);
     border-radius: var(--radius-round);
-    background: linear-gradient(to right, transparent, var(--gold-primary), transparent);
+    background: linear-gradient(to right, transparent, var(--silver-primary), transparent);
     box-shadow: var(--shadow-silver);
     transform: perspective(500px) rotateX(-45deg);
 }
@@ -384,7 +384,7 @@
 }
 
 /* =========================================================
-   SEAT (giữ nguyên màu)
+   SEAT (giữ nguyên màu sắc đặc trưng)
 ========================================================= */
 
 .seat {
@@ -510,7 +510,7 @@
 }
 
 /* =========================================================
-   BUTTON ACTION
+   BUTTON ACTION – SILVER
 ========================================================= */
 
 .booking-actions {
@@ -525,7 +525,7 @@
     height: 60px;
     border: none;
     border-radius: var(--radius-round);
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     color: var(--black-premium);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
@@ -537,7 +537,7 @@
 
 .btn-next:hover {
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 0 30px rgba(201, 168, 76, 0.35), var(--shadow-silver);
+    box-shadow: 0 0 30px rgba(232, 232, 232, 0.35), var(--shadow-silver);
 }
 
 .btn-next:active {
@@ -552,7 +552,7 @@
 }
 
 /* =========================================================
-   EMPTY PLACEHOLDER
+   EMPTY PLACEHOLDER – SILVER
 ========================================================= */
 
 .placeholder-msg {
@@ -568,7 +568,7 @@
 
 .placeholder-msg i {
     font-size: var(--font-size-h1);
-    color: var(--gold-primary);
+    color: var(--silver-primary);
 }
 
 .placeholder-msg h3 {

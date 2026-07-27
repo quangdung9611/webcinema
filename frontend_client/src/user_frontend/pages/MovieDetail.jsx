@@ -161,7 +161,7 @@ const MovieDetail = () => {
             });
             setUserRating(0);
             setReviewComment("");
-            const response = await axios.get(`${API_BASE_URL}/movies/${slug}`);
+            const response = await axios.get(`${API_BASE_URL}/movies/detail/${slug}`);
             setMovie(response.data);
             fetchReviews(movie.movie_id);
             closeReviewModal();

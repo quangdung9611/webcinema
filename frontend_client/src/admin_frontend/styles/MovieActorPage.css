@@ -1,5 +1,6 @@
 /* =========================================================
-   MOVIE ACTOR PAGE – SỬ DỤNG VAR TỪ INDEX.CSS (GOLD ACCENT)
+   MOVIE ACTOR PAGE – SỬ DỤNG VAR TỪ INDEX.CSS (SILVER EDITION)
+   ĐỒNG BỘ VỚI MOVIE GENRE PAGE
 ========================================================= */
 
 .movie-actor-page {
@@ -7,6 +8,8 @@
     grid-template-columns: repeat(4, 1fr);
     gap: var(--space-lg);
     width: 100%;
+    overflow: visible;
+    align-items: start;
 }
 
 /* =========================================================
@@ -22,11 +25,12 @@
     transition: var(--transition-normal);
     box-shadow: var(--shadow-sm);
     padding: var(--space-md);
+    height: fit-content;
 }
 
 .movie-actor-card:hover {
     transform: translateY(-5px);
-    border-color: rgba(201, 168, 76, 0.4);
+    border-color: rgba(232, 232, 232, 0.4);
     box-shadow: var(--shadow-lg);
 }
 
@@ -51,6 +55,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
+    overflow: visible;
 }
 
 .movie-actor-content h3 {
@@ -67,9 +72,9 @@
     margin: 0 auto;
     padding: var(--space-sm) var(--space-md);
     border-radius: var(--radius-round);
-    background: rgba(201, 168, 76, 0.18);
-    color: var(--gold-light);
-    font-size: var(--font-size-sm);
+    background: rgba(232, 232, 232, 0.18);
+    color: var(--silver-light);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
 }
 
@@ -88,7 +93,6 @@
     align-items: stretch;
 }
 
-/* Scrollbar */
 .actor-selected-list::-webkit-scrollbar {
     width: 4px;
 }
@@ -99,7 +103,7 @@
 }
 
 .actor-selected-list::-webkit-scrollbar-thumb {
-    background: var(--gold-primary);
+    background: var(--silver-primary);
     border-radius: var(--radius-xs);
 }
 
@@ -130,7 +134,7 @@
 
 .actor-name {
     color: var(--text-body);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-medium);
     flex: 1;
     overflow: hidden;
@@ -184,10 +188,11 @@
     cursor: pointer;
     transition: var(--transition-normal);
     user-select: none;
+    width: 100%;
 }
 
 .movie-select-trigger:hover {
-    border-color: rgba(201, 168, 76, 0.4);
+    border-color: rgba(232, 232, 232, 0.4);
     background: rgba(255, 255, 255, 0.08);
 }
 
@@ -199,136 +204,7 @@
 
 .movie-select-trigger .rotate-icon {
     transform: rotate(180deg);
-    transition: var(--transition-normal);
-}
-
-/* =========================================================
-   DROPDOWN
-========================================================= */
-
-.movie-select-dropdown {
-    position: absolute;
-    top: calc(100% + var(--space-sm));
-    left: 0;
-    width: 100%;
-    background: var(--black-soft);
-    border: var(--border-light);
-    border-radius: var(--radius-lg);
-    z-index: 999;
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
-}
-
-/* SEARCH WRAPPER */
-.movie-select-search-wrapper {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-md);
-    border-bottom: var(--border-light);
-    color: var(--text-secondary);
-}
-
-.movie-select-search-wrapper input {
-    width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text-body);
-    font-size: var(--font-size-base);
-}
-
-.movie-select-search-wrapper input::placeholder {
-    color: var(--text-muted);
-}
-
-/* OPTIONS LIST */
-.movie-select-options {
-    max-height: 260px;
-    overflow-y: auto;
-    padding: var(--space-sm);
-}
-
-.movie-select-options::-webkit-scrollbar {
-    width: 6px;
-}
-
-.movie-select-options::-webkit-scrollbar-thumb {
-    background: var(--gold-primary);
-    border-radius: var(--radius-round);
-}
-
-/* ITEM – HIỂN THỊ AVATAR + CHECKBOX + TÊN */
-.movie-select-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-sm);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: var(--transition-fast);
-}
-
-.movie-select-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.movie-select-item input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    accent-color: var(--gold-primary);
-    cursor: pointer;
-}
-
-.actor-avatar-dropdown {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: var(--border-light);
-    flex-shrink: 0;
-}
-
-.movie-select-item span {
-    color: var(--text-body);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-medium);
-    flex: 1;
-}
-
-/* NO RESULT */
-.movie-no-result {
-    padding: var(--space-sm);
-    text-align: center;
-    color: var(--text-muted);
-    font-size: var(--font-size-base);
-}
-
-/* =========================================================
-   SAVE BUTTON – GOLD
-========================================================= */
-
-.movie-genre-save-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-sm);
-    width: 100%;
-    padding: var(--space-md);
-    border: none;
-    border-radius: var(--radius-md);
-    background: var(--gold-gradient);
-    color: var(--black-premium);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-bold);
-    cursor: pointer;
-    transition: var(--transition-normal);
-}
-
-.movie-genre-save-btn:hover {
-    transform: translateY(-2px);
-    opacity: 0.92;
+    transition: transform var(--transition-normal);
 }
 
 /* =========================================================
@@ -366,6 +242,152 @@
 }
 
 /* =========================================================
+   MODAL – GIỐNG MOVIE GENRE
+========================================================= */
+
+.actor-modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.actor-modal-content .movie-select-search-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    border: var(--border-light);
+}
+
+.actor-modal-content .movie-select-search-wrapper input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-body);
+    font-size: var(--font-size-base);
+}
+
+.actor-modal-content .movie-select-search-wrapper input::placeholder {
+    color: var(--text-muted);
+}
+
+.actor-modal-options {
+    max-height: 350px;
+    overflow-y: auto;
+    padding: var(--space-sm);
+}
+
+.actor-modal-options::-webkit-scrollbar {
+    width: 5px;
+}
+
+.actor-modal-options::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: var(--radius-round);
+}
+
+.actor-modal-options::-webkit-scrollbar-thumb {
+    background: var(--silver-primary);
+    border-radius: var(--radius-round);
+}
+
+.actor-modal-options .movie-select-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-sm);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    color: var(--text-body);
+    min-height: 44px;
+}
+
+.actor-modal-options .movie-select-item:hover {
+    background: rgba(232, 232, 232, 0.06);
+}
+
+.actor-modal-options .movie-select-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    accent-color: var(--silver-primary);
+    cursor: pointer;
+}
+
+.actor-modal-options .movie-select-item .actor-avatar-dropdown {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: var(--border-light);
+    flex-shrink: 0;
+}
+
+.actor-modal-options .movie-select-item span {
+    color: var(--text-body);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-medium);
+    flex: 1;
+}
+
+.actor-modal-options .movie-no-result {
+    text-align: center;
+    padding: var(--space-md);
+    color: var(--text-muted);
+}
+
+/* =========================================================
+   NÚT TRONG MODAL – SỬ DỤNG CHUNG VỚI ADMIN FORM
+========================================================= */
+
+.actor-modal-content .admin-form-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: var(--border-light);
+}
+
+.actor-modal-content .admin-form-cancel-btn {
+    padding: var(--space-sm) var(--space-xl);
+    border-radius: var(--radius-md);
+    background: var(--hover-bg);
+    border: var(--border-light);
+    color: var(--text-body);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.actor-modal-content .admin-form-cancel-btn:hover {
+    background: rgba(232, 232, 232, 0.08);
+    border-color: rgba(232, 232, 232, 0.2);
+}
+
+.actor-modal-content .admin-form-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-xl);
+    border-radius: var(--radius-md);
+    background: var(--cinema-border-gradient);
+    color: var(--black-premium);
+    font-weight: var(--fw-bold);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.actor-modal-content .admin-form-submit-btn:hover {
+    transform: translateY(-2px);
+    color: var(--black-premium) !important;
+    box-shadow: var(--shadow-silver);
+}
+
+/* =========================================================
    RESPONSIVE
 ========================================================= */
 
@@ -396,6 +418,6 @@
         height: 24px;
     }
     .actor-name {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
 }

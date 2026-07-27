@@ -28,6 +28,15 @@ const getPosterUrl = (poster) => {
     return `https://api.quangdungcinema.id.vn/uploads/posters/${poster}`;
 };
 
+// Helper lấy URL backdrop (Cloudinary hoặc local)
+const getBackdropUrl = (backdrop) => {
+    if (!backdrop) return '';
+    if (backdrop.startsWith('http://') || backdrop.startsWith('https://')) {
+        return backdrop;
+    }
+    return `https://api.quangdungcinema.id.vn/uploads/backdrops/${backdrop}`;
+};
+
 const initialFormData = {
     title: '',
     slug: '',
@@ -188,13 +197,11 @@ const MoviePage = () => {
             }
 
             if (editingMovie) {
-                // ✅ Sửa: PUT /:movie_id (bỏ /update)
                 await axios.put(`${API_URL}/${editingMovie.movie_id}`, submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 showAlert('Thành công', 'Cập nhật phim thành công.', 'success');
             } else {
-                // ✅ Sửa: POST / (bỏ /add)
                 await axios.post(API_URL, submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
@@ -216,7 +223,6 @@ const MoviePage = () => {
             'warning',
             async () => {
                 try {
-                    // ✅ Sửa: DELETE /:movie_id (đã đúng, không prefix admin)
                     await axios.delete(`${API_URL}/${movie.movie_id}`);
                     closeAlert();
                     fetchMovies();
@@ -327,6 +333,25 @@ const MoviePage = () => {
         { label: 'Mô tả', name: 'description', type: 'textarea', placeholder: 'Nhập mô tả phim' }
     ];
 
+    // =============================================
+    // FILE PREVIEWS – như UserPage
+    // =============================================
+    const filePreviews = {};
+    if (editingMovie) {
+        if (editingMovie.movie_poster) {
+            filePreviews['movie_poster'] = {
+                url: getPosterUrl(editingMovie.movie_poster),
+                name: editingMovie.movie_poster
+            };
+        }
+        if (editingMovie.movie_backdrop) {
+            filePreviews['movie_backdrop'] = {
+                url: getBackdropUrl(editingMovie.movie_backdrop),
+                name: editingMovie.movie_backdrop
+            };
+        }
+    }
+
     const renderAlertIcon = () => {
         switch (alertModal.type) {
             case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
@@ -370,6 +395,7 @@ const MoviePage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingMovie ? 'Lưu thay đổi' : 'Thêm phim'}
+                    filePreviews={filePreviews}   // 🔥 dùng chung filePreviews
                 />
             </AdminModal>
 

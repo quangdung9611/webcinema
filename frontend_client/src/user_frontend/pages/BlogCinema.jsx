@@ -6,22 +6,9 @@ import { ChevronRight, Newspaper, AlertCircle } from 'lucide-react';
 import CinemaCard from '../components/CinemaCard';
 import '../styles/BlogCinema.css';
 
-const DEFAULT_POSTER =
-    "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/default-poster.jpg";
-
-const getImageUrl = (imageField, baseUrl = '') => {
-    if (!imageField) return DEFAULT_POSTER;
-    if (imageField.startsWith('http://') || imageField.startsWith('https://')) {
-        return imageField;
-    }
-    return baseUrl + imageField;
-};
-
 const BlogCinema = () => {
     const [blogs, setBlogs] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    const blogCinemaBaseUrl = "https://api.quangdungcinema.id.vn/uploads/blog_cinema/";
 
     useEffect(() => {
         const fetchBlogs = async () => {
@@ -54,7 +41,6 @@ const BlogCinema = () => {
     return (
         <div className="blog-page">
             <div className="blog-container">
-                {/* Header */}
                 <div className="blog-header">
                     <div className="blog-header-icon"><Newspaper size={48} /></div>
                     <h1>Blog Điện Ảnh</h1>
@@ -62,14 +48,12 @@ const BlogCinema = () => {
                     <div className="blog-header-line" />
                 </div>
 
-                {/* Breadcrumb */}
                 <div className="blog-breadcrumb">
                     <Link to="/">Trang chủ</Link>
                     <ChevronRight size={14} />
                     <span>Góc điện ảnh</span>
                 </div>
 
-                {/* Grid */}
                 {blogs.length === 0 ? (
                     <div className="blog-empty">
                         <AlertCircle size={48} />
@@ -79,19 +63,15 @@ const BlogCinema = () => {
                     </div>
                 ) : (
                     <div className="blog-grid">
-                        {blogs.map((blog) => {
-                            const imageField = blog.blog_image || blog.image_url;
-                            const imageUrl = getImageUrl(imageField, blogCinemaBaseUrl);
-                            return (
-                                <CinemaCard
-                                    key={blog.blog_id}
-                                    type="news"
-                                    image={imageUrl}
-                                    title={blog.title}
-                                    link={`/blog-cinema/${blog.slug}`}
-                                />
-                            );
-                        })}
+                        {blogs.map((blog) => (
+                            <CinemaCard
+                                key={blog.blog_id}
+                                type="news"
+                                image={blog.blog_image} // ✅ chỉ lấy đúng trường này
+                                title={blog.title}
+                                link={`/blog-cinema/${blog.slug}`}
+                            />
+                        ))}
                     </div>
                 )}
             </div>

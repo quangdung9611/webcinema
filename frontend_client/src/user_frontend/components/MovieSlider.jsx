@@ -4,9 +4,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import MoviePreviewModal from "./MoviePreviewModal";
 import "../styles/MovieSlider.css";
 
-const DEFAULT_POSTER =
-    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg";
-
 const MovieSlider = ({ title, movies = [] }) => {
     const navigate = useNavigate();
     const cardRefs = useRef({});
@@ -120,8 +117,8 @@ const MovieSlider = ({ title, movies = [] }) => {
                         const tiltStyle = getTiltStyle(movie.movie_id, position);
                         const isCenter = position === 'position-0';
 
-                        // ✅ Lấy poster trực tiếp từ URL Cloudinary (hoặc tên file)
-                        const posterUrl = movie.movie_poster || movie.poster_url || DEFAULT_POSTER;
+                        // ✅ Chỉ lấy movie_poster, không xử lý gì thêm
+                        const posterUrl = movie.movie_poster || null;
 
                         return (
                             <div key={movie.movie_id} className={`movie-item ${position}`}>
@@ -136,16 +133,17 @@ const MovieSlider = ({ title, movies = [] }) => {
                                         transition: isCenter ? 'transform 0.1s ease-out' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
                                     }}
                                 >
-                                    <img
-                                        src={posterUrl}
-                                        alt={movie.title}
-                                        loading="lazy"
-                                        draggable={false}
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = DEFAULT_POSTER;
-                                        }}
-                                    />
+                                    {posterUrl ? (
+                                        <img
+                                            src={posterUrl}
+                                            alt={movie.title}
+                                            loading="lazy"
+                                            draggable={false}
+                                        />
+                                    ) : (
+                                        // Không có ảnh -> hiển thị khối trống (giữ layout)
+                                        <div className="movie-card-no-poster" />
+                                    )}
                                     <div className="card-overlay"></div>
                                     <div className="card-info">
                                         <h3 className="card-title">{movie.title}</h3>

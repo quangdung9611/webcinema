@@ -1,5 +1,5 @@
 /* =========================================================
-   SIDEBAR – SỬ DỤNG VAR TỪ INDEX.CSS (GOLD EDITION)
+   SIDEBAR – ĐỒNG BỘ VỚI INDEX.CSS (SILVER EDITION)
 ========================================================= */
 
 .admin-sidebar {
@@ -8,7 +8,7 @@
     min-height: calc(100vh - 78px);
     position: sticky;
     top: 78px;
-    border-right: 1px solid rgba(212, 161, 30, 0.12);
+    border-right: 1px solid rgba(232, 232, 232, 0.12);
     overflow-y: auto;
     overflow-x: hidden;
     transition: var(--transition-normal);
@@ -28,7 +28,7 @@
 }
 
 /* =========================================================
-   CLOSE BUTTON – GOLD
+   CLOSE BUTTON – SILVER
 ========================================================= */
 
 .sidebar-close-btn {
@@ -40,20 +40,20 @@
     display: none;
     align-items: center;
     justify-content: center;
-    background: rgba(212, 161, 30, 0.06);
-    color: var(--gold-primary);
+    background: rgba(232, 232, 232, 0.06);
+    color: var(--silver-primary);
     cursor: pointer;
     transition: var(--transition-fast);
 }
 
 .sidebar-close-btn:hover {
-    background: rgba(212, 161, 30, 0.15);
-    color: var(--gold-light);
-    box-shadow: 0 0 30px rgba(212, 161, 30, 0.15);
+    background: rgba(232, 232, 232, 0.15);
+    color: var(--silver-light);
+    box-shadow: 0 0 30px rgba(232, 232, 232, 0.15);
 }
 
 /* =========================================================
-   LOGO – GOLD GRADIENT
+   LOGO – SILVER GRADIENT
 ========================================================= */
 
 .sidebar-logo {
@@ -67,20 +67,20 @@
     width: 38px;
     height: 38px;
     border-radius: var(--radius-md);
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h3);
     font-weight: var(--fw-black);
     color: var(--black-premium);
-    box-shadow: 0 4px 20px rgba(212, 161, 30, 0.25);
+    box-shadow: 0 4px 20px rgba(232, 232, 232, 0.25);
 }
 
 .sidebar-logo-text {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h3);
     font-weight: var(--fw-bold);
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -98,16 +98,16 @@
 }
 
 /* =========================================================
-   SECTION HEADER – GOLD
+   SECTION HEADER – SILVER
 ========================================================= */
 
 .sidebar-section {
     padding: var(--space-lg) var(--space-md) var(--space-xs);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    color: rgba(212, 161, 30, 0.4);
+    color: rgba(232, 232, 232, 0.4);
     cursor: default;
     user-select: none;
 }
@@ -115,7 +115,7 @@
 .sidebar-divider {
     height: 1px;
     margin: var(--space-xs) var(--space-md);
-    background: linear-gradient(90deg, transparent, rgba(212, 161, 30, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(232, 232, 232, 0.1), transparent);
 }
 
 /* =========================================================
@@ -127,7 +127,7 @@
 }
 
 /* =========================================================
-   LINK – GOLD
+   LINK – SILVER
 ========================================================= */
 
 .sidebar-link {
@@ -147,7 +147,7 @@
 }
 
 /* =========================================================
-   ICON – VÀNG KIM (MẶC ĐỊNH)
+   ICON – BẠC SÁNG
 ========================================================= */
 
 .link-icon {
@@ -156,7 +156,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     transition: color var(--transition-fast);
 }
 
@@ -171,17 +171,17 @@
 }
 
 /* =========================================================
-   BADGE – GOLD
+   BADGE – SILVER
 ========================================================= */
 
 .sidebar-link .link-badge {
     margin-left: auto;
     padding: var(--space-xs) var(--space-sm);
     border-radius: var(--radius-round);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
-    background: rgba(212, 161, 30, 0.12);
-    color: var(--gold-primary);
+    background: rgba(232, 232, 232, 0.12);
+    color: var(--silver-primary);
     transition: all var(--transition-normal);
 }
 
@@ -220,36 +220,36 @@
 }
 
 /* =========================================================
-   HOVER – GOLD (Icon sáng hơn)
+   HOVER – SILVER (Icon sáng hơn)
 ========================================================= */
 
 .sidebar-link:hover {
-    background: rgba(212, 161, 30, 0.05);
-    color: var(--gold-light);
+    background: rgba(232, 232, 232, 0.05);
+    color: var(--silver-light);
     transform: translateX(3px);
-    box-shadow: inset 0 0 0 1px rgba(212, 161, 30, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(232, 232, 232, 0.08);
 }
 
 .sidebar-link:hover .link-icon {
-    color: var(--gold-light);
+    color: var(--silver-light);
 }
 
 /* =========================================================
-   ACTIVE – GOLD GLOW
+   ACTIVE – SILVER GLOW
 ========================================================= */
 
 .sidebar-link.active {
-    background: rgba(212, 161, 30, 0.07);
-    color: var(--gold-light);
-    box-shadow: inset 3px 0 0 var(--gold-primary);
+    background: rgba(232, 232, 232, 0.07);
+    color: var(--silver-light);
+    box-shadow: inset 3px 0 0 var(--silver-primary);
 }
 
 .sidebar-link.active .link-icon {
-    color: var(--gold-light);
-    filter: drop-shadow(0 0 8px rgba(212, 161, 30, 0.3));
+    color: var(--silver-light);
+    filter: drop-shadow(0 0 8px rgba(232, 232, 232, 0.3));
 }
 
-/* Active glow – thanh neon vàng bên trái */
+/* Active glow – thanh neon bạc bên trái */
 .sidebar-link.active::before {
     content: '';
     position: absolute;
@@ -258,13 +258,13 @@
     width: 3px;
     height: 34px;
     border-radius: var(--radius-round);
-    background: var(--gold-gradient);
-    box-shadow: 0 0 20px rgba(212, 161, 30, 0.5),
-                0 0 60px rgba(212, 161, 30, 0.1);
+    background: var(--cinema-border-gradient);
+    box-shadow: 0 0 20px rgba(232, 232, 232, 0.5),
+                0 0 60px rgba(232, 232, 232, 0.1);
 }
 
 /* =========================================================
-   SUB-MENU – GOLD
+   SUB-MENU – SILVER
 ========================================================= */
 
 .sidebar-item.has-submenu .sidebar-link {
@@ -275,14 +275,14 @@
     content: '▾';
     position: absolute;
     right: var(--space-md);
-    color: var(--gold-primary);
-    font-size: var(--font-size-sm);
+    color: var(--silver-primary);
+    font-size: var(--font-size-h6);
     transition: transform var(--transition-normal), color var(--transition-normal);
 }
 
 .sidebar-item.has-submenu.open .sidebar-link::after {
     transform: rotate(180deg);
-    color: var(--gold-light);
+    color: var(--silver-light);
 }
 
 .submenu {
@@ -311,45 +311,45 @@
     margin: 2px 0;
 }
 
-/* Icon cho submenu (dùng dot vàng) */
+/* Icon cho submenu (dùng dot bạc) */
 .submenu-item::before {
     content: '◆';
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     font-size: 8px;
     opacity: 0.4;
     transition: all var(--transition-fast);
 }
 
 .submenu-item:hover {
-    background: rgba(212, 161, 30, 0.04);
-    color: var(--gold-light);
+    background: rgba(232, 232, 232, 0.04);
+    color: var(--silver-light);
 }
 
 .submenu-item:hover::before {
     opacity: 1;
-    color: var(--gold-light);
+    color: var(--silver-light);
 }
 
 .submenu-item.active {
-    background: rgba(212, 161, 30, 0.05);
-    color: var(--gold-light);
+    background: rgba(232, 232, 232, 0.05);
+    color: var(--silver-light);
 }
 
 .submenu-item.active::before {
     content: '◆';
     opacity: 1;
-    color: var(--gold-light);
-    box-shadow: 0 0 12px rgba(212, 161, 30, 0.3);
+    color: var(--silver-light);
+    box-shadow: 0 0 12px rgba(232, 232, 232, 0.3);
 }
 
 /* =========================================================
-   SIDEBAR FOOTER – GOLD
+   SIDEBAR FOOTER – SILVER
 ========================================================= */
 
 .sidebar-footer {
     margin-top: auto;
     padding: var(--space-md) var(--space-sm);
-    border-top: 1px solid rgba(212, 161, 30, 0.06);
+    border-top: 1px solid rgba(232, 232, 232, 0.06);
 }
 
 .sidebar-profile {
@@ -363,22 +363,22 @@
 }
 
 .sidebar-profile:hover {
-    background: rgba(212, 161, 30, 0.04);
+    background: rgba(232, 232, 232, 0.04);
 }
 
 .sidebar-avatar {
     width: 40px;
     height: 40px;
     border-radius: var(--radius-md);
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: var(--fw-bold);
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h3);
     color: var(--black-premium);
     flex-shrink: 0;
-    box-shadow: 0 4px 16px rgba(212, 161, 30, 0.2);
+    box-shadow: 0 4px 16px rgba(232, 232, 232, 0.2);
 }
 
 .sidebar-user-info {
@@ -396,8 +396,8 @@
 }
 
 .sidebar-user-role {
-    font-size: var(--font-size-sm);
-    color: rgba(212, 161, 30, 0.5);
+    font-size: var(--font-size-h6);
+    color: rgba(232, 232, 232, 0.5);
 }
 
 .sidebar-logout-btn {
@@ -412,7 +412,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h3);
 }
 
 .sidebar-logout-btn:hover {
@@ -421,7 +421,7 @@
 }
 
 /* =========================================================
-   SCROLLBAR – GOLD
+   SCROLLBAR – SILVER
 ========================================================= */
 
 .admin-sidebar::-webkit-scrollbar {
@@ -433,12 +433,12 @@
 }
 
 .admin-sidebar::-webkit-scrollbar-thumb {
-    background: rgba(212, 161, 30, 0.2);
+    background: rgba(232, 232, 232, 0.2);
     border-radius: var(--radius-round);
 }
 
 .admin-sidebar::-webkit-scrollbar-thumb:hover {
-    background: rgba(212, 161, 30, 0.4);
+    background: rgba(232, 232, 232, 0.4);
 }
 
 /* =========================================================
@@ -456,7 +456,7 @@
         z-index: 1400;
         backdrop-filter: blur(16px);
         background: rgba(10, 10, 10, 0.96);
-        border-right: 1px solid rgba(212, 161, 30, 0.12);
+        border-right: 1px solid rgba(232, 232, 232, 0.12);
     }
 
     .admin-sidebar.open {

@@ -87,17 +87,9 @@ const AdminPage = ({
 
                     {
                         onAdd && (
-                            <button
-                                className="admin-page-add-btn"
-                                onClick={onAdd}
-                            >
-
+                           <button className="admin-page-add-btn" onClick={onAdd}>
                                 <Plus size={18} />
-
-                                <span>
-                                    {buttonText}
-                                </span>
-
+                                <span className="admin-page-add-btn-text">{buttonText}</span>
                             </button>
                         )
                     }

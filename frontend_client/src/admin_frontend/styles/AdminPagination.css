@@ -1,5 +1,5 @@
 /* =========================================================
-   PAGINATION – SỬ DỤNG VAR TỪ INDEX.CSS (GOLD ACCENT)
+   PAGINATION – SỬ DỤNG VAR TỪ INDEX.CSS (SILVER EDITION)
 ========================================================= */
 
 .admin-pagination {
@@ -10,7 +10,7 @@
     justify-content: center;
     gap: var(--space-md);
     padding: var(--space-xl);
-    border-top: 1px solid rgba(201, 168, 76, 0.06);
+    border-top: 1px solid rgba(232, 232, 232, 0.06);
     background: linear-gradient(
         145deg,
         rgba(10, 10, 10, 0.98),
@@ -37,13 +37,13 @@
 .admin-pagination-btn {
     min-width: 46px;
     height: 46px;
-    border: 1px solid rgba(201, 168, 76, 0.06);
+    border: 1px solid rgba(232, 232, 232, 0.06);
     outline: none;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(201, 168, 76, 0.02);
+    background: rgba(232, 232, 232, 0.02);
     color: var(--text-secondary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
@@ -53,26 +53,26 @@
 }
 
 /* =========================================================
-   HOVER
+   HOVER – SILVER
 ========================================================= */
 
 .admin-pagination-btn:hover {
-    background: rgba(201, 168, 76, 0.06);
-    border-color: rgba(201, 168, 76, 0.15);
+    background: rgba(232, 232, 232, 0.06);
+    border-color: rgba(232, 232, 232, 0.15);
     color: var(--text-body);
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(201, 168, 76, 0.08);
+    box-shadow: 0 10px 25px rgba(232, 232, 232, 0.08);
 }
 
 /* =========================================================
-   ACTIVE – GOLD
+   ACTIVE – SILVER
 ========================================================= */
 
 .admin-pagination-btn.active {
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     color: var(--black-premium);
-    border: 1px solid rgba(201, 168, 76, 0.2);
-    box-shadow: 0 12px 28px rgba(201, 168, 76, 0.25);
+    border: 1px solid rgba(232, 232, 232, 0.2);
+    box-shadow: 0 12px 28px rgba(232, 232, 232, 0.25);
 }
 
 /* =========================================================
@@ -89,7 +89,7 @@
 }
 
 /* =========================================================
-   ELLIPSIS
+   ELLIPSIS – SILVER
 ========================================================= */
 
 .admin-pagination-dots {
@@ -98,14 +98,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(201, 168, 76, 0.3);
+    color: rgba(232, 232, 232, 0.3);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     user-select: none;
 }
 
 /* =========================================================
-   INFO
+   INFO – SILVER
 ========================================================= */
 
 .admin-pagination-info {
@@ -118,7 +118,7 @@
 }
 
 .admin-pagination-info span {
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     font-weight: var(--fw-bold);
     margin: 0 var(--space-xs);
 }
@@ -156,10 +156,10 @@
     .admin-pagination-dots {
         min-width: 38px;
         height: 38px;
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
         border-radius: var(--radius-sm);
     }
     .admin-pagination-info {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
 }

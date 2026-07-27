@@ -18,7 +18,7 @@ import AdminForm from '../../../components/AdminForm';
 
 const API_URL = 'https://api.quangdungcinema.id.vn/api/actors';
 
-// Hàm lấy URL ảnh
+// Helper lấy URL ảnh
 const getImageUrl = (image) => {
     if (!image) return '';
     if (image.startsWith('http://') || image.startsWith('https://')) {
@@ -30,10 +30,9 @@ const getImageUrl = (image) => {
 const DEFAULT_AVATAR =
     'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-avatar.jpg';
 
-// ✅ Thêm slug vào initialFormData
 const initialFormData = {
     name: '',
-    slug: '',          // thêm trường slug
+    slug: '',
     gender: 'Nam',
     nationality: 'Việt Nam',
     birthday: '',
@@ -50,6 +49,7 @@ const ActorPage = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [actorAvatarFile, setActorAvatarFile] = useState(null);
     const [formErrors, setFormErrors] = useState({});
+    const [filePreviews, setFilePreviews] = useState({}); // { actor_avatar: { url, name } }
 
     // Alert Modal
     const [alertModal, setAlertModal] = useState({
@@ -68,7 +68,7 @@ const ActorPage = () => {
         setAlertModal(prev => ({ ...prev, open: false }));
     };
 
-    // Fetch actors
+    // Fetch
     const fetchActors = async () => {
         setLoading(true);
         try {
@@ -85,7 +85,16 @@ const ActorPage = () => {
         fetchActors();
     }, []);
 
-    // Tạo slug tự động từ name
+    // Cleanup blob URL
+    useEffect(() => {
+        return () => {
+            if (filePreviews.actor_avatar?.url?.startsWith('blob:')) {
+                URL.revokeObjectURL(filePreviews.actor_avatar.url);
+            }
+        };
+    }, [filePreviews]);
+
+    // Slug
     const generateSlug = (str) => {
         if (!str) return '';
         return str
@@ -99,19 +108,22 @@ const ActorPage = () => {
             .trim();
     };
 
+    // Open add
     const handleOpenAdd = () => {
         setEditingActor(null);
         setFormData(initialFormData);
         setActorAvatarFile(null);
         setFormErrors({});
+        setFilePreviews({});
         setIsFormOpen(true);
     };
 
+    // Open edit
     const handleOpenEdit = (actor) => {
         setEditingActor(actor);
         setFormData({
             name: actor.name || '',
-            slug: actor.slug || '',      // ✅ lấy slug từ actor
+            slug: actor.slug || '',
             gender: actor.gender || 'Nam',
             nationality: actor.nationality || 'Việt Nam',
             birthday: actor.birthday ? actor.birthday.substring(0, 10) : '',
@@ -119,18 +131,40 @@ const ActorPage = () => {
         });
         setActorAvatarFile(null);
         setFormErrors({});
+        if (actor.actor_avatar) {
+            setFilePreviews({
+                actor_avatar: {
+                    url: getImageUrl(actor.actor_avatar),
+                    name: actor.actor_avatar
+                }
+            });
+        } else {
+            setFilePreviews({});
+        }
         setIsFormOpen(true);
     };
 
+    // Change
     const handleChange = (e) => {
         const { name, value, files } = e.target;
 
         if (name === 'actor_avatar') {
-            setActorAvatarFile(files[0]);
+            const file = files[0];
+            setActorAvatarFile(file);
+            if (file) {
+                if (filePreviews.actor_avatar?.url?.startsWith('blob:')) {
+                    URL.revokeObjectURL(filePreviews.actor_avatar.url);
+                }
+                const blobUrl = URL.createObjectURL(file);
+                setFilePreviews({
+                    actor_avatar: { url: blobUrl, name: file.name }
+                });
+            } else {
+                setFilePreviews({});
+            }
             return;
         }
 
-        // ✅ Nếu thay đổi name, tự động cập nhật slug
         if (name === 'name') {
             setFormData(prev => ({
                 ...prev,
@@ -145,7 +179,7 @@ const ActorPage = () => {
         setFormErrors(prev => ({ ...prev, [name]: '' }));
     };
 
-    // Validate form
+    // Validate
     const validateForm = () => {
         const errors = {};
         if (!formData.name.trim()) {
@@ -167,9 +201,13 @@ const ActorPage = () => {
         } else if (formData.biography.trim().length < 5) {
             errors.biography = 'Tiểu sử quá ngắn';
         }
+        if (!editingActor && !actorAvatarFile) {
+            errors.actor_avatar = 'Vui lòng chọn ảnh đại diện';
+        }
         return errors;
     };
 
+    // Submit
     const handleSubmit = async (e) => {
         e.preventDefault();
         const errors = validateForm();
@@ -188,8 +226,6 @@ const ActorPage = () => {
             submitData.append('nationality', formData.nationality.trim());
             submitData.append('birthday', formData.birthday);
             submitData.append('biography', formData.biography.trim());
-
-            // ✅ Gửi slug lên backend
             const slug = formData.slug || generateSlug(formData.name.trim());
             submitData.append('slug', slug);
 
@@ -199,13 +235,9 @@ const ActorPage = () => {
 
             let url = API_URL;
             let method = 'post';
-
             if (editingActor) {
                 url = `${API_URL}/${editingActor.actor_id}`;
                 method = 'put';
-            } else {
-                url = API_URL;
-                method = 'post';
             }
 
             await axios({
@@ -234,6 +266,7 @@ const ActorPage = () => {
         }
     };
 
+    // Delete
     const handleDelete = (actor) => {
         showAlert(
             'Xác nhận xóa',
@@ -320,21 +353,10 @@ const ActorPage = () => {
         }
     ];
 
-    // ✅ Thêm trường Slug vào formFields (giống MoviePage)
+    // Form fields
     const formFields = [
-        {
-            label: 'Họ tên',
-            name: 'name',
-            type: 'text',
-            placeholder: 'Nhập tên diễn viên'
-        },
-        {
-            label: 'Slug',
-            name: 'slug',
-            type: 'text',
-            placeholder: 'Slug tự động',
-            disabled: true   // không cho chỉnh sửa
-        },
+        { label: 'Họ tên', name: 'name', type: 'text', placeholder: 'Nhập tên diễn viên' },
+        { label: 'Slug', name: 'slug', type: 'text', placeholder: 'Slug tự động', disabled: true },
         {
             label: 'Giới tính',
             name: 'gender',
@@ -345,40 +367,19 @@ const ActorPage = () => {
                 { label: 'Khác', value: 'Khác' }
             ]
         },
-        {
-            label: 'Quốc tịch',
-            name: 'nationality',
-            type: 'text',
-            placeholder: 'Ví dụ: Việt Nam'
-        },
-        {
-            label: 'Ngày sinh',
-            name: 'birthday',
-            type: 'date'
-        },
-        {
-            label: 'Avatar',
-            name: 'actor_avatar',
-            type: 'file'
-        },
-        {
-            label: 'Tiểu sử',
-            name: 'biography',
-            type: 'textarea',
-            placeholder: 'Nhập tiểu sử diễn viên'
-        }
+        { label: 'Quốc tịch', name: 'nationality', type: 'text', placeholder: 'Ví dụ: Việt Nam' },
+        { label: 'Ngày sinh', name: 'birthday', type: 'date' },
+        { label: 'Avatar', name: 'actor_avatar', type: 'file' },
+        { label: 'Tiểu sử', name: 'biography', type: 'textarea', placeholder: 'Nhập tiểu sử diễn viên' }
     ];
 
+    // Alert icon
     const renderAlertIcon = () => {
         switch (alertModal.type) {
-            case 'success':
-                return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error':
-                return <XCircle size={58} color="#ef4444" />;
-            case 'warning':
-                return <AlertTriangle size={58} color="#f59e0b" />;
-            default:
-                return <Info size={58} color="#3b82f6" />;
+            case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
+            case 'error': return <XCircle size={58} color="#ef4444" />;
+            case 'warning': return <AlertTriangle size={58} color="#f59e0b" />;
+            default: return <Info size={58} color="#3b82f6" />;
         }
     };
 
@@ -403,44 +404,11 @@ const ActorPage = () => {
                 )}
             </AdminPage>
 
-            {/* Form Modal */}
             <AdminModal
                 open={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
                 title={editingActor ? 'Cập nhật diễn viên' : 'Thêm diễn viên'}
             >
-                {actorAvatarFile && (
-                    <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-                        <img
-                            src={URL.createObjectURL(actorAvatarFile)}
-                            alt="preview"
-                            style={{
-                                width: '140px',
-                                height: '140px',
-                                objectFit: 'cover',
-                                borderRadius: '50%'
-                            }}
-                        />
-                    </div>
-                )}
-                {editingActor && !actorAvatarFile && editingActor.actor_avatar && (
-                    <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-                        <img
-                            src={getImageUrl(editingActor.actor_avatar)}
-                            alt="preview"
-                            style={{
-                                width: '140px',
-                                height: '140px',
-                                objectFit: 'cover',
-                                borderRadius: '50%'
-                            }}
-                            onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = DEFAULT_AVATAR;
-                            }}
-                        />
-                    </div>
-                )}
                 <AdminForm
                     fields={formFields}
                     formData={formData}
@@ -449,10 +417,10 @@ const ActorPage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingActor ? 'Lưu thay đổi' : 'Thêm diễn viên'}
+                    filePreviews={filePreviews}   // 👈 Truyền vào đây
                 />
             </AdminModal>
 
-            {/* Alert Modal */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
