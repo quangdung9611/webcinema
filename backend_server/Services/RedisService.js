@@ -1,119 +1,90 @@
-/*=========================================================
-    DEPENDENCIES
-=========================================================*/
-
 const redis = require("../Config/redis");
-
-/*=========================================================
-    REDIS SERVICE
-=========================================================*/
 
 class RedisService {
 
-    /*=========================================================
-        SET WITH EXPIRY
-    =========================================================*/
     async set(key, value, ttlSeconds = 300) {
         try {
             await redis.set(key, value, { ex: ttlSeconds });
+            console.log(`✅ Redis SET success: ${key} = ${value}`);
             return true;
         } catch (error) {
-            console.error("Redis set error:", error);
+            console.error(`❌ Redis SET error: ${key}`, error);
             return false;
         }
     }
 
-    /*=========================================================
-        GET
-    =========================================================*/
     async get(key) {
         try {
-            return await redis.get(key);
+            const value = await redis.get(key);
+            console.log(`📥 Redis GET: ${key} => ${value}`);
+            return value;
         } catch (error) {
-            console.error("Redis get error:", error);
+            console.error(`❌ Redis GET error: ${key}`, error);
             return null;
         }
     }
 
-    /*=========================================================
-        DELETE
-    =========================================================*/
     async delete(key) {
         try {
             await redis.del(key);
+            console.log(`🗑️ Redis DEL: ${key}`);
             return true;
         } catch (error) {
-            console.error("Redis delete error:", error);
+            console.error(`❌ Redis DEL error: ${key}`, error);
             return false;
         }
     }
 
-    /*=========================================================
-        INCREMENT
-    =========================================================*/
     async increment(key) {
         try {
-            return await redis.incr(key);
+            const result = await redis.incr(key);
+            console.log(`📈 Redis INCR: ${key} => ${result}`);
+            return result;
         } catch (error) {
-            console.error("Redis increment error:", error);
+            console.error(`❌ Redis INCR error: ${key}`, error);
             return 0;
         }
     }
 
-    /*=========================================================
-        EXPIRE (SET TTL)
-    =========================================================*/
     async expire(key, ttlSeconds) {
         try {
             await redis.expire(key, ttlSeconds);
+            console.log(`⏰ Redis EXPIRE: ${key} ${ttlSeconds}s`);
             return true;
         } catch (error) {
-            console.error("Redis expire error:", error);
+            console.error(`❌ Redis EXPIRE error: ${key}`, error);
             return false;
         }
     }
 
-    /*=========================================================
-        OTP METHODS
-    =========================================================*/
-
-    /*=====================================================
-        SAVE OTP
-    =====================================================*/
+    // OTP specific methods
     async saveOTP(email, purpose, otp, ttlSeconds = 300) {
         const key = `otp:${email}:${purpose}`;
         return await this.set(key, otp, ttlSeconds);
     }
 
-    /*=====================================================
-        GET OTP
-    =====================================================*/
     async getOTP(email, purpose) {
         const key = `otp:${email}:${purpose}`;
         return await this.get(key);
     }
 
-    /*=====================================================
-        DELETE OTP
-    =====================================================*/
     async deleteOTP(email, purpose) {
         const key = `otp:${email}:${purpose}`;
         await this.delete(key);
         await this.deleteAttempts(email, purpose);
     }
 
-    /*=====================================================
-        GET OTP ATTEMPTS
-    =====================================================*/
+    async deleteAttempts(email, purpose) {
+        const key = `otp:${email}:${purpose}:attempts`;
+        await this.delete(key);
+    }
+
     async getOTPAttempts(email, purpose) {
         const key = `otp:${email}:${purpose}:attempts`;
         const attempts = await this.get(key);
         return attempts ? parseInt(attempts) : 0;
     }
 
-    /*=====================================================
-        INCREMENT OTP ATTEMPTS
-    =====================================================*/
     async incrementOTPAttempts(email, purpose, ttlSeconds = 300) {
         const key = `otp:${email}:${purpose}:attempts`;
         const attempts = await this.increment(key);
@@ -121,29 +92,14 @@ class RedisService {
         return attempts;
     }
 
-    /*=====================================================
-        DELETE OTP ATTEMPTS
-    =====================================================*/
-    async deleteAttempts(email, purpose) {
-        const key = `otp:${email}:${purpose}:attempts`;
-        await this.delete(key);
-    }
-
-    /*=====================================================
-        IS OTP LOCKED
-    =====================================================*/
     async isOTPLocked(email, purpose, maxAttempts = 5) {
         const attempts = await this.getOTPAttempts(email, purpose);
         return attempts >= maxAttempts;
     }
 
-    /*=====================================================
-        RATE LIMIT CHECK
-    =====================================================*/
     async checkRateLimit(email, purpose, limit = 3, windowSeconds = 60) {
         const key = `otp:${email}:${purpose}:ratelimit`;
         const current = await this.get(key);
-        
         if (current) {
             const count = parseInt(current);
             if (count >= limit) {
@@ -157,54 +113,10 @@ class RedisService {
 
         const newCount = await this.increment(key);
         await this.expire(key, windowSeconds);
-
         return {
             allowed: true,
             remaining: limit - newCount
         };
-    }
-
-    /*=========================================================
-        TOKEN BLACKLIST (Optional)
-    =========================================================*/
-    async blacklistToken(token, ttlSeconds = 86400) {
-        const key = `blacklist:${token}`;
-        return await this.set(key, "revoked", ttlSeconds);
-    }
-
-    async isTokenBlacklisted(token) {
-        const key = `blacklist:${token}`;
-        const result = await this.get(key);
-        return result !== null;
-    }
-
-    /*=========================================================
-        DELETE ALL OTP FOR EMAIL
-    =========================================================*/
-    async deleteAllOTP(email) {
-        try {
-            const keys = await redis.keys(`otp:${email}:*`);
-            for (const key of keys) {
-                await this.delete(key);
-            }
-            return keys.length;
-        } catch (error) {
-            console.error("Redis deleteAllOTP error:", error);
-            return 0;
-        }
-    }
-
-    /*=========================================================
-        HEALTH CHECK
-    =========================================================*/
-    async ping() {
-        try {
-            await redis.ping();
-            return true;
-        } catch (error) {
-            console.error("Redis ping error:", error);
-            return false;
-        }
     }
 }
 
