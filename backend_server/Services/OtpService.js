@@ -2,12 +2,12 @@
     DEPENDENCIES
 =========================================================*/
 
-const RedisService = require("./RedisService");
+const RedisService = require("./RedisService");  // instance
 const Otp = require("../utils/Otp");
 const OtpRepository = require("../Repositories/OtpRepository");
 
 /*=========================================================
-    OTP SERVICE (Dùng chung Redis)
+    OTP SERVICE (Dùng instance RedisService)
 =========================================================*/
 
 class OtpService {
@@ -15,7 +15,7 @@ class OtpService {
     /*=========================================================
         CREATE OTP - Dùng cho thanh toán/booking
     =========================================================*/
-    static async createPaymentOTP(email, purpose = "PAYMENT") {
+    async createPaymentOTP(email, purpose = "PAYMENT") {
         // 1. Check rate limit
         const rateLimit = await RedisService.checkRateLimit(email, purpose, 3, 60);
         if (!rateLimit.allowed) {
@@ -49,7 +49,7 @@ class OtpService {
     /*=========================================================
         VERIFY OTP - Dùng cho thanh toán/booking
     =========================================================*/
-    static async verifyPaymentOTP(email, otp, purpose = "PAYMENT") {
+    async verifyPaymentOTP(email, otp, purpose = "PAYMENT") {
         // 1. Check locked
         const isLocked = await RedisService.isOTPLocked(email, purpose, 5);
         if (isLocked) {
@@ -99,16 +99,16 @@ class OtpService {
     }
 
     /*=========================================================
-        VERIFY OTP - Dùng chung cho mọi purpose
+        VERIFY OTP - Alias
     =========================================================*/
-    static async verifyOTP(email, otp, purpose = "PAYMENT") {
+    async verifyOTP(email, otp, purpose = "PAYMENT") {
         return await this.verifyPaymentOTP(email, otp, purpose);
     }
 
     /*=========================================================
-        RESEND OTP - Dùng cho thanh toán/booking
+        RESEND OTP
     =========================================================*/
-    static async resendOTP(email, purpose = "PAYMENT") {
+    async resendOTP(email, purpose = "PAYMENT") {
         // 1. Check cooldown (30s)
         const cooldownKey = `otp:${email}:${purpose}:cooldown`;
         const lastSent = await RedisService.get(cooldownKey);
@@ -161,7 +161,7 @@ class OtpService {
     /*=========================================================
         DELETE OTP
     =========================================================*/
-    static async deleteOTP(email, purpose = "PAYMENT") {
+    async deleteOTP(email, purpose = "PAYMENT") {
         await RedisService.deleteOTP(email, purpose);
         
         await OtpRepository.create({
@@ -174,4 +174,4 @@ class OtpService {
     }
 }
 
-module.exports = OtpService;
+module.exports = new OtpService(); // ✅ export instance
