@@ -1,10 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 
 /* ==========================================================
-   ROOT VARIABLES – TỐI GIẢN CHO TOÀN DỰ ÁN
+   ROOT VARIABLES – MINIMALIST EDITION 🎬
+   Không màu – Chỉ ánh sáng, texture và chuyển động
    ========================================================== */
 :root {
-  /* Background */
+  /* Background – giữ nguyên gradient tối */
   --main-background: radial-gradient(circle at 30% 20%, rgba(232,232,232,0.04) 0%, transparent 40%), radial-gradient(circle at 70% 80%, rgba(232,232,232,0.03) 0%, transparent 40%), radial-gradient(circle at 50% 50%, rgba(255,255,255,0.01) 0%, transparent 60%), linear-gradient(180deg, #0a0a0a 0%, #0d0d0d 30%, #0a0a0a 60%, #080808 100%);
 
   /* Fonts */
@@ -12,7 +13,6 @@
   --font-heading: 'Plus Jakarta Sans', var(--font-primary);
   --font-size-base: 16px;
   --line-height-base: 1.6;
- /* Heading sizes – TO HƠN, VẪN DÙNG CLAMP */
   --font-size-h1: clamp(2.6rem, 5vw, 4.2rem);
   --font-size-h2: clamp(1.9rem, 3vw, 3.2rem);
   --font-size-h3: clamp(1.2rem, 1.5vw, 1.6rem);
@@ -20,16 +20,16 @@
   --font-size-h5: 1.05rem;
   --font-size-h6: 0.95rem;
 
-  /* Colors – Silver */
-  --silver-primary: #E8E8E8;
-  --silver-light: #F5F5F5;
-  --silver-dark: #B0B0B0;
-  --silver-muted: #999999;
+  /* 🎯 Colors – Chỉ dùng bạc và xám (không màu) */
+  --silver-primary: #E8E8E8;      /* Chữ chính, tiêu đề */
+  --silver-light: #F5F5F5;        /* Chữ sáng, nền card mờ */
+  --silver-dark: #B0B0B0;         /* Chữ phụ, icon */
+  --silver-muted: #888888;        /* Chữ mờ, placeholder */
 
-  /* Colors – Gold (điểm nhấn) */
-  --gold-primary: #C9A84C;
-  --gold-light: #E8C84A;
-  --gold-gradient: linear-gradient(135deg, var(--gold-primary), var(--gold-light));
+  /* 🔥 Gold → đổi thành bạc (giữ tên biến để tương thích) */
+  --gold-primary: var(--silver-primary);
+  --gold-light: var(--silver-light);
+  --gold-gradient: linear-gradient(135deg, var(--silver-primary), var(--silver-light));
 
   /* White & Black */
   --white-soft: #F5F5F5;
@@ -42,29 +42,60 @@
   --text-body: var(--white-soft);
   --text-secondary: var(--silver-dark);
   --text-muted: var(--silver-muted);
+/* ==========================================================
+   BORDER
+   ========================================================== */
 
-  /* Border */
-  --border-silver: 1px solid rgba(232,232,232,0.15);
-  --border-silver-hover: 1px solid rgba(245,245,245,0.4);
-  --border-light: 1px solid rgba(255,255,255,0.05);
+--border-silver: 2px solid rgba(232, 232, 232, 0.15);
 
-  /* Card */
-  --cinema-card-bg: linear-gradient(180deg, rgba(20,20,20,0.95), rgba(14,14,14,0.98));
-  --cinema-card-border: 2px solid rgba(232,232,232,0.08);
-  --cinema-card-shadow: 0 10px 28px rgba(0,0,0,0.6);
+--border-silver-hover: 2px solid rgba(255, 255, 255, 0.65);
 
-  /* Shadows */
-  --shadow-silver: 0 0 40px rgba(232,232,232,0.06);
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
-  --shadow-lg: 0 20px 50px rgba(0,0,0,0.5);
+--border-light: 1px solid rgba(255, 255, 255, 0.08);
+
+
+/* ==========================================================
+   CINEMA CARD
+   ========================================================== */
+
+--cinema-card-bg:
+    linear-gradient(
+        180deg,
+        rgba(22,22,22,.96) 0%,
+        rgba(14,14,14,.98) 100%
+    );
+
+--cinema-card-border:
+    2px solid rgba(232,232,232,.12);
+
+--cinema-card-shadow:
+    0 10px 30px rgba(0,0,0,.55);
+
+
+/* ==========================================================
+   SHADOWS
+   ========================================================== */
+
+--shadow-silver:
+    0 0 22px rgba(232,232,232,.22);
+
+--shadow-sm:
+    0 4px 12px rgba(0,0,0,.35);
+
+--shadow-lg:
+    0 18px 45px rgba(0,0,0,.60);
+
+--shadow-glow:
+    0 0 32px rgba(255,255,255,.12);
 
   /* Overlay */
   --overlay-dark: rgba(0,0,0,0.72);
 
-  /* Hover */
+  /* Hover – dùng opacity, filter, transform thay vì màu */
   --hover-bg: rgba(255,255,255,0.04);
+  --hover-brightness: brightness(1.2);
+  --hover-elevation: translateY(-3px);
 
-  /* Transitions */
+  /* Transitions – chậm, mượt */
   --ease-premium: cubic-bezier(0.16,1,0.3,1);
   --ease-smooth: cubic-bezier(0.22,1,0.36,1);
   --transition-fast: 0.2s ease;
@@ -92,7 +123,7 @@
   --container-width: 1200px;
   --container-padding: 20px;
 
-  /* Gradient đặc biệt */
+  /* Gradient đặc biệt – bạc sáng, không màu khác */
   --cinema-border-gradient: linear-gradient(120deg, #E8E8E8, #F5F5F5, #E8E8E8, #B0B0B0, #E8E8E8);
 
   /* Font weights */
@@ -105,7 +136,7 @@
 }
 
 /* ==========================================================
-   RESET & BASE
+   RESET & BASE – (giữ nguyên)
    ========================================================== */
 * {
   margin: 0;
@@ -142,7 +173,7 @@ body {
 }
 
 /* ==========================================================
-   TYPOGRAPHY
+   TYPOGRAPHY – (giữ nguyên, chỉ dùng bạc)
    ========================================================== */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
@@ -151,7 +182,7 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
   color: var(--text-heading) !important;
   word-wrap: break-word;
-  text-shadow: 0 0 15px rgba(232,232,232,0.1);
+  text-shadow: 0 0 15px rgba(232,232,232,0.06);
   transition: text-shadow var(--transition-normal);
 }
 
@@ -163,7 +194,7 @@ h5 { font-size: var(--font-size-h5); }
 h6 { font-size: var(--font-size-h6); }
 
 h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover {
-  text-shadow: 0 0 30px rgba(232,232,232,0.25), 0 0 60px rgba(232,232,232,0.08);
+  text-shadow: 0 0 30px rgba(232,232,232,0.15), 0 0 60px rgba(232,232,232,0.04);
 }
 
 p, span, div, a, li, label, input, textarea, select, button {
@@ -185,14 +216,17 @@ small { font-size: 0.875rem; }
 }
 
 /* ==========================================================
-   LINKS & BUTTONS (CƠ BẢN)
+   LINKS & BUTTONS (CƠ BẢN) – hover bằng sáng + nâng
    ========================================================== */
 a {
   text-decoration: none;
   color: inherit;
-  transition: color var(--transition-fast);
+  transition: color var(--transition-fast), filter var(--transition-fast);
 }
-a:hover, button:hover { color: var(--silver-light); }
+a:hover, button:hover {
+  color: var(--silver-light);
+  filter: brightness(1.1);
+}
 
 button, input, select, textarea {
   font-family: inherit;
@@ -227,7 +261,7 @@ footer {
 ul { list-style: none; }
 
 /* ==========================================================
-   UTILITY CLASSES
+   UTILITY CLASSES – (giữ nguyên)
    ========================================================== */
 .sr-only {
   position: absolute;
@@ -378,4 +412,24 @@ ul { list-style: none; }
   html { font-size: 12px; }
   .grid-cols-4, .grid-cols-3, .grid-cols-2 { grid-template-columns: 1fr !important; }
   .container { padding: 0 12px; }
+}
+
+/* =========================================================
+   OVERRIDE AUTOFILL – CHỐNG MÀU XANH CỦA TRÌNH DUYỆT
+========================================================= */
+
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus,
+.auth-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.04) inset !important;
+    -webkit-text-fill-color: var(--text-body) !important;
+    transition: background-color 5000s ease-in-out 0s;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Nếu input bị lỗi mà có autofill thì vẫn giữ viền đỏ */
+.auth-input.input-error:-webkit-autofill {
+    border-color: rgba(255, 59, 92, 0.4) !important;
+    -webkit-box-shadow: 0 0 0 1000px rgba(255, 59, 92, 0.06) inset !important;
 }

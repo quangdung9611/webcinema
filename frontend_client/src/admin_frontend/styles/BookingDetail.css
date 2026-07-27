@@ -1,21 +1,26 @@
+/* =========================================================
+   BOOKING DETAIL – SỬ DỤNG VAR TỪ INDEX.CSS (DARK + GOLD)
+========================================================= */
+
 /* Container bọc ngoài cùng */
 .booking-detail-wrapper {
-    background-color: #f1f5f9;
+    background: var(--black-premium);
     min-height: 100vh;
-    padding: 40px 20px;
+    padding: var(--space-3xl) var(--space-lg);
     display: flex;
     justify-content: center;
 }
 
-/* Khung nội dung chính max 800px */
+/* Khung nội dung chính */
 .booking-detail-container {
     width: 100%;
     max-width: 800px;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    background: var(--cinema-card-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
     overflow: hidden;
-    padding: 30px;
+    padding: var(--space-xl);
+    border: var(--border-light);
 }
 
 /* Header & Title */
@@ -23,233 +28,214 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
+    margin-bottom: var(--space-lg);
 }
 
 .detail-title-section {
     text-align: center;
-    margin-bottom: 30px;
-    border-bottom: 2px dashed #e2e8f0;
-    padding-bottom: 20px;
+    margin-bottom: var(--space-xl);
+    border-bottom: 2px dashed rgba(201, 168, 76, 0.2);
+    padding-bottom: var(--space-lg);
 }
 
 /* Các phần nội dung dọc */
 .detail-section {
-    margin-bottom: 25px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid rgba(201, 168, 76, 0.06);
 }
 
 .section-title {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 1.1rem;
-    color: #475569;
-    margin-bottom: 15px;
+    gap: var(--space-sm);
+    font-size: var(--font-size-h5);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
 }
 
 .section-body p {
-    margin: 8px 0;
-    color: #1e293b;
+    margin: var(--space-xs) 0;
+    color: var(--text-body);
 }
 
 /* Highlight thông tin */
 .movie-name-highlight {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #0f172a;
+    font-size: var(--font-size-h3);
+    font-weight: var(--fw-bold);
+    color: var(--text-heading);
 }
 
 .time-highlight {
-    color: #2563eb;
-    font-weight: 600;
+    color: var(--gold-primary);
+    font-weight: var(--fw-semibold);
 }
 
 /* Ghế ngồi kiểu badge */
 .seat-list-inline {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--space-sm);
 }
 
 .seat-badge {
-    background: #eff6ff;
-    color: #1e40af;
-    padding: 6px 12px;
-    border-radius: 6px;
-    border: 1px solid #bfdbfe;
-    font-weight: 600;
-    font-size: 0.9rem;
+    background: rgba(201, 168, 76, 0.08);
+    color: var(--gold-primary);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-xs);
+    border: 1px solid rgba(201, 168, 76, 0.15);
+    font-weight: var(--fw-semibold);
+    font-size: var(--font-size-sm);
 }
 
 /* Dịch vụ bắp nước */
 .food-item-line {
     display: flex;
     justify-content: space-between;
-    padding: 8px 0;
+    padding: var(--space-xs) 0;
+    color: var(--text-body);
 }
 
 /* Phần tổng tiền cuối cùng */
 .total-card-final {
-    background: #f8fafc;
-    padding: 20px;
-    border-radius: 12px;
-    border: none;
+    background: rgba(201, 168, 76, 0.04);
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(201, 168, 76, 0.06);
 }
 
 .footer-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: var(--space-sm);
+    color: var(--text-body);
 }
 
 .main-total {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 2px solid #e2e8f0;
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: #0f172a;
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 2px solid rgba(201, 168, 76, 0.2);
+    font-size: var(--font-size-h3);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-heading);
 }
 
 .amount-highlight {
-    color: #10b981;
+    color: var(--gold-primary);
 }
 
 .memo-text {
     font-family: monospace;
-    font-weight: 600;
-    color: #64748b;
+    font-weight: var(--fw-semibold);
+    color: var(--text-muted);
 }
 
-/* Status colors */
+/* Status colors – giữ nguyên màu đặc trưng */
 .status-tag {
-    padding: 5px 15px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 700;
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-round);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
 }
-.status-tag.completed{ 
-    background: #dcfce7; 
-    color: #15803d; 
+
+.status-tag.completed {
+    background: rgba(34, 197, 94, 0.12);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.15);
 }
-.status-tag.cancelled { 
-    background: #fee2e2; 
-    color: #b91c1c; 
+
+.status-tag.cancelled {
+    background: rgba(255, 59, 92, 0.12);
+    color: #ff4d6d;
+    border: 1px solid rgba(255, 59, 92, 0.15);
 }
 
 /* =========================
    RESPONSIVE - 1024px
 ========================= */
 @media (max-width: 1024px) {
-
     .booking-detail-container {
         max-width: 720px;
-        padding: 25px;
+        padding: var(--space-lg);
     }
-
     .detail-title-section {
-        padding-bottom: 15px;
+        padding-bottom: var(--space-md);
     }
-
     .main-total {
-        font-size: 1.3rem;
+        font-size: var(--font-size-h4);
     }
-
 }
-
 
 /* =========================
    RESPONSIVE - 768px
 ========================= */
 @media (max-width: 768px) {
-
     .booking-detail-wrapper {
-        padding: 30px 15px;
+        padding: var(--space-xl) var(--space-md);
     }
-
     .booking-detail-container {
         max-width: 100%;
-        border-radius: 12px;
-        padding: 20px;
+        border-radius: var(--radius-md);
+        padding: var(--space-lg);
     }
-
     .detail-header {
         flex-direction: column;
-        gap: 15px;
+        gap: var(--space-md);
         align-items: flex-start;
     }
-
     .detail-title-section {
         text-align: left;
     }
-
     .section-title {
-        font-size: 1rem;
+        font-size: var(--font-size-h6);
     }
-
     .movie-name-highlight {
-        font-size: 1.15rem;
+        font-size: var(--font-size-h4);
     }
-
     .footer-row {
         flex-direction: column;
-        gap: 6px;
+        gap: var(--space-xs);
     }
-
     .main-total {
-        font-size: 1.25rem;
+        font-size: var(--font-size-h4);
     }
-
 }
-
 
 /* =========================
    RESPONSIVE - 480px
 ========================= */
 @media (max-width: 480px) {
-
     .booking-detail-wrapper {
-        padding: 20px 10px;
+        padding: var(--space-lg) var(--space-sm);
     }
-
     .booking-detail-container {
-        padding: 16px;
-        border-radius: 10px;
+        padding: var(--space-md);
+        border-radius: var(--radius-sm);
     }
-
     .section-title {
-        font-size: 0.95rem;
-        gap: 6px;
+        font-size: var(--font-size-base);
+        gap: var(--space-xs);
     }
-
     .section-body p {
-        font-size: 0.9rem;
+        font-size: var(--font-size-sm);
     }
-
     .movie-name-highlight {
-        font-size: 1rem;
+        font-size: var(--font-size-h5);
     }
-
     .seat-badge {
-        font-size: 0.8rem;
-        padding: 5px 10px;
+        font-size: var(--font-size-sm);
+        padding: var(--space-xs) var(--space-sm);
     }
-
     .food-item-line {
         flex-direction: column;
-        gap: 4px;
-        font-size: 0.9rem;
+        gap: var(--space-xs);
+        font-size: var(--font-size-sm);
     }
-
     .main-total {
-        font-size: 1.1rem;
+        font-size: var(--font-size-h5);
     }
-
     .status-tag {
-        font-size: 0.7rem;
-        padding: 4px 10px;
+        font-size: var(--font-size-sm);
+        padding: var(--space-xs) var(--space-sm);
     }
-
 }

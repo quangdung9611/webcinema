@@ -9,11 +9,8 @@ const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
     PUBLIC ROUTES (Không cần auth - ai cũng xem được)
 ========================================================== */
 
-// Lấy danh sách khuyến mãi (admin và khách đều xem được)
-router.get('/', PromotionController.getAllPromotionsAdmin);
-
-// Lấy danh sách khuyến mãi cho client (alias)
-router.get('/all', PromotionController.getAllPromotions);
+// Lấy danh sách khuyến mãi cho cả 2 dùng
+router.get('/', PromotionController.getAllPromotions);
 
 // Tăng lượt thích (public)
 router.post('/like/:promotion_id', PromotionController.increaseLike);

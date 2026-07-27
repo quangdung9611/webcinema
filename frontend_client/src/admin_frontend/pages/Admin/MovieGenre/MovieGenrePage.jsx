@@ -30,6 +30,20 @@ const ASSIGNMENTS_API =
 const UPDATE_API =
     'https://api.quangdungcinema.id.vn/api/movie-genres/update';
 
+// =============================================
+// HELPER LẤY URL POSTER (GIỐNG MovieCard)
+// =============================================
+const DEFAULT_POSTER =
+    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg';
+
+const getPosterUrl = (poster) => {
+    if (!poster) return DEFAULT_POSTER;
+    if (poster.startsWith('http://') || poster.startsWith('https://')) {
+        return poster;
+    }
+    return `https://api.quangdungcinema.id.vn/uploads/posters/${poster}`;
+};
+
 const MovieGenrePage = () => {
 
     /* =====================================================
@@ -316,13 +330,17 @@ const MovieGenrePage = () => {
                                             >
 
                                                 {/* =======================
-                                                    POSTER
+                                                    POSTER (SỬA)
                                                 ======================= */}
 
                                                 <img
-                                                    src={`https://api.quangdungcinema.id.vn/uploads/posters/${movie.poster_url}`}
+                                                    src={getPosterUrl(movie.movie_poster)}
                                                     alt={movie.title}
                                                     className="movie-genre-poster"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = DEFAULT_POSTER;
+                                                    }}
                                                 />
 
                                                 {/* =======================

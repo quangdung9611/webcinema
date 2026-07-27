@@ -7,12 +7,8 @@ import MovieCard from "../components/MovieCard";
 import MoviePreviewModal from "../components/MoviePreviewModal";
 
 import "../styles/MovieStatusPage.css";
-import "../styles/user_home.css";
 
 const API_URL = "https://api.quangdungcinema.id.vn/api";
-
-const DEFAULT_BANNER =
-    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-banner.jpg";
 
 const statusMap = {
     "phim-dang-chieu": "Đang chiếu",
@@ -42,15 +38,10 @@ const MovieStatusPage = () => {
                 setError(null);
 
                 const res = await axios.get(`${API_URL}/movies`);
-
                 setMovies(res.data || []);
             } catch (err) {
                 console.error("Lỗi lấy danh sách phim:", err);
-
-                setError(
-                    "Không thể tải danh sách phim. Vui lòng thử lại sau."
-                );
-
+                setError("Không thể tải danh sách phim. Vui lòng thử lại sau.");
                 setMovies([]);
             } finally {
                 setLoading(false);
@@ -58,20 +49,13 @@ const MovieStatusPage = () => {
         };
 
         fetchMovies();
-
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth",
-        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
     }, [statusSlug]);
 
     const filteredMovies = useMemo(() => {
-        return movies.filter(
-            (movie) => movie.status === activeStatus
-        );
+        return movies.filter((movie) => movie.status === activeStatus);
     }, [movies, activeStatus]);
 
-    // Mở modal giống MovieSlider
     const handleMovieClick = (movie) => {
         setSelectedMovie(movie);
         setIsModalOpen(true);
@@ -79,7 +63,6 @@ const MovieStatusPage = () => {
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
-
         setTimeout(() => {
             setSelectedMovie(null);
         }, 850);
@@ -99,7 +82,6 @@ const MovieStatusPage = () => {
             <div className="empty-results error-state">
                 <Film size={48} />
                 <p>{error}</p>
-
                 <button
                     className="retry-btn"
                     onClick={() => window.location.reload()}
@@ -117,70 +99,34 @@ const MovieStatusPage = () => {
 
     return (
         <main className="movie-status-page">
-            {/* Banner - dùng trực tiếp URL Cloudinary */}
-            <div className="movie-status-hero">
-                <img
-                    src={DEFAULT_BANNER}
-                    alt="Movie Banner"
-                    className="movie-status-banner-img"
-                    onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = DEFAULT_BANNER;
-                    }}
-                />
-            </div>
-
-            {/* Header */}
-            <div
-                className="section-header"
-                style={{
-                    maxWidth: "1320px",
-                    margin: "0 auto",
-                    paddingInline: "var(--space-lg)",
-                }}
-            >
-                <div className="section-header-left">
-                    <h2 className="section-title">
-                        {currentTabLabel}
-                    </h2>
-
+            {/* ===== HEADER ===== */}
+            <div className="status-header">
+                <div className="status-header-left">
+                    <h2 className="status-title">{currentTabLabel}</h2>
                     <div className="title-underline" />
                 </div>
 
                 <div className="status-tabs">
                     <button
                         className={`status-tab ${
-                            statusSlug === "phim-dang-chieu"
-                                ? "active"
-                                : ""
+                            statusSlug === "phim-dang-chieu" ? "active" : ""
                         }`}
-                        onClick={() =>
-                            navigate(
-                                "/movies/status/phim-dang-chieu"
-                            )
-                        }
+                        onClick={() => navigate("/movies/status/phim-dang-chieu")}
                     >
                         Đang chiếu
                     </button>
-
                     <button
                         className={`status-tab ${
-                            statusSlug === "phim-sap-chieu"
-                                ? "active"
-                                : ""
+                            statusSlug === "phim-sap-chieu" ? "active" : ""
                         }`}
-                        onClick={() =>
-                            navigate(
-                                "/movies/status/phim-sap-chieu"
-                            )
-                        }
+                        onClick={() => navigate("/movies/status/phim-sap-chieu")}
                     >
                         Sắp chiếu
                     </button>
                 </div>
             </div>
 
-            {/* Movie Grid - MovieCard đã tự xử lý ảnh */}
+            {/* ===== MOVIE GRID ===== */}
             <section className="movie-list">
                 {filteredMovies.length > 0 ? (
                     filteredMovies.map((movie) => (
@@ -193,14 +139,12 @@ const MovieStatusPage = () => {
                 ) : (
                     <div className="empty-results">
                         <Film size={40} />
-                        <p>
-                            Hiện chưa có phim ở danh mục này...
-                        </p>
+                        <p>Hiện chưa có phim ở danh mục này...</p>
                     </div>
                 )}
             </section>
 
-            {/* Modal - MoviePreviewModal đã tự xử lý ảnh */}
+            {/* ===== MODAL ===== */}
             <MoviePreviewModal
                 open={isModalOpen}
                 onClose={handleCloseModal}

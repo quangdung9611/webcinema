@@ -1,5 +1,5 @@
 /* =========================================================
-   FILM GENRE – DÙNG BIẾN TỪ INDEX.CSS
+   FILM GENRE – ĐỒNG BỘ VỚI INDEX.CSS (MINIMALIST)
 ========================================================= */
 
 .film-genre-page {
@@ -26,16 +26,16 @@
 
 .filmgenre-section-header h2 {
     margin: 0;
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-h3);
     font-weight: var(--fw-extrabold);
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     white-space: nowrap;
 }
 
 .filmgenre-line {
     flex: 1;
     height: 1px;
-    background: linear-gradient(to right, var(--gold-primary), transparent);
+    background: linear-gradient(to right, var(--silver-primary), transparent);
 }
 
 /* =========================================================
@@ -56,22 +56,23 @@
     border-radius: var(--radius-round);
     background: rgba(255,255,255,.04);
     color: var(--text-secondary);
-    border: var(--border-gold);
+    border: var(--border-silver);
     transition: var(--transition-normal);
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-base);
     font-weight: var(--fw-medium);
 }
 
 .genre-tab:hover {
     transform: translateY(-2px);
-    color: var(--text-white);
-    border-color: var(--gold-primary);
+    color: var(--text-body);
+    border-color: var(--silver-primary);
 }
 
 .genre-tab.active {
-    color: var(--text-white);
-    background: var(--gold-gradient);
-    box-shadow: var(--shadow-gold);
+    color: var(--black-premium);
+    background: var(--cinema-border-gradient);
+    border-color: var(--silver-primary);
+    box-shadow: var(--shadow-silver);
 }
 
 /* =========================================================
@@ -98,18 +99,18 @@
     border-radius: var(--radius-lg);
     background: var(--cinema-card-bg);
     border: var(--cinema-card-border);
-    transition: var(--cinema-transition);
+    transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s ease;
     position: relative;
 }
 
 .genre-movie-inner:hover {
-    transform: var(--cinema-hover-transform);
-    border-color: var(--cinema-card-border-hover);
-    box-shadow: var(--cinema-card-shadow), var(--cinema-card-glow-hover);
+    transform: translateY(-4px);
+    border-color: var(--border-silver-hover);
+    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
 }
 
 /* =========================================================
-   SHINE
+   SHINE SWEEP
 ========================================================= */
 
 .genre-movie-inner::before {
@@ -119,9 +120,10 @@
     left: -150%;
     width: 70%;
     height: 100%;
-    background: linear-gradient(120deg, transparent, rgba(255,255,255,.12), transparent);
-    transition: .8s;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,.08), transparent);
+    transition: 0.8s ease;
     z-index: 5;
+    pointer-events: none;
 }
 
 .genre-movie-inner:hover::before {
@@ -143,7 +145,7 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform var(--transition-slow), filter var(--transition-normal);
+    transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1), filter 0.4s ease;
 }
 
 .genre-movie-inner:hover img {
@@ -164,8 +166,8 @@
     gap: var(--space-sm);
     padding: var(--space-lg);
     opacity: 0;
-    background: linear-gradient(to top, rgba(0,0,0,.9), rgba(0,0,0,.15));
-    transition: var(--transition-normal);
+    background: linear-gradient(to top, rgba(0,0,0,.85), rgba(0,0,0,.1));
+    transition: opacity 0.3s ease;
 }
 
 .genre-movie-inner:hover .genre-overlay {
@@ -173,7 +175,7 @@
 }
 
 /* =========================================================
-   BUTTONS
+   BUTTONS – SILVER
 ========================================================= */
 
 .genre-detail-btn,
@@ -184,17 +186,19 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
     font-weight: var(--fw-bold);
-    transition: var(--transition-normal);
-    font-size: var(--font-size-md);
+    transition: all 0.3s ease;
+    font-size: var(--font-size-base);
 }
 
 .genre-detail-btn {
-    background: var(--text-white);
+    background: var(--silver-primary);
     color: var(--black-premium);
 }
 
 .genre-detail-btn:hover {
     transform: translateY(-2px);
+    box-shadow: var(--shadow-silver);
+    background: var(--silver-light);
 }
 
 .genre-book-btn {
@@ -202,17 +206,17 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-xs);
-    color: var(--text-white);
-    background: var(--gold-gradient);
+    color: var(--black-premium);
+    background: var(--cinema-border-gradient);
 }
 
 .genre-book-btn:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--shadow-silver);
 }
 
 /* =========================================================
-   AGE
+   AGE BADGE
 ========================================================= */
 
 .movie-age-badge {
@@ -222,10 +226,10 @@
     z-index: 10;
     padding: var(--space-xs) var(--space-sm);
     border-radius: var(--radius-sm);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
-    color: var(--text-white);
-    background: var(--gold-gradient);
+    color: var(--black-premium);
+    background: var(--cinema-border-gradient);
     animation: ageFloat 3s ease-in-out infinite;
 }
 
@@ -245,7 +249,7 @@
 
 .genre-info h3 {
     margin: 0 0 var(--space-sm);
-    color: var(--text-white);
+    color: var(--text-body);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     line-height: 1.5;
@@ -266,16 +270,16 @@
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    color: var(--gold-primary);
+    color: var(--silver-primary);
 }
 
 .genre-type {
     color: var(--text-muted);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
 }
 
 /* =========================================================
-   LOADING
+   LOADING & EMPTY
 ========================================================= */
 
 .loading-movies,
@@ -283,11 +287,11 @@
     text-align: center;
     padding: var(--space-2xl) var(--space-lg);
     color: var(--text-muted);
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-h5);
 }
 
 /* =========================================================
-   RESPONSIVE – ĐIỀU CHỈNH FONT SIZE & SPACING DÙNG BIẾN
+   RESPONSIVE
 ========================================================= */
 
 @media (max-width: 1200px) {
@@ -299,7 +303,7 @@
         gap: var(--space-lg);
     }
     .filmgenre-section-header h2 {
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-h3);
     }
 }
 
@@ -313,7 +317,7 @@
     }
     .genre-tab {
         padding: var(--space-sm) var(--space-lg);
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
     .genre-movies-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -323,13 +327,13 @@
         padding: var(--space-md);
     }
     .genre-info h3 {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
         min-height: 46px;
     }
     .genre-detail-btn,
     .genre-book-btn {
         height: 46px;
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
 }
 
@@ -342,7 +346,7 @@
         gap: var(--space-sm);
     }
     .filmgenre-section-header h2 {
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-h4);
     }
     .genre-tabs {
         gap: var(--space-xs);
@@ -350,7 +354,7 @@
     }
     .genre-tab {
         padding: var(--space-xs) var(--space-md);
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
     .genre-movies-grid {
         gap: var(--space-md);
@@ -377,7 +381,7 @@
         width: 100%;
     }
     .filmgenre-section-header h2 {
-        font-size: var(--font-size-md);
+        font-size: var(--font-size-h5);
     }
     .genre-tabs {
         gap: var(--space-xs);
@@ -385,7 +389,7 @@
     }
     .genre-tab {
         padding: var(--space-xs) var(--space-sm);
-        font-size: var(--font-size-xs);
+        font-size: var(--font-size-h6);
     }
     .genre-movies-grid {
         grid-template-columns: 1fr;
@@ -395,7 +399,7 @@
         padding: var(--space-sm);
     }
     .genre-info h3 {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
         min-height: auto;
     }
     .genre-meta {
@@ -406,10 +410,10 @@
     .genre-detail-btn,
     .genre-book-btn {
         height: 44px;
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
     .movie-age-badge {
-        font-size: var(--font-size-xs);
+        font-size: var(--font-size-h6);
         padding: var(--space-xs) var(--space-sm);
     }
 }

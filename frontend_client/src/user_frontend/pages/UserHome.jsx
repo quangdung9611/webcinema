@@ -26,15 +26,13 @@ import 'swiper/css/pagination';
 import '../styles/user_home.css';
 
 // =============================================
-// HELPER: LẤY URL ẢNH (HỖ TRỢ CLOUDINARY + LOCAL)
+// HELPER: LẤY URL ẢNH
 // =============================================
 const getImageUrl = (url, baseUrl = '') => {
   if (!url) return '';
-  // Nếu là URL đầy đủ (http:// hoặc https://) thì dùng trực tiếp
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
-  // Ngược lại, ghép với baseUrl (cho dữ liệu cũ)
   return baseUrl + url;
 };
 
@@ -95,6 +93,7 @@ const UserHome = () => {
     });
   };
 
+  // ===== Fetch dữ liệu =====
   useEffect(() => {
     const fetchInitialData = async () => {
       setLoading(true);
@@ -107,8 +106,8 @@ const UserHome = () => {
         ] = await Promise.all([
           axios.get('https://api.quangdungcinema.id.vn/api/movies/status-group'),
           axios.get('https://api.quangdungcinema.id.vn/api/showtimes/quick-booking'),
-          axios.get('https://api.quangdungcinema.id.vn/api/promotions/all'),
-          axios.get('https://api.quangdungcinema.id.vn/api/blog-cinema/all')
+          axios.get('https://api.quangdungcinema.id.vn/api/promotions'),
+          axios.get('https://api.quangdungcinema.id.vn/api/blog-cinema')
         ]);
 
         setGroupedMovies(statusRes.data);
@@ -313,12 +312,17 @@ const UserHome = () => {
           </Swiper>
         </div>
 
-        {/* ===== QUICK BOOKING ===== */}
+        {/* ===== QUICK BOOKING – Rèm bạc ===== */}
         <ScrollReveal
           direction="up"
-          duration={0.9}
-          delay={0.05}
-          amount={0.2}
+          duration={1.2}
+          delay={0.1}
+          amount={0.15}
+          curtain={true}
+          curtainColor="silver"
+          curtainTexture="silk"
+          curtainSpeed={1.0}
+          curtainFolds={5}
         >
           <section className="quick-booking-container">
             <div className="quick-booking-content">
@@ -404,65 +408,63 @@ const UserHome = () => {
         {/* ===== CONTENT ===== */}
         <div className="home-container">
 
-          {/* FEATURES */}
-          <ScrollReveal
-            direction="up"
-            duration={0.9}
-            delay={0.1}
-            amount={0.2}
-          >
-            <section className="home-features-section">
-              <div className="features-grid">
-                <div className="feature-item">
-                  <div className="feature-icon-wrapper"><Ticket size={32} /></div>
-                  <div className="feature-text">
-                    <h4>ĐẶT VÉ NHANH CHÓNG</h4>
-                    <p>Tiết kiệm thời gian tối đa</p>
+          {/* ===== FEATURES – Xuất hiện tuần tự, không rèm ===== */}
+          <section className="home-features-section">
+            <div className="features-grid">
+              {[
+                { icon: Ticket, title: 'ĐẶT VÉ NHANH CHÓNG', desc: 'Tiết kiệm thời gian tối đa' },
+                { icon: Star, title: 'NHIỀU ƯU ĐÃI HẤP DẪN', desc: 'Săn deal hời mỗi ngày' },
+                { icon: CreditCard, title: 'THANH TOÁN ĐA DẠNG', desc: 'Hỗ trợ mọi loại ví điện tử' },
+                { icon: Monitor, title: 'TRẢI NGHIỆM ĐỈNH CAO', desc: 'Âm thanh, hình ảnh sống động' }
+              ].map((item, index) => (
+                <ScrollReveal
+                  key={index}
+                  direction="up"
+                  duration={1.0}
+                  delay={0.1 + index * 0.12}
+                  amount={0.15}
+                  curtain={false}
+                >
+                  <div className="feature-item">
+                    <div className="feature-icon-wrapper"><item.icon size={32} /></div>
+                    <div className="feature-text">
+                      <h4>{item.title}</h4>
+                      <p>{item.desc}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="feature-item">
-                  <div className="feature-icon-wrapper"><Star size={32} /></div>
-                  <div className="feature-text">
-                    <h4>NHIỀU ƯU ĐÃI HẤP DẪN</h4>
-                    <p>Săn deal hời mỗi ngày</p>
-                  </div>
-                </div>
-                <div className="feature-item">
-                  <div className="feature-icon-wrapper"><CreditCard size={32} /></div>
-                  <div className="feature-text">
-                    <h4>THANH TOÁN ĐA DẠNG</h4>
-                    <p>Hỗ trợ mọi loại ví điện tử</p>
-                  </div>
-                </div>
-                <div className="feature-item">
-                  <div className="feature-icon-wrapper"><Monitor size={32} /></div>
-                  <div className="feature-text">
-                    <h4>TRẢI NGHIỆM ĐỈNH CAO</h4>
-                    <p>Âm thanh, hình ảnh sống động</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </ScrollReveal>
+                </ScrollReveal>
+              ))}
+            </div>
+          </section>
 
-          {/* FILM GENRE */}
+          {/* ===== FILM GENRE – Rèm vàng ===== */}
           <ScrollReveal
             direction="up"
-            duration={0.9}
+            duration={1.2}
             delay={0.15}
-            amount={0.2}
+            amount={0.15}
+            curtain={true}
+            curtainColor="gold"
+            curtainTexture="velvet"
+            curtainSpeed={1.0}
+            curtainFolds={5}
           >
             <div className="movie-container">
               <FilmGenre />
             </div>
           </ScrollReveal>
 
-          {/* PROMOTIONS – CÓ NÚT "XEM TẤT CẢ" */}
+          {/* ===== PROMOTIONS – Rèm bạc + từng card tuần tự ===== */}
           <ScrollReveal
             direction="up"
-            duration={0.9}
+            duration={1.2}
             delay={0.2}
-            amount={0.2}
+            amount={0.15}
+            curtain={true}
+            curtainColor="silver"
+            curtainTexture="silk"
+            curtainSpeed={1.0}
+            curtainFolds={5}
           >
             <section className="promotions-section">
               <div className="section-header">
@@ -479,31 +481,43 @@ const UserHome = () => {
                 </button>
               </div>
               <div className="cinema-grid">
-                {promotions?.slice(0, 4).map((promo) => {
-                  // ✅ Hỗ trợ cả 2 tên trường: promotion_image (mới) và image_url (cũ)
+                {promotions?.slice(0, 4).map((promo, index) => {
                   const imageField = promo.promotion_image || promo.image_url;
                   const imageUrl = getImageUrl(imageField, 'https://api.quangdungcinema.id.vn/uploads/promotions/');
                   return (
-                    <CinemaCard
+                    <ScrollReveal
                       key={promo.promotion_id}
-                      type="promotion"
-                      image={imageUrl}
-                      title={promo.title}
-                      buttonText="Xem chi tiết"
-                      link={`/promotion/${promo.slug}`}
-                    />
+                      direction="up"
+                      duration={1.0}
+                      delay={0.9 + index * 0.12}  // 🔥 delay lớn để sau rèm
+                      amount={0.15}
+                      curtain={false}
+                    >
+                      <CinemaCard
+                        type="promotion"
+                        image={imageUrl}
+                        title={promo.title}
+                        buttonText="Xem chi tiết"
+                        link={`/promotion/${promo.slug}`}
+                      />
+                    </ScrollReveal>
                   );
                 })}
               </div>
             </section>
           </ScrollReveal>
 
-          {/* CINEMA CORNER – CÓ NÚT "XEM TẤT CẢ" */}
+          {/* ===== CINEMA CORNER – Rèm vàng + từng card tuần tự ===== */}
           <ScrollReveal
             direction="up"
-            duration={0.9}
+            duration={1.2}
             delay={0.25}
-            amount={0.2}
+            amount={0.15}
+            curtain={true}
+            curtainColor="gold"
+            curtainTexture="velvet"
+            curtainSpeed={1.0}
+            curtainFolds={5}
           >
             <section className="cinema-corner-section">
               <div className="section-header">
@@ -520,19 +534,26 @@ const UserHome = () => {
                 </button>
               </div>
               <div className="cinema-grid">
-                {cinemaNews?.slice(0, 4).map((news) => {
-                  // ✅ Hỗ trợ cả 2 tên trường: blog_image (mới) và image_url (cũ)
+                {cinemaNews?.slice(0, 4).map((news, index) => {
                   const imageField = news.blog_image || news.image_url;
                   const imageUrl = getImageUrl(imageField, 'https://api.quangdungcinema.id.vn/uploads/blog_cinema/');
                   return (
-                    <CinemaCard
+                    <ScrollReveal
                       key={news.blog_id}
-                      type="news"
-                      image={imageUrl}
-                      title={news.title}
-                      buttonText="Đọc thêm"
-                      link={`/blog-cinema/${news.slug}`}
-                    />
+                      direction="up"
+                      duration={1.0}
+                      delay={0.9 + index * 0.12}  // 🔥 delay lớn để sau rèm
+                      amount={0.15}
+                      curtain={false}
+                    >
+                      <CinemaCard
+                        type="news"
+                        image={imageUrl}
+                        title={news.title}
+                        buttonText="Đọc thêm"
+                        link={`/blog-cinema/${news.slug}`}
+                      />
+                    </ScrollReveal>
                   );
                 })}
               </div>

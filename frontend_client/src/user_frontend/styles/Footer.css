@@ -285,7 +285,7 @@
     border-radius: 50%;
     color: var(--black-premium);
     background: var(--cinema-border-gradient);
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-h4); /* 🔥 đã sửa từ --font-size-xl */
     font-weight: var(--fw-bold);
     transition: all var(--transition-normal);
     display: flex;
@@ -517,7 +517,7 @@
     .mystic-footer-scrolltop {
         width: 44px;
         height: 44px;
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-h5);
     }
     .mystic-footer-socials a {
         width: 40px;

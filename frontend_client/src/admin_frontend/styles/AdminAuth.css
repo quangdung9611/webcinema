@@ -1,830 +1,381 @@
 /* =========================================================
-    ADMIN LOGIN WRAPPER
+   ADMIN LOGIN – ĐỒNG BỘ VỚI INDEX.CSS (GOLD ACCENT)
 ========================================================= */
 
 .admin-login-wrapper {
-
     position: relative;
-
     width: 100%;
-
     min-height: 100vh;
-
     display: flex;
-
     align-items: center;
-
     justify-content: center;
-
     overflow: hidden;
-
-    padding: 40px;
-
-    background:
-        radial-gradient(circle at top left,
-            rgba(255, 0, 76, 0.15),
-            transparent 30%),
-
-        radial-gradient(circle at bottom right,
-            rgba(59, 130, 246, 0.12),
-            transparent 35%),
-
-        #050816;
-
+    padding: var(--space-3xl);
+    background: radial-gradient(circle at top left, rgba(201, 168, 76, 0.08), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(201, 168, 76, 0.06), transparent 35%),
+                var(--black-premium);
 }
-
-/* =========================================================
-    OVERLAY
-========================================================= */
 
 .admin-login-overlay {
-
     position: absolute;
-
     inset: 0;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(6, 11, 30, 0.92),
-            rgba(2, 6, 23, 0.96)
-        );
-
+    background: var(--cinema-card-bg);
     z-index: 1;
-
 }
-
-/* =========================================================
-    MAIN CONTAINER
-========================================================= */
 
 .admin-login-container {
-
     position: relative;
-
     z-index: 2;
-
     width: 100%;
-
     max-width: 1450px;
-
     min-height: 850px;
-
     display: grid;
-
     grid-template-columns: 1.15fr 0.85fr;
-
-    border-radius: 36px;
-
+    border-radius: var(--radius-xl);
     overflow: hidden;
-
-    border: 1px solid rgba(255, 255, 255, 0.08);
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(10, 15, 35, 0.95),
-            rgba(5, 10, 25, 0.92)
-        );
-
+    border: var(--border-light);
+    background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(5, 5, 5, 0.92));
     backdrop-filter: blur(18px);
-
-    box-shadow:
-        0 0 80px rgba(0, 0, 0, 0.55),
-        0 0 120px rgba(255, 0, 76, 0.08);
-
+    box-shadow: 0 0 80px rgba(0, 0, 0, 0.55), 0 0 120px rgba(201, 168, 76, 0.04);
 }
 
-/* =========================================================
-    LEFT PANEL
-========================================================= */
-
+/* ===== LEFT PANEL (GIỚI THIỆU) ===== */
 .admin-login-left {
-
     position: relative;
-
-    padding: 70px 70px 60px;
-
+    padding: var(--space-3xl) var(--space-3xl) var(--space-2xl);
     display: flex;
-
     flex-direction: column;
-
     justify-content: space-between;
-
     overflow: hidden;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(7, 12, 30, 0.95),
-            rgba(4, 8, 24, 0.92)
-        );
-
+    background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(5, 5, 5, 0.92));
 }
 
-/* =========================================================
-    RED GLOW EFFECT
-========================================================= */
-
+/* Glow vàng nhẹ */
 .admin-login-left::before {
-
     content: '';
-
     position: absolute;
-
     top: -180px;
-
     left: -120px;
-
     width: 700px;
-
     height: 700px;
-
     border-radius: 50%;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(255, 0, 76, 0.28),
-            transparent 65%
-        );
-
+    background: radial-gradient(circle, rgba(201, 168, 76, 0.25), transparent 65%);
     filter: blur(70px);
-
     z-index: 0;
-
 }
 
-/* =========================================================
-    CINEMA GLOW LINE
-========================================================= */
-
+/* Viền góc vàng */
 .admin-login-left::after {
-
     content: '';
-
     position: absolute;
-
-    top: 20px;
-
-    left: 20px;
-
+    top: var(--space-lg);
+    left: var(--space-lg);
     width: 260px;
-
     height: 260px;
-
-    border-top: 6px solid rgba(255, 50, 80, 0.9);
-
-    border-left: 6px solid rgba(255, 50, 80, 0.9);
-
+    border-top: 4px solid var(--gold-primary);
+    border-left: 4px solid var(--gold-primary);
     border-top-left-radius: 120px;
-
-    filter: blur(1px);
-
-    box-shadow:
-        0 0 20px rgba(255, 0, 76, 0.5),
-        0 0 60px rgba(255, 0, 76, 0.35);
-
+    filter: blur(0.5px);
+    box-shadow: 0 0 20px rgba(201, 168, 76, 0.3), 0 0 60px rgba(201, 168, 76, 0.15);
 }
-
-/* =========================================================
-    BRAND
-========================================================= */
 
 .admin-brand {
-
     position: relative;
-
     z-index: 2;
-
     display: flex;
-
     flex-direction: column;
-
     align-items: center;
-
     text-align: center;
-
-    gap: 18px;
-
+    gap: var(--space-md);
 }
 
 .admin-brand-logo {
-
     width: 88px;
-
     height: 88px;
-
     display: flex;
-
     align-items: center;
-
     justify-content: center;
-
     border-radius: 50%;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(255, 0, 76, 0.18),
-            rgba(255, 0, 76, 0.08)
-        );
-
-    border: 1px solid rgba(255, 255, 255, 0.08);
-
-    color: #ff3b5f;
-
-    box-shadow:
-        0 0 30px rgba(255, 0, 76, 0.25);
-
+    background: rgba(201, 168, 76, 0.12);
+    border: 1px solid rgba(201, 168, 76, 0.2);
+    color: var(--gold-primary);
+    box-shadow: 0 0 30px rgba(201, 168, 76, 0.15);
 }
 
 .admin-brand h1 {
-
     font-size: 74px;
-
-    font-weight: 900;
-
+    font-weight: var(--fw-black);
     letter-spacing: -3px;
-
     line-height: 1;
-
-    color: #ffffff;
-
+    color: var(--text-heading);
 }
-
 .admin-brand h1::after {
-
     content: ' STAR';
-
-    color: #ff3b5f;
-
+    color: var(--gold-primary);
 }
-
 .admin-brand span {
-
     letter-spacing: 10px;
-
     font-size: 17px;
-
     text-transform: uppercase;
-
-    color: rgba(255, 255, 255, 0.7);
-
+    color: var(--text-secondary);
 }
 
-/* =========================================================
-    LEFT CONTENT
-========================================================= */
-
+/* Left content */
 .admin-left-content {
-
     position: relative;
-
     z-index: 2;
-
     max-width: 650px;
-
     margin: 0 auto;
-
     text-align: center;
-
 }
-
 .admin-left-content h2 {
-
-    font-size: 56px;
-
-    font-weight: 900;
-
+    font-size: var(--font-size-h1);
+    font-weight: var(--fw-black);
     line-height: 1.1;
-
-    margin-bottom: 24px;
-
-    color: #ffffff;
-
+    margin-bottom: var(--space-lg);
+    color: var(--text-heading);
 }
-
 .admin-left-content p {
-
-    font-size: 22px;
-
+    font-size: var(--font-size-h4);
     line-height: 1.8;
-
-    color: rgba(255, 255, 255, 0.72);
-
+    color: var(--text-secondary);
 }
 
-/* =========================================================
-    FEATURE LIST
-========================================================= */
-
+/* Feature list */
 .admin-feature-list {
-
     position: relative;
-
     z-index: 2;
-
     display: flex;
-
     align-items: center;
-
     justify-content: center;
-
-    gap: 26px;
-
-    margin-top: 60px;
-
+    gap: var(--space-lg);
+    margin-top: var(--space-2xl);
 }
-
 .admin-feature-card {
-
     width: 220px;
-
-    padding: 26px 24px;
-
-    border-radius: 24px;
-
+    padding: var(--space-lg) var(--space-lg);
+    border-radius: var(--radius-lg);
     text-align: center;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(255, 255, 255, 0.05),
-            rgba(255, 255, 255, 0.02)
-        );
-
-    border: 1px solid rgba(255, 255, 255, 0.08);
-
+    background: rgba(255,255,255,0.04);
+    border: var(--border-light);
     backdrop-filter: blur(12px);
-
-    transition: 0.35s ease;
-
+    transition: var(--transition-normal);
 }
-
 .admin-feature-card:hover {
-
     transform: translateY(-6px);
-
-    border-color: rgba(255, 0, 76, 0.3);
-
-    box-shadow:
-        0 0 30px rgba(255, 0, 76, 0.18);
-
+    border-color: rgba(201, 168, 76, 0.3);
+    box-shadow: 0 0 30px rgba(201, 168, 76, 0.12);
 }
-
 .admin-feature-card svg {
-
-    color: #ff3b5f;
-
-    margin-bottom: 18px;
-
+    color: var(--gold-primary);
+    margin-bottom: var(--space-md);
 }
-
 .admin-feature-card strong {
-
     display: block;
-
-    margin-bottom: 10px;
-
-    font-size: 22px;
-
-    color: #ffffff;
-
+    margin-bottom: var(--space-sm);
+    font-size: var(--font-size-h4);
+    color: var(--text-body);
 }
-
 .admin-feature-card span {
-
     line-height: 1.7;
-
-    color: rgba(255, 255, 255, 0.72);
-
+    color: var(--text-secondary);
 }
-
-/* =========================================================
-    CINEMA ICON
-========================================================= */
 
 .admin-cinema-icon {
-
     position: absolute;
-
     bottom: -50px;
-
     left: -20px;
-
     opacity: 0.05;
-
-    color: #ffffff;
-
+    color: var(--white-soft);
     transform: rotate(-15deg);
-
 }
 
-/* =========================================================
-    RIGHT PANEL
-========================================================= */
-
+/* ===== RIGHT PANEL (FORM) ===== */
 .admin-login-right {
-
     position: relative;
-
     display: flex;
-
     flex-direction: column;
-
     justify-content: center;
-
-    padding: 70px;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(15, 23, 42, 0.82),
-            rgba(5, 10, 25, 0.92)
-        );
-
-    border-left: 1px solid rgba(255, 255, 255, 0.06);
-
+    padding: var(--space-3xl);
+    background: linear-gradient(135deg, rgba(20,20,20,0.82), rgba(10,10,10,0.92));
+    border-left: var(--border-light);
 }
-
-/* =========================================================
-    LOGIN HEADER
-========================================================= */
 
 .admin-login-header {
-
     text-align: center;
-
-    margin-bottom: 50px;
-
+    margin-bottom: var(--space-2xl);
 }
-
 .admin-login-icon {
-
     width: 88px;
-
     height: 88px;
-
-    margin: 0 auto 28px;
-
+    margin: 0 auto var(--space-xl);
     border-radius: 50%;
-
     display: flex;
-
     align-items: center;
-
     justify-content: center;
-
-    color: #ff3b5f;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(255, 0, 76, 0.2),
-            rgba(255, 0, 76, 0.08)
-        );
-
-    border: 1px solid rgba(255, 0, 76, 0.25);
-
-    box-shadow:
-        0 0 40px rgba(255, 0, 76, 0.18);
-
+    color: var(--gold-primary);
+    background: rgba(201, 168, 76, 0.12);
+    border: 1px solid rgba(201, 168, 76, 0.2);
+    box-shadow: 0 0 40px rgba(201, 168, 76, 0.12);
 }
-
 .admin-login-header h2 {
-
-    font-size: 54px;
-
-    font-weight: 900;
-
-    margin-bottom: 18px;
-
-    color: #ffffff;
-
+    font-size: var(--font-size-h1);
+    font-weight: var(--fw-black);
+    margin-bottom: var(--space-md);
+    color: var(--text-heading);
 }
-
 .admin-login-header p {
-
-    font-size: 20px;
-
-    color: rgba(255, 255, 255, 0.7);
-
+    font-size: var(--font-size-h4);
+    color: var(--text-secondary);
 }
-
-/* =========================================================
-    FORM
-========================================================= */
 
 .admin-login-form {
-
     display: flex;
-
     flex-direction: column;
-
-    gap: 30px;
-
+    gap: var(--space-xl);
 }
-
 .admin-input-group {
-
     display: flex;
-
     flex-direction: column;
-
-    gap: 14px;
-
+    gap: var(--space-md);
 }
-
 .admin-input-group label {
-
-    font-size: 17px;
-
-    font-weight: 700;
-
-    color: #ffffff;
-
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
+    color: var(--text-body);
 }
-
 .admin-input-box {
-
     height: 74px;
-
     display: flex;
-
     align-items: center;
-
-    gap: 16px;
-
-    padding: 0 24px;
-
-    border-radius: 20px;
-
-    border: 1px solid rgba(255, 255, 255, 0.08);
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(255, 255, 255, 0.04),
-            rgba(255, 255, 255, 0.02)
-        );
-
-    transition: 0.3s ease;
-
+    gap: var(--space-md);
+    padding: 0 var(--space-lg);
+    border-radius: var(--radius-lg);
+    border: var(--border-light);
+    background: rgba(255,255,255,0.04);
+    transition: var(--transition-normal);
 }
-
 .admin-input-box:focus-within {
-
-    border-color: rgba(255, 0, 76, 0.4);
-
-    box-shadow:
-        0 0 25px rgba(255, 0, 76, 0.12);
-
+    border-color: var(--gold-primary);
+    box-shadow: 0 0 25px rgba(201, 168, 76, 0.08);
 }
-
 .admin-input-box.error {
-
-    border-color: rgba(255, 0, 76, 0.5);
-
+    border-color: #ff4d6d;
 }
-
 .admin-input-box svg {
-
-    color: rgba(255, 255, 255, 0.72);
-
+    color: var(--text-secondary);
     flex-shrink: 0;
-
 }
-
 .admin-input-box input {
-
     width: 100%;
-
     height: 100%;
-
     border: none;
-
     outline: none;
-
     background: transparent;
-
-    color: #ffffff;
-
-    font-size: 17px;
-
+    color: var(--text-body);
+    font-size: var(--font-size-base);
 }
-
 .admin-input-box input::placeholder {
-
-    color: rgba(255, 255, 255, 0.4);
-
+    color: var(--text-muted);
 }
-
 .toggle-password-btn {
-
     border: none;
-
     background: transparent;
-
     display: flex;
-
     align-items: center;
-
     justify-content: center;
-
     cursor: pointer;
-
-    color: rgba(255, 255, 255, 0.72);
-
+    color: var(--text-secondary);
 }
-
 .admin-error-text {
-
-    font-size: 14px;
-
+    font-size: var(--font-size-sm);
     color: #ff4d6d;
-
     margin-left: 4px;
-
 }
 
-/* =========================================================
-    BUTTON
-========================================================= */
-
+/* Button */
 .btn-admin-login {
-
     height: 74px;
-
     border: none;
-
-    border-radius: 22px;
-
+    border-radius: var(--radius-lg);
     display: flex;
-
     align-items: center;
-
     justify-content: center;
-
-    gap: 14px;
-
+    gap: var(--space-md);
     cursor: pointer;
-
-    font-size: 19px;
-
-    font-weight: 800;
-
-    color: #ffffff;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff2d55,
-            #ff3b5f
-        );
-
-    transition: 0.35s ease;
-
-    margin-top: 10px;
-
-    box-shadow:
-        0 12px 30px rgba(255, 0, 76, 0.28);
-
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-extrabold);
+    color: var(--black-premium);
+    background: var(--gold-gradient);
+    transition: var(--transition-normal);
+    margin-top: var(--space-sm);
+    box-shadow: 0 12px 30px rgba(201, 168, 76, 0.25);
 }
-
 .btn-admin-login:hover {
-
     transform: translateY(-3px);
-
-    box-shadow:
-        0 18px 40px rgba(255, 0, 76, 0.35);
-
+    box-shadow: 0 18px 40px rgba(201, 168, 76, 0.35);
 }
-
 .btn-admin-login:disabled {
-
     opacity: 0.7;
-
     cursor: not-allowed;
-
 }
-
-/* =========================================================
-    FOOTER
-========================================================= */
 
 .admin-login-footer {
-
-    margin-top: 45px;
-
+    margin-top: var(--space-2xl);
     text-align: center;
-
-    font-size: 15px;
-
-    color: rgba(255, 255, 255, 0.45);
-
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
 }
-
-/* =========================================================
-    AUTH LOADING
-========================================================= */
 
 .admin-auth-loading {
-
     min-height: 100vh;
-
     display: flex;
-
     align-items: center;
-
     justify-content: center;
-
-    color: #ffffff;
-
+    color: var(--text-body);
 }
 
 /* =========================================================
-    RESPONSIVE
+   RESPONSIVE
 ========================================================= */
-
 @media (max-width: 1200px) {
-
     .admin-login-container {
-
         grid-template-columns: 1fr;
-
         max-width: 760px;
-
     }
-
     .admin-login-left {
-
         display: none;
-
     }
-
 }
-
 @media (max-width: 768px) {
-
     .admin-login-wrapper {
-
-        padding: 20px;
-
+        padding: var(--space-lg);
     }
-
     .admin-login-right {
-
-        padding: 50px 30px;
-
+        padding: var(--space-2xl) var(--space-xl);
     }
-
     .admin-login-header h2 {
-
-        font-size: 40px;
-
+        font-size: var(--font-size-h1);
     }
-
     .admin-input-box {
-
         height: 64px;
-
     }
-
     .btn-admin-login {
-
         height: 66px;
-
-        font-size: 17px;
-
+        font-size: var(--font-size-base);
     }
-
 }
-
 @media (max-width: 480px) {
-
     .admin-login-right {
-
-        padding: 40px 22px;
-
+        padding: var(--space-xl) var(--space-md);
     }
-
     .admin-login-header h2 {
-
-        font-size: 32px;
-
+        font-size: var(--font-size-h2);
     }
-
     .admin-login-header p {
-
-        font-size: 16px;
-
+        font-size: var(--font-size-base);
     }
-
     .admin-input-group label {
-
-        font-size: 15px;
-
+        font-size: var(--font-size-sm);
     }
-
 }

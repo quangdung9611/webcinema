@@ -3,28 +3,16 @@
 ========================================================= */
 
 .admin-form-overlay {
-
     position: fixed;
-
     inset: 0;
-
     z-index: 9999;
-
     display: flex;
-
     align-items: center;
     justify-content: center;
-
-    padding: 24px;
-
-    background:
-        rgba(0,0,0,.72);
-
-    backdrop-filter:
-        blur(14px);
-
-    animation:
-        adminFormFade .25s ease;
+    padding: var(--space-lg);
+    background: var(--overlay-dark);
+    backdrop-filter: blur(14px);
+    animation: adminFormFade var(--transition-slow);
 }
 
 /* =========================================================
@@ -32,83 +20,42 @@
 ========================================================= */
 
 .admin-form-modal {
-
     position: relative;
-
     width: 100%;
     max-width: 680px;
-
     overflow: hidden;
-
-    border-radius: 26px;
-
-    background:
-        linear-gradient(
-            180deg,
-            #242424 0%,
-            #171717 100%
-        );
-
-    border:
-        1px solid rgba(255,255,255,.06);
-
-    box-shadow:
-        0 20px 60px rgba(0,0,0,.60),
-        0 0 25px rgba(255,40,40,.08);
-
-    animation:
-        adminFormScale .28s ease;
+    border-radius: var(--radius-xl); /* 24px – tương đương 26px gốc */
+    background: var(--cinema-card-bg);
+    border: var(--border-light);
+    box-shadow: var(--shadow-lg), 0 0 25px rgba(255, 40, 40, 0.08);
+    animation: adminFormScale var(--transition-normal);
 }
 
 /* =========================================================
-   CINEMA GLOW
+   CINEMA GLOW (giữ nguyên hiệu ứng đặc trưng)
 ========================================================= */
 
 .admin-form-modal::before {
-
     content: '';
-
     position: absolute;
-
     top: -120px;
     right: -120px;
-
     width: 260px;
     height: 260px;
-
     border-radius: 50%;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(255,40,40,.16),
-            transparent 70%
-        );
-
+    background: radial-gradient(circle, rgba(255, 40, 40, 0.16), transparent 70%);
     pointer-events: none;
 }
 
 .admin-form-modal::after {
-
     content: '';
-
     position: absolute;
-
     bottom: -120px;
     left: -120px;
-
     width: 260px;
     height: 260px;
-
     border-radius: 50%;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(180,20,30,.10),
-            transparent 70%
-        );
-
+    background: radial-gradient(circle, rgba(180, 20, 30, 0.10), transparent 70%);
     pointer-events: none;
 }
 
@@ -117,42 +64,23 @@
 ========================================================= */
 
 .admin-form-header {
-
     position: relative;
-
     display: flex;
-
     align-items: center;
     justify-content: space-between;
-
-    padding: 24px 28px;
-
-    background:
-        linear-gradient(
-            180deg,
-            rgba(255,40,40,.05),
-            transparent
-        );
-
-    border-bottom:
-        1px solid rgba(255,255,255,.05);
-
+    padding: var(--space-lg) var(--space-xl);
+    background: linear-gradient(180deg, rgba(255, 40, 40, 0.05), transparent);
+    border-bottom: var(--border-silver);
     z-index: 2;
 }
 
 .admin-form-header h2 {
-
     margin: 0;
-
-    font-size: 28px;
-
-    font-weight: 900;
-
-    letter-spacing: .5px;
-
+    font-size: var(--font-size-h2); /* clamp, nhưng có thể ghi đè nếu muốn */
+    font-weight: var(--fw-black);
+    letter-spacing: 0.5px;
     text-transform: uppercase;
-
-    color: #ffffff;
+    color: var(--white-pure);
 }
 
 /* =========================================================
@@ -160,46 +88,25 @@
 ========================================================= */
 
 .admin-form-close-btn {
-
     width: 46px;
     height: 46px;
-
     display: flex;
-
     align-items: center;
     justify-content: center;
-
-    border-radius: 14px;
-
-    border:
-        1px solid rgba(255,255,255,.06);
-
-    background:
-        rgba(255,255,255,.04);
-
-    color: #ffffff;
-
+    border-radius: var(--radius-md);
+    border: var(--border-light);
+    background: var(--hover-bg);
+    color: var(--white-pure);
     cursor: pointer;
-
-    transition:
-        all .3s ease;
+    transition: all var(--transition-normal);
 }
 
 .admin-form-close-btn:hover {
-
-    background:
-        rgba(255,40,40,.08);
-
-    border:
-        1px solid rgba(255,55,55,.35);
-
-    color: #fff;
-
-    transform:
-        rotate(90deg);
-
-    box-shadow:
-        0 0 20px rgba(255,40,40,.14);
+    background: rgba(255, 40, 40, 0.08);
+    border: 1px solid rgba(255, 55, 55, 0.35);
+    color: var(--white-pure);
+    transform: rotate(90deg);
+    box-shadow: 0 0 20px rgba(255, 40, 40, 0.14);
 }
 
 /* =========================================================
@@ -207,17 +114,11 @@
 ========================================================= */
 
 .admin-form-body {
-
     position: relative;
-
-    padding: 30px;
-
+    padding: var(--space-xl); /* 32px (gốc 30px) */
     max-height: 80vh;
-
     overflow-y: auto;
-
     background: transparent;
-
     z-index: 2;
 }
 
@@ -226,12 +127,9 @@
 ========================================================= */
 
 .admin-form {
-
     display: flex;
-
     flex-direction: column;
-
-    gap: 22px;
+    gap: var(--space-lg); /* 24px (gốc 22px) */
 }
 
 /* =========================================================
@@ -239,12 +137,9 @@
 ========================================================= */
 
 .admin-form-group {
-
     display: flex;
-
     flex-direction: column;
-
-    gap: 10px;
+    gap: var(--space-sm); /* 8px (gốc 10px) */
 }
 
 /* =========================================================
@@ -252,18 +147,14 @@
 ========================================================= */
 
 .admin-form-label {
-
-    font-size: 14px;
-
-    font-weight: 700;
-
-    letter-spacing: .3px;
-
-    color: #f3f4f6;
+    font-size: var(--font-size-sm); /* 0.875rem */
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.3px;
+    color: var(--text-body);
 }
 
 /* =========================================================
-   INPUT
+   INPUT, TEXTAREA, SELECT
 ========================================================= */
 
 .admin-form-input,
@@ -272,34 +163,20 @@
 .admin-form-group input,
 .admin-form-group textarea,
 .admin-form-group select {
-
     width: 100%;
-
-    padding: 16px 18px;
-
-    border-radius: 16px;
-
-    border:
-        1px solid rgba(255,255,255,.06);
-
+    padding: var(--space-md) var(--space-lg); /* 16px 24px (gốc 16px 18px) */
+    border-radius: var(--radius-md); /* 12px (gốc 16px) – có thể dùng radius-lg nếu muốn */
+    border: var(--border-light);
     outline: none;
-
-    background:
-        rgba(255,255,255,.03);
-
-    color: #ffffff;
-
-    font-size: 15px;
-
-    font-weight: 500;
-
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--white-pure);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-medium);
     font-family: inherit;
-
-    transition:
-        transform .3s ease,
-        border-color .3s ease,
-        box-shadow .3s ease,
-        background .3s ease;
+    transition: transform var(--transition-normal),
+                border-color var(--transition-normal),
+                box-shadow var(--transition-normal),
+                background var(--transition-normal);
 }
 
 /* =========================================================
@@ -310,9 +187,7 @@
 .admin-form-textarea::placeholder,
 .admin-form-group input::placeholder,
 .admin-form-group textarea::placeholder {
-
-    color:
-        #777777;
+    color: var(--text-muted);
 }
 
 /* =========================================================
@@ -321,40 +196,26 @@
 
 .admin-form-textarea,
 .admin-form-group textarea {
-
     resize: vertical;
-
     min-height: 140px;
 }
+
 /* =========================================================
    SELECT
 ========================================================= */
 
 .admin-form-select,
 .admin-form-group select {
-
     cursor: pointer;
-
-    background:
-        linear-gradient(
-            180deg,
-            #242424,
-            #171717
-        );
-
-    color: #ffffff;
+    background: var(--cinema-card-bg);
+    color: var(--white-pure);
 }
-
-/* OPTION DROPDOWN */
 
 .admin-form-select option,
 .admin-form-group select option {
-
-    background: #171717;
-
-    color: #ffffff;
+    background: var(--black-soft);
+    color: var(--white-pure);
 }
-
 
 /* =========================================================
    HOVER
@@ -366,12 +227,8 @@
 .admin-form-group input:hover,
 .admin-form-group textarea:hover,
 .admin-form-group select:hover {
-
-    border:
-        1px solid rgba(255,55,55,.35);
-
-    box-shadow:
-        0 0 20px rgba(255,40,40,.10);
+    border: 1px solid rgba(255, 55, 55, 0.35);
+    box-shadow: 0 0 20px rgba(255, 40, 40, 0.10);
 }
 
 /* =========================================================
@@ -384,20 +241,12 @@
 .admin-form-group input:focus,
 .admin-form-group textarea:focus,
 .admin-form-group select:focus {
-
-    background:
-        rgba(255,255,255,.04);
-
-    border:
-        1px solid rgba(255,55,55,.58);
-
-    box-shadow:
-        0 0 0 1px rgba(255,40,40,.14),
-        0 0 20px rgba(255,25,25,.24),
-        0 0 42px rgba(185,28,28,.20);
-
-    transform:
-        translateY(-2px);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 55, 55, 0.58);
+    box-shadow: 0 0 0 1px rgba(255, 40, 40, 0.14),
+                0 0 20px rgba(255, 25, 25, 0.24),
+                0 0 42px rgba(185, 28, 28, 0.20);
+    transform: translateY(-2px);
 }
 
 /* =========================================================
@@ -405,15 +254,11 @@
 ========================================================= */
 
 .admin-form-group input[type="file"] {
-
-    padding: 14px;
-
-    background:
-        rgba(255,255,255,.03);
-
-    color:
-        #ffffff;
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--white-pure);
 }
+
 /* =========================================================
    ERROR INPUT
 ========================================================= */
@@ -424,21 +269,11 @@
 .admin-form-group input.error,
 .admin-form-group textarea.error,
 .admin-form-group select.error {
-
-    border:
-        1px solid rgba(255,70,70,.55) !important;
-
-    background:
-        rgba(255,70,70,.05) !important;
-
-    color:
-        #ffb4b4;
-
-    box-shadow:
-        0 0 15px rgba(255,40,40,.15) !important;
-
-    animation:
-        shakeInput .35s ease;
+    border: 1px solid rgba(255, 70, 70, 0.55) !important;
+    background: rgba(255, 70, 70, 0.05) !important;
+    color: #ffb4b4;
+    box-shadow: 0 0 15px rgba(255, 40, 40, 0.15) !important;
+    animation: shakeInput var(--transition-fast);
 }
 
 /* =========================================================
@@ -448,15 +283,9 @@
 .admin-form-input.success,
 .admin-form-textarea.success,
 .admin-form-select.success {
-
-    border:
-        1px solid rgba(255,210,60,.45) !important;
-
-    background:
-        rgba(255,210,60,.05) !important;
-
-    box-shadow:
-        0 0 15px rgba(255,210,60,.10) !important;
+    border: 1px solid rgba(255, 210, 60, 0.45) !important;
+    background: rgba(255, 210, 60, 0.05) !important;
+    box-shadow: 0 0 15px rgba(255, 210, 60, 0.10) !important;
 }
 
 /* =========================================================
@@ -464,24 +293,14 @@
 ========================================================= */
 
 .admin-form-error {
-
     display: flex;
-
     align-items: center;
-
-    gap: 8px;
-
-    margin-top: 4px;
-
-    color:
-        #ff6b6b;
-
-    font-size: 13px;
-
-    font-weight: 600;
-
-    animation:
-        adminErrorFade .25s ease;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+    color: #ff6b6b;
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-semibold);
+    animation: adminErrorFade var(--transition-fast);
 }
 
 /* =========================================================
@@ -489,24 +308,14 @@
 ========================================================= */
 
 .admin-form-success {
-
     display: flex;
-
     align-items: center;
-
-    gap: 8px;
-
-    margin-top: 4px;
-
-    color:
-        #ffd54f;
-
-    font-size: 13px;
-
-    font-weight: 600;
-
-    animation:
-        adminErrorFade .25s ease;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+    color: #ffd54f;
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-semibold);
+    animation: adminErrorFade var(--transition-fast);
 }
 
 /* =========================================================
@@ -514,64 +323,42 @@
 ========================================================= */
 
 .admin-password-strength {
-
-    margin-top: 10px;
+    margin-top: var(--space-sm);
 }
 
 .admin-password-bar {
-
     width: 100%;
-
     height: 8px;
-
-    border-radius: 999px;
-
-    background:
-        rgba(255,255,255,.06);
-
+    border-radius: var(--radius-round);
+    background: rgba(255, 255, 255, 0.06);
     overflow: hidden;
 }
 
 .admin-password-fill {
-
     height: 100%;
-
     border-radius: inherit;
-
-    transition: all .3s ease;
+    transition: all var(--transition-normal);
 }
 
 .admin-password-fill.weak {
-
     width: 33%;
-
-    background:
-        #ff4d4d;
+    background: #ff4d4d;
 }
 
 .admin-password-fill.medium {
-
     width: 66%;
-
-    background:
-        #ffb020;
+    background: #ffb020;
 }
 
 .admin-password-fill.strong {
-
     width: 100%;
-
-    background:
-        #ffd54f;
+    background: #ffd54f;
 }
 
 .admin-password-text {
-
-    margin-top: 8px;
-
-    font-size: 13px;
-
-    font-weight: 700;
+    margin-top: var(--space-xs);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
 }
 
 .admin-password-text.weak {
@@ -591,15 +378,11 @@
 ========================================================= */
 
 .admin-form-footer {
-
     display: flex;
-
     align-items: center;
     justify-content: flex-end;
-
-    gap: 14px;
-
-    margin-top: 12px;
+    gap: var(--space-md);
+    margin-top: var(--space-sm);
 }
 
 /* =========================================================
@@ -608,22 +391,14 @@
 
 .admin-form-submit-btn,
 .admin-form-cancel-btn {
-
     border: none;
     outline: none;
-
-    padding: 14px 24px;
-
-    border-radius: 16px;
-
-    font-size: 15px;
-
-    font-weight: 700;
-
+    padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
     cursor: pointer;
-
-    transition:
-        all .3s ease;
+    transition: all var(--transition-normal);
 }
 
 /* =========================================================
@@ -631,30 +406,16 @@
 ========================================================= */
 
 .admin-form-cancel-btn {
-
-    background:
-        rgba(255,255,255,.04);
-
-    border:
-        1px solid rgba(255,255,255,.06);
-
-    color:
-        #ffffff;
+    background: var(--hover-bg);
+    border: var(--border-light);
+    color: var(--white-pure);
 }
 
 .admin-form-cancel-btn:hover {
-
-    background:
-        rgba(255,40,40,.06);
-
-    border:
-        1px solid rgba(255,55,55,.35);
-
-    transform:
-        translateY(-2px);
-
-    box-shadow:
-        0 0 20px rgba(255,40,40,.12);
+    background: rgba(255, 40, 40, 0.06);
+    border: 1px solid rgba(255, 55, 55, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(255, 40, 40, 0.12);
 }
 
 /* =========================================================
@@ -662,49 +423,28 @@
 ========================================================= */
 
 .admin-form-submit-btn {
-
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
-
-    gap: 10px;
-
+    gap: var(--space-sm);
     min-width: 180px;
-
-    color: #fff;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff2d2d,
-            #d31f1f
-        );
-
-    box-shadow:
-        0 10px 24px rgba(255,40,40,.30);
+    color: var(--white-pure);
+    background: linear-gradient(135deg, #ff2d2d, #d31f1f);
+    box-shadow: 0 10px 24px rgba(255, 40, 40, 0.30);
 }
 
 .admin-form-submit-btn:hover {
-
-    transform:
-        translateY(-2px);
-
-    box-shadow:
-        0 0 0 1px rgba(255,40,40,.14),
-        0 0 20px rgba(255,25,25,.24),
-        0 0 42px rgba(185,28,28,.20),
-        0 0 75px rgba(255,0,0,.12);
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 1px rgba(255, 40, 40, 0.14),
+                0 0 20px rgba(255, 25, 25, 0.24),
+                0 0 42px rgba(185, 28, 28, 0.20),
+                0 0 75px rgba(255, 0, 0, 0.12);
 }
 
 .admin-form-submit-btn:disabled {
-
-    opacity: .65;
-
+    opacity: 0.65;
     cursor: not-allowed;
-
     transform: none;
-
     box-shadow: none;
 }
 
@@ -713,20 +453,12 @@
 ========================================================= */
 
 .admin-btn-spinner {
-
     width: 18px;
     height: 18px;
-
     border-radius: 50%;
-
-    border:
-        2px solid rgba(255,255,255,.25);
-
-    border-top-color:
-        #ffffff;
-
-    animation:
-        adminSpin .7s linear infinite;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-top-color: var(--white-pure);
+    animation: adminSpin 0.7s linear infinite;
 }
 
 /* =========================================================
@@ -734,9 +466,7 @@
 ========================================================= */
 
 .admin-form.shake {
-
-    animation:
-        formShake .35s ease;
+    animation: formShake var(--transition-fast);
 }
 
 /* =========================================================
@@ -744,297 +474,187 @@
 ========================================================= */
 
 .admin-form-body::-webkit-scrollbar {
-
     width: 8px;
 }
 
 .admin-form-body::-webkit-scrollbar-track {
-
     background: transparent;
 }
 
 .admin-form-body::-webkit-scrollbar-thumb {
-
-    background:
-        linear-gradient(
-            180deg,
-            #ff2d2d,
-            #8b0000
-        );
-
-    border-radius: 999px;
+    background: linear-gradient(180deg, #ff2d2d, #8b0000);
+    border-radius: var(--radius-round);
 }
 
 /* =========================================================
-   ANIMATIONS
+   ANIMATIONS (giữ nguyên)
 ========================================================= */
 
 @keyframes adminFormFade {
-
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes adminFormScale {
-
     from {
-
         opacity: 0;
-
-        transform:
-            scale(.92);
+        transform: scale(0.92);
     }
-
     to {
-
         opacity: 1;
-
-        transform:
-            scale(1);
+        transform: scale(1);
     }
 }
 
 @keyframes adminErrorFade {
-
     from {
-
         opacity: 0;
-
-        transform:
-            translateY(-4px);
+        transform: translateY(-4px);
     }
-
     to {
-
         opacity: 1;
-
-        transform:
-            translateY(0);
+        transform: translateY(0);
     }
 }
 
 @keyframes adminSpin {
-
-    to {
-        transform:
-            rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
 }
 
 @keyframes shakeInput {
-
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-4px); }
-    50% { transform: translateX(4px); }
-    75% { transform: translateX(-3px); }
+    0%   { transform: translateX(0); }
+    25%  { transform: translateX(-4px); }
+    50%  { transform: translateX(4px); }
+    75%  { transform: translateX(-3px); }
     100% { transform: translateX(0); }
 }
 
 @keyframes formShake {
-
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-6px); }
-    50% { transform: translateX(6px); }
-    75% { transform: translateX(-4px); }
+    0%   { transform: translateX(0); }
+    25%  { transform: translateX(-6px); }
+    50%  { transform: translateX(6px); }
+    75%  { transform: translateX(-4px); }
     100% { transform: translateX(0); }
 }
+
 /* =========================================================
-   DESKTOP SMALL
+   RESPONSIVE – sử dụng biến và media queries gốc
 ========================================================= */
 
 @media screen and (max-width: 1200px) {
-
     .admin-form-modal {
-
         max-width: 92%;
     }
-
     .admin-form-header h2 {
-
-        font-size: 26px;
+        font-size: var(--font-size-h2);
     }
 }
 
-/* =========================================================
-   TABLET LANDSCAPE
-========================================================= */
-
 @media screen and (max-width: 992px) {
-
     .admin-form-header {
-
-        padding: 22px 24px;
+        padding: var(--space-lg) var(--space-xl);
     }
-
     .admin-form-body {
-
-        padding: 24px;
+        padding: var(--space-xl);
     }
-
     .admin-form-header h2 {
-
-        font-size: 24px;
+        font-size: var(--font-size-h3);
     }
-
     .admin-form-input,
     .admin-form-textarea,
     .admin-form-select,
     .admin-form-group input,
     .admin-form-group textarea,
     .admin-form-group select {
-
-        padding: 15px 16px;
+        padding: var(--space-md) var(--space-lg);
     }
 }
 
-/* =========================================================
-   TABLET
-========================================================= */
-
 @media screen and (max-width: 768px) {
-
     .admin-form-overlay {
-
-        padding: 16px;
+        padding: var(--space-md);
     }
-
     .admin-form-modal {
-
         width: 100%;
-
-        border-radius: 22px;
+        border-radius: var(--radius-lg);
     }
-
     .admin-form-header {
-
-        padding: 20px;
+        padding: var(--space-lg);
     }
-
     .admin-form-header h2 {
-
-        font-size: 22px;
+        font-size: var(--font-size-h3);
     }
-
     .admin-form-close-btn {
-
         width: 42px;
         height: 42px;
     }
-
     .admin-form-body {
-
-        padding: 20px;
+        padding: var(--space-lg);
     }
-
     .admin-form {
-
-        gap: 18px;
+        gap: var(--space-md);
     }
-
     .admin-form-footer {
-
         flex-direction: column;
-
         align-items: stretch;
     }
-
     .admin-form-submit-btn,
     .admin-form-cancel-btn {
-
         width: 100%;
     }
 }
 
-/* =========================================================
-   MOBILE
-========================================================= */
-
 @media screen and (max-width: 480px) {
-
     .admin-form-overlay {
-
-        padding: 12px;
+        padding: var(--space-sm);
     }
-
     .admin-form-modal {
-
-        border-radius: 18px;
+        border-radius: var(--radius-lg);
     }
-
     .admin-form-header {
-
-        padding: 18px;
+        padding: var(--space-md);
     }
-
     .admin-form-header h2 {
-
-        font-size: 18px;
-
+        font-size: var(--font-size-h4);
         line-height: 1.3;
     }
-
     .admin-form-close-btn {
-
         width: 38px;
         height: 38px;
-
-        border-radius: 10px;
+        border-radius: var(--radius-sm);
     }
-
     .admin-form-body {
-
-        padding: 16px;
+        padding: var(--space-md);
     }
-
     .admin-form {
-
-        gap: 16px;
+        gap: var(--space-md);
     }
-
     .admin-form-label {
-
-        font-size: 13px;
+        font-size: var(--font-size-sm);
     }
-
     .admin-form-input,
     .admin-form-textarea,
     .admin-form-select,
     .admin-form-group input,
     .admin-form-group textarea,
     .admin-form-group select {
-
-        padding: 13px;
-
-        font-size: 13px;
-
-        border-radius: 14px;
+        padding: var(--space-md);
+        font-size: var(--font-size-sm);
+        border-radius: var(--radius-md);
     }
-
     .admin-form-textarea,
     .admin-form-group textarea {
-
         min-height: 110px;
     }
-
     .admin-form-submit-btn,
     .admin-form-cancel-btn {
-
         width: 100%;
-
-        padding: 13px 16px;
-
-        font-size: 13px;
+        padding: var(--space-md) var(--space-lg);
+        font-size: var(--font-size-sm);
     }
-
     .admin-form-error,
     .admin-form-success,
     .admin-password-text {
-
-        font-size: 12px;
+        font-size: var(--font-size-sm);
     }
 }

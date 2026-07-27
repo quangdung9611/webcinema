@@ -6,16 +6,14 @@ import { ChevronRight, Gift, AlertCircle } from 'lucide-react';
 import CinemaCard from '../components/CinemaCard';
 import '../styles/Promotion.css';
 
-// =============================================
-// HELPER: LẤY URL ẢNH (HỖ TRỢ CLOUDINARY + LOCAL)
-// =============================================
+const DEFAULT_POSTER =
+    "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/default-poster.jpg";
+
 const getImageUrl = (imageField, baseUrl = '') => {
-    if (!imageField) return '';
-    // Nếu là URL đầy đủ (http:// hoặc https://) thì dùng trực tiếp
+    if (!imageField) return DEFAULT_POSTER;
     if (imageField.startsWith('http://') || imageField.startsWith('https://')) {
         return imageField;
     }
-    // Ngược lại, ghép với baseUrl (cho dữ liệu cũ)
     return baseUrl + imageField;
 };
 
@@ -29,7 +27,7 @@ const Promotion = () => {
         const fetchPromotions = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get('https://api.quangdungcinema.id.vn/api/promotions/all');
+                const res = await axios.get('https://api.quangdungcinema.id.vn/api/promotions');
                 setPromotions(res.data || []);
             } catch (error) {
                 console.error("Lỗi khi tải khuyến mãi:", error);
@@ -39,20 +37,6 @@ const Promotion = () => {
         };
         fetchPromotions();
     }, []);
-
-    const getBadge = (promo) => {
-        const now = new Date();
-        const start = new Date(promo.start_date);
-        const end = new Date(promo.end_date);
-
-        if (start <= now && end >= now) {
-            return 'ĐANG DIỄN RA';
-        } else if (start > now) {
-            return 'SẮP DIỄN RA';
-        } else {
-            return 'ĐÃ KẾT THÚC';
-        }
-    };
 
     if (loading) {
         return (
@@ -70,16 +54,11 @@ const Promotion = () => {
     return (
         <div className="promotion-page">
             <div className="promotion-container">
-
                 {/* Header */}
                 <div className="promotion-header">
-                    <div className="promotion-header-icon">
-                        <Gift size={48} />
-                    </div>
+                    <div className="promotion-header-icon"><Gift size={48} /></div>
                     <h1>Khuyến Mãi &amp; Ưu Đãi</h1>
-                    <p className="promotion-header-desc">
-                        Cập nhật những chương trình ưu đãi hấp dẫn nhất từ CineStar.
-                    </p>
+                    <p className="promotion-header-desc">Cập nhật những chương trình ưu đãi hấp dẫn nhất từ CineStar.</p>
                     <div className="promotion-header-line"></div>
                 </div>
 
@@ -101,24 +80,20 @@ const Promotion = () => {
                 ) : (
                     <div className="promotion-grid">
                         {promotions.map((promo) => {
-                            // ✅ Hỗ trợ cả 2 tên trường: promotion_image (mới) và image_url (cũ)
                             const imageField = promo.promotion_image || promo.image_url;
                             const imageUrl = getImageUrl(imageField, promotionImageBaseUrl);
-
                             return (
                                 <CinemaCard
                                     key={promo.promotion_id}
                                     type="promotion"
                                     image={imageUrl}
                                     title={promo.title}
-                                    badge={getBadge(promo)}
                                     link={`/promotion/${promo.slug}`}
                                 />
                             );
                         })}
                     </div>
                 )}
-
             </div>
         </div>
     );

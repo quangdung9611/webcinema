@@ -5,7 +5,8 @@ import {
     Save,
     Loader2,
     ChevronDown,
-    Search
+    Search,
+    X
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -19,14 +20,31 @@ const ASSIGNMENTS_API = 'https://api.quangdungcinema.id.vn/api/movie-actors/all-
 const UPDATE_API = 'https://api.quangdungcinema.id.vn/api/movie-actors/update';
 
 // =============================================
-// HELPER: LẤY URL POSTER (HỖ TRỢ CLOUDINARY + LOCAL)
+// HELPER: LẤY URL POSTER (GIỐNG MovieGenrePage)
 // =============================================
+const DEFAULT_POSTER =
+    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg';
+
 const getPosterUrl = (poster) => {
-    if (!poster) return '';
+    if (!poster) return DEFAULT_POSTER;
     if (poster.startsWith('http://') || poster.startsWith('https://')) {
         return poster;
     }
     return `https://api.quangdungcinema.id.vn/uploads/posters/${poster}`;
+};
+
+// =============================================
+// HELPER: LẤY URL AVATAR ACTOR
+// =============================================
+const DEFAULT_AVATAR =
+    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-avatar.jpg';
+
+const getAvatarUrl = (avatar) => {
+    if (!avatar) return DEFAULT_AVATAR;
+    if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+        return avatar;
+    }
+    return `https://api.quangdungcinema.id.vn/uploads/actors/${avatar}`;
 };
 
 const MovieActorPage = () => {
@@ -131,6 +149,20 @@ const MovieActorPage = () => {
     };
 
     /* =====================================================
+        REMOVE ACTOR (Từ danh sách đã chọn)
+    ===================================================== */
+
+    const handleRemoveActor = (movieId, actorId) => {
+        setMovieActorMap(prev => {
+            const currentActors = prev[movieId] || [];
+            return {
+                ...prev,
+                [movieId]: currentActors.filter(id => id !== actorId)
+            };
+        });
+    };
+
+    /* =====================================================
         SAVE ACTORS
     ===================================================== */
 
@@ -188,9 +220,9 @@ const MovieActorPage = () => {
                             <div className="admin-empty-data">Không có dữ liệu phim.</div>
                         ) : (
                             filteredMovies.map(movie => {
-                                const selectedActors = movieActorMap[movie.movie_id] || [];
-                                // ✅ Lấy poster URL với helper hỗ trợ Cloudinary
-                                const posterUrl = getPosterUrl(movie.poster_url);
+                                const selectedActorIds = movieActorMap[movie.movie_id] || [];
+                                const selectedActors = actors.filter(a => selectedActorIds.includes(a.actor_id));
+                                const posterUrl = getPosterUrl(movie.movie_poster || movie.poster_url);
 
                                 return (
                                     <div key={movie.movie_id} className="movie-actor-card">
@@ -201,6 +233,10 @@ const MovieActorPage = () => {
                                             src={posterUrl}
                                             alt={movie.title}
                                             className="movie-actor-poster"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = DEFAULT_POSTER;
+                                            }}
                                         />
 
                                         {/* =======================
@@ -211,11 +247,44 @@ const MovieActorPage = () => {
                                             <span className="movie-status">{movie.status}</span>
 
                                             {/* =======================
+                                                SELECTED ACTORS (VERTICAL SCROLL)
+                                            ======================= */}
+                                            <div className="actor-selected-list">
+                                                {selectedActors.length > 0 ? (
+                                                    selectedActors.map(actor => (
+                                                        <div key={actor.actor_id} className="actor-selected-item">
+                                                            <img
+                                                                src={getAvatarUrl(actor.actor_avatar)}
+                                                                alt={actor.name}
+                                                                className="actor-avatar-small"
+                                                                onError={(e) => {
+                                                                    e.target.onerror = null;
+                                                                    e.target.src = DEFAULT_AVATAR;
+                                                                }}
+                                                            />
+                                                            <span className="actor-name">{actor.name}</span>
+                                                            <button
+                                                                className="actor-remove-btn"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleRemoveActor(movie.movie_id, actor.actor_id);
+                                                                }}
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <span className="actor-empty-text">Chưa có diễn viên</span>
+                                                )}
+                                            </div>
+
+                                            {/* =======================
                                                 SELECT BOX
                                             ======================= */}
-                                            <div className="actor-select-wrapper">
+                                            <div className="movie-select-box">
                                                 <div
-                                                    className="actor-select-box"
+                                                    className="movie-select-trigger"
                                                     onClick={() => {
                                                         if (openDropdown === movie.movie_id) {
                                                             setOpenDropdown(null);
@@ -226,8 +295,8 @@ const MovieActorPage = () => {
                                                     }}
                                                 >
                                                     <span>
-                                                        {selectedActors.length > 0
-                                                            ? `Đã chọn ${selectedActors.length} diễn viên`
+                                                        {selectedActorIds.length > 0
+                                                            ? `${selectedActorIds.length} diễn viên đã chọn`
                                                             : 'Chọn diễn viên'}
                                                     </span>
                                                     <ChevronDown
@@ -237,32 +306,47 @@ const MovieActorPage = () => {
                                                 </div>
 
                                                 {openDropdown === movie.movie_id && (
-                                                    <div className="actor-dropdown">
+                                                    <div className="movie-select-dropdown">
                                                         {/* SEARCH */}
-                                                        <div className="actor-search-box">
+                                                        <div className="movie-select-search-wrapper">
                                                             <Search size={16} />
                                                             <input
                                                                 type="text"
                                                                 placeholder="Tìm diễn viên..."
+                                                                className="movie-select-search"
                                                                 value={actorSearch}
                                                                 onChange={(e) => setActorSearch(e.target.value)}
+                                                                autoFocus
                                                             />
                                                         </div>
 
-                                                        {/* LIST */}
-                                                        <div className="actor-dropdown-list">
-                                                            {filteredActors.map(actor => (
-                                                                <label key={actor.actor_id} className="actor-dropdown-item">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={selectedActors.includes(actor.actor_id)}
-                                                                        onChange={() =>
-                                                                            handleCheckboxChange(movie.movie_id, actor.actor_id)
-                                                                        }
-                                                                    />
-                                                                    <span>{actor.name}</span>
-                                                                </label>
-                                                            ))}
+                                                        {/* OPTIONS */}
+                                                        <div className="movie-select-options">
+                                                            {filteredActors.length === 0 ? (
+                                                                <div className="movie-no-result">Không tìm thấy diễn viên</div>
+                                                            ) : (
+                                                                filteredActors.map(actor => (
+                                                                    <label key={actor.actor_id} className="movie-select-item">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={selectedActorIds.includes(actor.actor_id)}
+                                                                            onChange={() =>
+                                                                                handleCheckboxChange(movie.movie_id, actor.actor_id)
+                                                                            }
+                                                                        />
+                                                                        <img
+                                                                            src={getAvatarUrl(actor.actor_avatar)}
+                                                                            alt={actor.name}
+                                                                            className="actor-avatar-dropdown"
+                                                                            onError={(e) => {
+                                                                                e.target.onerror = null;
+                                                                                e.target.src = DEFAULT_AVATAR;
+                                                                            }}
+                                                                        />
+                                                                        <span>{actor.name}</span>
+                                                                    </label>
+                                                                ))
+                                                            )}
                                                         </div>
                                                     </div>
                                                 )}
@@ -272,7 +356,7 @@ const MovieActorPage = () => {
                                                 BUTTON
                                             ======================= */}
                                             <button
-                                                className="movie-actor-save-btn"
+                                                className="movie-genre-save-btn"
                                                 onClick={() => handleSaveActors(movie)}
                                             >
                                                 <Save size={16} />

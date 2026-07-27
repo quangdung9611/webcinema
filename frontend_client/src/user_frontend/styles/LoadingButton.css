@@ -13,8 +13,8 @@
     border-radius: var(--radius-round);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
-    color: var(--black-premium);
-    background: var(--gold-gradient);
+    color: var(--black-premium) !important; /* 🔥 BẮT BUỘC CHỮ ĐEN */
+    background: var(--cinema-border-gradient); /* gradient bạc */
     cursor: pointer;
     transition: all var(--transition-normal);
     min-width: 160px;
@@ -25,7 +25,7 @@
 
 .loading-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(201, 168, 76, 0.35);
+    box-shadow: 0 8px 24px rgba(232, 232, 232, 0.35); /* glow bạc */
 }
 
 .loading-btn:disabled {
@@ -34,10 +34,10 @@
 }
 
 .loading-btn.loading {
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     cursor: wait;
     gap: var(--space-sm);
-    filter: brightness(0.85);
+    filter: brightness(0.92);
 }
 
 /* =========================================
@@ -74,12 +74,13 @@
 }
 
 /* =========================================
-   TEXT
+   TEXT - ĐẢM BẢO CHỮ ĐEN
 ========================================= */
 
 .loading-btn-text {
     display: inline-block;
     line-height: 1;
+    color: var(--black-premium) !important; /* 🔥 CHỮ ĐEN TRÊN NỀN BẠC */
 }
 
 /* =========================================

@@ -1,35 +1,56 @@
 /* ============================================================
-   MOVIE STATUS PAGE – CINEMA GOLD
+   MOVIE STATUS PAGE – SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
+   KHÔNG BANNER
    ============================================================ */
 
 .movie-status-page {
     width: 100%;
     background: var(--main-background);
-    color: var(--text-primary);
+    color: var(--text-body);
     min-height: 100vh;
 }
 
 /* ============================================================
-   BANNER
+   HEADER
    ============================================================ */
 
-.movie-status-hero {
-    width: 100%;
-    overflow: hidden;
-    position: relative;
-    margin-bottom: var(--space-3xl);
+.status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-lg);
+    max-width: 1300px;
+    margin: var(--space-2xl) auto 0;
+    padding: 0 var(--space-lg);
+    flex-wrap: wrap;
 }
 
-.movie-status-banner-img {
+.status-header-left {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.status-title {
+    margin: 0;
+    color: var(--text-heading);
+    font-size: var(--font-size-h2);
+    font-weight: var(--fw-black);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding-bottom: 8px;
+}
+
+.title-underline {
     width: 100%;
-    height: auto;
-    display: block;
-    object-fit: cover;
-    filter: brightness(0.92) contrast(1.04) saturate(0.96);
+    height: 4px;
+    border-radius: var(--radius-round);
+    background: var(--cinema-border-gradient);
+    box-shadow: 0 0 20px rgba(232, 232, 232, 0.1);
 }
 
 /* ============================================================
-   TABS (nút nhỏ gọn, đặt bên phải header)
+   TABS
    ============================================================ */
 
 .status-tabs {
@@ -40,12 +61,12 @@
 }
 
 .status-tab {
-    border: var(--border-gold);
+    border: var(--border-silver);
     background: transparent;
     color: var(--text-secondary);
     padding: var(--space-sm) var(--space-xl);
     border-radius: var(--radius-round);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
     cursor: pointer;
     transition: all var(--transition-normal);
@@ -57,94 +78,102 @@
 
 .status-tab:hover {
     transform: translateY(-2px);
-    border-color: var(--gold-primary);
-    color: var(--text-white);
-    background: rgba(201, 168, 76, 0.06);
-    box-shadow: var(--shadow-gold);
+    border-color: var(--silver-primary);
+    color: var(--text-body);
+    background: rgba(232, 232, 232, 0.06);
+    box-shadow: var(--shadow-silver);
 }
 
 .status-tab.active {
-    background: var(--gold-gradient);
+    background: var(--cinema-border-gradient);
     color: var(--black-premium);
-    border-color: var(--gold-primary);
-    box-shadow: var(--shadow-gold);
+    border-color: var(--silver-primary);
+    box-shadow: var(--shadow-silver);
     font-weight: var(--fw-bold);
 }
 
 .status-tab.active:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 30px rgba(201, 168, 76, 0.3);
+    box-shadow: 0 0 30px rgba(232, 232, 232, 0.3);
 }
 
 /* ============================================================
-   MOVIE LIST – 4 CỘT MẶC ĐỊNH (>= 768px)
+   MOVIE LIST – 4 CỘT MẶC ĐỊNH
    ============================================================ */
 
 .movie-list {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--space-lg);
-    padding: 0 var(--space-lg) var(--space-3xl);
+    padding: var(--space-xl) var(--space-lg) var(--space-3xl);
     max-width: 1320px;
-    margin: var(--space-2xl) auto 0; /* 👈 THÊM margin-top */
+    margin: var(--space-xl) auto 0;
 }
 
 /* ============================================================
    RESPONSIVE – DƯỚI 768px CHUYỂN 2 CỘT
    ============================================================ */
 
-@media (max-width: 768px) {
-    .movie-status-hero {
-        margin-bottom: var(--space-2xl);
+@media (max-width: 992px) {
+    .status-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
     }
-
     .status-tabs {
         width: 100%;
         justify-content: flex-start;
-        gap: var(--space-xs);
-    }
-
-    .status-tab {
-        flex: 1;
-        padding: var(--space-xs) var(--space-lg);
-        font-size: var(--font-size-xs);
-        min-width: 100px;
-        letter-spacing: 0.02em;
-    }
-
-    .movie-list {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-md);
-        padding: 0 var(--space-md) var(--space-2xl);
-        margin-top: var(--space-xl); /* 👈 THÊM margin-top trên tablet */
     }
 }
 
-/* ============================================================
-   MOBILE NHỎ (<= 480px) – VẪN 2 CỘT
-   ============================================================ */
-
-@media (max-width: 480px) {
-    .movie-status-hero {
-        margin-bottom: var(--space-xl);
+@media (max-width: 768px) {
+    .status-header {
+        margin-top: var(--space-xl);
+        padding: 0 var(--space-md);
     }
-
+    .status-title {
+        font-size: var(--font-size-h3);
+    }
     .status-tabs {
         gap: var(--space-xs);
     }
+    .status-tab {
+        flex: 1;
+        padding: var(--space-xs) var(--space-lg);
+        font-size: var(--font-size-h6);
+        min-width: 100px;
+        letter-spacing: 0.02em;
+    }
+    .movie-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-md);
+        padding: var(--space-md) var(--space-md) var(--space-2xl);
+        margin-top: var(--space-lg);
+    }
+}
 
+@media (max-width: 480px) {
+    .status-header {
+        padding: 0 var(--space-sm);
+        margin-top: var(--space-lg);
+    }
+    .status-title {
+        font-size: var(--font-size-h4);
+    }
+    .status-tabs {
+        gap: var(--space-xs);
+    }
     .status-tab {
         padding: var(--space-xs) var(--space-md);
-        font-size: var(--font-size-xs);
+        font-size: var(--font-size-h6);
         min-width: 70px;
         flex: 1;
     }
-
     .movie-list {
         grid-template-columns: repeat(2, 1fr);
         gap: var(--space-sm);
-        padding: 0 var(--space-sm) var(--space-xl);
-        margin-top: var(--space-lg); /* 👈 THÊM margin-top trên mobile */
+        padding: var(--space-md) var(--space-sm) var(--space-xl);
+        margin-top: var(--space-md);
     }
 }
 
@@ -166,8 +195,8 @@
 .loading-spinner {
     width: 48px;
     height: 48px;
-    border: 3px solid rgba(201, 168, 76, 0.1);
-    border-top-color: var(--gold-primary);
+    border: 3px solid rgba(232, 232, 232, 0.1);
+    border-top-color: var(--silver-primary);
     border-radius: 50%;
     animation: spin 0.9s linear infinite;
 }
@@ -176,6 +205,29 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+.error-state {
+    text-align: center;
+    padding: var(--space-3xl) var(--space-lg);
+}
+
+.retry-btn {
+    margin-top: var(--space-md);
+    padding: var(--space-sm) var(--space-xl);
+    border: none;
+    border-radius: var(--radius-round);
+    background: var(--cinema-border-gradient);
+    color: var(--black-premium);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.retry-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-silver);
 }
 
 .empty-results {

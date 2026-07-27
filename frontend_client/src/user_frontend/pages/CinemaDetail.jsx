@@ -71,9 +71,35 @@ const CinemaDetail = () => {
       try {
         setLoading(true);
         const res = await axios.get(`https://api.quangdungcinema.id.vn/api/cinemas/${slug}`);
-        setData(res.data);
+        // ✅ Kiểm tra cấu trúc dữ liệu: nếu res.data có cinema_name trực tiếp thì dùng trực tiếp
+        // Ngược lại nếu res.data có trường cinema thì lấy res.data.cinema
+        // Đồng thời movies có thể ở res.data.movies
+        let cinemaData = null;
+        let moviesData = [];
+        if (res.data.cinema_name) {
+          // Dữ liệu trả về trực tiếp là object cinema (có thể kèm movies)
+          cinemaData = res.data;
+          moviesData = res.data.movies || [];
+        } else if (res.data.cinema) {
+          cinemaData = res.data.cinema;
+          moviesData = res.data.movies || [];
+        } else {
+          // Cấu trúc khác, thử tìm trong res.data.data
+          const nested = res.data.data;
+          if (nested && nested.cinema_name) {
+            cinemaData = nested;
+            moviesData = nested.movies || [];
+          } else if (nested && nested.cinema) {
+            cinemaData = nested.cinema;
+            moviesData = nested.movies || [];
+          } else {
+            console.warn('Không tìm thấy dữ liệu cinema', res.data);
+          }
+        }
+        setData({ cinema: cinemaData, movies: moviesData });
       } catch (err) {
         console.error(err);
+        setData({ cinema: null, movies: [] });
       } finally {
         setLoading(false);
       }
@@ -93,16 +119,22 @@ const CinemaDetail = () => {
     );
   }
 
-  if (!data) {
+  // ✅ Kiểm tra dữ liệu an toàn
+  const cinema = data?.cinema;
+  const movies = data?.movies || [];
+
+  if (!cinema) {
     return (
       <div className="cinema-error">
         <Film size={60} />
         <h2>Không tìm thấy rạp</h2>
+        <p>Rạp chiếu phim không tồn tại hoặc đã bị xóa.</p>
+        <button className="btn-back-home" onClick={() => navigate('/')}>
+          Về trang chủ
+        </button>
       </div>
     );
   }
-
-  const { cinema, movies } = data;
 
   // =====================================================
   // FILTER MOVIES
@@ -118,7 +150,7 @@ const CinemaDetail = () => {
     <div className="cinema-detail-page">
 
       {/* =====================================================
-          BANNER - SWIPER 4 ẢNH CINEMA (KHÔNG CHỮ)
+          BANNER - SWIPER 4 ẢNH CINEMA
       ===================================================== */}
       <div className="cinema-hero">
         <div className="cinema-overlay"></div>
@@ -151,16 +183,16 @@ const CinemaDetail = () => {
       <div className="cinema-content">
 
         {/* =====================================================
-            THÔNG TIN RẠP (ĐÃ CHUYỂN XUỐNG ĐÂY)
+            THÔNG TIN RẠP
         ===================================================== */}
         <div className="cinema-info-block">
           <span className="cinema-label">HỆ THỐNG RẠP</span>
-          <h1 className="cinema-name">{cinema.cinema_name}</h1>
+          <h1 className="cinema-name">{cinema.cinema_name || 'Rạp chiếu phim'}</h1>
           <div className="cinema-divider"></div>
           <div className="cinema-info-list">
             <div className="info-item">
               <MapPin size={18} />
-              <span>{cinema.address}, {cinema.city}</span>
+              <span>{cinema.address || 'Địa chỉ chưa cập nhật'}{cinema.city ? `, ${cinema.city}` : ''}</span>
             </div>
             <div className="info-item">
               <Phone size={18} />

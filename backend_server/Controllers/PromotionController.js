@@ -1,7 +1,7 @@
 const PromotionService = require("../Services/PromotionService");
 
 /* ==========================================================
-   GET ALL PROMOTIONS (PUBLIC)
+   GET ALL PROMOTIONS (Admin)
 ========================================================== */
 exports.getAllPromotions = async (req, res) => {
     try {
@@ -10,24 +10,6 @@ exports.getAllPromotions = async (req, res) => {
         return res.status(200).json(promotions);
     } catch (err) {
         console.error("getAllPromotions error:", err);
-
-        return res.status(err.statusCode || 500).json({
-            success: false,
-            message: err.message || "Lỗi máy chủ"
-        });
-    }
-};
-
-/* ==========================================================
-   GET ALL PROMOTIONS (ADMIN)
-========================================================== */
-exports.getAllPromotionsAdmin = async (req, res) => {
-    try {
-        const promotions = await PromotionService.getAllPromotions(false);
-
-        return res.status(200).json(promotions);
-    } catch (err) {
-        console.error("getAllPromotionsAdmin error:", err);
 
         return res.status(err.statusCode || 500).json({
             success: false,

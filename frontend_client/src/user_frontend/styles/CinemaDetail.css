@@ -32,7 +32,7 @@
   color: var(--text-body);
 }
 .spin-icon {
-  color: var(--gold-primary);
+  color: var(--silver-primary);
   animation: spin 1s linear infinite;
 }
 @keyframes spin {
@@ -86,7 +86,7 @@
   pointer-events: none;
 }
 
-/* Shine & particles – giữ nguyên */
+/* Shine & particles – giữ nguyên, nhưng đổi màu sang bạc */
 .hero-light {
   position: absolute;
   top: 0;
@@ -95,7 +95,7 @@
   height: 100%;
   z-index: 2;
   opacity: 0.3;
-  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.12), transparent);
+  background: linear-gradient(90deg, transparent, rgba(232, 232, 232, 0.12), transparent);
   transform: skewX(-25deg);
   animation: shineMove 12s ease-in-out infinite;
   pointer-events: none;
@@ -113,7 +113,7 @@
   z-index: 2;
   pointer-events: none;
   opacity: 0.08;
-  background-image: radial-gradient(rgba(201, 168, 76, 0.3) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(232, 232, 232, 0.3) 1px, transparent 1px);
   background-size: 160px 160px;
   animation: particleMove 25s linear infinite;
 }
@@ -136,9 +136,9 @@
   padding: var(--space-xs) var(--space-md);
   margin-bottom: var(--space-sm);
   border-radius: var(--radius-round);
-  background: rgba(201, 168, 76, 0.08);
-  border: 1px solid rgba(201, 168, 76, 0.2);
-  color: var(--gold-primary);
+  background: rgba(232, 232, 232, 0.08);
+  border: 1px solid rgba(232, 232, 232, 0.2);
+  color: var(--silver-primary);
   font-size: var(--font-size-base);
   font-weight: var(--fw-extrabold);
   letter-spacing: 2px;
@@ -161,8 +161,8 @@
   height: 4px;
   border-radius: var(--radius-round);
   margin-bottom: var(--space-lg);
-  background: linear-gradient(90deg, var(--gold-primary), var(--gold-light), transparent);
-  box-shadow: 0 0 20px rgba(201, 168, 76, 0.25);
+  background: linear-gradient(90deg, var(--silver-primary), var(--silver-light), transparent);
+  box-shadow: 0 0 20px rgba(232, 232, 232, 0.15);
 }
 
 .cinema-info-list {
@@ -180,7 +180,7 @@
   font-weight: var(--fw-medium);
 }
 .info-item svg {
-  color: var(--gold-primary);
+  color: var(--silver-primary);
 }
 
 .cinema-map-link {
@@ -196,10 +196,10 @@
   margin-top: var(--space-xs);
 }
 .cinema-map-link svg {
-  color: var(--gold-primary);
+  color: var(--silver-primary);
 }
 .cinema-map-link:hover {
-  color: var(--gold-light);
+  color: var(--silver-light);
   transform: translateX(5px);
 }
 
@@ -213,8 +213,8 @@
   margin-bottom: var(--space-xl);
 }
 .section-title svg {
-  color: var(--gold-primary);
-  filter: drop-shadow(0 0 12px rgba(201, 168, 76, 0.3));
+  color: var(--silver-primary);
+  filter: drop-shadow(0 0 12px rgba(232, 232, 232, 0.2));
 }
 .section-title h2 {
   color: var(--text-body);
@@ -253,11 +253,11 @@
   height: 18px;
 }
 .date-nav:hover {
-  color: var(--gold-primary);
+  color: var(--silver-primary);
   transform: scale(1.08);
-  background: rgba(201, 168, 76, 0.08);
+  background: rgba(232, 232, 232, 0.08);
   border-color: var(--border-silver-hover);
-  box-shadow: 0 0 25px rgba(201, 168, 76, 0.12);
+  box-shadow: 0 0 25px rgba(232, 232, 232, 0.1);
 }
 .date-list {
   flex: 1;
@@ -291,7 +291,7 @@
   left: -100%;
   width: 50%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.06), transparent);
+  background: linear-gradient(90deg, transparent, rgba(232, 232, 232, 0.06), transparent);
   transform: skewX(-25deg);
   transition: 0.6s;
 }
@@ -300,14 +300,14 @@
 }
 .date-card:hover {
   transform: translateY(-5px);
-  background: rgba(201, 168, 76, 0.06);
+  background: rgba(232, 232, 232, 0.06);
   border-color: var(--border-silver-hover);
-  box-shadow: var(--cinema-card-shadow), 0 0 20px rgba(201, 168, 76, 0.08);
+  box-shadow: var(--cinema-card-shadow), 0 0 20px rgba(232, 232, 232, 0.06);
 }
 .date-card.active {
-  background: var(--gold-gradient);
+  background: var(--cinema-border-gradient);
   border-color: transparent;
-  box-shadow: 0 0 30px rgba(201, 168, 76, 0.3);
+  box-shadow: 0 0 30px rgba(232, 232, 232, 0.2);
 }
 .date-card.active::before {
   display: none;
@@ -322,15 +322,16 @@
   font-weight: var(--fw-medium);
   color: rgba(255, 255, 255, 0.75);
 }
+/* ✅ Nút ngày active – chữ đen */
 .date-card.active .date-day,
 .date-card.active .date-number {
-  color: var(--text-body);
+  color: var(--black-premium);
 }
 .date-list::-webkit-scrollbar {
   height: 5px;
 }
 .date-list::-webkit-scrollbar-thumb {
-  background: var(--gold-primary);
+  background: var(--silver-primary);
   border-radius: var(--radius-round);
 }
 .date-list::-webkit-scrollbar-track {
@@ -357,7 +358,7 @@
 .movie-card:hover {
   transform: translateY(-6px);
   border-color: var(--border-silver-hover);
-  box-shadow: var(--cinema-card-shadow), 0 0 30px rgba(201, 168, 76, 0.06);
+  box-shadow: var(--cinema-card-shadow), 0 0 30px rgba(232, 232, 232, 0.04);
 }
 .movie-poster {
   position: relative;
@@ -395,12 +396,12 @@
   cursor: pointer;
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-round);
-  color: var(--black-premium);
+  color: var(--black-premium); /* chữ đen */
   font-size: var(--font-size-base);
   font-weight: var(--fw-bold);
-  background: var(--gold-gradient);
+  background: var(--cinema-border-gradient);
   transition: all var(--transition-normal);
-  box-shadow: 0 4px 20px rgba(201, 168, 76, 0.2);
+  box-shadow: 0 4px 20px rgba(232, 232, 232, 0.15);
 }
 .booking-btn:hover {
   transform: scale(1.05);
@@ -432,7 +433,7 @@
   font-size: var(--font-size-base);
 }
 .movie-meta svg {
-  color: var(--gold-primary);
+  color: var(--silver-primary);
 }
 .showtime-list {
   display: flex;
@@ -456,12 +457,12 @@
 }
 .showtime-btn:hover {
   transform: translateY(-2px);
-  background: rgba(201, 168, 76, 0.06);
+  background: rgba(232, 232, 232, 0.06);
   border-color: var(--border-silver-hover);
-  color: var(--gold-light);
+  color: var(--silver-light);
 }
 .showtime-btn svg {
-  color: var(--gold-primary);
+  color: var(--silver-primary);
 }
 
 /* ==========================================================
@@ -479,7 +480,7 @@
   border: var(--border-silver);
 }
 .empty-box svg {
-  color: var(--gold-primary);
+  color: var(--silver-primary);
 }
 .empty-box h3 {
   color: var(--text-body);

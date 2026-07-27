@@ -231,7 +231,7 @@ const UserLogin = () => {
                             loadingText="Đang đăng nhập..."
                             disabled={loading}
                             className="btn-user"
-                            spinnerColor="#ffffff"
+                            spinnerColor="#000000"
                         >
                             SIGN IN
                         </LoadingButton>

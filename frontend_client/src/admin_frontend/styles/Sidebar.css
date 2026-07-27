@@ -1,6 +1,5 @@
 /* =========================================================
-   SIDEBAR - GOLD EDITION 🏆
-   (Cập nhật icon vàng kim toàn bộ)
+   SIDEBAR – SỬ DỤNG VAR TỪ INDEX.CSS (GOLD EDITION)
 ========================================================= */
 
 .admin-sidebar {
@@ -12,12 +11,8 @@
     border-right: 1px solid rgba(212, 161, 30, 0.12);
     overflow-y: auto;
     overflow-x: hidden;
-    transition: 0.3s ease;
-    background: linear-gradient(
-        180deg,
-        rgba(11, 14, 20, 0.98),
-        rgba(0, 0, 0, 0.98)
-    );
+    transition: var(--transition-normal);
+    background: linear-gradient(180deg, rgba(10, 10, 10, 0.98), rgba(0, 0, 0, 0.98));
 }
 
 /* =========================================================
@@ -29,11 +24,11 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    padding: 0 18px;
+    padding: 0 var(--space-md);
 }
 
 /* =========================================================
-   CLOSE BUTTON - GOLD
+   CLOSE BUTTON – GOLD
 ========================================================= */
 
 .sidebar-close-btn {
@@ -41,51 +36,51 @@
     height: 40px;
     border: none;
     outline: none;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     display: none;
     align-items: center;
     justify-content: center;
     background: rgba(212, 161, 30, 0.06);
-    color: #D4A11E;
+    color: var(--gold-primary);
     cursor: pointer;
-    transition: 0.25s ease;
+    transition: var(--transition-fast);
 }
 
 .sidebar-close-btn:hover {
     background: rgba(212, 161, 30, 0.15);
-    color: #FBBF24;
+    color: var(--gold-light);
     box-shadow: 0 0 30px rgba(212, 161, 30, 0.15);
 }
 
 /* =========================================================
-   LOGO - GOLD GRADIENT
+   LOGO – GOLD GRADIENT
 ========================================================= */
 
 .sidebar-logo {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 20px 20px;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-lg) var(--space-lg);
 }
 
 .sidebar-logo-icon {
     width: 38px;
     height: 38px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #D4A11E, #FBBF24);
+    border-radius: var(--radius-md);
+    background: var(--gold-gradient);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
-    font-weight: 900;
-    color: #0B0E14;
+    font-size: var(--font-size-lg);
+    font-weight: var(--fw-black);
+    color: var(--black-premium);
     box-shadow: 0 4px 20px rgba(212, 161, 30, 0.25);
 }
 
 .sidebar-logo-text {
-    font-size: 20px;
-    font-weight: 700;
-    background: linear-gradient(135deg, #D4A11E, #FBBF24);
+    font-size: var(--font-size-lg);
+    font-weight: var(--fw-bold);
+    background: var(--gold-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -98,18 +93,18 @@
 .sidebar-menu {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 0 12px 18px;
+    gap: var(--space-xs);
+    padding: 0 var(--space-sm) var(--space-md);
 }
 
 /* =========================================================
-   SECTION HEADER - GOLD
+   SECTION HEADER – GOLD
 ========================================================= */
 
 .sidebar-section {
-    padding: 20px 16px 8px;
-    font-size: 11px;
-    font-weight: 600;
+    padding: var(--space-lg) var(--space-md) var(--space-xs);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-semibold);
     text-transform: uppercase;
     letter-spacing: 0.8px;
     color: rgba(212, 161, 30, 0.4);
@@ -119,7 +114,7 @@
 
 .sidebar-divider {
     height: 1px;
-    margin: 8px 16px;
+    margin: var(--space-xs) var(--space-md);
     background: linear-gradient(90deg, transparent, rgba(212, 161, 30, 0.1), transparent);
 }
 
@@ -132,7 +127,7 @@
 }
 
 /* =========================================================
-   LINK - GOLD
+   LINK – GOLD
 ========================================================= */
 
 .sidebar-link {
@@ -140,19 +135,19 @@
     height: 54px;
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 0 16px;
-    border-radius: 16px;
+    gap: var(--space-md);
+    padding: 0 var(--space-md);
+    border-radius: var(--radius-md);
     position: relative;
-    color: #8A9BB0;
-    transition: all 0.25s ease;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
     background: transparent;
     text-decoration: none;
     cursor: pointer;
 }
 
 /* =========================================================
-   🟡 ICON - VÀNG KIM (MẶC ĐỊNH LUÔN VÀNG)
+   ICON – VÀNG KIM (MẶC ĐỊNH)
 ========================================================= */
 
 .link-icon {
@@ -161,8 +156,8 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: #D4A11E; /* 🔥 Vàng kim luôn, không xám nữa! */
-    transition: color 0.25s ease;
+    color: var(--gold-primary);
+    transition: color var(--transition-fast);
 }
 
 /* =========================================================
@@ -170,24 +165,24 @@
 ========================================================= */
 
 .link-text {
-    font-weight: 500;
+    font-weight: var(--fw-medium);
     white-space: nowrap;
-    font-size: 0.95rem;
+    font-size: var(--font-size-base);
 }
 
 /* =========================================================
-   BADGE - GOLD
+   BADGE – GOLD
 ========================================================= */
 
 .sidebar-link .link-badge {
     margin-left: auto;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-round);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-bold);
     background: rgba(212, 161, 30, 0.12);
-    color: #D4A11E;
-    transition: all 0.3s ease;
+    color: var(--gold-primary);
+    transition: all var(--transition-normal);
 }
 
 .sidebar-link .link-badge.danger {
@@ -225,36 +220,36 @@
 }
 
 /* =========================================================
-   HOVER - GOLD (Icon sáng hơn)
+   HOVER – GOLD (Icon sáng hơn)
 ========================================================= */
 
 .sidebar-link:hover {
     background: rgba(212, 161, 30, 0.05);
-    color: #FBBF24;
+    color: var(--gold-light);
     transform: translateX(3px);
     box-shadow: inset 0 0 0 1px rgba(212, 161, 30, 0.08);
 }
 
 .sidebar-link:hover .link-icon {
-    color: #FBBF24; /* 🔥 Sáng hơn khi hover */
+    color: var(--gold-light);
 }
 
 /* =========================================================
-   ACTIVE - GOLD GLOW (Icon rực rỡ nhất)
+   ACTIVE – GOLD GLOW
 ========================================================= */
 
 .sidebar-link.active {
     background: rgba(212, 161, 30, 0.07);
-    color: #FBBF24;
-    box-shadow: inset 3px 0 0 #D4A11E;
+    color: var(--gold-light);
+    box-shadow: inset 3px 0 0 var(--gold-primary);
 }
 
 .sidebar-link.active .link-icon {
-    color: #FBBF24; /* 🔥 Rực rỡ nhất khi active */
+    color: var(--gold-light);
     filter: drop-shadow(0 0 8px rgba(212, 161, 30, 0.3));
 }
 
-/* ACTIVE GLOW - Thanh Neon vàng bên trái */
+/* Active glow – thanh neon vàng bên trái */
 .sidebar-link.active::before {
     content: '';
     position: absolute;
@@ -262,14 +257,14 @@
     top: 10px;
     width: 3px;
     height: 34px;
-    border-radius: 20px;
-    background: linear-gradient(180deg, #D4A11E, #FBBF24);
-    box-shadow: 0 0 20px rgba(212, 161, 30, 0.5), 
+    border-radius: var(--radius-round);
+    background: var(--gold-gradient);
+    box-shadow: 0 0 20px rgba(212, 161, 30, 0.5),
                 0 0 60px rgba(212, 161, 30, 0.1);
 }
 
 /* =========================================================
-   SUB-MENU - GOLD
+   SUB-MENU – GOLD
 ========================================================= */
 
 .sidebar-item.has-submenu .sidebar-link {
@@ -279,22 +274,22 @@
 .sidebar-item.has-submenu .sidebar-link::after {
     content: '▾';
     position: absolute;
-    right: 16px;
-    color: #D4A11E; /* 🔥 Icon mũi tên vàng luôn */
-    font-size: 12px;
-    transition: transform 0.3s ease, color 0.3s ease;
+    right: var(--space-md);
+    color: var(--gold-primary);
+    font-size: var(--font-size-sm);
+    transition: transform var(--transition-normal), color var(--transition-normal);
 }
 
 .sidebar-item.has-submenu.open .sidebar-link::after {
     transform: rotate(180deg);
-    color: #FBBF24; /* 🔥 Sáng hơn khi mở */
+    color: var(--gold-light);
 }
 
 .submenu {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    padding-left: 12px;
+    padding-left: var(--space-sm);
 }
 
 .sidebar-item.open .submenu {
@@ -304,14 +299,14 @@
 .submenu-item {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 0 16px 0 46px;
+    gap: var(--space-md);
+    padding: 0 var(--space-md) 0 calc(var(--space-md) * 3);
     height: 44px;
-    border-radius: 12px;
-    color: #6A7B90;
-    font-size: 0.9rem;
-    font-weight: 400;
-    transition: all 0.25s ease;
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-regular);
+    transition: all var(--transition-fast);
     cursor: pointer;
     margin: 2px 0;
 }
@@ -319,51 +314,51 @@
 /* Icon cho submenu (dùng dot vàng) */
 .submenu-item::before {
     content: '◆';
-    color: #D4A11E;
+    color: var(--gold-primary);
     font-size: 8px;
     opacity: 0.4;
-    transition: all 0.25s ease;
+    transition: all var(--transition-fast);
 }
 
 .submenu-item:hover {
     background: rgba(212, 161, 30, 0.04);
-    color: #FBBF24;
+    color: var(--gold-light);
 }
 
 .submenu-item:hover::before {
     opacity: 1;
-    color: #FBBF24;
+    color: var(--gold-light);
 }
 
 .submenu-item.active {
     background: rgba(212, 161, 30, 0.05);
-    color: #FBBF24;
+    color: var(--gold-light);
 }
 
 .submenu-item.active::before {
     content: '◆';
     opacity: 1;
-    color: #FBBF24;
+    color: var(--gold-light);
     box-shadow: 0 0 12px rgba(212, 161, 30, 0.3);
 }
 
 /* =========================================================
-   SIDEBAR FOOTER - GOLD
+   SIDEBAR FOOTER – GOLD
 ========================================================= */
 
 .sidebar-footer {
     margin-top: auto;
-    padding: 16px 12px;
+    padding: var(--space-md) var(--space-sm);
     border-top: 1px solid rgba(212, 161, 30, 0.06);
 }
 
 .sidebar-profile {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    border-radius: 14px;
-    transition: all 0.25s ease;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
     cursor: pointer;
 }
 
@@ -374,14 +369,14 @@
 .sidebar-avatar {
     width: 40px;
     height: 40px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #D4A11E, #FBBF24);
+    border-radius: var(--radius-md);
+    background: var(--gold-gradient);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 18px;
-    color: #0B0E14;
+    font-weight: var(--fw-bold);
+    font-size: var(--font-size-lg);
+    color: var(--black-premium);
     flex-shrink: 0;
     box-shadow: 0 4px 16px rgba(212, 161, 30, 0.2);
 }
@@ -392,32 +387,32 @@
 }
 
 .sidebar-user-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: #E8EDF2;
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-semibold);
+    color: var(--text-body);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .sidebar-user-role {
-    font-size: 12px;
+    font-size: var(--font-size-sm);
     color: rgba(212, 161, 30, 0.5);
 }
 
 .sidebar-logout-btn {
     width: 36px;
     height: 36px;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     border: none;
     background: rgba(255, 23, 68, 0.06);
-    color: #6A7B90;
+    color: var(--text-muted);
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: all var(--transition-fast);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
 }
 
 .sidebar-logout-btn:hover {
@@ -426,7 +421,7 @@
 }
 
 /* =========================================================
-   SCROLLBAR - GOLD
+   SCROLLBAR – GOLD
 ========================================================= */
 
 .admin-sidebar::-webkit-scrollbar {
@@ -439,7 +434,7 @@
 
 .admin-sidebar::-webkit-scrollbar-thumb {
     background: rgba(212, 161, 30, 0.2);
-    border-radius: 20px;
+    border-radius: var(--radius-round);
 }
 
 .admin-sidebar::-webkit-scrollbar-thumb:hover {
@@ -447,7 +442,7 @@
 }
 
 /* =========================================================
-   RESPONSIVE - TABLET
+   RESPONSIVE – TABLET
 ========================================================= */
 
 @media screen and (max-width: 1023px) {
@@ -460,7 +455,7 @@
         transform: translateX(-100%);
         z-index: 1400;
         backdrop-filter: blur(16px);
-        background: rgba(11, 14, 20, 0.96);
+        background: rgba(10, 10, 10, 0.96);
         border-right: 1px solid rgba(212, 161, 30, 0.12);
     }
 
@@ -475,14 +470,14 @@
     .sidebar-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.7);
+        background: var(--overlay-dark);
         backdrop-filter: blur(2px);
         z-index: 1300;
     }
 }
 
 /* =========================================================
-   RESPONSIVE - MOBILE
+   RESPONSIVE – MOBILE
 ========================================================= */
 
 @media screen and (max-width: 739px) {
@@ -493,10 +488,10 @@
 
     .sidebar-link {
         height: 52px;
-        border-radius: 14px;
+        border-radius: var(--radius-md);
     }
 
     .link-text {
-        font-size: 0.95rem;
+        font-size: var(--font-size-base);
     }
 }

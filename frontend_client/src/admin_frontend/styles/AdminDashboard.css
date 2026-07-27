@@ -1,16 +1,14 @@
 /* =========================================================
-   CINEMA ADMIN DASHBOARD
+   CINEMA ADMIN DASHBOARD – SỬ DỤNG VAR TỪ INDEX.CSS
 ========================================================= */
 
 .cinema-dashboard {
     width: 100%;
     min-height: 100vh;
-
     display: flex;
     flex-direction: column;
-    gap: 24px;
-
-    padding: 24px;
+    gap: var(--space-lg); /* 24px */
+    padding: var(--space-lg);
 }
 
 /* =========================================================
@@ -20,30 +18,23 @@
 .dashboard-loading {
     width: 100%;
     height: 80vh;
-
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
-
-    color: #ffffff;
-    font-size: 16px;
-    font-weight: 600;
+    gap: var(--space-md);
+    color: var(--white-pure);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-semibold);
 }
 
 .dashboard-loading-icon {
     animation: dashboardSpin 1s linear infinite;
-    color: #ef4444;
+    color: var(--gold-primary);
 }
 
 @keyframes dashboardSpin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
 }
 
 /* =========================================================
@@ -53,81 +44,71 @@
 .dashboard-stats-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 22px;
+    gap: var(--space-lg);
 }
 
 .dashboard-stat-card {
     position: relative;
-
-    background: #16161f;
-
-    border: 1px solid rgba(255,255,255,0.06);
-
-    border-radius: 24px;
-
-    padding: 24px;
-
+    background: var(--cinema-card-bg);
+    border: var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-
     min-height: 170px;
-
     overflow: hidden;
-
-    transition: 0.3s ease;
+    transition: var(--transition-normal);
 }
 
 .dashboard-stat-card:hover {
     transform: translateY(-5px);
-    border-color: rgba(239,68,68,0.4);
+    border-color: rgba(201, 168, 76, 0.4); /* gold với alpha */
 }
 
 .dashboard-stat-left {
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: var(--space-lg);
 }
 
 .dashboard-stat-icon {
     width: 74px;
     height: 74px;
-
     border-radius: 50%;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     flex-shrink: 0;
 }
 
 /* =========================================================
-   ICON BACKGROUND INSIDE
+   ICON BACKGROUND – VẪN GIỮ MÀU SẮC ĐẶC TRƯNG
+   (có thể điều chỉnh theo ý)
 ========================================================= */
 
 .purple-icon {
     background: rgba(168, 85, 247, 0.15);
     color: #c084fc;
-    box-shadow: inset 0 0 20px rgba(168,85,247,0.35);
+    box-shadow: inset 0 0 20px rgba(168, 85, 247, 0.35);
 }
 
 .blue-icon {
     background: rgba(59, 130, 246, 0.15);
     color: #60a5fa;
-    box-shadow: inset 0 0 20px rgba(59,130,246,0.35);
+    box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.35);
 }
 
 .green-icon {
     background: rgba(34, 197, 94, 0.15);
     color: #4ade80;
-    box-shadow: inset 0 0 20px rgba(34,197,94,0.35);
+    box-shadow: inset 0 0 20px rgba(34, 197, 94, 0.35);
 }
 
 .gold-icon {
-    background: rgba(245, 158, 11, 0.15);
-    color: #fbbf24;
-    box-shadow: inset 0 0 20px rgba(245,158,11,0.35);
+    background: rgba(201, 168, 76, 0.15);
+    color: var(--gold-light);
+    box-shadow: inset 0 0 20px rgba(201, 168, 76, 0.35);
 }
 
 /* =========================================================
@@ -137,63 +118,51 @@
 .dashboard-stat-content {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-sm);
 }
 
 .dashboard-stat-content p {
     letter-spacing: 1px;
     text-transform: uppercase;
-
-    color: #9ca3af;
-
-    font-size: 13px;
-    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-medium);
 }
 
 .dashboard-stat-content h2 {
     line-height: 1;
-
-    color: #ffffff;
-
-    font-size: 40px;
-    font-weight: 800;
+    color: var(--white-pure);
+    font-size: var(--font-size-h1); /* có thể chỉnh lại */
+    font-weight: var(--fw-extrabold);
 }
 
 .dashboard-stat-content span {
     display: flex;
     align-items: center;
-    gap: 6px;
-
-    color: #d1d5db;
-
-    font-size: 14px;
+    gap: var(--space-xs);
+    color: var(--text-body);
+    font-size: var(--font-size-base);
 }
 
 .dashboard-more-btn {
     width: 34px;
     height: 34px;
-
     border: none;
-
-    background: rgba(255,255,255,0.06);
-
-    color: #ffffff;
-
-    border-radius: 12px;
-
+    background: var(--hover-bg);
+    color: var(--white-pure);
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-
     cursor: pointer;
-    transition: 0.3s ease;
-
+    transition: var(--transition-normal);
     flex-shrink: 0;
 }
 
 .dashboard-more-btn:hover {
     transform: scale(1.08);
-    background: #ef4444;
+    background: var(--gold-primary);
+    color: var(--black-premium);
 }
 
 /* =========================================================
@@ -203,41 +172,35 @@
 .dashboard-middle-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 24px;
+    gap: var(--space-lg);
 }
 
 /* =========================================================
-   CARD
+   CARD CHUNG
 ========================================================= */
 
 .dashboard-chart-card,
 .dashboard-table-card,
 .dashboard-top-movie-card {
-    background: #16161f;
-
-    border: 1px solid rgba(255,255,255,0.06);
-
-    border-radius: 26px;
-
-    padding: 24px;
+    background: var(--cinema-card-bg);
+    border: var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
 }
 
 .dashboard-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    margin-bottom: 28px;
+    margin-bottom: var(--space-xl);
 }
 
 .dashboard-card-header h3 {
     letter-spacing: 1px;
     text-transform: uppercase;
-
-    color: #ffffff;
-
-    font-size: 24px;
-    font-weight: 800;
+    color: var(--white-pure);
+    font-size: var(--font-size-h3);
+    font-weight: var(--fw-extrabold);
 }
 
 /* =========================================================
@@ -249,26 +212,20 @@
 }
 
 .dashboard-chart-filter {
-    padding: 12px 18px;
-
+    padding: var(--space-sm) var(--space-lg);
     border: none;
-
-    background: #ef4444;
-
-    color: #ffffff;
-
-    border-radius: 12px;
-
+    background: var(--gold-primary);
+    color: var(--black-premium);
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: 0.3s ease;
-
-    font-size: 14px;
-    font-weight: 600;
+    transition: var(--transition-normal);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-semibold);
 }
 
 .dashboard-chart-filter:hover {
     transform: translateY(-2px);
-    background: #dc2626;
+    background: var(--gold-light);
 }
 
 .dashboard-chart-wrapper {
@@ -287,7 +244,7 @@
 .dashboard-pie-layout {
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: var(--space-xl);
 }
 
 .dashboard-pie-wrapper {
@@ -298,36 +255,35 @@
 .dashboard-pie-legend {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: var(--space-md);
 }
 
 .dashboard-legend-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 14px;
+    gap: var(--space-md);
 }
 
 .dashboard-legend-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-sm);
 }
 
 .dashboard-legend-left p {
-    color: #e5e7eb;
-    font-size: 14px;
+    color: var(--text-body);
+    font-size: var(--font-size-base);
 }
 
 .dashboard-legend-item span {
-    color: #9ca3af;
-    font-size: 14px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
 }
 
 .dashboard-legend-color {
     width: 12px;
     height: 12px;
-
     border-radius: 50%;
 }
 
@@ -338,7 +294,7 @@
 .dashboard-bottom-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 24px;
+    gap: var(--space-lg);
 }
 
 /* =========================================================
@@ -356,28 +312,24 @@
 }
 
 .dashboard-ticket-table thead tr {
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: var(--border-silver);
 }
 
 .dashboard-ticket-table th {
     text-align: left;
-    padding-bottom: 18px;
+    padding-bottom: var(--space-md);
     white-space: nowrap;
-
-    color: #ffffff;
-
-    font-size: 15px;
-    font-weight: 700;
+    color: var(--white-pure);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
 }
 
 .dashboard-ticket-table td {
-    padding: 18px 0;
+    padding: var(--space-md) 0;
     white-space: nowrap;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-
-    color: #d1d5db;
-
-    font-size: 14px;
+    border-bottom: var(--border-light);
+    color: var(--text-body);
+    font-size: var(--font-size-sm);
 }
 
 .dashboard-ticket-table tbody tr:last-child td {
@@ -396,8 +348,7 @@
 .dashboard-top-movie-list {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-
+    gap: var(--space-lg);
     flex: 1;
 }
 
@@ -405,79 +356,63 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 14px;
+    gap: var(--space-md);
 }
 
 .dashboard-top-movie-left {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: var(--space-md);
 }
 
 .dashboard-rank {
     min-width: 24px;
-
-    color: #ef4444;
-
-    font-size: 22px;
-    font-weight: 800;
+    color: var(--gold-primary);
+    font-size: var(--font-size-h3);
+    font-weight: var(--fw-extrabold);
 }
 
 .dashboard-movie-poster {
     width: 50px;
     height: 68px;
-
-    border-radius: 12px;
-
-    background: #23232f;
-
+    border-radius: var(--radius-md);
+    background: var(--black-soft);
     flex-shrink: 0;
 }
 
 .dashboard-top-movie-left h4 {
-    margin-bottom: 6px;
-
-    color: #ffffff;
-
-    font-size: 15px;
-    font-weight: 700;
+    margin-bottom: var(--space-xs);
+    color: var(--white-pure);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
 }
 
 .dashboard-top-movie-left p {
-    color: #9ca3af;
-
-    font-size: 13px;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
 }
 
 /* =========================================================
-   BUTTON
+   BUTTON XEM THÊM
 ========================================================= */
 
 .dashboard-view-more-btn {
     width: 100%;
-
-    margin-top: 24px;
-
-    padding: 14px;
-
+    margin-top: var(--space-lg);
+    padding: var(--space-md);
     border: none;
-
-    background: #ef4444;
-
-    color: #ffffff;
-
-    border-radius: 16px;
-
+    background: var(--gold-primary);
+    color: var(--black-premium);
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: 0.3s ease;
-
-    font-size: 15px;
-    font-weight: 700;
+    transition: var(--transition-normal);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
 }
 
 .dashboard-view-more-btn:hover {
     transform: translateY(-2px);
-    background: #dc2626;
+    background: var(--gold-light);
 }
 
 /* =========================================================
@@ -489,196 +424,156 @@
 }
 
 .dashboard-table-wrapper::-webkit-scrollbar-thumb {
-    background: #ef4444;
-    border-radius: 999px;
+    background: var(--gold-primary);
+    border-radius: var(--radius-round);
 }
 
 /* =========================================================
-   RESPONSIVE - 1400px
+   RESPONSIVE – 1400px
 ========================================================= */
 
 @media screen and (max-width: 1400px) {
-
     .dashboard-stats-row {
         grid-template-columns: repeat(2, 1fr);
     }
-
     .dashboard-middle-grid {
         grid-template-columns: 1fr;
     }
-
     .dashboard-bottom-grid {
         grid-template-columns: 1fr;
     }
-
 }
 
 /* =========================================================
-   RESPONSIVE - TABLET
+   RESPONSIVE – TABLET
 ========================================================= */
 
 @media screen and (max-width: 992px) {
-
     .cinema-dashboard {
-        padding: 18px;
-        gap: 18px;
+        padding: var(--space-md);
+        gap: var(--space-md);
     }
-
     .dashboard-stat-card {
         min-height: 150px;
-        padding: 20px;
+        padding: var(--space-lg);
     }
-
     .dashboard-stat-icon {
         width: 66px;
         height: 66px;
     }
-
     .dashboard-chart-card,
     .dashboard-table-card,
     .dashboard-top-movie-card {
-        padding: 20px;
+        padding: var(--space-lg);
     }
-
     .dashboard-chart-wrapper {
         height: 300px;
     }
-
 }
 
 /* =========================================================
-   RESPONSIVE - MOBILE
+   RESPONSIVE – MOBILE
 ========================================================= */
 
 @media screen and (max-width: 768px) {
-
     .cinema-dashboard {
-        padding: 14px;
+        padding: var(--space-md);
     }
-
     .dashboard-stats-row {
         grid-template-columns: 1fr;
     }
-
     .dashboard-stat-card {
-        border-radius: 20px;
-
-        padding: 18px;
-
+        border-radius: var(--radius-lg);
+        padding: var(--space-md);
         min-height: auto;
     }
-
     .dashboard-stat-left {
-        gap: 18px;
+        gap: var(--space-md);
     }
-
     .dashboard-stat-icon {
         width: 58px;
         height: 58px;
     }
-
     .dashboard-stat-content h2 {
-        font-size: 30px;
+        font-size: var(--font-size-h2);
     }
-
     .dashboard-chart-card,
     .dashboard-table-card,
     .dashboard-top-movie-card {
-        border-radius: 20px;
-        padding: 18px;
+        border-radius: var(--radius-lg);
+        padding: var(--space-md);
     }
-
     .dashboard-card-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 12px;
+        gap: var(--space-sm);
     }
-
     .dashboard-card-header h3 {
-        font-size: 18px;
+        font-size: var(--font-size-h4);
     }
-
     .dashboard-chart-filter {
         width: 100%;
     }
-
     .dashboard-chart-wrapper {
         height: 260px;
     }
-
     .dashboard-ticket-table {
         min-width: 650px;
     }
-
     .dashboard-top-movie-item {
         align-items: flex-start;
     }
-
     .dashboard-movie-poster {
         width: 44px;
         height: 60px;
     }
-
     .dashboard-view-more-btn {
-        padding: 13px;
+        padding: var(--space-md);
     }
-
 }
 
 /* =========================================================
-   RESPONSIVE - SMALL MOBILE
+   RESPONSIVE – SMALL MOBILE
 ========================================================= */
 
 @media screen and (max-width: 480px) {
-
     .cinema-dashboard {
-        padding: 12px;
-        gap: 14px;
+        padding: var(--space-sm);
+        gap: var(--space-md);
     }
-
     .dashboard-stat-card {
         flex-direction: column;
-        gap: 18px;
+        gap: var(--space-md);
     }
-
     .dashboard-stat-content p {
-        font-size: 11px;
+        font-size: var(--font-size-sm);
     }
-
     .dashboard-stat-content h2 {
-        font-size: 24px;
+        font-size: var(--font-size-h3);
     }
-
     .dashboard-stat-content span {
-        font-size: 12px;
+        font-size: var(--font-size-sm);
     }
-
     .dashboard-stat-icon {
         width: 52px;
         height: 52px;
     }
-
     .dashboard-chart-card,
     .dashboard-table-card,
     .dashboard-top-movie-card {
-        padding: 16px;
+        padding: var(--space-md);
     }
-
     .dashboard-card-header h3 {
-        font-size: 15px;
+        font-size: var(--font-size-h5);
     }
-
     .dashboard-ticket-table th,
     .dashboard-ticket-table td {
-        font-size: 12px;
+        font-size: var(--font-size-sm);
     }
-
     .dashboard-top-movie-left h4 {
-        font-size: 13px;
+        font-size: var(--font-size-sm);
     }
-
     .dashboard-top-movie-left p {
-        font-size: 12px;
+        font-size: var(--font-size-sm);
     }
-
 }

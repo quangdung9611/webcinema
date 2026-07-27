@@ -1,16 +1,12 @@
 /* =========================================================
-   PAGE
+   ADMIN PAGE – SỬ DỤNG VAR TỪ INDEX.CSS (GOLD ACCENT)
 ========================================================= */
 
 .admin-page {
-
     width: 100%;
-
     display: flex;
-
     flex-direction: column;
-
-    gap: 24px;
+    gap: var(--space-lg);
 }
 
 /* =========================================================
@@ -18,33 +14,16 @@
 ========================================================= */
 
 .admin-page-hero {
-
     display: flex;
-
     align-items: center;
     justify-content: space-between;
-
-    gap: 24px;
-
-    padding: 32px;
-
-    border-radius: 24px;
-
-    background:
-        linear-gradient(
-            180deg,
-            #181818 0%,
-            #111111 100%
-        );
-
-    border:
-        1px solid rgba(255,255,255,.06);
-
-    box-shadow:
-        0 12px 30px rgba(0,0,0,.35);
-
+    gap: var(--space-lg);
+    padding: var(--space-xl);
+    border-radius: var(--radius-xl);
+    background: var(--cinema-card-bg);
+    border: var(--border-light);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
-
     position: relative;
 }
 
@@ -53,47 +32,29 @@
 ========================================================= */
 
 .admin-page-hero-left {
-
     display: flex;
-
     align-items: center;
-
-    gap: 24px;
+    gap: var(--space-lg);
 }
 
 /* =========================================================
-   ICON BOX
+   ICON BOX – GOLD
 ========================================================= */
 
 .admin-page-icon-box {
-
     width: 88px;
     height: 88px;
-
     flex-shrink: 0;
-
     display: flex;
-
     align-items: center;
     justify-content: center;
-
-    border-radius: 22px;
-
-    color: #ffffff;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff3434,
-            #c1121f
-        );
-
-    box-shadow:
-        0 10px 24px rgba(255,50,50,.20);
+    border-radius: var(--radius-lg);
+    color: var(--black-premium);
+    background: var(--gold-gradient);
+    box-shadow: 0 10px 24px rgba(201, 168, 76, 0.20);
 }
 
 .admin-page-icon-box svg {
-
     width: 40px;
     height: 40px;
 }
@@ -103,29 +64,19 @@
 ========================================================= */
 
 .admin-page-title {
-
     margin: 0;
-
-    color: #ffffff;
-
-    font-size: 42px;
-
-    font-weight: 900;
-
+    color: var(--text-heading);
+    font-size: var(--font-size-h1);
+    font-weight: var(--fw-black);
     line-height: 1.1;
-
     text-transform: uppercase;
 }
 
 .admin-page-subtitle {
-
-    margin-top: 8px;
-
-    color: #9ca3af;
-
-    font-size: 15px;
-
-    font-weight: 500;
+    margin-top: var(--space-xs);
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-medium);
 }
 
 /* =========================================================
@@ -133,68 +84,39 @@
 ========================================================= */
 
 .admin-page-hero-right {
-
     display: flex;
-
     align-items: center;
-
-    gap: 14px;
+    gap: var(--space-md);
 }
 
 /* =========================================================
-   ADD BUTTON
+   ADD BUTTON – GOLD
 ========================================================= */
 
 .admin-page-add-btn {
-
     height: 58px;
-
-    padding: 0 28px;
-
+    padding: 0 var(--space-xl);
     border: none;
-
-    border-radius: 18px;
-
+    border-radius: var(--radius-lg);
     display: flex;
-
     align-items: center;
     justify-content: center;
-
-    gap: 10px;
-
+    gap: var(--space-sm);
     cursor: pointer;
-
-    color: #ffffff;
-
-    font-size: 15px;
-
-    font-weight: 700;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff3434,
-            #c1121f
-        );
-
-    box-shadow:
-        0 10px 20px rgba(255,50,50,.18);
-
-    transition:
-        all .25s ease;
+    color: var(--black-premium);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
+    background: var(--gold-gradient);
+    box-shadow: 0 10px 20px rgba(201, 168, 76, 0.18);
+    transition: all var(--transition-fast);
 }
 
 .admin-page-add-btn:hover {
-
-    transform:
-        translateY(-2px);
-
-    box-shadow:
-        0 0 20px rgba(255,50,50,.25);
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(201, 168, 76, 0.25);
 }
 
 .admin-page-add-btn svg {
-
     width: 18px;
     height: 18px;
 }
@@ -204,88 +126,57 @@
 ========================================================= */
 
 .admin-page-toolbar {
-
     display: flex;
-
     align-items: center;
     justify-content: space-between;
-
-    gap: 20px;
+    gap: var(--space-lg);
 }
 
 /* =========================================================
-   SEARCH
+   SEARCH – GOLD BORDER
 ========================================================= */
 
 .admin-page-search {
-
     flex: 1;
-
     position: relative;
-
     height: 60px;
-
     display: flex;
-
     align-items: center;
-
-    border-radius: 18px;
-
-    background:
-        #151515;
-
-    border:
-        1px solid rgba(255,255,255,.06);
-
-    transition:
-        all .25s ease;
+    border-radius: var(--radius-lg);
+    background: var(--black-soft);
+    border: var(--border-light);
+    transition: all var(--transition-fast);
 }
 
 .admin-page-search:hover {
-
-    border-color:
-        rgba(255,255,255,.10);
+    border-color: rgba(201, 168, 76, 0.10);
 }
 
 .admin-page-search:focus-within {
-
-    border-color:
-        rgba(255,50,50,.25);
-
-    box-shadow:
-        0 0 0 3px rgba(255,50,50,.08);
+    border-color: rgba(201, 168, 76, 0.25);
+    box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.08);
 }
 
 .admin-page-search-icon {
-
     position: absolute;
-
-    left: 20px;
-
-    color: #6b7280;
+    left: var(--space-lg);
+    color: var(--text-muted);
 }
 
 .admin-page-search-input {
-
     width: 100%;
     height: 100%;
-
     border: none;
     outline: none;
-
     background: transparent;
-
-    color: #ffffff;
-
+    color: var(--text-body);
     padding-left: 55px;
-    padding-right: 20px;
-
-    font-size: 15px;
+    padding-right: var(--space-lg);
+    font-size: var(--font-size-base);
 }
 
 .admin-page-search-input::placeholder {
-
-    color: #6b7280;
+    color: var(--text-muted);
 }
 
 /* =========================================================
@@ -293,12 +184,9 @@
 ========================================================= */
 
 .admin-page-toolbar-actions {
-
     display: flex;
-
     align-items: center;
-
-    gap: 12px;
+    gap: var(--space-sm);
 }
 
 /* =========================================================
@@ -306,143 +194,86 @@
 ========================================================= */
 
 .admin-page-content {
-
     width: 100%;
 }
 
 /* =========================================================
-   1200px
+   RESPONSIVE
 ========================================================= */
 
 @media (max-width: 1200px) {
-
     .admin-page-title {
-
-        font-size: 36px;
+        font-size: var(--font-size-h1);
     }
 }
 
-/* =========================================================
-   992px
-========================================================= */
-
 @media (max-width: 992px) {
-
     .admin-page-hero {
-
         flex-direction: column;
-
         align-items: flex-start;
     }
-
     .admin-page-toolbar {
-
         flex-direction: column;
-
         align-items: stretch;
     }
-
     .admin-page-title {
-
-        font-size: 32px;
+        font-size: var(--font-size-h2);
     }
-
     .admin-page-search {
-
         width: 100%;
     }
 }
 
-/* =========================================================
-   768px
-========================================================= */
-
 @media (max-width: 768px) {
-
     .admin-page {
-
-        gap: 20px;
+        gap: var(--space-lg);
     }
-
     .admin-page-hero {
-
-        padding: 24px;
-
-        border-radius: 20px;
+        padding: var(--space-lg);
+        border-radius: var(--radius-lg);
     }
-
     .admin-page-title {
-
-        font-size: 28px;
+        font-size: var(--font-size-h3);
     }
-
     .admin-page-icon-box {
-
         width: 72px;
         height: 72px;
     }
-
     .admin-page-icon-box svg {
-
         width: 32px;
         height: 32px;
     }
-
     .admin-page-hero-right {
-
         width: 100%;
     }
-
     .admin-page-add-btn {
-
         width: 100%;
     }
-
     .admin-page-search {
-
         height: 56px;
     }
 }
 
-/* =========================================================
-   480px
-========================================================= */
-
 @media (max-width: 480px) {
-
     .admin-page-hero-left {
-
         flex-direction: column;
-
         align-items: flex-start;
-
-        gap: 16px;
+        gap: var(--space-md);
     }
-
     .admin-page-title {
-
-        font-size: 22px;
+        font-size: var(--font-size-h4);
     }
-
     .admin-page-subtitle {
-
-        font-size: 13px;
+        font-size: var(--font-size-sm);
     }
-
     .admin-page-search {
-
         height: 52px;
     }
-
     .admin-page-search-input {
-
-        font-size: 14px;
+        font-size: var(--font-size-sm);
     }
-
     .admin-page-add-btn {
-
         height: 52px;
-
-        font-size: 14px;
+        font-size: var(--font-size-sm);
     }
 }

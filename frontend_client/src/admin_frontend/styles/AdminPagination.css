@@ -1,105 +1,82 @@
 /* =========================================================
-    PAGINATION WRAPPER - DARK NEON THEME
+   PAGINATION – SỬ DỤNG VAR TỪ INDEX.CSS (GOLD ACCENT)
 ========================================================= */
 
 .admin-pagination {
     width: 100%;
-
     display: flex;
     flex-wrap: wrap;
-
     align-items: center;
     justify-content: center;
-
-    gap: 14px;
-
-    padding: 28px;
-
-    border-top: 1px solid rgba(0, 229, 255, 0.06);
-
+    gap: var(--space-md);
+    padding: var(--space-xl);
+    border-top: 1px solid rgba(201, 168, 76, 0.06);
     background: linear-gradient(
         145deg,
-        rgba(11, 14, 20, 0.98),
-        rgba(15, 19, 26, 0.95)
+        rgba(10, 10, 10, 0.98),
+        rgba(26, 26, 26, 0.95)
     );
-
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
 }
 
 /* =========================================================
-    PAGE GROUP
+   PAGE GROUP
 ========================================================= */
 
 .admin-pagination-pages {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-sm);
     flex-wrap: wrap;
 }
 
 /* =========================================================
-    BUTTON
+   BUTTON
 ========================================================= */
 
 .admin-pagination-btn {
     min-width: 46px;
     height: 46px;
-
-    border: 1px solid rgba(0, 229, 255, 0.06);
+    border: 1px solid rgba(201, 168, 76, 0.06);
     outline: none;
-
-    border-radius: 14px;
-
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-
-    background: rgba(0, 229, 255, 0.02);
-
-    color: #8A9BB0;
-
-    font-size: 14px;
-    font-weight: 700;
-
+    background: rgba(201, 168, 76, 0.02);
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
     cursor: pointer;
-
-    transition: all 0.25s ease;
-
+    transition: all var(--transition-fast);
     backdrop-filter: blur(10px);
 }
 
 /* =========================================================
-    HOVER
+   HOVER
 ========================================================= */
 
 .admin-pagination-btn:hover {
-    background: rgba(0, 229, 255, 0.06);
-    border-color: rgba(0, 229, 255, 0.15);
-    color: #E8EDF2;
+    background: rgba(201, 168, 76, 0.06);
+    border-color: rgba(201, 168, 76, 0.15);
+    color: var(--text-body);
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0, 229, 255, 0.08);
+    box-shadow: 0 10px 25px rgba(201, 168, 76, 0.08);
 }
 
 /* =========================================================
-    ACTIVE - NEON CYAN
+   ACTIVE – GOLD
 ========================================================= */
 
 .admin-pagination-btn.active {
-    background: linear-gradient(
-        135deg,
-        #00C8E5,
-        #0088AA
-    );
-
-    color: #ffffff;
-
-    border: 1px solid rgba(0, 229, 255, 0.2);
-
-    box-shadow: 0 12px 28px rgba(0, 229, 255, 0.25);
+    background: var(--gold-gradient);
+    color: var(--black-premium);
+    border: 1px solid rgba(201, 168, 76, 0.2);
+    box-shadow: 0 12px 28px rgba(201, 168, 76, 0.25);
 }
 
 /* =========================================================
-    DISABLED BUTTON (PREV / NEXT)
+   DISABLED
 ========================================================= */
 
 .admin-pagination-btn.disabled {
@@ -112,90 +89,77 @@
 }
 
 /* =========================================================
-    ELLIPSIS (...)
+   ELLIPSIS
 ========================================================= */
 
 .admin-pagination-dots {
     min-width: 46px;
     height: 46px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
-    color: rgba(0, 229, 255, 0.3);
-
-    font-size: 16px;
-    font-weight: 700;
-
+    color: rgba(201, 168, 76, 0.3);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
     user-select: none;
 }
 
 /* =========================================================
-    INFO
+   INFO
 ========================================================= */
 
 .admin-pagination-info {
     width: 100%;
     text-align: center;
-
-    margin-top: 4px;
-
+    margin-top: var(--space-xs);
     color: rgba(255, 255, 255, 0.35);
-
-    font-size: 14px;
-    font-weight: 500;
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-medium);
 }
 
 .admin-pagination-info span {
-    color: #00E5FF;
-    font-weight: 700;
-    margin: 0 4px;
+    color: var(--gold-primary);
+    font-weight: var(--fw-bold);
+    margin: 0 var(--space-xs);
 }
 
 /* =========================================================
-    RESPONSIVE TABLET
+   RESPONSIVE – TABLET
 ========================================================= */
 
 @media (max-width: 768px) {
-
     .admin-pagination {
-        padding: 22px;
-        gap: 12px;
+        padding: var(--space-lg);
+        gap: var(--space-sm);
     }
-
     .admin-pagination-pages {
-        gap: 8px;
+        gap: var(--space-xs);
     }
-
     .admin-pagination-btn,
     .admin-pagination-dots {
         min-width: 42px;
         height: 42px;
-        border-radius: 12px;
+        border-radius: var(--radius-sm);
     }
 }
 
 /* =========================================================
-    RESPONSIVE MOBILE
+   RESPONSIVE – MOBILE
 ========================================================= */
 
 @media (max-width: 480px) {
-
     .admin-pagination {
-        padding: 18px;
-        gap: 10px;
+        padding: var(--space-md);
+        gap: var(--space-sm);
     }
-
     .admin-pagination-btn,
     .admin-pagination-dots {
         min-width: 38px;
         height: 38px;
-        font-size: 13px;
-        border-radius: 10px;
+        font-size: var(--font-size-sm);
+        border-radius: var(--radius-sm);
     }
-
     .admin-pagination-info {
-        font-size: 13px;
+        font-size: var(--font-size-sm);
     }
 }

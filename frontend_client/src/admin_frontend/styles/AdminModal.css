@@ -1,24 +1,18 @@
 /* =========================================================
-   ADMIN MODAL OVERLAY
+   ADMIN MODAL OVERLAY – SỬ DỤNG VAR TỪ INDEX.CSS (GOLD)
 ========================================================= */
 
 .admin-modal-overlay {
     position: fixed;
     inset: 0;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
-    padding: 24px;
-
+    padding: var(--space-lg);
     z-index: 9999;
-
-    background: rgba(5, 5, 5, 0.82);
-
+    background: var(--overlay-dark);
     backdrop-filter: blur(14px);
-
-    animation: modalFade .25s ease;
+    animation: modalFade var(--transition-slow);
 }
 
 /* =========================================================
@@ -26,82 +20,41 @@
 ========================================================= */
 
 .admin-modal-container {
-
     position: relative;
-
     width: 100%;
-
     overflow: hidden;
-
-    border-radius: 24px;
-
-    background:
-        linear-gradient(
-            180deg,
-            rgba(27,17,18,.98) 0%,
-            rgba(17,17,17,.98) 100%
-        );
-
-    border:
-        1px solid rgba(255,50,50,.12);
-
-    box-shadow:
-        0 25px 80px rgba(0,0,0,.65),
-        0 0 30px rgba(255,30,30,.08);
-
-    animation:
-        modalScale .28s ease;
+    border-radius: var(--radius-xl);
+    background: var(--cinema-card-bg);
+    border: 1px solid rgba(201, 168, 76, 0.12);
+    box-shadow: var(--shadow-lg), 0 0 30px rgba(201, 168, 76, 0.08);
+    animation: modalScale var(--transition-normal);
 }
 
 /* =========================================================
-   CINEMA GLOW EFFECT
+   CINEMA GLOW – GOLD
 ========================================================= */
 
 .admin-modal-container::before {
-
     content: '';
-
     position: absolute;
-
     top: -120px;
     right: -120px;
-
     width: 260px;
     height: 260px;
-
     border-radius: 50%;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(255,40,40,.18),
-            transparent 70%
-        );
-
+    background: radial-gradient(circle, rgba(201, 168, 76, 0.18), transparent 70%);
     pointer-events: none;
 }
 
 .admin-modal-container::after {
-
     content: '';
-
     position: absolute;
-
     bottom: -120px;
     left: -120px;
-
     width: 260px;
     height: 260px;
-
     border-radius: 50%;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(180,20,30,.12),
-            transparent 70%
-        );
-
+    background: radial-gradient(circle, rgba(180, 140, 60, 0.12), transparent 70%);
     pointer-events: none;
 }
 
@@ -130,25 +83,13 @@
 ========================================================= */
 
 .admin-modal-header {
-
     position: relative;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
-    padding: 20px 28px;
-
-    border-bottom:
-        1px solid rgba(255,255,255,.05);
-
-    background:
-        linear-gradient(
-            180deg,
-            rgba(255,40,40,.04),
-            transparent
-        );
-
+    padding: var(--space-lg) var(--space-xl);
+    border-bottom: var(--border-silver);
+    background: linear-gradient(180deg, rgba(201, 168, 76, 0.04), transparent);
     z-index: 2;
 }
 
@@ -157,12 +98,10 @@
 ========================================================= */
 
 .admin-modal-title-group {
-
     display: flex;
     align-items: center;
     justify-content: center;
-
-    gap: 12px;
+    gap: var(--space-sm);
 }
 
 /* =========================================================
@@ -170,22 +109,16 @@
 ========================================================= */
 
 .admin-modal-title {
-
     margin: 0;
-
-    font-size: 34px;
-
-    font-weight: 900;
-
+    font-size: var(--font-size-h2);
+    font-weight: var(--fw-black);
     text-transform: uppercase;
-
     letter-spacing: 1px;
-
-    color: #ffffff;
+    color: var(--white-pure);
 }
 
 /* =========================================================
-   ICON COLORS
+   ICON COLORS – giữ nguyên ý nghĩa
 ========================================================= */
 
 .admin-modal-title-group.success {
@@ -205,56 +138,33 @@
 }
 
 /* =========================================================
-   CLOSE BUTTON
+   CLOSE BUTTON – GOLD
 ========================================================= */
 
 .admin-modal-close-btn {
-
     position: absolute;
-
-    right: 18px;
+    right: var(--space-md);
     top: 50%;
-
     transform: translateY(-50%);
-
     width: 46px;
     height: 46px;
-
-    border-radius: 14px;
-
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-
-    background:
-        rgba(255,255,255,.04);
-
-    border:
-        1px solid rgba(255,255,255,.06);
-
-    color: #f3f4f6;
-
+    background: var(--hover-bg);
+    border: var(--border-light);
+    color: var(--text-body);
     cursor: pointer;
-
-    transition: all .3s ease;
+    transition: all var(--transition-normal);
 }
 
 .admin-modal-close-btn:hover {
-
-    background:
-        rgba(255,40,40,.16);
-
-    border-color:
-        rgba(255,40,40,.18);
-
-    color: #fff;
-
-    transform:
-        translateY(-50%)
-        rotate(90deg);
-
-    box-shadow:
-        0 0 20px rgba(255,40,40,.15);
+    background: rgba(201, 168, 76, 0.16);
+    border-color: rgba(201, 168, 76, 0.18);
+    color: var(--white-pure);
+    transform: translateY(-50%) rotate(90deg);
+    box-shadow: 0 0 20px rgba(201, 168, 76, 0.15);
 }
 
 /* =========================================================
@@ -262,17 +172,11 @@
 ========================================================= */
 
 .admin-modal-body {
-
     position: relative;
-
-    padding: 32px;
-
+    padding: var(--space-xl);
     max-height: 80vh;
-
     overflow-y: auto;
-
-    color: #d1d1d1;
-
+    color: var(--text-body);
     z-index: 2;
 }
 
@@ -280,8 +184,7 @@
 .admin-modal-body span,
 .admin-modal-body label,
 .admin-modal-body div {
-
-    color: #d1d1d1;
+    color: var(--text-body);
 }
 
 /* =========================================================
@@ -289,15 +192,11 @@
 ========================================================= */
 
 .admin-alert-actions {
-
     display: flex;
     justify-content: center;
     align-items: center;
-
-    gap: 14px;
-
-    margin-top: 28px;
-
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
     flex-wrap: wrap;
 }
 
@@ -306,50 +205,30 @@
 ========================================================= */
 
 .admin-modal-body button {
-
     border: none;
     outline: none;
-
-    border-radius: 14px;
-
-    padding: 12px 24px;
-
-    font-size: 14px;
-    font-weight: 700;
-
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-lg);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
     cursor: pointer;
-
-    transition: all .25s ease;
+    transition: all var(--transition-fast);
 }
 
 /* =========================================================
-   CONFIRM BUTTON
+   CONFIRM BUTTON – GOLD
 ========================================================= */
 
 .admin-confirm-btn {
-
     min-width: 140px;
-
-    color: #fff;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff2d2d,
-            #d31f1f
-        );
-
-    box-shadow:
-        0 10px 24px rgba(255,40,40,.35);
+    color: var(--black-premium);
+    background: var(--gold-gradient);
+    box-shadow: 0 10px 24px rgba(201, 168, 76, 0.35);
 }
 
 .admin-confirm-btn:hover {
-
-    transform:
-        translateY(-2px);
-
-    box-shadow:
-        0 14px 34px rgba(255,40,40,.45);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 34px rgba(201, 168, 76, 0.45);
 }
 
 /* =========================================================
@@ -357,32 +236,20 @@
 ========================================================= */
 
 .admin-cancel-btn {
-
     min-width: 120px;
-
-    background:
-        rgba(255,255,255,.05);
-
-    color: #f3f4f6;
-
-    border:
-        1px solid rgba(255,255,255,.08);
+    background: var(--hover-bg);
+    color: var(--text-body);
+    border: var(--border-light);
 }
 
 .admin-cancel-btn:hover {
-
-    background:
-        rgba(255,255,255,.10);
-
-    border-color:
-        rgba(255,255,255,.12);
-
-    transform:
-        translateY(-2px);
+    background: rgba(255, 255, 255, 0.10);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
 }
 
 /* =========================================================
-   CUSTOM SCROLLBAR
+   SCROLLBAR – GOLD
 ========================================================= */
 
 .admin-modal-body::-webkit-scrollbar {
@@ -394,110 +261,69 @@
 }
 
 .admin-modal-body::-webkit-scrollbar-thumb {
-
-    background:
-        linear-gradient(
-            180deg,
-            #ff2d2d,
-            #8b0000
-        );
-
-    border-radius: 999px;
+    background: linear-gradient(180deg, var(--gold-primary), var(--gold-light));
+    border-radius: var(--radius-round);
 }
 
 /* =========================================================
-   ANIMATIONS
+   ANIMATIONS (giữ nguyên)
 ========================================================= */
 
 @keyframes modalFade {
-
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
 @keyframes modalScale {
-
     from {
-
         opacity: 0;
-
-        transform:
-            scale(.92)
-            translateY(20px);
+        transform: scale(0.92) translateY(20px);
     }
-
     to {
-
         opacity: 1;
-
-        transform:
-            scale(1)
-            translateY(0);
+        transform: scale(1) translateY(0);
     }
 }
 
 /* =========================================================
-   TABLET
+   RESPONSIVE
 ========================================================= */
 
 @media (max-width: 992px) {
-
     .admin-modal-container {
         max-width: 95%;
     }
-
     .admin-modal-title {
-        font-size: 28px;
+        font-size: var(--font-size-h3);
     }
 }
 
-/* =========================================================
-   MOBILE
-========================================================= */
-
 @media (max-width: 768px) {
-
     .admin-modal-overlay {
-        padding: 16px;
+        padding: var(--space-md);
     }
-
     .admin-modal-container {
-        border-radius: 20px;
+        border-radius: var(--radius-lg);
     }
-
     .admin-modal-title {
-        font-size: 24px;
+        font-size: var(--font-size-h3);
     }
-
     .admin-modal-body {
-        padding: 24px;
+        padding: var(--space-lg);
     }
-
     .admin-modal-close-btn {
         width: 42px;
         height: 42px;
     }
 }
 
-/* =========================================================
-   SMALL MOBILE
-========================================================= */
-
 @media (max-width: 480px) {
-
     .admin-modal-title {
-        font-size: 20px;
+        font-size: var(--font-size-h4);
     }
-
     .admin-alert-actions {
         flex-direction: column;
     }
-
     .admin-confirm-btn,
     .admin-cancel-btn {
         width: 100%;

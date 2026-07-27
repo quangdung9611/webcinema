@@ -6,16 +6,14 @@ import { ChevronRight, Newspaper, AlertCircle } from 'lucide-react';
 import CinemaCard from '../components/CinemaCard';
 import '../styles/BlogCinema.css';
 
-// =============================================
-// HELPER: LẤY URL ẢNH (HỖ TRỢ CLOUDINARY + LOCAL)
-// =============================================
+const DEFAULT_POSTER =
+    "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/default-poster.jpg";
+
 const getImageUrl = (imageField, baseUrl = '') => {
-    if (!imageField) return '';
-    // Nếu là URL đầy đủ (http:// hoặc https://) thì dùng trực tiếp
+    if (!imageField) return DEFAULT_POSTER;
     if (imageField.startsWith('http://') || imageField.startsWith('https://')) {
         return imageField;
     }
-    // Ngược lại, ghép với baseUrl (cho dữ liệu cũ)
     return baseUrl + imageField;
 };
 
@@ -29,7 +27,7 @@ const BlogCinema = () => {
         const fetchBlogs = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get('https://api.quangdungcinema.id.vn/api/blog-cinema/all');
+                const res = await axios.get('https://api.quangdungcinema.id.vn/api/blog-cinema');
                 setBlogs(res.data || []);
             } catch (error) {
                 console.error("Lỗi khi tải bài viết:", error);
@@ -56,27 +54,22 @@ const BlogCinema = () => {
     return (
         <div className="blog-page">
             <div className="blog-container">
-
-                {/* ===== HEADER ===== */}
+                {/* Header */}
                 <div className="blog-header">
-                    <div className="blog-header-icon">
-                        <Newspaper size={48} />
-                    </div>
+                    <div className="blog-header-icon"><Newspaper size={48} /></div>
                     <h1>Blog Điện Ảnh</h1>
-                    <p className="blog-header-desc">
-                        Cập nhật những tin tức mới nhất về phim ảnh, review phim và sự kiện điện ảnh tại CineStar.
-                    </p>
+                    <p className="blog-header-desc">Cập nhật những tin tức mới nhất về phim ảnh, review phim và sự kiện điện ảnh tại CineStar.</p>
                     <div className="blog-header-line" />
                 </div>
 
-                {/* ===== BREADCRUMB ===== */}
+                {/* Breadcrumb */}
                 <div className="blog-breadcrumb">
                     <Link to="/">Trang chủ</Link>
                     <ChevronRight size={14} />
                     <span>Góc điện ảnh</span>
                 </div>
 
-                {/* ===== GRID ===== */}
+                {/* Grid */}
                 {blogs.length === 0 ? (
                     <div className="blog-empty">
                         <AlertCircle size={48} />
@@ -87,10 +80,8 @@ const BlogCinema = () => {
                 ) : (
                     <div className="blog-grid">
                         {blogs.map((blog) => {
-                            // ✅ Hỗ trợ cả 2 tên trường: blog_image (mới) và image_url (cũ)
                             const imageField = blog.blog_image || blog.image_url;
                             const imageUrl = getImageUrl(imageField, blogCinemaBaseUrl);
-
                             return (
                                 <CinemaCard
                                     key={blog.blog_id}
@@ -103,7 +94,6 @@ const BlogCinema = () => {
                         })}
                     </div>
                 )}
-
             </div>
         </div>
     );
