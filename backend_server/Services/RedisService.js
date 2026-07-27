@@ -2,6 +2,10 @@ const redis = require("../Config/redis");
 
 class RedisService {
 
+    /*=========================================================
+        BASIC REDIS METHODS
+    =========================================================*/
+
     async set(key, value, ttlSeconds = 300) {
         try {
             await redis.set(key, value, { ex: ttlSeconds });
@@ -57,52 +61,133 @@ class RedisService {
         }
     }
 
-    // OTP specific methods
+    /*=========================================================
+        OTP METHODS
+    =========================================================*/
+
     async saveOTP(email, purpose, otp, ttlSeconds = 300) {
+
         const key = `otp:${email}:${purpose}`;
-        return await this.set(key, otp, ttlSeconds);
+
+        console.log("\n========== SAVE OTP ==========");
+        console.log("📧 Email   :", email);
+        console.log("🎯 Purpose :", purpose);
+        console.log("🔑 Key     :", key);
+        console.log("🔢 OTP     :", otp);
+
+        const saved = await this.set(key, otp, ttlSeconds);
+
+        const value = await this.get(key);
+
+        console.log("📥 Redis value sau khi lưu :", value);
+        console.log("================================\n");
+
+        return saved;
     }
 
     async getOTP(email, purpose) {
+
         const key = `otp:${email}:${purpose}`;
-        return await this.get(key);
+
+        console.log("\n========== GET OTP ==========");
+        console.log("📧 Email   :", email);
+        console.log("🎯 Purpose :", purpose);
+        console.log("🔑 Key     :", key);
+
+        const value = await this.get(key);
+
+        console.log("📥 OTP đọc từ Redis :", value);
+        console.log("==============================\n");
+
+        return value;
     }
 
     async deleteOTP(email, purpose) {
+
         const key = `otp:${email}:${purpose}`;
+
+        console.log("\n========== DELETE OTP ==========");
+        console.log("📧 Email   :", email);
+        console.log("🎯 Purpose :", purpose);
+        console.log("🔑 Key     :", key);
+
         await this.delete(key);
         await this.deleteAttempts(email, purpose);
+
+        console.log("✅ OTP Deleted");
+        console.log("================================\n");
     }
 
     async deleteAttempts(email, purpose) {
         const key = `otp:${email}:${purpose}:attempts`;
+
+        console.log(`🗑️ Delete attempts: ${key}`);
+
         await this.delete(key);
     }
 
     async getOTPAttempts(email, purpose) {
+
         const key = `otp:${email}:${purpose}:attempts`;
+
         const attempts = await this.get(key);
-        return attempts ? parseInt(attempts) : 0;
+
+        const total = attempts ? parseInt(attempts) : 0;
+
+        console.log(`🔢 OTP Attempts: ${total}`);
+
+        return total;
     }
 
     async incrementOTPAttempts(email, purpose, ttlSeconds = 300) {
+
         const key = `otp:${email}:${purpose}:attempts`;
+
         const attempts = await this.increment(key);
+
         await this.expire(key, ttlSeconds);
+
+        console.log(`❌ OTP Sai lần thứ: ${attempts}`);
+
         return attempts;
     }
 
     async isOTPLocked(email, purpose, maxAttempts = 5) {
+
         const attempts = await this.getOTPAttempts(email, purpose);
-        return attempts >= maxAttempts;
+
+        const locked = attempts >= maxAttempts;
+
+        console.log(
+            `🔒 OTP Locked? ${locked} (${attempts}/${maxAttempts})`
+        );
+
+        return locked;
     }
 
+    /*=========================================================
+        RATE LIMIT
+    =========================================================*/
+
     async checkRateLimit(email, purpose, limit = 3, windowSeconds = 60) {
+
         const key = `otp:${email}:${purpose}:ratelimit`;
+
+        console.log("\n========== RATE LIMIT ==========");
+        console.log("Key:", key);
+
         const current = await this.get(key);
+
         if (current) {
+
             const count = parseInt(current);
+
+            console.log(`Current Count: ${count}`);
+
             if (count >= limit) {
+
+                console.log("⛔ Rate Limit Block");
+
                 return {
                     allowed: false,
                     remaining: 0,
@@ -112,7 +197,12 @@ class RedisService {
         }
 
         const newCount = await this.increment(key);
+
         await this.expire(key, windowSeconds);
+
+        console.log(`✅ Rate Limit Count: ${newCount}`);
+        console.log("===============================\n");
+
         return {
             allowed: true,
             remaining: limit - newCount
