@@ -1,7 +1,8 @@
 const PaymentService = require("../Services/PaymentService");
+const db = require("../Config/db"); // ✅ THÊM DÒNG NÀY
 
 exports.processOrder = async (req, res) => {
-  const connection = await db.getConnection();
+  const connection = await db.getConnection(); // ✅ lấy connection
   try {
     await connection.beginTransaction();
     const result = await PaymentService.processOrder(connection, req.body);

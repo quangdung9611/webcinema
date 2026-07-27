@@ -5,7 +5,7 @@ import axios from 'axios';
 // COMPONENTS
 import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
-import LoadingButton from '../components/LoadingButton'; // ✅ Import LoadingButton
+import LoadingButton from '../components/LoadingButton';
 
 // STYLES
 import '../styles/Payment.css';
@@ -46,7 +46,7 @@ const Payment = () => {
     const [isTimerActive, setIsTimerActive] = useState(false);
 
     const [isProcessing, setIsProcessing] = useState(false);
-    const [isApplyingCoupon, setIsApplyingCoupon] = useState(false); // ✅ Loading coupon
+    const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
     const [userInfo, setUserInfo] = useState({
         user_id: user?.user_id || '',
@@ -116,14 +116,37 @@ const Payment = () => {
 
         window.scrollTo(0, 0);
 
+        // Kiểm tra dữ liệu đầu vào
         if (
             !movie ||
             !selectedSeats ||
             selectedSeats.length === 0
         ) {
-
             navigate('/');
             return;
+        }
+
+        // Kiểm tra user đã đăng nhập chưa
+        if (!user || !user.user_id) {
+            showNotice(
+                'error',
+                'YÊU CẦU ĐĂNG NHẬP',
+                'Vui lòng đăng nhập để tiếp tục đặt vé.',
+                () => {
+                    navigate('/login', { state: { from: location.pathname } });
+                }
+            );
+            return;
+        }
+
+        // Nếu user đã đăng nhập, cập nhật userInfo
+        if (user) {
+            setUserInfo({
+                user_id: user.user_id || '',
+                full_name: user.full_name || '',
+                email: user.email || '',
+                phone: user.phone || ''
+            });
         }
 
         if (
@@ -131,11 +154,10 @@ const Payment = () => {
                 'holdExpiresAt'
             )
         ) {
-
             setIsTimerActive(true);
         }
 
-    }, [movie, selectedSeats, navigate]);
+    }, [movie, selectedSeats, navigate, user, location.pathname]);
 
     // =========================
     // TIMER EXPIRE
@@ -207,7 +229,7 @@ const Payment = () => {
                 return;
             }
 
-            setIsApplyingCoupon(true); // ✅ Bật loading coupon
+            setIsApplyingCoupon(true);
 
             try {
 
@@ -253,7 +275,7 @@ const Payment = () => {
                         'Mã không hợp lệ.'
                 );
             } finally {
-                setIsApplyingCoupon(false); // ✅ Tắt loading coupon
+                setIsApplyingCoupon(false);
             }
         };
 
@@ -262,6 +284,19 @@ const Payment = () => {
     // =========================
 
     const handleProceed = async () => {
+
+        // Kiểm tra thông tin người dùng
+        if (!userInfo.user_id) {
+            showNotice(
+                'error',
+                'YÊU CẦU ĐĂNG NHẬP',
+                'Vui lòng đăng nhập để tiếp tục.',
+                () => {
+                    navigate('/login', { state: { from: location.pathname } });
+                }
+            );
+            return;
+        }
 
         if (
             !userInfo.full_name ||
@@ -272,7 +307,7 @@ const Payment = () => {
             showNotice(
                 'error',
                 'THIẾU THÔNG TIN',
-                'Vui lòng nhập đầy đủ thông tin.'
+                'Vui lòng nhập đầy đủ thông tin nhận vé.'
             );
 
             return;
@@ -282,43 +317,39 @@ const Payment = () => {
 
         try {
 
+            // Đảm bảo selectedSeats có đủ thông tin
+            const seatsWithPrice = selectedSeats.map(seat => ({
+                seat_id: seat.seat_id,
+                seat_row: seat.seat_row || '',
+                seat_number: seat.seat_number || '',
+                price: seat.price || 0
+            }));
+
+            // Đảm bảo selectedFoods có đúng cấu trúc
+            const foodsWithQuantity = (selectedFoods || []).map(food => ({
+                product_id: food.product_id,
+                product_name: food.product_name || '',
+                quantity: food.quantity || 1,
+                price: food.price || 0
+            }));
+
             const postData = {
-
-                userId:
-                    userInfo.user_id,
-
-                showtimeId,
-
-                totalAmount:
-                    Number(grandTotal),
-
-                discountAmount:
-                    Number(discountAmount),
-
-                couponId:
-                    appliedCouponId,
-
-                selectedSeats,
-
-                selectedFoods,
-
-                customerEmail:
-                    userInfo.email,
-
-                customerName:
-                    userInfo.full_name,
-
-                movieTitle:
-                    movie?.title,
-
-                cinemaName:
-                    selectedCinema?.cinema_name,
-
-                startTime:
-                    selectedShowtime?.start_time,
-
+                userId: userInfo.user_id,
+                showtimeId: showtimeId,
+                totalAmount: Number(grandTotal),
+                discountAmount: Number(discountAmount),
+                couponId: appliedCouponId || null,
+                selectedSeats: seatsWithPrice,
+                selectedFoods: foodsWithQuantity,
+                customerEmail: userInfo.email,
+                customerName: userInfo.full_name,
+                movieTitle: movie?.title || '',
+                cinemaName: selectedCinema?.cinema_name || '',
+                startTime: selectedShowtime?.start_time || '',
                 status: 'pending'
             };
+
+            console.log('📦 Payment payload:', postData);
 
             const response =
                 await axios.post(
@@ -400,6 +431,12 @@ const Payment = () => {
                         }
                     );
                 }
+            } else {
+                showNotice(
+                    'error',
+                    'LỖI',
+                    response.data?.message || 'Không thể xử lý thanh toán.'
+                );
             }
 
         } catch (err) {
@@ -409,10 +446,12 @@ const Payment = () => {
                 err
             );
 
+            const errorMessage = err.response?.data?.message || err.message || 'Không thể xử lý thanh toán.';
+            
             showNotice(
                 'error',
                 'LỖI',
-                'Không thể xử lý thanh toán.'
+                errorMessage
             );
 
         } finally {
