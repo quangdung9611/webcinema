@@ -7,6 +7,21 @@ const Otp = require("../utils/Otp");
 const OtpRepository = require("../Repositories/OtpRepository");
 
 /*=========================================================
+    HẰNG SỐ PURPOSE
+=========================================================*/
+
+const PURPOSE = {
+    REGISTER: 'REGISTER',
+    FORGOT_PASSWORD: 'FORGOT_PASSWORD',
+    CHANGE_EMAIL: 'CHANGE_EMAIL',
+    VERIFY_EMAIL: 'VERIFY_EMAIL',
+    PAYMENT: 'PAYMENT',
+    RESET_PASSWORD: 'RESET_PASSWORD',
+    BOOKING: 'BOOKING',
+    VERIFY_PHONE: 'VERIFY_PHONE'
+};
+
+/*=========================================================
     OTP SERVICE
 =========================================================*/
 
@@ -176,4 +191,7 @@ async deleteOTP(email, purpose) {
 }
 }
 
-module.exports = new OtpService();
+// ✅ Export cả instance và hằng số PURPOSE
+const otpService = new OtpService();
+otpService.PURPOSE = PURPOSE;
+module.exports = otpService;
