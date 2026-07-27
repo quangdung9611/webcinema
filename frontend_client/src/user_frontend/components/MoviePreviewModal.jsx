@@ -23,11 +23,6 @@ import Modal from "./Modal";
 import "../styles/MoviePreviewModal.css";
 import "../styles/Modal.css";
 
-const DEFAULT_POSTER =
-    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg";
-const DEFAULT_BACKDROP =
-    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-backdrop.jpg";
-
 const decodeHtmlEntities = (text) => {
     if (!text) return '';
     const textarea = document.createElement('textarea');
@@ -160,7 +155,7 @@ const MoviePreviewModal = ({
                     movie: {
                         movie_id: movie.movie_id,
                         title: movie.title,
-                        poster_url: movie.poster_url,
+                        poster_url: movie.movie_poster,
                         age_rating: movie.age_rating,
                         slug: movie.slug || movie.movie_slug
                     }
@@ -278,7 +273,7 @@ const MoviePreviewModal = ({
                         <X size={24} />
                     </button>
 
-                    {/* BANNER HERO */}
+                    {/* BANNER HERO - chỉ dùng movie_backdrop */}
                     <div className="preview-hero-stage">
                         <div
                             className={`preview-hero-layer current ${
@@ -288,15 +283,15 @@ const MoviePreviewModal = ({
                             }`}
                         >
                             <div className="cinema-hero-banner">
-                                <img
-                                    src={selectedMovie?.backdrop_url || selectedMovie?.movie_backdrop || selectedMovie?.poster_url || DEFAULT_BACKDROP}
-                                    alt={selectedMovie?.title}
-                                    className="banner-horizontal-img"
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = DEFAULT_BACKDROP;
-                                    }}
-                                />
+                                {selectedMovie?.movie_backdrop ? (
+                                    <img
+                                        src={selectedMovie.movie_backdrop}
+                                        alt={selectedMovie.title}
+                                        className="banner-horizontal-img"
+                                    />
+                                ) : (
+                                    <div className="banner-placeholder" />
+                                )}
                             </div>
                         </div>
 
@@ -307,15 +302,15 @@ const MoviePreviewModal = ({
                                 }`}
                             >
                                 <div className="cinema-hero-banner">
-                                    <img
-                                        src={incomingMovie.backdrop_url || incomingMovie.movie_backdrop || incomingMovie.poster_url || DEFAULT_BACKDROP}
-                                        alt={incomingMovie.title}
-                                        className="banner-horizontal-img"
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = DEFAULT_BACKDROP;
-                                        }}
-                                    />
+                                    {incomingMovie.movie_backdrop ? (
+                                        <img
+                                            src={incomingMovie.movie_backdrop}
+                                            alt={incomingMovie.title}
+                                            className="banner-horizontal-img"
+                                        />
+                                    ) : (
+                                        <div className="banner-placeholder" />
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -326,15 +321,15 @@ const MoviePreviewModal = ({
                         <div className="preview-info-content">
                             <div className="preview-info-row">
                                 <div className="preview-poster-wrapper">
-                                    <img
-                                        src={selectedMovie?.poster_url || selectedMovie?.movie_poster || DEFAULT_POSTER}
-                                        alt={selectedMovie?.title}
-                                        className="preview-poster-img"
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = DEFAULT_POSTER;
-                                        }}
-                                    />
+                                    {selectedMovie?.movie_poster ? (
+                                        <img
+                                            src={selectedMovie.movie_poster}
+                                            alt={selectedMovie.title}
+                                            className="preview-poster-img"
+                                        />
+                                    ) : (
+                                        <div className="poster-placeholder" />
+                                    )}
                                 </div>
 
                                 <div className="preview-info-details">
@@ -441,7 +436,7 @@ const MoviePreviewModal = ({
                                 <div className="preview-strip-track" ref={trackRef}>
                                     {otherMovies.map((movie) => {
                                         const active = selectedMovie && selectedMovie.movie_id === movie.movie_id;
-                                        const posterSrc = movie.poster_url || movie.movie_poster || DEFAULT_POSTER;
+                                        const posterSrc = movie.movie_poster || null;
                                         return (
                                             <div
                                                 key={movie.movie_id}
@@ -450,15 +445,15 @@ const MoviePreviewModal = ({
                                                 }`}
                                                 onClick={() => changeHeroMovie(movie)}
                                             >
-                                                <img
-                                                    src={posterSrc}
-                                                    alt={movie.title}
-                                                    className="preview-strip-image"
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src = DEFAULT_POSTER;
-                                                    }}
-                                                />
+                                                {posterSrc ? (
+                                                    <img
+                                                        src={posterSrc}
+                                                        alt={movie.title}
+                                                        className="preview-strip-image"
+                                                    />
+                                                ) : (
+                                                    <div className="strip-poster-placeholder" />
+                                                )}
                                                 <div className="preview-strip-gradient" />
                                                 <div className="preview-strip-info">
                                                     <span className="preview-strip-name">

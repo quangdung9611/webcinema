@@ -13,9 +13,6 @@ import "../styles/MoviePreviewHero.css";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-const DEFAULT_BACKDROP =
-    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-backdrop.jpg";
-
 const MoviePreviewHero = ({
     movie,
     onBook,
@@ -35,22 +32,22 @@ const MoviePreviewHero = ({
         navigate(`/booking/${movie.slug || movie.movie_slug}`);
     };
 
-    // ✅ Dùng trực tiếp URL Cloudinary từ database (không ghép URL)
-    const backdropSrc = movie.backdrop_url || movie.movie_backdrop || movie.poster_url || DEFAULT_BACKDROP;
+    // ✅ Chỉ lấy movie_backdrop, không fallback, không helper
+    const backdropSrc = movie.movie_backdrop || null;
 
     return (
         <section className="preview-hero">
 
             {/* BACKDROP */}
-            <img
-                className="preview-hero-backdrop"
-                src={backdropSrc}
-                alt={movie.title}
-                onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = DEFAULT_BACKDROP;
-                }}
-            />
+            {backdropSrc ? (
+                <img
+                    className="preview-hero-backdrop"
+                    src={backdropSrc}
+                    alt={movie.title}
+                />
+            ) : (
+                <div className="preview-hero-backdrop-placeholder" />
+            )}
 
             {/* LỚP PHỦ */}
             <div className="preview-hero-overlay"></div>

@@ -28,7 +28,7 @@ const Booking = () => {
     const navigate = useNavigate();
     const { slug } = useParams();
 
-    // State...
+    // State
     const [movie, setMovie] = useState(location.state?.movie || null);
     const [cinemas, setCinemas] = useState([]);
     const [availableDates, setAvailableDates] = useState([]);
@@ -42,6 +42,7 @@ const Booking = () => {
     const [loading, setLoading] = useState(false);
     const [isNavigating, setIsNavigating] = useState(false);
     const [isTimerActive, setIsTimerActive] = useState(false);
+    const [fetchError, setFetchError] = useState(null); // 👈 state lỗi
 
     const [modalConfig, setModalConfig] = useState({
         show: false,
@@ -71,32 +72,53 @@ const Booking = () => {
         }
     };
 
-    // Load movie from slug
-    useEffect(() => {
-        window.scrollTo(0, 0);
-        const fetchMovieBySlug = async () => {
-            if (movie) return;
-            if (!slug) {
-                navigate('/');
-                return;
-            }
-            try {
-                setLoading(true);
-                const res = await axios.get(
-                    `https://api.quangdungcinema.id.vn/api/movies/${slug}`
-                );
-                setMovie(res.data);
-            } catch (error) {
-                console.error("Lỗi load movie theo slug:", error);
-                navigate('/');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchMovieBySlug();
-    }, [slug, movie, navigate]);
+    // =========================================================
+// LOAD MOVIE FROM SLUG
+// =========================================================
+useEffect(() => {
+    window.scrollTo(0, 0);
 
-    // Load cinemas + dates
+    const fetchMovieBySlug = async () => {
+        if (movie) return;
+
+        if (!slug) {
+            navigate('/');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setFetchError(null);
+
+            const res = await axios.get(
+                `https://api.quangdungcinema.id.vn/api/movies/detail/${slug}`
+            );
+
+            // ==========================
+            // DEBUG
+            // ==========================
+            console.log("===== MOVIE API =====");
+            console.log("Response:", res);
+            console.log("Response Data:", res.data);
+            console.log("movie_poster:", res.data?.movie_poster);
+            console.log("=====================");
+
+            setMovie(res.data);
+
+        } catch (error) {
+            console.error("Lỗi load movie theo slug:", error);
+            setFetchError("Không thể tải thông tin phim. Vui lòng thử lại.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchMovieBySlug();
+}, [slug, movie, navigate]);
+
+    // =========================================================
+    // LOAD CINEMAS + DATES (giữ nguyên)
+    // =========================================================
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -121,7 +143,9 @@ const Booking = () => {
         fetchInitialData();
     }, []);
 
-    // Load showtimes
+    // =========================================================
+    // LOAD SHOWTIMES (giữ nguyên)
+    // =========================================================
     useEffect(() => {
         if (!selectedCinema || !selectedDate || !(movie?.movie_id || movie?.id)) {
             setAvailableShowtimes([]);
@@ -148,7 +172,9 @@ const Booking = () => {
         fetchShowtimes();
     }, [selectedCinema, selectedDate, movie]);
 
-    // Fetch seats
+    // =========================================================
+    // FETCH SEATS (giữ nguyên)
+    // =========================================================
     const fetchSeats = useCallback(async () => {
         if (!showtimeId) return;
         try {
@@ -188,7 +214,9 @@ const Booking = () => {
         }
     }, [showtimeId, fetchSeats]);
 
-    // Socket realtime
+    // =========================================================
+    // SOCKET REALTIME (giữ nguyên)
+    // =========================================================
     useEffect(() => {
         if (!showtimeId) return;
         socket.on('server-khoa-ghe', (data) => {
@@ -219,7 +247,9 @@ const Booking = () => {
         };
     }, [showtimeId, socket]);
 
-    // Clear session
+    // =========================================================
+    // CLEAR SESSION (giữ nguyên)
+    // =========================================================
     const clearBookingSession = useCallback(() => {
         selectedSeats.forEach(s => {
             socket.emit('client-huy-chon-ghe', {
@@ -234,7 +264,9 @@ const Booking = () => {
         setSelectedSeats([]);
     }, [selectedSeats, socket, showtimeId]);
 
-    // Handle seat click
+    // =========================================================
+    // HANDLE SEAT CLICK (giữ nguyên)
+    // =========================================================
     const handleSeatClick = (seat) => {
         if (
             seat.seat_status === 'Booked' ||
@@ -280,7 +312,9 @@ const Booking = () => {
         sessionStorage.setItem('selectedSeats', JSON.stringify(updated));
     };
 
-    // Continue to Foods
+    // =========================================================
+    // CONTINUE TO FOODS (giữ nguyên)
+    // =========================================================
     const handleContinue = () => {
         setIsNavigating(true);
         navigate('/foods', {
@@ -298,7 +332,9 @@ const Booking = () => {
         }, 3000);
     };
 
-    // Group seats
+    // =========================================================
+    // GROUP SEATS (giữ nguyên)
+    // =========================================================
     const groupedSeats = useMemo(() => {
         return seats.reduce((acc, seat) => {
             const row = seat.seat_row;
@@ -310,11 +346,10 @@ const Booking = () => {
     }, [seats]);
 
     // =========================================================
-    // 🎬 MOVIE WITH POSTER – CHỈ LẤY movie_poster
+    // MOVIE WITH POSTER – chỉ lấy raw movie_poster
     // =========================================================
     const movieWithPoster = useMemo(() => {
         if (!movie) return null;
-        // ✅ Chỉ lấy movie_poster, không fallback
         const posterUrl = movie.movie_poster || null;
         return {
             ...movie,
@@ -323,7 +358,28 @@ const Booking = () => {
         };
     }, [movie]);
 
-    // Render
+    // =========================================================
+    // HIỂN THỊ LỖI nếu fetch thất bại
+    // =========================================================
+    if (fetchError) {
+        return (
+            <div className="booking-error-container">
+                <div className="booking-error-box">
+                    <p>{fetchError}</p>
+                    <button 
+                        className="booking-retry-btn"
+                        onClick={() => window.location.reload()}
+                    >
+                        Thử lại
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // =========================================================
+    // RENDER
+    // =========================================================
     return (
         <>
             <div className="booking-wrapper">

@@ -18,11 +18,6 @@ import MovieHeroBanner from '../components/MovieHeroBanner';
 import { useAuth } from '../../context/AuthContext';
 import "../styles/MovieDetail.css";
 
-const DEFAULT_POSTER =
-    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg";
-const DEFAULT_BACKDROP =
-    "https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-backdrop.jpg";
-
 const MovieDetail = () => {
     const { slug } = useParams();
     const navigate = useNavigate();
@@ -92,7 +87,7 @@ const MovieDetail = () => {
             try {
                 setLoading(true);
                 const [resMovie, resRelated, resActors] = await Promise.all([
-                    axios.get(`${API_BASE_URL}/movies/${slug}`),
+                    axios.get(`${API_BASE_URL}/movies/detail/${slug}`), // ✅ đã sửa thành detail
                     axios.get(`${API_BASE_URL}/movies`),
                     axios.get(`${API_BASE_URL}/actors`)
                 ]);
@@ -283,6 +278,13 @@ const MovieDetail = () => {
         return modalConfig.message;
     };
 
+    // Chuẩn bị object movie cho Banner: chỉ lấy raw, không fallback
+    const movieForBanner = {
+        ...movie,
+        poster_url: movie.movie_poster || null,
+        backdrop_url: movie.movie_backdrop || null,
+    };
+
     return (
         <div className="cinema-movie-detail-page">
             {/* Modal chung */}
@@ -332,9 +334,9 @@ const MovieDetail = () => {
                 </div>
             )}
 
-            {/* SECTION 1: HERO BANNER NGANG */}
+            {/* SECTION 1: HERO BANNER NGANG - truyền movieForBanner (không fallback) */}
             <MovieHeroBanner
-                movie={movie}
+                movie={movieForBanner}
                 onTrailer={openTrailerModal}
             />
 
@@ -344,15 +346,15 @@ const MovieDetail = () => {
                 <div className="movie-info-section">
                     <div className="movie-info-container">
                         <div className="movie-poster-col">
-                            <img
-                                src={movie.poster_url || movie.movie_poster || DEFAULT_POSTER}
-                                alt={movie.title}
-                                className="movie-poster-img"
-                                onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = DEFAULT_POSTER;
-                                }}
-                            />
+                            {movie.movie_poster ? (
+                                <img
+                                    src={movie.movie_poster}
+                                    alt={movie.title}
+                                    className="movie-poster-img"
+                                />
+                            ) : (
+                                <div className="movie-poster-placeholder" />
+                            )}
                         </div>
 
                         <div className="movie-info-content">
@@ -488,10 +490,6 @@ const MovieDetail = () => {
                                                 src={actor.actor_avatar}
                                                 alt={actor.name}
                                                 className="actor-real-img"
-                                                onError={(e) => {
-                                                    e.target.onerror = null;
-                                                    e.target.src = DEFAULT_POSTER;
-                                                }}
                                             />
                                         ) : (
                                             <div className="placeholder-avatar-bg">
@@ -541,16 +539,14 @@ const MovieDetail = () => {
                                 onClick={() => openTrailerByMovie(item)}
                             >
                                 <div className="other-trailer-thumb">
-                                    <img
-                                        src={getYoutubeID(item.trailer_url)
-                                            ? `https://img.youtube.com/vi/${getYoutubeID(item.trailer_url)}/maxresdefault.jpg`
-                                            : (item.poster_url || item.movie_poster || DEFAULT_POSTER)}
-                                        alt={item.title}
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = DEFAULT_POSTER;
-                                        }}
-                                    />
+                                    {item.movie_poster ? (
+                                        <img
+                                            src={item.movie_poster}
+                                            alt={item.title}
+                                        />
+                                    ) : (
+                                        <div className="trailer-thumb-placeholder" />
+                                    )}
                                     <div className="other-trailer-overlay">
                                         <Play size={42} strokeWidth={2.5} />
                                     </div>
