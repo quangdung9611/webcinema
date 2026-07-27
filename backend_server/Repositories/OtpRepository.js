@@ -11,6 +11,7 @@ class OtpRepository {
 
             email,
             purpose,
+            status = "sent",
             ip_address,
             user_agent
 
@@ -43,7 +44,7 @@ class OtpRepository {
 
                 email,
                 purpose,
-                "sent",
+                status,
                 ip_address,
                 user_agent
 
@@ -136,7 +137,8 @@ class OtpRepository {
         );
 
     }
-        /*=========================================================
+
+    /*=========================================================
         MARK VERIFIED
     =========================================================*/
     async markVerified(otpId) {
@@ -255,6 +257,35 @@ class OtpRepository {
     }
 
     /*=========================================================
+        MARK RESENT
+    =========================================================*/
+    async markResent(otpId) {
+
+        await db.query(
+
+            `
+            UPDATE otp_logs
+
+            SET
+
+                status = 'resent'
+
+            WHERE
+
+                otp_id = ?
+            `,
+
+            [
+
+                otpId
+
+            ]
+
+        );
+
+    }
+
+    /*=========================================================
         DELETE OTP LOGS
     =========================================================*/
     async deleteByEmail(
@@ -288,7 +319,8 @@ class OtpRepository {
         );
 
     }
-        /*=========================================================
+
+    /*=========================================================
         COUNT RECENT OTPS
     =========================================================*/
     async countRecentOtps(
