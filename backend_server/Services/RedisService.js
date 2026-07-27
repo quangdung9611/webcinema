@@ -208,6 +208,16 @@ class RedisService {
             remaining: limit - newCount
         };
     }
+    async ping() {
+    try {
+        const result = await redis.ping();
+        console.log("🏓 Redis Ping:", result);
+        return result;
+    } catch (err) {
+        console.error("❌ Redis Ping Error:", err);
+        throw err;
+    }
+}
 }
 
 module.exports = new RedisService();
