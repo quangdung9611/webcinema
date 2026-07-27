@@ -2,6 +2,7 @@ const BookingService = require("./BookingService");
 const TicketService = require("./TicketService");
 const PointsService = require("./PointsService");
 const OtpService = require("./OtpService");
+const { PURPOSE } = require("./OtpService"); // 👈 import hằng số
 const MailServiceTicket = require("./MailServiceTicket");
 
 class BankAppService {
@@ -48,7 +49,7 @@ class BankAppService {
     await BookingService.cancelBooking(connection, bookingId);
     await TicketService.releaseTickets(connection, bookingId);
     if (email) {
-      await OtpService.deleteOTP(email, "PAYMENT");
+      await OtpService.deleteOTP(email, PURPOSE.PAYMENT); // 👈 dùng hằng số
     }
     return true;
   }

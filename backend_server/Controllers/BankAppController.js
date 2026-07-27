@@ -1,5 +1,6 @@
 const BankAppService = require("../Services/BankAppService");
-const OtpService = require("../Services/OtpService");   // instance
+const OtpService = require("../Services/OtpService");
+const { PURPOSE } = require("../Services/OtpService"); // 👈 import hằng số
 const MailServiceTicket = require("../Services/MailServiceTicket");
 const db = require("../Config/db");
 
@@ -10,8 +11,8 @@ exports.sendOTP = async (req, res) => {
       return res.status(400).json({ success: false, message: "Thiếu email hoặc bookingId" });
     }
 
-    // ✅ Gọi instance method
-    const result = await OtpService.createPaymentOTP(email, "PAYMENT");
+    // ✅ Gọi method createOTP với PURPOSE.PAYMENT
+    const result = await OtpService.createOTP(email, PURPOSE.PAYMENT);
     if (!result.success) {
       return res.status(400).json({ success: false, message: result.message });
     }
@@ -31,7 +32,8 @@ exports.verifyOTP = async (req, res) => {
   try {
     const { email, otp, bookingId } = req.body;
 
-    const verifyResult = await OtpService.verifyPaymentOTP(email, otp, "PAYMENT");
+    // ✅ Gọi method verifyOTP với PURPOSE.PAYMENT
+    const verifyResult = await OtpService.verifyOTP(email, otp, PURPOSE.PAYMENT);
     if (!verifyResult.success) {
       return res.status(400).json(verifyResult);
     }
