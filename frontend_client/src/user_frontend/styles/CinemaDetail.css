@@ -284,20 +284,9 @@
   border: var(--border-silver);
   transition: all var(--transition-normal);
 }
-.date-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(232, 232, 232, 0.06), transparent);
-  transform: skewX(-25deg);
-  transition: 0.6s;
-}
-.date-card:hover::before {
-  left: 180%;
-}
+
+/* ===== ĐÃ XÓA HIỆU ỨNG QUÉT SÁNG (::before) ===== */
+
 .date-card:hover {
   transform: translateY(-5px);
   background: rgba(232, 232, 232, 0.06);
@@ -308,9 +297,6 @@
   background: var(--cinema-border-gradient);
   border-color: transparent;
   box-shadow: 0 0 30px rgba(232, 232, 232, 0.2);
-}
-.date-card.active::before {
-  display: none;
 }
 .date-day {
   font-size: var(--font-size-base);

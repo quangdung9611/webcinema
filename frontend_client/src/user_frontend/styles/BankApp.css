@@ -64,7 +64,7 @@
     box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
 }
 
-/* Glow vàng nhẹ */
+/* Glow bạc (thay vì vàng) */
 .otp-card::before {
     content: '';
     position: absolute;
@@ -73,7 +73,7 @@
     top: -120px;
     right: -120px;
     border-radius: 50%;
-    background: rgba(201, 168, 76, 0.10);
+    background: rgba(232, 232, 232, 0.10);
     filter: blur(90px);
 }
 
@@ -109,7 +109,7 @@
     right: var(--space-md);
     height: 4px;
     border-radius: var(--radius-round);
-    background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    background: linear-gradient(90deg, transparent, var(--silver-primary), transparent);
     animation: scanLine 2s linear infinite;
 }
 
@@ -141,7 +141,7 @@
     line-height: 1.1;
     text-align: center;
     margin-bottom: var(--space-sm);
-    color: var(--gold-primary);
+    color: var(--silver-primary);
 }
 
 .otp-sub {
@@ -180,9 +180,9 @@
 }
 
 .otp-field:focus {
-    border-color: var(--gold-primary);
-    background: rgba(201, 168, 76, 0.08);
-    box-shadow: 0 0 0 5px rgba(201, 168, 76, 0.12);
+    border-color: var(--silver-primary);
+    background: rgba(232, 232, 232, 0.08);
+    box-shadow: 0 0 0 5px rgba(232, 232, 232, 0.12);
 }
 
 /* ================================
@@ -206,7 +206,7 @@
     margin-top: var(--space-sm);
     font-size: var(--font-size-h1);
     font-weight: var(--fw-extrabold);
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     letter-spacing: 4px;
 }
 
@@ -219,7 +219,7 @@
     height: 66px;
     border: none;
     border-radius: var(--radius-lg);
-    background: var(--gold-gradient);
+    background: var(--gold-gradient); /* Đã map sang bạc trong index.css */
     color: var(--black-premium);
     font-size: var(--font-size-h4);
     font-weight: var(--fw-extrabold);
@@ -230,7 +230,7 @@
 
 .btn-confirm-payment:hover {
     transform: translateY(-2px);
-    box-shadow: 0 14px 28px rgba(201, 168, 76, 0.25);
+    box-shadow: 0 14px 28px rgba(232, 232, 232, 0.25);
 }
 
 .btn-confirm-payment:disabled {

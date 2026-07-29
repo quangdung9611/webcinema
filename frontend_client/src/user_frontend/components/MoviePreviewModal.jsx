@@ -19,7 +19,7 @@ import {
 
 import { useNavigate } from "react-router-dom";
 
-import Modal from "./Modal";
+import FilmModal from "./FilmModal"; // ✅ đã import
 import "../styles/MoviePreviewModal.css";
 import "../styles/Modal.css";
 
@@ -260,7 +260,8 @@ const MoviePreviewModal = ({
 
     return (
         <>
-            <Modal
+            {/* ✅ Đã đổi từ <Modal> thành <FilmModal> */}
+            <FilmModal
                 open={open}
                 onClose={onClose}
                 size="xl"
@@ -476,7 +477,7 @@ const MoviePreviewModal = ({
                     </div>
 
                 </div>
-            </Modal>
+            </FilmModal>
 
             {/* Trailer Modal */}
             {showTrailer && videoId && (

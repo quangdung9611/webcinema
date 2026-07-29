@@ -1,71 +1,70 @@
-import React, { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { X, CheckCircle2, XCircle, AlertTriangle, Info } from "lucide-react";
+import React from "react";
+import {
+    X,
+    CheckCircle2,
+    XCircle,
+    AlertTriangle,
+    Info
+} from "lucide-react";
 
 import "../styles/Modal.css";
 
 const Modal = ({
-    open,
+    show,
     onClose,
-    title = "",
+    title,
+    message,
     children,
-    size = "md",
     type = "default",
-    showHeader = true,
-    showCloseButton = true,
-    className = ""
+    className = "",
 }) => {
 
-    const [visible, setVisible] = useState(open);
-    const [animate, setAnimate] = useState(false);
+    if (!show) return null;
 
-    useEffect(() => {
-        if (open) {
-            setVisible(true);
-            requestAnimationFrame(() => {
-                setAnimate(true);
-            });
-        } else {
-            setAnimate(false);
-            const timer = setTimeout(() => {
-                setVisible(false);
-            }, 800); // 👈 KHỚP VỚI filmReelOut 0.7s
-            return () => clearTimeout(timer);
+    const renderHeaderIcon = () => {
+        switch (type) {
+            case "success":
+                return <CheckCircle2 size={34} strokeWidth={2.4} />;
+            case "error":
+                return <XCircle size={34} strokeWidth={2.4} />;
+            case "warning":
+                return <AlertTriangle size={34} strokeWidth={2.4} />;
+            case "info":
+                return <Info size={34} strokeWidth={2.4} />;
+            default:
+                return null;
         }
-    }, [open]);
+    };
 
-    if (!visible) return null;
-
-    return createPortal(
-        <div className={`modal-overlay ${animate ? "open" : "close"}`} onClick={onClose}>
+    return (
+        <div className="modal-overlay" onClick={onClose}>
             <div
-                className={`modal-container ${size} ${type} ${className}`}
+                className={`modal-container ${className}`}
                 onClick={(e) => e.stopPropagation()}
             >
-                {type !== "default" && (
-                    <div className={`modal-icon ${type}`}>
-                        {renderIcon()}
-                    </div>
-                )}
+                {/* Nút đóng (X) luôn hiển thị */}
+                <button className="modal-close-btn" onClick={onClose}>
+                    <X size={20} />
+                </button>
 
-                {/* {showHeader && (
-                    <div className="modal-header">
+                <div className="modal-content">
+                    {/* Tiêu đề và icon */}
+                    <div className={`modal-title-group ${type}`}>
+                        {type !== "default" && renderHeaderIcon()}
                         <h2 className="modal-title">{title}</h2>
                     </div>
-                )} */}
 
-                {showCloseButton && (
-                    <button className="modal-close-btn" onClick={onClose}>
-                        <X size={22} />
-                    </button>
-                )}
+                    <div className="modal-divider" />
 
-                <div className="modal-body">
-                    {children}
+                    {/* Nội dung */}
+                    <div className="modal-body">
+                        {message ? <p>{message}</p> : children}
+                    </div>
+
+                    {/* ❌ ĐÃ BỎ PHẦN onConfirm / onCancel */}
                 </div>
             </div>
-        </div>,
-        document.body
+        </div>
     );
 };
 

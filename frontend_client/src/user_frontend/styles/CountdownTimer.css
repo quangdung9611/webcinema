@@ -10,7 +10,7 @@
     margin-bottom: var(--space-lg);
     padding: var(--space-md) var(--space-lg);
     border-radius: var(--radius-lg);
-    background: var(--cinema-card-bg);
+  
     border: var(--border-silver);
     box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
     position: relative;
@@ -19,7 +19,7 @@
 }
 
 /* =========================================================
-   GOLD GLOW EFFECT
+   SILVER GLOW EFFECT (thay vì vàng)
 ========================================================= */
 
 .countdown-wrapper::before {
@@ -29,7 +29,7 @@
     right: -70px;
     width: 190px;
     height: 190px;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.18), transparent 70%);
+    background: radial-gradient(circle, rgba(232, 232, 232, 0.18), transparent 70%);
     pointer-events: none;
 }
 
@@ -45,10 +45,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--gold-primary);
-    background: linear-gradient(135deg, rgba(201, 168, 76, 0.22), rgba(184, 146, 58, 0.12));
-    border: 1px solid rgba(201, 168, 76, 0.16);
-    box-shadow: 0 0 18px rgba(201, 168, 76, 0.18), inset 0 0 10px rgba(201, 168, 76, 0.08);
+    color: var(--silver-primary);
+    background: linear-gradient(135deg, rgba(232, 232, 232, 0.22), rgba(200, 200, 200, 0.12));
+    border: 1px solid rgba(232, 232, 232, 0.16);
+    box-shadow: 0 0 18px rgba(232, 232, 232, 0.18), inset 0 0 10px rgba(232, 232, 232, 0.08);
 }
 
 /* =========================================================
@@ -73,7 +73,7 @@
     font-size: var(--font-size-h2);
     font-weight: var(--fw-black);
     line-height: 1;
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     text-shadow: var(--shadow-silver);
 }
 

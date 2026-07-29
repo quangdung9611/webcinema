@@ -29,30 +29,13 @@
 
 .cinema-card:hover .cinema-card-inner {
   border: var(--border-silver-hover) !important;
-
   box-shadow:
     var(--cinema-card-shadow),
     var(--shadow-silver) !important;
-
   transform: var(--hover-elevation) !important;
 }
-/* ---- SHINE SWEEP KHI HOVER ---- */
-.cinema-card-inner::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -150%;
-  width: 80px;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
-  z-index: 3;
-  pointer-events: none;
-  transition: left 0.8s ease;
-}
 
-.cinema-card:hover .cinema-card-inner::before {
-  left: 150%;
-}
+/* ===== ĐÃ XÓA HIỆU ỨNG ::before (ÁNH SÁNG QUÉT NGANG) ===== */
 
 /* ---- ẢNH (SCALE CHẬM RÃI) ---- */
 .cinema-card-image {
@@ -187,8 +170,5 @@
   }
   .cinema-card:hover .cinema-card-inner {
     transform: translateY(0);
-  }
-  .cinema-card-inner::before {
-    display: none;
   }
 }

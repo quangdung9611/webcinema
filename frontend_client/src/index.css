@@ -42,6 +42,52 @@
   --text-body: var(--white-soft);
   --text-secondary: var(--silver-dark);
   --text-muted: var(--silver-muted);
+
+   /* ======== GHẾ ======== */
+
+    /* Ghế thường */
+    --seat-standard-color: #7A7A7A;
+
+    /* Ghế VIP */
+    --seat-vip-color: #D4AF37;
+
+    /* Ghế đôi */
+    --seat-couple-color: #C026D3;
+
+    /* Ghế đang chọn */
+    --seat-selected-color: #22C55E;
+
+    /* Ghế người khác đang giữ (Socket) */
+    --seat-holding-color: #3B82F6;
+
+    /* Ghế đã bán */
+    --seat-sold-color: #DC2626;
+
+    /* Ghế bảo trì */
+    --seat-maintenance-color: #4B5563;
+
+    /* Hover */
+    --seat-hover-color: #E5E7EB;
+
+    /* ======== SỐ GHẾ ======== */
+
+    /* Ghế thường */
+    --seat-number-standard: black;
+
+    /* Ghế VIP */
+    --seat-number-vip: #FFFFFF;
+
+    /* Ghế đôi */
+    --seat-number-couple: #FFFFFF;
+
+    /* Ghế đang chọn */
+    --seat-number-selected: #FFFFFF;
+
+    /* Ghế đã bán */
+    --seat-number-sold: #F3F4F6;
+
+    /* Ghế bảo trì */
+    --seat-number-maintenance: #FCA5A5;
 /* ==========================================================
    BORDER
    ========================================================== */
@@ -433,3 +479,4 @@ ul { list-style: none; }
     border-color: rgba(255, 59, 92, 0.4) !important;
     -webkit-box-shadow: 0 0 0 1000px rgba(255, 59, 92, 0.06) inset !important;
 }
+

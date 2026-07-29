@@ -1,18 +1,14 @@
 /* =========================================================
-   BOOKING PAGE - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
-   Giữ nguyên màu sơ đồ ghế (NORMAL, VIP, COUPLE, SELECTED, SOLD, MAINTENANCE)
+   BOOKING PAGE - SILVER EDITION
+   Sử dụng biến từ index.css - KHÔNG HOVER, KHÔNG SHADOW
+   Responsive: sidebar ngang (40% poster - 60% thông tin) trên tablet
 ========================================================= */
-
 .booking-wrapper {
     min-height: 100vh;
     padding: var(--space-2xl) 0;
     color: var(--text-body);
     overflow: hidden;
 }
-
-/* =========================================================
-   MAIN LAYOUT
-========================================================= */
 
 .booking-container {
     width: 100%;
@@ -29,31 +25,22 @@
     box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
 }
 
-/* =========================================================
-   SIDEBAR
-========================================================= */
-
 .ticket-sidebar {
-    width: 285px !important;
+    width: 320px !important;
     flex-shrink: 0;
     position: sticky;
     top: 20px;
     height: fit-content;
 }
 
-/* =========================================================
-   POSTER
-========================================================= */
-
 .poster-container {
     width: 100% !important;
-    max-width: 220px;
+    max-width: 280px;
     margin: 0 auto var(--space-lg);
     overflow: hidden;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-silver), var(--cinema-card-shadow);
 }
-
 .poster-container img {
     width: 100%;
     height: auto;
@@ -61,14 +48,9 @@
     display: block;
     transition: var(--transition-normal);
 }
-
 .poster-container:hover img {
     transform: scale(1.03);
 }
-
-/* =========================================================
-   RIGHT AREA
-========================================================= */
 
 .main-booking-area {
     flex: 1;
@@ -76,80 +58,67 @@
     padding: var(--space-xs);
 }
 
-/* =========================================================
-   STEP NAVIGATION
-========================================================= */
-
+/* NAV */
 .booking-nav-flex {
     width: 100%;
     display: flex;
     align-items: stretch;
     gap: var(--space-lg);
     margin-bottom: var(--space-2xl);
+    flex-wrap: wrap;
 }
-
 .nav-col {
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
+    min-width: 0;
+    flex: 1 1 auto;
 }
-
 .nav-col label {
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--text-muted);
+    white-space: nowrap;
 }
-
-/* =========================================================
-   CINEMA SELECT
-========================================================= */
 
 .cinema-select {
-    width: 240px;
+    min-width: 200px;
+    flex: 0 0 240px;
 }
-
 .cinema-select select {
     width: 100%;
     height: 60px;
     padding: 0 var(--space-md);
     border-radius: var(--radius-md);
     border: var(--border-silver);
-    background: rgba(0,0,0,0.45);
+    background: rgba(0, 0, 0, 0.45);
     color: var(--text-body);
     outline: none;
     font-size: var(--font-size-base);
     font-weight: var(--fw-semibold);
     transition: var(--transition-normal);
 }
-
 .cinema-select select:hover {
     border-color: var(--silver-primary);
 }
-
 .cinema-select select:focus {
     border-color: var(--silver-primary);
     box-shadow: 0 0 0 4px rgba(232, 232, 232, 0.15), var(--shadow-silver);
 }
-
 .cinema-select option {
     background: var(--black-soft);
     color: var(--text-body);
 }
 
-/* =========================================================
-   DATE + TIME
-========================================================= */
-
 .date-slider {
-    flex: 1.6;
+    flex: 2 1 300px;
     min-width: 0;
 }
-
 .time-slider {
-    flex: 1;
-    min-width: 320px;
+    flex: 1.5 1 280px;
+    min-width: 0;
 }
 
 .slider-controls {
@@ -157,8 +126,8 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
+    width: 100%;
 }
-
 .scroll-list {
     flex: 1;
     display: flex;
@@ -167,38 +136,33 @@
     overflow-x: auto;
     scrollbar-width: none;
     scroll-behavior: smooth;
+    padding: 2px 0;
 }
-
 .scroll-list::-webkit-scrollbar {
     display: none;
 }
-
-/* =========================================================
-   ARROW BUTTON – SILVER
-========================================================= */
 
 .slide-btn {
     width: 42px;
     height: 42px;
     border: none;
     border-radius: 50%;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.06);
     color: var(--text-body);
     font-size: var(--font-size-base);
     cursor: pointer;
     flex-shrink: 0;
     transition: var(--transition-normal);
 }
-
 .slide-btn:hover {
     background: var(--cinema-border-gradient);
     color: var(--black-premium);
     box-shadow: var(--shadow-silver);
 }
-
-/* =========================================================
-   COMMON CARD
-========================================================= */
+.slide-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
 
 .compact-card {
     display: flex;
@@ -209,21 +173,17 @@
     transition: var(--transition-normal);
 }
 
-/* =========================================================
-   DATE CARD – SILVER
-========================================================= */
-
+/* DATE CARD */
 .date-slider .compact-card {
     width: 76px;
     min-width: 76px;
     height: 76px;
     border-radius: 50%;
     flex-direction: column;
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
     border: var(--border-light);
     backdrop-filter: blur(10px);
 }
-
 .date-slider .compact-card:hover {
     transform: translateY(-3px) scale(1.05);
     border-color: var(--silver-primary);
@@ -231,10 +191,38 @@
     box-shadow: var(--shadow-silver);
 }
 
-.date-slider .compact-card.active {
-    background: var(--cinema-border-gradient);
-    border: 1px solid rgba(255,255,255,0.12);
-    box-shadow: 0 0 0 5px rgba(232, 232, 232, 0.1), var(--shadow-silver);
+/* TIME CARD */
+.time-card {
+    min-width: 96px;
+    height: 60px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.04);
+    border: var(--border-light);
+    color: var(--text-body);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
+}
+.time-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--silver-primary);
+    background: rgba(232, 232, 232, 0.08);
+    box-shadow: var(--shadow-silver);
+}
+
+/* =========================================================
+   ĐỒNG BỘ ACTIVE CHO NGÀY & SUẤT CHIẾU
+========================================================= */
+.compact-card.active {
+    background: var(--cinema-border-gradient) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 0 0 5px rgba(232, 232, 232, 0.1), var(--shadow-silver) !important;
+    color: var(--black-premium) !important;
+    transform: scale(1.02) !important;
+}
+.compact-card.active .day-txt,
+.compact-card.active .date-txt,
+.compact-card.active .time-txt {
+    color: var(--black-premium) !important;
 }
 
 .day-txt {
@@ -245,75 +233,29 @@
     color: var(--text-secondary);
     margin-bottom: var(--space-xs);
 }
-
 .date-txt {
     font-size: var(--font-size-h5);
     font-weight: var(--fw-extrabold);
     color: var(--text-body);
 }
 
-.date-slider .compact-card.active .day-txt,
-.date-slider .compact-card.active .date-txt {
-    color: var(--black-premium);
-}
-
-/* =========================================================
-   TIME CARD – SILVER
-========================================================= */
-
-.time-card {
-    min-width: 96px;
-    height: 60px;
-    border-radius: var(--radius-sm);
-    background: rgba(255,255,255,0.04);
-    border: var(--border-light);
-    color: var(--text-body);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-bold);
-}
-
-.time-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--silver-primary);
-    background: rgba(232, 232, 232, 0.08);
-    box-shadow: var(--shadow-silver);
-}
-
-.time-card.active {
-    background: var(--cinema-border-gradient);
-    border-color: rgba(255,255,255,0.15);
-    box-shadow: var(--shadow-silver);
-}
-
-.time-card.active {
-    color: var(--black-premium);
-}
-
-/* =========================================================
-   DISABLED
-========================================================= */
-
 .disabled-step {
     opacity: 0.4;
     pointer-events: none;
 }
-
 .no-showtimes {
     height: 60px;
     display: flex;
     align-items: center;
     color: var(--text-muted);
     font-size: var(--font-size-base);
+    padding: 0 var(--space-sm);
 }
 
-/* =========================================================
-   SEAT AREA (giữ nguyên màu sơ đồ ghế)
-========================================================= */
-
+/* SEAT AREA */
 .seat-selection-content {
     width: 100%;
 }
-
 .seat-map-booking {
     width: 100%;
     display: flex;
@@ -321,16 +263,11 @@
     align-items: center;
 }
 
-/* =========================================================
-   SCREEN – SILVER
-========================================================= */
-
 .screen-header {
     width: 100%;
     text-align: center;
     margin-bottom: 60px;
 }
-
 .screen-line {
     width: 92%;
     height: 6px;
@@ -340,17 +277,12 @@
     box-shadow: var(--shadow-silver);
     transform: perspective(500px) rotateX(-45deg);
 }
-
 .screen-header span {
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     letter-spacing: 8px;
     color: var(--text-muted);
 }
-
-/* =========================================================
-   SEATS LAYOUT
-========================================================= */
 
 .seats-layout {
     width: 100%;
@@ -359,7 +291,6 @@
     align-items: center;
     gap: var(--space-sm);
 }
-
 .seat-row {
     width: 100%;
     display: flex;
@@ -367,7 +298,6 @@
     align-items: center;
     gap: var(--space-md);
 }
-
 .row-id {
     width: 22px;
     text-align: center;
@@ -375,7 +305,6 @@
     font-weight: var(--fw-bold);
     color: var(--text-muted);
 }
-
 .row-items {
     display: grid;
     grid-template-columns: repeat(10, auto);
@@ -384,9 +313,9 @@
 }
 
 /* =========================================================
-   SEAT (giữ nguyên màu sắc đặc trưng)
+   GHẾ - CHỈ MÀU SẮC, KHÔNG HOVER, KHÔNG SHADOW
+   HỖ TRỢ ALIAS: NORMAL / STANDARD / THUONG
 ========================================================= */
-
 .seat {
     position: relative;
     width: 42px;
@@ -396,73 +325,105 @@
     justify-content: center;
     cursor: pointer;
     transition: var(--transition-fast);
+    fill: currentColor !important;
+    stroke: currentColor !important;
 }
-
 .seat.COUPLE {
     width: 78px;
 }
-
 .seat-icon {
     width: 100%;
     height: 100%;
+    display: block;
+    fill: currentColor !important;
 }
 
+/* Số ghế - mặc định (nền trắng mờ, chữ đen) */
 .seat-number {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -48%);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-bold);
-    color: var(--text-body);
+    font-size: 12px;
+    font-weight: var(--fw-black);
     z-index: 2;
+    pointer-events: none;
+    user-select: none;
+    padding: 0 2px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.7);
+    color: #1a1a1a;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+    line-height: 1.2;
 }
 
-/* --- MÀU CỐ ĐỊNH CHO GHẾ (KHÔNG ĐỔI) --- */
-.seat.NORMAL {
-    color: #9ca3af;
+/* ======== 1. GHẾ THƯỜNG (alias: NORMAL, STANDARD, THUONG) ======== */
+.seat.NORMAL,
+.seat.STANDARD,
+.seat.THUONG {
+    color: var(--seat-standard-color) !important;
 }
+.seat.NORMAL .seat-number,
+.seat.STANDARD .seat-number,
+.seat.THUONG .seat-number {
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--seat-number-standard, #1a1a1a);
+}
+
+/* ======== 2. GHẾ VIP (alias: VIP) ======== */
 .seat.VIP {
-    color: #fbbf24;
-    filter: drop-shadow(0 0 6px rgba(251,191,36,0.25));
+    color: var(--seat-vip-color) !important;
 }
-.seat.COUPLE {
-    color: #c026d3;
-    filter: drop-shadow(0 0 8px rgba(192,38,211,0.25));
+.seat.VIP .seat-number {
+    background: rgba(0, 0, 0, 0.15);
+    color: var(--seat-number-vip, #1a1a1a);
 }
+
+/* ======== 3. GHẾ ĐÔI (alias: COUPLE, DOUBLE) ======== */
+.seat.COUPLE,
+.seat.DOUBLE {
+    color: var(--seat-couple-color) !important;
+}
+.seat.COUPLE .seat-number,
+.seat.DOUBLE .seat-number {
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--seat-number-couple, #1a1a1a);
+}
+
+/* ======== 4. GHẾ ĐANG CHỌN ======== */
 .seat.selected {
-    color: #ff2e2e;
-    filter: drop-shadow(0 0 10px rgba(255,0,0,0.8)) drop-shadow(0 0 20px rgba(255,0,0,0.4)) drop-shadow(0 0 35px rgba(255,0,0,0.2));
+    color: var(--seat-selected-color) !important;
 }
 .seat.selected .seat-number {
-    color: white;
-}
-.seat.sold {
-    color: #5b0a0a;
-    opacity: 0.95;
-    cursor: not-allowed;
-    filter: brightness(0.75);
-}
-.seat.maintenance {
-    color: #4b5563;
-    opacity: 0.45;
-    cursor: not-allowed;
-    filter: grayscale(1);
+    background: rgba(255, 255, 255, 0.9);
+    color: #000000 !important;
 }
 
-/* Hover (giữ nguyên) */
-.seat:hover:not(.sold):not(.maintenance) {
-    transform: translateY(-3px) scale(1.08);
+/* ======== 5. GHẾ ĐÃ BÁN ======== */
+.seat.sold {
+    color: var(--seat-sold-color) !important;
+    opacity: 0.9;
+    cursor: not-allowed;
 }
-.seat:hover:not(.sold):not(.maintenance):not(.selected) {
-    color: #ff6666;
-    filter: drop-shadow(0 0 8px rgba(255,0,0,0.35));
+.seat.sold .seat-number {
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--seat-number-sold, #eeeeee);
+}
+
+/* ======== 6. GHẾ BẢO TRÌ ======== */
+.seat.maintenance {
+    color: var(--seat-maintenance-color) !important;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.seat.maintenance .seat-number {
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--seat-number-maintenance, #9ca3af);
 }
 
 /* =========================================================
-   LEGEND (giữ nguyên màu box)
+   CHÚ THÍCH - ĐỒNG BỘ MÀU VỚI GHẾ
 ========================================================= */
-
 .seat-legend {
     margin-top: 60px;
     display: flex;
@@ -470,7 +431,6 @@
     flex-wrap: wrap;
     gap: var(--space-lg);
 }
-
 .leg-item {
     display: flex;
     align-items: center;
@@ -478,82 +438,70 @@
     font-size: var(--font-size-base);
     color: var(--text-secondary);
 }
-
 .leg-item .box {
     width: 20px;
     height: 20px;
     border-radius: var(--radius-xs);
     flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.1);
 }
-
-.box.normal {
-    background: #9ca3af;
+.box.normal,
+.box.standard {
+    background: var(--seat-standard-color) !important;
 }
 .box.vip {
-    background: #fbbf24;
-    box-shadow: 0 0 10px rgba(251,191,36,0.25);
+    background: var(--seat-vip-color) !important;
 }
 .box.couple {
     width: 38px;
-    background: #c026d3;
-    box-shadow: 0 0 10px rgba(192,38,211,0.25);
+    background: var(--seat-couple-color) !important;
 }
 .box.selected {
-    background: #ff2e2e;
-    box-shadow: 0 0 14px rgba(255,0,0,0.5);
+    background: var(--seat-selected-color) !important;
 }
 .box.sold {
-    background: #5b0a0a;
+    background: var(--seat-sold-color) !important;
 }
 .box.maintenance {
-    background: #4b5563;
+    background: var(--seat-maintenance-color) !important;
 }
 
 /* =========================================================
-   BUTTON ACTION – SILVER
+   NÚT TIẾP TỤC
 ========================================================= */
-
 .booking-actions {
     width: 100%;
     display: flex;
     justify-content: center;
     margin-top: 60px;
 }
-
 .btn-next {
     min-width: 320px;
     height: 60px;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: var(--radius-round);
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
+    background: var(--cinema-border-gradient) !important;
+    color: var(--black-premium) !important;
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     letter-spacing: 1px;
     cursor: pointer;
     transition: var(--transition-normal);
-    box-shadow: var(--shadow-silver);
+    box-shadow: 0 0 0 5px rgba(232, 232, 232, 0.1), var(--shadow-silver) !important;
 }
-
 .btn-next:hover {
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 0 30px rgba(232, 232, 232, 0.35), var(--shadow-silver);
+    box-shadow: 0 0 30px rgba(232, 232, 232, 0.35), var(--shadow-silver) !important;
 }
-
 .btn-next:active {
     transform: translateY(0) scale(0.99);
 }
-
 .btn-next:disabled {
-    background: rgba(255,255,255,0.08);
-    color: var(--text-muted);
-    box-shadow: none;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-muted) !important;
+    box-shadow: none !important;
     cursor: not-allowed;
 }
-
-/* =========================================================
-   EMPTY PLACEHOLDER – SILVER
-========================================================= */
 
 .placeholder-msg {
     min-height: 520px;
@@ -565,36 +513,44 @@
     text-align: center;
     color: var(--text-muted);
 }
-
 .placeholder-msg i {
     font-size: var(--font-size-h1);
     color: var(--silver-primary);
 }
-
 .placeholder-msg h3 {
     font-size: var(--font-size-h4);
     font-weight: var(--fw-bold);
     color: var(--text-secondary);
 }
-
 .placeholder-msg p {
     max-width: 400px;
     line-height: 1.7;
 }
 
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE - SIDEBAR NGANG (40% POSTER, 60% THÔNG TIN) TỪ 992px TRỞ XUỐNG
 ========================================================= */
 
+/* Màn hình vừa (tablet, laptop nhỏ) */
 @media (max-width: 1200px) {
     .booking-container {
         gap: var(--space-md);
+        padding: var(--space-md);
     }
     .ticket-sidebar {
         width: 280px !important;
     }
     .poster-container {
-        max-width: 190px;
+        max-width: 240px;
+    }
+    .cinema-select {
+        flex: 0 0 200px;
+    }
+    .date-slider {
+        flex: 2 1 260px;
+    }
+    .time-slider {
+        flex: 1.5 1 240px;
     }
     .row-items {
         gap: var(--space-sm);
@@ -608,54 +564,123 @@
     }
 }
 
+/* Màn hình nhỏ (≤ 992px) - SIDEBAR NGANG, POSTER 40% - THÔNG TIN 60%, CHIỀU CAO BẰNG NHAU */
 @media (max-width: 992px) {
     .booking-container {
         flex-direction: column;
+        padding: var(--space-md);
     }
+
+    /* Sidebar ngang, các phần tử con có chiều cao bằng nhau */
     .ticket-sidebar {
         width: 100% !important;
         position: static;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch !important;  /* quan trọng: chiều cao bằng nhau */
         gap: var(--space-lg);
+        padding: var(--space-md);
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: var(--radius-md);
+        flex-wrap: nowrap;
     }
+
+    /* Poster chiếm 40% */
     .poster-container {
-        width: 180px !important;
-        margin: 0;
+        flex: 0 0 40% !important;
+        max-width: 40% !important;
+        margin: 0 !important;
+        height: auto;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        display: flex;
+        align-items: stretch;
     }
-    .booking-nav-flex {
+    .poster-container img {
+        width: 100%;
+        height: 100% !important;      /* chiều cao full container */
+        object-fit: cover;
+        aspect-ratio: auto;           /* bỏ tỷ lệ cố định để full khung */
+        display: block;
+    }
+
+    /* Ticket-details chiếm 60%, chiều cao tự động bằng với poster nhờ align-items: stretch */
+    .ticket-details {
+        flex: 0 0 60% !important;
+        max-width: 60% !important;
+        display: flex;
         flex-direction: column;
+        justify-content: center;       /* căn giữa nội dung theo chiều dọc */
+        gap: var(--space-sm);
+        padding: var(--space-sm) 0;
     }
-    .cinema-select,
-    .date-slider,
+
+    /* Điều chỉnh các thành phần bên trong ticket-details cho gọn */
+    .ticket-details .movie-name {
+        font-size: var(--font-size-h4);
+        margin-bottom: var(--space-xs);
+    }
+    .ticket-details .detail-item {
+        font-size: var(--font-size-sm);
+        display: flex;
+        gap: var(--space-sm);
+    }
+    .ticket-details .detail-item span {
+        min-width: 50px;
+        color: var(--text-muted);
+    }
+    .ticket-details .grand-total h3 {
+        font-size: var(--font-size-h4);
+    }
+
+    /* 3 bước chọn vẫn hàng ngang */
+    .booking-nav-flex {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: var(--space-md);
+    }
+    .nav-col {
+        flex: 1 1 0;
+        min-width: 140px;
+    }
+    .cinema-select {
+        flex: 0 0 28%;
+        width: auto;
+    }
+    .date-slider {
+        flex: 0 0 28%;
+        width: auto;
+    }
     .time-slider {
+        flex: 0 0 38%;
+        width: auto;
+    }
+    .slider-controls {
         width: 100%;
     }
-    .time-slider {
-        min-width: 100%;
-    }
-}
-
-@media (max-width: 768px) {
-    .booking-wrapper {
-        padding: var(--space-md) 0;
-    }
-    .booking-container {
-        padding: var(--space-md);
-        border-radius: var(--radius-lg);
-    }
-    .ticket-sidebar {
-        flex-direction: column;
-    }
-    .poster-container {
-        width: 200px !important;
-        margin: 0 auto;
+    .date-slider .scroll-list {
+        max-width: none;
+        flex: 1;
     }
     .date-slider .compact-card {
-        width: 66px;
-        min-width: 66px;
-        height: 66px;
+        width: 68px;
+        min-width: 68px;
+        height: 68px;
+    }
+    .time-card {
+        min-width: 88px;
+        height: 54px;
+    }
+
+    /* Ghế và các thành phần khác */
+    .seat-legend {
+        gap: var(--space-md);
+    }
+    .seat-row {
+        gap: var(--space-sm);
+    }
+    .row-items {
+        gap: var(--space-xs);
     }
     .seat {
         width: 34px;
@@ -664,85 +689,301 @@
     .seat.COUPLE {
         width: 64px;
     }
+    .seat-number {
+        font-size: 11px;
+    }
+    .btn-next {
+        min-width: 280px;
+    }
+}
+
+/* Màn hình rất nhỏ (điện thoại) */
+@media (max-width: 768px) {
+    .booking-wrapper {
+        padding: var(--space-md) 0;
+    }
+    .booking-container {
+        padding: var(--space-sm);
+        border-radius: var(--radius-lg);
+        gap: var(--space-md);
+    }
+    .ticket-sidebar {
+        flex-direction: row !important;
+        gap: var(--space-md);
+        padding: var(--space-sm);
+        flex-wrap: nowrap;
+    }
+    .poster-container {
+        flex: 0 0 35% !important;
+        max-width: 35% !important;
+    }
+    .ticket-details {
+        flex: 0 0 65% !important;
+        max-width: 65% !important;
+        padding: var(--space-xs) 0;
+    }
+    .ticket-details .movie-name {
+        font-size: var(--font-size-sm);
+    }
+    .ticket-details .detail-item {
+        font-size: var(--font-size-xs);
+        gap: var(--space-xs);
+    }
+    .ticket-details .detail-item span {
+        min-width: 40px;
+    }
+    .ticket-details .grand-total h3 {
+        font-size: var(--font-size-h5);
+    }
+
+    .booking-nav-flex {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: var(--space-md);
+    }
+    .nav-col {
+        flex: 1 1 0;
+        min-width: 120px;
+    }
+    .cinema-select {
+        flex: 0 0 30%;
+    }
+    .date-slider {
+        flex: 0 0 30%;
+    }
+    .time-slider {
+        flex: 0 0 36%;
+    }
+    .nav-col label {
+        font-size: var(--font-size-sm);
+        letter-spacing: 1px;
+    }
+    .cinema-select select {
+        height: 50px;
+        font-size: var(--font-size-sm);
+    }
+    .slider-controls {
+        height: 54px;
+    }
+    .slide-btn {
+        width: 36px;
+        height: 36px;
+        font-size: var(--font-size-sm);
+    }
+    .date-slider .compact-card {
+        width: 60px;
+        min-width: 60px;
+        height: 60px;
+    }
+    .day-txt {
+        font-size: var(--font-size-sm);
+    }
+    .date-txt {
+        font-size: var(--font-size-base);
+    }
+    .time-card {
+        min-width: 78px;
+        height: 48px;
+        font-size: var(--font-size-sm);
+    }
+    .seat {
+        width: 30px;
+        height: 30px;
+    }
+    .seat.COUPLE {
+        width: 56px;
+    }
+    .seat-number {
+        font-size: 10px;
+    }
     .row-items {
         gap: var(--space-xs);
     }
     .seat-row {
         gap: var(--space-sm);
     }
-    .seat-number {
-        font-size: var(--font-size-base);
-    }
-    .btn-next {
-        width: 100%;
-        min-width: unset;
-    }
-    .seat-legend {
-        gap: var(--space-md);
-    }
-}
-
-@media (max-width: 480px) {
-    .booking-container {
-        padding: var(--space-sm);
-    }
-    .ticket-sidebar {
-        padding: var(--space-md);
-    }
-    .poster-container {
-        width: 150px !important;
-    }
-    .nav-col label {
-        font-size: var(--font-size-base);
-    }
-    .date-slider .compact-card {
-        width: 58px;
-        min-width: 58px;
-        height: 58px;
-    }
-    .day-txt {
-        font-size: var(--font-size-base);
-    }
-    .date-txt {
-        font-size: var(--font-size-base);
-    }
-    .time-card {
-        min-width: 82px;
-        height: 54px;
-    }
-    .seat {
-        width: 28px;
-        height: 28px;
-    }
-    .seat.COUPLE {
-        width: 54px;
-    }
-    .seat-number {
-        font-size: var(--font-size-base);
-    }
-    .row-items {
-        gap: var(--space-xs);
+    .row-id {
+        font-size: var(--font-size-sm);
+        width: 18px;
     }
     .screen-header {
         margin-bottom: 40px;
     }
     .screen-header span {
         letter-spacing: 4px;
+        font-size: var(--font-size-sm);
     }
     .seat-legend {
         gap: var(--space-sm);
+        margin-top: 40px;
     }
     .leg-item {
-        font-size: var(--font-size-base);
+        font-size: var(--font-size-sm);
+    }
+    .leg-item .box {
+        width: 16px;
+        height: 16px;
+    }
+    .box.couple {
+        width: 30px;
+    }
+    .btn-next {
+        min-width: 200px;
+        height: 50px;
+        font-size: var(--font-size-sm);
     }
     .booking-actions {
         margin-top: 40px;
     }
-    .btn-next {
-        height: 54px;
-        font-size: var(--font-size-base);
-    }
     .placeholder-msg {
         min-height: 350px;
+    }
+    .placeholder-msg i {
+        font-size: var(--font-size-h2);
+    }
+    .no-showtimes {
+        height: 48px;
+        font-size: var(--font-size-sm);
+    }
+}
+
+/* Màn hình cực nhỏ (điện thoại nhỏ) */
+@media (max-width: 480px) {
+    .booking-container {
+        padding: var(--space-xs);
+        border-radius: var(--radius-md);
+        gap: var(--space-sm);
+    }
+    .ticket-sidebar {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        padding: var(--space-xs);
+        justify-content: center;
+    }
+    .poster-container {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        width: 120px !important;
+        margin: 0 auto !important;
+    }
+    .ticket-details {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        padding: var(--space-xs) 0;
+        text-align: center;
+    }
+    .booking-nav-flex {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+    }
+    .nav-col {
+        flex: 1 1 0;
+        min-width: 80px;
+    }
+    .cinema-select {
+        flex: 0 0 100%;
+        width: 100%;
+    }
+    .date-slider {
+        flex: 0 0 48%;
+    }
+    .time-slider {
+        flex: 0 0 48%;
+    }
+    .nav-col label {
+        font-size: var(--font-size-xs);
+        letter-spacing: 0.5px;
+    }
+    .cinema-select select {
+        height: 44px;
+        font-size: var(--font-size-xs);
+    }
+    .slider-controls {
+        height: 48px;
+        gap: var(--space-xs);
+    }
+    .slide-btn {
+        width: 32px;
+        height: 32px;
+        font-size: var(--font-size-xs);
+    }
+    .date-slider .compact-card {
+        width: 52px;
+        min-width: 52px;
+        height: 52px;
+    }
+    .day-txt {
+        font-size: var(--font-size-xs);
+        margin-bottom: 2px;
+    }
+    .date-txt {
+        font-size: var(--font-size-sm);
+    }
+    .time-card {
+        min-width: 68px;
+        height: 42px;
+        font-size: var(--font-size-xs);
+    }
+    .seat {
+        width: 26px;
+        height: 26px;
+    }
+    .seat.COUPLE {
+        width: 48px;
+    }
+    .seat-number {
+        font-size: 8px;
+    }
+    .row-items {
+        gap: 4px;
+    }
+    .seat-row {
+        gap: var(--space-xs);
+    }
+    .row-id {
+        font-size: var(--font-size-xs);
+        width: 14px;
+    }
+    .screen-header {
+        margin-bottom: 30px;
+    }
+    .screen-header span {
+        letter-spacing: 2px;
+        font-size: var(--font-size-xs);
+    }
+    .seat-legend {
+        gap: var(--space-xs);
+        margin-top: 30px;
+    }
+    .leg-item {
+        font-size: var(--font-size-xs);
+        gap: var(--space-xs);
+    }
+    .leg-item .box {
+        width: 14px;
+        height: 14px;
+    }
+    .box.couple {
+        width: 26px;
+    }
+    .btn-next {
+        min-width: 100%;
+        height: 44px;
+        font-size: var(--font-size-xs);
+    }
+    .booking-actions {
+        margin-top: 30px;
+    }
+    .placeholder-msg {
+        min-height: 250px;
+    }
+    .placeholder-msg i {
+        font-size: var(--font-size-h3);
+    }
+    .no-showtimes {
+        height: 42px;
+        font-size: var(--font-size-xs);
     }
 }

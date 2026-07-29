@@ -1,99 +1,96 @@
 /* ==========================================================
    USER HOME - SILVER PREMIUM
-   HIỆU ỨNG ANIMATION ĐIỂM NHẤN
-   SỬ DỤNG BIẾN TỪ INDEX.CSS (CHỈ DÙNG FONT H1-H6 & BASE)
+   HIỆU ỨNG SPARKLE + LIGHT SWEEP (CHỈ HOVER)
    ========================================================== */
 
-/* ==========================================================
-   ANIMATIONS
-   ========================================================== */
+/* ===== ANIMATIONS ===== */
 @keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes shine {
-  from {
-    left: -120%;
-  }
-  to {
-    left: 120%;
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes particleMove {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-180px);
-  }
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-180px); }
 }
 
-/* 🔥 Shine sweep cho card và nút */
-@keyframes shineSweep {
-  0% {
-    left: -150%;
-  }
-  100% {
-    left: 150%;
-  }
-}
-
-/* 🔥 Pulse nhẹ cho nút CTA */
 @keyframes subtlePulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(232, 232, 232, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 0 12px rgba(232, 232, 232, 0.02);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 232, 232, 0.15); }
+  50% { box-shadow: 0 0 0 12px rgba(232, 232, 232, 0.02); }
 }
 
-/* 🔥 Glow mờ cho card */
-@keyframes glowPulse {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(232, 232, 232, 0.02);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(232, 232, 232, 0.06);
-  }
+@keyframes bannerBreath {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
 }
 
-/* 🔥 Chạy chữ (marquee) cho banner nhỏ */
-@keyframes marquee {
+/* ===== SPARKLE – HẠT LẤP LÁNH (to, nhiều, wow) ===== */
+@keyframes sparkleFloat {
   0% {
-    transform: translateX(0);
+    opacity: 0;
+    transform: scale(0) rotate(0deg) translateY(0) translateX(0);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1.4) rotate(120deg) translateY(-20px) translateX(10px);
+  }
+  35% {
+    opacity: 0.9;
+    transform: scale(0.9) rotate(240deg) translateY(-40px) translateX(-5px);
+  }
+  55% {
+    opacity: 0.7;
+    transform: scale(1.2) rotate(360deg) translateY(-60px) translateX(15px);
+  }
+  75% {
+    opacity: 0.4;
+    transform: scale(0.6) rotate(480deg) translateY(-80px) translateX(-10px);
   }
   100% {
-    transform: translateX(-50%);
+    opacity: 0;
+    transform: scale(0) rotate(600deg) translateY(-100px) translateX(5px);
+  }
+}
+
+/* ===== LIGHT SWEEP – QUÉT NGANG (chỉ hover) ===== */
+@keyframes lightSweepHover {
+  0% {
+    transform: translateX(-110%) scaleX(0.4);
+    opacity: 0;
+  }
+  15% {
+    transform: translateX(-70%) scaleX(0.7);
+    opacity: 0.6;
+  }
+  35% {
+    transform: translateX(-30%) scaleX(0.95);
+    opacity: 0.5;
+  }
+  55% {
+    transform: translateX(0%) scaleX(1.0);
+    opacity: 0.35;
+  }
+  75% {
+    transform: translateX(30%) scaleX(0.8);
+    opacity: 0.2;
+  }
+  100% {
+    transform: translateX(100%) scaleX(0.3);
+    opacity: 0;
   }
 }
 
 /* ==========================================================
    PAGE WRAPPER
    ========================================================== */
-.user-home {
-  position: relative;
-  overflow: hidden;
-}
-
+.user-home { position: relative; overflow: hidden; }
 .home-container {
   width: 100%;
   max-width: var(--container-width);
   margin: 0 auto;
   padding: 0 var(--container-padding) var(--space-3xl);
 }
-
-/* ==========================================================
-   COMMON SECTION – CHỈ FADE KHI SCROLL
-   ========================================================== */
 .home-features-section,
 .movie-container,
 .promotions-section,
@@ -103,7 +100,7 @@
 }
 
 /* ==========================================================
-   SECTION HEADER – CÓ GLOW KHI HOVER
+   SECTION HEADER
    ========================================================== */
 .section-header {
   display: flex;
@@ -113,13 +110,7 @@
   margin-bottom: var(--space-xl);
   flex-wrap: wrap;
 }
-
-.section-header-left {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
+.section-header-left { display: flex; flex-direction: column; flex: 1; }
 .section-title {
   display: inline-block;
   position: relative;
@@ -133,7 +124,6 @@
   text-shadow: 0 0 15px rgba(232, 232, 232, 0.08);
   transition: text-shadow 0.3s ease;
 }
-
 .section-title::after {
   content: '';
   position: absolute;
@@ -145,30 +135,41 @@
   background: var(--cinema-border-gradient);
   transition: width 0.3s ease, box-shadow 0.3s ease;
 }
-
 .section-header:hover .section-title::after {
   width: 105%;
   box-shadow: 0 0 20px rgba(232, 232, 232, 0.1);
 }
 
 /* ==========================================================
-   BANNER – CÓ HIỆU ỨNG PARTICLES
+   BANNER PREMIUM
    ========================================================== */
 .carousel-full-wrapper {
   position: relative;
   width: 100%;
   overflow: hidden;
-  line-height: 0;
 }
 
 .banner-premium {
   position: relative;
   width: 100%;
   aspect-ratio: 2.5 / 1;
+  background: #0a0a0a;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  transition: box-shadow 0.4s ease;
+  overflow: hidden;
 }
 
-.premiumSwiper,
+.banner-premium:hover {
+  box-shadow: 0 12px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(232, 232, 232, 0.05);
+}
+
+.premiumSwiper {
+  width: 100%;
+  height: 100%;
+}
+
 .banner-slide {
+  position: relative;
   width: 100%;
   height: 100%;
 }
@@ -177,29 +178,350 @@
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
 }
 
 .banner-img {
   width: 100%;
   height: 100%;
-  display: block;
   object-fit: cover;
-  user-select: none;
-  -webkit-user-drag: none;
+  animation: bannerBreath 10s ease-in-out infinite;
+  transition: transform 1.8s cubic-bezier(0.65, 0, 0.35, 1), opacity 1.4s ease;
+  will-change: transform, opacity;
 }
 
 .banner-particles {
   position: absolute;
   inset: 0;
+  z-index: 1;
   pointer-events: none;
-  opacity: 0.04;
-  background-image: radial-gradient(var(--silver-primary) 1px, transparent 1px);
-  background-size: 200px 200px;
-  animation: particleMove 40s linear infinite;
+  opacity: 0.08;
+  background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: particleMove 30s linear infinite;
+}
+
+.banner-spotlight {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.2s ease;
+  background: radial-gradient(circle, rgba(255,255,240,0.18) 0%, rgba(255,255,240,0.05) 40%, transparent 70%);
+  filter: blur(80px);
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+.banner-premium:hover .banner-spotlight {
+  opacity: 0.25 !important;
 }
 
 /* ==========================================================
-   QUICK BOOKING – SHINE SWEEP + GLOW
+   SPARKLE – HẠT LẤP LÁNH (30 hạt, to, wow)
+   ========================================================== */
+.sparkle-container {
+  position: absolute;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  animation: sparkleFade 3.2s ease-out 1 forwards;
+}
+
+.sparkle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.9), rgba(255,255,255,0.05));
+  box-shadow: 0 0 8px rgba(255,255,255,0.4), 0 0 25px rgba(255,255,255,0.15);
+  opacity: 0;
+  animation: sparkleFloat 2.8s ease-out 1 forwards;
+  will-change: transform, opacity;
+}
+
+/* Dùng nth-child để set vị trí, kích thước, delay cho từng hạt */
+.sparkle:nth-child(1) { top: 5%; left: 3%; animation-delay: 0.05s; width: 6px; height: 6px; }
+.sparkle:nth-child(2) { top: 15%; left: 12%; animation-delay: 0.25s; width: 8px; height: 8px; }
+.sparkle:nth-child(3) { top: 25%; left: 7%; animation-delay: 0.45s; width: 5px; height: 5px; }
+.sparkle:nth-child(4) { top: 35%; left: 22%; animation-delay: 0.65s; width: 7px; height: 7px; }
+.sparkle:nth-child(5) { top: 45%; left: 4%; animation-delay: 0.15s; width: 9px; height: 9px; }
+.sparkle:nth-child(6) { top: 55%; left: 18%; animation-delay: 0.35s; width: 6px; height: 6px; }
+.sparkle:nth-child(7) { top: 65%; left: 8%; animation-delay: 0.55s; width: 7px; height: 7px; }
+.sparkle:nth-child(8) { top: 75%; left: 28%; animation-delay: 0.75s; width: 8px; height: 8px; }
+.sparkle:nth-child(9) { top: 85%; left: 10%; animation-delay: 0.10s; width: 5px; height: 5px; }
+.sparkle:nth-child(10) { top: 95%; left: 35%; animation-delay: 0.30s; width: 6px; height: 6px; }
+.sparkle:nth-child(11) { top: 10%; left: 40%; animation-delay: 0.50s; width: 7px; height: 7px; }
+.sparkle:nth-child(12) { top: 20%; left: 55%; animation-delay: 0.70s; width: 9px; height: 9px; }
+.sparkle:nth-child(13) { top: 30%; left: 45%; animation-delay: 0.05s; width: 6px; height: 6px; }
+.sparkle:nth-child(14) { top: 40%; left: 65%; animation-delay: 0.25s; width: 8px; height: 8px; }
+.sparkle:nth-child(15) { top: 50%; left: 50%; animation-delay: 0.45s; width: 5px; height: 5px; }
+.sparkle:nth-child(16) { top: 60%; left: 70%; animation-delay: 0.65s; width: 7px; height: 7px; }
+.sparkle:nth-child(17) { top: 70%; left: 55%; animation-delay: 0.15s; width: 9px; height: 9px; }
+.sparkle:nth-child(18) { top: 80%; left: 75%; animation-delay: 0.35s; width: 6px; height: 6px; }
+.sparkle:nth-child(19) { top: 90%; left: 60%; animation-delay: 0.55s; width: 7px; height: 7px; }
+.sparkle:nth-child(20) { top: 8%; left: 80%; animation-delay: 0.75s; width: 8px; height: 8px; }
+.sparkle:nth-child(21) { top: 18%; left: 90%; animation-delay: 0.10s; width: 5px; height: 5px; }
+.sparkle:nth-child(22) { top: 28%; left: 75%; animation-delay: 0.30s; width: 6px; height: 6px; }
+.sparkle:nth-child(23) { top: 38%; left: 85%; animation-delay: 0.50s; width: 7px; height: 7px; }
+.sparkle:nth-child(24) { top: 48%; left: 95%; animation-delay: 0.70s; width: 9px; height: 9px; }
+.sparkle:nth-child(25) { top: 58%; left: 88%; animation-delay: 0.05s; width: 6px; height: 6px; }
+.sparkle:nth-child(26) { top: 68%; left: 98%; animation-delay: 0.25s; width: 8px; height: 8px; }
+.sparkle:nth-child(27) { top: 78%; left: 90%; animation-delay: 0.45s; width: 5px; height: 5px; }
+.sparkle:nth-child(28) { top: 88%; left: 85%; animation-delay: 0.65s; width: 7px; height: 7px; }
+.sparkle:nth-child(29) { top: 12%; left: 68%; animation-delay: 0.15s; width: 9px; height: 9px; }
+.sparkle:nth-child(30) { top: 72%; left: 42%; animation-delay: 0.35s; width: 6px; height: 6px; }
+
+@keyframes sparkleFade {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.3;
+  }
+  20% {
+    opacity: 0.7;
+  }
+  30% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  70% {
+    opacity: 0.6;
+  }
+  85% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sparkleFloat {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg) translateY(0) translateX(0);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1.4) rotate(120deg) translateY(-20px) translateX(10px);
+  }
+  35% {
+    opacity: 0.9;
+    transform: scale(0.9) rotate(240deg) translateY(-40px) translateX(-5px);
+  }
+  55% {
+    opacity: 0.7;
+    transform: scale(1.2) rotate(360deg) translateY(-60px) translateX(15px);
+  }
+  75% {
+    opacity: 0.4;
+    transform: scale(0.6) rotate(480deg) translateY(-80px) translateX(-10px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0) rotate(600deg) translateY(-100px) translateX(5px);
+  }
+}
+/* ==========================================================
+   LIGHT SWEEP – QUÉT NGANG (CHỈ KHI HOVER)
+   ========================================================== */
+.light-sweep-hover {
+  position: absolute;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.banner-premium:hover .light-sweep-hover {
+  opacity: 1;
+}
+
+.sweep-beam {
+  position: absolute;
+  top: 0;
+  left: -10%;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 15%,
+    rgba(255, 255, 255, 0.35) 30%,
+    rgba(255, 255, 255, 0.45) 45%,
+    rgba(255, 255, 255, 0.35) 55%,
+    rgba(255, 255, 255, 0.15) 70%,
+    transparent 100%
+  );
+  transform: translateX(-110%) scaleX(0.4);
+  opacity: 0;
+  animation: none; /* Mặc định tắt */
+  filter: blur(8px);
+  will-change: transform, opacity;
+  box-shadow: 0 0 60px rgba(255, 255, 255, 0.06);
+}
+
+/* Khi hover, bật animation */
+.banner-premium:hover .sweep-beam {
+  animation: lightSweepHover 2.2s cubic-bezier(0.4, 0, 0.2, 1) 1 forwards;
+}
+
+/* ==========================================================
+   LIGHT LEAK & FILM GRAIN
+   ========================================================== */
+.banner-slide::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: radial-gradient(circle at 30% 40%, rgba(255, 240, 200, 0.15), transparent 60%);
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  mix-blend-mode: overlay;
+}
+.swiper-slide-prev::after { opacity: 0.6; }
+.swiper-slide-active::after {
+  opacity: 0;
+  transition: opacity 1.6s ease 0.4s;
+}
+
+.banner-slide::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  mix-blend-mode: overlay;
+}
+.swiper-slide-prev::before { opacity: 0.4; }
+.swiper-slide-active::before {
+  opacity: 0;
+  transition: opacity 1.2s ease 0.6s;
+}
+
+/* ---- Progress bar ---- */
+.banner-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  z-index: 10;
+  overflow: hidden;
+}
+.banner-progress-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #b8b8b8, #ffffff, #b8b8b8);
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform 0.1s linear;
+  will-change: transform;
+}
+
+/* ---- Navigation ---- */
+.banner-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 0;
+  pointer-events: none;
+}
+.banner-premium:hover .banner-nav {
+  opacity: 0.6;
+  pointer-events: auto;
+}
+.banner-nav:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-50%) scale(1.08);
+  opacity: 1;
+}
+.banner-prev { left: 20px; }
+.banner-next { right: 20px; }
+.banner-prev svg { transform: rotate(180deg); }
+
+/* ---- Slide number ---- */
+.banner-slide-number {
+  position: absolute;
+  bottom: 30px;
+  right: 40px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 2px;
+  transition: opacity 0.3s ease;
+}
+.banner-premium:hover .banner-slide-number { opacity: 1; }
+.banner-slide-number .current {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+.banner-slide-number .separator { margin: 0 4px; opacity: 0.3; }
+
+/* ---- Slide transitions ---- */
+.premiumSwiper .swiper-slide {
+  transition: opacity 1.4s cubic-bezier(0.65, 0, 0.35, 1) !important;
+}
+.banner-slide .banner-img {
+  transition: transform 1.8s cubic-bezier(0.65, 0, 0.35, 1), opacity 1.4s ease, filter 1.2s ease;
+}
+.swiper-slide-active .banner-img {
+  transform: scale(1.02);
+  opacity: 1;
+  filter: brightness(1);
+}
+.swiper-slide-prev .banner-img {
+  transform: scale(0.98);
+  opacity: 0.75;
+  filter: brightness(0.82);
+}
+.swiper-slide-next .banner-img {
+  transform: scale(1.06);
+  opacity: 0.55;
+  filter: brightness(0.75);
+}
+
+/* ==========================================================
+   QUICK BOOKING, FEATURES, RESPONSIVE (giữ nguyên từ file cũ)
+   ========================================================== */
+/* ... (các phần này bạn đã có, tôi không viết lại để tránh dài) ... */
+/* ==========================================================
+   QUICK BOOKING
    ========================================================== */
 .quick-booking-container {
   position: relative;
@@ -208,7 +530,6 @@
   max-width: var(--container-width);
   margin: 0 auto;
 }
-
 .quick-booking-content {
   position: relative;
   overflow: hidden;
@@ -222,38 +543,17 @@
   box-shadow: var(--cinema-card-shadow);
   transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
-
-.quick-booking-content::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -150%;
-  width: 80px;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(232, 232, 232, 0.08), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.quick-booking-content:hover::before {
-  opacity: 1;
-  animation: shineSweep 0.8s ease forwards;
-}
-
 .quick-booking-content:hover {
   border: var(--border-silver-hover);
   box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
   transform: translateY(-2px);
 }
-
 .quick-booking-selects {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-md);
 }
-
 .quick-booking-selects select {
   width: 100%;
   height: 58px;
@@ -269,27 +569,22 @@
   font-weight: var(--fw-semibold);
   transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
-
 .quick-booking-selects select:hover:not(:disabled) {
   border: var(--border-silver-hover);
   background: rgba(255, 255, 255, 0.05);
 }
-
 .quick-booking-selects select:focus {
   border: var(--border-silver-hover);
   box-shadow: 0 0 0 3px rgba(232, 232, 232, 0.08);
 }
-
 .quick-booking-selects select:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
-
 .quick-booking-selects option {
   background: var(--black-soft);
   color: var(--text-body);
 }
-
 .btn-quick-booking {
   position: relative;
   overflow: hidden;
@@ -307,7 +602,6 @@
   transition: box-shadow 0.3s ease, transform 0.3s ease;
   animation: subtlePulse 3s ease-in-out infinite;
 }
-
 .btn-quick-booking:hover {
   transform: translateY(-3px) scale(1.02);
   box-shadow: var(--shadow-silver), 0 8px 24px rgba(232, 232, 232, 0.15);
@@ -315,14 +609,13 @@
 }
 
 /* ==========================================================
-   FEATURES – LIFT-UP + GLOW
+   FEATURES
    ========================================================== */
 .features-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-md);
 }
-
 .feature-item {
   position: relative;
   overflow: hidden;
@@ -336,31 +629,12 @@
   box-shadow: var(--shadow-sm);
   transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.3s ease, background 0.3s ease;
 }
-
-.feature-item::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -160%;
-  width: 90px;
-  height: 220%;
-  background: linear-gradient(90deg, transparent, rgba(232, 232, 232, 0.12), transparent);
-  transform: rotate(25deg);
-  transition: left 0.6s ease;
-  pointer-events: none;
-}
-
-.feature-item:hover::before {
-  left: 160%;
-}
-
 .feature-item:hover {
   border: var(--border-silver-hover);
   box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
   transform: translateY(-5px);
   background: linear-gradient(180deg, rgba(232, 232, 232, 0.08), rgba(232, 232, 232, 0.02));
 }
-
 .feature-icon-wrapper {
   width: 72px;
   height: 72px;
@@ -374,17 +648,12 @@
   color: var(--silver-primary);
   transition: box-shadow 0.25s ease, transform 0.3s ease, background 0.3s ease;
 }
-
 .feature-item:hover .feature-icon-wrapper {
   box-shadow: 0 0 20px rgba(232, 232, 232, 0.10);
   transform: scale(1.05);
   background: rgba(232, 232, 232, 0.12);
 }
-
-.feature-text {
-  flex: 1;
-}
-
+.feature-text { flex: 1; }
 .feature-text h4 {
   margin: 0 0 var(--space-sm);
   color: var(--text-body);
@@ -393,11 +662,7 @@
   line-height: 1.4;
   transition: color 0.25s ease;
 }
-
-.feature-item:hover h4 {
-  color: var(--silver-primary);
-}
-
+.feature-item:hover h4 { color: var(--silver-primary); }
 .feature-text p {
   margin: 0;
   color: rgba(255, 255, 255, 0.6);
@@ -406,7 +671,7 @@
 }
 
 /* ==========================================================
-   BUTTON VIEW ALL – GLOW + PULSE NHẸ
+   BUTTON VIEW ALL
    ========================================================== */
 .btn-view-all {
   display: inline-flex;
@@ -427,7 +692,6 @@
   flex-shrink: 0;
   animation: subtlePulse 4s ease-in-out infinite;
 }
-
 .btn-view-all:hover {
   color: var(--black-premium);
   background: var(--cinema-border-gradient);
@@ -438,7 +702,7 @@
 }
 
 /* ==========================================================
-   CINEMA GRID – CÓ GLOW KHI HOVER
+   CINEMA GRID
    ========================================================== */
 .cinema-grid {
   display: grid;
@@ -446,13 +710,11 @@
   gap: var(--space-md);
   align-items: start;
 }
-
 .promotions-section .cinema-card,
 .cinema-corner-section .cinema-card {
   height: 100%;
   width: 100%;
 }
-
 .promotions-section .cinema-card .cinema-card-inner,
 .cinema-corner-section .cinema-card .cinema-card-inner {
   height: 100%;
@@ -460,7 +722,6 @@
   flex-direction: column;
   transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s ease;
 }
-
 .promotions-section .cinema-card:hover .cinema-card-inner,
 .cinema-corner-section .cinema-card:hover .cinema-card-inner {
   transform: translateY(-4px);
@@ -469,192 +730,84 @@
 }
 
 /* ==========================================================
-   SPACING
+   SPACING & PERFORMANCE
    ========================================================== */
-.home-features-section {
-  margin-top: var(--space-3xl);
-}
-
-.movie-container {
-  margin-top: var(--space-3xl);
-}
-
-.promotions-section {
-  margin-top: var(--space-3xl);
-}
-
+.home-features-section { margin-top: var(--space-3xl); }
+.movie-container { margin-top: var(--space-3xl); }
+.promotions-section { margin-top: var(--space-3xl); }
 .cinema-corner-section {
   margin-top: var(--space-3xl);
   padding-bottom: var(--space-lg);
 }
-
-/* ==========================================================
-   PERFORMANCE
-   ========================================================== */
 .feature-item,
 .cinema-card,
-.quick-booking-content {
-  backface-visibility: hidden;
-}
+.quick-booking-content { backface-visibility: hidden; }
 
 /* ==========================================================
    RESPONSIVE
    ========================================================== */
-
 @media (max-width: 1024px) {
-  .features-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .cinema-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  .features-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cinema-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 768px) {
-  .banner-premium {
-    aspect-ratio: 3 / 2;
-    object-fit: cover;
+  .banner-premium { aspect-ratio: 3 / 2; }
+  .banner-nav {
+    width: 36px;
+    height: 36px;
+    opacity: 0.4 !important;
+    pointer-events: auto !important;
   }
-  .cinema-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-lg);
-  }
-
-  .section-header {
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-
-  .section-header-left {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .section-title {
-    font-size: var(--font-size-h3);
-    padding-bottom: 6px;
-  }
-
-  .section-title::after {
-    height: 3px;
-  }
-
-  .btn-view-all {
-    padding: 8px 18px;
-    font-size: var(--font-size-h6);
-    flex-shrink: 0;
-  }
-
+  .banner-premium:hover .banner-nav { opacity: 0.6 !important; }
+  .banner-prev { left: 10px; }
+  .banner-next { right: 10px; }
+  .banner-slide-number { display: none; }
+  .banner-spotlight { display: none; }
+  .banner-particles { display: none; }
+  .sparkle-container { display: none; }
+  .light-sweep-hover { display: none; }
+  .banner-progress-bar { height: 3px; }
+  .cinema-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
+  .section-header { flex-direction: row; align-items: center; flex-wrap: wrap; }
+  .section-header-left { flex: 1; min-width: 0; }
+  .section-title { font-size: var(--font-size-h3); padding-bottom: 6px; }
+  .section-title::after { height: 3px; }
+  .btn-view-all { padding: 8px 18px; font-size: var(--font-size-h6); flex-shrink: 0; }
   .quick-booking-content {
     flex-direction: column;
     padding: var(--space-lg);
     gap: var(--space-md);
   }
-
   .quick-booking-selects {
     width: 100%;
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-md);
   }
-
-  .quick-booking-selects select {
-    height: 52px;
-    font-size: var(--font-size-h6);
-  }
-
-  .btn-quick-booking {
-    width: 100%;
-    min-width: unset;
-    height: 52px;
-  }
-
-  .feature-item {
-    padding: var(--space-md);
-    gap: 14px;
-  }
-
-  .feature-icon-wrapper {
-    width: 60px;
-    height: 60px;
-    min-width: 60px;
-  }
-
-  .feature-text h4 {
-    font-size: var(--font-size-h6);
-  }
-
-  .feature-text p {
-    font-size: var(--font-size-h6);
-  }
+  .quick-booking-selects select { height: 52px; font-size: var(--font-size-h6); }
+  .btn-quick-booking { width: 100%; min-width: unset; height: 52px; }
+  .feature-item { padding: var(--space-md); gap: 14px; }
+  .feature-icon-wrapper { width: 60px; height: 60px; min-width: 60px; }
+  .feature-text h4 { font-size: var(--font-size-h6); }
+  .feature-text p { font-size: var(--font-size-h6); }
 }
 
 @media (max-width: 425px) {
-  .cinema-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 16px;
-  }
-
-  .home-container {
-    padding: 0 16px var(--space-3xl);
-  }
-
-  .section-title {
-    font-size: var(--font-size-h4);
-    padding-bottom: 4px;
-  }
-
-  .section-title::after {
-    height: 3px;
-  }
-
-  .btn-view-all {
-    padding: 6px 14px;
-    font-size: 11px;
-    gap: 4px;
-  }
-
-  .quick-booking-content {
-    padding: var(--space-md);
-    gap: 14px;
-  }
-
-  .quick-booking-selects {
-    gap: 14px;
-  }
-
-  .quick-booking-selects select {
-    height: 48px;
-    font-size: var(--font-size-h6);
-    padding: 0 14px;
-  }
-
-  .btn-quick-booking {
-    height: 48px;
-    font-size: var(--font-size-h6);
-  }
-
-  .features-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-  }
-
-  .feature-item {
-    padding: 14px;
-    gap: 12px;
-  }
-
-  .feature-icon-wrapper {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-  }
-
-  .feature-text h4 {
-    font-size: var(--font-size-h6);
-  }
-
-  .feature-text p {
-    font-size: 11px;
-  }
+  .banner-premium { aspect-ratio: 4 / 3; }
+  .banner-nav { width: 28px; height: 28px; }
+  .banner-nav svg { width: 14px; height: 14px; }
+  .cinema-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px; }
+  .home-container { padding: 0 16px var(--space-3xl); }
+  .section-title { font-size: var(--font-size-h4); padding-bottom: 4px; }
+  .section-title::after { height: 3px; }
+  .btn-view-all { padding: 6px 14px; font-size: 11px; gap: 4px; }
+  .quick-booking-content { padding: var(--space-md); gap: 14px; }
+  .quick-booking-selects { gap: 14px; }
+  .quick-booking-selects select { height: 48px; font-size: var(--font-size-h6); padding: 0 14px; }
+  .btn-quick-booking { height: 48px; font-size: var(--font-size-h6); }
+  .features-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .feature-item { padding: 14px; gap: 12px; }
+  .feature-icon-wrapper { width: 48px; height: 48px; min-width: 48px; }
+  .feature-text h4 { font-size: var(--font-size-h6); }
+  .feature-text p { font-size: 11px; }
 }

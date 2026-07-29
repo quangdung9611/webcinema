@@ -54,19 +54,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 4px solid var(--gold-primary);
-    box-shadow: 0 0 20px rgba(201, 168, 76, 0.5), 0 0 60px rgba(201, 168, 76, 0.2);
+    border: 4px solid var(--silver-primary);
+    box-shadow: 0 0 20px rgba(232, 232, 232, 0.5), 0 0 60px rgba(232, 232, 232, 0.2);
 }
 
 .success-icon svg {
-    color: var(--gold-primary);
+    color: var(--silver-primary);
 }
 
 .success-top h1 {
     margin-top: var(--space-lg);
     font-weight: var(--fw-black);
     letter-spacing: 1px;
-    color: var(--gold-primary);
+    color: var(--silver-primary);
 }
 
 .success-top p {
@@ -76,7 +76,7 @@
 }
 
 .success-top p span {
-    color: var(--gold-light);
+    color: var(--silver-light);
     font-weight: var(--fw-bold);
 }
 
@@ -92,7 +92,7 @@
 }
 
 .order-badge span {
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     margin-left: var(--space-xs);
 }
 
@@ -155,7 +155,7 @@
 
 .ticket-info h2 {
     margin-bottom: var(--space-2xl);
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     font-weight: var(--fw-black);
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -177,7 +177,7 @@
 }
 
 .detail-row svg {
-    color: var(--gold-primary);
+    color: var(--silver-primary);
 }
 
 .label {
@@ -191,7 +191,7 @@
 }
 
 .seat-value {
-    color: var(--gold-light);
+    color: var(--silver-light);
     font-weight: var(--fw-extrabold);
 }
 
@@ -259,7 +259,7 @@
     font-weight: var(--fw-black);
     line-height: 1;
     margin-bottom: var(--space-lg);
-    color: var(--gold-primary);
+    color: var(--silver-primary);
     font-size: var(--font-size-h3);
 }
 
@@ -314,7 +314,7 @@
 }
 
 .email-left svg {
-    color: var(--gold-primary);
+    color: var(--silver-primary);
 }
 
 /* ======================================================
@@ -339,10 +339,13 @@
     font-weight: var(--fw-bold);
     cursor: pointer;
     transition: all var(--transition-normal);
+    color: var(--black-premium) !important; /* ✅ MÀU CHỮ ĐEN */
 }
 
+/* ✅ GIỮ MÀU CHỮ ĐEN KHI HOVER */
 .success-actions button:hover {
     transform: translateY(-4px);
+    color: var(--black-premium) !important; /* Đảm bảo hover vẫn đen */
 }
 
 /* ======================================================
@@ -360,23 +363,29 @@
 ====================================================== */
 
 .home-btn {
-    background: var(--gold-gradient);
-    color: var(--black-premium);
-    border: 1px solid rgba(201, 168, 76, 0.45);
+    background: var(--gold-gradient); /* vẫn giữ tên biến nhưng trong index.css đã map sang silver */
+    color: var(--black-premium) !important;
+    border: 1px solid rgba(232, 232, 232, 0.45);
     box-shadow: var(--shadow-silver);
+}
+
+.home-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+    filter: brightness(1.08);
+    color: var(--black-premium) !important; /* Đảm bảo hover vẫn đen */
 }
 
 .download-btn {
     background: var(--gold-gradient);
-    color: var(--black-premium);
-    border: 1px solid rgba(201, 168, 76, 0.3);
+    color: var(--black-premium) !important;
+    border: 1px solid rgba(232, 232, 232, 0.3);
     box-shadow: var(--shadow-silver);
 }
 
-.home-btn:hover,
 .download-btn:hover {
     transform: translateY(-4px) scale(1.02);
     filter: brightness(1.08);
+    color: var(--black-premium) !important; /* Đảm bảo hover vẫn đen */
 }
 
 /* ======================================================

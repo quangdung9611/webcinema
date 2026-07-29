@@ -12,25 +12,27 @@ class ReviewRepository {
   }
 
   async findByMovie(movieId) {
-    const sql = `
-      SELECT
-        r.review_id,
-        r.movie_id,
-        r.user_id,
-        r.rating_score,
-        r.comment,
-        DATE_FORMAT(r.created_at, '%d/%m/%Y %H:%i') AS formatted_date,
-        u.username,
-        u.full_name,
-        IFNULL(u.full_name, u.username) AS display_name
-      FROM reviews r
-      JOIN users u ON r.user_id = u.user_id
-      WHERE r.movie_id = ?
-      ORDER BY r.created_at DESC
-    `;
-    const [rows] = await db.query(sql, [movieId]);
-    return rows;
-  }
+  const sql = `
+    SELECT
+      r.review_id,
+      r.movie_id,
+      r.user_id,
+      r.rating_score,
+      r.comment,
+      DATE_FORMAT(r.created_at, '%d/%m/%Y %H:%i') AS formatted_date,
+      u.username,
+      u.full_name,
+      IFNULL(u.full_name, u.username) AS display_name,
+      u.user_avatar
+    FROM reviews r
+    JOIN users u ON r.user_id = u.user_id
+    WHERE r.movie_id = ?
+    ORDER BY r.created_at DESC
+  `;
+
+  const [rows] = await db.query(sql, [movieId]);
+  return rows;
+}
 
   async findByUserAndMovie(userId, movieId) {
     const [rows] = await db.query(

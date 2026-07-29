@@ -1,6 +1,7 @@
 /* =========================================================
-   MOVIE DETAIL – SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
-   Padding 18px, gap 16px, grid 4/2
+   MOVIE DETAIL – SILVER PREMIUM EDITION
+   Đồng bộ với index.css – dùng biến, heading h2
+   Hỗ trợ avatar thực trong bình luận
    ========================================================= */
 
 .cinema-movie-detail-page {
@@ -9,11 +10,10 @@
     min-height: 100vh;
 }
 
-/* Container chính – padding trái phải 18px */
 .cinema-main-content-container {
     max-width: 1300px;
     margin: 0 auto;
-    padding: 0 18px var(--space-3xl);
+    padding: 0 24px var(--space-3xl);
     box-sizing: border-box;
 }
 
@@ -29,11 +29,113 @@
 }
 
 /* =========================================================
-   THÔNG TIN PHIM – LUÔN 2 CỘT
+   SECTION HEADER – TIÊU ĐỀ h2 + NÚT XEM TẤT CẢ
+   ========================================================= */
+.section-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+}
+
+.section-header-row .section-title-label {
+    font-size: var(--font-size-h2);
+    font-weight: var(--fw-black);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--silver-primary);
+    margin: 0;
+    white-space: nowrap;
+    font-family: var(--font-heading);
+}
+
+.section-header-row .filmgenre-line,
+.filmgenre-section-header .filmgenre-line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, var(--silver-primary), rgba(212, 212, 212, 0.2), transparent);
+    border-radius: var(--radius-round);
+    position: relative;
+    overflow: hidden;
+    min-width: 40px;
+}
+
+.section-header-row .filmgenre-line::after,
+.filmgenre-section-header .filmgenre-line::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    animation: filmLineMove 2.5s linear infinite;
+}
+
+@keyframes filmLineMove {
+    0% { left: -40%; }
+    100% { left: 100%; }
+}
+
+.section-header-row .view-all-link-gold,
+.section-header-row .btn-write-review-small {
+    flex-shrink: 0;
+    border: 2px solid var(--silver-primary);
+    outline: none;
+    cursor: pointer;
+    color: var(--silver-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-round);
+    background: transparent;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.section-header-row .view-all-link-gold:hover,
+.section-header-row .btn-write-review-small:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--silver-light);
+    color: var(--silver-light);
+    box-shadow: 0 4px 20px rgba(212, 212, 212, 0.08);
+}
+
+/* =========================================================
+   FIX: PHIM LIÊN QUAN HEADER
+   ========================================================= */
+.filmgenre-section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+}
+
+.filmgenre-section-header h2 {
+    font-size: var(--font-size-h2);
+    font-weight: var(--fw-black);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--silver-primary);
+    margin: 0;
+    white-space: nowrap;
+    font-family: var(--font-heading);
+}
+
+/* =========================================================
+   THÔNG TIN PHIM – 2 CỘT
    ========================================================= */
 .movie-info-section {
     width: 100%;
-    margin: var(--space-2xl) 0 var(--space-xl);
+    margin: var(--space-2xl) 0 var(--space-2xl);
 }
 
 .movie-info-container {
@@ -61,6 +163,13 @@
     object-fit: cover;
     display: block;
 }
+.movie-poster-placeholder {
+    width: 100%;
+    aspect-ratio: 2/3;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, var(--black-soft), var(--black-premium));
+    border: var(--border-silver);
+}
 
 .movie-info-content {
     display: flex;
@@ -71,7 +180,7 @@
     overflow: hidden;
 }
 
-/* ===== HÀNG 1: Tên phim + Rating ===== */
+/* HÀNG 1: Tên phim + Rating */
 .info-header-row {
     display: flex;
     align-items: flex-start;
@@ -127,12 +236,11 @@
     height: 14px;
 }
 .rating-count-text {
-    font-family: var(--font-primary);
     font-size: var(--font-size-base);
     color: var(--text-muted);
 }
 
-/* ===== HÀNG 2: Meta Tags ===== */
+/* HÀNG 2: Meta Tags */
 .info-meta-row {
     display: flex;
     flex-wrap: wrap;
@@ -150,7 +258,6 @@
     border-radius: var(--radius-round);
     background: rgba(255, 255, 255, 0.05);
     border: var(--border-light);
-    font-family: var(--font-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-semibold);
     color: var(--text-secondary);
@@ -177,7 +284,7 @@
     line-height: 1.8;
 }
 
-/* ===== HÀNG 3: Mô tả + Thông tin phụ ===== */
+/* HÀNG 3: Mô tả + Thông tin phụ */
 .info-detail-row {
     display: grid;
     grid-template-columns: 1.2fr 0.8fr;
@@ -198,7 +305,6 @@
 }
 
 .desc-text {
-    font-family: var(--font-primary);
     font-size: var(--font-size-base);
     line-height: 1.8;
     color: var(--text-secondary);
@@ -223,7 +329,6 @@
     background: none;
     border: none;
     color: var(--silver-primary);
-    font-family: var(--font-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     cursor: pointer;
@@ -241,11 +346,7 @@
     font-size: 0.625rem;
     transition: transform var(--transition-normal) ease;
 }
-.desc-toggle-btn:hover .toggle-icon {
-    transform: translateY(1px);
-}
 
-/* ----- INFO META COL – 2 CỘT NGANG ----- */
 .info-meta-col {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -260,22 +361,18 @@
     flex-direction: column;
     gap: 2px;
     padding: var(--space-xs) 0;
-    border-bottom: none;
     overflow-wrap: break-word;
     word-break: break-word;
     min-width: 0;
 }
 
 .meta-label {
-    font-family: var(--font-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-semibold);
     color: var(--text-muted);
-    min-width: unset;
 }
 
 .meta-value {
-    font-family: var(--font-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-medium);
     color: var(--silver-primary);
@@ -285,7 +382,7 @@
     max-width: 100%;
 }
 
-/* ===== HÀNG 4: Nút hành động – NGANG HÀNG ===== */
+/* HÀNG 4: Nút hành động */
 .info-actions-row {
     display: flex;
     flex-wrap: nowrap;
@@ -307,7 +404,6 @@
     gap: var(--space-sm);
     padding: var(--space-md) var(--space-sm);
     border-radius: var(--radius-md);
-    font-family: var(--font-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-extrabold);
     text-transform: uppercase;
@@ -318,7 +414,6 @@
     background: transparent !important;
     border: 2px solid var(--silver-primary);
     color: var(--silver-primary);
-    box-shadow: none;
     white-space: nowrap;
 }
 
@@ -331,7 +426,6 @@
     color: var(--silver-light);
     box-shadow: 0 4px 20px rgba(212, 212, 212, 0.12);
 }
-
 .btn-book-now:active,
 .btn-watch-trailer:active,
 .btn-review:active {
@@ -339,62 +433,35 @@
 }
 
 /* =========================================================
-   PHIM LIÊN QUAN, DIỄN VIÊN, TRAILER KHÁC
+   PHIM LIÊN QUAN – GRID 4 CỘT
    ========================================================= */
 .filmgenre-container {
     margin-top: var(--space-2xl);
     width: 100%;
 }
-.filmgenre-section-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    margin-bottom: var(--space-lg);
-}
-.filmgenre-section-header h2 {
-    font-size: var(--font-size-h3);
-    font-weight: var(--fw-black);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--silver-primary);
-    margin: 0;
-    white-space: nowrap;
-    font-family: var(--font-heading);
-}
-.filmgenre-line {
-    flex: 1;
-    height: 2px;
-    background: linear-gradient(90deg, var(--silver-primary), rgba(212, 212, 212, 0.2), transparent);
-    border-radius: var(--radius-round);
-    position: relative;
-    overflow: hidden;
-}
-.filmgenre-line::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -40%;
-    width: 40%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-    animation: filmLineMove 2.5s linear infinite;
-}
-@keyframes filmLineMove {
-    0% { left: -40%; }
-    100% { left: 100%; }
-}
 
-/* --- GRID CHUNG: 4 CỘT, GAP 16PX --- */
-.genre-movies-grid,
-.cast-avatars-horizontal-list,
-.other-trailers-grid {
+.genre-movies-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: 20px;
     width: 100%;
 }
 
-/* --- DIỄN VIÊN --- */
+/* =========================================================
+   DIỄN VIÊN
+   ========================================================= */
+.cinema-section-block {
+    margin-top: var(--space-2xl);
+    width: 100%;
+}
+
+.cast-avatars-horizontal-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    width: 100%;
+}
+
 .actor-circle-card {
     display: flex;
     flex-direction: column;
@@ -405,6 +472,7 @@
 .actor-circle-card:hover {
     transform: translateY(-8px);
 }
+
 .actor-avatar-frame {
     position: relative;
     width: 100%;
@@ -420,6 +488,7 @@
     border-color: var(--border-silver-hover);
     box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
 }
+
 .actor-avatar-frame::before {
     content: "";
     position: absolute;
@@ -428,6 +497,7 @@
     z-index: 2;
     pointer-events: none;
 }
+
 .actor-avatar-frame::after {
     content: "";
     position: absolute;
@@ -443,6 +513,7 @@
 .actor-circle-card:hover .actor-avatar-frame::after {
     left: 170%;
 }
+
 .actor-real-img {
     width: 100%;
     height: 100%;
@@ -453,6 +524,7 @@
 .actor-circle-card:hover .actor-real-img {
     transform: scale(1.08);
 }
+
 .placeholder-avatar-bg {
     width: 100%;
     height: 100%;
@@ -461,6 +533,7 @@
     justify-content: center;
     background: var(--black-soft);
 }
+
 .actor-real-name {
     margin-top: var(--space-md);
     color: var(--text-body);
@@ -473,14 +546,22 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    font-family: var(--font-primary);
 }
 .actor-circle-card:hover .actor-real-name {
     color: var(--silver-primary);
     text-shadow: var(--shadow-silver);
 }
 
-/* --- TRAILER KHÁC --- */
+/* =========================================================
+   TRAILER KHÁC
+   ========================================================= */
+.other-trailers-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    width: 100%;
+}
+
 .other-trailer-card {
     cursor: pointer;
     transition: all var(--transition-normal);
@@ -488,6 +569,7 @@
 .other-trailer-card:hover {
     transform: translateY(-8px);
 }
+
 .other-trailer-thumb {
     position: relative;
     width: 100%;
@@ -503,6 +585,7 @@
     border-color: var(--border-silver-hover);
     box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
 }
+
 .other-trailer-thumb img {
     width: 100%;
     height: 100%;
@@ -513,6 +596,7 @@
 .other-trailer-card:hover .other-trailer-thumb img {
     transform: scale(1.08);
 }
+
 .other-trailer-thumb::before {
     content: "";
     position: absolute;
@@ -520,6 +604,7 @@
     background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent 45%);
     z-index: 2;
 }
+
 .other-trailer-thumb::after {
     content: "";
     position: absolute;
@@ -535,6 +620,7 @@
 .other-trailer-card:hover .other-trailer-thumb::after {
     left: 180%;
 }
+
 .other-trailer-overlay {
     position: absolute;
     inset: 0;
@@ -567,6 +653,7 @@
 .other-trailer-card:hover .other-trailer-overlay svg {
     transform: scale(1.15);
 }
+
 .other-trailer-title {
     margin-top: var(--space-md);
     color: var(--text-body);
@@ -579,7 +666,6 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    font-family: var(--font-primary);
 }
 .other-trailer-card:hover .other-trailer-title {
     color: var(--silver-primary);
@@ -587,32 +673,11 @@
 }
 
 /* =========================================================
-   REVIEW SECTION
+   ĐÁNH GIÁ – REVIEW SECTION
    ========================================================= */
 .reviews-section-fullwidth {
     width: 100%;
     margin-top: var(--space-2xl);
-}
-.btn-write-review-small {
-    border: 2px solid var(--silver-primary);
-    outline: none;
-    cursor: pointer;
-    color: var(--silver-primary);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-bold);
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-round);
-    background: transparent;
-    box-shadow: none;
-    transition: all var(--transition-normal);
-    white-space: nowrap;
-}
-.btn-write-review-small:hover {
-    transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--silver-light);
-    color: var(--silver-light);
-    box-shadow: none;
 }
 
 .split-right-column-box {
@@ -624,12 +689,14 @@
     width: 100%;
     box-sizing: border-box;
 }
+
 .rating-statistics-dashboard {
     display: grid;
     grid-template-columns: 260px 1fr;
     gap: var(--space-2xl);
     margin-bottom: var(--space-2xl);
 }
+
 .dashboard-big-score-left {
     display: flex;
     flex-direction: column;
@@ -659,6 +726,7 @@
     color: var(--text-muted);
     font-size: var(--font-size-base);
 }
+
 .dashboard-progress-bars-right {
     display: flex;
     flex-direction: column;
@@ -696,11 +764,16 @@
     font-size: var(--font-size-base);
     font-weight: var(--fw-medium);
 }
+
+/* =========================================================
+   MINI COMMENTS – HIỂN THỊ AVATAR THỰC
+   ========================================================= */
 .mini-comments-list-viewport {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
 }
+
 .mini-comment-card {
     padding: var(--space-md);
     border-radius: var(--radius-md);
@@ -713,18 +786,34 @@
     border-color: rgba(201, 168, 76, 0.35);
     background: rgba(201, 168, 76, 0.05);
 }
+
 .comment-user-meta-header {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
 }
+
+/* Avatar thực */
+.comment-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    background: var(--black-soft);
+}
+
+/* Placeholder khi không có avatar */
 .user-avatar-placeholder-small {
     width: 42px;
     height: 42px;
     border-radius: 50%;
     flex-shrink: 0;
     background: var(--cinema-border-gradient);
+    border: 2px solid rgba(255, 255, 255, 0.08);
 }
+
 .user-name-title-box {
     flex: 1;
     display: flex;
@@ -735,7 +824,6 @@
     color: var(--text-body);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
-    font-family: var(--font-primary);
 }
 .user-stars-small-row {
     display: flex;
@@ -751,7 +839,6 @@
     color: var(--text-secondary);
     font-size: var(--font-size-base);
     line-height: 1.8;
-    font-family: var(--font-primary);
 }
 .empty-reviews-placeholder {
     padding: var(--space-xl) 0;
@@ -889,16 +976,19 @@
     padding-top: var(--space-md);
 }
 
-.btn-cancel-review {
+.btn-cancel-review,
+.btn-submit-review {
     padding: var(--space-sm) var(--space-xl);
     border-radius: var(--radius-round);
     border: 2px solid var(--silver-primary);
     background: transparent;
-    color: var(--silver-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     cursor: pointer;
     transition: all var(--transition-normal);
+}
+.btn-cancel-review {
+    color: var(--silver-primary);
 }
 .btn-cancel-review:hover {
     background: rgba(255, 255, 255, 0.08);
@@ -908,26 +998,17 @@
 }
 
 .btn-submit-review {
-    padding: var(--space-sm) var(--space-xl);
-    border-radius: var(--radius-round);
-    border: 2px solid var(--silver-primary);
-    background: transparent;
     color: var(--silver-primary);
-    font-size: var(--font-size-base);
     font-weight: var(--fw-extrabold);
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    box-shadow: none;
 }
 .btn-submit-review:hover {
     transform: translateY(-2px);
     background: rgba(255, 255, 255, 0.08);
     border-color: var(--silver-light);
     color: var(--silver-light);
-    box-shadow: none;
 }
 
-/* ----- Star rating: 10 sao ----- */
+/* Star rating */
 .star-rating-modal-content {
     display: flex;
     flex-direction: column;
@@ -976,7 +1057,6 @@
     background: rgba(255, 255, 255, 0.05);
     border: var(--border-light);
     color: var(--text-body);
-    font-family: var(--font-primary);
     font-size: var(--font-size-base);
     resize: vertical;
     transition: all var(--transition-normal);
@@ -991,10 +1071,10 @@
 }
 
 /* =========================================================
-   RESPONSIVE – CHỈ 4 CỘT (DESKTOP) VÀ 2 CỘT (MOBILE)
+   RESPONSIVE
    ========================================================= */
 
-/* Tablet dọc (≤ 992px) */
+/* Tablet ≤ 992px */
 @media (max-width: 992px) {
     .cinema-main-content-container {
         padding: 0 18px var(--space-2xl);
@@ -1019,11 +1099,6 @@
         align-items: center;
     }
 
-    .filmgenre-section-header h2,
-    .section-title-label {
-        font-size: var(--font-size-h4);
-    }
-
     .info-detail-row {
         grid-template-columns: 1fr;
         gap: var(--space-lg);
@@ -1044,14 +1119,10 @@
     }
 }
 
-/* Mobile ngang & tablet nhỏ (≤ 768px) – 2 CỘT CHO GRID */
+/* Mobile ≤ 768px */
 @media (max-width: 768px) {
     .cinema-main-content-container {
         padding: 0 18px var(--space-xl);
-    }
-
-    .movie-info-section {
-        margin: var(--space-xl) 0 var(--space-lg);
     }
 
     .movie-info-container {
@@ -1075,9 +1146,6 @@
         padding: var(--space-sm) var(--space-md);
         width: 100%;
     }
-    .rating-big-number {
-        font-size: var(--font-size-h3);
-    }
 
     .info-meta-row {
         gap: var(--space-xs);
@@ -1086,16 +1154,7 @@
         font-size: var(--font-size-base);
         padding: 2px 12px;
     }
-    .meta-tag svg {
-        width: 14px;
-        height: 14px;
-    }
 
-    .desc-text {
-        font-size: var(--font-size-base);
-    }
-
-    /* Nút hành động vẫn ngang, thu nhỏ */
     .info-actions-row {
         gap: var(--space-sm);
         flex-wrap: nowrap !important;
@@ -1109,23 +1168,12 @@
         border-width: 1.5px;
         letter-spacing: 0.5px;
     }
-    .btn-book-now svg,
-    .btn-watch-trailer svg,
-    .btn-review svg {
-        width: 16px;
-        height: 16px;
-    }
 
     .info-meta-col {
         grid-template-columns: 1fr 1fr;
         gap: var(--space-xs) var(--space-md);
     }
-    .meta-label,
-    .meta-value {
-        font-size: var(--font-size-base);
-    }
 
-    /* CHUYỂN GRID SANG 2 CỘT, GIỮ GAP 16PX */
     .genre-movies-grid,
     .cast-avatars-horizontal-list,
     .other-trailers-grid {
@@ -1137,40 +1185,17 @@
         padding: var(--space-lg);
         border-radius: var(--radius-md);
     }
-    .huge-number {
-        font-size: var(--font-size-h2);
-    }
 
-    .filmgenre-section-header h2,
-    .section-title-label {
-        font-size: var(--font-size-h5);
+    .section-header-row .section-title-label,
+    .filmgenre-section-header h2 {
+        font-size: var(--font-size-h4);
     }
-    .view-all-link-gold {
+    .section-header-row .view-all-link-gold,
+    .section-header-row .btn-write-review-small {
         font-size: var(--font-size-base);
-    }
-    .section-header-row {
-        flex-wrap: wrap;
-        gap: var(--space-sm);
+        padding: var(--space-xs) var(--space-sm);
     }
 
-    .info-rating-compact {
-        flex-direction: row;
-        justify-content: center;
-        gap: var(--space-sm);
-        flex-wrap: wrap;
-    }
-    .rating-stars-compact {
-        flex-direction: row;
-        align-items: center;
-        gap: var(--space-xs);
-    }
-
-    .movie-info-container,
-    .split-right-column-box {
-        border-radius: var(--radius-sm);
-    }
-
-    /* Review modal mobile */
     .review-modal-container {
         padding: var(--space-lg);
     }
@@ -1183,13 +1208,9 @@
         justify-content: center;
         padding: var(--space-md);
     }
-    .interactive-star {
-        width: 24px;
-        height: 24px;
-    }
 }
 
-/* Mobile nhỏ (≤ 480px) – GIỮ 2 CỘT, GAP 16PX, poster 130px */
+/* Mobile ≤ 480px */
 @media (max-width: 480px) {
     .cinema-main-content-container {
         padding: 0 18px var(--space-lg);
@@ -1224,7 +1245,6 @@
     }
 
     .info-meta-col {
-        grid-template-columns: 1fr 1fr;
         gap: var(--space-xs) var(--space-sm);
     }
     .meta-label,
@@ -1232,25 +1252,16 @@
         font-size: 0.625rem;
     }
 
-    .filmgenre-section-header h2,
-    .section-title-label {
-        font-size: var(--font-size-base);
-        letter-spacing: 1px;
-    }
-    .btn-write-review-small {
-        font-size: var(--font-size-base);
-        padding: var(--space-xs) var(--space-sm);
+    .section-header-row .section-title-label,
+    .filmgenre-section-header h2 {
+        font-size: var(--font-size-h5);
     }
 
     .split-right-column-box {
         padding: var(--space-md);
-        border-radius: var(--radius-md);
     }
     .huge-number {
         font-size: var(--font-size-h2);
-    }
-    .progress-percent-text {
-        font-size: var(--font-size-base);
     }
 
     .trailer-close-btn {
@@ -1268,11 +1279,6 @@
         margin-left: 52px;
     }
 
-    .meta-tag {
-        font-size: var(--font-size-base);
-        padding: var(--space-xs) var(--space-sm);
-    }
-
     .interactive-star {
         width: 20px;
         height: 20px;
@@ -1282,7 +1288,7 @@
     }
 }
 
-/* Cực nhỏ (≤ 360px) – GIỮ 2 CỘT, GAP 16PX, poster 100px */
+/* Cực nhỏ ≤ 360px */
 @media (max-width: 360px) {
     .cinema-main-content-container {
         padding: 0 18px var(--space-md);
@@ -1318,23 +1324,11 @@
     }
 
     .info-meta-col {
-        grid-template-columns: 1fr 1fr;
         gap: var(--space-xs);
     }
     .meta-label,
     .meta-value {
         font-size: 0.5625rem;
-    }
-
-    .filmgenre-section-header {
-        flex-wrap: wrap;
-    }
-    .filmgenre-line {
-        flex: 1 1 100%;
-        order: 2;
-    }
-    .section-header-row {
-        flex-wrap: wrap;
     }
 
     .interactive-star {

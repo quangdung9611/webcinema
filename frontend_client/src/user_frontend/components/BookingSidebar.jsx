@@ -1,3 +1,4 @@
+// ===================== BookingSidebar.js =====================
 import React from 'react';
 import CountdownTimer from '../pages/CountdownTimer';
 import '../styles/BookingSidebar.css';

@@ -4,10 +4,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 
 import Modal from '../components/Modal';
-import LoadingButton from '../components/LoadingButton'; // ✅ Import LoadingButton
+import LoadingButton from '../components/LoadingButton';
 import '../styles/UserAuth.css';
 
-// API URL từ env
 const API_URL = process.env.REACT_APP_API_URL || 'https://api.quangdungcinema.id.vn';
 
 const UserRegister = () => {
@@ -24,7 +23,6 @@ const UserRegister = () => {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    // Quản lý trạng thái Modal
     const [modalConfig, setModalConfig] = useState({
         show: false,
         type: 'success',
@@ -41,7 +39,6 @@ const UserRegister = () => {
     const validate = () => {
         let tempErrors = {};
 
-        // Username
         const usernameRegex = /^[a-zA-Z0-9_.]{4,20}$/;
         if (!formData.username.trim()) {
             tempErrors.username = 'Tên đăng nhập không được để trống';
@@ -49,14 +46,12 @@ const UserRegister = () => {
             tempErrors.username = 'Tên đăng nhập từ 4-20 ký tự, chỉ chứa chữ, số, dấu gạch dưới và dấu chấm';
         }
 
-        // Full Name
         if (!formData.full_name.trim()) {
             tempErrors.full_name = 'Họ tên không được để trống';
         } else if (formData.full_name.trim().length < 6) {
             tempErrors.full_name = 'Họ tên phải từ 6 ký tự trở lên';
         }
 
-        // Email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!formData.email.trim()) {
             tempErrors.email = 'Email không được để trống';
@@ -64,7 +59,6 @@ const UserRegister = () => {
             tempErrors.email = 'Email không hợp lệ';
         }
 
-        // Phone
         const phoneRegex = /^[0-9]{10}$/;
         if (!formData.phone.trim()) {
             tempErrors.phone = 'Số điện thoại không được để trống';
@@ -72,7 +66,6 @@ const UserRegister = () => {
             tempErrors.phone = 'Số điện thoại phải đúng 10 chữ số';
         }
 
-        // Password
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
         if (!formData.password.trim()) {
             tempErrors.password = 'Mật khẩu không được để trống';
@@ -123,7 +116,6 @@ const UserRegister = () => {
                 }
             );
 
-            // Đăng ký thành công
             setModalConfig({
                 show: true,
                 type: 'success',
@@ -153,11 +145,13 @@ const UserRegister = () => {
     };
 
     // ==========================================
-    // HANDLE MODAL CONFIRM
+    // HANDLE MODAL CLOSE
     // ==========================================
 
-    const handleModalConfirm = () => {
+    const handleModalClose = () => {
+        // Đóng modal
         setModalConfig({ ...modalConfig, show: false });
+        // Nếu là success thì chuyển sang login
         if (modalConfig.type === 'success') {
             navigate('/login');
         }
@@ -286,7 +280,6 @@ const UserRegister = () => {
                         />
                     </div>
 
-                    {/* ✅ SUBMIT - DÙNG LOADINGBUTTON */}
                     <LoadingButton
                         type="submit"
                         loading={loading}
@@ -299,7 +292,6 @@ const UserRegister = () => {
                     </LoadingButton>
                 </form>
 
-                {/* FOOTER */}
                 <div className="auth-footer">
                     <span>Đã có tài khoản? </span>
                     <Link to="/login" className="btn-link">
@@ -308,15 +300,13 @@ const UserRegister = () => {
                 </div>
             </div>
 
-            {/* ✅ ĐÃ BỎ LOADING SPINNER OVERLAY */}
-
-            {/* MODAL */}
+            {/* MODAL - sửa thành onClose */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}
                 title={modalConfig.title}
                 message={modalConfig.message}
-                onConfirm={handleModalConfirm}
+                onClose={handleModalClose}
             />
         </div>
     );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -25,9 +25,6 @@ import 'swiper/css/pagination';
 
 import '../styles/user_home.css';
 
-// =============================================
-// HELPER: LẤY URL ẢNH
-// =============================================
 const getImageUrl = (url, baseUrl = '') => {
   if (!url) return '';
   if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -37,7 +34,6 @@ const getImageUrl = (url, baseUrl = '') => {
 };
 
 const UserHome = () => {
-
   const navigate = useNavigate();
 
   const bannerImages = [
@@ -52,12 +48,17 @@ const UserHome = () => {
 
   const [swiperInstance, setSwiperInstance] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const spotlightRef = useRef(null);
+  const bannerRef = useRef(null);
+
+  // State để reset sparkle khi đổi slide
+  const [sparkleKey, setSparkleKey] = useState(0);
 
   const [groupedMovies, setGroupedMovies] = useState({
     "Đang chiếu": [],
     "Sắp chiếu": []
   });
-
   const [loading, setLoading] = useState(true);
   const [promotions, setPromotions] = useState([]);
   const [cinemaNews, setCinemaNews] = useState([]);
@@ -66,14 +67,12 @@ const UserHome = () => {
     movies: [],
     cinemas: []
   });
-
   const [selectedQuick, setSelectedQuick] = useState({
     movie: '',
     cinema: '',
     date: '',
     showtime: ''
   });
-
   const [availableDates, setAvailableDates] = useState([]);
   const [availableShowtimes, setAvailableShowtimes] = useState([]);
 
@@ -264,6 +263,59 @@ const UserHome = () => {
     }
   };
 
+  // ===== Spotlight =====
+  useEffect(() => {
+    const banner = bannerRef.current;
+    const spotlight = spotlightRef.current;
+    if (!banner || !spotlight) return;
+
+    const move = (e) => {
+      const rect = banner.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      spotlight.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+    };
+
+    const enter = () => { spotlight.style.opacity = ".12"; };
+    const leave = () => { spotlight.style.opacity = "0"; };
+
+    banner.addEventListener("mousemove", move);
+    banner.addEventListener("mouseenter", enter);
+    banner.addEventListener("mouseleave", leave);
+
+    return () => {
+      banner.removeEventListener("mousemove", move);
+      banner.removeEventListener("mouseenter", enter);
+      banner.removeEventListener("mouseleave", leave);
+    };
+  }, []);
+
+  // ===== Progress bar =====
+  useEffect(() => {
+    if (!swiperInstance) return;
+    const onAutoplayTimeLeft = (s, timeLeft, progress) => {
+      setProgress(1 - progress);
+    };
+    swiperInstance.on('autoplayTimeLeft', onAutoplayTimeLeft);
+    return () => {
+      swiperInstance.off('autoplayTimeLeft', onAutoplayTimeLeft);
+    };
+  }, [swiperInstance]);
+
+  useEffect(() => {
+    setProgress(0);
+  }, [activeIndex]);
+
+  // ===== Reset sparkle khi đổi slide =====
+  useEffect(() => {
+    if (!swiperInstance) return;
+    const onSlideChange = () => {
+      setSparkleKey(prev => prev + 1);
+    };
+    swiperInstance.on('slideChange', onSlideChange);
+    return () => swiperInstance.off('slideChange', onSlideChange);
+  }, [swiperInstance]);
+
   return (
     <>
       <Modal
@@ -276,52 +328,92 @@ const UserHome = () => {
       />
 
       <div className="user-home">
-
-        {/* ===== BANNER ===== */}
-        <div className="carousel-full-wrapper banner-premium">
-          <Swiper
-            modules={[Autoplay, EffectFade, Navigation, Pagination]}
-            effect="fade"
-            speed={1200}
-            autoplay={{ delay: 4500, disableOnInteraction: false }}
-            loop={true}
-            onSwiper={setSwiperInstance}
-            onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
-            className="premiumSwiper"
-          >
-            {bannerImages.map((img, index) => (
-              <SwiperSlide
-                key={index}
-                className={`banner-slide ${activeIndex === index ? "slide-active" : ""}`}
+        {/* ===== BANNER PREMIUM ===== */}
+        <ScrollReveal
+          direction="fade"
+          duration={0.8}
+          delay={0.1}
+          amount={0.1}
+          curtain={true}
+          curtainColor="gold"
+          curtainTexture="velvet"
+          curtainSpeed={1.2}
+          curtainFolds={7}
+          once={true}
+        >
+          <div className="carousel-full-wrapper banner-premium">
+            <div className="banner-track" ref={bannerRef}>
+              <Swiper
+                modules={[Autoplay, EffectFade, Navigation, Pagination]}
+                effect="fade"
+                fadeEffect={{ crossFade: true }}
+                speed={1400}
+                autoplay={{ delay: 4500, disableOnInteraction: false }}
+                loop={true}
+                onSwiper={setSwiperInstance}
+                onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
+                className="premiumSwiper"
               >
-                <div className="banner-media">
-                  <picture>
-                    <source
-                      media="(max-width: 767px)"
-                      srcSet={`${bannerDocUrl}${img}`}
-                    />
-                    <img
-                      src={`${bannerBaseUrl}${img}`}
-                      className="banner-img"
-                      alt="Cinema Banner"
-                    />
-                  </picture>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        </div>
+                {bannerImages.map((img, index) => (
+                  <SwiperSlide
+                    key={index}
+                    className={`banner-slide ${activeIndex === index ? "slide-active" : ""}`}
+                  >
+                    <div className="banner-media">
+                      <picture>
+                        <source media="(max-width: 767px)" srcSet={`${bannerDocUrl}${img}`} />
+                        <img src={`${bannerBaseUrl}${img}`} className="banner-img" alt="Cinema Banner" />
+                      </picture>
 
-        {/* ===== QUICK BOOKING – Rèm bạc ===== */}
+                      {/* ===== SPARKLE – HẠT LẤP LÁNH (chạy khi slide xuất hiện) ===== */}
+                        <div className="sparkle-container" key={sparkleKey}>
+                          {Array.from({ length: 30 }).map((_, i) => (
+                            <span className="sparkle" key={i}></span>
+                          ))}
+                        </div>
+
+                      {/* ===== LIGHT SWEEP (chỉ xuất hiện khi hover) ===== */}
+                      <div className="light-sweep-hover">
+                        <div className="sweep-beam"></div>
+                      </div>
+
+                      <div className="banner-particles"></div>
+                      <div ref={spotlightRef} className="banner-spotlight" />
+                    </div>
+
+                    <div className="banner-slide-number">
+                      <span className="current">{String(index + 1).padStart(2, '0')}</span>
+                      <span className="separator">/</span>
+                      <span className="total">{String(bannerImages.length).padStart(2, '0')}</span>
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+
+              <div className="banner-progress-bar">
+                <div className="banner-progress-fill" style={{ transform: `scaleX(${progress})` }} />
+              </div>
+
+              <button className="banner-nav banner-prev" onClick={() => swiperInstance?.slidePrev()}>
+                <ChevronRight size={24} />
+              </button>
+              <button className="banner-nav banner-next" onClick={() => swiperInstance?.slideNext()}>
+                <ChevronRight size={24} />
+              </button>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* ===== QUICK BOOKING ===== */}
         <ScrollReveal
           direction="up"
-          duration={1.2}
-          delay={0.1}
+          duration={0.5}
+          delay={0.2}
           amount={0.15}
           curtain={true}
           curtainColor="silver"
           curtainTexture="silk"
-          curtainSpeed={1.0}
+          curtainSpeed={0.6}
           curtainFolds={5}
         >
           <section className="quick-booking-container">
@@ -407,8 +499,6 @@ const UserHome = () => {
 
         {/* ===== CONTENT ===== */}
         <div className="home-container">
-
-          {/* ===== FEATURES – Xuất hiện tuần tự, không rèm ===== */}
           <section className="home-features-section">
             <div className="features-grid">
               {[
@@ -420,8 +510,8 @@ const UserHome = () => {
                 <ScrollReveal
                   key={index}
                   direction="up"
-                  duration={1.0}
-                  delay={0.1 + index * 0.12}
+                  duration={0.4}
+                  delay={0.4 + index * 0.08}
                   amount={0.15}
                   curtain={false}
                 >
@@ -437,16 +527,15 @@ const UserHome = () => {
             </div>
           </section>
 
-          {/* ===== FILM GENRE – Rèm vàng ===== */}
           <ScrollReveal
             direction="up"
-            duration={1.2}
-            delay={0.15}
+            duration={0.6}
+            delay={0.6}
             amount={0.15}
             curtain={true}
             curtainColor="gold"
             curtainTexture="velvet"
-            curtainSpeed={1.0}
+            curtainSpeed={0.6}
             curtainFolds={5}
           >
             <div className="movie-container">
@@ -454,16 +543,15 @@ const UserHome = () => {
             </div>
           </ScrollReveal>
 
-          {/* ===== PROMOTIONS – Rèm bạc + từng card tuần tự ===== */}
           <ScrollReveal
             direction="up"
-            duration={1.2}
-            delay={0.2}
+            duration={0.6}
+            delay={0.8}
             amount={0.15}
             curtain={true}
             curtainColor="silver"
             curtainTexture="silk"
-            curtainSpeed={1.0}
+            curtainSpeed={0.6}
             curtainFolds={5}
           >
             <section className="promotions-section">
@@ -472,12 +560,8 @@ const UserHome = () => {
                   <h3 className="section-title">ƯU ĐÃI HẤP DẪN</h3>
                   <div className="title-underline"></div>
                 </div>
-                <button
-                  className="btn-view-all"
-                  onClick={() => navigate('/promotion')}
-                >
-                  Xem tất cả
-                  <ChevronRight size={18} />
+                <button className="btn-view-all" onClick={() => navigate('/promotion')}>
+                  Xem tất cả <ChevronRight size={18} />
                 </button>
               </div>
               <div className="cinema-grid">
@@ -488,8 +572,8 @@ const UserHome = () => {
                     <ScrollReveal
                       key={promo.promotion_id}
                       direction="up"
-                      duration={1.0}
-                      delay={0.9 + index * 0.12}  // 🔥 delay lớn để sau rèm
+                      duration={0.4}
+                      delay={1.0 + index * 0.08}
                       amount={0.15}
                       curtain={false}
                     >
@@ -507,16 +591,15 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
-          {/* ===== CINEMA CORNER – Rèm vàng + từng card tuần tự ===== */}
           <ScrollReveal
             direction="up"
-            duration={1.2}
-            delay={0.25}
+            duration={0.6}
+            delay={1.2}
             amount={0.15}
             curtain={true}
             curtainColor="gold"
             curtainTexture="velvet"
-            curtainSpeed={1.0}
+            curtainSpeed={0.6}
             curtainFolds={5}
           >
             <section className="cinema-corner-section">
@@ -525,12 +608,8 @@ const UserHome = () => {
                   <h3 className="section-title">GÓC ĐIỆN ẢNH</h3>
                   <div className="title-underline"></div>
                 </div>
-                <button
-                  className="btn-view-all"
-                  onClick={() => navigate('/blog-cinema')}
-                >
-                  Xem tất cả
-                  <ChevronRight size={18} />
+                <button className="btn-view-all" onClick={() => navigate('/blog-cinema')}>
+                  Xem tất cả <ChevronRight size={18} />
                 </button>
               </div>
               <div className="cinema-grid">
@@ -541,8 +620,8 @@ const UserHome = () => {
                     <ScrollReveal
                       key={news.blog_id}
                       direction="up"
-                      duration={1.0}
-                      delay={0.9 + index * 0.12}  // 🔥 delay lớn để sau rèm
+                      duration={0.4}
+                      delay={1.4 + index * 0.08}
                       amount={0.15}
                       curtain={false}
                     >
@@ -559,7 +638,6 @@ const UserHome = () => {
               </div>
             </section>
           </ScrollReveal>
-
         </div>
       </div>
     </>

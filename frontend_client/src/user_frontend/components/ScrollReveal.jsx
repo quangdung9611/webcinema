@@ -1,5 +1,5 @@
 import { motion, useInView } from "framer-motion";
-import { useRef, useMemo, useState } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
 
 const ScrollReveal = ({
     children,
@@ -12,27 +12,36 @@ const ScrollReveal = ({
     amount = 0.15,
     once = true,
 
-    // ---- HIỆU ỨNG RÈM BẠC ----
+    // ---- HIỆU ỨNG RÈM ----
     curtain = false,
     curtainTexture = "silk",
     curtainSpeed = 0.9,
     curtainFolds = 5,
+
+    // ---- ĐÃ XÓA: projector, projectorDelay, projectorDuration ----
     ...rest
 }) => {
     const ref = useRef(null);
     const isInView = useInView(ref, { once, amount, rootMargin: "0px 0px -30px 0px" });
     const [curtainOpened, setCurtainOpened] = useState(false);
 
-    // ---- CHỈ CÓ MÀU BẠC/XÁM ----
+    // Mở rèm khi phần tử vào view (không còn projector)
+    useEffect(() => {
+        if (isInView) {
+            setCurtainOpened(true);
+        }
+    }, [isInView]);
+
+    // Màu sắc rèm (theo tông bạc/vàng)
     const colors = {
-        light: "#E8E8E8",    // bạc sáng
-        mid: "#D0D0D0",      // bạc trung bình
-        dark: "#A0A0A0",     // bạc tối
+        light: "#E8E8E8",
+        mid: "#D0D0D0",
+        dark: "#A0A0A0",
         glow: "rgba(200,200,200,0.15)",
         shadow: "rgba(0,0,0,0.12)",
     };
 
-    // ---- NẾP GẤP RÈM ----
+    // Nếp gấp rèm
     const foldGradients = useMemo(() => {
         const folds = [];
         for (let i = 0; i < curtainFolds; i++) {
@@ -44,7 +53,6 @@ const ScrollReveal = ({
         return folds;
     }, [curtainFolds]);
 
-    // ---- TEXTURE RÈM ----
     const textureGradient = useMemo(() => {
         if (curtainTexture === "velvet") {
             return `linear-gradient(180deg, rgba(0,0,0,0.03) 0%, rgba(255,255,255,0.04) 20%, rgba(0,0,0,0.03) 40%, rgba(255,255,255,0.03) 60%, rgba(0,0,0,0.04) 80%, rgba(255,255,255,0.02) 100%)`;
@@ -52,7 +60,7 @@ const ScrollReveal = ({
         return `linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.02) 25%, rgba(255,255,255,0.03) 50%, rgba(0,0,0,0.02) 75%, rgba(255,255,255,0.04) 100%)`;
     }, [curtainTexture]);
 
-    // ---- HIỆU ỨNG NỘI DUNG ----
+    // ---- NỘI DUNG ANIMATION ----
     const getInitialPos = () => {
         switch (direction) {
             case "up": return { y: 30, x: 0 };
@@ -108,12 +116,10 @@ const ScrollReveal = ({
                 pointerEvents: "none",
             }}
             initial={{ x: 0 }}
-            animate={{ x: isInView ? "-100%" : 0 }}
+            animate={{ x: curtainOpened ? "-100%" : 0 }}
             transition={{
                 duration: curtainSpeed,
-                delay: delay,
                 ease: [0.4, 0, 0.2, 1],
-                onComplete: () => setCurtainOpened(true),
             }}
         >
             <div style={{
@@ -164,10 +170,9 @@ const ScrollReveal = ({
                 pointerEvents: "none",
             }}
             initial={{ x: 0 }}
-            animate={{ x: isInView ? "100%" : 0 }}
+            animate={{ x: curtainOpened ? "100%" : 0 }}
             transition={{
                 duration: curtainSpeed,
-                delay: delay,
                 ease: [0.4, 0, 0.2, 1],
             }}
         >

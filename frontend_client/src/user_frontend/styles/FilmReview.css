@@ -1,15 +1,12 @@
 /* ==========================================================
    FILM REVIEW PAGE - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
    BỎ OVERLAY TRÊN ẢNH
+   ĐÃ XÓA QUÉT NGANG TRÊN CARD
 ========================================================== */
 
 .film-review-page {
     width: 100%;
 }
-
-/* ==========================================================
-   HERO BANNER SLIDER - ASPECT RATIO 2.5:1
-========================================================== */
 
 .film-review-hero {
     position: relative;
@@ -39,20 +36,14 @@
     image-rendering: -webkit-optimize-contrast;
 }
 
-/* Overlay nhẹ trên banner (giữ lại vì là hero, không phải card) */
 .review-overlay {
     position: absolute;
     inset: 0;
     z-index: 1;
-    background: linear-gradient(
-        180deg,
-        rgba(0, 0, 0, 0.10) 0%,
-        rgba(0, 0, 0, 0.35) 100%
-    );
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.10) 0%, rgba(0, 0, 0, 0.35) 100%);
     pointer-events: none;
 }
 
-/* Shine & particles – giữ nguyên */
 .review-light {
     position: absolute;
     top: 0;
@@ -90,19 +81,11 @@
     100% { transform: translateY(-180px); }
 }
 
-/* ==========================================================
-   CONTENT
-========================================================== */
-
 .film-review-content {
     max-width: 1300px;
     margin: 0 auto;
     padding: var(--space-2xl) var(--space-lg) var(--space-3xl);
 }
-
-/* ==========================================================
-   SECTION HEADER
-========================================================== */
 
 .review-section-header {
     display: flex;
@@ -127,19 +110,11 @@
     color: var(--text-body);
 }
 
-/* ==========================================================
-   GRID
-========================================================== */
-
 .review-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--space-lg);
 }
-
-/* ==========================================================
-   CARD
-========================================================== */
 
 .review-item {
     position: relative;
@@ -155,31 +130,7 @@
     transition: all var(--transition-normal);
 }
 
-/* Hiệu ứng shine trên card (giữ nguyên) */
-.review-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -140%;
-    width: 40%;
-    height: 100%;
-    z-index: 20;
-    pointer-events: none;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.22),
-        rgba(255, 255, 255, 0.10),
-        transparent
-    );
-    filter: blur(8px);
-    transform: skewX(-25deg);
-    transition: 1s ease;
-}
-
-.review-item:hover::before {
-    left: 150%;
-}
+/* ===== ĐÃ XÓA HIỆU ỨNG QUÉT NGANG (::before) ===== */
 
 .review-item::after {
     content: '';
@@ -206,10 +157,6 @@
     box-shadow: var(--cinema-card-shadow), 0 0 20px rgba(201, 168, 76, 0.08);
 }
 
-/* ==========================================================
-   IMAGE - KHÔNG CÓ OVERLAY
-========================================================== */
-
 .review-image-wrapper {
     position: relative;
     overflow: hidden;
@@ -227,10 +174,6 @@
     transform: scale(1.05);
 }
 
-/* ==========================================================
-   BADGE
-========================================================== */
-
 .review-badge {
     position: absolute;
     top: var(--space-sm);
@@ -247,17 +190,9 @@
     color: var(--gold-primary);
 }
 
-/* ==========================================================
-   CONTENT
-========================================================== */
-
 .review-content {
     padding: var(--space-md);
 }
-
-/* ==========================================================
-   TITLE
-========================================================== */
 
 .review-content h3 {
     margin: 0 0 var(--space-xs);
@@ -272,10 +207,6 @@
     overflow: hidden;
 }
 
-/* ==========================================================
-   DESCRIPTION
-========================================================== */
-
 .review-content p {
     margin: 0 0 var(--space-sm);
     font-size: var(--font-size-base);
@@ -287,10 +218,6 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-
-/* ==========================================================
-   META
-========================================================== */
 
 .review-meta {
     display: flex;
@@ -320,10 +247,6 @@
     color: var(--gold-primary);
 }
 
-/* ==========================================================
-   LOADING
-========================================================== */
-
 .film-review-loading {
     min-height: 100vh;
     display: flex;
@@ -334,10 +257,6 @@
     font-size: var(--font-size-h4);
     font-weight: var(--fw-bold);
 }
-
-/* ==========================================================
-   RESPONSIVE
-========================================================== */
 
 @media (max-width: 1200px) {
     .review-grid {

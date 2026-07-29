@@ -59,8 +59,8 @@ const BankApp = () => {
     const [timeLeft, setTimeLeft] = useState(300);
     const [otp, setOtp] = useState('');
     const [loadingVerify, setLoadingVerify] = useState(false);
-    const [loadingSendOtp, setLoadingSendOtp] = useState(false); // 👈 loading gửi OTP
-    const [sendOtpError, setSendOtpError] = useState(null); // 👈 lỗi gửi OTP
+    const [loadingSendOtp, setLoadingSendOtp] = useState(false);
+    const [sendOtpError, setSendOtpError] = useState(null);
 
     const [modalConfig, setModalConfig] = useState({
         show: false,
@@ -133,7 +133,6 @@ const BankApp = () => {
                         bookingId
                     }
                 );
-                // Không hiển thị thông báo thành công, vì OTP đã được gửi
             } catch (err) {
                 console.error('❌ Lỗi gửi OTP:', err);
                 const errorMsg = err.response?.data?.message || 'Không thể gửi mã OTP. Vui lòng thử lại.';
@@ -164,7 +163,6 @@ const BankApp = () => {
                     );
                 } catch (err) {
                     console.error('❌ Lỗi hủy đơn:', err);
-                    // Vẫn tiếp tục, vì đã hết thời gian
                 }
 
                 openModal(
@@ -255,7 +253,6 @@ const BankApp = () => {
                     bookingId
                 }
             );
-            // Reset timer
             setTimeLeft(300);
             openModal('success', 'THÀNH CÔNG', 'Mã OTP mới đã được gửi đến email của bạn.');
         } catch (err) {
@@ -343,7 +340,6 @@ const BankApp = () => {
                             </span>
                         </div>
 
-                        {/* Nút xác nhận thanh toán */}
                         <LoadingButton
                             type="button"
                             loading={loadingVerify}
@@ -356,7 +352,6 @@ const BankApp = () => {
                             XÁC NHẬN THANH TOÁN
                         </LoadingButton>
 
-                        {/* Nút gửi lại OTP (khi hết hạn hoặc lỗi) */}
                         {timeLeft < 60 && (
                             <button
                                 className="btn-resend-otp"
@@ -370,13 +365,19 @@ const BankApp = () => {
                 </div>
             </main>
 
+            {/* ✅ Modal đã sửa: chỉ dùng onClose, xử lý onConfirm bên trong */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}
                 title={modalConfig.title}
                 message={modalConfig.message}
-                onConfirm={modalConfig.onConfirm}
-                onCancel={closeModal}
+                onClose={() => {
+                    if (modalConfig.onConfirm) {
+                        modalConfig.onConfirm();
+                    } else {
+                        closeModal();
+                    }
+                }}
             />
         </div>
     );

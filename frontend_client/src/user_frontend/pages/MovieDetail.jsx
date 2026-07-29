@@ -57,6 +57,15 @@ const MovieDetail = () => {
         return (match && match[2].length === 11) ? match[2] : null;
     };
 
+    // Helper xử lý avatar (giống Header)
+    const getAvatarUrl = (avatar) => {
+        if (!avatar) return null;
+        if (avatar.startsWith('http')) {
+            return avatar;
+        }
+        return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
+    };
+
     const handleMovieClick = (movie) => {
         setSelectedMovie(movie);
         setIsModalOpen(true);
@@ -87,7 +96,7 @@ const MovieDetail = () => {
             try {
                 setLoading(true);
                 const [resMovie, resRelated, resActors] = await Promise.all([
-                    axios.get(`${API_BASE_URL}/movies/detail/${slug}`), // ✅ đã sửa thành detail
+                    axios.get(`${API_BASE_URL}/movies/detail/${slug}`),
                     axios.get(`${API_BASE_URL}/movies`),
                     axios.get(`${API_BASE_URL}/actors`)
                 ]);
@@ -273,12 +282,6 @@ const MovieDetail = () => {
     if (loading) return <div className="movie-loading-wrapper"><span>Đang tải thông tin phim...</span></div>;
     if (!movie) return <div className="movie-error-wrapper">Không tìm thấy dữ liệu bộ phim yêu cầu.</div>;
 
-    const getModalMessage = () => {
-        if (modalConfig.message === 'rating_mode') return renderStarRating();
-        return modalConfig.message;
-    };
-
-    // Chuẩn bị object movie cho Banner: chỉ lấy raw, không fallback
     const movieForBanner = {
         ...movie,
         poster_url: movie.movie_poster || null,
@@ -287,17 +290,20 @@ const MovieDetail = () => {
 
     return (
         <div className="cinema-movie-detail-page">
-            {/* Modal chung */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}
                 title={modalConfig.title}
-                message={getModalMessage()}
-                onConfirm={modalConfig.message === 'rating_mode' ? handleSendReview : (modalConfig.onConfirm || closeModal)}
-                onCancel={closeModal}
+                message={modalConfig.message}
+                onClose={() => {
+                    if (modalConfig.onConfirm) {
+                        modalConfig.onConfirm();
+                    } else {
+                        closeModal();
+                    }
+                }}
             />
 
-            {/* TRAILER MODAL */}
             {trailerModal.isOpen && (
                 <div className="trailer-modal-overlay" onClick={closeTrailerModal}>
                     <div className="trailer-modal-container" onClick={(e) => e.stopPropagation()}>
@@ -309,7 +315,6 @@ const MovieDetail = () => {
                 </div>
             )}
 
-            {/* REVIEW MODAL */}
             {showReviewModal && (
                 <div className="review-modal-overlay" onClick={closeReviewModal}>
                     <div className="review-modal-container" onClick={(e) => e.stopPropagation()}>
@@ -334,15 +339,12 @@ const MovieDetail = () => {
                 </div>
             )}
 
-            {/* SECTION 1: HERO BANNER NGANG - truyền movieForBanner (không fallback) */}
             <MovieHeroBanner
                 movie={movieForBanner}
                 onTrailer={openTrailerModal}
             />
 
-            {/* CONTAINER CHÍNH */}
             <div className="cinema-main-content-container">
-                {/* SECTION 1.5: THÔNG TIN PHIM CHI TIẾT */}
                 <div className="movie-info-section">
                     <div className="movie-info-container">
                         <div className="movie-poster-col">
@@ -449,7 +451,6 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                {/* SECTION 2: PHIM LIÊN QUAN */}
                 <div className="filmgenre-container">
                     <div className="filmgenre-section-header">
                         <h2>PHIM LIÊN QUAN</h2>
@@ -466,10 +467,9 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                {/* SECTION 3: DIỄN VIÊN */}
                 <div className="cinema-section-block">
                     <div className="section-header-row">
-                        <h3 className="section-title-label">DIỄN VIÊN</h3>
+                        <h2 className="section-title-label">DIỄN VIÊN</h2>
                         <div className="filmgenre-line" />
                         <span className="view-all-link-gold" onClick={() => navigate('/actors')}>
                             Xem tất cả ❯
@@ -525,10 +525,9 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                {/* SECTION 4: TRAILER KHÁC */}
                 <div className="cinema-section-block">
                     <div className="section-header-row">
-                        <h3 className="section-title-label">TRAILER KHÁC</h3>
+                        <h2 className="section-title-label">TRAILER KHÁC</h2>
                         <div className="filmgenre-line" />
                     </div>
                     <div className="other-trailers-grid">
@@ -557,10 +556,9 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                {/* SECTION 5: ĐÁNH GIÁ TỪ KHÁN GIẢ */}
                 <div className="reviews-section-fullwidth">
                     <div className="section-header-row">
-                        <h3 className="section-title-label">ĐÁNH GIÁ TỪ KHÁN GIẢ</h3>
+                        <h2 className="section-title-label">ĐÁNH GIÁ TỪ KHÁN GIẢ</h2>
                         <div className="filmgenre-line" />
                         <button className="btn-write-review-small" onClick={openRatingModal}>
                             Viết đánh giá
@@ -602,30 +600,43 @@ const MovieDetail = () => {
                                     Chưa có bình luận nào. Hãy là người đầu tiên đánh giá!
                                 </div>
                             ) : (
-                                reviews.slice(0, 3).map((rev, index) => (
-                                    <div className="mini-comment-card" key={index}>
-                                        <div className="comment-user-meta-header">
-                                            <div className="user-avatar-placeholder-small" />
-                                            <div className="user-name-title-box">
-                                                <span className="comment-username">{rev.username || "Khán giả"}</span>
-                                                <div className="user-stars-small-row">
-                                                    {[...Array(Math.ceil((rev.rating || 10) / 2))].map((_, i) => (
-                                                        <Star key={i} size={10} fill="#f5b50a" color="#f5b50a" />
-                                                    ))}
+                                reviews.slice(0, 3).map((rev, index) => {
+                                    // ✅ Lấy avatar từ user_avatar và xử lý URL đúng cách
+                                    const avatarUrl = rev.user_avatar ? getAvatarUrl(rev.user_avatar) : null;
+
+                                    return (
+                                        <div className="mini-comment-card" key={index}>
+                                            <div className="comment-user-meta-header">
+                                                {avatarUrl ? (
+                                                    <img
+                                                        src={avatarUrl}
+                                                        alt={rev.username || "Khán giả"}
+                                                        className="comment-avatar"
+                                                        loading="lazy"
+                                                    />
+                                                ) : (
+                                                    <div className="user-avatar-placeholder-small" />
+                                                )}
+                                                <div className="user-name-title-box">
+                                                    <span className="comment-username">{rev.username || "Khán giả"}</span>
+                                                    <div className="user-stars-small-row">
+                                                        {[...Array(Math.ceil((rev.rating || 10) / 2))].map((_, i) => (
+                                                            <Star key={i} size={10} fill="#f5b50a" color="#f5b50a" />
+                                                        ))}
+                                                    </div>
                                                 </div>
+                                                <span className="comment-time-ago">Mới đây</span>
                                             </div>
-                                            <span className="comment-time-ago">Mới đây</span>
+                                            <p className="comment-content-body-text">{rev.comment}</p>
                                         </div>
-                                        <p className="comment-content-body-text">{rev.comment}</p>
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* MoviePreviewModal */}
             <MoviePreviewModal
                 open={isModalOpen}
                 onClose={handleCloseModal}
