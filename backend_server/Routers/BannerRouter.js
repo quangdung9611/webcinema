@@ -12,19 +12,14 @@ const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
     PUBLIC ROUTES - KHÔNG CẦN AUTH
 =========================================================*/
 
-// GET /api/banners → lấy tất cả banners
+// GET /api/banners?page=HOME → lấy banner theo page (public)
+// GET /api/banners → nếu không có page → lấy tất cả banners (cho admin)
 router.get(
     "/",
-    BannerController.getAllBanners
-);
-
-// GET /api/banners/page/HOME → lấy banner theo page
-router.get(
-    "/page/:page",
     BannerController.getBannerByPage
 );
 
-// GET /api/banners/:banner_id → lấy banner theo ID
+// GET /api/banners/:banner_id → lấy banner theo ID (public)
 router.get(
     "/:banner_id",
     BannerController.getBannerById
