@@ -12,7 +12,7 @@ const { uploadToCloudinary, deleteFromCloudinary } = require("../Middlewares/Upl
 class BannerService {
 
     /*=========================================================
-        GET ALL BANNERS (cho admin)
+        GET ALL BANNERS
     =========================================================*/
     async getAllBanners() {
         return await BannerRepository.findAll();
@@ -33,21 +33,21 @@ class BannerService {
     }
 
     /*=========================================================
-        GET ACTIVE BANNER BY PAGE (is_active = 1)
+        GET ALL ACTIVE BANNERS BY PAGE (trả về mảng)
     =========================================================*/
-    async getActiveBannerByPage(page) {
-        const banner = await BannerRepository.findActiveByPage(page);
-        if (!banner) {
+    async getBannerByPage(page) {
+        const banners = await BannerRepository.findActiveByPage(page);
+        if (!banners || banners.length === 0) {
             throw {
                 statusCode: 404,
                 message: "Không tìm thấy banner cho trang này"
             };
         }
-        return banner;
+        return banners; // Trả về mảng
     }
 
     /*=========================================================
-        CREATE BANNER (upload file)
+        CREATE BANNER
     =========================================================*/
     async createBanner(data, file) {
         const { page, is_active } = data;
@@ -56,31 +56,25 @@ class BannerService {
             throw { statusCode: 400, field: "page", message: "Thiếu page" };
         }
 
-        // Upload file lên Cloudinary
-        if (!file) {
-            throw { statusCode: 400, field: "image", message: "Vui lòng chọn file ảnh" };
-        }
-
-        const result = await uploadToCloudinary(file, 'cinema_shop/banners');
-        const imageUrl = result.url;
-
-        // Nếu banner mới active, deactive tất cả banner cũ của page đó
-        const active = is_active !== undefined ? parseInt(is_active) : 1;
-        if (active === 1) {
-            await BannerRepository.deactivateAllByPage(page);
+        let imageUrl = null;
+        if (file) {
+            const result = await uploadToCloudinary(file, 'cinema_shop/banners');
+            imageUrl = result.url;
+        } else {
+            throw { statusCode: 400, field: "image_url", message: "Vui lòng chọn file ảnh" };
         }
 
         const bannerId = await BannerRepository.create({
             page,
             image_url: imageUrl,
-            is_active: active
+            is_active: is_active !== false ? 1 : 0
         });
 
         return bannerId;
     }
 
     /*=========================================================
-        UPDATE BANNER (có thể upload file mới)
+        UPDATE BANNER
     =========================================================*/
     async updateBanner(bannerId, data, file) {
         const banner = await BannerRepository.findById(bannerId);
@@ -91,31 +85,21 @@ class BannerService {
         // Xử lý upload ảnh mới nếu có file
         let imageUrl = banner.image_url;
         if (file) {
-            // Xóa ảnh cũ trên Cloudinary
             if (banner.image_url) {
                 const urlParts = banner.image_url.split('/');
                 const publicId = urlParts.slice(7).join('/').split('.')[0];
                 await deleteFromCloudinary(publicId);
             }
-            // Upload ảnh mới
             const result = await uploadToCloudinary(file, 'cinema_shop/banners');
             imageUrl = result.url;
+            data.image_url = imageUrl;
         }
 
-        // Xác định page và is_active mới
-        const newPage = data.page || banner.page;
-        let newActive = data.is_active !== undefined ? parseInt(data.is_active) : banner.is_active;
-
-        // Nếu active = 1, deactive tất cả banner khác cùng page
-        if (newActive === 1) {
-            await BannerRepository.deactivateAllByPage(newPage);
-        }
-
-        // Chuẩn bị dữ liệu update
+        // Lọc các trường cần update
         const updateData = {};
         if (data.page !== undefined) updateData.page = data.page;
-        if (file) updateData.image_url = imageUrl;
-        if (data.is_active !== undefined) updateData.is_active = newActive;
+        if (data.image_url !== undefined) updateData.image_url = data.image_url;
+        if (data.is_active !== undefined) updateData.is_active = data.is_active;
 
         if (Object.keys(updateData).length === 0) {
             throw { statusCode: 400, message: "Không có thay đổi nào" };
@@ -130,7 +114,7 @@ class BannerService {
     }
 
     /*=========================================================
-        DELETE BANNER (xóa cả file trên Cloudinary)
+        DELETE BANNER
     =========================================================*/
     async deleteBanner(bannerId) {
         const banner = await BannerRepository.findById(bannerId);
@@ -138,7 +122,6 @@ class BannerService {
             throw { statusCode: 404, message: "Không tìm thấy banner" };
         }
 
-        // Xóa ảnh trên Cloudinary
         if (banner.image_url) {
             const urlParts = banner.image_url.split('/');
             const publicId = urlParts.slice(7).join('/').split('.')[0];

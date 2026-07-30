@@ -13,21 +13,13 @@ exports.getBannerByPage = async (req, res) => {
         const { page } = req.query;
 
         if (page) {
-            // Chỉ lấy banner có is_active = 1
-            const banner = await BannerService.getActiveBannerByPage(page);
-            if (!banner) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Không tìm thấy banner cho trang này"
-                });
-            }
+            const banners = await BannerService.getBannerByPage(page);
             return res.status(200).json({
                 success: true,
-                data: banner
+                data: banners // Trả về mảng
             });
         }
 
-        // Lấy tất cả banners (cho admin)
         const banners = await BannerService.getAllBanners();
         return res.status(200).json({
             success: true,
@@ -64,7 +56,7 @@ exports.getBannerById = async (req, res) => {
 };
 
 /*=========================================================
-    ADMIN - CREATE BANNER (upload file)
+    ADMIN - CREATE BANNER
 =========================================================*/
 
 exports.createBanner = async (req, res) => {
@@ -86,7 +78,7 @@ exports.createBanner = async (req, res) => {
 };
 
 /*=========================================================
-    ADMIN - UPDATE BANNER (upload file)
+    ADMIN - UPDATE BANNER
 =========================================================*/
 
 exports.updateBanner = async (req, res) => {

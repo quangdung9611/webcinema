@@ -3,7 +3,7 @@ const db = require("../Config/db");
 class BannerRepository {
 
     /*=========================================================
-        FIND ALL BANNERS (admin)
+        FIND ALL BANNERS
     =========================================================*/
     async findAll() {
         const [rows] = await db.query(
@@ -45,7 +45,7 @@ class BannerRepository {
     }
 
     /*=========================================================
-        FIND ACTIVE BANNER BY PAGE (is_active = 1)
+        FIND ALL ACTIVE BANNERS BY PAGE
     =========================================================*/
     async findActiveByPage(page) {
         const [rows] = await db.query(
@@ -59,11 +59,11 @@ class BannerRepository {
                 updated_at
             FROM banners
             WHERE page = ? AND is_active = 1
-            LIMIT 1
+            ORDER BY created_at DESC
             `,
             [page]
         );
-        return rows[0] || null;
+        return rows; // Trả về mảng, không giới hạn
     }
 
     /*=========================================================
@@ -118,21 +118,6 @@ class BannerRepository {
         `;
 
         const [result] = await db.query(query, values);
-        return result.affectedRows;
-    }
-
-    /*=========================================================
-        DEACTIVATE ALL BANNERS OF A PAGE
-    =========================================================*/
-    async deactivateAllByPage(page) {
-        const [result] = await db.query(
-            `
-            UPDATE banners
-            SET is_active = 0, updated_at = NOW()
-            WHERE page = ?
-            `,
-            [page]
-        );
         return result.affectedRows;
     }
 

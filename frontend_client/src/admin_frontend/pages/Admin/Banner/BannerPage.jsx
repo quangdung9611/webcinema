@@ -146,7 +146,7 @@ const BannerPage = () => {
             submitData.append('page', formData.page);
             submitData.append('is_active', formData.is_active ? 1 : 0);
             if (bannerImageFile) {
-                submitData.append('image_url', bannerImageFile); // 🔥 Field name khớp với multer
+                submitData.append('image_url', bannerImageFile);
             }
 
             const headers = getAuthHeader();
@@ -314,7 +314,7 @@ const BannerPage = () => {
         },
         {
             label: 'Ảnh banner',
-            name: 'image_url', // 🔥 Đổi từ "image" thành "image_url"
+            name: 'image_url',
             type: 'file',
             required: !editingBanner
         },

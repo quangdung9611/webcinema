@@ -13,7 +13,7 @@ const upload = require("../Middlewares/MulterMiddleware");
     PUBLIC ROUTES - KHÔNG CẦN AUTH
 =========================================================*/
 
-// GET /api/banners?page=HOME → lấy banner active theo page
+// GET /api/banners?page=HOME → lấy tất cả banner active của HOME
 // GET /api/banners → lấy tất cả banners (admin)
 router.get("/", BannerController.getBannerByPage);
 
