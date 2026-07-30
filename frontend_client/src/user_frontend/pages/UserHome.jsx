@@ -36,15 +36,9 @@ const getImageUrl = (url, baseUrl = '') => {
 const UserHome = () => {
   const navigate = useNavigate();
 
-  const bannerImages = [
-    "banner1.png",
-    "banner2.png",
-    "banner3.png",
-    "banner4.png"
-  ];
-
-  const bannerBaseUrl = "https://api.quangdungcinema.id.vn/uploads/banners/";
-  const bannerDocUrl = "https://api.quangdungcinema.id.vn/uploads/banner_doc/";
+  // ===== STATE BANNER TỪ API =====
+  const [banners, setBanners] = useState([]);
+  const [bannerLoading, setBannerLoading] = useState(true);
 
   const [swiperInstance, setSwiperInstance] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -91,6 +85,24 @@ const UserHome = () => {
       message: ''
     });
   };
+
+  // ===== FETCH BANNER TỪ API =====
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        setBannerLoading(true);
+        const res = await axios.get('https://api.quangdungcinema.id.vn/api/banners?page=HOME');
+        const bannerData = res.data?.data || [];
+        setBanners(Array.isArray(bannerData) ? bannerData : []);
+      } catch (error) {
+        console.error('Lỗi tải banner:', error);
+        setBanners([]);
+      } finally {
+        setBannerLoading(false);
+      }
+    };
+    fetchBanners();
+  }, []);
 
   // ===== Fetch dữ liệu =====
   useEffect(() => {
@@ -316,6 +328,10 @@ const UserHome = () => {
     return () => swiperInstance.off('slideChange', onSlideChange);
   }, [swiperInstance]);
 
+  // ===== RENDER =====
+  // Nếu đang loading banner hoặc không có banner, hiển thị fallback
+  const hasBanners = banners.length > 0;
+
   return (
     <>
       <Modal
@@ -349,45 +365,69 @@ const UserHome = () => {
                 fadeEffect={{ crossFade: true }}
                 speed={1400}
                 autoplay={{ delay: 4500, disableOnInteraction: false }}
-                loop={true}
+                loop={hasBanners && banners.length > 1}
                 onSwiper={setSwiperInstance}
                 onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
                 className="premiumSwiper"
               >
-                {bannerImages.map((img, index) => (
-                  <SwiperSlide
-                    key={index}
-                    className={`banner-slide ${activeIndex === index ? "slide-active" : ""}`}
-                  >
-                    <div className="banner-media">
-                      <picture>
-                        <source media="(max-width: 767px)" srcSet={`${bannerDocUrl}${img}`} />
-                        <img src={`${bannerBaseUrl}${img}`} className="banner-img" alt="Cinema Banner" />
-                      </picture>
+                {hasBanners ? (
+                  banners.map((banner, index) => (
+                    <SwiperSlide
+                      key={banner.banner_id || index}
+                      className={`banner-slide ${activeIndex === index ? "slide-active" : ""}`}
+                    >
+                      <div className="banner-media">
+                        <img
+                          src={banner.image_url}
+                          className="banner-img"
+                          alt={`Banner ${index + 1}`}
+                        />
 
-                      {/* ===== SPARKLE – HẠT LẤP LÁNH (chạy khi slide xuất hiện) ===== */}
+                        {/* ===== SPARKLE – HẠT LẤP LÁNH ===== */}
                         <div className="sparkle-container" key={sparkleKey}>
                           {Array.from({ length: 30 }).map((_, i) => (
                             <span className="sparkle" key={i}></span>
                           ))}
                         </div>
 
-                      {/* ===== LIGHT SWEEP (chỉ xuất hiện khi hover) ===== */}
-                      <div className="light-sweep-hover">
-                        <div className="sweep-beam"></div>
+                        {/* ===== LIGHT SWEEP (chỉ xuất hiện khi hover) ===== */}
+                        <div className="light-sweep-hover">
+                          <div className="sweep-beam"></div>
+                        </div>
+
+                        <div className="banner-particles"></div>
+                        <div ref={spotlightRef} className="banner-spotlight" />
                       </div>
 
+                      <div className="banner-slide-number">
+                        <span className="current">{String(index + 1).padStart(2, '0')}</span>
+                        <span className="separator">/</span>
+                        <span className="total">{String(banners.length).padStart(2, '0')}</span>
+                      </div>
+                    </SwiperSlide>
+                  ))
+                ) : (
+                  // Fallback nếu không có banner
+                  <SwiperSlide className="banner-slide">
+                    <div className="banner-media">
+                      <div className="banner-fallback" style={{
+                        width: '100%',
+                        height: '100%',
+                        background: 'linear-gradient(135deg, #1a1a1a, #0a0a0a)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#888',
+                        fontSize: '1.5rem',
+                        fontWeight: 'bold'
+                      }}>
+                        🎬 Cinema Banner
+                      </div>
                       <div className="banner-particles"></div>
                       <div ref={spotlightRef} className="banner-spotlight" />
                     </div>
-
-                    <div className="banner-slide-number">
-                      <span className="current">{String(index + 1).padStart(2, '0')}</span>
-                      <span className="separator">/</span>
-                      <span className="total">{String(bannerImages.length).padStart(2, '0')}</span>
-                    </div>
                   </SwiperSlide>
-                ))}
+                )}
               </Swiper>
 
               <div className="banner-progress-bar">

@@ -3,7 +3,6 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Heart, Eye } from 'lucide-react';
 
-// SWIPER (cho banner slider)
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
 import 'swiper/css';
@@ -15,15 +14,29 @@ const FilmReview = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Mảng ảnh banner cho FilmReview
-    const reviewBannerImages = [
-        'review1.png',
-        'review2.png',
-        'review3.png',
-        'review4.png'
-    ];
-    const reviewBannerBaseUrl = 'https://api.quangdungcinema.id.vn/uploads/film_review/';
+    // ===== STATE BANNER TỪ API =====
+    const [banners, setBanners] = useState([]);
+    const [bannerLoading, setBannerLoading] = useState(true);
 
+    // ===== FETCH BANNER =====
+    useEffect(() => {
+        const fetchBanners = async () => {
+            try {
+                setBannerLoading(true);
+                const res = await axios.get('https://api.quangdungcinema.id.vn/api/banners?page=FILM_REVIEW');
+                const bannerData = res.data?.data || [];
+                setBanners(Array.isArray(bannerData) ? bannerData : []);
+            } catch (error) {
+                console.error('Lỗi tải banner:', error);
+                setBanners([]);
+            } finally {
+                setBannerLoading(false);
+            }
+        };
+        fetchBanners();
+    }, []);
+
+    // ===== FETCH NEWS =====
     useEffect(() => {
         const fetchReviewData = async () => {
             try {
@@ -71,9 +84,11 @@ const FilmReview = () => {
         return isNaN(parsedDate) ? 'Chưa cập nhật' : parsedDate.toLocaleDateString('vi-VN');
     };
 
-    if (loading) {
+    if (loading || bannerLoading) {
         return <div className="film-review-loading">Đang tải dữ liệu...</div>;
     }
+
+    const hasBanners = banners.length > 0;
 
     return (
         <div className="film-review-page">
@@ -89,18 +104,36 @@ const FilmReview = () => {
                     effect="fade"
                     speed={1200}
                     autoplay={{ delay: 4500, disableOnInteraction: false }}
-                    loop={true}
+                    loop={hasBanners && banners.length > 1}
                     className="review-swiper"
                 >
-                    {reviewBannerImages.map((img, idx) => (
-                        <SwiperSlide key={idx}>
-                            <img
-                                src={`${reviewBannerBaseUrl}${img}`}
-                                alt={`Review Banner ${idx + 1}`}
-                                className="review-banner-img"
-                            />
+                    {hasBanners ? (
+                        banners.map((banner, idx) => (
+                            <SwiperSlide key={banner.banner_id || idx}>
+                                <img
+                                    src={banner.image_url}
+                                    alt={`Review Banner ${idx + 1}`}
+                                    className="review-banner-img"
+                                />
+                            </SwiperSlide>
+                        ))
+                    ) : (
+                        <SwiperSlide>
+                            <div style={{
+                                width: '100%',
+                                height: '100%',
+                                background: 'linear-gradient(135deg, #1a1a1a, #0a0a0a)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#888',
+                                fontSize: '1.5rem',
+                                fontWeight: 'bold'
+                            }}>
+                                🎬 Film Review Banner
+                            </div>
                         </SwiperSlide>
-                    ))}
+                    )}
                 </Swiper>
             </div>
 
@@ -115,7 +148,6 @@ const FilmReview = () => {
                     {news.slice(0, 4).map((item) => (
                         <Link key={item.news_id} to={`/film-review/${item.slug}`} className="review-item">
                             <div className="review-image-wrapper">
-                                {/* ✅ Chỉ lấy đúng trường news_image, không xử lý */}
                                 {item.news_image ? (
                                     <img
                                         src={item.news_image}

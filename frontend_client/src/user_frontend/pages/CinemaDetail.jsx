@@ -35,15 +35,29 @@ const CinemaDetail = () => {
     new Date().toISOString().split('T')[0]
   );
 
-  // ✅ Mảng ảnh cinema (giống UserHome)
-  const cinemaImages = [
-    "cinema1.png",
-    "cinema2.png",
-    "cinema3.png",
-    "cinema4.png"
-  ];
+  // ===== STATE BANNER TỪ API =====
+  const [banners, setBanners] = useState([]);
+  const [bannerLoading, setBannerLoading] = useState(true);
 
-  const cinemaBaseUrl = "https://api.quangdungcinema.id.vn/uploads/cinema_map/";
+  // =====================================================
+  // FETCH BANNER TỪ API
+  // =====================================================
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        setBannerLoading(true);
+        const res = await axios.get('https://api.quangdungcinema.id.vn/api/banners?page=CINEMA');
+        const bannerData = res.data?.data || [];
+        setBanners(Array.isArray(bannerData) ? bannerData : []);
+      } catch (error) {
+        console.error('Lỗi tải banner:', error);
+        setBanners([]);
+      } finally {
+        setBannerLoading(false);
+      }
+    };
+    fetchBanners();
+  }, []);
 
   // =====================================================
   // DATE LIST
@@ -64,27 +78,22 @@ const CinemaDetail = () => {
   }, []);
 
   // =====================================================
-  // FETCH
+  // FETCH CINEMA DATA
   // =====================================================
   useEffect(() => {
     const fetchCinema = async () => {
       try {
         setLoading(true);
         const res = await axios.get(`https://api.quangdungcinema.id.vn/api/cinemas/${slug}`);
-        // ✅ Kiểm tra cấu trúc dữ liệu: nếu res.data có cinema_name trực tiếp thì dùng trực tiếp
-        // Ngược lại nếu res.data có trường cinema thì lấy res.data.cinema
-        // Đồng thời movies có thể ở res.data.movies
         let cinemaData = null;
         let moviesData = [];
         if (res.data.cinema_name) {
-          // Dữ liệu trả về trực tiếp là object cinema (có thể kèm movies)
           cinemaData = res.data;
           moviesData = res.data.movies || [];
         } else if (res.data.cinema) {
           cinemaData = res.data.cinema;
           moviesData = res.data.movies || [];
         } else {
-          // Cấu trúc khác, thử tìm trong res.data.data
           const nested = res.data.data;
           if (nested && nested.cinema_name) {
             cinemaData = nested;
@@ -119,7 +128,6 @@ const CinemaDetail = () => {
     );
   }
 
-  // ✅ Kiểm tra dữ liệu an toàn
   const cinema = data?.cinema;
   const movies = data?.movies || [];
 
@@ -143,6 +151,8 @@ const CinemaDetail = () => {
     movie.showtimes?.some(st => st.start_time.startsWith(selectedDate))
   );
 
+  const hasBanners = banners.length > 0;
+
   // =====================================================
   // RENDER
   // =====================================================
@@ -150,7 +160,7 @@ const CinemaDetail = () => {
     <div className="cinema-detail-page">
 
       {/* =====================================================
-          BANNER - SWIPER 4 ẢNH CINEMA
+          BANNER - SWIPER TỪ API
       ===================================================== */}
       <div className="cinema-hero">
         <div className="cinema-overlay"></div>
@@ -162,18 +172,34 @@ const CinemaDetail = () => {
           effect="fade"
           speed={1200}
           autoplay={{ delay: 4500, disableOnInteraction: false }}
-          loop={true}
+          loop={hasBanners && banners.length > 1}
           className="hero-swiper"
         >
-          {cinemaImages.map((img, idx) => (
-            <SwiperSlide key={idx}>
-              <img
-                src={`${cinemaBaseUrl}${img}`}
-                alt={`Cinema ${idx + 1}`}
-                className="hero-bg"
-              />
+          {hasBanners ? (
+            banners.map((banner, idx) => (
+              <SwiperSlide key={banner.banner_id || idx}>
+                <img
+                  src={banner.image_url}
+                  alt={`Banner ${idx + 1}`}
+                  className="hero-bg"
+                />
+              </SwiperSlide>
+            ))
+          ) : (
+            <SwiperSlide>
+              <div className="hero-bg" style={{
+                background: 'linear-gradient(135deg, #1a1a1a, #0a0a0a)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#888',
+                fontSize: '2rem',
+                fontWeight: 'bold'
+              }}>
+                🎬 Cinema Banner
+              </div>
             </SwiperSlide>
-          ))}
+          )}
         </Swiper>
       </div>
 

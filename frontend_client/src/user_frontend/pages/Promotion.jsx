@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronRight, Gift, AlertCircle } from 'lucide-react';
 
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, EffectFade } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/effect-fade';
+
 import CinemaCard from '../components/CinemaCard';
 import '../styles/Promotion.css';
 
@@ -10,6 +15,29 @@ const Promotion = () => {
     const [promotions, setPromotions] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // ===== STATE BANNER TỪ API =====
+    const [banners, setBanners] = useState([]);
+    const [bannerLoading, setBannerLoading] = useState(true);
+
+    // ===== FETCH BANNER =====
+    useEffect(() => {
+        const fetchBanners = async () => {
+            try {
+                setBannerLoading(true);
+                const res = await axios.get('https://api.quangdungcinema.id.vn/api/banners?page=PROMOTION');
+                const bannerData = res.data?.data || [];
+                setBanners(Array.isArray(bannerData) ? bannerData : []);
+            } catch (error) {
+                console.error('Lỗi tải banner:', error);
+                setBanners([]);
+            } finally {
+                setBannerLoading(false);
+            }
+        };
+        fetchBanners();
+    }, []);
+
+    // ===== FETCH PROMOTIONS =====
     useEffect(() => {
         const fetchPromotions = async () => {
             try {
@@ -25,7 +53,7 @@ const Promotion = () => {
         fetchPromotions();
     }, []);
 
-    if (loading) {
+    if (loading || bannerLoading) {
         return (
             <div className="promotion-page">
                 <div className="promotion-container">
@@ -38,8 +66,55 @@ const Promotion = () => {
         );
     }
 
+    const hasBanners = banners.length > 0;
+
     return (
         <div className="promotion-page">
+            
+            {/* ===== BANNER SLIDER ===== */}
+            <div className="promotion-hero">
+                <div className="promotion-overlay"></div>
+                <div className="promotion-light"></div>
+                <div className="promotion-particles"></div>
+
+                <Swiper
+                    modules={[Autoplay, EffectFade]}
+                    effect="fade"
+                    speed={1200}
+                    autoplay={{ delay: 4500, disableOnInteraction: false }}
+                    loop={hasBanners && banners.length > 1}
+                    className="promotion-swiper"
+                >
+                    {hasBanners ? (
+                        banners.map((banner, idx) => (
+                            <SwiperSlide key={banner.banner_id || idx}>
+                                <img
+                                    src={banner.image_url}
+                                    alt={`Promotion Banner ${idx + 1}`}
+                                    className="promotion-banner-img"
+                                />
+                            </SwiperSlide>
+                        ))
+                    ) : (
+                        <SwiperSlide>
+                            <div style={{
+                                width: '100%',
+                                height: '100%',
+                                background: 'linear-gradient(135deg, #1a1a1a, #0a0a0a)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#888',
+                                fontSize: '1.5rem',
+                                fontWeight: 'bold'
+                            }}>
+                                🎁 Khuyến Mãi
+                            </div>
+                        </SwiperSlide>
+                    )}
+                </Swiper>
+            </div>
+
             <div className="promotion-container">
                 <div className="promotion-header">
                     <div className="promotion-header-icon"><Gift size={48} /></div>
@@ -64,13 +139,12 @@ const Promotion = () => {
                 ) : (
                     <div className="promotion-grid">
                         {promotions.map((promo) => {
-                            // 👇 Chỉ lấy đúng promotion_image, không xử lý gì thêm
                             const imageUrl = promo.promotion_image || null;
                             return (
                                 <CinemaCard
                                     key={promo.promotion_id}
                                     type="promotion"
-                                    image={imageUrl} // có thể null nếu không có
+                                    image={imageUrl}
                                     title={promo.title}
                                     link={`/promotion/${promo.slug}`}
                                 />

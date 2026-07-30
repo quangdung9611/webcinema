@@ -22,7 +22,8 @@ const PAGE_OPTIONS = [
     { label: 'Khuyến mãi', value: 'PROMOTION' },
     { label: 'Rạp chiếu', value: 'CINEMA' },
     { label: 'Bài viết đánh giá', value: 'FILM_REVIEW' },
-    { label: 'Blog điện ảnh', value: 'BLOG' }
+    { label: 'Blog điện ảnh', value: 'BLOG' },
+    { label: 'Diễn viên', value: 'ACTOR' } // 🔥 Thêm mới
 ];
 
 const initialFormData = {
