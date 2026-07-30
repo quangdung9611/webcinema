@@ -149,6 +149,17 @@ const Payment = () => {
             });
         }
 
+        // 👉 Xóa key OTP cũ nếu không có giữ ghế (để reset cho booking mới)
+        if (!sessionStorage.getItem('holdExpiresAt')) {
+            sessionStorage.removeItem('bankHasSentOtp');
+            sessionStorage.removeItem('bankHasVisited');
+            sessionStorage.removeItem('bankOtpTimeLeft');
+            sessionStorage.removeItem('bankOtpInput');
+            sessionStorage.removeItem('bankLastOtpSentAt');
+            sessionStorage.removeItem('paymentCompleted');
+            sessionStorage.removeItem('completedBookingId');
+        }
+
         if (
             sessionStorage.getItem(
                 'holdExpiresAt'
@@ -406,6 +417,13 @@ const Payment = () => {
                 sessionStorage.removeItem(
                     'currentShowtimeId'
                 );
+
+                // Xóa các key OTP để tránh xung đột
+                sessionStorage.removeItem('bankHasSentOtp');
+                sessionStorage.removeItem('bankHasVisited');
+                sessionStorage.removeItem('bankOtpTimeLeft');
+                sessionStorage.removeItem('bankOtpInput');
+                sessionStorage.removeItem('bankLastOtpSentAt');
 
                 setIsTimerActive(false);
 
