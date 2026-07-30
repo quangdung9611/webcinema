@@ -3,6 +3,7 @@ const OtpService = require("../Services/OtpService");
 const { PURPOSE } = require("../Services/OtpService");
 const MailServiceTicket = require("../Services/MailServiceTicket");
 const db = require("../Config/db");
+const BookingRepository = require("../Repositories/BookingRepository"); // 👈 THÊM DÒNG NÀY
 
 exports.sendOTP = async (req, res) => {
   try {

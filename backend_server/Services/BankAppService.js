@@ -2,7 +2,7 @@ const BookingService = require("./BookingService");
 const TicketService = require("./TicketService");
 const PointsService = require("./PointsService");
 const OtpService = require("./OtpService");
-const { PURPOSE } = require("./OtpService"); // 👈 import hằng số
+const { PURPOSE } = require("./OtpService");
 const MailServiceTicket = require("./MailServiceTicket");
 
 class BankAppService {
@@ -23,13 +23,13 @@ class BankAppService {
       await PointsService.addPointsToUser(connection, order.user_id, points);
     }
 
-    // 5. Send ticket email
+    // 5. Send ticket email với retry
     const foods = await BookingService.getFoodDetail(connection, bookingId);
     const foodString = foods.length
       ? foods.map(f => `${f.item_name} (x${f.quantity})`).join(", ")
       : "Không có";
 
-    await MailServiceTicket.sendTicketEmail(order.email, {
+    const ticketData = {
       bookingId: order.booking_id,
       customerName: order.full_name,
       movieTitle: order.movie_name,
@@ -40,7 +40,33 @@ class BankAppService {
       seatLabel: order.seat_label,
       selectedFoods: foodString,
       earnedPoints: points,
-    }).catch(console.error);
+    };
+
+    // Retry logic: gửi email tối đa 3 lần
+    let retries = 3;
+    let lastError = null;
+    while (retries > 0) {
+      try {
+        await MailServiceTicket.sendTicketEmail(order.email, ticketData);
+        console.log(`✅ Email ticket sent successfully for booking ${bookingId}`);
+        break; // thành công -> thoát vòng lặp
+      } catch (err) {
+        lastError = err;
+        retries--;
+        console.error(`❌ Failed to send ticket email (retries left: ${retries})`, err.message);
+        if (retries === 0) {
+          console.error(`❌ All retries exhausted for email to ${order.email}`);
+          // Có thể ghi vào bảng log lỗi nếu cần
+        }
+        // Chờ 1s trước khi retry
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+
+    // Nếu đã thử hết mà vẫn lỗi, không throw lỗi vì giao dịch đã thành công
+    // Chỉ log để admin biết và xử lý sau
 
     return true;
   }
@@ -49,7 +75,7 @@ class BankAppService {
     await BookingService.cancelBooking(connection, bookingId);
     await TicketService.releaseTickets(connection, bookingId);
     if (email) {
-      await OtpService.deleteOTP(email, PURPOSE.PAYMENT); // 👈 dùng hằng số
+      await OtpService.deleteOTP(email, PURPOSE.PAYMENT);
     }
     return true;
   }
