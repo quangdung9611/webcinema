@@ -1,6 +1,39 @@
 /* ==========================================================
-   CINEMA DETAIL - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
+   CINEMA DETAIL – SILVER PREMIUM EDITION
+   HIỆU ỨNG THỞ ẢNH, GLOW, SHINE, PARTICLE
+   ĐỒNG BỘ BIẾN CSS TỪ INDEX.CSS
    ========================================================= */
+
+/* ==========================================================
+   ANIMATIONS
+   ========================================================== */
+@keyframes bannerBreath {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+@keyframes particleMove {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-180px); }
+}
+
+@keyframes shineMove {
+  0% { left: -40%; opacity: 0; }
+  20% { opacity: 0.25; }
+  50% { opacity: 0.5; }
+  100% { left: 140%; opacity: 0; }
+}
+
+@keyframes cardGlowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(232, 232, 232, 0.02); }
+  50% { box-shadow: 0 0 40px rgba(232, 232, 232, 0.06); }
+}
+
+@keyframes subtlePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 232, 232, 0.15); }
+  50% { box-shadow: 0 0 0 12px rgba(232, 232, 232, 0.02); }
+}
 
 /* ==========================================================
    PAGE
@@ -41,7 +74,7 @@
 }
 
 /* ==========================================================
-   HERO - BANNER SWIPER TỶ LỆ 2.5:1
+   HERO – BANNER SWIPER 2.5:1 + HIỆU ỨNG THỞ
 ========================================================== */
 .cinema-hero {
   position: relative;
@@ -52,6 +85,12 @@
   overflow: hidden;
   background-color: var(--black-premium);
   border-radius: var(--radius-lg);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  transition: box-shadow 0.4s ease;
+}
+
+.cinema-hero:hover {
+  box-shadow: 0 12px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(232, 232, 232, 0.05);
 }
 
 .hero-swiper {
@@ -71,6 +110,10 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  animation: bannerBreath 10s ease-in-out infinite;
+  transition: transform 1.8s cubic-bezier(0.65, 0, 0.35, 1),
+              opacity 1.4s ease;
+  will-change: transform, opacity;
 }
 
 /* Overlay – nhẹ hơn, không che ảnh quá nhiều */
@@ -86,7 +129,7 @@
   pointer-events: none;
 }
 
-/* Shine & particles – giữ nguyên, nhưng đổi màu sang bạc */
+/* Shine – quét sáng ngang */
 .hero-light {
   position: absolute;
   top: 0;
@@ -95,18 +138,13 @@
   height: 100%;
   z-index: 2;
   opacity: 0.3;
-  background: linear-gradient(90deg, transparent, rgba(232, 232, 232, 0.12), transparent);
+  background: linear-gradient(90deg, transparent, rgba(232, 232, 232, 0.15), transparent);
   transform: skewX(-25deg);
   animation: shineMove 12s ease-in-out infinite;
   pointer-events: none;
 }
-@keyframes shineMove {
-  0% { left: -40%; opacity: 0; }
-  20% { opacity: 0.25; }
-  50% { opacity: 0.5; }
-  100% { left: 140%; opacity: 0; }
-}
 
+/* Particles – hạt sáng nền */
 .cinema-particles {
   position: absolute;
   inset: 0;
@@ -116,10 +154,6 @@
   background-image: radial-gradient(rgba(232, 232, 232, 0.3) 1px, transparent 1px);
   background-size: 160px 160px;
   animation: particleMove 25s linear infinite;
-}
-@keyframes particleMove {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-180px); }
 }
 
 /* ==========================================================
@@ -285,8 +319,6 @@
   transition: all var(--transition-normal);
 }
 
-/* ===== ĐÃ XÓA HIỆU ỨNG QUÉT SÁNG (::before) ===== */
-
 .date-card:hover {
   transform: translateY(-5px);
   background: rgba(232, 232, 232, 0.06);
@@ -325,7 +357,7 @@
 }
 
 /* ==========================================================
-   MOVIE GRID
+   MOVIE GRID – CARD PREMIUM
 ========================================================== */
 .movie-grid {
   display: grid;
@@ -336,16 +368,59 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-xl);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--cinema-card-bg);
   backdrop-filter: blur(12px);
   border: var(--border-silver);
   transition: all var(--transition-normal);
+  animation: cardGlowPulse 6s ease-in-out infinite;
 }
 .movie-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-8px) scale(1.02);
   border-color: var(--border-silver-hover);
-  box-shadow: var(--cinema-card-shadow), 0 0 30px rgba(232, 232, 232, 0.04);
+  box-shadow: var(--cinema-card-shadow), 0 0 30px rgba(232, 232, 232, 0.06);
+  animation-play-state: paused;
 }
+
+/* BORDER GLOW CHẠY (giống film-card) */
+.movie-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: var(--radius-xl);
+  padding: 2px;
+  background: conic-gradient(
+    from var(--border-angle, 0deg),
+    transparent 0%,
+    rgba(232, 232, 232, 0.3) 15%,
+    rgba(255, 255, 255, 1) 35%,
+    rgba(232, 232, 232, 0.3) 55%,
+    rgba(255, 255, 255, 0.8) 75%,
+    transparent 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 10;
+  animation: borderRotate 6s linear infinite;
+  will-change: transform;
+}
+@keyframes borderRotate {
+  from { --border-angle: 0deg; }
+  to { --border-angle: 360deg; }
+}
+@property --border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.movie-card:hover::before {
+  opacity: 1;
+}
+
 .movie-poster {
   position: relative;
   overflow: hidden;
@@ -356,11 +431,14 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform var(--transition-normal);
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.6s ease;
 }
-.movie-card:hover img {
-  transform: scale(1.06);
+.movie-card:hover .movie-poster img {
+  transform: scale(1.12);
+  filter: brightness(1.08) saturate(1.06) contrast(1.04);
 }
+
 .movie-overlay {
   position: absolute;
   inset: 0;
@@ -382,17 +460,20 @@
   cursor: pointer;
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-round);
-  color: var(--black-premium); /* chữ đen */
+  color: var(--black-premium);
   font-size: var(--font-size-base);
   font-weight: var(--fw-bold);
   background: var(--cinema-border-gradient);
   transition: all var(--transition-normal);
   box-shadow: 0 4px 20px rgba(232, 232, 232, 0.15);
+  animation: subtlePulse 3s ease-in-out infinite;
 }
 .booking-btn:hover {
-  transform: scale(1.05);
+  transform: scale(1.08);
   box-shadow: var(--shadow-silver);
+  animation-play-state: paused;
 }
+
 .movie-info {
   padding: var(--space-lg);
 }
@@ -403,6 +484,10 @@
   line-height: 1.4;
   min-height: 56px;
   margin-bottom: var(--space-md);
+  transition: color 0.3s ease;
+}
+.movie-card:hover .movie-info h3 {
+  color: var(--silver-primary);
 }
 .movie-meta {
   display: flex;
@@ -549,6 +634,9 @@
   }
   .cinema-info-block {
     padding-top: var(--space-xl);
+  }
+  .movie-card::before {
+    display: none; /* tắt border glow trên mobile để tiết kiệm tài nguyên */
   }
 }
 

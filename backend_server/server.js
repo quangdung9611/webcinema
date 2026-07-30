@@ -71,8 +71,13 @@ const promotionRoutes = require("./Routers/PromotionRouter");
 const blogCinemaRoutes = require("./Routers/BlogCinemaRouter");
 const forgotPasswordRoutes = require("./Routers/ForgotPassRouter");
 
+// =============================================================
+// 🔥 BANNER ROUTER – THÊM MỚI
+// =============================================================
+const bannerRoutes = require("./Routers/BannerRouter");
+
 // ADMIN API - DASHBOARD
-const dashboardRouter = require("./Routers/DashboardRouter"); // ✅ Đổi tên
+const dashboardRouter = require("./Routers/DashboardRouter");
 
 /*=========================================================
     TRUST PROXY
@@ -215,6 +220,11 @@ app.use("/api/news", newsRoutes);
 app.use("/api/promotions", promotionRoutes);
 app.use("/api/blog-cinema", blogCinemaRoutes);
 app.use("/api/forgot-password", forgotPasswordRoutes);
+
+// =============================================================
+// 🔥 BANNER API – THÊM MỚI
+// =============================================================
+app.use("/api/banners", bannerRoutes);
 
 // ADMIN API - DASHBOARD
 app.use("/admin/api/manage", dashboardRouter);

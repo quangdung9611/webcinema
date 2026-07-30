@@ -19,7 +19,8 @@ import {
     Clock,
     Popcorn,
     BookOpen,
-    Gift
+    Gift,
+    Image,            // 👈 Thêm cho Banner
 } from 'lucide-react';
 
 import '../styles/Sidebar.css';
@@ -37,24 +38,24 @@ const AdminSidebar = ({
 
     const menuItems = [
 
+        // ===== DASHBOARD =====
         {
             path: '/',
             icon: <LayoutDashboard size={20} />,
             label: 'Dashboard'
         },
 
+        // ===== QUẢN LÝ NGƯỜI DÙNG & NỘI DUNG =====
         {
             path: '/users',
             icon: <Users size={20} />,
             label: 'Quản lý User'
         },
-
         {
             path: '/movies',
             icon: <Film size={20} />,
             label: 'Quản lý phim'
         },
-
         {
             path: '/news',
             icon: <Newspaper size={20} />,
@@ -70,81 +71,80 @@ const AdminSidebar = ({
             icon: <Gift size={20} />,
             label: 'Quản lý Khuyến mãi'
         },
+
+        // 🔥 BANNER – THÊM MỚI
+        {
+            path: '/banners',
+            icon: <Image size={20} />,
+            label: 'Quản lý Banner'
+        },
+
         {
             path: '/actors',
             icon: <Star size={20} />,
             label: 'Quản lý Diễn viên'
         },
-
         {
             path: '/genres',
             icon: <Theater size={20} />,
             label: 'Quản lý Thể Loại'
         },
-
         {
             path: '/movie-genres',
             icon: <Tags size={20} />,
             label: 'Gán thể loại phim'
         },
-
         {
             path: '/movie-actors',
             icon: <Tags size={20} />,
             label: 'Gán diễn viên Phim'
         },
 
+        // ===== QUẢN LÝ RẠP & PHÒNG =====
         {
             path: '/cinemas',
             icon: <Building2 size={20} />,
             label: 'Quản lý Rạp Chiếu'
         },
-
-        {
-            path: '/showtimes',
-            icon: <Clock size={20} />,
-            label: 'Quản lý Suất Chiếu'
-        },
-
         {
             path: '/rooms',
             icon: <DoorOpen size={20} />,
             label: 'Quản lý Phòng Chiếu'
         },
-
         {
             path: '/seats',
             icon: <Armchair size={20} />,
             label: 'Quản lý Ghế Ngồi'
         },
 
+        // ===== QUẢN LÝ VÉ & SUẤT CHIẾU =====
+        {
+            path: '/showtimes',
+            icon: <Clock size={20} />,
+            label: 'Quản lý Suất Chiếu'
+        },
         {
             path: '/tickets',
             icon: <Ticket size={20} />,
             label: 'Quản lý vé'
         },
+        {
+            path: '/bookings',
+            icon: <ShoppingBag size={20} />,
+            label: 'Quản lý đơn hàng'
+        },
 
-        /* ============================================
-            FOOD PAGE
-        ============================================ */
-
+        // ===== QUẢN LÝ ĐỒ ĂN & KHUYẾN MÃI =====
         {
             path: '/foods',
             icon: <Popcorn size={20} />,
             label: 'Quản lý Đồ Ăn'
         },
-
         {
             path: '/coupons',
             icon: <TicketPercent size={20} />,
             label: 'Quản lý Coupon'
         },
-
-        {
-            path: '/bookings',
-            icon: <ShoppingBag size={20} />,
-            label: 'Quản lý đơn hàng'
-        }
 
     ];
 

@@ -793,10 +793,9 @@
     gap: var(--space-sm);
 }
 
-/* Avatar thực */
 .comment-avatar {
-    width: 42px;
-    height: 42px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
@@ -804,16 +803,14 @@
     background: var(--black-soft);
 }
 
-/* Placeholder khi không có avatar */
 .user-avatar-placeholder-small {
-    width: 42px;
-    height: 42px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     flex-shrink: 0;
     background: var(--cinema-border-gradient);
     border: 2px solid rgba(255, 255, 255, 0.08);
 }
-
 .user-name-title-box {
     flex: 1;
     display: flex;

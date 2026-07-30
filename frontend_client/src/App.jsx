@@ -157,10 +157,11 @@ const BookingGuide = lazy(() =>
 const ContactSupport = lazy(() =>
     import("./user_frontend/pages/ContactSupport")
 );
-// Import (thêm vào phần USER PAGES)
+
 const MemberShip = lazy(() =>
     import("./user_frontend/pages/MemberShip")
 );
+
 // ==========================================================
 // ADMIN PAGES (LAZY)
 // ==========================================================
@@ -239,6 +240,14 @@ const BlogCinemaPage = lazy(() =>
 
 const PromotionPage = lazy(() =>
     import("./admin_frontend/pages/Admin/Promotion/PromotionPage")
+);
+
+// ==========================================================
+// 🔥 BANNER PAGE – THÊM MỚI
+// ==========================================================
+
+const BannerPage = lazy(() =>
+    import("./admin_frontend/pages/Admin/Banner/BannerPage")
 );
 
 // ==========================================================
@@ -441,6 +450,15 @@ function AppContent() {
                                         element={<FoodPage />}
                                     />
 
+                                    {/* ============================================
+                                        🔥 BANNER ROUTE – THÊM MỚI
+                                    ============================================ */}
+
+                                    <Route
+                                        path="banners"
+                                        element={<BannerPage />}
+                                    />
+
                                 </Route>
 
                                 {/* 404 */}
@@ -589,7 +607,12 @@ function AppContent() {
                                         path="contact"
                                         element={<ContactSupport />}
                                     />
-                                    <Route path="membership" element={<MemberShip />} />
+
+                                    <Route
+                                        path="membership"
+                                        element={<MemberShip />}
+                                    />
+
                                 </Route>
 
                                 <Route
