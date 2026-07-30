@@ -3,7 +3,7 @@ const db = require("../Config/db");
 class BannerRepository {
 
     /*=========================================================
-        FIND ALL BANNERS
+        FIND ALL BANNERS (admin)
     =========================================================*/
     async findAll() {
         const [rows] = await db.query(
@@ -45,7 +45,7 @@ class BannerRepository {
     }
 
     /*=========================================================
-        FIND ACTIVE BANNER BY PAGE
+        FIND ACTIVE BANNER BY PAGE (is_active = 1)
     =========================================================*/
     async findActiveByPage(page) {
         const [rows] = await db.query(
@@ -59,28 +59,6 @@ class BannerRepository {
                 updated_at
             FROM banners
             WHERE page = ? AND is_active = 1
-            LIMIT 1
-            `,
-            [page]
-        );
-        return rows[0] || null;
-    }
-
-    /*=========================================================
-        FIND BANNER BY PAGE (bất kể trạng thái)
-    =========================================================*/
-    async findByPage(page) {
-        const [rows] = await db.query(
-            `
-            SELECT
-                banner_id,
-                page,
-                image_url,
-                is_active,
-                created_at,
-                updated_at
-            FROM banners
-            WHERE page = ?
             LIMIT 1
             `,
             [page]

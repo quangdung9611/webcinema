@@ -12,16 +12,22 @@ exports.getBannerByPage = async (req, res) => {
     try {
         const { page } = req.query;
 
-        // Nếu có page → lấy banner theo page
         if (page) {
-            const banner = await BannerService.getBannerByPage(page);
+            // Chỉ lấy banner có is_active = 1
+            const banner = await BannerService.getActiveBannerByPage(page);
+            if (!banner) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Không tìm thấy banner cho trang này"
+                });
+            }
             return res.status(200).json({
                 success: true,
                 data: banner
             });
         }
 
-        // Nếu không có page → lấy tất cả banners
+        // Lấy tất cả banners (cho admin)
         const banners = await BannerService.getAllBanners();
         return res.status(200).json({
             success: true,
@@ -58,12 +64,12 @@ exports.getBannerById = async (req, res) => {
 };
 
 /*=========================================================
-    ADMIN - CREATE BANNER
+    ADMIN - CREATE BANNER (upload file)
 =========================================================*/
 
 exports.createBanner = async (req, res) => {
     try {
-        const bannerId = await BannerService.createBanner(req.body);
+        const bannerId = await BannerService.createBanner(req.body, req.file);
         return res.status(201).json({
             success: true,
             message: "Tạo banner thành công",
@@ -80,13 +86,13 @@ exports.createBanner = async (req, res) => {
 };
 
 /*=========================================================
-    ADMIN - UPDATE BANNER
+    ADMIN - UPDATE BANNER (upload file)
 =========================================================*/
 
 exports.updateBanner = async (req, res) => {
     try {
         const { banner_id } = req.params;
-        await BannerService.updateBanner(banner_id, req.body);
+        await BannerService.updateBanner(banner_id, req.body, req.file);
         return res.status(200).json({
             success: true,
             message: "Cập nhật banner thành công"

@@ -27,7 +27,6 @@ const PAGE_OPTIONS = [
 
 const initialFormData = {
     page: 'HOME',
-    image_url: '',
     is_active: true
 };
 
@@ -39,9 +38,9 @@ const BannerPage = () => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingBanner, setEditingBanner] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
+    const [bannerImageFile, setBannerImageFile] = useState(null);
     const [formErrors, setFormErrors] = useState({});
 
-    // Alert Modal
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -51,9 +50,6 @@ const BannerPage = () => {
         onCancel: null
     });
 
-    // =============================================
-    // Helper – Lấy token từ localStorage
-    // =============================================
     const getAuthHeader = () => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -63,9 +59,6 @@ const BannerPage = () => {
         return { Authorization: `Bearer ${token}` };
     };
 
-    // =============================================
-    // Alert Modal
-    // =============================================
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
@@ -74,9 +67,6 @@ const BannerPage = () => {
         setAlertModal(prev => ({ ...prev, open: false }));
     };
 
-    // =============================================
-    // Fetch banners
-    // =============================================
     const fetchBanners = async () => {
         setLoading(true);
         try {
@@ -96,28 +86,24 @@ const BannerPage = () => {
         fetchBanners();
     }, []);
 
-    // =============================================
-    // Validate form
-    // =============================================
     const validateForm = () => {
         const errors = {};
         if (!formData.page) {
             errors.page = 'Vui lòng chọn trang';
         }
-        if (!formData.image_url.trim()) {
-            errors.image_url = 'Vui lòng nhập URL ảnh';
-        } else if (!/^https?:\/\/.+/.test(formData.image_url.trim())) {
-            errors.image_url = 'URL không hợp lệ (phải bắt đầu bằng http:// hoặc https://)';
+        if (!bannerImageFile && !editingBanner) {
+            errors.image_url = 'Vui lòng chọn file ảnh';
+        }
+        if (bannerImageFile && !bannerImageFile.type.startsWith('image/')) {
+            errors.image_url = 'Vui lòng chọn file ảnh (jpg, png, ...)';
         }
         return errors;
     };
 
-    // =============================================
-    // Open add / edit
-    // =============================================
     const handleOpenAdd = () => {
         setEditingBanner(null);
         setFormData(initialFormData);
+        setBannerImageFile(null);
         setFormErrors({});
         setIsFormOpen(true);
     };
@@ -125,27 +111,25 @@ const BannerPage = () => {
     const handleOpenEdit = (banner) => {
         setEditingBanner(banner);
         setFormErrors({});
+        setBannerImageFile(null);
         setFormData({
             page: banner.page || 'HOME',
-            image_url: banner.image_url || '',
             is_active: banner.is_active === 1 || banner.is_active === true
         });
         setIsFormOpen(true);
     };
 
-    // =============================================
-    // Handle change
-    // =============================================
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
+        const { name, value, type, checked, files } = e.target;
+        if (name === 'image_url') {
+            setBannerImageFile(files[0]);
+            return;
+        }
         const newValue = type === 'checkbox' ? checked : value;
         setFormData(prev => ({ ...prev, [name]: newValue }));
         setFormErrors(prev => ({ ...prev, [name]: '' }));
     };
 
-    // =============================================
-    // Submit (Create / Update)
-    // =============================================
     const handleSubmit = async (e) => {
         e.preventDefault();
         const errors = validateForm();
@@ -158,19 +142,24 @@ const BannerPage = () => {
             setSubmitLoading(true);
             setFormErrors({});
 
-            const payload = {
-                page: formData.page,
-                image_url: formData.image_url.trim(),
-                is_active: formData.is_active ? 1 : 0
-            };
+            const submitData = new FormData();
+            submitData.append('page', formData.page);
+            submitData.append('is_active', formData.is_active ? 1 : 0);
+            if (bannerImageFile) {
+                submitData.append('image_url', bannerImageFile); // 🔥 Field name khớp với multer
+            }
 
             const headers = getAuthHeader();
 
             if (editingBanner) {
-                await axios.put(`${API_URL}/${editingBanner.banner_id}`, payload, { headers });
+                await axios.put(`${API_URL}/${editingBanner.banner_id}`, submitData, {
+                    headers: { ...headers, 'Content-Type': 'multipart/form-data' }
+                });
                 showAlert('Thành công', 'Cập nhật banner thành công.', 'success');
             } else {
-                await axios.post(API_URL, payload, { headers });
+                await axios.post(API_URL, submitData, {
+                    headers: { ...headers, 'Content-Type': 'multipart/form-data' }
+                });
                 showAlert('Thành công', 'Thêm banner thành công.', 'success');
             }
 
@@ -190,9 +179,6 @@ const BannerPage = () => {
         }
     };
 
-    // =============================================
-    // Delete
-    // =============================================
     const handleDelete = (banner) => {
         showAlert(
             'Xác nhận xóa',
@@ -214,9 +200,6 @@ const BannerPage = () => {
         );
     };
 
-    // =============================================
-    // Filter
-    // =============================================
     const filteredBanners = (banners || []).filter(banner => {
         const keyword = search.toLowerCase();
         return (
@@ -226,9 +209,6 @@ const BannerPage = () => {
         );
     });
 
-    // =============================================
-    // Table columns
-    // =============================================
     const columns = [
         {
             title: 'ID',
@@ -324,9 +304,6 @@ const BannerPage = () => {
         }
     ];
 
-    // =============================================
-    // Form fields
-    // =============================================
     const formFields = [
         {
             label: 'Trang hiển thị',
@@ -336,11 +313,10 @@ const BannerPage = () => {
             required: true
         },
         {
-            label: 'URL ảnh (Cloudinary)',
-            name: 'image_url',
-            type: 'text',
-            placeholder: 'https://res.cloudinary.com/.../banner.png',
-            required: true
+            label: 'Ảnh banner',
+            name: 'image_url', // 🔥 Đổi từ "image" thành "image_url"
+            type: 'file',
+            required: !editingBanner
         },
         {
             label: 'Hoạt động',
@@ -350,9 +326,6 @@ const BannerPage = () => {
         }
     ];
 
-    // =============================================
-    // File previews (cho image_url)
-    // =============================================
     const filePreviews = {};
     if (editingBanner && editingBanner.image_url) {
         filePreviews['image_url'] = {
@@ -361,9 +334,6 @@ const BannerPage = () => {
         };
     }
 
-    // =============================================
-    // RENDER
-    // =============================================
     return (
         <>
             <AdminPage
@@ -386,7 +356,6 @@ const BannerPage = () => {
                 )}
             </AdminPage>
 
-            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
@@ -404,7 +373,6 @@ const BannerPage = () => {
                 />
             </AdminModal>
 
-            {/* ALERT MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
