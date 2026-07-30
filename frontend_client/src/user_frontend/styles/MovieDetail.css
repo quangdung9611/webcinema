@@ -99,13 +99,14 @@
     gap: var(--space-xs);
 }
 
+/* ✨ NÂNG CẤP HOVER: NỀN BẠC, CHỮ ĐEN (ĐÃ FIX) ✨ */
 .section-header-row .view-all-link-gold:hover,
 .section-header-row .btn-write-review-small:hover {
     transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--silver-light);
-    color: var(--silver-light);
-    box-shadow: 0 4px 20px rgba(212, 212, 212, 0.08);
+    background: #e8e8e8 !important; /* Nền bạc sáng */
+    color: #000000 !important;      /* Chữ đen */
+    border-color: #e8e8e8;
+    box-shadow: 0 4px 20px rgba(232, 232, 232, 0.3);
 }
 
 /* =========================================================
@@ -381,7 +382,6 @@
     word-break: break-word;
     max-width: 100%;
 }
-
 /* HÀNG 4: Nút hành động */
 .info-actions-row {
     display: flex;
@@ -417,21 +417,22 @@
     white-space: nowrap;
 }
 
+/* ✨ NÂNG CẤP HOVER: NỀN BẠC, CHỮ ĐEN ✨ */
 .btn-book-now:hover,
 .btn-watch-trailer:hover,
 .btn-review:hover {
     transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.08) !important;
-    border-color: var(--silver-light);
-    color: var(--silver-light);
-    box-shadow: 0 4px 20px rgba(212, 212, 212, 0.12);
+    background: #e8e8e8 !important; /* Nền bạc sáng */
+    color: #000000 !important;      /* Chữ đen */
+    border-color: #e8e8e8;
+    box-shadow: 0 4px 20px rgba(232, 232, 232, 0.3);
 }
+
 .btn-book-now:active,
 .btn-watch-trailer:active,
 .btn-review:active {
     transform: scale(0.96);
 }
-
 /* =========================================================
    PHIM LIÊN QUAN – GRID 4 CỘT
    ========================================================= */
@@ -1068,7 +1069,7 @@
 }
 
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE - TỐI ƯU CHO MOBILE & TABLET
    ========================================================= */
 
 /* Tablet ≤ 992px */
@@ -1079,7 +1080,6 @@
 
     .movie-info-container {
         padding: var(--space-xl) var(--space-2xl);
-        grid-template-columns: 200px 1fr !important;
         gap: var(--space-xl);
         border-radius: var(--radius-lg);
     }
@@ -1116,35 +1116,47 @@
     }
 }
 
-/* Mobile ≤ 768px */
+/* Mobile ≤ 768px - CHUYỂN SANG BỐ CỤC 1 CỘT DỌC */
 @media (max-width: 768px) {
     .cinema-main-content-container {
-        padding: 0 18px var(--space-xl);
+        padding: 0 16px var(--space-xl);
     }
 
     .movie-info-container {
-        padding: var(--space-lg);
-        grid-template-columns: 160px 1fr !important;
+        grid-template-columns: 1fr !important; 
+        padding: var(--space-xl) var(--space-lg); /* Tăng padding để ảnh không bị sát lề */
         gap: var(--space-lg);
         border-radius: var(--radius-lg);
+        text-align: center;
+    }
+
+    .movie-poster-col {
+        max-width: 240px; /* 💡 Tăng lên 240px để poster to, rõ nét */
+        margin: 0 auto;
+    }
+    .movie-poster-img {
+        width: 100%;
+        height: auto; /* Chiều cao sẽ tự động co theo tỉ lệ 2/3 của ảnh gốc */
     }
 
     .movie-detail-title {
         font-size: var(--font-size-h3);
+        text-align: center;
     }
 
     .info-header-row {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: column !important;
+        align-items: center !important;
         gap: var(--space-sm);
     }
     .info-rating-compact {
+        width: 100%;
         justify-content: center;
         padding: var(--space-sm) var(--space-md);
-        width: 100%;
     }
 
     .info-meta-row {
+        justify-content: center;
         gap: var(--space-xs);
     }
     .meta-tag {
@@ -1153,22 +1165,31 @@
     }
 
     .info-actions-row {
-        gap: var(--space-sm);
-        flex-wrap: nowrap !important;
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+        margin-top: var(--space-sm);
     }
     .btn-book-now,
     .btn-watch-trailer,
     .btn-review {
-        font-size: var(--font-size-base);
-        padding: var(--space-xs) var(--space-sm);
-        min-height: 40px;
+        flex: 1 1 calc(50% - 5px) !important;
+        font-size: 13px !important;
+        padding: 12px 10px !important;
+        min-height: 44px !important;
         border-width: 1.5px;
-        letter-spacing: 0.5px;
+    }
+    .btn-book-now {
+        flex: 1 1 100% !important;
+        margin-bottom: 4px;
     }
 
     .info-meta-col {
         grid-template-columns: 1fr 1fr;
         gap: var(--space-xs) var(--space-md);
+        text-align: center;
+    }
+    .meta-label, .meta-value {
+        text-align: center;
     }
 
     .genre-movies-grid,
@@ -1207,32 +1228,42 @@
     }
 }
 
-/* Mobile ≤ 480px */
+/* Mobile cực nhỏ (Như iPhone SE) ≤ 480px */
 @media (max-width: 480px) {
     .cinema-main-content-container {
-        padding: 0 18px var(--space-lg);
+        padding: 0 12px var(--space-lg);
     }
 
     .movie-info-container {
         padding: var(--space-md);
-        grid-template-columns: 130px 1fr !important;
         gap: var(--space-md);
         border-radius: var(--radius-md);
     }
 
+    .movie-poster-col {
+        max-width: 180px; /* 💡 Vẫn giữ ảnh to rõ (180px) trên màn hình iPhone SE */
+    }
+    .movie-poster-img {
+        width: 100%;
+        height: auto;
+    }
+
     .movie-detail-title {
         font-size: var(--font-size-h4);
+        letter-spacing: 1px;
     }
 
     .info-actions-row {
-        gap: var(--space-xs);
+        gap: 6px !important;
     }
     .btn-book-now,
     .btn-watch-trailer,
     .btn-review {
-        font-size: 0.625rem;
-        padding: var(--space-xs) 4px;
-        min-height: 34px;
+        font-size: 10px !important;
+        padding: 8px 4px !important;
+        min-height: 36px !important;
+        border-width: 1px;
+        letter-spacing: 0px;
     }
     .btn-book-now svg,
     .btn-watch-trailer svg,
@@ -1242,11 +1273,11 @@
     }
 
     .info-meta-col {
-        gap: var(--space-xs) var(--space-sm);
+        gap: var(--space-xs);
     }
     .meta-label,
     .meta-value {
-        font-size: 0.625rem;
+        font-size: 0.75rem;
     }
 
     .section-header-row .section-title-label,
@@ -1274,6 +1305,13 @@
     .comment-time-ago {
         width: 100%;
         margin-left: 52px;
+        font-size: 11px;
+    }
+    .comment-username {
+        font-size: 14px;
+    }
+    .comment-content-body-text {
+        font-size: 13px;
     }
 
     .interactive-star {
@@ -1285,33 +1323,43 @@
     }
 }
 
-/* Cực nhỏ ≤ 360px */
+/* Màn hình siêu nhỏ (Dưới 360px) */
 @media (max-width: 360px) {
     .cinema-main-content-container {
-        padding: 0 18px var(--space-md);
+        padding: 0 10px var(--space-md);
     }
 
     .movie-info-container {
-        grid-template-columns: 100px 1fr !important;
-        gap: var(--space-sm);
         padding: var(--space-sm);
+        border-radius: var(--radius-sm);
+    }
+
+    .movie-poster-col {
+        max-width: 140px; /* 💡 Giảm nhẹ xuống 140px để vừa vặn với màn hình siêu nhỏ */
+    }
+    .movie-poster-img {
+        width: 100%;
+        height: auto;
     }
 
     .movie-detail-title {
-        font-size: var(--font-size-h5);
+        font-size: 18px;
+    }
+    
+    .info-rating-compact {
+        padding: 4px 12px;
+        gap: var(--space-sm);
+    }
+    .rating-big-number {
+        font-size: 26px;
     }
 
-    .info-actions-row {
-        gap: 4px;
-    }
     .btn-book-now,
     .btn-watch-trailer,
     .btn-review {
-        font-size: 0.5rem;
-        padding: 2px 4px;
-        min-height: 28px;
-        border-width: 1px;
-        letter-spacing: 0px;
+        font-size: 9px !important;
+        padding: 4px 2px !important;
+        min-height: 30px !important;
     }
     .btn-book-now svg,
     .btn-watch-trailer svg,
@@ -1320,12 +1368,13 @@
         height: 12px;
     }
 
-    .info-meta-col {
-        gap: var(--space-xs);
+    .meta-tag {
+        font-size: 9px;
+        padding: 2px 8px;
     }
     .meta-label,
     .meta-value {
-        font-size: 0.5625rem;
+        font-size: 0.6rem;
     }
 
     .interactive-star {

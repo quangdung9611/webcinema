@@ -72,7 +72,51 @@ const Booking = () => {
             ref.current.scrollLeft += offset;
         }
     };
+        // =========================================================
+    // ĐỒNG BỘ DỮ LIỆU TỪ QUICK BOOKING (LOCATION.STATE)
+    // =========================================================
+    useEffect(() => {
+        const stateData = location.state;
+        if (!stateData) return;
 
+        // 1. Cập nhật thông tin phim
+        if (stateData.movie) setMovie(stateData.movie);
+
+        // 2. Cập nhật Ngày chiếu
+        if (stateData.date) setSelectedDate(stateData.date);
+
+        // 3. Cập nhật tạm Rạp chiếu để sidebar hiện tên (sẽ được match ID chính xác ở effect tiếp theo)
+        if (stateData.cinema) {
+            setSelectedCinema(stateData.cinema);
+        }
+
+        // 4. Cập nhật tạm Suất chiếu (sẽ được match chính xác khi load danh sách suất xong)
+        if (stateData.showtime) {
+            setSelectedShowtime(stateData.showtime);
+        }
+    }, [location.state]);
+
+    // Khi danh sách rạp (cinemas) đã load xong từ API, tìm rạp chính xác để dropdown có đủ ID
+    useEffect(() => {
+        const stateData = location.state;
+        if (cinemas.length > 0 && stateData?.cinema) {
+            const matchedCinema = cinemas.find(c => c.cinema_name === stateData.cinema.cinema_name);
+            if (matchedCinema) {
+                setSelectedCinema(matchedCinema);
+            }
+        }
+    }, [cinemas]);
+
+    // Khi danh sách suất chiếu (availableShowtimes) load xong, tìm suất chiếu chính xác
+    useEffect(() => {
+        const stateData = location.state;
+        if (availableShowtimes.length > 0 && stateData?.showtime) {
+            const matchedShowtime = availableShowtimes.find(st => st.showtime_id === stateData.showtime.showtime_id);
+            if (matchedShowtime) {
+                setSelectedShowtime(matchedShowtime);
+            }
+        }
+    }, [availableShowtimes]);
     // =========================================================
     // LOAD MOVIE FROM SLUG – chỉ fetch nếu thiếu poster
     // =========================================================

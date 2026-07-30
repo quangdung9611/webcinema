@@ -87,7 +87,12 @@ class BookingRepository {
       [status, bookingId]
     );
   }
-
+// thêm method này
+async updateEmail(connection, bookingId, email) {
+  const query = `UPDATE bookings SET email = ? WHERE booking_id = ?`;
+  const [result] = await connection.execute(query, [email, bookingId]);
+  return result;
+}
   // ✅ sửa tham số từ id → bookingId
   async delete(bookingId) {
     const [result] = await db.execute(
@@ -96,7 +101,7 @@ class BookingRepository {
     );
     return result.affectedRows;
   }
-
+  
   async getConnection() {
     return db.getConnection();
   }

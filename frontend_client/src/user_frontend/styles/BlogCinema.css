@@ -4,7 +4,7 @@
 
 .blog-page {
   width: 100%;
-  padding: var(--space-2xl) 0 var(--space-3xl);
+  padding: 0 0 var(--space-3xl);
   background: var(--main-background);
   min-height: 70vh;
 }
@@ -15,7 +15,102 @@
   padding: 0 var(--container-padding);
 }
 
-/* ===== HEADER ===== */
+/* ==========================================================
+   HERO BANNER (GIỐNG PROMOTION & USERHOME)
+   ========================================================== */
+
+.blog-hero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2.5 / 1;
+  overflow: hidden;
+  background: #0a0a0a;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  transition: box-shadow 0.4s ease;
+}
+
+.blog-hero:hover {
+  box-shadow: 0 12px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(232, 232, 232, 0.05);
+}
+
+.blog-swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.blog-swiper .swiper-slide {
+  width: 100%;
+  height: 100%;
+}
+
+.blog-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: bannerBreath 10s ease-in-out infinite;
+  transition: transform 1.8s cubic-bezier(0.65, 0, 0.35, 1), opacity 1.4s ease;
+  will-change: transform, opacity;
+}
+
+@keyframes bannerBreath {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+.blog-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
+  pointer-events: none;
+}
+
+.blog-light {
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 18%;
+  height: 100%;
+  z-index: 2;
+  opacity: 0.3;
+  background: linear-gradient(90deg, transparent, rgba(232, 232, 232, 0.12), transparent);
+  transform: skewX(-25deg);
+  animation: shineMove 12s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shineMove {
+  0%   { left: -40%; opacity: 0; }
+  20%  { opacity: 0.3; }
+  50%  { opacity: 0.6; }
+  100% { left: 140%; opacity: 0; }
+}
+
+.blog-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.08;
+  background-image: radial-gradient(rgba(232, 232, 232, 0.3) 1px, transparent 1px);
+  background-size: 160px 160px;
+  animation: particleMove 25s linear infinite;
+}
+
+@keyframes particleMove {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-180px); }
+}
+
+/* ==========================================================
+   HEADER
+   ========================================================== */
+
 .blog-header {
   text-align: center;
   padding: var(--space-xl) 0 var(--space-2xl);
@@ -59,7 +154,10 @@
   margin: var(--space-xl) auto 0;
 }
 
-/* ===== BREADCRUMB ===== */
+/* ==========================================================
+   BREADCRUMB
+   ========================================================== */
+
 .blog-breadcrumb {
   display: flex;
   align-items: center;
@@ -76,14 +174,19 @@
   text-decoration: none;
   transition: color var(--transition-fast);
 }
+
 .blog-breadcrumb a:hover {
   color: var(--gold-primary);
 }
+
 .blog-breadcrumb .current {
   color: var(--text-body);
 }
 
-/* ===== GRID ===== */
+/* ==========================================================
+   GRID
+   ========================================================== */
+
 .blog-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -95,13 +198,17 @@
   height: 100%;
   width: 100%;
 }
+
 .blog-grid .cinema-card .cinema-card-inner {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-/* ===== EMPTY ===== */
+/* ==========================================================
+   EMPTY
+   ========================================================== */
+
 .blog-empty {
   text-align: center;
   padding: 60px var(--space-xl);
@@ -140,12 +247,16 @@
   text-decoration: none;
   transition: all var(--transition-normal);
 }
+
 .blog-empty-btn:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-silver);
 }
 
-/* ===== LOADING ===== */
+/* ==========================================================
+   LOADING
+   ========================================================== */
+
 .blog-loading {
   text-align: center;
   padding: 80px var(--space-xl);
@@ -196,23 +307,37 @@
 
 @media (max-width: 768px) {
   .blog-page {
-    padding: var(--space-xl) 0 var(--space-2xl);
+    padding: 0 0 var(--space-2xl);
   }
+
+  .blog-hero {
+    aspect-ratio: 3 / 2;
+  }
+
+  .blog-light,
+  .blog-particles {
+    display: none;
+  }
+
   .blog-header h1 {
     font-size: var(--font-size-h2);
   }
+
   .blog-header-desc {
     font-size: var(--font-size-base);
   }
+
   .blog-header-icon {
     width: 72px;
     height: 72px;
   }
+
   .blog-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-md);
     margin-bottom: var(--space-2xl);
   }
+
   .blog-breadcrumb {
     font-size: var(--font-size-base);
     padding: var(--space-sm) 0 var(--space-xl);
@@ -220,28 +345,38 @@
 }
 
 @media (max-width: 480px) {
+  .blog-hero {
+    aspect-ratio: 4 / 3;
+  }
+
   .blog-container {
     padding: 0 var(--space-md);
   }
+
   .blog-header h1 {
     font-size: var(--font-size-h3);
   }
+
   .blog-header-icon {
     width: 64px;
     height: 64px;
   }
+
   .blog-header-icon svg {
     width: 32px;
     height: 32px;
   }
+
   .blog-grid {
     grid-template-columns: 1fr 1fr;
     gap: var(--space-sm);
     margin-bottom: var(--space-xl);
   }
+
   .blog-empty h3 {
     font-size: var(--font-size-h4);
   }
+
   .blog-empty-btn {
     padding: var(--space-sm) var(--space-xl);
     font-size: var(--font-size-base);

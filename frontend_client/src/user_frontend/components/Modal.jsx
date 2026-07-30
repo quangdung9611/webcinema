@@ -11,12 +11,17 @@ import "../styles/Modal.css";
 
 const Modal = ({
     show,
-    onClose,
+    onClose = () => {}, // Quan trọng: fallback hàm rỗng để nút X luôn an toàn
     title,
     message,
     children,
     type = "default",
     className = "",
+    // ✨ Thêm mới: Hỗ trợ nút Xác nhận / Hủy
+    onConfirm,
+    onCancel,
+    confirmText = "Xác nhận",
+    cancelText = "Hủy",
 }) => {
 
     if (!show) return null;
@@ -61,7 +66,23 @@ const Modal = ({
                         {message ? <p>{message}</p> : children}
                     </div>
 
-                    {/* ❌ ĐÃ BỎ PHẦN onConfirm / onCancel */}
+                    {/* ✨ THÊM MỚI: Footer chứa nút Xác nhận / Hủy */}
+                    {(onConfirm || onCancel) && (
+                        <div className="modal-footer">
+                            <button 
+                                className="modal-btn-cancel" 
+                                onClick={onCancel || onClose}
+                            >
+                                {cancelText}
+                            </button>
+                            <button 
+                                className="modal-btn-confirm" 
+                                onClick={onConfirm}
+                            >
+                                {confirmText}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

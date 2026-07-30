@@ -18,27 +18,19 @@ import LoadingButton from '../components/LoadingButton';
 import '../styles/BankApp.css';
 
 const BankApp = () => {
-
     const location = useLocation();
     const navigate = useNavigate();
-
-    // =========================
-    // DATA
-    // =========================
 
     const bookingData =
         location.state ||
         JSON.parse(
-            sessionStorage.getItem(
-                'lastSuccessTicket'
-            )
+            sessionStorage.getItem('lastSuccessTicket')
         ) || {};
 
     const {
         bookingId,
         customerEmail,
         totalAmount,
-
         movie,
         selectedCinema,
         selectedDate,
@@ -51,115 +43,182 @@ const BankApp = () => {
         showtimeDetail
     } = bookingData;
 
-    // =========================
-    // STATES
-    // =========================
-
+    // Refs
     const hasSentOtp = useRef(false);
+    const isResending = useRef(false);
+    const redirectTimeoutRef = useRef(null);
+    const infoModalShownRef = useRef(false);
+    const autoNavigateRef = useRef(null);
+    const isModalOpenRef = useRef(false);
+    
+    // 👇 Thêm 2 ref mới
+    const hasShownOtpReminder = useRef(false);
+    const isFirstLoad = useRef(true);
+
+    // States
     const [timeLeft, setTimeLeft] = useState(300);
     const [otp, setOtp] = useState('');
     const [loadingVerify, setLoadingVerify] = useState(false);
     const [loadingSendOtp, setLoadingSendOtp] = useState(false);
-    const [sendOtpError, setSendOtpError] = useState(null);
-
     const [modalConfig, setModalConfig] = useState({
         show: false,
-        type: 'confirm',
+        type: 'info',
         title: '',
         message: '',
-        onConfirm: () => {}
+        onConfirm: () => {},
+        onCancel: () => {}
     });
 
-    // =========================
-    // MODAL
-    // =========================
+    // Modal handlers
+    const closeModal = () => {
+        setModalConfig(prev => ({ ...prev, show: false }));
+    };
 
-    const openModal = (
-        type,
-        title,
-        message,
-        onConfirmCustom = null
-    ) => {
+    const openModal = (type, title, message, onConfirmCustom = null, onCancelCustom = null) => {
         setModalConfig({
             show: true,
             type,
             title,
             message,
-            onConfirm: onConfirmCustom || (() =>
-                setModalConfig(prev => ({
-                    ...prev,
-                    show: false
-                }))
-            )
+            onConfirm: onConfirmCustom || (() => closeModal()),
+            onCancel: onCancelCustom || (() => closeModal())
         });
     };
 
-    const closeModal = () => {
-        setModalConfig(prev => ({ ...prev, show: false }));
-    };
+    // =========================
+    // CẢNH BÁO KHI RỜI TRANG
+    // =========================
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (timeLeft > 0 && otp.length > 0) {
+                e.preventDefault();
+                e.returnValue = 'Bạn đang nhập OTP. Nếu rời trang, bạn sẽ mất tiến trình thanh toán!';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [timeLeft, otp]);
 
     // =========================
     // CHECK DATA
     // =========================
-
     useEffect(() => {
         if (!bookingId || !customerEmail) {
-            openModal('error', 'THIẾU THÔNG TIN', 'Không tìm thấy thông tin đặt vé. Vui lòng đặt lại.', () => {
-                closeModal();
-                navigate('/');
-            });
+            openModal(
+                'error',
+                'THIẾU THÔNG TIN',
+                'Không tìm thấy thông tin đặt vé. Vui lòng đặt lại.',
+                () => {
+                    closeModal();
+                    navigate('/');
+                }
+            );
         }
     }, [bookingId, customerEmail, navigate]);
 
     // =========================
-    // SEND OTP
+    // THEO DÕI TRẠNG THÁI MODAL
     // =========================
-
     useEffect(() => {
-        const sendOtpInitial = async () => {
-            if (!customerEmail || !bookingId || hasSentOtp.current) {
+        isModalOpenRef.current = modalConfig.show;
+    }, [modalConfig.show]);
+
+    // =========================
+    // CLEANUP TIMEOUT
+    // =========================
+    useEffect(() => {
+        return () => {
+            if (autoNavigateRef.current) {
+                clearTimeout(autoNavigateRef.current);
+                autoNavigateRef.current = null;
+            }
+        };
+    }, []);
+
+    // =========================
+    // GỬI OTP API
+    // =========================
+    const sendOtpApi = async () => {
+        setLoadingSendOtp(true);
+        try {
+            await axios.post(
+                'https://api.quangdungcinema.id.vn/api/bank/send-otp',
+                {
+                    email: customerEmail,
+                    bookingId
+                }
+            );
+            hasSentOtp.current = true;
+            hasShownOtpReminder.current = false; // 👈 reset để có thể nhắc lại
+            infoModalShownRef.current = false;
+            return true;
+        } catch (err) {
+            console.error('❌ Lỗi gửi OTP:', err);
+            const errorMsg = err.response?.data?.message || 'Không thể gửi mã OTP. Vui lòng thử lại.';
+            openModal('error', 'LỖI GỬI OTP', errorMsg);
+            return false;
+        } finally {
+            setLoadingSendOtp(false);
+        }
+    };
+
+    // =========================
+    // LOGIC GỬI OTP LẦN ĐẦU / QUAY LẠI
+    // =========================
+    useEffect(() => {
+        const triggerSendOtp = async () => {
+            if (!customerEmail || !bookingId) return;
+
+            if (hasSentOtp.current === false) {
+                await sendOtpApi();
                 return;
             }
 
-            hasSentOtp.current = true;
-            setLoadingSendOtp(true);
-            setSendOtpError(null);
+            if (timeLeft === 0 && hasSentOtp.current === true) {
+                await sendOtpApi();
+                return;
+            }
 
-            try {
-                await axios.post(
-                    'https://api.quangdungcinema.id.vn/api/bank/send-otp',
-                    {
-                        email: customerEmail,
-                        bookingId
-                    }
-                );
-            } catch (err) {
-                console.error('❌ Lỗi gửi OTP:', err);
-                const errorMsg = err.response?.data?.message || 'Không thể gửi mã OTP. Vui lòng thử lại.';
-                setSendOtpError(errorMsg);
-                openModal('error', 'LỖI GỬI OTP', errorMsg);
-            } finally {
-                setLoadingSendOtp(false);
+            // Nếu đã gửi và còn thời gian → KHÔNG gửi lại (im lặng)
+            if (timeLeft > 0 && hasSentOtp.current === true) {
+                return;
             }
         };
 
-        sendOtpInitial();
-    }, [bookingId, customerEmail]);
+        triggerSendOtp();
+    }, [customerEmail, bookingId, timeLeft]);
 
     // =========================
-    // TIMER 5 MINUTES
+    // NHẮC NHỞ OTP ĐÃ GỬI KHI QUAY LẠI TRANG
     // =========================
+    useEffect(() => {
+        // Bỏ qua lần mount đầu tiên
+        if (isFirstLoad.current) {
+            isFirstLoad.current = false;
+            return;
+        }
 
+        // Nếu đã gửi OTP, còn thời gian, chưa hiển thị nhắc nhở và có đủ thông tin
+        if (hasSentOtp.current && timeLeft > 0 && !hasShownOtpReminder.current && customerEmail && bookingId) {
+            openModal(
+                'info',
+                'THÔNG BÁO',
+                'Mã OTP đã được gửi đến email của bạn. Vui lòng kiểm tra và nhập mã.'
+            );
+            hasShownOtpReminder.current = true;
+        }
+    }, [location.key]);
+
+    // =========================
+    // TIMER + AUTO REDIRECT
+    // =========================
     useEffect(() => {
         if (timeLeft <= 0) {
             const handleTimeout = async () => {
                 try {
                     await axios.post(
                         'https://api.quangdungcinema.id.vn/api/bank/cancel-timeout',
-                        {
-                            bookingId,
-                            email: customerEmail
-                        }
+                        { bookingId, email: customerEmail }
                     );
                 } catch (err) {
                     console.error('❌ Lỗi hủy đơn:', err);
@@ -168,12 +227,24 @@ const BankApp = () => {
                 openModal(
                     'error',
                     'HẾT HẠN',
-                    'Phiên giao dịch đã hết hạn! Vui lòng đặt lại vé.',
+                    'Phiên giao dịch đã hết hạn! Hệ thống sẽ tự động quay về trang chủ sau 5 giây.',
                     () => {
+                        if (redirectTimeoutRef.current) {
+                            clearTimeout(redirectTimeoutRef.current);
+                            redirectTimeoutRef.current = null;
+                        }
                         closeModal();
                         navigate('/');
                     }
                 );
+
+                if (redirectTimeoutRef.current) {
+                    clearTimeout(redirectTimeoutRef.current);
+                }
+                redirectTimeoutRef.current = setTimeout(() => {
+                    closeModal();
+                    navigate('/');
+                }, 5000);
             };
 
             handleTimeout();
@@ -184,13 +255,18 @@ const BankApp = () => {
             setTimeLeft(prev => prev - 1);
         }, 1000);
 
-        return () => clearInterval(timer);
+        return () => {
+            clearInterval(timer);
+            if (redirectTimeoutRef.current) {
+                clearTimeout(redirectTimeoutRef.current);
+                redirectTimeoutRef.current = null;
+            }
+        };
     }, [timeLeft, bookingId, customerEmail, navigate]);
 
     // =========================
     // VERIFY OTP
     // =========================
-
     const handleVerifyPayment = async () => {
         if (otp.length < 6) {
             openModal('error', 'THÔNG BÁO', 'Vui lòng nhập đủ 6 số OTP');
@@ -202,11 +278,7 @@ const BankApp = () => {
         try {
             const res = await axios.post(
                 'https://api.quangdungcinema.id.vn/api/bank/verify-otp',
-                {
-                    email: customerEmail,
-                    otp,
-                    bookingId
-                }
+                { email: customerEmail, otp, bookingId }
             );
 
             if (res.data.success) {
@@ -219,12 +291,28 @@ const BankApp = () => {
                     'THANH TOÁN THÀNH CÔNG',
                     'Cảm ơn bạn đã đặt vé! Vui lòng kiểm tra email để nhận vé.',
                     () => {
+                        if (autoNavigateRef.current) {
+                            clearTimeout(autoNavigateRef.current);
+                            autoNavigateRef.current = null;
+                        }
                         closeModal();
-                        navigate('/confirm-success', {
-                            state: bookingData
-                        });
+                        navigate('/confirm-success', { state: bookingData });
                     }
                 );
+
+                if (autoNavigateRef.current) {
+                    clearTimeout(autoNavigateRef.current);
+                }
+                autoNavigateRef.current = setTimeout(() => {
+                    if (isModalOpenRef.current) {
+                        closeModal();
+                        navigate('/confirm-success', { state: bookingData });
+                    }
+                    autoNavigateRef.current = null;
+                }, 3000);
+
+            } else {
+                openModal('error', 'THẤT BẠI', 'Mã OTP không đúng hoặc đã hết hạn!');
             }
         } catch (err) {
             console.error('❌ Lỗi verify OTP:', err);
@@ -238,49 +326,32 @@ const BankApp = () => {
     // =========================
     // RESEND OTP
     // =========================
-
     const handleResendOTP = async () => {
         if (loadingSendOtp) return;
 
-        setLoadingSendOtp(true);
-        setSendOtpError(null);
-
-        try {
-            await axios.post(
-                'https://api.quangdungcinema.id.vn/api/bank/send-otp',
-                {
-                    email: customerEmail,
-                    bookingId
-                }
-            );
-            setTimeLeft(300);
+        setTimeLeft(300);
+        isResending.current = true;
+        hasSentOtp.current = false;
+        const success = await sendOtpApi();
+        if (success) {
             openModal('success', 'THÀNH CÔNG', 'Mã OTP mới đã được gửi đến email của bạn.');
-        } catch (err) {
-            console.error('❌ Lỗi gửi lại OTP:', err);
-            const errorMsg = err.response?.data?.message || 'Không thể gửi lại OTP. Vui lòng thử lại.';
-            setSendOtpError(errorMsg);
-            openModal('error', 'LỖI GỬI OTP', errorMsg);
-        } finally {
-            setLoadingSendOtp(false);
+        } else {
+            isResending.current = false;
         }
     };
 
     // =========================
     // TIME FORMAT
     // =========================
-
     const mins = Math.floor(timeLeft / 60);
     const secs = timeLeft % 60;
 
     // =========================
     // RENDER
     // =========================
-
     return (
         <div className="bank-checkout-page">
             <main className="bank-checkout-container">
-
-                {/* LEFT SIDEBAR */}
                 <div className="bank-sidebar-wrapper">
                     <BookingSidebar
                         movie={movie}
@@ -300,10 +371,8 @@ const BankApp = () => {
                     />
                 </div>
 
-                {/* RIGHT OTP */}
                 <div className="bank-otp-section">
                     <div className="otp-card">
-
                         <div className="bank-qr-mini-wrapper">
                             <img
                                 src="https://api.quangdungcinema.id.vn/uploads/Bank/Qr_nganhang.jpg"
@@ -326,9 +395,7 @@ const BankApp = () => {
                                 maxLength="6"
                                 autoFocus
                                 value={otp}
-                                onChange={(e) =>
-                                    setOtp(e.target.value.replace(/\D/g, ''))
-                                }
+                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                             />
                         </div>
 
@@ -365,19 +432,14 @@ const BankApp = () => {
                 </div>
             </main>
 
-            {/* ✅ Modal đã sửa: chỉ dùng onClose, xử lý onConfirm bên trong */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}
                 title={modalConfig.title}
                 message={modalConfig.message}
-                onClose={() => {
-                    if (modalConfig.onConfirm) {
-                        modalConfig.onConfirm();
-                    } else {
-                        closeModal();
-                    }
-                }}
+                onClose={closeModal}
+                onConfirm={modalConfig.onConfirm}
+                onCancel={modalConfig.onCancel}
             />
         </div>
     );

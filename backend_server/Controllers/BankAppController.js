@@ -1,6 +1,6 @@
 const BankAppService = require("../Services/BankAppService");
 const OtpService = require("../Services/OtpService");
-const { PURPOSE } = require("../Services/OtpService"); // 👈 import hằng số
+const { PURPOSE } = require("../Services/OtpService");
 const MailServiceTicket = require("../Services/MailServiceTicket");
 const db = require("../Config/db");
 
@@ -11,7 +11,6 @@ exports.sendOTP = async (req, res) => {
       return res.status(400).json({ success: false, message: "Thiếu email hoặc bookingId" });
     }
 
-    // ✅ Gọi method createOTP với PURPOSE.PAYMENT
     const result = await OtpService.createOTP(email, PURPOSE.PAYMENT);
     if (!result.success) {
       return res.status(400).json({ success: false, message: result.message });
@@ -32,14 +31,20 @@ exports.verifyOTP = async (req, res) => {
   try {
     const { email, otp, bookingId } = req.body;
 
-    // ✅ Gọi method verifyOTP với PURPOSE.PAYMENT
+    // 1. Xác thực OTP
     const verifyResult = await OtpService.verifyOTP(email, otp, PURPOSE.PAYMENT);
     if (!verifyResult.success) {
       return res.status(400).json(verifyResult);
     }
 
     await connection.beginTransaction();
+
+    // 2. Cập nhật email của booking thành email B
+    await BookingRepository.updateEmail(connection, bookingId, email);
+
+    // 3. Hoàn tất thanh toán (lúc này email đã được cập nhật, nên gửi vé đúng)
     await BankAppService.completeBankPayment(connection, bookingId);
+
     await connection.commit();
 
     return res.json({

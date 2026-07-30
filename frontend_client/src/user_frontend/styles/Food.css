@@ -126,7 +126,7 @@
 }
 
 /* =========================================
-   ACTIONS
+   ACTIONS (+ / - )
 ========================================= */
 
 .food-actions {
@@ -167,140 +167,548 @@
 }
 
 /* =========================================
-   RESPONSIVE - Chỉ dùng biến font-size
+   ✨ NÂNG CẤP: NÚT TIẾP TỤC THANH TOÁN ✨
 ========================================= */
 
-/* --- 1200px --- */
+/* Container chứa nút - dùng để đẩy nút xuống đáy */
+.food-footer-actions {
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-lg);
+    border-top: var(--border-silver);
+    width: 100%;
+}
+
+/* Đảm bảo nút chiếm toàn bộ chiều ngang khung chứa (ngang bằng food-grid) */
+.food-footer-actions .btn-next {
+    width: 100%;
+    min-height: 56px;
+    font-size: var(--font-size-base);
+    border-radius: var(--radius-round);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cinema-border-gradient);
+    color: var(--black-premium);
+    border: none;
+    font-weight: var(--fw-extrabold);
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-silver);
+}
+
+/* Hover & Active cho nút chính */
+.food-footer-actions .btn-next:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 8px 25px rgba(212, 212, 212, 0.25);
+}
+
+.food-footer-actions .btn-next:active:not(:disabled) {
+    transform: scale(0.97);
+}
+.food-footer-actions .btn-next:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* =========================================================
+   RESPONSIVE - CHUẨN XẾP DỌC 100% TỪ 992px TRỞ XUỐNG
+========================================================= */
+
+/* Màn hình vừa (tablet, laptop nhỏ) */
 @media (max-width: 1200px) {
-    .food-grid {
+    .booking-container {
         gap: var(--space-md);
-    }
-
-    .food-card {
         padding: var(--space-md);
+    }
+    .ticket-sidebar {
+        width: 280px !important;
+    }
+    .poster-container {
+        max-width: 240px;
+    }
+    .cinema-select {
+        flex: 0 0 200px;
+    }
+    .date-slider {
+        flex: 2 1 260px;
+    }
+    .time-slider {
+        flex: 1.5 1 240px;
+    }
+    .row-items {
+        gap: var(--space-sm);
+    }
+    .seat {
+        width: 38px;
+        height: 38px;
+    }
+    .seat.COUPLE {
+        width: 72px;
+    }
+}
+
+/* Màn hình nhỏ (≤ 992px) - SIDEBAR XẾP DỌC (Poster trên, Thông tin dưới) */
+@media (max-width: 992px) {
+    .booking-container {
+        flex-direction: column;
+        padding: var(--space-md);
+        gap: var(--space-lg);
+    }
+
+    /* 1. Tái cấu trúc Sidebar về xếp dọc */
+    .ticket-sidebar {
+        width: 100% !important;
+        position: static;
+        display: flex !important;
+        flex-direction: column !important; /* Xếp dọc */
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: var(--space-md);
+        padding: var(--space-md);
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: var(--radius-md);
+        height: auto;
+    }
+
+    /* 2. Đưa Countdown Timer lên trên cùng */
+    .ticket-sidebar > .countdown-timer,
+    .ticket-sidebar > div:first-child:not(.poster-container):not(.ticket-details) {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+        order: -1 !important; /* Luôn nằm trên cùng */
+        margin-bottom: var(--space-sm) !important;
+        padding: 0 !important;
+    }
+
+    /* 3. Poster chiếm 100% chiều ngang, giới hạn kích thước */
+    .poster-container {
+        width: auto !important;
+        max-width: 260px !important; /* Không to quá, không nhỏ quá */
+        margin: 0 auto !important;
+        height: auto;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-silver);
+    }
+    .poster-container img {
+        width: 100%;
+        height: auto !important;
+        aspect-ratio: 2/3;
+        object-fit: cover;
+        display: block;
+    }
+    .poster-container .poster-placeholder {
+        width: 260px;
+        height: 390px;
+    }
+
+    /* 4. Thông tin chi tiết chiếm 100% dòng dưới */
+    .ticket-details {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Điều chỉnh nội dung bên trong chi tiết cho gọn gàng */
+    .ticket-details .movie-name {
+        font-size: var(--font-size-h4);
+        margin-bottom: var(--space-xs);
+        text-align: center;
+    }
+    .ticket-details .detail-item {
+        font-size: var(--font-size-base);
+        display: flex;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        line-height: 1.5;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        padding-bottom: var(--space-xs);
+    }
+    .ticket-details .detail-item span {
+        color: var(--text-muted);
+        min-width: 60px;
+    }
+    .ticket-details .grand-total {
+        margin-top: var(--space-sm);
+        text-align: center;
+    }
+    .ticket-details .grand-total h3 {
+        font-size: var(--font-size-h4);
+        margin: var(--space-xs) 0 0 0;
+    }
+    .ticket-details .price-row {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        padding-bottom: var(--space-xs);
+    }
+    .ticket-details .food-sidebar-actions {
+        margin-top: var(--space-md);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        width: 100%;
+    }
+    .btn-next-sidebar, .btn-back-food-sidebar {
+        min-height: 44px !important;
+        font-size: var(--font-size-base) !important;
+        padding: var(--space-sm) var(--space-md) !important;
+        width: 100% !important;
+    }
+
+    /* 5. Điều hướng 3 bước */
+    .booking-nav-flex {
+        flex-direction: row !important;
+        flex-wrap: wrap;
         gap: var(--space-md);
     }
-
-    .food-image {
-        width: 120px;
-        height: 120px;
+    .nav-col {
+        flex: 1 1 0;
+        min-width: 140px;
+    }
+    .cinema-select {
+        flex: 0 0 28%;
+        width: auto;
+    }
+    .date-slider {
+        flex: 0 0 28%;
+        width: auto;
+    }
+    .time-slider {
+        flex: 0 0 38%;
+        width: auto;
+    }
+    .slider-controls {
+        width: 100%;
+    }
+    .date-slider .compact-card {
+        width: 68px;
+        min-width: 68px;
+        height: 68px;
+    }
+    .time-card {
+        min-width: 88px;
+        height: 54px;
     }
 
-    .food-content h3 {
+    /* 6. Khu vực ghế & Legend */
+    .seat-legend {
+        gap: var(--space-md);
+    }
+    .seat-row {
+        gap: var(--space-sm);
+    }
+    .row-items {
+        gap: var(--space-xs);
+    }
+    .seat {
+        width: 34px;
+        height: 34px;
+    }
+    .seat.COUPLE {
+        width: 64px;
+    }
+    .seat-number {
+        font-size: 11px;
+    }
+    .btn-next {
+        min-width: 280px;
+    }
+}
+
+/* Màn hình rất nhỏ (điện thoại) */
+@media (max-width: 768px) {
+    .booking-wrapper {
+        padding: var(--space-md) 0;
+    }
+    .booking-container {
+        padding: var(--space-sm);
+        border-radius: var(--radius-lg);
+        gap: var(--space-md);
+    }
+    
+    .poster-container {
+        max-width: 200px !important; /* Poster nhỏ lại chút */
+    }
+    .poster-container .poster-placeholder {
+        width: 200px;
+        height: 300px;
+    }
+
+    .ticket-details .movie-name {
+        font-size: var(--font-size-base);
+    }
+    .ticket-details .detail-item {
+        font-size: var(--font-size-sm);
+    }
+    .ticket-details .grand-total h3 {
         font-size: var(--font-size-h5);
     }
 
-    .food-price {
-        font-size: var(--font-size-h4);
+    .booking-nav-flex {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
+    .nav-col {
+        flex: 1 1 0;
+        min-width: 120px;
+    }
+    .cinema-select {
+        flex: 0 0 30%;
+    }
+    .date-slider {
+        flex: 0 0 30%;
+    }
+    .time-slider {
+        flex: 0 0 36%;
+    }
+    .nav-col label {
+        font-size: var(--font-size-sm);
+        letter-spacing: 1px;
+    }
+    .cinema-select select {
+        height: 50px;
+        font-size: var(--font-size-sm);
+    }
+    .slider-controls {
+        height: 54px;
+    }
+    .slide-btn {
+        width: 36px;
+        height: 36px;
+        font-size: var(--font-size-sm);
+    }
+    .date-slider .compact-card {
+        width: 60px;
+        min-width: 60px;
+        height: 60px;
+    }
+    .day-txt {
+        font-size: var(--font-size-sm);
+    }
+    .date-txt {
+        font-size: var(--font-size-base);
+    }
+    .time-card {
+        min-width: 78px;
+        height: 48px;
+        font-size: var(--font-size-sm);
+    }
+    .seat {
+        width: 30px;
+        height: 30px;
+    }
+    .seat.COUPLE {
+        width: 56px;
+    }
+    .seat-number {
+        font-size: 10px;
+    }
+    .row-items {
+        gap: var(--space-xs);
+    }
+    .seat-row {
+        gap: var(--space-sm);
+    }
+    .row-id {
+        font-size: var(--font-size-sm);
+        width: 18px;
+    }
+    .screen-header {
+        margin-bottom: 40px;
+    }
+    .screen-header span {
+        letter-spacing: 4px;
+        font-size: var(--font-size-sm);
+    }
+    .seat-legend {
+        gap: var(--space-sm);
+        margin-top: 40px;
+    }
+    .leg-item {
+        font-size: var(--font-size-sm);
+    }
+    .leg-item .box {
+        width: 16px;
+        height: 16px;
+    }
+    .box.couple {
+        width: 30px;
+    }
+    .btn-next {
+        min-width: 200px;
+        height: 50px;
+        font-size: var(--font-size-sm);
+    }
+    .booking-actions {
+        margin-top: 40px;
+    }
+    .placeholder-msg {
+        min-height: 350px;
+    }
+    .placeholder-msg i {
+        font-size: var(--font-size-h2);
+    }
+    .no-showtimes {
+        height: 48px;
+        font-size: var(--font-size-sm);
     }
 }
 
-/* --- 992px --- */
-@media (max-width: 992px) {
-    .food-grid {
-        grid-template-columns: 1fr;
-        gap: var(--space-md);
+/* Màn hình cực nhỏ (điện thoại nhỏ) */
+@media (max-width: 480px) {
+    .booking-container {
+        padding: var(--space-xs);
+        border-radius: var(--radius-md);
+        gap: var(--space-sm);
     }
 
-    .food-card {
-        padding: var(--space-md);
-        gap: var(--space-md);
-        border-radius: var(--radius-lg);
+    .poster-container {
+        max-width: 150px !important; /* Thu nhỏ để không chiếm quá nhiều màn hình */
+    }
+    .poster-container .poster-placeholder {
+        width: 150px;
+        height: 225px;
     }
 
-    .food-image {
-        width: 130px;
-        height: 130px;
+    .ticket-details .detail-item {
+        font-size: var(--font-size-xs);
+        display: flex;
+        justify-content: space-between;
+        gap: var(--space-xs);
     }
-}
+    .ticket-details .detail-item span {
+        min-width: 40px;
+    }
+    .ticket-details .grand-total h3 {
+        font-size: var(--font-size-base);
+    }
+    .ticket-details .food-sidebar-actions {
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+    .btn-next-sidebar, .btn-back-food-sidebar {
+        min-height: 38px !important;
+        font-size: var(--font-size-xs) !important;
+    }
 
-/* --- 768px --- */
-@media (max-width: 768px) {
-    .food-page-header h2 {
+    .booking-nav-flex {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+    }
+    .nav-col {
+        flex: 1 1 0;
+        min-width: 80px;
+    }
+    .cinema-select {
+        flex: 0 0 100%;
+        width: 100%;
+    }
+    .date-slider {
+        flex: 0 0 48%;
+    }
+    .time-slider {
+        flex: 0 0 48%;
+    }
+    .nav-col label {
+        font-size: var(--font-size-xs);
+        letter-spacing: 0.5px;
+    }
+    .cinema-select select {
+        height: 44px;
+        font-size: var(--font-size-xs);
+    }
+    .slider-controls {
+        height: 48px;
+        gap: var(--space-xs);
+    }
+    .slide-btn {
+        width: 32px;
+        height: 32px;
+        font-size: var(--font-size-xs);
+    }
+    .date-slider .compact-card {
+        width: 52px;
+        min-width: 52px;
+        height: 52px;
+    }
+    .day-txt {
+        font-size: var(--font-size-xs);
+        margin-bottom: 2px;
+    }
+    .date-txt {
+        font-size: var(--font-size-sm);
+    }
+    .time-card {
+        min-width: 68px;
+        height: 42px;
+        font-size: var(--font-size-xs);
+    }
+    .seat {
+        width: 26px;
+        height: 26px;
+    }
+    .seat.COUPLE {
+        width: 48px;
+    }
+    .seat-number {
+        font-size: 8px;
+    }
+    .row-items {
+        gap: 4px;
+    }
+    .seat-row {
+        gap: var(--space-xs);
+    }
+    .row-id {
+        font-size: var(--font-size-xs);
+        width: 14px;
+    }
+    .screen-header {
+        margin-bottom: 30px;
+    }
+    .screen-header span {
+        letter-spacing: 2px;
+        font-size: var(--font-size-xs);
+    }
+    .seat-legend {
+        gap: var(--space-xs);
+        margin-top: 30px;
+    }
+    .leg-item {
+        font-size: var(--font-size-xs);
+        gap: var(--space-xs);
+    }
+    .leg-item .box {
+        width: 14px;
+        height: 14px;
+    }
+    .box.couple {
+        width: 26px;
+    }
+    .btn-next {
+        min-width: 100%;
+        height: 44px;
+        font-size: var(--font-size-xs);
+    }
+    .booking-actions {
+        margin-top: 30px;
+    }
+    .placeholder-msg {
+        min-height: 250px;
+    }
+    .placeholder-msg i {
         font-size: var(--font-size-h3);
     }
-
-    .food-page-header p {
-        font-size: var(--font-size-base);
-    }
-
-    .food-card {
-        padding: var(--space-md);
-        gap: var(--space-md);
-        border-radius: var(--radius-lg);
-    }
-
-    .food-image {
-        width: 110px;
-        height: 110px;
-    }
-
-    .food-content h3 {
-        font-size: var(--font-size-base);
-    }
-
-    .food-price {
-        font-size: var(--font-size-h4);
-    }
-
-    .qty-btn {
-        width: 40px;
-        height: 40px;
-        font-size: var(--font-size-base);
-    }
-
-    .food-qty {
-        font-size: var(--font-size-base);
-    }
-}
-
-/* --- 480px --- */
-@media (max-width: 480px) {
-    .food-page-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .food-page-header h2 {
-        font-size: var(--font-size-h4);
-    }
-
-    .food-card {
-        flex-direction: column;
-        align-items: stretch;
-        padding: var(--space-md);
-        gap: var(--space-md);
-    }
-
-    .food-image {
-        width: 100%;
-        height: 200px;
-    }
-
-    .food-content {
-        min-height: auto;
-        width: 100%;
-    }
-
-    .food-content h3 {
-        font-size: var(--font-size-base);
-    }
-
-    .food-price {
-        font-size: var(--font-size-base);
-    }
-
-    .food-actions {
-        margin-top: var(--space-sm);
-    }
-
-    .qty-btn {
-        width: 38px;
-        height: 38px;
-        font-size: var(--font-size-base);
-    }
-
-    .food-qty {
-        font-size: var(--font-size-base);
+    .no-showtimes {
+        height: 42px;
+        font-size: var(--font-size-xs);
     }
 }

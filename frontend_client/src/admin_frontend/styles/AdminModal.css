@@ -1,5 +1,6 @@
 /* =========================================================
-   ADMIN MODAL OVERLAY – SỬ DỤNG VAR TỪ INDEX.CSS (GOLD)
+   ADMIN MODAL OVERLAY – SILVER EDITION
+   SỬ DỤNG VAR TỪ INDEX.CSS (SILVER)
 ========================================================= */
 
 .admin-modal-overlay {
@@ -25,13 +26,13 @@
     overflow: hidden;
     border-radius: var(--radius-xl);
     background: var(--cinema-card-bg);
-    border: 1px solid rgba(201, 168, 76, 0.12);
-    box-shadow: var(--shadow-lg), 0 0 30px rgba(201, 168, 76, 0.08);
+    border: 1px solid rgba(232, 232, 232, 0.12);
+    box-shadow: var(--shadow-lg), 0 0 30px rgba(232, 232, 232, 0.06);
     animation: modalScale var(--transition-normal);
 }
 
 /* =========================================================
-   CINEMA GLOW – GOLD
+   CINEMA GLOW – SILVER
 ========================================================= */
 
 .admin-modal-container::before {
@@ -42,7 +43,7 @@
     width: 260px;
     height: 260px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(201, 168, 76, 0.18), transparent 70%);
+    background: radial-gradient(circle, rgba(232, 232, 232, 0.15), transparent 70%);
     pointer-events: none;
 }
 
@@ -54,7 +55,7 @@
     width: 260px;
     height: 260px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(180, 140, 60, 0.12), transparent 70%);
+    background: radial-gradient(circle, rgba(200, 200, 200, 0.10), transparent 70%);
     pointer-events: none;
 }
 
@@ -89,7 +90,7 @@
     justify-content: center;
     padding: var(--space-lg) var(--space-xl);
     border-bottom: var(--border-silver);
-    background: linear-gradient(180deg, rgba(201, 168, 76, 0.04), transparent);
+    background: linear-gradient(180deg, rgba(232, 232, 232, 0.04), transparent);
     z-index: 2;
 }
 
@@ -138,7 +139,7 @@
 }
 
 /* =========================================================
-   CLOSE BUTTON – GOLD
+   CLOSE BUTTON – SILVER
 ========================================================= */
 
 .admin-modal-close-btn {
@@ -160,11 +161,11 @@
 }
 
 .admin-modal-close-btn:hover {
-    background: rgba(201, 168, 76, 0.16);
-    border-color: rgba(201, 168, 76, 0.18);
+    background: rgba(232, 232, 232, 0.16);
+    border-color: rgba(232, 232, 232, 0.25);
     color: var(--white-pure);
     transform: translateY(-50%) rotate(90deg);
-    box-shadow: 0 0 20px rgba(201, 168, 76, 0.15);
+    box-shadow: 0 0 20px rgba(232, 232, 232, 0.15);
 }
 
 /* =========================================================
@@ -216,23 +217,24 @@
 }
 
 /* =========================================================
-   CONFIRM BUTTON – GOLD
+   CONFIRM BUTTON – SILVER (BẠC - CHỮ ĐEN)
 ========================================================= */
 
 .admin-confirm-btn {
     min-width: 140px;
-    color: var(--black-premium);
-    background: var(--gold-gradient);
-    box-shadow: 0 10px 24px rgba(201, 168, 76, 0.35);
+    color: var(--black-premium) !important;
+    background: var(--cinema-border-gradient);
+    box-shadow: 0 10px 24px rgba(232, 232, 232, 0.30);
 }
 
 .admin-confirm-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 14px 34px rgba(201, 168, 76, 0.45);
+    box-shadow: 0 14px 34px rgba(232, 232, 232, 0.40);
+    color: var(--black-premium) !important;
 }
 
 /* =========================================================
-   CANCEL BUTTON
+   CANCEL BUTTON – SILVER OUTLINE
 ========================================================= */
 
 .admin-cancel-btn {
@@ -244,12 +246,13 @@
 
 .admin-cancel-btn:hover {
     background: rgba(255, 255, 255, 0.10);
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(232, 232, 232, 0.30);
     transform: translateY(-2px);
+    color: var(--silver-light);
 }
 
 /* =========================================================
-   SCROLLBAR – GOLD
+   SCROLLBAR – SILVER
 ========================================================= */
 
 .admin-modal-body::-webkit-scrollbar {
@@ -261,12 +264,12 @@
 }
 
 .admin-modal-body::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, var(--gold-primary), var(--gold-light));
+    background: linear-gradient(180deg, var(--silver-primary), var(--silver-light));
     border-radius: var(--radius-round);
 }
 
 /* =========================================================
-   ANIMATIONS (giữ nguyên)
+   ANIMATIONS
 ========================================================= */
 
 @keyframes modalFade {
@@ -327,5 +330,6 @@
     .admin-confirm-btn,
     .admin-cancel-btn {
         width: 100%;
+        justify-content: center;
     }
 }
