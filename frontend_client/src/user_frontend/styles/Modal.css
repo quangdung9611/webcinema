@@ -1,12 +1,16 @@
-/* Modal.css */
+/* ============================================
+   MODAL CSS – Responsive & Emoji Icon (No Circle)
+   Version: 2.1
+   ============================================ */
 
+/* ----- OVERLAY ----- */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.7); /* đậm hơn một chút */
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -36,8 +40,9 @@
   }
 }
 
+/* ----- CONTAINER ----- */
 .modal-container {
-  background-color: #1e1e2f; /* màu xám đen chính */
+  background-color: #1e1e2f;
   border-radius: 20px;
   max-width: 520px;
   width: 100%;
@@ -48,10 +53,10 @@
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  color: #f1f1f1; /* chữ trắng xám cho toàn bộ */
+  color: #f1f1f1;
 }
 
-/* Nút đóng (X) */
+/* ----- NÚT ĐÓNG (X) ----- */
 .modal-close-btn {
   position: absolute;
   top: 16px;
@@ -67,7 +72,7 @@
   cursor: pointer;
   transition: background 0.2s, transform 0.2s;
   z-index: 10;
-  color: #ddd; /* trắng xám */
+  color: #ddd;
 }
 
 .modal-close-btn:hover {
@@ -79,80 +84,100 @@
   transform: scale(0.95);
 }
 
-/* Nội dung chính */
+/* ----- NỘI DUNG CHÍNH ----- */
 .modal-content {
   padding: 32px 28px 28px 28px;
   flex: 1;
   overflow-y: auto;
 }
 
-/* Nhóm tiêu đề + icon */
+/* ----- TIÊU ĐỀ + ICON (EMOJI) ----- */
 .modal-title-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 8px;
 }
 
-.modal-title-group svg {
+/* Icon emoji – chỉ emoji, không có nền tròn hay bóng */
+.modal-icon {
+  font-size: 52px;
+  line-height: 1;
+  display: inline-block;
   flex-shrink: 0;
 }
 
+/* Không có màu nền hay hiệu ứng cho từng loại, chỉ giữ emoji */
+.success-icon,
+.error-icon,
+.warning-icon,
+.info-icon {
+  /* không thêm gì, chỉ dùng để phân biệt nếu cần nhưng không style */
+}
+
+/* Tiêu đề */
 .modal-title {
   font-size: 24px;
   font-weight: 700;
   margin: 0;
-  color: #ffffff; /* trắng */
+  color: #ffffff;
   line-height: 1.3;
   word-break: break-word;
 }
 
-/* Màu sắc cho từng loại icon - giữ nguyên */
-.modal-title-group.success svg {
+/* Màu chữ tiêu đề theo loại (giữ nguyên) */
+.modal-title-group.success .modal-title {
   color: #22c55e;
 }
-.modal-title-group.success .modal-title {
-  color: #22c55e; /* hoặc để trắng? Ở đây giữ màu xanh cho tiêu đề nếu muốn, nhưng nếu muốn trắng thì sửa */
-  /* Theo yêu cầu "icon color giữ nguyên" nhưng không nói về tiêu đề, nên tôi để tiêu đề trắng cho đồng bộ, nhưng nếu muốn giữ màu thì thay đổi */
-  /* Tuy nhiên để dễ đọc, tôi để tiêu đề trắng, icon giữ màu */
-}
-/* Nhưng nếu bạn muốn tiêu đề màu theo loại thì thêm dòng dưới */
-/* Có thể comment nếu không muốn */
-.modal-title-group.success .modal-title {
-  color: #ffffff; /* hoặc #22c55e nếu muốn */
-}
 .modal-title-group.error .modal-title {
-  color: #ffffff;
+  color: #ef4444;
 }
 .modal-title-group.warning .modal-title {
-  color: #ffffff;
+  color: #f59e0b;
 }
 .modal-title-group.info .modal-title {
-  color: #ffffff;
+  color: #3b82f6;
 }
-/* Tuy nhiên, do yêu cầu "icon color giữ nguyên", tôi chỉ giữ icon, còn tiêu đề để trắng cho nổi */
 
-/* Đường kẻ phân cách */
+/* ----- ĐƯỜNG KẺ ----- */
 .modal-divider {
   height: 2px;
-  background: linear-gradient(to right, #3a3a4f, transparent); /* màu sáng hơn một chút */
+  background: linear-gradient(to right, #3a3a4f, transparent);
   margin: 12px 0 16px 0;
   opacity: 0.6;
 }
 
-/* Phần body */
+/* ----- BODY ----- */
 .modal-body {
   font-size: 16px;
   line-height: 1.6;
-  color: #d1d5db; /* xám sáng cho dễ đọc */
+  color: #d1d5db;
   margin: 8px 0 4px 0;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .modal-body p {
   margin: 0;
 }
 
-/* Footer nút bấm */
+.modal-body::-webkit-scrollbar {
+  width: 4px;
+}
+.modal-body::-webkit-scrollbar-track {
+  background: #2d2d3f;
+  border-radius: 4px;
+}
+.modal-body::-webkit-scrollbar-thumb {
+  background: #5a5a7a;
+  border-radius: 4px;
+}
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #7a7a9a;
+}
+
+/* ----- FOOTER NÚT ----- */
 .modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -163,7 +188,6 @@
   flex-wrap: wrap;
 }
 
-/* Nút chung - giữ nguyên màu như cũ */
 .modal-footer button {
   padding: 10px 28px;
   border-radius: 50px;
@@ -182,82 +206,122 @@
   transform: scale(0.96);
 }
 
-/* Nút hủy - giữ màu xám nhạt nhưng nền tối hơn cho hợp */
 .modal-btn-cancel {
   background: #3a3a4f;
   color: #e5e7eb;
 }
-
 .modal-btn-cancel:hover {
   background: #4a4a5f;
 }
 
-/* Nút xác nhận - giữ nguyên xanh dương */
 .modal-btn-confirm {
   background: #2563eb;
   color: #ffffff;
 }
-
 .modal-btn-confirm:hover {
   background: #1d4ed8;
 }
 
-/* Responsive */
-@media (max-width: 480px) {
-  .modal-container {
-    max-width: 100%;
-    border-radius: 16px;
-    margin: 10px;
-  }
+/* ============================================
+   RESPONSIVE
+   ============================================ */
 
+/* --- Màn hình tablet (≤ 992px) --- */
+@media (max-width: 992px) {
+  .modal-container {
+    max-width: 560px;
+  }
+  .modal-content {
+    padding: 28px 24px 24px 24px;
+  }
+  .modal-icon {
+    font-size: 46px;
+  }
+  .modal-title {
+    font-size: 22px;
+  }
+  .modal-body {
+    font-size: 15px;
+  }
+}
+
+/* --- Màn hình nhỏ (≤ 768px) --- */
+@media (max-width: 768px) {
+  .modal-container {
+    max-width: 90%;
+    border-radius: 18px;
+  }
   .modal-content {
     padding: 24px 20px 20px 20px;
   }
-
+  .modal-icon {
+    font-size: 40px;
+  }
   .modal-title {
     font-size: 20px;
   }
-
+  .modal-body {
+    font-size: 15px;
+  }
   .modal-footer {
     flex-direction: column-reverse;
     gap: 10px;
   }
-
   .modal-footer button {
     width: 100%;
     min-width: unset;
     padding: 12px;
+    font-size: 15px;
   }
-
   .modal-close-btn {
     top: 12px;
     right: 12px;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
   }
 }
 
-/* Hỗ trợ màn hình nhỏ */
-.modal-body {
-  max-height: 50vh;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.modal-body::-webkit-scrollbar {
-  width: 4px;
-}
-
-.modal-body::-webkit-scrollbar-track {
-  background: #2d2d3f;
-  border-radius: 4px;
-}
-
-.modal-body::-webkit-scrollbar-thumb {
-  background: #5a5a7a;
-  border-radius: 4px;
-}
-
-.modal-body::-webkit-scrollbar-thumb:hover {
-  background: #7a7a9a;
+/* --- Màn hình điện thoại (≤ 480px) --- */
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 8px;
+  }
+  .modal-container {
+    max-width: 100%;
+    border-radius: 16px;
+    margin: 8px;
+  }
+  .modal-content {
+    padding: 20px 16px 16px 16px;
+  }
+  .modal-title-group {
+    gap: 12px;
+  }
+  .modal-icon {
+    font-size: 36px;
+  }
+  .modal-title {
+    font-size: 18px;
+  }
+  .modal-body {
+    font-size: 14px;
+    max-height: 40vh;
+  }
+  .modal-footer {
+    margin-top: 20px;
+    padding-top: 16px;
+  }
+  .modal-footer button {
+    padding: 10px;
+    font-size: 14px;
+  }
+  .modal-close-btn {
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+  }
+  .modal-divider {
+    margin: 8px 0 12px 0;
+  }
 }

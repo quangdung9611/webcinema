@@ -8,12 +8,12 @@ import { QRCodeCanvas } from 'qrcode.react';
 import '../styles/Profile.css';
 import {
     User, ClipboardList, Bell, Pencil, ShieldCheck, Star, Info,
-    ChevronRight, Camera, Calendar, Clock, MapPin, ReceiptText, Armchair, Trash2
+    ChevronRight, Camera, Calendar, Clock, MapPin, ReceiptText, Armchair, Trash2, X,
+    Eye, EyeOff
 } from 'lucide-react';
 
 const Profile = () => {
     const { user, checkAuth } = useAuth();
-    const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [loadingClear, setLoadingClear] = useState(false);
 
@@ -22,14 +22,26 @@ const Profile = () => {
     const [avatarPreview, setAvatarPreview] = useState('');
     const fileInputRef = useRef(null);
 
+    // State cho form thông tin
     const [formData, setFormData] = useState({
         full_name: '', email: '', phone: '', address: '', username: '', points: 0, user_avatar: ''
     });
 
-    const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
-    const [modal, setModal] = useState({ show: false, type: '', title: '', message: '', onConfirm: null });
-    const [activeTab, setActiveTab] = useState('orders');
+    // State cho modal chỉnh sửa hồ sơ
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editFormData, setEditFormData] = useState({ full_name: '', email: '', phone: '' });
+    const [editPasswordData, setEditPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
+    const [loadingEdit, setLoadingEdit] = useState(false);
 
+    // 👁️ STATE CHO HIỂN THỊ MẬT KHẨU
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    // State cho modal chính (thông báo)
+    const [modal, setModal] = useState({ show: false, type: '', title: '', message: '', onConfirm: null });
+
+    const [activeTab, setActiveTab] = useState('orders');
     const [bookingHistory, setBookingHistory] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
 
@@ -66,7 +78,105 @@ const Profile = () => {
         }
     }, [user]);
 
-    // --- HÀM XỬ LÝ XÓA LỊCH SỬ (DÙNG DELETE /booking-history) ---
+    // Mở modal chỉnh sửa
+    const openEditModal = () => {
+        setEditFormData({
+            full_name: formData.full_name,
+            email: formData.email,
+            phone: formData.phone,
+        });
+        setEditPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
+        setShowOldPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
+        setShowEditModal(true);
+    };
+
+    // Đóng modal chỉnh sửa
+    const closeEditModal = () => {
+        setShowEditModal(false);
+        setEditPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
+        setLoadingEdit(false);
+        setShowOldPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
+    };
+
+    // Xử lý submit chỉnh sửa
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        const { oldPassword, newPassword, confirmPassword } = editPasswordData;
+
+        if (newPassword && newPassword !== confirmPassword) {
+            setModal({
+                show: true,
+                type: 'error',
+                title: 'Lỗi',
+                message: 'Mật khẩu xác nhận không khớp!',
+                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
+            });
+            return;
+        }
+
+        if (newPassword && !oldPassword) {
+            setModal({
+                show: true,
+                type: 'error',
+                title: 'Lỗi',
+                message: 'Vui lòng nhập mật khẩu cũ để đổi mật khẩu mới!',
+                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
+            });
+            return;
+        }
+
+        setLoadingEdit(true);
+        try {
+            const updateData = {
+                full_name: editFormData.full_name,
+                email: editFormData.email,
+                phone: editFormData.phone,
+            };
+            if (oldPassword && newPassword) {
+                updateData.oldPassword = oldPassword;
+                updateData.newPassword = newPassword;
+                updateData.confirmPassword = confirmPassword;
+            }
+
+            await axios.put('https://api.quangdungcinema.id.vn/api/users/profile', updateData, { withCredentials: true });
+
+            setFormData(prev => ({
+                ...prev,
+                full_name: editFormData.full_name,
+                email: editFormData.email,
+                phone: editFormData.phone,
+            }));
+
+            setModal({
+                show: true,
+                type: 'success',
+                title: 'Thành công',
+                message: 'Hồ sơ đã được cập nhật!',
+                onConfirm: () => {
+                    setModal(prev => ({ ...prev, show: false }));
+                    checkAuth();
+                }
+            });
+            closeEditModal();
+        } catch (error) {
+            console.error('Update error:', error);
+            setModal({
+                show: true,
+                type: 'error',
+                title: 'Thất bại',
+                message: error.response?.data?.error || 'Có lỗi xảy ra!',
+                onConfirm: () => setModal(prev => ({ ...prev, show: false }))
+            });
+        } finally {
+            setLoadingEdit(false);
+        }
+    };
+
+    // --- XÓA LỊCH SỬ ---
     const handleClearHistory = async () => {
         setLoadingClear(true);
         try {
@@ -74,10 +184,7 @@ const Profile = () => {
 
             if (res.data.success) {
                 setBookingHistory([]);
-                setFormData(prev => ({
-                    ...prev,
-                    points: 0
-                }));
+                setFormData(prev => ({ ...prev, points: 0 }));
 
                 setModal({
                     show: true,
@@ -109,12 +216,12 @@ const Profile = () => {
             show: true,
             type: 'warning',
             title: 'Xác nhận xóa',
-            message: 'Dũng có chắc muốn xóa sạch lịch sử và đưa điểm về 0 không?',
+            message: 'Bạn có chắc muốn xóa sạch lịch sử và đưa điểm về 0 không?',
             onConfirm: () => handleClearHistory()
         });
     };
 
-    // --- HÀM XỬ LÝ UPLOAD AVATAR (field name: user_avatar) ---
+    // --- AVATAR ---
     const openFileSelector = () => {
         if (fileInputRef.current) {
             fileInputRef.current.click();
@@ -195,36 +302,11 @@ const Profile = () => {
         }
     };
 
-    // --- CÁC HÀM KHÁC ---
-    const handleInput = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-    const handlePass = (e) => setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (passwordData.newPassword && passwordData.newPassword !== passwordData.confirmPassword) {
-            return setModal({ show: true, type: 'error', title: 'Lỗi', message: 'Mật khẩu xác nhận không khớp!', onConfirm: () => setModal({ ...modal, show: false }) });
-        }
-        setLoading(true);
-        try {
-            await axios.put('https://api.quangdungcinema.id.vn/api/users/profile',
-                { ...formData, ...passwordData }, { withCredentials: true });
-            setModal({ show: true, type: 'success', title: 'Thành công', message: 'Hồ sơ đã được cập nhật!', onConfirm: () => setModal({ ...modal, show: false }) });
-            setIsEditing(false);
-            setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
-            await checkAuth();
-        } catch (error) {
-            setModal({ show: true, type: 'error', title: 'Thất bại', message: error.response?.data?.error || 'Có lỗi xảy ra!', onConfirm: () => setModal({ ...modal, show: false }) });
-        } finally {
-            setLoading(false);
-        }
-    };
+    const avatarUrl = avatarPreview || (formData.user_avatar ?
+        (formData.user_avatar.startsWith('http') ? formData.user_avatar : `https://api.quangdungcinema.id.vn/uploads/avatars/${formData.user_avatar}`)
+        : '');
 
     if (!user) return <div className="loader">Đang tải...</div>;
-
-    // ✅ SỬA: xử lý avatar URL - hỗ trợ cả Cloudinary và tên file cũ
-    const avatarUrl = avatarPreview || (formData.user_avatar ? 
-        (formData.user_avatar.startsWith('http') ? formData.user_avatar : `https://api.quangdungcinema.id.vn/uploads/avatars/${formData.user_avatar}`) 
-        : '');
 
     return (
         <div className="galaxy-profile-wrapper">
@@ -235,20 +317,12 @@ const Profile = () => {
                         <div className="user-card-top">
                             <div className="avatar-wrapper" onClick={openFileSelector} style={{ cursor: 'pointer' }}>
                                 {avatarUrl ? (
-                                    <img
-                                        src={avatarUrl}
-                                        alt="avatar"
-                                        className="avatar-img"
-                                    />
+                                    <img src={avatarUrl} alt="avatar" className="avatar-img" />
                                 ) : (
                                     <div className="avatar-main">{formData.full_name?.charAt(0).toUpperCase()}</div>
                                 )}
                                 <div className="camera-icon">
-                                    {uploadingAvatar ? (
-                                        <span className="spinner-small"></span>
-                                    ) : (
-                                        <Camera size={14} />
-                                    )}
+                                    {uploadingAvatar ? <span className="spinner-small"></span> : <Camera size={14} />}
                                 </div>
                             </div>
                             <div className="user-titles">
@@ -299,60 +373,37 @@ const Profile = () => {
 
                         <div className="tab-body">
                             {activeTab === 'profile' ? (
-                                <form onSubmit={handleSubmit} className="galaxy-profile-form">
-                                    <div className="form-grid-2col">
-                                        <div className="input-box">
-                                            <label>Họ và tên</label>
-                                            <input name="full_name" value={formData.full_name} onChange={handleInput} disabled={!isEditing} />
-                                        </div>
-                                        <div className="input-box">
-                                            <label>Ngày sinh</label>
-                                            <input type="text" value="02/09/2004" disabled />
-                                        </div>
-                                        <div className="input-box">
-                                            <label>Email</label>
-                                            <div className="input-with-action">
-                                                <input name="email" value={formData.email} onChange={handleInput} disabled={!isEditing} />
-                                                {isEditing && <span className="action-link">Thay đổi</span>}
-                                            </div>
-                                        </div>
-                                        <div className="input-box">
-                                            <label>Số điện thoại</label>
-                                            <input name="phone" value={formData.phone} onChange={handleInput} disabled={!isEditing} />
-                                        </div>
+                                <div className="profile-info-view">
+                                    <div className="profile-info-item">
+                                        <span className="label">Họ và tên</span>
+                                        <span className="value">{formData.full_name}</span>
                                     </div>
-
-                                    {isEditing && (
-                                        <div className="password-change-section">
-                                            <h4><ShieldCheck size={18} /> Đổi mật khẩu</h4>
-                                            <div className="form-grid-2col">
-                                                <input type="password" name="oldPassword" placeholder="Mật khẩu cũ" onChange={handlePass} />
-                                                <input type="password" name="newPassword" placeholder="Mật khẩu mới" onChange={handlePass} />
-                                                <input type="password" name="confirmPassword" placeholder="Xác nhận mật khẩu" onChange={handlePass} />
-                                            </div>
-                                        </div>
-                                    )}
-
+                                    <div className="profile-info-item">
+                                        <span className="label">Email</span>
+                                        <span className="value">{formData.email}</span>
+                                    </div>
+                                    <div className="profile-info-item">
+                                        <span className="label">Số điện thoại</span>
+                                        <span className="value">{formData.phone}</span>
+                                    </div>
+                                    <div className="profile-info-item">
+                                        <span className="label">Ngày sinh</span>
+                                        <span className="value">02/09/2004</span>
+                                    </div>
+                                    <div className="profile-info-item">
+                                        <span className="label">Điểm thưởng</span>
+                                        <span className="value">{formData.points} điểm</span>
+                                    </div>
+                                    <div className="profile-info-item">
+                                        <span className="label">Hạng thành viên</span>
+                                        <span className="value">{formData.points >= 4000000 ? 'VIP' : 'Thường'}</span>
+                                    </div>
                                     <div className="form-actions">
-                                        {!isEditing ? (
-                                            <button type="button" className="btn-edit-mode" onClick={() => setIsEditing(true)}>Chỉnh sửa hồ sơ</button>
-                                        ) : (
-                                            <>
-                                                <button type="button" className="btn-cancel" onClick={() => setIsEditing(false)}>Hủy</button>
-                                                <LoadingButton
-                                                    type="submit"
-                                                    loading={loading}
-                                                    loadingText="Đang lưu..."
-                                                    disabled={loading}
-                                                    className="btn-submit-galaxy"
-                                                    spinnerColor="#ffffff"
-                                                >
-                                                    Cập nhật
-                                                </LoadingButton>
-                                            </>
-                                        )}
+                                        <button type="button" className="btn-edit-mode" onClick={openEditModal}>
+                                            <Pencil size={16} /> Chỉnh sửa hồ sơ
+                                        </button>
                                     </div>
-                                </form>
+                                </div>
                             ) : (
                                 <div className="history-tab-content">
                                     {bookingHistory.length > 0 && (
@@ -431,7 +482,7 @@ const Profile = () => {
                                     ) : (
                                         <div className="empty-history">
                                             <ClipboardList size={48} color="#444" />
-                                            <p>Dũng chưa có giao dịch nào trong năm 2026.</p>
+                                            <p>Bạn chưa có giao dịch nào trong năm 2026.</p>
                                             <Link to="/" className="btn-book-now">ĐẶT VÉ NGAY</Link>
                                         </div>
                                     )}
@@ -442,6 +493,7 @@ const Profile = () => {
                 </div>
             </div>
 
+            {/* INPUT FILE AVATAR (ẩn) */}
             <input
                 type="file"
                 ref={fileInputRef}
@@ -450,6 +502,7 @@ const Profile = () => {
                 onChange={handleAvatarChange}
             />
 
+            {/* MODAL CHUNG THÔNG BÁO */}
             <Modal
                 show={modal.show}
                 type={modal.type}
@@ -457,6 +510,133 @@ const Profile = () => {
                 message={modal.message}
                 onConfirm={modal.onConfirm || (() => setModal(prev => ({ ...prev, show: false })))}
             />
+
+            {/* MODAL CHỈNH SỬA HỒ SƠ */}
+            {showEditModal && (
+                <div className="modal-overlay" onClick={closeEditModal}>
+                    <div className="modal-container edit-profile-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Chỉnh sửa hồ sơ</h2>
+                            <button className="modal-close-btn" onClick={closeEditModal}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleEditSubmit}>
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label>Họ và tên</label>
+                                    <input
+                                        type="text"
+                                        name="full_name"
+                                        value={editFormData.full_name}
+                                        onChange={(e) => setEditFormData({ ...editFormData, full_name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Email</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={editFormData.email}
+                                        onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Số điện thoại</label>
+                                    <input
+                                        type="text"
+                                        name="phone"
+                                        value={editFormData.phone}
+                                        onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="password-section">
+                                    <h4>Đổi mật khẩu (tùy chọn)</h4>
+                                    
+                                    {/* Mật khẩu cũ */}
+                                    <div className="form-group">
+                                        <label>Mật khẩu cũ</label>
+                                        <div className="password-wrapper">
+                                            <input
+                                                type={showOldPassword ? 'text' : 'password'}
+                                                placeholder="Nhập mật khẩu cũ"
+                                                value={editPasswordData.oldPassword}
+                                                onChange={(e) => setEditPasswordData({ ...editPasswordData, oldPassword: e.target.value })}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="toggle-password"
+                                                onClick={() => setShowOldPassword(!showOldPassword)}
+                                                tabIndex="-1"
+                                            >
+                                                {showOldPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Mật khẩu mới */}
+                                    <div className="form-group">
+                                        <label>Mật khẩu mới</label>
+                                        <div className="password-wrapper">
+                                            <input
+                                                type={showNewPassword ? 'text' : 'password'}
+                                                placeholder="Nhập mật khẩu mới"
+                                                value={editPasswordData.newPassword}
+                                                onChange={(e) => setEditPasswordData({ ...editPasswordData, newPassword: e.target.value })}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="toggle-password"
+                                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                                tabIndex="-1"
+                                            >
+                                                {showNewPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Xác nhận mật khẩu */}
+                                    <div className="form-group">
+                                        <label>Xác nhận mật khẩu</label>
+                                        <div className="password-wrapper">
+                                            <input
+                                                type={showConfirmPassword ? 'text' : 'password'}
+                                                placeholder="Xác nhận mật khẩu mới"
+                                                value={editPasswordData.confirmPassword}
+                                                onChange={(e) => setEditPasswordData({ ...editPasswordData, confirmPassword: e.target.value })}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="toggle-password"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                tabIndex="-1"
+                                            >
+                                                {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn-cancel" onClick={closeEditModal}>Hủy</button>
+                                <LoadingButton
+                                    type="submit"
+                                    loading={loadingEdit}
+                                    loadingText="Đang lưu..."
+                                    disabled={loadingEdit}
+                                    className="btn-submit-galaxy"
+                                    spinnerColor="#ffffff"
+                                >
+                                    Lưu thay đổi
+                                </LoadingButton>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

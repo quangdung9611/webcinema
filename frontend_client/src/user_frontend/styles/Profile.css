@@ -1,6 +1,6 @@
 /* =========================================================
-   PROFILE LAYOUT - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
-========================================================= */
+   PROFILE LAYOUT - SILVER EDITION
+   ========================================================= */
 
 .galaxy-profile-wrapper {
     min-height: 100vh;
@@ -22,7 +22,7 @@
 
 /* =========================================================
    SIDEBAR
-========================================================= */
+   ========================================================= */
 
 .galaxy-sidebar {
     position: sticky;
@@ -50,8 +50,8 @@
 }
 
 /* =========================================================
-   USER TOP
-========================================================= */
+   USER CARD TOP
+   ========================================================= */
 
 .user-card-top {
     display: flex;
@@ -61,21 +61,20 @@
     margin-bottom: var(--space-lg);
     border-bottom: var(--border-light);
 }
+
 /* =========================================================
-   AVATAR - KÍCH THƯỚC 60x60, TRÒN, KHÔNG MÉO
-========================================================= */
+   AVATAR - 60x60, TRÒN, KHÔNG MÉO
+   ========================================================= */
 
 .avatar-wrapper {
     position: relative;
     flex-shrink: 0;
     width: 60px;
     height: 60px;
-    border-radius: 50;
-  
+    border-radius: 50%;
     cursor: pointer;
 }
 
-/* Trường hợp chưa có ảnh -> hiển thị chữ cái */
 .avatar-main {
     width: 100%;
     height: 100%;
@@ -84,22 +83,21 @@
     justify-content: center;
     background: var(--cinema-border-gradient);
     color: var(--black-premium);
-    font-size: 1.8rem;     /* cỡ chữ vừa phải */
+    font-size: 1.8rem;
     font-weight: var(--fw-extrabold);
     border-radius: 50%;
     box-shadow: var(--shadow-silver);
 }
 
-/* Ảnh avatar khi đã upload */
 .avatar-wrapper .avatar-img {
     width: 100%;
     height: 100%;
-    object-fit: cover;     /* giữ tỉ lệ, cắt phần thừa */
+    object-fit: cover;
     display: block;
     border-radius: 50%;
 }
 
-/* Icon camera (nhỏ gọn, nằm dưới góc phải) */
+/* Camera icon */
 .camera-icon {
     position: absolute;
     bottom: 0;
@@ -115,6 +113,7 @@
     border: 2px solid var(--black-premium);
     font-size: 12px;
 }
+
 .user-titles {
     flex: 1;
     min-width: 0;
@@ -143,8 +142,8 @@
 }
 
 /* =========================================================
-   SPENDING BOX
-========================================================= */
+   SPENDING SUMMARY
+   ========================================================= */
 
 .spending-summary {
     margin-bottom: var(--space-lg);
@@ -172,7 +171,7 @@
 
 /* =========================================================
    PROGRESS BAR
-========================================================= */
+   ========================================================= */
 
 .star-progress-container {
     margin-bottom: var(--space-xl);
@@ -210,16 +209,9 @@
     box-shadow: var(--shadow-silver);
 }
 
-.d-0 {
-    left: 0;
-}
-.d-2 {
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-.d-4 {
-    right: 0;
-}
+.d-0 { left: 0; }
+.d-2 { left: 50%; transform: translate(-50%, -50%); }
+.d-4 { right: 0; }
 
 .progress-labels {
     display: flex;
@@ -231,7 +223,7 @@
 
 /* =========================================================
    CONTACT MENU
-========================================================= */
+   ========================================================= */
 
 .galaxy-nav-menu {
     display: flex;
@@ -263,7 +255,7 @@
 
 /* =========================================================
    CONTENT AREA
-========================================================= */
+   ========================================================= */
 
 .galaxy-content-area {
     overflow: hidden;
@@ -275,7 +267,7 @@
 
 /* =========================================================
    TABS
-========================================================= */
+   ========================================================= */
 
 .tabs-header {
     display: flex;
@@ -323,117 +315,45 @@
 }
 
 /* =========================================================
-   PROFILE FORM
-========================================================= */
+   PROFILE INFO VIEW (thay cho form cũ)
+   ========================================================= */
 
-.galaxy-profile-form {
-    width: 100%;
-}
-
-.form-grid-2col {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-lg);
-}
-
-/* =========================================================
-   INPUT BOX
-========================================================= */
-
-.input-box {
+.profile-info-view {
     display: flex;
     flex-direction: column;
+    gap: var(--space-md);
 }
 
-.input-box label {
-    margin-bottom: var(--space-sm);
+.profile-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.profile-info-item:last-of-type {
+    border-bottom: none;
+}
+
+.profile-info-item .label {
     color: var(--text-secondary);
     font-size: 0.875rem;
-    font-weight: var(--fw-semibold);
-}
-
-.input-box input,
-.password-change-section input {
-    width: 100%;
-    height: 58px;
-    padding: 0 var(--space-md);
-    border-radius: var(--radius-md);
-    outline: none;
-    background: rgba(255, 255, 255, 0.04);
-    border: var(--border-light);
-    color: var(--text-body);
-    font-size: 0.875rem;
     font-weight: var(--fw-medium);
-    transition: all var(--transition-normal);
-    box-sizing: border-box;
 }
 
-.input-box input::placeholder,
-.password-change-section input::placeholder {
-    color: var(--text-muted);
-}
-
-.input-box input:focus,
-.password-change-section input:focus {
-    border-color: var(--silver-primary);
-    background: rgba(232, 232, 232, 0.05);
-    box-shadow: 0 0 0 4px rgba(232, 232, 232, 0.08);
-}
-
-.input-box input:disabled {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    color: var(--text-muted);
-    cursor: not-allowed;
-}
-
-/* =========================================================
-   INPUT ACTION
-========================================================= */
-
-.input-with-action {
-    position: relative;
-}
-
-.action-link {
-    position: absolute;
-    top: 50%;
-    right: var(--space-md);
-    transform: translateY(-50%);
-    color: var(--silver-primary);
-    font-size: 0.875rem;
-    font-weight: var(--fw-semibold);
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-.action-link:hover {
-    color: var(--silver-light);
-}
-
-/* =========================================================
-   PASSWORD SECTION
-========================================================= */
-
-.password-change-section {
-    margin-top: var(--space-2xl);
-    padding-top: var(--space-xl);
-    border-top: 1px dashed rgba(255, 255, 255, 0.06);
-}
-
-.password-change-section h4 {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    margin: 0 0 var(--space-lg);
-    color: var(--silver-primary);
-    font-size: 1rem;
+.profile-info-item .value {
+    color: var(--text-body);
+    font-size: 0.95rem;
     font-weight: var(--fw-bold);
+    word-break: break-word;
+    text-align: right;
+    max-width: 60%;
 }
 
 /* =========================================================
-   BUTTON ACTIONS
-========================================================= */
+   FORM ACTIONS
+   ========================================================= */
 
 .form-actions {
     display: flex;
@@ -443,7 +363,10 @@
     flex-wrap: wrap;
 }
 
-/* ----- Nút chính (Primary) sửa theo yêu cầu: nền bạc, chữ đen ----- */
+/* =========================================================
+   BUTTONS – SILVER GRADIENT, CHỮ ĐEN
+   ========================================================= */
+
 .btn-edit-mode,
 .btn-submit-galaxy,
 .btn-book-now {
@@ -456,8 +379,8 @@
     min-width: 180px;
     border: none;
     border-radius: var(--radius-round);
-    background: var(--cinema-border-gradient); /* Gradient bạc */
-    color: var(--black-premium);               /* Chữ đen */
+    background: var(--cinema-border-gradient);
+    color: var(--black-premium);
     font-size: 0.875rem;
     font-weight: var(--fw-bold);
     text-transform: uppercase;
@@ -474,7 +397,7 @@
 .btn-book-now:hover {
     transform: translateY(-3px) scale(1.02);
     box-shadow: 0 8px 40px rgba(232, 232, 232, 0.25);
-    color: var(--black-premium);  /* Giữ chữ đen khi hover */
+    color: var(--black-premium);
 }
 
 .btn-edit-mode:active,
@@ -490,7 +413,6 @@
     transform: none;
 }
 
-/* ----- Nút Cancel (Outline) ----- */
 .btn-cancel {
     display: inline-flex;
     align-items: center;
@@ -519,7 +441,6 @@
     box-shadow: var(--shadow-silver);
 }
 
-/* ----- Nút Clear History (Ghost) ----- */
 .btn-clear-history {
     display: inline-flex;
     align-items: center;
@@ -546,17 +467,13 @@
 
 /* =========================================================
    HISTORY TAB
-========================================================= */
+   ========================================================= */
 
 .history-tab-content {
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
 }
-
-/* =========================================================
-   CLEAR HISTORY BUTTON
-========================================================= */
 
 .history-action-bar {
     display: flex;
@@ -565,7 +482,7 @@
 
 /* =========================================================
    TICKET LIST
-========================================================= */
+   ========================================================= */
 
 .ticket-list {
     display: flex;
@@ -575,7 +492,7 @@
 
 /* =========================================================
    TICKET CARD
-========================================================= */
+   ========================================================= */
 
 .history-ticket-item {
     display: flex;
@@ -595,7 +512,7 @@
 
 /* =========================================================
    POSTER
-========================================================= */
+   ========================================================= */
 
 .ticket-thumb {
     width: 180px;
@@ -618,7 +535,7 @@
 
 /* =========================================================
    CENTER INFO
-========================================================= */
+   ========================================================= */
 
 .ticket-main-info {
     flex: 1;
@@ -658,10 +575,6 @@
     font-weight: var(--fw-semibold);
 }
 
-/* =========================================================
-   SEAT
-========================================================= */
-
 .seat-text {
     display: inline-flex;
     align-items: center;
@@ -691,7 +604,7 @@
 
 /* =========================================================
    QR SIDE
-========================================================= */
+   ========================================================= */
 
 .ticket-qr-side {
     width: 190px;
@@ -764,7 +677,7 @@
 
 /* =========================================================
    EMPTY HISTORY
-========================================================= */
+   ========================================================= */
 
 .empty-history {
     text-align: center;
@@ -779,7 +692,7 @@
 
 /* =========================================================
    LOADING
-========================================================= */
+   ========================================================= */
 
 .loading-text,
 .loader {
@@ -790,8 +703,253 @@
 }
 
 /* =========================================================
+   MODAL CHỈNH SỬA HỒ SƠ
+   ========================================================= */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    animation: fadeIn 0.25s ease-out;
+    padding: var(--space-md);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.edit-profile-modal {
+    max-width: 520px;
+    width: 100%;
+    background: #1e1e2f;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+    position: relative;
+    animation: slideUp 0.3s ease-out;
+    overflow: hidden;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(40px) scale(0.96);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.edit-profile-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-lg) var(--space-xl);
+    border-bottom: var(--border-light);
+}
+
+.edit-profile-modal .modal-header h2 {
+    color: var(--text-body);
+    font-size: 1.25rem;
+    margin: 0;
+    font-weight: var(--fw-extrabold);
+}
+
+.edit-profile-modal .modal-close-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.edit-profile-modal .modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: var(--text-body);
+    transform: rotate(90deg);
+}
+
+.edit-profile-modal .modal-body {
+    padding: var(--space-xl);
+    max-height: 65vh;
+    overflow-y: auto;
+}
+
+.edit-profile-modal .form-group {
+    margin-bottom: var(--space-md);
+}
+
+.edit-profile-modal .form-group label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: var(--fw-semibold);
+    margin-bottom: var(--space-xs);
+}
+
+.edit-profile-modal .form-group input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: var(--border-light);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-body);
+    font-size: 0.95rem;
+    transition: all var(--transition-normal);
+    box-sizing: border-box;
+}
+
+.edit-profile-modal .form-group input:focus {
+    outline: none;
+    border-color: var(--silver-primary);
+    background: rgba(232, 232, 232, 0.06);
+    box-shadow: 0 0 0 3px rgba(232, 232, 232, 0.1);
+}
+
+.edit-profile-modal .form-group input::placeholder {
+    color: var(--text-muted);
+}
+
+.edit-profile-modal .password-section {
+    margin-top: var(--space-lg);
+    padding-top: var(--space-lg);
+    border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.edit-profile-modal .password-section h4 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--silver-primary);
+    font-size: 1rem;
+    font-weight: var(--fw-bold);
+    margin: 0 0 var(--space-md);
+}
+
+/* =========================================================
+   PASSWORD WRAPPER (NÚT MẮT NẰM TRONG INPUT)
+   ========================================================= */
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 48px !important; /* Chừa chỗ cho nút mắt */
+    box-sizing: border-box;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #8a8a9e;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    border-radius: 4px;
+}
+
+.toggle-password:hover {
+    color: #d1d5db;
+}
+
+.toggle-password:focus {
+    outline: none;
+}
+
+.edit-profile-modal .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-md);
+    padding: var(--space-lg) var(--space-xl);
+    border-top: var(--border-light);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.edit-profile-modal .modal-footer button {
+    padding: 0.6rem 1.8rem;
+    border-radius: var(--radius-round);
+    font-weight: var(--fw-bold);
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.edit-profile-modal .modal-footer .btn-cancel {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 2px solid var(--border-light);
+}
+
+.edit-profile-modal .modal-footer .btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-body);
+}
+
+.edit-profile-modal .modal-footer .btn-submit-galaxy {
+    background: var(--cinema-border-gradient);
+    color: var(--black-premium);
+    box-shadow: var(--shadow-silver);
+}
+
+.edit-profile-modal .modal-footer .btn-submit-galaxy:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(232, 232, 232, 0.2);
+}
+/* =========================================================
+   CHỐNG AUTOFILL CHO TẤT CẢ INPUT (Ngoài password wrapper)
+   ========================================================= */
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus,
+.auth-input:-webkit-autofill:active,
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px rgba(30, 30, 47, 1) inset !important;
+    -webkit-text-fill-color: var(--text-body) !important;
+    transition: background-color 5000s ease-in-out 0s;
+    border-color: var(--border-light);
+}
+
+input:-webkit-autofill:focus {
+    border-color: var(--silver-primary);
+}
+
+/* Nếu input bị lỗi mà có autofill thì vẫn giữ viền đỏ */
+.auth-input.input-error:-webkit-autofill {
+    border-color: rgba(255, 59, 92, 0.4) !important;
+    -webkit-box-shadow: 0 0 0 1000px rgba(255, 59, 92, 0.06) inset !important;
+}
+
+/* =========================================================
    RESPONSIVE
-========================================================= */
+   ========================================================= */
 
 /* --- 1200px --- */
 @media (max-width: 1200px) {
@@ -811,12 +969,6 @@
     }
     .galaxy-sidebar {
         position: static;
-    }
-    .form-grid-2col {
-        grid-template-columns: 1fr;
-    }
-    .history-ticket-item {
-        flex-direction: column;
     }
     .ticket-thumb {
         width: 100%;
@@ -857,9 +1009,36 @@
     .btn-submit-galaxy,
     .btn-book-now {
         width: 100%;
+        min-width: unset;
     }
     .movie-title-history {
         font-size: var(--font-size-base);
+    }
+    .profile-info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-xs);
+    }
+    .profile-info-item .value {
+        text-align: left;
+        max-width: 100%;
+    }
+    .edit-profile-modal {
+        max-width: 95%;
+        margin: var(--space-sm);
+    }
+    .edit-profile-modal .modal-header,
+    .edit-profile-modal .modal-footer {
+        padding: var(--space-md);
+    }
+    .edit-profile-modal .modal-body {
+        padding: var(--space-md);
+    }
+    .edit-profile-modal .modal-footer {
+        flex-direction: column-reverse;
+    }
+    .edit-profile-modal .modal-footer button {
+        width: 100%;
     }
 }
 
@@ -879,4 +1058,33 @@
         width: 100%;
         justify-content: center;
     }
+    .ticket-qr-side {
+        padding: var(--space-md);
+    }
+    .edit-profile-modal .modal-header h2 {
+        font-size: 1.1rem;
+    }
+    .toggle-password {
+        right: 10px;
+    }
+    .password-wrapper input {
+        padding-right: 40px !important;
+    }
+}
+
+/* =========================================================
+   SPINNER LOADING NHỎ
+   ========================================================= */
+.spinner-small {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--silver-primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }

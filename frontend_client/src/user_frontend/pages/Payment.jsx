@@ -210,7 +210,7 @@ const Payment = () => {
             return;
         }
 
-        // ⭐️ XÓA TOÀN BỘ OTP CŨ ĐỂ BẮT ĐẦU PHIÊN MỚI
+        // Xóa toàn bộ OTP cũ để bắt đầu phiên mới
         sessionStorage.removeItem('bankHasSentOtp');
         sessionStorage.removeItem('bankHasVisited');
         sessionStorage.removeItem('bankOtpTimeLeft');
@@ -303,7 +303,23 @@ const Payment = () => {
             console.error('Lỗi thanh toán:', err);
             const errorMessage = err.response?.data?.message || err.message || 'Không thể xử lý thanh toán.';
             sessionStorage.removeItem('paymentInitiated');
-            showNotice('error', 'LỖI', errorMessage);
+
+            // 🆕 Xử lý riêng lỗi duplicate key
+            if (errorMessage.includes('Duplicate entry') || errorMessage.includes('uk_showtime_cinema_room_seat')) {
+                showNotice(
+                    'error',
+                    'GHẾ ĐÃ ĐƯỢC ĐẶT',
+                    'Ghế bạn chọn đã được đặt bởi người khác hoặc bạn đã có booking chưa hoàn tất. Vui lòng chọn ghế khác.',
+                    () => {
+                        // Xóa session và về trang chủ để reset
+                        sessionStorage.clear();
+                        navigate('/');
+                        window.location.reload();
+                    }
+                );
+            } else {
+                showNotice('error', 'LỖI', errorMessage);
+            }
         } finally {
             setIsProcessing(false);
         }

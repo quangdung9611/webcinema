@@ -106,6 +106,17 @@
 }
 
 /* =========================================================
+   EMOJI ICON – KHÔNG NỀN TRÒN, KHÔNG BÓNG
+========================================================= */
+
+.admin-modal-icon {
+    font-size: 44px;
+    line-height: 1;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* =========================================================
    TITLE
 ========================================================= */
 
@@ -119,22 +130,22 @@
 }
 
 /* =========================================================
-   ICON COLORS – giữ nguyên ý nghĩa
+   MÀU SẮC TITLE THEO TYPE
 ========================================================= */
 
-.admin-modal-title-group.success {
+.admin-modal-title-group.success .admin-modal-title {
     color: #4ade80;
 }
 
-.admin-modal-title-group.error {
+.admin-modal-title-group.error .admin-modal-title {
     color: #ff4d4d;
 }
 
-.admin-modal-title-group.warning {
+.admin-modal-title-group.warning .admin-modal-title {
     color: #f59e0b;
 }
 
-.admin-modal-title-group.info {
+.admin-modal-title-group.info .admin-modal-title {
     color: #60a5fa;
 }
 
@@ -299,6 +310,9 @@
     .admin-modal-title {
         font-size: var(--font-size-h3);
     }
+    .admin-modal-icon {
+        font-size: 38px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -318,6 +332,9 @@
         width: 42px;
         height: 42px;
     }
+    .admin-modal-icon {
+        font-size: 34px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -331,5 +348,8 @@
     .admin-cancel-btn {
         width: 100%;
         justify-content: center;
+    }
+    .admin-modal-icon {
+        font-size: 30px;
     }
 }

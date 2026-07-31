@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocation, useNavigate, useBlocker } from 'react-router-dom';
 import axios from 'axios';
 
 import Modal from '../components/Modal';
@@ -44,6 +44,7 @@ const BankApp = () => {
     const isFirstLoad = useRef(true);
     const paymentCompletedRef = useRef(false);
     const isPaymentInitiated = useRef(sessionStorage.getItem('paymentInitiated') === 'true');
+    const isCancellingRef = useRef(false);
 
     // =========================
     // STATES
@@ -66,6 +67,27 @@ const BankApp = () => {
         onConfirm: () => {},
         onCancel: () => {}
     });
+
+    // =========================
+    // BLOCKER – chặn mọi navigate khi ở BankApp & chưa thanh toán
+    // =========================
+    const shouldBlock = useCallback(() => {
+        if (paymentCompletedRef.current) return false;
+        if (!otp && timeLeft <= 0) return false;
+        return location.pathname === '/bank-app';
+    }, [otp, timeLeft, location.pathname]);
+
+    const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+        return shouldBlock();
+    });
+
+    useEffect(() => {
+        if (blocker.state === 'blocked') {
+            if (!modalConfig.show && !showBackConfirm) {
+                setShowBackConfirm(true);
+            }
+        }
+    }, [blocker.state]);
 
     // =========================
     // MODAL HANDLERS
@@ -94,6 +116,25 @@ const BankApp = () => {
     useEffect(() => {
         sessionStorage.setItem('bankOtpInput', otp);
     }, [otp]);
+
+    // =========================
+    // CALL API CANCEL BOOKING
+    // =========================
+    const cancelBookingOnServer = async () => {
+        if (isCancellingRef.current) return;
+        isCancellingRef.current = true;
+        try {
+            await axios.post('https://api.quangdungcinema.id.vn/api/bank/cancel-timeout', {
+                bookingId,
+                email: customerEmail
+            });
+            console.log('✅ Booking cancelled on server');
+        } catch (err) {
+            console.error('❌ Lỗi hủy booking:', err);
+        } finally {
+            isCancellingRef.current = false;
+        }
+    };
 
     // =========================
     // CHECK PAYMENT COMPLETED
@@ -129,7 +170,7 @@ const BankApp = () => {
     }, [bookingId]);
 
     // =========================
-    // BEFORE UNLOAD
+    // BEFORE UNLOAD (đóng tab)
     // =========================
     useEffect(() => {
         const handleBeforeUnload = (e) => {
@@ -177,9 +218,11 @@ const BankApp = () => {
     }, []);
 
     // =========================
-    // CLEAR ALL & GO HOME
+    // CLEAR ALL & GO HOME (có gọi API hủy + giải phóng blocker)
     // =========================
-    const clearAllAndGoHome = () => {
+    const clearAllAndGoHome = async () => {
+        await cancelBookingOnServer();
+
         sessionStorage.removeItem('bankHasSentOtp');
         sessionStorage.removeItem('bankHasVisited');
         sessionStorage.removeItem('bankOtpTimeLeft');
@@ -193,28 +236,25 @@ const BankApp = () => {
         sessionStorage.removeItem('currentShowtimeId');
         sessionStorage.removeItem('lastSuccessTicket');
         setShowBackConfirm(false);
+
+        if (blocker.state === 'blocked') {
+            blocker.proceed();
+        }
         navigate('/');
     };
 
     // =========================
-    // POPSTATE (BACK/FORWARD)
+    // XỬ LÝ KHI BẤM "Ở LẠI"
     // =========================
-    useEffect(() => {
-        const handlePopState = () => {
-            if (paymentCompletedRef.current) return;
-            if (!otp && timeLeft <= 0) return;
-            if (modalConfig.show || showBackConfirm) return;
-
-            setShowBackConfirm(true);
-            window.history.pushState(null, '', window.location.href);
-        };
-
-        window.addEventListener('popstate', handlePopState);
-        return () => window.removeEventListener('popstate', handlePopState);
-    }, [otp, timeLeft, modalConfig.show, showBackConfirm]);
+    const handleStay = () => {
+        setShowBackConfirm(false);
+        if (blocker.state === 'blocked') {
+            blocker.reset();
+        }
+    };
 
     // =========================
-    // SEND OTP API (chỉ gửi 1 lần lúc đầu)
+    // SEND OTP API
     // =========================
     const sendOtpApi = async () => {
         setLoadingSendOtp(true);
@@ -250,7 +290,6 @@ const BankApp = () => {
             if (paymentCompletedRef.current) return;
             if (!customerEmail || !bookingId) return;
 
-            // Kiểm tra flag paymentInitiated
             if (!isPaymentInitiated.current) {
                 if (!modalConfig.show) {
                     openModal(
@@ -266,7 +305,6 @@ const BankApp = () => {
                 return;
             }
 
-            // Nếu đã gửi rồi hoặc đã visit thì không gửi lại
             if (hasSentOtp.current || hasVisitedBankApp.current) {
                 if (!modalConfig.show) {
                     openModal(
@@ -278,7 +316,6 @@ const BankApp = () => {
                 return;
             }
 
-            // Lần đầu -> gửi
             await sendOtpApi();
         };
 
@@ -293,16 +330,8 @@ const BankApp = () => {
 
         if (timeLeft <= 0) {
             const handleTimeout = async () => {
-                try {
-                    await axios.post('https://api.quangdungcinema.id.vn/api/bank/cancel-timeout', {
-                        bookingId,
-                        email: customerEmail
-                    });
-                } catch (err) {
-                    console.error('❌ Lỗi hủy đơn:', err);
-                }
+                await cancelBookingOnServer();
 
-                // Không gửi lại OTP, chỉ thông báo và xóa session
                 openModal(
                     'error',
                     'HẾT HẠN',
@@ -384,17 +413,15 @@ const BankApp = () => {
                     autoNavigateRef.current = null;
                 }, 3000);
             } else {
-                // Nếu OTP sai, kiểm tra mã lỗi để biết có bị khóa không
                 const errorCode = res.data.code;
                 if (errorCode === 'OTP_LOCKED' || (res.data.message && res.data.message.includes('khóa'))) {
-                    // Bị khóa, xóa hết và về trang chủ
                     openModal(
                         'error',
                         'OTP BỊ KHÓA',
                         'Bạn đã nhập sai OTP quá nhiều lần. Toàn bộ thông tin đặt vé sẽ bị xóa.',
-                        () => {
+                        async () => {
                             closeModal();
-                            clearAllAndGoHome();
+                            await clearAllAndGoHome();
                         }
                     );
                 } else {
@@ -404,15 +431,14 @@ const BankApp = () => {
         } catch (err) {
             console.error('❌ Lỗi verify OTP:', err);
             const errorMsg = err.response?.data?.message || 'Mã OTP không đúng hoặc đã hết hạn!';
-            // Nếu lỗi từ backend có mã 429 hoặc 400, xử lý tương tự
             if (err.response?.status === 429 || errorMsg.includes('khóa') || errorMsg.includes('quá nhiều lần')) {
                 openModal(
                     'error',
                     'OTP BỊ KHÓA',
                     'Bạn đã nhập sai OTP quá nhiều lần. Toàn bộ thông tin đặt vé sẽ bị xóa.',
-                    () => {
+                    async () => {
                         closeModal();
-                        clearAllAndGoHome();
+                        await clearAllAndGoHome();
                     }
                 );
             } else {
@@ -502,8 +528,6 @@ const BankApp = () => {
                         >
                             XÁC NHẬN THANH TOÁN
                         </LoadingButton>
-
-                        {/* Đã bỏ nút resend */}
                     </div>
                 </div>
             </main>
@@ -553,7 +577,7 @@ const BankApp = () => {
                         </p>
                         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                             <button
-                                onClick={() => setShowBackConfirm(false)}
+                                onClick={handleStay}
                                 style={{
                                     padding: '10px 30px',
                                     background: '#3498db',
