@@ -179,16 +179,19 @@ class OtpService {
             }
         }
 
-        // Giới hạn 3 lần resend
-        const countKey = `otp:${email}:${purpose}:resend_count`;
-        const count = Number(await RedisService.get(countKey) || 0);
-        if (count >= 3) {
-            throw {
-                statusCode: 429,
-                message: "Bạn đã vượt quá số lần gửi OTP"
-            };
-        }
-
+      // Giới hạn số lần resend theo purpose
+let maxResend = 3; // mặc định cho các purpose khác
+if (purpose === PURPOSE.PAYMENT) {
+    maxResend = 2; // chỉ cho phép gửi lại 2 lần (tổng 3 lần gửi)
+}
+const countKey = `otp:${email}:${purpose}:resend_count`;
+const count = Number(await RedisService.get(countKey) || 0);
+if (count >= maxResend) {
+    throw {
+        statusCode: 429,
+        message: "Bạn đã vượt quá số lần gửi OTP. Vui lòng chờ 60 giây và quay lại trang thanh toán."
+    };
+}
         // Tạo OTP mới
         const otpCode = Otp.generate6();
         console.log(`📤 Resend OTP: ${otpCode}`);

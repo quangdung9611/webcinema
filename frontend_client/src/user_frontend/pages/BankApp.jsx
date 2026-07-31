@@ -56,6 +56,10 @@ const BankApp = () => {
     const hasShownOtpReminder = useRef(false);
     const isFirstLoad = useRef(true);
     const paymentCompletedRef = useRef(false);
+    const waitTimerRef = useRef(null);
+    
+    // 🆕 Flag kiểm tra thanh toán hợp lệ
+    const isPaymentInitiated = useRef(sessionStorage.getItem('paymentInitiated') === 'true');
 
     // =========================
     // STATES (KHÔI PHỤC TỪ SESSION)
@@ -79,6 +83,9 @@ const BankApp = () => {
         onConfirm: () => {},
         onCancel: () => {}
     });
+
+    const [showWaitModal, setShowWaitModal] = useState(false);
+    const [waitSeconds, setWaitSeconds] = useState(60);
 
     // =========================
     // MODAL HANDLERS
@@ -125,6 +132,7 @@ const BankApp = () => {
             sessionStorage.removeItem('bankHasSentOtp');
             sessionStorage.removeItem('bankHasVisited');
             sessionStorage.removeItem('bankLastOtpSentAt');
+            sessionStorage.removeItem('paymentInitiated');
 
             if (!modalConfig.show) {
                 openModal(
@@ -189,8 +197,31 @@ const BankApp = () => {
                 clearTimeout(autoNavigateRef.current);
                 autoNavigateRef.current = null;
             }
+            if (waitTimerRef.current) {
+                clearInterval(waitTimerRef.current);
+                waitTimerRef.current = null;
+            }
         };
     }, []);
+
+    // =========================
+    // HÀM RESET VÀ QUAY VỀ PAYMENT
+    // =========================
+    const resetAndNavigatePayment = () => {
+        sessionStorage.removeItem('bankHasSentOtp');
+        sessionStorage.removeItem('bankHasVisited');
+        sessionStorage.removeItem('bankOtpTimeLeft');
+        sessionStorage.removeItem('bankOtpInput');
+        sessionStorage.removeItem('bankLastOtpSentAt');
+        sessionStorage.removeItem('paymentInitiated');
+        setShowWaitModal(false);
+        setWaitSeconds(60);
+        if (waitTimerRef.current) {
+            clearInterval(waitTimerRef.current);
+            waitTimerRef.current = null;
+        }
+        navigate('/payment', { state: bookingData });
+    };
 
     // =========================
     // GỬI OTP API (LƯU THỜI GIAN)
@@ -208,6 +239,8 @@ const BankApp = () => {
             hasVisitedBankApp.current = true;
             sessionStorage.setItem('bankHasSentOtp', 'true');
             sessionStorage.setItem('bankHasVisited', 'true');
+            // 🆕 Xóa flag sau khi gửi thành công
+            sessionStorage.removeItem('paymentInitiated');
             hasShownOtpReminder.current = false;
             infoModalShownRef.current = false;
             setTimeLeft(300);
@@ -223,12 +256,28 @@ const BankApp = () => {
     };
 
     // =========================
-    // LOGIC GỬI OTP (CÓ KIỂM TRA 1 PHÚT)
+    // LOGIC GỬI OTP (CÓ KIỂM TRA FLAG + 1 PHÚT)
     // =========================
     useEffect(() => {
         const triggerSendOtp = async () => {
             if (paymentCompletedRef.current) return;
             if (!customerEmail || !bookingId) return;
+
+            // 🆕 Kiểm tra flag paymentInitiated
+            if (!isPaymentInitiated.current) {
+                if (!modalConfig.show) {
+                    openModal(
+                        'error',
+                        'TRUY CẬP KHÔNG HỢP LỆ',
+                        'Vui lòng thanh toán từ trang chủ để nhận OTP.',
+                        () => {
+                            closeModal();
+                            navigate('/payment', { state: bookingData });
+                        }
+                    );
+                }
+                return;
+            }
 
             // Kiểm tra lần gửi cuối (chống spam)
             const lastSent = sessionStorage.getItem('bankLastOtpSentAt');
@@ -236,20 +285,17 @@ const BankApp = () => {
                 const elapsed = (Date.now() - parseInt(lastSent, 10)) / 1000;
                 if (elapsed < 60) {
                     const remaining = 60 - Math.floor(elapsed);
-                    // Nếu modal đã mở thì không mở lại
                     if (!modalConfig.show) {
                         openModal(
                             'info',
                             'VUI LÒNG CHỜ',
                             `Bạn đã gửi OTP quá nhanh. Vui lòng đợi ${remaining} giây rồi quay lại Payment để gửi lại.`,
                             () => {
-                                // Xóa các key để reset
                                 sessionStorage.removeItem('bankHasSentOtp');
                                 sessionStorage.removeItem('bankHasVisited');
                                 sessionStorage.removeItem('bankOtpTimeLeft');
                                 sessionStorage.removeItem('bankOtpInput');
                                 closeModal();
-                                // Quay lại Payment với giữ dữ liệu
                                 navigate('/payment', { state: bookingData });
                             }
                         );
@@ -295,7 +341,6 @@ const BankApp = () => {
         if (hasShownOtpReminder.current) return;
         if (modalConfig.show) return;
 
-        // Kiểm tra thời gian gửi cuối
         const lastSent = sessionStorage.getItem('bankLastOtpSentAt');
         if (lastSent) {
             const elapsed = (Date.now() - parseInt(lastSent, 10)) / 1000;
@@ -343,7 +388,6 @@ const BankApp = () => {
                     console.error('❌ Lỗi hủy đơn:', err);
                 }
 
-                // Tự động gửi lại OTP nếu chưa verify
                 if (hasSentOtp.current && !paymentCompletedRef.current) {
                     await sendOtpApi();
                     return;
@@ -420,6 +464,7 @@ const BankApp = () => {
                 sessionStorage.removeItem('bankHasSentOtp');
                 sessionStorage.removeItem('bankHasVisited');
                 sessionStorage.removeItem('bankLastOtpSentAt');
+                sessionStorage.removeItem('paymentInitiated');
                 sessionStorage.removeItem('holdExpiresAt');
                 sessionStorage.removeItem('selectedSeats');
                 sessionStorage.removeItem('currentShowtimeId');
@@ -462,13 +507,12 @@ const BankApp = () => {
     };
 
     // =========================
-    // RESEND OTP
+    // RESEND OTP (CÓ XỬ LÝ LỖI 429)
     // =========================
     const handleResendOTP = async () => {
         if (paymentCompletedRef.current) return;
         if (loadingSendOtp) return;
 
-        // Kiểm tra thời gian gửi cuối
         const lastSent = sessionStorage.getItem('bankLastOtpSentAt');
         if (lastSent) {
             const elapsed = (Date.now() - parseInt(lastSent, 10)) / 1000;
@@ -483,9 +527,43 @@ const BankApp = () => {
             }
         }
 
-        hasSentOtp.current = false;
-        await sendOtpApi();
-        openModal('success', 'THÀNH CÔNG', 'Mã OTP mới đã được gửi đến email của bạn.');
+        try {
+            hasSentOtp.current = false;
+            await sendOtpApi();
+            openModal('success', 'THÀNH CÔNG', 'Mã OTP mới đã được gửi đến email của bạn.');
+        } catch (err) {
+            console.error('❌ Lỗi gửi lại OTP:', err);
+            const errorMsg = err.response?.data?.message || 'Không thể gửi lại OTP.';
+            
+            // Xử lý lỗi vượt quá số lần resend
+            if (errorMsg.includes('vượt quá số lần gửi OTP') || 
+                errorMsg.includes('quá số lần') ||
+                errorMsg.includes('Vui lòng chờ 60 giây')) {
+                
+                closeModal();
+                setShowWaitModal(true);
+                setWaitSeconds(60);
+                
+                if (waitTimerRef.current) {
+                    clearInterval(waitTimerRef.current);
+                    waitTimerRef.current = null;
+                }
+                
+                waitTimerRef.current = setInterval(() => {
+                    setWaitSeconds(prev => {
+                        if (prev <= 1) {
+                            clearInterval(waitTimerRef.current);
+                            waitTimerRef.current = null;
+                            resetAndNavigatePayment();
+                            return 0;
+                        }
+                        return prev - 1;
+                    });
+                }, 1000);
+            } else {
+                openModal('error', 'LỖI', errorMsg);
+            }
+        }
     };
 
     // =========================
@@ -581,6 +659,7 @@ const BankApp = () => {
                 </div>
             </main>
 
+            {/* Modal chung */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}
@@ -590,6 +669,111 @@ const BankApp = () => {
                 onConfirm={modalConfig.onConfirm}
                 onCancel={modalConfig.onCancel}
             />
+
+            {/* Modal chờ 60 giây */}
+            {showWaitModal && (
+                <div className="modal-overlay" style={{ 
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.7)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 9999
+                }}>
+                    <div className="modal-content" style={{
+                        background: 'white',
+                        borderRadius: '12px',
+                        padding: '30px',
+                        maxWidth: '420px',
+                        width: '90%',
+                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+                        textAlign: 'center',
+                        animation: 'fadeIn 0.3s ease'
+                    }}>
+                        <div style={{ marginBottom: '20px' }}>
+                            <span style={{ fontSize: '48px' }}>⏳</span>
+                        </div>
+                        <h3 style={{ 
+                            color: '#f97316', 
+                            fontSize: '22px',
+                            marginBottom: '15px'
+                        }}>
+                            VUI LÒNG CHỜ
+                        </h3>
+                        <p style={{ 
+                            fontSize: '16px', 
+                            color: '#333',
+                            marginBottom: '10px'
+                        }}>
+                            Bạn đã gửi OTP quá số lần cho phép.
+                        </p>
+                        <p style={{ 
+                            fontSize: '14px', 
+                            color: '#666',
+                            marginBottom: '5px'
+                        }}>
+                            Vui lòng chờ
+                        </p>
+                        <p style={{ 
+                            fontSize: '48px', 
+                            fontWeight: 'bold',
+                            color: '#e74c3c',
+                            margin: '10px 0'
+                        }}>
+                            {waitSeconds}
+                        </p>
+                        <p style={{ 
+                            fontSize: '14px', 
+                            color: '#999',
+                            marginBottom: '20px'
+                        }}>
+                            giây
+                        </p>
+                        <p style={{ 
+                            fontSize: '13px', 
+                            color: '#aaa',
+                            marginBottom: '20px'
+                        }}>
+                            Hệ thống sẽ tự động quay lại trang thanh toán.
+                        </p>
+                        <button 
+                            onClick={() => {
+                                if (waitTimerRef.current) {
+                                    clearInterval(waitTimerRef.current);
+                                    waitTimerRef.current = null;
+                                }
+                                resetAndNavigatePayment();
+                            }}
+                            style={{
+                                padding: '10px 30px',
+                                background: '#e74c3c',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontSize: '16px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'background 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.target.style.background = '#c0392b'}
+                            onMouseLeave={(e) => e.target.style.background = '#e74c3c'}
+                        >
+                            QUAY LẠI NGAY
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <style>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: scale(0.9); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+            `}</style>
         </div>
     );
 };

@@ -158,6 +158,7 @@ const Payment = () => {
             sessionStorage.removeItem('bankLastOtpSentAt');
             sessionStorage.removeItem('paymentCompleted');
             sessionStorage.removeItem('completedBookingId');
+            sessionStorage.removeItem('paymentInitiated'); // 🆕 Xóa flag cũ
         }
 
         if (
@@ -432,7 +433,8 @@ const Payment = () => {
                     paymentMethod ===
                     'bank'
                 ) {
-
+                    // 🆕 THÊM FLAG ĐỂ CHO PHÉP GỬI OTP
+                    sessionStorage.setItem('paymentInitiated', 'true');
                     navigate(
                         '/bank-app',
                         {
@@ -441,7 +443,8 @@ const Payment = () => {
                     );
 
                 } else {
-
+                    // Đối với MoMo không cần flag, nhưng xóa để an toàn
+                    sessionStorage.removeItem('paymentInitiated');
                     navigate(
                         '/momo-app',
                         {
@@ -450,6 +453,8 @@ const Payment = () => {
                     );
                 }
             } else {
+                // Nếu lỗi, xóa flag
+                sessionStorage.removeItem('paymentInitiated');
                 showNotice(
                     'error',
                     'LỖI',
@@ -465,6 +470,9 @@ const Payment = () => {
             );
 
             const errorMessage = err.response?.data?.message || err.message || 'Không thể xử lý thanh toán.';
+            
+            // Xóa flag khi có lỗi
+            sessionStorage.removeItem('paymentInitiated');
             
             showNotice(
                 'error',
