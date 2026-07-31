@@ -1,7 +1,9 @@
 /* =========================================================
-   CINEMA ADMIN DASHBOARD – SILVER EDITION
+   ADMIN DASHBOARD – SILVER EDITION
+   Sử dụng biến từ index.css, không khai báo root
    ========================================================= */
 
+/* ---------- CONTAINER CHÍNH ---------- */
 .cinema-dashboard {
     width: 100%;
     min-height: 100vh;
@@ -12,10 +14,7 @@
     background: transparent;
 }
 
-/* =========================================================
-   LOADING SKELETON
-   ========================================================= */
-
+/* ---------- SKELETON LOADING ---------- */
 .dashboard-loading {
     width: 100%;
     padding: var(--space-lg);
@@ -40,38 +39,26 @@
 .skeleton-stat-card {
     height: 170px;
 }
-
 .skeleton-revenue-table {
     min-height: 420px;
     grid-column: span 2;
 }
-
 .skeleton-pie-card {
     min-height: 420px;
     grid-column: span 1;
 }
-
 .skeleton-top-movie-card {
     min-height: 420px;
     grid-column: span 1;
 }
 
 @keyframes dashboardPulse {
-    0% {
-        opacity: 0.35;
-    }
-    50% {
-        opacity: 0.8;
-    }
-    100% {
-        opacity: 0.35;
-    }
+    0% { opacity: 0.35; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0.35; }
 }
 
-/* =========================================================
-   STAT CARDS
-   ========================================================= */
-
+/* ---------- STAT CARDS ---------- */
 .dashboard-stats-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -96,17 +83,13 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.035),
-        transparent 50%
-    );
+    background: linear-gradient(135deg, rgba(255,255,255,0.035), transparent 50%);
     pointer-events: none;
 }
 
 .stat-card:hover {
     transform: translateY(-5px);
-    border-color: rgba(232, 232, 232, 0.3);
+    border-color: rgba(232,232,232,0.3);
     box-shadow: var(--shadow-silver);
 }
 
@@ -121,28 +104,26 @@
     margin-bottom: var(--space-sm);
 }
 
+/* Màu sắc riêng cho từng thẻ */
 .stat-card.purple .stat-icon {
-    background: rgba(168, 85, 247, 0.15);
+    background: rgba(168,85,247,0.15);
     color: #c084fc;
-    box-shadow: inset 0 0 20px rgba(168, 85, 247, 0.2);
+    box-shadow: inset 0 0 20px rgba(168,85,247,0.2);
 }
-
 .stat-card.blue .stat-icon {
-    background: rgba(59, 130, 246, 0.15);
+    background: rgba(59,130,246,0.15);
     color: #60a5fa;
-    box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.2);
+    box-shadow: inset 0 0 20px rgba(59,130,246,0.2);
 }
-
 .stat-card.green .stat-icon {
-    background: rgba(34, 197, 94, 0.15);
+    background: rgba(34,197,94,0.15);
     color: #4ade80;
-    box-shadow: inset 0 0 20px rgba(34, 197, 94, 0.2);
+    box-shadow: inset 0 0 20px rgba(34,197,94,0.2);
 }
-
 .stat-card.silver .stat-icon {
-    background: rgba(232, 232, 232, 0.15);
+    background: rgba(232,232,232,0.15);
     color: var(--silver-light);
-    box-shadow: inset 0 0 20px rgba(232, 232, 232, 0.2);
+    box-shadow: inset 0 0 20px rgba(232,232,232,0.2);
 }
 
 .stat-content {
@@ -191,20 +172,19 @@
     transform: scale(1.05);
 }
 
-/* =========================================================
-   MAIN GRID (Revenue Table + Pie)
-   ========================================================= */
+/* ---------- BỐ CỤC HÀNG ---------- */
+.transaction-table-wrapper {
+    width: 100%;
+}
 
-.dashboard-main-grid {
+/* Hàng 2: Pie + Top Movies */
+.bottom-row {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: var(--space-lg);
 }
 
-/* =========================================================
-   CHART CARD (chung)
-   ========================================================= */
-
+/* ---------- CARD CHUNG ---------- */
 .chart-card {
     background: var(--cinema-card-bg);
     border: var(--border-light);
@@ -215,7 +195,7 @@
 }
 
 .chart-card:hover {
-    border-color: rgba(232, 232, 232, 0.2);
+    border-color: rgba(232,232,232,0.2);
 }
 
 .chart-header {
@@ -244,6 +224,7 @@
     font-weight: var(--fw-regular);
 }
 
+/* Nút làm mới */
 .refresh-dashboard-btn {
     display: flex;
     align-items: center;
@@ -261,9 +242,9 @@
 }
 
 .refresh-dashboard-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255,255,255,0.05);
     color: var(--text-body);
-    border-color: rgba(232, 232, 232, 0.2);
+    border-color: rgba(232,232,232,0.2);
 }
 
 .refresh-dashboard-btn:disabled {
@@ -276,18 +257,11 @@
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
-/* =========================================================
-   FILTER AREA (ngày + search)
-   ========================================================= */
-
+/* ---------- FILTER ---------- */
 .revenue-filter-area {
     display: flex;
     align-items: center;
@@ -321,9 +295,9 @@
 }
 
 .filter-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255,255,255,0.05);
     color: var(--text-body);
-    border-color: rgba(232, 232, 232, 0.2);
+    border-color: rgba(232,232,232,0.2);
 }
 
 .filter-btn.active {
@@ -334,9 +308,10 @@
 }
 
 .filter-btn.custom {
-    border-color: rgba(232, 232, 232, 0.15);
+    border-color: rgba(232,232,232,0.15);
 }
 
+/* Search box */
 .revenue-search {
     display: flex;
     align-items: center;
@@ -344,13 +319,13 @@
     padding: 0 var(--space-sm);
     border: var(--border-light);
     border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.035);
+    background: rgba(255,255,255,0.035);
     transition: var(--transition-normal);
 }
 
 .revenue-search:focus-within {
     border-color: var(--silver-primary);
-    background: rgba(255, 255, 255, 0.055);
+    background: rgba(255,255,255,0.055);
 }
 
 .revenue-search svg {
@@ -373,10 +348,7 @@
     color: var(--text-muted);
 }
 
-/* =========================================================
-   CUSTOM DATE PICKER
-   ========================================================= */
-
+/* ---------- CUSTOM DATE PICKER ---------- */
 .custom-date-picker {
     display: flex;
     align-items: flex-end;
@@ -385,7 +357,7 @@
     margin-bottom: var(--space-lg);
     border: var(--border-light);
     border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.025);
+    background: rgba(255,255,255,0.025);
     flex-wrap: wrap;
 }
 
@@ -405,7 +377,7 @@
     padding: var(--space-sm) var(--space-md);
     border: var(--border-light);
     border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255,255,255,0.04);
     color: var(--text-body);
     font-size: var(--font-size-base);
     transition: var(--transition-normal);
@@ -417,7 +389,7 @@
 .date-input-group input[type="date"]:focus {
     outline: none;
     border-color: var(--silver-primary);
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255,255,255,0.06);
 }
 
 .date-input-group input[type="date"]::-webkit-calendar-picker-indicator {
@@ -452,10 +424,7 @@
     cursor: not-allowed;
 }
 
-/* =========================================================
-   REVENUE SUMMARY
-   ========================================================= */
-
+/* ---------- SUMMARY ---------- */
 .revenue-summary {
     display: flex;
     gap: var(--space-xl);
@@ -484,10 +453,7 @@
     font-weight: var(--fw-extrabold);
 }
 
-/* =========================================================
-   REVENUE TABLE CONTAINER
-   ========================================================= */
-
+/* ---------- BẢNG GIAO DỊCH ---------- */
 .revenue-table-container {
     width: 100%;
     max-height: 380px;
@@ -495,46 +461,30 @@
     overflow-y: auto;
     border: var(--border-light);
     border-radius: var(--radius-lg);
-    background: rgba(0, 0, 0, 0.12);
+    background: rgba(0,0,0,0.12);
 }
 
 .revenue-table-container::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
-
 .revenue-table-container::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.025);
+    background: rgba(255,255,255,0.025);
 }
-
 .revenue-table-container::-webkit-scrollbar-thumb {
-    background: rgba(232, 232, 232, 0.18);
+    background: rgba(232,232,232,0.18);
     border-radius: 10px;
 }
-
 .revenue-table-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(232, 232, 232, 0.35);
+    background: rgba(232,232,232,0.35);
 }
 
-/* =========================================================
-   REVENUE TABLE – FIXED LAYOUT
-   ========================================================= */
-
+/* Table chính */
 .revenue-table {
     width: 100%;
-    min-width: 620px;
+    min-width: 1000px;
     border-collapse: collapse;
-    table-layout: fixed; /* đảm bảo các cột có độ rộng cố định */
-}
-
-.revenue-table colgroup .col-date {
-    width: 30%;
-}
-.revenue-table colgroup .col-orders {
-    width: 25%;
-}
-.revenue-table colgroup .col-revenue {
-    width: 45%;
+    table-layout: fixed;
 }
 
 .revenue-table thead {
@@ -548,7 +498,7 @@
 }
 
 .revenue-table th {
-    padding: 14px 18px;
+    padding: 12px 16px;
     color: var(--text-secondary);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
@@ -559,10 +509,23 @@
     background: #171717;
     text-align: left;
     vertical-align: middle;
-    /* Không dùng flex để tránh phá vỡ cấu trúc table */
 }
 
-/* Căn chỉnh riêng cho từng cột */
+.revenue-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.revenue-table th.sortable:hover {
+    color: var(--white-pure);
+}
+
+.revenue-table th.sortable span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .revenue-table th.text-center {
     text-align: center;
 }
@@ -570,30 +533,15 @@
     text-align: right;
 }
 
-/* Phần sortable – giữ icon và text cùng hàng */
-.revenue-table th .sortable-content {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-}
-.revenue-table th.sortable {
-    cursor: pointer;
-    user-select: none;
-}
-.revenue-table th.sortable:hover {
-    color: var(--white-pure);
-}
-
-/* Dòng dữ liệu */
 .revenue-table td {
-    padding: 15px 18px;
+    padding: 12px 16px;
     color: var(--text-body);
     font-size: var(--font-size-base);
     border-bottom: var(--border-light);
-    white-space: nowrap;
     text-align: left;
     vertical-align: middle;
+    word-break: break-word;
+    line-height: 1.4;
 }
 
 .revenue-table td.text-center {
@@ -607,12 +555,13 @@
     transition: background var(--transition-normal);
 }
 .revenue-table tbody tr:hover {
-    background: rgba(255, 255, 255, 0.035);
+    background: rgba(255,255,255,0.035);
 }
 .revenue-table tbody tr:last-child td {
     border-bottom: none;
 }
 
+/* Cột ngày */
 .revenue-date {
     display: flex;
     align-items: center;
@@ -625,25 +574,7 @@
     flex-shrink: 0;
 }
 
-.order-count {
-    display: inline-block;
-    padding: 2px 12px;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 20px;
-    color: var(--text-body);
-    font-weight: var(--fw-semibold);
-}
-
-.revenue-value {
-    color: var(--white-pure);
-    font-weight: var(--fw-bold);
-    font-variant-numeric: tabular-nums;
-}
-
-/* =========================================================
-   REVENUE EMPTY STATE
-   ========================================================= */
-
+/* ---------- EMPTY STATE ---------- */
 .revenue-empty {
     min-height: 260px;
     display: flex;
@@ -669,10 +600,7 @@
     font-size: var(--font-size-base);
 }
 
-/* =========================================================
-   REVENUE PAGINATION
-   ========================================================= */
-
+/* ---------- PAGINATION ---------- */
 .revenue-pagination {
     display: flex;
     justify-content: space-between;
@@ -711,9 +639,9 @@
     transition: var(--transition-normal);
 }
 .pagination-buttons button:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255,255,255,0.05);
     color: var(--white-pure);
-    border-color: rgba(232, 232, 232, 0.2);
+    border-color: rgba(232,232,232,0.2);
 }
 .pagination-buttons button:disabled {
     opacity: 0.3;
@@ -726,10 +654,7 @@
     padding: 0 var(--space-sm);
 }
 
-/* =========================================================
-   PIE CHART
-   ========================================================= */
-
+/* ---------- PIE CHART ---------- */
 .pie-layout {
     display: flex;
     flex-direction: column;
@@ -754,7 +679,7 @@
     background: transparent;
 }
 .pie-legend::-webkit-scrollbar-thumb {
-    background: rgba(232, 232, 232, 0.18);
+    background: rgba(232,232,232,0.18);
     border-radius: 10px;
 }
 .legend-item {
@@ -789,10 +714,7 @@
     white-space: nowrap;
 }
 
-/* =========================================================
-   TOP MOVIE CARD
-   ========================================================= */
-
+/* ---------- TOP MOVIES ---------- */
 .top-movie-card {
     background: var(--cinema-card-bg);
     border: var(--border-light);
@@ -802,7 +724,7 @@
     min-width: 0;
 }
 .top-movie-card:hover {
-    border-color: rgba(232, 232, 232, 0.2);
+    border-color: rgba(232,232,232,0.2);
 }
 .card-header {
     margin-bottom: var(--space-xl);
@@ -886,24 +808,13 @@
 }
 
 /* =========================================================
-   RESPONSIVE – 1400px
+   RESPONSIVE
    ========================================================= */
-
-@media screen and (max-width: 1400px) {
-    .dashboard-stats-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .dashboard-main-grid {
+@media screen and (max-width: 1200px) {
+    .bottom-row {
         grid-template-columns: 1fr;
     }
-    .skeleton-stat-card {
-        height: 150px;
-    }
 }
-
-/* =========================================================
-   RESPONSIVE – 992px
-   ========================================================= */
 
 @media screen and (max-width: 992px) {
     .cinema-dashboard {
@@ -929,11 +840,10 @@
     .revenue-table-container {
         max-height: 340px;
     }
+    .dashboard-stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
-
-/* =========================================================
-   RESPONSIVE – 768px
-   ========================================================= */
 
 @media screen and (max-width: 768px) {
     .dashboard-stats-row {
@@ -997,6 +907,7 @@
     }
     .revenue-summary {
         gap: var(--space-md);
+        flex-wrap: wrap;
     }
     .revenue-summary-item strong {
         font-size: var(--font-size-h5);
@@ -1005,11 +916,12 @@
         max-height: 320px;
     }
     .revenue-table {
-        min-width: 600px;
+        min-width: 820px;
     }
     .revenue-table th,
     .revenue-table td {
-        padding: 12px 14px;
+        padding: 10px 12px;
+        font-size: var(--font-size-h6);
     }
     .revenue-pagination {
         flex-direction: column;
@@ -1034,10 +946,6 @@
         grid-column: span 1;
     }
 }
-
-/* =========================================================
-   RESPONSIVE – 480px
-   ========================================================= */
 
 @media screen and (max-width: 480px) {
     .cinema-dashboard {
@@ -1067,12 +975,12 @@
         max-height: 280px;
     }
     .revenue-table {
-        min-width: 580px;
+        min-width: 760px;
     }
     .revenue-table th,
     .revenue-table td {
-        font-size: var(--font-size-h6);
-        padding: 11px 12px;
+        font-size: 0.7rem;
+        padding: 8px 10px;
     }
     .top-movie-left h4 {
         font-size: var(--font-size-h6);

@@ -3,194 +3,65 @@ const db = require('../Config/db');
 class DashboardController {
 
     // ============================================================
-    // 1. THỐNG KÊ TỔNG QUAN
-    // ============================================================
-    static async getStats(req, res) {
-        try {
-            const { period } = req.query;
+// 1. THỐNG KÊ TỔNG QUAN (toàn bộ CSDL, không lọc theo thời gian)
+// ============================================================
+static async getStats(req, res) {
+    try {
+        // --------------------------------------------------------
+        // Tổng số phim
+        // --------------------------------------------------------
+        const [movieRes] = await db.query(`
+            SELECT COUNT(*) AS total
+            FROM movies
+        `);
 
-            let dateFilter = '';
-            let params = [];
-            let startDate;
-            let endDate;
+        // --------------------------------------------------------
+        // Tổng user - không tính admin
+        // --------------------------------------------------------
+        const [userRes] = await db.query(`
+            SELECT COUNT(*) AS total
+            FROM users
+            WHERE role != 'admin'
+        `);
 
-            if (period) {
-                const range = DashboardController.getDateRange(period);
+        // --------------------------------------------------------
+        // Tổng vé đã bán
+        // --------------------------------------------------------
+        const [ticketRes] = await db.query(`
+            SELECT COUNT(t.ticket_id) AS total
+            FROM tickets t
+            JOIN bookings b ON t.booking_id = b.booking_id
+            WHERE b.status = 'Completed'
+        `);
 
-                startDate = range.startDate;
-                endDate = range.endDate;
+        // --------------------------------------------------------
+        // Tổng doanh thu (toàn bộ)
+        // --------------------------------------------------------
+        const [revenueRes] = await db.query(`
+            SELECT COALESCE(SUM(total_amount), 0) AS total
+            FROM bookings
+            WHERE status = 'Completed'
+        `);
 
-                dateFilter = 'AND DATE(booking_date) BETWEEN ? AND ?';
-                params = [startDate, endDate];
-            }
+        const totalRevenue = Number(revenueRes[0]?.total) || 0;
 
-            // --------------------------------------------------------
-            // Tổng số phim
-            // --------------------------------------------------------
-            const [movieRes] = await db.query(`
-                SELECT COUNT(*) AS total
-                FROM movies
-            `);
+        return res.status(200).json({
+            success: true,
+            movies: Number(movieRes[0]?.total) || 0,
+            users: Number(userRes[0]?.total) || 0,
+            tickets: Number(ticketRes[0]?.total) || 0,
+            revenue: totalRevenue
+        });
 
-            // --------------------------------------------------------
-            // Tổng user - không tính admin
-            // --------------------------------------------------------
-            const [userRes] = await db.query(`
-                SELECT COUNT(*) AS total
-                FROM users
-                WHERE role != 'admin'
-            `);
-
-            // --------------------------------------------------------
-            // Tổng vé đã bán
-            // --------------------------------------------------------
-            const [ticketRes] = await db.query(`
-                SELECT COUNT(t.ticket_id) AS total
-                FROM tickets t
-                JOIN bookings b
-                    ON t.booking_id = b.booking_id
-                WHERE b.status = 'Completed'
-            `);
-
-            // --------------------------------------------------------
-            // Tổng doanh thu
-            // --------------------------------------------------------
-            let revenueQuery = `
-                SELECT COALESCE(SUM(total_amount), 0) AS total
-                FROM bookings
-                WHERE status = 'Completed'
-            `;
-
-            if (dateFilter) {
-                revenueQuery += ` ${dateFilter}`;
-            }
-
-            const [revenueRes] = await db.query(
-                revenueQuery,
-                params
-            );
-
-            const totalRevenue =
-                Number(revenueRes[0]?.total) || 0;
-
-            let response = {
-                success: true,
-                movies: Number(movieRes[0]?.total) || 0,
-                users: Number(userRes[0]?.total) || 0,
-                tickets: Number(ticketRes[0]?.total) || 0,
-                revenue: totalRevenue
-            };
-
-            // --------------------------------------------------------
-            // Thống kê theo khoảng thời gian
-            // --------------------------------------------------------
-            if (period) {
-
-                // User mới
-                const [newUsersRes] = await db.query(`
-                    SELECT COUNT(*) AS total
-                    FROM users
-                    WHERE role != 'admin'
-                      AND DATE(created_at) BETWEEN ? AND ?
-                `, [
-                    startDate,
-                    endDate
-                ]);
-
-                // Đơn hàng mới
-                const [newOrdersRes] = await db.query(`
-                    SELECT COUNT(*) AS total
-                    FROM bookings
-                    WHERE status = 'Completed'
-                      AND DATE(booking_date) BETWEEN ? AND ?
-                `, [
-                    startDate,
-                    endDate
-                ]);
-
-                // ----------------------------------------------------
-                // Khoảng thời gian trước đó
-                // ----------------------------------------------------
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-
-                const duration =
-                    Math.round(
-                        (end - start) /
-                        (1000 * 60 * 60 * 24)
-                    ) + 1;
-
-                const prevEnd = new Date(start);
-                prevEnd.setDate(
-                    prevEnd.getDate() - 1
-                );
-
-                const prevStart = new Date(prevEnd);
-                prevStart.setDate(
-                    prevStart.getDate() - duration + 1
-                );
-
-                const prevStartStr =
-                    prevStart.toISOString().split('T')[0];
-
-                const prevEndStr =
-                    prevEnd.toISOString().split('T')[0];
-
-                // ----------------------------------------------------
-                // Doanh thu kỳ trước
-                // ----------------------------------------------------
-                const [prevRevenueRes] = await db.query(`
-                    SELECT COALESCE(SUM(total_amount), 0) AS total
-                    FROM bookings
-                    WHERE status = 'Completed'
-                      AND DATE(booking_date) BETWEEN ? AND ?
-                `, [
-                    prevStartStr,
-                    prevEndStr
-                ]);
-
-                const prevRevenue =
-                    Number(prevRevenueRes[0]?.total) || 0;
-
-                const revenueGrowth =
-                    prevRevenue > 0
-                        ? ((totalRevenue - prevRevenue) /
-                            prevRevenue) * 100
-                        : 0;
-
-                response = {
-                    ...response,
-                    new_users:
-                        Number(newUsersRes[0]?.total) || 0,
-
-                    new_orders:
-                        Number(newOrdersRes[0]?.total) || 0,
-
-                    revenue_growth:
-                        Math.round(
-                            revenueGrowth * 10
-                        ) / 10,
-
-                    period
-                };
-            }
-
-            return res.status(200).json(response);
-
-        } catch (error) {
-
-            console.error(
-                '❌ getStats error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: 'Lỗi thống kê.',
-                error: error.message
-            });
-        }
+    } catch (error) {
+        console.error('❌ getStats error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Lỗi thống kê.',
+            error: error.message
+        });
     }
+}
 
     // ============================================================
     // 2. DANH SÁCH CHI TIẾT GIAO DỊCH (BẢNG)

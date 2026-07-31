@@ -42,7 +42,6 @@ const AdminDashboard = () => {
     /* =========================================================
         STATE - DỮ LIỆU DASHBOARD
     ========================================================= */
-    // Chi tiết giao dịch (bảng)
     const [transactions, setTransactions] = useState([]);
     const [summary, setSummary] = useState({
         totalRevenue: 0,
@@ -50,11 +49,7 @@ const AdminDashboard = () => {
         totalTickets: 0,
         totalProducts: 0
     });
-
-    // Biểu đồ tròn
     const [revenueByMovie, setRevenueByMovie] = useState([]);
-
-    // Top phim
     const [topMovies, setTopMovies] = useState([]);
 
     /* =========================================================
@@ -297,15 +292,15 @@ const AdminDashboard = () => {
     };
 
     /* =========================================================
-        SEARCH + SORT TRANSACTIONS
+        SEARCH + SORT + GROUP TRANSACTIONS
     ========================================================= */
-    const processedData = useMemo(() => {
-        let data = [...transactions];
-
-        // SEARCH
+    // Nhóm các item theo booking_id và gộp chi tiết
+    const groupedData = useMemo(() => {
+        // Bước 1: Filter theo search keyword
+        let filtered = [...transactions];
         if (searchKeyword.trim()) {
             const keyword = searchKeyword.trim().toLowerCase();
-            data = data.filter((item) => {
+            filtered = filtered.filter((item) => {
                 const customer = (item.customer_name || '').toLowerCase();
                 const movie = (item.movie_title || '').toLowerCase();
                 const itemName = (item.item_name || '').toLowerCase();
@@ -317,52 +312,77 @@ const AdminDashboard = () => {
             });
         }
 
-        // SORT
-        data.sort((a, b) => {
-            let valueA, valueB;
+        // Bước 2: Group theo booking_id
+        const groupMap = new Map();
+        filtered.forEach(item => {
+            const key = item.booking_id;
+            if (!groupMap.has(key)) {
+                groupMap.set(key, {
+                    booking_id: key,
+                    booking_date: item.booking_date,
+                    customer_name: item.customer_name,
+                    movie_title: item.movie_title,
+                    details: [],
+                    totalQuantity: 0,
+                    totalRevenue: 0
+                });
+            }
+            const group = groupMap.get(key);
+            group.details.push({
+                item_type: item.item_type,
+                seat_info: item.seat_info || '',
+                item_name: item.item_name || '',
+                ticket_code: item.ticket_code || '',
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                revenue: item.revenue
+            });
+            group.totalQuantity += item.quantity;
+            group.totalRevenue += item.revenue;
+        });
 
+        // Chuyển map thành array
+        let grouped = Array.from(groupMap.values());
+
+        // Bước 3: Sort
+        grouped.sort((a, b) => {
+            let valueA, valueB;
             if (sortField === 'booking_date') {
                 valueA = new Date(a.booking_date).getTime();
                 valueB = new Date(b.booking_date).getTime();
             } else if (sortField === 'customer_name') {
                 valueA = a.customer_name || '';
                 valueB = b.customer_name || '';
-                return sortDirection === 'asc'
-                    ? valueA.localeCompare(valueB)
-                    : valueB.localeCompare(valueA);
+                return sortDirection === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
             } else if (sortField === 'movie_title') {
                 valueA = a.movie_title || '';
                 valueB = b.movie_title || '';
-                return sortDirection === 'asc'
-                    ? valueA.localeCompare(valueB)
-                    : valueB.localeCompare(valueA);
+                return sortDirection === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
             } else if (sortField === 'revenue') {
-                valueA = a.revenue || 0;
-                valueB = b.revenue || 0;
+                valueA = a.totalRevenue || 0;
+                valueB = b.totalRevenue || 0;
             } else {
                 valueA = a[sortField] || '';
                 valueB = b[sortField] || '';
             }
-
             if (typeof valueA === 'number' && typeof valueB === 'number') {
                 return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
             }
-
             return 0;
         });
 
-        return data;
+        return grouped;
     }, [transactions, searchKeyword, sortField, sortDirection]);
 
     /* =========================================================
         PAGINATION
     ========================================================= */
-    const totalPages = Math.max(1, Math.ceil(processedData.length / rowsPerPage));
+    const totalPages = Math.max(1, Math.ceil(groupedData.length / rowsPerPage));
 
     const paginatedData = useMemo(() => {
         const startIndex = (currentPage - 1) * rowsPerPage;
-        return processedData.slice(startIndex, startIndex + rowsPerPage);
-    }, [processedData, currentPage]);
+        return groupedData.slice(startIndex, startIndex + rowsPerPage);
+    }, [groupedData, currentPage]);
 
     /* =========================================================
         LOADING
@@ -393,68 +413,34 @@ const AdminDashboard = () => {
             <div className="dashboard-stats-row">
                 {/* MOVIES */}
                 <div className="stat-card purple">
-                    <div className="stat-icon">
-                        <Film size={28} />
-                    </div>
-                    <div className="stat-content">
-                        <p>TỔNG SỐ PHIM</p>
-                        <h2>{stats.movies}</h2>
-                    </div>
-                    <button className="stat-more-btn">
-                        <MoreHorizontal size={18} />
-                    </button>
+                    <div className="stat-icon"><Film size={28} /></div>
+                    <div className="stat-content"><p>TỔNG SỐ PHIM</p><h2>{stats.movies}</h2></div>
+                    <button className="stat-more-btn"><MoreHorizontal size={18} /></button>
                 </div>
-
                 {/* TICKETS */}
                 <div className="stat-card blue">
-                    <div className="stat-icon">
-                        <Ticket size={28} />
-                    </div>
-                    <div className="stat-content">
-                        <p>TỔNG VÉ ĐÃ BÁN</p>
-                        <h2>{stats.tickets}</h2>
-                    </div>
-                    <button className="stat-more-btn">
-                        <MoreHorizontal size={18} />
-                    </button>
+                    <div className="stat-icon"><Ticket size={28} /></div>
+                    <div className="stat-content"><p>TỔNG VÉ ĐÃ BÁN</p><h2>{stats.tickets}</h2></div>
+                    <button className="stat-more-btn"><MoreHorizontal size={18} /></button>
                 </div>
-
                 {/* USERS */}
                 <div className="stat-card green">
-                    <div className="stat-icon">
-                        <Users size={28} />
-                    </div>
-                    <div className="stat-content">
-                        <p>TỔNG NGƯỜI DÙNG</p>
-                        <h2>{stats.users}</h2>
-                    </div>
-                    <button className="stat-more-btn">
-                        <MoreHorizontal size={18} />
-                    </button>
+                    <div className="stat-icon"><Users size={28} /></div>
+                    <div className="stat-content"><p>TỔNG NGƯỜI DÙNG</p><h2>{stats.users}</h2></div>
+                    <button className="stat-more-btn"><MoreHorizontal size={18} /></button>
                 </div>
-
                 {/* REVENUE */}
                 <div className="stat-card silver">
-                    <div className="stat-icon">
-                        <DollarSign size={28} />
-                    </div>
-                    <div className="stat-content">
-                        <p>DOANH THU</p>
-                        <h2>{formatMoney(stats.revenue)}</h2>
-                    </div>
-                    <button className="stat-more-btn">
-                        <MoreHorizontal size={18} />
-                    </button>
+                    <div className="stat-icon"><DollarSign size={28} /></div>
+                    <div className="stat-content"><p>DOANH THU</p><h2>{formatMoney(stats.revenue)}</h2></div>
+                    <button className="stat-more-btn"><MoreHorizontal size={18} /></button>
                 </div>
             </div>
 
             {/* =================================================
-                MAIN CONTENT
+                HÀNG 1: TRANSACTION TABLE (full width)
             ================================================= */}
-            <div className="dashboard-main-grid">
-                {/* =================================================
-                    TRANSACTION TABLE
-                ================================================= */}
+            <div className="transaction-table-wrapper">
                 <div className="chart-card revenue-table-card">
                     {/* HEADER */}
                     <div className="chart-header">
@@ -477,43 +463,20 @@ const AdminDashboard = () => {
                     {/* FILTER */}
                     <div className="revenue-filter-area">
                         <div className="chart-filter-group">
-                            <button
-                                className={`filter-btn ${timeRange === 'week' ? 'active' : ''}`}
-                                onClick={() => handleRangeChange('week')}
-                            >
-                                7 ngày
-                            </button>
-                            <button
-                                className={`filter-btn ${timeRange === 'month' ? 'active' : ''}`}
-                                onClick={() => handleRangeChange('month')}
-                            >
-                                30 ngày
-                            </button>
-                            <button
-                                className={`filter-btn ${timeRange === 'quarter' ? 'active' : ''}`}
-                                onClick={() => handleRangeChange('quarter')}
-                            >
-                                3 tháng
-                            </button>
-                            <button
-                                className={`filter-btn custom ${timeRange === 'custom' ? 'active' : ''}`}
-                                onClick={() => handleRangeChange('custom')}
-                            >
-                                <Calendar size={14} />
-                                Tùy chỉnh
+                            <button className={`filter-btn ${timeRange === 'week' ? 'active' : ''}`} onClick={() => handleRangeChange('week')}>7 ngày</button>
+                            <button className={`filter-btn ${timeRange === 'month' ? 'active' : ''}`} onClick={() => handleRangeChange('month')}>30 ngày</button>
+                            <button className={`filter-btn ${timeRange === 'quarter' ? 'active' : ''}`} onClick={() => handleRangeChange('quarter')}>3 tháng</button>
+                            <button className={`filter-btn custom ${timeRange === 'custom' ? 'active' : ''}`} onClick={() => handleRangeChange('custom')}>
+                                <Calendar size={14} /> Tùy chỉnh
                             </button>
                         </div>
-
                         <div className="revenue-search">
                             <Search size={17} />
                             <input
                                 type="text"
                                 placeholder="Tìm theo tên khách, phim, mã vé..."
                                 value={searchKeyword}
-                                onChange={(e) => {
-                                    setSearchKeyword(e.target.value);
-                                    setCurrentPage(1);
-                                }}
+                                onChange={(e) => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
                             />
                         </div>
                     </div>
@@ -523,30 +486,13 @@ const AdminDashboard = () => {
                         <div className="custom-date-picker">
                             <div className="date-input-group">
                                 <label>Từ ngày</label>
-                                <input
-                                    type="date"
-                                    value={customStart}
-                                    onChange={(e) => setCustomStart(e.target.value)}
-                                    max={customEnd || today}
-                                />
+                                <input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} max={customEnd || today} />
                             </div>
                             <div className="date-input-group">
                                 <label>Đến ngày</label>
-                                <input
-                                    type="date"
-                                    value={customEnd}
-                                    onChange={(e) => setCustomEnd(e.target.value)}
-                                    min={customStart || undefined}
-                                    max={today}
-                                />
+                                <input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} min={customStart || undefined} max={today} />
                             </div>
-                            <button
-                                className="apply-date-btn"
-                                onClick={handleCustomApply}
-                                disabled={!customStart || !customEnd}
-                            >
-                                Áp dụng
-                            </button>
+                            <button className="apply-date-btn" onClick={handleCustomApply} disabled={!customStart || !customEnd}>Áp dụng</button>
                         </div>
                     )}
 
@@ -569,8 +515,8 @@ const AdminDashboard = () => {
                             <strong>{summary.totalProducts}</strong>
                         </div>
                         <div className="revenue-summary-item">
-                            <span>Số dòng</span>
-                            <strong>{processedData.length}</strong>
+                            <span>Số đơn</span>
+                            <strong>{groupedData.length}</strong>
                         </div>
                     </div>
 
@@ -581,16 +527,13 @@ const AdminDashboard = () => {
                                 <thead>
                                     <tr>
                                         <th onClick={() => handleSort('booking_date')} className="sortable">
-                                            <span>NGÀY</span>
-                                            <ArrowUpDown size={14} />
+                                            <span>NGÀY</span> <ArrowUpDown size={14} />
                                         </th>
                                         <th onClick={() => handleSort('customer_name')} className="sortable">
-                                            <span>KHÁCH HÀNG</span>
-                                            <ArrowUpDown size={14} />
+                                            <span>KHÁCH HÀNG</span> <ArrowUpDown size={14} />
                                         </th>
                                         <th onClick={() => handleSort('movie_title')} className="sortable">
-                                            <span>PHIM</span>
-                                            <ArrowUpDown size={14} />
+                                            <span>PHIM</span> <ArrowUpDown size={14} />
                                         </th>
                                         <th>
                                             <span>CHI TIẾT</span>
@@ -598,61 +541,62 @@ const AdminDashboard = () => {
                                         <th className="text-center">SL</th>
                                         <th className="text-right">ĐƠN GIÁ</th>
                                         <th onClick={() => handleSort('revenue')} className="sortable text-right">
-                                            <span>THÀNH TIỀN</span>
-                                            <ArrowUpDown size={14} />
+                                            <span>THÀNH TIỀN</span> <ArrowUpDown size={14} />
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {paginatedData.map((item, index) => (
-                                        <tr key={index}>
-                                            <td>
-                                                <div className="revenue-date">
-                                                    <Calendar size={16} />
-                                                    <span>{formatDate(item.booking_date)}</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    <User size={14} />
-                                                    <span>{item.customer_name}</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    <Film size={14} />
-                                                    <span>{item.movie_title}</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                                                    {item.item_type === 'Vé' ? (
-                                                        <>
-                                                            <Tag size={14} />
-                                                            <span>{item.seat_info}</span>
-                                                            {item.ticket_code && (
-                                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                                                                    ({item.ticket_code})
-                                                                </span>
-                                                            )}
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <span style={{ color: 'var(--text-secondary)' }}>🍿</span>
-                                                            <span>{item.item_name}</span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="text-center">{item.quantity}</td>
-                                            <td className="text-right">{formatMoney(item.unit_price)}</td>
-                                            <td className="text-right">
-                                                <strong style={{ color: 'var(--white-pure)' }}>
-                                                    {formatMoney(item.revenue)}
-                                                </strong>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {paginatedData.map((booking, idx) => {
+                                        // Tạo mảng các item mô tả chi tiết
+                                        const detailItems = booking.details.map((d, i) => {
+                                            if (d.item_type === 'Vé') {
+                                                return `${d.seat_info || 'Ghế'}${d.ticket_code ? ` (${d.ticket_code})` : ''}`;
+                                            } else {
+                                                return `${d.item_name || 'Sản phẩm'}${d.quantity > 1 ? ` x${d.quantity}` : ''}`;
+                                            }
+                                        });
+                                        const detailString = detailItems.join(', ');
+                                        
+                                        // Tính tổng số lượng và tổng tiền
+                                        const totalQty = booking.totalQuantity;
+                                        const totalRevenue = booking.totalRevenue;
+                                        // Đơn giá trung bình (có thể không hiển thị, nhưng tạm thời lấy tổng/sl)
+                                        const avgUnitPrice = totalQty > 0 ? totalRevenue / totalQty : 0;
+
+                                        return (
+                                            <tr key={booking.booking_id}>
+                                                <td>
+                                                    <div className="revenue-date">
+                                                        <Calendar size={16} />
+                                                        <span>{formatDate(booking.booking_date)}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        <User size={14} />
+                                                        <span>{booking.customer_name}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        <Film size={14} />
+                                                        <span>{booking.movie_title}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                                        <Tag size={14} />
+                                                        <span>{detailString}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="text-center">{totalQty}</td>
+                                                <td className="text-right">{formatMoney(avgUnitPrice)}</td>
+                                                <td className="text-right">
+                                                    <strong style={{ color: 'var(--white-pure)' }}>{formatMoney(totalRevenue)}</strong>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         ) : (
@@ -665,37 +609,32 @@ const AdminDashboard = () => {
                     </div>
 
                     {/* PAGINATION */}
-                    {processedData.length > 0 && (
+                    {groupedData.length > 0 && (
                         <div className="revenue-pagination">
                             <span className="pagination-info">
                                 Hiển thị <strong>{(currentPage - 1) * rowsPerPage + 1}</strong> -{' '}
-                                <strong>{Math.min(currentPage * rowsPerPage, processedData.length)}</strong> trong tổng
-                                số <strong>{processedData.length}</strong> dòng
+                                <strong>{Math.min(currentPage * rowsPerPage, groupedData.length)}</strong> trong tổng
+                                số <strong>{groupedData.length}</strong> đơn hàng
                             </span>
                             <div className="pagination-buttons">
-                                <button
-                                    disabled={currentPage === 1}
-                                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                                >
+                                <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}>
                                     <ChevronLeft size={17} />
                                 </button>
-                                <span className="page-number">
-                                    {currentPage} / {totalPages}
-                                </span>
-                                <button
-                                    disabled={currentPage >= totalPages}
-                                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                                >
+                                <span className="page-number">{currentPage} / {totalPages}</span>
+                                <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}>
                                     <ChevronRight size={17} />
                                 </button>
                             </div>
                         </div>
                     )}
                 </div>
+            </div>
 
-                {/* =================================================
-                    PIE CHART
-                ================================================= */}
+            {/* =================================================
+                HÀNG 2: PIE CHART + TOP MOVIES (cùng hàng)
+            ================================================= */}
+            <div className="bottom-row">
+                {/* PIE CHART */}
                 <div className="chart-card pie-chart">
                     <div className="chart-header">
                         <div>
@@ -708,31 +647,13 @@ const AdminDashboard = () => {
                             <div className="pie-wrapper">
                                 <ResponsiveContainer width="100%" height={280}>
                                     <PieChart>
-                                        <Pie
-                                            data={revenueByMovie}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={65}
-                                            outerRadius={95}
-                                            paddingAngle={3}
-                                            dataKey="value"
-                                        >
+                                        <Pie data={revenueByMovie} cx="50%" cy="50%" innerRadius={65} outerRadius={95} paddingAngle={3} dataKey="value">
                                             {revenueByMovie.map((_, index) => (
-                                                <Cell
-                                                    key={index}
-                                                    fill={COLORS[index % COLORS.length]}
-                                                />
+                                                <Cell key={index} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip
-                                            contentStyle={{
-                                                background: '#1a1a1a',
-                                                border: '1px solid rgba(232,232,232,0.2)',
-                                                borderRadius: '8px',
-                                                color: '#fff'
-                                            }}
-                                            formatter={(value) => [formatMoney(value), 'Doanh thu']}
-                                        />
+                                        <Tooltip contentStyle={{ background: '#1a1a1a', border: '1px solid rgba(232,232,232,0.2)', borderRadius: '8px', color: '#fff' }}
+                                            formatter={(value) => [formatMoney(value), 'Doanh thu']} />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </div>
@@ -740,10 +661,7 @@ const AdminDashboard = () => {
                                 {revenueByMovie.map((movie, index) => (
                                     <div className="legend-item" key={index}>
                                         <div className="legend-left">
-                                            <span
-                                                className="legend-color"
-                                                style={{ background: COLORS[index % COLORS.length] }}
-                                            />
+                                            <span className="legend-color" style={{ background: COLORS[index % COLORS.length] }} />
                                             <p>{movie.name}</p>
                                         </div>
                                         <span>{movie.percent || '0%'}</span>
@@ -758,40 +676,38 @@ const AdminDashboard = () => {
                         </div>
                     )}
                 </div>
-            </div>
 
-            {/* =================================================
-                TOP MOVIES
-            ================================================= */}
-            <div className="top-movie-card">
-                <div className="card-header">
-                    <div>
-                        <h3>PHIM DOANH THU CAO</h3>
-                        <p className="section-description">Top phim có doanh thu cao nhất.</p>
+                {/* TOP MOVIES */}
+                <div className="top-movie-card">
+                    <div className="card-header">
+                        <div>
+                            <h3>PHIM DOANH THU CAO</h3>
+                            <p className="section-description">Top phim có doanh thu cao nhất.</p>
+                        </div>
                     </div>
-                </div>
-                <div className="top-movie-list">
-                    {topMovies.length > 0 ? (
-                        topMovies.map((movie, index) => (
-                            <div className="top-movie-item" key={movie.id || index}>
-                                <div className="top-movie-left">
-                                    <span className="rank">{String(index + 1).padStart(2, '0')}</span>
-                                    <div className="movie-poster-placeholder">
-                                        {movie.poster && <img src={movie.poster} alt={movie.title} />}
+                    <div className="top-movie-list">
+                        {topMovies.length > 0 ? (
+                            topMovies.map((movie, index) => (
+                                <div className="top-movie-item" key={movie.id || index}>
+                                    <div className="top-movie-left">
+                                        <span className="rank">{String(index + 1).padStart(2, '0')}</span>
+                                        <div className="movie-poster-placeholder">
+                                            {movie.poster && <img src={movie.poster} alt={movie.title} />}
+                                        </div>
+                                        <div>
+                                            <h4>{movie.title}</h4>
+                                            <p>{formatMoney(movie.revenue)}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h4>{movie.title}</h4>
-                                        <p>{formatMoney(movie.revenue)}</p>
-                                    </div>
+                                    <TrendingUp size={18} className="trend-icon" />
                                 </div>
-                                <TrendingUp size={18} className="trend-icon" />
-                            </div>
-                        ))
-                    ) : (
-                        <div className="no-data">Chưa có dữ liệu</div>
-                    )}
+                            ))
+                        ) : (
+                            <div className="no-data">Chưa có dữ liệu</div>
+                        )}
+                    </div>
+                    <button className="view-more-btn">Xem tất cả phim</button>
                 </div>
-                <button className="view-more-btn">Xem tất cả phim</button>
             </div>
         </div>
     );
