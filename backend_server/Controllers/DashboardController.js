@@ -42,7 +42,6 @@ class DashboardController {
             const [revenueRes] = await db.query(revenueQuery, params);
             const totalRevenue = Number(revenueRes[0]?.total) || 0;
 
-            // Thêm các chỉ số phụ nếu có period
             let response = {
                 success: true,
                 movies: movieRes[0].total || 0,
@@ -52,20 +51,17 @@ class DashboardController {
             };
 
             if (period) {
-                // User mới
                 const [newUsersRes] = await db.query(`
                     SELECT COUNT(*) as total 
                     FROM users 
                     WHERE role != 'admin' AND DATE(created_at) BETWEEN ? AND ?
                 `, [startDate, endDate]);
-                // Đơn hàng mới
                 const [newOrdersRes] = await db.query(`
                     SELECT COUNT(*) as total 
                     FROM bookings 
                     WHERE status = 'Completed' AND DATE(booking_date) BETWEEN ? AND ?
                 `, [startDate, endDate]);
 
-                // Tính tăng trưởng doanh thu so với kỳ trước
                 const duration = (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24);
                 const prevStart = new Date(startDate);
                 prevStart.setDate(prevStart.getDate() - duration - 1);
@@ -100,8 +96,7 @@ class DashboardController {
     }
 
     // ----------------------------------------------------------------
-    // 2. Doanh thu theo ngày (Line Chart)
-    //    Nhận startDate, endDate (query)
+    // 2. Doanh thu theo ngày (Line Chart) – ĐÃ SỬA GROUP BY
     // ----------------------------------------------------------------
     static async getRevenueTrend(req, res) {
         try {
@@ -109,14 +104,15 @@ class DashboardController {
             const end = endDate || new Date().toISOString().split('T')[0];
             let start = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-            // Nếu start > end thì đảo lại
             if (new Date(start) > new Date(end)) {
                 [start, end] = [end, start];
             }
 
+            // ✅ SỬA: GROUP BY DATE(booking_date) để tránh lỗi only_full_group_by
+            // Đồng thời format date ở frontend
             const [dailyRevenue] = await db.query(`
                 SELECT 
-                    DATE_FORMAT(booking_date, '%d/%m') as date,
+                    DATE(booking_date) as date,
                     COALESCE(SUM(total_amount), 0) as daily_total
                 FROM bookings
                 WHERE status = 'Completed' 
@@ -137,8 +133,7 @@ class DashboardController {
     }
 
     // ----------------------------------------------------------------
-    // 3. Doanh thu theo phim (Pie Chart)
-    //    Nhận startDate, endDate (query)
+    // 3. Doanh thu theo phim (Pie Chart) – KHÔNG GROUP BY LỖI
     // ----------------------------------------------------------------
     static async getRevenueByMovie(req, res) {
         try {
@@ -150,6 +145,7 @@ class DashboardController {
                 [start, end] = [end, start];
             }
 
+            // ✅ GROUP BY m.movie_id, m.title (đầy đủ)
             const [movieRevenue] = await db.query(`
                 SELECT 
                     m.title AS name, 
@@ -184,7 +180,6 @@ class DashboardController {
 
     // ----------------------------------------------------------------
     // 4. Số vé bán theo phim (Bar Chart)
-    //    Nhận startDate, endDate (query)
     // ----------------------------------------------------------------
     static async getTicketsByMovie(req, res) {
         try {
@@ -196,6 +191,7 @@ class DashboardController {
                 [start, end] = [end, start];
             }
 
+            // ✅ GROUP BY m.movie_id, m.title
             const [ticketDetails] = await db.query(`
                 SELECT 
                     m.title AS movieName,
@@ -224,11 +220,11 @@ class DashboardController {
 
     // ----------------------------------------------------------------
     // 5. Top phim doanh thu cao (Top List)
-    //    Nhận limit (query) mặc định 10
     // ----------------------------------------------------------------
     static async getTopMovies(req, res) {
         try {
             const limit = parseInt(req.query.limit) || 10;
+            // ✅ GROUP BY đầy đủ
             const [movies] = await db.query(`
                 SELECT 
                     m.movie_id,
@@ -263,6 +259,41 @@ class DashboardController {
         } catch (error) {
             console.error('❌ getTopMovies error:', error);
             return res.status(500).json({ success: false, message: 'Lỗi lấy top phim.', error: error.message });
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // 6. Tăng trưởng người dùng (Area Chart)
+    //    Nhận days (query) mặc định 30
+    // ----------------------------------------------------------------
+    static async getUserGrowth(req, res) {
+        try {
+            const days = parseInt(req.query.days) || 30;
+            const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+            const [data] = await db.query(`
+                SELECT 
+                    DATE(created_at) as date,
+                    COUNT(*) as new_users,
+                    SUM(COUNT(*)) OVER (ORDER BY DATE(created_at)) as cumulative
+                FROM users
+                WHERE role != 'admin'
+                  AND DATE(created_at) >= ?
+                GROUP BY DATE(created_at)
+                ORDER BY DATE(created_at) ASC
+            `, [startDate]);
+
+            return res.status(200).json({
+                success: true,
+                data: data.map(d => ({
+                    date: d.date,
+                    newUsers: d.new_users,
+                    cumulative: d.cumulative
+                }))
+            });
+        } catch (error) {
+            console.error('❌ getUserGrowth error:', error);
+            return res.status(500).json({ success: false, message: 'Lỗi lấy tăng trưởng người dùng.', error: error.message });
         }
     }
 
