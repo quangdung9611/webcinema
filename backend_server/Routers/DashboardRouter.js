@@ -1,26 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const DashboardController = require('../Controllers/DashboardController'); // ✅ Đổi tên
+const DashboardController = require('../Controllers/DashboardController');
 
-/**
- * @route   GET /admin/api/manage/me
- * Lấy thông tin admin để giữ trạng thái đăng nhập
- */
+// Giữ nguyên route me
 router.get('/me', (req, res) => {
-    res.json({ 
-        success: true, 
-        message: "Admin lane active" 
-    });
+    res.json({ success: true, message: "Admin lane active" });
 });
 
-/**
- * @route   GET /admin/api/manage/stats
- */
-router.get('/stats', DashboardController.getDashboardStats); // ✅ Đổi
-
-/**
- * @route   GET /admin/api/manage/revenue-chart
- */
-router.get('/revenue-chart', DashboardController.getRevenueChartData); // ✅ Đổi
+// ✅ Sửa đúng tên method
+router.get('/stats', DashboardController.getStats);
+router.get('/revenue-chart', DashboardController.getRevenueChartData);
+// Thêm route mới nếu cần
+router.get('/top-movies', DashboardController.getTopMovies);
+router.get('/user-growth', DashboardController.getUserGrowth);
 
 module.exports = router;

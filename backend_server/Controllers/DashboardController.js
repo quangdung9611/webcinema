@@ -2,33 +2,34 @@ const db = require('../Config/db');
 
 class DashboardController {
     /**
-     * Lấy thống kê tổng quan (card stats) – CŨ, giữ nguyên cho frontend cũ
+     * Lấy thống kê tổng quan (card stats)
      * GET /admin/api/manage/stats
-     * 
-     * ⚠️ Query params (tùy chọn): period = week | month | quarter | year
-     * Nếu không có period -> lấy tổng tất cả dữ liệu (không lọc)
+     * Query: period (week | month | quarter | year) – optional
      */
     static async getStats(req, res) {
         try {
             const { period } = req.query;
 
-            // Nếu có period, lọc theo thời gian
+            // Nếu có period, lọc theo thời gian cho doanh thu
             let dateFilter = '';
             let params = [];
+            let startDate, endDate;
 
             if (period) {
-                const { startDate, endDate } = DashboardController.getDateRange(period);
+                const range = DashboardController.getDateRange(period);
+                startDate = range.startDate;
+                endDate = range.endDate;
                 dateFilter = 'AND DATE(booking_date) BETWEEN ? AND ?';
                 params = [startDate, endDate];
             }
 
-            // 1. Tổng phim (không lọc theo thời gian)
+            // 1. Tổng phim
             const [movieRes] = await db.query("SELECT COUNT(*) as total FROM movies");
 
-            // 2. Tổng người dùng (không lọc)
+            // 2. Tổng người dùng (không tính admin)
             const [userRes] = await db.query("SELECT COUNT(*) as total FROM users WHERE role != 'admin'");
 
-            // 3. Tổng vé đã bán (không lọc theo thời gian, vì vé đã bán là tuyệt đối)
+            // 3. Tổng vé đã bán (Completed)
             const [ticketRes] = await db.query(`
                 SELECT COUNT(t.ticket_id) as total 
                 FROM tickets t
@@ -46,35 +47,33 @@ class DashboardController {
                 revenueQuery += ` ${dateFilter}`;
             }
             const [revenueRes] = await db.query(revenueQuery, params);
+            const totalRevenue = Number(revenueRes[0]?.total) || 0;
 
-            // 5. Người dùng mới trong kỳ (nếu có period)
+            // 5. Người dùng mới (nếu có period)
             let newUsers = 0;
+            let newOrders = 0;
+            let revenueGrowth = 0;
+
             if (period) {
+                // Người dùng mới
                 const [newUsersRes] = await db.query(`
                     SELECT COUNT(*) as total 
                     FROM users 
                     WHERE role != 'admin'
                       AND DATE(created_at) BETWEEN ? AND ?
-                `, params);
+                `, [startDate, endDate]);
                 newUsers = newUsersRes[0]?.total || 0;
-            }
 
-            // 6. Đơn hàng mới trong kỳ (nếu có period)
-            let newOrders = 0;
-            if (period) {
+                // Đơn hàng mới
                 const [newOrdersRes] = await db.query(`
                     SELECT COUNT(*) as total 
                     FROM bookings 
                     WHERE status = 'Completed'
                       AND DATE(booking_date) BETWEEN ? AND ?
-                `, params);
+                `, [startDate, endDate]);
                 newOrders = newOrdersRes[0]?.total || 0;
-            }
 
-            // 7. Tính tăng trưởng doanh thu so với kỳ trước (nếu có period)
-            let revenueGrowth = 0;
-            if (period) {
-                const { startDate, endDate } = DashboardController.getDateRange(period);
+                // Tăng trưởng doanh thu
                 const duration = (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24);
                 const prevStart = new Date(startDate);
                 prevStart.setDate(prevStart.getDate() - duration - 1);
@@ -90,23 +89,17 @@ class DashboardController {
                       AND DATE(booking_date) BETWEEN ? AND ?
                 `, [prevStartStr, prevEndStr]);
 
-                const currentRevenue = Number(revenueRes[0]?.total) || 0;
                 const prevRevenue = Number(prevRevenueRes[0]?.total) || 0;
-                revenueGrowth = prevRevenue > 0 ? ((currentRevenue - prevRevenue) / prevRevenue) * 100 : 0;
+                revenueGrowth = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0;
             }
 
-            const totalRevenue = Number(revenueRes[0]?.total) || 0;
-
-            // ⚠️ Frontend hiện tại chỉ cần 4 key cơ bản: movies, users, tickets, revenue
-            // Nếu frontend đã cập nhật để dùng dữ liệu mới, bạn có thể trả thêm các field khác
+            // Trả về dữ liệu cho frontend
             return res.status(200).json({
                 success: true,
-                // ===== NHỮNG KEY CŨ (frontend cũ vẫn dùng) =====
                 movies: movieRes[0].total || 0,
                 users: userRes[0].total || 0,
                 tickets: ticketRes[0].total || 0,
                 revenue: totalRevenue,
-                // ===== THÊM CÁC KEY MỚI (nếu frontend đã cập nhật) =====
                 ...(period ? {
                     new_users: newUsers,
                     new_orders: newOrders,
@@ -125,21 +118,19 @@ class DashboardController {
     }
 
     /**
-     * Lấy dữ liệu biểu đồ (CHỈNH SỬA ĐỂ TƯƠNG THÍCH VỚI FRONTEND CŨ)
+     * Lấy dữ liệu biểu đồ (line + pie + table)
      * GET /admin/api/manage/revenue-chart
-     * Query: startDate, endDate (nếu không có -> lấy 7 ngày gần nhất)
+     * Query: startDate, endDate
      */
     static async getRevenueChartData(req, res) {
         try {
             const { startDate, endDate } = req.query;
 
-            // Gán giá trị mặc định: 7 ngày trước đến hiện tại
+            // Mặc định 7 ngày gần nhất
             const end = endDate || new Date().toISOString().split('T')[0];
             const start = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-            console.log(`📅 Dashboard filter: ${start} → ${end}`);
-
-            // 1. Doanh thu theo ngày (line chart) – giữ nguyên format để frontend cũ đọc
+            // 1. Doanh thu theo ngày
             const [dailyRevenue] = await db.query(`
                 SELECT 
                     DATE_FORMAT(booking_date, '%d/%m') as date,
@@ -147,11 +138,11 @@ class DashboardController {
                 FROM bookings
                 WHERE status = 'Completed' 
                   AND DATE(booking_date) BETWEEN ? AND ?
-                GROUP BY DATE(booking_date), DATE_FORMAT(booking_date, '%d/%m')
+                GROUP BY DATE(booking_date)
                 ORDER BY DATE(booking_date) ASC
             `, [start, end]);
 
-            // 2. Doanh thu theo phim (pie chart) – frontend cũ dùng key 'name' và 'value'
+            // 2. Doanh thu theo phim
             const [movieRevenue] = await db.query(`
                 SELECT 
                     m.title AS name, 
@@ -165,7 +156,6 @@ class DashboardController {
                 ORDER BY value DESC
             `, [start, end]);
 
-            // Thêm phần trăm (frontend cũ có thể dùng hoặc không)
             const totalRevenue = movieRevenue.reduce((sum, item) => sum + Number(item.value), 0);
             const movieDataWithPercent = movieRevenue.map(item => ({
                 ...item,
@@ -173,7 +163,7 @@ class DashboardController {
                 percent: totalRevenue > 0 ? ((item.value / totalRevenue) * 100).toFixed(1) + '%' : '0%'
             }));
 
-            // 3. Số vé bán theo phim (ticketData) – frontend cũ dùng key 'movieName' và 'ticketCount'
+            // 3. Số vé bán theo phim
             const [ticketDetails] = await db.query(`
                 SELECT 
                     m.title AS movieName,
@@ -189,7 +179,7 @@ class DashboardController {
                 ORDER BY ticketCount DESC
             `, [start, end]);
 
-            // 4. (Tùy chọn) Lấy thêm tổng doanh thu, số đơn hàng trong kỳ – nếu frontend mới cần
+            // 4. Tổng doanh thu & số đơn hàng trong kỳ
             const [summary] = await db.query(`
                 SELECT 
                     COALESCE(SUM(total_amount), 0) as total_revenue,
@@ -199,19 +189,12 @@ class DashboardController {
                   AND DATE(booking_date) BETWEEN ? AND ?
             `, [start, end]);
 
-            console.log(`✅ Đã tìm thấy ${dailyRevenue.length} ngày dữ liệu, ${movieDataWithPercent.length} phim, ${ticketDetails.length} dòng vé.`);
-
             return res.status(200).json({
                 success: true,
-                // ===== CÁC KEY CŨ (frontend cũ vẫn dùng) =====
                 dailyData: dailyRevenue,
                 movieData: movieDataWithPercent,
                 ticketData: ticketDetails,
-                // ===== CÁC KEY MỚI (thêm để frontend mới có thể dùng) =====
-                period: {
-                    start,
-                    end,
-                },
+                period: { start, end },
                 summary: {
                     total_revenue: Number(summary[0]?.total_revenue) || 0,
                     total_orders: Number(summary[0]?.total_orders) || 0
@@ -228,9 +211,7 @@ class DashboardController {
     }
 
     /**
-     * 🔥 MỚI: Lấy danh sách phim doanh thu cao
-     * GET /admin/api/manage/top-movies
-     * Query: limit (default 10)
+     * Lấy top phim doanh thu cao
      */
     static async getTopMovies(req, res) {
         try {
@@ -239,7 +220,7 @@ class DashboardController {
                 SELECT 
                     m.movie_id,
                     m.title,
-                    m.poster_url,
+                    m.movie_poster as poster,
                     m.release_date,
                     COUNT(t.ticket_id) as tickets_sold,
                     COALESCE(SUM(b.total_amount), 0) as revenue,
@@ -249,7 +230,7 @@ class DashboardController {
                 JOIN bookings b ON s.showtime_id = b.showtime_id
                 JOIN tickets t ON b.booking_id = t.booking_id
                 WHERE b.status = 'Completed'
-                GROUP BY m.movie_id, m.title, m.poster_url, m.release_date
+                GROUP BY m.movie_id, m.title, m.movie_poster, m.release_date
                 ORDER BY revenue DESC
                 LIMIT ?
             `, [limit]);
@@ -259,7 +240,7 @@ class DashboardController {
                 movies: movies.map(m => ({
                     id: m.movie_id,
                     title: m.title,
-                    poster: m.poster_url,
+                    poster: m.poster,
                     release_date: m.release_date,
                     tickets_sold: m.tickets_sold,
                     revenue: Number(m.revenue),
@@ -277,9 +258,7 @@ class DashboardController {
     }
 
     /**
-     * 🔥 MỚI: Lấy thống kê tăng trưởng người dùng
-     * GET /admin/api/manage/user-growth
-     * Query: days (default 30)
+     * Tăng trưởng người dùng
      */
     static async getUserGrowth(req, res) {
         try {
@@ -317,7 +296,7 @@ class DashboardController {
     }
 
     /**
-     * Hàm hỗ trợ: Lấy khoảng thời gian theo period
+     * Helper: lấy khoảng thời gian theo period
      */
     static getDateRange(period) {
         const now = new Date();
