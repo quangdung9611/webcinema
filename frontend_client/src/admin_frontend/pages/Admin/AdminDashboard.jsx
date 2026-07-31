@@ -13,7 +13,9 @@ import {
     ArrowUpDown,
     ChevronLeft,
     ChevronRight,
-    RefreshCw
+    RefreshCw,
+    User,
+    Tag
 } from 'lucide-react';
 
 import {
@@ -40,8 +42,19 @@ const AdminDashboard = () => {
     /* =========================================================
         STATE - DỮ LIỆU DASHBOARD
     ========================================================= */
-    const [revenueTrend, setRevenueTrend] = useState([]);
+    // Chi tiết giao dịch (bảng)
+    const [transactions, setTransactions] = useState([]);
+    const [summary, setSummary] = useState({
+        totalRevenue: 0,
+        totalOrders: 0,
+        totalTickets: 0,
+        totalProducts: 0
+    });
+
+    // Biểu đồ tròn
     const [revenueByMovie, setRevenueByMovie] = useState([]);
+
+    // Top phim
     const [topMovies, setTopMovies] = useState([]);
 
     /* =========================================================
@@ -51,8 +64,8 @@ const AdminDashboard = () => {
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
     const [showCustomPicker, setShowCustomPicker] = useState(false);
-    const [searchRevenue, setSearchRevenue] = useState('');
-    const [sortField, setSortField] = useState('date');
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [sortField, setSortField] = useState('booking_date');
     const [sortDirection, setSortDirection] = useState('desc');
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
@@ -147,16 +160,28 @@ const AdminDashboard = () => {
                     });
                 }
 
-                // 2. DOANH THU THEO NGÀY
+                // 2. CHI TIẾT GIAO DỊCH (BẢNG)
                 const resTrend = await axios.get(
                     `https://api.quangdungcinema.id.vn/admin/api/manage/revenue-trend?startDate=${start}&endDate=${end}`,
                     { withCredentials: true }
                 );
 
                 if (resTrend.data.success) {
-                    setRevenueTrend(Array.isArray(resTrend.data.data) ? resTrend.data.data : []);
+                    setTransactions(Array.isArray(resTrend.data.data) ? resTrend.data.data : []);
+                    setSummary(resTrend.data.summary || {
+                        totalRevenue: 0,
+                        totalOrders: 0,
+                        totalTickets: 0,
+                        totalProducts: 0
+                    });
                 } else {
-                    setRevenueTrend([]);
+                    setTransactions([]);
+                    setSummary({
+                        totalRevenue: 0,
+                        totalOrders: 0,
+                        totalTickets: 0,
+                        totalProducts: 0
+                    });
                 }
 
                 // 3. DOANH THU THEO PHIM
@@ -182,6 +207,7 @@ const AdminDashboard = () => {
                 } else {
                     setTopMovies([]);
                 }
+
             } catch (error) {
                 console.error('❌ Dashboard Error:', error);
             } finally {
@@ -206,7 +232,7 @@ const AdminDashboard = () => {
     const handleRangeChange = (range) => {
         setTimeRange(range);
         setCurrentPage(1);
-        setSearchRevenue('');
+        setSearchKeyword('');
 
         if (range !== 'custom') {
             setShowCustomPicker(false);
@@ -224,7 +250,7 @@ const AdminDashboard = () => {
         if (customStart > customEnd) return;
 
         setCurrentPage(1);
-        setSearchRevenue('');
+        setSearchKeyword('');
         fetchAllData('custom');
     };
 
@@ -245,7 +271,9 @@ const AdminDashboard = () => {
         return d.toLocaleDateString('vi-VN', {
             day: '2-digit',
             month: '2-digit',
-            year: 'numeric'
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
     };
 
@@ -269,65 +297,72 @@ const AdminDashboard = () => {
     };
 
     /* =========================================================
-        SEARCH + SORT REVENUE DATA
+        SEARCH + SORT TRANSACTIONS
     ========================================================= */
-    const processedRevenue = useMemo(() => {
-        let data = [...revenueTrend];
+    const processedData = useMemo(() => {
+        let data = [...transactions];
 
         // SEARCH
-        if (searchRevenue.trim()) {
-            const keyword = searchRevenue.trim().toLowerCase();
+        if (searchKeyword.trim()) {
+            const keyword = searchKeyword.trim().toLowerCase();
             data = data.filter((item) => {
-                const date = formatDate(item.date).toLowerCase();
-                return date.includes(keyword);
+                const customer = (item.customer_name || '').toLowerCase();
+                const movie = (item.movie_title || '').toLowerCase();
+                const itemName = (item.item_name || '').toLowerCase();
+                const ticketCode = (item.ticket_code || '').toLowerCase();
+                return customer.includes(keyword) ||
+                    movie.includes(keyword) ||
+                    itemName.includes(keyword) ||
+                    ticketCode.includes(keyword);
             });
         }
 
         // SORT
         data.sort((a, b) => {
             let valueA, valueB;
-            if (sortField === 'date') {
-                valueA = new Date(a.date).getTime();
-                valueB = new Date(b.date).getTime();
+
+            if (sortField === 'booking_date') {
+                valueA = new Date(a.booking_date).getTime();
+                valueB = new Date(b.booking_date).getTime();
+            } else if (sortField === 'customer_name') {
+                valueA = a.customer_name || '';
+                valueB = b.customer_name || '';
+                return sortDirection === 'asc'
+                    ? valueA.localeCompare(valueB)
+                    : valueB.localeCompare(valueA);
+            } else if (sortField === 'movie_title') {
+                valueA = a.movie_title || '';
+                valueB = b.movie_title || '';
+                return sortDirection === 'asc'
+                    ? valueA.localeCompare(valueB)
+                    : valueB.localeCompare(valueA);
             } else if (sortField === 'revenue') {
-                valueA = Number(a.daily_total) || 0;
-                valueB = Number(b.daily_total) || 0;
-            } else if (sortField === 'orders') {
-                valueA = Number(a.order_count ?? a.orders ?? 0);
-                valueB = Number(b.order_count ?? b.orders ?? 0);
+                valueA = a.revenue || 0;
+                valueB = b.revenue || 0;
+            } else {
+                valueA = a[sortField] || '';
+                valueB = b[sortField] || '';
             }
-            return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
+
+            if (typeof valueA === 'number' && typeof valueB === 'number') {
+                return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
+            }
+
+            return 0;
         });
 
         return data;
-    }, [revenueTrend, searchRevenue, sortField, sortDirection]);
+    }, [transactions, searchKeyword, sortField, sortDirection]);
 
     /* =========================================================
         PAGINATION
     ========================================================= */
-    const totalPages = Math.max(1, Math.ceil(processedRevenue.length / rowsPerPage));
+    const totalPages = Math.max(1, Math.ceil(processedData.length / rowsPerPage));
 
-    const paginatedRevenue = useMemo(() => {
+    const paginatedData = useMemo(() => {
         const startIndex = (currentPage - 1) * rowsPerPage;
-        return processedRevenue.slice(startIndex, startIndex + rowsPerPage);
-    }, [processedRevenue, currentPage]);
-
-    /* =========================================================
-        TOTAL REVENUE IN TABLE
-    ========================================================= */
-    const tableTotalRevenue = useMemo(() => {
-        return processedRevenue.reduce((sum, item) => sum + (Number(item.daily_total) || 0), 0);
-    }, [processedRevenue]);
-
-    /* =========================================================
-        TOTAL ORDERS IN TABLE
-    ========================================================= */
-    const tableTotalOrders = useMemo(() => {
-        return processedRevenue.reduce(
-            (sum, item) => sum + Number(item.order_count ?? item.orders ?? 0),
-            0
-        );
-    }, [processedRevenue]);
+        return processedData.slice(startIndex, startIndex + rowsPerPage);
+    }, [processedData, currentPage]);
 
     /* =========================================================
         LOADING
@@ -418,15 +453,15 @@ const AdminDashboard = () => {
             ================================================= */}
             <div className="dashboard-main-grid">
                 {/* =================================================
-                    REVENUE TABLE
+                    TRANSACTION TABLE
                 ================================================= */}
                 <div className="chart-card revenue-table-card">
                     {/* HEADER */}
                     <div className="chart-header">
                         <div>
-                            <h3>DOANH THU THEO THỜI GIAN</h3>
+                            <h3>CHI TIẾT GIAO DỊCH</h3>
                             <p className="section-description">
-                                Theo dõi doanh thu từng ngày trong khoảng thời gian đã chọn.
+                                Danh sách chi tiết các vé và sản phẩm đã bán trong khoảng thời gian chọn.
                             </p>
                         </div>
                         <button
@@ -441,7 +476,6 @@ const AdminDashboard = () => {
 
                     {/* FILTER */}
                     <div className="revenue-filter-area">
-                        {/* RANGE */}
                         <div className="chart-filter-group">
                             <button
                                 className={`filter-btn ${timeRange === 'week' ? 'active' : ''}`}
@@ -470,15 +504,14 @@ const AdminDashboard = () => {
                             </button>
                         </div>
 
-                        {/* SEARCH */}
                         <div className="revenue-search">
                             <Search size={17} />
                             <input
                                 type="text"
-                                placeholder="Tìm theo ngày..."
-                                value={searchRevenue}
+                                placeholder="Tìm theo tên khách, phim, mã vé..."
+                                value={searchKeyword}
                                 onChange={(e) => {
-                                    setSearchRevenue(e.target.value);
+                                    setSearchKeyword(e.target.value);
                                     setCurrentPage(1);
                                 }}
                             />
@@ -521,77 +554,123 @@ const AdminDashboard = () => {
                     <div className="revenue-summary">
                         <div className="revenue-summary-item">
                             <span>Tổng doanh thu</span>
-                            <strong>{formatMoney(tableTotalRevenue)}</strong>
+                            <strong>{formatMoney(summary.totalRevenue)}</strong>
                         </div>
                         <div className="revenue-summary-item">
                             <span>Tổng đơn hàng</span>
-                            <strong>{tableTotalOrders}</strong>
+                            <strong>{summary.totalOrders}</strong>
                         </div>
                         <div className="revenue-summary-item">
-                            <span>Số ngày</span>
-                            <strong>{processedRevenue.length}</strong>
+                            <span>Tổng vé</span>
+                            <strong>{summary.totalTickets}</strong>
+                        </div>
+                        <div className="revenue-summary-item">
+                            <span>Tổng sản phẩm</span>
+                            <strong>{summary.totalProducts}</strong>
+                        </div>
+                        <div className="revenue-summary-item">
+                            <span>Số dòng</span>
+                            <strong>{processedData.length}</strong>
                         </div>
                     </div>
 
                     {/* TABLE */}
                     <div className="revenue-table-container">
-                        {paginatedRevenue.length > 0 ? (
+                        {paginatedData.length > 0 ? (
                             <table className="revenue-table">
                                 <thead>
                                     <tr>
-                                        <th onClick={() => handleSort('date')} className="sortable">
+                                        <th onClick={() => handleSort('booking_date')} className="sortable">
                                             <span>NGÀY</span>
                                             <ArrowUpDown size={14} />
                                         </th>
-                                        <th onClick={() => handleSort('orders')} className="sortable text-center">
-                                            <span>ĐƠN HÀNG</span>
+                                        <th onClick={() => handleSort('customer_name')} className="sortable">
+                                            <span>KHÁCH HÀNG</span>
                                             <ArrowUpDown size={14} />
                                         </th>
+                                        <th onClick={() => handleSort('movie_title')} className="sortable">
+                                            <span>PHIM</span>
+                                            <ArrowUpDown size={14} />
+                                        </th>
+                                        <th>
+                                            <span>CHI TIẾT</span>
+                                        </th>
+                                        <th className="text-center">SL</th>
+                                        <th className="text-right">ĐƠN GIÁ</th>
                                         <th onClick={() => handleSort('revenue')} className="sortable text-right">
-                                            <span>DOANH THU</span>
+                                            <span>THÀNH TIỀN</span>
                                             <ArrowUpDown size={14} />
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {paginatedRevenue.map((item, index) => {
-                                        const orders = Number(item.order_count ?? item.orders ?? 0);
-                                        const revenue = Number(item.daily_total) || 0;
-                                        return (
-                                            <tr key={`${item.date}-${index}`}>
-                                                <td>
-                                                    <div className="revenue-date">
-                                                        <Calendar size={16} />
-                                                        <span>{formatDate(item.date)}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="text-center">
-                                                    <span className="order-count">{orders}</span>
-                                                </td>
-                                                <td className="text-right">
-                                                    <strong className="revenue-value">{formatMoney(revenue)}</strong>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
+                                    {paginatedData.map((item, index) => (
+                                        <tr key={index}>
+                                            <td>
+                                                <div className="revenue-date">
+                                                    <Calendar size={16} />
+                                                    <span>{formatDate(item.booking_date)}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <User size={14} />
+                                                    <span>{item.customer_name}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <Film size={14} />
+                                                    <span>{item.movie_title}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                                    {item.item_type === 'Vé' ? (
+                                                        <>
+                                                            <Tag size={14} />
+                                                            <span>{item.seat_info}</span>
+                                                            {item.ticket_code && (
+                                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                                                                    ({item.ticket_code})
+                                                                </span>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span style={{ color: 'var(--text-secondary)' }}>🍿</span>
+                                                            <span>{item.item_name}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="text-center">{item.quantity}</td>
+                                            <td className="text-right">{formatMoney(item.unit_price)}</td>
+                                            <td className="text-right">
+                                                <strong style={{ color: 'var(--white-pure)' }}>
+                                                    {formatMoney(item.revenue)}
+                                                </strong>
+                                            </td>
+                                        </tr>
+                                    ))}
                                 </tbody>
                             </table>
                         ) : (
                             <div className="revenue-empty">
                                 <DollarSign size={42} />
-                                <h4>Chưa có dữ liệu doanh thu</h4>
-                                <p>Không tìm thấy doanh thu trong khoảng thời gian này.</p>
+                                <h4>Chưa có giao dịch</h4>
+                                <p>Không tìm thấy giao dịch nào trong khoảng thời gian này.</p>
                             </div>
                         )}
                     </div>
 
                     {/* PAGINATION */}
-                    {processedRevenue.length > 0 && (
+                    {processedData.length > 0 && (
                         <div className="revenue-pagination">
                             <span className="pagination-info">
                                 Hiển thị <strong>{(currentPage - 1) * rowsPerPage + 1}</strong> -{' '}
-                                <strong>{Math.min(currentPage * rowsPerPage, processedRevenue.length)}</strong> trong tổng
-                                số <strong>{processedRevenue.length}</strong> ngày
+                                <strong>{Math.min(currentPage * rowsPerPage, processedData.length)}</strong> trong tổng
+                                số <strong>{processedData.length}</strong> dòng
                             </span>
                             <div className="pagination-buttons">
                                 <button
