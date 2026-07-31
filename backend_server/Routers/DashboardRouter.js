@@ -1,46 +1,14 @@
 const express = require('express');
-
 const router = express.Router();
+const DashboardController = require('../Controllers/DashboardController');
 
-const DashboardController =
-    require('../Controllers/DashboardController');
+router.get('/me', (req, res) => {
+    res.json({ success: true, message: "Admin lane active" });
+});
 
-
-// =========================================================
-// ADMIN DASHBOARD
-// =========================================================
-
-
-// Dashboard overview
-router.get(
-    '/dashboard/overview',
-    DashboardController.getOverview
-);
-
-
-// Dashboard analytics
-router.get(
-    '/dashboard/analytics',
-    DashboardController.getAnalytics
-);
-
-
-// Recent activity
-router.get(
-    '/dashboard/recent-activity',
-    DashboardController.getRecentActivity
-);
-
-
-// =========================================================
-// LEGACY API
-// Giữ lại để các component cũ không chết
-// =========================================================
-
-router.get(
-    '/stats',
-    DashboardController.getStats
-);
-
+router.get('/stats', DashboardController.getStats);
+router.get('/revenue-chart', DashboardController.getRevenueChartData);
+router.get('/top-movies', DashboardController.getTopMovies);
+router.get('/user-growth', DashboardController.getUserGrowth);
 
 module.exports = router;
