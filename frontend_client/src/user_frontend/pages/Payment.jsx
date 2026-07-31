@@ -14,10 +14,8 @@ import '../styles/Payment.css';
 import { useAuth } from '../../context/AuthContext';
 
 const Payment = () => {
-
     const location = useLocation();
     const navigate = useNavigate();
-
     const { user } = useAuth();
 
     const {
@@ -36,15 +34,11 @@ const Payment = () => {
     // =========================
     // STATES
     // =========================
-
     const [couponCode, setCouponCode] = useState('');
     const [discountAmount, setDiscountAmount] = useState(0);
     const [appliedCouponId, setAppliedCouponId] = useState(null);
-
     const [paymentMethod, setPaymentMethod] = useState('bank');
-
     const [isTimerActive, setIsTimerActive] = useState(false);
-
     const [isProcessing, setIsProcessing] = useState(false);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
@@ -54,7 +48,7 @@ const Payment = () => {
         email: user?.email || '',
         phone: user?.phone || ''
     });
-   
+
     const [modal, setModal] = useState({
         show: false,
         type: '',
@@ -63,25 +57,12 @@ const Payment = () => {
         onConfirm: null
     });
 
-    // =========================
-    // SHOWTIME ID
-    // =========================
-
-    const showtimeId =
-        selectedShowtime?.showtime_id ||
-        selectedShowtime?.id;
+    const showtimeId = selectedShowtime?.showtime_id || selectedShowtime?.id;
 
     // =========================
     // NOTICE
     // =========================
-
-    const showNotice = (
-        type,
-        title,
-        message,
-        onConfirm = null
-    ) => {
-
+    const showNotice = (type, title, message, onConfirm = null) => {
         setModal({
             show: true,
             type,
@@ -89,57 +70,37 @@ const Payment = () => {
             message,
             onConfirm:
                 onConfirm ||
-                (() =>
-                    setModal(prev => ({
-                        ...prev,
-                        show: false
-                    })))
+                (() => setModal(prev => ({ ...prev, show: false })))
         });
     };
 
     // =========================
     // TOTAL
     // =========================
-
-    const subTotal =
-        Number(totalTicketPrice || 0) +
-        Number(totalFoodPrice || 0);
-
-    const grandTotal =
-        subTotal - Number(discountAmount || 0);
+    const subTotal = Number(totalTicketPrice || 0) + Number(totalFoodPrice || 0);
+    const grandTotal = subTotal - Number(discountAmount || 0);
 
     // =========================
     // INIT
     // =========================
-
     useEffect(() => {
-
         window.scrollTo(0, 0);
 
-        // Kiểm tra dữ liệu đầu vào
-        if (
-            !movie ||
-            !selectedSeats ||
-            selectedSeats.length === 0
-        ) {
+        if (!movie || !selectedSeats || selectedSeats.length === 0) {
             navigate('/');
             return;
         }
 
-        // Kiểm tra user đã đăng nhập chưa
         if (!user || !user.user_id) {
             showNotice(
                 'error',
                 'YÊU CẦU ĐĂNG NHẬP',
                 'Vui lòng đăng nhập để tiếp tục đặt vé.',
-                () => {
-                    navigate('/login', { state: { from: location.pathname } });
-                }
+                () => navigate('/login', { state: { from: location.pathname } })
             );
             return;
         }
 
-        // Nếu user đã đăng nhập, cập nhật userInfo
         if (user) {
             setUserInfo({
                 user_id: user.user_id || '',
@@ -149,7 +110,7 @@ const Payment = () => {
             });
         }
 
-        // 👉 Xóa key OTP cũ nếu không có giữ ghế (để reset cho booking mới)
+        // Reset OTP nếu không có giữ ghế
         if (!sessionStorage.getItem('holdExpiresAt')) {
             sessionStorage.removeItem('bankHasSentOtp');
             sessionStorage.removeItem('bankHasVisited');
@@ -158,60 +119,38 @@ const Payment = () => {
             sessionStorage.removeItem('bankLastOtpSentAt');
             sessionStorage.removeItem('paymentCompleted');
             sessionStorage.removeItem('completedBookingId');
-            sessionStorage.removeItem('paymentInitiated'); // 🆕 Xóa flag cũ
+            sessionStorage.removeItem('paymentInitiated');
         }
 
-        if (
-            sessionStorage.getItem(
-                'holdExpiresAt'
-            )
-        ) {
+        if (sessionStorage.getItem('holdExpiresAt')) {
             setIsTimerActive(true);
         }
-
     }, [movie, selectedSeats, navigate, user, location.pathname]);
 
     // =========================
     // TIMER EXPIRE
     // =========================
-
     const handleTimeExpire = async () => {
-
         try {
-
-            if (
-                selectedSeats?.length > 0
-            ) {
-
+            if (selectedSeats?.length > 0) {
                 await axios.post(
                     'https://api.quangdungcinema.id.vn/api/seats/release',
                     {
-                        seatIds:
-                            selectedSeats.map(
-                                s => s.seat_id
-                            ),
-
+                        seatIds: selectedSeats.map(s => s.seat_id),
                         showtimeId
                     }
                 );
             }
-
         } catch (err) {
-
-            console.error(
-                'Lỗi nhả ghế:',
-                err
-            );
+            console.error('Lỗi nhả ghế:', err);
         }
 
         sessionStorage.clear();
-
         showNotice(
             'error',
             'HẾT THỜI GIAN',
             'Ghế đã được mở khóa.',
             () => {
-
                 navigate('/');
                 window.location.reload();
             }
@@ -221,115 +160,69 @@ const Payment = () => {
     // =========================
     // APPLY COUPON
     // =========================
+    const handleApplyCoupon = async () => {
+        const inputCode = couponCode.toUpperCase().trim();
+        if (!inputCode) {
+            showNotice('error', 'THIẾU THÔNG TIN', 'Vui lòng nhập mã giảm giá.');
+            return;
+        }
 
-    const handleApplyCoupon =
-        async () => {
+        setIsApplyingCoupon(true);
+        try {
+            const res = await axios.post(
+                'https://api.quangdungcinema.id.vn/api/coupons/check',
+                { code: inputCode, userId: userInfo.user_id }
+            );
 
-            const inputCode =
-                couponCode
-                    .toUpperCase()
-                    .trim();
-
-            if (!inputCode) {
-
-                showNotice(
-                    'error',
-                    'THIẾU THÔNG TIN',
-                    'Vui lòng nhập mã giảm giá.'
-                );
-
-                return;
+            if (res.data.success) {
+                const { discount_value, coupon_id } = res.data.data;
+                setDiscountAmount(Number(discount_value));
+                setAppliedCouponId(coupon_id);
+                showNotice('success', 'THÀNH CÔNG', 'Áp dụng mã giảm giá thành công.');
             }
-
-            setIsApplyingCoupon(true);
-
-            try {
-
-                const res =
-                    await axios.post(
-                        'https://api.quangdungcinema.id.vn/api/coupons/check',
-                        {
-                            code: inputCode,
-                            userId:
-                                userInfo.user_id
-                        }
-                    );
-
-                if (res.data.success) {
-
-                    const {
-                        discount_value,
-                        coupon_id
-                    } = res.data.data;
-
-                    setDiscountAmount(
-                        Number(discount_value)
-                    );
-
-                    setAppliedCouponId(
-                        coupon_id
-                    );
-
-                    showNotice(
-                        'success',
-                        'THÀNH CÔNG',
-                        'Áp dụng mã giảm giá thành công.'
-                    );
-                }
-
-            } catch (err) {
-
-                showNotice(
-                    'error',
-                    'THÔNG BÁO',
-                    err.response?.data
-                        ?.message ||
-                        'Mã không hợp lệ.'
-                );
-            } finally {
-                setIsApplyingCoupon(false);
-            }
-        };
+        } catch (err) {
+            showNotice(
+                'error',
+                'THÔNG BÁO',
+                err.response?.data?.message || 'Mã không hợp lệ.'
+            );
+        } finally {
+            setIsApplyingCoupon(false);
+        }
+    };
 
     // =========================
-    // PAYMENT
+    // PAYMENT – XÓA OTP CŨ TRƯỚC KHI GỬI
     // =========================
-
     const handleProceed = async () => {
-
-        // Kiểm tra thông tin người dùng
         if (!userInfo.user_id) {
             showNotice(
                 'error',
                 'YÊU CẦU ĐĂNG NHẬP',
                 'Vui lòng đăng nhập để tiếp tục.',
-                () => {
-                    navigate('/login', { state: { from: location.pathname } });
-                }
+                () => navigate('/login', { state: { from: location.pathname } })
             );
             return;
         }
 
-        if (
-            !userInfo.full_name ||
-            !userInfo.email ||
-            !userInfo.phone
-        ) {
-
-            showNotice(
-                'error',
-                'THIẾU THÔNG TIN',
-                'Vui lòng nhập đầy đủ thông tin nhận vé.'
-            );
-
+        if (!userInfo.full_name || !userInfo.email || !userInfo.phone) {
+            showNotice('error', 'THIẾU THÔNG TIN', 'Vui lòng nhập đầy đủ thông tin nhận vé.');
             return;
         }
+
+        // ⭐️ XÓA TOÀN BỘ OTP CŨ ĐỂ BẮT ĐẦU PHIÊN MỚI
+        sessionStorage.removeItem('bankHasSentOtp');
+        sessionStorage.removeItem('bankHasVisited');
+        sessionStorage.removeItem('bankOtpTimeLeft');
+        sessionStorage.removeItem('bankOtpInput');
+        sessionStorage.removeItem('bankLastOtpSentAt');
+        sessionStorage.removeItem('paymentCompleted');
+        sessionStorage.removeItem('completedBookingId');
+        sessionStorage.removeItem('paymentInitiated');
 
         setIsProcessing(true);
 
         try {
-
-            // Đảm bảo selectedSeats có đủ thông tin
             const seatsWithPrice = selectedSeats.map(seat => ({
                 seat_id: seat.seat_id,
                 seat_row: seat.seat_row || '',
@@ -337,7 +230,6 @@ const Payment = () => {
                 price: seat.price || 0
             }));
 
-            // Đảm bảo selectedFoods có đúng cấu trúc
             const foodsWithQuantity = (selectedFoods || []).map(food => ({
                 product_id: food.product_id,
                 product_name: food.product_name || '',
@@ -361,32 +253,18 @@ const Payment = () => {
                 status: 'pending'
             };
 
-            console.log('📦 Payment payload:', postData);
+            const response = await axios.post(
+                'https://api.quangdungcinema.id.vn/api/payment/process',
+                postData
+            );
 
-            const response =
-                await axios.post(
-                    'https://api.quangdungcinema.id.vn/api/payment/process',
-                    postData
-                );
-
-            if (
-                response.data.success
-            ) {
-
+            if (response.data.success) {
                 const finalState = {
                     orderId: response.data.bookingId,
                     bookingId: response.data.bookingId,
-
-                    totalAmount:
-                        Number(grandTotal),
-
-                    customerName:
-                        userInfo.full_name,
-
-                    customerEmail:
-                        userInfo.email,
-
-                    // booking sidebar data
+                    totalAmount: Number(grandTotal),
+                    customerName: userInfo.full_name,
+                    customerEmail: userInfo.email,
                     movie,
                     selectedCinema,
                     selectedDate,
@@ -398,185 +276,83 @@ const Payment = () => {
                     totalFoodPrice,
                     showtimeDetail
                 };
-                // SAVE SUCCESS DATA
-                sessionStorage.setItem(
-                    'lastSuccessTicket',
-                    JSON.stringify(
-                        finalState
-                    )
-                );
 
-                // CLEAR TEMP
-                sessionStorage.removeItem(
-                    'holdExpiresAt'
-                );
-
-                sessionStorage.removeItem(
-                    'selectedSeats'
-                );
-
-                sessionStorage.removeItem(
-                    'currentShowtimeId'
-                );
-
-                // Xóa các key OTP để tránh xung đột
+                sessionStorage.setItem('lastSuccessTicket', JSON.stringify(finalState));
+                sessionStorage.removeItem('holdExpiresAt');
+                sessionStorage.removeItem('selectedSeats');
+                sessionStorage.removeItem('currentShowtimeId');
                 sessionStorage.removeItem('bankHasSentOtp');
                 sessionStorage.removeItem('bankHasVisited');
                 sessionStorage.removeItem('bankOtpTimeLeft');
                 sessionStorage.removeItem('bankOtpInput');
                 sessionStorage.removeItem('bankLastOtpSentAt');
-
                 setIsTimerActive(false);
 
-                // NAVIGATE PAYMENT
-                if (
-                    paymentMethod ===
-                    'bank'
-                ) {
-                    // 🆕 THÊM FLAG ĐỂ CHO PHÉP GỬI OTP
+                if (paymentMethod === 'bank') {
                     sessionStorage.setItem('paymentInitiated', 'true');
-                    navigate(
-                        '/bank-app',
-                        {
-                            state: finalState
-                        }
-                    );
-
+                    navigate('/bank-app', { state: finalState });
                 } else {
-                    // Đối với MoMo không cần flag, nhưng xóa để an toàn
                     sessionStorage.removeItem('paymentInitiated');
-                    navigate(
-                        '/momo-app',
-                        {
-                            state: finalState
-                        }
-                    );
+                    navigate('/momo-app', { state: finalState });
                 }
             } else {
-                // Nếu lỗi, xóa flag
                 sessionStorage.removeItem('paymentInitiated');
-                showNotice(
-                    'error',
-                    'LỖI',
-                    response.data?.message || 'Không thể xử lý thanh toán.'
-                );
+                showNotice('error', 'LỖI', response.data?.message || 'Không thể xử lý thanh toán.');
             }
-
         } catch (err) {
-
-            console.error(
-                'Lỗi thanh toán:',
-                err
-            );
-
+            console.error('Lỗi thanh toán:', err);
             const errorMessage = err.response?.data?.message || err.message || 'Không thể xử lý thanh toán.';
-            
-            // Xóa flag khi có lỗi
             sessionStorage.removeItem('paymentInitiated');
-            
-            showNotice(
-                'error',
-                'LỖI',
-                errorMessage
-            );
-
+            showNotice('error', 'LỖI', errorMessage);
         } finally {
-
             setIsProcessing(false);
         }
     };
 
+    // =========================
+    // RENDER
+    // =========================
     return (
-
         <div className="booking-wrapper">
-
-            {/* MODAL */}
             <Modal
                 show={modal.show}
                 type={modal.type}
                 title={modal.title}
                 message={modal.message}
                 onConfirm={modal.onConfirm}
-                onCancel={() =>
-                    setModal({
-                        ...modal,
-                        show: false
-                    })
-                }
+                onCancel={() => setModal({ ...modal, show: false })}
             />
 
             <div className="booking-container">
-
-                {/* SIDEBAR */}
                 <BookingSidebar
                     movie={movie}
-
                     showtimeDetail={showtimeDetail}
-
                     selectedCinema={selectedCinema}
-
                     selectedDate={selectedDate}
-
                     selectedShowtime={selectedShowtime}
-
-                    selectedSeats={
-                        Array.isArray(selectedSeats)
-                            ? selectedSeats
-                            : []
-                    }
-
-                    foods={
-                        Array.isArray(foods)
-                            ? foods
-                            : []
-                    }
-
-                    selectedFoods={
-                        Array.isArray(selectedFoods)
-                            ? selectedFoods
-                            : []
-                    }
-
+                    selectedSeats={Array.isArray(selectedSeats) ? selectedSeats : []}
+                    foods={Array.isArray(foods) ? foods : []}
+                    selectedFoods={Array.isArray(selectedFoods) ? selectedFoods : []}
                     totalTicketPrice={totalTicketPrice}
-
                     totalFoodPrice={totalFoodPrice}
-
                     grandTotal={grandTotal}
-
                     isTimerActive={isTimerActive}
-
                     onExpire={handleTimeExpire}
-
                     showFoodSection={true}
                 />
 
-                {/* MAIN */}
                 <section className="main-booking-area">
-
                     {/* COUPON */}
                     <div className="payment-card">
-
-                        <h3>
-                            MÃ GIẢM GIÁ
-                        </h3>
-
+                        <h3>MÃ GIẢM GIÁ</h3>
                         <div className="coupon-group">
-
                             <input
                                 type="text"
                                 placeholder="Nhập mã giảm giá..."
-                                value={
-                                    couponCode
-                                }
-                                onChange={e =>
-                                    setCouponCode(
-                                        e.target.value
-                                    )
-                                }
+                                value={couponCode}
+                                onChange={e => setCouponCode(e.target.value)}
                                 disabled={isApplyingCoupon}
                             />
-
-                            {/* ✅ Nút áp dụng mã - có loading */}
                             <LoadingButton
                                 type="button"
                                 loading={isApplyingCoupon}
@@ -593,127 +369,51 @@ const Payment = () => {
 
                     {/* USER INFO */}
                     <div className="payment-card">
-
-                        <h3>
-                            THÔNG TIN NHẬN VÉ
-                        </h3>
-
+                        <h3>THÔNG TIN NHẬN VÉ</h3>
                         <div className="form-grid">
-
                             <input
                                 type="text"
                                 placeholder="Họ và tên"
-                                value={
-                                    userInfo.full_name
-                                }
-                                onChange={e =>
-                                    setUserInfo({
-                                        ...userInfo,
-                                        full_name:
-                                            e.target.value
-                                    })
-                                }
+                                value={userInfo.full_name}
+                                onChange={e => setUserInfo({ ...userInfo, full_name: e.target.value })}
                             />
-
                             <input
                                 type="text"
                                 placeholder="Số điện thoại"
-                                value={
-                                    userInfo.phone
-                                }
-                                onChange={e =>
-                                    setUserInfo({
-                                        ...userInfo,
-                                        phone:
-                                            e.target.value
-                                    })
-                                }
+                                value={userInfo.phone}
+                                onChange={e => setUserInfo({ ...userInfo, phone: e.target.value })}
                             />
                         </div>
-
                         <input
                             type="email"
                             placeholder="Email nhận vé"
-                            value={
-                                userInfo.email
-                            }
-                            onChange={e =>
-                                setUserInfo({
-                                    ...userInfo,
-                                    email:
-                                        e.target.value
-                                })
-                            }
+                            value={userInfo.email}
+                            onChange={e => setUserInfo({ ...userInfo, email: e.target.value })}
                         />
                     </div>
 
                     {/* PAYMENT */}
                     <div className="payment-card">
-
-                        <h3>
-                            HÌNH THỨC THANH TOÁN
-                        </h3>
-
+                        <h3>HÌNH THỨC THANH TOÁN</h3>
                         <div className="payment-methods">
-
-                            {/* BANK */}
-                            <label
-                                className={`payment-method ${
-                                    paymentMethod ===
-                                    'bank'
-                                        ? 'active'
-                                        : ''
-                                }`}
-                            >
-
+                            <label className={`payment-method ${paymentMethod === 'bank' ? 'active' : ''}`}>
                                 <input
                                     type="radio"
-                                    checked={
-                                        paymentMethod ===
-                                        'bank'
-                                    }
-                                    onChange={() =>
-                                        setPaymentMethod(
-                                            'bank'
-                                        )
-                                    }
+                                    checked={paymentMethod === 'bank'}
+                                    onChange={() => setPaymentMethod('bank')}
                                 />
-
-                                <span>
-                                    VietQR
-                                </span>
+                                <span>VietQR</span>
                             </label>
-
-                            {/* MOMO */}
-                            <label
-                                className={`payment-method ${
-                                    paymentMethod ===
-                                    'momo'
-                                        ? 'active'
-                                        : ''
-                                }`}
-                            >
-
+                            <label className={`payment-method ${paymentMethod === 'momo' ? 'active' : ''}`}>
                                 <input
                                     type="radio"
-                                    checked={
-                                        paymentMethod ===
-                                        'momo'
-                                    }
-                                    onChange={() =>
-                                        setPaymentMethod(
-                                            'momo'
-                                        )
-                                    }
+                                    checked={paymentMethod === 'momo'}
+                                    onChange={() => setPaymentMethod('momo')}
                                 />
-
-                                <span>
-                                    MoMo
-                                </span>
+                                <span>MoMo</span>
                             </label>
                         </div>
 
-                        {/* ✅ Nút thanh toán - LoadingButton */}
                         <LoadingButton
                             type="button"
                             loading={isProcessing}
@@ -726,12 +426,7 @@ const Payment = () => {
                             XÁC NHẬN THANH TOÁN
                         </LoadingButton>
 
-                        <button
-                            className="btn-back"
-                            onClick={() =>
-                                navigate(-1)
-                            }
-                        >
+                        <button className="btn-back" onClick={() => navigate(-1)}>
                             QUAY LẠI
                         </button>
                     </div>
