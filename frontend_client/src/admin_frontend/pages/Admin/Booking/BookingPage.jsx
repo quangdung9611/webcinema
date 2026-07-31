@@ -18,6 +18,7 @@ import {
 import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
+import '../../../styles/BookingDetail.css'; // Giữ CSS của BookingDetail
 
 const BOOKING_API = 'https://api.quangdungcinema.id.vn/api/bookings';
 
@@ -66,10 +67,8 @@ const BookingPage = () => {
             setLoading(true);
             const res = await axios.get(`${BOOKING_API}/detail/${booking_id}`);
             setSelectedBooking(res.data.booking);
-            // Lấy từ trường tickets và foods trong response
             const tickets = res.data.tickets || [];
             const foods = res.data.foods || [];
-            // Gộp thành details cho dễ xử lý
             const details = [
                 ...tickets.map(t => ({
                     ...t,
@@ -77,6 +76,7 @@ const BookingPage = () => {
                     item_name: `Ghế ${t.seat_row}${t.seat_number}`,
                     quantity: 1,
                     price: t.price,
+                    subtotal: t.price,
                 })),
                 ...foods.map(f => ({
                     ...f,
@@ -84,6 +84,7 @@ const BookingPage = () => {
                     item_name: f.item_name,
                     quantity: f.quantity,
                     price: f.price,
+                    subtotal: f.price * f.quantity,
                 }))
             ];
             setBookingDetails(details);
@@ -228,101 +229,80 @@ const BookingPage = () => {
                 )}
             </AdminPage>
 
-            {/* DETAIL MODAL */}
+            {/* DETAIL MODAL – Nội dung lấy từ BookingDetail */}
             <AdminModal
                 open={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
-                title={`Chi tiết đơn hàng #${selectedBooking?.booking_id || ''}`}
+                title={`CHI TIẾT ĐƠN HÀNG #${selectedBooking?.booking_id || ''}`}
             >
                 {selectedBooking && (
                     <div className="booking-detail-wrapper">
-                        {/* Customer */}
-                        <section className="detail-section">
-                            <h3 className="section-title">
-                                <User size={18} />
-                                Thông tin khách hàng
-                            </h3>
-                            <div className="section-body">
-                                <p><strong>Họ tên:</strong> {selectedBooking.full_name}</p>
-                                <p><strong>Email:</strong> {selectedBooking.email}</p>
-                            </div>
-                        </section>
+                        <div className="detail-content-vertical">
+                            {/* 1. Khách hàng */}
+                            <section className="detail-section">
+                                <h3 className="section-title"><User size={18} /> Thông tin khách hàng</h3>
+                                <div className="section-body">
+                                    <p><strong>Họ tên:</strong> {selectedBooking.full_name}</p>
+                                    <p><strong>Số điện thoại:</strong> {selectedBooking.phone}</p>
+                                    <p><strong>Email:</strong> {selectedBooking.email}</p>
+                                </div>
+                            </section>
 
-                        {/* Showtime */}
-                        <section className="detail-section">
-                            <h3 className="section-title">
-                                <Film size={18} />
-                                Thông tin suất chiếu
-                            </h3>
-                            <div className="section-body">
-                                <p className="movie-name-highlight">{selectedBooking.movie_name}</p>
-                                <p>
-                                    <MapPin size={14} />
-                                    {selectedBooking.cinema_name} - {selectedBooking.room_name}
-                                </p>
-                                <p className="time-highlight">
-                                    <Calendar size={14} />
-                                    {selectedBooking.start_time}
-                                </p>
-                            </div>
-                        </section>
+                            {/* 2. Suất chiếu */}
+                            <section className="detail-section">
+                                <h3 className="section-title"><Film size={18} /> Thông tin suất chiếu</h3>
+                                <div className="section-body">
+                                    <p className="movie-name-highlight">{selectedBooking.movie_name}</p>
+                                    <p><MapPin size={14} /> {selectedBooking.cinema_name} - {selectedBooking.room_name}</p>
+                                    <p>
+                                            <Calendar size={14} /> 
+                                            <span className="time-highlight">Ngày: {selectedBooking.show_date}</span>
+                                            <span className="time-highlight" style={{ marginLeft: '12px' }}>Giờ: {selectedBooking.show_hour}</span>
+                                    </p>
+                                </div>
+                            </section>
 
-                        {/* Seats */}
-                        <section className="detail-section">
-                            <h3 className="section-title">
-                                <Ticket size={18} />
-                                Danh sách ghế
-                            </h3>
-                            <div className="seat-list-inline">
-                                {seats.length > 0 ? (
-                                    seats.map(seat => (
-                                        <span key={seat.booking_detail_id || seat.ticket_id} className="seat-badge">
-                                            {seat.seat_row}{seat.seat_number} ({seat.seat_type})
+                            {/* 3. Ghế ngồi */}
+                            <section className="detail-section">
+                                <h3 className="section-title"><Ticket size={18} /> Danh sách ghế ({seats.length})</h3>
+                                <div className="seat-list-inline">
+                                    {seats.map(s => (
+                                        <span key={s.booking_detail_id || s.ticket_id} className="seat-badge">
+                                            {s.seat_row}{s.seat_number} ({s.seat_type})
                                         </span>
-                                    ))
-                                ) : (
-                                    <p className="no-data">Không có ghế</p>
-                                )}
-                            </div>
-                        </section>
+                                    ))}
+                                </div>
+                            </section>
 
-                        {/* Foods */}
-                        <section className="detail-section">
-                            <h3 className="section-title">
-                                <Popcorn size={18} />
-                                Bắp nước
-                            </h3>
-                            <div className="food-list-vertical">
-                                {foods.length > 0 ? (
-                                    foods.map(food => (
-                                        <div key={food.booking_detail_id || food.id} className="food-item-line">
-                                            <span>
-                                                {food.item_name} <small>x{food.quantity}</small>
-                                            </span>
-                                            <strong>
-                                                {Number(food.price * food.quantity).toLocaleString()}đ
-                                            </strong>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="no-data">Không có dịch vụ.</p>
-                                )}
-                            </div>
-                        </section>
+                            {/* 4. Dịch vụ bắp nước */}
+                            <section className="detail-section">
+                                <h3 className="section-title"><Popcorn size={18} /> Dịch vụ bắp nước</h3>
+                                <div className="food-list-vertical">
+                                    {foods.length > 0 ? (
+                                        foods.map(f => (
+                                            <div key={f.booking_detail_id || f.id} className="food-item-line">
+                                                <span>{f.item_name} <small>x{f.quantity}</small></span>
+                                                <span className="text-bold">{Number(f.subtotal).toLocaleString()}đ</span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="no-data">Không có dịch vụ đi kèm.</p>
+                                    )}
+                                </div>
+                            </section>
 
-                        {/* Total */}
-                        <section className="detail-section total-card-final">
-                            <div className="footer-row">
-                                <span>Memo:</span>
-                                <strong>{selectedBooking.memo}</strong>
-                            </div>
-                            <div className="footer-row main-total">
-                                <span>TỔNG TIỀN</span>
-                                <strong className="amount-highlight">
-                                    {Number(selectedBooking.total_amount).toLocaleString()}đ
-                                </strong>
-                            </div>
-                        </section>
+                            {/* 5. Tổng tiền */}
+                            <section className="detail-section total-card-final">
+                                <div className="footer-row">
+                                    <span>Mã đơn (Memo):</span>
+                                    <span className="memo-text">{selectedBooking.memo || 'N/A'}</span>
+                                </div>
+                                <div className="footer-row main-total">
+                                    <span>TỔNG THANH TOÁN</span>
+                                    <span className="amount-highlight">{Number(selectedBooking.total_amount).toLocaleString()}đ</span>
+                                </div>
+                            </section>
+                        </div>
                     </div>
                 )}
             </AdminModal>

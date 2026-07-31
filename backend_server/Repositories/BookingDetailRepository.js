@@ -1,6 +1,7 @@
 const db = require("../Config/db");
 
 class BookingDetailRepository {
+  // ---- Các phương thức hiện có ----
   async findByBookingId(connection, bookingId) {
     const [rows] = await connection.query(
       `SELECT booking_detail_id, product_id, item_name, quantity, price, seat_id, created_at
@@ -68,6 +69,27 @@ class BookingDetailRepository {
       [detailId]
     );
     return result.affectedRows;
+  }
+
+  // ---- PHƯƠNG THỨC MỚI: LẤY BOOKING KÈM SUẤT CHIẾU ----
+  async findBookingWithShowtime(connection, bookingId) {
+    const [rows] = await connection.query(
+      `SELECT 
+          b.*,
+          s.start_time,
+          m.title AS movie_name,
+          c.cinema_name,
+          r.room_name
+       FROM bookings b
+       LEFT JOIN showtimes s ON b.showtime_id = s.showtime_id
+       LEFT JOIN movies m ON s.movie_id = m.movie_id
+       LEFT JOIN rooms r ON s.room_id = r.room_id
+       LEFT JOIN cinemas c ON r.cinema_id = c.cinema_id
+       WHERE b.booking_id = ?
+      `,
+      [bookingId]
+    );
+    return rows[0];
   }
 }
 

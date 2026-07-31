@@ -1,11 +1,7 @@
-/* --- BIẾN MÀU SẮC CHỦ ĐẠO (Chỉ giữ lại các biến trạng thái đặc thù của sơ đồ ghế) --- */
-:root
-{
-    --success: #10b981;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --radius: 14px;
-}
+/* --------------------------------------------------------------------
+   ADMIN TICKET – QUẢN LÝ VÉ & SƠ ĐỒ GHẾ
+   Sử dụng nền tối, chữ sáng (phù hợp với giao diện admin)
+   -------------------------------------------------------------------- */
 
 /* --- TỔNG THỂ --- */
 .admin-ticket-container
@@ -24,15 +20,17 @@
     align-items: center;
     justify-content: center;
     gap: 12px;
+    color: #e2e8f0;
 }
 
 /* --- TOOLBAR BỘ LỌC --- */
 .top-toolbar
 {
     padding: 1.5rem;
-    border-radius: var(--radius);
-    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    border: 1px solid #334155;
     margin-bottom: 2rem;
+    background: #1e293b;
 }
 
 .filter-selection-grid
@@ -54,21 +52,45 @@
 {
     font-weight: 700;
     text-transform: uppercase;
+    color: #e2e8f0;
 }
 
 .filter-group select
 {
     height: 48px;
     padding: 0 1rem;
-    border: 1.5px solid #e2e8f0;
+    border: 1.5px solid #475569;
     border-radius: 10px;
+    background: #0f172a;
+    color: #f1f5f9;
     transition: all 0.2s;
     cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23e2e8f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
 }
 
 .filter-group select:focus
 {
     outline: none;
+    border-color: #64748b;
+    box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.3);
+}
+
+.filter-group select option
+{
+    background: #0f172a;
+    color: #f1f5f9;
+}
+
+.filter-group select:disabled
+{
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* --- NÚT CHUYỂN TAB --- */
@@ -78,6 +100,7 @@
     border-radius: 10px;
     display: inline-flex;
     gap: 4px;
+    background: #0f172a;
 }
 
 .view-mode-switch button
@@ -91,6 +114,20 @@
     cursor: pointer;
     border-radius: 8px;
     transition: all 0.3s ease;
+    background: transparent;
+    color: #94a3b8;
+}
+
+.view-mode-switch button.active
+{
+    background: #3b82f6;
+    color: #fff;
+}
+
+.view-mode-switch button:hover:not(.active)
+{
+    background: #334155;
+    color: #e2e8f0;
 }
 
 /* --- STATS CARDS --- */
@@ -108,7 +145,7 @@
     align-items: center;
     gap: 20px;
     padding: 1.5rem;
-    border-radius: var(--radius);
+    border-radius: 14px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -137,6 +174,8 @@
     font-weight: 800;
     display: block;
     line-height: 1;
+    color: #fff;
+    font-size: 2rem;
 }
 
 .stat-card p
@@ -146,6 +185,7 @@
     opacity: 0.9;
     display: flex;
     align-items: center;
+    color: #fff;
 }
 
 /* --- TABLE SECTION --- */
@@ -155,33 +195,43 @@
     margin-bottom: 1.5rem;
 }
 
-.search-icon-input
+.search-bar .search-icon
 {
     position: absolute;
     left: 15px;
     top: 50%;
     transform: translateY(-50%);
+    color: #94a3b8;
 }
 
 .search-bar input
 {
     width: 100%;
     padding: 12px 15px 12px 45px;
-    border: 1.5px solid #e2e8f0;
+    border: 1.5px solid #475569;
     border-radius: 10px;
     transition: all 0.2s;
+    background: #0f172a;
+    color: #f1f5f9;
+}
+
+.search-bar input::placeholder
+{
+    color: #64748b;
 }
 
 .search-bar input:focus
 {
     outline: none;
+    border-color: #64748b;
+    box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.3);
 }
 
 .admin-table
 {
     width: 100%;
     border-collapse: collapse;
-    border-radius: var(--radius);
+    border-radius: 14px;
     overflow: hidden;
 }
 
@@ -191,13 +241,15 @@
     text-align: left;
     font-weight: 700;
     text-transform: uppercase;
-    border-bottom: 2px solid #f1f5f9;
+    border-bottom: 2px solid #334155;
+    color: #e2e8f0;
 }
 
 .admin-table td
 {
     padding: 1.25rem 1rem;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #334155;
+    color: #f1f5f9;
 }
 
 .status-badge
@@ -212,14 +264,14 @@
 
 .status-badge.used
 {
-    background: #dcfce7;
-    color: #15803d;
+    background: #10b981;
+    color: #fff;
 }
 
 .status-badge.pending
 {
-    background: #fef3c7;
-    color: #b45309;
+    background: #f59e0b;
+    color: #0f172a;
 }
 
 /* --- VISUAL MONITOR (SƠ ĐỒ GHẾ GIÁM SÁT) --- */
@@ -228,7 +280,8 @@
     padding: 4rem 2rem;
     border-radius: 24px;
     text-align: center;
-    border: 1px solid #f1f5f9;
+    border: 1px solid #334155;
+    background: #1e293b;
 }
 
 .screen-bar-admin
@@ -242,6 +295,9 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
+    background: #475569;
+    color: #e2e8f0;
+    padding: 0.5rem 0;
 }
 
 .monitor-grid
@@ -263,6 +319,7 @@
 {
     width: 30px;
     font-weight: 800;
+    color: #e2e8f0;
 }
 
 .seat-item-admin
@@ -277,44 +334,46 @@
     align-items: center;
     cursor: default;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid #e2e8f0;
+    border: 1px solid #475569;
+    background: #0f172a;
+    color: #f1f5f9;
 }
 
-.seat-num-text
+.seat-item-admin .seat-icon
+{
+    font-size: 14px;
+    opacity: 0.5;
+}
+
+.seat-item-admin .seat-text
 {
     font-weight: 700;
-    z-index: 2;
+    font-size: 0.7rem;
 }
 
-.seat-icon-bg
-{
-    position: absolute;
-    opacity: 0.2;
-    z-index: 1;
-}
-
-/* TRẠNG THÁI GHẾ TRONG TRANG VÉ */
+/* TRẠNG THÁI GHẾ */
 .seat-item-admin.empty
 {
-    border-color: #cbd5e1;
+    border-color: #475569;
+    background: #0f172a;
 }
 
 .seat-item-admin.reserved
 {
-    background-color: var(--warning) !important;
+    background-color: #f59e0b !important;
     border-color: #d97706;
 }
 
 .seat-item-admin.sold
 {
-    background-color: var(--danger) !important;
+    background-color: #ef4444 !important;
     border-color: #dc2626;
     cursor: pointer;
 }
 
 .seat-item-admin.used
 {
-    background-color: var(--success) !important;
+    background-color: #10b981 !important;
     border-color: #059669;
 }
 
@@ -337,6 +396,10 @@
     text-transform: uppercase;
     max-width: 90%;
     overflow: hidden;
+    color: #fff;
+    font-size: 0.55rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 /* --- CHÚ THÍCH (LEGEND) --- */
@@ -347,7 +410,7 @@
     gap: 2rem;
     margin-top: 3rem;
     padding-top: 2rem;
-    border-top: 1px dashed #e2e8f0;
+    border-top: 1px dashed #475569;
 }
 
 .legend-item
@@ -356,6 +419,7 @@
     align-items: center;
     gap: 0.5rem;
     font-weight: 600;
+    color: #e2e8f0;
 }
 
 .legend-item .box
@@ -367,22 +431,23 @@
 
 .box.empty
 {
-    border: 1px solid #e2e8f0;
+    border: 1px solid #475569;
+    background: #0f172a;
 }
 
 .box.reserved
 {
-    background: var(--warning);
+    background: #f59e0b;
 }
 
 .box.sold
 {
-    background: var(--danger);
+    background: #ef4444;
 }
 
 .box.used
 {
-    background: var(--success);
+    background: #10b981;
 }
 
 /* --- UTILS --- */
@@ -394,9 +459,10 @@
     padding: 4rem;
     font-weight: 600;
     gap: 12px;
+    color: #e2e8f0;
 }
 
-.spin-icon
+.spin
 {
     animation: spin 1s linear infinite;
 }
@@ -411,33 +477,42 @@
 {
     text-align: center;
     padding: 4rem;
-    border-radius: var(--radius);
-    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+    border: 1px dashed #475569;
+    color: #94a3b8;
 }
 
 .checkin-btn
 {
     padding: 6px 16px;
-    background: #4f46e5;
+    background: #3b82f6;
     border: none;
     border-radius: 6px;
     font-weight: 600;
     cursor: pointer;
     transition: 0.2s;
+    color: #fff;
+}
+
+.checkin-btn:hover
+{
+    background: #2563eb;
 }
 
 .disabled-btn
 {
     padding: 6px 16px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #334155;
     border-radius: 6px;
     cursor: not-allowed;
+    background: transparent;
+    color: #64748b;
 }
+
 /* ==========================================================================
-   MÃ BỔ SUNG RESPONSIVE MEDIA QUERIES
+   RESPONSIVE
    ========================================================================== */
 
-/* --- CHO MÀN HÌNH MEDIUM & TABLET (Dưới 992px) --- */
 @media (max-width: 992px) {
     .ticket-stats-cards {
         gap: 1rem;
@@ -448,17 +523,15 @@
     }
 }
 
-/* --- CHO MÀN HÌNH NHỎ & MOBILE (Dưới 768px) --- */
 @media (max-width: 768px) {
     .admin-ticket-container {
-        padding: 1rem; /* Thu nhỏ khoảng cách viền tổng thể */
+        padding: 1rem;
     }
 
     .admin-ticket-header h2 {
         margin-bottom: 1.5rem;
     }
 
-    /* Chuyển 3 khối thống kê thành hàng dọc */
     .ticket-stats-cards {
         grid-template-columns: 1fr;
         gap: 1rem;
@@ -468,13 +541,11 @@
         padding: 1rem;
     }
 
-    /* Chuyển các ô select bộ lọc thành hàng đơn xếp chồng */
     .filter-selection-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
 
-    /* Kéo dài nút chuyển chế độ Tab full màn hình */
     .view-mode-switch {
         display: flex;
         width: 100%;
@@ -494,18 +565,32 @@
 
     .map-legend {
         gap: 1rem 1.5rem;
+        flex-wrap: wrap;
     }
 }
 
-/* --- CHO THIẾT BỊ DI ĐỘNG RẤT NHỎ (Dưới 480px) --- */
 @media (max-width: 480px) {
     .admin-table th, 
     .admin-table td {
         padding: 1rem 0.5rem;
+        font-size: 0.85rem;
     }
 
     .checkin-btn, 
     .disabled-btn {
         padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+
+    .seat-item-admin {
+        width: 32px;
+        height: 32px;
+    }
+    .seat-item-admin.Couple {
+        width: 70px;
+    }
+    .row-label-admin {
+        width: 20px;
+        font-size: 0.8rem;
     }
 }
