@@ -214,7 +214,7 @@
 }
 
 /* =========================================================
-   FILTER GROUP (Nút chọn thời gian)
+   FILTER GROUP
 ========================================================= */
 
 .chart-filter-group {
@@ -341,24 +341,8 @@
 }
 
 /* =========================================================
-   CHART FILTER BUTTON (cũ – giữ lại để tương thích)
+   CHART WRAPPER
 ========================================================= */
-
-.chart-filter-btn {
-    padding: var(--space-sm) var(--space-lg);
-    border: none;
-    border-radius: var(--radius-md);
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
-    font-weight: var(--fw-bold);
-    cursor: pointer;
-    transition: var(--transition-normal);
-}
-
-.chart-filter-btn:hover {
-    transform: translateY(-2px);
-    background: var(--silver-light);
-}
 
 .chart-wrapper {
     width: 100%;
@@ -424,7 +408,18 @@
     gap: var(--space-lg);
 }
 
-.table-card,
+/* =========================================================
+   BAR CHART
+========================================================= */
+
+.bar-chart {
+    min-height: 400px;
+}
+
+/* =========================================================
+   TOP MOVIE CARD
+   ========================================================= */
+
 .top-movie-card {
     background: var(--cinema-card-bg);
     border: var(--border-light);
@@ -433,7 +428,6 @@
     transition: var(--transition-normal);
 }
 
-.table-card:hover,
 .top-movie-card:hover {
     border-color: rgba(232,232,232,0.2);
 }
@@ -449,47 +443,6 @@
     letter-spacing: 1px;
     color: var(--white-pure);
 }
-
-/* =========================================================
-   TABLE
-   ========================================================= */
-
-.table-wrapper {
-    overflow-x: auto;
-    width: 100%;
-}
-
-.ticket-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.ticket-table thead tr {
-    border-bottom: var(--border-silver);
-}
-
-.ticket-table th {
-    text-align: left;
-    padding: var(--space-sm) 0;
-    color: var(--white-pure);
-    font-weight: var(--fw-bold);
-    font-size: var(--font-size-base);
-}
-
-.ticket-table td {
-    padding: var(--space-md) 0;
-    border-bottom: var(--border-light);
-    color: var(--text-body);
-    font-size: var(--font-size-base);
-}
-
-.ticket-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-/* =========================================================
-   TOP MOVIE LIST
-   ========================================================= */
 
 .top-movie-list {
     display: flex;
@@ -542,10 +495,6 @@
     flex-shrink: 0;
 }
 
-/* =========================================================
-   VIEW MORE BUTTON
-   ========================================================= */
-
 .view-more-btn {
     width: 100%;
     margin-top: var(--space-lg);
@@ -597,9 +546,7 @@
         width: 56px;
         height: 56px;
     }
-    .chart-card,
-    .table-card,
-    .top-movie-card {
+    .chart-card {
         padding: var(--space-lg);
     }
     .chart-wrapper {
@@ -622,9 +569,7 @@
     .stat-content h2 {
         font-size: var(--font-size-h3);
     }
-    .chart-card,
-    .table-card,
-    .top-movie-card {
+    .chart-card {
         border-radius: var(--radius-lg);
         padding: var(--space-md);
     }
@@ -638,9 +583,6 @@
     }
     .chart-wrapper {
         height: 260px;
-    }
-    .ticket-table {
-        min-width: 650px;
     }
     .top-movie-item {
         align-items: flex-start;
@@ -656,7 +598,6 @@
         height: 120px;
     }
 
-    /* Filter responsive */
     .chart-filter-group {
         width: 100%;
         justify-content: flex-start;
@@ -701,10 +642,6 @@
     .chart-header h3 {
         font-size: var(--font-size-h5);
     }
-    .ticket-table th,
-    .ticket-table td {
-        font-size: var(--font-size-h6);
-    }
     .top-movie-left h4 {
         font-size: var(--font-size-h6);
     }
@@ -718,4 +655,53 @@
         font-size: 0.7rem;
         padding: var(--space-xs) var(--space-sm);
     }
+}
+
+/* =========================================================
+   TABLE (giữ lại nếu cần, nhưng không dùng nữa)
+   ========================================================= */
+
+.table-card {
+    background: var(--cinema-card-bg);
+    border: var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    transition: var(--transition-normal);
+}
+
+.table-card:hover {
+    border-color: rgba(232,232,232,0.2);
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.ticket-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ticket-table thead tr {
+    border-bottom: var(--border-silver);
+}
+
+.ticket-table th {
+    text-align: left;
+    padding: var(--space-sm) 0;
+    color: var(--white-pure);
+    font-weight: var(--fw-bold);
+    font-size: var(--font-size-base);
+}
+
+.ticket-table td {
+    padding: var(--space-md) 0;
+    border-bottom: var(--border-light);
+    color: var(--text-body);
+    font-size: var(--font-size-base);
+}
+
+.ticket-table tbody tr:last-child td {
+    border-bottom: none;
 }

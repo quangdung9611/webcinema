@@ -1,16 +1,10 @@
 const db = require('../Config/db');
 
 class DashboardController {
-    /**
-     * Lấy thống kê tổng quan (card stats)
-     * GET /admin/api/manage/stats
-     * Query: period (week | month | quarter | year) – optional
-     */
+    // ======================== STATS ========================
     static async getStats(req, res) {
         try {
             const { period } = req.query;
-
-            // Nếu có period, lọc theo thời gian cho doanh thu
             let dateFilter = '';
             let params = [];
             let startDate, endDate;
@@ -23,13 +17,8 @@ class DashboardController {
                 params = [startDate, endDate];
             }
 
-            // 1. Tổng phim
             const [movieRes] = await db.query("SELECT COUNT(*) as total FROM movies");
-
-            // 2. Tổng người dùng (không tính admin)
             const [userRes] = await db.query("SELECT COUNT(*) as total FROM users WHERE role != 'admin'");
-
-            // 3. Tổng vé đã bán (Completed)
             const [ticketRes] = await db.query(`
                 SELECT COUNT(t.ticket_id) as total 
                 FROM tickets t
@@ -37,43 +26,31 @@ class DashboardController {
                 WHERE b.status = 'Completed'
             `);
 
-            // 4. Doanh thu – lọc theo period nếu có
             let revenueQuery = `
                 SELECT COALESCE(SUM(total_amount), 0) as total 
                 FROM bookings 
                 WHERE status = 'Completed'
             `;
-            if (dateFilter) {
-                revenueQuery += ` ${dateFilter}`;
-            }
+            if (dateFilter) revenueQuery += ` ${dateFilter}`;
             const [revenueRes] = await db.query(revenueQuery, params);
             const totalRevenue = Number(revenueRes[0]?.total) || 0;
 
-            // 5. Người dùng mới (nếu có period)
-            let newUsers = 0;
-            let newOrders = 0;
-            let revenueGrowth = 0;
-
+            let newUsers = 0, newOrders = 0, revenueGrowth = 0;
             if (period) {
-                // Người dùng mới
                 const [newUsersRes] = await db.query(`
                     SELECT COUNT(*) as total 
                     FROM users 
-                    WHERE role != 'admin'
-                      AND DATE(created_at) BETWEEN ? AND ?
+                    WHERE role != 'admin' AND DATE(created_at) BETWEEN ? AND ?
                 `, [startDate, endDate]);
                 newUsers = newUsersRes[0]?.total || 0;
 
-                // Đơn hàng mới
                 const [newOrdersRes] = await db.query(`
                     SELECT COUNT(*) as total 
                     FROM bookings 
-                    WHERE status = 'Completed'
-                      AND DATE(booking_date) BETWEEN ? AND ?
+                    WHERE status = 'Completed' AND DATE(booking_date) BETWEEN ? AND ?
                 `, [startDate, endDate]);
                 newOrders = newOrdersRes[0]?.total || 0;
 
-                // Tăng trưởng doanh thu
                 const duration = (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24);
                 const prevStart = new Date(startDate);
                 prevStart.setDate(prevStart.getDate() - duration - 1);
@@ -85,15 +62,13 @@ class DashboardController {
                 const [prevRevenueRes] = await db.query(`
                     SELECT COALESCE(SUM(total_amount), 0) as total 
                     FROM bookings 
-                    WHERE status = 'Completed'
-                      AND DATE(booking_date) BETWEEN ? AND ?
+                    WHERE status = 'Completed' AND DATE(booking_date) BETWEEN ? AND ?
                 `, [prevStartStr, prevEndStr]);
 
                 const prevRevenue = Number(prevRevenueRes[0]?.total) || 0;
                 revenueGrowth = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0;
             }
 
-            // Trả về dữ liệu cho frontend
             return res.status(200).json({
                 success: true,
                 movies: movieRes[0].total || 0,
@@ -104,32 +79,23 @@ class DashboardController {
                     new_users: newUsers,
                     new_orders: newOrders,
                     revenue_growth: Math.round(revenueGrowth * 10) / 10,
-                    period: period
+                    period
                 } : {})
             });
         } catch (error) {
-            console.error('❌ Lỗi getStats:', error);
-            return res.status(500).json({
-                success: false,
-                message: 'Không thể lấy thống kê.',
-                error: error.message
-            });
+            console.error('❌ getStats error:', error);
+            return res.status(500).json({ success: false, message: 'Lỗi thống kê.', error: error.message });
         }
     }
 
-    /**
-     * Lấy dữ liệu biểu đồ (line + pie + table)
-     * GET /admin/api/manage/revenue-chart
-     * Query: startDate, endDate
-     */
+    // ======================== CHART DATA ========================
     static async getRevenueChartData(req, res) {
         try {
             const { startDate, endDate } = req.query;
-
-            // Mặc định 7 ngày gần nhất
             const end = endDate || new Date().toISOString().split('T')[0];
             const start = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
+            // ⚠️ SỬA LỖI SQL: thêm ANY_VALUE() hoặc sử dụng GROUP BY đúng
             // 1. Doanh thu theo ngày
             const [dailyRevenue] = await db.query(`
                 SELECT 
@@ -179,7 +145,7 @@ class DashboardController {
                 ORDER BY ticketCount DESC
             `, [start, end]);
 
-            // 4. Tổng doanh thu & số đơn hàng trong kỳ
+            // 4. Tổng hợp thông tin
             const [summary] = await db.query(`
                 SELECT 
                     COALESCE(SUM(total_amount), 0) as total_revenue,
@@ -201,18 +167,16 @@ class DashboardController {
                 }
             });
         } catch (error) {
-            console.error('❌ Lỗi getRevenueChartData:', error);
+            console.error('❌ getRevenueChartData error:', error);
             return res.status(500).json({
                 success: false,
-                message: 'Không thể lấy dữ liệu biểu đồ.',
+                message: 'Lỗi lấy dữ liệu biểu đồ.',
                 error: error.message
             });
         }
     }
 
-    /**
-     * Lấy top phim doanh thu cao
-     */
+    // ======================== TOP MOVIES ========================
     static async getTopMovies(req, res) {
         try {
             const limit = parseInt(req.query.limit) || 10;
@@ -248,18 +212,12 @@ class DashboardController {
                 }))
             });
         } catch (error) {
-            console.error('❌ Lỗi getTopMovies:', error);
-            return res.status(500).json({
-                success: false,
-                message: 'Không thể lấy danh sách phim.',
-                error: error.message
-            });
+            console.error('❌ getTopMovies error:', error);
+            return res.status(500).json({ success: false, message: 'Lỗi lấy top phim.', error: error.message });
         }
     }
 
-    /**
-     * Tăng trưởng người dùng
-     */
+    // ======================== USER GROWTH ========================
     static async getUserGrowth(req, res) {
         try {
             const days = parseInt(req.query.days) || 30;
@@ -286,18 +244,12 @@ class DashboardController {
                 }))
             });
         } catch (error) {
-            console.error('❌ Lỗi getUserGrowth:', error);
-            return res.status(500).json({
-                success: false,
-                message: 'Không thể lấy dữ liệu tăng trưởng.',
-                error: error.message
-            });
+            console.error('❌ getUserGrowth error:', error);
+            return res.status(500).json({ success: false, message: 'Lỗi tăng trưởng.', error: error.message });
         }
     }
 
-    /**
-     * Helper: lấy khoảng thời gian theo period
-     */
+    // ======================== HELPER ========================
     static getDateRange(period) {
         const now = new Date();
         const endDate = now.toISOString().split('T')[0];
