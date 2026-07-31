@@ -1,29 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-
 import {
     Film, Ticket, Users, DollarSign, MoreHorizontal,
     Calendar, TrendingUp
 } from 'lucide-react';
-
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, PieChart, Pie, Cell,
-    BarChart, Bar // ✅ Thêm BarChart
+    BarChart, Bar
 } from 'recharts';
-
 import '../../styles/AdminDashboard.css';
 
 const AdminDashboard = () => {
+    // State cho thống kê tổng quan
     const [stats, setStats] = useState({
         movies: 0, tickets: 0, users: 0, revenue: 0
     });
 
-    const [chartData, setChartData] = useState({
-        daily: [],
-        movies: [],
-        tickets: []
-    });
+    // State cho từng biểu đồ
+    const [revenueTrend, setRevenueTrend] = useState([]);
+    const [revenueByMovie, setRevenueByMovie] = useState([]);
+    const [ticketsByMovie, setTicketsByMovie] = useState([]);
+    const [topMovies, setTopMovies] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const [timeRange, setTimeRange] = useState('week');
@@ -33,6 +31,7 @@ const AdminDashboard = () => {
 
     const COLORS = ['#a855f7', '#3b82f6', '#22c55e', '#f59e0b', '#94a3b8'];
 
+    // Hàm lấy khoảng thời gian
     const getDateRange = useCallback((range) => {
         const end = new Date();
         const start = new Date();
@@ -53,13 +52,15 @@ const AdminDashboard = () => {
         };
     }, [customStart, customEnd]);
 
-    const fetchDashboardData = useCallback(async (range = timeRange) => {
+    // Hàm fetch tất cả dữ liệu
+    const fetchAllData = useCallback(async (range = timeRange) => {
         setLoading(true);
         try {
             const { start, end } = getDateRange(range);
 
+            // 1. Thống kê tổng quan
             const resStats = await axios.get(
-                'https://api.quangdungcinema.id.vn/admin/api/manage/stats',
+                `https://api.quangdungcinema.id.vn/admin/api/manage/stats?period=${range !== 'custom' ? range : ''}`,
                 { withCredentials: true }
             );
             if (resStats.data.success) {
@@ -71,16 +72,40 @@ const AdminDashboard = () => {
                 });
             }
 
-            const resChart = await axios.get(
-                `https://api.quangdungcinema.id.vn/admin/api/manage/revenue-chart?startDate=${start}&endDate=${end}`,
+            // 2. Doanh thu theo ngày (Line)
+            const resTrend = await axios.get(
+                `https://api.quangdungcinema.id.vn/admin/api/manage/revenue-trend?startDate=${start}&endDate=${end}`,
                 { withCredentials: true }
             );
-            if (resChart.data.success) {
-                setChartData({
-                    daily: resChart.data.dailyData || [],
-                    movies: resChart.data.movieData || [],
-                    tickets: resChart.data.ticketData || []
-                });
+            if (resTrend.data.success) {
+                setRevenueTrend(resTrend.data.data || []);
+            }
+
+            // 3. Doanh thu theo phim (Pie)
+            const resPie = await axios.get(
+                `https://api.quangdungcinema.id.vn/admin/api/manage/revenue-by-movie?startDate=${start}&endDate=${end}`,
+                { withCredentials: true }
+            );
+            if (resPie.data.success) {
+                setRevenueByMovie(resPie.data.data || []);
+            }
+
+            // 4. Số vé theo phim (Bar)
+            const resBar = await axios.get(
+                `https://api.quangdungcinema.id.vn/admin/api/manage/tickets-by-movie?startDate=${start}&endDate=${end}`,
+                { withCredentials: true }
+            );
+            if (resBar.data.success) {
+                setTicketsByMovie(resBar.data.data || []);
+            }
+
+            // 5. Top phim doanh thu cao (có thể không cần khoảng thời gian)
+            const resTop = await axios.get(
+                `https://api.quangdungcinema.id.vn/admin/api/manage/top-movies?limit=5`,
+                { withCredentials: true }
+            );
+            if (resTop.data.success) {
+                setTopMovies(resTop.data.movies || []);
             }
         } catch (error) {
             console.error('Dashboard Error:', error);
@@ -90,22 +115,22 @@ const AdminDashboard = () => {
     }, [timeRange, getDateRange]);
 
     useEffect(() => {
-        fetchDashboardData();
+        fetchAllData();
     }, []);
 
     const handleRangeChange = (range) => {
         setTimeRange(range);
         if (range !== 'custom') {
             setShowCustomPicker(false);
-            fetchDashboardData(range);
+            fetchAllData(range);
         } else {
             setShowCustomPicker(true);
-            if (customStart && customEnd) fetchDashboardData('custom');
+            if (customStart && customEnd) fetchAllData('custom');
         }
     };
 
     const handleCustomApply = () => {
-        if (customStart && customEnd) fetchDashboardData('custom');
+        if (customStart && customEnd) fetchAllData('custom');
     };
 
     if (loading) {
@@ -191,7 +216,7 @@ const AdminDashboard = () => {
 
                     <div className="chart-wrapper">
                         <ResponsiveContainer width="100%" height={320}>
-                            <LineChart data={chartData.daily}>
+                            <LineChart data={revenueTrend}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
                                 <XAxis dataKey="date" stroke="#94a3b8" />
                                 <YAxis stroke="#94a3b8" tickFormatter={(value) => `${value / 1000}k`} />
@@ -214,13 +239,13 @@ const AdminDashboard = () => {
                             <ResponsiveContainer width="100%" height={280}>
                                 <PieChart>
                                     <Pie
-                                        data={chartData.movies}
+                                        data={revenueByMovie}
                                         cx="50%" cy="50%"
                                         innerRadius={60} outerRadius={90}
                                         paddingAngle={3}
                                         dataKey="value"
                                     >
-                                        {chartData.movies.map((entry, index) => (
+                                        {revenueByMovie.map((entry, index) => (
                                             <Cell key={index} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
@@ -232,7 +257,7 @@ const AdminDashboard = () => {
                             </ResponsiveContainer>
                         </div>
                         <div className="pie-legend">
-                            {chartData.movies.map((movie, index) => (
+                            {revenueByMovie.map((movie, index) => (
                                 <div className="legend-item" key={index}>
                                     <div className="legend-left">
                                         <span className="legend-color" style={{ background: COLORS[index % COLORS.length] }} />
@@ -254,7 +279,7 @@ const AdminDashboard = () => {
                     </div>
                     <div className="chart-wrapper">
                         <ResponsiveContainer width="100%" height={280}>
-                            <BarChart data={chartData.tickets}>
+                            <BarChart data={ticketsByMovie}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                                 <XAxis dataKey="movieName" stroke="#94a3b8" />
                                 <YAxis stroke="#94a3b8" />
@@ -272,15 +297,15 @@ const AdminDashboard = () => {
                         <h3>PHIM DOANH THU CAO</h3>
                     </div>
                     <div className="top-movie-list">
-                        {chartData.movies.length > 0 ? (
-                            chartData.movies.map((movie, index) => (
+                        {topMovies.length > 0 ? (
+                            topMovies.map((movie, index) => (
                                 <div className="top-movie-item" key={index}>
                                     <div className="top-movie-left">
                                         <span className="rank">{index + 1}</span>
                                         <div className="movie-poster-placeholder" />
                                         <div>
-                                            <h4>{movie.name}</h4>
-                                            <p>{movie.value?.toLocaleString('vi-VN') || 0} đ</p>
+                                            <h4>{movie.title}</h4>
+                                            <p>{movie.revenue?.toLocaleString('vi-VN') || 0} đ</p>
                                         </div>
                                     </div>
                                     <TrendingUp size={18} className="trend-icon" />

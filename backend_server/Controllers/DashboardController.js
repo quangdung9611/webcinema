@@ -1,7 +1,10 @@
 const db = require('../Config/db');
 
 class DashboardController {
-    // ======================== STATS ========================
+    // ----------------------------------------------------------------
+    // 1. Thống kê tổng quan (số phim, vé, user, doanh thu)
+    //    Có thể lọc theo period (today, week, month, quarter, year)
+    // ----------------------------------------------------------------
     static async getStats(req, res) {
         try {
             const { period } = req.query;
@@ -17,8 +20,11 @@ class DashboardController {
                 params = [startDate, endDate];
             }
 
+            // Tổng phim
             const [movieRes] = await db.query("SELECT COUNT(*) as total FROM movies");
+            // Tổng user (không admin)
             const [userRes] = await db.query("SELECT COUNT(*) as total FROM users WHERE role != 'admin'");
+            // Tổng vé đã bán (từ booking Completed)
             const [ticketRes] = await db.query(`
                 SELECT COUNT(t.ticket_id) as total 
                 FROM tickets t
@@ -26,6 +32,7 @@ class DashboardController {
                 WHERE b.status = 'Completed'
             `);
 
+            // Tổng doanh thu
             let revenueQuery = `
                 SELECT COALESCE(SUM(total_amount), 0) as total 
                 FROM bookings 
@@ -35,22 +42,30 @@ class DashboardController {
             const [revenueRes] = await db.query(revenueQuery, params);
             const totalRevenue = Number(revenueRes[0]?.total) || 0;
 
-            let newUsers = 0, newOrders = 0, revenueGrowth = 0;
+            // Thêm các chỉ số phụ nếu có period
+            let response = {
+                success: true,
+                movies: movieRes[0].total || 0,
+                users: userRes[0].total || 0,
+                tickets: ticketRes[0].total || 0,
+                revenue: totalRevenue
+            };
+
             if (period) {
+                // User mới
                 const [newUsersRes] = await db.query(`
                     SELECT COUNT(*) as total 
                     FROM users 
                     WHERE role != 'admin' AND DATE(created_at) BETWEEN ? AND ?
                 `, [startDate, endDate]);
-                newUsers = newUsersRes[0]?.total || 0;
-
+                // Đơn hàng mới
                 const [newOrdersRes] = await db.query(`
                     SELECT COUNT(*) as total 
                     FROM bookings 
                     WHERE status = 'Completed' AND DATE(booking_date) BETWEEN ? AND ?
                 `, [startDate, endDate]);
-                newOrders = newOrdersRes[0]?.total || 0;
 
+                // Tính tăng trưởng doanh thu so với kỳ trước
                 const duration = (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24);
                 const prevStart = new Date(startDate);
                 prevStart.setDate(prevStart.getDate() - duration - 1);
@@ -66,37 +81,39 @@ class DashboardController {
                 `, [prevStartStr, prevEndStr]);
 
                 const prevRevenue = Number(prevRevenueRes[0]?.total) || 0;
-                revenueGrowth = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0;
-            }
+                const revenueGrowth = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0;
 
-            return res.status(200).json({
-                success: true,
-                movies: movieRes[0].total || 0,
-                users: userRes[0].total || 0,
-                tickets: ticketRes[0].total || 0,
-                revenue: totalRevenue,
-                ...(period ? {
-                    new_users: newUsers,
-                    new_orders: newOrders,
+                response = {
+                    ...response,
+                    new_users: newUsersRes[0]?.total || 0,
+                    new_orders: newOrdersRes[0]?.total || 0,
                     revenue_growth: Math.round(revenueGrowth * 10) / 10,
                     period
-                } : {})
-            });
+                };
+            }
+
+            return res.status(200).json(response);
         } catch (error) {
             console.error('❌ getStats error:', error);
             return res.status(500).json({ success: false, message: 'Lỗi thống kê.', error: error.message });
         }
     }
 
-    // ======================== CHART DATA ========================
-    static async getRevenueChartData(req, res) {
+    // ----------------------------------------------------------------
+    // 2. Doanh thu theo ngày (Line Chart)
+    //    Nhận startDate, endDate (query)
+    // ----------------------------------------------------------------
+    static async getRevenueTrend(req, res) {
         try {
             const { startDate, endDate } = req.query;
             const end = endDate || new Date().toISOString().split('T')[0];
-            const start = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            let start = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-            // ⚠️ SỬA LỖI SQL: thêm ANY_VALUE() hoặc sử dụng GROUP BY đúng
-            // 1. Doanh thu theo ngày
+            // Nếu start > end thì đảo lại
+            if (new Date(start) > new Date(end)) {
+                [start, end] = [end, start];
+            }
+
             const [dailyRevenue] = await db.query(`
                 SELECT 
                     DATE_FORMAT(booking_date, '%d/%m') as date,
@@ -108,7 +125,31 @@ class DashboardController {
                 ORDER BY DATE(booking_date) ASC
             `, [start, end]);
 
-            // 2. Doanh thu theo phim
+            return res.status(200).json({
+                success: true,
+                data: dailyRevenue,
+                period: { start, end }
+            });
+        } catch (error) {
+            console.error('❌ getRevenueTrend error:', error);
+            return res.status(500).json({ success: false, message: 'Lỗi lấy dữ liệu xu hướng doanh thu.', error: error.message });
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // 3. Doanh thu theo phim (Pie Chart)
+    //    Nhận startDate, endDate (query)
+    // ----------------------------------------------------------------
+    static async getRevenueByMovie(req, res) {
+        try {
+            const { startDate, endDate } = req.query;
+            const end = endDate || new Date().toISOString().split('T')[0];
+            let start = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+            if (new Date(start) > new Date(end)) {
+                [start, end] = [end, start];
+            }
+
             const [movieRevenue] = await db.query(`
                 SELECT 
                     m.title AS name, 
@@ -123,13 +164,38 @@ class DashboardController {
             `, [start, end]);
 
             const totalRevenue = movieRevenue.reduce((sum, item) => sum + Number(item.value), 0);
-            const movieDataWithPercent = movieRevenue.map(item => ({
+            const dataWithPercent = movieRevenue.map(item => ({
                 ...item,
                 value: Number(item.value),
                 percent: totalRevenue > 0 ? ((item.value / totalRevenue) * 100).toFixed(1) + '%' : '0%'
             }));
 
-            // 3. Số vé bán theo phim
+            return res.status(200).json({
+                success: true,
+                data: dataWithPercent,
+                period: { start, end },
+                total: totalRevenue
+            });
+        } catch (error) {
+            console.error('❌ getRevenueByMovie error:', error);
+            return res.status(500).json({ success: false, message: 'Lỗi lấy doanh thu theo phim.', error: error.message });
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // 4. Số vé bán theo phim (Bar Chart)
+    //    Nhận startDate, endDate (query)
+    // ----------------------------------------------------------------
+    static async getTicketsByMovie(req, res) {
+        try {
+            const { startDate, endDate } = req.query;
+            const end = endDate || new Date().toISOString().split('T')[0];
+            let start = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+            if (new Date(start) > new Date(end)) {
+                [start, end] = [end, start];
+            }
+
             const [ticketDetails] = await db.query(`
                 SELECT 
                     m.title AS movieName,
@@ -145,38 +211,21 @@ class DashboardController {
                 ORDER BY ticketCount DESC
             `, [start, end]);
 
-            // 4. Tổng hợp thông tin
-            const [summary] = await db.query(`
-                SELECT 
-                    COALESCE(SUM(total_amount), 0) as total_revenue,
-                    COUNT(*) as total_orders
-                FROM bookings
-                WHERE status = 'Completed'
-                  AND DATE(booking_date) BETWEEN ? AND ?
-            `, [start, end]);
-
             return res.status(200).json({
                 success: true,
-                dailyData: dailyRevenue,
-                movieData: movieDataWithPercent,
-                ticketData: ticketDetails,
-                period: { start, end },
-                summary: {
-                    total_revenue: Number(summary[0]?.total_revenue) || 0,
-                    total_orders: Number(summary[0]?.total_orders) || 0
-                }
+                data: ticketDetails,
+                period: { start, end }
             });
         } catch (error) {
-            console.error('❌ getRevenueChartData error:', error);
-            return res.status(500).json({
-                success: false,
-                message: 'Lỗi lấy dữ liệu biểu đồ.',
-                error: error.message
-            });
+            console.error('❌ getTicketsByMovie error:', error);
+            return res.status(500).json({ success: false, message: 'Lỗi lấy số vé theo phim.', error: error.message });
         }
     }
 
-    // ======================== TOP MOVIES ========================
+    // ----------------------------------------------------------------
+    // 5. Top phim doanh thu cao (Top List)
+    //    Nhận limit (query) mặc định 10
+    // ----------------------------------------------------------------
     static async getTopMovies(req, res) {
         try {
             const limit = parseInt(req.query.limit) || 10;
@@ -217,39 +266,9 @@ class DashboardController {
         }
     }
 
-    // ======================== USER GROWTH ========================
-    static async getUserGrowth(req, res) {
-        try {
-            const days = parseInt(req.query.days) || 30;
-            const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-            const [data] = await db.query(`
-                SELECT 
-                    DATE(created_at) as date,
-                    COUNT(*) as new_users,
-                    SUM(COUNT(*)) OVER (ORDER BY DATE(created_at)) as cumulative
-                FROM users
-                WHERE role != 'admin'
-                  AND DATE(created_at) >= ?
-                GROUP BY DATE(created_at)
-                ORDER BY DATE(created_at) ASC
-            `, [startDate]);
-
-            return res.status(200).json({
-                success: true,
-                data: data.map(d => ({
-                    date: d.date,
-                    new_users: d.new_users,
-                    cumulative: d.cumulative
-                }))
-            });
-        } catch (error) {
-            console.error('❌ getUserGrowth error:', error);
-            return res.status(500).json({ success: false, message: 'Lỗi tăng trưởng.', error: error.message });
-        }
-    }
-
-    // ======================== HELPER ========================
+    // ----------------------------------------------------------------
+    // Helper: tính khoảng thời gian
+    // ----------------------------------------------------------------
     static getDateRange(period) {
         const now = new Date();
         const endDate = now.toISOString().split('T')[0];
