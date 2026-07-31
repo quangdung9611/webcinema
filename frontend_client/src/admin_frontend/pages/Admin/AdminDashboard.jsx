@@ -1,4 +1,3 @@
-
 import React, {
     useState,
     useEffect,
@@ -14,7 +13,9 @@ import {
     DollarSign,
     MoreHorizontal,
     Calendar,
-    TrendingUp
+    TrendingUp,
+    RefreshCw,
+    AlertCircle
 } from 'lucide-react';
 
 import {
@@ -72,10 +73,29 @@ const AdminDashboard = () => {
 
 
     // =========================================================
+    // CHART ERRORS
+    // =========================================================
+
+    const [chartErrors, setChartErrors] = useState({
+        revenue: null,
+        movieRevenue: null,
+        tickets: null,
+        userGrowth: null
+    });
+
+
+    // =========================================================
     // LOADING
     // =========================================================
 
     const [loading, setLoading] = useState(true);
+
+
+    // =========================================================
+    // REFRESHING
+    // =========================================================
+
+    const [refreshing, setRefreshing] = useState(false);
 
 
     // =========================================================
@@ -93,7 +113,7 @@ const AdminDashboard = () => {
 
 
     // =========================================================
-    // PIE COLORS
+    // COLORS
     // =========================================================
 
     const COLORS = [
@@ -109,7 +129,20 @@ const AdminDashboard = () => {
 
 
     // =========================================================
-    // GET DATE RANGE
+    // TODAY
+    // =========================================================
+
+    const getToday = () => {
+
+        return new Date()
+            .toISOString()
+            .split('T')[0];
+
+    };
+
+
+    // =========================================================
+    // DATE RANGE
     // =========================================================
 
     const getDateRange = useCallback(
@@ -125,7 +158,7 @@ const AdminDashboard = () => {
                 case 'week':
 
                     start.setDate(
-                        end.getDate() - 7
+                        end.getDate() - 6
                     );
 
                     break;
@@ -133,8 +166,8 @@ const AdminDashboard = () => {
 
                 case 'month':
 
-                    start.setMonth(
-                        end.getMonth() - 1
+                    start.setDate(
+                        end.getDate() - 29
                     );
 
                     break;
@@ -154,29 +187,27 @@ const AdminDashboard = () => {
                     return {
                         start:
                             customStart ||
-                            start
-                                .toISOString()
-                                .split('T')[0],
+                            getToday(),
 
                         end:
                             customEnd ||
-                            end
-                                .toISOString()
-                                .split('T')[0]
+                            getToday()
                     };
 
 
                 default:
 
                     start.setDate(
-                        end.getDate() - 7
+                        end.getDate() - 6
                     );
 
                     break;
+
             }
 
 
             return {
+
                 start: start
                     .toISOString()
                     .split('T')[0],
@@ -184,6 +215,7 @@ const AdminDashboard = () => {
                 end: end
                     .toISOString()
                     .split('T')[0]
+
             };
 
         },
@@ -195,215 +227,712 @@ const AdminDashboard = () => {
 
 
     // =========================================================
-    // FETCH DASHBOARD DATA
+    // NORMALIZE ARRAY
     // =========================================================
 
-    const fetchDashboardData = useCallback(
-        async (range = timeRange) => {
+    const normalizeArray = (response) => {
 
-            setLoading(true);
-
-
-            try {
-
-                const {
-                    start,
-                    end
-                } = getDateRange(range);
+        if (!response) {
+            return [];
+        }
 
 
-                // =================================================
-                // 1. STATS
-                // =================================================
-
-                const statsRequest = axios.get(
-                    `${API_BASE_URL}/stats`,
-                    {
-                        withCredentials: true
-                    }
-                );
+        if (
+            response.data &&
+            Array.isArray(response.data)
+        ) {
+            return response.data;
+        }
 
 
-                // =================================================
-                // 2. REVENUE CHART
-                // =================================================
+        if (
+            response.data &&
+            Array.isArray(response.data.data)
+        ) {
+            return response.data.data;
+        }
 
-                const revenueRequest = axios.get(
+
+        if (
+            response.data &&
+            Array.isArray(response.data.rows)
+        ) {
+            return response.data.rows;
+        }
+
+
+        if (
+            Array.isArray(response)
+        ) {
+            return response;
+        }
+
+
+        return [];
+
+    };
+
+
+    // =========================================================
+    // FORMAT REVENUE DATA
+    // =========================================================
+
+    const normalizeRevenueData = (response) => {
+
+        const data = normalizeArray(response);
+
+
+        return data.map((item) => ({
+
+            ...item,
+
+            date:
+                item.date ||
+                item.booking_date ||
+                item.day ||
+                item.label ||
+                '',
+
+            revenue:
+                Number(
+                    item.revenue ??
+                    item.totalRevenue ??
+                    item.total_revenue ??
+                    item.amount ??
+                    item.total ??
+                    0
+                )
+
+        }));
+
+    };
+
+
+    // =========================================================
+    // FORMAT MOVIE REVENUE
+    // =========================================================
+
+    const normalizeMovieRevenueData = (response) => {
+
+        const data = normalizeArray(response);
+
+
+        return data.map((item) => ({
+
+            ...item,
+
+            id:
+                item.id ||
+                item.movie_id ||
+                item.movieId,
+
+            name:
+                item.name ||
+                item.movieName ||
+                item.movie_name ||
+                item.title ||
+                'Không xác định',
+
+            value:
+                Number(
+                    item.value ??
+                    item.revenue ??
+                    item.totalRevenue ??
+                    item.total_revenue ??
+                    0
+                ),
+
+            percent:
+                item.percent ??
+                item.percentage ??
+                '0%'
+
+        }));
+
+    };
+
+
+    // =========================================================
+    // FORMAT TICKET DATA
+    // =========================================================
+
+    const normalizeTicketData = (response) => {
+
+        const data = normalizeArray(response);
+
+
+        return data.map((item) => ({
+
+            ...item,
+
+            movieName:
+                item.movieName ||
+                item.movie_name ||
+                item.name ||
+                item.title ||
+                'Không xác định',
+
+            ticketCount:
+                Number(
+                    item.ticketCount ??
+                    item.ticket_count ??
+                    item.totalTickets ??
+                    item.total_tickets ??
+                    item.quantity ??
+                    item.count ??
+                    0
+                )
+
+        }));
+
+    };
+
+
+    // =========================================================
+    // FORMAT USER GROWTH
+    // =========================================================
+
+    const normalizeUserGrowthData = (response) => {
+
+        const data = normalizeArray(response);
+
+
+        return data.map((item) => ({
+
+            ...item,
+
+            date:
+                item.date ||
+                item.created_at ||
+                item.day ||
+                item.label ||
+                '',
+
+            newUsers:
+                Number(
+                    item.newUsers ??
+                    item.new_users ??
+                    item.userCount ??
+                    item.user_count ??
+                    item.count ??
+                    0
+                ),
+
+            cumulative:
+                Number(
+                    item.cumulative ??
+                    item.totalUsers ??
+                    item.total_users ??
+                    item.total ??
+                    0
+                )
+
+        }));
+
+    };
+
+
+    // =========================================================
+    // FETCH STATS
+    // =========================================================
+
+    const fetchStats = async () => {
+
+        try {
+
+            const response = await axios.get(
+                `${API_BASE_URL}/stats`,
+                {
+                    withCredentials: true
+                }
+            );
+
+
+            if (
+                response.data?.success
+            ) {
+
+                setStats({
+
+                    movies:
+                        Number(
+                            response.data.movies
+                        ) || 0,
+
+                    tickets:
+                        Number(
+                            response.data.tickets
+                        ) || 0,
+
+                    users:
+                        Number(
+                            response.data.users
+                        ) || 0,
+
+                    revenue:
+                        Number(
+                            response.data.revenue
+                        ) || 0
+
+                });
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                '❌ Stats API Error:',
+                error
+            );
+
+        }
+
+    };
+
+
+    // =========================================================
+    // FETCH REVENUE
+    // =========================================================
+
+    const fetchRevenue = async (
+        start,
+        end
+    ) => {
+
+        try {
+
+            const response =
+                await axios.get(
                     `${API_BASE_URL}/revenue-chart`,
                     {
                         params: {
                             startDate: start,
                             endDate: end
                         },
+
                         withCredentials: true
                     }
                 );
 
 
-                // =================================================
-                // 3. MOVIE REVENUE CHART
-                // =================================================
+            console.log(
+                '📊 Revenue API:',
+                response.data
+            );
 
-                const movieRevenueRequest = axios.get(
+
+            if (
+                response.data?.success === false
+            ) {
+
+                throw new Error(
+                    response.data.error ||
+                    response.data.message ||
+                    'Không lấy được dữ liệu doanh thu.'
+                );
+
+            }
+
+
+            setChartData(
+                previous => ({
+                    ...previous,
+
+                    revenue:
+                        normalizeRevenueData(
+                            response
+                        )
+                })
+            );
+
+
+            setChartErrors(
+                previous => ({
+                    ...previous,
+
+                    revenue: null
+                })
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                '❌ Revenue Chart Error:',
+                error
+            );
+
+
+            setChartErrors(
+                previous => ({
+                    ...previous,
+
+                    revenue:
+                        error.response?.data?.message ||
+                        error.message ||
+                        'Không thể lấy dữ liệu doanh thu.'
+                })
+            );
+
+
+            setChartData(
+                previous => ({
+                    ...previous,
+
+                    revenue: []
+                })
+            );
+
+        }
+
+    };
+
+
+    // =========================================================
+    // FETCH MOVIE REVENUE
+    // =========================================================
+
+    const fetchMovieRevenue = async (
+        start,
+        end
+    ) => {
+
+        try {
+
+            const response =
+                await axios.get(
                     `${API_BASE_URL}/movie-revenue-chart`,
                     {
                         params: {
                             startDate: start,
                             endDate: end
                         },
+
                         withCredentials: true
                     }
                 );
 
 
-                // =================================================
-                // 4. TICKET CHART
-                // =================================================
+            console.log(
+                '🎬 Movie Revenue API:',
+                response.data
+            );
 
-                const ticketRequest = axios.get(
+
+            if (
+                response.data?.success === false
+            ) {
+
+                throw new Error(
+                    response.data.error ||
+                    response.data.message ||
+                    'Không lấy được doanh thu theo phim.'
+                );
+
+            }
+
+
+            setChartData(
+                previous => ({
+                    ...previous,
+
+                    movieRevenue:
+                        normalizeMovieRevenueData(
+                            response
+                        )
+                })
+            );
+
+
+            setChartErrors(
+                previous => ({
+                    ...previous,
+
+                    movieRevenue: null
+                })
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                '❌ Movie Revenue Error:',
+                error
+            );
+
+
+            setChartErrors(
+                previous => ({
+                    ...previous,
+
+                    movieRevenue:
+                        error.response?.data?.message ||
+                        error.message ||
+                        'Không thể lấy dữ liệu doanh thu theo phim.'
+                })
+            );
+
+
+            setChartData(
+                previous => ({
+                    ...previous,
+
+                    movieRevenue: []
+                })
+            );
+
+        }
+
+    };
+
+
+    // =========================================================
+    // FETCH TICKETS
+    // =========================================================
+
+    const fetchTickets = async (
+        start,
+        end
+    ) => {
+
+        try {
+
+            const response =
+                await axios.get(
                     `${API_BASE_URL}/ticket-chart`,
                     {
                         params: {
                             startDate: start,
                             endDate: end
                         },
+
                         withCredentials: true
                     }
                 );
 
 
-                // =================================================
-                // 5. USER GROWTH CHART
-                // =================================================
+            console.log(
+                '🎟 Ticket API:',
+                response.data
+            );
 
-                const userGrowthRequest = axios.get(
+
+            if (
+                response.data?.success === false
+            ) {
+
+                throw new Error(
+                    response.data.error ||
+                    response.data.message ||
+                    'Không lấy được dữ liệu vé.'
+                );
+
+            }
+
+
+            setChartData(
+                previous => ({
+                    ...previous,
+
+                    tickets:
+                        normalizeTicketData(
+                            response
+                        )
+                })
+            );
+
+
+            setChartErrors(
+                previous => ({
+                    ...previous,
+
+                    tickets: null
+                })
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                '❌ Ticket Chart Error:',
+                error
+            );
+
+
+            setChartErrors(
+                previous => ({
+                    ...previous,
+
+                    tickets:
+                        error.response?.data?.message ||
+                        error.message ||
+                        'Không thể lấy dữ liệu vé.'
+                })
+            );
+
+
+            setChartData(
+                previous => ({
+                    ...previous,
+
+                    tickets: []
+                })
+            );
+
+        }
+
+    };
+
+
+    // =========================================================
+    // FETCH USER GROWTH
+    // =========================================================
+
+    const fetchUserGrowth = async (
+        start,
+        end
+    ) => {
+
+        try {
+
+            const response =
+                await axios.get(
                     `${API_BASE_URL}/user-growth-chart`,
                     {
                         params: {
                             startDate: start,
                             endDate: end
                         },
+
                         withCredentials: true
                     }
                 );
 
 
-                // =================================================
-                // CALL ALL API IN PARALLEL
-                // =================================================
-
-                const [
-                    resStats,
-                    resRevenue,
-                    resMovieRevenue,
-                    resTickets,
-                    resUserGrowth
-                ] = await Promise.all([
-                    statsRequest,
-                    revenueRequest,
-                    movieRevenueRequest,
-                    ticketRequest,
-                    userGrowthRequest
-                ]);
+            console.log(
+                '👥 User Growth API:',
+                response.data
+            );
 
 
-                // =================================================
-                // SET STATS
-                // =================================================
+            if (
+                response.data?.success === false
+            ) {
 
-                if (
-                    resStats.data &&
-                    resStats.data.success
-                ) {
-
-                    setStats({
-                        movies:
-                            Number(
-                                resStats.data.movies
-                            ) || 0,
-
-                        tickets:
-                            Number(
-                                resStats.data.tickets
-                            ) || 0,
-
-                        users:
-                            Number(
-                                resStats.data.users
-                            ) || 0,
-
-                        revenue:
-                            Number(
-                                resStats.data.revenue
-                            ) || 0
-                    });
-
-                }
-
-
-                // =================================================
-                // SET CHART DATA
-                // =================================================
-
-                setChartData({
-
-                    // -----------------------------
-                    // CHART 1
-                    // -----------------------------
-
-                    revenue:
-                        resRevenue.data?.success
-                            ? resRevenue.data.data || []
-                            : [],
-
-
-                    // -----------------------------
-                    // CHART 2
-                    // -----------------------------
-
-                    movieRevenue:
-                        resMovieRevenue.data?.success
-                            ? resMovieRevenue.data.data || []
-                            : [],
-
-
-                    // -----------------------------
-                    // CHART 3
-                    // -----------------------------
-
-                    tickets:
-                        resTickets.data?.success
-                            ? resTickets.data.data || []
-                            : [],
-
-
-                    // -----------------------------
-                    // CHART 4
-                    // -----------------------------
-
-                    userGrowth:
-                        resUserGrowth.data?.success
-                            ? resUserGrowth.data.data || []
-                            : []
-                });
-
-
-            } catch (error) {
-
-                console.error(
-                    '❌ Dashboard Error:',
-                    error
+                throw new Error(
+                    response.data.error ||
+                    response.data.message ||
+                    'Không lấy được dữ liệu người dùng.'
                 );
 
+            }
 
-                // Không để dashboard crash
-                setChartData({
-                    revenue: [],
-                    movieRevenue: [],
-                    tickets: [],
+
+            setChartData(
+                previous => ({
+                    ...previous,
+
+                    userGrowth:
+                        normalizeUserGrowthData(
+                            response
+                        )
+                })
+            );
+
+
+            setChartErrors(
+                previous => ({
+                    ...previous,
+
+                    userGrowth: null
+                })
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                '❌ User Growth Error:',
+                error
+            );
+
+
+            setChartErrors(
+                previous => ({
+                    ...previous,
+
+                    userGrowth:
+                        error.response?.data?.message ||
+                        error.message ||
+                        'Không thể lấy dữ liệu tăng trưởng người dùng.'
+                })
+            );
+
+
+            setChartData(
+                previous => ({
+                    ...previous,
+
                     userGrowth: []
-                });
+                })
+            );
 
+        }
+
+    };
+
+
+    // =========================================================
+    // FETCH ALL DASHBOARD DATA
+    // =========================================================
+
+    const fetchDashboardData = useCallback(
+        async (range = timeRange) => {
+
+            const {
+                start,
+                end
+            } = getDateRange(range);
+
+
+            setLoading(true);
+
+
+            setChartErrors({
+                revenue: null,
+                movieRevenue: null,
+                tickets: null,
+                userGrowth: null
+            });
+
+
+            try {
+
+                await Promise.allSettled([
+
+                    fetchStats(),
+
+                    fetchRevenue(
+                        start,
+                        end
+                    ),
+
+                    fetchMovieRevenue(
+                        start,
+                        end
+                    ),
+
+                    fetchTickets(
+                        start,
+                        end
+                    ),
+
+                    fetchUserGrowth(
+                        start,
+                        end
+                    )
+
+                ]);
 
             } finally {
 
@@ -427,37 +956,38 @@ const AdminDashboard = () => {
 
         fetchDashboardData('week');
 
-    }, [fetchDashboardData]);
+    }, []);
 
 
     // =========================================================
     // HANDLE RANGE CHANGE
     // =========================================================
 
-    const handleRangeChange = (range) => {
+    const handleRangeChange = (
+        range
+    ) => {
 
         setTimeRange(range);
 
 
-        if (range !== 'custom') {
+        if (
+            range !== 'custom'
+        ) {
 
-            setShowCustomPicker(false);
+            setShowCustomPicker(
+                false
+            );
 
-            fetchDashboardData(range);
+
+            fetchDashboardData(
+                range
+            );
 
         } else {
 
-            setShowCustomPicker(true);
-
-
-            if (
-                customStart &&
-                customEnd
-            ) {
-
-                fetchDashboardData('custom');
-
-            }
+            setShowCustomPicker(
+                true
+            );
 
         }
 
@@ -480,7 +1010,36 @@ const AdminDashboard = () => {
         }
 
 
-        fetchDashboardData('custom');
+        if (
+            customStart >
+            customEnd
+        ) {
+
+            return;
+
+        }
+
+
+        fetchDashboardData(
+            'custom'
+        );
+
+    };
+
+
+    // =========================================================
+    // REFRESH
+    // =========================================================
+
+    const handleRefresh = async () => {
+
+        setRefreshing(true);
+
+        await fetchDashboardData(
+            timeRange
+        );
+
+        setRefreshing(false);
 
     };
 
@@ -489,11 +1048,53 @@ const AdminDashboard = () => {
     // FORMAT MONEY
     // =========================================================
 
-    const formatMoney = (value) => {
+    const formatMoney = (
+        value
+    ) => {
 
-        return `${Number(value || 0).toLocaleString(
+        return `${Number(
+            value || 0
+        ).toLocaleString(
             'vi-VN'
         )} đ`;
+
+    };
+
+
+    // =========================================================
+    // FORMAT NUMBER
+    // =========================================================
+
+    const formatNumber = (
+        value
+    ) => {
+
+        return Number(
+            value || 0
+        ).toLocaleString(
+            'vi-VN'
+        );
+
+    };
+
+
+    // =========================================================
+    // CUSTOM TOOLTIP
+    // =========================================================
+
+    const tooltipStyle = {
+
+        background:
+            '#1a1a1a',
+
+        border:
+            '1px solid rgba(232,232,232,0.2)',
+
+        borderRadius:
+            '8px',
+
+        color:
+            '#fff'
 
     };
 
@@ -510,8 +1111,13 @@ const AdminDashboard = () => {
 
                 <div className="dashboard-skeleton-grid">
 
-                    {[...Array(4)].map(
-                        (_, index) => (
+                    {[
+                        1,
+                        2,
+                        3,
+                        4
+                    ].map(
+                        index => (
 
                             <div
                                 key={index}
@@ -549,6 +1155,53 @@ const AdminDashboard = () => {
 
 
             {/* =================================================
+                DASHBOARD HEADER
+            ================================================= */}
+
+            <div className="dashboard-main-header">
+
+                <div>
+
+                    <h1>
+                        Tổng quan hệ thống
+                    </h1>
+
+                    <p>
+                        Theo dõi hoạt động kinh doanh
+                        của rạp phim
+                    </p>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    className="dashboard-refresh-btn"
+                    onClick={
+                        handleRefresh
+                    }
+                    disabled={
+                        refreshing
+                    }
+                >
+
+                    <RefreshCw
+                        size={17}
+                        className={
+                            refreshing
+                                ? 'refresh-spin'
+                                : ''
+                        }
+                    />
+
+                    Làm mới
+
+                </button>
+
+            </div>
+
+
+            {/* =================================================
                 STAT CARDS
             ================================================= */}
 
@@ -560,17 +1213,21 @@ const AdminDashboard = () => {
                 <div className="stat-card purple">
 
                     <div className="stat-icon">
+
                         <Film size={28} />
+
                     </div>
 
 
                     <div className="stat-content">
 
-                        <p>TỔNG SỐ PHIM</p>
+                        <p>
+                            TỔNG SỐ PHIM
+                        </p>
 
                         <h2>
-                            {stats.movies.toLocaleString(
-                                'vi-VN'
+                            {formatNumber(
+                                stats.movies
                             )}
                         </h2>
 
@@ -581,7 +1238,11 @@ const AdminDashboard = () => {
                         className="stat-more-btn"
                         type="button"
                     >
-                        <MoreHorizontal size={18} />
+
+                        <MoreHorizontal
+                            size={18}
+                        />
+
                     </button>
 
                 </div>
@@ -592,17 +1253,21 @@ const AdminDashboard = () => {
                 <div className="stat-card blue">
 
                     <div className="stat-icon">
+
                         <Ticket size={28} />
+
                     </div>
 
 
                     <div className="stat-content">
 
-                        <p>TỔNG VÉ ĐÃ BÁN</p>
+                        <p>
+                            TỔNG VÉ ĐÃ BÁN
+                        </p>
 
                         <h2>
-                            {stats.tickets.toLocaleString(
-                                'vi-VN'
+                            {formatNumber(
+                                stats.tickets
                             )}
                         </h2>
 
@@ -613,7 +1278,11 @@ const AdminDashboard = () => {
                         className="stat-more-btn"
                         type="button"
                     >
-                        <MoreHorizontal size={18} />
+
+                        <MoreHorizontal
+                            size={18}
+                        />
+
                     </button>
 
                 </div>
@@ -624,17 +1293,21 @@ const AdminDashboard = () => {
                 <div className="stat-card green">
 
                     <div className="stat-icon">
+
                         <Users size={28} />
+
                     </div>
 
 
                     <div className="stat-content">
 
-                        <p>TỔNG NGƯỜI DÙNG</p>
+                        <p>
+                            TỔNG NGƯỜI DÙNG
+                        </p>
 
                         <h2>
-                            {stats.users.toLocaleString(
-                                'vi-VN'
+                            {formatNumber(
+                                stats.users
                             )}
                         </h2>
 
@@ -645,7 +1318,11 @@ const AdminDashboard = () => {
                         className="stat-more-btn"
                         type="button"
                     >
-                        <MoreHorizontal size={18} />
+
+                        <MoreHorizontal
+                            size={18}
+                        />
+
                     </button>
 
                 </div>
@@ -656,13 +1333,19 @@ const AdminDashboard = () => {
                 <div className="stat-card silver">
 
                     <div className="stat-icon">
-                        <DollarSign size={28} />
+
+                        <DollarSign
+                            size={28}
+                        />
+
                     </div>
 
 
                     <div className="stat-content">
 
-                        <p>DOANH THU</p>
+                        <p>
+                            DOANH THU
+                        </p>
 
                         <h2>
                             {formatMoney(
@@ -677,7 +1360,11 @@ const AdminDashboard = () => {
                         className="stat-more-btn"
                         type="button"
                     >
-                        <MoreHorizontal size={18} />
+
+                        <MoreHorizontal
+                            size={18}
+                        />
+
                     </button>
 
                 </div>
@@ -693,7 +1380,7 @@ const AdminDashboard = () => {
 
 
                 {/* =================================================
-                    CHART 1 - REVENUE
+                    REVENUE
                 ================================================= */}
 
                 <div className="chart-card revenue-chart">
@@ -701,9 +1388,13 @@ const AdminDashboard = () => {
 
                     <div className="chart-header">
 
-                        <h3>
-                            DOANH THU THEO THỜI GIAN
-                        </h3>
+                        <div>
+
+                            <h3>
+                                DOANH THU THEO THỜI GIAN
+                            </h3>
+
+                        </div>
 
 
                         <div className="chart-filter-group">
@@ -774,7 +1465,9 @@ const AdminDashboard = () => {
                                 }
                             >
 
-                                <Calendar size={14} />
+                                <Calendar
+                                    size={14}
+                                />
 
                                 Tùy chỉnh
 
@@ -785,7 +1478,7 @@ const AdminDashboard = () => {
                     </div>
 
 
-                    {/* CUSTOM DATE PICKER */}
+                    {/* CUSTOM DATE */}
 
                     {showCustomPicker && (
 
@@ -800,17 +1493,19 @@ const AdminDashboard = () => {
 
                                 <input
                                     type="date"
-                                    value={customStart}
-                                    onChange={(e) =>
+                                    value={
+                                        customStart
+                                    }
+                                    onChange={(
+                                        e
+                                    ) =>
                                         setCustomStart(
                                             e.target.value
                                         )
                                     }
                                     max={
                                         customEnd ||
-                                        new Date()
-                                            .toISOString()
-                                            .split('T')[0]
+                                        getToday()
                                     }
                                 />
 
@@ -825,8 +1520,12 @@ const AdminDashboard = () => {
 
                                 <input
                                     type="date"
-                                    value={customEnd}
-                                    onChange={(e) =>
+                                    value={
+                                        customEnd
+                                    }
+                                    onChange={(
+                                        e
+                                    ) =>
                                         setCustomEnd(
                                             e.target.value
                                         )
@@ -836,9 +1535,7 @@ const AdminDashboard = () => {
                                         undefined
                                     }
                                     max={
-                                        new Date()
-                                            .toISOString()
-                                            .split('T')[0]
+                                        getToday()
                                     }
                                 />
 
@@ -860,11 +1557,28 @@ const AdminDashboard = () => {
                     )}
 
 
-                    {/* REVENUE LINE CHART */}
+                    {/* CHART */}
 
                     <div className="chart-wrapper">
 
-                        {chartData.revenue.length > 0 ? (
+                        {chartErrors.revenue ? (
+
+                            <div className="chart-error">
+
+                                <AlertCircle
+                                    size={20}
+                                />
+
+                                <span>
+                                    {
+                                        chartErrors.revenue
+                                    }
+                                </span>
+
+                            </div>
+
+                        ) : chartData.revenue.length >
+                          0 ? (
 
                             <ResponsiveContainer
                                 width="100%"
@@ -896,23 +1610,21 @@ const AdminDashboard = () => {
                                             value
                                         ) =>
                                             `${(
-                                                Number(value) /
+                                                Number(
+                                                    value
+                                                ) /
                                                 1000
-                                            ).toFixed(0)}k`
+                                            ).toFixed(
+                                                0
+                                            )}k`
                                         }
                                     />
 
 
                                     <Tooltip
-                                        contentStyle={{
-                                            background:
-                                                '#1a1a1a',
-                                            border:
-                                                '1px solid rgba(232,232,232,0.2)',
-                                            borderRadius:
-                                                '8px',
-                                            color: '#fff'
-                                        }}
+                                        contentStyle={
+                                            tooltipStyle
+                                        }
                                         formatter={(
                                             value
                                         ) => [
@@ -931,7 +1643,8 @@ const AdminDashboard = () => {
                                         strokeWidth={3}
                                         dot={{
                                             r: 4,
-                                            fill: '#a855f7'
+                                            fill:
+                                                '#a855f7'
                                         }}
                                         activeDot={{
                                             r: 6
@@ -945,7 +1658,11 @@ const AdminDashboard = () => {
                         ) : (
 
                             <div className="no-data">
-                                Chưa có dữ liệu doanh thu
+
+                                Chưa có dữ liệu
+                                doanh thu trong
+                                khoảng thời gian này.
+
                             </div>
 
                         )}
@@ -956,7 +1673,7 @@ const AdminDashboard = () => {
 
 
                 {/* =================================================
-                    CHART 2 - MOVIE REVENUE PIE
+                    MOVIE REVENUE
                 ================================================= */}
 
                 <div className="chart-card pie-chart">
@@ -976,8 +1693,24 @@ const AdminDashboard = () => {
 
                         <div className="pie-wrapper">
 
-                            {chartData.movieRevenue.length >
-                            0 ? (
+                            {chartErrors.movieRevenue ? (
+
+                                <div className="chart-error">
+
+                                    <AlertCircle
+                                        size={20}
+                                    />
+
+                                    <span>
+                                        {
+                                            chartErrors.movieRevenue
+                                        }
+                                    </span>
+
+                                </div>
+
+                            ) : chartData.movieRevenue.length >
+                              0 ? (
 
                                 <ResponsiveContainer
                                     width="100%"
@@ -992,9 +1725,15 @@ const AdminDashboard = () => {
                                             }
                                             cx="50%"
                                             cy="50%"
-                                            innerRadius={60}
-                                            outerRadius={90}
-                                            paddingAngle={3}
+                                            innerRadius={
+                                                60
+                                            }
+                                            outerRadius={
+                                                90
+                                            }
+                                            paddingAngle={
+                                                3
+                                            }
                                             dataKey="value"
                                         >
 
@@ -1024,15 +1763,9 @@ const AdminDashboard = () => {
 
 
                                         <Tooltip
-                                            contentStyle={{
-                                                background:
-                                                    '#1a1a1a',
-                                                border:
-                                                    '1px solid rgba(232,232,232,0.2)',
-                                                borderRadius:
-                                                    '8px',
-                                                color: '#fff'
-                                            }}
+                                            contentStyle={
+                                                tooltipStyle
+                                            }
                                             formatter={(
                                                 value
                                             ) => [
@@ -1058,7 +1791,7 @@ const AdminDashboard = () => {
                         </div>
 
 
-                        {/* PIE LEGEND */}
+                        {/* LEGEND */}
 
                         <div className="pie-legend">
 
@@ -1139,7 +1872,7 @@ const AdminDashboard = () => {
 
 
                 {/* =================================================
-                    CHART 3 - TICKET COUNT
+                    TICKETS
                 ================================================= */}
 
                 <div className="chart-card bar-chart">
@@ -1156,7 +1889,24 @@ const AdminDashboard = () => {
 
                     <div className="chart-wrapper">
 
-                        {chartData.tickets.length > 0 ? (
+                        {chartErrors.tickets ? (
+
+                            <div className="chart-error">
+
+                                <AlertCircle
+                                    size={20}
+                                />
+
+                                <span>
+                                    {
+                                        chartErrors.tickets
+                                    }
+                                </span>
+
+                            </div>
+
+                        ) : chartData.tickets.length >
+                          0 ? (
 
                             <ResponsiveContainer
                                 width="100%"
@@ -1167,6 +1917,12 @@ const AdminDashboard = () => {
                                     data={
                                         chartData.tickets
                                     }
+                                    margin={{
+                                        top: 10,
+                                        right: 10,
+                                        left: 0,
+                                        bottom: 10
+                                    }}
                                 >
 
                                     <CartesianGrid
@@ -1179,7 +1935,7 @@ const AdminDashboard = () => {
                                         dataKey="movieName"
                                         stroke="#94a3b8"
                                         tick={{
-                                            fontSize: 12
+                                            fontSize: 11
                                         }}
                                     />
 
@@ -1193,22 +1949,14 @@ const AdminDashboard = () => {
 
 
                                     <Tooltip
-                                        contentStyle={{
-                                            background:
-                                                '#1a1a1a',
-                                            border:
-                                                '1px solid rgba(232,232,232,0.2)',
-                                            borderRadius:
-                                                '8px',
-                                            color: '#fff'
-                                        }}
+                                        contentStyle={
+                                            tooltipStyle
+                                        }
                                         formatter={(
                                             value
                                         ) => [
-                                            `${Number(
+                                            `${formatNumber(
                                                 value
-                                            ).toLocaleString(
-                                                'vi-VN'
                                             )} vé`,
                                             'Số vé'
                                         ]}
@@ -1233,7 +1981,11 @@ const AdminDashboard = () => {
                         ) : (
 
                             <div className="no-data">
+
                                 Chưa có dữ liệu vé
+                                trong khoảng thời
+                                gian này.
+
                             </div>
 
                         )}
@@ -1244,7 +1996,7 @@ const AdminDashboard = () => {
 
 
                 {/* =================================================
-                    CHART 4 - USER GROWTH
+                    USER GROWTH
                 ================================================= */}
 
                 <div className="chart-card user-growth-chart">
@@ -1261,8 +2013,24 @@ const AdminDashboard = () => {
 
                     <div className="chart-wrapper">
 
-                        {chartData.userGrowth.length >
-                        0 ? (
+                        {chartErrors.userGrowth ? (
+
+                            <div className="chart-error">
+
+                                <AlertCircle
+                                    size={20}
+                                />
+
+                                <span>
+                                    {
+                                        chartErrors.userGrowth
+                                    }
+                                </span>
+
+                            </div>
+
+                        ) : chartData.userGrowth.length >
+                          0 ? (
 
                             <ResponsiveContainer
                                 width="100%"
@@ -1288,13 +2056,17 @@ const AdminDashboard = () => {
                                             <stop
                                                 offset="0%"
                                                 stopColor="#3b82f6"
-                                                stopOpacity={0.4}
+                                                stopOpacity={
+                                                    0.4
+                                                }
                                             />
 
                                             <stop
                                                 offset="100%"
                                                 stopColor="#3b82f6"
-                                                stopOpacity={0}
+                                                stopOpacity={
+                                                    0
+                                                }
                                             />
 
                                         </linearGradient>
@@ -1324,15 +2096,9 @@ const AdminDashboard = () => {
 
 
                                     <Tooltip
-                                        contentStyle={{
-                                            background:
-                                                '#1a1a1a',
-                                            border:
-                                                '1px solid rgba(232,232,232,0.2)',
-                                            borderRadius:
-                                                '8px',
-                                            color: '#fff'
-                                        }}
+                                        contentStyle={
+                                            tooltipStyle
+                                        }
                                         formatter={(
                                             value,
                                             name
@@ -1344,10 +2110,8 @@ const AdminDashboard = () => {
                                             ) {
 
                                                 return [
-                                                    Number(
+                                                    formatNumber(
                                                         value
-                                                    ).toLocaleString(
-                                                        'vi-VN'
                                                     ),
                                                     'Người dùng mới'
                                                 ];
@@ -1356,10 +2120,8 @@ const AdminDashboard = () => {
 
 
                                             return [
-                                                Number(
+                                                formatNumber(
                                                     value
-                                                ).toLocaleString(
-                                                    'vi-VN'
                                                 ),
                                                 'Tổng người dùng'
                                             ];
@@ -1394,7 +2156,11 @@ const AdminDashboard = () => {
                         ) : (
 
                             <div className="no-data">
-                                Chưa có dữ liệu người dùng
+
+                                Chưa có dữ liệu
+                                người dùng trong
+                                khoảng thời gian này.
+
                             </div>
 
                         )}
@@ -1427,62 +2193,65 @@ const AdminDashboard = () => {
                     {chartData.movieRevenue.length >
                     0 ? (
 
-                        chartData.movieRevenue.map(
-                            (
-                                movie,
-                                index
-                            ) => (
+                        chartData.movieRevenue
+                            .slice(0, 5)
+                            .map(
+                                (
+                                    movie,
+                                    index
+                                ) => (
 
-                                <div
-                                    className="top-movie-item"
-                                    key={
-                                        movie.id ||
-                                        index
-                                    }
-                                >
+                                    <div
+                                        className="top-movie-item"
+                                        key={
+                                            movie.id ||
+                                            index
+                                        }
+                                    >
 
-
-                                    <div className="top-movie-left">
-
-
-                                        <span className="rank">
-                                            {index + 1}
-                                        </span>
+                                        <div className="top-movie-left">
 
 
-                                        <div className="movie-poster-placeholder" />
+                                            <span className="rank">
+
+                                                {index + 1}
+
+                                            </span>
 
 
-                                        <div>
-
-                                            <h4>
-                                                {
-                                                    movie.name
-                                                }
-                                            </h4>
+                                            <div className="movie-poster-placeholder" />
 
 
-                                            <p>
-                                                {formatMoney(
-                                                    movie.value
-                                                )}
-                                            </p>
+                                            <div>
+
+                                                <h4>
+                                                    {
+                                                        movie.name
+                                                    }
+                                                </h4>
+
+
+                                                <p>
+                                                    {formatMoney(
+                                                        movie.value
+                                                    )}
+                                                </p>
+
+                                            </div>
 
                                         </div>
 
+
+                                        <TrendingUp
+                                            size={18}
+                                            className="trend-icon"
+                                        />
+
                                     </div>
 
-
-                                    <TrendingUp
-                                        size={18}
-                                        className="trend-icon"
-                                    />
-
-                                </div>
+                                )
 
                             )
-
-                        )
 
                     ) : (
 
@@ -1512,4 +2281,3 @@ const AdminDashboard = () => {
 
 
 export default AdminDashboard;
-

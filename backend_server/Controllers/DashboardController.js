@@ -3,363 +3,966 @@ const db = require('../Config/db');
 class DashboardController {
 
     // =========================================================
-    // STATS
+    // GET DATE RANGE
     // =========================================================
-    static async getStats(req, res) {
+
+    static getDateRange(period = '7d') {
+
+        const now = new Date();
+
+        const endDate =
+            now.toISOString().split('T')[0];
+
+        const start = new Date(now);
+
+        switch (period) {
+
+            case 'today':
+                start.setHours(0, 0, 0, 0);
+                break;
+
+            case '7d':
+                start.setDate(
+                    start.getDate() - 6
+                );
+                break;
+
+            case '30d':
+                start.setDate(
+                    start.getDate() - 29
+                );
+                break;
+
+            case '3m':
+                start.setMonth(
+                    start.getMonth() - 3
+                );
+                break;
+
+            case '12m':
+                start.setFullYear(
+                    start.getFullYear() - 1
+                );
+                break;
+
+            default:
+                start.setDate(
+                    start.getDate() - 6
+                );
+                break;
+        }
+
+        return {
+            startDate:
+                start.toISOString().split('T')[0],
+
+            endDate
+        };
+    }
+
+
+    // =========================================================
+    // FORMAT DATE
+    // =========================================================
+
+    static formatDate(date) {
+
+        return new Date(date)
+            .toISOString()
+            .split('T')[0];
+
+    }
+
+
+    // =========================================================
+    // BUILD DATE SERIES
+    // =========================================================
+
+    static buildDateSeries(
+        startDate,
+        endDate
+    ) {
+
+        const result = [];
+
+        const current =
+            new Date(`${startDate}T00:00:00`);
+
+        const end =
+            new Date(`${endDate}T00:00:00`);
+
+
+        while (current <= end) {
+
+            const date =
+                current
+                    .toISOString()
+                    .split('T')[0];
+
+            result.push(date);
+
+            current.setDate(
+                current.getDate() + 1
+            );
+        }
+
+
+        return result;
+    }
+
+
+    // =========================================================
+    // FORMAT LABEL
+    // =========================================================
+
+    static formatDateLabel(date) {
+
+        const [year, month, day] =
+            date.split('-');
+
+        return `${day}/${month}`;
+
+    }
+
+
+    // =========================================================
+    // CALCULATE CHANGE %
+    // =========================================================
+
+    static calculateChange(
+        current,
+        previous
+    ) {
+
+        current =
+            Number(current) || 0;
+
+        previous =
+            Number(previous) || 0;
+
+
+        if (previous === 0) {
+
+            if (current === 0) {
+                return 0;
+            }
+
+            return 100;
+        }
+
+
+        return Number(
+            (
+                ((current - previous) /
+                    previous) *
+                100
+            ).toFixed(1)
+        );
+    }
+
+
+    // =========================================================
+    // 1. OVERVIEW
+    //
+    // GET /dashboard/overview
+    // =========================================================
+
+    static async getOverview(req, res) {
+
         try {
 
-            // Tổng số phim
-            const [movieRes] = await db.query(`
+            const {
+                period = '7d',
+                startDate: customStart,
+                endDate: customEnd
+            } = req.query;
+
+
+            let startDate;
+            let endDate;
+
+
+            if (
+                customStart &&
+                customEnd
+            ) {
+
+                startDate = customStart;
+                endDate = customEnd;
+
+            } else {
+
+                const range =
+                    DashboardController
+                        .getDateRange(period);
+
+                startDate =
+                    range.startDate;
+
+                endDate =
+                    range.endDate;
+            }
+
+
+            // =================================================
+            // PREVIOUS PERIOD
+            // =================================================
+
+            const start =
+                new Date(
+                    `${startDate}T00:00:00`
+                );
+
+            const end =
+                new Date(
+                    `${endDate}T00:00:00`
+                );
+
+
+            const duration =
+                Math.max(
+                    1,
+                    Math.round(
+                        (
+                            end - start
+                        ) /
+                        (
+                            1000 *
+                            60 *
+                            60 *
+                            24
+                        )
+                    ) + 1
+                );
+
+
+            const previousEnd =
+                new Date(start);
+
+            previousEnd.setDate(
+                previousEnd.getDate() - 1
+            );
+
+
+            const previousStart =
+                new Date(previousEnd);
+
+            previousStart.setDate(
+                previousStart.getDate() -
+                duration +
+                1
+            );
+
+
+            const previousStartDate =
+                DashboardController.formatDate(
+                    previousStart
+                );
+
+            const previousEndDate =
+                DashboardController.formatDate(
+                    previousEnd
+                );
+
+
+            // =================================================
+            // TOTAL MOVIES
+            // =================================================
+
+            const [
+                movieResult
+            ] = await db.query(`
                 SELECT COUNT(*) AS total
                 FROM movies
             `);
 
-            // Tổng số khách hàng
-            const [userRes] = await db.query(`
+
+            // =================================================
+            // TOTAL USERS
+            // =================================================
+
+            const [
+                userResult
+            ] = await db.query(`
                 SELECT COUNT(*) AS total
                 FROM users
                 WHERE role != 'admin'
             `);
 
-            // Tổng số vé đã bán
-            const [ticketRes] = await db.query(`
-                SELECT COUNT(t.ticket_id) AS total
-                FROM tickets t
-                INNER JOIN bookings b
-                    ON t.booking_id = b.booking_id
-                WHERE b.status = 'Completed'
-            `);
 
-            // Tổng doanh thu
-            const [revenueRes] = await db.query(`
-                SELECT COALESCE(SUM(total_amount), 0) AS total
-                FROM bookings
-                WHERE status = 'Completed'
-            `);
+            // =================================================
+            // CURRENT PERIOD
+            // =================================================
 
-            return res.status(200).json({
-                success: true,
-                movies: Number(movieRes[0]?.total) || 0,
-                users: Number(userRes[0]?.total) || 0,
-                tickets: Number(ticketRes[0]?.total) || 0,
-                revenue: Number(revenueRes[0]?.total) || 0
-            });
+            const [
+                currentResult
+            ] = await db.query(`
+                SELECT
 
-        } catch (error) {
+                    COALESCE(
+                        SUM(
+                            CASE
+                                WHEN b.status = 'Completed'
+                                THEN b.total_amount
+                                ELSE 0
+                            END
+                        ),
+                        0
+                    ) AS revenue,
 
-            console.error('❌ getStats error:', error);
+                    COUNT(
+                        DISTINCT
+                        CASE
+                            WHEN b.status = 'Completed'
+                            THEN b.booking_id
+                        END
+                    ) AS orders
 
-            return res.status(500).json({
-                success: false,
-                message: 'Lỗi lấy thống kê dashboard.',
-                error: error.message
-            });
-        }
-    }
+                FROM bookings b
 
-
-    // =========================================================
-    // 1. REVENUE CHART
-    // GET /revenue-chart
-    // =========================================================
-    static async getRevenueChart(req, res) {
-
-        try {
-
-            const {
+                WHERE DATE(b.booking_date)
+                BETWEEN ? AND ?
+            `, [
                 startDate,
                 endDate
-            } = req.query;
-
-            const end =
-                endDate ||
-                new Date().toISOString().split('T')[0];
-
-            const start =
-                startDate ||
-                new Date(
-                    Date.now() - 7 * 24 * 60 * 60 * 1000
-                ).toISOString().split('T')[0];
-
-
-            const [data] = await db.query(`
-                SELECT
-                    DATE_FORMAT(booking_date, '%d/%m') AS date,
-                    COALESCE(SUM(total_amount), 0) AS revenue
-                FROM bookings
-                WHERE status = 'Completed'
-                    AND DATE(booking_date) BETWEEN ? AND ?
-                GROUP BY DATE(booking_date)
-                ORDER BY DATE(booking_date) ASC
-            `, [
-                start,
-                end
             ]);
 
 
+            // =================================================
+            // CURRENT TICKETS
+            // =================================================
+
+            const [
+                currentTicketsResult
+            ] = await db.query(`
+                SELECT COUNT(t.ticket_id) AS total
+
+                FROM tickets t
+
+                INNER JOIN bookings b
+                    ON t.booking_id = b.booking_id
+
+                WHERE b.status = 'Completed'
+
+                    AND DATE(b.booking_date)
+                    BETWEEN ? AND ?
+            `, [
+                startDate,
+                endDate
+            ]);
+
+
+            // =================================================
+            // NEW USERS
+            // =================================================
+
+            const [
+                currentUsersResult
+            ] = await db.query(`
+                SELECT COUNT(*) AS total
+
+                FROM users
+
+                WHERE role != 'admin'
+
+                    AND DATE(created_at)
+                    BETWEEN ? AND ?
+            `, [
+                startDate,
+                endDate
+            ]);
+
+
+            // =================================================
+            // PREVIOUS PERIOD
+            // =================================================
+
+            const [
+                previousResult
+            ] = await db.query(`
+                SELECT
+
+                    COALESCE(
+                        SUM(total_amount),
+                        0
+                    ) AS revenue,
+
+                    COUNT(*) AS orders
+
+                FROM bookings
+
+                WHERE status = 'Completed'
+
+                    AND DATE(booking_date)
+                    BETWEEN ? AND ?
+            `, [
+                previousStartDate,
+                previousEndDate
+            ]);
+
+
+            const [
+                previousTicketsResult
+            ] = await db.query(`
+                SELECT COUNT(t.ticket_id) AS total
+
+                FROM tickets t
+
+                INNER JOIN bookings b
+                    ON t.booking_id = b.booking_id
+
+                WHERE b.status = 'Completed'
+
+                    AND DATE(b.booking_date)
+                    BETWEEN ? AND ?
+            `, [
+                previousStartDate,
+                previousEndDate
+            ]);
+
+
+            const [
+                previousUsersResult
+            ] = await db.query(`
+                SELECT COUNT(*) AS total
+
+                FROM users
+
+                WHERE role != 'admin'
+
+                    AND DATE(created_at)
+                    BETWEEN ? AND ?
+            `, [
+                previousStartDate,
+                previousEndDate
+            ]);
+
+
+            // =================================================
+            // VALUES
+            // =================================================
+
+            const revenue =
+                Number(
+                    currentResult[0]?.revenue
+                ) || 0;
+
+
+            const tickets =
+                Number(
+                    currentTicketsResult[0]?.total
+                ) || 0;
+
+
+            const users =
+                Number(
+                    userResult[0]?.total
+                ) || 0;
+
+
+            const movies =
+                Number(
+                    movieResult[0]?.total
+                ) || 0;
+
+
+            const orders =
+                Number(
+                    currentResult[0]?.orders
+                ) || 0;
+
+
+            const newUsers =
+                Number(
+                    currentUsersResult[0]?.total
+                ) || 0;
+
+
+            const previousRevenue =
+                Number(
+                    previousResult[0]?.revenue
+                ) || 0;
+
+
+            const previousTickets =
+                Number(
+                    previousTicketsResult[0]?.total
+                ) || 0;
+
+
+            const previousUsers =
+                Number(
+                    previousUsersResult[0]?.total
+                ) || 0;
+
+
             return res.status(200).json({
+
                 success: true,
 
-                data: data.map(item => ({
-                    date: item.date,
-                    revenue: Number(item.revenue) || 0
-                })),
-
                 period: {
-                    start,
-                    end
+                    period,
+                    startDate,
+                    endDate
+                },
+
+                kpi: {
+
+                    revenue,
+                    revenueChange:
+                        DashboardController
+                            .calculateChange(
+                                revenue,
+                                previousRevenue
+                            ),
+
+                    tickets,
+                    ticketsChange:
+                        DashboardController
+                            .calculateChange(
+                                tickets,
+                                previousTickets
+                            ),
+
+                    users,
+
+                    newUsers,
+
+                    usersChange:
+                        DashboardController
+                            .calculateChange(
+                                newUsers,
+                                previousUsers
+                            ),
+
+                    movies,
+
+                    orders
+
                 }
+
             });
+
 
         } catch (error) {
 
-            console.error('❌ getRevenueChart error:', error);
+            console.error(
+                '❌ Dashboard Overview:',
+                error
+            );
+
 
             return res.status(500).json({
+
                 success: false,
-                message: 'Lỗi lấy biểu đồ doanh thu.',
-                error: error.message
+
+                message:
+                    'Lỗi lấy tổng quan dashboard.',
+
+                error:
+                    error.message
+
             });
+
         }
+
     }
 
 
     // =========================================================
-    // 2. MOVIE REVENUE CHART
-    // GET /movie-revenue-chart
+    // 2. ANALYTICS
+    //
+    // GET /dashboard/analytics
     // =========================================================
-    static async getMovieRevenueChart(req, res) {
+
+    static async getAnalytics(req, res) {
 
         try {
 
             const {
-                startDate,
-                endDate
+                period = '7d',
+                startDate: customStart,
+                endDate: customEnd
             } = req.query;
 
-            const end =
-                endDate ||
-                new Date().toISOString().split('T')[0];
 
-            const start =
-                startDate ||
-                new Date(
-                    Date.now() - 7 * 24 * 60 * 60 * 1000
-                ).toISOString().split('T')[0];
+            let startDate;
+            let endDate;
 
 
-            const [movies] = await db.query(`
+            if (
+                customStart &&
+                customEnd
+            ) {
+
+                startDate = customStart;
+                endDate = customEnd;
+
+            } else {
+
+                const range =
+                    DashboardController
+                        .getDateRange(period);
+
+                startDate =
+                    range.startDate;
+
+                endDate =
+                    range.endDate;
+            }
+
+
+            // =================================================
+            // 1. REVENUE BY DAY
+            // =================================================
+
+            const [
+                revenueRows
+            ] = await db.query(`
+
                 SELECT
-                    m.movie_id,
-                    m.title AS name,
+
+                    DATE(booking_date)
+                        AS booking_day,
 
                     COALESCE(
-                        SUM(b.total_amount),
+                        SUM(total_amount),
                         0
                     ) AS revenue
+
+                FROM bookings
+
+                WHERE status = 'Completed'
+
+                    AND DATE(booking_date)
+                    BETWEEN ? AND ?
+
+                GROUP BY
+                    DATE(booking_date)
+
+                ORDER BY
+                    DATE(booking_date) ASC
+
+            `, [
+                startDate,
+                endDate
+            ]);
+
+
+            const revenueMap =
+                new Map();
+
+
+            revenueRows.forEach(row => {
+
+                const date =
+                    DashboardController.formatDate(
+                        row.booking_day
+                    );
+
+
+                revenueMap.set(
+                    date,
+                    Number(row.revenue) || 0
+                );
+
+            });
+
+
+            const dates =
+                DashboardController.buildDateSeries(
+                    startDate,
+                    endDate
+                );
+
+
+            const revenue =
+                dates.map(date => ({
+
+                    date,
+
+                    label:
+                        DashboardController
+                            .formatDateLabel(
+                                date
+                            ),
+
+                    value:
+                        revenueMap.get(date) || 0
+
+                }));
+
+
+            // =================================================
+            // 2. TICKETS BY DAY
+            // =================================================
+
+            const [
+                ticketRows
+            ] = await db.query(`
+
+                SELECT
+
+                    DATE(b.booking_date)
+                        AS booking_day,
+
+                    COUNT(t.ticket_id)
+                        AS tickets
+
+                FROM tickets t
+
+                INNER JOIN bookings b
+                    ON t.booking_id =
+                       b.booking_id
+
+                WHERE b.status =
+                    'Completed'
+
+                    AND DATE(b.booking_date)
+                    BETWEEN ? AND ?
+
+                GROUP BY
+                    DATE(b.booking_date)
+
+                ORDER BY
+                    DATE(b.booking_date) ASC
+
+            `, [
+                startDate,
+                endDate
+            ]);
+
+
+            const ticketMap =
+                new Map();
+
+
+            ticketRows.forEach(row => {
+
+                const date =
+                    DashboardController.formatDate(
+                        row.booking_day
+                    );
+
+
+                ticketMap.set(
+                    date,
+                    Number(row.tickets) || 0
+                );
+
+            });
+
+
+            const tickets =
+                dates.map(date => ({
+
+                    date,
+
+                    label:
+                        DashboardController
+                            .formatDateLabel(
+                                date
+                            ),
+
+                    value:
+                        ticketMap.get(date) || 0
+
+                }));
+
+
+            // =================================================
+            // 3. TOP MOVIES
+            //
+            // IMPORTANT:
+            // Do NOT SUM booking amount after JOIN tickets
+            // =================================================
+
+            const [
+                topMovies
+            ] = await db.query(`
+
+                SELECT
+
+                    m.movie_id AS id,
+
+                    m.title,
+
+                    m.movie_poster AS poster,
+
+                    COALESCE(
+                        revenue_data.revenue,
+                        0
+                    ) AS revenue,
+
+                    COALESCE(
+                        ticket_data.tickets_sold,
+                        0
+                    ) AS tickets_sold,
+
+                    COALESCE(
+                        order_data.orders,
+                        0
+                    ) AS orders
 
                 FROM movies m
 
-                INNER JOIN showtimes s
-                    ON m.movie_id = s.movie_id
+                LEFT JOIN (
 
-                INNER JOIN bookings b
-                    ON s.showtime_id = b.showtime_id
+                    SELECT
 
-                WHERE b.status = 'Completed'
-                    AND DATE(b.booking_date) BETWEEN ? AND ?
+                        s.movie_id,
 
-                GROUP BY
-                    m.movie_id,
-                    m.title
+                        SUM(
+                            b.total_amount
+                        ) AS revenue
 
-                ORDER BY revenue DESC
-            `, [
-                start,
-                end
-            ]);
+                    FROM bookings b
 
+                    INNER JOIN showtimes s
+                        ON b.showtime_id =
+                           s.showtime_id
 
-            const totalRevenue = movies.reduce(
-                (total, movie) =>
-                    total + Number(movie.revenue || 0),
-                0
-            );
+                    WHERE b.status =
+                        'Completed'
 
+                        AND DATE(b.booking_date)
+                        BETWEEN ? AND ?
 
-            const data = movies.map(movie => {
+                    GROUP BY
+                        s.movie_id
 
-                const revenue =
-                    Number(movie.revenue) || 0;
+                ) revenue_data
 
-                const percent =
-                    totalRevenue > 0
-                        ? ((revenue / totalRevenue) * 100).toFixed(1)
-                        : 0;
-
-                return {
-                    id: movie.movie_id,
-                    name: movie.name,
-                    value: revenue,
-                    percent: `${percent}%`
-                };
-            });
+                    ON revenue_data.movie_id =
+                       m.movie_id
 
 
-            return res.status(200).json({
-                success: true,
-                data,
-                totalRevenue,
-                period: {
-                    start,
-                    end
-                }
-            });
+                LEFT JOIN (
 
-        } catch (error) {
+                    SELECT
 
-            console.error(
-                '❌ getMovieRevenueChart error:',
-                error
-            );
+                        s.movie_id,
 
-            return res.status(500).json({
-                success: false,
-                message: 'Lỗi lấy doanh thu theo phim.',
-                error: error.message
-            });
-        }
-    }
+                        COUNT(t.ticket_id)
+                            AS tickets_sold
 
+                    FROM tickets t
 
-    // =========================================================
-    // 3. TICKET CHART
-    // GET /ticket-chart
-    // =========================================================
-    static async getTicketChart(req, res) {
+                    INNER JOIN bookings b
+                        ON t.booking_id =
+                           b.booking_id
 
-        try {
+                    INNER JOIN showtimes s
+                        ON t.showtime_id =
+                           s.showtime_id
 
-            const {
-                startDate,
-                endDate
-            } = req.query;
+                    WHERE b.status =
+                        'Completed'
 
-            const end =
-                endDate ||
-                new Date().toISOString().split('T')[0];
+                        AND DATE(b.booking_date)
+                        BETWEEN ? AND ?
 
-            const start =
-                startDate ||
-                new Date(
-                    Date.now() - 7 * 24 * 60 * 60 * 1000
-                ).toISOString().split('T')[0];
+                    GROUP BY
+                        s.movie_id
+
+                ) ticket_data
+
+                    ON ticket_data.movie_id =
+                       m.movie_id
 
 
-            const [data] = await db.query(`
-                SELECT
+                LEFT JOIN (
 
-                    m.movie_id,
+                    SELECT
 
-                    m.title AS movieName,
+                        s.movie_id,
 
-                    COUNT(t.ticket_id) AS ticketCount,
+                        COUNT(
+                            DISTINCT b.booking_id
+                        ) AS orders
 
+                    FROM bookings b
+
+                    INNER JOIN showtimes s
+                        ON b.showtime_id =
+                           s.showtime_id
+
+                    WHERE b.status =
+                        'Completed'
+
+                        AND DATE(b.booking_date)
+                        BETWEEN ? AND ?
+
+                    GROUP BY
+                        s.movie_id
+
+                ) order_data
+
+                    ON order_data.movie_id =
+                       m.movie_id
+
+
+                WHERE
                     COALESCE(
-                        SUM(b.total_amount),
+                        revenue_data.revenue,
                         0
-                    ) AS revenue
+                    ) > 0
 
-                FROM tickets t
+                ORDER BY
+                    revenue DESC
 
-                INNER JOIN bookings b
-                    ON t.booking_id = b.booking_id
+                LIMIT 10
 
-                INNER JOIN showtimes s
-                    ON t.showtime_id = s.showtime_id
-
-                INNER JOIN movies m
-                    ON s.movie_id = m.movie_id
-
-                WHERE b.status = 'Completed'
-                    AND DATE(b.booking_date) BETWEEN ? AND ?
-
-                GROUP BY
-                    m.movie_id,
-                    m.title
-
-                ORDER BY ticketCount DESC
             `, [
-                start,
-                end
+                startDate,
+                endDate,
+
+                startDate,
+                endDate,
+
+                startDate,
+                endDate
             ]);
 
 
-            return res.status(200).json({
-                success: true,
+            const formattedTopMovies =
+                topMovies.map(movie => ({
 
-                data: data.map(item => ({
-                    id: item.movie_id,
-                    movieName: item.movieName,
-                    ticketCount: Number(item.ticketCount) || 0,
-                    revenue: Number(item.revenue) || 0
-                })),
+                    id:
+                        movie.id,
 
-                period: {
-                    start,
-                    end
-                }
-            });
+                    title:
+                        movie.title,
 
-        } catch (error) {
+                    poster:
+                        movie.poster,
 
-            console.error(
-                '❌ getTicketChart error:',
-                error
-            );
+                    revenue:
+                        Number(movie.revenue) || 0,
 
-            return res.status(500).json({
-                success: false,
-                message: 'Lỗi lấy biểu đồ số vé.',
-                error: error.message
-            });
-        }
-    }
+                    tickets:
+                        Number(movie.tickets_sold) || 0,
+
+                    orders:
+                        Number(movie.orders) || 0
+
+                }));
 
 
-    // =========================================================
-    // 4. USER GROWTH CHART
-    // GET /user-growth-chart
-    // =========================================================
-    static async getUserGrowthChart(req, res) {
+            // =================================================
+            // 4. USER GROWTH
+            // =================================================
 
-        try {
+            const [
+                userRows
+            ] = await db.query(`
 
-            const {
-                startDate,
-                endDate
-            } = req.query;
-
-            const end =
-                endDate ||
-                new Date().toISOString().split('T')[0];
-
-            const start =
-                startDate ||
-                new Date(
-                    Date.now() - 30 * 24 * 60 * 60 * 1000
-                ).toISOString().split('T')[0];
-
-
-            const [data] = await db.query(`
                 SELECT
 
-                    DATE_FORMAT(
-                        created_at,
-                        '%d/%m'
-                    ) AS date,
+                    DATE(created_at)
+                        AS created_day,
 
-                    COUNT(*) AS newUsers
+                    COUNT(*) AS new_users
 
                 FROM users
 
@@ -368,149 +971,489 @@ class DashboardController {
                     AND DATE(created_at)
                     BETWEEN ? AND ?
 
-                GROUP BY DATE(created_at)
+                GROUP BY
+                    DATE(created_at)
 
-                ORDER BY DATE(created_at) ASC
+                ORDER BY
+                    DATE(created_at) ASC
+
             `, [
-                start,
-                end
+                startDate,
+                endDate
             ]);
 
 
-            // Tính cumulative ở Node
-            let cumulative = 0;
+            // =================================================
+            // USERS BEFORE START DATE
+            // =================================================
 
-            const result = data.map(item => {
+            const [
+                baselineRows
+            ] = await db.query(`
 
-                const newUsers =
-                    Number(item.newUsers) || 0;
+                SELECT COUNT(*) AS total
 
-                cumulative += newUsers;
+                FROM users
 
-                return {
-                    date: item.date,
-                    newUsers,
-                    cumulative
-                };
+                WHERE role != 'admin'
+
+                    AND DATE(created_at) < ?
+
+            `, [
+                startDate
+            ]);
+
+
+            let cumulative =
+                Number(
+                    baselineRows[0]?.total
+                ) || 0;
+
+
+            const userMap =
+                new Map();
+
+
+            userRows.forEach(row => {
+
+                const date =
+                    DashboardController.formatDate(
+                        row.created_day
+                    );
+
+
+                userMap.set(
+                    date,
+                    Number(row.new_users) || 0
+                );
+
             });
 
+
+            const userGrowth =
+                dates.map(date => {
+
+                    const newUsers =
+                        userMap.get(date) || 0;
+
+
+                    cumulative += newUsers;
+
+
+                    return {
+
+                        date,
+
+                        label:
+                            DashboardController
+                                .formatDateLabel(
+                                    date
+                                ),
+
+                        newUsers,
+
+                        cumulative
+
+                    };
+
+                });
+
+
+            // =================================================
+            // RESPONSE
+            // =================================================
 
             return res.status(200).json({
+
                 success: true,
-                data: result,
+
                 period: {
-                    start,
-                    end
-                }
+                    period,
+                    startDate,
+                    endDate
+                },
+
+                revenue,
+
+                tickets,
+
+                topMovies:
+                    formattedTopMovies,
+
+                userGrowth
+
             });
+
 
         } catch (error) {
 
             console.error(
-                '❌ getUserGrowthChart error:',
+                '❌ Dashboard Analytics:',
                 error
             );
 
+
             return res.status(500).json({
+
                 success: false,
-                message: 'Lỗi lấy biểu đồ tăng trưởng người dùng.',
-                error: error.message
+
+                message:
+                    'Lỗi lấy dữ liệu phân tích dashboard.',
+
+                error:
+                    error.message
+
             });
+
         }
+
     }
 
 
     // =========================================================
-    // TOP MOVIES
+    // 3. RECENT ACTIVITY
+    //
+    // GET /dashboard/recent-activity
     // =========================================================
-    static async getTopMovies(req, res) {
+
+    static async getRecentActivity(req, res) {
 
         try {
 
             const limit =
                 Math.min(
-                    parseInt(req.query.limit) || 10,
-                    50
+                    parseInt(
+                        req.query.limit
+                    ) || 8,
+                    20
                 );
 
 
-            const [movies] = await db.query(`
+            // =================================================
+            // RECENT BOOKINGS
+            // =================================================
+
+            const [
+                bookingRows
+            ] = await db.query(`
+
                 SELECT
 
-                    m.movie_id,
-                    m.title,
-                    m.movie_poster AS poster,
-                    m.release_date,
+                    b.booking_id,
 
-                    COUNT(t.ticket_id) AS tickets_sold,
+                    b.total_amount,
 
-                    COALESCE(
-                        SUM(b.total_amount),
-                        0
-                    ) AS revenue,
+                    b.booking_date,
 
-                    COUNT(
-                        DISTINCT b.booking_id
-                    ) AS orders
+                    b.status,
 
-                FROM movies m
+                    u.username,
 
-                INNER JOIN showtimes s
-                    ON m.movie_id = s.movie_id
+                    u.email
 
-                INNER JOIN bookings b
-                    ON s.showtime_id = b.showtime_id
+                FROM bookings b
 
-                INNER JOIN tickets t
-                    ON b.booking_id = t.booking_id
+                LEFT JOIN users u
+                    ON b.user_id =
+                       u.user_id
 
-                WHERE b.status = 'Completed'
-
-                GROUP BY
-                    m.movie_id,
-                    m.title,
-                    m.movie_poster,
-                    m.release_date
-
-                ORDER BY revenue DESC
+                ORDER BY
+                    b.booking_date DESC
 
                 LIMIT ?
+
             `, [
                 limit
             ]);
 
 
+            // =================================================
+            // RECENT USERS
+            // =================================================
+
+            const [
+                userRows
+            ] = await db.query(`
+
+                SELECT
+
+                    user_id,
+
+                    username,
+
+                    email,
+
+                    created_at
+
+                FROM users
+
+                WHERE role != 'admin'
+
+                ORDER BY
+                    created_at DESC
+
+                LIMIT ?
+
+            `, [
+                limit
+            ]);
+
+
+            const activities = [];
+
+
+            // =================================================
+            // BOOKING ACTIVITIES
+            // =================================================
+
+            bookingRows.forEach(item => {
+
+                activities.push({
+
+                    id:
+                        `booking-${item.booking_id}`,
+
+                    type:
+                        'booking',
+
+                    title:
+                        item.status === 'Completed'
+                            ? 'Đặt vé thành công'
+                            : 'Đơn đặt vé mới',
+
+                    description:
+                        item.username
+                            ? `${item.username} đã đặt vé`
+                            : 'Có đơn đặt vé mới',
+
+                    amount:
+                        Number(
+                            item.total_amount
+                        ) || 0,
+
+                    date:
+                        item.booking_date
+
+                });
+
+            });
+
+
+            // =================================================
+            // USER ACTIVITIES
+            // =================================================
+
+            userRows.forEach(item => {
+
+                activities.push({
+
+                    id:
+                        `user-${item.user_id}`,
+
+                    type:
+                        'user',
+
+                    title:
+                        'Người dùng mới',
+
+                    description:
+                        item.username ||
+                        item.email ||
+                        'Người dùng mới đăng ký',
+
+                    amount:
+                        null,
+
+                    date:
+                        item.created_at
+
+                });
+
+            });
+
+
+            // =================================================
+            // SORT
+            // =================================================
+
+            activities.sort(
+                (a, b) =>
+                    new Date(b.date) -
+                    new Date(a.date)
+            );
+
+
             return res.status(200).json({
+
                 success: true,
 
-                movies: movies.map(movie => ({
-                    id: movie.movie_id,
-                    title: movie.title,
-                    poster: movie.poster,
-                    release_date: movie.release_date,
-                    tickets_sold:
-                        Number(movie.tickets_sold) || 0,
-                    revenue:
-                        Number(movie.revenue) || 0,
-                    orders:
-                        Number(movie.orders) || 0
-                }))
+                activities:
+                    activities.slice(
+                        0,
+                        limit
+                    )
+
             });
+
 
         } catch (error) {
 
             console.error(
-                '❌ getTopMovies error:',
+                '❌ Dashboard Recent Activity:',
                 error
             );
 
+
             return res.status(500).json({
+
                 success: false,
-                message: 'Lỗi lấy top phim.',
-                error: error.message
+
+                message:
+                    'Lỗi lấy hoạt động gần đây.',
+
+                error:
+                    error.message
+
             });
+
         }
+
     }
+
+
+    // =========================================================
+    // LEGACY STATS
+    //
+    // Giữ lại để không làm hỏng API cũ.
+    // =========================================================
+
+    static async getStats(req, res) {
+
+        try {
+
+            const {
+                period = '7d'
+            } = req.query;
+
+
+            const range =
+                DashboardController
+                    .getDateRange(period);
+
+
+            const [
+                movieResult
+            ] = await db.query(`
+                SELECT COUNT(*) AS total
+                FROM movies
+            `);
+
+
+            const [
+                userResult
+            ] = await db.query(`
+                SELECT COUNT(*) AS total
+                FROM users
+                WHERE role != 'admin'
+            `);
+
+
+            const [
+                ticketResult
+            ] = await db.query(`
+                SELECT COUNT(t.ticket_id) AS total
+
+                FROM tickets t
+
+                INNER JOIN bookings b
+                    ON t.booking_id =
+                       b.booking_id
+
+                WHERE b.status =
+                    'Completed'
+
+                    AND DATE(b.booking_date)
+                    BETWEEN ? AND ?
+            `, [
+                range.startDate,
+                range.endDate
+            ]);
+
+
+            const [
+                revenueResult
+            ] = await db.query(`
+                SELECT
+
+                    COALESCE(
+                        SUM(total_amount),
+                        0
+                    ) AS total
+
+                FROM bookings
+
+                WHERE status =
+                    'Completed'
+
+                    AND DATE(booking_date)
+                    BETWEEN ? AND ?
+            `, [
+                range.startDate,
+                range.endDate
+            ]);
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                movies:
+                    Number(
+                        movieResult[0]?.total
+                    ) || 0,
+
+                users:
+                    Number(
+                        userResult[0]?.total
+                    ) || 0,
+
+                tickets:
+                    Number(
+                        ticketResult[0]?.total
+                    ) || 0,
+
+                revenue:
+                    Number(
+                        revenueResult[0]?.total
+                    ) || 0
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                '❌ getStats:',
+                error
+            );
+
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    'Lỗi thống kê.',
+
+                error:
+                    error.message
+
+            });
+
+        }
+
+    }
+
 }
 
 
