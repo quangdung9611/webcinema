@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import {
     Ticket,
@@ -11,31 +11,23 @@ import {
     Loader2,
     Monitor,
     Info,
-    AlertCircle,
-    Check,
-    Film
+    Check
 } from 'lucide-react';
 import AdminModal from '../../../components/AdminModal';
 import '../../../styles/TicketList.css';
 
 const TicketList = () => {
+    // ----- STATES -----
     const [tickets, setTickets] = useState([]);
     const [allSeats, setAllSeats] = useState([]);
     const [cinemas, setCinemas] = useState([]);
     const [rooms, setRooms] = useState([]);
     const [showtimes, setShowtimes] = useState([]);
     const [viewMode, setViewMode] = useState('table');
-
-    const today = new Date().toISOString().split('T')[0];
-
-    const [modalConfig, setModalConfig] = useState({
-        show: false,
-        type: 'info',
-        title: '',
-        message: '',
-        onConfirm: () => {},
-        onCancel: null
-    });
+    const [searchTerm, setSearchTerm] = useState('');
+    const [loadingTickets, setLoadingTickets] = useState(false);
+    const [loadingShowtimes, setLoadingShowtimes] = useState(false);
+    const [loadingRooms, setLoadingRooms] = useState(false);
 
     const [filters, setFilters] = useState({
         cinemaId: '',
@@ -43,13 +35,37 @@ const TicketList = () => {
         showtimeId: ''
     });
 
-    const [searchTerm, setSearchTerm] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [modal, setModal] = useState({
+        show: false,
+        type: 'info',
+        title: '',
+        message: '',
+        onConfirm: null,
+        onCancel: null
+    });
 
-    const closeModal = () => setModalConfig(prev => ({ ...prev, show: false }));
+    // ----- API CONFIG -----
+    const API_BASE = 'https://api.quangdungcinema.id.vn';
+    const getAuthHeader = () => {
+        const token = localStorage.getItem('token');
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    };
 
-    const openModal = (type, title, message, onConfirm = closeModal, onCancel = null) => {
-        setModalConfig({
+    const handleApiError = (error, fallbackMessage = 'Có lỗi xảy ra.') => {
+        console.error('API Error:', error);
+        if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+            return;
+        }
+        showModal('error', 'Lỗi', error.response?.data?.message || fallbackMessage);
+    };
+
+    // ----- MODAL -----
+    const closeModal = () => setModal(prev => ({ ...prev, show: false }));
+
+    const showModal = (type, title, message, onConfirm = closeModal, onCancel = null) => {
+        setModal({
             show: true,
             type,
             title,
@@ -59,123 +75,142 @@ const TicketList = () => {
         });
     };
 
-    // --- 1. Lấy danh sách rạp ---
+    // ----- 1. Lấy danh sách rạp -----
     useEffect(() => {
         const fetchCinemas = async () => {
             try {
-                const res = await axios.get('https://api.quangdungcinema.id.vn/api/cinemas');
-                setCinemas(res.data);
+                const res = await axios.get(`${API_BASE}/api/cinemas`);
+                setCinemas(res.data || []);
             } catch (err) {
-                console.error('Lỗi lấy rạp:', err);
-                openModal('error', 'Lỗi', 'Không thể tải danh sách rạp.');
+                handleApiError(err, 'Không thể tải danh sách rạp.');
             }
         };
         fetchCinemas();
     }, []);
 
-    // --- 2. Khi chọn rạp -> lấy phòng ---
+    // ----- 2. Khi chọn rạp -> lấy phòng -----
     useEffect(() => {
-        if (filters.cinemaId) {
-            const fetchRooms = async () => {
-                try {
-                    const res = await axios.get(`https://api.quangdungcinema.id.vn/api/rooms/cinema/${filters.cinemaId}`);
-                    setRooms(res.data);
-                    setFilters(prev => ({ ...prev, roomId: '', showtimeId: '' }));
-                    setTickets([]);
-                    setShowtimes([]);
-                    setAllSeats([]);
-                } catch (err) {
-                    console.error('Lỗi lấy phòng:', err);
-                    openModal('error', 'Lỗi', 'Không thể tải danh sách phòng.');
-                }
-            };
-            fetchRooms();
+        if (!filters.cinemaId) {
+            setRooms([]);
+            setFilters(prev => ({ ...prev, roomId: '', showtimeId: '' }));
+            setShowtimes([]);
+            setTickets([]);
+            setAllSeats([]);
+            return;
         }
+
+        const fetchRooms = async () => {
+            setLoadingRooms(true);
+            try {
+                const res = await axios.get(`${API_BASE}/api/rooms/cinema/${filters.cinemaId}`);
+                setRooms(res.data || []);
+                setFilters(prev => ({ ...prev, roomId: '', showtimeId: '' }));
+                setShowtimes([]);
+                setTickets([]);
+                setAllSeats([]);
+            } catch (err) {
+                handleApiError(err, 'Không thể tải danh sách phòng.');
+            } finally {
+                setLoadingRooms(false);
+            }
+        };
+        fetchRooms();
     }, [filters.cinemaId]);
 
-    // --- 3. Khi chọn phòng -> lấy tất cả showtimes và lọc theo phòng + ngày ---
+    // ----- 3. Khi chọn phòng -> lấy sơ đồ ghế + suất chiếu -----
     useEffect(() => {
-        if (filters.roomId) {
-            const fetchAllSeats = async () => {
-                try {
-                    const res = await axios.get(`https://api.quangdungcinema.id.vn/api/seats/room/${filters.roomId}`);
-                    setAllSeats(res.data);
-                } catch (err) {
-                    console.error('Lỗi lấy sơ đồ ghế:', err);
-                }
-            };
-            fetchAllSeats();
-
-            const fetchShowtimes = async () => {
-                setLoading(true);
-                try {
-                    // Lấy tất cả showtimes, lọc theo room_id và ngày
-                    const res = await axios.get('https://api.quangdungcinema.id.vn/api/showtimes');
-                    const allShowtimes = res.data || [];
-                    const filtered = allShowtimes.filter(s =>
-                        s.room_id == filters.roomId &&
-                        s.start_time?.startsWith(today)
-                    );
-                    setShowtimes(filtered);
-                    setFilters(prev => ({ ...prev, showtimeId: '' }));
-                    setTickets([]);
-                } catch (err) {
-                    console.error('Lỗi lấy suất chiếu:', err);
-                    openModal('error', 'Lỗi', 'Không thể tải danh sách suất chiếu.');
-                } finally {
-                    setLoading(false);
-                }
-            };
-            fetchShowtimes();
+        if (!filters.roomId) {
+            setShowtimes([]);
+            setAllSeats([]);
+            setTickets([]);
+            setFilters(prev => ({ ...prev, showtimeId: '' }));
+            return;
         }
-    }, [filters.roomId]);
 
-    // --- 4. Khi chọn suất chiếu -> lấy vé ---
-    const fetchTickets = async () => {
-        if (!filters.showtimeId) return;
-        setLoading(true);
+        const fetchData = async () => {
+            setLoadingShowtimes(true);
+            try {
+                const tokenHeader = getAuthHeader();
+
+                // Lấy sơ đồ ghế (public)
+                const seatsRes = await axios.get(`${API_BASE}/api/seats/room/${filters.roomId}`);
+                setAllSeats(seatsRes.data || []);
+
+                // Lấy suất chiếu theo rạp và phòng (admin)
+                const showtimesRes = await axios.get(
+                    `${API_BASE}/api/showtimes/by-cinema-room?cinema_id=${filters.cinemaId}&room_id=${filters.roomId}`,
+                    { headers: tokenHeader }
+                );
+                setShowtimes(showtimesRes.data || []);
+                setFilters(prev => ({ ...prev, showtimeId: '' }));
+                setTickets([]);
+            } catch (err) {
+                handleApiError(err, 'Không thể tải suất chiếu.');
+            } finally {
+                setLoadingShowtimes(false);
+            }
+        };
+        fetchData();
+    }, [filters.cinemaId, filters.roomId]);
+
+    // ----- 4. Khi chọn suất chiếu -> lấy vé -----
+    const fetchTickets = useCallback(async () => {
+        if (!filters.showtimeId) {
+            setTickets([]);
+            return;
+        }
+
+        setLoadingTickets(true);
         try {
-            const res = await axios.get(`https://api.quangdungcinema.id.vn/api/tickets/showtime/${filters.showtimeId}`);
+            const tokenHeader = getAuthHeader();
+            const res = await axios.get(
+                `${API_BASE}/api/tickets/showtime/${filters.showtimeId}`,
+                { headers: tokenHeader }
+            );
             setTickets(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
-            console.error('Lỗi lấy vé:', err);
-            openModal('error', 'Lỗi', 'Không thể tải danh sách vé.');
+            handleApiError(err, 'Không thể tải danh sách vé.');
             setTickets([]);
         } finally {
-            setLoading(false);
+            setLoadingTickets(false);
         }
-    };
+    }, [filters.showtimeId]);
 
     useEffect(() => {
         fetchTickets();
-    }, [filters.showtimeId]);
+    }, [fetchTickets]);
 
-    // --- 5. Check-in vé ---
+    // ----- 5. Check-in vé -----
     const handleCheckIn = (code) => {
-        openModal(
+        showModal(
             'confirm',
             'Xác nhận soát vé',
             `Bạn có chắc muốn soát vé mã: ${code}?`,
             async () => {
                 try {
-                    await axios.post('https://api.quangdungcinema.id.vn/api/tickets/check-in', { ticketCode: code });
-                    openModal('success', 'Thành công', `Đã soát vé ${code} thành công!`);
+                    const tokenHeader = getAuthHeader();
+                    await axios.post(
+                        `${API_BASE}/api/tickets/check-in`,
+                        { ticketCode: code },
+                        { headers: tokenHeader }
+                    );
+                    showModal('success', 'Thành công', `Đã soát vé ${code} thành công!`);
                     fetchTickets();
                 } catch (err) {
-                    openModal('error', 'Lỗi soát vé', err.response?.data?.message || 'Lỗi hệ thống.');
+                    showModal('error', 'Lỗi soát vé', err.response?.data?.message || 'Lỗi hệ thống.');
                 }
             }
         );
     };
 
-    // --- Thống kê ---
+    // ----- Thống kê -----
     const stats = {
         total: tickets.length,
         used: tickets.filter(t => t.ticket_status === 'Used').length,
         pending: tickets.filter(t => t.ticket_status !== 'Used').length
     };
 
-    // --- Sơ đồ ghế ---
+    // ----- Sơ đồ ghế -----
     const fullLayout = allSeats.reduce((acc, seat) => {
         const row = seat.seat_row || 'A';
         if (!acc[row]) acc[row] = [];
@@ -184,25 +219,29 @@ const TicketList = () => {
         return acc;
     }, {});
 
-    // --- Format thời gian ---
+    // ----- Format -----
     const formatShowtimeLabel = (showtime) => {
         if (!showtime) return '';
         const datePart = showtime.start_time?.split(' ')[0] || '';
         const timePart = showtime.start_time?.split(' ')[1]?.substring(0, 5) || '';
         const [year, month, day] = datePart.split('-');
         const dateVN = `${day}/${month}/${year}`;
-        return `${showtime.title || 'Phim'} | ${dateVN} | ${timePart}`;
+        const title = showtime.title || 'Phim';
+        return `${title} | ${dateVN} | ${timePart}`;
     };
 
+    const isLoading = loadingTickets || loadingShowtimes;
+
+    // ----- RENDER -----
     return (
         <div className="admin-ticket-container">
             <AdminModal
-                show={modalConfig.show}
-                type={modalConfig.type}
-                title={modalConfig.title}
-                message={modalConfig.message}
-                onConfirm={modalConfig.onConfirm}
-                onCancel={modalConfig.onCancel}
+                show={modal.show}
+                type={modal.type}
+                title={modal.title}
+                message={modal.message}
+                onConfirm={modal.onConfirm}
+                onCancel={modal.onCancel}
             />
 
             <div className="admin-ticket-header">
@@ -213,6 +252,7 @@ const TicketList = () => {
 
                 <div className="top-toolbar">
                     <div className="filter-selection-grid">
+                        {/* Rạp */}
                         <div className="filter-group">
                             <label>Rạp chiếu:</label>
                             <select
@@ -226,12 +266,13 @@ const TicketList = () => {
                             </select>
                         </div>
 
+                        {/* Phòng */}
                         <div className="filter-group">
                             <label>Phòng:</label>
                             <select
                                 value={filters.roomId}
                                 onChange={(e) => setFilters({ ...filters, roomId: e.target.value })}
-                                disabled={!filters.cinemaId}
+                                disabled={!filters.cinemaId || loadingRooms}
                             >
                                 <option value="">-- Chọn Phòng --</option>
                                 {rooms.map(r => (
@@ -240,12 +281,13 @@ const TicketList = () => {
                             </select>
                         </div>
 
+                        {/* Suất chiếu */}
                         <div className="filter-group large">
                             <label>Chọn phim & Suất chiếu:</label>
                             <select
                                 value={filters.showtimeId}
                                 onChange={(e) => setFilters({ ...filters, showtimeId: e.target.value })}
-                                disabled={!showtimes.length}
+                                disabled={!showtimes.length || loadingShowtimes}
                             >
                                 <option value="">-- Chọn Suất chiếu --</option>
                                 {showtimes.map(s => (
@@ -254,6 +296,7 @@ const TicketList = () => {
                                     </option>
                                 ))}
                             </select>
+                            {loadingShowtimes && <span className="loading-indicator">Đang tải...</span>}
                         </div>
                     </div>
 
@@ -273,6 +316,7 @@ const TicketList = () => {
                     </div>
                 </div>
 
+                {/* Stats Cards */}
                 <div className="ticket-stats-cards">
                     <div className="stat-card blue">
                         <span>{stats.total}</span>
@@ -290,10 +334,10 @@ const TicketList = () => {
             </div>
 
             <div className="content-body">
-                {loading ? (
+                {isLoading ? (
                     <div className="loader">
                         <Loader2 size={24} className="spin" style={{ marginRight: '10px' }} />
-                        Đang quét dữ liệu vé...
+                        Đang tải dữ liệu...
                     </div>
                 ) : !filters.showtimeId ? (
                     <div className="empty-msg">

@@ -12,7 +12,27 @@ exports.getAllShowtimes = async (req, res) => {
     });
   }
 };
+// ShowtimeController.js
 
+exports.getShowtimesByCinemaAndRoom = async (req, res) => {
+  try {
+    const { cinema_id, room_id } = req.query;
+
+    // Kiểm tra nếu thiếu tham số
+    if (!cinema_id || !room_id) {
+      return res.status(400).json({
+        error: 'Thiếu tham số cinema_id hoặc room_id'
+      });
+    }
+
+    const showtimes = await ShowtimeRepository.findByCinemaAndRoom(cinema_id, room_id);
+
+    res.status(200).json(showtimes);
+  } catch (error) {
+    console.error('Lỗi lấy suất chiếu theo rạp và phòng:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
 exports.getShowtimeDetail = async (req, res) => {
   try {
     const { showtime_id } = req.params;

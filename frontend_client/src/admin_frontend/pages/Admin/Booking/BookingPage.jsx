@@ -248,17 +248,25 @@ const BookingPage = () => {
                                 </div>
                             </section>
 
-                            {/* 2. Suất chiếu */}
+                           {/* 2. Suất chiếu */}
                             <section className="detail-section">
                                 <h3 className="section-title"><Film size={18} /> Thông tin suất chiếu</h3>
                                 <div className="section-body">
                                     <p className="movie-name-highlight">{selectedBooking.movie_name}</p>
                                     <p><MapPin size={14} /> {selectedBooking.cinema_name} - {selectedBooking.room_name}</p>
-                                    <p>
+                                    {selectedBooking.start_time ? (
+                                        <p className="time-highlight">
                                             <Calendar size={14} /> 
-                                            <span className="time-highlight">Ngày: {selectedBooking.show_date}</span>
-                                            <span className="time-highlight" style={{ marginLeft: '12px' }}>Giờ: {selectedBooking.show_hour}</span>
-                                    </p>
+                                            Ngày: {new Date(selectedBooking.start_time).toLocaleDateString('vi-VN')} 
+                                            &nbsp;|&nbsp;
+                                            Giờ: {new Date(selectedBooking.start_time).toLocaleTimeString('vi-VN', {
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                        </p>
+                                    ) : (
+                                        <p className="no-data">Chưa có thông tin suất chiếu.</p>
+                                    )}
                                 </div>
                             </section>
 

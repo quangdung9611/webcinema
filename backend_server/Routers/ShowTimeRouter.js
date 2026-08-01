@@ -13,17 +13,33 @@ router.get("/filter-booking", ShowtimeController.getShowtimesForBooking);
 router.get("/movie/:movieId", ShowtimeController.getShowtimesByMovie);
 router.get("/filter-legacy", ShowtimeController.filterShowtimes);
 
-// ✅ THÊM ROUTE NÀY – Lấy chi tiết suất chiếu theo ID (public)
+// Lấy chi tiết suất chiếu theo ID (public)
 router.get("/detail/:showtime_id", ShowtimeController.getShowtimeDetail);
 
 // ==========================================================
 // ADMIN ROUTES (Cần quyền admin)
 // ==========================================================
 
+// Lấy tất cả suất chiếu (có thể lọc theo query)
 router.get("/", authenticateAdmin, ShowtimeController.getAllShowtimes);
+
+// ✅ BỔ SUNG: Lấy suất chiếu theo rạp và phòng
+router.get(
+  "/by-cinema-room",
+  authenticateAdmin,
+  ShowtimeController.getShowtimesByCinemaAndRoom
+);
+
+// Lấy chi tiết suất chiếu theo ID (admin)
 router.get("/:showtime_id", authenticateAdmin, ShowtimeController.getShowtimeDetail);
+
+// Tạo suất chiếu mới
 router.post("/", authenticateAdmin, ShowtimeController.createShowtime);
+
+// Cập nhật suất chiếu
 router.put("/:showtime_id", authenticateAdmin, ShowtimeController.updateShowtime);
+
+// Xóa suất chiếu
 router.delete("/:showtime_id", authenticateAdmin, ShowtimeController.deleteShowtime);
 
 module.exports = router;
