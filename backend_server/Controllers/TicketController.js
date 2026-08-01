@@ -33,7 +33,7 @@ exports.getTicketQR = async (req, res) => {
 // ==========================================================
 
 exports.checkInTicket = async (req, res) => {
-  const connection = await TicketRepository.getConnection();
+  let connection;
   try {
     const { ticketCode } = req.body;
 
@@ -44,8 +44,10 @@ exports.checkInTicket = async (req, res) => {
       });
     }
 
+    connection = await TicketRepository.getConnection();
     const ticket = await TicketService.getTicketByCode(connection, ticketCode);
     if (!ticket) {
+      connection.release();
       return res.status(404).json({
         success: false,
         message: "Không tìm thấy mã vé này trong hệ thống!",
@@ -53,6 +55,7 @@ exports.checkInTicket = async (req, res) => {
     }
 
     if (ticket.ticket_status === "Used") {
+      connection.release();
       return res.status(400).json({
         success: false,
         message: "Cảnh báo: Vé này đã được soát trước đó!",
@@ -68,7 +71,7 @@ exports.checkInTicket = async (req, res) => {
       ticket,
     });
   } catch (error) {
-    connection.release();
+    if (connection) connection.release();
     console.error("checkInTicket error:", error);
     return res.status(500).json({
       success: false,
@@ -82,8 +85,9 @@ exports.checkInTicket = async (req, res) => {
 // ==========================================================
 
 exports.getAllTickets = async (req, res) => {
-  const connection = await TicketRepository.getConnection();
+  let connection;
   try {
+    connection = await TicketRepository.getConnection();
     const tickets = await TicketService.getAllTickets(connection);
     connection.release();
     return res.status(200).json({
@@ -91,7 +95,7 @@ exports.getAllTickets = async (req, res) => {
       data: tickets,
     });
   } catch (error) {
-    connection.release();
+    if (connection) connection.release();
     console.error("getAllTickets error:", error);
     return res.status(500).json({
       success: false,
@@ -105,21 +109,26 @@ exports.getAllTickets = async (req, res) => {
 // ==========================================================
 
 exports.getTicketsByShowtime = async (req, res) => {
-  const connection = await TicketRepository.getConnection();
+  let connection;
   try {
     const { showtimeId } = req.params;
+    console.log(`📌 [API] getTicketsByShowtime: showtimeId=${showtimeId}`);
+
+    connection = await TicketRepository.getConnection();
     const tickets = await TicketService.getTicketsByShowtime(connection, showtimeId);
     connection.release();
+
+    console.log(`✅ Tickets found: ${tickets.length}`);
     return res.status(200).json({
       success: true,
       data: tickets,
     });
   } catch (error) {
-    connection.release();
-    console.error("getTicketsByShowtime error:", error);
+    if (connection) connection.release();
+    console.error("❌ getTicketsByShowtime error:", error.stack || error);
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Lỗi máy chủ",
     });
   }
 };
@@ -129,9 +138,10 @@ exports.getTicketsByShowtime = async (req, res) => {
 // ==========================================================
 
 exports.getTicketSeatMap = async (req, res) => {
-  const connection = await TicketRepository.getConnection();
+  let connection;
   try {
     const { showtimeId } = req.params;
+    connection = await TicketRepository.getConnection();
     const seatMap = await TicketService.getTicketSeatMap(connection, showtimeId);
     connection.release();
     return res.status(200).json({
@@ -139,7 +149,7 @@ exports.getTicketSeatMap = async (req, res) => {
       data: seatMap,
     });
   } catch (error) {
-    connection.release();
+    if (connection) connection.release();
     console.error("getTicketSeatMap error:", error);
     return res.status(500).json({
       success: false,
