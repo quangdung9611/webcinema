@@ -35,21 +35,20 @@ class TicketRepository {
     return rows;
   }
 
-  async findByShowtimeId(connection, showtimeId) {
-    const [rows] = await connection.query(
-      `SELECT t.*, s.seat_row, s.seat_number, s.seat_type,
-              u.full_name AS customer_name
-       FROM tickets t
-       LEFT JOIN seats s ON t.seat_id = s.seat_id
-       LEFT JOIN bookings b ON t.booking_id = b.booking_id
-       LEFT JOIN users u ON b.user_id = u.user_id
-       WHERE t.showtime_id = ?
-       ORDER BY s.seat_row, s.seat_number`,
-      [showtimeId]
-    );
-    return rows;
-  }
-
+async findByShowtimeId(connection, showtimeId) {
+  const [rows] = await connection.query(
+    `SELECT t.*, s.seat_row, s.seat_number, s.seat_type,
+            u.full_name AS customer_name
+     FROM tickets t
+     LEFT JOIN seats s ON t.seat_id = s.seat_id
+     LEFT JOIN bookings b ON t.booking_id = b.booking_id   // ✅ ĐÚNG
+     LEFT JOIN users u ON b.user_id = u.user_id
+     WHERE t.showtime_id = ?
+     ORDER BY s.seat_row, s.seat_number`,
+    [showtimeId]
+  );
+  return rows;
+}
   async findByCode(connection, ticketCode) {
     const [rows] = await connection.query(
       `SELECT t.*, s.seat_row, s.seat_number, s.seat_type,
