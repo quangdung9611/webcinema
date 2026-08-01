@@ -76,43 +76,31 @@ class ShowtimeRepository {
     const [rows] = await db.query(sql, params);
     return rows[0] || null;
   }
-  // ShowtimeRepository.js
 
-async findByCinemaAndRoom(cinemaId, roomId) {
-  let query = `
-    SELECT
-      s.showtime_id,
-      DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') AS start_time,
-      m.title,
-      m.duration,
-      m.movie_id,
-      c.cinema_name,
-      c.cinema_id,
-      r.room_name,
-      r.room_id,
-      r.room_type
-    FROM showtimes s
-    JOIN movies m ON s.movie_id = m.movie_id
-    JOIN cinemas c ON s.cinema_id = c.cinema_id
-    JOIN rooms r ON s.room_id = r.room_id
-    WHERE 1=1
-  `;
-  const params = [];
-
-  if (cinemaId) {
-    query += ` AND c.cinema_id = ?`;
-    params.push(cinemaId);
-  }
-  if (roomId) {
-    query += ` AND r.room_id = ?`;
-    params.push(roomId);
+  // ✅ PHƯƠNG THỨC LỌC THEO RẠP VÀ PHÒNG
+  async findByCinemaAndRoom(cinemaId, roomId) {
+    const [rows] = await db.query(`
+      SELECT
+        s.showtime_id,
+        DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') AS start_time,
+        m.title,
+        m.duration,
+        m.movie_id,
+        c.cinema_name,
+        c.cinema_id,
+        r.room_name,
+        r.room_id,
+        r.room_type
+      FROM showtimes s
+      JOIN movies m ON s.movie_id = m.movie_id
+      JOIN cinemas c ON s.cinema_id = c.cinema_id
+      JOIN rooms r ON s.room_id = r.room_id
+      WHERE c.cinema_id = ? AND r.room_id = ?
+      ORDER BY s.start_time DESC
+    `, [cinemaId, roomId]);
+    return rows;
   }
 
-  query += ` ORDER BY s.start_time DESC`;
-
-  const [rows] = await db.query(query, params);
-  return rows;
-}
   async isPastTime(startTime) {
     const [rows] = await db.query(`
       SELECT CASE

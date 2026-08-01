@@ -1,5 +1,7 @@
 const ShowtimeService = require("../Services/ShowtimeService");
+const ShowtimeRepository = require("../Repositories/ShowtimeRepository"); // ✅ THÊM IMPORT NÀY
 
+// -------------------- LẤY TẤT CẢ --------------------
 exports.getAllShowtimes = async (req, res) => {
   try {
     const data = await ShowtimeService.getAllShowtimes();
@@ -12,27 +14,27 @@ exports.getAllShowtimes = async (req, res) => {
     });
   }
 };
-// ShowtimeController.js
 
+// -------------------- LẤY SUẤT CHIẾU THEO RẠP + PHÒNG --------------------
 exports.getShowtimesByCinemaAndRoom = async (req, res) => {
   try {
     const { cinema_id, room_id } = req.query;
 
-    // Kiểm tra nếu thiếu tham số
     if (!cinema_id || !room_id) {
       return res.status(400).json({
-        error: 'Thiếu tham số cinema_id hoặc room_id'
+        error: "Thiếu tham số cinema_id hoặc room_id",
       });
     }
 
     const showtimes = await ShowtimeRepository.findByCinemaAndRoom(cinema_id, room_id);
-
     res.status(200).json(showtimes);
   } catch (error) {
-    console.error('Lỗi lấy suất chiếu theo rạp và phòng:', error);
+    console.error("Lỗi lấy suất chiếu theo rạp và phòng:", error);
     res.status(500).json({ error: error.message });
   }
 };
+
+// -------------------- CHI TIẾT SUẤT CHIẾU --------------------
 exports.getShowtimeDetail = async (req, res) => {
   try {
     const { showtime_id } = req.params;
@@ -47,6 +49,7 @@ exports.getShowtimeDetail = async (req, res) => {
   }
 };
 
+// -------------------- SUẤT CHIẾU THEO PHIM --------------------
 exports.getShowtimesByMovie = async (req, res) => {
   try {
     const { movieId } = req.params;
@@ -61,6 +64,7 @@ exports.getShowtimesByMovie = async (req, res) => {
   }
 };
 
+// -------------------- TẠO --------------------
 exports.createShowtime = async (req, res) => {
   try {
     const showtimeId = await ShowtimeService.createShowtime(req.body);
@@ -79,6 +83,7 @@ exports.createShowtime = async (req, res) => {
   }
 };
 
+// -------------------- CẬP NHẬT --------------------
 exports.updateShowtime = async (req, res) => {
   try {
     const { showtime_id } = req.params;
@@ -97,6 +102,7 @@ exports.updateShowtime = async (req, res) => {
   }
 };
 
+// -------------------- XÓA --------------------
 exports.deleteShowtime = async (req, res) => {
   try {
     const { showtime_id } = req.params;
@@ -114,6 +120,7 @@ exports.deleteShowtime = async (req, res) => {
   }
 };
 
+// -------------------- QUICK BOOKING --------------------
 exports.getQuickBookingData = async (req, res) => {
   try {
     const { movie_id, cinema_id, date } = req.query;
@@ -128,6 +135,7 @@ exports.getQuickBookingData = async (req, res) => {
   }
 };
 
+// -------------------- BOOKING FILTER --------------------
 exports.getShowtimesForBooking = async (req, res) => {
   try {
     const { movie_id, cinema_id, date } = req.query;
@@ -142,6 +150,7 @@ exports.getShowtimesForBooking = async (req, res) => {
   }
 };
 
+// -------------------- FILTER LEGACY --------------------
 exports.filterShowtimes = async (req, res) => {
   try {
     const { movie_id, room_id, date } = req.query;
