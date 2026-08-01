@@ -167,18 +167,17 @@ class TicketRepository {
   }
 
   async markUsed(connection, ticketId) {
-    const [result] = await connection.execute(
-      `
-      UPDATE tickets
-      SET ticket_status = 'Used',
-          seat_status = 'Used',
-          updated_at = NOW()
-      WHERE ticket_id = ?
-      `,
-      [ticketId]
-    );
-    return result.affectedRows;
-  }
+  const [result] = await connection.execute(
+    `
+    UPDATE tickets
+    SET ticket_status = 'Used',
+        updated_at = NOW()
+    WHERE ticket_id = ?
+    `,
+    [ticketId]
+  );
+  return result.affectedRows;
+}
 
   // ==========================================================
   // KIỂM TRA

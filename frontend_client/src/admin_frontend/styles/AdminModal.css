@@ -298,7 +298,34 @@
         transform: scale(1) translateY(0);
     }
 }
-
+.admin-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+.admin-modal-btn {
+    padding: 8px 24px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.admin-modal-btn.confirm {
+    background: #3b82f6;
+    color: white;
+}
+.admin-modal-btn.confirm:hover {
+    background: #2563eb;
+}
+.admin-modal-btn.cancel {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+.admin-modal-btn.cancel:hover {
+    background: #d1d5db;
+}
 /* =========================================================
    RESPONSIVE
 ========================================================= */

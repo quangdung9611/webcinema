@@ -35,6 +35,7 @@ const TicketList = () => {
         showtimeId: ''
     });
 
+    // ----- MODAL STATE (dùng show) -----
     const [modal, setModal] = useState({
         show: false,
         type: 'info',
@@ -51,6 +52,26 @@ const TicketList = () => {
         return token ? { Authorization: `Bearer ${token}` } : {};
     };
 
+    // ----- MODAL HELPERS -----
+    const closeModal = () => setModal(prev => ({ ...prev, show: false }));
+
+    const showModal = (type, title, message, onConfirm = closeModal, onCancel = closeModal) => {
+        setModal({
+            show: true,
+            type,
+            title,
+            message,
+            onConfirm: () => {
+                if (onConfirm) onConfirm();
+                closeModal();
+            },
+            onCancel: () => {
+                if (onCancel) onCancel();
+                closeModal();
+            }
+        });
+    };
+
     const handleApiError = (error, fallbackMessage = 'Có lỗi xảy ra.') => {
         console.error('API Error:', error);
         if (error.response?.status === 401) {
@@ -59,20 +80,6 @@ const TicketList = () => {
             return;
         }
         showModal('error', 'Lỗi', error.response?.data?.message || fallbackMessage);
-    };
-
-    // ----- MODAL -----
-    const closeModal = () => setModal(prev => ({ ...prev, show: false }));
-
-    const showModal = (type, title, message, onConfirm = closeModal, onCancel = null) => {
-        setModal({
-            show: true,
-            type,
-            title,
-            message,
-            onConfirm: () => { onConfirm(); closeModal(); },
-            onCancel: onCancel ? () => { onCancel(); closeModal(); } : null
-        });
     };
 
     // ----- 1. Lấy danh sách rạp -----
@@ -167,7 +174,8 @@ const TicketList = () => {
                 `${API_BASE}/api/tickets/showtime/${filters.showtimeId}`,
                 { headers: tokenHeader }
             );
-            setTickets(Array.isArray(res.data) ? res.data : []);
+            const ticketsData = res.data?.data || res.data || [];
+            setTickets(Array.isArray(ticketsData) ? ticketsData : []);
         } catch (err) {
             handleApiError(err, 'Không thể tải danh sách vé.');
             setTickets([]);
@@ -189,17 +197,23 @@ const TicketList = () => {
             async () => {
                 try {
                     const tokenHeader = getAuthHeader();
-                    await axios.post(
+                    const response = await axios.post(
                         `${API_BASE}/api/tickets/check-in`,
                         { ticketCode: code },
                         { headers: tokenHeader }
                     );
-                    showModal('success', 'Thành công', `Đã soát vé ${code} thành công!`);
-                    fetchTickets();
+                    if (response.data.success) {
+                        showModal('success', 'Thành công', response.data.message || 'Đã soát vé thành công!');
+                        await fetchTickets();
+                    } else {
+                        showModal('error', 'Lỗi', response.data.message || 'Không thể soát vé.');
+                    }
                 } catch (err) {
-                    showModal('error', 'Lỗi soát vé', err.response?.data?.message || 'Lỗi hệ thống.');
+                    const errorMsg = err.response?.data?.message || err.message || 'Lỗi hệ thống.';
+                    showModal('error', 'Lỗi soát vé', errorMsg);
                 }
-            }
+            },
+            () => console.log('Hủy soát vé')
         );
     };
 
@@ -207,7 +221,7 @@ const TicketList = () => {
     const stats = {
         total: tickets.length,
         used: tickets.filter(t => t.ticket_status === 'Used').length,
-        pending: tickets.filter(t => t.ticket_status !== 'Used').length
+        pending: tickets.filter(t => t.ticket_status === 'Valid').length
     };
 
     // ----- Sơ đồ ghế -----
@@ -237,11 +251,11 @@ const TicketList = () => {
         <div className="admin-ticket-container">
             <AdminModal
                 show={modal.show}
+                onCancel={closeModal}
                 type={modal.type}
                 title={modal.title}
                 message={modal.message}
                 onConfirm={modal.onConfirm}
-                onCancel={modal.onCancel}
             />
 
             <div className="admin-ticket-header">
@@ -252,7 +266,6 @@ const TicketList = () => {
 
                 <div className="top-toolbar">
                     <div className="filter-selection-grid">
-                        {/* Rạp */}
                         <div className="filter-group">
                             <label>Rạp chiếu:</label>
                             <select
@@ -266,7 +279,6 @@ const TicketList = () => {
                             </select>
                         </div>
 
-                        {/* Phòng */}
                         <div className="filter-group">
                             <label>Phòng:</label>
                             <select
@@ -281,7 +293,6 @@ const TicketList = () => {
                             </select>
                         </div>
 
-                        {/* Suất chiếu */}
                         <div className="filter-group large">
                             <label>Chọn phim & Suất chiếu:</label>
                             <select
@@ -316,7 +327,6 @@ const TicketList = () => {
                     </div>
                 </div>
 
-                {/* Stats Cards */}
                 <div className="ticket-stats-cards">
                     <div className="stat-card blue">
                         <span>{stats.total}</span>
@@ -371,38 +381,44 @@ const TicketList = () => {
                                         t.ticket_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                         (t.customer_name || t.full_name || '').toLowerCase().includes(searchTerm.toLowerCase())
                                     )
-                                    .map((ticket) => (
-                                        <tr key={ticket.ticket_id}>
-                                            <td className="ticket-code">{ticket.ticket_code}</td>
-                                            <td>
-                                                <span className="seat-label">
-                                                    {ticket.seat_row}{ticket.seat_number}
-                                                </span>
-                                            </td>
-                                            <td>{ticket.customer_name || ticket.full_name || 'N/A'}</td>
-                                            <td>
-                                                <span className={`status-badge ${ticket.ticket_status === 'Used' ? 'used' : 'pending'}`}>
-                                                    {ticket.ticket_status === 'Used' ? (
-                                                        <><Check size={12} /> Đã dùng</>
+                                    .map((ticket) => {
+                                        const isUsed = ticket.ticket_status === 'Used';
+                                        const isValid = ticket.ticket_status === 'Valid';
+                                        return (
+                                            <tr key={ticket.ticket_id}>
+                                                <td className="ticket-code">{ticket.ticket_code}</td>
+                                                <td>
+                                                    <span className="seat-label">
+                                                        {ticket.seat_row}{ticket.seat_number}
+                                                    </span>
+                                                </td>
+                                                <td>{ticket.customer_name || ticket.full_name || 'N/A'}</td>
+                                                <td>
+                                                    <span className={`status-badge ${isUsed ? 'used' : 'pending'}`}>
+                                                        {isUsed ? (
+                                                            <><Check size={12} /> Đã dùng</>
+                                                        ) : (
+                                                            <><Clock size={12} /> Chưa dùng</>
+                                                        )}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {isValid ? (
+                                                        <button
+                                                            className="checkin-btn"
+                                                            onClick={() => handleCheckIn(ticket.ticket_code)}
+                                                        >
+                                                            Soát vé
+                                                        </button>
                                                     ) : (
-                                                        <><Clock size={12} /> Chưa dùng</>
+                                                        <button className="disabled-btn" disabled>
+                                                            {isUsed ? 'Đã soát' : 'Không khả dụng'}
+                                                        </button>
                                                     )}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                {ticket.ticket_status !== 'Used' ? (
-                                                    <button
-                                                        className="checkin-btn"
-                                                        onClick={() => handleCheckIn(ticket.ticket_code)}
-                                                    >
-                                                        Soát vé
-                                                    </button>
-                                                ) : (
-                                                    <button className="disabled-btn" disabled>Đã soát</button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                             </tbody>
                         </table>
                     </div>
