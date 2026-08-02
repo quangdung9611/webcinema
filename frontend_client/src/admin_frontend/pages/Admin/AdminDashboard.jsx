@@ -497,7 +497,8 @@ function AdminDashboard() {
                     change={comparison.revenue?.change}
                     previousValue={comparison.revenue?.previous}
                     currentValue={comparison.revenue?.current}
-                    comparison="so với kỳ trước"
+                    isMoney={true}
+                    comparisonLabel="so với kỳ trước"
                     loading={loading}
                 />
                 <KpiCard
@@ -508,7 +509,8 @@ function AdminDashboard() {
                     change={comparison.orders?.change}
                     previousValue={comparison.orders?.previous}
                     currentValue={comparison.orders?.current}
-                    comparison="so với kỳ trước"
+                    isMoney={false}
+                    comparisonLabel="so với kỳ trước"
                     loading={loading}
                 />
                 <KpiCard
@@ -519,7 +521,8 @@ function AdminDashboard() {
                     change={comparison.tickets?.change}
                     previousValue={comparison.tickets?.previous}
                     currentValue={comparison.tickets?.current}
-                    comparison="so với kỳ trước"
+                    isMoney={false}
+                    comparisonLabel="so với kỳ trước"
                     loading={loading}
                 />
                 <KpiCard
@@ -528,7 +531,8 @@ function AdminDashboard() {
                     icon={<Users />}
                     iconClass="green"
                     change={null}
-                    comparison="tổng khách hàng"
+                    isMoney={false}
+                    comparisonLabel="tổng khách hàng"
                     loading={loading}
                 />
             </section>
@@ -1011,9 +1015,14 @@ function AdminDashboard() {
 // SUB-COMPONENTS
 // =============================================================
 
-function KpiCard({ title, value, icon, iconClass, change, previousValue, currentValue, comparison, loading }) {
+function KpiCard({ title, value, icon, iconClass, change, previousValue, currentValue, isMoney, comparisonLabel, loading }) {
     const hasChange = change !== null && change !== undefined;
     const positive = Number(change) >= 0;
+
+    const formatValue = (val) => {
+        if (val === undefined || val === null) return '--';
+        return isMoney ? money(val) : number(val);
+    };
 
     return (
         <div className="kpi-card">
@@ -1029,14 +1038,14 @@ function KpiCard({ title, value, icon, iconClass, change, previousValue, current
             <div className="kpi-content">
                 <span className="kpi-title">{title}</span>
                 <strong className="kpi-value">{loading ? '...' : value}</strong>
-                <span className="kpi-comparison">{comparison}</span>
+                <span className="kpi-comparison">{comparisonLabel}</span>
                 {hasChange && previousValue !== undefined && currentValue !== undefined && (
                     <div className="kpi-detail">
                         <span>
-                            Kỳ trước: <strong>{typeof value === 'string' && value.includes('₫') ? money(previousValue) : number(previousValue)}</strong>
+                            Kỳ trước: <strong>{formatValue(previousValue)}</strong>
                         </span>
                         <span>
-                            Hiện tại: <strong>{typeof value === 'string' && value.includes('₫') ? money(currentValue) : number(currentValue)}</strong>
+                            Hiện tại: <strong>{formatValue(currentValue)}</strong>
                         </span>
                     </div>
                 )}
