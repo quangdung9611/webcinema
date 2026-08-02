@@ -713,6 +713,154 @@ class DashboardController {
         prevEnd.setDate(prevEnd.getDate() - 1);
         return prevEnd.toISOString().split('T')[0];
     }
+
+    // =============================================================
+//  19. TỔNG HỢP NHANH CHO TRANG CHỦ ADMIN
+// =============================================================
+static async getSummary(req, res) {
+    try {
+        const { period = 'week', startDate, endDate } = req.query;
+        const range = this.getDateRange(period, startDate, endDate);
+        const cacheKey = `summary_${range.startDate}_${range.endDate}`;
+        const cached = cache.get(cacheKey);
+        if (cached) return res.json({ success: true, ...cached });
+
+        // Gọi các method nội bộ (truyền range thay vì req, res)
+        const stats = await this._getStatsInternal(range);
+        const topMovies = await this._getTopMoviesInternal(range, 5);
+        const bookingStatus = await this._getBookingStatusInternal(range);
+        const seat = await this._getSeatPerformanceInternal(range);
+
+        const result = { stats, topMovies, bookingStatus, seat };
+        cache.set(cacheKey, result);
+        return res.json({ success: true, ...result });
+    } catch (error) {
+        console.error('❌ getSummary error:', error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+// =============================================================
+//  20. 5 ĐƠN HÀNG GẦN NHẤT
+// =============================================================
+static async getRecentOrders(req, res) {
+    try {
+        const sql = `
+            SELECT
+                b.booking_id, b.booking_date, b.total_amount, b.status,
+                COALESCE(u.full_name, 'Khách lẻ') AS customer_name,
+                m.title AS movie_title
+            FROM bookings b
+            LEFT JOIN users u ON u.user_id = b.user_id
+            LEFT JOIN showtimes st ON st.showtime_id = b.showtime_id
+            LEFT JOIN movies m ON m.movie_id = st.movie_id
+            ORDER BY b.booking_date DESC
+            LIMIT 5
+        `;
+        const [rows] = await db.query(sql);
+        return res.json({ success: true, data: rows });
+    } catch (error) {
+        console.error('❌ getRecentOrders error:', error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+// =============================================================
+//  CÁC METHOD INTERNAL (dùng cho getSummary)
+// =============================================================
+static async _getStatsInternal(range) {
+    const sql = `
+        WITH current_period AS (
+            SELECT
+                COUNT(DISTINCT b.booking_id) AS orders,
+                COUNT(DISTINCT CASE WHEN bd.seat_id IS NOT NULL THEN bd.booking_detail_id END) AS tickets,
+                COALESCE(SUM(CASE WHEN bd.seat_id IS NOT NULL THEN bd.quantity * bd.price END), 0) AS ticket_revenue,
+                COALESCE(SUM(CASE WHEN bd.product_id IS NOT NULL THEN bd.quantity * bd.price END), 0) AS product_revenue,
+                COALESCE(SUM(b.total_amount), 0) AS revenue
+            FROM bookings b
+            LEFT JOIN booking_details bd ON bd.booking_id = b.booking_id
+            WHERE b.status = 'Completed'
+              AND ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
+        ),
+        total_movies AS (SELECT COUNT(*) AS total FROM movies),
+        total_users AS (SELECT COUNT(*) AS total FROM users WHERE role = 'customer')
+        SELECT
+            (SELECT total FROM total_movies) AS movies,
+            (SELECT total FROM total_users) AS users,
+            c.orders, c.tickets, c.revenue, c.ticket_revenue, c.product_revenue
+        FROM current_period c
+    `;
+    const [rows] = await db.query(sql);
+    const data = rows[0] || {};
+    return {
+        movies: Number(data.movies) || 0,
+        users: Number(data.users) || 0,
+        tickets: Number(data.tickets) || 0,
+        revenue: Number(data.revenue) || 0,
+        orders: Number(data.orders) || 0,
+        ticketRevenue: Number(data.ticket_revenue) || 0,
+        productRevenue: Number(data.product_revenue) || 0,
+    };
+}
+
+static async _getTopMoviesInternal(range, limit) {
+    const sql = `
+        SELECT
+            m.movie_id AS id,
+            m.title,
+            m.movie_poster AS poster,
+            COUNT(DISTINCT bd.booking_detail_id) AS tickets_sold,
+            COUNT(DISTINCT b.booking_id) AS orders,
+            COALESCE(SUM(bd.quantity * bd.price), 0) AS revenue
+        FROM movies m
+        INNER JOIN showtimes st ON st.movie_id = m.movie_id
+        INNER JOIN bookings b ON b.showtime_id = st.showtime_id AND b.status = 'Completed'
+        INNER JOIN booking_details bd ON bd.booking_id = b.booking_id AND bd.seat_id IS NOT NULL
+        WHERE ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
+        GROUP BY m.movie_id, m.title, m.movie_poster
+        ORDER BY revenue DESC
+        LIMIT ?
+    `;
+    const [rows] = await db.query(sql, [limit]);
+    return rows;
+}
+
+static async _getBookingStatusInternal(range) {
+    const sql = `
+        SELECT status, COUNT(*) AS orders, COALESCE(SUM(total_amount), 0) AS revenue
+        FROM bookings
+        WHERE ${this.buildDateCondition('booking_date', range.startDate, range.endDate)}
+        GROUP BY status
+        ORDER BY orders DESC
+    `;
+    const [rows] = await db.query(sql);
+    return rows;
+}
+
+static async _getSeatPerformanceInternal(range) {
+    const sql = `
+        SELECT
+            COUNT(DISTINCT st.showtime_id) AS showtimes,
+            COALESCE(SUM(r.total_seats), 0) AS capacity,
+            COUNT(DISTINCT CASE WHEN b.status = 'Completed' AND bd.seat_id IS NOT NULL THEN bd.booking_detail_id END) AS sold_tickets
+        FROM showtimes st
+        INNER JOIN rooms r ON r.room_id = st.room_id
+        LEFT JOIN bookings b ON b.showtime_id = st.showtime_id
+        LEFT JOIN booking_details bd ON bd.booking_id = b.booking_id AND bd.seat_id IS NOT NULL
+        WHERE st.start_time >= ? AND st.start_time < DATE_ADD(?, INTERVAL 1 DAY)
+    `;
+    const [rows] = await db.query(sql, [range.startDate, range.endDate]);
+    const row = rows[0] || {};
+    const capacity = Number(row.capacity) || 0;
+    const sold = Number(row.sold_tickets) || 0;
+    return {
+        showtimes: Number(row.showtimes) || 0,
+        capacity,
+        soldTickets: sold,
+        emptySeats: Math.max(capacity - sold, 0),
+        occupancy: capacity > 0 ? parseFloat((sold / capacity * 100).toFixed(1)) : 0
+    };
+}
 }
 
 module.exports = DashboardController;
