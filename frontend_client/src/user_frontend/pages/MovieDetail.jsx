@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 import {
     Star,
     Calendar,
@@ -48,7 +48,7 @@ const MovieDetail = () => {
         onConfirm: null
     });
 
-    const API_BASE_URL = "https://api.quangdungcinema.id.vn/api";
+    // ❌ Xóa API_BASE_URL
 
     const getYoutubeID = (url) => {
         if (!url) return null;
@@ -80,7 +80,7 @@ const MovieDetail = () => {
 
     const fetchReviews = useCallback(async (movieId) => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/reviews/${movieId}`);
+            const res = await api.get(`/api/reviews/${movieId}`);
             const sortedReviews = res.data.sort((a, b) =>
                 new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at)
             );
@@ -88,7 +88,7 @@ const MovieDetail = () => {
         } catch (error) {
             console.error("Lỗi lấy danh sách review:", error);
         }
-    }, [API_BASE_URL]);
+    }, []);
 
     useEffect(() => {
         const fetchMovieData = async () => {
@@ -96,9 +96,9 @@ const MovieDetail = () => {
             try {
                 setLoading(true);
                 const [resMovie, resRelated, resActors] = await Promise.all([
-                    axios.get(`${API_BASE_URL}/movies/detail/${slug}`),
-                    axios.get(`${API_BASE_URL}/movies`),
-                    axios.get(`${API_BASE_URL}/actors`)
+                    api.get(`/api/movies/detail/${slug}`),
+                    api.get('/api/movies'),
+                    api.get('/api/actors')
                 ]);
 
                 const movieData = resMovie.data;
@@ -134,7 +134,7 @@ const MovieDetail = () => {
         };
         fetchMovieData();
         window.scrollTo(0, 0);
-    }, [slug, fetchReviews, API_BASE_URL]);
+    }, [slug, fetchReviews]);
 
     const closeModal = () => setModalConfig(prev => ({ ...prev, show: false }));
     const closeTrailerModal = () => setTrailerModal({ isOpen: false, url: '' });
@@ -157,7 +157,7 @@ const MovieDetail = () => {
             return;
         }
         try {
-            await axios.post(`${API_BASE_URL}/reviews`, {
+            await api.post('/api/reviews', {
                 movie_id: movie.movie_id,
                 user_id: user.user_id,
                 rating: userRating,
@@ -165,7 +165,7 @@ const MovieDetail = () => {
             });
             setUserRating(0);
             setReviewComment("");
-            const response = await axios.get(`${API_BASE_URL}/movies/detail/${slug}`);
+            const response = await api.get(`/api/movies/detail/${slug}`);
             setMovie(response.data);
             fetchReviews(movie.movie_id);
             closeReviewModal();
@@ -601,7 +601,6 @@ const MovieDetail = () => {
                                 </div>
                             ) : (
                                 reviews.slice(0, 3).map((rev, index) => {
-                                    // ✅ Lấy avatar từ user_avatar và xử lý URL đúng cách
                                     const avatarUrl = rev.user_avatar ? getAvatarUrl(rev.user_avatar) : null;
 
                                     return (

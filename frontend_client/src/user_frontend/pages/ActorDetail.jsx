@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import '../styles/ActorDetail.css'; 
+import api from '../../api/api'; // ✅ Import api
+import '../styles/ActorDetail.css';
 
 const ActorDetail = () => {
-    const { slug } = useParams(); 
+    const { slug } = useParams();
     const navigate = useNavigate();
     const [actor, setActor] = useState(null);
     const [loading, setLoading] = useState(true);
-    // State lưu danh sách phim cho sidebar
     const [relatedMovies, setRelatedMovies] = useState([]);
 
     useEffect(() => {
@@ -16,11 +15,12 @@ const ActorDetail = () => {
             if (!slug || slug === 'undefined') return;
             try {
                 setLoading(true);
-                const response = await axios.get(`https://api.quangdungcinema.id.vn/api/actors/${slug}`);
+                // ✅ Dùng api thay vì axios
+                const response = await api.get(`/api/actors/${slug}`);
                 setActor(response.data);
 
                 // Lấy phim cho sidebar
-                const resRelated = await axios.get(`https://api.quangdungcinema.id.vn/api/movies`);
+                const resRelated = await api.get('/api/movies');
                 setRelatedMovies(resRelated.data.slice(0, 3));
 
                 setLoading(false);
@@ -39,18 +39,18 @@ const ActorDetail = () => {
     return (
         <div className="actor-profile-page">
             <div className="detail-content-flex">
-                
+
                 {/* CỘT TRÁI: THÔNG TIN CHI TIẾT */}
                 <div className="main-detail-col">
                     <div className="actor-container">
-                        
+
                         {/* PHẦN 1: PROFILE HEADER */}
                         <div className="actor-header">
                             <div className="actor-avatar-wrapper">
                                 {actor.avatar ? (
-                                    <img 
-                                        src={`https://api.quangdungcinema.id.vn/uploads/actors/${actor.avatar}`} 
-                                        alt={actor.name} 
+                                    <img
+                                        src={`https://api.quangdungcinema.id.vn/uploads/actors/${actor.avatar}`}
+                                        alt={actor.name}
                                         className="actor-img"
                                     />
                                 ) : (
@@ -88,14 +88,14 @@ const ActorDetail = () => {
                             <div className="actor-movie-grid">
                                 {actor.movies && actor.movies.length > 0 ? (
                                     actor.movies.map((movie) => (
-                                        <div 
+                                        <div
                                             key={movie.movie_id}
                                             className="actor-movie-card"
                                             onClick={() => navigate(`/movies/${movie.slug}`)}
                                         >
                                             <div className="actor-movie-poster">
-                                                <img 
-                                                    src={`https://api.quangdungcinema.id.vn/uploads/posters/${movie.poster_url}`} 
+                                                <img
+                                                    src={`https://api.quangdungcinema.id.vn/uploads/posters/${movie.poster_url}`}
                                                     alt={movie.title}
                                                 />
                                             </div>
@@ -120,17 +120,16 @@ const ActorDetail = () => {
                         </div>
                         <div className="sidebar-movie-list">
                             {relatedMovies.map((m, index) => (
-                                <div 
-                                    key={index} 
-                                    className="sidebar-movie-item-vertical" 
+                                <div
+                                    key={index}
+                                    className="sidebar-movie-item-vertical"
                                     onClick={() => navigate(`/movies/detail/${m.slug}`)}
                                 >
                                     <div className="sidebar-poster-vertical">
-                                        <img 
-                                            src={`https://api.quangdungcinema.id.vn/uploads/posters/${m.poster_url}`} 
-                                            alt={m.title} 
+                                        <img
+                                            src={`https://api.quangdungcinema.id.vn/uploads/posters/${m.poster_url}`}
+                                            alt={m.title}
                                         />
-                                        {/* Overlay nhãn tuổi và rating */}
                                         <div className="movie-meta-overlay">
                                             <span className="rating-tag"><i className="fas fa-star"></i> 8.6</span>
                                             <span className="age-limit-tag">T18</span>

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 
 import {
   MapPin,
@@ -46,7 +46,7 @@ const CinemaDetail = () => {
     const fetchBanners = async () => {
       try {
         setBannerLoading(true);
-        const res = await axios.get('https://api.quangdungcinema.id.vn/api/banners?page=CINEMA');
+        const res = await api.get('/api/banners?page=CINEMA');
         const bannerData = res.data?.data || [];
         setBanners(Array.isArray(bannerData) ? bannerData : []);
       } catch (error) {
@@ -84,7 +84,7 @@ const CinemaDetail = () => {
     const fetchCinema = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`https://api.quangdungcinema.id.vn/api/cinemas/${slug}`);
+        const res = await api.get(`/api/cinemas/${slug}`);
         let cinemaData = null;
         let moviesData = [];
         if (res.data.cinema_name) {

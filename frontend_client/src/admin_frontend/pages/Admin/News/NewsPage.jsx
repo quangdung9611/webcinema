@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api thay vì axios
 import {
     Newspaper,
     Edit,
@@ -19,7 +19,7 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
-const API_URL = 'https://api.quangdungcinema.id.vn/api/news';
+// ❌ Xóa API_URL
 
 // Helper lấy URL ảnh
 const getImageUrl = (image) => {
@@ -46,7 +46,7 @@ const NewsPage = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
     const [newsImageFile, setNewsImageFile] = useState(null);
-    const [filePreviews, setFilePreviews] = useState({}); // { news_image: { url, name } }
+    const [filePreviews, setFilePreviews] = useState({});
 
     // Alert
     const [alertModal, setAlertModal] = useState({
@@ -70,7 +70,7 @@ const NewsPage = () => {
     const fetchNews = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL);
+            const res = await api.get('/api/news');  // ✅ Dùng api
             setNews(res.data);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách tin tức.', 'error');
@@ -211,19 +211,18 @@ const NewsPage = () => {
                 submitData.append('news_image', newsImageFile);
             }
 
-            const token = sessionStorage.getItem('usertoken');
+            // ✅ Dùng api với multipart/form-data
             const config = {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
-                    ...(token && { Authorization: `Bearer ${token}` })
+                    'Content-Type': 'multipart/form-data'
                 }
             };
 
             if (editingNews) {
-                await axios.put(`${API_URL}/${editingNews.news_id}`, submitData, config);
+                await api.put(`/api/news/${editingNews.news_id}`, submitData, config);
                 showAlert('Thành công', 'Cập nhật bài viết thành công.', 'success');
             } else {
-                await axios.post(API_URL, submitData, config);
+                await api.post('/api/news', submitData, config);
                 showAlert('Thành công', 'Đăng bài viết mới thành công.', 'success');
             }
 
@@ -248,10 +247,7 @@ const NewsPage = () => {
             'warning',
             async () => {
                 try {
-                    const token = sessionStorage.getItem('usertoken');
-                    await axios.delete(`${API_URL}/${item.news_id}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                    await api.delete(`/api/news/${item.news_id}`);  // ✅ Dùng api
                     closeAlert();
                     fetchNews();
                     showAlert('Thành công', 'Xóa bài viết thành công.', 'success');
@@ -381,7 +377,7 @@ const NewsPage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingNews ? 'Lưu thay đổi' : 'Đăng bài viết'}
-                    filePreviews={filePreviews}   // 👈 Truyền vào đây
+                    filePreviews={filePreviews}
                 />
             </AdminModal>
 

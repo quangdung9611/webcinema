@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 
 // Components
 import CountdownTimer from './CountdownTimer';
 import BookingSidebar from '../components/BookingSidebar';
-import LoadingButton from '../components/LoadingButton'; // ✅ Import LoadingButton
+import LoadingButton from '../components/LoadingButton';
 // Styles
 import '../styles/Food.css';
 import '../styles/Booking.css';
@@ -26,8 +26,8 @@ const Food = () => {
     const [foods, setFoods] = useState([]);
     const [selectedFoods, setSelectedFoods] = useState({});
     const [isTimerActive, setIsTimerActive] = useState(false);
-    const [loading, setLoading] = useState(false); // ✅ Thêm state loading
-    const [loadingFoods, setLoadingFoods] = useState(false); // ✅ Loading foods
+    const [loading, setLoading] = useState(false);
+    const [loadingFoods, setLoadingFoods] = useState(false);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -44,11 +44,9 @@ const Food = () => {
         }
 
         const fetchFoods = async () => {
-            setLoadingFoods(true); // ✅ Bật loading foods
+            setLoadingFoods(true);
             try {
-                const res = await axios.get(
-                    'https://api.quangdungcinema.id.vn/api/foods'
-                );
+                const res = await api.get('/api/foods');
                 
                 if (res.data && Array.isArray(res.data.data)) {
                     setFoods(res.data.data);
@@ -60,7 +58,7 @@ const Food = () => {
                 console.error('Lỗi tải thức ăn:', err);
                 setFoods([]);
             } finally {
-                setLoadingFoods(false); // ✅ Tắt loading foods
+                setLoadingFoods(false);
             }
         };
 
@@ -122,7 +120,7 @@ const Food = () => {
     // CONTINUE PAYMENT
     // =============================
     const handleContinue = () => {
-        setLoading(true); // ✅ Bật loading
+        setLoading(true);
 
         const finalFoods = foods
             .filter(f => (selectedFoods[f.product_id] || 0) > 0)
@@ -135,9 +133,7 @@ const Food = () => {
 
         const finalBookingData = {
             ...location.state,
-
             selectedFoods: finalFoods,
-
             totalTicketPrice,
             totalFoodPrice,
             grandTotal
@@ -148,7 +144,6 @@ const Food = () => {
             JSON.stringify(finalBookingData)
         );
 
-        // ✅ Điều hướng sau khi setLoading
         navigate('/payment', {
             state: finalBookingData
         });
@@ -286,7 +281,7 @@ const Food = () => {
                         {renderFoods()}
                     </div>
 
-                    {/* ✅ Nút hành động dưới cùng (cho mobile) */}
+                    {/* Nút hành động dưới cùng (cho mobile) */}
                     <div className="food-footer-actions">
                         <LoadingButton
                             type="button"

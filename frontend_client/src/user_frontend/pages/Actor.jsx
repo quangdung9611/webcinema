@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 import { Link } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 
@@ -24,7 +24,7 @@ const Actor = () => {
         const fetchBanners = async () => {
             try {
                 setBannerLoading(true);
-                const res = await axios.get('https://api.quangdungcinema.id.vn/api/banners?page=ACTOR');
+                const res = await api.get('/api/banners?page=ACTOR');
                 const bannerData = res.data?.data || [];
                 setBanners(Array.isArray(bannerData) ? bannerData : []);
             } catch (error) {
@@ -41,7 +41,7 @@ const Actor = () => {
     useEffect(() => {
         const fetchActors = async () => {
             try {
-                const res = await axios.get('https://api.quangdungcinema.id.vn/api/actors');
+                const res = await api.get('/api/actors');
                 setActors(res.data);
             } catch (error) {
                 console.error(error);

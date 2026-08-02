@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api
 import {
     Smile,
     Edit,
@@ -16,7 +16,7 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
-const API_URL = 'https://api.quangdungcinema.id.vn/api/actors';
+// ❌ Xóa API_URL
 
 // Helper lấy URL ảnh
 const getImageUrl = (image) => {
@@ -49,7 +49,7 @@ const ActorPage = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [actorAvatarFile, setActorAvatarFile] = useState(null);
     const [formErrors, setFormErrors] = useState({});
-    const [filePreviews, setFilePreviews] = useState({}); // { actor_avatar: { url, name } }
+    const [filePreviews, setFilePreviews] = useState({});
 
     // Alert Modal
     const [alertModal, setAlertModal] = useState({
@@ -72,7 +72,7 @@ const ActorPage = () => {
     const fetchActors = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL);
+            const res = await api.get('/api/actors');
             setActors(res.data);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách diễn viên.', 'error');
@@ -233,26 +233,19 @@ const ActorPage = () => {
                 submitData.append('actor_avatar', actorAvatarFile);
             }
 
-            let url = API_URL;
-            let method = 'post';
+            const config = {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            };
+
             if (editingActor) {
-                url = `${API_URL}/${editingActor.actor_id}`;
-                method = 'put';
+                await api.put(`/api/actors/${editingActor.actor_id}`, submitData, config);
+                showAlert('Thành công', 'Cập nhật diễn viên thành công.', 'success');
+            } else {
+                await api.post('/api/actors', submitData, config);
+                showAlert('Thành công', 'Thêm diễn viên thành công.', 'success');
             }
 
-            await axios({
-                method,
-                url,
-                data: submitData,
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-
             setIsFormOpen(false);
-            showAlert(
-                'Thành công',
-                editingActor ? 'Cập nhật diễn viên thành công.' : 'Thêm diễn viên thành công.',
-                'success'
-            );
             fetchActors();
         } catch (error) {
             const backendError = error.response?.data?.message || error.response?.data?.error || 'Đã xảy ra lỗi.';
@@ -274,7 +267,7 @@ const ActorPage = () => {
             'warning',
             async () => {
                 try {
-                    await axios.delete(`${API_URL}/${actor.actor_id}`);
+                    await api.delete(`/api/actors/${actor.actor_id}`);
                     closeAlert();
                     fetchActors();
                     showAlert('Thành công', 'Xóa diễn viên thành công.', 'success');
@@ -417,7 +410,7 @@ const ActorPage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingActor ? 'Lưu thay đổi' : 'Thêm diễn viên'}
-                    filePreviews={filePreviews}   // 👈 Truyền vào đây
+                    filePreviews={filePreviews}
                 />
             </AdminModal>
 

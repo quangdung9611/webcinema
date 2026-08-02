@@ -11,7 +11,7 @@ import {
     useBlocker
 } from 'react-router-dom';
 
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 
 // COMPONENT
 import BookingSidebar from '../components/BookingSidebar';
@@ -156,7 +156,7 @@ const MomoApp = () => {
         if (isCancellingRef.current) return;
         isCancellingRef.current = true;
         try {
-            await axios.post('https://api.quangdungcinema.id.vn/api/bank/cancel-timeout', {
+            await api.post('/api/bank/cancel-timeout', { // ✅ Dùng api
                 bookingId,
                 email: ticketData?.customerEmail || ''
             });
@@ -292,7 +292,7 @@ const MomoApp = () => {
         const autoConfirm = setTimeout(() => {
             setIsConfirming(true);
 
-            axios.post('https://api.quangdungcinema.id.vn/api/momo/confirm-fast', {
+            api.post('/api/momo/confirm-fast', { // ✅ Dùng api
                 bookingId
             })
             .then(() => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 
 // COMPONENTS
 import Modal from '../components/Modal';
@@ -133,13 +133,10 @@ const Payment = () => {
     const handleTimeExpire = async () => {
         try {
             if (selectedSeats?.length > 0) {
-                await axios.post(
-                    'https://api.quangdungcinema.id.vn/api/seats/release',
-                    {
-                        seatIds: selectedSeats.map(s => s.seat_id),
-                        showtimeId
-                    }
-                );
+                await api.post('/api/seats/release', {
+                    seatIds: selectedSeats.map(s => s.seat_id),
+                    showtimeId
+                });
             }
         } catch (err) {
             console.error('Lỗi nhả ghế:', err);
@@ -169,10 +166,10 @@ const Payment = () => {
 
         setIsApplyingCoupon(true);
         try {
-            const res = await axios.post(
-                'https://api.quangdungcinema.id.vn/api/coupons/check',
-                { code: inputCode, userId: userInfo.user_id }
-            );
+            const res = await api.post('/api/coupons/check', {
+                code: inputCode,
+                userId: userInfo.user_id
+            });
 
             if (res.data.success) {
                 const { discount_value, coupon_id } = res.data.data;
@@ -253,10 +250,7 @@ const Payment = () => {
                 status: 'pending'
             };
 
-            const response = await axios.post(
-                'https://api.quangdungcinema.id.vn/api/payment/process',
-                postData
-            );
+            const response = await api.post('/api/payment/process', postData);
 
             if (response.data.success) {
                 const finalState = {
@@ -304,14 +298,13 @@ const Payment = () => {
             const errorMessage = err.response?.data?.message || err.message || 'Không thể xử lý thanh toán.';
             sessionStorage.removeItem('paymentInitiated');
 
-            // 🆕 Xử lý riêng lỗi duplicate key
+            // Xử lý riêng lỗi duplicate key
             if (errorMessage.includes('Duplicate entry') || errorMessage.includes('uk_showtime_cinema_room_seat')) {
                 showNotice(
                     'error',
                     'GHẾ ĐÃ ĐƯỢC ĐẶT',
                     'Ghế bạn chọn đã được đặt bởi người khác hoặc bạn đã có booking chưa hoàn tất. Vui lòng chọn ghế khác.',
                     () => {
-                        // Xóa session và về trang chủ để reset
                         sessionStorage.clear();
                         navigate('/');
                         window.location.reload();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api
 import {
     Ticket,
     LayoutGrid,
@@ -35,7 +35,7 @@ const TicketList = () => {
         showtimeId: ''
     });
 
-    // ----- MODAL STATE (dùng show) -----
+    // ----- MODAL STATE -----
     const [modal, setModal] = useState({
         show: false,
         type: 'info',
@@ -44,13 +44,6 @@ const TicketList = () => {
         onConfirm: null,
         onCancel: null
     });
-
-    // ----- API CONFIG -----
-    const API_BASE = 'https://api.quangdungcinema.id.vn';
-    const getAuthHeader = () => {
-        const token = localStorage.getItem('token');
-        return token ? { Authorization: `Bearer ${token}` } : {};
-    };
 
     // ----- MODAL HELPERS -----
     const closeModal = () => setModal(prev => ({ ...prev, show: false }));
@@ -74,11 +67,7 @@ const TicketList = () => {
 
     const handleApiError = (error, fallbackMessage = 'Có lỗi xảy ra.') => {
         console.error('API Error:', error);
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-            return;
-        }
+        // api.js đã xử lý 401, nhưng giữ fallback
         showModal('error', 'Lỗi', error.response?.data?.message || fallbackMessage);
     };
 
@@ -86,7 +75,7 @@ const TicketList = () => {
     useEffect(() => {
         const fetchCinemas = async () => {
             try {
-                const res = await axios.get(`${API_BASE}/api/cinemas`);
+                const res = await api.get('/api/cinemas');
                 setCinemas(res.data || []);
             } catch (err) {
                 handleApiError(err, 'Không thể tải danh sách rạp.');
@@ -109,7 +98,7 @@ const TicketList = () => {
         const fetchRooms = async () => {
             setLoadingRooms(true);
             try {
-                const res = await axios.get(`${API_BASE}/api/rooms/cinema/${filters.cinemaId}`);
+                const res = await api.get(`/api/rooms/cinema/${filters.cinemaId}`);
                 setRooms(res.data || []);
                 setFilters(prev => ({ ...prev, roomId: '', showtimeId: '' }));
                 setShowtimes([]);
@@ -137,16 +126,13 @@ const TicketList = () => {
         const fetchData = async () => {
             setLoadingShowtimes(true);
             try {
-                const tokenHeader = getAuthHeader();
-
                 // Lấy sơ đồ ghế (public)
-                const seatsRes = await axios.get(`${API_BASE}/api/seats/room/${filters.roomId}`);
+                const seatsRes = await api.get(`/api/seats/room/${filters.roomId}`);
                 setAllSeats(seatsRes.data || []);
 
                 // Lấy suất chiếu theo rạp và phòng (admin)
-                const showtimesRes = await axios.get(
-                    `${API_BASE}/api/showtimes/by-cinema-room?cinema_id=${filters.cinemaId}&room_id=${filters.roomId}`,
-                    { headers: tokenHeader }
+                const showtimesRes = await api.get(
+                    `/api/showtimes/by-cinema-room?cinema_id=${filters.cinemaId}&room_id=${filters.roomId}`
                 );
                 setShowtimes(showtimesRes.data || []);
                 setFilters(prev => ({ ...prev, showtimeId: '' }));
@@ -169,11 +155,7 @@ const TicketList = () => {
 
         setLoadingTickets(true);
         try {
-            const tokenHeader = getAuthHeader();
-            const res = await axios.get(
-                `${API_BASE}/api/tickets/showtime/${filters.showtimeId}`,
-                { headers: tokenHeader }
-            );
+            const res = await api.get(`/api/tickets/showtime/${filters.showtimeId}`);
             const ticketsData = res.data?.data || res.data || [];
             setTickets(Array.isArray(ticketsData) ? ticketsData : []);
         } catch (err) {
@@ -196,12 +178,7 @@ const TicketList = () => {
             `Bạn có chắc muốn soát vé mã: ${code}?`,
             async () => {
                 try {
-                    const tokenHeader = getAuthHeader();
-                    const response = await axios.post(
-                        `${API_BASE}/api/tickets/check-in`,
-                        { ticketCode: code },
-                        { headers: tokenHeader }
-                    );
+                    const response = await api.post('/api/tickets/check-in', { ticketCode: code });
                     if (response.data.success) {
                         showModal('success', 'Thành công', response.data.message || 'Đã soát vé thành công!');
                         await fetchTickets();
@@ -212,8 +189,7 @@ const TicketList = () => {
                     const errorMsg = err.response?.data?.message || err.message || 'Lỗi hệ thống.';
                     showModal('error', 'Lỗi soát vé', errorMsg);
                 }
-            },
-            () => console.log('Hủy soát vé')
+            }
         );
     };
 

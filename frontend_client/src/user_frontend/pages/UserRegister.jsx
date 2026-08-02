@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import api from '../../api/api'; // ✅ Import api
 import { Eye, EyeOff } from 'lucide-react';
 
 import Modal from '../components/Modal';
 import LoadingButton from '../components/LoadingButton';
 import '../styles/UserAuth.css';
-
-const API_URL = process.env.REACT_APP_API_URL || 'https://api.quangdungcinema.id.vn';
 
 const UserRegister = () => {
     const [formData, setFormData] = useState({
@@ -99,22 +97,14 @@ const UserRegister = () => {
         setLoading(true);
 
         try {
-            const response = await axios.post(
-                `${API_URL}/api/auth/register`,
-                {
-                    username: formData.username,
-                    full_name: formData.full_name,
-                    email: formData.email,
-                    password: formData.password,
-                    phone: formData.phone,
-                    address: formData.address || ''
-                },
-                {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
+            const response = await api.post('/api/auth/register', {
+                username: formData.username,
+                full_name: formData.full_name,
+                email: formData.email,
+                password: formData.password,
+                phone: formData.phone,
+                address: formData.address || ''
+            });
 
             setModalConfig({
                 show: true,
@@ -149,9 +139,7 @@ const UserRegister = () => {
     // ==========================================
 
     const handleModalClose = () => {
-        // Đóng modal
         setModalConfig({ ...modalConfig, show: false });
-        // Nếu là success thì chuyển sang login
         if (modalConfig.type === 'success') {
             navigate('/login');
         }

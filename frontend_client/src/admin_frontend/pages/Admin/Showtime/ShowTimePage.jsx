@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api (giống UserPage)
 import {
     CalendarDays,
     Edit,
@@ -19,10 +19,11 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
-const SHOWTIME_API = 'https://api.quangdungcinema.id.vn/api/showtimes';
-const MOVIES_API = 'https://api.quangdungcinema.id.vn/api/movies';
-const CINEMAS_API = 'https://api.quangdungcinema.id.vn/api/cinemas';
-const ROOMS_API = 'https://api.quangdungcinema.id.vn/api/rooms/cinema';
+// ❌ Xóa các API_URL constants
+// const SHOWTIME_API = '...';
+// const MOVIES_API = '...';
+// const CINEMAS_API = '...';
+// const ROOMS_API = '...';
 
 const initialFormData = {
     movie_id: '',
@@ -111,7 +112,7 @@ const ShowTimePage = () => {
     const fetchShowtimes = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(SHOWTIME_API);
+            const res = await api.get('/api/showtimes');
             setShowtimes(res.data);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách suất chiếu.', 'error');
@@ -123,8 +124,8 @@ const ShowTimePage = () => {
     const fetchInitialData = async () => {
         try {
             const [movieRes, cinemaRes] = await Promise.all([
-                axios.get(MOVIES_API),
-                axios.get(CINEMAS_API)
+                api.get('/api/movies'),
+                api.get('/api/cinemas')
             ]);
             setMovies(movieRes.data);
             setCinemas(cinemaRes.data);
@@ -157,11 +158,10 @@ const ShowTimePage = () => {
     const handleOpenEdit = async (showtime) => {
         try {
             setLoading(true);
-            // ✅ Lấy chi tiết theo showtime_id
-            const detailRes = await axios.get(`${SHOWTIME_API}/${showtime.showtime_id}`);
+            const detailRes = await api.get(`/api/showtimes/${showtime.showtime_id}`);
             const st = detailRes.data;
 
-            const roomRes = await axios.get(`${ROOMS_API}/${st.cinema_id}`);
+            const roomRes = await api.get(`/api/rooms/cinema/${st.cinema_id}`);
             setRooms(roomRes.data);
 
             setEditingShowtime(st);
@@ -212,7 +212,7 @@ const ShowTimePage = () => {
             setFormData(prev => ({ ...prev, cinema_id: value, room_id: '' }));
             if (value) {
                 try {
-                    const res = await axios.get(`${ROOMS_API}/${value}`);
+                    const res = await api.get(`/api/rooms/cinema/${value}`);
                     setRooms(res.data);
                 } catch (error) {
                     console.error(error);
@@ -246,12 +246,10 @@ const ShowTimePage = () => {
             };
 
             if (editingShowtime) {
-                // ✅ Cập nhật theo showtime_id
-                await axios.put(`${SHOWTIME_API}/${editingShowtime.showtime_id}`, submitData);
+                await api.put(`/api/showtimes/${editingShowtime.showtime_id}`, submitData);
                 showAlert('Thành công', 'Cập nhật suất chiếu thành công.', 'success');
             } else {
-                // ✅ Thêm mới
-                await axios.post(SHOWTIME_API, submitData);
+                await api.post('/api/showtimes', submitData);
                 showAlert('Thành công', 'Thêm suất chiếu thành công.', 'success');
             }
 
@@ -283,8 +281,7 @@ const ShowTimePage = () => {
             'warning',
             async () => {
                 try {
-                    // ✅ Xóa theo showtime_id
-                    await axios.delete(`${SHOWTIME_API}/${showtime.showtime_id}`);
+                    await api.delete(`/api/showtimes/${showtime.showtime_id}`);
                     closeAlert();
                     fetchShowtimes();
                     showAlert('Thành công', 'Xóa suất chiếu thành công.', 'success');

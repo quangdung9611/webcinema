@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 import { ChevronRight, Gift, AlertCircle } from 'lucide-react';
 
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -24,7 +24,7 @@ const Promotion = () => {
         const fetchBanners = async () => {
             try {
                 setBannerLoading(true);
-                const res = await axios.get('https://api.quangdungcinema.id.vn/api/banners?page=PROMOTION');
+                const res = await api.get('/api/banners?page=PROMOTION');
                 const bannerData = res.data?.data || [];
                 setBanners(Array.isArray(bannerData) ? bannerData : []);
             } catch (error) {
@@ -42,7 +42,7 @@ const Promotion = () => {
         const fetchPromotions = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get('https://api.quangdungcinema.id.vn/api/promotions');
+                const res = await api.get('/api/promotions');
                 setPromotions(res.data || []);
             } catch (error) {
                 console.error("Lỗi khi tải khuyến mãi:", error);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api thay vì axios
 import {
     Popcorn,
     Edit,
@@ -24,7 +24,7 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
-const API_URL = 'https://api.quangdungcinema.id.vn/api/foods';
+// ❌ Xóa API_URL
 
 // Helper lấy URL ảnh (hỗ trợ Cloudinary và local)
 const getImageUrl = (image) => {
@@ -55,7 +55,7 @@ const FoodPage = () => {
     const [editingFood, setEditingFood] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
     const [foodImage, setFoodImage] = useState(null);
-    const [filePreviews, setFilePreviews] = useState({}); // { food_image: { url, name } }
+    const [filePreviews, setFilePreviews] = useState({});
     const [formErrors, setFormErrors] = useState({});
 
     // Alert Modal
@@ -80,7 +80,7 @@ const FoodPage = () => {
     const fetchFoods = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL);
+            const res = await api.get('/api/foods');  // ✅ Dùng api
             setFoods(res.data.data || []);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách đồ ăn.', 'error');
@@ -144,7 +144,6 @@ const FoodPage = () => {
         });
         setFoodImage(null);
         setFormErrors({});
-        // Set preview cho file
         if (food.food_image) {
             setFilePreviews({
                 food_image: {
@@ -202,15 +201,16 @@ const FoodPage = () => {
                 submitData.append('food_image', foodImage);
             }
 
+            // ✅ Dùng api với multipart/form-data
+            const config = {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            };
+
             if (editingFood) {
-                await axios.put(`${API_URL}/${editingFood.product_id}`, submitData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await api.put(`/api/foods/${editingFood.product_id}`, submitData, config);
                 showAlert('Thành công', 'Cập nhật sản phẩm thành công.', 'success');
             } else {
-                await axios.post(API_URL, submitData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await api.post('/api/foods', submitData, config);
                 showAlert('Thành công', 'Thêm sản phẩm thành công.', 'success');
             }
 
@@ -236,7 +236,7 @@ const FoodPage = () => {
             'warning',
             async () => {
                 try {
-                    await axios.delete(`${API_URL}/${food.product_id}`);
+                    await api.delete(`/api/foods/${food.product_id}`);  // ✅ Dùng api
                     closeAlert();
                     fetchFoods();
                     showAlert('Thành công', 'Xóa sản phẩm thành công.', 'success');
@@ -439,7 +439,7 @@ const FoodPage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingFood ? 'Lưu thay đổi' : 'Thêm sản phẩm'}
-                    filePreviews={filePreviews}   // 👈 Truyền vào đây
+                    filePreviews={filePreviews}
                 />
             </AdminModal>
 

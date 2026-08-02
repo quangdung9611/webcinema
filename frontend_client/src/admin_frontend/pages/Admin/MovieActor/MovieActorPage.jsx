@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api thay vì axios
 import { Users, Loader2, Search, X, ChevronDown, Save } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -8,10 +8,7 @@ import AdminPagination from '../../../components/AdminPagination';
 
 import '../../../styles/MovieActorPage.css';
 
-const MOVIES_API = 'https://api.quangdungcinema.id.vn/api/movies';
-const ACTORS_API = 'https://api.quangdungcinema.id.vn/api/actors';
-const ASSIGNMENTS_API = 'https://api.quangdungcinema.id.vn/api/movie-actors/all-assignments';
-const UPDATE_API = 'https://api.quangdungcinema.id.vn/api/movie-actors/update';
+// ❌ Xóa các API constants
 
 const DEFAULT_POSTER =
     'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg';
@@ -80,9 +77,9 @@ const MovieActorPage = () => {
         setLoading(true);
         try {
             const [resMovies, resActors, resAssignments] = await Promise.all([
-                axios.get(MOVIES_API),
-                axios.get(ACTORS_API),
-                axios.get(ASSIGNMENTS_API),
+                api.get('/api/movies'),                           // ✅ Dùng api
+                api.get('/api/actors'),                           // ✅ Dùng api
+                api.get('/api/movie-actors/all-assignments'),     // ✅ Dùng api
             ]);
 
             setMovies(resMovies.data);
@@ -144,7 +141,7 @@ const MovieActorPage = () => {
     const handleSaveActors = async () => {
         if (!selectedMovie) return;
         try {
-            await axios.post(UPDATE_API, {
+            await api.post('/api/movie-actors/update', {   // ✅ Dùng api
                 movie_id: selectedMovie.movie_id,
                 actor_ids: movieActorMap[selectedMovie.movie_id] || [],
             });
@@ -282,8 +279,6 @@ const MovieActorPage = () => {
                                                         <ChevronDown size={18} />
                                                     </button>
                                                 </div>
-
-                                                {/* ❌ ĐÃ XÓA NÚT LƯU TRONG CARD */}
                                             </div>
                                         </div>
                                     );

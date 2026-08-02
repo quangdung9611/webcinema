@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api
 import {
     Image,
     Edit,
@@ -15,7 +15,7 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
-const API_URL = 'https://api.quangdungcinema.id.vn/api/banners';
+// ❌ Xóa API_URL
 
 const PAGE_OPTIONS = [
     { label: 'Trang chủ', value: 'HOME' },
@@ -23,7 +23,7 @@ const PAGE_OPTIONS = [
     { label: 'Rạp chiếu', value: 'CINEMA' },
     { label: 'Bài viết đánh giá', value: 'FILM_REVIEW' },
     { label: 'Blog điện ảnh', value: 'BLOG' },
-    { label: 'Diễn viên', value: 'ACTOR' } // 🔥 Thêm mới
+    { label: 'Diễn viên', value: 'ACTOR' }
 ];
 
 const initialFormData = {
@@ -51,14 +51,7 @@ const BannerPage = () => {
         onCancel: null
     });
 
-    const getAuthHeader = () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.warn('Không tìm thấy token, vui lòng đăng nhập lại');
-            return {};
-        }
-        return { Authorization: `Bearer ${token}` };
-    };
+    // ❌ Xóa getAuthHeader - api tự xử lý
 
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
@@ -71,7 +64,7 @@ const BannerPage = () => {
     const fetchBanners = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL);
+            const res = await api.get('/api/banners');
             const bannersData = res.data?.data || res.data || [];
             setBanners(Array.isArray(bannersData) ? bannersData : []);
         } catch (error) {
@@ -150,17 +143,16 @@ const BannerPage = () => {
                 submitData.append('image_url', bannerImageFile);
             }
 
-            const headers = getAuthHeader();
+            // ✅ Dùng api với multipart/form-data
+            const config = {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            };
 
             if (editingBanner) {
-                await axios.put(`${API_URL}/${editingBanner.banner_id}`, submitData, {
-                    headers: { ...headers, 'Content-Type': 'multipart/form-data' }
-                });
+                await api.put(`/api/banners/${editingBanner.banner_id}`, submitData, config);
                 showAlert('Thành công', 'Cập nhật banner thành công.', 'success');
             } else {
-                await axios.post(API_URL, submitData, {
-                    headers: { ...headers, 'Content-Type': 'multipart/form-data' }
-                });
+                await api.post('/api/banners', submitData, config);
                 showAlert('Thành công', 'Thêm banner thành công.', 'success');
             }
 
@@ -187,8 +179,7 @@ const BannerPage = () => {
             'warning',
             async () => {
                 try {
-                    const headers = getAuthHeader();
-                    await axios.delete(`${API_URL}/${banner.banner_id}`, { headers });
+                    await api.delete(`/api/banners/${banner.banner_id}`);
                     closeAlert();
                     fetchBanners();
                     showAlert('Thành công', 'Xóa banner thành công.', 'success');
@@ -225,7 +216,8 @@ const BannerPage = () => {
                     PROMOTION: 'Khuyến mãi',
                     CINEMA: 'Rạp chiếu',
                     FILM_REVIEW: 'Bài viết đánh giá',
-                    BLOG: 'Blog điện ảnh'
+                    BLOG: 'Blog điện ảnh',
+                    ACTOR: 'Diễn viên'
                 };
                 return <span className="status-badge page-badge">{pageMap[row.page] || row.page}</span>;
             }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api thay vì axios
 import { Tags, Save, Loader2, ChevronDown, Search, X } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -8,10 +8,7 @@ import AdminPagination from '../../../components/AdminPagination';
 
 import '../../../styles/MovieGenrePage.css';
 
-const MOVIES_API = 'https://api.quangdungcinema.id.vn/api/movies';
-const GENRES_API = 'https://api.quangdungcinema.id.vn/api/genres';
-const ASSIGNMENTS_API = 'https://api.quangdungcinema.id.vn/api/movie-genres/all-assignments';
-const UPDATE_API = 'https://api.quangdungcinema.id.vn/api/movie-genres/update';
+// ❌ Xóa các API constants
 
 const DEFAULT_POSTER =
     'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg';
@@ -34,10 +31,10 @@ const MovieGenrePage = () => {
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
 
-    // 🔥 Modal states
+    // Modal states
     const [genreModalOpen, setGenreModalOpen] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState(null);
-    const [tempGenres, setTempGenres] = useState([]); // thể loại tạm thời trong modal
+    const [tempGenres, setTempGenres] = useState([]);
     const [genreSearch, setGenreSearch] = useState('');
     const [saving, setSaving] = useState(false);
 
@@ -71,9 +68,9 @@ const MovieGenrePage = () => {
         setLoading(true);
         try {
             const [resMovies, resGenres, resAssignments] = await Promise.all([
-                axios.get(MOVIES_API),
-                axios.get(GENRES_API),
-                axios.get(ASSIGNMENTS_API),
+                api.get('/api/movies'),                           // ✅ Dùng api
+                api.get('/api/genres'),                           // ✅ Dùng api
+                api.get('/api/movie-genres/all-assignments'),     // ✅ Dùng api
             ]);
 
             setMovies(resMovies.data);
@@ -133,12 +130,11 @@ const MovieGenrePage = () => {
 
         setSaving(true);
         try {
-            await axios.post(UPDATE_API, {
+            await api.post('/api/movie-genres/update', {   // ✅ Dùng api
                 movie_id: selectedMovie.movie_id,
                 genre_ids: tempGenres,
             });
 
-            // Cập nhật state
             setMovieGenreMap((prev) => ({
                 ...prev,
                 [selectedMovie.movie_id]: tempGenres,
@@ -219,7 +215,6 @@ const MovieGenrePage = () => {
                                             <div className="movie-genre-content">
                                                 <h3>{movie.title}</h3>
 
-                                                {/* Nút mở modal */}
                                                 <button
                                                     type="button"
                                                     className="movie-select-trigger"
@@ -232,8 +227,6 @@ const MovieGenrePage = () => {
                                                     </span>
                                                     <ChevronDown size={18} />
                                                 </button>
-
-                                                {/* ❌ ĐÃ XÓA NÚT LƯU TRONG CARD */}
                                             </div>
                                         </div>
                                     );

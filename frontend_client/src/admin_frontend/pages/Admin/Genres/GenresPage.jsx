@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api thay vì axios
 import {
     Theater,
     Edit,
@@ -20,7 +20,7 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
-const API_URL = 'https://api.quangdungcinema.id.vn/api/genres';
+// ❌ Xóa API_URL
 
 const initialFormData = {
     genre_name: '',
@@ -58,7 +58,7 @@ const GenresPage = () => {
     const fetchGenres = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL);
+            const res = await api.get('/api/genres');  // ✅ Dùng api
             setGenres(res.data);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách thể loại.', 'error');
@@ -183,12 +183,10 @@ const GenresPage = () => {
             setFormErrors({});
 
             if (editingGenre) {
-                // ✅ Sửa: bỏ /update
-                await axios.put(`${API_URL}/${editingGenre.genre_id}`, formData);
+                await api.put(`/api/genres/${editingGenre.genre_id}`, formData);  // ✅ Dùng api
                 showAlert('Thành công', 'Cập nhật thể loại thành công.', 'success');
             } else {
-                // ✅ Sửa: bỏ /add
-                await axios.post(API_URL, formData);
+                await api.post('/api/genres', formData);  // ✅ Dùng api
                 showAlert('Thành công', 'Thêm thể loại thành công.', 'success');
             }
 
@@ -220,8 +218,7 @@ const GenresPage = () => {
             'warning',
             async () => {
                 try {
-                    // ✅ Sửa: bỏ /delete
-                    await axios.delete(`${API_URL}/${genre.genre_id}`);
+                    await api.delete(`/api/genres/${genre.genre_id}`);  // ✅ Dùng api
                     closeAlert();
                     fetchGenres();
                     showAlert('Thành công', 'Xóa thể loại thành công.', 'success');

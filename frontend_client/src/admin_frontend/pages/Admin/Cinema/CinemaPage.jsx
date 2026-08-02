@@ -1,9 +1,5 @@
-import React, {
-    useEffect,
-    useState
-} from 'react';
-
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import api from '../../../../api/api';  // ✅ Import api thay vì axios
 
 import {
     Tv,
@@ -15,7 +11,6 @@ import {
     Navigation,
     Phone,
     Map,
-
     CheckCircle2,
     XCircle,
     AlertTriangle,
@@ -27,8 +22,7 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
-const API_URL =
-    'https://api.quangdungcinema.id.vn/api/cinemas';
+// ❌ Xóa API_URL
 
 const initialFormData = {
     cinema_name: '',
@@ -66,7 +60,7 @@ const CinemaPage = () => {
     const fetchCinemas = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL);
+            const res = await api.get('/api/cinemas');  // ✅ Dùng api
             setCinemas(res.data);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách rạp.', 'error');
@@ -254,12 +248,10 @@ const CinemaPage = () => {
             setFormErrors({});
 
             if (editingCinema) {
-                // ✅ SỬA: bỏ /update
-                await axios.put(`${API_URL}/${editingCinema.cinema_id}`, formData);
+                await api.put(`/api/cinemas/${editingCinema.cinema_id}`, formData);  // ✅ Dùng api
                 showAlert('Thành công', 'Cập nhật rạp thành công.', 'success');
             } else {
-                // ✅ SỬA: bỏ /add
-                await axios.post(API_URL, formData);
+                await api.post('/api/cinemas', formData);  // ✅ Dùng api
                 showAlert('Thành công', 'Thêm rạp thành công.', 'success');
             }
 
@@ -291,8 +283,7 @@ const CinemaPage = () => {
             'warning',
             async () => {
                 try {
-                    // ✅ SỬA: bỏ /delete
-                    await axios.delete(`${API_URL}/${cinema.cinema_id}`);
+                    await api.delete(`/api/cinemas/${cinema.cinema_id}`);  // ✅ Dùng api
                     closeAlert();
                     fetchCinemas();
                     showAlert('Thành công', 'Xóa rạp thành công.', 'success');

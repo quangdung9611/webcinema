@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api thay vì axios
 import {
     Star,
     User,
@@ -12,7 +12,7 @@ import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 
-const API_URL = 'https://api.quangdungcinema.id.vn/api/reviews';
+// ❌ Xóa API_URL
 
 const ReviewPage = ({ movieId }) => {
 
@@ -51,7 +51,7 @@ const ReviewPage = ({ movieId }) => {
         if (!movieId) return;
         setLoading(true);
         try {
-            const res = await axios.get(`${API_URL}/${movieId}`);
+            const res = await api.get(`/api/reviews/${movieId}`);  // ✅ Dùng api
             setReviews(res.data);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách bình luận.', 'error');

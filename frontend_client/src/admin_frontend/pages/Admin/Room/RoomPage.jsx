@@ -1,9 +1,5 @@
-import React, {
-    useEffect,
-    useState
-} from 'react';
-
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import api from '../../../../api/api';  // ✅ Import api thay vì axios
 
 import {
     Monitor,
@@ -27,15 +23,9 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
-/* =====================================================
-    API
-===================================================== */
-
-const ROOM_API =
-    'https://api.quangdungcinema.id.vn/api/rooms';
-
-const CINEMA_API =
-    'https://api.quangdungcinema.id.vn/api/cinemas';
+// ❌ Xóa các API constants
+// const ROOM_API = '...';
+// const CINEMA_API = '...';
 
 /* =====================================================
     INITIAL FORM
@@ -116,7 +106,7 @@ const RoomPage = () => {
     const fetchRooms = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(ROOM_API);
+            const res = await api.get('/api/rooms');  // ✅ Dùng api
             setRooms(res.data);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách phòng chiếu.', 'error');
@@ -127,7 +117,7 @@ const RoomPage = () => {
 
     const fetchCinemas = async () => {
         try {
-            const res = await axios.get(CINEMA_API);
+            const res = await api.get('/api/cinemas');  // ✅ Dùng api
             setCinemas(res.data);
         } catch (error) {
             console.error(error);
@@ -225,12 +215,10 @@ const RoomPage = () => {
             setFormErrors({});
 
             if (editingRoom) {
-                // ✅ Sửa: bỏ /update, dùng /:room_id
-                await axios.put(`${ROOM_API}/${editingRoom.room_id}`, formData);
+                await api.put(`/api/rooms/${editingRoom.room_id}`, formData);  // ✅ Dùng api
                 showAlert('Thành công', 'Cập nhật phòng chiếu thành công.', 'success');
             } else {
-                // ✅ Sửa: bỏ /add, dùng /
-                await axios.post(ROOM_API, formData);
+                await api.post('/api/rooms', formData);  // ✅ Dùng api
                 showAlert('Thành công', 'Thêm phòng chiếu thành công.', 'success');
             }
 
@@ -263,8 +251,7 @@ const RoomPage = () => {
             'warning',
             async () => {
                 try {
-                    // ✅ Sửa: bỏ /delete, dùng /:room_id
-                    await axios.delete(`${ROOM_API}/${room.room_id}`);
+                    await api.delete(`/api/rooms/${room.room_id}`);  // ✅ Dùng api
                     closeAlert();
                     fetchRooms();
                     showAlert('Thành công', 'Xóa phòng chiếu thành công.', 'success');

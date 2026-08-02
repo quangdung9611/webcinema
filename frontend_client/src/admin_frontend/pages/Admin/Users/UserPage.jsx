@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api
 import {
     Users,
     Edit,
@@ -11,8 +11,6 @@ import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
-
-const API_URL = 'https://api.quangdungcinema.id.vn/api/users';
 
 // Helper lấy URL avatar
 const getAvatarUrl = (avatar) => {
@@ -66,7 +64,7 @@ const UserPage = () => {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL);
+            const res = await api.get('/api/users');
             const usersData = res.data?.data || res.data || [];
             setUsers(Array.isArray(usersData) ? usersData : []);
         } catch (error) {
@@ -185,12 +183,12 @@ const UserPage = () => {
                 submitData.append('user_avatar', userAvatarFile);
             }
             if (editingUser) {
-                await axios.put(`${API_URL}/${editingUser.user_id}`, submitData, {
+                await api.put(`/api/users/${editingUser.user_id}`, submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 showAlert('Thành công', 'Cập nhật người dùng thành công.', 'success');
             } else {
-                await axios.post(`${API_URL}`, submitData, {
+                await api.post('/api/users', submitData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 showAlert('Thành công', 'Thêm người dùng thành công.', 'success');
@@ -218,7 +216,7 @@ const UserPage = () => {
             'warning',
             async () => {
                 try {
-                    await axios.delete(`${API_URL}/${user.user_id}`);
+                    await api.delete(`/api/users/${user.user_id}`);
                     closeAlert();
                     fetchUsers();
                     showAlert('Thành công', 'Xóa người dùng thành công.', 'success');
@@ -374,7 +372,7 @@ const UserPage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingUser ? 'Lưu thay đổi' : 'Thêm người dùng'}
-                    filePreviews={filePreviews}   // 🔥 BẮT BUỘC TRUYỀN
+                    filePreviews={filePreviews}
                 />
             </AdminModal>
 

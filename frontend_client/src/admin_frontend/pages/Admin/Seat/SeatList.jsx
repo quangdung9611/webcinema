@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api
 import {
     Zap,
     Trash2,
@@ -14,7 +14,7 @@ import {
 import AdminModal from '../../../components/AdminModal';
 import '../../../styles/AdminSeat.css';
 
-const API_BASE = 'https://api.quangdungcinema.id.vn/api';
+// ❌ Xóa API_BASE
 
 const SeatList = () => {
     const [cinemas, setCinemas] = useState([]);
@@ -35,7 +35,7 @@ const SeatList = () => {
     useEffect(() => {
         const fetchCinemas = async () => {
             try {
-                const res = await axios.get(`${API_BASE}/cinemas`);
+                const res = await api.get('/api/cinemas');
                 setCinemas(res.data);
             } catch (err) {
                 console.error('Lỗi lấy rạp:', err);
@@ -49,7 +49,7 @@ const SeatList = () => {
         const fetchRooms = async () => {
             if (selectedCinema) {
                 try {
-                    const res = await axios.get(`${API_BASE}/rooms/cinema/${selectedCinema}`);
+                    const res = await api.get(`/api/rooms/cinema/${selectedCinema}`);
                     setRooms(res.data);
                     setSelectedRoom('');
                     setSeats([]);
@@ -66,7 +66,7 @@ const SeatList = () => {
         if (selectedRoom) {
             setLoading(true);
             try {
-                const res = await axios.get(`${API_BASE}/seats/room/${selectedRoom}`);
+                const res = await api.get(`/api/seats/room/${selectedRoom}`);
                 setSeats(res.data);
             } catch (err) {
                 console.error('Lỗi lấy ghế:', err);
@@ -94,18 +94,18 @@ const SeatList = () => {
 
             if (modal.type === 'maintenance') {
                 const seat = modal.data;
-                await axios.put(`${API_BASE}/seats/toggle-active`, {
+                await api.put('/api/seats/toggle-active', {
                     seatId: seat.seat_id,
                     isActive: seat.is_active ? 0 : 1
                 });
             } else if (modal.type === 'init') {
-                await axios.post(`${API_BASE}/seats/init`, {
+                await api.post('/api/seats/init', {
                     roomId: selectedRoom,
                     roomType: rType,
                     cinemaId: selectedCinema
                 });
             } else if (modal.type === 'delete') {
-                await axios.delete(`${API_BASE}/seats/room/${selectedRoom}`);
+                await api.delete(`/api/seats/room/${selectedRoom}`);
                 setSeats([]);
             }
 
@@ -244,7 +244,7 @@ const SeatList = () => {
                         <div className="screen">MÀN HÌNH</div>
                         <div className="admin-grid seats-layout">
                             {Object.keys(groupedSeats)
-                                .sort((a, b) => b.localeCompare(a)) // reverse alphabetical
+                                .sort((a, b) => b.localeCompare(a))
                                 .map(row => (
                                     <div key={row} className="seat-row">
                                         <span className="row-name row-id">{row}</span>

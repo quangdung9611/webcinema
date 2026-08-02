@@ -13,7 +13,8 @@ import {
     useParams
 } from 'react-router-dom';
 
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
+
 import { io } from "socket.io-client";
 
 import Modal from '../components/Modal';
@@ -138,9 +139,7 @@ const Booking = () => {
                 setLoading(true);
                 setFetchError(null);
 
-                const res = await axios.get(
-                    `https://api.quangdungcinema.id.vn/api/movies/detail/${slug}`
-                );
+                const res = await api.get(`/api/movies/detail/${slug}`);
 
                 console.log("===== MOVIE API =====");
                 console.log("Response:", res);
@@ -168,9 +167,7 @@ const Booking = () => {
         const fetchInitialData = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get(
-                    'https://api.quangdungcinema.id.vn/api/cinemas'
-                );
+                const res = await api.get('/api/cinemas');
                 setCinemas(res.data);
                 const dates = [];
                 for (let i = 0; i < 7; i++) {
@@ -198,16 +195,13 @@ const Booking = () => {
         }
         const fetchShowtimes = async () => {
             try {
-                const res = await axios.get(
-                    `https://api.quangdungcinema.id.vn/api/showtimes/filter-booking`,
-                    {
-                        params: {
-                            cinema_id: selectedCinema.cinema_id,
-                            date: selectedDate,
-                            movie_id: movie.movie_id || movie.id
-                        }
+                const res = await api.get('/api/showtimes/filter-booking', {
+                    params: {
+                        cinema_id: selectedCinema.cinema_id,
+                        date: selectedDate,
+                        movie_id: movie.movie_id || movie.id
                     }
-                );
+                });
                 setAvailableShowtimes(res.data);
             } catch (err) {
                 console.error("Lỗi tải suất chiếu:", err);
@@ -225,8 +219,8 @@ const Booking = () => {
         try {
             setLoading(true);
             const [detailRes, seatsRes] = await Promise.all([
-                axios.get(`https://api.quangdungcinema.id.vn/api/showtimes/detail/${showtimeId}`),
-                axios.get(`https://api.quangdungcinema.id.vn/api/seats/showtime/${showtimeId}`)
+                api.get(`/api/showtimes/detail/${showtimeId}`),
+                api.get(`/api/seats/showtime/${showtimeId}`)
             ]);
             setShowtimeDetail(detailRes.data);
             setSeats(seatsRes.data);

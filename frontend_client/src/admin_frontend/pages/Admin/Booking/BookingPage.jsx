@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api
 import {
     ClipboardList,
     Eye,
@@ -20,7 +20,7 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import '../../../styles/BookingDetail.css'; // Giữ CSS của BookingDetail
 
-const BOOKING_API = 'https://api.quangdungcinema.id.vn/api/bookings';
+// ❌ Xóa BOOKING_API
 
 const BookingPage = () => {
     const [bookings, setBookings] = useState([]);
@@ -49,7 +49,7 @@ const BookingPage = () => {
     const fetchBookings = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(BOOKING_API);
+            const res = await api.get('/api/bookings');
             setBookings(res.data.data || []);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách đơn hàng.');
@@ -65,7 +65,7 @@ const BookingPage = () => {
     const handleViewDetail = async (booking_id) => {
         try {
             setLoading(true);
-            const res = await axios.get(`${BOOKING_API}/detail/${booking_id}`);
+            const res = await api.get(`/api/bookings/detail/${booking_id}`);
             setSelectedBooking(res.data.booking);
             const tickets = res.data.tickets || [];
             const foods = res.data.foods || [];
@@ -103,7 +103,7 @@ const BookingPage = () => {
             `Bạn có chắc muốn chuyển đơn #${booking_id} sang "${nextStatus}"?`,
             async () => {
                 try {
-                    await axios.put(`${BOOKING_API}/update/${booking_id}/status`, { status: nextStatus });
+                    await api.put(`/api/bookings/update/${booking_id}/status`, { status: nextStatus });
                     closeAlert();
                     fetchBookings();
                 } catch (error) {
@@ -120,7 +120,7 @@ const BookingPage = () => {
             `Bạn có chắc muốn xóa đơn "${memo}"?`,
             async () => {
                 try {
-                    await axios.delete(`${BOOKING_API}/delete/${booking_id}`);
+                    await api.delete(`/api/bookings/delete/${booking_id}`);
                     closeAlert();
                     fetchBookings();
                 } catch (error) {
@@ -248,7 +248,7 @@ const BookingPage = () => {
                                 </div>
                             </section>
 
-                           {/* 2. Suất chiếu */}
+                            {/* 2. Suất chiếu */}
                             <section className="detail-section">
                                 <h3 className="section-title"><Film size={18} /> Thông tin suất chiếu</h3>
                                 <div className="section-body">

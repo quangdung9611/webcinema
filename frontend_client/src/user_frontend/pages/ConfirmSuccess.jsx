@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 import {
   CheckCircle2,
   MapPin,
@@ -51,10 +51,7 @@ const ConfirmSuccess = () => {
       hasConfirmed.current = true;
 
       try {
-        const response = await axios.get(
-          `https://api.quangdungcinema.id.vn/api/bookings/detail/${orderId}`,
-          { withCredentials: true }
-        );
+        const response = await api.get(`/api/bookings/detail/${orderId}`);
 
         if (response.data.success) {
           const b = response.data.booking;
@@ -83,7 +80,7 @@ const ConfirmSuccess = () => {
             seatDisplay: b.seat_label || seats,
             ticketPIN: b.pin || b.memo?.slice(-6),
             customerName: b.full_name,
-            customerEmail: b.email, // ✅ ĐÃ CẬP NHẬT TỪ SERVER (EMAIL B)
+            customerEmail: b.email,
             selectedFoods: foods,
           };
 
@@ -94,10 +91,7 @@ const ConfirmSuccess = () => {
 
           // Cập nhật user info (nếu cần)
           try {
-            const userRes = await axios.get(
-              'https://api.quangdungcinema.id.vn/api/auth/me',
-              { withCredentials: true }
-            );
+            const userRes = await api.get('/api/auth/me');
             if (userRes.data.success) {
               localStorage.setItem('user', JSON.stringify(userRes.data.user));
               window.dispatchEvent(new Event('storage'));

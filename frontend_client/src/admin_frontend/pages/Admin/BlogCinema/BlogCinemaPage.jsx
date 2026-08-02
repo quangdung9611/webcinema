@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api
 import {
     BookOpen,
     Edit,
@@ -19,10 +19,10 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
-const API_URL = 'https://api.quangdungcinema.id.vn/api/blog-cinema';
+// ❌ Xóa API_URL
 
 // =============================================
-// HELPER: LẤY URL ẢNH (HỖ TRỢ CLOUDINARY + LOCAL)
+// HELPER: LẤY URL ẢNH
 // =============================================
 const getImageUrl = (image) => {
     if (!image) return '';
@@ -88,7 +88,7 @@ const BlogCinemaPage = () => {
     const fetchBlogs = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL);
+            const res = await api.get('/api/blog-cinema');
             setBlogs(res.data);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách blog từ máy chủ.', 'error');
@@ -219,19 +219,15 @@ const BlogCinemaPage = () => {
                 submitData.append('blog_image', blogImageFile);
             }
 
-            const token = sessionStorage.getItem('usertoken');
             const config = {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    ...(token && { Authorization: `Bearer ${token}` })
-                }
+                headers: { 'Content-Type': 'multipart/form-data' }
             };
 
             if (editingBlog) {
-                await axios.put(`${API_URL}/${editingBlog.blog_id}`, submitData, config);
+                await api.put(`/api/blog-cinema/${editingBlog.blog_id}`, submitData, config);
                 showAlert('Thành công', 'Cập nhật blog thành công.', 'success');
             } else {
-                await axios.post(API_URL, submitData, config);
+                await api.post('/api/blog-cinema', submitData, config);
                 showAlert('Thành công', 'Tạo blog mới thành công.', 'success');
             }
 
@@ -258,13 +254,7 @@ const BlogCinemaPage = () => {
             'warning',
             async () => {
                 try {
-                    const token = sessionStorage.getItem('usertoken');
-                    const config = {
-                        headers: {
-                            ...(token && { Authorization: `Bearer ${token}` })
-                        }
-                    };
-                    await axios.delete(`${API_URL}/${item.blog_id}`, config);
+                    await api.delete(`/api/blog-cinema/${item.blog_id}`);
                     closeAlert();
                     fetchBlogs();
                     showAlert('Thành công', 'Xóa blog thành công.', 'success');
@@ -426,7 +416,7 @@ const BlogCinemaPage = () => {
     ];
 
     /* =====================================================
-        FILE PREVIEWS (giống UserPage)
+        FILE PREVIEWS
     ===================================================== */
     const filePreviews = {};
     if (editingBlog && editingBlog.blog_image) {
@@ -492,7 +482,7 @@ const BlogCinemaPage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingBlog ? 'Lưu thay đổi Blog' : 'Đăng Blog'}
-                    filePreviews={filePreviews}   // 🔥 Truyền vào đây
+                    filePreviews={filePreviews}
                 />
             </AdminModal>
 

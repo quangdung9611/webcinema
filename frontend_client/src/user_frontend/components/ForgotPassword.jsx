@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 import Modal from './Modal';
 
 import {
@@ -43,10 +43,7 @@ const ForgotPassword = ({ onClose }) => {
             setLoading(true);
             resetMessage();
 
-            await axios.post(
-                'https://api.quangdungcinema.id.vn/api/forgot-password/send-otp',
-                { email }
-            );
+            await api.post('/api/forgot-password/send-otp', { email });
 
             setStep(2);
             setMessage('OTP đã được gửi tới email của bạn');
@@ -75,13 +72,10 @@ const ForgotPassword = ({ onClose }) => {
             setLoading(true);
             resetMessage();
 
-            await axios.post(
-                'https://api.quangdungcinema.id.vn/api/forgot-password/verify-otp',
-                {
-                    email,
-                    otp
-                }
-            );
+            await api.post('/api/forgot-password/verify-otp', {
+                email,
+                otp
+            });
 
             setStep(3);
             setMessage('Xác thực OTP thành công');
@@ -122,13 +116,10 @@ const ForgotPassword = ({ onClose }) => {
             setLoading(true);
             resetMessage();
 
-            await axios.post(
-                'https://api.quangdungcinema.id.vn/api/forgot-password/reset-password',
-                {
-                    email,
-                    newPassword: password
-                }
-            );
+            await api.post('/api/forgot-password/reset-password', {
+                email,
+                newPassword: password
+            });
 
             setMessage('Đổi mật khẩu thành công!');
             setMessageType('success');
@@ -156,10 +147,10 @@ const ForgotPassword = ({ onClose }) => {
 
     return (
         <Modal
-            show={true}          // ✅ đổi open → show
+            show={true}
             onClose={onClose}
             title="QUÊN MẬT KHẨU"
-            type="default"       // ✅ giữ nguyên, không cần size
+            type="default"
         >
             <div className="forgot-password">
                 <div className="forgot-icon">

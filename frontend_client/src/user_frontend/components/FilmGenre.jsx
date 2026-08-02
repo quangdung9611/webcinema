@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import api from "../../api/api"; // ✅ import api
 import { motion, AnimatePresence } from "framer-motion";
 
 import MovieSlider from "../components/MovieSlider";
 import MoviePreviewModal from "../components/MoviePreviewModal";
 import "../styles/FilmGenre.css";
 
-const API_URL = "https://api.quangdungcinema.id.vn/api";
+// ❌ Xóa API_URL
 
 const containerVariants = {
   hidden: {},
@@ -51,9 +51,9 @@ const FilmGenre = () => {
     try {
       setLoading(true);
       const url = genreSlug
-        ? `${API_URL}/movies/with-genre?genre=${genreSlug}`
-        : `${API_URL}/movies`;
-      const { data } = await axios.get(url);
+        ? `/api/movies/with-genre?genre=${genreSlug}`
+        : `/api/movies`;
+      const { data } = await api.get(url);
       setMovies(data || []);
     } catch (error) {
       console.error("Lỗi tải phim:", error);
@@ -69,7 +69,7 @@ const FilmGenre = () => {
   useEffect(() => {
     const fetchGenres = async () => {
       try {
-        const { data } = await axios.get(`${API_URL}/genres`);
+        const { data } = await api.get("/api/genres");
         setGenres(data || []);
       } catch (error) {
         console.error("Lỗi tải thể loại:", error);

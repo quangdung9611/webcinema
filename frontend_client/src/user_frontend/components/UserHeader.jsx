@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/api';  // ✅ Import api thay vì axios
 import { useAuth } from '../../context/AuthContext';
 import {
     ChevronDown,
@@ -46,11 +46,10 @@ const UserHeader = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // ✅ Sửa fetchCinemas - dùng api
     const fetchCinemas = async () => {
         try {
-            const res = await axios.get('https://api.quangdungcinema.id.vn/api/cinemas', {
-                withCredentials: true,
-            });
+            const res = await api.get('/api/cinemas');
             setCinemas(res.data);
         } catch (err) {
             console.error('Lỗi lấy dữ liệu rạp:', err);
@@ -61,13 +60,10 @@ const UserHeader = () => {
         fetchCinemas();
     }, []);
 
+    // ✅ Sửa handleLogout - dùng api
     const handleLogout = async () => {
         try {
-            await axios.post(
-                'https://api.quangdungcinema.id.vn/api/auth/logout',
-                {},
-                { withCredentials: true }
-            );
+            await api.post('/api/auth/logout');
         } catch (err) {
             console.error('Lỗi khi logout:', err);
         } finally {
@@ -90,19 +86,16 @@ const UserHeader = () => {
     };
 
     // ================================================
-    // ✅ SỬA: XỬ LÝ AVATAR URL (HỖ TRỢ CLOUDINARY + LOCAL)
+    // XỬ LÝ AVATAR URL (HỖ TRỢ CLOUDINARY + LOCAL)
     // ================================================
     const getAvatarUrl = (avatar) => {
         if (!avatar) return null;
-        // Nếu là URL Cloudinary (bắt đầu bằng http), dùng trực tiếp
         if (avatar.startsWith('http')) {
             return avatar;
         }
-        // Ngược lại, ghép với domain cũ (hỗ trợ tên file)
         return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
     };
 
-    // Ưu tiên user.user_avatar (mới), fallback user.avatar (cũ)
     const avatarSource = user?.user_avatar || user?.avatar;
     const avatarUrl = avatarSource ? getAvatarUrl(avatarSource) : null;
 

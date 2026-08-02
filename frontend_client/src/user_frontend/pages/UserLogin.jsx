@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import api from '../../api/api';  // ✅ Import api thay vì axios
 
 import { useAuth } from '../../context/AuthContext';
 import ForgotPassword from '../components/ForgotPassword';
-import LoadingButton from '../components/LoadingButton'; // ✅ Import LoadingButton
+import LoadingButton from '../components/LoadingButton';
 
 import '../styles/UserAuth.css';
-
-// API URL từ env
-const API_URL = process.env.REACT_APP_API_URL || 'https://api.quangdungcinema.id.vn';
 
 const UserLogin = () => {
     const [formData, setFormData] = useState({
@@ -36,7 +33,6 @@ const UserLogin = () => {
     const validate = () => {
         let tempErrors = {};
 
-        // Email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!formData.email.trim()) {
             tempErrors.email = 'Vui lòng nhập email';
@@ -44,7 +40,6 @@ const UserLogin = () => {
             tempErrors.email = 'Email không hợp lệ';
         }
 
-        // Password
         if (!formData.password.trim()) {
             tempErrors.password = 'Vui lòng nhập mật khẩu';
         } else if (formData.password.length < 6) {
@@ -87,19 +82,11 @@ const UserLogin = () => {
         setServerError('');
 
         try {
-            const response = await axios.post(
-                `${API_URL}/api/auth/login`,
-                {
-                    email: formData.email,
-                    password: formData.password
-                },
-                {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
+            // ✅ Gọi API login qua api instance
+            const response = await api.post('/api/auth/login', {
+                email: formData.email,
+                password: formData.password
+            });
 
             // Check if email is verified
             if (response.data?.user && !response.data.user.email_verified) {
@@ -138,8 +125,6 @@ const UserLogin = () => {
 
     return (
         <>
-            {/* ✅ ĐÃ BỎ LoadingSpinner OVERLAY - CHỈ DÙNG LoadingButton */}
-
             <div className="auth-container">
                 <div className="auth-card">
                     <h2>ĐĂNG NHẬP</h2>
@@ -224,7 +209,7 @@ const UserLogin = () => {
                             </button>
                         </div>
 
-                        {/* ✅ SUBMIT - DÙNG LOADINGBUTTON */}
+                        {/* SUBMIT - DÙNG LOADINGBUTTON */}
                         <LoadingButton
                             type="submit"
                             loading={loading}

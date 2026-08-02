@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ThumbsUp, Eye } from 'lucide-react'; 
-// import MovieSidebar from '../components/MovieSidebar'; 
 import '../styles/CinemaGenre.css';
 
 const CinemaGenre = () => {
     const navigate = useNavigate();
     const { genreSlug } = useParams();
     
-    const [movies, setMovies] = useState([]);      // Phim đã lọc theo thể loại
-    const [allMovies, setAllMovies] = useState([]); // Tất cả phim để truyền vào Sidebar
+    const [movies, setMovies] = useState([]);
+    const [allMovies, setAllMovies] = useState([]);
     const [genres, setGenres] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -21,8 +20,8 @@ const CinemaGenre = () => {
             try {
                 setLoading(true);
                 const [resMovies, resGenres] = await Promise.all([
-                    axios.get('https://api.quangdungcinema.id.vn/api/movies'),
-                    axios.get('https://api.quangdungcinema.id.vn/api/genres')
+                    api.get('/api/movies'),
+                    api.get('/api/genres')
                 ]);
 
                 setAllMovies(resMovies.data);
@@ -52,7 +51,7 @@ const CinemaGenre = () => {
     const handleMovieClick = async (e, movie) => {
         e.preventDefault(); 
         try {
-            await axios.patch(`https://api.quangdungcinema.id.vn/api/movies/view/${movie.movie_id}`);
+            await api.patch(`/api/movies/view/${movie.movie_id}`);
             navigate(`/movies/detail/${movie.slug}`);
         } catch (error) {
             console.error("Lỗi tăng lượt xem:", error);
@@ -62,7 +61,7 @@ const CinemaGenre = () => {
 
     const handleLikeMovie = async (movieId) => {
         try {
-            await axios.patch(`https://api.quangdungcinema.id.vn/api/movies/like/${movieId}`);
+            await api.patch(`/api/movies/like/${movieId}`);
             setMovies(prevMovies => 
                 prevMovies.map(movie => 
                     movie.movie_id === movieId 
@@ -164,7 +163,7 @@ const CinemaGenre = () => {
                     {/* <MovieSidebar 
                         IMAGE_BASE_URL={IMAGE_BASE_URL}
                         title="Phim Đang Chiếu"
-                        relatedMovies={allMovies.slice(0, 6)} // Truyền data vào đây để Sidebar có cái mà hiện
+                        relatedMovies={allMovies.slice(0, 6)}
                     /> */}
                 </div>
 

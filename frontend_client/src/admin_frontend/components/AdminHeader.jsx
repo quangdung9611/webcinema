@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/api';  // ✅ Import api thay vì axios
 
 import {
     Menu,
@@ -13,9 +13,6 @@ import {
 import { useAuth } from '../../context/AuthContext';
 
 import '../styles/AdminHeader.css';
-
-// API URL từ env
-const API_URL = process.env.REACT_APP_API_URL || 'https://api.quangdungcinema.id.vn';
 
 const AdminHeader = ({ toggleSidebar }) => {
 
@@ -40,14 +37,8 @@ const AdminHeader = ({ toggleSidebar }) => {
 
     const handleLogout = async () => {
         try {
-            // ✅ Dùng endpoint chung /api/auth/logout
-            await axios.post(
-                `${API_URL}/api/auth/logout`,
-                {},
-                {
-                    withCredentials: true
-                }
-            );
+            // ✅ Dùng api thay vì axios
+            await api.post('/api/auth/logout');
         } catch (error) {
             console.error('Lỗi đăng xuất Admin:', error);
         } finally {

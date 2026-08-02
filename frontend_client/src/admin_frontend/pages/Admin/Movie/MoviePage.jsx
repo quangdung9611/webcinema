@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api thay vì axios
 import {
     Film,
     Edit,
@@ -17,7 +17,7 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
-const API_URL = 'https://api.quangdungcinema.id.vn/api/movies';
+// ❌ Xóa API_URL
 
 // Helper lấy URL poster (Cloudinary hoặc local)
 const getPosterUrl = (poster) => {
@@ -83,7 +83,7 @@ const MoviePage = () => {
     const fetchMovies = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL);
+            const res = await api.get('/api/movies');  // ✅ Dùng api
             setMovies(res.data);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách phim.', 'error');
@@ -196,15 +196,16 @@ const MoviePage = () => {
                 submitData.append('movie_backdrop', movieBackdropFile);
             }
 
+            // ✅ Dùng api với multipart/form-data
+            const config = {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            };
+
             if (editingMovie) {
-                await axios.put(`${API_URL}/${editingMovie.movie_id}`, submitData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await api.put(`/api/movies/${editingMovie.movie_id}`, submitData, config);
                 showAlert('Thành công', 'Cập nhật phim thành công.', 'success');
             } else {
-                await axios.post(API_URL, submitData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await api.post('/api/movies', submitData, config);
                 showAlert('Thành công', 'Thêm phim thành công.', 'success');
             }
             setIsFormOpen(false);
@@ -223,7 +224,7 @@ const MoviePage = () => {
             'warning',
             async () => {
                 try {
-                    await axios.delete(`${API_URL}/${movie.movie_id}`);
+                    await api.delete(`/api/movies/${movie.movie_id}`);  // ✅ Dùng api
                     closeAlert();
                     fetchMovies();
                     showAlert('Thành công', 'Xóa phim thành công.', 'success');
@@ -395,7 +396,7 @@ const MoviePage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingMovie ? 'Lưu thay đổi' : 'Thêm phim'}
-                    filePreviews={filePreviews}   // 🔥 dùng chung filePreviews
+                    filePreviews={filePreviews}
                 />
             </AdminModal>
 

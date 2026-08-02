@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api thay vì axios
 import {
     Gift,
     Edit,
@@ -19,7 +19,7 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
-const API_URL = 'https://api.quangdungcinema.id.vn/api/promotions';
+// ❌ Xóa API_URL
 
 const getImageUrl = (image) => {
     if (!image) return '';
@@ -50,7 +50,7 @@ const PromotionPage = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
     const [promotionImageFile, setPromotionImageFile] = useState(null);
-    const [filePreviews, setFilePreviews] = useState({}); // { promotion_image: { url, name } }
+    const [filePreviews, setFilePreviews] = useState({});
 
     // Alert
     const [alertModal, setAlertModal] = useState({
@@ -74,7 +74,7 @@ const PromotionPage = () => {
     const fetchPromotions = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(API_URL);
+            const res = await api.get('/api/promotions');  // ✅ Dùng api
             setPromotions(res.data);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách khuyến mãi.', 'error');
@@ -215,19 +215,18 @@ const PromotionPage = () => {
                 submitData.append('promotion_image', promotionImageFile);
             }
 
-            const token = sessionStorage.getItem('usertoken');
+            // ✅ Dùng api với multipart/form-data
             const config = {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
-                    ...(token && { Authorization: `Bearer ${token}` })
+                    'Content-Type': 'multipart/form-data'
                 }
             };
 
             if (editingPromotion) {
-                await axios.put(`${API_URL}/${editingPromotion.promotion_id}`, submitData, config);
+                await api.put(`/api/promotions/${editingPromotion.promotion_id}`, submitData, config);
                 showAlert('Thành công', 'Cập nhật khuyến mãi thành công.', 'success');
             } else {
-                await axios.post(API_URL, submitData, config);
+                await api.post('/api/promotions', submitData, config);
                 showAlert('Thành công', 'Tạo khuyến mãi mới thành công.', 'success');
             }
 
@@ -248,10 +247,7 @@ const PromotionPage = () => {
             'warning',
             async () => {
                 try {
-                    const token = sessionStorage.getItem('usertoken');
-                    await axios.delete(`${API_URL}/${item.promotion_id}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                    await api.delete(`/api/promotions/${item.promotion_id}`);  // ✅ Dùng api
                     closeAlert();
                     fetchPromotions();
                     showAlert('Thành công', 'Xóa khuyến mãi thành công.', 'success');
@@ -398,7 +394,7 @@ const PromotionPage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingPromotion ? 'Lưu thay đổi' : 'Tạo khuyến mãi'}
-                    filePreviews={filePreviews}   // 👈 Truyền vào đây
+                    filePreviews={filePreviews}
                 />
             </AdminModal>
 

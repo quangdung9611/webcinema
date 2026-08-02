@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import Modal from '../components/Modal';
@@ -49,7 +49,7 @@ const Profile = () => {
     const fetchHistory = async () => {
         setLoadingHistory(true);
         try {
-            const res = await axios.get('https://api.quangdungcinema.id.vn/api/users/booking-history', { withCredentials: true });
+            const res = await api.get('/api/users/booking-history');
             setBookingHistory(res.data.bookings || []);
         } catch (error) {
             console.error("Lỗi fetch lịch sử:", error);
@@ -142,7 +142,7 @@ const Profile = () => {
                 updateData.confirmPassword = confirmPassword;
             }
 
-            await axios.put('https://api.quangdungcinema.id.vn/api/users/profile', updateData, { withCredentials: true });
+            await api.put('/api/users/profile', updateData);
 
             setFormData(prev => ({
                 ...prev,
@@ -180,7 +180,7 @@ const Profile = () => {
     const handleClearHistory = async () => {
         setLoadingClear(true);
         try {
-            const res = await axios.delete('https://api.quangdungcinema.id.vn/api/users/booking-history', { withCredentials: true });
+            const res = await api.delete('/api/users/booking-history');
 
             if (res.data.success) {
                 setBookingHistory([]);
@@ -265,14 +265,9 @@ const Profile = () => {
         formDataUpload.append('user_avatar', file);
 
         try {
-            const res = await axios.post(
-                'https://api.quangdungcinema.id.vn/api/users/avatar',
-                formDataUpload,
-                {
-                    withCredentials: true,
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                }
-            );
+            const res = await api.post('/api/users/avatar', formDataUpload, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
 
             if (res.data.success) {
                 setFormData(prev => ({ ...prev, user_avatar: res.data.data.avatar }));

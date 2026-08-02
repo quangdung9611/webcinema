@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../../../api/api';  // ✅ Import api thay vì axios
 import {
     Ticket,
     Edit,
@@ -22,10 +22,7 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 
-/* =====================================================
-    API
-===================================================== */
-const API_URL = 'https://api.quangdungcinema.id.vn/api/coupons';
+// ❌ Xóa API_URL
 
 /* =====================================================
     INITIAL FORM
@@ -75,8 +72,7 @@ const CouponPage = () => {
     const fetchCoupons = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(API_URL);
-            // response trả về { success: true, data: [...] }
+            const res = await api.get('/api/coupons');  // ✅ Dùng api
             setCoupons(res.data?.data || res.data || []);
         } catch (error) {
             showAlert('Lỗi', 'Không thể tải danh sách mã giảm giá.', 'error');
@@ -148,13 +144,9 @@ const CouponPage = () => {
     ===================================================== */
     const handleChange = (e) => {
         const { name, value } = e.target;
-
-        // Tự động viết hoa mã coupon
         const finalValue = name === 'coupon_code' ? value.toUpperCase() : value;
 
         setFormData(prev => ({ ...prev, [name]: finalValue }));
-
-        // Xóa lỗi field đang sửa
         setFormErrors(prev => ({ ...prev, [name]: '' }));
     };
 
@@ -174,7 +166,6 @@ const CouponPage = () => {
             setSubmitLoading(true);
             setFormErrors({});
 
-            // Dữ liệu gửi lên (không cần FormData vì không có file)
             const payload = {
                 coupon_code: formData.coupon_code.trim(),
                 discount_value: Number(formData.discount_value),
@@ -182,12 +173,10 @@ const CouponPage = () => {
             };
 
             if (editingCoupon) {
-                // PUT /:coupon_id (RESTful)
-                await axios.put(`${API_URL}/${editingCoupon.coupon_id}`, payload);
+                await api.put(`/api/coupons/${editingCoupon.coupon_id}`, payload);  // ✅ Dùng api
                 showAlert('Thành công', 'Cập nhật mã giảm giá thành công.', 'success');
             } else {
-                // POST /
-                await axios.post(API_URL, payload);
+                await api.post('/api/coupons', payload);  // ✅ Dùng api
                 showAlert('Thành công', 'Thêm mã giảm giá thành công.', 'success');
             }
 
@@ -218,7 +207,7 @@ const CouponPage = () => {
             'warning',
             async () => {
                 try {
-                    await axios.delete(`${API_URL}/${coupon.coupon_id}`);
+                    await api.delete(`/api/coupons/${coupon.coupon_id}`);  // ✅ Dùng api
                     closeAlert();
                     fetchCoupons();
                     showAlert('Thành công', 'Xóa mã giảm giá thành công.', 'success');

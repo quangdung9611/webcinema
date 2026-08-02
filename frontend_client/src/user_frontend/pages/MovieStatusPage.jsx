@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from '../../api/api'; // ✅ Import api
 import { Film } from "lucide-react";
 
 import MovieCard from "../components/MovieCard";
@@ -8,7 +8,7 @@ import MoviePreviewModal from "../components/MoviePreviewModal";
 
 import "../styles/MovieStatusPage.css";
 
-const API_URL = "https://api.quangdungcinema.id.vn/api";
+// ❌ Xóa API_URL
 
 const statusMap = {
     "phim-dang-chieu": "Đang chiếu",
@@ -37,7 +37,7 @@ const MovieStatusPage = () => {
                 setLoading(true);
                 setError(null);
 
-                const res = await axios.get(`${API_URL}/movies`);
+                const res = await api.get('/api/movies');
                 setMovies(res.data || []);
             } catch (err) {
                 console.error("Lỗi lấy danh sách phim:", err);

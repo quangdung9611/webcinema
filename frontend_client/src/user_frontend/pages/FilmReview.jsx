@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 import { Link } from 'react-router-dom';
 import { Heart, Eye } from 'lucide-react';
 
@@ -23,7 +23,7 @@ const FilmReview = () => {
         const fetchBanners = async () => {
             try {
                 setBannerLoading(true);
-                const res = await axios.get('https://api.quangdungcinema.id.vn/api/banners?page=FILM_REVIEW');
+                const res = await api.get('/api/banners?page=FILM_REVIEW');
                 const bannerData = res.data?.data || [];
                 setBanners(Array.isArray(bannerData) ? bannerData : []);
             } catch (error) {
@@ -41,7 +41,7 @@ const FilmReview = () => {
         const fetchReviewData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('https://api.quangdungcinema.id.vn/api/news/all');
+                const response = await api.get('/api/news/all');
                 const sortedNews = (response.data || []).sort(
                     (a, b) => new Date(b.created_at) - new Date(a.created_at)
                 );
@@ -60,7 +60,7 @@ const FilmReview = () => {
     const handleLike = async (e, newsId) => {
         e.preventDefault();
         try {
-            await axios.post(`https://api.quangdungcinema.id.vn/api/news/like/${newsId}`);
+            await api.post(`/api/news/like/${newsId}`);
             setNews((prevNews) =>
                 prevNews.map((item) =>
                     item.news_id === newsId

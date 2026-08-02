@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../../api/api';  // ✅ Import api thay vì axios
 
 import {
     ShieldCheck,
@@ -16,12 +16,10 @@ import {
 } from 'lucide-react';
 
 import Modal from '../../components/AdminModal';
+import LoadingButton from '../../../user_frontend/components/LoadingButton'; // ✅ Import LoadingButton
 import { useAuth } from '../../../context/AuthContext';
 
 import '../../styles/AdminAuth.css';
-
-// API URL từ env
-const API_URL = process.env.REACT_APP_API_URL || 'https://api.quangdungcinema.id.vn';
 
 const AdminLogin = () => {
 
@@ -34,6 +32,7 @@ const AdminLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
+    const [serverError, setServerError] = useState(''); // ✅ Thêm serverError
 
     const { checkAuth, admin, loading: authLoading } = useAuth();
 
@@ -88,22 +87,14 @@ const AdminLogin = () => {
         if (!validate()) return;
 
         setLoading(true);
+        setServerError('');
 
         try {
-            // ✅ Gọi API login ADMIN (khác với user)
-            const response = await axios.post(
-                `${API_URL}/admin/api/auth/login`, // 👈 ĐÚNG ENDPOINT
-                {
-                    email: email,
-                    password: password
-                },
-                {
-                    withCredentials: true, // 👈 Gửi cookie (admin_token sẽ được set)
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
+            // ✅ Gọi API login ADMIN qua api instance
+            const response = await api.post('/admin/api/auth/login', {
+                email: email,
+                password: password
+            });
 
             // ✅ Kiểm tra role admin (dự phòng, backend đã check)
             if (response.data?.user?.role !== 'admin') {
@@ -124,16 +115,8 @@ const AdminLogin = () => {
             await checkAuth();
             window.dispatchEvent(new Event('authChange'));
 
-            setModalConfig({
-                show: true,
-                type: 'success',
-                title: 'XÁC THỰC THÀNH CÔNG',
-                message: 'Chào mừng quản trị viên hệ thống.',
-                onConfirm: () => {
-                    setModalConfig(prev => ({ ...prev, show: false }));
-                    navigate('/admin/dashboard', { replace: true }); // 👈 Redirect đến admin dashboard
-                }
-            });
+            // ✅ Chuyển trang mượt mà sau khi đăng nhập thành công
+            navigate('/dashboard', { replace: true });
 
         } catch (err) {
             console.error('Admin Login Error:', err);
@@ -148,15 +131,7 @@ const AdminLogin = () => {
             } else if (err.response?.data?.field === 'password') {
                 setErrors({ password: errorMessage });
             } else {
-                setModalConfig({
-                    show: true,
-                    type: 'error',
-                    title: 'TRUY CẬP BỊ TỪ CHỐI',
-                    message: errorMessage,
-                    onConfirm: () => {
-                        setModalConfig(prev => ({ ...prev, show: false }));
-                    }
-                });
+                setServerError(errorMessage);
             }
         } finally {
             setLoading(false);
@@ -257,6 +232,7 @@ const AdminLogin = () => {
                                         if (errors.email) {
                                             setErrors({ ...errors, email: '' });
                                         }
+                                        if (serverError) setServerError('');
                                     }}
                                     autoComplete="email"
                                     disabled={loading}
@@ -281,6 +257,7 @@ const AdminLogin = () => {
                                         if (errors.password) {
                                             setErrors({ ...errors, password: '' });
                                         }
+                                        if (serverError) setServerError('');
                                     }}
                                     autoComplete="current-password"
                                     disabled={loading}
@@ -299,21 +276,24 @@ const AdminLogin = () => {
                             )}
                         </div>
 
-                        {/* BUTTON */}
-                        <button
+                        {/* SERVER ERROR */}
+                        {serverError && (
+                            <div className="admin-server-error">
+                                {serverError}
+                            </div>
+                        )}
+
+                        {/* ✅ BUTTON - DÙNG LOADINGBUTTON */}
+                        <LoadingButton
                             type="submit"
-                            className="btn-admin-login"
+                            loading={loading}
+                            loadingText="ĐANG XÁC THỰC..."
                             disabled={loading}
+                            className="btn-admin-login"
+                            spinnerColor="#000000"
                         >
-                            {loading ? (
-                                'ĐANG XÁC THỰC...'
-                            ) : (
-                                <>
-                                    ĐĂNG NHẬP HỆ THỐNG
-                                    <ArrowRight size={18} />
-                                </>
-                            )}
-                        </button>
+                            ĐĂNG NHẬP HỆ THỐNG
+                        </LoadingButton>
                     </form>
 
                     <div className="admin-login-footer">
@@ -323,7 +303,7 @@ const AdminLogin = () => {
 
             </div>
 
-            {/* MODAL */}
+            {/* MODAL - Chỉ hiển thị khi có lỗi role */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}

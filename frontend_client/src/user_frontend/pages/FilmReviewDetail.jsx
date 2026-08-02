@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 import { ThumbsUp, Eye, Calendar, ChevronLeft, User } from 'lucide-react';
-// import MovieSidebar from '../components/MovieSidebar'; 
 import '../styles/FilmReviewDetail.css';
 
 const FilmReviewDetail = () => {
@@ -15,7 +14,7 @@ const FilmReviewDetail = () => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get(`https://api.quangdungcinema.id.vn/api/news/${slug}`);
+                const res = await api.get(`/api/news/${slug}`);
                 setItem(res.data);
                 setLoading(false);
             } catch (error) {
@@ -30,7 +29,7 @@ const FilmReviewDetail = () => {
     const handleLikeDetail = async () => {
         if (!item) return;
         try {
-            await axios.post(`https://api.quangdungcinema.id.vn/api/news/like/${item.news_id}`);
+            await api.post(`/api/news/like/${item.news_id}`);
             setItem(prev => ({ ...prev, likes: (prev.likes || 0) + 1 }));
         } catch (error) {
             console.error("Lỗi khi thích bài viết:", error);

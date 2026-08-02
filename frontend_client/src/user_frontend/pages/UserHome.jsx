@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/api';
 
 import Modal from '../components/Modal';
 import FilmGenre from '../components/FilmGenre';
@@ -25,18 +25,17 @@ import 'swiper/css/pagination';
 
 import '../styles/user_home.css';
 
+// Helper lấy URL ảnh
 const getImageUrl = (url, baseUrl = '') => {
   if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
   return baseUrl + url;
 };
 
 const UserHome = () => {
   const navigate = useNavigate();
 
-  // ===== STATE BANNER TỪ API =====
+  // State cho banner
   const [banners, setBanners] = useState([]);
   const [bannerLoading, setBannerLoading] = useState(true);
 
@@ -45,10 +44,9 @@ const UserHome = () => {
   const [progress, setProgress] = useState(0);
   const spotlightRef = useRef(null);
   const bannerRef = useRef(null);
-
-  // State để reset sparkle khi đổi slide
   const [sparkleKey, setSparkleKey] = useState(0);
 
+  // State cho phim, khuyến mãi, tin tức
   const [groupedMovies, setGroupedMovies] = useState({
     "Đang chiếu": [],
     "Sắp chiếu": []
@@ -57,6 +55,7 @@ const UserHome = () => {
   const [promotions, setPromotions] = useState([]);
   const [cinemaNews, setCinemaNews] = useState([]);
 
+  // Quick booking
   const [quickData, setQuickData] = useState({
     movies: [],
     cinemas: []
@@ -70,6 +69,7 @@ const UserHome = () => {
   const [availableDates, setAvailableDates] = useState([]);
   const [availableShowtimes, setAvailableShowtimes] = useState([]);
 
+  // Modal
   const [modal, setModal] = useState({
     show: false,
     type: 'error',
@@ -86,12 +86,12 @@ const UserHome = () => {
     });
   };
 
-  // ===== FETCH BANNER TỪ API =====
+  // ===== FETCH BANNER =====
   useEffect(() => {
     const fetchBanners = async () => {
       try {
         setBannerLoading(true);
-        const res = await axios.get('https://api.quangdungcinema.id.vn/api/banners?page=HOME');
+        const res = await api.get('/api/banners?page=HOME');
         const bannerData = res.data?.data || [];
         setBanners(Array.isArray(bannerData) ? bannerData : []);
       } catch (error) {
@@ -104,7 +104,7 @@ const UserHome = () => {
     fetchBanners();
   }, []);
 
-  // ===== Fetch dữ liệu =====
+  // ===== FETCH DỮ LIỆU CHÍNH =====
   useEffect(() => {
     const fetchInitialData = async () => {
       setLoading(true);
@@ -115,10 +115,10 @@ const UserHome = () => {
           promotionRes,
           blogRes
         ] = await Promise.all([
-          axios.get('https://api.quangdungcinema.id.vn/api/movies/status-group'),
-          axios.get('https://api.quangdungcinema.id.vn/api/showtimes/quick-booking'),
-          axios.get('https://api.quangdungcinema.id.vn/api/promotions'),
-          axios.get('https://api.quangdungcinema.id.vn/api/blog-cinema')
+          api.get('/api/movies/status-group'),
+          api.get('/api/showtimes/quick-booking'),
+          api.get('/api/promotions'),
+          api.get('/api/blog-cinema')
         ]);
 
         setGroupedMovies(statusRes.data);
@@ -144,7 +144,7 @@ const UserHome = () => {
     fetchInitialData();
   }, []);
 
-  // ===== Quick Booking logic =====
+  // ===== QUICK BOOKING EFFECTS =====
   useEffect(() => {
     if (!selectedQuick.movie) {
       setQuickData(prev => ({ ...prev, cinemas: [] }));
@@ -155,10 +155,9 @@ const UserHome = () => {
 
     const fetchCinemas = async () => {
       try {
-        const res = await axios.get(
-          "https://api.quangdungcinema.id.vn/api/showtimes/quick-booking",
-          { params: { movie_id: selectedQuick.movie } }
-        );
+        const res = await api.get('/api/showtimes/quick-booking', {
+          params: { movie_id: selectedQuick.movie }
+        });
         setQuickData(prev => ({ ...prev, cinemas: res.data }));
       } catch (error) {
         console.error("Lỗi load rạp:", error);
@@ -183,10 +182,9 @@ const UserHome = () => {
 
     const fetchDates = async () => {
       try {
-        const res = await axios.get(
-          "https://api.quangdungcinema.id.vn/api/showtimes/quick-booking",
-          { params: { movie_id: selectedQuick.movie, cinema_id: selectedQuick.cinema } }
-        );
+        const res = await api.get('/api/showtimes/quick-booking', {
+          params: { movie_id: selectedQuick.movie, cinema_id: selectedQuick.cinema }
+        });
         setAvailableDates(res.data.map(d => d.show_date));
       } catch (error) {
         console.error("Lỗi load ngày:", error);
@@ -210,10 +208,9 @@ const UserHome = () => {
 
     const fetchShowtimes = async () => {
       try {
-        const res = await axios.get(
-          "https://api.quangdungcinema.id.vn/api/showtimes/quick-booking",
-          { params: { movie_id: selectedQuick.movie, cinema_id: selectedQuick.cinema, date: selectedQuick.date } }
-        );
+        const res = await api.get('/api/showtimes/quick-booking', {
+          params: { movie_id: selectedQuick.movie, cinema_id: selectedQuick.cinema, date: selectedQuick.date }
+        });
         setAvailableShowtimes(res.data);
       } catch (error) {
         console.error("Lỗi load suất:", error);
@@ -248,7 +245,7 @@ const UserHome = () => {
     }
 
     try {
-      const res = await axios.get(`https://api.quangdungcinema.id.vn/api/showtimes/detail/${selectedQuick.showtime}`);
+      const res = await api.get(`/api/showtimes/detail/${selectedQuick.showtime}`);
       const showtimeData = res.data;
 
       navigate(`/booking/${showtimeData.slug}`, {
@@ -275,7 +272,7 @@ const UserHome = () => {
     }
   };
 
-  // ===== Spotlight =====
+  // ===== SPOTLIGHT EFFECT =====
   useEffect(() => {
     const banner = bannerRef.current;
     const spotlight = spotlightRef.current;
@@ -302,7 +299,7 @@ const UserHome = () => {
     };
   }, []);
 
-  // ===== Progress bar =====
+  // ===== PROGRESS BAR =====
   useEffect(() => {
     if (!swiperInstance) return;
     const onAutoplayTimeLeft = (s, timeLeft, progress) => {
@@ -318,7 +315,7 @@ const UserHome = () => {
     setProgress(0);
   }, [activeIndex]);
 
-  // ===== Reset sparkle khi đổi slide =====
+  // ===== RESET SPARKLE =====
   useEffect(() => {
     if (!swiperInstance) return;
     const onSlideChange = () => {
@@ -328,8 +325,6 @@ const UserHome = () => {
     return () => swiperInstance.off('slideChange', onSlideChange);
   }, [swiperInstance]);
 
-  // ===== RENDER =====
-  // Nếu đang loading banner hoặc không có banner, hiển thị fallback
   const hasBanners = banners.length > 0;
 
   return (
@@ -344,17 +339,16 @@ const UserHome = () => {
       />
 
       <div className="user-home">
-        {/* ===== BANNER PREMIUM ===== */}
+        {/* ===== BANNER – GIỮ CURTAIN ===== */}
         <ScrollReveal
           direction="fade"
           duration={0.8}
           delay={0.1}
           amount={0.1}
           curtain={true}
-          curtainColor="gold"
           curtainTexture="velvet"
-          curtainSpeed={1.2}
-          curtainFolds={7}
+          curtainSpeed={1.0}
+          curtainFolds={5}
           once={true}
         >
           <div className="carousel-full-wrapper banner-premium">
@@ -382,23 +376,17 @@ const UserHome = () => {
                           className="banner-img"
                           alt={`Banner ${index + 1}`}
                         />
-
-                        {/* ===== SPARKLE – HẠT LẤP LÁNH ===== */}
                         <div className="sparkle-container" key={sparkleKey}>
                           {Array.from({ length: 30 }).map((_, i) => (
                             <span className="sparkle" key={i}></span>
                           ))}
                         </div>
-
-                        {/* ===== LIGHT SWEEP (chỉ xuất hiện khi hover) ===== */}
                         <div className="light-sweep-hover">
                           <div className="sweep-beam"></div>
                         </div>
-
                         <div className="banner-particles"></div>
                         <div ref={spotlightRef} className="banner-spotlight" />
                       </div>
-
                       <div className="banner-slide-number">
                         <span className="current">{String(index + 1).padStart(2, '0')}</span>
                         <span className="separator">/</span>
@@ -407,7 +395,6 @@ const UserHome = () => {
                     </SwiperSlide>
                   ))
                 ) : (
-                  // Fallback nếu không có banner
                   <SwiperSlide className="banner-slide">
                     <div className="banner-media">
                       <div className="banner-fallback" style={{
@@ -444,17 +431,13 @@ const UserHome = () => {
           </div>
         </ScrollReveal>
 
-        {/* ===== QUICK BOOKING ===== */}
+        {/* ===== QUICK BOOKING – BỎ CURTAIN ===== */}
         <ScrollReveal
           direction="up"
           duration={0.5}
           delay={0.2}
           amount={0.15}
-          curtain={true}
-          curtainColor="silver"
-          curtainTexture="silk"
-          curtainSpeed={0.6}
-          curtainFolds={5}
+          curtain={false}
         >
           <section className="quick-booking-container">
             <div className="quick-booking-content">
@@ -537,7 +520,7 @@ const UserHome = () => {
           </section>
         </ScrollReveal>
 
-        {/* ===== CONTENT ===== */}
+        {/* ===== CÁC PHẦN CÒN LẠI (BỎ CURTAIN) ===== */}
         <div className="home-container">
           <section className="home-features-section">
             <div className="features-grid">
@@ -567,32 +550,26 @@ const UserHome = () => {
             </div>
           </section>
 
+          {/* FilmGenre – bỏ curtain */}
           <ScrollReveal
             direction="up"
             duration={0.6}
             delay={0.6}
             amount={0.15}
-            curtain={true}
-            curtainColor="gold"
-            curtainTexture="velvet"
-            curtainSpeed={0.6}
-            curtainFolds={5}
+            curtain={false}
           >
             <div className="movie-container">
               <FilmGenre />
             </div>
           </ScrollReveal>
 
+          {/* Promotions – bỏ curtain */}
           <ScrollReveal
             direction="up"
             duration={0.6}
             delay={0.8}
             amount={0.15}
-            curtain={true}
-            curtainColor="silver"
-            curtainTexture="silk"
-            curtainSpeed={0.6}
-            curtainFolds={5}
+            curtain={false}
           >
             <section className="promotions-section">
               <div className="section-header">
@@ -631,16 +608,13 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
+          {/* Cinema corner – bỏ curtain */}
           <ScrollReveal
             direction="up"
             duration={0.6}
             delay={1.2}
             amount={0.15}
-            curtain={true}
-            curtainColor="gold"
-            curtainTexture="velvet"
-            curtainSpeed={0.6}
-            curtainFolds={5}
+            curtain={false}
           >
             <section className="cinema-corner-section">
               <div className="section-header">

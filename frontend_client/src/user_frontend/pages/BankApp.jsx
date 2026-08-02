@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate, useBlocker } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/api'; // ✅ Import api
 
 import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
@@ -124,7 +124,7 @@ const BankApp = () => {
         if (isCancellingRef.current) return;
         isCancellingRef.current = true;
         try {
-            await axios.post('https://api.quangdungcinema.id.vn/api/bank/cancel-timeout', {
+            await api.post('/api/bank/cancel-timeout', {
                 bookingId,
                 email: customerEmail
             });
@@ -259,7 +259,7 @@ const BankApp = () => {
     const sendOtpApi = async () => {
         setLoadingSendOtp(true);
         try {
-            await axios.post('https://api.quangdungcinema.id.vn/api/bank/send-otp', {
+            await api.post('/api/bank/send-otp', {
                 email: customerEmail,
                 bookingId
             });
@@ -374,7 +374,7 @@ const BankApp = () => {
 
         setLoadingVerify(true);
         try {
-            const res = await axios.post('https://api.quangdungcinema.id.vn/api/bank/verify-otp', {
+            const res = await api.post('/api/bank/verify-otp', {
                 email: customerEmail,
                 otp,
                 bookingId
