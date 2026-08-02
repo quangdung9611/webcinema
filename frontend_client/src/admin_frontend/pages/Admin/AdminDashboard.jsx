@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import api from '../../../api/api';
-
 import {
     Activity,
     AlertCircle,
@@ -21,6 +20,19 @@ import {
     UserRound,
     Users,
 } from 'lucide-react';
+import {
+    LineChart,
+    Line,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+    CartesianGrid,
+    Legend,
+    Cell,
+} from 'recharts';
 
 import '../../styles/AdminDashboard.css';
 
@@ -30,6 +42,8 @@ import '../../styles/AdminDashboard.css';
 
 const API = {
     stats: '/admin/api/dashboard/stats',
+    periodComparison: '/admin/api/dashboard/period-comparison',
+    revenueTrend: '/admin/api/dashboard/revenue-trend',
     transactions: '/admin/api/dashboard/transactions',
     topMovies: '/admin/api/dashboard/top-movies',
     bookingStatus: '/admin/api/dashboard/booking-status',
@@ -60,8 +74,12 @@ const PERIODS = [
     { value: 'custom', label: 'Tùy chỉnh' },
 ];
 
+const CHART_COLORS = ['#d6b36a', '#6c9eff', '#a886ff', '#5ed6a0', '#ef6a72'];
+
 const EMPTY_STATE = {
     stats: null,
+    periodComparison: [],
+    revenueTrend: [],
     transactions: [],
     transactionPagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
     transactionPeriod: null,
@@ -108,6 +126,16 @@ const formatDate = (date) => {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
+    });
+};
+
+const formatDateShort = (date) => {
+    if (!date) return '--';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '--';
+    return d.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
     });
 };
 
@@ -211,6 +239,8 @@ function AdminDashboard() {
     const content = data.content || {};
     const seatData = data.seats || {};
     const transactionPagination = data.transactionPagination || EMPTY_STATE.transactionPagination;
+    const periodComparisonData = data.periodComparison || [];
+    const revenueTrendData = data.revenueTrend || [];
 
     const maxCinemaRevenue = Math.max(
         ...data.cinemas.map((item) => Number(item.revenue) || 0),
@@ -242,6 +272,8 @@ function AdminDashboard() {
 
             const requests = [
                 ['stats', API.stats],
+                ['periodComparison', API.periodComparison],
+                ['revenueTrend', API.revenueTrend],
                 ['transactions', API.transactions],
                 ['topMovies', API.topMovies],
                 ['bookingStatus', API.bookingStatus],
@@ -297,6 +329,12 @@ function AdminDashboard() {
                 switch (key) {
                     case 'stats':
                         nextData.stats = response;
+                        break;
+                    case 'periodComparison':
+                        nextData.periodComparison = response.data || [];
+                        break;
+                    case 'revenueTrend':
+                        nextData.revenueTrend = response.data || [];
                         break;
                     case 'transactions':
                         nextData.transactions = Array.isArray(response.data) ? response.data : [];
@@ -535,6 +573,88 @@ function AdminDashboard() {
                     comparisonLabel="tổng khách hàng"
                     loading={loading}
                 />
+            </section>
+
+            {/* CHARTS SECTION */}
+            <section className="dashboard-grid grid-charts">
+                {/* Period Comparison Bar Chart */}
+                <div className="dashboard-card chart-card">
+                    <CardHeader icon={<BarChart3 />} title="So sánh doanh thu theo kỳ" subtitle="Doanh thu các mốc thời gian" />
+                    <div className="chart-container">
+                        {periodComparisonData.length === 0 ? (
+                            <EmptyChart />
+                        ) : (
+                            <ResponsiveContainer width="100%" height={280}>
+                                <BarChart data={periodComparisonData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                                    <XAxis dataKey="label" tick={{ fill: '#9297a3', fontSize: 11 }} />
+                                    <YAxis tick={{ fill: '#9297a3', fontSize: 11 }} tickFormatter={(v) => money(v)} />
+                                    <Tooltip
+                                        contentStyle={{ background: '#16181d', border: '1px solid rgba(214,179,106,0.18)', borderRadius: 8 }}
+                                        formatter={(value) => [money(value), 'Doanh thu']}
+                                        labelStyle={{ color: '#f4f4f5' }}
+                                    />
+                                    <Bar dataKey="currentRevenue" name="Doanh thu hiện tại" fill="#d6b36a" radius={[4, 4, 0, 0]}>
+                                        {periodComparisonData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+                    <div className="chart-legend-compact">
+                        {periodComparisonData.map((item, index) => (
+                            <div className="legend-item" key={item.period}>
+                                <span className="legend-dot" style={{ background: CHART_COLORS[index % CHART_COLORS.length] }} />
+                                <span>{item.label}</span>
+                                <strong>{money(item.currentRevenue)}</strong>
+                                <span className={`change-badge ${item.change >= 0 ? 'positive' : 'negative'}`}>
+                                    {item.change >= 0 ? '↑' : '↓'} {Math.abs(item.change)}%
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Revenue Trend Line Chart */}
+                <div className="dashboard-card chart-card">
+                    <CardHeader icon={<TrendingUp />} title="Xu hướng doanh thu" subtitle="Doanh thu theo ngày trong kỳ" />
+                    <div className="chart-container">
+                        {revenueTrendData.length === 0 ? (
+                            <EmptyChart />
+                        ) : (
+                            <ResponsiveContainer width="100%" height={280}>
+                                <LineChart data={revenueTrendData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                                    <XAxis
+                                        dataKey="date"
+                                        tick={{ fill: '#9297a3', fontSize: 10 }}
+                                        tickFormatter={(v) => formatDateShort(v)}
+                                        interval={Math.max(0, Math.floor(revenueTrendData.length / 20))}
+                                    />
+                                    <YAxis tick={{ fill: '#9297a3', fontSize: 11 }} tickFormatter={(v) => money(v)} />
+                                    <Tooltip
+                                        contentStyle={{ background: '#16181d', border: '1px solid rgba(214,179,106,0.18)', borderRadius: 8 }}
+                                        formatter={(value) => [money(value), 'Doanh thu']}
+                                        labelFormatter={(label) => formatDate(label)}
+                                        labelStyle={{ color: '#f4f4f5' }}
+                                    />
+                                    <Legend wrapperStyle={{ color: '#9297a3' }} />
+                                    <Line type="monotone" dataKey="revenue" stroke="#d6b36a" strokeWidth={2.5} dot={{ r: 2.5, fill: '#d6b36a' }} name="Doanh thu" />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+                    <div className="chart-summary">
+                        {revenueTrendData.length > 0 && (
+                            <>
+                                <span>Ngày cao nhất: <strong>{formatDate(revenueTrendData.reduce((a, b) => a.revenue > b.revenue ? a : b).date)}</strong></span>
+                                <span>Doanh thu cao nhất: <strong>{money(revenueTrendData.reduce((a, b) => a.revenue > b.revenue ? a : b).revenue)}</strong></span>
+                            </>
+                        )}
+                    </div>
+                </div>
             </section>
 
             {/* TRANSACTIONS + SEAT */}
@@ -1149,6 +1269,15 @@ function TransactionTable({ transactions }) {
                     );
                 })}
             </div>
+        </div>
+    );
+}
+
+function EmptyChart() {
+    return (
+        <div className="empty-chart">
+            <BarChart3 size={30} />
+            <span>Chưa có dữ liệu trong kỳ này</span>
         </div>
     );
 }
