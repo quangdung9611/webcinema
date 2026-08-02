@@ -2,22 +2,19 @@ const express = require('express');
 const router = express.Router();
 const DashboardController = require('../Controllers/DashboardController');
 
-// ===== THỐNG KÊ TỔNG QUAN =====
+// 1. Thống kê tổng quan (có period optional)
 router.get('/stats', DashboardController.getStats);
 
-// ===== DOANH THU THEO NGÀY (LINE CHART) =====
-router.get('/daily-revenue', DashboardController.getDailyRevenue);
+// 2. Doanh thu theo ngày (line chart)
+router.get('/revenue-trend', DashboardController.getRevenueTrend);
 
-// ===== CHI TIẾT GIAO DỊCH (BẢNG) =====
-router.get('/transactions', DashboardController.getTransactions);
-
-// ===== DOANH THU THEO PHIM (PIE) =====
+// 3. Doanh thu theo phim (pie chart)
 router.get('/revenue-by-movie', DashboardController.getRevenueByMovie);
 
-// ===== SỐ VÉ THEO PHIM (BAR) =====
+// 4. Số vé bán theo phim (bar chart)
 router.get('/tickets-by-movie', DashboardController.getTicketsByMovie);
 
-// ===== TOP PHIM DOANH THU =====
+// 5. Top phim doanh thu cao (danh sách)
 router.get('/top-movies', DashboardController.getTopMovies);
 
 module.exports = router;
