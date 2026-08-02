@@ -32,7 +32,10 @@ import '../../styles/AdminDashboard.css';
 
 const API = {
     stats: '/admin/api/dashboard/stats',
-    revenueTrend: '/admin/api/dashboard/revenue-trend',
+
+    // Doanh thu chi tiết thay cho revenue-trend
+    revenueDetails: '/admin/api/dashboard/revenue-details',
+
     topMovies: '/admin/api/dashboard/top-movies',
     bookingStatus: '/admin/api/dashboard/booking-status',
     userGrowth: '/admin/api/dashboard/user-growth',
@@ -50,17 +53,39 @@ const API = {
 };
 
 // =============================================================
-// CONSTANTS & HELPERS
+// CONSTANTS
 // =============================================================
 
 const PERIODS = [
-    { value: 'today', label: 'Hôm nay' },
-    { value: 'week', label: '7 ngày' },
-    { value: 'month', label: '30 ngày' },
-    { value: 'quarter', label: '90 ngày' },
-    { value: 'year', label: '1 năm' },
-    { value: 'custom', label: 'Tùy chỉnh' },
+    {
+        value: 'today',
+        label: 'Hôm nay',
+    },
+    {
+        value: 'week',
+        label: '7 ngày',
+    },
+    {
+        value: 'month',
+        label: '30 ngày',
+    },
+    {
+        value: 'quarter',
+        label: '90 ngày',
+    },
+    {
+        value: 'year',
+        label: '1 năm',
+    },
+    {
+        value: 'custom',
+        label: 'Tùy chỉnh',
+    },
 ];
+
+// =============================================================
+// HELPERS
+// =============================================================
 
 const money = (value) =>
     new Intl.NumberFormat('vi-VN', {
@@ -128,7 +153,10 @@ const getPoster = (poster) => {
 
 const emptyState = {
     stats: null,
-    revenueTrend: [],
+
+    // Đã đổi từ revenueTrend -> revenueDetails
+    revenueDetails: [],
+
     topMovies: [],
     bookingStatus: [],
     userGrowth: [],
@@ -172,7 +200,11 @@ function AdminDashboard() {
             period,
         };
 
-        if (period === 'custom' && startDate && endDate) {
+        if (
+            period === 'custom' &&
+            startDate &&
+            endDate
+        ) {
             params.startDate = startDate;
             params.endDate = endDate;
         }
@@ -196,7 +228,10 @@ function AdminDashboard() {
 
             const requests = [
                 ['stats', API.stats],
-                ['revenueTrend', API.revenueTrend],
+
+                // Doanh thu chi tiết
+                ['revenueDetails', API.revenueDetails],
+
                 ['topMovies', API.topMovies],
                 ['bookingStatus', API.bookingStatus],
                 ['userGrowth', API.userGrowth],
@@ -253,44 +288,54 @@ function AdminDashboard() {
                             nextData.stats = response;
                             break;
 
-                        case 'revenueTrend':
-                            nextData.revenueTrend = response.data || [];
+                        case 'revenueDetails':
+                            nextData.revenueDetails =
+                                response.data || [];
                             break;
 
                         case 'topMovies':
-                            nextData.topMovies = response.movies || [];
+                            nextData.topMovies =
+                                response.movies || [];
                             break;
 
                         case 'bookingStatus':
-                            nextData.bookingStatus = response.data || [];
+                            nextData.bookingStatus =
+                                response.data || [];
                             break;
 
                         case 'userGrowth':
-                            nextData.userGrowth = response.data || [];
+                            nextData.userGrowth =
+                                response.data || [];
                             break;
 
                         case 'topCustomers':
-                            nextData.topCustomers = response.data || [];
+                            nextData.topCustomers =
+                                response.data || [];
                             break;
 
                         case 'products':
-                            nextData.products = response.data || [];
+                            nextData.products =
+                                response.data || [];
                             break;
 
                         case 'cinemas':
-                            nextData.cinemas = response.data || [];
+                            nextData.cinemas =
+                                response.data || [];
                             break;
 
                         case 'rooms':
-                            nextData.rooms = response.data || [];
+                            nextData.rooms =
+                                response.data || [];
                             break;
 
                         case 'showtimes':
-                            nextData.showtimes = response.data || [];
+                            nextData.showtimes =
+                                response.data || [];
                             break;
 
                         case 'coupons':
-                            nextData.coupons = response.data || [];
+                            nextData.coupons =
+                                response.data || [];
                             break;
 
                         case 'content':
@@ -298,19 +343,23 @@ function AdminDashboard() {
                             break;
 
                         case 'userStatus':
-                            nextData.userStatus = response.data || [];
+                            nextData.userStatus =
+                                response.data || [];
                             break;
 
                         case 'otp':
-                            nextData.otp = response.data || [];
+                            nextData.otp =
+                                response.data || [];
                             break;
 
                         case 'reviews':
-                            nextData.reviews = response.data || [];
+                            nextData.reviews =
+                                response.data || [];
                             break;
 
                         case 'seats':
-                            nextData.seats = response.data || null;
+                            nextData.seats =
+                                response.data || null;
                             break;
 
                         default:
@@ -321,9 +370,14 @@ function AdminDashboard() {
 
             setData(nextData);
         } catch (err) {
-            console.error('Dashboard error:', err);
+            console.error(
+                'Dashboard error:',
+                err
+            );
 
-            setError('Không thể tải dữ liệu dashboard.');
+            setError(
+                'Không thể tải dữ liệu dashboard.'
+            );
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -336,6 +390,7 @@ function AdminDashboard() {
 
     useEffect(() => {
         fetchDashboard();
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [queryParams]);
 
@@ -360,7 +415,10 @@ function AdminDashboard() {
         }
 
         if (startDate > endDate) {
-            setError('Ngày bắt đầu không được lớn hơn ngày kết thúc.');
+            setError(
+                'Ngày bắt đầu không được lớn hơn ngày kết thúc.'
+            );
+
             return;
         }
 
@@ -377,29 +435,29 @@ function AdminDashboard() {
     const content = data.content || {};
     const seatData = data.seats || {};
 
-    const maxRevenue = Math.max(
-        ...data.revenueTrend.map(
-            (item) => Number(item.revenue) || 0
-        ),
-        1
-    );
-
     const maxCinemaRevenue = Math.max(
         ...data.cinemas.map(
-            (item) => Number(item.revenue) || 0
+            (item) =>
+                Number(item.revenue) || 0
         ),
         1
     );
 
-    const totalBookingStatus = data.bookingStatus.reduce(
-        (sum, item) => sum + Number(item.orders || 0),
-        0
-    );
+    const totalBookingStatus =
+        data.bookingStatus.reduce(
+            (sum, item) =>
+                sum +
+                Number(item.orders || 0),
+            0
+        );
 
-    const totalUserStatus = data.userStatus.reduce(
-        (sum, item) => sum + Number(item.total || 0),
-        0
-    );
+    const totalUserStatus =
+        data.userStatus.reduce(
+            (sum, item) =>
+                sum +
+                Number(item.total || 0),
+            0
+        );
 
     // =========================================================
     // RENDER
@@ -413,39 +471,59 @@ function AdminDashboard() {
             ================================================= */}
 
             <header className="dashboard-header">
+
                 <div className="dashboard-heading">
+
                     <div className="dashboard-heading-icon">
                         <LayoutDashboard size={22} />
                     </div>
 
                     <div>
+
                         <span className="dashboard-eyebrow">
                             QUANG DUNG CINEMA
                         </span>
 
-                        <h1>Tổng quan hệ thống</h1>
+                        <h1>
+                            Tổng quan hệ thống
+                        </h1>
 
                         <p>
                             Theo dõi hoạt động kinh doanh và hiệu suất rạp phim.
                         </p>
+
                     </div>
+
                 </div>
 
                 <div className="dashboard-actions">
+
                     <button
                         type="button"
                         className="refresh-button"
-                        onClick={() => fetchDashboard(true)}
+                        onClick={() =>
+                            fetchDashboard(true)
+                        }
                         disabled={refreshing}
                     >
+
                         <RefreshCw
                             size={17}
-                            className={refreshing ? 'spin' : ''}
+                            className={
+                                refreshing
+                                    ? 'spin'
+                                    : ''
+                            }
                         />
 
-                        <span>Làm mới</span>
+                        <span>
+                            Làm mới
+                        </span>
+
                     </button>
+
                 </div>
+
             </header>
 
             {/* =================================================
@@ -457,74 +535,99 @@ function AdminDashboard() {
                 <div className="filter-left">
 
                     <div className="filter-label">
+
                         <CalendarDays size={17} />
-                        <span>Khoảng thời gian</span>
+
+                        <span>
+                            Khoảng thời gian
+                        </span>
+
                     </div>
 
                     <div className="period-tabs">
+
                         {PERIODS.map((item) => (
                             <button
                                 type="button"
                                 key={item.value}
                                 className={`period-tab ${
-                                    period === item.value
+                                    period ===
+                                    item.value
                                         ? 'active'
                                         : ''
                                 }`}
                                 onClick={() =>
-                                    handlePeriodChange(item.value)
+                                    handlePeriodChange(
+                                        item.value
+                                    )
                                 }
                             >
                                 {item.label}
                             </button>
                         ))}
+
                     </div>
 
                 </div>
 
-                {showCustom && period === 'custom' && (
-                    <div className="custom-date">
+                {showCustom &&
+                    period === 'custom' && (
+                        <div className="custom-date">
 
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) =>
-                                setStartDate(e.target.value)
-                            }
-                        />
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) =>
+                                    setStartDate(
+                                        e.target.value
+                                    )
+                                }
+                            />
 
-                        <span>—</span>
+                            <span>
+                                —
+                            </span>
 
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) =>
-                                setEndDate(e.target.value)
-                            }
-                        />
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) =>
+                                    setEndDate(
+                                        e.target.value
+                                    )
+                                }
+                            />
 
-                        <button
-                            type="button"
-                            onClick={handleCustomSubmit}
-                        >
-                            Áp dụng
-                        </button>
+                            <button
+                                type="button"
+                                onClick={
+                                    handleCustomSubmit
+                                }
+                            >
+                                Áp dụng
+                            </button>
 
-                    </div>
-                )}
+                        </div>
+                    )}
 
                 <div className="current-period">
-                    <span>Đang xem</span>
+
+                    <span>
+                        Đang xem
+                    </span>
 
                     <strong>
                         {stats.period?.startDate
                             ? `${formatDate(
-                                  stats.period.startDate
+                                  stats.period
+                                      .startDate
                               )} — ${formatDate(
-                                  stats.period.endDate
+                                  stats.period
+                                      .endDate
                               )}`
                             : '--'}
                     </strong>
+
                 </div>
 
             </section>
@@ -535,16 +638,22 @@ function AdminDashboard() {
 
             {error && (
                 <div className="dashboard-error">
+
                     <AlertCircle size={19} />
 
-                    <span>{error}</span>
+                    <span>
+                        {error}
+                    </span>
 
                     <button
                         type="button"
-                        onClick={() => fetchDashboard(true)}
+                        onClick={() =>
+                            fetchDashboard(true)
+                        }
                     >
                         Thử lại
                     </button>
+
                 </div>
             )}
 
@@ -559,7 +668,10 @@ function AdminDashboard() {
                     value={money(stats.revenue)}
                     icon={<CircleDollarSign />}
                     iconClass="gold"
-                    change={comparison.revenue?.change}
+                    change={
+                        comparison.revenue
+                            ?.change
+                    }
                     comparison="so với kỳ trước"
                     loading={loading}
                 />
@@ -569,7 +681,10 @@ function AdminDashboard() {
                     value={number(stats.orders)}
                     icon={<Ticket />}
                     iconClass="blue"
-                    change={comparison.orders?.change}
+                    change={
+                        comparison.orders
+                            ?.change
+                    }
                     comparison="so với kỳ trước"
                     loading={loading}
                 />
@@ -579,7 +694,10 @@ function AdminDashboard() {
                     value={number(stats.tickets)}
                     icon={<Clapperboard />}
                     iconClass="purple"
-                    change={comparison.tickets?.change}
+                    change={
+                        comparison.tickets
+                            ?.change
+                    }
                     comparison="so với kỳ trước"
                     loading={loading}
                 />
@@ -602,99 +720,415 @@ function AdminDashboard() {
 
             <section className="dashboard-grid grid-main">
 
+                {/* =================================================
+                    REVENUE DETAIL TABLE
+                ================================================= */}
+
                 <div className="dashboard-card revenue-card">
 
                     <CardHeader
                         icon={<TrendingUp />}
-                        title="Doanh thu theo ngày"
-                        subtitle="Doanh thu và số đơn trong kỳ"
+                        title="Chi tiết doanh thu"
+                        subtitle="Danh sách đơn đặt vé và doanh thu trong kỳ"
                     />
 
                     <div className="revenue-summary">
 
                         <div>
-                            <span>Tổng doanh thu</span>
-                            <strong>{money(stats.revenue)}</strong>
-                        </div>
+                            <span>
+                                Tổng doanh thu
+                            </span>
 
-                        <div>
-                            <span>Tiền vé</span>
                             <strong>
-                                {money(stats.ticketRevenue)}
+                                {money(
+                                    stats.revenue
+                                )}
                             </strong>
                         </div>
 
                         <div>
-                            <span>Sản phẩm</span>
+                            <span>
+                                Tiền vé
+                            </span>
+
                             <strong>
-                                {money(stats.productRevenue)}
+                                {money(
+                                    stats.ticketRevenue
+                                )}
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>
+                                Sản phẩm
+                            </span>
+
+                            <strong>
+                                {money(
+                                    stats.productRevenue
+                                )}
                             </strong>
                         </div>
 
                     </div>
 
-                    <div className="revenue-chart">
+                    <div className="revenue-table-wrapper">
 
-                        {data.revenueTrend.length === 0 ? (
-                            <EmptyChart />
+                        {data.revenueDetails
+                            .length === 0 ? (
+
+                            <div className="revenue-empty">
+
+                                <TrendingUp
+                                    size={32}
+                                />
+
+                                <strong>
+                                    Chưa có dữ liệu doanh thu
+                                </strong>
+
+                                <span>
+                                    Không có đơn hàng nào trong khoảng thời gian này.
+                                </span>
+
+                            </div>
+
                         ) : (
-                            data.revenueTrend.map((item, index) => {
 
-                                const revenue =
-                                    Number(item.revenue) || 0;
+                            <div className="revenue-table">
 
-                                const height = Math.max(
-                                    (revenue / maxRevenue) * 100,
-                                    4
-                                );
+                                {/* TABLE HEADER */}
 
-                                return (
-                                    <div
-                                        className="chart-column"
-                                        key={`${item.date}-${index}`}
-                                    >
+                                <div className="revenue-table-head">
 
-                                        <div className="chart-tooltip">
-                                            <strong>
-                                                {money(revenue)}
-                                            </strong>
+                                    <span>
+                                        Ngày / giờ
+                                    </span>
 
-                                            <span>
-                                                {item.orders || 0} đơn
-                                            </span>
-                                        </div>
+                                    <span>
+                                        Khách hàng
+                                    </span>
 
-                                        <div className="chart-bar-wrap">
-                                            <div
-                                                className="chart-bar"
-                                                style={{
-                                                    height: `${height}%`,
-                                                }}
-                                            />
-                                        </div>
+                                    <span>
+                                        Phim
+                                    </span>
 
-                                        <span className="chart-date">
-                                            {item.date
-                                                ? new Date(
-                                                      item.date
-                                                  ).toLocaleDateString(
-                                                      'vi-VN',
-                                                      {
-                                                          day: '2-digit',
-                                                          month: '2-digit',
-                                                      }
-                                                  )
-                                                : '--'}
-                                        </span>
+                                    <span>
+                                        Hạng vé
+                                    </span>
 
-                                    </div>
-                                );
-                            })
+                                    <span>
+                                        Rạp
+                                    </span>
+
+                                    <span>
+                                        Phòng
+                                    </span>
+
+                                    <span>
+                                        Ghế
+                                    </span>
+
+                                    <span>
+                                        Bắp nước
+                                    </span>
+
+                                    <span>
+                                        Tổng tiền
+                                    </span>
+
+                                </div>
+
+                                {/* TABLE BODY */}
+
+                                <div className="revenue-table-body">
+
+                                    {data.revenueDetails.map(
+                                        (
+                                            item,
+                                            index
+                                        ) => {
+
+                                            const createdAt =
+                                                item.created_at ??
+                                                item.createdAt ??
+                                                item.booking_date ??
+                                                item.date;
+
+                                            const ticketRevenue =
+                                                Number(
+                                                    item.ticket_revenue ??
+                                                        item.ticketRevenue
+                                                ) || 0;
+
+                                            const productRevenue =
+                                                Number(
+                                                    item.product_revenue ??
+                                                        item.productRevenue
+                                                ) || 0;
+
+                                            const totalRevenue =
+                                                Number(
+                                                    item.total_revenue ??
+                                                        item.totalRevenue ??
+                                                        item.revenue
+                                                ) || 0;
+
+                                            const customerName =
+                                                item.customer_name ??
+                                                item.customerName ??
+                                                item.full_name ??
+                                                item.username ??
+                                                '--';
+
+                                            const movieTitle =
+                                                item.movie_title ??
+                                                item.movieTitle ??
+                                                '--';
+
+                                            const cinemaName =
+                                                item.cinema_name ??
+                                                item.cinemaName ??
+                                                '--';
+
+                                            const roomName =
+                                                item.room_name ??
+                                                item.roomName ??
+                                                '--';
+
+                                            const seatName =
+                                                item.seats ??
+                                                item.seat_numbers ??
+                                                item.seatNumbers ??
+                                                item.seat_number ??
+                                                '--';
+
+                                            const ticketClass =
+                                                item.ticket_class ??
+                                                item.ticketClass ??
+                                                item.ticket_type ??
+                                                item.ticketType ??
+                                                '--';
+
+                                            const products =
+                                                item.products ??
+                                                item.product_names ??
+                                                item.productNames ??
+                                                '--';
+
+                                            return (
+                                                <div
+                                                    className="revenue-table-row"
+                                                    key={
+                                                        item.order_id ||
+                                                        item.booking_id ||
+                                                        index
+                                                    }
+                                                >
+
+                                                    {/* DATE / TIME */}
+
+                                                    <div className="revenue-date">
+
+                                                        <strong>
+                                                            {formatDate(
+                                                                createdAt
+                                                            )}
+                                                        </strong>
+
+                                                        <span>
+                                                            {formatTime(
+                                                                createdAt
+                                                            )}
+                                                        </span>
+
+                                                    </div>
+
+                                                    {/* CUSTOMER */}
+
+                                                    <div className="revenue-customer">
+
+                                                        <div className="revenue-avatar">
+                                                            <UserRound
+                                                                size={
+                                                                    16
+                                                                }
+                                                            />
+                                                        </div>
+
+                                                        <div>
+
+                                                            <strong>
+                                                                {
+                                                                    customerName
+                                                                }
+                                                            </strong>
+
+                                                            {item.email && (
+                                                                <span>
+                                                                    {
+                                                                        item.email
+                                                                    }
+                                                                </span>
+                                                            )}
+
+                                                        </div>
+
+                                                    </div>
+
+                                                    {/* MOVIE */}
+
+                                                    <div
+                                                        className="revenue-movie"
+                                                        title={
+                                                            movieTitle
+                                                        }
+                                                    >
+                                                        {
+                                                            movieTitle
+                                                        }
+                                                    </div>
+
+                                                    {/* TICKET CLASS */}
+
+                                                    <div>
+
+                                                        <span className="ticket-badge">
+                                                            {
+                                                                ticketClass
+                                                            }
+                                                        </span>
+
+                                                    </div>
+
+                                                    {/* CINEMA */}
+
+                                                    <div
+                                                        className="revenue-location"
+                                                        title={
+                                                            cinemaName
+                                                        }
+                                                    >
+
+                                                        <MapPin
+                                                            size={
+                                                                14
+                                                            }
+                                                        />
+
+                                                        <span>
+                                                            {
+                                                                cinemaName
+                                                            }
+                                                        </span>
+
+                                                    </div>
+
+                                                    {/* ROOM */}
+
+                                                    <div>
+
+                                                        <span className="room-badge">
+                                                            {
+                                                                roomName
+                                                            }
+                                                        </span>
+
+                                                    </div>
+
+                                                    {/* SEATS */}
+
+                                                    <div>
+
+                                                        <span className="seat-badge">
+                                                            {
+                                                                seatName
+                                                            }
+                                                        </span>
+
+                                                    </div>
+
+                                                    {/* PRODUCTS */}
+
+                                                    <div className="revenue-products">
+
+                                                        {products !==
+                                                        '--' ? (
+                                                            <>
+                                                                <Package
+                                                                    size={
+                                                                        14
+                                                                    }
+                                                                />
+
+                                                                <span>
+                                                                    {
+                                                                        products
+                                                                    }
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <span className="no-product">
+                                                                Không
+                                                            </span>
+                                                        )}
+
+                                                    </div>
+
+                                                    {/* TOTAL */}
+
+                                                    <div className="revenue-total">
+
+                                                        <strong>
+                                                            {money(
+                                                                totalRevenue
+                                                            )}
+                                                        </strong>
+
+                                                        {(ticketRevenue >
+                                                            0 ||
+                                                            productRevenue >
+                                                                0) && (
+                                                            <span>
+
+                                                                Vé{' '}
+                                                                {money(
+                                                                    ticketRevenue
+                                                                )}
+
+                                                                {productRevenue >
+                                                                    0 && (
+                                                                    <>
+                                                                        {' '}
+                                                                        • Bắp nước{' '}
+                                                                        {money(
+                                                                            productRevenue
+                                                                        )}
+                                                                    </>
+                                                                )}
+
+                                                            </span>
+                                                        )}
+
+                                                    </div>
+
+                                                </div>
+                                            );
+                                        }
+                                    )}
+
+                                </div>
+
+                            </div>
                         )}
 
                     </div>
 
                 </div>
+
+                {/* =================================================
+                    SEAT CAPACITY
+                ================================================= */}
 
                 <div className="dashboard-card seat-card">
 
@@ -721,6 +1155,7 @@ function AdminDashboard() {
                         >
 
                             <div className="seat-circle-inner">
+
                                 <strong>
                                     {Number(
                                         seatData.occupancy
@@ -728,7 +1163,10 @@ function AdminDashboard() {
                                     %
                                 </strong>
 
-                                <span>lấp đầy</span>
+                                <span>
+                                    lấp đầy
+                                </span>
+
                             </div>
 
                         </div>
@@ -738,30 +1176,50 @@ function AdminDashboard() {
                     <div className="seat-stats">
 
                         <div>
-                            <span>Suất chiếu</span>
+                            <span>
+                                Suất chiếu
+                            </span>
+
                             <strong>
-                                {number(seatData.showtimes)}
+                                {number(
+                                    seatData.showtimes
+                                )}
                             </strong>
                         </div>
 
                         <div>
-                            <span>Tổng ghế</span>
+                            <span>
+                                Tổng ghế
+                            </span>
+
                             <strong>
-                                {number(seatData.capacity)}
+                                {number(
+                                    seatData.capacity
+                                )}
                             </strong>
                         </div>
 
                         <div>
-                            <span>Đã bán</span>
+                            <span>
+                                Đã bán
+                            </span>
+
                             <strong>
-                                {number(seatData.soldTickets)}
+                                {number(
+                                    seatData.soldTickets
+                                )}
                             </strong>
                         </div>
 
                         <div>
-                            <span>Còn trống</span>
+                            <span>
+                                Còn trống
+                            </span>
+
                             <strong>
-                                {number(seatData.emptySeats)}
+                                {number(
+                                    seatData.emptySeats
+                                )}
                             </strong>
                         </div>
 
@@ -777,6 +1235,8 @@ function AdminDashboard() {
 
             <section className="dashboard-grid grid-two">
 
+                {/* TOP MOVIES */}
+
                 <div className="dashboard-card">
 
                     <CardHeader
@@ -787,11 +1247,15 @@ function AdminDashboard() {
 
                     <div className="movie-ranking">
 
-                        {data.topMovies.length === 0 ? (
+                        {data.topMovies.length ===
+                        0 ? (
                             <EmptyList />
                         ) : (
                             data.topMovies.map(
-                                (movie, index) => (
+                                (
+                                    movie,
+                                    index
+                                ) => (
                                     <div
                                         className="movie-ranking-item"
                                         key={
@@ -803,8 +1267,12 @@ function AdminDashboard() {
 
                                         <div className="ranking-number">
                                             {String(
-                                                index + 1
-                                            ).padStart(2, '0')}
+                                                index +
+                                                    1
+                                            ).padStart(
+                                                2,
+                                                '0'
+                                            )}
                                         </div>
 
                                         <div className="movie-poster">
@@ -822,7 +1290,11 @@ function AdminDashboard() {
                                                     }
                                                 />
                                             ) : (
-                                                <Film size={20} />
+                                                <Film
+                                                    size={
+                                                        20
+                                                    }
+                                                />
                                             )}
 
                                         </div>
@@ -839,16 +1311,19 @@ function AdminDashboard() {
                                                     movie.tickets_sold
                                                 }{' '}
                                                 vé •{' '}
-                                                {movie.orders || 0}{' '}
+                                                {movie.orders ||
+                                                    0}{' '}
                                                 đơn
                                             </span>
 
                                         </div>
 
                                         <div className="movie-revenue">
+
                                             {money(
                                                 movie.revenue
                                             )}
+
                                         </div>
 
                                     </div>
@@ -860,6 +1335,8 @@ function AdminDashboard() {
 
                 </div>
 
+                {/* BOOKING STATUS */}
+
                 <div className="dashboard-card">
 
                     <CardHeader
@@ -870,28 +1347,37 @@ function AdminDashboard() {
 
                     <div className="status-list">
 
-                        {data.bookingStatus.length === 0 ? (
+                        {data.bookingStatus
+                            .length === 0 ? (
                             <EmptyList />
                         ) : (
                             data.bookingStatus.map(
-                                (item, index) => {
+                                (
+                                    item,
+                                    index
+                                ) => {
 
                                     const total =
-                                        totalBookingStatus || 1;
+                                        totalBookingStatus ||
+                                        1;
 
                                     const value =
                                         Number(
                                             item.orders
                                         ) || 0;
 
-                                    const width = Math.min(
-                                        (value / total) * 100,
-                                        100
-                                    );
+                                    const width =
+                                        Math.min(
+                                            (value /
+                                                total) *
+                                                100,
+                                            100
+                                        );
 
                                     const statusClass =
                                         String(
-                                            item.status || ''
+                                            item.status ||
+                                                ''
                                         )
                                             .toLowerCase()
                                             .replace(
@@ -908,12 +1394,14 @@ function AdminDashboard() {
                                             <div className="status-row-top">
 
                                                 <span className="status-name">
+
                                                     <i
                                                         className={`status-dot ${statusClass}`}
                                                     />
 
                                                     {item.status ||
                                                         '--'}
+
                                                 </span>
 
                                                 <strong>
@@ -925,18 +1413,22 @@ function AdminDashboard() {
                                             </div>
 
                                             <div className="progress-track">
+
                                                 <div
                                                     className="progress-fill"
                                                     style={{
                                                         width: `${width}%`,
                                                     }}
                                                 />
+
                                             </div>
 
                                             <div className="status-meta">
+
                                                 {money(
                                                     item.revenue
                                                 )}
+
                                             </div>
 
                                         </div>
@@ -966,69 +1458,92 @@ function AdminDashboard() {
                 <div className="cinema-table">
 
                     <div className="table-head">
-                        <span>Rạp</span>
-                        <span>Đơn hàng</span>
-                        <span>Vé bán</span>
-                        <span>Doanh thu</span>
-                        <span>Hiệu suất</span>
+
+                        <span>
+                            Rạp
+                        </span>
+
+                        <span>
+                            Đơn hàng
+                        </span>
+
+                        <span>
+                            Vé bán
+                        </span>
+
+                        <span>
+                            Doanh thu
+                        </span>
+
+                        <span>
+                            Hiệu suất
+                        </span>
+
                     </div>
 
-                    {data.cinemas.length === 0 ? (
+                    {data.cinemas.length ===
+                    0 ? (
                         <EmptyList />
                     ) : (
-                        data.cinemas.map((cinema) => {
+                        data.cinemas.map(
+                            (cinema) => {
 
-                            const revenue =
-                                Number(
-                                    cinema.revenue
-                                ) || 0;
+                                const revenue =
+                                    Number(
+                                        cinema.revenue
+                                    ) || 0;
 
-                            const width =
-                                (revenue /
-                                    maxCinemaRevenue) *
-                                100;
+                                const width =
+                                    (revenue /
+                                        maxCinemaRevenue) *
+                                    100;
 
-                            return (
-                                <div
-                                    className="table-row"
-                                    key={
-                                        cinema.cinema_id ||
-                                        cinema.id
-                                    }
-                                >
+                                return (
+                                    <div
+                                        className="table-row"
+                                        key={
+                                            cinema.cinema_id ||
+                                            cinema.id
+                                        }
+                                    >
 
-                                    <strong>
-                                        {cinema.cinema_name ||
-                                            '--'}
-                                    </strong>
+                                        <strong>
+                                            {cinema.cinema_name ||
+                                                '--'}
+                                        </strong>
 
-                                    <span>
-                                        {number(
-                                            cinema.orders
-                                        )}
-                                    </span>
+                                        <span>
+                                            {number(
+                                                cinema.orders
+                                            )}
+                                        </span>
 
-                                    <span>
-                                        {number(
-                                            cinema.tickets
-                                        )}
-                                    </span>
+                                        <span>
+                                            {number(
+                                                cinema.tickets
+                                            )}
+                                        </span>
 
-                                    <strong className="money">
-                                        {money(revenue)}
-                                    </strong>
+                                        <strong className="money">
+                                            {money(
+                                                revenue
+                                            )}
+                                        </strong>
 
-                                    <div className="mini-progress">
-                                        <div
-                                            style={{
-                                                width: `${width}%`,
-                                            }}
-                                        />
+                                        <div className="mini-progress">
+
+                                            <div
+                                                style={{
+                                                    width: `${width}%`,
+                                                }}
+                                            />
+
+                                        </div>
+
                                     </div>
-
-                                </div>
-                            );
-                        })
+                                );
+                            }
+                        )
                     )}
 
                 </div>
@@ -1041,103 +1556,116 @@ function AdminDashboard() {
 
             <section className="dashboard-grid grid-two">
 
+                {/* ROOMS */}
+
                 <div className="dashboard-card">
 
                     <CardHeader
-                        icon={<LayoutDashboard />}
+                        icon={
+                            <LayoutDashboard />
+                        }
                         title="Hiệu suất phòng"
                         subtitle="Tỷ lệ lấp đầy từng phòng"
                     />
 
                     <div className="room-list">
 
-                        {data.rooms.length === 0 ? (
+                        {data.rooms.length ===
+                        0 ? (
                             <EmptyList />
                         ) : (
                             data.rooms
                                 .slice(0, 8)
-                                .map((room) => {
+                                .map(
+                                    (
+                                        room
+                                    ) => {
 
-                                    const occupancy =
-                                        Number(
-                                            room.occupancy
-                                        ) || 0;
+                                        const occupancy =
+                                            Number(
+                                                room.occupancy
+                                            ) || 0;
 
-                                    const revenue =
-                                        Number(
-                                            room.revenue
-                                        ) || 0;
+                                        const revenue =
+                                            Number(
+                                                room.revenue
+                                            ) || 0;
 
-                                    const width =
-                                        Math.min(
-                                            occupancy,
-                                            100
-                                        );
+                                        const width =
+                                            Math.min(
+                                                occupancy,
+                                                100
+                                            );
 
-                                    return (
-                                        <div
-                                            className="room-item"
-                                            key={
-                                                room.room_id ||
-                                                room.id
-                                            }
-                                        >
+                                        return (
+                                            <div
+                                                className="room-item"
+                                                key={
+                                                    room.room_id ||
+                                                    room.id
+                                                }
+                                            >
 
-                                            <div className="room-info">
-
-                                                <strong>
-                                                    {room.room_name ||
-                                                        '--'}
-                                                </strong>
-
-                                                <span>
-                                                    {room.cinema_name ||
-                                                        '--'}{' '}
-                                                    •{' '}
-                                                    {room.room_type ||
-                                                        '--'}
-                                                </span>
-
-                                            </div>
-
-                                            <div className="room-progress">
-
-                                                <div className="room-progress-top">
-                                                    <span>
-                                                        {
-                                                            occupancy
-                                                        }
-                                                        %
-                                                    </span>
+                                                <div className="room-info">
 
                                                     <strong>
-                                                        {money(
-                                                            revenue
-                                                        )}
+                                                        {room.room_name ||
+                                                            '--'}
                                                     </strong>
+
+                                                    <span>
+                                                        {room.cinema_name ||
+                                                            '--'}{' '}
+                                                        •{' '}
+                                                        {room.room_type ||
+                                                            '--'}
+                                                    </span>
+
                                                 </div>
 
-                                                <div className="progress-track">
+                                                <div className="room-progress">
 
-                                                    <div
-                                                        className="progress-fill"
-                                                        style={{
-                                                            width: `${width}%`,
-                                                        }}
-                                                    />
+                                                    <div className="room-progress-top">
+
+                                                        <span>
+                                                            {
+                                                                occupancy
+                                                            }
+                                                            %
+                                                        </span>
+
+                                                        <strong>
+                                                            {money(
+                                                                revenue
+                                                            )}
+                                                        </strong>
+
+                                                    </div>
+
+                                                    <div className="progress-track">
+
+                                                        <div
+                                                            className="progress-fill"
+                                                            style={{
+                                                                width: `${width}%`,
+                                                            }}
+                                                        />
+
+                                                    </div>
 
                                                 </div>
 
                                             </div>
-
-                                        </div>
-                                    );
-                                })
+                                        );
+                                    }
+                                )
                         )}
 
                     </div>
 
                 </div>
+
+                {/* SHOWTIMES */}
 
                 <div className="dashboard-card">
 
@@ -1149,64 +1677,71 @@ function AdminDashboard() {
 
                     <div className="showtime-list">
 
-                        {data.showtimes.length === 0 ? (
+                        {data.showtimes
+                            .length === 0 ? (
                             <EmptyList />
                         ) : (
                             data.showtimes
                                 .slice(0, 8)
-                                .map((showtime) => (
-                                    <div
-                                        className="showtime-item"
-                                        key={
-                                            showtime.showtime_id ||
-                                            showtime.id
-                                        }
-                                    >
+                                .map(
+                                    (
+                                        showtime
+                                    ) => (
+                                        <div
+                                            className="showtime-item"
+                                            key={
+                                                showtime.showtime_id ||
+                                                showtime.id
+                                            }
+                                        >
 
-                                        <div className="showtime-time">
-                                            {formatTime(
-                                                showtime.start_time
-                                            )}
+                                            <div className="showtime-time">
+
+                                                {formatTime(
+                                                    showtime.start_time
+                                                )}
+
+                                            </div>
+
+                                            <div className="showtime-info">
+
+                                                <strong>
+                                                    {showtime.movie_title ||
+                                                        '--'}
+                                                </strong>
+
+                                                <span>
+                                                    {showtime.cinema_name ||
+                                                        '--'}{' '}
+                                                    •{' '}
+                                                    {showtime.room_name ||
+                                                        '--'}
+                                                </span>
+
+                                            </div>
+
+                                            <div className="showtime-occupancy">
+
+                                                <strong>
+                                                    {
+                                                        showtime.occupancy
+                                                    }
+                                                    %
+                                                </strong>
+
+                                                <span>
+                                                    {showtime.tickets ||
+                                                        0}{' '}
+                                                    /{' '}
+                                                    {showtime.total_seats ||
+                                                        0}
+                                                </span>
+
+                                            </div>
+
                                         </div>
-
-                                        <div className="showtime-info">
-
-                                            <strong>
-                                                {showtime.movie_title ||
-                                                    '--'}
-                                            </strong>
-
-                                            <span>
-                                                {showtime.cinema_name ||
-                                                    '--'}{' '}
-                                                •{' '}
-                                                {showtime.room_name ||
-                                                    '--'}
-                                            </span>
-
-                                        </div>
-
-                                        <div className="showtime-occupancy">
-
-                                            <strong>
-                                                {
-                                                    showtime.occupancy
-                                                }
-                                                %
-                                            </strong>
-
-                                            <span>
-                                                {showtime.tickets ||
-                                                    0}{' '}
-                                                /{' '}
-                                                {showtime.total_seats ||
-                                                    0}
-                                            </span>
-
-                                        </div>
-
-                                    </div>
-                                ))
+                                    )
+                                )
                         )}
 
                     </div>
@@ -1221,6 +1756,8 @@ function AdminDashboard() {
 
             <section className="dashboard-grid grid-two">
 
+                {/* CUSTOMERS */}
+
                 <div className="dashboard-card">
 
                     <CardHeader
@@ -1231,11 +1768,15 @@ function AdminDashboard() {
 
                     <div className="customer-list">
 
-                        {data.topCustomers.length === 0 ? (
+                        {data.topCustomers
+                            .length === 0 ? (
                             <EmptyList />
                         ) : (
                             data.topCustomers.map(
-                                (customer, index) => (
+                                (
+                                    customer,
+                                    index
+                                ) => (
                                     <div
                                         className="customer-item"
                                         key={
@@ -1246,7 +1787,8 @@ function AdminDashboard() {
                                     >
 
                                         <div className="customer-rank">
-                                            {index + 1}
+                                            {index +
+                                                1}
                                         </div>
 
                                         <div className="customer-avatar">
@@ -1263,7 +1805,9 @@ function AdminDashboard() {
                                                 />
                                             ) : (
                                                 <UserRound
-                                                    size={17}
+                                                    size={
+                                                        17
+                                                    }
                                                 />
                                             )}
 
@@ -1308,6 +1852,8 @@ function AdminDashboard() {
 
                 </div>
 
+                {/* PRODUCTS */}
+
                 <div className="dashboard-card">
 
                     <CardHeader
@@ -1318,66 +1864,75 @@ function AdminDashboard() {
 
                     <div className="product-list">
 
-                        {data.products.length === 0 ? (
+                        {data.products.length ===
+                        0 ? (
                             <EmptyList />
                         ) : (
                             data.products
                                 .slice(0, 8)
-                                .map((product) => (
-                                    <div
-                                        className="product-item"
-                                        key={
-                                            product.product_id ||
-                                            product.id
-                                        }
-                                    >
+                                .map(
+                                    (
+                                        product
+                                    ) => (
+                                        <div
+                                            className="product-item"
+                                            key={
+                                                product.product_id ||
+                                                product.id
+                                            }
+                                        >
 
-                                        <div className="product-image">
+                                            <div className="product-image">
 
-                                            {product.image ? (
-                                                <img
-                                                    src={
-                                                        product.image
-                                                    }
-                                                    alt={
-                                                        product.product_name ||
-                                                        'Product'
-                                                    }
-                                                />
-                                            ) : (
-                                                <Package
-                                                    size={18}
-                                                />
-                                            )}
+                                                {product.image ? (
+                                                    <img
+                                                        src={
+                                                            product.image
+                                                        }
+                                                        alt={
+                                                            product.product_name ||
+                                                            'Product'
+                                                        }
+                                                    />
+                                                ) : (
+                                                    <Package
+                                                        size={
+                                                            18
+                                                        }
+                                                    />
+                                                )}
 
-                                        </div>
+                                            </div>
 
-                                        <div className="product-info">
+                                            <div className="product-info">
 
-                                            <strong>
-                                                {product.product_name ||
-                                                    '--'}
+                                                <strong>
+                                                    {product.product_name ||
+                                                        '--'}
+                                                </strong>
+
+                                                <span>
+                                                    {product.category ||
+                                                        '--'}{' '}
+                                                    •{' '}
+                                                    {product.quantity ||
+                                                        0}{' '}
+                                                    sản phẩm
+                                                </span>
+
+                                            </div>
+
+                                            <strong className="product-revenue">
+
+                                                {money(
+                                                    product.revenue
+                                                )}
+
                                             </strong>
 
-                                            <span>
-                                                {product.category ||
-                                                    '--'}{' '}
-                                                •{' '}
-                                                {product.quantity ||
-                                                    0}{' '}
-                                                sản phẩm
-                                            </span>
-
                                         </div>
-
-                                        <strong className="product-revenue">
-                                            {money(
-                                                product.revenue
-                                            )}
-                                        </strong>
-
-                                    </div>
-                                ))
+                                    )
+                                )
                         )}
 
                     </div>
@@ -1392,6 +1947,8 @@ function AdminDashboard() {
 
             <section className="dashboard-grid grid-two">
 
+                {/* USER STATUS */}
+
                 <div className="dashboard-card">
 
                     <CardHeader
@@ -1402,64 +1959,74 @@ function AdminDashboard() {
 
                     <div className="user-status-grid">
 
-                        {data.userStatus.length === 0 ? (
+                        {data.userStatus
+                            .length === 0 ? (
                             <EmptyList />
                         ) : (
-                            data.userStatus.map((item) => {
+                            data.userStatus.map(
+                                (
+                                    item
+                                ) => {
 
-                                const total =
-                                    totalUserStatus || 1;
+                                    const total =
+                                        totalUserStatus ||
+                                        1;
 
-                                const value =
-                                    Number(
-                                        item.total
-                                    ) || 0;
+                                    const value =
+                                        Number(
+                                            item.total
+                                        ) || 0;
 
-                                const width =
-                                    (value / total) * 100;
+                                    const width =
+                                        (value /
+                                            total) *
+                                        100;
 
-                                return (
-                                    <div
-                                        className="user-status-item"
-                                        key={
-                                            item.status
-                                        }
-                                    >
+                                    return (
+                                        <div
+                                            className="user-status-item"
+                                            key={
+                                                item.status
+                                            }
+                                        >
 
-                                        <div className="user-status-top">
+                                            <div className="user-status-top">
 
-                                            <span>
-                                                {item.status ||
-                                                    '--'}
-                                            </span>
+                                                <span>
+                                                    {item.status ||
+                                                        '--'}
+                                                </span>
 
-                                            <strong>
-                                                {number(
-                                                    value
-                                                )}
-                                            </strong>
+                                                <strong>
+                                                    {number(
+                                                        value
+                                                    )}
+                                                </strong>
+
+                                            </div>
+
+                                            <div className="progress-track">
+
+                                                <div
+                                                    className="progress-fill"
+                                                    style={{
+                                                        width: `${width}%`,
+                                                    }}
+                                                />
+
+                                            </div>
 
                                         </div>
-
-                                        <div className="progress-track">
-
-                                            <div
-                                                className="progress-fill"
-                                                style={{
-                                                    width: `${width}%`,
-                                                }}
-                                            />
-
-                                        </div>
-
-                                    </div>
-                                );
-                            })
+                                    );
+                                }
+                            )
                         )}
 
                     </div>
 
                 </div>
+
+                {/* USER GROWTH */}
 
                 <div className="dashboard-card">
 
@@ -1471,66 +2038,72 @@ function AdminDashboard() {
 
                     <div className="growth-list">
 
-                        {data.userGrowth.length === 0 ? (
+                        {data.userGrowth
+                            .length === 0 ? (
                             <EmptyList />
                         ) : (
                             data.userGrowth
                                 .slice(-8)
-                                .map((item, index) => {
+                                .map(
+                                    (
+                                        item,
+                                        index
+                                    ) => {
 
-                                    const newUsers =
-                                        Number(
-                                            item.newUsers
-                                        ) || 0;
+                                        const newUsers =
+                                            Number(
+                                                item.newUsers
+                                            ) || 0;
 
-                                    return (
-                                        <div
-                                            className="growth-item"
-                                            key={
-                                                item.date ||
-                                                index
-                                            }
-                                        >
+                                        return (
+                                            <div
+                                                className="growth-item"
+                                                key={
+                                                    item.date ||
+                                                    index
+                                                }
+                                            >
 
-                                            <span>
-                                                {item.date
-                                                    ? new Date(
-                                                          item.date
-                                                      ).toLocaleDateString(
-                                                          'vi-VN',
-                                                          {
-                                                              day: '2-digit',
-                                                              month: '2-digit',
-                                                          }
-                                                      )
-                                                    : '--'}
-                                            </span>
+                                                <span>
+                                                    {item.date
+                                                        ? new Date(
+                                                              item.date
+                                                          ).toLocaleDateString(
+                                                              'vi-VN',
+                                                              {
+                                                                  day: '2-digit',
+                                                                  month: '2-digit',
+                                                              }
+                                                          )
+                                                        : '--'}
+                                                </span>
 
-                                            <div className="growth-bar-wrap">
+                                                <div className="growth-bar-wrap">
 
-                                                <div
-                                                    className="growth-bar"
-                                                    style={{
-                                                        width: `${Math.min(
-                                                            newUsers *
-                                                                10,
-                                                            100
-                                                        )}%`,
-                                                    }}
-                                                />
+                                                    <div
+                                                        className="growth-bar"
+                                                        style={{
+                                                            width: `${Math.min(
+                                                                newUsers *
+                                                                    10,
+                                                                100
+                                                            )}%`,
+                                                        }}
+                                                    />
+
+                                                </div>
+
+                                                <strong>
+                                                    +
+                                                    {number(
+                                                        newUsers
+                                                    )}
+                                                </strong>
 
                                             </div>
-
-                                            <strong>
-                                                +
-                                                {number(
-                                                    newUsers
-                                                )}
-                                            </strong>
-
-                                        </div>
-                                    );
-                                })
+                                        );
+                                    }
+                                )
                         )}
 
                     </div>
@@ -1556,7 +2129,10 @@ function AdminDashboard() {
                     <ContentItem
                         icon={<Film />}
                         label="Phim"
-                        value={content.movies?.total}
+                        value={
+                            content.movies
+                                ?.total
+                        }
                         meta={
                             content.movies
                                 ? `${content.movies.showing || 0} đang chiếu`
@@ -1567,37 +2143,54 @@ function AdminDashboard() {
                     <ContentItem
                         icon={<Star />}
                         label="Diễn viên"
-                        value={content.actors}
+                        value={
+                            content.actors
+                        }
                     />
 
                     <ContentItem
-                        icon={<Clapperboard />}
+                        icon={
+                            <Clapperboard />
+                        }
                         label="Thể loại"
-                        value={content.genres}
+                        value={
+                            content.genres
+                        }
                     />
 
                     <ContentItem
                         icon={<MapPin />}
                         label="Rạp"
-                        value={content.cinemas}
+                        value={
+                            content.cinemas
+                        }
                     />
 
                     <ContentItem
-                        icon={<LayoutDashboard />}
+                        icon={
+                            <LayoutDashboard />
+                        }
                         label="Phòng"
-                        value={content.rooms}
+                        value={
+                            content.rooms
+                        }
                     />
 
                     <ContentItem
                         icon={<Clock3 />}
                         label="Suất chiếu"
-                        value={content.upcomingShowtimes}
+                        value={
+                            content.upcomingShowtimes
+                        }
                     />
 
                     <ContentItem
                         icon={<Package />}
                         label="Sản phẩm"
-                        value={content.products?.total}
+                        value={
+                            content.products
+                                ?.total
+                        }
                         meta={
                             content.products
                                 ? `${content.products.active || 0} đang hoạt động`
@@ -1608,7 +2201,10 @@ function AdminDashboard() {
                     <ContentItem
                         icon={<Activity />}
                         label="Blog"
-                        value={content.blogs?.total}
+                        value={
+                            content.blogs
+                                ?.total
+                        }
                         meta={
                             content.blogs
                                 ? `${content.blogs.active || 0} đang hoạt động`
@@ -1619,25 +2215,37 @@ function AdminDashboard() {
                     <ContentItem
                         icon={<Percent />}
                         label="Khuyến mãi"
-                        value={content.promotions?.total}
+                        value={
+                            content.promotions
+                                ?.total
+                        }
                     />
 
                     <ContentItem
                         icon={<Ticket />}
                         label="Banner"
-                        value={content.banners?.total}
+                        value={
+                            content.banners
+                                ?.total
+                        }
                     />
 
                     <ContentItem
                         icon={<Star />}
                         label="Đánh giá"
-                        value={content.reviews?.total}
+                        value={
+                            content.reviews
+                                ?.total
+                        }
                         meta={
                             content.reviews
                                 ? `${Number(
-                                      content.reviews
+                                      content
+                                          .reviews
                                           .averageRating
-                                  ).toFixed(1)} / 5`
+                                  ).toFixed(
+                                      1
+                                  )} / 5`
                                 : ''
                         }
                     />
@@ -1645,7 +2253,9 @@ function AdminDashboard() {
                     <ContentItem
                         icon={<Activity />}
                         label="Tin tức"
-                        value={content.news}
+                        value={
+                            content.news
+                        }
                     />
 
                 </div>
@@ -1658,6 +2268,8 @@ function AdminDashboard() {
 
             <section className="dashboard-grid grid-three">
 
+                {/* REVIEWS */}
+
                 <div className="dashboard-card">
 
                     <CardHeader
@@ -1668,59 +2280,69 @@ function AdminDashboard() {
 
                     <div className="review-list">
 
-                        {data.reviews.length === 0 ? (
+                        {data.reviews
+                            .length === 0 ? (
                             <EmptyList />
                         ) : (
                             data.reviews
                                 .slice(0, 7)
-                                .map((movie, index) => (
-                                    <div
-                                        className="review-item"
-                                        key={
-                                            movie.movie_id ||
-                                            movie.id ||
-                                            index
-                                        }
-                                    >
+                                .map(
+                                    (
+                                        movie,
+                                        index
+                                    ) => (
+                                        <div
+                                            className="review-item"
+                                            key={
+                                                movie.movie_id ||
+                                                movie.id ||
+                                                index
+                                            }
+                                        >
 
-                                        <div className="review-info">
+                                            <div className="review-info">
 
-                                            <strong>
-                                                {movie.title ||
-                                                    '--'}
-                                            </strong>
+                                                <strong>
+                                                    {movie.title ||
+                                                        '--'}
+                                                </strong>
 
-                                            <span>
-                                                {
-                                                    movie.review_count
-                                                }{' '}
-                                                đánh giá
-                                            </span>
+                                                <span>
+                                                    {
+                                                        movie.review_count
+                                                    }{' '}
+                                                    đánh giá
+                                                </span>
+
+                                            </div>
+
+                                            <div className="review-score">
+
+                                                <Star
+                                                    size={
+                                                        15
+                                                    }
+                                                    fill="currentColor"
+                                                />
+
+                                                <strong>
+                                                    {
+                                                        movie.average_rating
+                                                    }
+                                                </strong>
+
+                                            </div>
 
                                         </div>
-
-                                        <div className="review-score">
-
-                                            <Star
-                                                size={15}
-                                                fill="currentColor"
-                                            />
-
-                                            <strong>
-                                                {
-                                                    movie.average_rating
-                                                }
-                                            </strong>
-
-                                        </div>
-
-                                    </div>
-                                ))
+                                    )
+                                )
                         )}
 
                     </div>
 
                 </div>
+
+                {/* COUPONS */}
 
                 <div className="dashboard-card">
 
@@ -1732,48 +2354,58 @@ function AdminDashboard() {
 
                     <div className="coupon-list">
 
-                        {data.coupons.length === 0 ? (
+                        {data.coupons
+                            .length === 0 ? (
                             <EmptyList />
                         ) : (
                             data.coupons
                                 .slice(0, 7)
-                                .map((coupon, index) => (
-                                    <div
-                                        className="coupon-item"
-                                        key={
-                                            coupon.coupon_id ||
-                                            coupon.id ||
-                                            index
-                                        }
-                                    >
+                                .map(
+                                    (
+                                        coupon,
+                                        index
+                                    ) => (
+                                        <div
+                                            className="coupon-item"
+                                            key={
+                                                coupon.coupon_id ||
+                                                coupon.id ||
+                                                index
+                                            }
+                                        >
 
-                                        <div>
+                                            <div>
+
+                                                <strong>
+                                                    {coupon.coupon_code ||
+                                                        '--'}
+                                                </strong>
+
+                                                <span>
+                                                    {
+                                                        coupon.used_count
+                                                    }{' '}
+                                                    lượt dùng
+                                                </span>
+
+                                            </div>
+
                                             <strong>
-                                                {coupon.coupon_code ||
-                                                    '--'}
+                                                {money(
+                                                    coupon.revenue
+                                                )}
                                             </strong>
 
-                                            <span>
-                                                {
-                                                    coupon.used_count
-                                                }{' '}
-                                                lượt dùng
-                                            </span>
                                         </div>
-
-                                        <strong>
-                                            {money(
-                                                coupon.revenue
-                                            )}
-                                        </strong>
-
-                                    </div>
-                                ))
+                                    )
+                                )
                         )}
 
                     </div>
 
                 </div>
+
+                {/* OTP */}
 
                 <div className="dashboard-card">
 
@@ -1785,39 +2417,45 @@ function AdminDashboard() {
 
                     <div className="otp-list">
 
-                        {data.otp.length === 0 ? (
+                        {data.otp.length ===
+                        0 ? (
                             <EmptyList />
                         ) : (
                             data.otp
                                 .slice(0, 8)
-                                .map((item, index) => (
-                                    <div
-                                        className="otp-item"
-                                        key={`${item.purpose}-${item.status}-${index}`}
-                                    >
+                                .map(
+                                    (
+                                        item,
+                                        index
+                                    ) => (
+                                        <div
+                                            className="otp-item"
+                                            key={`${item.purpose}-${item.status}-${index}`}
+                                        >
 
-                                        <div>
+                                            <div>
+
+                                                <strong>
+                                                    {item.purpose ||
+                                                        '--'}
+                                                </strong>
+
+                                                <span>
+                                                    {item.status ||
+                                                        '--'}
+                                                </span>
+
+                                            </div>
 
                                             <strong>
-                                                {item.purpose ||
-                                                    '--'}
+                                                {number(
+                                                    item.total
+                                                )}
                                             </strong>
 
-                                            <span>
-                                                {item.status ||
-                                                    '--'}
-                                            </span>
-
                                         </div>
-
-                                        <strong>
-                                            {number(
-                                                item.total
-                                            )}
-                                        </strong>
-
-                                    </div>
-                                ))
+                                    )
+                                )
                         )}
 
                     </div>
@@ -1833,8 +2471,11 @@ function AdminDashboard() {
             <footer className="dashboard-footer">
 
                 <div>
+
                     <span className="footer-dot" />
+
                     Hệ thống đang hoạt động
+
                 </div>
 
                 <span>
@@ -1886,13 +2527,19 @@ function KpiCard({
                                 : 'negative'
                         }`}
                     >
+
                         <span>
-                            {positive ? '↑' : '↓'}
+                            {positive
+                                ? '↑'
+                                : '↓'}
                         </span>
 
                         <span>
-                            {percent(change)}
+                            {percent(
+                                change
+                            )}
                         </span>
+
                     </div>
                 )}
 
@@ -1905,7 +2552,9 @@ function KpiCard({
                 </span>
 
                 <strong className="kpi-value">
-                    {loading ? '...' : value}
+                    {loading
+                        ? '...'
+                        : value}
                 </strong>
 
                 <span className="kpi-comparison">
@@ -1936,9 +2585,13 @@ function CardHeader({
 
             <div className="card-header-content">
 
-                <h2>{title}</h2>
+                <h2>
+                    {title}
+                </h2>
 
-                <p>{subtitle}</p>
+                <p>
+                    {subtitle}
+                </p>
 
             </div>
 
@@ -1965,34 +2618,22 @@ function ContentItem({
 
             <div className="content-item-info">
 
-                <span>{label}</span>
+                <span>
+                    {label}
+                </span>
 
                 <strong>
                     {number(value)}
                 </strong>
 
                 {meta && (
-                    <small>{meta}</small>
+                    <small>
+                        {meta}
+                    </small>
                 )}
 
             </div>
 
-        </div>
-    );
-}
-
-// =============================================================
-// EMPTY CHART
-// =============================================================
-
-function EmptyChart() {
-    return (
-        <div className="empty-chart">
-            <BarChart3 size={30} />
-
-            <span>
-                Chưa có dữ liệu trong kỳ này
-            </span>
         </div>
     );
 }

@@ -55,7 +55,11 @@ router.get(
     '/top-movies',
     DashboardController.getTopMovies
 );
-
+// Chi tiết doanh thu
+router.get(
+    '/revenue-details',
+    DashboardController.getTransactions
+);
 
 /*
 |--------------------------------------------------------------------------
