@@ -40,23 +40,18 @@ class DashboardController {
         switch (period) {
             case 'today':
                 break;
-
             case 'week':
                 start.setDate(start.getDate() - 6);
                 break;
-
             case 'month':
                 start.setDate(start.getDate() - 29);
                 break;
-
             case 'quarter':
                 start.setDate(start.getDate() - 89);
                 break;
-
             case 'year':
                 start.setFullYear(start.getFullYear() - 1);
                 break;
-
             default:
                 start.setDate(start.getDate() - 6);
                 break;
@@ -72,15 +67,8 @@ class DashboardController {
     // HELPER – ĐIỀU KIỆN NGÀY
     // =============================================================
 
-    static buildDateCondition(
-        table = 'b.booking_date',
-        startDate,
-        endDate
-    ) {
-        return `
-            ${table} >= ?
-            AND ${table} < DATE_ADD(?, INTERVAL 1 DAY)
-        `;
+    static buildDateCondition(table = 'b.booking_date', startDate, endDate) {
+        return `${table} >= ? AND ${table} < DATE_ADD(?, INTERVAL 1 DAY)`;
     }
 
     // =============================================================
@@ -90,14 +78,10 @@ class DashboardController {
     static calcPercent(current, previous) {
         const cur = Number(current) || 0;
         const prev = Number(previous) || 0;
-
         if (prev === 0) {
             return cur === 0 ? 0 : 100;
         }
-
-        return parseFloat(
-            (((cur - prev) / prev) * 100).toFixed(1)
-        );
+        return parseFloat(((cur - prev) / prev * 100).toFixed(1));
     }
 
     // =============================================================
@@ -107,30 +91,17 @@ class DashboardController {
     static getPreviousStart(start, end) {
         const s = new Date(start);
         const e = new Date(end);
-
-        const diff =
-            Math.ceil(
-                (e - s) / (1000 * 60 * 60 * 24)
-            ) + 1;
-
+        const diff = Math.ceil((e - s) / (1000 * 60 * 60 * 24)) + 1;
         const prevEnd = new Date(s);
         prevEnd.setDate(prevEnd.getDate() - 1);
-
         const prevStart = new Date(prevEnd);
-        prevStart.setDate(
-            prevStart.getDate() - diff + 1
-        );
-
+        prevStart.setDate(prevStart.getDate() - diff + 1);
         return prevStart.toISOString().split('T')[0];
     }
 
     static getPreviousEnd(start) {
         const prevEnd = new Date(start);
-
-        prevEnd.setDate(
-            prevEnd.getDate() - 1
-        );
-
+        prevEnd.setDate(prevEnd.getDate() - 1);
         return prevEnd.toISOString().split('T')[0];
     }
 
@@ -140,160 +111,62 @@ class DashboardController {
 
     static async getStats(req, res) {
         try {
-            const {
-                period = 'week',
-                startDate,
-                endDate
-            } = req.query;
+            const { period = 'week', startDate, endDate } = req.query;
+            const range = this.getDateRange(period, startDate, endDate);
+            const previousStart = this.getPreviousStart(range.startDate, range.endDate);
+            const previousEnd = this.getPreviousEnd(range.startDate);
 
-            const range = this.getDateRange(
-                period,
-                startDate,
-                endDate
-            );
-
-            const previousStart = this.getPreviousStart(
-                range.startDate,
-                range.endDate
-            );
-
-            const previousEnd = this.getPreviousEnd(
-                range.startDate
-            );
-
-            const cacheKey =
-                `stats_${range.startDate}_${range.endDate}`;
-
+            const cacheKey = `stats_${range.startDate}_${range.endDate}`;
             const cached = cache.get(cacheKey);
-
             if (cached) {
-                return res.json({
-                    success: true,
-                    ...cached
-                });
+                return res.json({ success: true, ...cached });
             }
 
             const sql = `
                 WITH current_period AS (
                     SELECT
                         COUNT(DISTINCT b.booking_id) AS orders,
-
-                        COUNT(
-                            DISTINCT CASE
-                                WHEN bd.seat_id IS NOT NULL
-                                THEN bd.booking_detail_id
-                            END
-                        ) AS tickets,
-
-                        COALESCE(
-                            SUM(
-                                CASE
-                                    WHEN bd.seat_id IS NOT NULL
-                                    THEN bd.quantity * bd.price
-                                    ELSE 0
-                                END
-                            ),
-                            0
-                        ) AS ticket_revenue,
-
-                        COALESCE(
-                            SUM(
-                                CASE
-                                    WHEN bd.product_id IS NOT NULL
-                                    THEN bd.quantity * bd.price
-                                    ELSE 0
-                                END
-                            ),
-                            0
-                        ) AS product_revenue,
-
-                        COALESCE(
-                            SUM(b.total_amount),
-                            0
-                        ) AS revenue
-
+                        COUNT(DISTINCT CASE WHEN bd.seat_id IS NOT NULL THEN bd.booking_detail_id END) AS tickets,
+                        COALESCE(SUM(CASE WHEN bd.seat_id IS NOT NULL THEN bd.quantity * bd.price END), 0) AS ticket_revenue,
+                        COALESCE(SUM(CASE WHEN bd.product_id IS NOT NULL THEN bd.quantity * bd.price END), 0) AS product_revenue,
+                        COALESCE(SUM(b.total_amount), 0) AS revenue
                     FROM bookings b
-
-                    LEFT JOIN booking_details bd
-                        ON bd.booking_id = b.booking_id
-
+                    LEFT JOIN booking_details bd ON bd.booking_id = b.booking_id
                     WHERE b.status = 'Completed'
-                        AND ${this.buildDateCondition(
-                            'b.booking_date',
-                            range.startDate,
-                            range.endDate
-                        )}
+                      AND ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
                 ),
-
                 previous_period AS (
                     SELECT
                         COUNT(*) AS orders,
-
-                        COALESCE(
-                            SUM(ticket_data.tickets),
-                            0
-                        ) AS tickets,
-
-                        COALESCE(
-                            SUM(b.total_amount),
-                            0
-                        ) AS revenue
-
+                        COALESCE(SUM(ticket_data.tickets), 0) AS tickets,
+                        COALESCE(SUM(b.total_amount), 0) AS revenue
                     FROM bookings b
-
                     LEFT JOIN (
-                        SELECT
-                            booking_id,
-                            COUNT(
-                                CASE
-                                    WHEN seat_id IS NOT NULL
-                                    THEN 1
-                                END
-                            ) AS tickets
+                        SELECT booking_id, COUNT(CASE WHEN seat_id IS NOT NULL THEN 1 END) AS tickets
                         FROM booking_details
                         GROUP BY booking_id
-                    ) ticket_data
-                        ON ticket_data.booking_id = b.booking_id
-
+                    ) ticket_data ON ticket_data.booking_id = b.booking_id
                     WHERE b.status = 'Completed'
-                        AND ${this.buildDateCondition(
-                            'b.booking_date',
-                            previousStart,
-                            previousEnd
-                        )}
+                      AND ${this.buildDateCondition('b.booking_date', previousStart, previousEnd)}
                 ),
-
-                total_movies AS (
-                    SELECT COUNT(*) AS total
-                    FROM movies
-                ),
-
-                total_users AS (
-                    SELECT COUNT(*) AS total
-                    FROM users
-                    WHERE role = 'customer'
-                )
-
+                total_movies AS (SELECT COUNT(*) AS total FROM movies),
+                total_users AS (SELECT COUNT(*) AS total FROM users WHERE role = 'customer')
                 SELECT
                     (SELECT total FROM total_movies) AS movies,
                     (SELECT total FROM total_users) AS users,
-
                     c.orders,
                     c.tickets,
                     c.revenue,
                     c.ticket_revenue,
                     c.product_revenue,
-
                     p.orders AS prev_orders,
                     p.tickets AS prev_tickets,
                     p.revenue AS prev_revenue
-
                 FROM current_period c
                 CROSS JOIN previous_period p
             `;
 
             const [rows] = await db.query(sql);
-
             const data = rows[0] || {};
 
             const result = {
@@ -302,77 +175,33 @@ class DashboardController {
                 tickets: Number(data.tickets) || 0,
                 revenue: Number(data.revenue) || 0,
                 orders: Number(data.orders) || 0,
-
-                ticketRevenue:
-                    Number(data.ticket_revenue) || 0,
-
-                productRevenue:
-                    Number(data.product_revenue) || 0,
-
+                ticketRevenue: Number(data.ticket_revenue) || 0,
+                productRevenue: Number(data.product_revenue) || 0,
                 period: range,
-
                 comparison: {
                     revenue: {
-                        current:
-                            Number(data.revenue) || 0,
-
-                        previous:
-                            Number(data.prev_revenue) || 0,
-
-                        change:
-                            this.calcPercent(
-                                data.revenue,
-                                data.prev_revenue
-                            )
+                        current: Number(data.revenue) || 0,
+                        previous: Number(data.prev_revenue) || 0,
+                        change: this.calcPercent(data.revenue, data.prev_revenue)
                     },
-
                     orders: {
-                        current:
-                            Number(data.orders) || 0,
-
-                        previous:
-                            Number(data.prev_orders) || 0,
-
-                        change:
-                            this.calcPercent(
-                                data.orders,
-                                data.prev_orders
-                            )
+                        current: Number(data.orders) || 0,
+                        previous: Number(data.prev_orders) || 0,
+                        change: this.calcPercent(data.orders, data.prev_orders)
                     },
-
                     tickets: {
-                        current:
-                            Number(data.tickets) || 0,
-
-                        previous:
-                            Number(data.prev_tickets) || 0,
-
-                        change:
-                            this.calcPercent(
-                                data.tickets,
-                                data.prev_tickets
-                            )
+                        current: Number(data.tickets) || 0,
+                        previous: Number(data.prev_tickets) || 0,
+                        change: this.calcPercent(data.tickets, data.prev_tickets)
                     }
                 }
             };
 
             cache.set(cacheKey, result);
-
-            return res.json({
-                success: true,
-                ...result
-            });
-
+            return res.json({ success: true, ...result });
         } catch (error) {
-            console.error(
-                '❌ getStats error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getStats error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -382,79 +211,29 @@ class DashboardController {
 
     static async getRevenueTrend(req, res) {
         try {
-            const range = this.getDateRange(
-                req.query.period || 'week',
-                req.query.startDate,
-                req.query.endDate
-            );
-
-            const cacheKey =
-                `trend_${range.startDate}_${range.endDate}`;
-
+            const range = this.getDateRange(req.query.period || 'week', req.query.startDate, req.query.endDate);
+            const cacheKey = `trend_${range.startDate}_${range.endDate}`;
             const cached = cache.get(cacheKey);
-
             if (cached) {
-                return res.json({
-                    success: true,
-                    data: cached,
-                    period: range
-                });
+                return res.json({ success: true, data: cached, period: range });
             }
 
             const sql = `
                 SELECT
                     DATE(b.booking_date) AS date,
-
-                    COUNT(
-                        DISTINCT b.booking_id
-                    ) AS orders,
-
-                    COALESCE(
-                        SUM(b.total_amount),
-                        0
-                    ) AS revenue,
-
-                    COALESCE(
-                        SUM(
-                            CASE
-                                WHEN bd.seat_id IS NOT NULL
-                                THEN bd.quantity
-                                ELSE 0
-                            END
-                        ),
-                        0
-                    ) AS tickets,
-
-                    COALESCE(
-                        SUM(
-                            CASE
-                                WHEN bd.product_id IS NOT NULL
-                                THEN bd.quantity
-                                ELSE 0
-                            END
-                        ),
-                        0
-                    ) AS products
-
+                    COUNT(DISTINCT b.booking_id) AS orders,
+                    COALESCE(SUM(b.total_amount), 0) AS revenue,
+                    COALESCE(SUM(CASE WHEN bd.seat_id IS NOT NULL THEN bd.quantity END), 0) AS tickets,
+                    COALESCE(SUM(CASE WHEN bd.product_id IS NOT NULL THEN bd.quantity END), 0) AS products
                 FROM bookings b
-
-                LEFT JOIN booking_details bd
-                    ON bd.booking_id = b.booking_id
-
+                LEFT JOIN booking_details bd ON bd.booking_id = b.booking_id
                 WHERE b.status = 'Completed'
-                    AND ${this.buildDateCondition(
-                        'b.booking_date',
-                        range.startDate,
-                        range.endDate
-                    )}
-
+                  AND ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
                 GROUP BY DATE(b.booking_date)
-
                 ORDER BY date ASC
             `;
 
             const [rows] = await db.query(sql);
-
             const data = rows.map(row => ({
                 ...row,
                 orders: Number(row.orders) || 0,
@@ -464,23 +243,10 @@ class DashboardController {
             }));
 
             cache.set(cacheKey, data);
-
-            return res.json({
-                success: true,
-                data,
-                period: range
-            });
-
+            return res.json({ success: true, data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getRevenueTrend error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getRevenueTrend error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -490,256 +256,83 @@ class DashboardController {
 
     static async getTransactions(req, res) {
         try {
-            const {
-                startDate,
-                endDate,
-                page = 1,
-                limit = 20,
-                search = '',
-                status = 'Completed'
-            } = req.query;
+            const { startDate, endDate, page = 1, limit = 20, search = '', status = 'Completed' } = req.query;
+            const range = this.getDateRange('custom', startDate, endDate);
+            const pageVal = Math.max(1, parseInt(page) || 1);
+            const limitVal = Math.min(100, Math.max(1, parseInt(limit) || 20));
+            const offset = (pageVal - 1) * limitVal;
+            const searchText = search.trim();
+            const searchTerm = `%${searchText}%`;
 
-            const range = this.getDateRange(
-                'custom',
-                startDate,
-                endDate
-            );
+            const statusCondition = status !== 'all' ? 'AND b.status = ?' : '';
 
-            const pageVal =
-                Math.max(
-                    1,
-                    parseInt(page) || 1
-                );
-
-            const limitVal =
-                Math.min(
-                    100,
-                    Math.max(
-                        1,
-                        parseInt(limit) || 20
-                    )
-                );
-
-            const offset =
-                (pageVal - 1) * limitVal;
-
-            const searchText =
-                search.trim();
-
-            const searchTerm =
-                `%${searchText}%`;
-
-            const statusCondition =
-                status !== 'all'
-                    ? 'AND b.status = ?'
-                    : '';
-
-            // -----------------------------
-            // COUNT
-            // -----------------------------
-
+            // Count
             const countSql = `
                 SELECT COUNT(*) AS total
-
                 FROM bookings b
-
-                LEFT JOIN users u
-                    ON u.user_id = b.user_id
-
-                LEFT JOIN showtimes st
-                    ON st.showtime_id = b.showtime_id
-
-                LEFT JOIN movies m
-                    ON m.movie_id = st.movie_id
-
-                WHERE b.booking_date >= ?
-                    AND b.booking_date < DATE_ADD(
-                        ?,
-                        INTERVAL 1 DAY
-                    )
-
-                    ${statusCondition}
-
-                    AND (
-                        ? = ''
-                        OR u.full_name LIKE ?
-                        OR u.email LIKE ?
-                        OR m.title LIKE ?
-                        OR b.memo LIKE ?
-                    )
+                LEFT JOIN users u ON u.user_id = b.user_id
+                LEFT JOIN showtimes st ON st.showtime_id = b.showtime_id
+                LEFT JOIN movies m ON m.movie_id = st.movie_id
+                WHERE b.booking_date >= ? AND b.booking_date < DATE_ADD(?, INTERVAL 1 DAY)
+                  ${statusCondition}
+                  AND (? = '' OR u.full_name LIKE ? OR u.email LIKE ? OR m.title LIKE ? OR b.memo LIKE ?)
             `;
+            const countParams = [range.startDate, range.endDate];
+            if (status !== 'all') countParams.push(status);
+            countParams.push(searchText, searchTerm, searchTerm, searchTerm, searchTerm);
+            const [countRows] = await db.query(countSql, countParams);
+            const total = Number(countRows[0]?.total) || 0;
 
-            const countParams = [
-                range.startDate,
-                range.endDate
-            ];
-
-            if (status !== 'all') {
-                countParams.push(status);
-            }
-
-            countParams.push(
-                searchText,
-                searchTerm,
-                searchTerm,
-                searchTerm,
-                searchTerm
-            );
-
-            const [countRows] =
-                await db.query(
-                    countSql,
-                    countParams
-                );
-
-            const total =
-                Number(
-                    countRows[0]?.total
-                ) || 0;
-
-            // -----------------------------
-            // DATA
-            // -----------------------------
-
+            // Data
             const sql = `
                 SELECT
-                    b.booking_id,
-                    b.booking_date,
-                    b.total_amount,
-                    b.status,
-                    b.memo,
-
-                    COALESCE(
-                        u.full_name,
-                        'Khách lẻ'
-                    ) AS customer_name,
-
+                    b.booking_id, b.booking_date, b.total_amount, b.status, b.memo,
+                    COALESCE(u.full_name, 'Khách lẻ') AS customer_name,
                     u.email,
-
                     m.title AS movie_title,
-
                     c.cinema_name,
-
                     r.room_name,
-
                     st.start_time,
-
-                    (
-                        SELECT COUNT(*)
-                        FROM booking_details bd
-                        WHERE bd.booking_id =
-                            b.booking_id
-                            AND bd.seat_id IS NOT NULL
-                    ) AS ticket_count,
-
-                    (
-                        SELECT COUNT(*)
-                        FROM booking_details bd
-                        WHERE bd.booking_id =
-                            b.booking_id
-                            AND bd.product_id IS NOT NULL
-                    ) AS product_count
-
+                    (SELECT COUNT(*) FROM booking_details bd WHERE bd.booking_id = b.booking_id AND bd.seat_id IS NOT NULL) AS ticket_count,
+                    (SELECT COUNT(*) FROM booking_details bd WHERE bd.booking_id = b.booking_id AND bd.product_id IS NOT NULL) AS product_count
                 FROM bookings b
-
-                LEFT JOIN users u
-                    ON u.user_id = b.user_id
-
-                LEFT JOIN showtimes st
-                    ON st.showtime_id = b.showtime_id
-
-                LEFT JOIN movies m
-                    ON m.movie_id = st.movie_id
-
-                LEFT JOIN cinemas c
-                    ON c.cinema_id = st.cinema_id
-
-                LEFT JOIN rooms r
-                    ON r.room_id = st.room_id
-
-                WHERE b.booking_date >= ?
-                    AND b.booking_date < DATE_ADD(
-                        ?,
-                        INTERVAL 1 DAY
-                    )
-
-                    ${statusCondition}
-
-                    AND (
-                        ? = ''
-                        OR u.full_name LIKE ?
-                        OR u.email LIKE ?
-                        OR m.title LIKE ?
-                        OR b.memo LIKE ?
-                    )
-
+                LEFT JOIN users u ON u.user_id = b.user_id
+                LEFT JOIN showtimes st ON st.showtime_id = b.showtime_id
+                LEFT JOIN movies m ON m.movie_id = st.movie_id
+                LEFT JOIN cinemas c ON c.cinema_id = st.cinema_id
+                LEFT JOIN rooms r ON r.room_id = st.room_id
+                WHERE b.booking_date >= ? AND b.booking_date < DATE_ADD(?, INTERVAL 1 DAY)
+                  ${statusCondition}
+                  AND (? = '' OR u.full_name LIKE ? OR u.email LIKE ? OR m.title LIKE ? OR b.memo LIKE ?)
                 ORDER BY b.booking_date DESC
-
                 LIMIT ? OFFSET ?
             `;
+            const params = [range.startDate, range.endDate];
+            if (status !== 'all') params.push(status);
+            params.push(searchText, searchTerm, searchTerm, searchTerm, searchTerm, limitVal, offset);
 
-            const params = [
-                range.startDate,
-                range.endDate
-            ];
-
-            if (status !== 'all') {
-                params.push(status);
-            }
-
-            params.push(
-                searchText,
-                searchTerm,
-                searchTerm,
-                searchTerm,
-                searchTerm,
-                limitVal,
-                offset
-            );
-
-            const [rows] =
-                await db.query(
-                    sql,
-                    params
-                );
-
+            const [rows] = await db.query(sql, params);
             const data = rows.map(row => ({
                 ...row,
-                total_amount:
-                    Number(row.total_amount) || 0,
-                ticket_count:
-                    Number(row.ticket_count) || 0,
-                product_count:
-                    Number(row.product_count) || 0
+                total_amount: Number(row.total_amount) || 0,
+                ticket_count: Number(row.ticket_count) || 0,
+                product_count: Number(row.product_count) || 0
             }));
 
             return res.json({
                 success: true,
                 data,
-
                 pagination: {
                     page: pageVal,
                     limit: limitVal,
                     total,
-                    totalPages:
-                        Math.ceil(
-                            total / limitVal
-                        )
+                    totalPages: Math.ceil(total / limitVal)
                 },
-
                 period: range
             });
-
         } catch (error) {
-            console.error(
-                '❌ getTransactions error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getTransactions error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -749,17 +342,9 @@ class DashboardController {
 
     static async getRevenueByMovie(req, res) {
         try {
-            const range = this.getDateRange(
-                req.query.period || 'month',
-                req.query.startDate,
-                req.query.endDate
-            );
-
-            const cacheKey =
-                `by_movie_${range.startDate}_${range.endDate}`;
-
+            const range = this.getDateRange(req.query.period || 'month', req.query.startDate, req.query.endDate);
+            const cacheKey = `by_movie_${range.startDate}_${range.endDate}`;
             const cached = cache.get(cacheKey);
-
             if (cached) {
                 return res.json({
                     success: true,
@@ -774,108 +359,33 @@ class DashboardController {
                     m.movie_id,
                     m.title AS name,
                     m.movie_poster AS poster,
-
-                    COUNT(
-                        DISTINCT bd.booking_detail_id
-                    ) AS tickets,
-
-                    COALESCE(
-                        SUM(
-                            bd.quantity * bd.price
-                        ),
-                        0
-                    ) AS value
-
+                    COUNT(DISTINCT bd.booking_detail_id) AS tickets,
+                    COALESCE(SUM(bd.quantity * bd.price), 0) AS value
                 FROM booking_details bd
-
-                INNER JOIN bookings b
-                    ON b.booking_id =
-                        bd.booking_id
-                    AND b.status = 'Completed'
-
-                INNER JOIN showtimes st
-                    ON st.showtime_id =
-                        b.showtime_id
-
-                INNER JOIN movies m
-                    ON m.movie_id =
-                        st.movie_id
-
+                INNER JOIN bookings b ON b.booking_id = bd.booking_id AND b.status = 'Completed'
+                INNER JOIN showtimes st ON st.showtime_id = b.showtime_id
+                INNER JOIN movies m ON m.movie_id = st.movie_id
                 WHERE bd.seat_id IS NOT NULL
-
-                    AND ${this.buildDateCondition(
-                        'b.booking_date',
-                        range.startDate,
-                        range.endDate
-                    )}
-
-                GROUP BY
-                    m.movie_id,
-                    m.title,
-                    m.movie_poster
-
+                  AND ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
+                GROUP BY m.movie_id, m.title, m.movie_poster
                 ORDER BY value DESC
             `;
 
-            const [rows] =
-                await db.query(sql);
-
-            const total =
-                rows.reduce(
-                    (sum, row) =>
-                        sum +
-                        Number(row.value || 0),
-                    0
-                );
-
+            const [rows] = await db.query(sql);
+            const total = rows.reduce((sum, row) => sum + Number(row.value || 0), 0);
             const data = rows.map(row => ({
                 ...row,
-
-                tickets:
-                    Number(row.tickets) || 0,
-
-                value:
-                    Number(row.value) || 0,
-
-                percent:
-                    total > 0
-                        ? parseFloat(
-                            (
-                                Number(row.value) /
-                                total *
-                                100
-                            ).toFixed(1)
-                        )
-                        : 0
+                tickets: Number(row.tickets) || 0,
+                value: Number(row.value) || 0,
+                percent: total > 0 ? parseFloat((Number(row.value) / total * 100).toFixed(1)) : 0
             }));
 
-            const result = {
-                data,
-                total
-            };
-
-            cache.set(
-                cacheKey,
-                result
-            );
-
-            return res.json({
-                success: true,
-                data,
-                total,
-                period: range
-            });
-
+            const result = { data, total };
+            cache.set(cacheKey, result);
+            return res.json({ success: true, data, total, period: range });
         } catch (error) {
-            console.error(
-                '❌ getRevenueByMovie error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getRevenueByMovie error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -885,34 +395,12 @@ class DashboardController {
 
     static async getTopMovies(req, res) {
         try {
-            const limit =
-                Math.min(
-                    Math.max(
-                        parseInt(req.query.limit) || 10,
-                        1
-                    ),
-                    50
-                );
-
-            const range =
-                this.getDateRange(
-                    req.query.period || 'month',
-                    req.query.startDate,
-                    req.query.endDate
-                );
-
-            const cacheKey =
-                `top_movies_${range.startDate}_${range.endDate}_${limit}`;
-
-            const cached =
-                cache.get(cacheKey);
-
+            const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 50);
+            const range = this.getDateRange(req.query.period || 'month', req.query.startDate, req.query.endDate);
+            const cacheKey = `top_movies_${range.startDate}_${range.endDate}_${limit}`;
+            const cached = cache.get(cacheKey);
             if (cached) {
-                return res.json({
-                    success: true,
-                    movies: cached,
-                    period: range
-                });
+                return res.json({ success: true, movies: cached, period: range });
             }
 
             const sql = `
@@ -922,93 +410,32 @@ class DashboardController {
                     m.movie_poster AS poster,
                     m.release_date,
                     m.status,
-
-                    COUNT(
-                        DISTINCT bd.booking_detail_id
-                    ) AS tickets_sold,
-
-                    COUNT(
-                        DISTINCT b.booking_id
-                    ) AS orders,
-
-                    COALESCE(
-                        SUM(
-                            bd.quantity * bd.price
-                        ),
-                        0
-                    ) AS revenue
-
+                    COUNT(DISTINCT bd.booking_detail_id) AS tickets_sold,
+                    COUNT(DISTINCT b.booking_id) AS orders,
+                    COALESCE(SUM(bd.quantity * bd.price), 0) AS revenue
                 FROM movies m
-
-                INNER JOIN showtimes st
-                    ON st.movie_id =
-                        m.movie_id
-
-                INNER JOIN bookings b
-                    ON b.showtime_id =
-                        st.showtime_id
-                    AND b.status = 'Completed'
-
-                INNER JOIN booking_details bd
-                    ON bd.booking_id =
-                        b.booking_id
-                    AND bd.seat_id IS NOT NULL
-
-                WHERE ${this.buildDateCondition(
-                    'b.booking_date',
-                    range.startDate,
-                    range.endDate
-                )}
-
-                GROUP BY
-                    m.movie_id,
-                    m.title,
-                    m.movie_poster,
-                    m.release_date,
-                    m.status
-
+                INNER JOIN showtimes st ON st.movie_id = m.movie_id
+                INNER JOIN bookings b ON b.showtime_id = st.showtime_id AND b.status = 'Completed'
+                INNER JOIN booking_details bd ON bd.booking_id = b.booking_id AND bd.seat_id IS NOT NULL
+                WHERE ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
+                GROUP BY m.movie_id, m.title, m.movie_poster, m.release_date, m.status
                 ORDER BY revenue DESC
-
                 LIMIT ?
             `;
 
-            const [rows] =
-                await db.query(
-                    sql,
-                    [limit]
-                );
-
+            const [rows] = await db.query(sql, [limit]);
             const data = rows.map(row => ({
                 ...row,
-                tickets_sold:
-                    Number(row.tickets_sold) || 0,
-                orders:
-                    Number(row.orders) || 0,
-                revenue:
-                    Number(row.revenue) || 0
+                tickets_sold: Number(row.tickets_sold) || 0,
+                orders: Number(row.orders) || 0,
+                revenue: Number(row.revenue) || 0
             }));
 
-            cache.set(
-                cacheKey,
-                data
-            );
-
-            return res.json({
-                success: true,
-                movies: data,
-                period: range
-            });
-
+            cache.set(cacheKey, data);
+            return res.json({ success: true, movies: data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getTopMovies error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getTopMovies error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -1018,102 +445,38 @@ class DashboardController {
 
     static async getTicketsByMovie(req, res) {
         try {
-            const range =
-                this.getDateRange(
-                    req.query.period || 'month',
-                    req.query.startDate,
-                    req.query.endDate
-                );
-
-            const limit =
-                Math.min(
-                    Math.max(
-                        parseInt(req.query.limit) || 10,
-                        1
-                    ),
-                    50
-                );
+            const range = this.getDateRange(req.query.period || 'month', req.query.startDate, req.query.endDate);
+            const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 50);
 
             const sql = `
                 SELECT
                     m.movie_id,
                     m.title,
                     m.movie_poster AS poster,
-
-                    COUNT(
-                        DISTINCT bd.booking_detail_id
-                    ) AS tickets,
-
-                    COALESCE(
-                        SUM(
-                            bd.quantity
-                        ),
-                        0
-                    ) AS quantity
-
+                    COUNT(DISTINCT bd.booking_detail_id) AS tickets,
+                    COALESCE(SUM(bd.quantity), 0) AS quantity
                 FROM booking_details bd
-
-                INNER JOIN bookings b
-                    ON b.booking_id =
-                        bd.booking_id
-                    AND b.status = 'Completed'
-
-                INNER JOIN showtimes st
-                    ON st.showtime_id =
-                        b.showtime_id
-
-                INNER JOIN movies m
-                    ON m.movie_id =
-                        st.movie_id
-
+                INNER JOIN bookings b ON b.booking_id = bd.booking_id AND b.status = 'Completed'
+                INNER JOIN showtimes st ON st.showtime_id = b.showtime_id
+                INNER JOIN movies m ON m.movie_id = st.movie_id
                 WHERE bd.seat_id IS NOT NULL
-
-                    AND ${this.buildDateCondition(
-                        'b.booking_date',
-                        range.startDate,
-                        range.endDate
-                    )}
-
-                GROUP BY
-                    m.movie_id,
-                    m.title,
-                    m.movie_poster
-
+                  AND ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
+                GROUP BY m.movie_id, m.title, m.movie_poster
                 ORDER BY tickets DESC
-
                 LIMIT ?
             `;
 
-            const [rows] =
-                await db.query(
-                    sql,
-                    [limit]
-                );
-
+            const [rows] = await db.query(sql, [limit]);
             const data = rows.map(row => ({
                 ...row,
-                tickets:
-                    Number(row.tickets) || 0,
-                quantity:
-                    Number(row.quantity) || 0
+                tickets: Number(row.tickets) || 0,
+                quantity: Number(row.quantity) || 0
             }));
 
-            return res.json({
-                success: true,
-                data,
-                period: range
-            });
-
+            return res.json({ success: true, data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getTicketsByMovie error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getTicketsByMovie error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -1123,62 +486,26 @@ class DashboardController {
 
     static async getBookingStatus(req, res) {
         try {
-            const range =
-                this.getDateRange(
-                    req.query.period || 'month',
-                    req.query.startDate,
-                    req.query.endDate
-                );
-
+            const range = this.getDateRange(req.query.period || 'month', req.query.startDate, req.query.endDate);
             const sql = `
-                SELECT
-                    status,
-                    COUNT(*) AS orders,
-                    COALESCE(
-                        SUM(total_amount),
-                        0
-                    ) AS revenue
-
+                SELECT status, COUNT(*) AS orders, COALESCE(SUM(total_amount), 0) AS revenue
                 FROM bookings
-
-                WHERE ${this.buildDateCondition(
-                    'booking_date',
-                    range.startDate,
-                    range.endDate
-                )}
-
+                WHERE ${this.buildDateCondition('booking_date', range.startDate, range.endDate)}
                 GROUP BY status
-
                 ORDER BY orders DESC
             `;
 
-            const [rows] =
-                await db.query(sql);
-
+            const [rows] = await db.query(sql);
             const data = rows.map(row => ({
                 ...row,
-                orders:
-                    Number(row.orders) || 0,
-                revenue:
-                    Number(row.revenue) || 0
+                orders: Number(row.orders) || 0,
+                revenue: Number(row.revenue) || 0
             }));
 
-            return res.json({
-                success: true,
-                data,
-                period: range
-            });
-
+            return res.json({ success: true, data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getBookingStatus error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getBookingStatus error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -1188,66 +515,31 @@ class DashboardController {
 
     static async getUserGrowth(req, res) {
         try {
-            const range =
-                this.getDateRange(
-                    req.query.period || 'month',
-                    req.query.startDate,
-                    req.query.endDate
-                );
-
+            const range = this.getDateRange(req.query.period || 'month', req.query.startDate, req.query.endDate);
             const sql = `
-                SELECT
-                    DATE(created_at) AS date,
-                    COUNT(*) AS new_users
-
+                SELECT DATE(created_at) AS date, COUNT(*) AS new_users
                 FROM users
-
                 WHERE role = 'customer'
-
-                    AND ${this.buildDateCondition(
-                        'created_at',
-                        range.startDate,
-                        range.endDate
-                    )}
-
+                  AND ${this.buildDateCondition('created_at', range.startDate, range.endDate)}
                 GROUP BY DATE(created_at)
-
                 ORDER BY date ASC
             `;
 
-            const [rows] =
-                await db.query(sql);
-
+            const [rows] = await db.query(sql);
             let cumulative = 0;
-
             const data = rows.map(row => {
-                cumulative +=
-                    Number(row.new_users) || 0;
-
+                cumulative += Number(row.new_users) || 0;
                 return {
                     date: row.date,
-                    newUsers:
-                        Number(row.new_users) || 0,
+                    newUsers: Number(row.new_users) || 0,
                     cumulative
                 };
             });
 
-            return res.json({
-                success: true,
-                data,
-                period: range
-            });
-
+            return res.json({ success: true, data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getUserGrowth error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getUserGrowth error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -1257,111 +549,37 @@ class DashboardController {
 
     static async getTopCustomers(req, res) {
         try {
-            const limit =
-                Math.min(
-                    Math.max(
-                        parseInt(req.query.limit) || 10,
-                        1
-                    ),
-                    50
-                );
-
-            const range =
-                this.getDateRange(
-                    req.query.period || 'month',
-                    req.query.startDate,
-                    req.query.endDate
-                );
-
+            const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 50);
+            const range = this.getDateRange(req.query.period || 'month', req.query.startDate, req.query.endDate);
             const sql = `
                 SELECT
-                    u.user_id,
-                    u.full_name,
-                    u.email,
-                    u.user_avatar AS avatar,
-                    u.points,
-
-                    COUNT(
-                        DISTINCT b.booking_id
-                    ) AS orders,
-
-                    COUNT(
-                        DISTINCT CASE
-                            WHEN bd.seat_id IS NOT NULL
-                            THEN bd.booking_detail_id
-                        END
-                    ) AS tickets,
-
-                    COALESCE(
-                        SUM(b.total_amount),
-                        0
-                    ) AS spending
-
+                    u.user_id, u.full_name, u.email, u.user_avatar AS avatar, u.points,
+                    COUNT(DISTINCT b.booking_id) AS orders,
+                    COUNT(DISTINCT CASE WHEN bd.seat_id IS NOT NULL THEN bd.booking_detail_id END) AS tickets,
+                    COALESCE(SUM(b.total_amount), 0) AS spending
                 FROM users u
-
-                INNER JOIN bookings b
-                    ON b.user_id =
-                        u.user_id
-                    AND b.status = 'Completed'
-
-                LEFT JOIN booking_details bd
-                    ON bd.booking_id =
-                        b.booking_id
-
+                INNER JOIN bookings b ON b.user_id = u.user_id AND b.status = 'Completed'
+                LEFT JOIN booking_details bd ON bd.booking_id = b.booking_id
                 WHERE u.role = 'customer'
-
-                    AND ${this.buildDateCondition(
-                        'b.booking_date',
-                        range.startDate,
-                        range.endDate
-                    )}
-
-                GROUP BY
-                    u.user_id,
-                    u.full_name,
-                    u.email,
-                    u.user_avatar,
-                    u.points
-
+                  AND ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
+                GROUP BY u.user_id, u.full_name, u.email, u.user_avatar, u.points
                 ORDER BY spending DESC
-
                 LIMIT ?
             `;
 
-            const [rows] =
-                await db.query(
-                    sql,
-                    [limit]
-                );
-
+            const [rows] = await db.query(sql, [limit]);
             const data = rows.map(row => ({
                 ...row,
-                orders:
-                    Number(row.orders) || 0,
-                tickets:
-                    Number(row.tickets) || 0,
-                spending:
-                    Number(row.spending) || 0,
-                points:
-                    Number(row.points) || 0
+                orders: Number(row.orders) || 0,
+                tickets: Number(row.tickets) || 0,
+                spending: Number(row.spending) || 0,
+                points: Number(row.points) || 0
             }));
 
-            return res.json({
-                success: true,
-                data,
-                period: range
-            });
-
+            return res.json({ success: true, data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getTopCustomers error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getTopCustomers error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -1371,87 +589,32 @@ class DashboardController {
 
     static async getProductPerformance(req, res) {
         try {
-            const range =
-                this.getDateRange(
-                    req.query.period || 'month',
-                    req.query.startDate,
-                    req.query.endDate
-                );
-
+            const range = this.getDateRange(req.query.period || 'month', req.query.startDate, req.query.endDate);
             const sql = `
                 SELECT
-                    p.product_id,
-                    p.product_name,
-                    p.food_image AS image,
-                    p.category,
-
-                    COALESCE(
-                        SUM(bd.quantity),
-                        0
-                    ) AS quantity,
-
-                    COALESCE(
-                        SUM(
-                            bd.quantity * bd.price
-                        ),
-                        0
-                    ) AS revenue
-
+                    p.product_id, p.product_name, p.food_image AS image, p.category,
+                    COALESCE(SUM(bd.quantity), 0) AS quantity,
+                    COALESCE(SUM(bd.quantity * bd.price), 0) AS revenue
                 FROM booking_details bd
-
-                INNER JOIN bookings b
-                    ON b.booking_id =
-                        bd.booking_id
-                    AND b.status = 'Completed'
-
-                INNER JOIN product_menu p
-                    ON p.product_id =
-                        bd.product_id
-
+                INNER JOIN bookings b ON b.booking_id = bd.booking_id AND b.status = 'Completed'
+                INNER JOIN product_menu p ON p.product_id = bd.product_id
                 WHERE bd.product_id IS NOT NULL
-
-                    AND ${this.buildDateCondition(
-                        'b.booking_date',
-                        range.startDate,
-                        range.endDate
-                    )}
-
-                GROUP BY
-                    p.product_id,
-                    p.product_name,
-                    p.food_image,
-                    p.category
-
+                  AND ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
+                GROUP BY p.product_id, p.product_name, p.food_image, p.category
                 ORDER BY revenue DESC
             `;
 
-            const [rows] =
-                await db.query(sql);
-
+            const [rows] = await db.query(sql);
             const data = rows.map(row => ({
                 ...row,
-                quantity:
-                    Number(row.quantity) || 0,
-                revenue:
-                    Number(row.revenue) || 0
+                quantity: Number(row.quantity) || 0,
+                revenue: Number(row.revenue) || 0
             }));
 
-            return res.json({
-                success: true,
-                data,
-                period: range
-            });
-
+            return res.json({ success: true, data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getProductPerformance error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getProductPerformance error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -1461,94 +624,34 @@ class DashboardController {
 
     static async getCinemaPerformance(req, res) {
         try {
-            const range =
-                this.getDateRange(
-                    req.query.period || 'month',
-                    req.query.startDate,
-                    req.query.endDate
-                );
-
+            const range = this.getDateRange(req.query.period || 'month', req.query.startDate, req.query.endDate);
             const sql = `
                 SELECT
-                    c.cinema_id,
-                    c.cinema_name,
-
-                    COUNT(
-                        DISTINCT b.booking_id
-                    ) AS orders,
-
-                    COUNT(
-                        DISTINCT CASE
-                            WHEN bd.seat_id IS NOT NULL
-                            THEN bd.booking_detail_id
-                        END
-                    ) AS tickets,
-
-                    COALESCE(
-                        SUM(
-                            DISTINCT b.total_amount
-                        ),
-                        0
-                    ) AS revenue
-
+                    c.cinema_id, c.cinema_name,
+                    COUNT(DISTINCT b.booking_id) AS orders,
+                    COUNT(DISTINCT CASE WHEN bd.seat_id IS NOT NULL THEN bd.booking_detail_id END) AS tickets,
+                    COALESCE(SUM(DISTINCT b.total_amount), 0) AS revenue
                 FROM cinemas c
-
-                INNER JOIN showtimes st
-                    ON st.cinema_id =
-                        c.cinema_id
-
-                INNER JOIN bookings b
-                    ON b.showtime_id =
-                        st.showtime_id
-                    AND b.status = 'Completed'
-
-                LEFT JOIN booking_details bd
-                    ON bd.booking_id =
-                        b.booking_id
-                    AND bd.seat_id IS NOT NULL
-
-                WHERE ${this.buildDateCondition(
-                    'b.booking_date',
-                    range.startDate,
-                    range.endDate
-                )}
-
-                GROUP BY
-                    c.cinema_id,
-                    c.cinema_name
-
+                INNER JOIN showtimes st ON st.cinema_id = c.cinema_id
+                INNER JOIN bookings b ON b.showtime_id = st.showtime_id AND b.status = 'Completed'
+                LEFT JOIN booking_details bd ON bd.booking_id = b.booking_id AND bd.seat_id IS NOT NULL
+                WHERE ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
+                GROUP BY c.cinema_id, c.cinema_name
                 ORDER BY revenue DESC
             `;
 
-            const [rows] =
-                await db.query(sql);
-
+            const [rows] = await db.query(sql);
             const data = rows.map(row => ({
                 ...row,
-                orders:
-                    Number(row.orders) || 0,
-                tickets:
-                    Number(row.tickets) || 0,
-                revenue:
-                    Number(row.revenue) || 0
+                orders: Number(row.orders) || 0,
+                tickets: Number(row.tickets) || 0,
+                revenue: Number(row.revenue) || 0
             }));
 
-            return res.json({
-                success: true,
-                data,
-                period: range
-            });
-
+            return res.json({ success: true, data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getCinemaPerformance error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getCinemaPerformance error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -1558,142 +661,42 @@ class DashboardController {
 
     static async getRoomPerformance(req, res) {
         try {
-            const range =
-                this.getDateRange(
-                    req.query.period || 'month',
-                    req.query.startDate,
-                    req.query.endDate
-                );
-
+            const range = this.getDateRange(req.query.period || 'month', req.query.startDate, req.query.endDate);
             const sql = `
                 SELECT
-                    r.room_id,
-                    r.room_name,
-                    r.room_type,
-                    c.cinema_name,
-
-                    COUNT(
-                        DISTINCT st.showtime_id
-                    ) AS showtimes,
-
-                    COUNT(
-                        DISTINCT CASE
-                            WHEN b.status = 'Completed'
-                                AND bd.seat_id IS NOT NULL
-                            THEN bd.booking_detail_id
-                        END
-                    ) AS tickets,
-
-                    COUNT(
-                        DISTINCT st.showtime_id
-                    ) * r.total_seats AS capacity,
-
-                    COALESCE(
-                        SUM(
-                            CASE
-                                WHEN b.status = 'Completed'
-                                THEN b.total_amount
-                                ELSE 0
-                            END
-                        ),
-                        0
-                    ) AS revenue
-
+                    r.room_id, r.room_name, r.room_type, c.cinema_name,
+                    COUNT(DISTINCT st.showtime_id) AS showtimes,
+                    COUNT(DISTINCT CASE WHEN b.status = 'Completed' AND bd.seat_id IS NOT NULL THEN bd.booking_detail_id END) AS tickets,
+                    COUNT(DISTINCT st.showtime_id) * r.total_seats AS capacity,
+                    COALESCE(SUM(CASE WHEN b.status = 'Completed' THEN b.total_amount ELSE 0 END), 0) AS revenue
                 FROM rooms r
-
-                INNER JOIN cinemas c
-                    ON c.cinema_id =
-                        r.cinema_id
-
-                LEFT JOIN showtimes st
-                    ON st.room_id =
-                        r.room_id
-
-                    AND st.start_time >= ?
-
-                    AND st.start_time <
-                        DATE_ADD(
-                            ?,
-                            INTERVAL 1 DAY
-                        )
-
-                LEFT JOIN bookings b
-                    ON b.showtime_id =
-                        st.showtime_id
-
-                LEFT JOIN booking_details bd
-                    ON bd.booking_id =
-                        b.booking_id
-                    AND bd.seat_id IS NOT NULL
-
-                GROUP BY
-                    r.room_id,
-                    r.room_name,
-                    r.room_type,
-                    c.cinema_name,
-                    r.total_seats
-
+                INNER JOIN cinemas c ON c.cinema_id = r.cinema_id
+                LEFT JOIN showtimes st ON st.room_id = r.room_id
+                    AND st.start_time >= ? AND st.start_time < DATE_ADD(?, INTERVAL 1 DAY)
+                LEFT JOIN bookings b ON b.showtime_id = st.showtime_id
+                LEFT JOIN booking_details bd ON bd.booking_id = b.booking_id AND bd.seat_id IS NOT NULL
+                GROUP BY r.room_id, r.room_name, r.room_type, c.cinema_name, r.total_seats
                 ORDER BY revenue DESC
             `;
 
-            const [rows] =
-                await db.query(
-                    sql,
-                    [
-                        range.startDate,
-                        range.endDate
-                    ]
-                );
-
+            const [rows] = await db.query(sql, [range.startDate, range.endDate]);
             const data = rows.map(row => {
-                const tickets =
-                    Number(row.tickets) || 0;
-
-                const capacity =
-                    Number(row.capacity) || 0;
-
+                const tickets = Number(row.tickets) || 0;
+                const capacity = Number(row.capacity) || 0;
                 return {
                     ...row,
-
-                    showtimes:
-                        Number(row.showtimes) || 0,
-
+                    showtimes: Number(row.showtimes) || 0,
                     tickets,
-
                     capacity,
-
-                    occupancy:
-                        capacity > 0
-                            ? parseFloat(
-                                (
-                                    tickets /
-                                    capacity *
-                                    100
-                                ).toFixed(1)
-                            )
-                            : 0,
-
-                    revenue:
-                        Number(row.revenue) || 0
+                    occupancy: capacity > 0 ? parseFloat((tickets / capacity * 100).toFixed(1)) : 0,
+                    revenue: Number(row.revenue) || 0
                 };
             });
 
-            return res.json({
-                success: true,
-                data,
-                period: range
-            });
-
+            return res.json({ success: true, data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getRoomPerformance error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getRoomPerformance error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -1703,154 +706,45 @@ class DashboardController {
 
     static async getShowtimePerformance(req, res) {
         try {
-            const range =
-                this.getDateRange(
-                    req.query.period || 'today',
-                    req.query.startDate,
-                    req.query.endDate
-                );
-
-            const limit =
-                Math.min(
-                    Math.max(
-                        parseInt(req.query.limit) || 20,
-                        1
-                    ),
-                    100
-                );
-
+            const range = this.getDateRange(req.query.period || 'today', req.query.startDate, req.query.endDate);
+            const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
             const sql = `
                 SELECT
-                    st.showtime_id,
-                    st.start_time,
-
+                    st.showtime_id, st.start_time,
                     m.title AS movie_title,
-
                     c.cinema_name,
-
-                    r.room_name,
-                    r.total_seats,
-
-                    COUNT(
-                        DISTINCT CASE
-                            WHEN b.status = 'Completed'
-                                AND bd.seat_id IS NOT NULL
-                            THEN bd.booking_detail_id
-                        END
-                    ) AS tickets,
-
-                    COALESCE(
-                        SUM(
-                            CASE
-                                WHEN b.status = 'Completed'
-                                THEN b.total_amount
-                                ELSE 0
-                            END
-                        ),
-                        0
-                    ) AS revenue
-
+                    r.room_name, r.total_seats,
+                    COUNT(DISTINCT CASE WHEN b.status = 'Completed' AND bd.seat_id IS NOT NULL THEN bd.booking_detail_id END) AS tickets,
+                    COALESCE(SUM(CASE WHEN b.status = 'Completed' THEN b.total_amount ELSE 0 END), 0) AS revenue
                 FROM showtimes st
-
-                INNER JOIN movies m
-                    ON m.movie_id =
-                        st.movie_id
-
-                INNER JOIN cinemas c
-                    ON c.cinema_id =
-                        st.cinema_id
-
-                INNER JOIN rooms r
-                    ON r.room_id =
-                        st.room_id
-
-                LEFT JOIN bookings b
-                    ON b.showtime_id =
-                        st.showtime_id
-
-                LEFT JOIN booking_details bd
-                    ON bd.booking_id =
-                        b.booking_id
-                    AND bd.seat_id IS NOT NULL
-
-                WHERE st.start_time >= ?
-
-                    AND st.start_time <
-                        DATE_ADD(
-                            ?,
-                            INTERVAL 1 DAY
-                        )
-
-                GROUP BY
-                    st.showtime_id,
-                    st.start_time,
-                    m.title,
-                    c.cinema_name,
-                    r.room_name,
-                    r.total_seats
-
+                INNER JOIN movies m ON m.movie_id = st.movie_id
+                INNER JOIN cinemas c ON c.cinema_id = st.cinema_id
+                INNER JOIN rooms r ON r.room_id = st.room_id
+                LEFT JOIN bookings b ON b.showtime_id = st.showtime_id
+                LEFT JOIN booking_details bd ON bd.booking_id = b.booking_id AND bd.seat_id IS NOT NULL
+                WHERE st.start_time >= ? AND st.start_time < DATE_ADD(?, INTERVAL 1 DAY)
+                GROUP BY st.showtime_id, st.start_time, m.title, c.cinema_name, r.room_name, r.total_seats
                 ORDER BY tickets DESC
-
                 LIMIT ?
             `;
 
-            const [rows] =
-                await db.query(
-                    sql,
-                    [
-                        range.startDate,
-                        range.endDate,
-                        limit
-                    ]
-                );
-
+            const [rows] = await db.query(sql, [range.startDate, range.endDate, limit]);
             const data = rows.map(row => {
-                const tickets =
-                    Number(row.tickets) || 0;
-
-                const totalSeats =
-                    Number(row.total_seats) || 0;
-
+                const tickets = Number(row.tickets) || 0;
+                const totalSeats = Number(row.total_seats) || 0;
                 return {
                     ...row,
-
                     tickets,
-
-                    total_seats:
-                        totalSeats,
-
-                    occupancy:
-                        totalSeats > 0
-                            ? parseFloat(
-                                (
-                                    tickets /
-                                    totalSeats *
-                                    100
-                                ).toFixed(1)
-                            )
-                            : 0,
-
-                    revenue:
-                        Number(row.revenue) || 0
+                    total_seats: totalSeats,
+                    occupancy: totalSeats > 0 ? parseFloat((tickets / totalSeats * 100).toFixed(1)) : 0,
+                    revenue: Number(row.revenue) || 0
                 };
             });
 
-            return res.json({
-                success: true,
-                data,
-                period: range
-            });
-
+            return res.json({ success: true, data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getShowtimePerformance error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getShowtimePerformance error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -1860,84 +754,30 @@ class DashboardController {
 
     static async getCouponPerformance(req, res) {
         try {
-            const range =
-                this.getDateRange(
-                    req.query.period || 'month',
-                    req.query.startDate,
-                    req.query.endDate
-                );
-
+            const range = this.getDateRange(req.query.period || 'month', req.query.startDate, req.query.endDate);
             const sql = `
                 SELECT
-                    c.coupon_id,
-                    c.coupon_code,
-                    c.discount_value,
-                    c.expiry_date,
-
-                    COUNT(
-                        b.booking_id
-                    ) AS used_count,
-
-                    COALESCE(
-                        SUM(
-                            b.total_amount
-                        ),
-                        0
-                    ) AS revenue
-
+                    c.coupon_id, c.coupon_code, c.discount_value, c.expiry_date,
+                    COUNT(b.booking_id) AS used_count,
+                    COALESCE(SUM(b.total_amount), 0) AS revenue
                 FROM coupons c
-
-                LEFT JOIN bookings b
-                    ON b.coupon_id =
-                        c.coupon_id
-
-                    AND b.status =
-                        'Completed'
-
-                    AND ${this.buildDateCondition(
-                        'b.booking_date',
-                        range.startDate,
-                        range.endDate
-                    )}
-
-                GROUP BY
-                    c.coupon_id,
-                    c.coupon_code,
-                    c.discount_value,
-                    c.expiry_date
-
+                LEFT JOIN bookings b ON b.coupon_id = c.coupon_id AND b.status = 'Completed'
+                    AND ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
+                GROUP BY c.coupon_id, c.coupon_code, c.discount_value, c.expiry_date
                 ORDER BY used_count DESC
             `;
 
-            const [rows] =
-                await db.query(sql);
-
+            const [rows] = await db.query(sql);
             const data = rows.map(row => ({
                 ...row,
-
-                used_count:
-                    Number(row.used_count) || 0,
-
-                revenue:
-                    Number(row.revenue) || 0
+                used_count: Number(row.used_count) || 0,
+                revenue: Number(row.revenue) || 0
             }));
 
-            return res.json({
-                success: true,
-                data,
-                period: range
-            });
-
+            return res.json({ success: true, data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getCouponPerformance error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getCouponPerformance error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -1947,173 +787,46 @@ class DashboardController {
 
     static async getContentStats(req, res) {
         try {
-            const [
-                movies,
-                actors,
-                genres,
-                cinemas,
-                rooms,
-                showtimes,
-                products,
-                blogs,
-                news,
-                promotions,
-                banners,
-                reviews
-            ] = await Promise.all([
-
-                db.query(`
-                    SELECT
-                        COUNT(*) AS total,
-                        SUM(
-                            status = 'Đang chiếu'
-                        ) AS showing,
-                        SUM(
-                            status = 'Sắp chiếu'
-                        ) AS upcoming
-                    FROM movies
-                `),
-
-                db.query(`
-                    SELECT COUNT(*) AS total
-                    FROM actors
-                `),
-
-                db.query(`
-                    SELECT COUNT(*) AS total
-                    FROM genres
-                `),
-
-                db.query(`
-                    SELECT COUNT(*) AS total
-                    FROM cinemas
-                `),
-
-                db.query(`
-                    SELECT COUNT(*) AS total
-                    FROM rooms
-                `),
-
-                db.query(`
-                    SELECT COUNT(*) AS total
-                    FROM showtimes
-                    WHERE start_time >= NOW()
-                `),
-
-                db.query(`
-                    SELECT
-                        COUNT(*) AS total,
-                        SUM(status = 1) AS active
-                    FROM product_menu
-                `),
-
-                db.query(`
-                    SELECT
-                        COUNT(*) AS total,
-                        SUM(is_active = 1) AS active
-                    FROM blog_cinema
-                `),
-
-                db.query(`
-                    SELECT COUNT(*) AS total
-                    FROM news
-                `),
-
-                db.query(`
-                    SELECT
-                        COUNT(*) AS total,
-                        SUM(is_active = 1) AS active
-                    FROM promotions
-                `),
-
-                db.query(`
-                    SELECT
-                        COUNT(*) AS total,
-                        SUM(is_active = 1) AS active
-                    FROM banners
-                `),
-
-                db.query(`
-                    SELECT
-                        COUNT(*) AS total,
-                        COALESCE(
-                            AVG(rating_score),
-                            0
-                        ) AS average_rating
-                    FROM reviews
-                `)
-            ]);
+            const [movies] = await db.query(`
+                SELECT
+                    COUNT(*) AS total,
+                    SUM(status = 'Đang chiếu') AS showing,
+                    SUM(status = 'Sắp chiếu') AS upcoming
+                FROM movies
+            `);
+            const [actors] = await db.query(`SELECT COUNT(*) AS total FROM actors`);
+            const [genres] = await db.query(`SELECT COUNT(*) AS total FROM genres`);
+            const [cinemas] = await db.query(`SELECT COUNT(*) AS total FROM cinemas`);
+            const [rooms] = await db.query(`SELECT COUNT(*) AS total FROM rooms`);
+            const [showtimes] = await db.query(`SELECT COUNT(*) AS total FROM showtimes WHERE start_time >= NOW()`);
+            const [products] = await db.query(`SELECT COUNT(*) AS total, SUM(status = 1) AS active FROM product_menu`);
+            const [blogs] = await db.query(`SELECT COUNT(*) AS total, SUM(is_active = 1) AS active FROM blog_cinema`);
+            const [news] = await db.query(`SELECT COUNT(*) AS total FROM news`);
+            const [promotions] = await db.query(`SELECT COUNT(*) AS total, SUM(is_active = 1) AS active FROM promotions`);
+            const [banners] = await db.query(`SELECT COUNT(*) AS total, SUM(is_active = 1) AS active FROM banners`);
+            const [reviews] = await db.query(`SELECT COUNT(*) AS total, COALESCE(AVG(rating_score), 0) AS average_rating FROM reviews`);
 
             return res.json({
                 success: true,
-
-                movies: movies[0][0],
-
-                actors:
-                    Number(
-                        actors[0][0]?.total
-                    ) || 0,
-
-                genres:
-                    Number(
-                        genres[0][0]?.total
-                    ) || 0,
-
-                cinemas:
-                    Number(
-                        cinemas[0][0]?.total
-                    ) || 0,
-
-                rooms:
-                    Number(
-                        rooms[0][0]?.total
-                    ) || 0,
-
-                upcomingShowtimes:
-                    Number(
-                        showtimes[0][0]?.total
-                    ) || 0,
-
-                products:
-                    products[0][0],
-
-                blogs:
-                    blogs[0][0],
-
-                news:
-                    Number(
-                        news[0][0]?.total
-                    ) || 0,
-
-                promotions:
-                    promotions[0][0],
-
-                banners:
-                    banners[0][0],
-
+                movies: movies[0],
+                actors: Number(actors[0]?.total) || 0,
+                genres: Number(genres[0]?.total) || 0,
+                cinemas: Number(cinemas[0]?.total) || 0,
+                rooms: Number(rooms[0]?.total) || 0,
+                upcomingShowtimes: Number(showtimes[0]?.total) || 0,
+                products: products[0],
+                blogs: blogs[0],
+                news: Number(news[0]?.total) || 0,
+                promotions: promotions[0],
+                banners: banners[0],
                 reviews: {
-                    total:
-                        Number(
-                            reviews[0][0]?.total
-                        ) || 0,
-
-                    averageRating:
-                        Number(
-                            reviews[0][0]?.average_rating
-                        ) || 0
+                    total: Number(reviews[0]?.total) || 0,
+                    averageRating: Number(reviews[0]?.average_rating) || 0
                 }
             });
-
         } catch (error) {
-            console.error(
-                '❌ getContentStats error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getContentStats error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -2123,42 +836,23 @@ class DashboardController {
 
     static async getUserStatus(req, res) {
         try {
-            const [rows] =
-                await db.query(`
-                    SELECT
-                        status,
-                        COUNT(*) AS total
-
-                    FROM users
-
-                    WHERE role = 'customer'
-
-                    GROUP BY status
-
-                    ORDER BY total DESC
-                `);
+            const [rows] = await db.query(`
+                SELECT status, COUNT(*) AS total
+                FROM users
+                WHERE role = 'customer'
+                GROUP BY status
+                ORDER BY total DESC
+            `);
 
             const data = rows.map(row => ({
                 ...row,
-                total:
-                    Number(row.total) || 0
+                total: Number(row.total) || 0
             }));
 
-            return res.json({
-                success: true,
-                data
-            });
-
+            return res.json({ success: true, data });
         } catch (error) {
-            console.error(
-                '❌ getUserStatus error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getUserStatus error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -2168,61 +862,25 @@ class DashboardController {
 
     static async getOtpStats(req, res) {
         try {
-            const range =
-                this.getDateRange(
-                    req.query.period || 'month',
-                    req.query.startDate,
-                    req.query.endDate
-                );
-
+            const range = this.getDateRange(req.query.period || 'month', req.query.startDate, req.query.endDate);
             const sql = `
-                SELECT
-                    purpose,
-                    status,
-                    COUNT(*) AS total
-
+                SELECT purpose, status, COUNT(*) AS total
                 FROM otp_logs
-
-                WHERE ${this.buildDateCondition(
-                    'created_at',
-                    range.startDate,
-                    range.endDate
-                )}
-
-                GROUP BY
-                    purpose,
-                    status
-
-                ORDER BY
-                    purpose,
-                    total DESC
+                WHERE ${this.buildDateCondition('created_at', range.startDate, range.endDate)}
+                GROUP BY purpose, status
+                ORDER BY purpose, total DESC
             `;
 
-            const [rows] =
-                await db.query(sql);
-
+            const [rows] = await db.query(sql);
             const data = rows.map(row => ({
                 ...row,
-                total:
-                    Number(row.total) || 0
+                total: Number(row.total) || 0
             }));
 
-            return res.json({
-                success: true,
-                data,
-                period: range
-            });
-
+            return res.json({ success: true, data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getOtpStats error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getOtpStats error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -2232,62 +890,27 @@ class DashboardController {
 
     static async getReviewStats(req, res) {
         try {
-            const [rows] =
-                await db.query(`
-                    SELECT
-                        m.movie_id,
-                        m.title,
-
-                        COUNT(
-                            r.review_id
-                        ) AS review_count,
-
-                        COALESCE(
-                            AVG(
-                                r.rating_score
-                            ),
-                            0
-                        ) AS average_rating
-
-                    FROM movies m
-
-                    LEFT JOIN reviews r
-                        ON r.movie_id =
-                            m.movie_id
-
-                    GROUP BY
-                        m.movie_id,
-                        m.title
-
-                    ORDER BY
-                        average_rating DESC
-                `);
+            const [rows] = await db.query(`
+                SELECT
+                    m.movie_id, m.title,
+                    COUNT(r.review_id) AS review_count,
+                    COALESCE(AVG(r.rating_score), 0) AS average_rating
+                FROM movies m
+                LEFT JOIN reviews r ON r.movie_id = m.movie_id
+                GROUP BY m.movie_id, m.title
+                ORDER BY average_rating DESC
+            `);
 
             const data = rows.map(row => ({
                 ...row,
-
-                review_count:
-                    Number(row.review_count) || 0,
-
-                average_rating:
-                    Number(row.average_rating) || 0
+                review_count: Number(row.review_count) || 0,
+                average_rating: Number(row.average_rating) || 0
             }));
 
-            return res.json({
-                success: true,
-                data
-            });
-
+            return res.json({ success: true, data });
         } catch (error) {
-            console.error(
-                '❌ getReviewStats error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getReviewStats error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -2297,34 +920,12 @@ class DashboardController {
 
     static async getSeatPerformance(req, res) {
         try {
-            const range =
-                this.getDateRange(
-                    req.query.period || 'month',
-                    req.query.startDate,
-                    req.query.endDate
-                );
-
-            const data =
-                await this._getSeatPerformanceInternal(
-                    range
-                );
-
-            return res.json({
-                success: true,
-                data,
-                period: range
-            });
-
+            const range = this.getDateRange(req.query.period || 'month', req.query.startDate, req.query.endDate);
+            const data = await this._getSeatPerformanceInternal(range);
+            return res.json({ success: true, data, period: range });
         } catch (error) {
-            console.error(
-                '❌ getSeatPerformance error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getSeatPerformance error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -2334,38 +935,15 @@ class DashboardController {
 
     static async getSummary(req, res) {
         try {
-            const {
-                period = 'week',
-                startDate,
-                endDate
-            } = req.query;
-
-            const range =
-                this.getDateRange(
-                    period,
-                    startDate,
-                    endDate
-                );
-
-            const cacheKey =
-                `summary_${range.startDate}_${range.endDate}`;
-
-            const cached =
-                cache.get(cacheKey);
-
+            const { period = 'week', startDate, endDate } = req.query;
+            const range = this.getDateRange(period, startDate, endDate);
+            const cacheKey = `summary_${range.startDate}_${range.endDate}`;
+            const cached = cache.get(cacheKey);
             if (cached) {
-                return res.json({
-                    success: true,
-                    ...cached
-                });
+                return res.json({ success: true, ...cached });
             }
 
-            const [
-                stats,
-                topMovies,
-                bookingStatus,
-                seat
-            ] = await Promise.all([
+            const [stats, topMovies, bookingStatus, seat] = await Promise.all([
                 this._getStatsInternal(range),
                 this._getTopMoviesInternal(range, 5),
                 this._getBookingStatusInternal(range),
@@ -2380,26 +958,11 @@ class DashboardController {
                 period: range
             };
 
-            cache.set(
-                cacheKey,
-                result
-            );
-
-            return res.json({
-                success: true,
-                ...result
-            });
-
+            cache.set(cacheKey, result);
+            return res.json({ success: true, ...result });
         } catch (error) {
-            console.error(
-                '❌ getSummary error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getSummary error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -2415,58 +978,26 @@ class DashboardController {
                     b.booking_date,
                     b.total_amount,
                     b.status,
-
-                    COALESCE(
-                        u.full_name,
-                        'Khách lẻ'
-                    ) AS customer_name,
-
+                    COALESCE(u.full_name, 'Khách lẻ') AS customer_name,
                     m.title AS movie_title
-
                 FROM bookings b
-
-                LEFT JOIN users u
-                    ON u.user_id =
-                        b.user_id
-
-                LEFT JOIN showtimes st
-                    ON st.showtime_id =
-                        b.showtime_id
-
-                LEFT JOIN movies m
-                    ON m.movie_id =
-                        st.movie_id
-
-                ORDER BY
-                    b.booking_date DESC
-
+                LEFT JOIN users u ON u.user_id = b.user_id
+                LEFT JOIN showtimes st ON st.showtime_id = b.showtime_id
+                LEFT JOIN movies m ON m.movie_id = st.movie_id
+                ORDER BY b.booking_date DESC
                 LIMIT 5
             `;
 
-            const [rows] =
-                await db.query(sql);
-
+            const [rows] = await db.query(sql);
             const data = rows.map(row => ({
                 ...row,
-                total_amount:
-                    Number(row.total_amount) || 0
+                total_amount: Number(row.total_amount) || 0
             }));
 
-            return res.json({
-                success: true,
-                data
-            });
-
+            return res.json({ success: true, data });
         } catch (error) {
-            console.error(
-                '❌ getRecentOrders error:',
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message: error.message
-            });
+            console.error('❌ getRecentOrders error:', error);
+            return res.status(500).json({ success: false, message: error.message });
         }
     }
 
@@ -2477,99 +1008,29 @@ class DashboardController {
     static async _getStatsInternal(range) {
         const sql = `
             SELECT
-                (
-                    SELECT COUNT(*)
-                    FROM movies
-                ) AS movies,
-
-                (
-                    SELECT COUNT(*)
-                    FROM users
-                    WHERE role = 'customer'
-                ) AS users,
-
-                COUNT(
-                    DISTINCT b.booking_id
-                ) AS orders,
-
-                COUNT(
-                    DISTINCT CASE
-                        WHEN bd.seat_id IS NOT NULL
-                        THEN bd.booking_detail_id
-                    END
-                ) AS tickets,
-
-                COALESCE(
-                    SUM(
-                        DISTINCT b.total_amount
-                    ),
-                    0
-                ) AS revenue,
-
-                COALESCE(
-                    SUM(
-                        CASE
-                            WHEN bd.seat_id IS NOT NULL
-                            THEN bd.quantity * bd.price
-                            ELSE 0
-                        END
-                    ),
-                    0
-                ) AS ticket_revenue,
-
-                COALESCE(
-                    SUM(
-                        CASE
-                            WHEN bd.product_id IS NOT NULL
-                            THEN bd.quantity * bd.price
-                            ELSE 0
-                        END
-                    ),
-                    0
-                ) AS product_revenue
-
+                (SELECT COUNT(*) FROM movies) AS movies,
+                (SELECT COUNT(*) FROM users WHERE role = 'customer') AS users,
+                COUNT(DISTINCT b.booking_id) AS orders,
+                COUNT(DISTINCT CASE WHEN bd.seat_id IS NOT NULL THEN bd.booking_detail_id END) AS tickets,
+                COALESCE(SUM(DISTINCT b.total_amount), 0) AS revenue,
+                COALESCE(SUM(CASE WHEN bd.seat_id IS NOT NULL THEN bd.quantity * bd.price END), 0) AS ticket_revenue,
+                COALESCE(SUM(CASE WHEN bd.product_id IS NOT NULL THEN bd.quantity * bd.price END), 0) AS product_revenue
             FROM bookings b
-
-            LEFT JOIN booking_details bd
-                ON bd.booking_id =
-                    b.booking_id
-
+            LEFT JOIN booking_details bd ON bd.booking_id = b.booking_id
             WHERE b.status = 'Completed'
-
-                AND ${this.buildDateCondition(
-                    'b.booking_date',
-                    range.startDate,
-                    range.endDate
-                )}
+              AND ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
         `;
 
-        const [rows] =
-            await db.query(sql);
-
-        const data =
-            rows[0] || {};
-
+        const [rows] = await db.query(sql);
+        const data = rows[0] || {};
         return {
-            movies:
-                Number(data.movies) || 0,
-
-            users:
-                Number(data.users) || 0,
-
-            tickets:
-                Number(data.tickets) || 0,
-
-            revenue:
-                Number(data.revenue) || 0,
-
-            orders:
-                Number(data.orders) || 0,
-
-            ticketRevenue:
-                Number(data.ticket_revenue) || 0,
-
-            productRevenue:
-                Number(data.product_revenue) || 0
+            movies: Number(data.movies) || 0,
+            users: Number(data.users) || 0,
+            tickets: Number(data.tickets) || 0,
+            revenue: Number(data.revenue) || 0,
+            orders: Number(data.orders) || 0,
+            ticketRevenue: Number(data.ticket_revenue) || 0,
+            productRevenue: Number(data.product_revenue) || 0
         };
     }
 
@@ -2577,84 +1038,31 @@ class DashboardController {
     // INTERNAL – TOP MOVIES
     // =============================================================
 
-    static async _getTopMoviesInternal(
-        range,
-        limit = 5
-    ) {
+    static async _getTopMoviesInternal(range, limit = 5) {
         const sql = `
             SELECT
                 m.movie_id AS id,
                 m.title,
                 m.movie_poster AS poster,
-
-                COUNT(
-                    DISTINCT bd.booking_detail_id
-                ) AS tickets_sold,
-
-                COUNT(
-                    DISTINCT b.booking_id
-                ) AS orders,
-
-                COALESCE(
-                    SUM(
-                        bd.quantity * bd.price
-                    ),
-                    0
-                ) AS revenue
-
+                COUNT(DISTINCT bd.booking_detail_id) AS tickets_sold,
+                COUNT(DISTINCT b.booking_id) AS orders,
+                COALESCE(SUM(bd.quantity * bd.price), 0) AS revenue
             FROM movies m
-
-            INNER JOIN showtimes st
-                ON st.movie_id =
-                    m.movie_id
-
-            INNER JOIN bookings b
-                ON b.showtime_id =
-                    st.showtime_id
-
-                AND b.status =
-                    'Completed'
-
-            INNER JOIN booking_details bd
-                ON bd.booking_id =
-                    b.booking_id
-
-                AND bd.seat_id IS NOT NULL
-
-            WHERE ${this.buildDateCondition(
-                'b.booking_date',
-                range.startDate,
-                range.endDate
-            )}
-
-            GROUP BY
-                m.movie_id,
-                m.title,
-                m.movie_poster
-
-            ORDER BY
-                revenue DESC
-
+            INNER JOIN showtimes st ON st.movie_id = m.movie_id
+            INNER JOIN bookings b ON b.showtime_id = st.showtime_id AND b.status = 'Completed'
+            INNER JOIN booking_details bd ON bd.booking_id = b.booking_id AND bd.seat_id IS NOT NULL
+            WHERE ${this.buildDateCondition('b.booking_date', range.startDate, range.endDate)}
+            GROUP BY m.movie_id, m.title, m.movie_poster
+            ORDER BY revenue DESC
             LIMIT ?
         `;
 
-        const [rows] =
-            await db.query(
-                sql,
-                [limit]
-            );
-
+        const [rows] = await db.query(sql, [limit]);
         return rows.map(row => ({
             ...row,
-
-            tickets_sold:
-                Number(row.tickets_sold) || 0,
-
-            orders:
-                Number(row.orders) || 0,
-
-            revenue:
-                Number(row.revenue) || 0
+            tickets_sold: Number(row.tickets_sold) || 0,
+            orders: Number(row.orders) || 0,
+            revenue: Number(row.revenue) || 0
         }));
     }
 
@@ -2664,39 +1072,18 @@ class DashboardController {
 
     static async _getBookingStatusInternal(range) {
         const sql = `
-            SELECT
-                status,
-                COUNT(*) AS orders,
-
-                COALESCE(
-                    SUM(total_amount),
-                    0
-                ) AS revenue
-
+            SELECT status, COUNT(*) AS orders, COALESCE(SUM(total_amount), 0) AS revenue
             FROM bookings
-
-            WHERE ${this.buildDateCondition(
-                'booking_date',
-                range.startDate,
-                range.endDate
-            )}
-
+            WHERE ${this.buildDateCondition('booking_date', range.startDate, range.endDate)}
             GROUP BY status
-
             ORDER BY orders DESC
         `;
 
-        const [rows] =
-            await db.query(sql);
-
+        const [rows] = await db.query(sql);
         return rows.map(row => ({
             ...row,
-
-            orders:
-                Number(row.orders) || 0,
-
-            revenue:
-                Number(row.revenue) || 0
+            orders: Number(row.orders) || 0,
+            revenue: Number(row.revenue) || 0
         }));
     }
 
@@ -2707,92 +1094,27 @@ class DashboardController {
     static async _getSeatPerformanceInternal(range) {
         const sql = `
             SELECT
-
-                COUNT(
-                    DISTINCT st.showtime_id
-                ) AS showtimes,
-
-                COALESCE(
-                    SUM(r.total_seats),
-                    0
-                ) AS capacity,
-
-                COUNT(
-                    DISTINCT CASE
-                        WHEN b.status = 'Completed'
-                            AND bd.seat_id IS NOT NULL
-                        THEN bd.booking_detail_id
-                    END
-                ) AS sold_tickets
-
+                COUNT(DISTINCT st.showtime_id) AS showtimes,
+                COALESCE(SUM(r.total_seats), 0) AS capacity,
+                COUNT(DISTINCT CASE WHEN b.status = 'Completed' AND bd.seat_id IS NOT NULL THEN bd.booking_detail_id END) AS sold_tickets
             FROM showtimes st
-
-            INNER JOIN rooms r
-                ON r.room_id =
-                    st.room_id
-
-            LEFT JOIN bookings b
-                ON b.showtime_id =
-                    st.showtime_id
-
-            LEFT JOIN booking_details bd
-                ON bd.booking_id =
-                    b.booking_id
-
-                AND bd.seat_id IS NOT NULL
-
-            WHERE st.start_time >= ?
-
-                AND st.start_time <
-                    DATE_ADD(
-                        ?,
-                        INTERVAL 1 DAY
-                    )
+            INNER JOIN rooms r ON r.room_id = st.room_id
+            LEFT JOIN bookings b ON b.showtime_id = st.showtime_id
+            LEFT JOIN booking_details bd ON bd.booking_id = b.booking_id AND bd.seat_id IS NOT NULL
+            WHERE st.start_time >= ? AND st.start_time < DATE_ADD(?, INTERVAL 1 DAY)
         `;
 
-        const [rows] =
-            await db.query(
-                sql,
-                [
-                    range.startDate,
-                    range.endDate
-                ]
-            );
-
-        const row =
-            rows[0] || {};
-
-        const capacity =
-            Number(row.capacity) || 0;
-
-        const sold =
-            Number(row.sold_tickets) || 0;
+        const [rows] = await db.query(sql, [range.startDate, range.endDate]);
+        const row = rows[0] || {};
+        const capacity = Number(row.capacity) || 0;
+        const sold = Number(row.sold_tickets) || 0;
 
         return {
-            showtimes:
-                Number(row.showtimes) || 0,
-
+            showtimes: Number(row.showtimes) || 0,
             capacity,
-
-            soldTickets:
-                sold,
-
-            emptySeats:
-                Math.max(
-                    capacity - sold,
-                    0
-                ),
-
-            occupancy:
-                capacity > 0
-                    ? parseFloat(
-                        (
-                            sold /
-                            capacity *
-                            100
-                        ).toFixed(1)
-                    )
-                    : 0
+            soldTickets: sold,
+            emptySeats: Math.max(capacity - sold, 0),
+            occupancy: capacity > 0 ? parseFloat((sold / capacity * 100).toFixed(1)) : 0
         };
     }
 }
