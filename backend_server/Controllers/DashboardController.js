@@ -323,6 +323,11 @@ class DashboardController {
             const previousTickets =
                 Number(old.tickets) || 0;
 
+            // Tính diff (chênh lệch tuyệt đối)
+            const revenueDiff = revenue - previousRevenue;
+            const ordersDiff = orders - previousOrders;
+            const ticketsDiff = tickets - previousTickets;
+
             return res.status(200).json({
 
                 success: true,
@@ -350,6 +355,7 @@ class DashboardController {
                     revenue: {
                         current: revenue,
                         previous: previousRevenue,
+                        diff: revenueDiff,
                         change: DashboardController.percentChange(
                             revenue,
                             previousRevenue
@@ -359,6 +365,7 @@ class DashboardController {
                     orders: {
                         current: orders,
                         previous: previousOrders,
+                        diff: ordersDiff,
                         change: DashboardController.percentChange(
                             orders,
                             previousOrders
@@ -368,6 +375,7 @@ class DashboardController {
                     tickets: {
                         current: tickets,
                         previous: previousTickets,
+                        diff: ticketsDiff,
                         change: DashboardController.percentChange(
                             tickets,
                             previousTickets
@@ -393,7 +401,86 @@ class DashboardController {
 
 
     /* ============================================================
-        2. DOANH THU THEO NGÀY
+        2. SO SÁNH DOANH THU THEO CÁC MỐC THỜI GIAN
+        Trả về doanh thu và tăng trưởng cho tất cả các period
+    ============================================================ */
+
+    static async getPeriodComparison(req, res) {
+
+        try {
+
+            const periods = ['today', 'week', 'month', 'quarter', 'year'];
+            const result = [];
+
+            for (const period of periods) {
+
+                const range = DashboardController.getDateRange(period);
+                const previous = DashboardController.getPreviousDateRange(
+                    range.startDate,
+                    range.endDate
+                );
+
+                // Lấy doanh thu kỳ hiện tại
+                const [currentRows] = await db.query(`
+                    SELECT COALESCE(SUM(total_amount), 0) AS revenue
+                    FROM bookings
+                    WHERE status = 'Completed'
+                      AND booking_date >= ?
+                      AND booking_date < DATE_ADD(?, INTERVAL 1 DAY)
+                `, [range.startDate, range.endDate]);
+
+                // Lấy doanh thu kỳ trước
+                const [previousRows] = await db.query(`
+                    SELECT COALESCE(SUM(total_amount), 0) AS revenue
+                    FROM bookings
+                    WHERE status = 'Completed'
+                      AND booking_date >= ?
+                      AND booking_date < DATE_ADD(?, INTERVAL 1 DAY)
+                `, [previous.startDate, previous.endDate]);
+
+                const currentRevenue = Number(currentRows[0]?.revenue) || 0;
+                const previousRevenue = Number(previousRows[0]?.revenue) || 0;
+                const diff = currentRevenue - previousRevenue;
+                const change = DashboardController.percentChange(currentRevenue, previousRevenue);
+
+                result.push({
+                    period,
+                    label: period === 'today' ? 'Hôm nay' :
+                           period === 'week' ? '7 ngày' :
+                           period === 'month' ? '30 ngày' :
+                           period === 'quarter' ? '90 ngày' : '1 năm',
+                    currentRevenue,
+                    previousRevenue,
+                    diff,
+                    change,
+                    range,
+                    previousRange: previous
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                data: result
+            });
+
+        } catch (error) {
+
+            console.error(
+                '❌ getPeriodComparison:',
+                error
+            );
+
+            return res.status(500).json({
+                success: false,
+                message: 'Lỗi lấy dữ liệu so sánh theo kỳ.',
+                error: error.message
+            });
+        }
+    }
+
+
+    /* ============================================================
+        3. DOANH THU THEO NGÀY
     ============================================================ */
 
     static async getRevenueTrend(req, res) {
@@ -493,7 +580,7 @@ class DashboardController {
 
 
     /* ============================================================
-        3. CHI TIẾT GIAO DỊCH
+        4. CHI TIẾT GIAO DỊCH
     ============================================================ */
 
     static async getTransactions(req, res) {
@@ -762,7 +849,7 @@ class DashboardController {
 
 
     /* ============================================================
-        4. DOANH THU THEO PHIM
+        5. DOANH THU THEO PHIM
         CHỈ TÍNH TIỀN VÉ
     ============================================================ */
 
@@ -885,7 +972,7 @@ class DashboardController {
 
 
     /* ============================================================
-        5. VÉ BÁN THEO PHIM
+        6. VÉ BÁN THEO PHIM
     ============================================================ */
 
     static async getTicketsByMovie(req, res) {
@@ -979,7 +1066,7 @@ class DashboardController {
 
 
     /* ============================================================
-        6. TOP PHIM
+        7. TOP PHIM
     ============================================================ */
 
     static async getTopMovies(req, res) {
@@ -1102,7 +1189,7 @@ class DashboardController {
 
 
     /* ============================================================
-        7. BOOKING THEO TRẠNG THÁI
+        8. BOOKING THEO TRẠNG THÁI
     ============================================================ */
 
     static async getBookingStatus(req, res) {
@@ -1175,7 +1262,7 @@ class DashboardController {
 
 
     /* ============================================================
-        8. USER GROWTH
+        9. USER GROWTH
     ============================================================ */
 
     static async getUserGrowth(req, res) {
@@ -1253,7 +1340,7 @@ class DashboardController {
 
 
     /* ============================================================
-        9. KHÁCH HÀNG TOP
+        10. KHÁCH HÀNG TOP
     ============================================================ */
 
     static async getTopCustomers(req, res) {
@@ -1376,7 +1463,7 @@ class DashboardController {
 
 
     /* ============================================================
-        10. SẢN PHẨM BÁN CHẠY
+        11. SẢN PHẨM BÁN CHẠY
     ============================================================ */
 
     static async getProductPerformance(req, res) {
@@ -1473,7 +1560,7 @@ class DashboardController {
 
 
     /* ============================================================
-        11. DOANH THU THEO RẠP
+        12. DOANH THU THEO RẠP
     ============================================================ */
 
     static async getCinemaPerformance(req, res) {
@@ -1570,7 +1657,7 @@ class DashboardController {
 
 
     /* ============================================================
-        12. HIỆU SUẤT PHÒNG
+        13. HIỆU SUẤT PHÒNG
     ============================================================ */
 
     static async getRoomPerformance(req, res) {
@@ -1711,7 +1798,7 @@ class DashboardController {
 
 
     /* ============================================================
-        13. HIỆU SUẤT SUẤT CHIẾU
+        14. HIỆU SUẤT SUẤT CHIẾU
     ============================================================ */
 
     static async getShowtimePerformance(req, res) {
@@ -1865,7 +1952,7 @@ class DashboardController {
 
 
     /* ============================================================
-        14. COUPON
+        15. COUPON
     ============================================================ */
 
     static async getCouponPerformance(req, res) {
@@ -1961,7 +2048,7 @@ class DashboardController {
 
 
     /* ============================================================
-        15. NỘI DUNG WEBSITE
+        16. NỘI DUNG WEBSITE
     ============================================================ */
 
     static async getContentStats(req, res) {
@@ -2122,7 +2209,7 @@ class DashboardController {
 
 
     /* ============================================================
-        16. USER STATUS
+        17. USER STATUS
     ============================================================ */
 
     static async getUserStatus(req, res) {
@@ -2175,7 +2262,7 @@ class DashboardController {
 
 
     /* ============================================================
-        17. OTP / PAYMENT ACTIVITY
+        18. OTP / PAYMENT ACTIVITY
     ============================================================ */
 
     static async getOtpStats(req, res) {
@@ -2248,7 +2335,7 @@ class DashboardController {
 
 
     /* ============================================================
-        18. REVIEW / RATING
+        19. REVIEW / RATING
     ============================================================ */
 
     static async getReviewStats(req, res) {
@@ -2317,7 +2404,7 @@ class DashboardController {
 
 
     /* ============================================================
-        19. GHẾ / CÔNG SUẤT TOÀN HỆ THỐNG
+        20. GHẾ / CÔNG SUẤT TOÀN HỆ THỐNG
     ============================================================ */
 
     static async getSeatPerformance(req, res) {

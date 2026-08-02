@@ -1,204 +1,112 @@
 const express = require('express');
-
 const router = express.Router();
+const DashboardController = require('../Controllers/DashboardController');
 
-const DashboardController =
-    require('../Controllers/DashboardController');
+// ================================================================
+// 1. DASHBOARD OVERVIEW
+// ================================================================
 
+// Tổng quan KPI (có so sánh với kỳ trước)
+router.get('/stats', DashboardController.getStats);
 
-/*
-|--------------------------------------------------------------------------
-| DASHBOARD OVERVIEW
-|--------------------------------------------------------------------------
-*/
+// So sánh doanh thu giữa các kỳ (hôm nay, 7 ngày, 30 ngày, 90 ngày, 1 năm)
+router.get('/period-comparison', DashboardController.getPeriodComparison);
 
-// Tổng quan KPI
-router.get(
-    '/stats',
-    DashboardController.getStats
-);
+// ================================================================
+// 2. REVENUE
+// ================================================================
 
+// Doanh thu theo ngày (line chart)
+router.get('/revenue-trend', DashboardController.getRevenueTrend);
 
-/*
-|--------------------------------------------------------------------------
-| REVENUE
-|--------------------------------------------------------------------------
-*/
+// Doanh thu theo phim (pie chart)
+router.get('/revenue-by-movie', DashboardController.getRevenueByMovie);
 
-// Doanh thu theo ngày
-router.get(
-    '/revenue-trend',
-    DashboardController.getRevenueTrend
-);
+// Chi tiết doanh thu (alias cho transactions)
+router.get('/revenue-details', DashboardController.getTransactions);
 
-// Doanh thu theo phim
-router.get(
-    '/revenue-by-movie',
-    DashboardController.getRevenueByMovie
-);
+// ================================================================
+// 3. MOVIES
+// ================================================================
 
+// Số vé bán theo phim
+router.get('/tickets-by-movie', DashboardController.getTicketsByMovie);
 
-/*
-|--------------------------------------------------------------------------
-| MOVIES
-|--------------------------------------------------------------------------
-*/
+// Top phim doanh thu cao
+router.get('/top-movies', DashboardController.getTopMovies);
 
-// Vé bán theo phim
-router.get(
-    '/tickets-by-movie',
-    DashboardController.getTicketsByMovie
-);
+// ================================================================
+// 4. BOOKINGS / TRANSACTIONS
+// ================================================================
 
-// Top phim
-router.get(
-    '/top-movies',
-    DashboardController.getTopMovies
-);
-// Chi tiết doanh thu
-router.get(
-    '/revenue-details',
-    DashboardController.getTransactions
-);
+// Danh sách giao dịch (phân trang, tìm kiếm)
+router.get('/transactions', DashboardController.getTransactions);
 
-/*
-|--------------------------------------------------------------------------
-| BOOKINGS
-|--------------------------------------------------------------------------
-*/
+// Thống kê trạng thái booking
+router.get('/booking-status', DashboardController.getBookingStatus);
 
-// Giao dịch
-router.get(
-    '/transactions',
-    DashboardController.getTransactions
-);
+// ================================================================
+// 5. USERS
+// ================================================================
 
-// Booking theo trạng thái
-router.get(
-    '/booking-status',
-    DashboardController.getBookingStatus
-);
+// Tăng trưởng user theo thời gian
+router.get('/user-growth', DashboardController.getUserGrowth);
 
+// Phân bố trạng thái user (active / banned)
+router.get('/user-status', DashboardController.getUserStatus);
 
-/*
-|--------------------------------------------------------------------------
-| USERS
-|--------------------------------------------------------------------------
-*/
+// Top khách hàng chi tiêu nhiều nhất
+router.get('/top-customers', DashboardController.getTopCustomers);
 
-// User tăng trưởng
-router.get(
-    '/user-growth',
-    DashboardController.getUserGrowth
-);
+// ================================================================
+// 6. CINEMA / ROOM / SHOWTIME / SEAT
+// ================================================================
 
-// User theo trạng thái
-router.get(
-    '/user-status',
-    DashboardController.getUserStatus
-);
+// Hiệu suất theo rạp
+router.get('/cinema-performance', DashboardController.getCinemaPerformance);
 
-// Top khách hàng
-router.get(
-    '/top-customers',
-    DashboardController.getTopCustomers
-);
+// Hiệu suất phòng chiếu
+router.get('/room-performance', DashboardController.getRoomPerformance);
 
-
-/*
-|--------------------------------------------------------------------------
-| CINEMA / ROOM / SHOWTIME / SEAT
-|--------------------------------------------------------------------------
-*/
-
-// Hiệu suất rạp
-router.get(
-    '/cinema-performance',
-    DashboardController.getCinemaPerformance
-);
-
-// Hiệu suất phòng
-router.get(
-    '/room-performance',
-    DashboardController.getRoomPerformance
-);
-
-// Hiệu suất suất chiếu
-router.get(
-    '/showtime-performance',
-    DashboardController.getShowtimePerformance
-);
+// Hiệu suất suất chiếu (top suất có lượng vé cao)
+router.get('/showtime-performance', DashboardController.getShowtimePerformance);
 
 // Công suất ghế toàn hệ thống
-router.get(
-    '/seat-performance',
-    DashboardController.getSeatPerformance
-);
+router.get('/seat-performance', DashboardController.getSeatPerformance);
 
-
-/*
-|--------------------------------------------------------------------------
-| PRODUCTS
-|--------------------------------------------------------------------------
-*/
+// ================================================================
+// 7. PRODUCTS (BẮP NƯỚC)
+// ================================================================
 
 // Sản phẩm bán chạy
-router.get(
-    '/product-performance',
-    DashboardController.getProductPerformance
-);
+router.get('/product-performance', DashboardController.getProductPerformance);
 
+// ================================================================
+// 8. COUPON
+// ================================================================
 
-/*
-|--------------------------------------------------------------------------
-| COUPON
-|--------------------------------------------------------------------------
-*/
+// Hiệu quả sử dụng coupon
+router.get('/coupon-performance', DashboardController.getCouponPerformance);
 
-// Hiệu quả coupon
-router.get(
-    '/coupon-performance',
-    DashboardController.getCouponPerformance
-);
+// ================================================================
+// 9. CONTENT (NỘI DUNG WEBSITE)
+// ================================================================
 
+// Thống kê tổng quan nội dung (phim, diễn viên, thể loại, rạp, phòng, blog, promotion, banner, tin tức, đánh giá)
+router.get('/content-stats', DashboardController.getContentStats);
 
-/*
-|--------------------------------------------------------------------------
-| CONTENT
-|--------------------------------------------------------------------------
-*/
+// ================================================================
+// 10. OTP / SECURITY
+// ================================================================
 
-// Thống kê nội dung website
-router.get(
-    '/content-stats',
-    DashboardController.getContentStats
-);
+// Thống kê hoạt động OTP theo mục đích và trạng thái
+router.get('/otp-stats', DashboardController.getOtpStats);
 
+// ================================================================
+// 11. REVIEWS (ĐÁNH GIÁ PHIM)
+// ================================================================
 
-/*
-|--------------------------------------------------------------------------
-| OTP / SECURITY
-|--------------------------------------------------------------------a------
-*/
-
-// OTP statistics
-router.get(
-    '/otp-stats',
-    DashboardController.getOtpStats
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| REVIEWS
-|--------------------------------------------------------------------------
-*/
-
-// Review / rating
-router.get(
-    '/review-stats',
-    DashboardController.getReviewStats
-);
-
+// Thống kê đánh giá phim (số lượng + điểm trung bình)
+router.get('/review-stats', DashboardController.getReviewStats);
 
 module.exports = router;
