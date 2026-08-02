@@ -227,7 +227,7 @@ app.use("/api/forgot-password", forgotPasswordRoutes);
 app.use("/api/banners", bannerRoutes);
 
 // ADMIN API - DASHBOARD
-app.use("/admin/api/manage", dashboardRouter);
+app.use("/admin/api/dashboard", dashboardRouter);
 
 /*=========================================================
     SERVER
