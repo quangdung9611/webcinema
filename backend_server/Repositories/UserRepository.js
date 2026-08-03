@@ -4,17 +4,27 @@ const db = require("../Config/db");
 class UserRepository {
 
     /*=========================================================
-        FIND ALL USERS - PAGINATION
-        Mặc định: 20 users / trang
-        Tối đa: 100 users / trang
-    =========================================================*/
-    async findAll(page = 1, limit = 20) {
+        FIND ALL USERS - PAGINATION + SEARCH
 
-        // Ép kiểu số và đảm bảo giá trị hợp lệ
+        Mặc định:
+        - 20 users / trang
+        - Tối đa 100 users / trang
+
+        Search:
+        - username
+        - full_name
+        - email
+        - phone
+    =========================================================*/
+    async findAll(page = 1, limit = 20, search = "") {
+
+        // =====================================================
+        // ÉP KIỂU VÀ VALIDATE PAGINATION
+        // =====================================================
+
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
 
-        // Giá trị mặc định
         if (!Number.isInteger(page) || page < 1) {
             page = 1;
         }
@@ -28,12 +38,51 @@ class UserRepository {
             limit = 100;
         }
 
-        // Tính OFFSET
+        // =====================================================
+        // XỬ LÝ SEARCH
+        // =====================================================
+
+        search = typeof search === "string"
+            ? search.trim()
+            : "";
+
+        // =====================================================
+        // BUILD WHERE
+        // =====================================================
+
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+
+            whereClause = `
+                WHERE
+                    username LIKE ?
+                    OR full_name LIKE ?
+                    OR email LIKE ?
+                    OR phone LIKE ?
+            `;
+
+            const keyword = `%${search}%`;
+
+            queryParams.push(
+                keyword,
+                keyword,
+                keyword,
+                keyword
+            );
+        }
+
+        // =====================================================
+        // TÍNH OFFSET
+        // =====================================================
+
         const offset = (page - 1) * limit;
 
-        /*=====================================================
-            GET USERS
-        =====================================================*/
+        // =====================================================
+        // GET USERS
+        // =====================================================
+
         const [rows] = await db.query(
             `
             SELECT
@@ -53,48 +102,85 @@ class UserRepository {
                 created_at,
                 updated_at
             FROM users
+
+            ${whereClause}
+
             ORDER BY user_id DESC
+
             LIMIT ? OFFSET ?
             `,
-            [limit, offset]
+            [
+                ...queryParams,
+                limit,
+                offset
+            ]
         );
 
-        /*=====================================================
-            GET TOTAL USERS
-        =====================================================*/
+        // =====================================================
+        // GET TOTAL USERS
+        // Quan trọng:
+        // COUNT phải dùng cùng WHERE với SELECT
+        // =====================================================
+
         const [countRows] = await db.query(
             `
             SELECT COUNT(*) AS total
             FROM users
-            `
+
+            ${whereClause}
+            `,
+            queryParams
         );
 
-        const total = Number(countRows[0]?.total || 0);
+        const total = Number(
+            countRows[0]?.total || 0
+        );
 
-        /*=====================================================
-            CALCULATE TOTAL PAGES
-        =====================================================*/
-        const totalPages = Math.ceil(total / limit);
+        // =====================================================
+        // CALCULATE TOTAL PAGES
+        // =====================================================
 
-        /*=====================================================
-            RETURN PAGINATION DATA
-        =====================================================*/
+        const totalPages = Math.ceil(
+            total / limit
+        );
+
+        // =====================================================
+        // ĐẢM BẢO PAGE KHÔNG VƯỢT QUÁ TOTAL PAGES
+        // =====================================================
+
+        const safeTotalPages =
+            totalPages > 0
+                ? totalPages
+                : 1;
+
+        // =====================================================
+        // RETURN
+        // =====================================================
+
         return {
+
             data: rows,
 
             pagination: {
+
                 page,
+
                 limit,
+
                 total,
-                totalPages,
 
-                // Có trang trước không?
-                hasPreviousPage: page > 1,
+                totalPages: safeTotalPages,
 
-                // Có trang tiếp theo không?
-                hasNextPage: page < totalPages
+                hasPreviousPage:
+                    page > 1,
+
+                hasNextPage:
+                    page < safeTotalPages
+
             }
+
         };
+
     }
 
 
@@ -102,6 +188,7 @@ class UserRepository {
         FIND USER BY ID
     =========================================================*/
     async findById(userId) {
+
         const [rows] = await db.query(
             `
             SELECT
@@ -136,6 +223,7 @@ class UserRepository {
         FIND USER PROFILE
     =========================================================*/
     async findProfile(userId) {
+
         const [rows] = await db.query(
             `
             SELECT
@@ -169,6 +257,7 @@ class UserRepository {
         FIND USER BY EMAIL
     =========================================================*/
     async findByEmail(email) {
+
         const [rows] = await db.query(
             `
             SELECT
@@ -201,6 +290,7 @@ class UserRepository {
         FIND USER BY USERNAME
     =========================================================*/
     async findByUsername(username) {
+
         const [rows] = await db.query(
             `
             SELECT
@@ -231,9 +321,10 @@ class UserRepository {
 
     /*=========================================================
         FIND BASIC USER
-        (không cần user_avatar)
+        Không cần user_avatar
     =========================================================*/
     async findBasicById(userId) {
+
         const [rows] = await db.query(
             `
             SELECT
@@ -257,6 +348,7 @@ class UserRepository {
         CHECK USER EXISTS
     =========================================================*/
     async exists(username, email, phone) {
+
         const [rows] = await db.query(
             `
             SELECT
@@ -265,12 +357,17 @@ class UserRepository {
                 email,
                 phone
             FROM users
-            WHERE username = ?
+            WHERE
+                username = ?
                 OR email = ?
                 OR phone = ?
             LIMIT 1
             `,
-            [username, email, phone]
+            [
+                username,
+                email,
+                phone
+            ]
         );
 
         return rows[0] || null;
@@ -281,6 +378,7 @@ class UserRepository {
         CHECK EMAIL EXISTS
     =========================================================*/
     async existsByEmail(email) {
+
         const [rows] = await db.query(
             `
             SELECT 1
@@ -299,6 +397,7 @@ class UserRepository {
         CHECK USERNAME EXISTS
     =========================================================*/
     async existsByUsername(username) {
+
         const [rows] = await db.query(
             `
             SELECT 1
@@ -317,6 +416,7 @@ class UserRepository {
         CHECK PHONE EXISTS
     =========================================================*/
     async existsByPhone(phone) {
+
         const [rows] = await db.query(
             `
             SELECT 1
@@ -335,6 +435,7 @@ class UserRepository {
         CREATE USER
     =========================================================*/
     async create(user) {
+
         const [result] = await db.query(
             `
             INSERT INTO users
@@ -376,6 +477,7 @@ class UserRepository {
         UPDATE PROFILE
     =========================================================*/
     async updateProfile(userId, data) {
+
         const [result] = await db.query(
             `
             UPDATE users
@@ -408,13 +510,19 @@ class UserRepository {
         UPDATE AVATAR
     =========================================================*/
     async updateAvatar(userId, avatarUrl) {
+
         const [result] = await db.query(
             `
             UPDATE users
-            SET user_avatar = ?, updated_at = NOW()
+            SET
+                user_avatar = ?,
+                updated_at = NOW()
             WHERE user_id = ?
             `,
-            [avatarUrl, userId]
+            [
+                avatarUrl,
+                userId
+            ]
         );
 
         return result.affectedRows;
@@ -425,13 +533,19 @@ class UserRepository {
         UPDATE PASSWORD
     =========================================================*/
     async updatePassword(userId, hashedPassword) {
+
         const [result] = await db.query(
             `
             UPDATE users
-            SET password = ?, updated_at = NOW()
+            SET
+                password = ?,
+                updated_at = NOW()
             WHERE user_id = ?
             `,
-            [hashedPassword, userId]
+            [
+                hashedPassword,
+                userId
+            ]
         );
 
         return result.affectedRows;
@@ -442,13 +556,19 @@ class UserRepository {
         UPDATE ROLE
     =========================================================*/
     async updateRole(userId, role) {
+
         const [result] = await db.query(
             `
             UPDATE users
-            SET role = ?, updated_at = NOW()
+            SET
+                role = ?,
+                updated_at = NOW()
             WHERE user_id = ?
             `,
-            [role, userId]
+            [
+                role,
+                userId
+            ]
         );
 
         return result.affectedRows;
@@ -459,13 +579,19 @@ class UserRepository {
         UPDATE STATUS
     =========================================================*/
     async updateStatus(userId, status) {
+
         const [result] = await db.query(
             `
             UPDATE users
-            SET status = ?, updated_at = NOW()
+            SET
+                status = ?,
+                updated_at = NOW()
             WHERE user_id = ?
             `,
-            [status, userId]
+            [
+                status,
+                userId
+            ]
         );
 
         return result.affectedRows;
@@ -476,13 +602,19 @@ class UserRepository {
         UPDATE EMAIL VERIFIED
     =========================================================*/
     async updateEmailVerified(userId, verified = true) {
+
         const [result] = await db.query(
             `
             UPDATE users
-            SET email_verified = ?, updated_at = NOW()
+            SET
+                email_verified = ?,
+                updated_at = NOW()
             WHERE user_id = ?
             `,
-            [verified ? 1 : 0, userId]
+            [
+                verified ? 1 : 0,
+                userId
+            ]
         );
 
         return result.affectedRows;
@@ -493,6 +625,7 @@ class UserRepository {
         UPDATE EMAIL
     =========================================================*/
     async updateEmail(userId, email) {
+
         const [result] = await db.query(
             `
             UPDATE users
@@ -502,7 +635,10 @@ class UserRepository {
                 updated_at = NOW()
             WHERE user_id = ?
             `,
-            [email, userId]
+            [
+                email,
+                userId
+            ]
         );
 
         return result.affectedRows;
@@ -513,6 +649,7 @@ class UserRepository {
         UPDATE LAST LOGIN
     =========================================================*/
     async updateLastLogin(userId, ipAddress = null) {
+
         const [result] = await db.query(
             `
             UPDATE users
@@ -522,7 +659,10 @@ class UserRepository {
                 updated_at = NOW()
             WHERE user_id = ?
             `,
-            [ipAddress, userId]
+            [
+                ipAddress,
+                userId
+            ]
         );
 
         return result.affectedRows;
@@ -533,10 +673,13 @@ class UserRepository {
         RESET USER POINTS
     =========================================================*/
     async resetPoints(userId) {
+
         const [result] = await db.query(
             `
             UPDATE users
-            SET points = 0, updated_at = NOW()
+            SET
+                points = 0,
+                updated_at = NOW()
             WHERE user_id = ?
             `,
             [userId]
@@ -550,6 +693,7 @@ class UserRepository {
         DELETE USER
     =========================================================*/
     async delete(userId) {
+
         const [result] = await db.query(
             `
             DELETE FROM users
@@ -560,6 +704,7 @@ class UserRepository {
 
         return result.affectedRows;
     }
+
 }
 
 module.exports = new UserRepository();
