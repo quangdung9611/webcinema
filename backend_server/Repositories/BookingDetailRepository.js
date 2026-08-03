@@ -1,96 +1,233 @@
+
 const db = require("../Config/db");
 
 class BookingDetailRepository {
-  // ---- Các phương thức hiện có ----
-  async findByBookingId(connection, bookingId) {
-    const [rows] = await connection.query(
-      `SELECT booking_detail_id, product_id, item_name, quantity, price, seat_id, created_at
-       FROM booking_details
-       WHERE booking_id = ?
-       ORDER BY booking_detail_id ASC`,
-      [bookingId]
-    );
-    return rows;
-  }
 
-  async findByBookingIdWithSeat(connection, bookingId) {
-    const [rows] = await connection.query(
-      `SELECT bd.*, s.seat_row, s.seat_number, s.seat_type
-       FROM booking_details bd
-       LEFT JOIN seats s ON bd.seat_id = s.seat_id
-       WHERE bd.booking_id = ?
-       ORDER BY bd.booking_detail_id ASC`,
-      [bookingId]
-    );
-    return rows;
-  }
+    // ==========================================================
+    // LẤY CHI TIẾT BOOKING
+    // Không pagination
+    // ==========================================================
+    async findByBookingId(connection, bookingId) {
 
-  async findFoodItems(connection, bookingId) {
-    const [rows] = await connection.query(
-      `SELECT item_name, quantity, price
-       FROM booking_details
-       WHERE booking_id = ? AND seat_id IS NULL`,
-      [bookingId]
-    );
-    return rows;
-  }
+        const [rows] = await connection.query(
+            `
+            SELECT
+                booking_detail_id,
+                product_id,
+                item_name,
+                quantity,
+                price,
+                seat_id,
+                created_at
 
-  async findSeatItems(connection, bookingId) {
-    const [rows] = await connection.query(
-      `SELECT item_name, seat_id
-       FROM booking_details
-       WHERE booking_id = ? AND seat_id IS NOT NULL`,
-      [bookingId]
-    );
-    return rows;
-  }
+            FROM booking_details
 
-  async create(connection, data) {
-    const { booking_id, product_id, item_name, quantity, price, seat_id } = data;
-    const [result] = await connection.query(
-      `INSERT INTO booking_details (booking_id, product_id, item_name, quantity, price, seat_id)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [booking_id, product_id || null, item_name, quantity || 1, price, seat_id || null]
-    );
-    return result.insertId;
-  }
+            WHERE booking_id = ?
 
-  async deleteByBookingId(connection, bookingId) {
-    const [result] = await connection.query(
-      `DELETE FROM booking_details WHERE booking_id = ?`,
-      [bookingId]
-    );
-    return result.affectedRows;
-  }
+            ORDER BY booking_detail_id ASC
+            `,
+            [bookingId]
+        );
 
-  async deleteById(connection, detailId) {
-    const [result] = await connection.query(
-      `DELETE FROM booking_details WHERE booking_detail_id = ?`,
-      [detailId]
-    );
-    return result.affectedRows;
-  }
+        return rows;
+    }
 
-  // ---- PHƯƠNG THỨC MỚI: LẤY BOOKING KÈM SUẤT CHIẾU ----
-  async findBookingWithShowtime(connection, bookingId) {
-    const [rows] = await connection.query(
-      `SELECT 
-          b.*,
-          s.start_time,
-          m.title AS movie_name,
-          c.cinema_name,
-          r.room_name
-       FROM bookings b
-       LEFT JOIN showtimes s ON b.showtime_id = s.showtime_id
-       LEFT JOIN movies m ON s.movie_id = m.movie_id
-       LEFT JOIN rooms r ON s.room_id = r.room_id
-       LEFT JOIN cinemas c ON r.cinema_id = c.cinema_id
-       WHERE b.booking_id = ?
-      `,
-      [bookingId]
-    );
-    return rows[0];
-  }
+
+    // ==========================================================
+    // LẤY CHI TIẾT BOOKING KÈM THÔNG TIN GHẾ
+    // Không pagination
+    // ==========================================================
+    async findByBookingIdWithSeat(connection, bookingId) {
+
+        const [rows] = await connection.query(
+            `
+            SELECT
+                bd.*,
+                s.seat_row,
+                s.seat_number,
+                s.seat_type
+
+            FROM booking_details bd
+
+            LEFT JOIN seats s
+                ON bd.seat_id = s.seat_id
+
+            WHERE bd.booking_id = ?
+
+            ORDER BY bd.booking_detail_id ASC
+            `,
+            [bookingId]
+        );
+
+        return rows;
+    }
+
+
+    // ==========================================================
+    // LẤY CÁC MÓN ĂN / ĐỒ UỐNG TRONG BOOKING
+    // Không pagination
+    // ==========================================================
+    async findFoodItems(connection, bookingId) {
+
+        const [rows] = await connection.query(
+            `
+            SELECT
+                item_name,
+                quantity,
+                price
+
+            FROM booking_details
+
+            WHERE booking_id = ?
+                AND seat_id IS NULL
+            `,
+            [bookingId]
+        );
+
+        return rows;
+    }
+
+
+    // ==========================================================
+    // LẤY CÁC GHẾ TRONG BOOKING
+    // Không pagination
+    // ==========================================================
+    async findSeatItems(connection, bookingId) {
+
+        const [rows] = await connection.query(
+            `
+            SELECT
+                item_name,
+                seat_id
+
+            FROM booking_details
+
+            WHERE booking_id = ?
+                AND seat_id IS NOT NULL
+            `,
+            [bookingId]
+        );
+
+        return rows;
+    }
+
+
+    // ==========================================================
+    // TẠO BOOKING DETAIL
+    // ==========================================================
+    async create(connection, data) {
+
+        const {
+            booking_id,
+            product_id,
+            item_name,
+            quantity,
+            price,
+            seat_id
+        } = data;
+
+        const [result] = await connection.query(
+            `
+            INSERT INTO booking_details
+            (
+                booking_id,
+                product_id,
+                item_name,
+                quantity,
+                price,
+                seat_id
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            `,
+            [
+                booking_id,
+                product_id || null,
+                item_name,
+                quantity || 1,
+                price,
+                seat_id || null
+            ]
+        );
+
+        return result.insertId;
+    }
+
+
+    // ==========================================================
+    // XÓA TOÀN BỘ DETAIL CỦA BOOKING
+    // ==========================================================
+    async deleteByBookingId(connection, bookingId) {
+
+        const [result] = await connection.query(
+            `
+            DELETE FROM booking_details
+            WHERE booking_id = ?
+            `,
+            [bookingId]
+        );
+
+        return result.affectedRows;
+    }
+
+
+    // ==========================================================
+    // XÓA DETAIL THEO ID
+    // ==========================================================
+    async deleteById(connection, detailId) {
+
+        const [result] = await connection.query(
+            `
+            DELETE FROM booking_details
+            WHERE booking_detail_id = ?
+            `,
+            [detailId]
+        );
+
+        return result.affectedRows;
+    }
+
+
+    // ==========================================================
+    // LẤY BOOKING KÈM THÔNG TIN SUẤT CHIẾU
+    // Không pagination
+    // ==========================================================
+    async findBookingWithShowtime(connection, bookingId) {
+
+        const [rows] = await connection.query(
+            `
+            SELECT
+                b.*,
+
+                s.start_time,
+
+                m.title AS movie_name,
+
+                c.cinema_name,
+
+                r.room_name
+
+            FROM bookings b
+
+            LEFT JOIN showtimes s
+                ON b.showtime_id = s.showtime_id
+
+            LEFT JOIN movies m
+                ON s.movie_id = m.movie_id
+
+            LEFT JOIN rooms r
+                ON s.room_id = r.room_id
+
+            LEFT JOIN cinemas c
+                ON r.cinema_id = c.cinema_id
+
+            WHERE b.booking_id = ?
+            `,
+            [bookingId]
+        );
+
+        return rows[0] || null;
+    }
 }
 
 module.exports = new BookingDetailRepository();
+

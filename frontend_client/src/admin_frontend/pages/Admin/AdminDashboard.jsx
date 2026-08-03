@@ -575,9 +575,8 @@ function AdminDashboard() {
                 />
             </section>
 
-            {/* CHARTS SECTION */}
+            {/* CHARTS SECTION (2 cột) */}
             <section className="dashboard-grid grid-charts">
-                {/* Period Comparison Bar Chart */}
                 <div className="dashboard-card chart-card">
                     <CardHeader icon={<BarChart3 />} title="So sánh doanh thu theo kỳ" subtitle="Doanh thu các mốc thời gian" />
                     <div className="chart-container">
@@ -617,7 +616,6 @@ function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* Revenue Trend Line Chart */}
                 <div className="dashboard-card chart-card">
                     <CardHeader icon={<TrendingUp />} title="Xu hướng doanh thu" subtitle="Doanh thu theo ngày trong kỳ" />
                     <div className="chart-container">
@@ -657,9 +655,8 @@ function AdminDashboard() {
                 </div>
             </section>
 
-            {/* TRANSACTIONS + SEAT */}
-            <section className="dashboard-grid grid-main">
-                {/* Transactions Table */}
+            {/* TRANSACTIONS TABLE (FULL WIDTH) */}
+            <div className="full-card">
                 <div className="dashboard-card revenue-card">
                     <CardHeader icon={<TrendingUp />} title="Chi tiết giao dịch" subtitle="Danh sách đơn đặt vé và doanh thu trong kỳ" />
 
@@ -734,7 +731,10 @@ function AdminDashboard() {
                         </div>
                     )}
                 </div>
+            </div>
 
+            {/* SEAT + TOP MOVIES + BOOKING STATUS (3 cột) */}
+            <section className="dashboard-grid grid-three">
                 {/* Seat Capacity */}
                 <div className="dashboard-card seat-card">
                     <CardHeader icon={<Ticket />} title="Công suất toàn hệ thống" subtitle="Tình trạng sử dụng ghế" />
@@ -770,10 +770,8 @@ function AdminDashboard() {
                         </div>
                     </div>
                 </div>
-            </section>
 
-            {/* TOP MOVIES + BOOKING STATUS */}
-            <section className="dashboard-grid grid-two">
+                {/* Top Movies */}
                 <div className="dashboard-card">
                     <CardHeader icon={<Film />} title="Top phim" subtitle="Phim có doanh thu vé cao nhất" />
                     <div className="movie-ranking">
@@ -801,6 +799,7 @@ function AdminDashboard() {
                     </div>
                 </div>
 
+                {/* Booking Status */}
                 <div className="dashboard-card">
                     <CardHeader icon={<Activity />} title="Trạng thái booking" subtitle="Phân bổ đơn đặt vé" />
                     <div className="status-list">
@@ -1201,78 +1200,104 @@ function ContentItem({ icon, label, value, meta }) {
 
 function TransactionTable({ transactions }) {
     return (
-        <div className="revenue-table">
-            <div className="revenue-table-head">
-                <span>Ngày / giờ</span>
-                <span>Khách hàng</span>
-                <span>Phim</span>
-                <span>Suất chiếu</span>
-                <span>Rạp</span>
-                <span>Phòng</span>
-                <span>Vé</span>
-                <span>Bắp nước</span>
-                <span>Tổng tiền</span>
-            </div>
-            <div className="revenue-table-body">
+        <table className="revenue-table">
+            {/* Định nghĩa độ rộng cột cứng */}
+            <colgroup>
+                <col className="col-date" />
+                <col className="col-cust" />
+                <col className="col-movie" />
+                <col className="col-time" />
+                <col className="col-cinema" />
+                <col className="col-room" />
+                <col className="col-ticket" />
+                <col className="col-snack" />
+                <col className="col-total" />
+            </colgroup>
+            
+            <thead>
+                <tr className="revenue-table-head">
+                    <th>Ngày / giờ</th>
+                    <th>Khách hàng</th>
+                    <th>Phim</th>
+                    <th>Suất chiếu</th>
+                    <th>Rạp</th>
+                    <th>Phòng</th>
+                    <th>Vé</th>
+                    <th>Bắp nước</th>
+                    <th>Tổng tiền</th>
+                </tr>
+            </thead>
+            
+            <tbody>
                 {transactions.map((item, index) => {
                     const statusClass = String(item.status || '')
                         .toLowerCase()
                         .replace(/\s+/g, '-');
                     return (
-                        <div className="revenue-table-row" key={item.booking_id || index}>
-                            <div className="revenue-date">
-                                <strong>{formatDate(item.booking_date)}</strong>
-                                <span>{formatTime(item.booking_date)}</span>
-                            </div>
-                            <div className="revenue-customer">
-                                <div className="revenue-avatar">
-                                    <UserRound size={16} />
+                        <tr className="revenue-table-row" key={item.booking_id || index}>
+                            <td>
+                                <div className="revenue-date">
+                                    <strong>{formatDate(item.booking_date)}</strong>
+                                    <span>{formatTime(item.booking_date)}</span>
                                 </div>
-                                <div>
-                                    <strong>{item.customer_name || 'Khách lẻ'}</strong>
-                                    {item.email && <span>{item.email}</span>}
+                            </td>
+                            <td>
+                                <div className="revenue-customer">
+                                    <div className="revenue-avatar">
+                                        <UserRound size={16} />
+                                    </div>
+                                    <div>
+                                        <strong>{item.customer_name || 'Khách lẻ'}</strong>
+                                        {item.email && <span>{item.email}</span>}
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="revenue-movie" title={item.movie_title}>
+                            </td>
+                            <td className="revenue-movie" title={item.movie_title}>
                                 {item.movie_title || '--'}
-                            </div>
-                            <div>
+                            </td>
+                            <td>
                                 <span className="ticket-badge">{formatShowtime(item.start_time)}</span>
-                            </div>
-                            <div className="revenue-location" title={item.cinema_name}>
-                                <MapPin size={14} />
-                                <span>{item.cinema_name || '--'}</span>
-                            </div>
-                            <div>
+                            </td>
+                            <td>
+                                <div className="revenue-location" title={item.cinema_name}>
+                                    <MapPin size={14} />
+                                    <span>{item.cinema_name || '--'}</span>
+                                </div>
+                            </td>
+                            <td>
                                 <span className="room-badge">{item.room_name || '--'}</span>
-                            </div>
-                            <div>
+                            </td>
+                            <td>
                                 <span className="seat-badge">{Number(item.ticket_count) || 0} vé</span>
-                            </div>
-                            <div className="revenue-products">
-                                {Number(item.product_count) > 0 ? (
-                                    <>
-                                        <Package size={14} />
-                                        <span>{item.product_count} SP</span>
-                                    </>
-                                ) : (
-                                    <span className="no-product">Không</span>
-                                )}
-                            </div>
-                            <div className="revenue-total">
-                                <strong>{money(item.total_amount)}</strong>
-                                <span className={`transaction-status-badge ${statusClass}`}>
-                                    {item.status || '--'}
-                                </span>
-                            </div>
-                        </div>
+                            </td>
+                            <td>
+                                <div className="revenue-products">
+                                    {Number(item.product_count) > 0 ? (
+                                        <>
+                                            <Package size={14} />
+                                            <span>{item.product_count} SP</span>
+                                        </>
+                                    ) : (
+                                        <span className="no-product">Không</span>
+                                    )}
+                                </div>
+                            </td>
+                            <td>
+                                {/* Căn lề phải cho cột Tổng tiền */}
+                                <div className="revenue-total-cell">
+                                    <strong>{money(item.total_amount)}</strong>
+                                    <span className={`transaction-status-badge ${statusClass}`}>
+                                        {item.status || '--'}
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
                     );
                 })}
-            </div>
-        </div>
+            </tbody>
+        </table>
     );
 }
-
 function EmptyChart() {
     return (
         <div className="empty-chart">

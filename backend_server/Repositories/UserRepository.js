@@ -1,11 +1,39 @@
-const db = require("../Config/db");
+
+const db = require("./Config/db");
 
 class UserRepository {
 
     /*=========================================================
-        FIND ALL USERS
+        FIND ALL USERS - PAGINATION
+        Mặc định: 20 users / trang
+        Tối đa: 100 users / trang
     =========================================================*/
-    async findAll() {
+    async findAll(page = 1, limit = 20) {
+
+        // Ép kiểu số và đảm bảo giá trị hợp lệ
+        page = Number.parseInt(page, 10);
+        limit = Number.parseInt(limit, 10);
+
+        // Giá trị mặc định
+        if (!Number.isInteger(page) || page < 1) {
+            page = 1;
+        }
+
+        if (!Number.isInteger(limit) || limit < 1) {
+            limit = 20;
+        }
+
+        // Không cho client yêu cầu quá nhiều dữ liệu
+        if (limit > 100) {
+            limit = 100;
+        }
+
+        // Tính OFFSET
+        const offset = (page - 1) * limit;
+
+        /*=====================================================
+            GET USERS
+        =====================================================*/
         const [rows] = await db.query(
             `
             SELECT
@@ -26,10 +54,49 @@ class UserRepository {
                 updated_at
             FROM users
             ORDER BY user_id DESC
+            LIMIT ? OFFSET ?
+            `,
+            [limit, offset]
+        );
+
+        /*=====================================================
+            GET TOTAL USERS
+        =====================================================*/
+        const [countRows] = await db.query(
+            `
+            SELECT COUNT(*) AS total
+            FROM users
             `
         );
-        return rows;
+
+        const total = Number(countRows[0]?.total || 0);
+
+        /*=====================================================
+            CALCULATE TOTAL PAGES
+        =====================================================*/
+        const totalPages = Math.ceil(total / limit);
+
+        /*=====================================================
+            RETURN PAGINATION DATA
+        =====================================================*/
+        return {
+            data: rows,
+
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages,
+
+                // Có trang trước không?
+                hasPreviousPage: page > 1,
+
+                // Có trang tiếp theo không?
+                hasNextPage: page < totalPages
+            }
+        };
     }
+
 
     /*=========================================================
         FIND USER BY ID
@@ -60,8 +127,10 @@ class UserRepository {
             `,
             [userId]
         );
+
         return rows[0] || null;
     }
+
 
     /*=========================================================
         FIND USER PROFILE
@@ -91,8 +160,10 @@ class UserRepository {
             `,
             [userId]
         );
+
         return rows[0] || null;
     }
+
 
     /*=========================================================
         FIND USER BY EMAIL
@@ -121,8 +192,10 @@ class UserRepository {
             `,
             [email]
         );
+
         return rows[0] || null;
     }
+
 
     /*=========================================================
         FIND USER BY USERNAME
@@ -151,11 +224,14 @@ class UserRepository {
             `,
             [username]
         );
+
         return rows[0] || null;
     }
 
+
     /*=========================================================
-        FIND BASIC USER (không cần user_avatar)
+        FIND BASIC USER
+        (không cần user_avatar)
     =========================================================*/
     async findBasicById(userId) {
         const [rows] = await db.query(
@@ -172,11 +248,13 @@ class UserRepository {
             `,
             [userId]
         );
+
         return rows[0] || null;
     }
 
+
     /*=========================================================
-        CHECK USER EXISTS (không cần user_avatar)
+        CHECK USER EXISTS
     =========================================================*/
     async exists(username, email, phone) {
         const [rows] = await db.query(
@@ -194,8 +272,10 @@ class UserRepository {
             `,
             [username, email, phone]
         );
+
         return rows[0] || null;
     }
+
 
     /*=========================================================
         CHECK EMAIL EXISTS
@@ -210,8 +290,10 @@ class UserRepository {
             `,
             [email]
         );
+
         return rows.length > 0;
     }
+
 
     /*=========================================================
         CHECK USERNAME EXISTS
@@ -226,8 +308,10 @@ class UserRepository {
             `,
             [username]
         );
+
         return rows.length > 0;
     }
+
 
     /*=========================================================
         CHECK PHONE EXISTS
@@ -242,81 +326,86 @@ class UserRepository {
             `,
             [phone]
         );
+
         return rows.length > 0;
     }
 
+
     /*=========================================================
-        CREATE USER (user_avatar mặc định NULL)
+        CREATE USER
     =========================================================*/
-   async create(user) {
-    const [result] = await db.query(
-        `
-        INSERT INTO users
-        (
-            username,
-            full_name,
-            phone,
-            address,
-            email,
-            password,
-            user_avatar,
-            role,
-            status,
-            email_verified,
-            points
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [
-            user.username,
-            user.full_name,
-            user.phone,
-            user.address || "",
-            user.email,
-            user.password,
-            user.user_avatar || null,
-            user.role || "customer",
-            user.status || "active",
-            user.email_verified || 0,
-            user.points || 0
-        ]
-    );
+    async create(user) {
+        const [result] = await db.query(
+            `
+            INSERT INTO users
+            (
+                username,
+                full_name,
+                phone,
+                address,
+                email,
+                password,
+                user_avatar,
+                role,
+                status,
+                email_verified,
+                points
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `,
+            [
+                user.username,
+                user.full_name,
+                user.phone,
+                user.address || "",
+                user.email,
+                user.password,
+                user.user_avatar || null,
+                user.role || "customer",
+                user.status || "active",
+                user.email_verified || 0,
+                user.points || 0
+            ]
+        );
 
-    return result.insertId;
-}
+        return result.insertId;
+    }
+
 
     /*=========================================================
-        UPDATE PROFILE (bao gồm user_avatar)
+        UPDATE PROFILE
     =========================================================*/
     async updateProfile(userId, data) {
         const [result] = await db.query(
-    `
-    UPDATE users
-    SET
-        username = ?,
-        full_name = ?,
-        phone = ?,
-        address = ?,
-        email = ?,
-        user_avatar = COALESCE(?, user_avatar),
-        updated_at = NOW()
-    WHERE user_id = ?
-    `,
-    [
-        data.username,
-        data.full_name,
-        data.phone,
-        data.address,
-        data.email,
-        data.user_avatar,
-        userId
-    ]
-);
+            `
+            UPDATE users
+            SET
+                username = ?,
+                full_name = ?,
+                phone = ?,
+                address = ?,
+                email = ?,
+                user_avatar = COALESCE(?, user_avatar),
+                updated_at = NOW()
+            WHERE user_id = ?
+            `,
+            [
+                data.username,
+                data.full_name,
+                data.phone,
+                data.address,
+                data.email,
+                data.user_avatar,
+                userId
+            ]
+        );
+
         return result.affectedRows;
     }
 
+
     /*=========================================================
-        UPDATE AVATAR (riêng biệt, dùng cho upload)
+        UPDATE AVATAR
     =========================================================*/
     async updateAvatar(userId, avatarUrl) {
         const [result] = await db.query(
@@ -327,8 +416,10 @@ class UserRepository {
             `,
             [avatarUrl, userId]
         );
+
         return result.affectedRows;
     }
+
 
     /*=========================================================
         UPDATE PASSWORD
@@ -342,8 +433,10 @@ class UserRepository {
             `,
             [hashedPassword, userId]
         );
+
         return result.affectedRows;
     }
+
 
     /*=========================================================
         UPDATE ROLE
@@ -357,8 +450,10 @@ class UserRepository {
             `,
             [role, userId]
         );
+
         return result.affectedRows;
     }
+
 
     /*=========================================================
         UPDATE STATUS
@@ -372,8 +467,10 @@ class UserRepository {
             `,
             [status, userId]
         );
+
         return result.affectedRows;
     }
+
 
     /*=========================================================
         UPDATE EMAIL VERIFIED
@@ -387,8 +484,10 @@ class UserRepository {
             `,
             [verified ? 1 : 0, userId]
         );
+
         return result.affectedRows;
     }
+
 
     /*=========================================================
         UPDATE EMAIL
@@ -397,13 +496,18 @@ class UserRepository {
         const [result] = await db.query(
             `
             UPDATE users
-            SET email = ?, email_verified = 0, updated_at = NOW()
+            SET
+                email = ?,
+                email_verified = 0,
+                updated_at = NOW()
             WHERE user_id = ?
             `,
             [email, userId]
         );
+
         return result.affectedRows;
     }
+
 
     /*=========================================================
         UPDATE LAST LOGIN
@@ -412,13 +516,18 @@ class UserRepository {
         const [result] = await db.query(
             `
             UPDATE users
-            SET last_login_at = NOW(), last_login_ip = ?, updated_at = NOW()
+            SET
+                last_login_at = NOW(),
+                last_login_ip = ?,
+                updated_at = NOW()
             WHERE user_id = ?
             `,
             [ipAddress, userId]
         );
+
         return result.affectedRows;
     }
+
 
     /*=========================================================
         RESET USER POINTS
@@ -432,8 +541,10 @@ class UserRepository {
             `,
             [userId]
         );
+
         return result.affectedRows;
     }
+
 
     /*=========================================================
         DELETE USER
@@ -446,8 +557,10 @@ class UserRepository {
             `,
             [userId]
         );
+
         return result.affectedRows;
     }
 }
 
 module.exports = new UserRepository();
+
