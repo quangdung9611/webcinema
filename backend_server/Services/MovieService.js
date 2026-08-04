@@ -60,9 +60,11 @@ const validateMovieData = (data, files, isUpdate = false) => {
 };
 
 class MovieService {
-    // Lấy tất cả phim
-    async getAllMovies() {
-        return await MovieRepository.findAll();
+    // ======================================================
+    // Lấy tất cả phim (Đã thêm Pagination & Search)
+    // ======================================================
+    async getAllMovies(page = 1, limit = 20, search = "") {
+        return await MovieRepository.findAll(page, limit, search);
     }
 
     // Lấy phim theo ID
@@ -252,13 +254,22 @@ class MovieService {
         return await MovieRepository.findGroupedByStatus();
     }
 
-    // Lấy phim theo status (có avg rating)
-    async getMoviesByStatus(status) {
+    // ======================================================
+    // Lấy phim theo status (Đã thêm Pagination)
+    // ======================================================
+    async getMoviesByStatus(status, page = 1, limit = 20) {
         const valid = ['Đang chiếu', 'Sắp chiếu'];
         if (!valid.includes(status)) {
             throw { statusCode: 400, message: "Trạng thái không hợp lệ" };
         }
-        return await MovieRepository.findByStatus(status);
+        return await MovieRepository.findByStatus(status, page, limit);
+    }
+
+    // ======================================================
+    // Lấy phim theo genre (Đã thêm Pagination)
+    // ======================================================
+    async getMoviesByGenre(genreSlug, page = 1, limit = 20) {
+        return await MovieRepository.findByGenre(genreSlug || null, page, limit);
     }
 
     // Like phim
@@ -277,11 +288,6 @@ class MovieService {
             throw { statusCode: 404, message: "Phim không tồn tại" };
         }
         return true;
-    }
-
-    // Lấy phim theo genre
-    async getMoviesByGenre(genreSlug) {
-        return await MovieRepository.findByGenre(genreSlug || null);
     }
 }
 
