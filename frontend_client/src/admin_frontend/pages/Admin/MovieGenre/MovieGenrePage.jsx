@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import api from '../../../../api/api';  // ✅ Import api thay vì axios
+import api from '../../../../api/api';
 import { Tags, Save, Loader2, ChevronDown, Search, X } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -8,37 +8,50 @@ import AdminPagination from '../../../components/AdminPagination';
 
 import '../../../styles/MovieGenrePage.css';
 
-// ❌ Xóa các API constants
-
-const DEFAULT_POSTER =
-    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg';
-
+const DEFAULT_POSTER = 'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg';
 const getPosterUrl = (poster) => {
     if (!poster) return DEFAULT_POSTER;
-    if (poster.startsWith('http://') || poster.startsWith('https://')) {
-        return poster;
-    }
+    if (poster.startsWith('http://') || poster.startsWith('https://')) return poster;
     return `https://api.quangdungcinema.id.vn/uploads/posters/${poster}`;
 };
 
+// Hàm parse dữ liệu an toàn
+const parseData = (response) => {
+    if (response?.data?.success && response.data.data?.data) {
+        return response.data.data.data;
+    }
+    if (response?.data?.data) {
+        return response.data.data;
+    }
+    if (Array.isArray(response?.data)) {
+        return response.data;
+    }
+    return [];
+};
+
+const parseAssignments = (response) => {
+    if (response?.data?.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+    }
+    if (Array.isArray(response?.data)) {
+        return response.data;
+    }
+    return [];
+};
+
 const MovieGenrePage = () => {
-    /* =====================================================
-        STATES
-    ===================================================== */
     const [movies, setMovies] = useState([]);
     const [genres, setGenres] = useState([]);
     const [movieGenreMap, setMovieGenreMap] = useState({});
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
 
-    // Modal states
     const [genreModalOpen, setGenreModalOpen] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState(null);
     const [tempGenres, setTempGenres] = useState([]);
     const [genreSearch, setGenreSearch] = useState('');
     const [saving, setSaving] = useState(false);
 
-    // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(4);
 
@@ -50,9 +63,6 @@ const MovieGenrePage = () => {
         onCancel: null,
     });
 
-    /* =====================================================
-        ALERT MODAL
-    ===================================================== */
     const showAlert = (title, message, onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, onConfirm, onCancel });
     };
@@ -61,34 +71,41 @@ const MovieGenrePage = () => {
         setAlertModal((prev) => ({ ...prev, open: false }));
     };
 
-    /* =====================================================
-        FETCH DATA
-    ===================================================== */
+    // =====================================================
+    // FETCH DATA
+    // =====================================================
     const fetchData = async () => {
         setLoading(true);
         try {
             const [resMovies, resGenres, resAssignments] = await Promise.all([
-                api.get('/api/movies'),                           // ✅ Dùng api
-                api.get('/api/genres'),                           // ✅ Dùng api
-                api.get('/api/movie-genres/all-assignments'),     // ✅ Dùng api
+                api.get('/api/movies'),
+                api.get('/api/genres'),
+                api.get('/api/movie-genres/all-assignments'),
             ]);
 
-            setMovies(resMovies.data);
-            setGenres(resGenres.data);
+            const moviesData = parseData(resMovies);
+            const genresData = parseData(resGenres);
+            const assignmentsData = parseAssignments(resAssignments);
+
+            setMovies(Array.isArray(moviesData) ? moviesData : []);
+            setGenres(Array.isArray(genresData) ? genresData : []);
 
             const initialMap = {};
-            resMovies.data.forEach((movie) => {
+            (Array.isArray(moviesData) ? moviesData : []).forEach((movie) => {
                 initialMap[movie.movie_id] = [];
             });
 
-            if (resAssignments.data && Array.isArray(resAssignments.data)) {
-                resAssignments.data.forEach((item) => {
-                    initialMap[item.movie_id] = item.genre_ids || [];
+            if (Array.isArray(assignmentsData)) {
+                assignmentsData.forEach((item) => {
+                    if (initialMap[item.movie_id] !== undefined) {
+                        initialMap[item.movie_id] = item.genre_ids || [];
+                    }
                 });
             }
 
             setMovieGenreMap(initialMap);
         } catch (error) {
+            console.error('Fetch data error:', error);
             showAlert('Lỗi', 'Không thể tải dữ liệu hệ thống.');
         } finally {
             setLoading(false);
@@ -99,9 +116,9 @@ const MovieGenrePage = () => {
         fetchData();
     }, []);
 
-    /* =====================================================
-        MODAL HANDLERS
-    ===================================================== */
+    // =====================================================
+    // MODAL HANDLERS
+    // =====================================================
     const openGenreModal = (movie) => {
         setSelectedMovie(movie);
         setTempGenres(movieGenreMap[movie.movie_id] || []);
@@ -130,7 +147,7 @@ const MovieGenrePage = () => {
 
         setSaving(true);
         try {
-            await api.post('/api/movie-genres/update', {   // ✅ Dùng api
+            await api.post('/api/movie-genres/update', {
                 movie_id: selectedMovie.movie_id,
                 genre_ids: tempGenres,
             });
@@ -149,9 +166,9 @@ const MovieGenrePage = () => {
         }
     };
 
-    /* =====================================================
-        FILTER MOVIES
-    ===================================================== */
+    // =====================================================
+    // FILTER & PAGINATION
+    // =====================================================
     const filteredMovies = useMemo(() => {
         return movies.filter((movie) => {
             const keyword = search.toLowerCase();
@@ -159,9 +176,6 @@ const MovieGenrePage = () => {
         });
     }, [movies, search]);
 
-    /* =====================================================
-        PAGINATION
-    ===================================================== */
     const totalPages = Math.ceil(filteredMovies.length / itemsPerPage);
     const currentMovies = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
@@ -172,9 +186,9 @@ const MovieGenrePage = () => {
         setCurrentPage(1);
     }, [search]);
 
-    /* =====================================================
-        RENDER
-    ===================================================== */
+    // =====================================================
+    // RENDER
+    // =====================================================
     return (
         <>
             <AdminPage
@@ -245,9 +259,7 @@ const MovieGenrePage = () => {
                 )}
             </AdminPage>
 
-            {/* =====================================================
-                GENRE MODAL (AdminModal)
-            ===================================================== */}
+            {/* GENRE MODAL */}
             <AdminModal
                 open={genreModalOpen}
                 onClose={closeGenreModal}
@@ -255,7 +267,6 @@ const MovieGenrePage = () => {
                 size="md"
             >
                 <div className="movie-genre-modal-content">
-                    {/* Search */}
                     <div className="movie-select-search-wrapper">
                         <Search size={16} />
                         <input
@@ -266,7 +277,6 @@ const MovieGenrePage = () => {
                         />
                     </div>
 
-                    {/* Danh sách thể loại */}
                     <div className="movie-genre-modal-list">
                         {genres
                             .filter((genre) =>
@@ -286,7 +296,6 @@ const MovieGenrePage = () => {
                             ))}
                     </div>
 
-                    {/* Actions */}
                     <div className="movie-genre-modal-actions">
                         <button
                             type="button"

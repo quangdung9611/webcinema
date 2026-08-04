@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import api from '../../../../api/api';  // ✅ Import api thay vì axios
+import api from '../../../../api/api';
 import { Users, Loader2, Search, X, ChevronDown, Save } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -8,46 +8,60 @@ import AdminPagination from '../../../components/AdminPagination';
 
 import '../../../styles/MovieActorPage.css';
 
-// ❌ Xóa các API constants
-
-const DEFAULT_POSTER =
-    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg';
-
+const DEFAULT_POSTER = 'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-poster.jpg';
 const getPosterUrl = (poster) => {
     if (!poster) return DEFAULT_POSTER;
-    if (poster.startsWith('http://') || poster.startsWith('https://')) {
-        return poster;
-    }
+    if (poster.startsWith('http://') || poster.startsWith('https://')) return poster;
     return `https://api.quangdungcinema.id.vn/uploads/posters/${poster}`;
 };
 
-const DEFAULT_AVATAR =
-    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-avatar.jpg';
-
+const DEFAULT_AVATAR = 'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-avatar.jpg';
 const getAvatarUrl = (avatar) => {
     if (!avatar) return DEFAULT_AVATAR;
-    if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
-        return avatar;
-    }
+    if (avatar.startsWith('http://') || avatar.startsWith('https://')) return avatar;
     return `https://api.quangdungcinema.id.vn/uploads/actors/${avatar}`;
 };
 
+// Hàm parse dữ liệu an toàn, hỗ trợ mọi cấu trúc API
+const parseData = (response) => {
+    // Nếu có success: true, data: { data: [...] } => lấy data.data
+    if (response?.data?.success && response.data.data?.data) {
+        return response.data.data.data;
+    }
+    // Nếu có data: [...] (không có success) => lấy data
+    if (response?.data?.data) {
+        return response.data.data;
+    }
+    // Nếu response là mảng trực tiếp
+    if (Array.isArray(response?.data)) {
+        return response.data;
+    }
+    // Trường hợp khác: trả về mảng rỗng
+    return [];
+};
+
+// Tương tự cho parse assignments (có thể không có success)
+const parseAssignments = (response) => {
+    if (response?.data?.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+    }
+    if (Array.isArray(response?.data)) {
+        return response.data;
+    }
+    return [];
+};
+
 const MovieActorPage = () => {
-    /* =====================================================
-        STATES
-    ===================================================== */
     const [movies, setMovies] = useState([]);
     const [actors, setActors] = useState([]);
     const [movieActorMap, setMovieActorMap] = useState({});
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
 
-    // Modal states
     const [actorModalOpen, setActorModalOpen] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState(null);
     const [actorSearch, setActorSearch] = useState('');
 
-    // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(4);
 
@@ -59,45 +73,56 @@ const MovieActorPage = () => {
         onCancel: null,
     });
 
-    /* =====================================================
-        ALERT MODAL
-    ===================================================== */
     const showAlert = (title, message, onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, onConfirm, onCancel });
     };
 
-    const closeAlert = () => {
-        setAlertModal((prev) => ({ ...prev, open: false }));
-    };
+    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
-    /* =====================================================
-        FETCH DATA
-    ===================================================== */
+    // =====================================================
+    // FETCH DATA
+    // =====================================================
     const fetchData = async () => {
         setLoading(true);
         try {
             const [resMovies, resActors, resAssignments] = await Promise.all([
-                api.get('/api/movies'),                           // ✅ Dùng api
-                api.get('/api/actors'),                           // ✅ Dùng api
-                api.get('/api/movie-actors/all-assignments'),     // ✅ Dùng api
+                api.get('/api/movies'),
+                api.get('/api/actors'),
+                api.get('/api/movie-actors/all-assignments'),
             ]);
 
-            setMovies(resMovies.data);
-            setActors(resActors.data);
+            // 🟢 Log dữ liệu nhận được để kiểm tra (bạn có thể mở console F12 để xem)
+            console.log('Movies response:', resMovies.data);
+            console.log('Actors response:', resActors.data);
+            console.log('Assignments response:', resAssignments.data);
 
+            // Parse movies
+            const moviesData = parseData(resMovies);
+            const actorsData = parseData(resActors);
+            const assignmentsData = parseAssignments(resAssignments);
+
+            // Đảm bảo là mảng
+            setMovies(Array.isArray(moviesData) ? moviesData : []);
+            setActors(Array.isArray(actorsData) ? actorsData : []);
+
+            // Khởi tạo map actor cho mỗi phim
             const initialMap = {};
-            resMovies.data.forEach((movie) => {
+            (Array.isArray(moviesData) ? moviesData : []).forEach((movie) => {
                 initialMap[movie.movie_id] = [];
             });
 
-            if (resAssignments.data && Array.isArray(resAssignments.data)) {
-                resAssignments.data.forEach((item) => {
-                    initialMap[item.movie_id] = item.actor_ids || [];
+            // Điền actor_ids vào map
+            if (Array.isArray(assignmentsData)) {
+                assignmentsData.forEach((item) => {
+                    if (initialMap[item.movie_id] !== undefined) {
+                        initialMap[item.movie_id] = item.actor_ids || [];
+                    }
                 });
             }
 
             setMovieActorMap(initialMap);
         } catch (error) {
+            console.error('Fetch data error:', error);
             showAlert('Lỗi', 'Không thể tải dữ liệu hệ thống.');
         } finally {
             setLoading(false);
@@ -108,9 +133,7 @@ const MovieActorPage = () => {
         fetchData();
     }, []);
 
-    /* =====================================================
-        HANDLE CHECKBOX
-    ===================================================== */
+    // Các handler giữ nguyên
     const handleCheckboxChange = (movieId, actorId) => {
         setMovieActorMap((prev) => {
             const currentActors = prev[movieId] || [];
@@ -122,9 +145,6 @@ const MovieActorPage = () => {
         });
     };
 
-    /* =====================================================
-        REMOVE ACTOR
-    ===================================================== */
     const handleRemoveActor = (movieId, actorId) => {
         setMovieActorMap((prev) => {
             const currentActors = prev[movieId] || [];
@@ -135,13 +155,10 @@ const MovieActorPage = () => {
         });
     };
 
-    /* =====================================================
-        SAVE ACTORS (từ modal)
-    ===================================================== */
     const handleSaveActors = async () => {
         if (!selectedMovie) return;
         try {
-            await api.post('/api/movie-actors/update', {   // ✅ Dùng api
+            await api.post('/api/movie-actors/update', {
                 movie_id: selectedMovie.movie_id,
                 actor_ids: movieActorMap[selectedMovie.movie_id] || [],
             });
@@ -152,9 +169,7 @@ const MovieActorPage = () => {
         }
     };
 
-    /* =====================================================
-        FILTER MOVIES
-    ===================================================== */
+    // Lọc & phân trang
     const filteredMovies = useMemo(() => {
         return movies.filter((movie) => {
             const keyword = search.toLowerCase();
@@ -162,9 +177,6 @@ const MovieActorPage = () => {
         });
     }, [movies, search]);
 
-    /* =====================================================
-        PAGINATION
-    ===================================================== */
     const totalPages = Math.ceil(filteredMovies.length / itemsPerPage);
     const currentMovies = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
@@ -175,16 +187,11 @@ const MovieActorPage = () => {
         setCurrentPage(1);
     }, [search]);
 
-    /* =====================================================
-        FILTER ACTORS (cho modal)
-    ===================================================== */
     const filteredActors = actors.filter((actor) =>
         actor.name?.toLowerCase().includes(actorSearch.toLowerCase())
     );
 
-    /* =====================================================
-        RENDER
-    ===================================================== */
+    // Render JSX
     return (
         <>
             <AdminPage
@@ -229,7 +236,6 @@ const MovieActorPage = () => {
                                                 <h3>{movie.title}</h3>
                                                 <span className="movie-status">{movie.status}</span>
 
-                                                {/* SELECTED ACTORS LIST */}
                                                 <div className="actor-selected-list">
                                                     {selectedActors.length > 0 ? (
                                                         selectedActors.map((actor) => (
@@ -260,7 +266,6 @@ const MovieActorPage = () => {
                                                     )}
                                                 </div>
 
-                                                {/* SELECT TRIGGER - Mở modal */}
                                                 <div className="movie-select-box">
                                                     <button
                                                         type="button"
@@ -286,7 +291,6 @@ const MovieActorPage = () => {
                             )}
                         </div>
 
-                        {/* PAGINATION */}
                         {filteredMovies.length > itemsPerPage && (
                             <AdminPagination
                                 currentPage={currentPage}
@@ -347,18 +351,11 @@ const MovieActorPage = () => {
                         )}
                     </div>
                     <div className="admin-form-footer">
-                        <button
-                            className="admin-form-cancel-btn"
-                            onClick={() => setActorModalOpen(false)}
-                        >
+                        <button className="admin-form-cancel-btn" onClick={() => setActorModalOpen(false)}>
                             Hủy
                         </button>
-                        <button
-                            className="admin-form-submit-btn"
-                            onClick={handleSaveActors}
-                        >
-                            <Save size={16} />
-                            Lưu
+                        <button className="admin-form-submit-btn" onClick={handleSaveActors}>
+                            <Save size={16} /> Lưu
                         </button>
                     </div>
                 </div>
@@ -369,10 +366,7 @@ const MovieActorPage = () => {
                 <div className="admin-alert-content">
                     <p>{alertModal.message}</p>
                     <div className="admin-alert-actions">
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={alertModal.onConfirm || closeAlert}
-                        >
+                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
                             Xác nhận
                         </button>
                     </div>

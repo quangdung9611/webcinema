@@ -99,7 +99,7 @@ const ActorPage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/actors/admin', {
+            const res = await api.get('/api/actors', {
                 params: { page, limit: 20, search: keyword.trim() },
                 signal: controller.signal
             });
