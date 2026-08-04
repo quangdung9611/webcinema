@@ -19,7 +19,8 @@ exports.checkCoupon = async (req, res) => {
 
 exports.getAllCoupons = async (req, res) => {
   try {
-    const data = await CouponService.getAllCoupons();
+    const { page = 1, limit = 20, search = "" } = req.query;
+    const data = await CouponService.getAllCoupons(page, limit, search);
     return res.status(200).json({
       success: true,
       data
@@ -53,7 +54,7 @@ exports.createCoupon = async (req, res) => {
 
 exports.updateCoupon = async (req, res) => {
   try {
-    const { coupon_id } = req.params; // ✅ sửa
+    const { coupon_id } = req.params;
     await CouponService.updateCoupon(coupon_id, req.body);
     return res.status(200).json({
       success: true,
@@ -71,7 +72,7 @@ exports.updateCoupon = async (req, res) => {
 
 exports.deleteCoupon = async (req, res) => {
   try {
-    const { coupon_id } = req.params; // ✅ sửa
+    const { coupon_id } = req.params;
     await CouponService.deleteCoupon(coupon_id);
     return res.status(200).json({
       success: true,

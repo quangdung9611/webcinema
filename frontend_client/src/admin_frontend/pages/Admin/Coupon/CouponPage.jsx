@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import api from '../../../../api/api';  // ✅ Import api thay vì axios
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import api from '../../../../api/api';
 import {
     Ticket,
     Edit,
@@ -21,34 +21,69 @@ import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
+import AdminPagination from '../../../components/AdminPagination';
 
-// ❌ Xóa API_URL
-
-/* =====================================================
-    INITIAL FORM
-===================================================== */
+// ==========================================================
+// CONSTANTS & HELPERS
+// ==========================================================
 const initialFormData = {
     coupon_code: '',
     discount_value: '',
     expiry_date: ''
 };
 
+const parseData = (response) => {
+    if (response?.data?.success && response.data.data?.data) {
+        return response.data.data.data;
+    }
+    if (response?.data?.data) {
+        return response.data.data;
+    }
+    if (Array.isArray(response?.data)) {
+        return response.data;
+    }
+    return [];
+};
+
+const parsePagination = (response) => {
+    if (response?.data?.data?.pagination) {
+        return response.data.data.pagination;
+    }
+    if (response?.data?.pagination) {
+        return response.data.pagination;
+    }
+    return { page: 1, limit: 20, total: 0, totalPages: 1 };
+};
+
+// ==========================================================
+// COMPONENT
+// ==========================================================
 const CouponPage = () => {
-    /* =====================================================
-        STATES
-    ===================================================== */
+    // ------------------------------------------------------
+    // STATES
+    // ------------------------------------------------------
     const [coupons, setCoupons] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
+
     const [search, setSearch] = useState('');
+    const [pagination, setPagination] = useState({
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false
+    });
+
+    const isFetching = useRef(false);
+    const abortControllerRef = useRef(null);
+
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingCoupon, setEditingCoupon] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
     const [formErrors, setFormErrors] = useState({});
 
-    /* =====================================================
-        ALERT MODAL
-    ===================================================== */
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -58,36 +93,102 @@ const CouponPage = () => {
         onCancel: null
     });
 
+    // ------------------------------------------------------
+    // ALERT HANDLER
+    // ------------------------------------------------------
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
+    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
-    const closeAlert = () => {
-        setAlertModal(prev => ({ ...prev, open: false }));
-    };
+    // ------------------------------------------------------
+    // FETCH COUPONS
+    // ------------------------------------------------------
+    const fetchCoupons = useCallback(async (page = 1, keyword = '') => {
+        if (isFetching.current) return;
+        if (abortControllerRef.current) abortControllerRef.current.abort();
 
-    /* =====================================================
-        FETCH DATA
-    ===================================================== */
-    const fetchCoupons = async () => {
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        isFetching.current = true;
         setLoading(true);
+
         try {
-            const res = await api.get('/api/coupons');  // ✅ Dùng api
-            setCoupons(res.data?.data || res.data || []);
+            const res = await api.get('/api/coupons', {
+                params: {
+                    page,
+                    limit: 20,
+                    search: keyword.trim()
+                },
+                signal: controller.signal
+            });
+
+            const couponsData = parseData(res);
+            const paginationData = parsePagination(res);
+
+            setCoupons(Array.isArray(couponsData) ? couponsData : []);
+            setPagination(paginationData);
         } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.error('FETCH COUPONS ERROR:', error);
             showAlert('Lỗi', 'Không thể tải danh sách mã giảm giá.', 'error');
         } finally {
             setLoading(false);
+            isFetching.current = false;
+            if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
+            }
         }
-    };
-
-    useEffect(() => {
-        fetchCoupons();
     }, []);
 
-    /* =====================================================
-        OPEN ADD / EDIT
-    ===================================================== */
+    useEffect(() => {
+        fetchCoupons(1, '');
+    }, []);
+
+    // ------------------------------------------------------
+    // SEARCH DEBOUNCE
+    // ------------------------------------------------------
+    const prevSearchRef = useRef('');
+    useEffect(() => {
+        if (search === prevSearchRef.current) return;
+        prevSearchRef.current = search;
+        const timer = setTimeout(() => fetchCoupons(1, search), 400);
+        return () => clearTimeout(timer);
+    }, [search, fetchCoupons]);
+
+    const handlePageChange = (page) => fetchCoupons(page, search);
+
+    // ------------------------------------------------------
+    // VALIDATE FORM
+    // ------------------------------------------------------
+    const validateForm = () => {
+        const errors = {};
+        if (!formData.coupon_code.trim()) {
+            errors.coupon_code = 'Vui lòng nhập mã giảm giá';
+        } else if (formData.coupon_code.trim().length < 3) {
+            errors.coupon_code = 'Mã giảm giá phải từ 3 ký tự trở lên';
+        }
+        if (!formData.discount_value) {
+            errors.discount_value = 'Vui lòng nhập số tiền giảm';
+        } else if (Number(formData.discount_value) <= 0) {
+            errors.discount_value = 'Số tiền giảm phải lớn hơn 0';
+        }
+        if (!formData.expiry_date) {
+            errors.expiry_date = 'Vui lòng chọn ngày hết hạn';
+        } else {
+            const selectedDate = new Date(formData.expiry_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (selectedDate < today) {
+                errors.expiry_date = 'Ngày hết hạn không được ở quá khứ';
+            }
+        }
+        return errors;
+    };
+
+    // ------------------------------------------------------
+    // HANDLE MODAL ACTIONS
+    // ------------------------------------------------------
     const handleOpenAdd = () => {
         setEditingCoupon(null);
         setFormData(initialFormData);
@@ -107,55 +208,21 @@ const CouponPage = () => {
         setIsFormOpen(true);
     };
 
-    /* =====================================================
-        VALIDATE FORM
-    ===================================================== */
-    const validateForm = () => {
-        const errors = {};
-
-        if (!formData.coupon_code.trim()) {
-            errors.coupon_code = 'Vui lòng nhập mã giảm giá';
-        } else if (formData.coupon_code.trim().length < 3) {
-            errors.coupon_code = 'Mã giảm giá phải từ 3 ký tự trở lên';
-        }
-
-        if (!formData.discount_value) {
-            errors.discount_value = 'Vui lòng nhập số tiền giảm';
-        } else if (Number(formData.discount_value) <= 0) {
-            errors.discount_value = 'Số tiền giảm phải lớn hơn 0';
-        }
-
-        if (!formData.expiry_date) {
-            errors.expiry_date = 'Vui lòng chọn ngày hết hạn';
-        } else {
-            const selectedDate = new Date(formData.expiry_date);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            if (selectedDate < today) {
-                errors.expiry_date = 'Ngày hết hạn không được ở quá khứ';
-            }
-        }
-
-        return errors;
-    };
-
-    /* =====================================================
-        HANDLE CHANGE
-    ===================================================== */
+    // ------------------------------------------------------
+    // HANDLE CHANGE
+    // ------------------------------------------------------
     const handleChange = (e) => {
         const { name, value } = e.target;
         const finalValue = name === 'coupon_code' ? value.toUpperCase() : value;
-
-        setFormData(prev => ({ ...prev, [name]: finalValue }));
-        setFormErrors(prev => ({ ...prev, [name]: '' }));
+        setFormData((prev) => ({ ...prev, [name]: finalValue }));
+        setFormErrors((prev) => ({ ...prev, [name]: '' }));
     };
 
-    /* =====================================================
-        SUBMIT
-    ===================================================== */
+    // ------------------------------------------------------
+    // HANDLE SUBMIT
+    // ------------------------------------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         const errors = validateForm();
         if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
@@ -173,33 +240,31 @@ const CouponPage = () => {
             };
 
             if (editingCoupon) {
-                await api.put(`/api/coupons/${editingCoupon.coupon_id}`, payload);  // ✅ Dùng api
+                await api.put(`/api/coupons/${editingCoupon.coupon_id}`, payload);
                 showAlert('Thành công', 'Cập nhật mã giảm giá thành công.', 'success');
             } else {
-                await api.post('/api/coupons', payload);  // ✅ Dùng api
+                await api.post('/api/coupons', payload);
                 showAlert('Thành công', 'Thêm mã giảm giá thành công.', 'success');
             }
 
             setIsFormOpen(false);
-            fetchCoupons();
+            fetchCoupons(pagination.page, search);
         } catch (error) {
             const backendField = error.response?.data?.field;
-            const backendError = error.response?.data?.message || error.response?.data?.error;
-
+            const backendError = error.response?.data?.message || error.response?.data?.error || 'Đã xảy ra lỗi hệ thống.';
             if (backendField) {
                 setFormErrors({ [backendField]: backendError });
                 return;
             }
-
-            showAlert('Lỗi', backendError || 'Đã xảy ra lỗi hệ thống.', 'error');
+            showAlert('Lỗi', backendError, 'error');
         } finally {
             setSubmitLoading(false);
         }
     };
 
-    /* =====================================================
-        DELETE
-    ===================================================== */
+    // ------------------------------------------------------
+    // HANDLE DELETE
+    // ------------------------------------------------------
     const handleDelete = (coupon) => {
         showAlert(
             'Xác nhận xóa',
@@ -207,9 +272,12 @@ const CouponPage = () => {
             'warning',
             async () => {
                 try {
-                    await api.delete(`/api/coupons/${coupon.coupon_id}`);  // ✅ Dùng api
+                    await api.delete(`/api/coupons/${coupon.coupon_id}`);
                     closeAlert();
-                    fetchCoupons();
+                    const newPage = coupons.length === 1 && pagination.page > 1
+                        ? pagination.page - 1
+                        : pagination.page;
+                    fetchCoupons(newPage, search);
                     showAlert('Thành công', 'Xóa mã giảm giá thành công.', 'success');
                 } catch (error) {
                     showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa mã giảm giá.', 'error');
@@ -219,22 +287,15 @@ const CouponPage = () => {
         );
     };
 
-    /* =====================================================
-        HELPERS FORMAT
-    ===================================================== */
+    // ------------------------------------------------------
+    // HELPERS FORMAT
+    // ------------------------------------------------------
     const formatCurrency = (amount) => Number(amount).toLocaleString('vi-VN') + 'đ';
     const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('vi-VN');
 
-    /* =====================================================
-        FILTER
-    ===================================================== */
-    const filteredCoupons = coupons.filter(coupon =>
-        coupon.coupon_code?.toLowerCase().includes(search.toLowerCase())
-    );
-
-    /* =====================================================
-        TABLE COLUMNS
-    ===================================================== */
+    // ------------------------------------------------------
+    // TABLE COLUMNS
+    // ------------------------------------------------------
     const columns = [
         {
             title: 'ID',
@@ -317,9 +378,9 @@ const CouponPage = () => {
         }
     ];
 
-    /* =====================================================
-        FORM FIELDS
-    ===================================================== */
+    // ------------------------------------------------------
+    // FORM FIELDS
+    // ------------------------------------------------------
     const formFields = [
         {
             label: 'Mã giảm giá',
@@ -340,9 +401,9 @@ const CouponPage = () => {
         }
     ];
 
-    /* =====================================================
-        ALERT ICON
-    ===================================================== */
+    // ------------------------------------------------------
+    // HELPER: RENDER ALERT ICON
+    // ------------------------------------------------------
     const renderAlertIcon = () => {
         switch (alertModal.type) {
             case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
@@ -352,9 +413,9 @@ const CouponPage = () => {
         }
     };
 
-    /* =====================================================
-        RENDER
-    ===================================================== */
+    // ------------------------------------------------------
+    // RENDER
+    // ------------------------------------------------------
     return (
         <>
             <AdminPage
@@ -372,7 +433,14 @@ const CouponPage = () => {
                         <span>Đang tải dữ liệu...</span>
                     </div>
                 ) : (
-                    <AdminTable columns={columns} data={filteredCoupons} />
+                    <>
+                        <AdminTable columns={columns} data={coupons} />
+                        <AdminPagination
+                            currentPage={pagination.page}
+                            totalPages={pagination.totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </>
                 )}
             </AdminPage>
 
