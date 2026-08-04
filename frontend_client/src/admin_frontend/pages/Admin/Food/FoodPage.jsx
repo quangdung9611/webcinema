@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import api from '../../../../api/api';  // ✅ Import api thay vì axios
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import api from '../../../../api/api';
 import {
     Popcorn,
     Edit,
@@ -23,20 +23,18 @@ import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
+import AdminPagination from '../../../components/AdminPagination';
 
-// ❌ Xóa API_URL
-
-// Helper lấy URL ảnh (hỗ trợ Cloudinary và local)
+// ==========================================================
+// HELPERS
+// ==========================================================
 const getImageUrl = (image) => {
     if (!image) return '';
-    if (image.startsWith('http://') || image.startsWith('https://')) {
-        return image;
-    }
+    if (image.startsWith('http://') || image.startsWith('https://')) return image;
     return `https://api.quangdungcinema.id.vn/uploads/foods/${image}`;
 };
 
-const DEFAULT_IMAGE =
-    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-food.jpg';
+const DEFAULT_IMAGE = 'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-food.jpg';
 
 const initialFormData = {
     product_name: '',
@@ -45,12 +43,30 @@ const initialFormData = {
     status: '1'
 };
 
+// ==========================================================
+// COMPONENT
+// ==========================================================
 const FoodPage = () => {
-
+    // ------------------------------------------------------
+    // STATES
+    // ------------------------------------------------------
     const [foods, setFoods] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
+
     const [search, setSearch] = useState('');
+    const [pagination, setPagination] = useState({
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false
+    });
+
+    const isFetching = useRef(false);
+    const abortControllerRef = useRef(null);
+
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingFood, setEditingFood] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
@@ -58,7 +74,6 @@ const FoodPage = () => {
     const [filePreviews, setFilePreviews] = useState({});
     const [formErrors, setFormErrors] = useState({});
 
-    // Alert Modal
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -68,41 +83,81 @@ const FoodPage = () => {
         onCancel: null
     });
 
+    // ------------------------------------------------------
+    // ALERT HANDLER
+    // ------------------------------------------------------
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
 
-    const closeAlert = () => {
-        setAlertModal(prev => ({ ...prev, open: false }));
-    };
+    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
-    // Fetch foods
-    const fetchFoods = async () => {
+    // ------------------------------------------------------
+    // FETCH FOODS
+    // ------------------------------------------------------
+    const fetchFoods = useCallback(async (page = 1, keyword = '') => {
+        if (isFetching.current) return;
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        isFetching.current = true;
         setLoading(true);
+
         try {
-            const res = await api.get('/api/foods');  // ✅ Dùng api
-            setFoods(res.data.data || []);
+            const res = await api.get('/api/foods', {
+                params: {
+                    page,
+                    limit: 20,
+                    search: keyword.trim()
+                },
+                signal: controller.signal
+            });
+
+            const responseData = res.data?.data;
+            const foodsData = responseData?.data || [];
+            const paginationData = responseData?.pagination || {
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1
+            };
+
+            setFoods(foodsData);
+            setPagination(paginationData);
         } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.error('FETCH FOODS ERROR:', error);
             showAlert('Lỗi', 'Không thể tải danh sách đồ ăn.', 'error');
         } finally {
             setLoading(false);
+            isFetching.current = false;
+            if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
+            }
         }
-    };
-
-    useEffect(() => {
-        fetchFoods();
     }, []);
 
-    // Cleanup blob URL
     useEffect(() => {
-        return () => {
-            if (filePreviews.food_image?.url?.startsWith('blob:')) {
-                URL.revokeObjectURL(filePreviews.food_image.url);
-            }
-        };
-    }, [filePreviews]);
+        fetchFoods(1, '');
+    }, []);
 
-    // Validate
+    // ------------------------------------------------------
+    // SEARCH DEBOUNCE
+    // ------------------------------------------------------
+    const prevSearchRef = useRef('');
+    useEffect(() => {
+        if (search === prevSearchRef.current) return;
+        prevSearchRef.current = search;
+        const timer = setTimeout(() => fetchFoods(1, search), 400);
+        return () => clearTimeout(timer);
+    }, [search, fetchFoods]);
+
+    const handlePageChange = (page) => fetchFoods(page, search);
+
+    // ------------------------------------------------------
+    // VALIDATE FORM
+    // ------------------------------------------------------
     const validateForm = () => {
         const errors = {};
         if (!formData.product_name.trim()) {
@@ -123,7 +178,9 @@ const FoodPage = () => {
         return Object.keys(errors).length === 0;
     };
 
-    // Open Add
+    // ------------------------------------------------------
+    // HANDLE MODAL ACTIONS
+    // ------------------------------------------------------
     const handleOpenAdd = () => {
         setEditingFood(null);
         setFormData(initialFormData);
@@ -133,7 +190,6 @@ const FoodPage = () => {
         setIsFormOpen(true);
     };
 
-    // Open Edit
     const handleOpenEdit = (food) => {
         setEditingFood(food);
         setFormData({
@@ -157,12 +213,14 @@ const FoodPage = () => {
         setIsFormOpen(true);
     };
 
-    // Change handler
+    // ------------------------------------------------------
+    // HANDLE FORM CHANGE
+    // ------------------------------------------------------
     const handleChange = (e) => {
         const { name, value, files } = e.target;
 
         if (formErrors[name]) {
-            setFormErrors(prev => ({ ...prev, [name]: '' }));
+            setFormErrors((prev) => ({ ...prev, [name]: '' }));
         }
 
         if (name === 'food_image') {
@@ -182,10 +240,12 @@ const FoodPage = () => {
             return;
         }
 
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Submit
+    // ------------------------------------------------------
+    // HANDLE SUBMIT
+    // ------------------------------------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
@@ -201,7 +261,6 @@ const FoodPage = () => {
                 submitData.append('food_image', foodImage);
             }
 
-            // ✅ Dùng api với multipart/form-data
             const config = {
                 headers: { 'Content-Type': 'multipart/form-data' }
             };
@@ -215,7 +274,7 @@ const FoodPage = () => {
             }
 
             setIsFormOpen(false);
-            fetchFoods();
+            fetchFoods(pagination.page, search);
         } catch (error) {
             const backendError = error.response?.data?.message || 'Đã xảy ra lỗi hệ thống.';
             if (error.response?.data?.field) {
@@ -228,7 +287,9 @@ const FoodPage = () => {
         }
     };
 
-    // Delete
+    // ------------------------------------------------------
+    // HANDLE DELETE
+    // ------------------------------------------------------
     const handleDelete = (food) => {
         showAlert(
             'Xác nhận xóa',
@@ -236,9 +297,13 @@ const FoodPage = () => {
             'warning',
             async () => {
                 try {
-                    await api.delete(`/api/foods/${food.product_id}`);  // ✅ Dùng api
+                    await api.delete(`/api/foods/${food.product_id}`);
                     closeAlert();
-                    fetchFoods();
+
+                    const newPage = foods.length === 1 && pagination.page > 1
+                        ? pagination.page - 1
+                        : pagination.page;
+                    fetchFoods(newPage, search);
                     showAlert('Thành công', 'Xóa sản phẩm thành công.', 'success');
                 } catch (error) {
                     showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa sản phẩm.', 'error');
@@ -248,21 +313,16 @@ const FoodPage = () => {
         );
     };
 
-    // Filter
-    const filteredFoods = foods.filter(food => {
-        const keyword = search.toLowerCase();
-        return (
-            food.product_name?.toLowerCase().includes(keyword) ||
-            food.category?.toLowerCase().includes(keyword)
-        );
-    });
-
-    // Format currency
+    // ------------------------------------------------------
+    // HELPER: FORMAT CURRENCY
+    // ------------------------------------------------------
     const formatCurrency = (amount) => {
         return Number(amount).toLocaleString('vi-VN') + 'đ';
     };
 
-    // Columns
+    // ------------------------------------------------------
+    // TABLE COLUMNS
+    // ------------------------------------------------------
     const columns = [
         {
             title: 'Hình ảnh',
@@ -342,10 +402,16 @@ const FoodPage = () => {
             key: 'actions',
             render: (row) => (
                 <div className="admin-table-actions">
-                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
+                    <button
+                        className="admin-action-btn edit-btn"
+                        onClick={() => handleOpenEdit(row)}
+                    >
                         <Edit size={16} />
                     </button>
-                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
+                    <button
+                        className="admin-action-btn delete-btn"
+                        onClick={() => handleDelete(row)}
+                    >
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -353,7 +419,9 @@ const FoodPage = () => {
         }
     ];
 
-    // Form fields
+    // ------------------------------------------------------
+    // FORM FIELDS
+    // ------------------------------------------------------
     const formFields = [
         {
             label: 'Tên sản phẩm',
@@ -395,16 +463,25 @@ const FoodPage = () => {
         }
     ];
 
-    // Alert icon
+    // ------------------------------------------------------
+    // HELPER: RENDER ALERT ICON
+    // ------------------------------------------------------
     const renderAlertIcon = () => {
         switch (alertModal.type) {
-            case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error': return <XCircle size={58} color="#ef4444" />;
-            case 'warning': return <AlertTriangle size={58} color="#f59e0b" />;
-            default: return <Info size={58} color="#3b82f6" />;
+            case 'success':
+                return <CheckCircle2 size={58} color="#22c55e" />;
+            case 'error':
+                return <XCircle size={58} color="#ef4444" />;
+            case 'warning':
+                return <AlertTriangle size={58} color="#f59e0b" />;
+            default:
+                return <Info size={58} color="#3b82f6" />;
         }
     };
 
+    // ------------------------------------------------------
+    // RENDER
+    // ------------------------------------------------------
     return (
         <>
             <AdminPage
@@ -422,7 +499,14 @@ const FoodPage = () => {
                         <span>Đang tải dữ liệu...</span>
                     </div>
                 ) : (
-                    <AdminTable columns={columns} data={filteredFoods} />
+                    <>
+                        <AdminTable columns={columns} data={foods} />
+                        <AdminPagination
+                            currentPage={pagination.page}
+                            totalPages={pagination.totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </>
                 )}
             </AdminPage>
 
@@ -461,7 +545,10 @@ const FoodPage = () => {
                                 Hủy
                             </button>
                         )}
-                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
+                        <button
+                            className="admin-confirm-btn"
+                            onClick={alertModal.onConfirm || closeAlert}
+                        >
                             Xác nhận
                         </button>
                     </div>

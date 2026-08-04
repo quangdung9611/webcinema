@@ -18,11 +18,11 @@ const validateFood = (data, file, isUpdate = false) => {
 };
 
 class FoodService {
-  async getAllFoods() {
-    return await FoodRepository.findAll();
+  async getAllFoods(page = 1, limit = 20, search = "") {
+    return await FoodRepository.findAll(page, limit, search);
   }
 
-  async getFoodById(productId) { // ✅ sửa
+  async getFoodById(productId) {
     const food = await FoodRepository.findById(productId);
     if (!food) {
       const err = new Error("Không tìm thấy món ăn");
@@ -65,7 +65,7 @@ class FoodService {
     });
   }
 
-  async updateFood(productId, data, file) { // ✅ sửa
+  async updateFood(productId, data, file) {
     const existing = await FoodRepository.findById(productId);
     if (!existing) {
       const err = new Error("Món ăn không tồn tại");
@@ -111,7 +111,7 @@ class FoodService {
     return true;
   }
 
-  async deleteFood(productId) { // ✅ sửa
+  async deleteFood(productId) {
     const existing = await FoodRepository.findById(productId);
     if (!existing) {
       const err = new Error("Món ăn không tồn tại");
