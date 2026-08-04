@@ -17,22 +17,6 @@ exports.getAllBlogs = async (req, res) => {
     }
 };
 
-/* ==========================================================
-   GET ALL BLOGS (ADMIN) - PAGINATION & SEARCH
-========================================================== */
-exports.getAllBlogsAdmin = async (req, res) => {
-    try {
-        const { page = 1, limit = 20, search = "" } = req.query;
-        const data = await BlogCinemaService.getAllBlogs(false, page, limit, search);
-        return res.status(200).json({ success: true, data });
-    } catch (err) {
-        console.error("getAllBlogsAdmin error:", err);
-        return res.status(err.statusCode || 500).json({
-            success: false,
-            message: err.message || "Lỗi máy chủ"
-        });
-    }
-};
 
 /* ==========================================================
    GET BLOG BY ID (ADMIN)

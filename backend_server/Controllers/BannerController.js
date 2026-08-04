@@ -1,32 +1,18 @@
 const BannerService = require("../Services/BannerService");
 
 /*=========================================================
-    PUBLIC - GET ALL BANNERS (Active, Pagination + Search)
+    GET ALL BANNERS (Dùng chung cho Admin & Public)
 =========================================================*/
-exports.getAllBannersPublic = async (req, res) => {
+exports.getAllBanners = async (req, res) => {
     try {
-        const { page = 1, limit = 20, search = "" } = req.query;
-        const data = await BannerService.getAllBanners(true, page, limit, search);
+        // Lấy tham số từ query, mặc định onlyActive = false (lấy tất cả)
+        const { page = 1, limit = 20, search = "", onlyActive = "false" } = req.query;
+        // Chuyển onlyActive sang boolean
+        const onlyActiveBool = onlyActive === "true";
+        const data = await BannerService.getAllBanners(onlyActiveBool, page, limit, search);
         return res.status(200).json({ success: true, data });
     } catch (err) {
-        console.error("Get Public Banners Error:", err);
-        return res.status(err.statusCode || 500).json({
-            success: false,
-            message: err.message || "Lỗi máy chủ"
-        });
-    }
-};
-
-/*=========================================================
-    ADMIN - GET ALL BANNERS (Pagination + Search)
-=========================================================*/
-exports.getAllBannersAdmin = async (req, res) => {
-    try {
-        const { page = 1, limit = 20, search = "" } = req.query;
-        const data = await BannerService.getAllBanners(false, page, limit, search);
-        return res.status(200).json({ success: true, data });
-    } catch (err) {
-        console.error("Get Admin Banners Error:", err);
+        console.error("Get Banners Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"

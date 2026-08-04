@@ -1,32 +1,15 @@
 const ActorService = require("../Services/ActorService");
 
 /* ==========================================================
-   ADMIN - LẤY DANH SÁCH (Pagination + Search)
+   LẤY DANH SÁCH DIỄN VIÊN (Dùng chung cho Admin & Public)
 ========================================================== */
-exports.getAllActorsAdmin = async (req, res) => {
+exports.getAllActors = async (req, res) => {
   try {
     const { page = 1, limit = 20, search = "" } = req.query;
     const data = await ActorService.getAllActors(page, limit, search);
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    console.error("Get All Actors Admin Error:", err);
-    return res.status(err.statusCode || 500).json({
-      success: false,
-      message: err.message || "Lỗi máy chủ",
-    });
-  }
-};
-
-/* ==========================================================
-   PUBLIC - LẤY DANH SÁCH (Pagination + Search)
-========================================================== */
-exports.getAllActorsPublic = async (req, res) => {
-  try {
-    const { page = 1, limit = 20, search = "" } = req.query;
-    const data = await ActorService.getAllActors(page, limit, search);
-    return res.status(200).json({ success: true, data });
-  } catch (err) {
-    console.error("Get All Actors Public Error:", err);
+    console.error("Get All Actors Error:", err);
     return res.status(err.statusCode || 500).json({
       success: false,
       message: err.message || "Lỗi máy chủ",

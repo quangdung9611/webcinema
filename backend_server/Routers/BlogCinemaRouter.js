@@ -9,7 +9,7 @@ const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
 // ==========================================================
 
 // Lấy danh sách blog (ai cũng xem)
-router.get('/', BlogCinemaController.getAllBlogsAdmin);
+router.get('/', BlogCinemaController.getAllBlogs);
 
 // Tăng lượt thích
 router.post('/like/:blog_id', BlogCinemaController.increaseLike);

@@ -15,7 +15,7 @@ const upload = require("../Middlewares/MulterMiddleware");
 
 // GET /api/banners?page=HOME → lấy tất cả banner active của HOME
 // GET /api/banners → lấy tất cả banners (admin)
-router.get("/", BannerController.getBannerByPage);
+router.get("/", BannerController.getAllBanners);
 
 // GET /api/banners/:banner_id → lấy banner theo ID
 router.get("/:banner_id", BannerController.getBannerById);
