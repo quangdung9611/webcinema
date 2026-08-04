@@ -1,32 +1,32 @@
-/*=========================================================
-    DEPENDENCIES
-=========================================================*/
-
 const BannerService = require("../Services/BannerService");
 
 /*=========================================================
-    PUBLIC - GET BANNER (có page hoặc tất cả)
+    PUBLIC - GET ALL BANNERS (Active, Pagination + Search)
 =========================================================*/
-
-exports.getBannerByPage = async (req, res) => {
+exports.getAllBannersPublic = async (req, res) => {
     try {
-        const { page } = req.query;
-
-        if (page) {
-            const banners = await BannerService.getBannerByPage(page);
-            return res.status(200).json({
-                success: true,
-                data: banners // Trả về mảng
-            });
-        }
-
-        const banners = await BannerService.getAllBanners();
-        return res.status(200).json({
-            success: true,
-            data: banners
-        });
+        const { page = 1, limit = 20, search = "" } = req.query;
+        const data = await BannerService.getAllBanners(true, page, limit, search);
+        return res.status(200).json({ success: true, data });
     } catch (err) {
-        console.error("Get Banner Error:", err);
+        console.error("Get Public Banners Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    ADMIN - GET ALL BANNERS (Pagination + Search)
+=========================================================*/
+exports.getAllBannersAdmin = async (req, res) => {
+    try {
+        const { page = 1, limit = 20, search = "" } = req.query;
+        const data = await BannerService.getAllBanners(false, page, limit, search);
+        return res.status(200).json({ success: true, data });
+    } catch (err) {
+        console.error("Get Admin Banners Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -37,15 +37,11 @@ exports.getBannerByPage = async (req, res) => {
 /*=========================================================
     PUBLIC - GET BANNER BY ID
 =========================================================*/
-
 exports.getBannerById = async (req, res) => {
     try {
         const { banner_id } = req.params;
         const banner = await BannerService.getBannerById(banner_id);
-        return res.status(200).json({
-            success: true,
-            data: banner
-        });
+        return res.status(200).json({ success: true, data: banner });
     } catch (err) {
         console.error("Get Banner By ID Error:", err);
         return res.status(err.statusCode || 500).json({
@@ -58,7 +54,6 @@ exports.getBannerById = async (req, res) => {
 /*=========================================================
     ADMIN - CREATE BANNER
 =========================================================*/
-
 exports.createBanner = async (req, res) => {
     try {
         const bannerId = await BannerService.createBanner(req.body, req.file);
@@ -80,7 +75,6 @@ exports.createBanner = async (req, res) => {
 /*=========================================================
     ADMIN - UPDATE BANNER
 =========================================================*/
-
 exports.updateBanner = async (req, res) => {
     try {
         const { banner_id } = req.params;
@@ -102,7 +96,6 @@ exports.updateBanner = async (req, res) => {
 /*=========================================================
     ADMIN - DELETE BANNER
 =========================================================*/
-
 exports.deleteBanner = async (req, res) => {
     try {
         const { banner_id } = req.params;

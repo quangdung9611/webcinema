@@ -1,290 +1,151 @@
-
 const db = require("../Config/db");
 
 class RoomRepository {
-
     // ==========================================================
-    // LẤY DANH SÁCH PHÒNG - PAGINATION
-    // Mặc định: 20 phòng / trang
-    // Tối đa: 100 phòng / trang
+    // LẤY DANH SÁCH PHÒNG - PAGINATION + SEARCH (JOIN với cinemas)
     // ==========================================================
-    async findAll(page = 1, limit = 20) {
-
-        // ------------------------------------------------------
-        // CHUẨN HÓA PAGE / LIMIT
-        // ------------------------------------------------------
+    async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 20;
+        if (limit > 100) limit = 100;
 
-        if (!Number.isInteger(page) || page < 1) {
-            page = 1;
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `
+                WHERE r.room_name LIKE ? 
+                OR c.cinema_name LIKE ? 
+                OR c.city LIKE ? 
+                OR r.room_type LIKE ?
+            `;
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword, keyword, keyword);
         }
 
-        if (!Number.isInteger(limit) || limit < 1) {
-            limit = 20;
-        }
-
-        // Không cho lấy quá nhiều dữ liệu
-        if (limit > 100) {
-            limit = 100;
-        }
-
-        // ------------------------------------------------------
-        // TÍNH OFFSET
-        // ------------------------------------------------------
         const offset = (page - 1) * limit;
 
-
-        // ======================================================
-        // LẤY DANH SÁCH PHÒNG
-        // ======================================================
         const sql = `
             SELECT
                 r.room_id,
                 r.room_name,
                 r.room_type,
                 r.total_seats,
-
-                DATE_FORMAT(
-                    r.created_at,
-                    '%d/%m/%Y %H:%i'
-                ) AS formatted_date,
-
+                DATE_FORMAT(r.created_at, '%d/%m/%Y %H:%i') AS formatted_date,
                 c.cinema_id,
                 c.cinema_name,
                 c.city
-
             FROM rooms r
-
-            JOIN cinemas c
-                ON r.cinema_id = c.cinema_id
-
+            JOIN cinemas c ON r.cinema_id = c.cinema_id
+            ${whereClause}
             ORDER BY r.room_id DESC
-
             LIMIT ? OFFSET ?
         `;
 
-        const [rows] = await db.query(
-            sql,
-            [limit, offset]
-        );
+        const [rows] = await db.query(sql, [...queryParams, limit, offset]);
 
-
-        // ======================================================
-        // ĐẾM TỔNG SỐ PHÒNG
-        // ======================================================
-        const [countRows] = await db.query(
-            `
+        const countSql = `
             SELECT COUNT(*) AS total
-            FROM rooms
-            `
-        );
+            FROM rooms r
+            JOIN cinemas c ON r.cinema_id = c.cinema_id
+            ${whereClause}
+        `;
+        const [countRows] = await db.query(countSql, queryParams);
 
-        const total = Number(
-            countRows[0]?.total || 0
-        );
+        const total = Number(countRows[0]?.total || 0);
+        const totalPages = Math.ceil(total / limit) || 1;
 
-
-        // ======================================================
-        // TÍNH TỔNG SỐ TRANG
-        // ======================================================
-        const totalPages = Math.ceil(
-            total / limit
-        );
-
-
-        // ======================================================
-        // RETURN
-        // ======================================================
         return {
             data: rows,
-
             pagination: {
                 page,
                 limit,
                 total,
                 totalPages,
-
                 hasPreviousPage: page > 1,
-
                 hasNextPage: page < totalPages
             }
         };
     }
 
-
     // ==========================================================
     // LẤY PHÒNG THEO ID
-    // Không pagination
     // ==========================================================
     async findById(roomId) {
-
         const [rows] = await db.query(
-            `
-            SELECT *
-            FROM rooms
-            WHERE room_id = ?
-            LIMIT 1
-            `,
+            `SELECT * FROM rooms WHERE room_id = ? LIMIT 1`,
             [roomId]
         );
-
         return rows[0] || null;
     }
 
-
     // ==========================================================
     // LẤY PHÒNG THEO RẠP
-    // Không pagination
-    // Dùng để lấy danh sách phòng của một cinema
     // ==========================================================
     async findByCinema(cinemaId) {
-
         const [rows] = await db.query(
             `
-            SELECT
-                room_id,
-                room_name,
-                room_type,
-                total_seats
-
+            SELECT room_id, room_name, room_type, total_seats
             FROM rooms
-
             WHERE cinema_id = ?
-
             ORDER BY room_name ASC
             `,
             [cinemaId]
         );
-
         return rows;
     }
-
 
     // ==========================================================
     // KIỂM TRA TÊN PHÒNG TRONG RẠP
     // ==========================================================
-    async findByNameInCinema(
-        roomName,
-        cinemaId,
-        excludeRoomId = null
-    ) {
-
-        let sql = `
-            SELECT room_id
-            FROM rooms
-            WHERE room_name = ?
-                AND cinema_id = ?
-        `;
-
-        const params = [
-            roomName.trim(),
-            cinemaId
-        ];
-
+    async findByNameInCinema(roomName, cinemaId, excludeRoomId = null) {
+        let sql = `SELECT room_id FROM rooms WHERE room_name = ? AND cinema_id = ?`;
+        const params = [roomName.trim(), cinemaId];
         if (excludeRoomId) {
-
-            sql += `
-                AND room_id != ?
-            `;
-
+            sql += ` AND room_id != ?`;
             params.push(excludeRoomId);
         }
-
-        const [rows] = await db.query(
-            sql,
-            params
-        );
-
+        const [rows] = await db.query(sql, params);
         return rows[0] || null;
     }
-
 
     // ==========================================================
     // TẠO PHÒNG
     // ==========================================================
     async create(data) {
-
-        const {
-            room_name,
-            cinema_id,
-            room_type
-        } = data;
-
+        const { room_name, cinema_id, room_type } = data;
         const [result] = await db.query(
-            `
-            INSERT INTO rooms
-            (
-                room_name,
-                cinema_id,
-                room_type
-            )
-            VALUES (?, ?, ?)
-            `,
-            [
-                room_name.trim(),
-                cinema_id,
-                room_type
-            ]
+            `INSERT INTO rooms (room_name, cinema_id, room_type) VALUES (?, ?, ?)`,
+            [room_name.trim(), cinema_id, room_type]
         );
-
         return result.insertId;
     }
-
 
     // ==========================================================
     // CẬP NHẬT PHÒNG
     // ==========================================================
-    async update(
-        roomId,
-        data
-    ) {
-
-        const {
-            room_name,
-            cinema_id,
-            room_type
-        } = data;
-
+    async update(roomId, data) {
+        const { room_name, cinema_id, room_type } = data;
         const [result] = await db.query(
-            `
-            UPDATE rooms
-
-            SET
-                room_name = ?,
-                cinema_id = ?,
-                room_type = ?
-
-            WHERE room_id = ?
-            `,
-            [
-                room_name.trim(),
-                cinema_id,
-                room_type,
-                roomId
-            ]
+            `UPDATE rooms SET room_name = ?, cinema_id = ?, room_type = ? WHERE room_id = ?`,
+            [room_name.trim(), cinema_id, room_type, roomId]
         );
-
         return result.affectedRows;
     }
-
 
     // ==========================================================
     // XÓA PHÒNG
     // ==========================================================
     async delete(roomId) {
-
         const [result] = await db.query(
-            `
-            DELETE FROM rooms
-            WHERE room_id = ?
-            `,
+            `DELETE FROM rooms WHERE room_id = ?`,
             [roomId]
         );
-
         return result.affectedRows;
     }
 }
 
 module.exports = new RoomRepository();
-

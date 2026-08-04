@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import api from '../../../../api/api';  // ✅ Import api
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import api from '../../../../api/api';
 import {
     Smile,
     Edit,
@@ -15,20 +15,18 @@ import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
+import AdminPagination from '../../../components/AdminPagination';
 
-// ❌ Xóa API_URL
-
-// Helper lấy URL ảnh
+// ==========================================================
+// HELPERS & CONSTANTS
+// ==========================================================
 const getImageUrl = (image) => {
     if (!image) return '';
-    if (image.startsWith('http://') || image.startsWith('https://')) {
-        return image;
-    }
+    if (image.startsWith('http://') || image.startsWith('https://')) return image;
     return `https://api.quangdungcinema.id.vn/uploads/actors/${image}`;
 };
 
-const DEFAULT_AVATAR =
-    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-avatar.jpg';
+const DEFAULT_AVATAR = 'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-avatar.jpg';
 
 const initialFormData = {
     name: '',
@@ -39,11 +37,30 @@ const initialFormData = {
     biography: ''
 };
 
+// ==========================================================
+// COMPONENT
+// ==========================================================
 const ActorPage = () => {
+    // ======================================================
+    // STATES
+    // ======================================================
     const [actors, setActors] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
+
     const [search, setSearch] = useState('');
+    const [pagination, setPagination] = useState({
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false
+    });
+
+    const isFetching = useRef(false);
+    const abortControllerRef = useRef(null);
+
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingActor, setEditingActor] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
@@ -51,7 +68,6 @@ const ActorPage = () => {
     const [formErrors, setFormErrors] = useState({});
     const [filePreviews, setFilePreviews] = useState({});
 
-    // Alert Modal
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -61,40 +77,80 @@ const ActorPage = () => {
         onCancel: null
     });
 
+    // ======================================================
+    // ALERT HANDLER
+    // ======================================================
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
-    const closeAlert = () => {
-        setAlertModal(prev => ({ ...prev, open: false }));
-    };
+    
+    const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }));
 
-    // Fetch
-    const fetchActors = async () => {
+    // ======================================================
+    // FETCH ACTORS (PAGINATION + SEARCH)
+    // ======================================================
+    const fetchActors = useCallback(async (page = 1, keyword = '') => {
+        if (isFetching.current) return;
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        isFetching.current = true;
         setLoading(true);
+
         try {
-            const res = await api.get('/api/actors');
-            setActors(res.data);
+            const res = await api.get('/api/actors/admin', {
+                params: { page, limit: 20, search: keyword.trim() },
+                signal: controller.signal
+            });
+
+            const responseData = res.data?.data;
+            const actorsData = responseData?.data || [];
+            const paginationData = responseData?.pagination || {
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1
+            };
+
+            setActors(actorsData);
+            setPagination(paginationData);
+
         } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.error('FETCH ACTORS ERROR:', error);
             showAlert('Lỗi', 'Không thể tải danh sách diễn viên.', 'error');
         } finally {
             setLoading(false);
+            isFetching.current = false;
+            if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
+            }
         }
-    };
-
-    useEffect(() => {
-        fetchActors();
     }, []);
 
-    // Cleanup blob URL
+    // Khởi tạo lần đầu
     useEffect(() => {
-        return () => {
-            if (filePreviews.actor_avatar?.url?.startsWith('blob:')) {
-                URL.revokeObjectURL(filePreviews.actor_avatar.url);
-            }
-        };
-    }, [filePreviews]);
+        fetchActors(1, '');
+    }, []);
 
-    // Slug
+    // ======================================================
+    // SEARCH DEBOUNCE
+    // ======================================================
+    const prevSearchRef = useRef('');
+    useEffect(() => {
+        if (search === prevSearchRef.current) return;
+        prevSearchRef.current = search;
+
+        const timer = setTimeout(() => fetchActors(1, search), 400);
+        return () => clearTimeout(timer);
+    }, [search, fetchActors]);
+
+    const handlePageChange = (page) => fetchActors(page, search);
+
+    // ======================================================
+    // SLUG GENERATOR
+    // ======================================================
     const generateSlug = (str) => {
         if (!str) return '';
         return str
@@ -108,78 +164,9 @@ const ActorPage = () => {
             .trim();
     };
 
-    // Open add
-    const handleOpenAdd = () => {
-        setEditingActor(null);
-        setFormData(initialFormData);
-        setActorAvatarFile(null);
-        setFormErrors({});
-        setFilePreviews({});
-        setIsFormOpen(true);
-    };
-
-    // Open edit
-    const handleOpenEdit = (actor) => {
-        setEditingActor(actor);
-        setFormData({
-            name: actor.name || '',
-            slug: actor.slug || '',
-            gender: actor.gender || 'Nam',
-            nationality: actor.nationality || 'Việt Nam',
-            birthday: actor.birthday ? actor.birthday.substring(0, 10) : '',
-            biography: actor.biography || ''
-        });
-        setActorAvatarFile(null);
-        setFormErrors({});
-        if (actor.actor_avatar) {
-            setFilePreviews({
-                actor_avatar: {
-                    url: getImageUrl(actor.actor_avatar),
-                    name: actor.actor_avatar
-                }
-            });
-        } else {
-            setFilePreviews({});
-        }
-        setIsFormOpen(true);
-    };
-
-    // Change
-    const handleChange = (e) => {
-        const { name, value, files } = e.target;
-
-        if (name === 'actor_avatar') {
-            const file = files[0];
-            setActorAvatarFile(file);
-            if (file) {
-                if (filePreviews.actor_avatar?.url?.startsWith('blob:')) {
-                    URL.revokeObjectURL(filePreviews.actor_avatar.url);
-                }
-                const blobUrl = URL.createObjectURL(file);
-                setFilePreviews({
-                    actor_avatar: { url: blobUrl, name: file.name }
-                });
-            } else {
-                setFilePreviews({});
-            }
-            return;
-        }
-
-        if (name === 'name') {
-            setFormData(prev => ({
-                ...prev,
-                name: value,
-                slug: generateSlug(value)
-            }));
-            setFormErrors(prev => ({ ...prev, [name]: '' }));
-            return;
-        }
-
-        setFormData(prev => ({ ...prev, [name]: value }));
-        setFormErrors(prev => ({ ...prev, [name]: '' }));
-    };
-
-    // Validate
+    // ======================================================
+    // VALIDATE FORM
+    // ======================================================
     const validateForm = () => {
         const errors = {};
         if (!formData.name.trim()) {
@@ -207,7 +194,87 @@ const ActorPage = () => {
         return errors;
     };
 
-    // Submit
+    // ======================================================
+    // HANDLE MODAL ACTIONS
+    // ======================================================
+    const handleOpenAdd = () => {
+        setEditingActor(null);
+        setFormData(initialFormData);
+        setActorAvatarFile(null);
+        setFormErrors({});
+        setFilePreviews({});
+        setIsFormOpen(true);
+    };
+
+    const handleOpenEdit = (actor) => {
+        setEditingActor(actor);
+        setFormData({
+            name: actor.name || '',
+            slug: actor.slug || '',
+            gender: actor.gender || 'Nam',
+            nationality: actor.nationality || 'Việt Nam',
+            birthday: actor.birthday ? actor.birthday.substring(0, 10) : '',
+            biography: actor.biography || ''
+        });
+        setActorAvatarFile(null);
+        setFormErrors({});
+        setFilePreviews(
+            actor.actor_avatar
+                ? {
+                      actor_avatar: {
+                          url: getImageUrl(actor.actor_avatar),
+                          name: actor.actor_avatar
+                      }
+                  }
+                : {}
+        );
+        setIsFormOpen(true);
+    };
+
+    // ======================================================
+    // HANDLE FORM CHANGE
+    // ======================================================
+    const handleChange = (e) => {
+        const { name, value, files } = e.target;
+
+        if (name === 'actor_avatar') {
+            const file = files[0];
+            setActorAvatarFile(file);
+
+            // Cleanup & preview
+            if (file) {
+                if (filePreviews.actor_avatar?.url?.startsWith('blob:')) {
+                    URL.revokeObjectURL(filePreviews.actor_avatar.url);
+                }
+                setFilePreviews({
+                    actor_avatar: {
+                        url: URL.createObjectURL(file),
+                        name: file.name
+                    }
+                });
+            } else {
+                setFilePreviews({});
+            }
+            return;
+        }
+
+        if (name === 'name') {
+            setFormData((prev) => ({
+                ...prev,
+                name: value,
+                slug: generateSlug(value)
+            }));
+            setFormErrors((prev) => ({ ...prev, [name]: '' }));
+            return;
+        }
+
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        setFormErrors((prev) => ({ ...prev, [name]: '' }));
+    };
+
+    // ======================================================
+    // HANDLE SUBMIT
+    // ======================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
         const errors = validateForm();
@@ -218,24 +285,21 @@ const ActorPage = () => {
 
         try {
             setSubmitLoading(true);
-            setFormErrors({});
-
             const submitData = new FormData();
             submitData.append('name', formData.name.trim());
             submitData.append('gender', formData.gender);
             submitData.append('nationality', formData.nationality.trim());
             submitData.append('birthday', formData.birthday);
             submitData.append('biography', formData.biography.trim());
+
             const slug = formData.slug || generateSlug(formData.name.trim());
             submitData.append('slug', slug);
-
+            
             if (actorAvatarFile) {
                 submitData.append('actor_avatar', actorAvatarFile);
             }
 
-            const config = {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            };
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
 
             if (editingActor) {
                 await api.put(`/api/actors/${editingActor.actor_id}`, submitData, config);
@@ -246,7 +310,7 @@ const ActorPage = () => {
             }
 
             setIsFormOpen(false);
-            fetchActors();
+            fetchActors(pagination.page, search);
         } catch (error) {
             const backendError = error.response?.data?.message || error.response?.data?.error || 'Đã xảy ra lỗi.';
             if (error.response?.data?.field) {
@@ -259,7 +323,9 @@ const ActorPage = () => {
         }
     };
 
-    // Delete
+    // ======================================================
+    // HANDLE DELETE
+    // ======================================================
     const handleDelete = (actor) => {
         showAlert(
             'Xác nhận xóa',
@@ -269,7 +335,11 @@ const ActorPage = () => {
                 try {
                     await api.delete(`/api/actors/${actor.actor_id}`);
                     closeAlert();
-                    fetchActors();
+                    
+                    const newPage = actors.length === 1 && pagination.page > 1
+                        ? pagination.page - 1
+                        : pagination.page;
+                    fetchActors(newPage, search);
                     showAlert('Thành công', 'Xóa diễn viên thành công.', 'success');
                 } catch (error) {
                     showAlert('Lỗi', 'Không thể xóa diễn viên.', 'error');
@@ -279,16 +349,17 @@ const ActorPage = () => {
         );
     };
 
-    // Filter
-    const filteredActors = actors.filter(actor => {
-        const keyword = search.toLowerCase();
-        return (
-            actor.name?.toLowerCase().includes(keyword) ||
-            actor.nationality?.toLowerCase().includes(keyword)
-        );
-    });
+    // ======================================================
+    // HELPER: IMAGE ERROR HANDLER
+    // ======================================================
+    const handleImageError = (e) => {
+        e.target.onerror = null;
+        e.target.src = DEFAULT_AVATAR;
+    };
 
-    // Columns
+    // ======================================================
+    // TABLE COLUMNS
+    // ======================================================
     const columns = [
         {
             title: 'Avatar',
@@ -303,10 +374,7 @@ const ActorPage = () => {
                         objectFit: 'cover',
                         borderRadius: '50%'
                     }}
-                    onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = DEFAULT_AVATAR;
-                    }}
+                    onError={handleImageError}
                 />
             )
         },
@@ -324,21 +392,26 @@ const ActorPage = () => {
         {
             title: 'Ngày sinh',
             key: 'birthday',
-            render: (row) => (
+            render: (row) =>
                 row.birthday
                     ? new Date(row.birthday).toLocaleDateString('vi-VN')
                     : '---'
-            )
         },
         {
             title: 'Thao tác',
             key: 'actions',
             render: (row) => (
                 <div className="admin-table-actions">
-                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
+                    <button
+                        className="admin-action-btn edit-btn"
+                        onClick={() => handleOpenEdit(row)}
+                    >
                         <Edit size={16} />
                     </button>
-                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
+                    <button
+                        className="admin-action-btn delete-btn"
+                        onClick={() => handleDelete(row)}
+                    >
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -346,7 +419,9 @@ const ActorPage = () => {
         }
     ];
 
-    // Form fields
+    // ======================================================
+    // FORM FIELDS
+    // ======================================================
     const formFields = [
         { label: 'Họ tên', name: 'name', type: 'text', placeholder: 'Nhập tên diễn viên' },
         { label: 'Slug', name: 'slug', type: 'text', placeholder: 'Slug tự động', disabled: true },
@@ -366,16 +441,25 @@ const ActorPage = () => {
         { label: 'Tiểu sử', name: 'biography', type: 'textarea', placeholder: 'Nhập tiểu sử diễn viên' }
     ];
 
-    // Alert icon
+    // ======================================================
+    // HELPER: RENDER ALERT ICON
+    // ======================================================
     const renderAlertIcon = () => {
         switch (alertModal.type) {
-            case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error': return <XCircle size={58} color="#ef4444" />;
-            case 'warning': return <AlertTriangle size={58} color="#f59e0b" />;
-            default: return <Info size={58} color="#3b82f6" />;
+            case 'success':
+                return <CheckCircle2 size={58} color="#22c55e" />;
+            case 'error':
+                return <XCircle size={58} color="#ef4444" />;
+            case 'warning':
+                return <AlertTriangle size={58} color="#f59e0b" />;
+            default:
+                return <Info size={58} color="#3b82f6" />;
         }
     };
 
+    // ======================================================
+    // RENDER
+    // ======================================================
     return (
         <>
             <AdminPage
@@ -393,7 +477,14 @@ const ActorPage = () => {
                         <span>Đang tải dữ liệu...</span>
                     </div>
                 ) : (
-                    <AdminTable columns={columns} data={filteredActors} />
+                    <>
+                        <AdminTable columns={columns} data={actors} />
+                        <AdminPagination
+                            currentPage={pagination.page}
+                            totalPages={pagination.totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </>
                 )}
             </AdminPage>
 
@@ -432,7 +523,10 @@ const ActorPage = () => {
                                 Hủy
                             </button>
                         )}
-                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
+                        <button
+                            className="admin-confirm-btn"
+                            onClick={alertModal.onConfirm || closeAlert}
+                        >
                             Xác nhận
                         </button>
                     </div>

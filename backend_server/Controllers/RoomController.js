@@ -2,8 +2,9 @@ const RoomService = require("../Services/RoomService");
 
 exports.getAllRooms = async (req, res) => {
   try {
-    const data = await RoomService.getAllRooms();
-    return res.status(200).json(data);
+    const { page = 1, limit = 20, search = "" } = req.query;
+    const data = await RoomService.getAllRooms(page, limit, search);
+    return res.status(200).json({ success: true, data });
   } catch (err) {
     console.error("Get all rooms error:", err);
     return res.status(err.statusCode || 500).json({
@@ -15,9 +16,9 @@ exports.getAllRooms = async (req, res) => {
 
 exports.getRoomById = async (req, res) => {
   try {
-    const { room_id } = req.params; // ✅ sửa
+    const { room_id } = req.params;
     const data = await RoomService.getRoomById(room_id);
-    return res.status(200).json(data);
+    return res.status(200).json({ success: true, data });
   } catch (err) {
     console.error("Get room by id error:", err);
     return res.status(err.statusCode || 500).json({
@@ -31,7 +32,7 @@ exports.getRoomsByCinema = async (req, res) => {
   try {
     const { cinema_id } = req.params;
     const data = await RoomService.getRoomsByCinema(cinema_id);
-    return res.status(200).json(data);
+    return res.status(200).json({ success: true, data });
   } catch (err) {
     console.error("Get rooms by cinema error:", err);
     return res.status(err.statusCode || 500).json({
@@ -47,7 +48,7 @@ exports.createRoom = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Thêm phòng thành công",
-      room_id: roomId,
+      data: { room_id: roomId },
     });
   } catch (err) {
     console.error("Create room error:", err);
@@ -61,7 +62,7 @@ exports.createRoom = async (req, res) => {
 
 exports.updateRoom = async (req, res) => {
   try {
-    const { room_id } = req.params; // ✅ sửa
+    const { room_id } = req.params;
     await RoomService.updateRoom(room_id, req.body);
     return res.status(200).json({
       success: true,
@@ -79,7 +80,7 @@ exports.updateRoom = async (req, res) => {
 
 exports.deleteRoom = async (req, res) => {
   try {
-    const { room_id } = req.params; // ✅ sửa
+    const { room_id } = req.params;
     await RoomService.deleteRoom(room_id);
     return res.status(200).json({
       success: true,

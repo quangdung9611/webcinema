@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import api from '../../../../api/api';  // ✅ Import api thay vì axios
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import api from '../../../../api/api';
 import {
     Gift,
     Edit,
@@ -18,19 +18,15 @@ import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
-
-// ❌ Xóa API_URL
+import AdminPagination from '../../../components/AdminPagination';
 
 const getImageUrl = (image) => {
     if (!image) return '';
-    if (image.startsWith('http://') || image.startsWith('https://')) {
-        return image;
-    }
+    if (image.startsWith('http://') || image.startsWith('https://')) return image;
     return `https://api.quangdungcinema.id.vn/uploads/promotions/${image}`;
 };
 
-const DEFAULT_IMAGE =
-    'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-promotion.jpg';
+const DEFAULT_IMAGE = 'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-promotion.jpg';
 
 const initialFormData = {
     title: '',
@@ -44,7 +40,16 @@ const PromotionPage = () => {
     const [promotions, setPromotions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
+
     const [search, setSearch] = useState('');
+    const [pagination, setPagination] = useState({
+        page: 1, limit: 20, total: 0, totalPages: 1,
+        hasNextPage: false, hasPreviousPage: false
+    });
+
+    const isFetching = useRef(false);
+    const abortControllerRef = useRef(null);
+
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingPromotion, setEditingPromotion] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
@@ -52,7 +57,6 @@ const PromotionPage = () => {
     const [promotionImageFile, setPromotionImageFile] = useState(null);
     const [filePreviews, setFilePreviews] = useState({});
 
-    // Alert
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -66,37 +70,55 @@ const PromotionPage = () => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
 
-    const closeAlert = () => {
-        setAlertModal(prev => ({ ...prev, open: false }));
-    };
+    const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }));
 
-    // Fetch
-    const fetchPromotions = async () => {
+    const fetchPromotions = useCallback(async (page = 1, keyword = '') => {
+        if (isFetching.current) return;
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        isFetching.current = true;
+        setLoading(true);
+
         try {
-            setLoading(true);
-            const res = await api.get('/api/promotions');  // ✅ Dùng api
-            setPromotions(res.data);
+            const res = await api.get('/api/promotions', {
+                params: { page, limit: 20, search: keyword.trim() },
+                signal: controller.signal
+            });
+
+            const responseData = res.data?.data;
+            const promotionsData = responseData?.data || [];
+            const paginationData = responseData?.pagination || {
+                page: 1, limit: 20, total: 0, totalPages: 1
+            };
+
+            setPromotions(promotionsData);
+            setPagination(paginationData);
+
         } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.error('FETCH PROMOTIONS ERROR:', error);
             showAlert('Lỗi', 'Không thể tải danh sách khuyến mãi.', 'error');
         } finally {
             setLoading(false);
+            isFetching.current = false;
+            if (abortControllerRef.current === controller) abortControllerRef.current = null;
         }
-    };
-
-    useEffect(() => {
-        fetchPromotions();
     }, []);
 
-    // Cleanup blob URL
-    useEffect(() => {
-        return () => {
-            if (filePreviews.promotion_image?.url?.startsWith('blob:')) {
-                URL.revokeObjectURL(filePreviews.promotion_image.url);
-            }
-        };
-    }, [filePreviews]);
+    useEffect(() => { fetchPromotions(1, ''); }, []);
 
-    // Slug
+    const prevSearchRef = useRef('');
+    useEffect(() => {
+        if (search === prevSearchRef.current) return;
+        prevSearchRef.current = search;
+        const timer = setTimeout(() => fetchPromotions(1, search), 400);
+        return () => clearTimeout(timer);
+    }, [search, fetchPromotions]);
+
+    const handlePageChange = (page) => fetchPromotions(page, search);
+
     const generateSlug = (str) => {
         if (!str) return '';
         return str
@@ -110,7 +132,6 @@ const PromotionPage = () => {
             .trim();
     };
 
-    // Open add / edit
     const handleOpenAdd = () => {
         setEditingPromotion(null);
         setFormData(initialFormData);
@@ -133,10 +154,7 @@ const PromotionPage = () => {
         setPromotionImageFile(null);
         if (item.promotion_image) {
             setFilePreviews({
-                promotion_image: {
-                    url: getImageUrl(item.promotion_image),
-                    name: item.promotion_image
-                }
+                promotion_image: { url: getImageUrl(item.promotion_image), name: item.promotion_image }
             });
         } else {
             setFilePreviews({});
@@ -144,13 +162,9 @@ const PromotionPage = () => {
         setIsFormOpen(true);
     };
 
-    // Change
     const handleChange = (e) => {
         const { name, value, files } = e.target;
-
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
-        }
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
 
         if (name === 'promotion_image') {
             const file = files[0];
@@ -160,9 +174,7 @@ const PromotionPage = () => {
                     URL.revokeObjectURL(filePreviews.promotion_image.url);
                 }
                 const blobUrl = URL.createObjectURL(file);
-                setFilePreviews({
-                    promotion_image: { url: blobUrl, name: file.name }
-                });
+                setFilePreviews({ promotion_image: { url: blobUrl, name: file.name } });
             } else {
                 setFilePreviews({});
             }
@@ -170,18 +182,13 @@ const PromotionPage = () => {
         }
 
         if (name === 'title') {
-            setFormData(prev => ({
-                ...prev,
-                title: value,
-                slug: generateSlug(value)
-            }));
+            setFormData(prev => ({ ...prev, title: value, slug: generateSlug(value) }));
             return;
         }
 
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Validate
     const validateForm = () => {
         const newErrors = {};
         if (!formData.title.trim()) {
@@ -196,31 +203,21 @@ const PromotionPage = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Submit
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
 
         try {
             setSubmitLoading(true);
-
             const submitData = new FormData();
             submitData.append('title', formData.title.trim());
             submitData.append('slug', formData.slug);
             submitData.append('description', formData.description || '');
             submitData.append('likes', formData.likes);
             submitData.append('is_active', formData.is_active);
+            if (promotionImageFile) submitData.append('promotion_image', promotionImageFile);
 
-            if (promotionImageFile) {
-                submitData.append('promotion_image', promotionImageFile);
-            }
-
-            // ✅ Dùng api với multipart/form-data
-            const config = {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            };
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
 
             if (editingPromotion) {
                 await api.put(`/api/promotions/${editingPromotion.promotion_id}`, submitData, config);
@@ -231,7 +228,7 @@ const PromotionPage = () => {
             }
 
             setIsFormOpen(false);
-            fetchPromotions();
+            fetchPromotions(pagination.page, search);
         } catch (error) {
             showAlert('Lỗi', error.response?.data?.message || 'Không thể lưu dữ liệu.', 'error');
         } finally {
@@ -239,7 +236,6 @@ const PromotionPage = () => {
         }
     };
 
-    // Delete
     const handleDelete = (item) => {
         showAlert(
             'Xác nhận xóa',
@@ -247,9 +243,12 @@ const PromotionPage = () => {
             'warning',
             async () => {
                 try {
-                    await api.delete(`/api/promotions/${item.promotion_id}`);  // ✅ Dùng api
+                    await api.delete(`/api/promotions/${item.promotion_id}`);
                     closeAlert();
-                    fetchPromotions();
+                    const newPage = promotions.length === 1 && pagination.page > 1
+                        ? pagination.page - 1
+                        : pagination.page;
+                    fetchPromotions(newPage, search);
                     showAlert('Thành công', 'Xóa khuyến mãi thành công.', 'success');
                 } catch (error) {
                     showAlert('Lỗi', 'Không thể xóa khuyến mãi.', 'error');
@@ -259,16 +258,6 @@ const PromotionPage = () => {
         );
     };
 
-    // Filter
-    const filteredPromotions = promotions.filter(item => {
-        const keyword = search.toLowerCase();
-        return (
-            item.title?.toLowerCase().includes(keyword) ||
-            item.description?.toLowerCase().includes(keyword)
-        );
-    });
-
-    // Table columns
     const columns = [
         {
             title: 'Hình ảnh',
@@ -302,11 +291,7 @@ const PromotionPage = () => {
                 </span>
             )
         },
-        {
-            title: 'Ngày tạo',
-            key: 'created_at',
-            render: (row) => row.full_date || new Date(row.created_at).toLocaleDateString('vi-VN')
-        },
+        { title: 'Ngày tạo', key: 'full_date' },
         {
             title: 'Xem',
             key: 'slug',
@@ -332,13 +317,12 @@ const PromotionPage = () => {
         }
     ];
 
-    // Form fields
     const formFields = [
-        { label: 'Tiêu đề khuyến mãi', name: 'title', type: 'text' },
+        { label: 'Tiêu đề khuyến mãi', name: 'title', type: 'text', placeholder: 'Nhập tiêu đề' },
         { label: 'Slug', name: 'slug', type: 'text', disabled: true },
-        { label: 'Mô tả ngắn', name: 'description', type: 'textarea' },
+        { label: 'Mô tả ngắn', name: 'description', type: 'textarea', placeholder: 'Nhập mô tả' },
         { label: 'Hình ảnh', name: 'promotion_image', type: 'file' },
-        { label: 'Likes', name: 'likes', type: 'number' },
+        { label: 'Likes', name: 'likes', type: 'number', placeholder: '0' },
         {
             label: 'Trạng thái',
             name: 'is_active',
@@ -349,6 +333,14 @@ const PromotionPage = () => {
             ]
         }
     ];
+
+    const filePreviews = {};
+    if (editingPromotion && editingPromotion.promotion_image) {
+        filePreviews['promotion_image'] = {
+            url: getImageUrl(editingPromotion.promotion_image),
+            name: editingPromotion.promotion_image
+        };
+    }
 
     const renderAlertIcon = () => {
         switch (alertModal.type) {
@@ -376,11 +368,17 @@ const PromotionPage = () => {
                         <span>Đang tải dữ liệu khuyến mãi...</span>
                     </div>
                 ) : (
-                    <AdminTable columns={columns} data={filteredPromotions} />
+                    <>
+                        <AdminTable columns={columns} data={promotions} />
+                        <AdminPagination
+                            currentPage={pagination.page}
+                            totalPages={pagination.totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </>
                 )}
             </AdminPage>
 
-            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
@@ -398,7 +396,6 @@ const PromotionPage = () => {
                 />
             </AdminModal>
 
-            {/* ALERT MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
@@ -413,9 +410,7 @@ const PromotionPage = () => {
                     <p>{alertModal.message}</p>
                     <div className="admin-alert-actions">
                         {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy bỏ
-                            </button>
+                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>Hủy bỏ</button>
                         )}
                         <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
                             Xác nhận

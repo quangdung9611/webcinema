@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import api from '../../../../api/api';  // ✅ Import api thay vì axios
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import api from '../../../../api/api';
 import {
     Theater,
     Edit,
@@ -19,24 +19,40 @@ import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
+import AdminPagination from '../../../components/AdminPagination';
 
-// ❌ Xóa API_URL
-
+// ==========================================================
+// CONSTANTS
+// ==========================================================
 const initialFormData = {
     genre_name: '',
     slug: ''
 };
 
+// ==========================================================
+// COMPONENT
+// ==========================================================
 const GenresPage = () => {
-
-    /* =====================================================
-        STATES
-    ===================================================== */
-
+    // ======================================================
+    // STATES
+    // ======================================================
     const [genres, setGenres] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
+
     const [search, setSearch] = useState('');
+    const [pagination, setPagination] = useState({
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false
+    });
+
+    const isFetching = useRef(false);
+    const abortControllerRef = useRef(null);
+
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingGenre, setEditingGenre] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
@@ -51,58 +67,83 @@ const GenresPage = () => {
         onCancel: null
     });
 
-    /* =====================================================
-        FETCH GENRES
-    ===================================================== */
-
-    const fetchGenres = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get('/api/genres');  // ✅ Dùng api
-            setGenres(res.data);
-        } catch (error) {
-            showAlert('Lỗi', 'Không thể tải danh sách thể loại.', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchGenres();
-    }, []);
-
-    /* =====================================================
-        ALERT MODAL
-    ===================================================== */
-
+    // ======================================================
+    // ALERT HANDLER
+    // ======================================================
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
 
-    const closeAlert = () => {
-        setAlertModal(prev => ({ ...prev, open: false }));
-    };
+    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
-    /* =====================================================
-        VALIDATE FORM
-    ===================================================== */
+    // ======================================================
+    // FETCH GENRES (PAGINATION + SEARCH)
+    // ======================================================
+    const fetchGenres = useCallback(async (page = 1, keyword = '') => {
+        if (isFetching.current) return;
+        if (abortControllerRef.current) abortControllerRef.current.abort();
 
-    const validateForm = () => {
-        const errors = {};
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        isFetching.current = true;
+        setLoading(true);
 
-        if (!formData.genre_name.trim()) {
-            errors.genre_name = 'Vui lòng nhập tên thể loại';
-        } else if (formData.genre_name.trim().length < 2) {
-            errors.genre_name = 'Tên thể loại phải từ 2 ký tự trở lên';
+        try {
+            const res = await api.get('/api/genres', {
+                params: {
+                    page,
+                    limit: 20,
+                    search: keyword.trim()
+                },
+                signal: controller.signal
+            });
+
+            const responseData = res.data?.data;
+            const genresData = responseData?.data || [];
+            const paginationData = responseData?.pagination || {
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1
+            };
+
+            setGenres(genresData);
+            setPagination(paginationData);
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.error('FETCH GENRES ERROR:', error);
+            showAlert('Lỗi', 'Không thể tải danh sách thể loại.', 'error');
+        } finally {
+            setLoading(false);
+            isFetching.current = false;
+            if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
+            }
         }
+    }, []);
 
-        return errors;
-    };
+    // Khởi tạo lần đầu
+    useEffect(() => {
+        fetchGenres(1, '');
+    }, []);
 
-    /* =====================================================
-        GENERATE SLUG
-    ===================================================== */
+    // ======================================================
+    // SEARCH DEBOUNCE
+    // ======================================================
+    const prevSearchRef = useRef('');
+    useEffect(() => {
+        if (search === prevSearchRef.current) return;
+        prevSearchRef.current = search;
 
+        const timer = setTimeout(() => fetchGenres(1, search), 400);
+        return () => clearTimeout(timer);
+    }, [search, fetchGenres]);
+
+    const handlePageChange = (page) => fetchGenres(page, search);
+
+    // ======================================================
+    // SLUG GENERATOR
+    // ======================================================
     const generateSlug = (str) => {
         if (!str) return '';
         return str
@@ -116,10 +157,22 @@ const GenresPage = () => {
             .trim();
     };
 
-    /* =====================================================
-        OPEN ADD / EDIT
-    ===================================================== */
+    // ======================================================
+    // VALIDATE FORM
+    // ======================================================
+    const validateForm = () => {
+        const errors = {};
+        if (!formData.genre_name.trim()) {
+            errors.genre_name = 'Vui lòng nhập tên thể loại';
+        } else if (formData.genre_name.trim().length < 2) {
+            errors.genre_name = 'Tên thể loại phải từ 2 ký tự trở lên';
+        }
+        return errors;
+    };
 
+    // ======================================================
+    // HANDLE MODAL ACTIONS
+    // ======================================================
     const handleOpenAdd = () => {
         setEditingGenre(null);
         setFormData(initialFormData);
@@ -137,41 +190,39 @@ const GenresPage = () => {
         setIsFormOpen(true);
     };
 
-    /* =====================================================
-        CHANGE FORM
-    ===================================================== */
-
+    // ======================================================
+    // HANDLE FORM CHANGE
+    // ======================================================
     const handleChange = (e) => {
         const { name, value } = e.target;
 
         if (name === 'genre_name') {
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
                 genre_name: value,
                 slug: generateSlug(value)
             }));
 
+            // Real-time validation
             let errorMessage = '';
             if (!value.trim()) {
                 errorMessage = 'Vui lòng nhập tên thể loại';
             } else if (value.trim().length < 2) {
                 errorMessage = 'Tên thể loại phải từ 2 ký tự trở lên';
             }
-            setFormErrors(prev => ({ ...prev, genre_name: errorMessage }));
+            setFormErrors((prev) => ({ ...prev, genre_name: errorMessage }));
             return;
         }
 
-        setFormData(prev => ({ ...prev, [name]: value }));
-        setFormErrors(prev => ({ ...prev, [name]: '' }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        setFormErrors((prev) => ({ ...prev, [name]: '' }));
     };
 
-    /* =====================================================
-        SUBMIT
-    ===================================================== */
-
+    // ======================================================
+    // HANDLE SUBMIT
+    // ======================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         const errors = validateForm();
         if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
@@ -183,15 +234,15 @@ const GenresPage = () => {
             setFormErrors({});
 
             if (editingGenre) {
-                await api.put(`/api/genres/${editingGenre.genre_id}`, formData);  // ✅ Dùng api
+                await api.put(`/api/genres/${editingGenre.genre_id}`, formData);
                 showAlert('Thành công', 'Cập nhật thể loại thành công.', 'success');
             } else {
-                await api.post('/api/genres', formData);  // ✅ Dùng api
+                await api.post('/api/genres', formData);
                 showAlert('Thành công', 'Thêm thể loại thành công.', 'success');
             }
 
             setIsFormOpen(false);
-            fetchGenres();
+            fetchGenres(pagination.page, search);
         } catch (error) {
             const backendField = error.response?.data?.field;
             const backendError = error.response?.data?.error;
@@ -207,10 +258,9 @@ const GenresPage = () => {
         }
     };
 
-    /* =====================================================
-        DELETE GENRE
-    ===================================================== */
-
+    // ======================================================
+    // HANDLE DELETE
+    // ======================================================
     const handleDelete = (genre) => {
         showAlert(
             'Xác nhận xóa',
@@ -218,9 +268,13 @@ const GenresPage = () => {
             'warning',
             async () => {
                 try {
-                    await api.delete(`/api/genres/${genre.genre_id}`);  // ✅ Dùng api
+                    await api.delete(`/api/genres/${genre.genre_id}`);
                     closeAlert();
-                    fetchGenres();
+
+                    const newPage = genres.length === 1 && pagination.page > 1
+                        ? pagination.page - 1
+                        : pagination.page;
+                    fetchGenres(newPage, search);
                     showAlert('Thành công', 'Xóa thể loại thành công.', 'success');
                 } catch (error) {
                     showAlert('Lỗi', 'Không thể xóa thể loại.', 'error');
@@ -230,18 +284,9 @@ const GenresPage = () => {
         );
     };
 
-    /* =====================================================
-        FILTER GENRES
-    ===================================================== */
-
-    const filteredGenres = genres.filter(item =>
-        item.genre_name?.toLowerCase().includes(search.toLowerCase())
-    );
-
-    /* =====================================================
-        TABLE COLUMNS
-    ===================================================== */
-
+    // ======================================================
+    // TABLE COLUMNS
+    // ======================================================
     const columns = [
         {
             title: 'ID',
@@ -301,10 +346,16 @@ const GenresPage = () => {
             key: 'actions',
             render: (row) => (
                 <div className="admin-table-actions">
-                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
+                    <button
+                        className="admin-action-btn edit-btn"
+                        onClick={() => handleOpenEdit(row)}
+                    >
                         <Edit size={16} />
                     </button>
-                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
+                    <button
+                        className="admin-action-btn delete-btn"
+                        onClick={() => handleDelete(row)}
+                    >
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -312,10 +363,9 @@ const GenresPage = () => {
         }
     ];
 
-    /* =====================================================
-        FORM FIELDS
-    ===================================================== */
-
+    // ======================================================
+    // FORM FIELDS
+    // ======================================================
     const formFields = [
         {
             label: 'Tên thể loại',
@@ -332,23 +382,25 @@ const GenresPage = () => {
         }
     ];
 
-    /* =====================================================
-        ALERT ICON
-    ===================================================== */
-
+    // ======================================================
+    // HELPER: RENDER ALERT ICON
+    // ======================================================
     const renderAlertIcon = () => {
         switch (alertModal.type) {
-            case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error': return <XCircle size={58} color="#ef4444" />;
-            case 'warning': return <AlertTriangle size={58} color="#f59e0b" />;
-            default: return <Info size={58} color="#3b82f6" />;
+            case 'success':
+                return <CheckCircle2 size={58} color="#22c55e" />;
+            case 'error':
+                return <XCircle size={58} color="#ef4444" />;
+            case 'warning':
+                return <AlertTriangle size={58} color="#f59e0b" />;
+            default:
+                return <Info size={58} color="#3b82f6" />;
         }
     };
 
-    /* =====================================================
-        RENDER
-    ===================================================== */
-
+    // ======================================================
+    // RENDER
+    // ======================================================
     return (
         <>
             <AdminPage
@@ -366,11 +418,17 @@ const GenresPage = () => {
                         <span>Đang tải dữ liệu...</span>
                     </div>
                 ) : (
-                    <AdminTable columns={columns} data={filteredGenres} />
+                    <>
+                        <AdminTable columns={columns} data={genres} />
+                        <AdminPagination
+                            currentPage={pagination.page}
+                            totalPages={pagination.totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </>
                 )}
             </AdminPage>
 
-            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
@@ -387,7 +445,6 @@ const GenresPage = () => {
                 />
             </AdminModal>
 
-            {/* ALERT MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
@@ -406,7 +463,10 @@ const GenresPage = () => {
                                 Hủy
                             </button>
                         )}
-                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
+                        <button
+                            className="admin-confirm-btn"
+                            onClick={alertModal.onConfirm || closeAlert}
+                        >
                             Xác nhận
                         </button>
                     </div>

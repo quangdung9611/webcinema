@@ -1,16 +1,15 @@
 const BlogCinemaService = require("../Services/BlogCinemaService");
 
 /* ==========================================================
-   GET ALL BLOGS (PUBLIC)
+   GET ALL BLOGS (PUBLIC) - PAGINATION & SEARCH
 ========================================================== */
 exports.getAllBlogs = async (req, res) => {
     try {
-        const blogs = await BlogCinemaService.getAllBlogs(true);
-
-        return res.status(200).json(blogs);
+        const { page = 1, limit = 20, search = "" } = req.query;
+        const data = await BlogCinemaService.getAllBlogs(true, page, limit, search);
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("getAllBlogs error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -19,16 +18,15 @@ exports.getAllBlogs = async (req, res) => {
 };
 
 /* ==========================================================
-   GET ALL BLOGS (ADMIN)
+   GET ALL BLOGS (ADMIN) - PAGINATION & SEARCH
 ========================================================== */
 exports.getAllBlogsAdmin = async (req, res) => {
     try {
-        const blogs = await BlogCinemaService.getAllBlogs(false);
-
-        return res.status(200).json(blogs);
+        const { page = 1, limit = 20, search = "" } = req.query;
+        const data = await BlogCinemaService.getAllBlogs(false, page, limit, search);
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("getAllBlogsAdmin error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -42,13 +40,10 @@ exports.getAllBlogsAdmin = async (req, res) => {
 exports.getBlogById = async (req, res) => {
     try {
         const { blog_id } = req.params;
-
         const blog = await BlogCinemaService.getBlogById(blog_id);
-
         return res.status(200).json(blog);
     } catch (err) {
         console.error("getBlogById error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -62,13 +57,10 @@ exports.getBlogById = async (req, res) => {
 exports.getBlogBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
-
         const blog = await BlogCinemaService.getBlogBySlug(slug);
-
         return res.status(200).json(blog);
     } catch (err) {
         console.error("getBlogBySlug error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -82,17 +74,13 @@ exports.getBlogBySlug = async (req, res) => {
 exports.createBlog = async (req, res) => {
     try {
         const blogId = await BlogCinemaService.createBlog(req.body, req.file);
-
         return res.status(201).json({
             success: true,
             message: "Thêm blog thành công!",
-            data: {
-                blog_id: blogId
-            }
+            data: { blog_id: blogId }
         });
     } catch (err) {
         console.error("createBlog error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -106,20 +94,13 @@ exports.createBlog = async (req, res) => {
 exports.updateBlog = async (req, res) => {
     try {
         const { blog_id } = req.params;
-
-        await BlogCinemaService.updateBlog(
-            blog_id,
-            req.body,
-            req.file
-        );
-
+        await BlogCinemaService.updateBlog(blog_id, req.body, req.file);
         return res.status(200).json({
             success: true,
             message: "Cập nhật blog thành công!"
         });
     } catch (err) {
         console.error("updateBlog error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -133,16 +114,13 @@ exports.updateBlog = async (req, res) => {
 exports.deleteBlog = async (req, res) => {
     try {
         const { blog_id } = req.params;
-
         await BlogCinemaService.deleteBlog(blog_id);
-
         return res.status(200).json({
             success: true,
             message: "Đã xóa blog thành công."
         });
     } catch (err) {
         console.error("deleteBlog error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -156,16 +134,13 @@ exports.deleteBlog = async (req, res) => {
 exports.increaseLike = async (req, res) => {
     try {
         const { blog_id } = req.params;
-
         await BlogCinemaService.likeBlog(blog_id);
-
         return res.status(200).json({
             success: true,
             message: "Đã tăng lượt thích!"
         });
     } catch (err) {
         console.error("increaseLike error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"

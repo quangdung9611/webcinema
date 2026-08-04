@@ -2,9 +2,27 @@ const db = require("../Config/db");
 
 class ActorRepository {
     // ==========================================================
-    // LẤY DANH SÁCH TẤT CẢ DIỄN VIÊN
+    // LẤY DANH SÁCH DIỄN VIÊN - PAGINATION + SEARCH
     // ==========================================================
-    async findAll() {
+    async findAll(page = 1, limit = 20, search = "") {
+        page = Number.parseInt(page, 10);
+        limit = Number.parseInt(limit, 10);
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 20;
+        if (limit > 100) limit = 100;
+
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `WHERE (name LIKE ? OR nationality LIKE ?)`;
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword);
+        }
+
+        const offset = (page - 1) * limit;
+
         const [rows] = await db.query(
             `
             SELECT
@@ -19,10 +37,34 @@ class ActorRepository {
                 created_at,
                 updated_at
             FROM actors
+            ${whereClause}
             ORDER BY actor_id DESC
-            `
+            LIMIT ? OFFSET ?
+            `,
+            [...queryParams, limit, offset]
         );
-        return rows;
+
+        let countSql = `SELECT COUNT(*) AS total FROM actors`;
+        const countParams = [...queryParams];
+        if (search) {
+            countSql += ` WHERE (name LIKE ? OR nationality LIKE ?)`;
+        }
+
+        const [countRows] = await db.query(countSql, countParams);
+        const total = Number(countRows[0]?.total || 0);
+        const totalPages = Math.ceil(total / limit) || 1;
+
+        return {
+            data: rows,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages,
+                hasPreviousPage: page > 1,
+                hasNextPage: page < totalPages
+            }
+        };
     }
 
     // ==========================================================
@@ -30,22 +72,7 @@ class ActorRepository {
     // ==========================================================
     async findById(actorId) {
         const [rows] = await db.query(
-            `
-            SELECT
-                actor_id,
-                name,
-                gender,
-                nationality,
-                actor_avatar,
-                biography,
-                birthday,
-                slug,
-                created_at,
-                updated_at
-            FROM actors
-            WHERE actor_id = ?
-            LIMIT 1
-            `,
+            `SELECT * FROM actors WHERE actor_id = ? LIMIT 1`,
             [actorId]
         );
         return rows[0] || null;
@@ -56,22 +83,7 @@ class ActorRepository {
     // ==========================================================
     async findBySlugWithMovies(slug) {
         const [actorRows] = await db.query(
-            `
-            SELECT
-                actor_id,
-                name,
-                gender,
-                nationality,
-                actor_avatar,
-                biography,
-                birthday,
-                slug,
-                created_at,
-                updated_at
-            FROM actors
-            WHERE slug = ?
-            LIMIT 1
-            `,
+            `SELECT * FROM actors WHERE slug = ? LIMIT 1`,
             [slug]
         );
         const actor = actorRows[0];
@@ -79,12 +91,7 @@ class ActorRepository {
 
         const [movies] = await db.query(
             `
-            SELECT
-                m.movie_id,
-                m.title,
-                m.slug,
-                m.movie_poster,
-                m.release_date
+            SELECT m.movie_id, m.title, m.slug, m.movie_poster, m.release_date
             FROM movies m
             JOIN movie_actors ma ON m.movie_id = ma.movie_id
             WHERE ma.actor_id = ?
@@ -97,31 +104,21 @@ class ActorRepository {
     }
 
     // ==========================================================
-    // KIỂM TRA TỒN TẠI THEO TÊN HOẶC SLUG (GIỐNG MOVIE)
+    // KIỂM TRA TỒN TẠI (GIỐNG MOVIE)
     // ==========================================================
-   // ==========================================================
-// KIỂM TRA TỒN TẠI THEO TÊN HOẶC SLUG
-// ==========================================================
-async existsByNameOrSlug(name, slug, excludeId = null) {
-    let sql = `
-        SELECT actor_id
-        FROM actors
-        WHERE (name = ? OR slug = ?)
-    `;
-
-    const params = [name.trim(), slug];
-
-    if (excludeId != null) {
-        sql += ` AND actor_id != ?`;
-        params.push(Number(excludeId));
+    async existsByNameOrSlug(name, slug, excludeId = null) {
+        let sql = `SELECT actor_id FROM actors WHERE (name = ? OR slug = ?)`;
+        const params = [name.trim(), slug];
+        if (excludeId != null) {
+            sql += ` AND actor_id != ?`;
+            params.push(Number(excludeId));
+        }
+        const [rows] = await db.query(sql, params);
+        return rows.length > 0;
     }
 
-    const [rows] = await db.query(sql, params);
-    return rows.length > 0;
-}
-
     // ==========================================================
-    // LẤY ẢNH CỦA DIỄN VIÊN (để xóa trên Cloudinary)
+    // LẤY ẢNH (để xóa trên Cloudinary)
     // ==========================================================
     async getAvatar(actorId) {
         const [rows] = await db.query(
@@ -135,176 +132,70 @@ async existsByNameOrSlug(name, slug, excludeId = null) {
     // CRUD CHÍNH
     // ==========================================================
     async create(data) {
-        const {
-            name,
-            slug,
-            gender,
-            nationality,
-            actor_avatar,
-            biography,
-            birthday,
-        } = data;
-
+        const { name, slug, gender, nationality, actor_avatar, biography, birthday } = data;
         const [result] = await db.query(
             `
-            INSERT INTO actors (
-                name, slug, gender, nationality,
-                actor_avatar, biography, birthday
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO actors (name, slug, gender, nationality, actor_avatar, biography, birthday)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             `,
-            [
-                name.trim(),
-                slug,
-                gender,
-                nationality.trim(),
-                actor_avatar || null,
-                biography.trim(),
-                birthday,
-            ]
+            [name.trim(), slug, gender, nationality.trim(), actor_avatar || null, biography.trim(), birthday]
         );
         return result.insertId;
     }
 
     async update(actorId, data) {
-        const {
-            name,
-            slug,
-            gender,
-            nationality,
-            actor_avatar,
-            biography,
-            birthday,
-        } = data;
-
+        const { name, slug, gender, nationality, actor_avatar, biography, birthday } = data;
         const [result] = await db.query(
             `
             UPDATE actors
-            SET
-                name = ?,
-                slug = ?,
-                gender = ?,
-                nationality = ?,
-                actor_avatar = ?,
-                biography = ?,
-                birthday = ?
+            SET name = ?, slug = ?, gender = ?, nationality = ?, actor_avatar = ?, biography = ?, birthday = ?
             WHERE actor_id = ?
             `,
-            [
-                name.trim(),
-                slug,
-                gender,
-                nationality.trim(),
-                actor_avatar || null,
-                biography.trim(),
-                birthday,
-                actorId,
-            ]
+            [name.trim(), slug, gender, nationality.trim(), actor_avatar || null, biography.trim(), birthday, actorId]
         );
         return result.affectedRows;
     }
 
     async delete(actorId) {
-        const [result] = await db.query(
-            `DELETE FROM actors WHERE actor_id = ?`,
-            [actorId]
-        );
+        const [result] = await db.query(`DELETE FROM actors WHERE actor_id = ?`, [actorId]);
         return result.affectedRows;
     }
 
     // ==========================================================
     // TRANSACTION SUPPORT
     // ==========================================================
-    async getConnection() {
-        return db.getConnection();
-    }
-
-    async beginTransaction(connection) {
-        await connection.beginTransaction();
-    }
-
-    async commit(connection) {
-        await connection.commit();
-    }
-
-    async rollback(connection) {
-        await connection.rollback();
-    }
-
-    // Dùng với connection có sẵn
+    async getConnection() { return db.getConnection(); }
+    async beginTransaction(connection) { await connection.beginTransaction(); }
+    async commit(connection) { await connection.commit(); }
+    async rollback(connection) { await connection.rollback(); }
+    
     async createWithConnection(connection, data) {
-        const {
-            name,
-            slug,
-            gender,
-            nationality,
-            actor_avatar,
-            biography,
-            birthday,
-        } = data;
-
+        const { name, slug, gender, nationality, actor_avatar, biography, birthday } = data;
         const [result] = await connection.query(
             `
-            INSERT INTO actors (
-                name, slug, gender, nationality,
-                actor_avatar, biography, birthday
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO actors (name, slug, gender, nationality, actor_avatar, biography, birthday)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             `,
-            [
-                name.trim(),
-                slug,
-                gender,
-                nationality.trim(),
-                actor_avatar || null,
-                biography.trim(),
-                birthday,
-            ]
+            [name.trim(), slug, gender, nationality.trim(), actor_avatar || null, biography.trim(), birthday]
         );
         return result.insertId;
     }
 
     async updateWithConnection(connection, actorId, data) {
-        const {
-            name,
-            slug,
-            gender,
-            nationality,
-            actor_avatar,
-            biography,
-            birthday,
-        } = data;
-
+        const { name, slug, gender, nationality, actor_avatar, biography, birthday } = data;
         const [result] = await connection.query(
             `
             UPDATE actors
-            SET
-                name = ?,
-                slug = ?,
-                gender = ?,
-                nationality = ?,
-                actor_avatar = ?,
-                biography = ?,
-                birthday = ?
+            SET name = ?, slug = ?, gender = ?, nationality = ?, actor_avatar = ?, biography = ?, birthday = ?
             WHERE actor_id = ?
             `,
-            [
-                name.trim(),
-                slug,
-                gender,
-                nationality.trim(),
-                actor_avatar || null,
-                biography.trim(),
-                birthday,
-                actorId,
-            ]
+            [name.trim(), slug, gender, nationality.trim(), actor_avatar || null, biography.trim(), birthday, actorId]
         );
         return result.affectedRows;
     }
 
     async deleteWithConnection(connection, actorId) {
-        const [result] = await connection.query(
-            `DELETE FROM actors WHERE actor_id = ?`,
-            [actorId]
-        );
+        const [result] = await connection.query(`DELETE FROM actors WHERE actor_id = ?`, [actorId]);
         return result.affectedRows;
     }
 }

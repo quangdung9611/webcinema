@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import api from '../../../../api/api';  // ✅ Import api
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import api from '../../../../api/api';
 import {
     Image,
     Edit,
@@ -14,8 +14,7 @@ import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
-
-// ❌ Xóa API_URL
+import AdminPagination from '../../../components/AdminPagination';
 
 const PAGE_OPTIONS = [
     { label: 'Trang chủ', value: 'HOME' },
@@ -35,7 +34,20 @@ const BannerPage = () => {
     const [banners, setBanners] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
+
     const [search, setSearch] = useState('');
+    const [pagination, setPagination] = useState({
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false
+    });
+
+    const isFetching = useRef(false);
+    const abortControllerRef = useRef(null);
+
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingBanner, setEditingBanner] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
@@ -51,35 +63,77 @@ const BannerPage = () => {
         onCancel: null
     });
 
-    // ❌ Xóa getAuthHeader - api tự xử lý
-
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
 
-    const closeAlert = () => {
-        setAlertModal(prev => ({ ...prev, open: false }));
-    };
+    const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }));
 
-    const fetchBanners = async () => {
+    // ======================================================
+    // FETCH BANNERS (PAGINATION + SEARCH)
+    // ======================================================
+    const fetchBanners = useCallback(async (page = 1, keyword = '') => {
+        if (isFetching.current) return;
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        isFetching.current = true;
         setLoading(true);
+
         try {
-            const res = await api.get('/api/banners');
-            const bannersData = res.data?.data || res.data || [];
-            setBanners(Array.isArray(bannersData) ? bannersData : []);
+            const res = await api.get('/api/banners', {
+                params: { page, limit: 20, search: keyword.trim() },
+                signal: controller.signal
+            });
+
+            const responseData = res.data?.data;
+            const bannersData = responseData?.data || [];
+            const paginationData = responseData?.pagination || {
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1
+            };
+
+            setBanners(bannersData);
+            setPagination(paginationData);
+
         } catch (error) {
-            console.error('Fetch banners error:', error);
+            if (error.name === 'AbortError') return;
+            console.error('FETCH BANNERS ERROR:', error);
             showAlert('Lỗi', 'Không thể tải danh sách banner.', 'error');
             setBanners([]);
         } finally {
             setLoading(false);
+            isFetching.current = false;
+            if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
+            }
         }
-    };
-
-    useEffect(() => {
-        fetchBanners();
     }, []);
 
+    useEffect(() => {
+        fetchBanners(1, '');
+    }, []);
+
+    // ======================================================
+    // SEARCH DEBOUNCE
+    // ======================================================
+    const prevSearchRef = useRef('');
+    useEffect(() => {
+        if (search === prevSearchRef.current) return;
+        prevSearchRef.current = search;
+
+        const timer = setTimeout(() => fetchBanners(1, search), 400);
+        return () => clearTimeout(timer);
+    }, [search, fetchBanners]);
+
+    const handlePageChange = (page) => fetchBanners(page, search);
+
+    // ======================================================
+    // VALIDATE FORM
+    // ======================================================
     const validateForm = () => {
         const errors = {};
         if (!formData.page) {
@@ -94,6 +148,9 @@ const BannerPage = () => {
         return errors;
     };
 
+    // ======================================================
+    // HANDLE MODAL ACTIONS
+    // ======================================================
     const handleOpenAdd = () => {
         setEditingBanner(null);
         setFormData(initialFormData);
@@ -113,17 +170,25 @@ const BannerPage = () => {
         setIsFormOpen(true);
     };
 
+    // ======================================================
+    // HANDLE FORM CHANGE
+    // ======================================================
     const handleChange = (e) => {
         const { name, value, type, checked, files } = e.target;
+
         if (name === 'image_url') {
             setBannerImageFile(files[0]);
             return;
         }
+
         const newValue = type === 'checkbox' ? checked : value;
-        setFormData(prev => ({ ...prev, [name]: newValue }));
-        setFormErrors(prev => ({ ...prev, [name]: '' }));
+        setFormData((prev) => ({ ...prev, [name]: newValue }));
+        setFormErrors((prev) => ({ ...prev, [name]: '' }));
     };
 
+    // ======================================================
+    // HANDLE SUBMIT
+    // ======================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
         const errors = validateForm();
@@ -134,8 +199,6 @@ const BannerPage = () => {
 
         try {
             setSubmitLoading(true);
-            setFormErrors({});
-
             const submitData = new FormData();
             submitData.append('page', formData.page);
             submitData.append('is_active', formData.is_active ? 1 : 0);
@@ -143,10 +206,7 @@ const BannerPage = () => {
                 submitData.append('image_url', bannerImageFile);
             }
 
-            // ✅ Dùng api với multipart/form-data
-            const config = {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            };
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
 
             if (editingBanner) {
                 await api.put(`/api/banners/${editingBanner.banner_id}`, submitData, config);
@@ -157,9 +217,8 @@ const BannerPage = () => {
             }
 
             setIsFormOpen(false);
-            fetchBanners();
+            fetchBanners(pagination.page, search);
         } catch (error) {
-            console.error('Submit banner error:', error);
             const backendField = error.response?.data?.field;
             const backendMessage = error.response?.data?.message || 'Đã xảy ra lỗi.';
             if (backendField) {
@@ -172,6 +231,9 @@ const BannerPage = () => {
         }
     };
 
+    // ======================================================
+    // HANDLE DELETE
+    // ======================================================
     const handleDelete = (banner) => {
         showAlert(
             'Xác nhận xóa',
@@ -181,10 +243,13 @@ const BannerPage = () => {
                 try {
                     await api.delete(`/api/banners/${banner.banner_id}`);
                     closeAlert();
-                    fetchBanners();
+
+                    const newPage = banners.length === 1 && pagination.page > 1
+                        ? pagination.page - 1
+                        : pagination.page;
+                    fetchBanners(newPage, search);
                     showAlert('Thành công', 'Xóa banner thành công.', 'success');
                 } catch (error) {
-                    console.error('Delete banner error:', error);
                     showAlert('Lỗi', 'Không thể xóa banner.', 'error');
                 }
             },
@@ -192,15 +257,9 @@ const BannerPage = () => {
         );
     };
 
-    const filteredBanners = (banners || []).filter(banner => {
-        const keyword = search.toLowerCase();
-        return (
-            banner.page?.toLowerCase().includes(keyword) ||
-            banner.banner_id?.toString().includes(keyword) ||
-            banner.image_url?.toLowerCase().includes(keyword)
-        );
-    });
-
+    // ======================================================
+    // COLUMNS
+    // ======================================================
     const columns = [
         {
             title: 'ID',
@@ -219,7 +278,11 @@ const BannerPage = () => {
                     BLOG: 'Blog điện ảnh',
                     ACTOR: 'Diễn viên'
                 };
-                return <span className="status-badge page-badge">{pageMap[row.page] || row.page}</span>;
+                return (
+                    <span className="status-badge page-badge">
+                        {pageMap[row.page] || row.page}
+                    </span>
+                );
             }
         },
         {
@@ -236,10 +299,6 @@ const BannerPage = () => {
                             objectFit: 'cover',
                             borderRadius: '4px',
                             border: '1px solid rgba(255,255,255,0.1)'
-                        }}
-                        onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.parentElement.innerHTML = `<span style="color:#888;font-size:12px;">Không tải được</span>`;
                         }}
                     />
                     <a
@@ -260,13 +319,11 @@ const BannerPage = () => {
                 <span className={`status-badge ${row.is_active ? 'active' : 'inactive'}`}>
                     {row.is_active ? (
                         <>
-                            <CheckCircle size={14} />
-                            Hoạt động
+                            <CheckCircle size={14} /> Hoạt động
                         </>
                     ) : (
                         <>
-                            <XCircle size={14} />
-                            Ẩn
+                            <XCircle size={14} /> Ẩn
                         </>
                     )}
                 </span>
@@ -275,21 +332,26 @@ const BannerPage = () => {
         {
             title: 'Ngày tạo',
             key: 'created_at',
-            render: (row) => {
-                if (!row.created_at) return '—';
-                const date = new Date(row.created_at);
-                return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            }
+            render: (row) =>
+                row.created_at
+                    ? new Date(row.created_at).toLocaleDateString('vi-VN')
+                    : '—'
         },
         {
             title: 'Thao tác',
             key: 'actions',
             render: (row) => (
                 <div className="admin-table-actions">
-                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
+                    <button
+                        className="admin-action-btn edit-btn"
+                        onClick={() => handleOpenEdit(row)}
+                    >
                         <Edit size={16} />
                     </button>
-                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
+                    <button
+                        className="admin-action-btn delete-btn"
+                        onClick={() => handleDelete(row)}
+                    >
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -297,6 +359,9 @@ const BannerPage = () => {
         }
     ];
 
+    // ======================================================
+    // FORM FIELDS
+    // ======================================================
     const formFields = [
         {
             label: 'Trang hiển thị',
@@ -327,6 +392,9 @@ const BannerPage = () => {
         };
     }
 
+    // ======================================================
+    // RENDER
+    // ======================================================
     return (
         <>
             <AdminPage
@@ -345,7 +413,14 @@ const BannerPage = () => {
                         <span>Đang tải dữ liệu...</span>
                     </div>
                 ) : (
-                    <AdminTable columns={columns} data={filteredBanners} />
+                    <>
+                        <AdminTable columns={columns} data={banners} />
+                        <AdminPagination
+                            currentPage={pagination.page}
+                            totalPages={pagination.totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </>
                 )}
             </AdminPage>
 
@@ -381,7 +456,10 @@ const BannerPage = () => {
                                 Hủy
                             </button>
                         )}
-                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
+                        <button
+                            className="admin-confirm-btn"
+                            onClick={alertModal.onConfirm || closeAlert}
+                        >
                             Xác nhận
                         </button>
                     </div>

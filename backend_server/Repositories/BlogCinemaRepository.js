@@ -1,53 +1,40 @@
-
-// Repositories/BlogCinemaRepository.js
-
 const db = require("../Config/db");
 
 class BlogCinemaRepository {
 
     // ==========================================================
-    // LẤY DANH SÁCH BLOG - PAGINATION
-    // Mặc định: 20 bài / trang
-    // Tối đa: 100 bài / trang
+    // LẤY DANH SÁCH BLOG - PAGINATION + SEARCH
     // ==========================================================
-    async findAll(
-        onlyActive = false,
-        page = 1,
-        limit = 20
-    ) {
-
-        // ------------------------------------------------------
-        // CHUẨN HÓA PAGE / LIMIT
-        // ------------------------------------------------------
-
+    async findAll(onlyActive = false, page = 1, limit = 20, search = "") {
+        // Chuẩn hóa
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 20;
+        if (limit > 100) limit = 100;
 
-        if (!Number.isInteger(page) || page < 1) {
-            page = 1;
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `WHERE (title LIKE ? OR description LIKE ?)`;
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword);
         }
 
-        if (!Number.isInteger(limit) || limit < 1) {
-            limit = 20;
+        if (onlyActive) {
+            if (whereClause) {
+                whereClause += ` AND is_active = 1`;
+            } else {
+                whereClause = `WHERE is_active = 1`;
+            }
         }
-
-        // Không cho lấy quá nhiều dữ liệu
-        if (limit > 100) {
-            limit = 100;
-        }
-
-        // ------------------------------------------------------
-        // TÍNH OFFSET
-        // ------------------------------------------------------
 
         const offset = (page - 1) * limit;
 
-
-        // ======================================================
-        // LẤY DANH SÁCH BLOG
-        // ======================================================
-
-        let sql = `
+        const [rows] = await db.query(
+            `
             SELECT
                 blog_id,
                 title,
@@ -58,202 +45,103 @@ class BlogCinemaRepository {
                 likes,
                 is_active,
                 created_at,
-                updated_at
-
+                updated_at,
+                DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS full_date
             FROM blog_cinema
-        `;
-
-        const params = [];
-
-        if (onlyActive) {
-            sql += `
-                WHERE is_active = 1
-            `;
-        }
-
-        sql += `
+            ${whereClause}
             ORDER BY created_at DESC
             LIMIT ? OFFSET ?
-        `;
-
-        params.push(limit, offset);
-
-
-        const [rows] = await db.query(
-            sql,
-            params
+            `,
+            [...queryParams, limit, offset]
         );
 
-
-        // ======================================================
-        // ĐẾM TỔNG SỐ BLOG
-        // ======================================================
-
-        let countSql = `
-            SELECT COUNT(*) AS total
-            FROM blog_cinema
-        `;
-
-        const countParams = [];
+        let countSql = `SELECT COUNT(*) AS total FROM blog_cinema`;
+        const countParams = [...queryParams];
 
         if (onlyActive) {
-            countSql += `
-                WHERE is_active = 1
-            `;
+            if (whereClause.includes('AND')) {
+                countSql += ` WHERE is_active = 1`;
+            } else {
+                countSql += ` WHERE is_active = 1`;
+            }
         }
 
-        const [countRows] = await db.query(
-            countSql,
-            countParams
-        );
+        // Nếu có search, phải thêm điều kiện vào count
+        if (search) {
+            if (!onlyActive) {
+                countSql += ` WHERE (title LIKE ? OR description LIKE ?)`;
+            } else {
+                countSql += ` AND (title LIKE ? OR description LIKE ?)`;
+            }
+            // CountParams đã có keyword, nên ta cần push thêm nếu chưa có
+            if (countParams.length === 0) {
+                const keyword = `%${search}%`;
+                countParams.push(keyword, keyword);
+            }
+        }
 
-        const total = Number(
-            countRows[0]?.total || 0
-        );
-
-
-        // ======================================================
-        // TÍNH TỔNG SỐ TRANG
-        // ======================================================
-
-        const totalPages = Math.ceil(
-            total / limit
-        );
-
-
-        // ======================================================
-        // RETURN
-        // ======================================================
+        const [countRows] = await db.query(countSql, countParams);
+        const total = Number(countRows[0]?.total || 0);
+        const totalPages = Math.ceil(total / limit) || 1;
 
         return {
             data: rows,
-
             pagination: {
                 page,
                 limit,
                 total,
                 totalPages,
-
                 hasPreviousPage: page > 1,
-
                 hasNextPage: page < totalPages
             }
         };
     }
 
-
     // ==========================================================
     // TÌM BLOG THEO ID
-    // Không pagination
     // ==========================================================
     async findById(blogId) {
-
         const [rows] = await db.query(
-            `
-            SELECT *
-            FROM blog_cinema
-
-            WHERE blog_id = ?
-
-            LIMIT 1
-            `,
+            `SELECT * FROM blog_cinema WHERE blog_id = ? LIMIT 1`,
             [blogId]
         );
-
         return rows[0] || null;
     }
-
 
     // ==========================================================
     // TÌM BLOG THEO SLUG
-    // Không pagination
     // ==========================================================
     async findBySlug(slug) {
-
         const [rows] = await db.query(
-            `
-            SELECT *
-            FROM blog_cinema
-
-            WHERE slug = ?
-
-            LIMIT 1
-            `,
+            `SELECT * FROM blog_cinema WHERE slug = ? LIMIT 1`,
             [slug]
         );
-
         return rows[0] || null;
     }
-
 
     // ==========================================================
     // KIỂM TRA TITLE HOẶC SLUG
     // ==========================================================
-    async existsByTitleOrSlug(
-        title,
-        slug,
-        excludeId = null
-    ) {
-
-        let sql = `
-            SELECT blog_id
-            FROM blog_cinema
-
-            WHERE (title = ? OR slug = ?)
-        `;
-
-        const params = [
-            title.trim(),
-            slug
-        ];
-
+    async existsByTitleOrSlug(title, slug, excludeId = null) {
+        let sql = `SELECT blog_id FROM blog_cinema WHERE (title = ? OR slug = ?)`;
+        const params = [title.trim(), slug];
         if (excludeId != null) {
-
-            sql += `
-                AND blog_id != ?
-            `;
-
-            params.push(
-                Number(excludeId)
-            );
+            sql += ` AND blog_id != ?`;
+            params.push(Number(excludeId));
         }
-
-        const [rows] = await db.query(
-            sql,
-            params
-        );
-
+        const [rows] = await db.query(sql, params);
         return rows.length > 0;
     }
-
 
     // ==========================================================
     // CREATE
     // ==========================================================
     async create(data) {
-
-        const {
-            title,
-            slug,
-            description,
-            blog_image,
-            likes,
-            is_active
-        } = data;
-
+        const { title, slug, description, blog_image, likes, is_active } = data;
         const [result] = await db.query(
             `
             INSERT INTO blog_cinema
-            (
-                title,
-                slug,
-                description,
-                blog_image,
-                likes,
-                views,
-                is_active
-            )
-
+            (title, slug, description, blog_image, likes, views, is_active)
             VALUES (?, ?, ?, ?, ?, 0, ?)
             `,
             [
@@ -265,40 +153,18 @@ class BlogCinemaRepository {
                 is_active
             ]
         );
-
         return result.insertId;
     }
-
 
     // ==========================================================
     // UPDATE
     // ==========================================================
-    async update(
-        blogId,
-        data
-    ) {
-
-        const {
-            title,
-            slug,
-            description,
-            blog_image,
-            likes,
-            is_active
-        } = data;
-
+    async update(blogId, data) {
+        const { title, slug, description, blog_image, likes, is_active } = data;
         const [result] = await db.query(
             `
             UPDATE blog_cinema
-
-            SET
-                title = ?,
-                slug = ?,
-                description = ?,
-                blog_image = ?,
-                likes = ?,
-                is_active = ?
-
+            SET title = ?, slug = ?, description = ?, blog_image = ?, likes = ?, is_active = ?
             WHERE blog_id = ?
             `,
             [
@@ -311,143 +177,78 @@ class BlogCinemaRepository {
                 blogId
             ]
         );
-
         return result.affectedRows;
     }
-
 
     // ==========================================================
     // DELETE
     // ==========================================================
     async delete(blogId) {
-
         const [result] = await db.query(
-            `
-            DELETE FROM blog_cinema
-
-            WHERE blog_id = ?
-            `,
+            `DELETE FROM blog_cinema WHERE blog_id = ?`,
             [blogId]
         );
-
         return result.affectedRows;
     }
-
 
     // ==========================================================
     // TĂNG VIEWS
     // ==========================================================
     async incrementViews(blogId) {
-
         const [result] = await db.query(
-            `
-            UPDATE blog_cinema
-
-            SET views = views + 1
-
-            WHERE blog_id = ?
-            `,
+            `UPDATE blog_cinema SET views = views + 1 WHERE blog_id = ?`,
             [blogId]
         );
-
         return result.affectedRows;
     }
-
 
     // ==========================================================
     // TĂNG LIKES
     // ==========================================================
     async incrementLikes(blogId) {
-
         const [result] = await db.query(
-            `
-            UPDATE blog_cinema
-
-            SET likes = likes + 1
-
-            WHERE blog_id = ?
-            `,
+            `UPDATE blog_cinema SET likes = likes + 1 WHERE blog_id = ?`,
             [blogId]
         );
-
         return result.affectedRows;
     }
-
 
     // ==========================================================
     // LẤY ẢNH BLOG
     // ==========================================================
     async getImage(blogId) {
-
         const [rows] = await db.query(
-            `
-            SELECT blog_image
-
-            FROM blog_cinema
-
-            WHERE blog_id = ?
-            `,
+            `SELECT blog_image FROM blog_cinema WHERE blog_id = ?`,
             [blogId]
         );
-
         return rows[0] || null;
     }
-
 
     // ==========================================================
     // TRANSACTION
     // ==========================================================
-
     async getConnection() {
         return db.getConnection();
     }
-
 
     async beginTransaction(connection) {
         await connection.beginTransaction();
     }
 
-
     async commit(connection) {
         await connection.commit();
     }
-
 
     async rollback(connection) {
         await connection.rollback();
     }
 
-
-    // ==========================================================
-    // UPDATE WITH CONNECTION
-    // ==========================================================
-    async updateWithConnection(
-        connection,
-        blogId,
-        data
-    ) {
-
-        const {
-            title,
-            slug,
-            description,
-            blog_image,
-            likes,
-            is_active
-        } = data;
-
+    async updateWithConnection(connection, blogId, data) {
+        const { title, slug, description, blog_image, likes, is_active } = data;
         const [result] = await connection.query(
             `
             UPDATE blog_cinema
-
-            SET
-                title = ?,
-                slug = ?,
-                description = ?,
-                blog_image = ?,
-                likes = ?,
-                is_active = ?
-
+            SET title = ?, slug = ?, description = ?, blog_image = ?, likes = ?, is_active = ?
             WHERE blog_id = ?
             `,
             [
@@ -460,31 +261,16 @@ class BlogCinemaRepository {
                 blogId
             ]
         );
-
         return result.affectedRows;
     }
 
-
-    // ==========================================================
-    // DELETE WITH CONNECTION
-    // ==========================================================
-    async deleteWithConnection(
-        connection,
-        blogId
-    ) {
-
+    async deleteWithConnection(connection, blogId) {
         const [result] = await connection.query(
-            `
-            DELETE FROM blog_cinema
-
-            WHERE blog_id = ?
-            `,
+            `DELETE FROM blog_cinema WHERE blog_id = ?`,
             [blogId]
         );
-
         return result.affectedRows;
     }
 }
 
 module.exports = new BlogCinemaRepository();
-

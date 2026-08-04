@@ -24,12 +24,9 @@ const extractPublicId = (url) => {
 
 const validateActorData = (data, file, isUpdate = false) => {
   const { name, gender, nationality, biography, birthday } = data;
-
   if (!name || name.trim() === "") return "Vui lòng nhập tên diễn viên.";
   if (name.trim().length < 2) return "Tên diễn viên phải từ 2 ký tự trở lên.";
-  if (!gender || !["Nam", "Nữ", "Khác"].includes(gender)) {
-    return "Giới tính không hợp lệ (Nam, Nữ, Khác).";
-  }
+  if (!gender || !["Nam", "Nữ", "Khác"].includes(gender)) return "Giới tính không hợp lệ (Nam, Nữ, Khác).";
   if (!nationality || nationality.trim() === "") return "Vui lòng nhập quốc tịch.";
   if (!birthday) return "Vui lòng chọn ngày sinh.";
   const inputDate = new Date(birthday);
@@ -41,8 +38,8 @@ const validateActorData = (data, file, isUpdate = false) => {
 };
 
 class ActorService {
-  async getAllActors() {
-    return await ActorRepository.findAll();
+  async getAllActors(page = 1, limit = 20, search = "") {
+    return await ActorRepository.findAll(page, limit, search);
   }
 
   async getActorById(actorId) {
@@ -65,12 +62,8 @@ class ActorService {
     return actor;
   }
 
-  // ==========================================================
-  // CREATE ACTOR (NHẬN SLUG TỪ FRONTEND)
-  // ==========================================================
   async createActor(data, file) {
     const { name, gender, nationality, biography, birthday, slug: providedSlug } = data;
-
     const error = validateActorData(data, file, false);
     if (error) {
       const err = new Error(error);
@@ -78,10 +71,7 @@ class ActorService {
       throw err;
     }
 
-    // ✅ Ưu tiên dùng slug từ frontend, nếu không có hoặc rỗng thì tự tạo
     const slug = providedSlug && providedSlug.trim() ? providedSlug.trim() : createSlug(name);
-
-    // ✅ Dùng existsByNameOrSlug (giống Movie) thay vì findByNameOrSlug
     const exists = await ActorRepository.existsByNameOrSlug(name.trim(), slug);
     if (exists) {
       const err = new Error("Tên hoặc slug đã tồn tại");
@@ -106,9 +96,6 @@ class ActorService {
     });
   }
 
-  // ==========================================================
-  // UPDATE ACTOR (NHẬN SLUG TỪ FRONTEND)
-  // ==========================================================
   async updateActor(actorId, data, file) {
     const existing = await ActorRepository.findById(actorId);
     if (!existing) {
@@ -125,14 +112,7 @@ class ActorService {
       throw err;
     }
 
-    // ✅ Ưu tiên dùng slug từ frontend, nếu không có hoặc rỗng thì tự tạo
-   const slug = (
-    providedSlug && providedSlug.trim()
-        ? providedSlug.trim()
-        : createSlug(name)
-).toLowerCase();
-
-    // ✅ Dùng existsByNameOrSlug (giống Movie) thay vì findByNameOrSlug
+    const slug = (providedSlug && providedSlug.trim() ? providedSlug.trim() : createSlug(name)).toLowerCase();
     const exists = await ActorRepository.existsByNameOrSlug(name.trim(), slug, actorId);
     if (exists) {
       const err = new Error("Tên hoặc slug đã trùng với diễn viên khác");
@@ -143,7 +123,6 @@ class ActorService {
     const conn = await ActorRepository.getConnection();
     try {
       await ActorRepository.beginTransaction(conn);
-
       let actorAvatar = existing.actor_avatar;
       if (file) {
         if (existing.actor_avatar) {
@@ -185,12 +164,10 @@ class ActorService {
     const conn = await ActorRepository.getConnection();
     try {
       await ActorRepository.beginTransaction(conn);
-
       if (existing.actor_avatar) {
         const publicId = extractPublicId(existing.actor_avatar);
         await deleteFromCloudinary(publicId);
       }
-
       await ActorRepository.deleteWithConnection(conn, actorId);
       await ActorRepository.commit(conn);
       return true;

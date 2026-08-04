@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import api from '../../../../api/api';  // ✅ Import api thay vì axios
-
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import api from '../../../../api/api';
 import {
     Tv,
     Edit,
@@ -21,9 +20,11 @@ import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
+import AdminPagination from '../../../components/AdminPagination';
 
-// ❌ Xóa API_URL
-
+// ==========================================================
+// CONSTANTS
+// ==========================================================
 const initialFormData = {
     cinema_name: '',
     address: '',
@@ -33,12 +34,38 @@ const initialFormData = {
     map_link: ''
 };
 
-const CinemaPage = () => {
+const alertConfig = {
+    success: { icon: <CheckCircle2 size={52} />, iconClass: 'success' },
+    error: { icon: <XCircle size={52} />, iconClass: 'error' },
+    warning: { icon: <AlertTriangle size={52} />, iconClass: 'warning' },
+    info: { icon: <Info size={52} />, iconClass: 'info' },
+    default: { icon: <Info size={52} />, iconClass: 'default' }
+};
 
+// ==========================================================
+// COMPONENT
+// ==========================================================
+const CinemaPage = () => {
+    // ------------------------------------------------------
+    // STATES
+    // ------------------------------------------------------
     const [cinemas, setCinemas] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
+
     const [search, setSearch] = useState('');
+    const [pagination, setPagination] = useState({
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false
+    });
+
+    const isFetching = useRef(false);
+    const abortControllerRef = useRef(null);
+
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingCinema, setEditingCinema] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
@@ -53,63 +80,78 @@ const CinemaPage = () => {
         onCancel: null
     });
 
-    /* =====================================================
-        FETCH CINEMAS
-    ===================================================== */
+    // ------------------------------------------------------
+    // ALERT HANDLER
+    // ------------------------------------------------------
+    const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
+        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+    };
+    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
-    const fetchCinemas = async () => {
+    // ------------------------------------------------------
+    // FETCH CINEMAS (PAGINATION + SEARCH)
+    // ------------------------------------------------------
+    const fetchCinemas = useCallback(async (page = 1, keyword = '') => {
+        if (isFetching.current) return;
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        isFetching.current = true;
         setLoading(true);
+
         try {
-            const res = await api.get('/api/cinemas');  // ✅ Dùng api
-            setCinemas(res.data);
+            const res = await api.get('/api/cinemas', {
+                params: {
+                    page,
+                    limit: 20,
+                    search: keyword.trim()
+                },
+                signal: controller.signal
+            });
+
+            const responseData = res.data?.data;
+            const cinemasData = responseData?.data || [];
+            const paginationData = responseData?.pagination || {
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1
+            };
+
+            setCinemas(cinemasData);
+            setPagination(paginationData);
         } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.error('FETCH CINEMAS ERROR:', error);
             showAlert('Lỗi', 'Không thể tải danh sách rạp.', 'error');
         } finally {
             setLoading(false);
+            isFetching.current = false;
+            if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
+            }
         }
-    };
-
-    useEffect(() => {
-        fetchCinemas();
     }, []);
 
-    /* =====================================================
-        ALERT MODAL
-    ===================================================== */
+    useEffect(() => { fetchCinemas(1, ''); }, []);
 
-    const showAlert = (
-        title,
-        message,
-        type = 'default',
-        onConfirm = null,
-        onCancel = null
-    ) => {
-        setAlertModal({
-            open: true,
-            title,
-            message,
-            type,
-            onConfirm,
-            onCancel
-        });
-    };
+    // ------------------------------------------------------
+    // SEARCH DEBOUNCE
+    // ------------------------------------------------------
+    const prevSearchRef = useRef('');
+    useEffect(() => {
+        if (search === prevSearchRef.current) return;
+        prevSearchRef.current = search;
+        const timer = setTimeout(() => fetchCinemas(1, search), 400);
+        return () => clearTimeout(timer);
+    }, [search, fetchCinemas]);
 
-    const closeAlert = () => {
-        setAlertModal(prev => ({ ...prev, open: false }));
-    };
+    const handlePageChange = (page) => fetchCinemas(page, search);
 
-    const alertConfig = {
-        success: { icon: <CheckCircle2 size={52} />, iconClass: 'success' },
-        error: { icon: <XCircle size={52} />, iconClass: 'error' },
-        warning: { icon: <AlertTriangle size={52} />, iconClass: 'warning' },
-        info: { icon: <Info size={52} />, iconClass: 'info' },
-        default: { icon: <Info size={52} />, iconClass: 'default' }
-    };
-
-    /* =====================================================
-        GENERATE SLUG
-    ===================================================== */
-
+    // ------------------------------------------------------
+    // SLUG GENERATOR
+    // ------------------------------------------------------
     const generateSlug = (str) => {
         if (!str) return '';
         return str
@@ -123,48 +165,40 @@ const CinemaPage = () => {
             .trim();
     };
 
-    /* =====================================================
-        VALIDATE FORM
-    ===================================================== */
-
+    // ------------------------------------------------------
+    // VALIDATE FORM
+    // ------------------------------------------------------
     const validateForm = () => {
         const errors = {};
-
         if (!formData.cinema_name.trim()) {
             errors.cinema_name = 'Vui lòng nhập tên rạp';
         } else if (formData.cinema_name.trim().length < 5) {
             errors.cinema_name = 'Tên rạp phải từ 5 ký tự trở lên';
         }
-
         if (!formData.city.trim()) {
             errors.city = 'Vui lòng nhập thành phố';
         } else if (formData.city.trim().length < 2) {
             errors.city = 'Tên thành phố quá ngắn';
         }
-
         if (!formData.address.trim()) {
             errors.address = 'Vui lòng nhập địa chỉ';
         } else if (formData.address.trim().length < 5) {
             errors.address = 'Địa chỉ phải từ 5 ký tự trở lên';
         }
-
         if (!formData.hotline.trim()) {
             errors.hotline = 'Vui lòng nhập hotline';
         } else if (!/^[0-9]{9,11}$/.test(formData.hotline.trim())) {
             errors.hotline = 'Hotline không hợp lệ';
         }
-
         if (!formData.map_link.trim()) {
             errors.map_link = 'Vui lòng nhập link Google Map';
         }
-
         return errors;
     };
 
-    /* =====================================================
-        OPEN ADD / EDIT
-    ===================================================== */
-
+    // ------------------------------------------------------
+    // HANDLE MODAL ACTIONS
+    // ------------------------------------------------------
     const handleOpenAdd = () => {
         setEditingCinema(null);
         setFormData(initialFormData);
@@ -186,21 +220,20 @@ const CinemaPage = () => {
         setIsFormOpen(true);
     };
 
-    /* =====================================================
-        HANDLE CHANGE
-    ===================================================== */
-
+    // ------------------------------------------------------
+    // HANDLE CHANGE
+    // ------------------------------------------------------
     const handleChange = (e) => {
         const { name, value } = e.target;
 
         if (name === 'cinema_name') {
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
                 cinema_name: value,
                 slug: generateSlug(value)
             }));
         } else {
-            setFormData(prev => ({ ...prev, [name]: value }));
+            setFormData((prev) => ({ ...prev, [name]: value }));
         }
 
         // Realtime validation
@@ -227,16 +260,14 @@ const CinemaPage = () => {
                 break;
             default: break;
         }
-        setFormErrors(prev => ({ ...prev, [name]: errorMessage }));
+        setFormErrors((prev) => ({ ...prev, [name]: errorMessage }));
     };
 
-    /* =====================================================
-        SUBMIT
-    ===================================================== */
-
+    // ------------------------------------------------------
+    // HANDLE SUBMIT
+    // ------------------------------------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         const errors = validateForm();
         if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
@@ -248,34 +279,31 @@ const CinemaPage = () => {
             setFormErrors({});
 
             if (editingCinema) {
-                await api.put(`/api/cinemas/${editingCinema.cinema_id}`, formData);  // ✅ Dùng api
+                await api.put(`/api/cinemas/${editingCinema.cinema_id}`, formData);
                 showAlert('Thành công', 'Cập nhật rạp thành công.', 'success');
             } else {
-                await api.post('/api/cinemas', formData);  // ✅ Dùng api
+                await api.post('/api/cinemas', formData);
                 showAlert('Thành công', 'Thêm rạp thành công.', 'success');
             }
 
             setIsFormOpen(false);
-            fetchCinemas();
+            fetchCinemas(pagination.page, search);
         } catch (error) {
             const backendField = error.response?.data?.field;
-            const backendError = error.response?.data?.error;
-
+            const backendError = error.response?.data?.error || 'Đã xảy ra lỗi.';
             if (backendField) {
                 setFormErrors({ [backendField]: backendError });
-                return;
+            } else {
+                showAlert('Lỗi', backendError, 'error');
             }
-
-            showAlert('Lỗi', backendError || 'Đã xảy ra lỗi.', 'error');
         } finally {
             setSubmitLoading(false);
         }
     };
 
-    /* =====================================================
-        DELETE CINEMA
-    ===================================================== */
-
+    // ------------------------------------------------------
+    // HANDLE DELETE
+    // ------------------------------------------------------
     const handleDelete = (cinema) => {
         showAlert(
             'Xác nhận xóa',
@@ -283,9 +311,13 @@ const CinemaPage = () => {
             'warning',
             async () => {
                 try {
-                    await api.delete(`/api/cinemas/${cinema.cinema_id}`);  // ✅ Dùng api
+                    await api.delete(`/api/cinemas/${cinema.cinema_id}`);
                     closeAlert();
-                    fetchCinemas();
+
+                    const newPage = cinemas.length === 1 && pagination.page > 1
+                        ? pagination.page - 1
+                        : pagination.page;
+                    fetchCinemas(newPage, search);
                     showAlert('Thành công', 'Xóa rạp thành công.', 'success');
                 } catch (error) {
                     showAlert('Lỗi', 'Không thể xóa rạp.', 'error');
@@ -295,23 +327,9 @@ const CinemaPage = () => {
         );
     };
 
-    /* =====================================================
-        FILTER
-    ===================================================== */
-
-    const filteredCinemas = cinemas.filter(cinema => {
-        const keyword = search.toLowerCase();
-        return (
-            cinema.cinema_name?.toLowerCase().includes(keyword) ||
-            cinema.city?.toLowerCase().includes(keyword) ||
-            cinema.address?.toLowerCase().includes(keyword)
-        );
-    });
-
-    /* =====================================================
-        TABLE COLUMNS
-    ===================================================== */
-
+    // ------------------------------------------------------
+    // TABLE COLUMNS
+    // ------------------------------------------------------
     const columns = [
         {
             title: 'Tên rạp',
@@ -363,8 +381,7 @@ const CinemaPage = () => {
             key: 'city',
             render: (row) => (
                 <span className="status-badge used">
-                    <Building2 size={14} />
-                    {row.city}
+                    <Building2 size={14} /> {row.city}
                 </span>
             )
         },
@@ -383,10 +400,16 @@ const CinemaPage = () => {
             key: 'actions',
             render: (row) => (
                 <div className="admin-table-actions">
-                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
+                    <button
+                        className="admin-action-btn edit-btn"
+                        onClick={() => handleOpenEdit(row)}
+                    >
                         <Edit size={16} />
                     </button>
-                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
+                    <button
+                        className="admin-action-btn delete-btn"
+                        onClick={() => handleDelete(row)}
+                    >
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -394,10 +417,9 @@ const CinemaPage = () => {
         }
     ];
 
-    /* =====================================================
-        FORM FIELDS
-    ===================================================== */
-
+    // ------------------------------------------------------
+    // FORM FIELDS
+    // ------------------------------------------------------
     const formFields = [
         {
             label: 'Tên rạp',
@@ -438,10 +460,9 @@ const CinemaPage = () => {
         }
     ];
 
-    /* =====================================================
-        RENDER
-    ===================================================== */
-
+    // ------------------------------------------------------
+    // RENDER
+    // ------------------------------------------------------
     return (
         <>
             <AdminPage
@@ -459,11 +480,17 @@ const CinemaPage = () => {
                         <span>Đang tải dữ liệu...</span>
                     </div>
                 ) : (
-                    <AdminTable columns={columns} data={filteredCinemas} />
+                    <>
+                        <AdminTable columns={columns} data={cinemas} />
+                        <AdminPagination
+                            currentPage={pagination.page}
+                            totalPages={pagination.totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </>
                 )}
             </AdminPage>
 
-            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
@@ -481,7 +508,6 @@ const CinemaPage = () => {
                 />
             </AdminModal>
 
-            {/* ALERT MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
@@ -499,7 +525,10 @@ const CinemaPage = () => {
                                 Hủy
                             </button>
                         )}
-                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
+                        <button
+                            className="admin-confirm-btn"
+                            onClick={alertModal.onConfirm || closeAlert}
+                        >
                             Xác nhận
                         </button>
                     </div>

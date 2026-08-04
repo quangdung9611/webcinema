@@ -20,11 +20,11 @@ const validateRoom = (data) => {
 };
 
 class RoomService {
-  async getAllRooms() {
-    return await RoomRepository.findAll();
+  async getAllRooms(page = 1, limit = 20, search = "") {
+    return await RoomRepository.findAll(page, limit, search);
   }
 
-  async getRoomById(roomId) { // ✅ sửa
+  async getRoomById(roomId) {
     const room = await RoomRepository.findById(roomId);
     if (!room) {
       const err = new Error("Không tìm thấy phòng");
@@ -62,7 +62,7 @@ class RoomService {
     return await RoomRepository.create({ room_name: name, cinema_id, room_type });
   }
 
-  async updateRoom(roomId, data) { // ✅ sửa
+  async updateRoom(roomId, data) {
     const { room_name, cinema_id, room_type } = data;
 
     const existing = await RoomRepository.findById(roomId);
@@ -100,7 +100,7 @@ class RoomService {
     return true;
   }
 
-  async deleteRoom(roomId) { // ✅ sửa
+  async deleteRoom(roomId) {
     const existing = await RoomRepository.findById(roomId);
     if (!existing) {
       const err = new Error("Không tìm thấy phòng");

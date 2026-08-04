@@ -1,17 +1,15 @@
 const GenreService = require("../Services/GenreService");
 
 /* ==========================================================
-    GET ALL
+   ADMIN - GET ALL GENRES (Pagination + Search)
 ========================================================== */
-
 exports.getAllGenres = async (req, res) => {
     try {
-        const genres = await GenreService.getAllGenres();
-
-        return res.status(200).json(genres);
+        const { page = 1, limit = 20, search = "" } = req.query;
+        const data = await GenreService.getAllGenres(page, limit, search);
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("getAllGenres error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -20,20 +18,15 @@ exports.getAllGenres = async (req, res) => {
 };
 
 /* ==========================================================
-    GET BY ID
+   GET BY ID
 ========================================================== */
-
 exports.getGenreById = async (req, res) => {
     try {
         const { genre_id } = req.params;
-
         const genre = await GenreService.getGenreById(genre_id);
-
         return res.status(200).json(genre);
-
     } catch (err) {
         console.error("getGenreById error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -42,25 +35,18 @@ exports.getGenreById = async (req, res) => {
 };
 
 /* ==========================================================
-    CREATE
+   CREATE
 ========================================================== */
-
 exports.createGenre = async (req, res) => {
     try {
-
         const genreId = await GenreService.createGenre(req.body);
-
         return res.status(201).json({
             success: true,
             message: "Thêm thể loại thành công!",
-            data: {
-                genre_id: genreId
-            }
+            data: { genre_id: genreId }
         });
-
     } catch (err) {
         console.error("createGenre error:", err);
-
         return res.status(err.statusCode || 400).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -69,27 +55,18 @@ exports.createGenre = async (req, res) => {
 };
 
 /* ==========================================================
-    UPDATE
+   UPDATE
 ========================================================== */
-
 exports.updateGenre = async (req, res) => {
     try {
-
         const { genre_id } = req.params;
-
-        await GenreService.updateGenre(
-            genre_id,
-            req.body
-        );
-
+        await GenreService.updateGenre(genre_id, req.body);
         return res.status(200).json({
             success: true,
             message: "Cập nhật thể loại thành công!"
         });
-
     } catch (err) {
         console.error("updateGenre error:", err);
-
         return res.status(err.statusCode || 400).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -98,24 +75,18 @@ exports.updateGenre = async (req, res) => {
 };
 
 /* ==========================================================
-    DELETE
+   DELETE
 ========================================================== */
-
 exports.deleteGenre = async (req, res) => {
     try {
-
         const { genre_id } = req.params;
-
         await GenreService.deleteGenre(genre_id);
-
         return res.status(200).json({
             success: true,
             message: "Đã xóa thể loại thành công."
         });
-
     } catch (err) {
         console.error("deleteGenre error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"

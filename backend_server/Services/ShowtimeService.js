@@ -14,8 +14,12 @@ const validateShowtime = (data) => {
 };
 
 class ShowtimeService {
-  async getAllShowtimes() {
-    return await ShowtimeRepository.findAll();
+  async getAllShowtimes(page = 1, limit = 20, search = "") {
+    return await ShowtimeRepository.findAll(page, limit, search);
+  }
+
+  async getShowtimesByCinemaAndRoom(cinema_id, room_id, page = 1, limit = 20) {
+    return await ShowtimeRepository.findByCinemaAndRoom(cinema_id, room_id, page, limit);
   }
 
   async getShowtimeDetail(showtimeId) {
@@ -34,7 +38,6 @@ class ShowtimeService {
 
   async createShowtime(data) {
     let { movie_id, cinema_id, room_id, start_time } = data;
-
     start_time = formatDateTime(start_time);
     movie_id = Number(movie_id);
     cinema_id = Number(cinema_id);
@@ -63,24 +66,17 @@ class ShowtimeService {
       throw err;
     }
 
-    return await ShowtimeRepository.create({
-      movie_id,
-      cinema_id,
-      room_id,
-      start_time,
-    });
+    return await ShowtimeRepository.create({ movie_id, cinema_id, room_id, start_time });
   }
 
   async updateShowtime(showtimeId, data) {
     let { movie_id, cinema_id, room_id, start_time } = data;
-
     const existing = await ShowtimeRepository.findById(showtimeId);
     if (!existing) {
       const err = new Error("Không tìm thấy suất chiếu");
       err.statusCode = 404;
       throw err;
     }
-
     start_time = formatDateTime(start_time);
     movie_id = Number(movie_id);
     cinema_id = Number(cinema_id);
@@ -109,19 +105,12 @@ class ShowtimeService {
       throw err;
     }
 
-    const affected = await ShowtimeRepository.update(showtimeId, {
-      movie_id,
-      cinema_id,
-      room_id,
-      start_time,
-    });
-
+    const affected = await ShowtimeRepository.update(showtimeId, { movie_id, cinema_id, room_id, start_time });
     if (affected === 0) {
       const err = new Error("Không thể cập nhật suất chiếu");
       err.statusCode = 500;
       throw err;
     }
-
     return true;
   }
 
@@ -132,21 +121,18 @@ class ShowtimeService {
       err.statusCode = 404;
       throw err;
     }
-
     const hasTickets = await ShowtimeRepository.hasTickets(showtimeId);
     if (hasTickets) {
       const err = new Error("Suất chiếu này đã có vé bán, không thể xóa");
       err.statusCode = 400;
       throw err;
     }
-
     const affected = await ShowtimeRepository.delete(showtimeId);
     if (affected === 0) {
       const err = new Error("Không thể xóa suất chiếu");
       err.statusCode = 500;
       throw err;
     }
-
     return true;
   }
 
@@ -154,19 +140,15 @@ class ShowtimeService {
     if (!movie_id && !cinema_id && !date) {
       return await ShowtimeRepository.getQuickBookingMovies();
     }
-
     if (movie_id && !cinema_id && !date) {
       return await ShowtimeRepository.getQuickBookingCinemas(movie_id);
     }
-
     if (movie_id && cinema_id && !date) {
       return await ShowtimeRepository.getQuickBookingDates(movie_id, cinema_id);
     }
-
     if (movie_id && cinema_id && date) {
       return await ShowtimeRepository.getQuickBookingTimes(movie_id, cinema_id, date);
     }
-
     return [];
   }
 

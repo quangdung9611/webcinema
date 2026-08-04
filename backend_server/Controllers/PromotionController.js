@@ -5,12 +5,28 @@ const PromotionService = require("../Services/PromotionService");
 ========================================================== */
 exports.getAllPromotions = async (req, res) => {
     try {
-        const promotions = await PromotionService.getAllPromotions(true);
-
-        return res.status(200).json(promotions);
+        const { page = 1, limit = 20, search = "" } = req.query;
+        const data = await PromotionService.getAllPromotions(true, page, limit, search);
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("getAllPromotions error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
 
+/* ==========================================================
+   GET ALL PROMOTIONS (Public) - only active
+========================================================== */
+exports.getAllPromotionsPublic = async (req, res) => {
+    try {
+        const { page = 1, limit = 20, search = "" } = req.query;
+        const data = await PromotionService.getAllPromotions(false, page, limit, search);
+        return res.status(200).json({ success: true, data });
+    } catch (err) {
+        console.error("getAllPromotionsPublic error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -24,13 +40,10 @@ exports.getAllPromotions = async (req, res) => {
 exports.getPromotionById = async (req, res) => {
     try {
         const { promotion_id } = req.params;
-
         const promotion = await PromotionService.getPromotionById(promotion_id);
-
         return res.status(200).json(promotion);
     } catch (err) {
         console.error("getPromotionById error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -44,13 +57,10 @@ exports.getPromotionById = async (req, res) => {
 exports.getPromotionBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
-
         const promotion = await PromotionService.getPromotionBySlug(slug);
-
         return res.status(200).json(promotion);
     } catch (err) {
         console.error("getPromotionBySlug error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -63,21 +73,14 @@ exports.getPromotionBySlug = async (req, res) => {
 ========================================================== */
 exports.createPromotion = async (req, res) => {
     try {
-        const promotionId = await PromotionService.createPromotion(
-            req.body,
-            req.file
-        );
-
+        const promotionId = await PromotionService.createPromotion(req.body, req.file);
         return res.status(201).json({
             success: true,
             message: "Thêm khuyến mãi thành công!",
-            data: {
-                promotion_id: promotionId
-            }
+            data: { promotion_id: promotionId }
         });
     } catch (err) {
         console.error("createPromotion error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -91,20 +94,13 @@ exports.createPromotion = async (req, res) => {
 exports.updatePromotion = async (req, res) => {
     try {
         const { promotion_id } = req.params;
-
-        await PromotionService.updatePromotion(
-            promotion_id,
-            req.body,
-            req.file
-        );
-
+        await PromotionService.updatePromotion(promotion_id, req.body, req.file);
         return res.status(200).json({
             success: true,
             message: "Cập nhật khuyến mãi thành công!"
         });
     } catch (err) {
         console.error("updatePromotion error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -118,16 +114,13 @@ exports.updatePromotion = async (req, res) => {
 exports.deletePromotion = async (req, res) => {
     try {
         const { promotion_id } = req.params;
-
         await PromotionService.deletePromotion(promotion_id);
-
         return res.status(200).json({
             success: true,
             message: "Đã xóa khuyến mãi thành công."
         });
     } catch (err) {
         console.error("deletePromotion error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -141,16 +134,13 @@ exports.deletePromotion = async (req, res) => {
 exports.increaseLike = async (req, res) => {
     try {
         const { promotion_id } = req.params;
-
         await PromotionService.likePromotion(promotion_id);
-
         return res.status(200).json({
             success: true,
             message: "Đã tăng lượt thích!"
         });
     } catch (err) {
         console.error("increaseLike error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -164,9 +154,7 @@ exports.increaseLike = async (req, res) => {
 exports.togglePromotionStatus = async (req, res) => {
     try {
         const { promotion_id } = req.params;
-
         const isActive = await PromotionService.toggleStatus(promotion_id);
-
         return res.status(200).json({
             success: true,
             message: "Cập nhật trạng thái thành công!",
@@ -174,7 +162,6 @@ exports.togglePromotionStatus = async (req, res) => {
         });
     } catch (err) {
         console.error("togglePromotionStatus error:", err);
-
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
