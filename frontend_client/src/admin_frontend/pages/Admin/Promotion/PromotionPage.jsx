@@ -20,6 +20,9 @@ import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 import AdminPagination from '../../../components/AdminPagination';
 
+// ==========================================================
+// HELPERS
+// ==========================================================
 const getImageUrl = (image) => {
     if (!image) return '';
     if (image.startsWith('http://') || image.startsWith('https://')) return image;
@@ -36,15 +39,25 @@ const initialFormData = {
     is_active: 1
 };
 
+// ==========================================================
+// COMPONENT
+// ==========================================================
 const PromotionPage = () => {
+    // ------------------------------------------------------
+    // STATES
+    // ------------------------------------------------------
     const [promotions, setPromotions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
 
     const [search, setSearch] = useState('');
     const [pagination, setPagination] = useState({
-        page: 1, limit: 20, total: 0, totalPages: 1,
-        hasNextPage: false, hasPreviousPage: false
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false
     });
 
     const isFetching = useRef(false);
@@ -66,12 +79,17 @@ const PromotionPage = () => {
         onCancel: null
     });
 
+    // ------------------------------------------------------
+    // ALERT HANDLER
+    // ------------------------------------------------------
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
+    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
-    const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }));
-
+    // ------------------------------------------------------
+    // FETCH PROMOTIONS
+    // ------------------------------------------------------
     const fetchPromotions = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
         if (abortControllerRef.current) abortControllerRef.current.abort();
@@ -90,12 +108,14 @@ const PromotionPage = () => {
             const responseData = res.data?.data;
             const promotionsData = responseData?.data || [];
             const paginationData = responseData?.pagination || {
-                page: 1, limit: 20, total: 0, totalPages: 1
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1
             };
 
             setPromotions(promotionsData);
             setPagination(paginationData);
-
         } catch (error) {
             if (error.name === 'AbortError') return;
             console.error('FETCH PROMOTIONS ERROR:', error);
@@ -103,12 +123,19 @@ const PromotionPage = () => {
         } finally {
             setLoading(false);
             isFetching.current = false;
-            if (abortControllerRef.current === controller) abortControllerRef.current = null;
+            if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
+            }
         }
     }, []);
 
-    useEffect(() => { fetchPromotions(1, ''); }, []);
+    useEffect(() => {
+        fetchPromotions(1, '');
+    }, []);
 
+    // ------------------------------------------------------
+    // SEARCH DEBOUNCE
+    // ------------------------------------------------------
     const prevSearchRef = useRef('');
     useEffect(() => {
         if (search === prevSearchRef.current) return;
@@ -119,6 +146,9 @@ const PromotionPage = () => {
 
     const handlePageChange = (page) => fetchPromotions(page, search);
 
+    // ------------------------------------------------------
+    // SLUG GENERATOR
+    // ------------------------------------------------------
     const generateSlug = (str) => {
         if (!str) return '';
         return str
@@ -132,6 +162,26 @@ const PromotionPage = () => {
             .trim();
     };
 
+    // ------------------------------------------------------
+    // VALIDATE FORM
+    // ------------------------------------------------------
+    const validateForm = () => {
+        const newErrors = {};
+        if (!formData.title.trim()) {
+            newErrors.title = 'Vui lòng nhập tiêu đề khuyến mãi.';
+        } else if (formData.title.trim().length < 5) {
+            newErrors.title = 'Tiêu đề phải từ 5 ký tự trở lên.';
+        }
+        if (!editingPromotion && !promotionImageFile) {
+            newErrors.promotion_image = 'Vui lòng chọn ảnh khuyến mãi.';
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    // ------------------------------------------------------
+    // HANDLE OPEN ADD/EDIT
+    // ------------------------------------------------------
     const handleOpenAdd = () => {
         setEditingPromotion(null);
         setFormData(initialFormData);
@@ -152,29 +202,38 @@ const PromotionPage = () => {
         });
         setErrors({});
         setPromotionImageFile(null);
+        
+        // Reset filePreviews safely
+        const newPreviews = {};
         if (item.promotion_image) {
-            setFilePreviews({
-                promotion_image: { url: getImageUrl(item.promotion_image), name: item.promotion_image }
-            });
-        } else {
-            setFilePreviews({});
+            newPreviews.promotion_image = {
+                url: getImageUrl(item.promotion_image),
+                name: item.promotion_image
+            };
         }
+        setFilePreviews(newPreviews);
         setIsFormOpen(true);
     };
 
+    // ------------------------------------------------------
+    // HANDLE CHANGE
+    // ------------------------------------------------------
     const handleChange = (e) => {
         const { name, value, files } = e.target;
-        if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+        if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
 
         if (name === 'promotion_image') {
             const file = files[0];
             setPromotionImageFile(file);
             if (file) {
+                // Clear old blob URL to prevent memory leak
                 if (filePreviews.promotion_image?.url?.startsWith('blob:')) {
                     URL.revokeObjectURL(filePreviews.promotion_image.url);
                 }
                 const blobUrl = URL.createObjectURL(file);
-                setFilePreviews({ promotion_image: { url: blobUrl, name: file.name } });
+                setFilePreviews({
+                    promotion_image: { url: blobUrl, name: file.name }
+                });
             } else {
                 setFilePreviews({});
             }
@@ -182,27 +241,16 @@ const PromotionPage = () => {
         }
 
         if (name === 'title') {
-            setFormData(prev => ({ ...prev, title: value, slug: generateSlug(value) }));
+            setFormData((prev) => ({ ...prev, title: value, slug: generateSlug(value) }));
             return;
         }
 
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const validateForm = () => {
-        const newErrors = {};
-        if (!formData.title.trim()) {
-            newErrors.title = 'Vui lòng nhập tiêu đề khuyến mãi.';
-        } else if (formData.title.trim().length < 5) {
-            newErrors.title = 'Tiêu đề phải từ 5 ký tự trở lên.';
-        }
-        if (!editingPromotion && !promotionImageFile) {
-            newErrors.promotion_image = 'Vui lòng chọn ảnh khuyến mãi.';
-        }
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
+    // ------------------------------------------------------
+    // HANDLE SUBMIT
+    // ------------------------------------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
@@ -236,6 +284,9 @@ const PromotionPage = () => {
         }
     };
 
+    // ------------------------------------------------------
+    // HANDLE DELETE
+    // ------------------------------------------------------
     const handleDelete = (item) => {
         showAlert(
             'Xác nhận xóa',
@@ -258,6 +309,9 @@ const PromotionPage = () => {
         );
     };
 
+    // ------------------------------------------------------
+    // TABLE COLUMNS
+    // ------------------------------------------------------
     const columns = [
         {
             title: 'Hình ảnh',
@@ -317,6 +371,9 @@ const PromotionPage = () => {
         }
     ];
 
+    // ------------------------------------------------------
+    // FORM FIELDS
+    // ------------------------------------------------------
     const formFields = [
         { label: 'Tiêu đề khuyến mãi', name: 'title', type: 'text', placeholder: 'Nhập tiêu đề' },
         { label: 'Slug', name: 'slug', type: 'text', disabled: true },
@@ -334,14 +391,9 @@ const PromotionPage = () => {
         }
     ];
 
-    const filePreviews = {};
-    if (editingPromotion && editingPromotion.promotion_image) {
-        filePreviews['promotion_image'] = {
-            url: getImageUrl(editingPromotion.promotion_image),
-            name: editingPromotion.promotion_image
-        };
-    }
-
+    // ------------------------------------------------------
+    // HELPER: RENDER ALERT ICON
+    // ------------------------------------------------------
     const renderAlertIcon = () => {
         switch (alertModal.type) {
             case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
@@ -351,6 +403,9 @@ const PromotionPage = () => {
         }
     };
 
+    // ------------------------------------------------------
+    // RENDER
+    // ------------------------------------------------------
     return (
         <>
             <AdminPage
