@@ -3,8 +3,8 @@ import { X } from 'lucide-react';
 import '../styles/AdminModal.css';
 
 const AdminModal = ({
-    show,
-    onCancel,
+    open, // đổi tên prop từ show -> open
+    onClose, // thay vì onCancel
     type = 'default',
     title,
     message,
@@ -12,7 +12,7 @@ const AdminModal = ({
     children,
     size = 'md'
 }) => {
-    if (!show) return null;
+    if (!open) return null;
 
     const renderHeaderIcon = () => {
         switch (type) {
@@ -25,13 +25,10 @@ const AdminModal = ({
     };
 
     const handleClose = () => {
-        if (onCancel) onCancel();
+        if (onClose) onClose();
     };
 
-    // Nội dung body: ưu tiên children, nếu không có thì dùng message
     const bodyContent = children || (message && <p>{message}</p>);
-
-    // Hiển thị nút action nếu type là confirm hoặc có onConfirm
     const showActions = type === 'confirm' || onConfirm;
 
     return (
@@ -54,8 +51,8 @@ const AdminModal = ({
                     {bodyContent}
                     {showActions && (
                         <div className="admin-modal-actions">
-                            {onCancel && (
-                                <button className="admin-modal-btn cancel" onClick={onCancel}>
+                            {onClose && (
+                                <button className="admin-modal-btn cancel" onClick={onClose}>
                                     Hủy
                                 </button>
                             )}

@@ -19,12 +19,14 @@ exports.getMovieBySlug = async (req, res) => {
 };
 
 /* ==========================================================
-    GET ALL MOVIES
+    GET ALL MOVIES (ADMIN & USER)
 ========================================================== */
 exports.getAllMovies = async (req, res) => {
     try {
-        const movies = await MovieService.getAllMovies();
-        return res.status(200).json(movies);
+        // Thêm page, limit, search đồng bộ UserController
+        const { page = 1, limit = 20, search = "" } = req.query;
+        const data = await MovieService.getAllMovies(page, limit, search);
+        return res.status(200).json({ success: true, data }); // Chuẩn format
     } catch (err) {
         console.error("getAllMovies error:", err);
         return res.status(500).json({
@@ -39,7 +41,7 @@ exports.getAllMovies = async (req, res) => {
 ========================================================== */
 exports.getMovieById = async (req, res) => {
     try {
-        const { movie_id } = req.params; // ✅ sửa
+        const { movie_id } = req.params;
         const movie = await MovieService.getMovieById(movie_id);
         return res.status(200).json(movie);
     } catch (err) {
@@ -76,7 +78,7 @@ exports.createMovie = async (req, res) => {
 ========================================================== */
 exports.updateMovie = async (req, res) => {
     try {
-        const { movie_id } = req.params; // ✅ sửa
+        const { movie_id } = req.params;
         await MovieService.updateMovie(movie_id, req.body, req.files || {});
         return res.status(200).json({
             success: true,
@@ -96,7 +98,7 @@ exports.updateMovie = async (req, res) => {
 ========================================================== */
 exports.deleteMovie = async (req, res) => {
     try {
-        const { movie_id } = req.params; // ✅ sửa
+        const { movie_id } = req.params;
         await MovieService.deleteMovie(movie_id);
         return res.status(200).json({
             success: true,
@@ -128,11 +130,12 @@ exports.getMoviesByStatusGroup = async (req, res) => {
 };
 
 /* ==========================================================
-    GET MOVIES BY STATUS SLUG
+    GET MOVIES BY STATUS SLUG (USER)
 ========================================================== */
 exports.getMoviesByStatusSlug = async (req, res) => {
     try {
         const { statusSlug } = req.params;
+        const { page = 1, limit = 20 } = req.query; // Thêm Pagination
         const statusMap = {
             "phim-dang-chieu": "Đang chiếu",
             "phim-sap-chieu": "Sắp chiếu"
@@ -144,8 +147,9 @@ exports.getMoviesByStatusSlug = async (req, res) => {
                 message: "Đường dẫn không hợp lệ"
             });
         }
-        const movies = await MovieService.getMoviesByStatus(dbStatus);
-        return res.status(200).json(movies);
+        // Đồng bộ trả về { success: true, data }
+        const data = await MovieService.getMoviesByStatus(dbStatus, page, limit);
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("getMoviesByStatusSlug error:", err);
         return res.status(err.statusCode || 500).json({
@@ -160,7 +164,7 @@ exports.getMoviesByStatusSlug = async (req, res) => {
 ========================================================== */
 exports.likeMovie = async (req, res) => {
     try {
-        const { movie_id } = req.params; // ✅ sửa
+        const { movie_id } = req.params;
         await MovieService.likeMovie(movie_id);
         return res.status(200).json({
             success: true,
@@ -180,7 +184,7 @@ exports.likeMovie = async (req, res) => {
 ========================================================== */
 exports.incrementViews = async (req, res) => {
     try {
-        const { movie_id } = req.params; // ✅ sửa
+        const { movie_id } = req.params;
         await MovieService.incrementViews(movie_id);
         return res.status(200).json({
             success: true,
@@ -196,13 +200,13 @@ exports.incrementViews = async (req, res) => {
 };
 
 /* ==========================================================
-    GET MOVIES WITH GENRE
+    GET MOVIES WITH GENRE (USER)
 ========================================================== */
 exports.getMoviesWithGenre = async (req, res) => {
     try {
-        const { genre } = req.query;
-        const movies = await MovieService.getMoviesByGenre(genre);
-        return res.status(200).json(movies || []);
+        const { genre, page = 1, limit = 20 } = req.query; // Thêm Pagination
+        const data = await MovieService.getMoviesByGenre(genre, page, limit);
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("getMoviesWithGenre error:", err);
         return res.status(500).json({

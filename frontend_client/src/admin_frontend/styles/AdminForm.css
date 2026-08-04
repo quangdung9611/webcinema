@@ -260,7 +260,7 @@
 }
 
 /* =========================================================
-   ERROR INPUT – GIỮ MÀU ĐỎ ĐỂ CẢNH BÁO
+   ERROR INPUT – MÀU ĐỎ NỔI BẬT
 ========================================================= */
 
 .admin-form-input.error,
@@ -269,27 +269,27 @@
 .admin-form-group input.error,
 .admin-form-group textarea.error,
 .admin-form-group select.error {
-    border: 1px solid rgba(255, 70, 70, 0.55) !important;
-    background: rgba(255, 70, 70, 0.05) !important;
-    color: #ffb4b4;
-    box-shadow: 0 0 15px rgba(255, 40, 40, 0.15) !important;
+    border: 2px solid #ff4757 !important;           /* Đỏ tươi */
+    background: rgba(255, 71, 87, 0.08) !important;
+    color: #ff6b81;
+    box-shadow: 0 0 20px rgba(255, 71, 87, 0.2) !important;
     animation: shakeInput var(--transition-fast);
 }
 
 /* =========================================================
-   SUCCESS INPUT – SILVER
+   SUCCESS INPUT – MÀU XANH SÁNG
 ========================================================= */
 
 .admin-form-input.success,
 .admin-form-textarea.success,
 .admin-form-select.success {
-    border: 1px solid rgba(232, 232, 232, 0.45) !important;
-    background: rgba(232, 232, 232, 0.05) !important;
-    box-shadow: 0 0 15px rgba(232, 232, 232, 0.10) !important;
+    border: 2px solid #2ed573 !important;           /* Xanh lá tươi */
+    background: rgba(46, 213, 115, 0.08) !important;
+    box-shadow: 0 0 20px rgba(46, 213, 115, 0.15) !important;
 }
 
 /* =========================================================
-   ERROR TEXT
+   ERROR TEXT – MÀU ĐỎ
 ========================================================= */
 
 .admin-form-error {
@@ -297,14 +297,19 @@
     align-items: center;
     gap: var(--space-xs);
     margin-top: var(--space-xs);
-    color: #ff6b6b;
+    color: #ff4757 !important;           /* Đỏ tươi, rõ ràng */
     font-size: var(--font-size-h6);
-    font-weight: var(--fw-semibold);
+    font-weight: var(--fw-bold);
     animation: adminErrorFade var(--transition-fast);
 }
 
+.admin-form-error svg {
+    color: #ff4757 !important;
+    flex-shrink: 0;
+}
+
 /* =========================================================
-   SUCCESS TEXT – SILVER
+   SUCCESS TEXT – MÀU XANH
 ========================================================= */
 
 .admin-form-success {
@@ -312,14 +317,19 @@
     align-items: center;
     gap: var(--space-xs);
     margin-top: var(--space-xs);
-    color: var(--silver-primary);
+    color: #2ed573 !important;           /* Xanh lá sáng, rõ ràng */
     font-size: var(--font-size-h6);
-    font-weight: var(--fw-semibold);
+    font-weight: var(--fw-bold);
     animation: adminErrorFade var(--transition-fast);
 }
 
+.admin-form-success svg {
+    color: #2ed573 !important;
+    flex-shrink: 0;
+}
+
 /* =========================================================
-   PASSWORD STRENGTH
+   PASSWORD STRENGTH – GIỮ NGUYÊN
 ========================================================= */
 
 .admin-password-strength {
@@ -419,7 +429,7 @@
 }
 
 /* =========================================================
-   SUBMIT BUTTON – SILVER (đồng bộ với AdminAuth)
+   SUBMIT BUTTON – SILVER
 ========================================================= */
 
 .admin-form-submit-btn {
@@ -428,14 +438,14 @@
     justify-content: center;
     gap: var(--space-sm);
     min-width: 180px;
-    color: var(--black-premium) !important; /* 🔥 BẮT BUỘC CHỮ ĐEN */
+    color: var(--black-premium) !important;
     background: var(--cinema-border-gradient);
     box-shadow: 0 10px 24px rgba(232, 232, 232, 0.30);
 }
 
 .admin-form-submit-btn:hover {
     transform: translateY(-2px);
-    color: var(--black-premium) !important; /* 🔥 GIỮ CHỮ ĐEN KHI HOVER */
+    color: var(--black-premium) !important;
     box-shadow: 0 0 0 1px rgba(232, 232, 232, 0.14),
                 0 0 20px rgba(232, 232, 232, 0.24),
                 0 0 42px rgba(200, 200, 200, 0.20),

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Thêm useEffect
 import { useNavigate } from 'react-router-dom';
-import api from '../../../api/api';  // ✅ Import api thay vì axios
+import api from '../../../api/api';
 
 import {
     ShieldCheck,
@@ -8,7 +8,6 @@ import {
     Lock,
     Eye,
     EyeOff,
-    ArrowRight,
     Sparkles,
     Clapperboard,
     ChartColumn,
@@ -16,10 +15,10 @@ import {
 } from 'lucide-react';
 
 import Modal from '../../components/AdminModal';
-import LoadingButton from '../../../user_frontend/components/LoadingButton'; // ✅ Import LoadingButton
-import { useAuth } from '../../../context/AuthContext';
+import LoadingButton from '../../../user_frontend/components/LoadingButton';
 
 import '../../styles/AdminAuth.css';
+
 
 const AdminLogin = () => {
 
@@ -32,10 +31,35 @@ const AdminLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
-    const [serverError, setServerError] = useState(''); // ✅ Thêm serverError
+    const [serverError, setServerError] = useState('');
 
-    const { checkAuth, admin, loading: authLoading } = useAuth();
+    const navigate = useNavigate();
 
+    /* =====================================================
+        CHECK SESSION (Nếu đã đăng nhập thì chuyển trang)
+    ===================================================== */
+    useEffect(() => {
+        const checkAdminSession = async () => {
+            try {
+                // Gọi API kiểm tra trạng thái đăng nhập
+                const res = await api.get('/admin/api/auth/me');
+                
+                // Nếu role là admin, đẩy thẳng vào dashboard, không cần login nữa
+                if (res.data?.user?.role === 'admin') {
+                    navigate('/dashboard', { replace: true });
+                }
+            } catch (error) {
+                // Nếu lỗi 401 (chưa login) hoặc lỗi khác, im lặng để hiển thị form login
+                console.log('Chưa đăng nhập, hiển thị form login.');
+            }
+        };
+        checkAdminSession();
+    }, [navigate]);
+
+
+    /* =====================================================
+        MODAL
+    ===================================================== */
     const [modalConfig, setModalConfig] = useState({
         show: false,
         type: 'success',
@@ -44,26 +68,13 @@ const AdminLogin = () => {
         onConfirm: () => {}
     });
 
-    const navigate = useNavigate();
-
-    /* =====================================================
-        AUTO LOGIN
-    ===================================================== */
-
-    useEffect(() => {
-        if (!authLoading && admin) {
-            navigate('/', { replace: true });
-        }
-    }, [admin, authLoading, navigate]);
 
     /* =====================================================
         VALIDATE
     ===================================================== */
-
     const validate = () => {
-        let tempErrors = {};
-
-        if (!email) {
+        const tempErrors = {};
+        if (!email.trim()) {
             tempErrors.email = 'Email quản trị không được để trống';
         } else if (!/\S+@\S+\.\S+/.test(email)) {
             tempErrors.email = 'Định dạng email không hợp lệ';
@@ -77,27 +88,32 @@ const AdminLogin = () => {
         return Object.keys(tempErrors).length === 0;
     };
 
-    /* =====================================================
-        LOGIN
-    ===================================================== */
 
+    /* =====================================================
+        HANDLE LOGIN
+    ===================================================== */
     const handleAdminLogin = async (e) => {
         e.preventDefault();
 
-        if (!validate()) return;
+        if (!validate()) {
+            return;
+        }
 
         setLoading(true);
         setServerError('');
 
         try {
-            // ✅ Gọi API login ADMIN qua api instance
-            const response = await api.post('/admin/api/auth/login', {
-                email: email,
-                password: password
-            });
+            const response = await api.post(
+                '/admin/api/auth/login',
+                {
+                    email: email.trim(),
+                    password: password
+                }
+            );
 
-            // ✅ Kiểm tra role admin (dự phòng, backend đã check)
-            if (response.data?.user?.role !== 'admin') {
+            const adminUser = response.data?.user;
+
+            if (adminUser && adminUser.role && adminUser.role !== 'admin') {
                 setModalConfig({
                     show: true,
                     type: 'error',
@@ -111,21 +127,14 @@ const AdminLogin = () => {
                 return;
             }
 
-            // ✅ Cập nhật auth context
-            await checkAuth();
-            window.dispatchEvent(new Event('authChange'));
-
-            // ✅ Chuyển trang mượt mà sau khi đăng nhập thành công
             navigate('/dashboard', { replace: true });
 
         } catch (err) {
             console.error('Admin Login Error:', err);
-
             const errorMessage = err.response?.data?.message ||
-                err.response?.data?.error ||
-                'Sai tài khoản hoặc mật khẩu quản trị.';
+                                 err.response?.data?.error ||
+                                 'Sai tài khoản hoặc mật khẩu quản trị.';
 
-            // Hiển thị lỗi theo field nếu có
             if (err.response?.data?.field === 'email') {
                 setErrors({ email: errorMessage });
             } else if (err.response?.data?.field === 'password') {
@@ -138,32 +147,18 @@ const AdminLogin = () => {
         }
     };
 
-    /* =====================================================
-        LOADING AUTH
-    ===================================================== */
-
-    if (authLoading) {
-        return (
-            <div className="admin-auth-loading">
-                Đang kiểm tra quyền truy cập...
-            </div>
-        );
-    }
 
     /* =====================================================
         RENDER
     ===================================================== */
-
     return (
         <div className="admin-login-wrapper">
-
-            {/* BACKGROUND EFFECT */}
             <div className="admin-login-overlay"></div>
-
-            {/* MAIN CARD */}
             <div className="admin-login-container">
 
-                {/* LEFT PANEL */}
+                {/* =================================================
+                    LEFT PANEL
+                ================================================= */}
                 <div className="admin-login-left">
                     <div className="admin-brand">
                         <div className="admin-brand-logo">
@@ -172,12 +167,10 @@ const AdminLogin = () => {
                         <h1>CINEMA STAR</h1>
                         <span>ADMIN PANEL</span>
                     </div>
-
                     <div className="admin-left-content">
                         <h2>Hệ thống quản trị rạp chiếu phim</h2>
                         <p>Quản lý toàn bộ hoạt động hệ thống cinema hiện đại, trực quan và bảo mật.</p>
                     </div>
-
                     <div className="admin-feature-list">
                         <div className="admin-feature-card">
                             <ShieldCheck size={24} />
@@ -201,13 +194,14 @@ const AdminLogin = () => {
                             </div>
                         </div>
                     </div>
-
                     <div className="admin-cinema-icon">
                         <Clapperboard size={260} />
                     </div>
                 </div>
 
-                {/* RIGHT PANEL */}
+                {/* =================================================
+                    RIGHT PANEL
+                ================================================= */}
                 <div className="admin-login-right">
                     <div className="admin-login-header">
                         <div className="admin-login-icon">
@@ -229,18 +223,14 @@ const AdminLogin = () => {
                                     value={email}
                                     onChange={(e) => {
                                         setEmail(e.target.value);
-                                        if (errors.email) {
-                                            setErrors({ ...errors, email: '' });
-                                        }
+                                        if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
                                         if (serverError) setServerError('');
                                     }}
                                     autoComplete="email"
                                     disabled={loading}
                                 />
                             </div>
-                            {errors.email && (
-                                <span className="admin-error-text">{errors.email}</span>
-                            )}
+                            {errors.email && <span className="admin-error-text">{errors.email}</span>}
                         </div>
 
                         {/* PASSWORD */}
@@ -254,9 +244,7 @@ const AdminLogin = () => {
                                     value={password}
                                     onChange={(e) => {
                                         setPassword(e.target.value);
-                                        if (errors.password) {
-                                            setErrors({ ...errors, password: '' });
-                                        }
+                                        if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
                                         if (serverError) setServerError('');
                                     }}
                                     autoComplete="current-password"
@@ -265,25 +253,17 @@ const AdminLogin = () => {
                                 <button
                                     type="button"
                                     className="toggle-password-btn"
-                                    onClick={() => setShowPassword(!showPassword)}
+                                    onClick={() => setShowPassword(prev => !prev)}
                                     tabIndex="-1"
                                 >
                                     {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                                 </button>
                             </div>
-                            {errors.password && (
-                                <span className="admin-error-text">{errors.password}</span>
-                            )}
+                            {errors.password && <span className="admin-error-text">{errors.password}</span>}
                         </div>
 
-                        {/* SERVER ERROR */}
-                        {serverError && (
-                            <div className="admin-server-error">
-                                {serverError}
-                            </div>
-                        )}
+                        {serverError && <div className="admin-server-error">{serverError}</div>}
 
-                        {/* ✅ BUTTON - DÙNG LOADINGBUTTON */}
                         <LoadingButton
                             type="submit"
                             loading={loading}
@@ -303,7 +283,6 @@ const AdminLogin = () => {
 
             </div>
 
-            {/* MODAL - Chỉ hiển thị khi có lỗi role */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}
@@ -311,7 +290,6 @@ const AdminLogin = () => {
                 message={modalConfig.message}
                 onConfirm={modalConfig.onConfirm}
             />
-
         </div>
     );
 };

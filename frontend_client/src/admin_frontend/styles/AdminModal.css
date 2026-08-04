@@ -1,6 +1,7 @@
 /* =========================================================
-   ADMIN MODAL OVERLAY – SILVER EDITION
-   SỬ DỤNG VAR TỪ INDEX.CSS (SILVER)
+   ADMIN MODAL - DARK LUXURY PREMIUM EDITION
+   Màu sắc: Xám ánh bạc (Silver/Grey) trên nền đen
+   Giữ nguyên bố cục, kích thước, animation
 ========================================================= */
 
 .admin-modal-overlay {
@@ -11,56 +12,57 @@
     justify-content: center;
     padding: var(--space-lg);
     z-index: 9999;
-    background: var(--overlay-dark);
-    backdrop-filter: blur(14px);
-    animation: modalFade var(--transition-slow);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(18px);
+    animation: modalFade 0.3s ease;
 }
 
 /* =========================================================
-   MODAL CONTAINER
+   MODAL CONTAINER - XÁM ĐẬM SANG TRỌNG
 ========================================================= */
 
 .admin-modal-container {
     position: relative;
     width: 100%;
     overflow: hidden;
-    border-radius: var(--radius-xl);
-    background: var(--cinema-card-bg);
-    border: 1px solid rgba(232, 232, 232, 0.12);
-    box-shadow: var(--shadow-lg), 0 0 30px rgba(232, 232, 232, 0.06);
-    animation: modalScale var(--transition-normal);
+    border-radius: 20px;
+    background: #1a1a1a; /* xám đen, khác biệt với nền đen tuyền */
+    border: 1px solid rgba(180, 180, 180, 0.25);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8),
+                0 0 60px rgba(180, 180, 180, 0.05);
+    animation: modalScale 0.3s ease;
 }
 
 /* =========================================================
-   CINEMA GLOW – SILVER
+   GLOW XÁM - ÁNH BẠC
 ========================================================= */
 
 .admin-modal-container::before {
     content: '';
     position: absolute;
-    top: -120px;
-    right: -120px;
-    width: 260px;
-    height: 260px;
+    top: -150px;
+    right: -150px;
+    width: 300px;
+    height: 300px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(232, 232, 232, 0.15), transparent 70%);
+    background: radial-gradient(circle, rgba(180, 180, 180, 0.10), transparent 70%);
     pointer-events: none;
 }
 
 .admin-modal-container::after {
     content: '';
     position: absolute;
-    bottom: -120px;
-    left: -120px;
-    width: 260px;
-    height: 260px;
+    bottom: -150px;
+    left: -150px;
+    width: 300px;
+    height: 300px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(200, 200, 200, 0.10), transparent 70%);
+    background: radial-gradient(circle, rgba(180, 180, 180, 0.05), transparent 70%);
     pointer-events: none;
 }
 
 /* =========================================================
-   SIZE
+   SIZE (giữ nguyên)
 ========================================================= */
 
 .admin-modal-container.sm {
@@ -80,7 +82,7 @@
 }
 
 /* =========================================================
-   HEADER
+   HEADER - VIỀN XÁM NHẸ
 ========================================================= */
 
 .admin-modal-header {
@@ -89,13 +91,13 @@
     align-items: center;
     justify-content: center;
     padding: var(--space-lg) var(--space-xl);
-    border-bottom: var(--border-silver);
-    background: linear-gradient(180deg, rgba(232, 232, 232, 0.04), transparent);
+    border-bottom: 1px solid rgba(180, 180, 180, 0.15);
+    background: linear-gradient(180deg, rgba(180, 180, 180, 0.05), transparent);
     z-index: 2;
 }
 
 /* =========================================================
-   TITLE GROUP
+   TITLE GROUP (giữ nguyên)
 ========================================================= */
 
 .admin-modal-title-group {
@@ -106,51 +108,60 @@
 }
 
 /* =========================================================
-   EMOJI ICON – KHÔNG NỀN TRÒN, KHÔNG BÓNG
+   EMOJI ICON - GIỮ NGUYÊN KÍCH THƯỚC, BỎ LỌC MÀU
 ========================================================= */
 
 .admin-modal-icon {
-    font-size: 44px;
+    font-size: 48px;
     line-height: 1;
     display: inline-block;
     flex-shrink: 0;
+    filter: drop-shadow(0 0 12px rgba(180, 180, 180, 0.3));
 }
 
 /* =========================================================
-   TITLE
+   TITLE - XÁM SÁNG (KHÔNG CÒN VÀNG)
 ========================================================= */
 
 .admin-modal-title {
     margin: 0;
     font-size: var(--font-size-h2);
-    font-weight: var(--fw-black);
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--white-pure);
+    letter-spacing: 1.5px;
+    color: #d0d0d0; /* xám sáng */
+    /* bỏ gradient vàng, dùng màu tĩnh */
+    -webkit-text-fill-color: #d0d0d0;
+    background: none;
+    animation: none;
 }
 
 /* =========================================================
-   MÀU SẮC TITLE THEO TYPE
+   MÀU SẮC TITLE THEO TYPE (XÁM THEO NGỮ CẢNH)
 ========================================================= */
 
 .admin-modal-title-group.success .admin-modal-title {
-    color: #4ade80;
+    color: #8bc34a; /* xanh lá xám */
+    -webkit-text-fill-color: #8bc34a;
 }
 
 .admin-modal-title-group.error .admin-modal-title {
-    color: #ff4d4d;
+    color: #e57373; /* đỏ nhạt */
+    -webkit-text-fill-color: #e57373;
 }
 
 .admin-modal-title-group.warning .admin-modal-title {
-    color: #f59e0b;
+    color: #ffb74d; /* cam xám */
+    -webkit-text-fill-color: #ffb74d;
 }
 
 .admin-modal-title-group.info .admin-modal-title {
-    color: #60a5fa;
+    color: #64b5f6; /* xanh dương nhạt */
+    -webkit-text-fill-color: #64b5f6;
 }
 
 /* =========================================================
-   CLOSE BUTTON – SILVER
+   CLOSE BUTTON - XÁM
 ========================================================= */
 
 .admin-modal-close-btn {
@@ -158,29 +169,29 @@
     right: var(--space-md);
     top: 50%;
     transform: translateY(-50%);
-    width: 46px;
-    height: 46px;
-    border-radius: var(--radius-md);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--hover-bg);
-    border: var(--border-light);
-    color: var(--text-body);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(180, 180, 180, 0.2);
+    color: #a0a0a0;
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: all 0.3s ease;
 }
 
 .admin-modal-close-btn:hover {
-    background: rgba(232, 232, 232, 0.16);
-    border-color: rgba(232, 232, 232, 0.25);
-    color: var(--white-pure);
+    background: rgba(180, 180, 180, 0.12);
+    border-color: #c0c0c0;
+    color: #e0e0e0;
     transform: translateY(-50%) rotate(90deg);
-    box-shadow: 0 0 20px rgba(232, 232, 232, 0.15);
+    box-shadow: 0 0 30px rgba(180, 180, 180, 0.15);
 }
 
 /* =========================================================
-   BODY
+   BODY - CHỮ TRẮNG XÁM
 ========================================================= */
 
 .admin-modal-body {
@@ -188,7 +199,7 @@
     padding: var(--space-xl);
     max-height: 80vh;
     overflow-y: auto;
-    color: var(--text-body);
+    color: #d0d0d0;
     z-index: 2;
 }
 
@@ -196,14 +207,21 @@
 .admin-modal-body span,
 .admin-modal-body label,
 .admin-modal-body div {
-    color: var(--text-body);
+    color: #d0d0d0;
+}
+
+.admin-modal-body p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    text-align: center;
+    margin: 0;
 }
 
 /* =========================================================
-   ACTIONS
+   ACTIONS - NÚT (giữ nguyên bố cục)
 ========================================================= */
 
-.admin-alert-actions {
+.admin-modal-actions {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -213,61 +231,72 @@
 }
 
 /* =========================================================
-   BUTTON BASE
-========================================================= */
-
-.admin-modal-body button {
-    border: none;
-    outline: none;
-    border-radius: var(--radius-md);
-    padding: var(--space-sm) var(--space-lg);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-bold);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-/* =========================================================
-   CONFIRM BUTTON – SILVER (BẠC - CHỮ ĐEN)
+   CONFIRM BUTTON - XÁM BẠC
 ========================================================= */
 
 .admin-confirm-btn {
     min-width: 140px;
-    color: var(--black-premium) !important;
-    background: var(--cinema-border-gradient);
-    box-shadow: 0 10px 24px rgba(232, 232, 232, 0.30);
+    padding: 12px 32px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #1a1a1a !important;
+    background: linear-gradient(135deg, #c0c0c0, #888888);
+    box-shadow: 0 8px 24px rgba(180, 180, 180, 0.30);
+    text-transform: uppercase;
 }
 
 .admin-confirm-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 34px rgba(232, 232, 232, 0.40);
-    color: var(--black-premium) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 14px 34px rgba(180, 180, 180, 0.45);
+    background: linear-gradient(135deg, #d0d0d0, #999999);
+}
+
+.admin-confirm-btn:active {
+    transform: translateY(0);
 }
 
 /* =========================================================
-   CANCEL BUTTON – SILVER OUTLINE
+   CANCEL BUTTON - OUTLINE XÁM
 ========================================================= */
 
 .admin-cancel-btn {
     min-width: 120px;
-    background: var(--hover-bg);
-    color: var(--text-body);
-    border: var(--border-light);
+    padding: 12px 28px;
+    border: 1px solid rgba(180, 180, 180, 0.25);
+    border-radius: 50px;
+    background: transparent;
+    color: #a0a0a0;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .admin-cancel-btn:hover {
-    background: rgba(255, 255, 255, 0.10);
-    border-color: rgba(232, 232, 232, 0.30);
-    transform: translateY(-2px);
-    color: var(--silver-light);
+    background: rgba(180, 180, 180, 0.08);
+    border-color: #c0c0c0;
+    color: #d0d0d0;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(180, 180, 180, 0.10);
+}
+
+.admin-cancel-btn:active {
+    transform: translateY(0);
 }
 
 /* =========================================================
-   SCROLLBAR – SILVER
+   SCROLLBAR - XÁM
 ========================================================= */
 
 .admin-modal-body::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 .admin-modal-body::-webkit-scrollbar-track {
@@ -275,12 +304,16 @@
 }
 
 .admin-modal-body::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, var(--silver-primary), var(--silver-light));
-    border-radius: var(--radius-round);
+    background: linear-gradient(180deg, #c0c0c0, #888888);
+    border-radius: 50px;
+}
+
+.admin-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #d0d0d0;
 }
 
 /* =========================================================
-   ANIMATIONS
+   ANIMATIONS (giữ nguyên)
 ========================================================= */
 
 @keyframes modalFade {
@@ -291,43 +324,16 @@
 @keyframes modalScale {
     from {
         opacity: 0;
-        transform: scale(0.92) translateY(20px);
+        transform: scale(0.92) translateY(30px);
     }
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
     }
 }
-.admin-modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-}
-.admin-modal-btn {
-    padding: 8px 24px;
-    border: none;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.admin-modal-btn.confirm {
-    background: #3b82f6;
-    color: white;
-}
-.admin-modal-btn.confirm:hover {
-    background: #2563eb;
-}
-.admin-modal-btn.cancel {
-    background: #e5e7eb;
-    color: #1f2937;
-}
-.admin-modal-btn.cancel:hover {
-    background: #d1d5db;
-}
+
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE (giữ nguyên)
 ========================================================= */
 
 @media (max-width: 992px) {
@@ -338,7 +344,7 @@
         font-size: var(--font-size-h3);
     }
     .admin-modal-icon {
-        font-size: 38px;
+        font-size: 40px;
     }
 }
 
@@ -347,7 +353,7 @@
         padding: var(--space-md);
     }
     .admin-modal-container {
-        border-radius: var(--radius-lg);
+        border-radius: 16px;
     }
     .admin-modal-title {
         font-size: var(--font-size-h3);
@@ -360,7 +366,13 @@
         height: 42px;
     }
     .admin-modal-icon {
-        font-size: 34px;
+        font-size: 36px;
+    }
+    .admin-confirm-btn,
+    .admin-cancel-btn {
+        min-width: 100px;
+        padding: 10px 20px;
+        font-size: 0.9rem;
     }
 }
 
@@ -368,15 +380,20 @@
     .admin-modal-title {
         font-size: var(--font-size-h4);
     }
-    .admin-alert-actions {
+    .admin-modal-actions {
         flex-direction: column;
+        width: 100%;
     }
     .admin-confirm-btn,
     .admin-cancel-btn {
         width: 100%;
         justify-content: center;
+        min-width: unset;
     }
     .admin-modal-icon {
-        font-size: 30px;
+        font-size: 32px;
+    }
+    .admin-modal-body {
+        padding: var(--space-md);
     }
 }

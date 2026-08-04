@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import api from '../../api/api'; // ✅ Import api
+import api from '../../api/api';
 
 // COMPONENTS
 import Modal from '../components/Modal';
@@ -10,13 +10,21 @@ import LoadingButton from '../components/LoadingButton';
 // STYLES
 import '../styles/Payment.css';
 
-// CONTEXT
-import { useAuth } from '../../context/AuthContext';
-
 const Payment = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user } = useAuth();
+
+    // Lấy thông tin user từ localStorage (hoặc sessionStorage) thay vì useAuth
+    const getUserFromStorage = () => {
+        try {
+            const userStr = localStorage.getItem('user'); // hoặc sessionStorage
+            return userStr ? JSON.parse(userStr) : null;
+        } catch {
+            return null;
+        }
+    };
+
+    const [user, setUser] = useState(getUserFromStorage());
 
     const {
         movie,
@@ -91,7 +99,9 @@ const Payment = () => {
             return;
         }
 
-        if (!user || !user.user_id) {
+        // Kiểm tra user từ localStorage
+        const storedUser = getUserFromStorage();
+        if (!storedUser || !storedUser.user_id) {
             showNotice(
                 'error',
                 'YÊU CẦU ĐĂNG NHẬP',
@@ -101,14 +111,13 @@ const Payment = () => {
             return;
         }
 
-        if (user) {
-            setUserInfo({
-                user_id: user.user_id || '',
-                full_name: user.full_name || '',
-                email: user.email || '',
-                phone: user.phone || ''
-            });
-        }
+        setUser(storedUser);
+        setUserInfo({
+            user_id: storedUser.user_id || '',
+            full_name: storedUser.full_name || '',
+            email: storedUser.email || '',
+            phone: storedUser.phone || ''
+        });
 
         // Reset OTP nếu không có giữ ghế
         if (!sessionStorage.getItem('holdExpiresAt')) {
@@ -125,7 +134,7 @@ const Payment = () => {
         if (sessionStorage.getItem('holdExpiresAt')) {
             setIsTimerActive(true);
         }
-    }, [movie, selectedSeats, navigate, user, location.pathname]);
+    }, [movie, selectedSeats, navigate, location.pathname]);
 
     // =========================
     // TIMER EXPIRE
@@ -192,7 +201,9 @@ const Payment = () => {
     // PAYMENT – XÓA OTP CŨ TRƯỚC KHI GỬI
     // =========================
     const handleProceed = async () => {
-        if (!userInfo.user_id) {
+        // Lấy user mới nhất từ localStorage phòng trường hợp đã đăng xuất
+        const latestUser = getUserFromStorage();
+        if (!latestUser || !latestUser.user_id) {
             showNotice(
                 'error',
                 'YÊU CẦU ĐĂNG NHẬP',
@@ -202,7 +213,13 @@ const Payment = () => {
             return;
         }
 
-        if (!userInfo.full_name || !userInfo.email || !userInfo.phone) {
+        // Cập nhật userInfo từ localStorage
+        const userId = latestUser.user_id;
+        const fullName = latestUser.full_name || '';
+        const email = latestUser.email || '';
+        const phone = latestUser.phone || '';
+
+        if (!fullName || !email || !phone) {
             showNotice('error', 'THIẾU THÔNG TIN', 'Vui lòng nhập đầy đủ thông tin nhận vé.');
             return;
         }
@@ -235,15 +252,15 @@ const Payment = () => {
             }));
 
             const postData = {
-                userId: userInfo.user_id,
+                userId: userId,
                 showtimeId: showtimeId,
                 totalAmount: Number(grandTotal),
                 discountAmount: Number(discountAmount),
                 couponId: appliedCouponId || null,
                 selectedSeats: seatsWithPrice,
                 selectedFoods: foodsWithQuantity,
-                customerEmail: userInfo.email,
-                customerName: userInfo.full_name,
+                customerEmail: email,
+                customerName: fullName,
                 movieTitle: movie?.title || '',
                 cinemaName: selectedCinema?.cinema_name || '',
                 startTime: selectedShowtime?.start_time || '',
@@ -257,8 +274,8 @@ const Payment = () => {
                     orderId: response.data.bookingId,
                     bookingId: response.data.bookingId,
                     totalAmount: Number(grandTotal),
-                    customerName: userInfo.full_name,
-                    customerEmail: userInfo.email,
+                    customerName: fullName,
+                    customerEmail: email,
                     movie,
                     selectedCinema,
                     selectedDate,
@@ -298,7 +315,6 @@ const Payment = () => {
             const errorMessage = err.response?.data?.message || err.message || 'Không thể xử lý thanh toán.';
             sessionStorage.removeItem('paymentInitiated');
 
-            // Xử lý riêng lỗi duplicate key
             if (errorMessage.includes('Duplicate entry') || errorMessage.includes('uk_showtime_cinema_room_seat')) {
                 showNotice(
                     'error',

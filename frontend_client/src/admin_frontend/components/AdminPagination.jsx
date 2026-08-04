@@ -1,60 +1,32 @@
 // src/components/AdminPagination.jsx
 
 import React from 'react';
-
-import {
-    ChevronLeft,
-    ChevronRight
-} from 'lucide-react';
-
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import '../styles/AdminPagination.css';
 
 const AdminPagination = ({
-
     currentPage = 1,
-
     totalPages = 1,
-
     onPageChange
-
 }) => {
 
-    /* =========================================================
-        HIDE PAGINATION
-    ========================================================= */
-
+    // Nếu chỉ có 1 trang hoặc ít hơn, không hiển thị
     if (totalPages <= 1) {
-
         return null;
-
     }
 
-    /* =========================================================
-        HANDLE PAGE CHANGE
-    ========================================================= */
+    // Đảm bảo currentPage nằm trong khoảng hợp lệ (1..totalPages)
+    const safePage = Math.min(Math.max(currentPage, 1), totalPages);
 
     const handleChangePage = (page) => {
-
-        if (
-            page < 1 ||
-            page > totalPages
-        ) {
-            return;
-        }
-
+        if (page < 1 || page > totalPages) return;
         onPageChange(page);
-
     };
 
-    /* =========================================================
-        GENERATE PAGE NUMBERS (UPDATED - SMART PAGINATION)
-    ========================================================= */
-
     const renderPages = () => {
-
         const pages = [];
 
-        // Nếu ít page thì render full
+        // Nếu số trang ít (<=5) hiển thị tất cả
         if (totalPages <= 5) {
             for (let i = 1; i <= totalPages; i++) {
                 pages.push(i);
@@ -62,10 +34,7 @@ const AdminPagination = ({
             return pages.map((i) => (
                 <button
                     key={i}
-                    className={`
-                        admin-pagination-btn
-                        ${currentPage === i ? 'active' : ''}
-                    `}
+                    className={`admin-pagination-btn ${safePage === i ? 'active' : ''}`}
                     onClick={() => handleChangePage(i)}
                 >
                     {i}
@@ -73,50 +42,42 @@ const AdminPagination = ({
             ));
         }
 
-        // Luôn có page 1
+        // Luôn có trang đầu
         pages.push(1);
 
-        // dấu ...
-        if (currentPage > 3) {
+        // Dấu ... bên trái nếu safePage > 3
+        if (safePage > 3) {
             pages.push('...');
         }
 
-        // range giữa
-        const start = Math.max(2, currentPage - 1);
-        const end = Math.min(totalPages - 1, currentPage + 1);
+        // Các trang xung quanh safePage (tối đa 3 trang: trước, hiện tại, sau)
+        const start = Math.max(2, safePage - 1);
+        const end = Math.min(totalPages - 1, safePage + 1);
 
         for (let i = start; i <= end; i++) {
             pages.push(i);
         }
 
-        // dấu ...
-        if (currentPage < totalPages - 2) {
+        // Dấu ... bên phải nếu safePage < totalPages - 2
+        if (safePage < totalPages - 2) {
             pages.push('...');
         }
 
-        // page cuối
+        // Trang cuối
         pages.push(totalPages);
 
         return pages.map((p, index) => {
-
             if (p === '...') {
                 return (
-                    <span
-                        key={`dots-${index}`}
-                        className="admin-pagination-dots"
-                    >
+                    <span key={`dots-${index}`} className="admin-pagination-dots">
                         ...
                     </span>
                 );
             }
-
             return (
                 <button
                     key={p}
-                    className={`
-                        admin-pagination-btn
-                        ${currentPage === p ? 'active' : ''}
-                    `}
+                    className={`admin-pagination-btn ${safePage === p ? 'active' : ''}`}
                     onClick={() => handleChangePage(p)}
                 >
                     {p}
@@ -125,88 +86,37 @@ const AdminPagination = ({
         });
     };
 
-    /* =========================================================
-        RENDER
-    ========================================================= */
-
     return (
-
         <div className="admin-pagination">
-
-            {/* =====================================================
-                PREV BUTTON
-            ===================================================== */}
-
+            {/* Nút Previous */}
             <button
-                className={`
-                    admin-pagination-btn
-                    ${currentPage === 1 ? 'disabled' : ''}
-                `}
-                onClick={() =>
-                    handleChangePage(
-                        currentPage - 1
-                    )
-                }
+                className={`admin-pagination-btn ${safePage === 1 ? 'disabled' : ''}`}
+                onClick={() => handleChangePage(safePage - 1)}
+                disabled={safePage === 1}
             >
-
                 <ChevronLeft size={18} />
-
             </button>
 
-            {/* =====================================================
-                PAGE NUMBERS
-            ===================================================== */}
-
+            {/* Các nút trang */}
             <div className="admin-pagination-pages">
-
                 {renderPages()}
-
             </div>
 
-            {/* =====================================================
-                NEXT BUTTON
-            ===================================================== */}
-
+            {/* Nút Next */}
             <button
-                className={`
-                    admin-pagination-btn
-                    ${currentPage === totalPages ? 'disabled' : ''}
-                `}
-                onClick={() =>
-                    handleChangePage(
-                        currentPage + 1
-                    )
-                }
+                className={`admin-pagination-btn ${safePage === totalPages ? 'disabled' : ''}`}
+                onClick={() => handleChangePage(safePage + 1)}
+                disabled={safePage === totalPages}
             >
-
                 <ChevronRight size={18} />
-
             </button>
 
-            {/* =====================================================
-                INFO
-            ===================================================== */}
-
+            {/* Thông tin trang */}
             <div className="admin-pagination-info">
-
-                Trang
-
-                <span>
-                    {currentPage}
-                </span>
-
-                /
-
-                <span>
-                    {totalPages}
-                </span>
-
+                Trang <span>{safePage}</span> / <span>{totalPages}</span>
             </div>
-
         </div>
-
     );
-
 };
 
 export default AdminPagination;

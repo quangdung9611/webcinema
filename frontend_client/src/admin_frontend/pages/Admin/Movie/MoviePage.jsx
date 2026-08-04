@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import api from '../../../../api/api';  // ✅ Import api thay vì axios
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import api from '../../../../api/api';
 import {
     Film,
     Edit,
@@ -16,27 +16,26 @@ import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
+import AdminPagination from '../../../components/AdminPagination'; // ✅ Thêm Pagination
 
-// ❌ Xóa API_URL
-
-// Helper lấy URL poster (Cloudinary hoặc local)
+// ==========================================================
+// POSTER / BACKDROP URL
+// ==========================================================
 const getPosterUrl = (poster) => {
     if (!poster) return '';
-    if (poster.startsWith('http://') || poster.startsWith('https://')) {
-        return poster;
-    }
+    if (poster.startsWith('http://') || poster.startsWith('https://')) return poster;
     return `https://api.quangdungcinema.id.vn/uploads/posters/${poster}`;
 };
 
-// Helper lấy URL backdrop (Cloudinary hoặc local)
 const getBackdropUrl = (backdrop) => {
     if (!backdrop) return '';
-    if (backdrop.startsWith('http://') || backdrop.startsWith('https://')) {
-        return backdrop;
-    }
+    if (backdrop.startsWith('http://') || backdrop.startsWith('https://')) return backdrop;
     return `https://api.quangdungcinema.id.vn/uploads/backdrops/${backdrop}`;
 };
 
+// ==========================================================
+// INITIAL FORM
+// ==========================================================
 const initialFormData = {
     title: '',
     slug: '',
@@ -50,12 +49,40 @@ const initialFormData = {
     description: ''
 };
 
+// ==========================================================
+// COMPONENT
+// ==========================================================
 const MoviePage = () => {
 
+    // ======================================================
+    // DATA
+    // ======================================================
     const [movies, setMovies] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
+
+    // ======================================================
+    // SEARCH & PAGINATION (Giống UserPage)
+    // ======================================================
     const [search, setSearch] = useState('');
+    const [pagination, setPagination] = useState({
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPreviousPage: false
+    });
+
+    // ======================================================
+    // CHỐNG GỌI TRÙNG
+    // ======================================================
+    const isFetching = useRef(false);
+    const abortControllerRef = useRef(null);
+
+    // ======================================================
+    // FORM
+    // ======================================================
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingMovie, setEditingMovie] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
@@ -63,6 +90,9 @@ const MoviePage = () => {
     const [movieBackdropFile, setMovieBackdropFile] = useState(null);
     const [formErrors, setFormErrors] = useState({});
 
+    // ======================================================
+    // ALERT MODAL
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -80,30 +110,111 @@ const MoviePage = () => {
         setAlertModal(prev => ({ ...prev, open: false }));
     };
 
-    const fetchMovies = async () => {
+    // ======================================================
+    // FETCH MOVIES - GIỐNG HỆT UserPage
+    // ======================================================
+    const fetchMovies = useCallback(async (page = 1, keyword = '') => {
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
+        }
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        isFetching.current = true;
         setLoading(true);
+
         try {
-            const res = await api.get('/api/movies');  // ✅ Dùng api
-            setMovies(res.data);
+            const res = await api.get('/api/movies', {
+                params: {
+                    page,
+                    limit: 20,
+                    search: keyword.trim()
+                },
+                signal: controller.signal
+            });
+
+            // Parse dữ liệu giống UserPage
+            const responseData = res.data?.data;
+            const moviesData = responseData?.data || [];
+            const paginationData = responseData?.pagination || {
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            };
+
+            setMovies(moviesData);
+            setPagination(paginationData);
+
         } catch (error) {
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
+            console.error('FETCH MOVIES ERROR:', error);
+            setMovies([]);
+            setPagination({ page: 1, limit: 20, total: 0, totalPages: 1 });
             showAlert('Lỗi', 'Không thể tải danh sách phim.', 'error');
         } finally {
             setLoading(false);
+            isFetching.current = false;
+            if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
+            }
         }
-    };
-
-    useEffect(() => {
-        fetchMovies();
     }, []);
 
+    // ======================================================
+    // MOUNT
+    // ======================================================
+    useEffect(() => {
+        fetchMovies(1, '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // ======================================================
+    // SEARCH - DEBOUNCE 400ms
+    // ======================================================
+    const prevSearchRef = useRef('');
+
+    useEffect(() => {
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
+
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchMovies(1, currentSearch);
+        }, 400);
+
+        return () => clearTimeout(timer);
+    }, [search, fetchMovies]);
+
+    // ======================================================
+    // PAGE CHANGE
+    // ======================================================
+    const handlePageChange = (page) => {
+        fetchMovies(page, search);
+    };
+
+    // ======================================================
+    // VALIDATE FORM
+    // ======================================================
     const validateForm = () => {
         const errors = {};
         if (!formData.title.trim()) errors.title = 'Vui lòng nhập tên phim.';
         if (!formData.director.trim()) errors.director = 'Vui lòng nhập tên đạo diễn.';
         if (!formData.nation.trim()) errors.nation = 'Vui lòng nhập quốc gia sản xuất.';
-        if (!formData.duration) {
-            errors.duration = 'Vui lòng nhập thời lượng phim.';
-        } else if (Number(formData.duration) <= 0) {
+        if (!formData.duration || Number(formData.duration) <= 0) {
             errors.duration = 'Thời lượng phim phải lớn hơn 0 phút.';
         }
         if (!formData.release_date) errors.release_date = 'Vui lòng chọn ngày phát hành.';
@@ -144,7 +255,7 @@ const MoviePage = () => {
             director: movie.director || '',
             nation: movie.nation || '',
             duration: movie.duration || '',
-            age_rating: movie.age_rating !== undefined ? String(movie.age_rating) : '0',
+            age_rating: String(movie.age_rating || '0'),
             release_date: movie.release_date ? movie.release_date.substring(0, 10) : '',
             status: movie.status || 'Sắp chiếu',
             trailer_url: movie.trailer_url || '',
@@ -158,23 +269,18 @@ const MoviePage = () => {
 
     const handleChange = (e) => {
         const { name, value, files } = e.target;
-        if (formErrors[name]) {
-            setFormErrors(prev => ({ ...prev, [name]: '' }));
-        }
+        if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
+        
         if (name === 'movie_poster') {
-            setMoviePosterFile(files[0]);
+            setMoviePosterFile(files?.[0] || null);
             return;
         }
         if (name === 'movie_backdrop') {
-            setMovieBackdropFile(files[0]);
+            setMovieBackdropFile(files?.[0] || null);
             return;
         }
         if (name === 'title') {
-            setFormData(prev => ({
-                ...prev,
-                title: value,
-                slug: generateSlug(value)
-            }));
+            setFormData(prev => ({ ...prev, title: value, slug: generateSlug(value) }));
             return;
         }
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -186,20 +292,11 @@ const MoviePage = () => {
         try {
             setSubmitLoading(true);
             const submitData = new FormData();
-            Object.entries(formData).forEach(([key, value]) => {
-                submitData.append(key, value);
-            });
-            if (moviePosterFile) {
-                submitData.append('movie_poster', moviePosterFile);
-            }
-            if (movieBackdropFile) {
-                submitData.append('movie_backdrop', movieBackdropFile);
-            }
+            Object.entries(formData).forEach(([key, value]) => submitData.append(key, value));
+            if (moviePosterFile) submitData.append('movie_poster', moviePosterFile);
+            if (movieBackdropFile) submitData.append('movie_backdrop', movieBackdropFile);
 
-            // ✅ Dùng api với multipart/form-data
-            const config = {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            };
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
 
             if (editingMovie) {
                 await api.put(`/api/movies/${editingMovie.movie_id}`, submitData, config);
@@ -209,8 +306,14 @@ const MoviePage = () => {
                 showAlert('Thành công', 'Thêm phim thành công.', 'success');
             }
             setIsFormOpen(false);
-            fetchMovies();
+            // Gọi lại danh sách đúng trang đang đứng
+            fetchMovies(pagination.page, search);
         } catch (error) {
+            console.error('SUBMIT MOVIE ERROR:', error);
+            if (error.response?.data?.field) {
+                setFormErrors({ [error.response.data.field]: error.response.data.message });
+                return;
+            }
             showAlert('Lỗi', error.response?.data?.error || 'Đã xảy ra lỗi.', 'error');
         } finally {
             setSubmitLoading(false);
@@ -224,9 +327,12 @@ const MoviePage = () => {
             'warning',
             async () => {
                 try {
-                    await api.delete(`/api/movies/${movie.movie_id}`);  // ✅ Dùng api
+                    await api.delete(`/api/movies/${movie.movie_id}`);
                     closeAlert();
-                    fetchMovies();
+                    const newPage = movies.length === 1 && pagination.page > 1
+                        ? pagination.page - 1
+                        : pagination.page;
+                    fetchMovies(newPage, search);
                     showAlert('Thành công', 'Xóa phim thành công.', 'success');
                 } catch (error) {
                     showAlert('Lỗi', 'Không thể xóa phim.', 'error');
@@ -236,34 +342,20 @@ const MoviePage = () => {
         );
     };
 
-    const filteredMovies = movies.filter(movie => {
-        const keyword = search.toLowerCase();
-        return (
-            movie.title?.toLowerCase().includes(keyword) ||
-            movie.director?.toLowerCase().includes(keyword) ||
-            movie.nation?.toLowerCase().includes(keyword)
-        );
-    });
-
+    // ======================================================
+    // TABLE COLUMNS
+    // ======================================================
     const columns = [
         {
             title: 'Poster',
             key: 'movie_poster',
-            render: (row) => {
-                const posterUrl = getPosterUrl(row.movie_poster);
-                return (
-                    <img
-                        src={posterUrl}
-                        alt={row.title}
-                        style={{
-                            width: '70px',
-                            height: '100px',
-                            objectFit: 'cover',
-                            borderRadius: '10px'
-                        }}
-                    />
-                );
-            }
+            render: (row) => (
+                <img
+                    src={getPosterUrl(row.movie_poster)}
+                    alt={row.title}
+                    style={{ width: '70px', height: '100px', objectFit: 'cover', borderRadius: '10px' }}
+                />
+            )
         },
         { title: 'Tên phim', key: 'title' },
         { title: 'Đạo diễn', key: 'director' },
@@ -300,6 +392,9 @@ const MoviePage = () => {
         }
     ];
 
+    // ======================================================
+    // FORM FIELDS
+    // ======================================================
     const formFields = [
         { label: 'Tên phim', name: 'title', type: 'text', placeholder: 'Nhập tên phim' },
         { label: 'Slug', name: 'slug', type: 'text', placeholder: 'Slug tự động', disabled: true },
@@ -334,9 +429,9 @@ const MoviePage = () => {
         { label: 'Mô tả', name: 'description', type: 'textarea', placeholder: 'Nhập mô tả phim' }
     ];
 
-    // =============================================
-    // FILE PREVIEWS – như UserPage
-    // =============================================
+    // ======================================================
+    // FILE PREVIEWS
+    // ======================================================
     const filePreviews = {};
     if (editingMovie) {
         if (editingMovie.movie_poster) {
@@ -362,6 +457,9 @@ const MoviePage = () => {
         }
     };
 
+    // ======================================================
+    // RENDER
+    // ======================================================
     return (
         <>
             <AdminPage
@@ -379,7 +477,14 @@ const MoviePage = () => {
                         <span>Đang tải dữ liệu...</span>
                     </div>
                 ) : (
-                    <AdminTable columns={columns} data={filteredMovies} />
+                    <>
+                        <AdminTable columns={columns} data={movies} />
+                        <AdminPagination
+                            currentPage={pagination.page}
+                            totalPages={pagination.totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </>
                 )}
             </AdminPage>
 

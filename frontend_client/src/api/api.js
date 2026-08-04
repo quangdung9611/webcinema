@@ -10,18 +10,19 @@ const api = axios.create({
     },
 });
 
-// Interceptor xử lý lỗi 401 (hết hạn token)
+// Interceptor xử lý lỗi
 api.interceptors.response.use(
     (response) => response,
     (error) => {
+        // QUAN TRỌNG: Chỉ log lỗi, TUYỆT ĐỐI KHÔNG dùng window.location.href ở đây!
         if (error.response?.status === 401) {
-            // Chuyển về trang login tương ứng
-            if (window.location.pathname.includes('/admin')) {
-                window.location.href = '/admin/login';
-            } else {
-                window.location.href = '/login';
-            }
+            console.warn('Hết phiên đăng nhập hoặc chưa đăng nhập!');
+            
+            // (Tùy chọn nâng cao) Bạn có thể dùng window.dispatchEvent để React biết và chuyển trang
+            // window.dispatchEvent(new Event('unauthorized'));
         }
+        
+        // Trả về lỗi để các component (UserLogin, AdminLogin) bắt được và tự xử lý
         return Promise.reject(error);
     }
 );

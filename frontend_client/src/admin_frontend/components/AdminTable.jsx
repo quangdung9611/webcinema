@@ -9,6 +9,19 @@ const AdminTable = ({
     emptyText = 'Không có dữ liệu'
 }) => {
 
+    // =========================================================
+    // SAFE DATA
+    // =========================================================
+
+    const tableData = Array.isArray(data)
+        ? data
+        : [];
+
+
+    // =========================================================
+    // RENDER
+    // =========================================================
+
     return (
 
         <div className="admin-table-container">
@@ -17,9 +30,9 @@ const AdminTable = ({
 
                 <table className="admin-table">
 
-                    {/* =====================================
+                    {/* =====================================================
                         TABLE HEAD
-                    ===================================== */}
+                    ===================================================== */}
 
                     <thead>
 
@@ -27,7 +40,9 @@ const AdminTable = ({
 
                             {columns.map((column) => (
 
-                                <th key={column.key}>
+                                <th
+                                    key={column.key}
+                                >
                                     {column.title}
                                 </th>
 
@@ -38,18 +53,22 @@ const AdminTable = ({
                     </thead>
 
 
-                    {/* =====================================
+                    {/* =====================================================
                         TABLE BODY
-                    ===================================== */}
+                    ===================================================== */}
 
                     <tbody>
+
+                        {/* =================================================
+                            LOADING
+                        ================================================= */}
 
                         {loading ? (
 
                             <tr>
 
                                 <td
-                                    colSpan={columns.length}
+                                    colSpan={columns.length || 1}
                                     className="admin-table-empty"
                                 >
                                     Đang tải dữ liệu...
@@ -57,12 +76,16 @@ const AdminTable = ({
 
                             </tr>
 
-                        ) : data.length === 0 ? (
+                        ) : tableData.length === 0 ? (
+
+                            /* =============================================
+                                EMPTY
+                            ============================================= */
 
                             <tr>
 
                                 <td
-                                    colSpan={columns.length}
+                                    colSpan={columns.length || 1}
                                     className="admin-table-empty"
                                 >
                                     {emptyText}
@@ -72,23 +95,29 @@ const AdminTable = ({
 
                         ) : (
 
-                            data.map((row, index) => (
+                            /* =============================================
+                                DATA
+                            ============================================= */
+
+                            tableData.map((row, index) => (
 
                                 <tr
                                     key={
-                                        row.user_id ||
-                                        row.id ||
+                                        row.user_id ??
+                                        row.id ??
                                         index
                                     }
                                 >
 
                                     {columns.map((column) => (
 
-                                        <td key={column.key}>
+                                        <td
+                                            key={column.key}
+                                        >
 
-                                            {column.render
+                                            {typeof column.render === 'function'
                                                 ? column.render(row)
-                                                : row[column.key]
+                                                : row[column.key] ?? '—'
                                             }
 
                                         </td>
