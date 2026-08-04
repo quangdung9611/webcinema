@@ -1,8 +1,10 @@
 const db = require("../Config/db");
 
 class BookingRepository {
+
     // ==========================================================
     // LẤY DANH SÁCH BOOKING - PAGINATION + SEARCH
+    // QUAN TRỌNG: Dùng db.query thay vì db.execute
     // ==========================================================
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
@@ -17,18 +19,19 @@ class BookingRepository {
 
         if (search) {
             whereClause = `
-                WHERE u.full_name LIKE ? 
-                OR u.email LIKE ? 
-                OR b.memo LIKE ?
-                OR m.title LIKE ?
+                WHERE
+                    b.memo LIKE ?
+                    OR u.full_name LIKE ?
+                    OR u.email LIKE ?
             `;
             const keyword = `%${search}%`;
-            queryParams.push(keyword, keyword, keyword, keyword);
+            queryParams.push(keyword, keyword, keyword);
         }
 
         const offset = (page - 1) * limit;
 
-        const [rows] = await db.execute(
+        // Dùng db.query để tránh lỗi stmt_execute không khớp placeholder
+        const [rows] = await db.query(
             `
             SELECT
                 b.booking_id,
@@ -50,13 +53,11 @@ class BookingRepository {
             [...queryParams, limit, offset]
         );
 
-        const [countRows] = await db.execute(
+        const [countRows] = await db.query(
             `
             SELECT COUNT(*) AS total
             FROM bookings b
             LEFT JOIN users u ON b.user_id = u.user_id
-            LEFT JOIN showtimes s ON b.showtime_id = s.showtime_id
-            LEFT JOIN movies m ON s.movie_id = m.movie_id
             ${whereClause}
             `,
             queryParams
@@ -79,7 +80,7 @@ class BookingRepository {
     }
 
     // ==========================================================
-    // LẤY BOOKING THEO ID
+    // LẤY BOOKING THEO ID (Dùng transaction)
     // ==========================================================
     async findById(connection, bookingId) {
         const [rows] = await connection.query(
@@ -90,7 +91,7 @@ class BookingRepository {
     }
 
     // ==========================================================
-    // LẤY CHI TIẾT BOOKING
+    // LẤY CHI TIẾT BOOKING (Dùng transaction)
     // ==========================================================
     async getDetail(connection, bookingId) {
         const [rows] = await connection.query(
@@ -125,7 +126,7 @@ class BookingRepository {
     }
 
     // ==========================================================
-    // LẤY FOOD DETAILS
+    // LẤY FOOD DETAILS (Dùng transaction)
     // ==========================================================
     async getFoodDetails(connection, bookingId) {
         const [rows] = await connection.query(
@@ -140,42 +141,20 @@ class BookingRepository {
     }
 
     // ==========================================================
-    // LẤY STATUS BOOKING
-    // ==========================================================
-    async getStatus(connection, bookingId) {
-        const [rows] = await connection.query(
-            `SELECT status FROM bookings WHERE booking_id = ? LIMIT 1`,
-            [bookingId]
-        );
-        return rows[0]?.status || null;
-    }
-
-    // ==========================================================
-    // CẬP NHẬT STATUS
+    // CẬP NHẬT STATUS (Dùng transaction)
     // ==========================================================
     async updateStatus(connection, bookingId, status) {
-        await connection.execute(
+        await connection.query(
             `UPDATE bookings SET status = ? WHERE booking_id = ?`,
             [status, bookingId]
         );
     }
 
     // ==========================================================
-    // CẬP NHẬT EMAIL
-    // ==========================================================
-    async updateEmail(connection, bookingId, email) {
-        const [result] = await connection.execute(
-            `UPDATE bookings SET email = ? WHERE booking_id = ?`,
-            [email, bookingId]
-        );
-        return result;
-    }
-
-    // ==========================================================
     // XÓA BOOKING
     // ==========================================================
     async delete(bookingId) {
-        const [result] = await db.execute(
+        const [result] = await db.query(
             `DELETE FROM bookings WHERE booking_id = ?`,
             [bookingId]
         );
@@ -183,7 +162,7 @@ class BookingRepository {
     }
 
     // ==========================================================
-    // CONNECTION & TRANSACTION
+    // CONNECTION & TRANSACTION (Giữ nguyên)
     // ==========================================================
     async getConnection() { return db.getConnection(); }
     async beginTransaction(conn) { await conn.beginTransaction(); }

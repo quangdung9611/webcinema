@@ -4,18 +4,18 @@ const PointsService = require("../Services/PointsService");
 const BookingRepository = require("../Repositories/BookingRepository");
 
 /* ==========================================================
-    GET ALL BOOKINGS (Admin) - Pagination + Search
+    GET ALL BOOKINGS (Thêm Page, Limit, Search)
 ========================================================== */
 exports.getAllBookings = async (req, res) => {
   try {
     const { page = 1, limit = 20, search = "" } = req.query;
     const data = await BookingService.getAllBookings(page, limit, search);
-    return res.status(200).json({ success: true, data });
+    return res.json({ success: true, data });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
       success: false,
-      message: error.message || "Lỗi lấy danh sách booking",
+      message: "Lỗi lấy danh sách booking",
     });
   }
 };
@@ -27,6 +27,7 @@ exports.getBookingDetails = async (req, res) => {
   const connection = await BookingRepository.getConnection();
   try {
     const { booking_id } = req.params;
+
     const booking = await BookingService.getBookingDetail(connection, booking_id);
     if (!booking) {
       connection.release();
@@ -78,7 +79,7 @@ exports.updateBookingStatus = async (req, res) => {
     const oldStatus = booking.status;
     const newStatus = String(status || "").toUpperCase();
 
-    // Update status (dùng hàm completeBooking đã có)
+    // Update status
     await BookingService.completeBooking(connection, booking_id);
 
     // Nếu chuyển sang Completed
