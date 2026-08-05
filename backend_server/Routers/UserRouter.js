@@ -22,8 +22,7 @@ router.post("/reset-points", authenticateUser, UserController.resetMyPoints);
 // Lấy toàn bộ user (không phân trang)
 router.get("/", authenticateAdmin, UserController.getAllUsers);
 
-// Lấy user có phân trang (thêm route này)
-router.get("/paginated", authenticateAdmin, UserController.getUsersWithPagination);
+
 
 router.get("/:user_id", authenticateAdmin, UserController.getUserById);
 router.post("/", authenticateAdmin, upload.single("user_avatar"), UserController.createUser);
