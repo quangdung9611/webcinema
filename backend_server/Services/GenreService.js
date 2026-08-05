@@ -38,13 +38,6 @@ class GenreService {
     }
 
     /* ==========================================================
-        GET ALL GENRES - KHÔNG PHÂN TRANG (PUBLIC)
-    ========================================================== */
-    async getGenresPublic(search = "") {
-        return await GenreRepository.findAllPublic(search);
-    }
-
-    /* ==========================================================
         GET GENRE BY ID (ADMIN)
     ========================================================== */
     async getGenreById(genreId) {

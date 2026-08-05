@@ -4,19 +4,10 @@ const GenreController = require("../Controllers/GenreController");
 const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
 /* ==========================================================
-    PUBLIC ROUTES (không cần auth)
-========================================================== */
-// Lấy danh sách thể loại (không phân trang)
-router.get("/public", GenreController.getAllGenresPublic);
-
-// Lấy chi tiết thể loại theo slug (nếu có) hoặc ID
-// router.get("/:slug", GenreController.getGenreBySlug); // nếu có
-
-/* ==========================================================
     ADMIN ROUTES (cần auth admin)
 ========================================================== */
-// Lấy toàn bộ thể loại (không phân trang)
-router.get("/", authenticateAdmin, GenreController.getAllGenresAll);
+// Lấy toàn bộ thể loại (không phân trang) - dùng chung cho admin và public
+router.get("/", GenreController.getAllGenresAll);
 
 // Lấy thể loại có phân trang
 router.get("/paginated", authenticateAdmin, GenreController.getGenresWithPagination);

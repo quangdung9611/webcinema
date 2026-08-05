@@ -88,41 +88,7 @@ class GenreRepository {
         };
     }
 
-    /* ==========================================================
-        FIND ALL - KHÔNG PHÂN TRANG (PUBLIC)
-    ========================================================== */
-    async findAllPublic(search = "") {
-        search = typeof search === "string" ? search.trim() : "";
-        let whereClause = "";
-        const queryParams = [];
-
-        if (search) {
-            whereClause = `WHERE genre_name LIKE ?`;
-            queryParams.push(`%${search}%`);
-        }
-
-        const [rows] = await db.query(
-            `
-            SELECT genre_id, genre_name, slug
-            FROM genres
-            ${whereClause}
-            ORDER BY genre_id DESC
-            `,
-            queryParams
-        );
-
-        return {
-            data: rows,
-            pagination: {
-                page: 1,
-                limit: rows.length,
-                total: rows.length,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false
-            }
-        };
-    }
+    // ❌ ĐÃ XÓA HÀM findAllPublic (không cần dùng)
 
     /* ==========================================================
         GET BY ID
