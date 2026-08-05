@@ -2,10 +2,62 @@ const db = require("../Config/db");
 
 class BookingRepository {
 
-    // ==========================================================
-    // LẤY DANH SÁCH BOOKING - PAGINATION + SEARCH
-    // QUAN TRỌNG: Dùng db.query thay vì db.execute
-    // ==========================================================
+    /* ==========================================================
+        FIND ALL - KHÔNG PHÂN TRANG (ADMIN)
+    ========================================================== */
+    async findAllAll(search = "") {
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `
+                WHERE
+                    b.memo LIKE ?
+                    OR u.full_name LIKE ?
+                    OR u.email LIKE ?
+            `;
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword, keyword);
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                b.booking_id,
+                DATE_FORMAT(b.booking_date, '%d/%m/%Y %H:%i') AS booking_date,
+                b.total_amount,
+                b.status,
+                b.memo,
+                u.full_name AS customer_name,
+                u.email AS customer_email,
+                m.title AS movie_title
+            FROM bookings b
+            LEFT JOIN users u ON b.user_id = u.user_id
+            LEFT JOIN showtimes s ON b.showtime_id = s.showtime_id
+            LEFT JOIN movies m ON s.movie_id = m.movie_id
+            ${whereClause}
+            ORDER BY b.booking_id DESC
+            `,
+            queryParams
+        );
+
+        return {
+            data: rows,
+            pagination: {
+                page: 1,
+                limit: rows.length,
+                total: rows.length,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            }
+        };
+    }
+
+    /* ==========================================================
+        FIND ALL - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -30,7 +82,6 @@ class BookingRepository {
 
         const offset = (page - 1) * limit;
 
-        // Dùng db.query để tránh lỗi stmt_execute không khớp placeholder
         const [rows] = await db.query(
             `
             SELECT
@@ -79,9 +130,9 @@ class BookingRepository {
         };
     }
 
-    // ==========================================================
-    // LẤY BOOKING THEO ID (Dùng transaction)
-    // ==========================================================
+    /* ==========================================================
+        FIND BY ID (Dùng transaction)
+    ========================================================== */
     async findById(connection, bookingId) {
         const [rows] = await connection.query(
             `SELECT * FROM bookings WHERE booking_id = ? LIMIT 1`,
@@ -90,9 +141,9 @@ class BookingRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // LẤY CHI TIẾT BOOKING (Dùng transaction)
-    // ==========================================================
+    /* ==========================================================
+        GET DETAIL (Dùng transaction)
+    ========================================================== */
     async getDetail(connection, bookingId) {
         const [rows] = await connection.query(
             `
@@ -125,9 +176,9 @@ class BookingRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // LẤY FOOD DETAILS (Dùng transaction)
-    // ==========================================================
+    /* ==========================================================
+        GET FOOD DETAILS (Dùng transaction)
+    ========================================================== */
     async getFoodDetails(connection, bookingId) {
         const [rows] = await connection.query(
             `
@@ -140,9 +191,9 @@ class BookingRepository {
         return rows;
     }
 
-    // ==========================================================
-    // CẬP NHẬT STATUS (Dùng transaction)
-    // ==========================================================
+    /* ==========================================================
+        UPDATE STATUS (Dùng transaction)
+    ========================================================== */
     async updateStatus(connection, bookingId, status) {
         await connection.query(
             `UPDATE bookings SET status = ? WHERE booking_id = ?`,
@@ -150,9 +201,9 @@ class BookingRepository {
         );
     }
 
-    // ==========================================================
-    // XÓA BOOKING
-    // ==========================================================
+    /* ==========================================================
+        DELETE BOOKING
+    ========================================================== */
     async delete(bookingId) {
         const [result] = await db.query(
             `DELETE FROM bookings WHERE booking_id = ?`,
@@ -161,13 +212,21 @@ class BookingRepository {
         return result.affectedRows;
     }
 
-    // ==========================================================
-    // CONNECTION & TRANSACTION (Giữ nguyên)
-    // ==========================================================
-    async getConnection() { return db.getConnection(); }
-    async beginTransaction(conn) { await conn.beginTransaction(); }
-    async commit(conn) { await conn.commit(); }
-    async rollback(conn) { await conn.rollback(); }
+    /* ==========================================================
+        CONNECTION & TRANSACTION
+    ========================================================== */
+    async getConnection() {
+        return db.getConnection();
+    }
+    async beginTransaction(conn) {
+        await conn.beginTransaction();
+    }
+    async commit(conn) {
+        await conn.commit();
+    }
+    async rollback(conn) {
+        await conn.rollback();
+    }
 }
 
 module.exports = new BookingRepository();

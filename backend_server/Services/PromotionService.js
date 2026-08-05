@@ -38,10 +38,23 @@ const validatePromotion = (data, file, isUpdate = false) => {
 
 class PromotionService {
 
-    async getAllPromotions(onlyActive = true, page = 1, limit = 20, search = "") {
-        return await PromotionRepository.findAll(onlyActive, page, limit, search);
+    /* ==========================================================
+        GET ALL PROMOTIONS - KHÔNG PHÂN TRANG (DÙNG CHUNG)
+    ========================================================== */
+    async getAllPromotionsAll(search = "") {
+        return await PromotionRepository.findAllAll(search);
     }
 
+    /* ==========================================================
+        GET ALL PROMOTIONS - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
+    async getAllPromotionsPaginated(page = 1, limit = 20, search = "") {
+        return await PromotionRepository.findAll(false, page, limit, search);
+    }
+
+    /* ==========================================================
+        GET PROMOTION BY ID (ADMIN)
+    ========================================================== */
     async getPromotionById(promotionId) {
         const promotion = await PromotionRepository.findById(promotionId);
         if (!promotion) {
@@ -52,6 +65,9 @@ class PromotionService {
         return promotion;
     }
 
+    /* ==========================================================
+        GET PROMOTION BY SLUG (PUBLIC)
+    ========================================================== */
     async getPromotionBySlug(slug) {
         const promotion = await PromotionRepository.findBySlug(slug);
         if (!promotion) {
@@ -63,6 +79,9 @@ class PromotionService {
         return promotion;
     }
 
+    /* ==========================================================
+        CREATE PROMOTION (ADMIN)
+    ========================================================== */
     async createPromotion(data, file) {
         const error = validatePromotion(data, file);
         if (error) {
@@ -93,6 +112,9 @@ class PromotionService {
         });
     }
 
+    /* ==========================================================
+        UPDATE PROMOTION (ADMIN)
+    ========================================================== */
     async updatePromotion(promotionId, data, file) {
         const promotion = await PromotionRepository.findById(promotionId);
         if (!promotion) {
@@ -144,6 +166,9 @@ class PromotionService {
         }
     }
 
+    /* ==========================================================
+        DELETE PROMOTION (ADMIN)
+    ========================================================== */
     async deletePromotion(promotionId) {
         const promotion = await PromotionRepository.findById(promotionId);
         if (!promotion) {
@@ -169,6 +194,9 @@ class PromotionService {
         }
     }
 
+    /* ==========================================================
+        LIKE PROMOTION (PUBLIC)
+    ========================================================== */
     async likePromotion(promotionId) {
         const affected = await PromotionRepository.incrementLikes(promotionId);
         if (!affected) {
@@ -179,6 +207,9 @@ class PromotionService {
         return true;
     }
 
+    /* ==========================================================
+        TOGGLE STATUS (ADMIN)
+    ========================================================== */
     async toggleStatus(promotionId) {
         const status = await PromotionRepository.toggleStatus(promotionId);
         if (status === null) {

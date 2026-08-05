@@ -1,36 +1,35 @@
 const express = require("express");
 const router = express.Router();
-const ShowtimeController = require("../Controllers/ShowTimeController");
+const ShowtimeController = require("../Controllers/ShowtimeController");
 const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
-// ==========================================================
-// PUBLIC ROUTES (Không cần đăng nhập)
-// ==========================================================
+/* ==========================================================
+    PUBLIC ROUTES (Không cần đăng nhập)
+========================================================== */
+// Lấy tất cả suất chiếu (không phân trang)
+router.get("/", ShowtimeController.getAllShowtimesAll);
 
 // Lấy danh sách suất chiếu theo movie, cinema, date (dùng cho quick booking)
 router.get("/quick-booking", ShowtimeController.getQuickBookingData);
 router.get("/filter-booking", ShowtimeController.getShowtimesForBooking);
-router.get("/movie/:movieId", ShowtimeController.getShowtimesByMovie);
 router.get("/filter-legacy", ShowtimeController.filterShowtimes);
 
-// Lấy chi tiết suất chiếu theo ID (public)
+// Lấy suất chiếu theo phim
+router.get("/movie/:movieId", ShowtimeController.getShowtimesByMovie);
+
+// Lấy suất chiếu theo rạp và phòng
+router.get("/by-cinema-room", ShowtimeController.getShowtimesByCinemaAndRoom);
+
+// Lấy chi tiết suất chiếu (public)
 router.get("/detail/:showtime_id", ShowtimeController.getShowtimeDetail);
 
-// ==========================================================
-// ADMIN ROUTES (Cần quyền admin)
-// ==========================================================
+/* ==========================================================
+    ADMIN ROUTES (Cần quyền admin)
+========================================================== */
+// Lấy suất chiếu có phân trang
+router.get("/paginated", authenticateAdmin, ShowtimeController.getShowtimesWithPagination);
 
-// Lấy tất cả suất chiếu (có thể lọc theo query)
-router.get("/", authenticateAdmin, ShowtimeController.getAllShowtimes);
-
-// ✅ BỔ SUNG: Lấy suất chiếu theo rạp và phòng
-router.get(
-  "/by-cinema-room",
-  authenticateAdmin,
-  ShowtimeController.getShowtimesByCinemaAndRoom
-);
-
-// Lấy chi tiết suất chiếu theo ID (admin)
+// Lấy chi tiết suất chiếu (admin)
 router.get("/:showtime_id", authenticateAdmin, ShowtimeController.getShowtimeDetail);
 
 // Tạo suất chiếu mới

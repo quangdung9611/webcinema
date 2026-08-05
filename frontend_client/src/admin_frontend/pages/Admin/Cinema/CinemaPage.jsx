@@ -34,14 +34,6 @@ const initialFormData = {
     map_link: ''
 };
 
-const alertConfig = {
-    success: { icon: <CheckCircle2 size={52} />, iconClass: 'success' },
-    error: { icon: <XCircle size={52} />, iconClass: 'error' },
-    warning: { icon: <AlertTriangle size={52} />, iconClass: 'warning' },
-    info: { icon: <Info size={52} />, iconClass: 'info' },
-    default: { icon: <Info size={52} />, iconClass: 'default' }
-};
-
 // ==========================================================
 // COMPONENT
 // ==========================================================
@@ -89,7 +81,7 @@ const CinemaPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ------------------------------------------------------
-    // FETCH CINEMAS (PAGINATION + SEARCH)
+    // FETCH CINEMAS - GỌI /paginated
     // ------------------------------------------------------
     const fetchCinemas = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
@@ -101,7 +93,7 @@ const CinemaPage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/cinemas', {
+            const res = await api.get('/api/cinemas/paginated', {
                 params: {
                     page,
                     limit: 20,
@@ -461,6 +453,22 @@ const CinemaPage = () => {
     ];
 
     // ------------------------------------------------------
+    // HELPER: RENDER ALERT ICON
+    // ------------------------------------------------------
+    const renderAlertIcon = () => {
+        switch (alertModal.type) {
+            case 'success':
+                return <CheckCircle2 size={58} color="#22c55e" />;
+            case 'error':
+                return <XCircle size={58} color="#ef4444" />;
+            case 'warning':
+                return <AlertTriangle size={58} color="#f59e0b" />;
+            default:
+                return <Info size={58} color="#3b82f6" />;
+        }
+    };
+
+    // ------------------------------------------------------
     // RENDER
     // ------------------------------------------------------
     return (
@@ -495,7 +503,6 @@ const CinemaPage = () => {
                 open={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
                 title={editingCinema ? 'Cập nhật rạp' : 'Thêm rạp'}
-                type="info"
             >
                 <AdminForm
                     fields={formFields}
@@ -513,10 +520,11 @@ const CinemaPage = () => {
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
+                size="sm"
             >
                 <div className="admin-alert-content">
-                    <div className={`admin-alert-icon ${alertConfig[alertModal.type]?.iconClass}`}>
-                        {alertConfig[alertModal.type]?.icon}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
+                        {renderAlertIcon()}
                     </div>
                     <p>{alertModal.message}</p>
                     <div className="admin-alert-actions">

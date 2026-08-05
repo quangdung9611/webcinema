@@ -70,7 +70,7 @@ const BannerPage = () => {
     const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }));
 
     // ======================================================
-    // FETCH BANNERS (PAGINATION + SEARCH)
+    // FETCH BANNERS (PAGINATION + SEARCH) - GỌI /paginated
     // ======================================================
     const fetchBanners = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
@@ -82,7 +82,7 @@ const BannerPage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/banners', {
+            const res = await api.get('/api/banners/paginated', {
                 params: { page, limit: 20, search: keyword.trim() },
                 signal: controller.signal
             });

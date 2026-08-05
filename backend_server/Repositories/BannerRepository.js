@@ -2,9 +2,52 @@ const db = require("../Config/db");
 
 class BannerRepository {
 
-    // ==========================================================
-    // FIND ALL BANNERS - PAGINATION + SEARCH (Admin & Public)
-    // ==========================================================
+    /* ==========================================================
+        FIND ALL - KHÔNG PHÂN TRANG (DÙNG CHUNG)
+    ========================================================== */
+    async findAllAll(search = "") {
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `WHERE (page LIKE ? OR image_url LIKE ?)`;
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword);
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                banner_id,
+                page,
+                image_url,
+                is_active,
+                created_at,
+                updated_at
+            FROM banners
+            ${whereClause}
+            ORDER BY created_at DESC
+            `,
+            queryParams
+        );
+
+        return {
+            data: rows,
+            pagination: {
+                page: 1,
+                limit: rows.length,
+                total: rows.length,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            }
+        };
+    }
+
+    /* ==========================================================
+        FIND ALL - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
     async findAll(onlyActive = false, page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -89,9 +132,9 @@ class BannerRepository {
         };
     }
 
-    // ==========================================================
-    // FIND BANNER BY ID
-    // ==========================================================
+    /* ==========================================================
+        FIND BANNER BY ID
+    ========================================================== */
     async findById(bannerId) {
         const [rows] = await db.query(
             `SELECT * FROM banners WHERE banner_id = ? LIMIT 1`,
@@ -100,9 +143,9 @@ class BannerRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // CREATE BANNER
-    // ==========================================================
+    /* ==========================================================
+        CREATE BANNER
+    ========================================================== */
     async create(data) {
         const [result] = await db.query(
             `
@@ -114,9 +157,9 @@ class BannerRepository {
         return result.insertId;
     }
 
-    // ==========================================================
-    // UPDATE BANNER
-    // ==========================================================
+    /* ==========================================================
+        UPDATE BANNER
+    ========================================================== */
     async update(bannerId, data) {
         const fields = [];
         const values = [];
@@ -135,9 +178,9 @@ class BannerRepository {
         return result.affectedRows;
     }
 
-    // ==========================================================
-    // DELETE BANNER
-    // ==========================================================
+    /* ==========================================================
+        DELETE BANNER
+    ========================================================== */
     async delete(bannerId) {
         const [result] = await db.query(`DELETE FROM banners WHERE banner_id = ?`, [bannerId]);
         return result.affectedRows;

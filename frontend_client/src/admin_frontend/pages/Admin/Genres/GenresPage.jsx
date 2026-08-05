@@ -77,7 +77,7 @@ const GenresPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ======================================================
-    // FETCH GENRES (PAGINATION + SEARCH)
+    // FETCH GENRES - GỌI /paginated
     // ======================================================
     const fetchGenres = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
@@ -89,7 +89,7 @@ const GenresPage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/genres', {
+            const res = await api.get('/api/genres/paginated', {
                 params: {
                     page,
                     limit: 20,

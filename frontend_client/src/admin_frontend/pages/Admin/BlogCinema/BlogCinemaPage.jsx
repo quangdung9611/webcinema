@@ -32,7 +32,6 @@ const getImageUrl = (image) => {
 const DEFAULT_IMAGE = 'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-blog.jpg';
 
 const initialFormData = {
-    blog_id: '',
     title: '',
     slug: '',
     description: '',
@@ -89,7 +88,7 @@ const BlogCinemaPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ======================================================
-    // FETCH BLOGS (PAGINATION + SEARCH)
+    // FETCH BLOGS (PAGINATION + SEARCH) - GỌI /paginated
     // ======================================================
     const fetchBlogs = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
@@ -101,7 +100,7 @@ const BlogCinemaPage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/blog-cinema', {
+            const res = await api.get('/api/blog-cinema/paginated', {
                 params: {
                     page,
                     limit: 20,
@@ -203,7 +202,6 @@ const BlogCinemaPage = () => {
     const handleOpenEdit = (item) => {
         setEditingBlog(item);
         setFormData({
-            blog_id: item.blog_id || '',
             title: item.title || '',
             slug: item.slug || '',
             description: item.description || '',

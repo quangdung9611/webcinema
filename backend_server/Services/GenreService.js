@@ -23,10 +23,30 @@ const validateGenre = (data) => {
 
 class GenreService {
 
-    async getAllGenres(page = 1, limit = 20, search = "") {
+    /* ==========================================================
+        GET ALL GENRES - KHÔNG PHÂN TRANG (ADMIN)
+    ========================================================== */
+    async getAllGenresAll(search = "") {
+        return await GenreRepository.findAllAll(search);
+    }
+
+    /* ==========================================================
+        GET ALL GENRES - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
+    async getAllGenresPaginated(page = 1, limit = 20, search = "") {
         return await GenreRepository.findAll(page, limit, search);
     }
 
+    /* ==========================================================
+        GET ALL GENRES - KHÔNG PHÂN TRANG (PUBLIC)
+    ========================================================== */
+    async getGenresPublic(search = "") {
+        return await GenreRepository.findAllPublic(search);
+    }
+
+    /* ==========================================================
+        GET GENRE BY ID (ADMIN)
+    ========================================================== */
     async getGenreById(genreId) {
         const genre = await GenreRepository.findById(genreId);
         if (!genre) {
@@ -37,6 +57,9 @@ class GenreService {
         return genre;
     }
 
+    /* ==========================================================
+        CREATE GENRE (ADMIN)
+    ========================================================== */
     async createGenre(data) {
         const error = validateGenre(data);
         if (error) {
@@ -57,6 +80,9 @@ class GenreService {
         });
     }
 
+    /* ==========================================================
+        UPDATE GENRE (ADMIN)
+    ========================================================== */
     async updateGenre(genreId, data) {
         const genre = await GenreRepository.findById(genreId);
         if (!genre) {
@@ -84,6 +110,9 @@ class GenreService {
         return true;
     }
 
+    /* ==========================================================
+        DELETE GENRE (ADMIN)
+    ========================================================== */
     async deleteGenre(genreId) {
         const genre = await GenreRepository.findById(genreId);
         if (!genre) {

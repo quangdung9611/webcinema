@@ -87,7 +87,7 @@ const ActorPage = () => {
     const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }));
 
     // ======================================================
-    // FETCH ACTORS (PAGINATION + SEARCH)
+    // FETCH ACTORS - GỌI /paginated
     // ======================================================
     const fetchActors = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
@@ -99,7 +99,7 @@ const ActorPage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/actors', {
+            const res = await api.get('/api/actors/paginated', {
                 params: { page, limit: 20, search: keyword.trim() },
                 signal: controller.signal
             });
@@ -241,7 +241,6 @@ const ActorPage = () => {
             const file = files[0];
             setActorAvatarFile(file);
 
-            // Cleanup & preview
             if (file) {
                 if (filePreviews.actor_avatar?.url?.startsWith('blob:')) {
                     URL.revokeObjectURL(filePreviews.actor_avatar.url);

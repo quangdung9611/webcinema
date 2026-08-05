@@ -6,32 +6,54 @@ const upload = require('../Middlewares/MulterMiddleware');
 const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
 
 /* ==========================================================
-    PUBLIC ROUTES (Không cần auth - ai cũng xem được)
+    PUBLIC ROUTES (không cần auth)
 ========================================================== */
+// Lấy danh sách khuyến mãi (không phân trang)
+router.get('/', PromotionController.getAllPromotionsAll);
 
-// Lấy danh sách khuyến mãi cho cả 2 dùng
-router.get('/', PromotionController.getAllPromotions);
-
-// Tăng lượt thích (public)
-router.post('/like/:promotion_id', PromotionController.increaseLike);
-
-// Lấy chi tiết khuyến mãi theo ID (public)
-router.get('/:promotion_id', PromotionController.getPromotionById);
-
-// Lấy chi tiết khuyến mãi theo slug (public) - ĐẶT CUỐI CÙNG
+// Lấy chi tiết khuyến mãi theo slug
 router.get('/:slug', PromotionController.getPromotionBySlug);
 
+// Tăng lượt thích
+router.post('/like/:promotion_id', PromotionController.increaseLike);
+
 /* ==========================================================
-    ADMIN ROUTES (Chỉ admin mới được thêm/sửa/xóa)
+    ADMIN ROUTES (cần auth admin)
 ========================================================== */
+// Lấy khuyến mãi có phân trang
+router.get('/paginated', authenticateAdmin, PromotionController.getPromotionsWithPagination);
 
-// Tạo khuyến mãi mới (admin)
-router.post('/', authenticateAdmin, upload.single('promotion_image'), PromotionController.createPromotion);
+// Lấy chi tiết khuyến mãi theo ID (đặt TRƯỚC /:slug)
+router.get('/:promotion_id', authenticateAdmin, PromotionController.getPromotionById);
 
-// Cập nhật khuyến mãi (admin)
-router.put('/:promotion_id', authenticateAdmin, upload.single('promotion_image'), PromotionController.updatePromotion);
+// Tạo khuyến mãi mới
+router.post(
+    '/',
+    authenticateAdmin,
+    upload.single('promotion_image'),
+    PromotionController.createPromotion
+);
 
-// Xóa khuyến mãi (admin)
-router.delete('/:promotion_id', authenticateAdmin, PromotionController.deletePromotion);
+// Cập nhật khuyến mãi
+router.put(
+    '/:promotion_id',
+    authenticateAdmin,
+    upload.single('promotion_image'),
+    PromotionController.updatePromotion
+);
+
+// Xóa khuyến mãi
+router.delete(
+    '/:promotion_id',
+    authenticateAdmin,
+    PromotionController.deletePromotion
+);
+
+// Toggle status (bật/tắt)
+router.patch(
+    '/:promotion_id/toggle',
+    authenticateAdmin,
+    PromotionController.togglePromotionStatus
+);
 
 module.exports = router;

@@ -92,7 +92,7 @@ const BookingPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ------------------------------------------------------
-    // FETCH BOOKINGS
+    // FETCH BOOKINGS - GỌI /paginated
     // ------------------------------------------------------
     const fetchBookings = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
@@ -104,7 +104,7 @@ const BookingPage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/bookings', {
+            const res = await api.get('/api/bookings/paginated', {
                 params: {
                     page,
                     limit: 20,
@@ -158,7 +158,6 @@ const BookingPage = () => {
             const res = await api.get(`/api/bookings/detail/${booking_id}`);
             const { booking, tickets = [], foods = [] } = res.data;
 
-            // Combine tickets and foods into a single details array
             const details = [
                 ...tickets.map(t => ({
                     ...t,

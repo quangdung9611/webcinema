@@ -1,15 +1,24 @@
 const PromotionService = require("../Services/PromotionService");
 
 /* ==========================================================
-   GET ALL PROMOTIONS (Admin)
+    PUBLIC/ADMIN - GET ALL PROMOTIONS (KHÔNG PHÂN TRANG)
 ========================================================== */
-exports.getAllPromotions = async (req, res) => {
+exports.getAllPromotionsAll = async (req, res) => {
     try {
-        const { page = 1, limit = 20, search = "" } = req.query;
-        const data = await PromotionService.getAllPromotions(true, page, limit, search);
+        const { search = "", page, limit } = req.query;
+
+        // ⚠️ Nếu có page hoặc limit → từ chối yêu cầu, trả về 400
+        if (page !== undefined || limit !== undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "Route /api/promotions không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/promotions/paginated để phân trang."
+            });
+        }
+
+        const data = await PromotionService.getAllPromotionsAll(search);
         return res.status(200).json({ success: true, data });
     } catch (err) {
-        console.error("getAllPromotions error:", err);
+        console.error("Get All Promotions Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -18,15 +27,15 @@ exports.getAllPromotions = async (req, res) => {
 };
 
 /* ==========================================================
-   GET ALL PROMOTIONS (Public) - only active
+    ADMIN - GET PROMOTIONS WITH PAGINATION
 ========================================================== */
-exports.getAllPromotionsPublic = async (req, res) => {
+exports.getPromotionsWithPagination = async (req, res) => {
     try {
         const { page = 1, limit = 20, search = "" } = req.query;
-        const data = await PromotionService.getAllPromotions(false, page, limit, search);
+        const data = await PromotionService.getAllPromotionsPaginated(page, limit, search);
         return res.status(200).json({ success: true, data });
     } catch (err) {
-        console.error("getAllPromotionsPublic error:", err);
+        console.error("Get Promotions Paginated Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -35,13 +44,13 @@ exports.getAllPromotionsPublic = async (req, res) => {
 };
 
 /* ==========================================================
-   GET PROMOTION BY ID (ADMIN)
+    ADMIN - GET PROMOTION BY ID
 ========================================================== */
 exports.getPromotionById = async (req, res) => {
     try {
         const { promotion_id } = req.params;
         const promotion = await PromotionService.getPromotionById(promotion_id);
-        return res.status(200).json(promotion);
+        return res.status(200).json({ success: true, data: promotion });
     } catch (err) {
         console.error("getPromotionById error:", err);
         return res.status(err.statusCode || 500).json({
@@ -52,13 +61,13 @@ exports.getPromotionById = async (req, res) => {
 };
 
 /* ==========================================================
-   GET PROMOTION BY SLUG (PUBLIC)
+    PUBLIC - GET PROMOTION BY SLUG
 ========================================================== */
 exports.getPromotionBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
         const promotion = await PromotionService.getPromotionBySlug(slug);
-        return res.status(200).json(promotion);
+        return res.status(200).json({ success: true, data: promotion });
     } catch (err) {
         console.error("getPromotionBySlug error:", err);
         return res.status(err.statusCode || 500).json({
@@ -69,7 +78,7 @@ exports.getPromotionBySlug = async (req, res) => {
 };
 
 /* ==========================================================
-   CREATE PROMOTION (ADMIN)
+    ADMIN - CREATE PROMOTION
 ========================================================== */
 exports.createPromotion = async (req, res) => {
     try {
@@ -89,7 +98,7 @@ exports.createPromotion = async (req, res) => {
 };
 
 /* ==========================================================
-   UPDATE PROMOTION (ADMIN)
+    ADMIN - UPDATE PROMOTION
 ========================================================== */
 exports.updatePromotion = async (req, res) => {
     try {
@@ -109,7 +118,7 @@ exports.updatePromotion = async (req, res) => {
 };
 
 /* ==========================================================
-   DELETE PROMOTION (ADMIN)
+    ADMIN - DELETE PROMOTION
 ========================================================== */
 exports.deletePromotion = async (req, res) => {
     try {
@@ -129,7 +138,7 @@ exports.deletePromotion = async (req, res) => {
 };
 
 /* ==========================================================
-   LIKE PROMOTION
+    PUBLIC - LIKE PROMOTION
 ========================================================== */
 exports.increaseLike = async (req, res) => {
     try {
@@ -149,7 +158,7 @@ exports.increaseLike = async (req, res) => {
 };
 
 /* ==========================================================
-   TOGGLE PROMOTION STATUS (ADMIN)
+    ADMIN - TOGGLE PROMOTION STATUS
 ========================================================== */
 exports.togglePromotionStatus = async (req, res) => {
     try {
@@ -158,7 +167,7 @@ exports.togglePromotionStatus = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Cập nhật trạng thái thành công!",
-            is_active: isActive
+            data: { is_active: isActive }
         });
     } catch (err) {
         console.error("togglePromotionStatus error:", err);

@@ -85,7 +85,7 @@ const NewsPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ======================================================
-    // FETCH NEWS (PAGINATION + SEARCH)
+    // FETCH NEWS (PAGINATION + SEARCH) - GỌI /paginated
     // ======================================================
     const fetchNews = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
@@ -97,7 +97,7 @@ const NewsPage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/news', {
+            const res = await api.get('/api/news/paginated', {   // ← ĐỔI THÀNH /paginated
                 params: {
                     page,
                     limit: 20,

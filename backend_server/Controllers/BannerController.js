@@ -1,18 +1,41 @@
 const BannerService = require("../Services/BannerService");
 
 /*=========================================================
-    GET ALL BANNERS (Dùng chung cho Admin & Public)
+    PUBLIC/ADMIN - GET ALL BANNERS (KHÔNG PHÂN TRANG)
 =========================================================*/
-exports.getAllBanners = async (req, res) => {
+exports.getAllBannersAll = async (req, res) => {
     try {
-        // Lấy tham số từ query, mặc định onlyActive = false (lấy tất cả)
-        const { page = 1, limit = 20, search = "", onlyActive = "false" } = req.query;
-        // Chuyển onlyActive sang boolean
-        const onlyActiveBool = onlyActive === "true";
-        const data = await BannerService.getAllBanners(onlyActiveBool, page, limit, search);
+        const { search = "", page, limit } = req.query;
+
+        // ⚠️ Nếu có page hoặc limit → từ chối yêu cầu, trả về 400
+        if (page !== undefined || limit !== undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "Route /api/banners không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/banners/paginated để phân trang."
+            });
+        }
+
+        const data = await BannerService.getAllBannersAll(search);
         return res.status(200).json({ success: true, data });
     } catch (err) {
-        console.error("Get Banners Error:", err);
+        console.error("Get All Banners Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    ADMIN - GET BANNERS WITH PAGINATION
+=========================================================*/
+exports.getBannersWithPagination = async (req, res) => {
+    try {
+        const { page = 1, limit = 20, search = "" } = req.query;
+        const data = await BannerService.getAllBannersPaginated(page, limit, search);
+        return res.status(200).json({ success: true, data });
+    } catch (err) {
+        console.error("Get Banners Paginated Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"

@@ -97,7 +97,7 @@ const ShowTimePage = () => {
     };
 
     // ------------------------------------------------------
-    // FETCH SHOWTIMES (PAGINATION + SEARCH)
+    // FETCH SHOWTIMES - GỌI /paginated
     // ------------------------------------------------------
     const fetchShowtimes = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
@@ -109,7 +109,7 @@ const ShowTimePage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/showtimes', {
+            const res = await api.get('/api/showtimes/paginated', {
                 params: {
                     page,
                     limit: 20,
@@ -219,7 +219,7 @@ const ShowTimePage = () => {
     const handleOpenEdit = async (showtime) => {
         try {
             setLoading(true);
-            const detailRes = await api.get(`/api/showtimes/${showtime.showtime_id}`);
+            const detailRes = await api.get(`/api/showtimes/detail/${showtime.showtime_id}`);
             const st = detailRes.data?.data || detailRes.data;
 
             await fetchRoomsByCinema(st.cinema_id);

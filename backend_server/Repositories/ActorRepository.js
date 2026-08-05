@@ -1,9 +1,57 @@
 const db = require("../Config/db");
 
 class ActorRepository {
-    // ==========================================================
-    // LẤY DANH SÁCH DIỄN VIÊN - PAGINATION + SEARCH
-    // ==========================================================
+
+    /* ==========================================================
+        FIND ALL ACTORS - KHÔNG PHÂN TRANG (DÙNG CHUNG)
+    ========================================================== */
+    async findAllAll(search = "") {
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `WHERE (name LIKE ? OR nationality LIKE ?)`;
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword);
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                actor_id,
+                name,
+                gender,
+                nationality,
+                actor_avatar,
+                biography,
+                birthday,
+                slug,
+                created_at,
+                updated_at
+            FROM actors
+            ${whereClause}
+            ORDER BY actor_id DESC
+            `,
+            queryParams
+        );
+
+        return {
+            data: rows,
+            pagination: {
+                page: 1,
+                limit: rows.length,
+                total: rows.length,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            }
+        };
+    }
+
+    /* ==========================================================
+        FIND ALL ACTORS - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -67,9 +115,9 @@ class ActorRepository {
         };
     }
 
-    // ==========================================================
-    // TÌM DIỄN VIÊN THEO ACTOR_ID
-    // ==========================================================
+    /* ==========================================================
+        FIND ACTOR BY ID
+    ========================================================== */
     async findById(actorId) {
         const [rows] = await db.query(
             `SELECT * FROM actors WHERE actor_id = ? LIMIT 1`,
@@ -78,9 +126,9 @@ class ActorRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // TÌM DIỄN VIÊN THEO SLUG (kèm danh sách phim)
-    // ==========================================================
+    /* ==========================================================
+        FIND ACTOR BY SLUG (kèm danh sách phim)
+    ========================================================== */
     async findBySlugWithMovies(slug) {
         const [actorRows] = await db.query(
             `SELECT * FROM actors WHERE slug = ? LIMIT 1`,
@@ -103,9 +151,9 @@ class ActorRepository {
         return actor;
     }
 
-    // ==========================================================
-    // KIỂM TRA TỒN TẠI (GIỐNG MOVIE)
-    // ==========================================================
+    /* ==========================================================
+        CHECK EXIST BY NAME OR SLUG
+    ========================================================== */
     async existsByNameOrSlug(name, slug, excludeId = null) {
         let sql = `SELECT actor_id FROM actors WHERE (name = ? OR slug = ?)`;
         const params = [name.trim(), slug];
@@ -117,9 +165,9 @@ class ActorRepository {
         return rows.length > 0;
     }
 
-    // ==========================================================
-    // LẤY ẢNH (để xóa trên Cloudinary)
-    // ==========================================================
+    /* ==========================================================
+        GET AVATAR (để xóa trên Cloudinary)
+    ========================================================== */
     async getAvatar(actorId) {
         const [rows] = await db.query(
             `SELECT actor_avatar FROM actors WHERE actor_id = ?`,
@@ -128,9 +176,9 @@ class ActorRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // CRUD CHÍNH
-    // ==========================================================
+    /* ==========================================================
+        CREATE ACTOR
+    ========================================================== */
     async create(data) {
         const { name, slug, gender, nationality, actor_avatar, biography, birthday } = data;
         const [result] = await db.query(
@@ -143,6 +191,9 @@ class ActorRepository {
         return result.insertId;
     }
 
+    /* ==========================================================
+        UPDATE ACTOR
+    ========================================================== */
     async update(actorId, data) {
         const { name, slug, gender, nationality, actor_avatar, biography, birthday } = data;
         const [result] = await db.query(
@@ -156,19 +207,29 @@ class ActorRepository {
         return result.affectedRows;
     }
 
+    /* ==========================================================
+        DELETE ACTOR
+    ========================================================== */
     async delete(actorId) {
         const [result] = await db.query(`DELETE FROM actors WHERE actor_id = ?`, [actorId]);
         return result.affectedRows;
     }
 
-    // ==========================================================
-    // TRANSACTION SUPPORT
-    // ==========================================================
-    async getConnection() { return db.getConnection(); }
-    async beginTransaction(connection) { await connection.beginTransaction(); }
-    async commit(connection) { await connection.commit(); }
-    async rollback(connection) { await connection.rollback(); }
-    
+    /* ==========================================================
+        TRANSACTION SUPPORT
+    ========================================================== */
+    async getConnection() {
+        return db.getConnection();
+    }
+    async beginTransaction(connection) {
+        await connection.beginTransaction();
+    }
+    async commit(connection) {
+        await connection.commit();
+    }
+    async rollback(connection) {
+        await connection.rollback();
+    }
     async createWithConnection(connection, data) {
         const { name, slug, gender, nationality, actor_avatar, biography, birthday } = data;
         const [result] = await connection.query(
@@ -180,7 +241,6 @@ class ActorRepository {
         );
         return result.insertId;
     }
-
     async updateWithConnection(connection, actorId, data) {
         const { name, slug, gender, nationality, actor_avatar, biography, birthday } = data;
         const [result] = await connection.query(
@@ -193,7 +253,6 @@ class ActorRepository {
         );
         return result.affectedRows;
     }
-
     async deleteWithConnection(connection, actorId) {
         const [result] = await connection.query(`DELETE FROM actors WHERE actor_id = ?`, [actorId]);
         return result.affectedRows;

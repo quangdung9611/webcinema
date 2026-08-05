@@ -1,9 +1,61 @@
 const db = require("../Config/db");
 
 class ShowtimeRepository {
-    // ==========================================================
-    // LẤY DANH SÁCH SUẤT CHIẾU - PAGINATION + SEARCH
-    // ==========================================================
+
+    /* ==========================================================
+        FIND ALL - KHÔNG PHÂN TRANG (DÙNG CHUNG)
+    ========================================================== */
+    async findAllAll(search = "") {
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `
+                WHERE m.title LIKE ?
+                OR c.cinema_name LIKE ?
+                OR r.room_name LIKE ?
+            `;
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword, keyword);
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                s.showtime_id,
+                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') AS start_time,
+                m.title,
+                m.duration,
+                c.cinema_name,
+                r.room_name,
+                r.room_type
+            FROM showtimes s
+            JOIN movies m ON s.movie_id = m.movie_id
+            JOIN cinemas c ON s.cinema_id = c.cinema_id
+            JOIN rooms r ON s.room_id = r.room_id
+            ${whereClause}
+            ORDER BY s.start_time DESC
+            `,
+            queryParams
+        );
+
+        return {
+            data: rows,
+            pagination: {
+                page: 1,
+                limit: rows.length,
+                total: rows.length,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            }
+        };
+    }
+
+    /* ==========================================================
+        FIND ALL - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -76,73 +128,9 @@ class ShowtimeRepository {
         };
     }
 
-    // ==========================================================
-    // Các hàm khác giữ nguyên, chỉ sửa chỗ trả về pagination nếu cần
-    // ==========================================================
-    async findById(showtimeId) {
-        const [rows] = await db.query(
-            `
-            SELECT
-                s.showtime_id,
-                s.movie_id,
-                s.cinema_id,
-                s.room_id,
-                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') AS start_time,
-                m.title,
-                m.slug,
-                m.movie_poster,
-                m.age_rating,
-                r.room_name,
-                r.room_type,
-                c.cinema_name
-            FROM showtimes s
-            JOIN movies m ON s.movie_id = m.movie_id
-            JOIN rooms r ON s.room_id = r.room_id
-            JOIN cinemas c ON s.cinema_id = c.cinema_id
-            WHERE s.showtime_id = ?
-            LIMIT 1
-            `,
-            [showtimeId]
-        );
-        return rows[0] || null;
-    }
-
-    async findByMovie(movieId) {
-        const [rows] = await db.query(
-            `
-            SELECT
-                s.showtime_id,
-                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') AS start_time,
-                r.room_name,
-                r.room_type,
-                c.cinema_name
-            FROM showtimes s
-            JOIN rooms r ON s.room_id = r.room_id
-            JOIN cinemas c ON s.cinema_id = c.cinema_id
-            WHERE s.movie_id = ? AND s.start_time >= NOW()
-            ORDER BY s.start_time ASC
-            `,
-            [movieId]
-        );
-        return rows;
-    }
-
-    async findConflict(roomId, startTime, excludeShowtimeId = null) {
-        let sql = `
-            SELECT showtime_id
-            FROM showtimes
-            WHERE room_id = ?
-                AND DATE_FORMAT(start_time, '%Y-%m-%d %H:%i') = ?
-        `;
-        const params = [roomId, startTime];
-        if (excludeShowtimeId) {
-            sql += ` AND showtime_id != ?`;
-            params.push(excludeShowtimeId);
-        }
-        const [rows] = await db.query(sql, params);
-        return rows[0] || null;
-    }
-
+    /* ==========================================================
+        FIND BY CINEMA AND ROOM (PUBLIC)
+    ========================================================== */
     async findByCinemaAndRoom(cinemaId, roomId, page = 1, limit = 20) {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -192,6 +180,82 @@ class ShowtimeRepository {
         };
     }
 
+    /* ==========================================================
+        FIND BY ID
+    ========================================================== */
+    async findById(showtimeId) {
+        const [rows] = await db.query(
+            `
+            SELECT
+                s.showtime_id,
+                s.movie_id,
+                s.cinema_id,
+                s.room_id,
+                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') AS start_time,
+                m.title,
+                m.slug,
+                m.movie_poster,
+                m.age_rating,
+                r.room_name,
+                r.room_type,
+                c.cinema_name
+            FROM showtimes s
+            JOIN movies m ON s.movie_id = m.movie_id
+            JOIN rooms r ON s.room_id = r.room_id
+            JOIN cinemas c ON s.cinema_id = c.cinema_id
+            WHERE s.showtime_id = ?
+            LIMIT 1
+            `,
+            [showtimeId]
+        );
+        return rows[0] || null;
+    }
+
+    /* ==========================================================
+        FIND BY MOVIE (PUBLIC)
+    ========================================================== */
+    async findByMovie(movieId) {
+        const [rows] = await db.query(
+            `
+            SELECT
+                s.showtime_id,
+                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') AS start_time,
+                r.room_name,
+                r.room_type,
+                c.cinema_name
+            FROM showtimes s
+            JOIN rooms r ON s.room_id = r.room_id
+            JOIN cinemas c ON s.cinema_id = c.cinema_id
+            WHERE s.movie_id = ? AND s.start_time >= NOW()
+            ORDER BY s.start_time ASC
+            `,
+            [movieId]
+        );
+        return rows;
+    }
+
+    /* ==========================================================
+        CHECK CONFLICT
+    ========================================================== */
+    async findConflict(roomId, startTime, excludeShowtimeId = null) {
+        let sql = `
+            SELECT showtime_id
+            FROM showtimes
+            WHERE room_id = ?
+                AND DATE_FORMAT(start_time, '%Y-%m-%d %H:%i') = ?
+        `;
+        const params = [roomId, startTime];
+        if (excludeShowtimeId) {
+            sql += ` AND showtime_id != ?`;
+            params.push(excludeShowtimeId);
+        }
+        const [rows] = await db.query(sql, params);
+        return rows[0] || null;
+    }
+
+    /* ==========================================================
+        CHECK IF PAST TIME
+    ========================================================== */
     async isPastTime(startTime) {
         const [rows] = await db.query(
             `
@@ -202,6 +266,9 @@ class ShowtimeRepository {
         return rows[0]?.isPast === 1;
     }
 
+    /* ==========================================================
+        CHECK IF HAS TICKETS
+    ========================================================== */
     async hasTickets(showtimeId) {
         const [rows] = await db.query(
             `SELECT ticket_id FROM tickets WHERE showtime_id = ? LIMIT 1`,
@@ -210,6 +277,9 @@ class ShowtimeRepository {
         return rows[0] || null;
     }
 
+    /* ==========================================================
+        QUICK BOOKING HELPERS (PUBLIC)
+    ========================================================== */
     async getQuickBookingMovies() {
         const [rows] = await db.query(
             `
@@ -305,6 +375,9 @@ class ShowtimeRepository {
         return rows;
     }
 
+    /* ==========================================================
+        CREATE
+    ========================================================== */
     async create(data) {
         const { movie_id, cinema_id, room_id, start_time } = data;
         const [result] = await db.query(
@@ -317,6 +390,9 @@ class ShowtimeRepository {
         return result.insertId;
     }
 
+    /* ==========================================================
+        UPDATE
+    ========================================================== */
     async update(showtimeId, data) {
         const { movie_id, cinema_id, room_id, start_time } = data;
         const [result] = await db.query(
@@ -330,6 +406,9 @@ class ShowtimeRepository {
         return result.affectedRows;
     }
 
+    /* ==========================================================
+        DELETE
+    ========================================================== */
     async delete(showtimeId) {
         const [result] = await db.query(
             `DELETE FROM showtimes WHERE showtime_id = ?`,

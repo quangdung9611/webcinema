@@ -3,16 +3,23 @@ const { uploadToCloudinary, deleteFromCloudinary } = require("../Middlewares/Upl
 
 class BannerService {
 
-    // ==========================================================
-    // GET ALL BANNERS (Admin & Public) - PAGINATION + SEARCH
-    // ==========================================================
-    async getAllBanners(onlyActive = false, page = 1, limit = 20, search = "") {
-        return await BannerRepository.findAll(onlyActive, page, limit, search);
+    /* ==========================================================
+        GET ALL BANNERS - KHÔNG PHÂN TRANG (DÙNG CHUNG)
+    ========================================================== */
+    async getAllBannersAll(search = "") {
+        return await BannerRepository.findAllAll(search);
     }
 
-    // ==========================================================
-    // GET BANNER BY ID
-    // ==========================================================
+    /* ==========================================================
+        GET ALL BANNERS - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
+    async getAllBannersPaginated(page = 1, limit = 20, search = "") {
+        return await BannerRepository.findAll(false, page, limit, search);
+    }
+
+    /* ==========================================================
+        GET BANNER BY ID
+    ========================================================== */
     async getBannerById(bannerId) {
         const banner = await BannerRepository.findById(bannerId);
         if (!banner) {
@@ -21,9 +28,9 @@ class BannerService {
         return banner;
     }
 
-    // ==========================================================
-    // CREATE BANNER
-    // ==========================================================
+    /* ==========================================================
+        CREATE BANNER (ADMIN)
+    ========================================================== */
     async createBanner(data, file) {
         const { page, is_active } = data;
         if (!page) {
@@ -39,13 +46,13 @@ class BannerService {
         return await BannerRepository.create({
             page,
             image_url: imageUrl,
-            is_active: is_active !== false ? 1 : 0
+            is_active: is_active !== undefined ? (is_active === "true" || is_active === true ? 1 : 0) : 1
         });
     }
 
-    // ==========================================================
-    // UPDATE BANNER
-    // ==========================================================
+    /* ==========================================================
+        UPDATE BANNER (ADMIN)
+    ========================================================== */
     async updateBanner(bannerId, data, file) {
         const banner = await BannerRepository.findById(bannerId);
         if (!banner) {
@@ -80,9 +87,9 @@ class BannerService {
         return true;
     }
 
-    // ==========================================================
-    // DELETE BANNER
-    // ==========================================================
+    /* ==========================================================
+        DELETE BANNER (ADMIN)
+    ========================================================== */
     async deleteBanner(bannerId) {
         const banner = await BannerRepository.findById(bannerId);
         if (!banner) {

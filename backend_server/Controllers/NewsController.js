@@ -1,15 +1,24 @@
 const NewsService = require("../Services/NewsService");
 
 /* ==========================================================
-   GET ALL NEWS (PUBLIC) - PAGINATION & SEARCH
+    PUBLIC - GET ALL NEWS (KHÔNG PHÂN TRANG)
 ========================================================== */
-exports.getAllNews = async (req, res) => {
+exports.getAllNewsAll = async (req, res) => {
     try {
-        const { page = 1, limit = 20, search = "" } = req.query;
-        const data = await NewsService.getAllNews(page, limit, search);
+        const { search = "", page, limit } = req.query;
+
+        // ⚠️ Nếu có page hoặc limit → từ chối yêu cầu
+        if (page !== undefined || limit !== undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "Route /api/news không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/news/paginated để phân trang."
+            });
+        }
+
+        const data = await NewsService.getAllNewsAll(search);
         return res.status(200).json({ success: true, data });
     } catch (err) {
-        console.error("getAllNews error:", err);
+        console.error("Get All News Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -18,15 +27,15 @@ exports.getAllNews = async (req, res) => {
 };
 
 /* ==========================================================
-   GET ALL NEWS (ADMIN) - PAGINATION & SEARCH
+    ADMIN - GET NEWS WITH PAGINATION
 ========================================================== */
-exports.getAllNewsAdmin = async (req, res) => {
+exports.getNewsWithPagination = async (req, res) => {
     try {
         const { page = 1, limit = 20, search = "" } = req.query;
         const data = await NewsService.getAllNewsAdmin(page, limit, search);
         return res.status(200).json({ success: true, data });
     } catch (err) {
-        console.error("getAllNewsAdmin error:", err);
+        console.error("Get News Paginated Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -34,12 +43,14 @@ exports.getAllNewsAdmin = async (req, res) => {
     }
 };
 
-// Các hàm CRUD giữ nguyên...
+/* ==========================================================
+    ADMIN - GET NEWS BY ID
+========================================================== */
 exports.getNewsById = async (req, res) => {
     try {
         const { news_id } = req.params;
         const news = await NewsService.getNewsById(news_id);
-        return res.status(200).json(news);
+        return res.status(200).json({ success: true, data: news });
     } catch (err) {
         console.error("getNewsById error:", err);
         return res.status(err.statusCode || 500).json({
@@ -49,11 +60,14 @@ exports.getNewsById = async (req, res) => {
     }
 };
 
+/* ==========================================================
+    PUBLIC - GET NEWS BY SLUG
+========================================================== */
 exports.getNewsBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
         const news = await NewsService.getNewsBySlug(slug);
-        return res.status(200).json(news);
+        return res.status(200).json({ success: true, data: news });
     } catch (err) {
         console.error("getNewsBySlug error:", err);
         return res.status(err.statusCode || 500).json({
@@ -63,6 +77,9 @@ exports.getNewsBySlug = async (req, res) => {
     }
 };
 
+/* ==========================================================
+    ADMIN - CREATE NEWS
+========================================================== */
 exports.createNews = async (req, res) => {
     try {
         const newsId = await NewsService.createNews(req.body, req.file);
@@ -80,6 +97,9 @@ exports.createNews = async (req, res) => {
     }
 };
 
+/* ==========================================================
+    ADMIN - UPDATE NEWS
+========================================================== */
 exports.updateNews = async (req, res) => {
     try {
         const { news_id } = req.params;
@@ -97,6 +117,9 @@ exports.updateNews = async (req, res) => {
     }
 };
 
+/* ==========================================================
+    ADMIN - DELETE NEWS
+========================================================== */
 exports.deleteNews = async (req, res) => {
     try {
         const { news_id } = req.params;
@@ -114,6 +137,9 @@ exports.deleteNews = async (req, res) => {
     }
 };
 
+/* ==========================================================
+    PUBLIC - LIKE NEWS
+========================================================== */
 exports.likeNews = async (req, res) => {
     try {
         const { news_id } = req.params;

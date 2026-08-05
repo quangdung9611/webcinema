@@ -1,9 +1,55 @@
 const db = require("../Config/db");
 
 class CinemaRepository {
-    // ==========================================================
-    // GET ALL - PAGINATION + SEARCH
-    // ==========================================================
+
+    /* ==========================================================
+        FIND ALL - KHÔNG PHÂN TRANG (DÙNG CHUNG)
+    ========================================================== */
+    async findAllAll(search = "") {
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `WHERE (cinema_name LIKE ? OR city LIKE ? OR address LIKE ?)`;
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword, keyword);
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                cinema_id,
+                cinema_name,
+                slug,
+                address,
+                city,
+                hotline,
+                map_link,
+                DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS created_at
+            FROM cinemas
+            ${whereClause}
+            ORDER BY cinema_id DESC
+            `,
+            queryParams
+        );
+
+        return {
+            data: rows,
+            pagination: {
+                page: 1,
+                limit: rows.length,
+                total: rows.length,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            }
+        };
+    }
+
+    /* ==========================================================
+        FIND ALL - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -67,9 +113,9 @@ class CinemaRepository {
         };
     }
 
-    // ==========================================================
-    // GET BY ID
-    // ==========================================================
+    /* ==========================================================
+        GET BY ID
+    ========================================================== */
     async findById(cinemaId) {
         const [rows] = await db.query(
             `SELECT * FROM cinemas WHERE cinema_id = ? LIMIT 1`,
@@ -78,9 +124,9 @@ class CinemaRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // GET BY SLUG
-    // ==========================================================
+    /* ==========================================================
+        GET BY SLUG
+    ========================================================== */
     async findBySlug(slug) {
         const [rows] = await db.query(
             `SELECT * FROM cinemas WHERE slug = ? LIMIT 1`,
@@ -89,9 +135,9 @@ class CinemaRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // CHECK DUPLICATE NAME
-    // ==========================================================
+    /* ==========================================================
+        CHECK DUPLICATE NAME
+    ========================================================== */
     async findByName(cinemaName, excludeCinemaId = null) {
         let sql = `SELECT cinema_id FROM cinemas WHERE cinema_name = ?`;
         const params = [cinemaName.trim()];
@@ -103,9 +149,9 @@ class CinemaRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // CHECK DUPLICATE HOTLINE
-    // ==========================================================
+    /* ==========================================================
+        CHECK DUPLICATE HOTLINE
+    ========================================================== */
     async findByHotline(hotline, excludeCinemaId = null) {
         let sql = `SELECT cinema_id FROM cinemas WHERE hotline = ?`;
         const params = [hotline];
@@ -117,9 +163,9 @@ class CinemaRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // CREATE
-    // ==========================================================
+    /* ==========================================================
+        CREATE
+    ========================================================== */
     async create(data) {
         const { cinema_name, slug, address, city, hotline, map_link } = data;
         const [result] = await db.query(
@@ -132,9 +178,9 @@ class CinemaRepository {
         return result.insertId;
     }
 
-    // ==========================================================
-    // UPDATE
-    // ==========================================================
+    /* ==========================================================
+        UPDATE
+    ========================================================== */
     async update(cinemaId, data) {
         const { cinema_name, slug, address, city, hotline, map_link } = data;
         const [result] = await db.query(
@@ -148,9 +194,9 @@ class CinemaRepository {
         return result.affectedRows;
     }
 
-    // ==========================================================
-    // DELETE
-    // ==========================================================
+    /* ==========================================================
+        DELETE
+    ========================================================== */
     async delete(cinemaId) {
         const [result] = await db.query(
             `DELETE FROM cinemas WHERE cinema_id = ?`,
@@ -159,9 +205,9 @@ class CinemaRepository {
         return result.affectedRows;
     }
 
-    // ==========================================================
-    // MOVIES OF CINEMA (for public detail)
-    // ==========================================================
+    /* ==========================================================
+        MOVIES OF CINEMA (for public detail)
+    ========================================================== */
     async getMoviesByCinema(cinemaId) {
         const [rows] = await db.query(
             `

@@ -2,9 +2,45 @@ const db = require("../Config/db");
 
 class GenreRepository {
 
-    // ==========================================================
-    // GET ALL GENRES - PAGINATION + SEARCH
-    // ==========================================================
+    /* ==========================================================
+        FIND ALL - KHÔNG PHÂN TRANG (ADMIN)
+    ========================================================== */
+    async findAllAll(search = "") {
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `WHERE genre_name LIKE ?`;
+            queryParams.push(`%${search}%`);
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT genre_id, genre_name, slug
+            FROM genres
+            ${whereClause}
+            ORDER BY genre_id DESC
+            `,
+            queryParams
+        );
+
+        return {
+            data: rows,
+            pagination: {
+                page: 1,
+                limit: rows.length,
+                total: rows.length,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            }
+        };
+    }
+
+    /* ==========================================================
+        FIND ALL - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -52,9 +88,45 @@ class GenreRepository {
         };
     }
 
-    // ==========================================================
-    // GET BY ID
-    // ==========================================================
+    /* ==========================================================
+        FIND ALL - KHÔNG PHÂN TRANG (PUBLIC)
+    ========================================================== */
+    async findAllPublic(search = "") {
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `WHERE genre_name LIKE ?`;
+            queryParams.push(`%${search}%`);
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT genre_id, genre_name, slug
+            FROM genres
+            ${whereClause}
+            ORDER BY genre_id DESC
+            `,
+            queryParams
+        );
+
+        return {
+            data: rows,
+            pagination: {
+                page: 1,
+                limit: rows.length,
+                total: rows.length,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            }
+        };
+    }
+
+    /* ==========================================================
+        GET BY ID
+    ========================================================== */
     async findById(genreId) {
         const [rows] = await db.query(
             `SELECT * FROM genres WHERE genre_id = ? LIMIT 1`,
@@ -63,9 +135,9 @@ class GenreRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // CHECK DUPLICATE NAME / SLUG
-    // ==========================================================
+    /* ==========================================================
+        CHECK DUPLICATE NAME / SLUG
+    ========================================================== */
     async findByNameOrSlug(name, slug, excludeGenreId = null) {
         let sql = `SELECT genre_id FROM genres WHERE (genre_name = ? OR slug = ?)`;
         const params = [name.trim(), slug];
@@ -77,9 +149,9 @@ class GenreRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // CHECK GENRE LINKED TO MOVIE
-    // ==========================================================
+    /* ==========================================================
+        CHECK GENRE LINKED TO MOVIE
+    ========================================================== */
     async checkLinked(genreId) {
         const [rows] = await db.query(
             `SELECT movie_id FROM movie_genres WHERE genre_id = ? LIMIT 1`,
@@ -88,9 +160,9 @@ class GenreRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // CREATE
-    // ==========================================================
+    /* ==========================================================
+        CREATE
+    ========================================================== */
     async create(data) {
         const { genre_name, slug } = data;
         const [result] = await db.query(
@@ -100,9 +172,9 @@ class GenreRepository {
         return result.insertId;
     }
 
-    // ==========================================================
-    // UPDATE
-    // ==========================================================
+    /* ==========================================================
+        UPDATE
+    ========================================================== */
     async update(genreId, data) {
         const { genre_name, slug } = data;
         const [result] = await db.query(
@@ -112,9 +184,9 @@ class GenreRepository {
         return result.affectedRows;
     }
 
-    // ==========================================================
-    // DELETE
-    // ==========================================================
+    /* ==========================================================
+        DELETE
+    ========================================================== */
     async delete(genreId) {
         const [result] = await db.query(`DELETE FROM genres WHERE genre_id = ?`, [genreId]);
         return result.affectedRows;

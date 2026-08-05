@@ -26,7 +26,7 @@ const extractPublicId = (url) => {
     return parts.slice(uploadIndex + 1).join('/').split('.')[0];
 };
 
-// Hàm validate (có thể tách ra utils riêng nếu muốn)
+// Hàm validate (giữ nguyên, có thể tách riêng sau)
 const validateMovieData = (data, files, isUpdate = false) => {
     const { title, duration, release_date, status, director, nation, age_rating, trailer_url } = data;
 
@@ -60,14 +60,24 @@ const validateMovieData = (data, files, isUpdate = false) => {
 };
 
 class MovieService {
-    // ======================================================
-    // Lấy tất cả phim (Đã thêm Pagination & Search)
-    // ======================================================
+
+    /*=========================================================
+        GET ALL MOVIES - KHÔNG PHÂN TRANG
+    =========================================================*/
+    async getAllMoviesAll(search = "") {
+        return await MovieRepository.findAllAll(search);
+    }
+
+    /*=========================================================
+        GET ALL MOVIES - CÓ PHÂN TRANG
+    =========================================================*/
     async getAllMovies(page = 1, limit = 20, search = "") {
         return await MovieRepository.findAll(page, limit, search);
     }
 
-    // Lấy phim theo ID
+    /*=========================================================
+        GET MOVIE BY ID
+    =========================================================*/
     async getMovieById(movieId) {
         const movie = await MovieRepository.findById(movieId);
         if (!movie) {
@@ -76,13 +86,14 @@ class MovieService {
         return movie;
     }
 
-    // Lấy phim theo slug (kèm genres, actors, showtimes)
+    /*=========================================================
+        GET MOVIE BY SLUG
+    =========================================================*/
     async getMovieBySlug(slug) {
         const movie = await MovieRepository.findBySlug(slug);
         if (!movie) {
             throw { statusCode: 404, message: "Không tìm thấy phim" };
         }
-
         // Lấy thêm genres, actors, showtimes
         const genres = await MovieRepository.getGenresByMovieId(movie.movie_id);
         const actors = await MovieRepository.getActorsByMovieId(movie.movie_id);
@@ -90,19 +101,19 @@ class MovieService {
         if (movie.status === "Đang chiếu") {
             showtimes = await MovieRepository.getShowtimesByMovieId(movie.movie_id);
         }
-
         movie.genres = genres;
         movie.actors = actors;
         movie.showtimes = showtimes;
         return movie;
     }
 
-    // Tạo phim mới
+    /*=========================================================
+        CREATE MOVIE
+    =========================================================*/
     async createMovie(data, files) {
-        // Validate
         const error = validateMovieData(data, files, false);
         if (error) {
-            throw { statusCode: 400, message: error };
+            throw { statusCode: 400, field: "general", message: error };
         }
 
         const {
@@ -112,13 +123,11 @@ class MovieService {
 
         const slug = createSlug(title);
 
-        // Kiểm tra trùng lặp
         const exists = await MovieRepository.existsByTitleOrSlug(title.trim(), slug);
         if (exists) {
-            throw { statusCode: 400, message: "Phim này đã tồn tại trong hệ thống (trùng tên hoặc slug)." };
+            throw { statusCode: 400, field: "title", message: "Phim này đã tồn tại trong hệ thống (trùng tên hoặc slug)." };
         }
 
-        // Upload ảnh lên Cloudinary
         let movie_poster = null;
         let movie_backdrop = null;
 
@@ -152,18 +161,18 @@ class MovieService {
         return movieId;
     }
 
-    // Cập nhật phim
+    /*=========================================================
+        UPDATE MOVIE
+    =========================================================*/
     async updateMovie(movieId, data, files) {
-        // Check tồn tại
         const existing = await MovieRepository.findById(movieId);
         if (!existing) {
             throw { statusCode: 404, message: "Phim không tồn tại" };
         }
 
-        // Validate (cho phép không upload poster khi update)
         const error = validateMovieData(data, files, true);
         if (error) {
-            throw { statusCode: 400, message: error };
+            throw { statusCode: 400, field: "general", message: error };
         }
 
         const {
@@ -173,17 +182,14 @@ class MovieService {
 
         const slug = createSlug(title);
 
-        // Kiểm tra trùng lặp (trừ chính nó)
         const exists = await MovieRepository.existsByTitleOrSlug(title.trim(), slug, movieId);
         if (exists) {
-            throw { statusCode: 400, message: "Tên phim hoặc slug đã trùng với phim khác." };
+            throw { statusCode: 400, field: "title", message: "Tên phim hoặc slug đã trùng với phim khác." };
         }
 
-        // Xử lý ảnh
         let finalPoster = existing.movie_poster;
         let finalBackdrop = existing.movie_backdrop;
 
-        // Xóa ảnh cũ nếu có ảnh mới
         if (files['movie_poster']?.[0]) {
             if (existing.movie_poster) {
                 const publicId = extractPublicId(existing.movie_poster);
@@ -225,14 +231,15 @@ class MovieService {
         return true;
     }
 
-    // Xóa phim
+    /*=========================================================
+        DELETE MOVIE
+    =========================================================*/
     async deleteMovie(movieId) {
         const movie = await MovieRepository.findById(movieId);
         if (!movie) {
             throw { statusCode: 404, message: "Phim không tồn tại" };
         }
 
-        // Xóa ảnh trên Cloudinary
         if (movie.movie_poster) {
             const publicId = extractPublicId(movie.movie_poster);
             await deleteFromCloudinary(publicId);
@@ -249,30 +256,34 @@ class MovieService {
         return true;
     }
 
-    // Lấy danh sách phim theo status group (Đang chiếu, Sắp chiếu)
+    /*=========================================================
+        GET MOVIES BY STATUS GROUP
+    =========================================================*/
     async getMoviesByStatusGroup() {
         return await MovieRepository.findGroupedByStatus();
     }
 
-    // ======================================================
-    // Lấy phim theo status (Đã thêm Pagination)
-    // ======================================================
-    async getMoviesByStatus(status, page = 1, limit = 20) {
+    /*=========================================================
+        GET MOVIES BY STATUS
+    =========================================================*/
+    async getMoviesByStatus(status, page = 1, limit = 20, search = "") {
         const valid = ['Đang chiếu', 'Sắp chiếu'];
         if (!valid.includes(status)) {
             throw { statusCode: 400, message: "Trạng thái không hợp lệ" };
         }
-        return await MovieRepository.findByStatus(status, page, limit);
+        return await MovieRepository.findByStatus(status, page, limit, search);
     }
 
-    // ======================================================
-    // Lấy phim theo genre (Đã thêm Pagination)
-    // ======================================================
-    async getMoviesByGenre(genreSlug, page = 1, limit = 20) {
-        return await MovieRepository.findByGenre(genreSlug || null, page, limit);
+    /*=========================================================
+        GET MOVIES BY GENRE
+    =========================================================*/
+    async getMoviesByGenre(genreSlug, page = 1, limit = 20, search = "") {
+        return await MovieRepository.findByGenre(genreSlug || null, page, limit, search);
     }
 
-    // Like phim
+    /*=========================================================
+        LIKE MOVIE
+    =========================================================*/
     async likeMovie(movieId) {
         const affected = await MovieRepository.incrementLikes(movieId);
         if (affected === 0) {
@@ -281,7 +292,9 @@ class MovieService {
         return true;
     }
 
-    // Tăng views
+    /*=========================================================
+        INCREMENT VIEWS
+    =========================================================*/
     async incrementViews(movieId) {
         const affected = await MovieRepository.incrementViews(movieId);
         if (affected === 0) {

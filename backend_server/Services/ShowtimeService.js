@@ -14,14 +14,31 @@ const validateShowtime = (data) => {
 };
 
 class ShowtimeService {
-  async getAllShowtimes(page = 1, limit = 20, search = "") {
+
+  /* ==========================================================
+      GET ALL SHOWTIMES - KHÔNG PHÂN TRANG (DÙNG CHUNG)
+  ========================================================== */
+  async getAllShowtimesAll(search = "") {
+    return await ShowtimeRepository.findAllAll(search);
+  }
+
+  /* ==========================================================
+      GET ALL SHOWTIMES - CÓ PHÂN TRANG (ADMIN)
+  ========================================================== */
+  async getAllShowtimesPaginated(page = 1, limit = 20, search = "") {
     return await ShowtimeRepository.findAll(page, limit, search);
   }
 
+  /* ==========================================================
+      GET SHOWTIMES BY CINEMA AND ROOM (PUBLIC)
+  ========================================================== */
   async getShowtimesByCinemaAndRoom(cinema_id, room_id, page = 1, limit = 20) {
     return await ShowtimeRepository.findByCinemaAndRoom(cinema_id, room_id, page, limit);
   }
 
+  /* ==========================================================
+      GET SHOWTIME DETAIL (PUBLIC)
+  ========================================================== */
   async getShowtimeDetail(showtimeId) {
     const showtime = await ShowtimeRepository.findById(showtimeId);
     if (!showtime) {
@@ -32,10 +49,16 @@ class ShowtimeService {
     return showtime;
   }
 
+  /* ==========================================================
+      GET SHOWTIMES BY MOVIE (PUBLIC)
+  ========================================================== */
   async getShowtimesByMovie(movieId) {
     return await ShowtimeRepository.findByMovie(movieId);
   }
 
+  /* ==========================================================
+      CREATE SHOWTIME (ADMIN)
+  ========================================================== */
   async createShowtime(data) {
     let { movie_id, cinema_id, room_id, start_time } = data;
     start_time = formatDateTime(start_time);
@@ -69,6 +92,9 @@ class ShowtimeService {
     return await ShowtimeRepository.create({ movie_id, cinema_id, room_id, start_time });
   }
 
+  /* ==========================================================
+      UPDATE SHOWTIME (ADMIN)
+  ========================================================== */
   async updateShowtime(showtimeId, data) {
     let { movie_id, cinema_id, room_id, start_time } = data;
     const existing = await ShowtimeRepository.findById(showtimeId);
@@ -114,6 +140,9 @@ class ShowtimeService {
     return true;
   }
 
+  /* ==========================================================
+      DELETE SHOWTIME (ADMIN)
+  ========================================================== */
   async deleteShowtime(showtimeId) {
     const existing = await ShowtimeRepository.findById(showtimeId);
     if (!existing) {
@@ -136,6 +165,9 @@ class ShowtimeService {
     return true;
   }
 
+  /* ==========================================================
+      QUICK BOOKING DATA (PUBLIC)
+  ========================================================== */
   async getQuickBookingData(movie_id, cinema_id, date) {
     if (!movie_id && !cinema_id && !date) {
       return await ShowtimeRepository.getQuickBookingMovies();
@@ -152,6 +184,9 @@ class ShowtimeService {
     return [];
   }
 
+  /* ==========================================================
+      GET SHOWTIMES FOR BOOKING (PUBLIC)
+  ========================================================== */
   async getShowtimesForBooking(movie_id, cinema_id, date) {
     if (!movie_id || !cinema_id || !date) {
       const err = new Error("Vui lòng chọn rạp và ngày");
@@ -161,6 +196,9 @@ class ShowtimeService {
     return await ShowtimeRepository.getShowtimesForBooking(movie_id, cinema_id, date);
   }
 
+  /* ==========================================================
+      FILTER SHOWTIMES (PUBLIC)
+  ========================================================== */
   async filterShowtimes(movie_id, room_id, date) {
     if (!movie_id || !room_id || !date) {
       const err = new Error("Thiếu dữ liệu lọc");

@@ -32,51 +32,104 @@ const validateNews = (data, file, isUpdate = false) => {
 };
 
 class NewsService {
-    async getAllNews(page = 1, limit = 20, search = "") {
-        return await NewsRepository.findAll(false, page, limit, search);
+
+    /* ==========================================================
+        GET ALL NEWS - KHÔNG PHÂN TRANG (PUBLIC)
+    ========================================================== */
+    async getAllNewsAll(search = "") {
+        return await NewsRepository.findAllAll(search);
     }
 
+    /* ==========================================================
+        GET ALL NEWS - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
     async getAllNewsAdmin(page = 1, limit = 20, search = "") {
-        return await NewsRepository.findAll(true, page, limit, search);
+        return await NewsRepository.findAll(page, limit, search);
     }
 
+    /* ==========================================================
+        GET NEWS BY ID (ADMIN)
+    ========================================================== */
     async getNewsById(newsId) {
         const news = await NewsRepository.findById(newsId);
-        if (!news) { const err = new Error("Không tìm thấy bài viết"); err.statusCode = 404; throw err; }
+        if (!news) {
+            const err = new Error("Không tìm thấy bài viết");
+            err.statusCode = 404;
+            throw err;
+        }
         return news;
     }
 
+    /* ==========================================================
+        GET NEWS BY SLUG (PUBLIC)
+    ========================================================== */
     async getNewsBySlug(slug) {
         const news = await NewsRepository.findBySlug(slug);
-        if (!news) { const err = new Error("Không tìm thấy bài viết"); err.statusCode = 404; throw err; }
+        if (!news) {
+            const err = new Error("Không tìm thấy bài viết");
+            err.statusCode = 404;
+            throw err;
+        }
         await NewsRepository.incrementViews(news.news_id);
         return news;
     }
 
+    /* ==========================================================
+        CREATE NEWS (ADMIN)
+    ========================================================== */
     async createNews(data, file) {
         const error = validateNews(data, file, false);
-        if (error) { const err = new Error(error); err.statusCode = 400; throw err; }
+        if (error) {
+            const err = new Error(error);
+            err.statusCode = 400;
+            throw err;
+        }
         const { title, content, likes } = data;
         const slug = createSlug(title);
         const exists = await NewsRepository.existsByTitleOrSlug(title.trim(), slug);
-        if (exists) { const err = new Error("Tiêu đề hoặc slug đã tồn tại"); err.statusCode = 400; throw err; }
+        if (exists) {
+            const err = new Error("Tiêu đề hoặc slug đã tồn tại");
+            err.statusCode = 400;
+            throw err;
+        }
         let news_image = null;
         if (file) {
             const result = await uploadToCloudinary(file, "cinema_shop/news");
             news_image = result.url;
         }
-        return await NewsRepository.create({ title: title.trim(), slug, content: content.trim(), news_image, likes: Number(likes) || 0 });
+        return await NewsRepository.create({
+            title: title.trim(),
+            slug,
+            content: content.trim(),
+            news_image,
+            likes: Number(likes) || 0
+        });
     }
 
+    /* ==========================================================
+        UPDATE NEWS (ADMIN)
+    ========================================================== */
     async updateNews(newsId, data, file) {
         const existing = await NewsRepository.findById(newsId);
-        if (!existing) { const err = new Error("Bài viết không tồn tại"); err.statusCode = 404; throw err; }
+        if (!existing) {
+            const err = new Error("Bài viết không tồn tại");
+            err.statusCode = 404;
+            throw err;
+        }
         const error = validateNews(data, file, true);
-        if (error) { const err = new Error(error); err.statusCode = 400; throw err; }
+        if (error) {
+            const err = new Error(error);
+            err.statusCode = 400;
+            throw err;
+        }
         const { title, content, likes } = data;
         const slug = createSlug(title);
         const exists = await NewsRepository.existsByTitleOrSlug(title.trim(), slug, newsId);
-        if (exists) { const err = new Error("Tiêu đề hoặc slug đã trùng với bài viết khác"); err.statusCode = 400; throw err; }
+        if (exists) {
+            const err = new Error("Tiêu đề hoặc slug đã trùng với bài viết khác");
+            err.statusCode = 400;
+            throw err;
+        }
         const conn = await NewsRepository.getConnection();
         try {
             await NewsRepository.beginTransaction(conn);
@@ -89,7 +142,13 @@ class NewsService {
                 const result = await uploadToCloudinary(file, "cinema_shop/news");
                 news_image = result.url;
             }
-            await NewsRepository.updateWithConnection(conn, newsId, { title: title.trim(), slug, content: content.trim(), news_image, likes: Number(likes) || 0 });
+            await NewsRepository.updateWithConnection(conn, newsId, {
+                title: title.trim(),
+                slug,
+                content: content.trim(),
+                news_image,
+                likes: Number(likes) || 0
+            });
             await NewsRepository.commit(conn);
             return true;
         } catch (err) {
@@ -100,9 +159,16 @@ class NewsService {
         }
     }
 
+    /* ==========================================================
+        DELETE NEWS (ADMIN)
+    ========================================================== */
     async deleteNews(newsId) {
         const existing = await NewsRepository.findById(newsId);
-        if (!existing) { const err = new Error("Bài viết không tồn tại"); err.statusCode = 404; throw err; }
+        if (!existing) {
+            const err = new Error("Bài viết không tồn tại");
+            err.statusCode = 404;
+            throw err;
+        }
         const conn = await NewsRepository.getConnection();
         try {
             await NewsRepository.beginTransaction(conn);
@@ -121,9 +187,16 @@ class NewsService {
         }
     }
 
+    /* ==========================================================
+        LIKE NEWS (PUBLIC)
+    ========================================================== */
     async likeNews(newsId) {
         const affected = await NewsRepository.incrementLikes(newsId);
-        if (!affected) { const err = new Error("Không tìm thấy bài viết"); err.statusCode = 404; throw err; }
+        if (!affected) {
+            const err = new Error("Không tìm thấy bài viết");
+            err.statusCode = 404;
+            throw err;
+        }
         return true;
     }
 }

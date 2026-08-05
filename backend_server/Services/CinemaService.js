@@ -27,10 +27,31 @@ const validateCinema = (data) => {
 };
 
 class CinemaService {
-    async getAllCinemas(page = 1, limit = 20, search = "") {
+
+    /* ==========================================================
+        GET ALL CINEMAS - KHÔNG PHÂN TRANG (ADMIN)
+    ========================================================== */
+    async getAllCinemasAll(search = "") {
+        return await CinemaRepository.findAllAll(search);
+    }
+
+    /* ==========================================================
+        GET ALL CINEMAS - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
+    async getAllCinemasPaginated(page = 1, limit = 20, search = "") {
         return await CinemaRepository.findAll(page, limit, search);
     }
 
+    /* ==========================================================
+        GET ALL CINEMAS - KHÔNG PHÂN TRANG (PUBLIC)
+    ========================================================== */
+    async getCinemasPublic(search = "") {
+        return await CinemaRepository.findAllPublic(search);
+    }
+
+    /* ==========================================================
+        GET CINEMA BY ID (ADMIN)
+    ========================================================== */
     async getCinemaById(cinemaId) {
         const cinema = await CinemaRepository.findById(cinemaId);
         if (!cinema) {
@@ -41,6 +62,9 @@ class CinemaService {
         return cinema;
     }
 
+    /* ==========================================================
+        GET CINEMA BY SLUG (PUBLIC)
+    ========================================================== */
     async getCinemaBySlug(slug) {
         const cinema = await CinemaRepository.findBySlug(slug);
         if (!cinema) {
@@ -67,6 +91,9 @@ class CinemaService {
         return { ...cinema, movies: Object.values(movieMap) };
     }
 
+    /* ==========================================================
+        CREATE CINEMA (ADMIN)
+    ========================================================== */
     async createCinema(data) {
         const error = validateCinema(data);
         if (error) {
@@ -98,6 +125,9 @@ class CinemaService {
         });
     }
 
+    /* ==========================================================
+        UPDATE CINEMA (ADMIN)
+    ========================================================== */
     async updateCinema(cinemaId, data) {
         const cinema = await CinemaRepository.findById(cinemaId);
         if (!cinema) {
@@ -136,6 +166,9 @@ class CinemaService {
         return true;
     }
 
+    /* ==========================================================
+        DELETE CINEMA (ADMIN)
+    ========================================================== */
     async deleteCinema(cinemaId) {
         const cinema = await CinemaRepository.findById(cinemaId);
         if (!cinema) {

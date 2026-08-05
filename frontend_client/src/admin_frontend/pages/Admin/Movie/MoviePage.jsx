@@ -1,3 +1,4 @@
+// pages/admin/MoviePage.js
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import api from '../../../../api/api';
 import {
@@ -16,7 +17,7 @@ import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
-import AdminPagination from '../../../components/AdminPagination'; // ✅ Thêm Pagination
+import AdminPagination from '../../../components/AdminPagination';
 
 // ==========================================================
 // POSTER / BACKDROP URL
@@ -62,7 +63,7 @@ const MoviePage = () => {
     const [submitLoading, setSubmitLoading] = useState(false);
 
     // ======================================================
-    // SEARCH & PAGINATION (Giống UserPage)
+    // SEARCH & PAGINATION
     // ======================================================
     const [search, setSearch] = useState('');
     const [pagination, setPagination] = useState({
@@ -111,7 +112,7 @@ const MoviePage = () => {
     };
 
     // ======================================================
-    // FETCH MOVIES - GIỐNG HỆT UserPage
+    // FETCH MOVIES - GIỐNG UserPage
     // ======================================================
     const fetchMovies = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) {
@@ -130,7 +131,7 @@ const MoviePage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/movies', {
+            const res = await api.get('/api/movies/paginated', {
                 params: {
                     page,
                     limit: 20,
@@ -139,7 +140,6 @@ const MoviePage = () => {
                 signal: controller.signal
             });
 
-            // Parse dữ liệu giống UserPage
             const responseData = res.data?.data;
             const moviesData = responseData?.data || [];
             const paginationData = responseData?.pagination || {
@@ -161,7 +161,14 @@ const MoviePage = () => {
             }
             console.error('FETCH MOVIES ERROR:', error);
             setMovies([]);
-            setPagination({ page: 1, limit: 20, total: 0, totalPages: 1 });
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
             showAlert('Lỗi', 'Không thể tải danh sách phim.', 'error');
         } finally {
             setLoading(false);
@@ -238,6 +245,9 @@ const MoviePage = () => {
             .trim();
     };
 
+    // ======================================================
+    // OPEN ADD / EDIT
+    // ======================================================
     const handleOpenAdd = () => {
         setEditingMovie(null);
         setFormData(initialFormData);
@@ -267,10 +277,13 @@ const MoviePage = () => {
         setIsFormOpen(true);
     };
 
+    // ======================================================
+    // HANDLE CHANGE
+    // ======================================================
     const handleChange = (e) => {
         const { name, value, files } = e.target;
         if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
-        
+
         if (name === 'movie_poster') {
             setMoviePosterFile(files?.[0] || null);
             return;
@@ -286,6 +299,9 @@ const MoviePage = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // ======================================================
+    // SUBMIT
+    // ======================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
@@ -306,20 +322,24 @@ const MoviePage = () => {
                 showAlert('Thành công', 'Thêm phim thành công.', 'success');
             }
             setIsFormOpen(false);
-            // Gọi lại danh sách đúng trang đang đứng
             fetchMovies(pagination.page, search);
         } catch (error) {
             console.error('SUBMIT MOVIE ERROR:', error);
-            if (error.response?.data?.field) {
-                setFormErrors({ [error.response.data.field]: error.response.data.message });
+            const backendField = error.response?.data?.field;
+            const backendError = error.response?.data?.message;
+            if (backendField) {
+                setFormErrors({ [backendField]: backendError });
                 return;
             }
-            showAlert('Lỗi', error.response?.data?.error || 'Đã xảy ra lỗi.', 'error');
+            showAlert('Lỗi', backendError || 'Đã xảy ra lỗi.', 'error');
         } finally {
             setSubmitLoading(false);
         }
     };
 
+    // ======================================================
+    // DELETE
+    // ======================================================
     const handleDelete = (movie) => {
         showAlert(
             'Xác nhận xóa',
@@ -329,13 +349,15 @@ const MoviePage = () => {
                 try {
                     await api.delete(`/api/movies/${movie.movie_id}`);
                     closeAlert();
-                    const newPage = movies.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
+                    const currentPage = pagination.page;
+                    const newPage = movies.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
                     fetchMovies(newPage, search);
                     showAlert('Thành công', 'Xóa phim thành công.', 'success');
                 } catch (error) {
-                    showAlert('Lỗi', 'Không thể xóa phim.', 'error');
+                    console.error('DELETE MOVIE ERROR:', error);
+                    showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa phim.', 'error');
                 }
             },
             closeAlert
@@ -448,6 +470,9 @@ const MoviePage = () => {
         }
     }
 
+    // ======================================================
+    // RENDER ALERT ICON
+    // ======================================================
     const renderAlertIcon = () => {
         switch (alertModal.type) {
             case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
@@ -488,6 +513,7 @@ const MoviePage = () => {
                 )}
             </AdminPage>
 
+            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={() => setIsFormOpen(false)}
@@ -505,6 +531,7 @@ const MoviePage = () => {
                 />
             </AdminModal>
 
+            {/* ALERT MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}

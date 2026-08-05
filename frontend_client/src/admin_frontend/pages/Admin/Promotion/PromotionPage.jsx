@@ -88,7 +88,7 @@ const PromotionPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ------------------------------------------------------
-    // FETCH PROMOTIONS
+    // FETCH PROMOTIONS - GỌI /paginated
     // ------------------------------------------------------
     const fetchPromotions = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
@@ -100,8 +100,12 @@ const PromotionPage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/promotions', {
-                params: { page, limit: 20, search: keyword.trim() },
+            const res = await api.get('/api/promotions/paginated', {
+                params: {
+                    page,
+                    limit: 20,
+                    search: keyword.trim()
+                },
                 signal: controller.signal
             });
 
@@ -202,8 +206,7 @@ const PromotionPage = () => {
         });
         setErrors({});
         setPromotionImageFile(null);
-        
-        // Reset filePreviews safely
+
         const newPreviews = {};
         if (item.promotion_image) {
             newPreviews.promotion_image = {
@@ -226,7 +229,6 @@ const PromotionPage = () => {
             const file = files[0];
             setPromotionImageFile(file);
             if (file) {
-                // Clear old blob URL to prevent memory leak
                 if (filePreviews.promotion_image?.url?.startsWith('blob:')) {
                     URL.revokeObjectURL(filePreviews.promotion_image.url);
                 }

@@ -1,61 +1,70 @@
 // controllers/MovieController.js
 const MovieService = require('../Services/MovieService');
 
-/* ==========================================================
-    GET MOVIE BY SLUG
-========================================================== */
-exports.getMovieBySlug = async (req, res) => {
+/*=========================================================
+    ADMIN - GET ALL MOVIES (KHÔNG PHÂN TRANG)
+=========================================================*/
+exports.getAllMoviesAll = async (req, res) => {
     try {
-        const { slug } = req.params;
-        const movie = await MovieService.getMovieBySlug(slug);
-        return res.status(200).json(movie);
+        const { search = "", page, limit } = req.query;
+
+        // ⚠️ Nếu có page hoặc limit → từ chối yêu cầu, trả về 400
+        if (page !== undefined || limit !== undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "Route /api/movies không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/movies/paginated để phân trang."
+            });
+        }
+
+        // Ngược lại, lấy toàn bộ phim (chỉ search)
+        const data = await MovieService.getAllMoviesAll(search);
+        return res.status(200).json({ success: true, data });
     } catch (err) {
-        console.error("getMovieBySlug error:", err);
+        console.error("Get All Movies Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi server"
+            message: err.message || "Lỗi máy chủ"
         });
     }
 };
 
-/* ==========================================================
-    GET ALL MOVIES (ADMIN & USER)
-========================================================== */
-exports.getAllMovies = async (req, res) => {
+/*=========================================================
+    ADMIN - GET MOVIES WITH PAGINATION
+=========================================================*/
+exports.getMoviesWithPagination = async (req, res) => {
     try {
-        // Thêm page, limit, search đồng bộ UserController
         const { page = 1, limit = 20, search = "" } = req.query;
         const data = await MovieService.getAllMovies(page, limit, search);
-        return res.status(200).json({ success: true, data }); // Chuẩn format
+        return res.status(200).json({ success: true, data });
     } catch (err) {
-        console.error("getAllMovies error:", err);
-        return res.status(500).json({
+        console.error("Get Movies Paginated Error:", err);
+        return res.status(err.statusCode || 500).json({
             success: false,
-            message: "Lỗi khi lấy danh sách phim"
+            message: err.message || "Lỗi máy chủ"
         });
     }
 };
 
-/* ==========================================================
-    GET MOVIE BY ID (ADMIN)
-========================================================== */
+/*=========================================================
+    ADMIN - GET MOVIE BY ID
+=========================================================*/
 exports.getMovieById = async (req, res) => {
     try {
         const { movie_id } = req.params;
         const movie = await MovieService.getMovieById(movie_id);
-        return res.status(200).json(movie);
+        return res.status(200).json({ success: true, data: movie });
     } catch (err) {
-        console.error("getMovieById error:", err);
+        console.error("Get Movie By ID Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi server"
+            message: err.message || "Lỗi máy chủ"
         });
     }
 };
 
-/* ==========================================================
-    CREATE MOVIE (ADMIN)
-========================================================== */
+/*=========================================================
+    ADMIN - CREATE MOVIE
+=========================================================*/
 exports.createMovie = async (req, res) => {
     try {
         const movieId = await MovieService.createMovie(req.body, req.files || {});
@@ -65,17 +74,18 @@ exports.createMovie = async (req, res) => {
             data: { movie_id: movieId }
         });
     } catch (err) {
-        console.error("createMovie error:", err);
+        console.error("Create Movie Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi server"
+            field: err.field || null,
+            message: err.message || "Lỗi máy chủ"
         });
     }
 };
 
-/* ==========================================================
-    UPDATE MOVIE (ADMIN)
-========================================================== */
+/*=========================================================
+    ADMIN - UPDATE MOVIE
+=========================================================*/
 exports.updateMovie = async (req, res) => {
     try {
         const { movie_id } = req.params;
@@ -85,17 +95,18 @@ exports.updateMovie = async (req, res) => {
             message: "Cập nhật thông tin phim thành công!"
         });
     } catch (err) {
-        console.error("updateMovie error:", err);
+        console.error("Update Movie Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi server"
+            field: err.field || null,
+            message: err.message || "Lỗi máy chủ"
         });
     }
 };
 
-/* ==========================================================
-    DELETE MOVIE (ADMIN)
-========================================================== */
+/*=========================================================
+    ADMIN - DELETE MOVIE
+=========================================================*/
 exports.deleteMovie = async (req, res) => {
     try {
         const { movie_id } = req.params;
@@ -105,37 +116,54 @@ exports.deleteMovie = async (req, res) => {
             message: "Đã xóa phim thành công."
         });
     } catch (err) {
-        console.error("deleteMovie error:", err);
+        console.error("Delete Movie Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi server"
+            message: err.message || "Lỗi máy chủ"
         });
     }
 };
 
-/* ==========================================================
-    GET MOVIES BY STATUS GROUP
-========================================================== */
+/*=========================================================
+    PUBLIC - GET MOVIE BY SLUG
+=========================================================*/
+exports.getMovieBySlug = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const movie = await MovieService.getMovieBySlug(slug);
+        return res.status(200).json({ success: true, data: movie });
+    } catch (err) {
+        console.error("Get Movie By Slug Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    PUBLIC - GET MOVIES BY STATUS GROUP
+=========================================================*/
 exports.getMoviesByStatusGroup = async (req, res) => {
     try {
         const grouped = await MovieService.getMoviesByStatusGroup();
-        return res.status(200).json(grouped);
+        return res.status(200).json({ success: true, data: grouped });
     } catch (err) {
-        console.error("getMoviesByStatusGroup error:", err);
+        console.error("Get Movies By Status Group Error:", err);
         return res.status(500).json({
             success: false,
-            message: "Lỗi server"
+            message: err.message || "Lỗi máy chủ"
         });
     }
 };
 
-/* ==========================================================
-    GET MOVIES BY STATUS SLUG (USER)
-========================================================== */
+/*=========================================================
+    PUBLIC - GET MOVIES BY STATUS SLUG (có phân trang)
+=========================================================*/
 exports.getMoviesByStatusSlug = async (req, res) => {
     try {
         const { statusSlug } = req.params;
-        const { page = 1, limit = 20 } = req.query; // Thêm Pagination
+        const { page = 1, limit = 20, search = "" } = req.query;
         const statusMap = {
             "phim-dang-chieu": "Đang chiếu",
             "phim-sap-chieu": "Sắp chiếu"
@@ -147,21 +175,37 @@ exports.getMoviesByStatusSlug = async (req, res) => {
                 message: "Đường dẫn không hợp lệ"
             });
         }
-        // Đồng bộ trả về { success: true, data }
-        const data = await MovieService.getMoviesByStatus(dbStatus, page, limit);
+        const data = await MovieService.getMoviesByStatus(dbStatus, page, limit, search);
         return res.status(200).json({ success: true, data });
     } catch (err) {
-        console.error("getMoviesByStatusSlug error:", err);
+        console.error("Get Movies By Status Slug Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi server"
+            message: err.message || "Lỗi máy chủ"
         });
     }
 };
 
-/* ==========================================================
-    LIKE MOVIE
-========================================================== */
+/*=========================================================
+    PUBLIC - GET MOVIES WITH GENRE (có phân trang)
+=========================================================*/
+exports.getMoviesWithGenre = async (req, res) => {
+    try {
+        const { genre, page = 1, limit = 20, search = "" } = req.query;
+        const data = await MovieService.getMoviesByGenre(genre, page, limit, search);
+        return res.status(200).json({ success: true, data });
+    } catch (err) {
+        console.error("Get Movies With Genre Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    USER - LIKE MOVIE
+=========================================================*/
 exports.likeMovie = async (req, res) => {
     try {
         const { movie_id } = req.params;
@@ -171,17 +215,17 @@ exports.likeMovie = async (req, res) => {
             message: "Đã tăng lượt thích!"
         });
     } catch (err) {
-        console.error("likeMovie error:", err);
+        console.error("Like Movie Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi server"
+            message: err.message || "Lỗi máy chủ"
         });
     }
 };
 
-/* ==========================================================
-    INCREMENT VIEWS
-========================================================== */
+/*=========================================================
+    USER - INCREMENT VIEWS
+=========================================================*/
 exports.incrementViews = async (req, res) => {
     try {
         const { movie_id } = req.params;
@@ -191,27 +235,10 @@ exports.incrementViews = async (req, res) => {
             message: "Đã tăng lượt xem!"
         });
     } catch (err) {
-        console.error("incrementViews error:", err);
+        console.error("Increment Views Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi server"
-        });
-    }
-};
-
-/* ==========================================================
-    GET MOVIES WITH GENRE (USER)
-========================================================== */
-exports.getMoviesWithGenre = async (req, res) => {
-    try {
-        const { genre, page = 1, limit = 20 } = req.query; // Thêm Pagination
-        const data = await MovieService.getMoviesByGenre(genre, page, limit);
-        return res.status(200).json({ success: true, data });
-    } catch (err) {
-        console.error("getMoviesWithGenre error:", err);
-        return res.status(500).json({
-            success: false,
-            message: err.message || "Lỗi server"
+            message: err.message || "Lỗi máy chủ"
         });
     }
 };

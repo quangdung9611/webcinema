@@ -1,9 +1,60 @@
 const db = require("../Config/db");
 
 class RoomRepository {
-    // ==========================================================
-    // LẤY DANH SÁCH PHÒNG - PAGINATION + SEARCH (JOIN với cinemas)
-    // ==========================================================
+
+    /* ==========================================================
+        FIND ALL - KHÔNG PHÂN TRANG (DÙNG CHUNG)
+    ========================================================== */
+    async findAllAll(search = "") {
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `
+                WHERE r.room_name LIKE ? 
+                OR c.cinema_name LIKE ? 
+                OR c.city LIKE ? 
+                OR r.room_type LIKE ?
+            `;
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword, keyword, keyword);
+        }
+
+        const sql = `
+            SELECT
+                r.room_id,
+                r.room_name,
+                r.room_type,
+                r.total_seats,
+                DATE_FORMAT(r.created_at, '%d/%m/%Y %H:%i') AS formatted_date,
+                c.cinema_id,
+                c.cinema_name,
+                c.city
+            FROM rooms r
+            JOIN cinemas c ON r.cinema_id = c.cinema_id
+            ${whereClause}
+            ORDER BY r.room_id DESC
+        `;
+
+        const [rows] = await db.query(sql, queryParams);
+
+        return {
+            data: rows,
+            pagination: {
+                page: 1,
+                limit: rows.length,
+                total: rows.length,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            }
+        };
+    }
+
+    /* ==========================================================
+        FIND ALL - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -71,9 +122,9 @@ class RoomRepository {
         };
     }
 
-    // ==========================================================
-    // LẤY PHÒNG THEO ID
-    // ==========================================================
+    /* ==========================================================
+        FIND BY ID
+    ========================================================== */
     async findById(roomId) {
         const [rows] = await db.query(
             `SELECT * FROM rooms WHERE room_id = ? LIMIT 1`,
@@ -82,9 +133,9 @@ class RoomRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // LẤY PHÒNG THEO RẠP
-    // ==========================================================
+    /* ==========================================================
+        FIND BY CINEMA (PUBLIC)
+    ========================================================== */
     async findByCinema(cinemaId) {
         const [rows] = await db.query(
             `
@@ -98,9 +149,9 @@ class RoomRepository {
         return rows;
     }
 
-    // ==========================================================
-    // KIỂM TRA TÊN PHÒNG TRONG RẠP
-    // ==========================================================
+    /* ==========================================================
+        CHECK DUPLICATE ROOM NAME IN CINEMA
+    ========================================================== */
     async findByNameInCinema(roomName, cinemaId, excludeRoomId = null) {
         let sql = `SELECT room_id FROM rooms WHERE room_name = ? AND cinema_id = ?`;
         const params = [roomName.trim(), cinemaId];
@@ -112,9 +163,9 @@ class RoomRepository {
         return rows[0] || null;
     }
 
-    // ==========================================================
-    // TẠO PHÒNG
-    // ==========================================================
+    /* ==========================================================
+        CREATE
+    ========================================================== */
     async create(data) {
         const { room_name, cinema_id, room_type } = data;
         const [result] = await db.query(
@@ -124,9 +175,9 @@ class RoomRepository {
         return result.insertId;
     }
 
-    // ==========================================================
-    // CẬP NHẬT PHÒNG
-    // ==========================================================
+    /* ==========================================================
+        UPDATE
+    ========================================================== */
     async update(roomId, data) {
         const { room_name, cinema_id, room_type } = data;
         const [result] = await db.query(
@@ -136,9 +187,9 @@ class RoomRepository {
         return result.affectedRows;
     }
 
-    // ==========================================================
-    // XÓA PHÒNG
-    // ==========================================================
+    /* ==========================================================
+        DELETE
+    ========================================================== */
     async delete(roomId) {
         const [result] = await db.query(
             `DELETE FROM rooms WHERE room_id = ?`,

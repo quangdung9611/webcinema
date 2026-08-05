@@ -1,16 +1,33 @@
 const express = require('express');
 const router = express.Router();
-const cinemaController = require('../Controllers/CinemaController');
+const CinemaController = require('../Controllers/CinemaController');
 const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
 
-// PUBLIC
-router.get('/', cinemaController.getAllCinemas);
-router.get('/:slug', cinemaController.getCinemaBySlug);
+/* ==========================================================
+    PUBLIC ROUTES (không cần auth)
+========================================================== */
+// Lấy danh sách rạp (không phân trang)
+router.get('/', CinemaController.getAllCinemasAll);
 
-// ADMIN (cần auth) - GIỐNG USER/ACTOR
-router.get('/:cinema_id', authenticateAdmin, cinemaController.getCinemaById);
-router.post('/', authenticateAdmin, cinemaController.createCinema);
-router.put('/:cinema_id', authenticateAdmin, cinemaController.updateCinema);
-router.delete('/:cinema_id', authenticateAdmin, cinemaController.deleteCinema);
+// Lấy chi tiết rạp theo slug
+router.get('/:slug', CinemaController.getCinemaBySlug);
+
+/* ==========================================================
+    ADMIN ROUTES (cần auth admin)
+========================================================== */
+// Lấy rạp có phân trang
+router.get('/paginated', authenticateAdmin, CinemaController.getCinemasWithPagination);
+
+// Lấy chi tiết rạp theo ID (đặt TRƯỚC /:slug để tránh xung đột)
+router.get('/:cinema_id', authenticateAdmin, CinemaController.getCinemaById);
+
+// Tạo rạp mới
+router.post('/', authenticateAdmin, CinemaController.createCinema);
+
+// Cập nhật rạp
+router.put('/:cinema_id', authenticateAdmin, CinemaController.updateCinema);
+
+// Xóa rạp
+router.delete('/:cinema_id', authenticateAdmin, CinemaController.deleteCinema);
 
 module.exports = router;

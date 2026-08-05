@@ -1,15 +1,24 @@
 const GenreService = require("../Services/GenreService");
 
 /* ==========================================================
-   ADMIN - GET ALL GENRES (Pagination + Search)
+    ADMIN - GET ALL GENRES (KHÔNG PHÂN TRANG)
 ========================================================== */
-exports.getAllGenres = async (req, res) => {
+exports.getAllGenresAll = async (req, res) => {
     try {
-        const { page = 1, limit = 20, search = "" } = req.query;
-        const data = await GenreService.getAllGenres(page, limit, search);
+        const { search = "", page, limit } = req.query;
+
+        // ⚠️ Nếu có page hoặc limit → từ chối yêu cầu, trả về 400
+        if (page !== undefined || limit !== undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "Route /api/genres không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/genres/paginated để phân trang."
+            });
+        }
+
+        const data = await GenreService.getAllGenresAll(search);
         return res.status(200).json({ success: true, data });
     } catch (err) {
-        console.error("getAllGenres error:", err);
+        console.error("Get All Genres Error:", err);
         return res.status(err.statusCode || 500).json({
             success: false,
             message: err.message || "Lỗi máy chủ"
@@ -18,13 +27,31 @@ exports.getAllGenres = async (req, res) => {
 };
 
 /* ==========================================================
-   GET BY ID
+    ADMIN - GET GENRES WITH PAGINATION
+========================================================== */
+exports.getGenresWithPagination = async (req, res) => {
+    try {
+        const { page = 1, limit = 20, search = "" } = req.query;
+        const data = await GenreService.getAllGenresPaginated(page, limit, search);
+        return res.status(200).json({ success: true, data });
+    } catch (err) {
+        console.error("Get Genres Paginated Error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+
+/* ==========================================================
+    ADMIN - GET GENRE BY ID
 ========================================================== */
 exports.getGenreById = async (req, res) => {
     try {
         const { genre_id } = req.params;
         const genre = await GenreService.getGenreById(genre_id);
-        return res.status(200).json(genre);
+        return res.status(200).json({ success: true, data: genre });
     } catch (err) {
         console.error("getGenreById error:", err);
         return res.status(err.statusCode || 500).json({
@@ -35,7 +62,7 @@ exports.getGenreById = async (req, res) => {
 };
 
 /* ==========================================================
-   CREATE
+    ADMIN - CREATE GENRE
 ========================================================== */
 exports.createGenre = async (req, res) => {
     try {
@@ -55,7 +82,7 @@ exports.createGenre = async (req, res) => {
 };
 
 /* ==========================================================
-   UPDATE
+    ADMIN - UPDATE GENRE
 ========================================================== */
 exports.updateGenre = async (req, res) => {
     try {
@@ -75,7 +102,7 @@ exports.updateGenre = async (req, res) => {
 };
 
 /* ==========================================================
-   DELETE
+    ADMIN - DELETE GENRE
 ========================================================== */
 exports.deleteGenre = async (req, res) => {
     try {

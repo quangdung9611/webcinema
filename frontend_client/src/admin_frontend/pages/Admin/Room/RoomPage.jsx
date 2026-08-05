@@ -80,7 +80,7 @@ const RoomPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ------------------------------------------------------
-    // FETCH DATA (ROOMS + CINEMAS)
+    // FETCH ROOMS (PAGINATION + SEARCH) - GỌI /paginated
     // ------------------------------------------------------
     const fetchRooms = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) return;
@@ -92,7 +92,7 @@ const RoomPage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/rooms', {
+            const res = await api.get('/api/rooms/paginated', {
                 params: {
                     page,
                     limit: 20,

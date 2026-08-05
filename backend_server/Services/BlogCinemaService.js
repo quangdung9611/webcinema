@@ -1,8 +1,5 @@
 const BlogCinemaRepository = require("../Repositories/BlogCinemaRepository");
-const {
-    uploadToCloudinary,
-    deleteFromCloudinary
-} = require("../Middlewares/UploadCloudinary");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../Middlewares/UploadCloudinary");
 
 // ==========================================================
 // CREATE SLUG
@@ -50,16 +47,23 @@ const validateBlogData = (data, file, isUpdate = false) => {
 
 class BlogCinemaService {
 
-    // ==========================================================
-    // GET ALL (Có Search + Pagination)
-    // ==========================================================
-    async getAllBlogs(onlyActive = true, page = 1, limit = 20, search = "") {
-        return await BlogCinemaRepository.findAll(onlyActive, page, limit, search);
+    /* ==========================================================
+        GET ALL BLOGS - KHÔNG PHÂN TRANG (DÙNG CHUNG)
+    ========================================================== */
+    async getAllBlogsAll(search = "") {
+        return await BlogCinemaRepository.findAllAll(search);
     }
 
-    // ==========================================================
-    // GET ID
-    // ==========================================================
+    /* ==========================================================
+        GET ALL BLOGS - CÓ PHÂN TRANG (ADMIN)
+    ========================================================== */
+    async getAllBlogsPaginated(page = 1, limit = 20, search = "") {
+        return await BlogCinemaRepository.findAll(false, page, limit, search);
+    }
+
+    /* ==========================================================
+        GET BLOG BY ID (ADMIN)
+    ========================================================== */
     async getBlogById(blogId) {
         const blog = await BlogCinemaRepository.findById(blogId);
         if (!blog) {
@@ -70,9 +74,9 @@ class BlogCinemaService {
         return blog;
     }
 
-    // ==========================================================
-    // GET SLUG
-    // ==========================================================
+    /* ==========================================================
+        GET BLOG BY SLUG (PUBLIC)
+    ========================================================== */
     async getBlogBySlug(slug) {
         const blog = await BlogCinemaRepository.findBySlug(slug);
         if (!blog) {
@@ -84,9 +88,9 @@ class BlogCinemaService {
         return blog;
     }
 
-    // ==========================================================
-    // CREATE
-    // ==========================================================
+    /* ==========================================================
+        CREATE BLOG (ADMIN)
+    ========================================================== */
     async createBlog(data, file) {
         const { title, description, likes } = data;
         const error = validateBlogData(data, file, false);
@@ -120,9 +124,9 @@ class BlogCinemaService {
         });
     }
 
-    // ==========================================================
-    // UPDATE
-    // ==========================================================
+    /* ==========================================================
+        UPDATE BLOG (ADMIN)
+    ========================================================== */
     async updateBlog(blogId, data, file) {
         const existing = await BlogCinemaRepository.findById(blogId);
         if (!existing) {
@@ -184,9 +188,9 @@ class BlogCinemaService {
         }
     }
 
-    // ==========================================================
-    // DELETE
-    // ==========================================================
+    /* ==========================================================
+        DELETE BLOG (ADMIN)
+    ========================================================== */
     async deleteBlog(blogId) {
         const existing = await BlogCinemaRepository.findById(blogId);
         if (!existing) {
@@ -213,9 +217,9 @@ class BlogCinemaService {
         }
     }
 
-    // ==========================================================
-    // LIKE
-    // ==========================================================
+    /* ==========================================================
+        LIKE BLOG (PUBLIC)
+    ========================================================== */
     async likeBlog(blogId) {
         const affected = await BlogCinemaRepository.incrementLikes(blogId);
         if (affected === 0) {

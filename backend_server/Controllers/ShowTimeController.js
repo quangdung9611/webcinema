@@ -1,36 +1,51 @@
 const ShowtimeService = require("../Services/ShowtimeService");
 
-exports.getAllShowtimes = async (req, res) => {
+/* ==========================================================
+    PUBLIC/ADMIN - GET ALL SHOWTIMES (KHÔNG PHÂN TRANG)
+========================================================== */
+exports.getAllShowtimesAll = async (req, res) => {
   try {
-    const { page = 1, limit = 20, search = "" } = req.query;
-    const data = await ShowtimeService.getAllShowtimes(page, limit, search);
+    const { search = "", page, limit } = req.query;
+
+    // ⚠️ Nếu có page hoặc limit → từ chối yêu cầu, trả về 400
+    if (page !== undefined || limit !== undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "Route /api/showtimes không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/showtimes/paginated để phân trang."
+      });
+    }
+
+    const data = await ShowtimeService.getAllShowtimesAll(search);
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    console.error("Get all showtimes error:", err);
+    console.error("Get All Showtimes Error:", err);
     return res.status(err.statusCode || 500).json({
       success: false,
-      message: err.message || "Lỗi máy chủ",
+      message: err.message || "Lỗi máy chủ"
     });
   }
 };
 
-exports.getShowtimesByCinemaAndRoom = async (req, res) => {
+/* ==========================================================
+    ADMIN - GET SHOWTIMES WITH PAGINATION
+========================================================== */
+exports.getShowtimesWithPagination = async (req, res) => {
   try {
-    const { cinema_id, room_id } = req.query;
-    if (!cinema_id || !room_id) {
-      return res.status(400).json({
-        success: false,
-        error: "Thiếu tham số cinema_id hoặc room_id",
-      });
-    }
-    const data = await ShowtimeService.getShowtimesByCinemaAndRoom(cinema_id, room_id);
+    const { page = 1, limit = 20, search = "" } = req.query;
+    const data = await ShowtimeService.getAllShowtimesPaginated(page, limit, search);
     return res.status(200).json({ success: true, data });
-  } catch (error) {
-    console.error("Lỗi lấy suất chiếu theo rạp và phòng:", error);
-    res.status(500).json({ success: false, error: error.message });
+  } catch (err) {
+    console.error("Get Showtimes Paginated Error:", err);
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ"
+    });
   }
 };
 
+/* ==========================================================
+    ADMIN - GET SHOWTIME DETAIL BY ID
+========================================================== */
 exports.getShowtimeDetail = async (req, res) => {
   try {
     const { showtime_id } = req.params;
@@ -45,6 +60,29 @@ exports.getShowtimeDetail = async (req, res) => {
   }
 };
 
+/* ==========================================================
+    PUBLIC - GET SHOWTIMES BY CINEMA AND ROOM
+========================================================== */
+exports.getShowtimesByCinemaAndRoom = async (req, res) => {
+  try {
+    const { cinema_id, room_id } = req.query;
+    if (!cinema_id || !room_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu tham số cinema_id hoặc room_id",
+      });
+    }
+    const data = await ShowtimeService.getShowtimesByCinemaAndRoom(cinema_id, room_id);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Lỗi lấy suất chiếu theo rạp và phòng:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/* ==========================================================
+    PUBLIC - GET SHOWTIMES BY MOVIE
+========================================================== */
 exports.getShowtimesByMovie = async (req, res) => {
   try {
     const { movieId } = req.params;
@@ -59,6 +97,60 @@ exports.getShowtimesByMovie = async (req, res) => {
   }
 };
 
+/* ==========================================================
+    PUBLIC - QUICK BOOKING DATA
+========================================================== */
+exports.getQuickBookingData = async (req, res) => {
+  try {
+    const { movie_id, cinema_id, date } = req.query;
+    const data = await ShowtimeService.getQuickBookingData(movie_id, cinema_id, date);
+    return res.status(200).json({ success: true, data });
+  } catch (err) {
+    console.error("Quick booking error:", err);
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ",
+    });
+  }
+};
+
+/* ==========================================================
+    PUBLIC - GET SHOWTIMES FOR BOOKING
+========================================================== */
+exports.getShowtimesForBooking = async (req, res) => {
+  try {
+    const { movie_id, cinema_id, date } = req.query;
+    const data = await ShowtimeService.getShowtimesForBooking(movie_id, cinema_id, date);
+    return res.status(200).json({ success: true, data });
+  } catch (err) {
+    console.error("Booking showtime error:", err);
+    return res.status(err.statusCode || 400).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ",
+    });
+  }
+};
+
+/* ==========================================================
+    PUBLIC - FILTER SHOWTIMES
+========================================================== */
+exports.filterShowtimes = async (req, res) => {
+  try {
+    const { movie_id, room_id, date } = req.query;
+    const data = await ShowtimeService.filterShowtimes(movie_id, room_id, date);
+    return res.status(200).json({ success: true, data });
+  } catch (err) {
+    console.error("Filter showtime error:", err);
+    return res.status(err.statusCode || 400).json({
+      success: false,
+      message: err.message || "Lỗi máy chủ",
+    });
+  }
+};
+
+/* ==========================================================
+    ADMIN - CREATE SHOWTIME
+========================================================== */
 exports.createShowtime = async (req, res) => {
   try {
     const showtimeId = await ShowtimeService.createShowtime(req.body);
@@ -77,6 +169,9 @@ exports.createShowtime = async (req, res) => {
   }
 };
 
+/* ==========================================================
+    ADMIN - UPDATE SHOWTIME
+========================================================== */
 exports.updateShowtime = async (req, res) => {
   try {
     const { showtime_id } = req.params;
@@ -95,6 +190,9 @@ exports.updateShowtime = async (req, res) => {
   }
 };
 
+/* ==========================================================
+    ADMIN - DELETE SHOWTIME
+========================================================== */
 exports.deleteShowtime = async (req, res) => {
   try {
     const { showtime_id } = req.params;
@@ -106,48 +204,6 @@ exports.deleteShowtime = async (req, res) => {
   } catch (err) {
     console.error("Delete showtime error:", err);
     return res.status(err.statusCode || 500).json({
-      success: false,
-      message: err.message || "Lỗi máy chủ",
-    });
-  }
-};
-
-exports.getQuickBookingData = async (req, res) => {
-  try {
-    const { movie_id, cinema_id, date } = req.query;
-    const data = await ShowtimeService.getQuickBookingData(movie_id, cinema_id, date);
-    return res.status(200).json({ success: true, data });
-  } catch (err) {
-    console.error("Quick booking error:", err);
-    return res.status(err.statusCode || 500).json({
-      success: false,
-      message: err.message || "Lỗi máy chủ",
-    });
-  }
-};
-
-exports.getShowtimesForBooking = async (req, res) => {
-  try {
-    const { movie_id, cinema_id, date } = req.query;
-    const data = await ShowtimeService.getShowtimesForBooking(movie_id, cinema_id, date);
-    return res.status(200).json({ success: true, data });
-  } catch (err) {
-    console.error("Booking showtime error:", err);
-    return res.status(err.statusCode || 400).json({
-      success: false,
-      message: err.message || "Lỗi máy chủ",
-    });
-  }
-};
-
-exports.filterShowtimes = async (req, res) => {
-  try {
-    const { movie_id, room_id, date } = req.query;
-    const data = await ShowtimeService.filterShowtimes(movie_id, room_id, date);
-    return res.status(200).json({ success: true, data });
-  } catch (err) {
-    console.error("Filter showtime error:", err);
-    return res.status(err.statusCode || 400).json({
       success: false,
       message: err.message || "Lỗi máy chủ",
     });

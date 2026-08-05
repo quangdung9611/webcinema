@@ -13,16 +13,18 @@ const upload = require("../Middlewares/MulterMiddleware");
     PUBLIC ROUTES - KHÔNG CẦN AUTH
 =========================================================*/
 
-// GET /api/banners?page=HOME → lấy tất cả banner active của HOME
-// GET /api/banners → lấy tất cả banners (admin)
-router.get("/", BannerController.getAllBanners);
+// GET /api/banners → lấy tất cả banner (không phân trang, public)
+router.get("/", BannerController.getAllBannersAll);
 
-// GET /api/banners/:banner_id → lấy banner theo ID
+// GET /api/banners/:banner_id → lấy banner theo ID (public)
 router.get("/:banner_id", BannerController.getBannerById);
 
 /*=========================================================
-    ADMIN ROUTES - CẦN AUTHENTICATE ADMIN + UPLOAD
+    ADMIN ROUTES - CẦN AUTHENTICATE ADMIN
 =========================================================*/
+
+// GET /api/banners/paginated → lấy banner có phân trang (admin)
+router.get("/paginated", authenticateAdmin, BannerController.getBannersWithPagination);
 
 // Tạo banner mới (upload file field: "image_url")
 router.post(
