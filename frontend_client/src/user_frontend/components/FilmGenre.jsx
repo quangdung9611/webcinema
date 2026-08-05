@@ -6,7 +6,15 @@ import MovieSlider from "../components/MovieSlider";
 import MoviePreviewModal from "../components/MoviePreviewModal";
 import "../styles/FilmGenre.css";
 
-// ❌ Xóa API_URL
+// Helper unwrap mảng từ object wrap của API (Tránh crash)
+const unwrapArray = (data) => {
+  if (Array.isArray(data)) return data;
+  if (data?.data && Array.isArray(data.data)) return data.data;
+  if (data?.movies && Array.isArray(data.movies)) return data.movies;
+  if (data?.result && Array.isArray(data.result)) return data.result;
+  if (data?.content && Array.isArray(data.content)) return data.content;
+  return [];
+};
 
 const containerVariants = {
   hidden: {},
@@ -44,7 +52,7 @@ const FilmGenre = () => {
     setPreviewOpen(true);
   };
 
-    /* ==========================
+  /* ==========================
      FETCH MOVIES (ĐÃ SỬA LỖI)
   ========================== */
   const fetchMovies = useCallback(async (genreSlug = "") => {
@@ -55,45 +63,31 @@ const FilmGenre = () => {
         : `/api/movies`;
       
       const response = await api.get(url);
-      // Lấy dữ liệu gốc từ API
       const rawData = response.data;
-
-      // 🔥 BƯỚC QUAN TRỌNG: Debug xem API trả về cái gì
-      console.log("API Response Data:", rawData);
-
-      // Xác định mảng phim nằm ở đâu trong rawData
-      // Thông thường là nằm trong rawData.data, rawData.movies, hoặc chính rawData
-      let moviesArray = [];
-      if (Array.isArray(rawData)) {
-        moviesArray = rawData; // Trường hợp API trả về mảng luôn
-      } else if (rawData && Array.isArray(rawData.data)) {
-        moviesArray = rawData.data; // Trường hợp API trả về { data: [...] }
-      } else if (rawData && Array.isArray(rawData.movies)) {
-        moviesArray = rawData.movies; // Trường hợp API trả về { movies: [...] }
-      } else if (rawData && Array.isArray(rawData.content)) {
-        moviesArray = rawData.content; // Trường hợp API dùng Pagination (Spring Boot thường hay làm vậy)
-      }
-      
+      let moviesArray = unwrapArray(rawData);
       setMovies(moviesArray);
-      
     } catch (error) {
       console.error("Lỗi tải phim:", error);
-      setMovies([]); // Nếu lỗi, set về mảng rỗng để không crash
+      setMovies([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   /* ==========================
-     FETCH GENRES
+     FETCH GENRES (🔥 Đã sửa lỗi unwrapArray)
   ========================== */
   useEffect(() => {
     const fetchGenres = async () => {
       try {
-        const { data } = await api.get("/api/genres");
-        setGenres(data || []);
+        const response = await api.get("/api/genres");
+        const rawData = response.data;
+        // Sử dụng helper unwrapArray để lấy đúng mảng
+        const genresArray = unwrapArray(rawData);
+        setGenres(genresArray);
       } catch (error) {
         console.error("Lỗi tải thể loại:", error);
+        setGenres([]); // Quan trọng: Set mảng rỗng nếu lỗi để tránh crash
       }
     };
     fetchGenres();
