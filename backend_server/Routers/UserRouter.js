@@ -1,117 +1,35 @@
-/*=========================================================
-    DEPENDENCIES
-=========================================================*/
-
 const express = require("express");
 const router = express.Router();
 
 const UserController = require("../Controllers/UserController");
 const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
 const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
-
-// ✅ Đổi từ UploadMiddleware → MulterMiddleware
 const upload = require("../Middlewares/MulterMiddleware");
 
 /*=========================================================
-    USER - PROFILE & BOOKING (Công khai cho user)
+    USER - PROFILE & BOOKING
 =========================================================*/
-
-// Lấy thông tin cá nhân
-router.get(
-    "/profile",
-    authenticateUser,
-    UserController.getUserProfile
-);
-
-// Cập nhật thông tin cá nhân
-router.put(
-    "/profile",
-    authenticateUser,
-    UserController.updateUserProfile
-);
-
-// Upload avatar (field: user_avatar)
-router.post(
-    "/avatar",
-    authenticateUser,
-    upload.single("user_avatar"),
-    UserController.uploadAvatar
-);
-
-// Lịch sử đặt vé
-router.get(
-    "/booking-history",
-    authenticateUser,
-    UserController.getMyBookings
-);
-
-// Xóa lịch sử đặt vé
-router.delete(
-    "/booking-history",
-    authenticateUser,
-    UserController.clearBookingHistory
-);
-
-// Reset điểm thưởng
-router.post(
-    "/reset-points",
-    authenticateUser,
-    UserController.resetMyPoints
-);
+router.get("/profile", authenticateUser, UserController.getUserProfile);
+router.put("/profile", authenticateUser, UserController.updateUserProfile);
+router.post("/avatar", authenticateUser, upload.single("user_avatar"), UserController.uploadAvatar);
+router.get("/booking-history", authenticateUser, UserController.getMyBookings);
+router.delete("/booking-history", authenticateUser, UserController.clearBookingHistory);
+router.post("/reset-points", authenticateUser, UserController.resetMyPoints);
 
 /*=========================================================
-    ADMIN - QUẢN LÝ USERS (CRUD)
+    ADMIN - QUẢN LÝ USERS
 =========================================================*/
+// Lấy toàn bộ user (không phân trang)
+router.get("/", authenticateAdmin, UserController.getAllUsers);
 
-// Lấy toàn bộ user
-router.get(
-    "/",
-    authenticateAdmin,
-    UserController.getAllUsers
-);
+// Lấy user có phân trang (thêm route này)
+router.get("/paginated", authenticateAdmin, UserController.getUsersWithPagination);
 
-// Lấy user theo ID
-router.get(
-    "/:user_id",
-    authenticateAdmin,
-    UserController.getUserById
-);
-
-// Tạo user mới (có thể upload avatar)
-router.post(
-    "/",
-    authenticateAdmin,
-    upload.single("user_avatar"),
-    UserController.createUser
-);
-
-// Cập nhật user (có thể upload avatar)
-router.put(
-    "/:user_id",
-    authenticateAdmin,
-    upload.single("user_avatar"),
-    UserController.updateUser
-);
-
-// Cập nhật status
-router.patch(
-    "/:user_id/status",
-    authenticateAdmin,
-    UserController.updateUserStatus
-);
-
-// Cập nhật role
-router.patch(
-    "/:user_id/role",
-    authenticateAdmin,
-    UserController.updateUserRole
-);
-
-// Xóa user
-router.delete(
-    "/:user_id",
-    authenticateAdmin,
-    UserController.deleteUser
-);
+router.get("/:user_id", authenticateAdmin, UserController.getUserById);
+router.post("/", authenticateAdmin, upload.single("user_avatar"), UserController.createUser);
+router.put("/:user_id", authenticateAdmin, upload.single("user_avatar"), UserController.updateUser);
+router.patch("/:user_id/status", authenticateAdmin, UserController.updateUserStatus);
+router.patch("/:user_id/role", authenticateAdmin, UserController.updateUserRole);
+router.delete("/:user_id", authenticateAdmin, UserController.deleteUser);
 
 module.exports = router;
