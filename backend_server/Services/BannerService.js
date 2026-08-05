@@ -3,11 +3,13 @@ const { uploadToCloudinary, deleteFromCloudinary } = require("../Middlewares/Upl
 
 class BannerService {
 
-    /* ==========================================================
+  /* ==========================================================
         GET ALL BANNERS - KHÔNG PHÂN TRANG (DÙNG CHUNG)
+        Đã thêm tham số page = "" để lọc theo vị trí (HOME, PROMOTION, ...)
     ========================================================== */
-    async getAllBannersAll(search = "") {
-        return await BannerRepository.findAllAll(search);
+    async getAllBannersAll(search = "", page = "") {
+        // Truyền cả search và page xuống Repository
+        return await BannerRepository.findAllAll(search, page);
     }
 
     /* ==========================================================

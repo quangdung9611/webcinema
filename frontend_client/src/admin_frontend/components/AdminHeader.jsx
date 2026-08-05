@@ -42,7 +42,7 @@ const AdminHeader = ({ toggleSidebar }) => {
                 // --- SỬA TẠI ĐÂY ---
                 // Bất kể status 401 hay lỗi khác, đều chuyển về trang Admin Login
                 // Vì api.js đã không còn tự động window.location.href nữa
-                navigate('/admin/login', { replace: true });
+                navigate('/login', { replace: true });
 
             }
 
@@ -76,7 +76,7 @@ const AdminHeader = ({ toggleSidebar }) => {
 
             // --- SỬA TẠI ĐÂY ---
             // Chuyển về đúng trang Admin Login, không chuyển sang trang User Login
-            navigate('/admin/login', {
+            navigate('/login', {
                 replace: true
             });
 

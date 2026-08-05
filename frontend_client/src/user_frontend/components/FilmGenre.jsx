@@ -44,8 +44,8 @@ const FilmGenre = () => {
     setPreviewOpen(true);
   };
 
-  /* ==========================
-     FETCH MOVIES
+    /* ==========================
+     FETCH MOVIES (ĐÃ SỬA LỖI)
   ========================== */
   const fetchMovies = useCallback(async (genreSlug = "") => {
     try {
@@ -53,11 +53,32 @@ const FilmGenre = () => {
       const url = genreSlug
         ? `/api/movies/with-genre?genre=${genreSlug}`
         : `/api/movies`;
-      const { data } = await api.get(url);
-      setMovies(data || []);
+      
+      const response = await api.get(url);
+      // Lấy dữ liệu gốc từ API
+      const rawData = response.data;
+
+      // 🔥 BƯỚC QUAN TRỌNG: Debug xem API trả về cái gì
+      console.log("API Response Data:", rawData);
+
+      // Xác định mảng phim nằm ở đâu trong rawData
+      // Thông thường là nằm trong rawData.data, rawData.movies, hoặc chính rawData
+      let moviesArray = [];
+      if (Array.isArray(rawData)) {
+        moviesArray = rawData; // Trường hợp API trả về mảng luôn
+      } else if (rawData && Array.isArray(rawData.data)) {
+        moviesArray = rawData.data; // Trường hợp API trả về { data: [...] }
+      } else if (rawData && Array.isArray(rawData.movies)) {
+        moviesArray = rawData.movies; // Trường hợp API trả về { movies: [...] }
+      } else if (rawData && Array.isArray(rawData.content)) {
+        moviesArray = rawData.content; // Trường hợp API dùng Pagination (Spring Boot thường hay làm vậy)
+      }
+      
+      setMovies(moviesArray);
+      
     } catch (error) {
       console.error("Lỗi tải phim:", error);
-      setMovies([]);
+      setMovies([]); // Nếu lỗi, set về mảng rỗng để không crash
     } finally {
       setLoading(false);
     }

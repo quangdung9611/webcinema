@@ -3,19 +3,25 @@ const BannerService = require("../Services/BannerService");
 /*=========================================================
     PUBLIC/ADMIN - GET ALL BANNERS (KHÔNG PHÂN TRANG)
 =========================================================*/
+/*=========================================================
+    PUBLIC/ADMIN - GET ALL BANNERS (KHÔNG PHÂN TRANG, HỖ TRỢ PAGE KEY)
+=========================================================*/
 exports.getAllBannersAll = async (req, res) => {
     try {
-        const { search = "", page, limit } = req.query;
-
-        // ⚠️ Nếu có page hoặc limit → từ chối yêu cầu, trả về 400
-        if (page !== undefined || limit !== undefined) {
+        // Lấy tham số search và page từ query (page có thể là "HOME", "PROMOTION"...)
+        const { search = "", page = "" } = req.query;
+        
+        // 🛑 Chỉ chặn nếu người dùng truyền tham số limit vào route này
+        if (req.query.limit !== undefined) {
             return res.status(400).json({
                 success: false,
-                message: "Route /api/banners không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/banners/paginated để phân trang."
+                message: "Route /api/banners không hỗ trợ phân trang. Vui lòng sử dụng /api/banners/paginated để phân trang."
             });
         }
 
-        const data = await BannerService.getAllBannersAll(search);
+        // Gọi Service và truyền thêm tham số page vào
+        const data = await BannerService.getAllBannersAll(search, page);
+        
         return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("Get All Banners Error:", err);
@@ -25,7 +31,6 @@ exports.getAllBannersAll = async (req, res) => {
         });
     }
 };
-
 /*=========================================================
     ADMIN - GET BANNERS WITH PAGINATION
 =========================================================*/

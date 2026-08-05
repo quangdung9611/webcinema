@@ -32,6 +32,16 @@ const getImageUrl = (url, baseUrl = '') => {
   return baseUrl + url;
 };
 
+// Helper unwrap mảng từ object wrap của API (Tránh crash)
+const unwrapArray = (data) => {
+  if (Array.isArray(data)) return data;
+  if (data?.data && Array.isArray(data.data)) return data.data;
+  if (data?.movies && Array.isArray(data.movies)) return data.movies;
+  if (data?.result && Array.isArray(data.result)) return data.result;
+  if (data?.content && Array.isArray(data.content)) return data.content;
+  return [];
+};
+
 const UserHome = () => {
   const navigate = useNavigate();
 
@@ -91,9 +101,9 @@ const UserHome = () => {
     const fetchBanners = async () => {
       try {
         setBannerLoading(true);
-        const res = await api.get('/api/banners?page=HOME');
-        const bannerData = res.data?.data || [];
-        setBanners(Array.isArray(bannerData) ? bannerData : []);
+        // Chỉnh sửa: Dùng params object để tránh lỗi 400
+        const res = await api.get('/api/banners', { params: { page: 'HOME' } });
+        setBanners(unwrapArray(res.data));
       } catch (error) {
         console.error('Lỗi tải banner:', error);
         setBanners([]);
@@ -121,13 +131,19 @@ const UserHome = () => {
           api.get('/api/blog-cinema')
         ]);
 
-        setGroupedMovies(statusRes.data);
+        // 1. Grouped Movies (Object chứa mảng, giữ nguyên dạng key-value)
+        setGroupedMovies(statusRes.data || { "Đang chiếu": [], "Sắp chiếu": [] });
+
+        // 2. Quick Booking Movies (Dùng unwrapArray để lấy đúng mảng)
+        const movieList = unwrapArray(movieRes.data);
         setQuickData({
-          movies: movieRes.data,
+          movies: movieList,
           cinemas: []
         });
-        setPromotions(promotionRes.data || []);
-        setCinemaNews(blogRes.data || []);
+
+        // 3. Promotions và CinemaNews
+        setPromotions(unwrapArray(promotionRes.data));
+        setCinemaNews(unwrapArray(blogRes.data));
       } catch (error) {
         console.error("Lỗi khi load data:", error);
         setModal({
@@ -145,6 +161,7 @@ const UserHome = () => {
   }, []);
 
   // ===== QUICK BOOKING EFFECTS =====
+  // Load Rạp khi chọn phim
   useEffect(() => {
     if (!selectedQuick.movie) {
       setQuickData(prev => ({ ...prev, cinemas: [] }));
@@ -158,7 +175,7 @@ const UserHome = () => {
         const res = await api.get('/api/showtimes/quick-booking', {
           params: { movie_id: selectedQuick.movie }
         });
-        setQuickData(prev => ({ ...prev, cinemas: res.data }));
+        setQuickData(prev => ({ ...prev, cinemas: unwrapArray(res.data) }));
       } catch (error) {
         console.error("Lỗi load rạp:", error);
         setModal({
@@ -173,6 +190,7 @@ const UserHome = () => {
     fetchCinemas();
   }, [selectedQuick.movie]);
 
+  // Load Ngày khi chọn rạp
   useEffect(() => {
     if (!selectedQuick.movie || !selectedQuick.cinema) {
       setAvailableDates([]);
@@ -185,7 +203,9 @@ const UserHome = () => {
         const res = await api.get('/api/showtimes/quick-booking', {
           params: { movie_id: selectedQuick.movie, cinema_id: selectedQuick.cinema }
         });
-        setAvailableDates(res.data.map(d => d.show_date));
+        // unwrapArray rồi map lấy ngày
+        const datesData = unwrapArray(res.data);
+        setAvailableDates(datesData.map(d => d.show_date));
       } catch (error) {
         console.error("Lỗi load ngày:", error);
         setModal({
@@ -200,6 +220,7 @@ const UserHome = () => {
     fetchDates();
   }, [selectedQuick.movie, selectedQuick.cinema]);
 
+  // Load Suất chiếu khi chọn ngày
   useEffect(() => {
     if (!selectedQuick.movie || !selectedQuick.cinema || !selectedQuick.date) {
       setAvailableShowtimes([]);
@@ -211,7 +232,7 @@ const UserHome = () => {
         const res = await api.get('/api/showtimes/quick-booking', {
           params: { movie_id: selectedQuick.movie, cinema_id: selectedQuick.cinema, date: selectedQuick.date }
         });
-        setAvailableShowtimes(res.data);
+        setAvailableShowtimes(unwrapArray(res.data));
       } catch (error) {
         console.error("Lỗi load suất:", error);
         setModal({
@@ -454,6 +475,7 @@ const UserHome = () => {
                   }
                 >
                   <option value="">Chọn phim</option>
+                  {/* SỬA LỖI QUAN TRỌNG: quickData.movies giờ đã là mảng thật sự */}
                   {quickData.movies.map(m => (
                     <option key={m.movie_id} value={m.movie_id}>{m.title}</option>
                   ))}
@@ -520,7 +542,7 @@ const UserHome = () => {
           </section>
         </ScrollReveal>
 
-        {/* ===== CÁC PHẦN CÒN LẠI (BỎ CURTAIN) ===== */}
+        {/* ===== CÁC PHẦN CÒN LẠI ===== */}
         <div className="home-container">
           <section className="home-features-section">
             <div className="features-grid">
@@ -550,7 +572,7 @@ const UserHome = () => {
             </div>
           </section>
 
-          {/* FilmGenre – bỏ curtain */}
+          {/* FilmGenre */}
           <ScrollReveal
             direction="up"
             duration={0.6}
@@ -563,7 +585,7 @@ const UserHome = () => {
             </div>
           </ScrollReveal>
 
-          {/* Promotions – bỏ curtain */}
+          {/* Promotions */}
           <ScrollReveal
             direction="up"
             duration={0.6}
@@ -608,7 +630,7 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
-          {/* Cinema corner – bỏ curtain */}
+          {/* Cinema corner */}
           <ScrollReveal
             direction="up"
             duration={0.6}
