@@ -5,7 +5,17 @@ const UserService = require("../Services/UserService");
 =========================================================*/
 exports.getAllUsers = async (req, res) => {
     try {
-        const { search = "" } = req.query;
+        const { search = "", page, limit } = req.query;
+
+        // ⚠️ Nếu có page hoặc limit → từ chối yêu cầu, trả về 400
+        if (page !== undefined || limit !== undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "Route /api/users không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/users/paginated để phân trang."
+            });
+        }
+
+        // Ngược lại, lấy toàn bộ user (chỉ search)
         const data = await UserService.getAllUsersAll(search);
         return res.status(200).json({ success: true, data });
     } catch (err) {
@@ -16,6 +26,7 @@ exports.getAllUsers = async (req, res) => {
         });
     }
 };
+
 
 /*=========================================================
     ADMIN - GET USERS WITH PAGINATION

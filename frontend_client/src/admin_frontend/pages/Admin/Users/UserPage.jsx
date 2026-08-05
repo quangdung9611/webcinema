@@ -118,7 +118,7 @@ const UserPage = () => {
         setLoading(true);
 
         try {
-            const res = await api.get('/api/users', {
+            const res = await api.get('/api/users/paginated', {
                 params: {
                     page,
                     limit: 20,
