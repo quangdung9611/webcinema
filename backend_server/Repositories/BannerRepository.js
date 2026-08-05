@@ -4,17 +4,32 @@ class BannerRepository {
 
     /* ==========================================================
         FIND ALL - KHÔNG PHÂN TRANG (DÙNG CHUNG)
+        🔥 Đã thêm tham số page để nhận 'HOME', 'PROMOTION',...
     ========================================================== */
-    async findAllAll(search = "") {
+    async findAllAll(search = "", page = "") {
         search = typeof search === "string" ? search.trim() : "";
-        let whereClause = "";
+        page = typeof page === "string" ? page.trim() : "";
+
+        const conditions = [];
         const queryParams = [];
 
+        // 1. Điều kiện tìm kiếm (page LIKE hoặc image_url LIKE)
         if (search) {
-            whereClause = `WHERE (page LIKE ? OR image_url LIKE ?)`;
+            conditions.push("(page LIKE ? OR image_url LIKE ?)");
             const keyword = `%${search}%`;
             queryParams.push(keyword, keyword);
         }
+
+        // 2. Điều kiện lọc theo trang (page = 'HOME', 'PROMOTION', ...)
+        if (page) {
+            conditions.push("page = ?");
+            queryParams.push(page);
+        }
+
+        // Ghép câu WHERE
+        const whereClause = conditions.length > 0 
+            ? "WHERE " + conditions.join(" AND ") 
+            : "";
 
         const [rows] = await db.query(
             `
@@ -32,6 +47,7 @@ class BannerRepository {
             queryParams
         );
 
+        // Giữ nguyên cấu trúc pagination giả lập cho frontend
         return {
             data: rows,
             pagination: {
