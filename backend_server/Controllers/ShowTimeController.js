@@ -7,7 +7,6 @@ exports.getAllShowtimesAll = async (req, res) => {
     try {
         const { search = "", page, limit } = req.query;
 
-        // Không cho phép page / limit trên API không phân trang
         if (page !== undefined || limit !== undefined) {
             return res.status(400).json({
                 success: false,
@@ -15,13 +14,8 @@ exports.getAllShowtimesAll = async (req, res) => {
             });
         }
 
-        // Service trả về trực tiếp rows[]
         const data = await ShowtimeService.getAllShowtimesAll(search);
-
-        return res.status(200).json({
-            success: true,
-            data
-        });
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("Get All Showtimes Error:", err);
         return res.status(err.statusCode || 500).json({
@@ -37,11 +31,7 @@ exports.getAllShowtimesAll = async (req, res) => {
 exports.getShowtimesWithPagination = async (req, res) => {
     try {
         const { page = 1, limit = 20, search = "" } = req.query;
-
         const result = await ShowtimeService.getAllShowtimesPaginated(page, limit, search);
-
-        // Service trả: { data: [], pagination: {} }
-        // Controller KHÔNG bọc result vào data nữa
         return res.status(200).json({
             success: true,
             data: result.data,
@@ -63,10 +53,7 @@ exports.getShowtimeDetail = async (req, res) => {
     try {
         const { showtime_id } = req.params;
         const data = await ShowtimeService.getShowtimeDetail(showtime_id);
-        return res.status(200).json({
-            success: true,
-            data
-        });
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("Get showtime detail error:", err);
         return res.status(err.statusCode || 500).json({
@@ -78,6 +65,7 @@ exports.getShowtimeDetail = async (req, res) => {
 
 /*=========================================================
     PUBLIC - GET SHOWTIMES BY CINEMA AND ROOM
+    ✅ TRẢ VỀ MẢNG TRỰC TIẾP, KHÔNG BỌC OBJECT data
 =========================================================*/
 exports.getShowtimesByCinemaAndRoom = async (req, res) => {
     try {
@@ -89,11 +77,10 @@ exports.getShowtimesByCinemaAndRoom = async (req, res) => {
             });
         }
 
+        // Service trả về { data: [], pagination: {} }
+        // Chỉ lấy data (mảng) để trả về
         const result = await ShowtimeService.getShowtimesByCinemaAndRoom(cinema_id, room_id);
-
-        // ✅ Nếu service trả về { data: [...], pagination: {...} }
-        // thì lấy result.data, còn không thì dùng result
-        const data = Array.isArray(result?.data) ? result.data : (Array.isArray(result) ? result : []);
+        const data = result?.data || [];
 
         return res.status(200).json({
             success: true,
@@ -107,6 +94,7 @@ exports.getShowtimesByCinemaAndRoom = async (req, res) => {
         });
     }
 };
+
 /*=========================================================
     PUBLIC - GET SHOWTIMES BY MOVIE
 =========================================================*/
@@ -114,10 +102,7 @@ exports.getShowtimesByMovie = async (req, res) => {
     try {
         const { movieId } = req.params;
         const data = await ShowtimeService.getShowtimesByMovie(movieId);
-        return res.status(200).json({
-            success: true,
-            data
-        });
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("Get showtimes by movie error:", err);
         return res.status(err.statusCode || 500).json({
@@ -134,10 +119,7 @@ exports.getQuickBookingData = async (req, res) => {
     try {
         const { movie_id, cinema_id, date } = req.query;
         const data = await ShowtimeService.getQuickBookingData(movie_id, cinema_id, date);
-        return res.status(200).json({
-            success: true,
-            data
-        });
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("Quick booking error:", err);
         return res.status(err.statusCode || 500).json({
@@ -154,10 +136,7 @@ exports.getShowtimesForBooking = async (req, res) => {
     try {
         const { movie_id, cinema_id, date } = req.query;
         const data = await ShowtimeService.getShowtimesForBooking(movie_id, cinema_id, date);
-        return res.status(200).json({
-            success: true,
-            data
-        });
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("Booking showtime error:", err);
         return res.status(err.statusCode || 400).json({
@@ -174,10 +153,7 @@ exports.filterShowtimes = async (req, res) => {
     try {
         const { movie_id, room_id, date } = req.query;
         const data = await ShowtimeService.filterShowtimes(movie_id, room_id, date);
-        return res.status(200).json({
-            success: true,
-            data
-        });
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("Filter showtime error:", err);
         return res.status(err.statusCode || 400).json({
