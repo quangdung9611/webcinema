@@ -21,7 +21,7 @@ import AdminForm from '../../../components/AdminForm';
 import AdminPagination from '../../../components/AdminPagination';
 
 // ==========================================================
-// HELPERS
+// HELPERS & CONSTANTS
 // ==========================================================
 const getImageUrl = (image) => {
     if (!image) return '';
@@ -43,9 +43,9 @@ const initialFormData = {
 // COMPONENT
 // ==========================================================
 const PromotionPage = () => {
-    // ------------------------------------------------------
+    // ======================================================
     // STATES
-    // ------------------------------------------------------
+    // ======================================================
     const [promotions, setPromotions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -79,17 +79,17 @@ const PromotionPage = () => {
         onCancel: null
     });
 
-    // ------------------------------------------------------
+    // ======================================================
     // ALERT HANDLER
-    // ------------------------------------------------------
+    // ======================================================
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
-    // ------------------------------------------------------
-    // FETCH PROMOTIONS - GIỐNG MoviePage
-    // ------------------------------------------------------
+    // ======================================================
+    // FETCH PROMOTIONS - GIỐNG HỆT BlogCinemaPage
+    // ======================================================
     const fetchPromotions = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) {
             console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
@@ -116,7 +116,7 @@ const PromotionPage = () => {
                 signal: controller.signal
             });
 
-            // ✅ Lấy trực tiếp từ res.data giống MoviePage
+            // ✅ Parse trực tiếp giống Blog (và Movie)
             const promotionsData = res.data?.data || [];
             const paginationData = res.data?.pagination || {
                 page: 1,
@@ -154,17 +154,17 @@ const PromotionPage = () => {
         }
     }, []);
 
-    // ------------------------------------------------------
+    // ======================================================
     // MOUNT
-    // ------------------------------------------------------
+    // ======================================================
     useEffect(() => {
         fetchPromotions(1, '');
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // ------------------------------------------------------
+    // ======================================================
     // SEARCH DEBOUNCE
-    // ------------------------------------------------------
+    // ======================================================
     const prevSearchRef = useRef('');
     useEffect(() => {
         const currentSearch = search;
@@ -184,9 +184,9 @@ const PromotionPage = () => {
         fetchPromotions(page, search);
     };
 
-    // ------------------------------------------------------
+    // ======================================================
     // SLUG GENERATOR
-    // ------------------------------------------------------
+    // ======================================================
     const generateSlug = (str) => {
         if (!str) return '';
         return str
@@ -200,9 +200,9 @@ const PromotionPage = () => {
             .trim();
     };
 
-    // ------------------------------------------------------
+    // ======================================================
     // VALIDATE FORM
-    // ------------------------------------------------------
+    // ======================================================
     const validateForm = () => {
         const newErrors = {};
         if (!formData.title.trim()) {
@@ -217,9 +217,9 @@ const PromotionPage = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // ------------------------------------------------------
-    // HANDLE OPEN ADD/EDIT
-    // ------------------------------------------------------
+    // ======================================================
+    // HANDLE MODAL ACTIONS
+    // ======================================================
     const handleOpenAdd = () => {
         setEditingPromotion(null);
         setFormData(initialFormData);
@@ -252,9 +252,9 @@ const PromotionPage = () => {
         setIsFormOpen(true);
     };
 
-    // ------------------------------------------------------
+    // ======================================================
     // HANDLE CHANGE
-    // ------------------------------------------------------
+    // ======================================================
     const handleChange = (e) => {
         const { name, value, files } = e.target;
 
@@ -293,9 +293,9 @@ const PromotionPage = () => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // ------------------------------------------------------
+    // ======================================================
     // HANDLE SUBMIT
-    // ------------------------------------------------------
+    // ======================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
@@ -334,9 +334,9 @@ const PromotionPage = () => {
         }
     };
 
-    // ------------------------------------------------------
+    // ======================================================
     // HANDLE DELETE
-    // ------------------------------------------------------
+    // ======================================================
     const handleDelete = (item) => {
         showAlert(
             'Xác nhận xóa',
@@ -360,9 +360,17 @@ const PromotionPage = () => {
         );
     };
 
-    // ------------------------------------------------------
+    // ======================================================
+    // HELPER: IMAGE ERROR HANDLER
+    // ======================================================
+    const handleImageError = (e) => {
+        e.target.onerror = null;
+        e.target.src = DEFAULT_IMAGE;
+    };
+
+    // ======================================================
     // TABLE COLUMNS
-    // ------------------------------------------------------
+    // ======================================================
     const columns = [
         {
             title: 'Hình ảnh',
@@ -371,8 +379,13 @@ const PromotionPage = () => {
                 <img
                     src={getImageUrl(row.promotion_image) || DEFAULT_IMAGE}
                     alt="promotion"
-                    style={{ width: '120px', height: '70px', objectFit: 'cover', borderRadius: '10px' }}
-                    onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_IMAGE; }}
+                    style={{
+                        width: '120px',
+                        height: '70px',
+                        objectFit: 'cover',
+                        borderRadius: '10px'
+                    }}
+                    onError={handleImageError}
                 />
             )
         },
@@ -400,11 +413,14 @@ const PromotionPage = () => {
             key: 'is_active',
             render: (row) => (
                 <span className={`status-badge ${row.is_active ? 'success' : 'danger'}`}>
-                    {row.is_active ? 'Đang hoạt động' : 'Đã ẩn'}
+                    {row.is_active ? 'Hiển thị' : 'Đã ẩn'}
                 </span>
             )
         },
-        { title: 'Ngày tạo', key: 'full_date' },
+        {
+            title: 'Ngày tạo',
+            key: 'full_date'
+        },
         {
             title: 'Xem',
             key: 'slug',
@@ -441,9 +457,9 @@ const PromotionPage = () => {
         }
     ];
 
-    // ------------------------------------------------------
+    // ======================================================
     // FORM FIELDS
-    // ------------------------------------------------------
+    // ======================================================
     const formFields = [
         {
             label: 'Tiêu đề khuyến mãi',
@@ -485,9 +501,9 @@ const PromotionPage = () => {
         }
     ];
 
-    // ------------------------------------------------------
+    // ======================================================
     // HELPER: RENDER ALERT ICON
-    // ------------------------------------------------------
+    // ======================================================
     const renderAlertIcon = () => {
         switch (alertModal.type) {
             case 'success':
@@ -501,9 +517,9 @@ const PromotionPage = () => {
         }
     };
 
-    // ------------------------------------------------------
+    // ======================================================
     // RENDER
-    // ------------------------------------------------------
+    // ======================================================
     return (
         <>
             <AdminPage
