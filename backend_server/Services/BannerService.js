@@ -1,115 +1,493 @@
+
 const BannerRepository = require("../Repositories/BannerRepository");
-const { uploadToCloudinary, deleteFromCloudinary } = require("../Middlewares/UploadCloudinary");
+
+const {
+    uploadToCloudinary,
+    deleteFromCloudinary
+} = require("../Middlewares/UploadCloudinary");
+
+
+/* ==========================================================
+    EXTRACT CLOUDINARY PUBLIC ID
+========================================================== */
+const extractPublicId = (url) => {
+
+    if (!url) {
+        return null;
+    }
+
+    const parts = url.split("/");
+
+    const uploadIndex = parts.indexOf("upload");
+
+    if (uploadIndex === -1) {
+        return null;
+    }
+
+    return parts
+        .slice(uploadIndex + 1)
+        .join("/")
+        .split("?")[0]
+        .split(".")[0];
+};
+
+
+/* ==========================================================
+    NORMALIZE IS_ACTIVE
+========================================================== */
+const normalizeActiveStatus = (value, defaultValue = 1) => {
+
+    if (
+        value === undefined ||
+        value === null ||
+        value === ""
+    ) {
+        return defaultValue;
+    }
+
+    if (
+        value === true ||
+        value === 1 ||
+        value === "1" ||
+        value === "true"
+    ) {
+        return 1;
+    }
+
+    if (
+        value === false ||
+        value === 0 ||
+        value === "0" ||
+        value === "false"
+    ) {
+        return 0;
+    }
+
+    return defaultValue;
+};
+
+
+/* ==========================================================
+    VALIDATE PAGE
+========================================================== */
+const validatePage = (page) => {
+
+    if (
+        page === undefined ||
+        page === null ||
+        typeof page !== "string" ||
+        page.trim() === ""
+    ) {
+        const err = new Error(
+            "Vui lòng chọn vị trí banner."
+        );
+
+        err.statusCode = 400;
+        err.field = "page";
+
+        throw err;
+    }
+
+    return page.trim();
+};
+
 
 class BannerService {
 
-  /* ==========================================================
-        GET ALL BANNERS - KHÔNG PHÂN TRANG (DÙNG CHUNG)
-        Đã thêm tham số page = "" để lọc theo vị trí (HOME, PROMOTION, ...)
-    ========================================================== */
-    async getAllBannersAll(search = "", page = "") {
-        // Truyền cả search và page xuống Repository
-        return await BannerRepository.findAllAll(search, page);
-    }
 
     /* ==========================================================
-        GET ALL BANNERS - CÓ PHÂN TRANG (ADMIN)
+        GET ALL BANNERS
+        KHÔNG PHÂN TRANG
+
+        HỖ TRỢ:
+        - search
+        - page
+
+        Ví dụ:
+        /api/banners
+        /api/banners?search=HOME
+        /api/banners?page=HOME
     ========================================================== */
-    async getAllBannersPaginated(page = 1, limit = 20, search = "") {
-        return await BannerRepository.findAll(false, page, limit, search);
+    async getAllBannersAll(search = "", page = "") {
+
+        return await BannerRepository.findAllAll(
+            search,
+            page
+        );
     }
+
+
+    /* ==========================================================
+        GET ALL BANNERS
+        CÓ PHÂN TRANG
+
+        ADMIN
+    ========================================================== */
+    async getAllBannersPaginated(
+        page = 1,
+        limit = 20,
+        search = ""
+    ) {
+
+        return await BannerRepository.findAll(
+            false,
+            page,
+            limit,
+            search
+        );
+    }
+
+
+    /* ==========================================================
+        GET ACTIVE BANNERS BY PAGE
+
+        DÙNG CHO FRONTEND
+
+        Ví dụ:
+        HOME
+        PROMOTION
+        BLOG
+    ========================================================== */
+    async getActiveBannersByPage(page) {
+
+        page = validatePage(page);
+
+        return await BannerRepository.findActiveByPage(
+            page
+        );
+    }
+
 
     /* ==========================================================
         GET BANNER BY ID
     ========================================================== */
     async getBannerById(bannerId) {
-        const banner = await BannerRepository.findById(bannerId);
+
+        const banner = await BannerRepository.findById(
+            bannerId
+        );
+
         if (!banner) {
-            throw { statusCode: 404, message: "Không tìm thấy banner" };
+
+            const err = new Error(
+                "Không tìm thấy banner"
+            );
+
+            err.statusCode = 404;
+
+            throw err;
         }
+
         return banner;
     }
 
+
     /* ==========================================================
-        CREATE BANNER (ADMIN)
+        CREATE BANNER
+        ADMIN
+
+        🔥 LOGIC CŨ:
+        Banner mới tạo LUÔN is_active = 1
     ========================================================== */
     async createBanner(data, file) {
-        const { page, is_active } = data;
-        if (!page) {
-            throw { statusCode: 400, field: "page", message: "Thiếu page" };
-        }
+
+        const page = validatePage(data.page);
+
+
+        /*
+         * Bắt buộc phải có ảnh
+         */
         if (!file) {
-            throw { statusCode: 400, field: "image_url", message: "Vui lòng chọn file ảnh" };
+
+            const err = new Error(
+                "Vui lòng chọn file ảnh"
+            );
+
+            err.statusCode = 400;
+            err.field = "image_url";
+
+            throw err;
         }
 
-        const result = await uploadToCloudinary(file, 'cinema_shop/banners');
+
+        /*
+         * Upload ảnh lên Cloudinary
+         */
+        const result = await uploadToCloudinary(
+            file,
+            "cinema_shop/banners"
+        );
+
+
+        if (!result || !result.url) {
+
+            const err = new Error(
+                "Upload ảnh banner thất bại"
+            );
+
+            err.statusCode = 500;
+            err.field = "image_url";
+
+            throw err;
+        }
+
+
         const imageUrl = result.url;
 
+
+        /*
+         * 🔥 CREATE LUÔN ACTIVE
+         */
         return await BannerRepository.create({
             page,
             image_url: imageUrl,
-            is_active: is_active !== undefined ? (is_active === "true" || is_active === true ? 1 : 0) : 1
+            is_active: 1
         });
     }
 
+
     /* ==========================================================
-        UPDATE BANNER (ADMIN)
+        UPDATE BANNER
+        ADMIN
     ========================================================== */
-    async updateBanner(bannerId, data, file) {
-        const banner = await BannerRepository.findById(bannerId);
+    async updateBanner(
+        bannerId,
+        data,
+        file
+    ) {
+
+        /*
+         * Kiểm tra banner tồn tại
+         */
+        const banner = await BannerRepository.findById(
+            bannerId
+        );
+
         if (!banner) {
-            throw { statusCode: 404, message: "Không tìm thấy banner" };
+
+            const err = new Error(
+                "Không tìm thấy banner"
+            );
+
+            err.statusCode = 404;
+
+            throw err;
         }
 
-        let imageUrl = banner.image_url;
-        if (file) {
-            if (banner.image_url) {
-                const urlParts = banner.image_url.split('/');
-                const publicId = urlParts.slice(7).join('/').split('.')[0];
-                await deleteFromCloudinary(publicId);
-            }
-            const result = await uploadToCloudinary(file, 'cinema_shop/banners');
-            imageUrl = result.url;
-            data.image_url = imageUrl;
-        }
 
         const updateData = {};
-        if (data.page !== undefined) updateData.page = data.page;
-        if (data.image_url !== undefined) updateData.image_url = data.image_url;
-        if (data.is_active !== undefined) updateData.is_active = data.is_active;
 
+
+        /* ======================================================
+            UPDATE PAGE
+        ====================================================== */
+        if (data.page !== undefined) {
+
+            updateData.page = validatePage(
+                data.page
+            );
+        }
+
+
+        /* ======================================================
+            UPDATE STATUS
+        ====================================================== */
+        if (data.is_active !== undefined) {
+
+            updateData.is_active =
+                normalizeActiveStatus(
+                    data.is_active,
+                    banner.is_active
+                );
+        }
+
+
+        /* ======================================================
+            UPDATE IMAGE
+        ====================================================== */
+        if (file) {
+
+            /*
+             * Upload ảnh mới trước
+             */
+            const result =
+                await uploadToCloudinary(
+                    file,
+                    "cinema_shop/banners"
+                );
+
+
+            if (!result || !result.url) {
+
+                const err = new Error(
+                    "Upload ảnh banner thất bại"
+                );
+
+                err.statusCode = 500;
+                err.field = "image_url";
+
+                throw err;
+            }
+
+
+            /*
+             * Gán URL ảnh mới
+             */
+            updateData.image_url = result.url;
+
+
+            /*
+             * Xóa ảnh cũ khỏi Cloudinary
+             */
+            if (banner.image_url) {
+
+                const publicId =
+                    extractPublicId(
+                        banner.image_url
+                    );
+
+                if (publicId) {
+
+                    try {
+
+                        await deleteFromCloudinary(
+                            publicId
+                        );
+
+                    } catch (cloudinaryError) {
+
+                        console.error(
+                            "Delete old banner image error:",
+                            cloudinaryError
+                        );
+                    }
+                }
+            }
+        }
+
+
+        /* ======================================================
+            KIỂM TRA CÓ THAY ĐỔI HAY KHÔNG
+        ====================================================== */
         if (Object.keys(updateData).length === 0) {
-            throw { statusCode: 400, message: "Không có thay đổi nào" };
+
+            const err = new Error(
+                "Không có thay đổi nào"
+            );
+
+            err.statusCode = 400;
+
+            throw err;
         }
 
-        const affectedRows = await BannerRepository.update(bannerId, updateData);
+
+        /* ======================================================
+            UPDATE DATABASE
+        ====================================================== */
+        const affectedRows =
+            await BannerRepository.update(
+                bannerId,
+                updateData
+            );
+
+
         if (affectedRows === 0) {
-            throw { statusCode: 400, message: "Cập nhật thất bại" };
+
+            const err = new Error(
+                "Cập nhật banner thất bại"
+            );
+
+            err.statusCode = 400;
+
+            throw err;
         }
+
+
         return true;
     }
 
+
     /* ==========================================================
-        DELETE BANNER (ADMIN)
+        DELETE BANNER
+        ADMIN
     ========================================================== */
     async deleteBanner(bannerId) {
-        const banner = await BannerRepository.findById(bannerId);
+
+        /*
+         * Kiểm tra banner tồn tại
+         */
+        const banner =
+            await BannerRepository.findById(
+                bannerId
+            );
+
+
         if (!banner) {
-            throw { statusCode: 404, message: "Không tìm thấy banner" };
+
+            const err = new Error(
+                "Không tìm thấy banner"
+            );
+
+            err.statusCode = 404;
+
+            throw err;
         }
 
+
+        /* ======================================================
+            XÓA ẢNH CLOUDINARY
+        ====================================================== */
         if (banner.image_url) {
-            const urlParts = banner.image_url.split('/');
-            const publicId = urlParts.slice(7).join('/').split('.')[0];
-            await deleteFromCloudinary(publicId);
+
+            const publicId =
+                extractPublicId(
+                    banner.image_url
+                );
+
+            if (publicId) {
+
+                try {
+
+                    await deleteFromCloudinary(
+                        publicId
+                    );
+
+                } catch (cloudinaryError) {
+
+                    console.error(
+                        "Delete banner image error:",
+                        cloudinaryError
+                    );
+                }
+            }
         }
 
-        const affectedRows = await BannerRepository.delete(bannerId);
+
+        /* ======================================================
+            XÓA DATABASE
+        ====================================================== */
+        const affectedRows =
+            await BannerRepository.delete(
+                bannerId
+            );
+
+
         if (affectedRows === 0) {
-            throw { statusCode: 500, message: "Xóa banner thất bại" };
+
+            const err = new Error(
+                "Xóa banner thất bại"
+            );
+
+            err.statusCode = 500;
+
+            throw err;
         }
+
+
         return true;
     }
 }
 
+
 module.exports = new BannerService();
+
