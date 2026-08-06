@@ -111,74 +111,70 @@ const MoviePage = () => {
         setAlertModal(prev => ({ ...prev, open: false }));
     };
 
-    // ======================================================
-    // FETCH MOVIES - GIỐNG UserPage
-    // ======================================================
-    const fetchMovies = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) {
-            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+   const fetchMovies = useCallback(async (page = 1, keyword = '') => {
+    if (isFetching.current) {
+        console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+        return;
+    }
+
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    isFetching.current = true;
+    setLoading(true);
+
+    try {
+        const res = await api.get('/api/movies/paginated', {
+            params: {
+                page,
+                limit: 20,
+                search: keyword.trim()
+            },
+            signal: controller.signal
+        });
+
+        // ✅ LẤY TRỰC TIẾP TỪ res.data
+        const moviesData = res.data?.data || [];
+        const paginationData = res.data?.pagination || {
+            page: 1,
+            limit: 20,
+            total: 0,
+            totalPages: 1,
+            hasPreviousPage: false,
+            hasNextPage: false
+        };
+
+        setMovies(moviesData);
+        setPagination(paginationData);
+
+    } catch (error) {
+        if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+            console.log('🛑 Request bị hủy');
             return;
         }
-
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
+        console.error('FETCH MOVIES ERROR:', error);
+        setMovies([]);
+        setPagination({
+            page: 1,
+            limit: 20,
+            total: 0,
+            totalPages: 1,
+            hasPreviousPage: false,
+            hasNextPage: false
+        });
+        showAlert('Lỗi', 'Không thể tải danh sách phim.', 'error');
+    } finally {
+        setLoading(false);
+        isFetching.current = false;
+        if (abortControllerRef.current === controller) {
+            abortControllerRef.current = null;
         }
-
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-
-        isFetching.current = true;
-        setLoading(true);
-
-        try {
-            const res = await api.get('/api/movies/paginated', {
-                params: {
-                    page,
-                    limit: 20,
-                    search: keyword.trim()
-                },
-                signal: controller.signal
-            });
-
-            const responseData = res.data?.data;
-            const moviesData = responseData?.data || [];
-            const paginationData = responseData?.pagination || {
-                page: 1,
-                limit: 20,
-                total: 0,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false
-            };
-
-            setMovies(moviesData);
-            setPagination(paginationData);
-
-        } catch (error) {
-            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
-                console.log('🛑 Request bị hủy');
-                return;
-            }
-            console.error('FETCH MOVIES ERROR:', error);
-            setMovies([]);
-            setPagination({
-                page: 1,
-                limit: 20,
-                total: 0,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false
-            });
-            showAlert('Lỗi', 'Không thể tải danh sách phim.', 'error');
-        } finally {
-            setLoading(false);
-            isFetching.current = false;
-            if (abortControllerRef.current === controller) {
-                abortControllerRef.current = null;
-            }
-        }
-    }, []);
-
+    }
+}, []);
     // ======================================================
     // MOUNT
     // ======================================================

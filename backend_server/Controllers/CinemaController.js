@@ -1,14 +1,14 @@
-const CinemaService = require("../Services/CinemaService");
+const CinemaService = require('../Services/CinemaService');
 
-// ==========================================================
-// PUBLIC / ADMIN - GET ALL CINEMAS (KHÔNG PHÂN TRANG)
-// RESPONSE: { success: true, data: [...] }
-// ==========================================================
+/* =========================================================
+    ADMIN - GET ALL CINEMAS (KHÔNG PHÂN TRANG)
+    RESPONSE: { success: true, data: [] }
+========================================================= */
 exports.getAllCinemasAll = async (req, res) => {
     try {
         const { search = "", page, limit } = req.query;
 
-        // Không cho phép phân trang ở route này
+        // Không cho phép phân trang
         if (page !== undefined || limit !== undefined) {
             return res.status(400).json({
                 success: false,
@@ -16,8 +16,13 @@ exports.getAllCinemasAll = async (req, res) => {
             });
         }
 
+        // Service trả về mảng trực tiếp
         const data = await CinemaService.getAllCinemasAll(search);
-        return res.status(200).json({ success: true, data });
+
+        return res.status(200).json({
+            success: true,
+            data
+        });
     } catch (err) {
         console.error("Get All Cinemas Error:", err);
         return res.status(err.statusCode || 500).json({
@@ -27,14 +32,16 @@ exports.getAllCinemasAll = async (req, res) => {
     }
 };
 
-// ==========================================================
-// ADMIN - GET CINEMAS WITH PAGINATION
-// RESPONSE: { success: true, data: [...], pagination: {...} }
-// ==========================================================
+/* =========================================================
+    ADMIN - GET CINEMAS WITH PAGINATION
+    RESPONSE: { success: true, data: [], pagination: {} }
+========================================================= */
 exports.getCinemasWithPagination = async (req, res) => {
     try {
         const { page = 1, limit = 20, search = "" } = req.query;
+
         const result = await CinemaService.getAllCinemasPaginated(page, limit, search);
+
         return res.status(200).json({
             success: true,
             data: result.data,
@@ -49,14 +56,17 @@ exports.getCinemasWithPagination = async (req, res) => {
     }
 };
 
-// ==========================================================
-// ADMIN - GET CINEMA BY ID
-// ==========================================================
+/* =========================================================
+    ADMIN - GET CINEMA BY ID
+========================================================= */
 exports.getCinemaById = async (req, res) => {
     try {
         const { cinema_id } = req.params;
         const cinema = await CinemaService.getCinemaById(cinema_id);
-        return res.status(200).json({ success: true, data: cinema });
+        return res.status(200).json({
+            success: true,
+            data: cinema
+        });
     } catch (err) {
         console.error("Get Cinema By ID Error:", err);
         return res.status(err.statusCode || 500).json({
@@ -66,14 +76,17 @@ exports.getCinemaById = async (req, res) => {
     }
 };
 
-// ==========================================================
-// PUBLIC - GET CINEMA BY SLUG
-// ==========================================================
+/* =========================================================
+    PUBLIC - GET CINEMA BY SLUG
+========================================================= */
 exports.getCinemaBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
         const cinema = await CinemaService.getCinemaBySlug(slug);
-        return res.status(200).json({ success: true, data: cinema });
+        return res.status(200).json({
+            success: true,
+            data: cinema
+        });
     } catch (err) {
         console.error("Get Cinema By Slug Error:", err);
         return res.status(err.statusCode || 500).json({
@@ -83,9 +96,9 @@ exports.getCinemaBySlug = async (req, res) => {
     }
 };
 
-// ==========================================================
-// ADMIN - CREATE CINEMA
-// ==========================================================
+/* =========================================================
+    ADMIN - CREATE CINEMA
+========================================================= */
 exports.createCinema = async (req, res) => {
     try {
         const cinemaId = await CinemaService.createCinema(req.body);
@@ -98,14 +111,15 @@ exports.createCinema = async (req, res) => {
         console.error("Create Cinema Error:", err);
         return res.status(err.statusCode || 400).json({
             success: false,
+            field: err.field || null,
             message: err.message || "Lỗi máy chủ"
         });
     }
 };
 
-// ==========================================================
-// ADMIN - UPDATE CINEMA
-// ==========================================================
+/* =========================================================
+    ADMIN - UPDATE CINEMA
+========================================================= */
 exports.updateCinema = async (req, res) => {
     try {
         const { cinema_id } = req.params;
@@ -118,14 +132,15 @@ exports.updateCinema = async (req, res) => {
         console.error("Update Cinema Error:", err);
         return res.status(err.statusCode || 400).json({
             success: false,
+            field: err.field || null,
             message: err.message || "Lỗi máy chủ"
         });
     }
 };
 
-// ==========================================================
-// ADMIN - DELETE CINEMA
-// ==========================================================
+/* =========================================================
+    ADMIN - DELETE CINEMA
+========================================================= */
 exports.deleteCinema = async (req, res) => {
     try {
         const { cinema_id } = req.params;

@@ -80,51 +80,49 @@ const CinemaPage = () => {
     };
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
-    // ------------------------------------------------------
-    // FETCH CINEMAS - GỌI /paginated
-    // ------------------------------------------------------
     const fetchCinemas = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) return;
-        if (abortControllerRef.current) abortControllerRef.current.abort();
+    if (isFetching.current) return;
+    if (abortControllerRef.current) abortControllerRef.current.abort();
 
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-        isFetching.current = true;
-        setLoading(true);
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    isFetching.current = true;
+    setLoading(true);
 
-        try {
-            const res = await api.get('/api/cinemas/paginated', {
-                params: {
-                    page,
-                    limit: 20,
-                    search: keyword.trim()
-                },
-                signal: controller.signal
-            });
-
-            const responseData = res.data?.data;
-            const cinemasData = responseData?.data || [];
-            const paginationData = responseData?.pagination || {
-                page: 1,
+    try {
+        const res = await api.get('/api/cinemas/paginated', {
+            params: {
+                page,
                 limit: 20,
-                total: 0,
-                totalPages: 1
-            };
+                search: keyword.trim()
+            },
+            signal: controller.signal
+        });
 
-            setCinemas(cinemasData);
-            setPagination(paginationData);
-        } catch (error) {
-            if (error.name === 'AbortError') return;
-            console.error('FETCH CINEMAS ERROR:', error);
-            showAlert('Lỗi', 'Không thể tải danh sách rạp.', 'error');
-        } finally {
-            setLoading(false);
-            isFetching.current = false;
-            if (abortControllerRef.current === controller) {
-                abortControllerRef.current = null;
-            }
+        // Parse đơn giản như MoviePage
+        const cinemasData = res.data?.data || [];
+        const paginationData = res.data?.pagination || {
+            page: 1,
+            limit: 20,
+            total: 0,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false
+        };
+
+        setCinemas(cinemasData);
+        setPagination(paginationData);
+
+    } catch (error) {
+        // ... xử lý lỗi
+    } finally {
+        setLoading(false);
+        isFetching.current = false;
+        if (abortControllerRef.current === controller) {
+            abortControllerRef.current = null;
         }
-    }, []);
+    }
+}, []);
 
     useEffect(() => { fetchCinemas(1, ''); }, []);
 
