@@ -118,17 +118,11 @@ class ShowtimeRepository {
         };
     }
 
-    /* ==========================================================
+     /*=========================================================
         FIND BY CINEMA AND ROOM (PUBLIC)
-    ========================================================== */
-    async findByCinemaAndRoom(cinemaId, roomId, page = 1, limit = 20) {
-        page = Number.parseInt(page, 10);
-        limit = Number.parseInt(limit, 10);
-        if (page < 1) page = 1;
-        if (limit < 1) limit = 20;
-        if (limit > 100) limit = 100;
-        const offset = (page - 1) * limit;
-
+        ✅ TRẢ VỀ MẢNG TRỰC TIẾP, KHÔNG BỌC OBJECT
+    =========================================================*/
+    async findByCinemaAndRoom(cinemaId, roomId) {
         const [rows] = await db.query(
             `
             SELECT
@@ -148,26 +142,11 @@ class ShowtimeRepository {
             JOIN rooms r ON s.room_id = r.room_id
             WHERE c.cinema_id = ? AND r.room_id = ?
             ORDER BY s.start_time DESC
-            LIMIT ? OFFSET ?
-            `,
-            [cinemaId, roomId, limit, offset]
-        );
-
-        const [countRows] = await db.query(
-            `
-            SELECT COUNT(*) AS total
-            FROM showtimes s
-            WHERE s.cinema_id = ? AND s.room_id = ?
             `,
             [cinemaId, roomId]
         );
-        const total = Number(countRows[0]?.total || 0);
-        const totalPages = Math.ceil(total / limit) || 1;
 
-        return {
-            data: rows,
-            pagination: { page, limit, total, totalPages, hasPreviousPage: page > 1, hasNextPage: page < totalPages }
-        };
+        return rows;
     }
 
     /* ==========================================================

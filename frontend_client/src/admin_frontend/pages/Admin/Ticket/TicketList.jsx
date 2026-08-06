@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import api from '../../../../api/api';  // ✅ Import api
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import api from '../../../../api/api';
 import {
     Ticket,
     LayoutGrid,
@@ -35,6 +35,9 @@ const TicketList = () => {
         showtimeId: ''
     });
 
+    // ----- ABORT CONTROLLER -----
+    const abortControllerRef = useRef(null);
+
     // ----- MODAL STATE -----
     const [modal, setModal] = useState({
         show: false,
@@ -67,26 +70,29 @@ const TicketList = () => {
 
     const handleApiError = (error, fallbackMessage = 'Có lỗi xảy ra.') => {
         console.error('API Error:', error);
-        // api.js đã xử lý 401, nhưng giữ fallback
         showModal('error', 'Lỗi', error.response?.data?.message || fallbackMessage);
     };
 
-    // ----- 1. Lấy danh sách rạp -----
-    useEffect(() => {
-        const fetchCinemas = async () => {
-            try {
-                const res = await api.get('/api/cinemas');
-                setCinemas(res.data || []);
-            } catch (err) {
-                handleApiError(err, 'Không thể tải danh sách rạp.');
-            }
-        };
-        fetchCinemas();
+    // ----- 1. Lấy danh sách rạp (có parse) -----
+    const fetchCinemas = useCallback(async () => {
+        try {
+            const res = await api.get('/api/cinemas');
+            // ✅ Lấy mảng từ res.data.data
+            const cinemaList = res.data?.data || [];
+            setCinemas(cinemaList);
+            console.log('✅ [Cinemas] Đã tải:', cinemaList.length);
+        } catch (err) {
+            handleApiError(err, 'Không thể tải danh sách rạp.');
+        }
     }, []);
 
-    // ----- 2. Khi chọn rạp -> lấy phòng -----
     useEffect(() => {
-        if (!filters.cinemaId) {
+        fetchCinemas();
+    }, [fetchCinemas]);
+
+    // ----- 2. Khi chọn rạp -> lấy phòng (có parse) -----
+    const fetchRooms = useCallback(async (cinemaId) => {
+        if (!cinemaId) {
             setRooms([]);
             setFilters(prev => ({ ...prev, roomId: '', showtimeId: '' }));
             setShowtimes([]);
@@ -95,27 +101,31 @@ const TicketList = () => {
             return;
         }
 
-        const fetchRooms = async () => {
-            setLoadingRooms(true);
-            try {
-                const res = await api.get(`/api/rooms/cinema/${filters.cinemaId}`);
-                setRooms(res.data || []);
-                setFilters(prev => ({ ...prev, roomId: '', showtimeId: '' }));
-                setShowtimes([]);
-                setTickets([]);
-                setAllSeats([]);
-            } catch (err) {
-                handleApiError(err, 'Không thể tải danh sách phòng.');
-            } finally {
-                setLoadingRooms(false);
-            }
-        };
-        fetchRooms();
-    }, [filters.cinemaId]);
+        setLoadingRooms(true);
+        try {
+            const res = await api.get(`/api/rooms/cinema/${cinemaId}`);
+            // ✅ Lấy mảng từ res.data.data
+            const roomList = res.data?.data || [];
+            setRooms(roomList);
+            setFilters(prev => ({ ...prev, roomId: '', showtimeId: '' }));
+            setShowtimes([]);
+            setTickets([]);
+            setAllSeats([]);
+            console.log(`✅ [Rooms] Đã tải cho cinema ${cinemaId}:`, roomList.length);
+        } catch (err) {
+            handleApiError(err, 'Không thể tải danh sách phòng.');
+        } finally {
+            setLoadingRooms(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchRooms(filters.cinemaId);
+    }, [filters.cinemaId, fetchRooms]);
 
     // ----- 3. Khi chọn phòng -> lấy sơ đồ ghế + suất chiếu -----
-    useEffect(() => {
-        if (!filters.roomId) {
+    const fetchShowtimesAndSeats = useCallback(async (cinemaId, roomId) => {
+        if (!roomId) {
             setShowtimes([]);
             setAllSeats([]);
             setTickets([]);
@@ -123,52 +133,78 @@ const TicketList = () => {
             return;
         }
 
-        const fetchData = async () => {
-            setLoadingShowtimes(true);
-            try {
-                // Lấy sơ đồ ghế (public)
-                const seatsRes = await api.get(`/api/seats/room/${filters.roomId}`);
-                setAllSeats(seatsRes.data || []);
+        setLoadingShowtimes(true);
+        try {
+            // Lấy sơ đồ ghế (public)
+            const seatsRes = await api.get(`/api/seats/room/${roomId}`);
+            // ✅ Lấy mảng từ res.data.data
+            const seatList = seatsRes.data?.data || [];
+            setAllSeats(seatList);
 
-                // Lấy suất chiếu theo rạp và phòng (admin)
-                const showtimesRes = await api.get(
-                    `/api/showtimes/by-cinema-room?cinema_id=${filters.cinemaId}&room_id=${filters.roomId}`
-                );
-                setShowtimes(showtimesRes.data || []);
-                setFilters(prev => ({ ...prev, showtimeId: '' }));
-                setTickets([]);
-            } catch (err) {
-                handleApiError(err, 'Không thể tải suất chiếu.');
-            } finally {
-                setLoadingShowtimes(false);
-            }
-        };
-        fetchData();
-    }, [filters.cinemaId, filters.roomId]);
+            // Lấy suất chiếu theo rạp và phòng (admin)
+            const showtimesRes = await api.get(
+                `/api/showtimes/by-cinema-room?cinema_id=${cinemaId}&room_id=${roomId}`
+            );
+            // ✅ Lấy mảng từ res.data.data
+            const showtimeList = showtimesRes.data?.data || [];
+            setShowtimes(showtimeList);
+            setFilters(prev => ({ ...prev, showtimeId: '' }));
+            setTickets([]);
+            console.log(`✅ [Showtimes] Đã tải cho room ${roomId}:`, showtimeList.length);
+            console.log(`✅ [Seats] Đã tải cho room ${roomId}:`, seatList.length);
+        } catch (err) {
+            handleApiError(err, 'Không thể tải suất chiếu.');
+        } finally {
+            setLoadingShowtimes(false);
+        }
+    }, []);
 
-    // ----- 4. Khi chọn suất chiếu -> lấy vé -----
-    const fetchTickets = useCallback(async () => {
-        if (!filters.showtimeId) {
+    useEffect(() => {
+        fetchShowtimesAndSeats(filters.cinemaId, filters.roomId);
+    }, [filters.cinemaId, filters.roomId, fetchShowtimesAndSeats]);
+
+    // ----- 4. Khi chọn suất chiếu -> lấy vé (có abort controller) -----
+    const fetchTickets = useCallback(async (showtimeId) => {
+        if (!showtimeId) {
             setTickets([]);
             return;
         }
 
+        // Hủy request cũ nếu có
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         setLoadingTickets(true);
         try {
-            const res = await api.get(`/api/tickets/showtime/${filters.showtimeId}`);
-            const ticketsData = res.data?.data || res.data || [];
+            const res = await api.get(`/api/tickets/showtime/${showtimeId}`, {
+                signal: controller.signal
+            });
+            // ✅ Lấy mảng từ res.data.data
+            const ticketsData = res.data?.data || [];
             setTickets(Array.isArray(ticketsData) ? ticketsData : []);
+            console.log(`✅ [Tickets] Đã tải cho showtime ${showtimeId}:`, ticketsData.length);
         } catch (err) {
+            if (err.name === 'AbortError') {
+                console.log('🛑 [Tickets] Request bị hủy');
+                return;
+            }
             handleApiError(err, 'Không thể tải danh sách vé.');
             setTickets([]);
         } finally {
             setLoadingTickets(false);
+            if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
+            }
         }
-    }, [filters.showtimeId]);
+    }, []);
 
     useEffect(() => {
-        fetchTickets();
-    }, [fetchTickets]);
+        fetchTickets(filters.showtimeId);
+    }, [filters.showtimeId, fetchTickets]);
 
     // ----- 5. Check-in vé -----
     const handleCheckIn = (code) => {
@@ -181,7 +217,7 @@ const TicketList = () => {
                     const response = await api.post('/api/tickets/check-in', { ticketCode: code });
                     if (response.data.success) {
                         showModal('success', 'Thành công', response.data.message || 'Đã soát vé thành công!');
-                        await fetchTickets();
+                        await fetchTickets(filters.showtimeId);
                     } else {
                         showModal('error', 'Lỗi', response.data.message || 'Không thể soát vé.');
                     }

@@ -32,29 +32,6 @@ const initialFormData = {
     expiry_date: ''
 };
 
-const parseData = (response) => {
-    if (response?.data?.success && response.data.data?.data) {
-        return response.data.data.data;
-    }
-    if (response?.data?.data) {
-        return response.data.data;
-    }
-    if (Array.isArray(response?.data)) {
-        return response.data;
-    }
-    return [];
-};
-
-const parsePagination = (response) => {
-    if (response?.data?.data?.pagination) {
-        return response.data.data.pagination;
-    }
-    if (response?.data?.pagination) {
-        return response.data.pagination;
-    }
-    return { page: 1, limit: 20, total: 0, totalPages: 1 };
-};
-
 // ==========================================================
 // COMPONENT
 // ==========================================================
@@ -102,19 +79,26 @@ const CouponPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ------------------------------------------------------
-    // FETCH COUPONS
+    // FETCH COUPONS - GIỐNG MoviePage
     // ------------------------------------------------------
     const fetchCoupons = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) return;
-        if (abortControllerRef.current) abortControllerRef.current.abort();
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
+        }
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
+
         isFetching.current = true;
         setLoading(true);
 
         try {
-            const res = await api.get('/api/coupons', {
+            const res = await api.get('/api/coupons/paginated', {
                 params: {
                     page,
                     limit: 20,
@@ -123,14 +107,34 @@ const CouponPage = () => {
                 signal: controller.signal
             });
 
-            const couponsData = parseData(res);
-            const paginationData = parsePagination(res);
+            // ✅ Lấy trực tiếp từ res.data giống MoviePage
+            const couponsData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            };
 
-            setCoupons(Array.isArray(couponsData) ? couponsData : []);
+            setCoupons(couponsData);
             setPagination(paginationData);
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
             console.error('FETCH COUPONS ERROR:', error);
+            setCoupons([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
             showAlert('Lỗi', 'Không thể tải danh sách mã giảm giá.', 'error');
         } finally {
             setLoading(false);
@@ -141,8 +145,12 @@ const CouponPage = () => {
         }
     }, []);
 
+    // ------------------------------------------------------
+    // MOUNT
+    // ------------------------------------------------------
     useEffect(() => {
         fetchCoupons(1, '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ------------------------------------------------------
@@ -150,13 +158,22 @@ const CouponPage = () => {
     // ------------------------------------------------------
     const prevSearchRef = useRef('');
     useEffect(() => {
-        if (search === prevSearchRef.current) return;
-        prevSearchRef.current = search;
-        const timer = setTimeout(() => fetchCoupons(1, search), 400);
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
+
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchCoupons(1, currentSearch);
+        }, 400);
+
         return () => clearTimeout(timer);
     }, [search, fetchCoupons]);
 
-    const handlePageChange = (page) => fetchCoupons(page, search);
+    const handlePageChange = (page) => {
+        fetchCoupons(page, search);
+    };
 
     // ------------------------------------------------------
     // VALIDATE FORM
@@ -274,9 +291,11 @@ const CouponPage = () => {
                 try {
                     await api.delete(`/api/coupons/${coupon.coupon_id}`);
                     closeAlert();
-                    const newPage = coupons.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
+
+                    const currentPage = pagination.page;
+                    const newPage = coupons.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
                     fetchCoupons(newPage, search);
                     showAlert('Thành công', 'Xóa mã giảm giá thành công.', 'success');
                 } catch (error) {
@@ -406,10 +425,14 @@ const CouponPage = () => {
     // ------------------------------------------------------
     const renderAlertIcon = () => {
         switch (alertModal.type) {
-            case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error': return <XCircle size={58} color="#ef4444" />;
-            case 'warning': return <AlertTriangle size={58} color="#f59e0b" />;
-            default: return <Info size={58} color="#3b82f6" />;
+            case 'success':
+                return <CheckCircle2 size={58} color="#22c55e" />;
+            case 'error':
+                return <XCircle size={58} color="#ef4444" />;
+            case 'warning':
+                return <AlertTriangle size={58} color="#f59e0b" />;
+            default:
+                return <Info size={58} color="#3b82f6" />;
         }
     };
 
@@ -480,7 +503,10 @@ const CouponPage = () => {
                                 Hủy
                             </button>
                         )}
-                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
+                        <button
+                            className="admin-confirm-btn"
+                            onClick={alertModal.onConfirm || closeAlert}
+                        >
                             Xác nhận
                         </button>
                     </div>

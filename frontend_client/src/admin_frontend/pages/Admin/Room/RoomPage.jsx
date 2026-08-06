@@ -80,14 +80,21 @@ const RoomPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ------------------------------------------------------
-    // FETCH ROOMS (PAGINATION + SEARCH) - GỌI /paginated
+    // FETCH ROOMS - GIỐNG MoviePage
     // ------------------------------------------------------
     const fetchRooms = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) return;
-        if (abortControllerRef.current) abortControllerRef.current.abort();
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
+        }
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
+
         isFetching.current = true;
         setLoading(true);
 
@@ -101,20 +108,34 @@ const RoomPage = () => {
                 signal: controller.signal
             });
 
-            const responseData = res.data?.data;
-            const roomsData = responseData?.data || [];
-            const paginationData = responseData?.pagination || {
+            // ✅ Lấy trực tiếp từ res.data giống MoviePage
+            const roomsData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
                 page: 1,
                 limit: 20,
                 total: 0,
-                totalPages: 1
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
             };
 
             setRooms(roomsData);
             setPagination(paginationData);
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
             console.error('FETCH ROOMS ERROR:', error);
+            setRooms([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
             showAlert('Lỗi', 'Không thể tải danh sách phòng chiếu.', 'error');
         } finally {
             setLoading(false);
@@ -125,18 +146,27 @@ const RoomPage = () => {
         }
     }, []);
 
-    const fetchCinemas = async () => {
+    // ------------------------------------------------------
+    // FETCH CINEMAS (cho dropdown)
+    // ------------------------------------------------------
+    const fetchCinemas = useCallback(async () => {
         try {
             const res = await api.get('/api/cinemas');
-            setCinemas(res.data.data?.data || res.data?.data || []);
+            // Cinema API trả về { success: true, data: [...] }
+            const cinemaList = res.data?.data || [];
+            setCinemas(cinemaList);
         } catch (error) {
             console.error('Fetch cinemas error:', error);
         }
-    };
+    }, []);
 
+    // ------------------------------------------------------
+    // MOUNT
+    // ------------------------------------------------------
     useEffect(() => {
         fetchRooms(1, '');
         fetchCinemas();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ------------------------------------------------------
@@ -144,13 +174,22 @@ const RoomPage = () => {
     // ------------------------------------------------------
     const prevSearchRef = useRef('');
     useEffect(() => {
-        if (search === prevSearchRef.current) return;
-        prevSearchRef.current = search;
-        const timer = setTimeout(() => fetchRooms(1, search), 400);
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
+
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchRooms(1, currentSearch);
+        }, 400);
+
         return () => clearTimeout(timer);
     }, [search, fetchRooms]);
 
-    const handlePageChange = (page) => fetchRooms(page, search);
+    const handlePageChange = (page) => {
+        fetchRooms(page, search);
+    };
 
     // ------------------------------------------------------
     // VALIDATE FORM
@@ -275,9 +314,10 @@ const RoomPage = () => {
                     await api.delete(`/api/rooms/${room.room_id}`);
                     closeAlert();
 
-                    const newPage = rooms.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
+                    const currentPage = pagination.page;
+                    const newPage = rooms.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
                     fetchRooms(newPage, search);
                     showAlert('Thành công', 'Xóa phòng chiếu thành công.', 'success');
                 } catch (error) {

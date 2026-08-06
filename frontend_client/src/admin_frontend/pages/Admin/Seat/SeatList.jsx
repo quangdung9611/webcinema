@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import api from '../../../../api/api';  // ✅ Import api
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import api from '../../../../api/api';
 import {
     Zap,
     Trash2,
@@ -13,8 +13,6 @@ import {
 } from 'lucide-react';
 import AdminModal from '../../../components/AdminModal';
 import '../../../styles/AdminSeat.css';
-
-// ❌ Xóa API_BASE
 
 const SeatList = () => {
     const [cinemas, setCinemas] = useState([]);
@@ -31,54 +29,94 @@ const SeatList = () => {
         title: ''
     });
 
-    // --- FETCH CINEMAS ---
-    useEffect(() => {
-        const fetchCinemas = async () => {
-            try {
-                const res = await api.get('/api/cinemas');
-                setCinemas(res.data);
-            } catch (err) {
-                console.error('Lỗi lấy rạp:', err);
-            }
-        };
-        fetchCinemas();
+    // Dùng ref để tránh gọi nhiều lần
+    const isFetching = useRef(false);
+    const abortControllerRef = useRef(null);
+
+    // --- FETCH CINEMAS (có parse data) ---
+    const fetchCinemas = useCallback(async () => {
+        try {
+            const res = await api.get('/api/cinemas');
+            // ✅ Lấy mảng từ res.data.data
+            const cinemaList = res.data?.data || [];
+            setCinemas(cinemaList);
+        } catch (err) {
+            console.error('Lỗi lấy rạp:', err);
+        }
     }, []);
 
-    // --- FETCH ROOMS BY CINEMA ---
     useEffect(() => {
-        const fetchRooms = async () => {
-            if (selectedCinema) {
-                try {
-                    const res = await api.get(`/api/rooms/cinema/${selectedCinema}`);
-                    setRooms(res.data);
-                    setSelectedRoom('');
-                    setSeats([]);
-                } catch (err) {
-                    console.error('Lỗi lấy phòng:', err);
-                }
-            }
-        };
-        fetchRooms();
-    }, [selectedCinema]);
+        fetchCinemas();
+    }, [fetchCinemas]);
 
-    // --- FETCH SEATS BY ROOM ---
-    const fetchSeats = async () => {
-        if (selectedRoom) {
-            setLoading(true);
-            try {
-                const res = await api.get(`/api/seats/room/${selectedRoom}`);
-                setSeats(res.data);
-            } catch (err) {
-                console.error('Lỗi lấy ghế:', err);
-            } finally {
-                setLoading(false);
+    // --- FETCH ROOMS BY CINEMA (có parse data) ---
+    const fetchRooms = useCallback(async (cinemaId) => {
+        if (!cinemaId) {
+            setRooms([]);
+            setSelectedRoom('');
+            setSeats([]);
+            return;
+        }
+        try {
+            const res = await api.get(`/api/rooms/cinema/${cinemaId}`);
+            // ✅ Lấy mảng từ res.data.data
+            const roomList = res.data?.data || [];
+            setRooms(roomList);
+            setSelectedRoom('');
+            setSeats([]);
+        } catch (err) {
+            console.error('Lỗi lấy phòng:', err);
+            setRooms([]);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchRooms(selectedCinema);
+    }, [selectedCinema, fetchRooms]);
+
+    // --- FETCH SEATS BY ROOM (có parse data + abort controller) ---
+    const fetchSeats = useCallback(async (roomId) => {
+        if (!roomId) {
+            setSeats([]);
+            return;
+        }
+
+        // Hủy request cũ nếu có
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        isFetching.current = true;
+        setLoading(true);
+
+        try {
+            const res = await api.get(`/api/seats/room/${roomId}`, {
+                signal: controller.signal
+            });
+            // ✅ Lấy mảng từ res.data.data
+            const seatList = res.data?.data || [];
+            setSeats(seatList);
+        } catch (err) {
+            if (err.name === 'AbortError') {
+                console.log('🛑 Fetch seats bị hủy');
+                return;
+            }
+            console.error('Lỗi lấy ghế:', err);
+            setSeats([]);
+        } finally {
+            setLoading(false);
+            isFetching.current = false;
+            if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
             }
         }
-    };
+    }, []);
 
     useEffect(() => {
-        fetchSeats();
-    }, [selectedRoom]);
+        fetchSeats(selectedRoom);
+    }, [selectedRoom, fetchSeats]);
 
     // --- MODAL HANDLERS ---
     const handleModalConfirm = async () => {
@@ -109,7 +147,8 @@ const SeatList = () => {
                 setSeats([]);
             }
 
-            fetchSeats();
+            // Reload seats
+            await fetchSeats(selectedRoom);
             setModal({ ...modal, isOpen: false });
         } catch (err) {
             setModal({

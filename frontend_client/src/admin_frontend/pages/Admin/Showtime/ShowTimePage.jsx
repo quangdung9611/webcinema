@@ -97,14 +97,21 @@ const ShowTimePage = () => {
     };
 
     // ------------------------------------------------------
-    // FETCH SHOWTIMES - GỌI /paginated
+    // FETCH SHOWTIMES - GIỐNG MoviePage
     // ------------------------------------------------------
     const fetchShowtimes = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) return;
-        if (abortControllerRef.current) abortControllerRef.current.abort();
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
+        }
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
+
         isFetching.current = true;
         setLoading(true);
 
@@ -118,20 +125,34 @@ const ShowTimePage = () => {
                 signal: controller.signal
             });
 
-            const responseData = res.data?.data;
-            const showtimesData = responseData?.data || [];
-            const paginationData = responseData?.pagination || {
+            // ✅ Lấy trực tiếp từ res.data giống MoviePage
+            const showtimesData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
                 page: 1,
                 limit: 20,
                 total: 0,
-                totalPages: 1
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
             };
 
             setShowtimes(showtimesData);
             setPagination(paginationData);
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
             console.error('FETCH SHOWTIMES ERROR:', error);
+            setShowtimes([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
             showAlert('Lỗi', 'Không thể tải danh sách suất chiếu.', 'error');
         } finally {
             setLoading(false);
@@ -145,22 +166,31 @@ const ShowTimePage = () => {
     // ------------------------------------------------------
     // FETCH INITIAL DATA (Movies & Cinemas)
     // ------------------------------------------------------
-    const fetchInitialData = async () => {
+    const fetchInitialData = useCallback(async () => {
         try {
             const [movieRes, cinemaRes] = await Promise.all([
                 api.get('/api/movies'),
                 api.get('/api/cinemas')
             ]);
-            setMovies(movieRes.data?.data?.data || movieRes.data?.data || []);
-            setCinemas(cinemaRes.data?.data?.data || cinemaRes.data?.data || []);
+
+            // Movies: { success: true, data: [...] }
+            const moviesData = movieRes.data?.data || [];
+            const cinemasData = cinemaRes.data?.data || [];
+
+            setMovies(moviesData);
+            setCinemas(cinemasData);
         } catch (error) {
             console.error('Fetch initial data error:', error);
         }
-    };
+    }, []);
 
+    // ------------------------------------------------------
+    // MOUNT
+    // ------------------------------------------------------
     useEffect(() => {
         fetchShowtimes(1, '');
         fetchInitialData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ------------------------------------------------------
@@ -168,30 +198,40 @@ const ShowTimePage = () => {
     // ------------------------------------------------------
     const prevSearchRef = useRef('');
     useEffect(() => {
-        if (search === prevSearchRef.current) return;
-        prevSearchRef.current = search;
-        const timer = setTimeout(() => fetchShowtimes(1, search), 400);
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
+
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchShowtimes(1, currentSearch);
+        }, 400);
+
         return () => clearTimeout(timer);
     }, [search, fetchShowtimes]);
 
-    const handlePageChange = (page) => fetchShowtimes(page, search);
+    const handlePageChange = (page) => {
+        fetchShowtimes(page, search);
+    };
 
     // ------------------------------------------------------
     // FETCH ROOMS BY CINEMA
     // ------------------------------------------------------
-    const fetchRoomsByCinema = async (cinemaId) => {
+    const fetchRoomsByCinema = useCallback(async (cinemaId) => {
         if (!cinemaId) {
             setRooms([]);
             return;
         }
         try {
             const res = await api.get(`/api/rooms/cinema/${cinemaId}`);
-            setRooms(res.data?.data || res.data || []);
+            const roomsData = res.data?.data || [];
+            setRooms(roomsData);
         } catch (error) {
             console.error('Fetch rooms error:', error);
             setRooms([]);
         }
-    };
+    }, []);
 
     // ------------------------------------------------------
     // VALIDATE FORM
@@ -258,7 +298,7 @@ const ShowTimePage = () => {
         }
         setFormErrors((prev) => ({ ...prev, [name]: errorMessage }));
 
-        if (name === 'cinema_id') {
+        if (name === 'cinema_id' && value) {
             setFormData((prev) => ({ ...prev, cinema_id: value, room_id: '' }));
             await fetchRoomsByCinema(value);
         }
@@ -320,9 +360,10 @@ const ShowTimePage = () => {
                     await api.delete(`/api/showtimes/${showtime.showtime_id}`);
                     closeAlert();
 
-                    const newPage = showtimes.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
+                    const currentPage = pagination.page;
+                    const newPage = showtimes.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
                     fetchShowtimes(newPage, search);
                     showAlert('Thành công', 'Xóa suất chiếu thành công.', 'success');
                 } catch (error) {

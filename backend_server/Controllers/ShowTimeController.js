@@ -88,7 +88,13 @@ exports.getShowtimesByCinemaAndRoom = async (req, res) => {
                 message: "Thiếu tham số cinema_id hoặc room_id"
             });
         }
-        const data = await ShowtimeService.getShowtimesByCinemaAndRoom(cinema_id, room_id);
+
+        const result = await ShowtimeService.getShowtimesByCinemaAndRoom(cinema_id, room_id);
+
+        // ✅ Nếu service trả về { data: [...], pagination: {...} }
+        // thì lấy result.data, còn không thì dùng result
+        const data = Array.isArray(result?.data) ? result.data : (Array.isArray(result) ? result : []);
+
         return res.status(200).json({
             success: true,
             data
@@ -101,7 +107,6 @@ exports.getShowtimesByCinemaAndRoom = async (req, res) => {
         });
     }
 };
-
 /*=========================================================
     PUBLIC - GET SHOWTIMES BY MOVIE
 =========================================================*/

@@ -29,12 +29,12 @@ class ShowtimeService {
     return await ShowtimeRepository.findAll(page, limit, search);
   }
 
-  /* ==========================================================
-      GET SHOWTIMES BY CINEMA AND ROOM (PUBLIC)
-  ========================================================== */
   async getShowtimesByCinemaAndRoom(cinema_id, room_id, page = 1, limit = 20) {
-    return await ShowtimeRepository.findByCinemaAndRoom(cinema_id, room_id, page, limit);
-  }
+    // Lấy dữ liệu từ repository
+    const result = await ShowtimeRepository.findByCinemaAndRoom(cinema_id, room_id, page, limit);
+    // Trả về mảng data (không có pagination)
+    return result.data;
+}
 
   /* ==========================================================
       GET SHOWTIME DETAIL (PUBLIC)

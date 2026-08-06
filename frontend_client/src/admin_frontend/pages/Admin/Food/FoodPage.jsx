@@ -93,19 +93,26 @@ const FoodPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ------------------------------------------------------
-    // FETCH FOODS
+    // FETCH FOODS - GIỐNG MoviePage
     // ------------------------------------------------------
     const fetchFoods = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) return;
-        if (abortControllerRef.current) abortControllerRef.current.abort();
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
+        }
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
+
         isFetching.current = true;
         setLoading(true);
 
         try {
-            const res = await api.get('/api/foods', {
+            const res = await api.get('/api/foods/paginated', {
                 params: {
                     page,
                     limit: 20,
@@ -114,20 +121,34 @@ const FoodPage = () => {
                 signal: controller.signal
             });
 
-            const responseData = res.data?.data;
-            const foodsData = responseData?.data || [];
-            const paginationData = responseData?.pagination || {
+            // ✅ Lấy trực tiếp từ res.data giống MoviePage
+            const foodsData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
                 page: 1,
                 limit: 20,
                 total: 0,
-                totalPages: 1
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
             };
 
             setFoods(foodsData);
             setPagination(paginationData);
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
             console.error('FETCH FOODS ERROR:', error);
+            setFoods([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
             showAlert('Lỗi', 'Không thể tải danh sách đồ ăn.', 'error');
         } finally {
             setLoading(false);
@@ -138,8 +159,12 @@ const FoodPage = () => {
         }
     }, []);
 
+    // ------------------------------------------------------
+    // MOUNT
+    // ------------------------------------------------------
     useEffect(() => {
         fetchFoods(1, '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ------------------------------------------------------
@@ -147,13 +172,22 @@ const FoodPage = () => {
     // ------------------------------------------------------
     const prevSearchRef = useRef('');
     useEffect(() => {
-        if (search === prevSearchRef.current) return;
-        prevSearchRef.current = search;
-        const timer = setTimeout(() => fetchFoods(1, search), 400);
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
+
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchFoods(1, currentSearch);
+        }, 400);
+
         return () => clearTimeout(timer);
     }, [search, fetchFoods]);
 
-    const handlePageChange = (page) => fetchFoods(page, search);
+    const handlePageChange = (page) => {
+        fetchFoods(page, search);
+    };
 
     // ------------------------------------------------------
     // VALIDATE FORM
@@ -300,9 +334,10 @@ const FoodPage = () => {
                     await api.delete(`/api/foods/${food.product_id}`);
                     closeAlert();
 
-                    const newPage = foods.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
+                    const currentPage = pagination.page;
+                    const newPage = foods.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
                     fetchFoods(newPage, search);
                     showAlert('Thành công', 'Xóa sản phẩm thành công.', 'success');
                 } catch (error) {
