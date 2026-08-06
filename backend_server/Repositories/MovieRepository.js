@@ -5,60 +5,61 @@ const db = require('../Config/db');
 
 class MovieRepository {
 
-    /*=========================================================
-        FIND ALL MOVIES - KHÔNG PHÂN TRANG (có search)
+   /* ==========================================================
+    FIND ALL ACTORS - KHÔNG PHÂN TRANG (PUBLIC)
+    RESPONSE CHỈ LÀ ARRAY
+========================================================== */
+async findAllAll(search = "") {
 
-        RETURN:
-        rows[]
+    search =
+        typeof search === "string"
+            ? search.trim()
+            : "";
 
-        KHÔNG data object
-        KHÔNG pagination
-    =========================================================*/
-    async findAllAll(search = "") {
+    const conditions = [];
+    const queryParams = [];
 
-        search =
-            typeof search === "string"
-                ? search.trim()
-                : "";
+    if (search) {
 
-        let whereClause = "";
-        const queryParams = [];
-
-
-        if (search) {
-
-            whereClause = `
-                WHERE
-                    title LIKE ?
-                    OR director LIKE ?
-                    OR nation LIKE ?
-            `;
-
-            const keyword = `%${search}%`;
-
-            queryParams.push(
-                keyword,
-                keyword,
-                keyword
-            );
-        }
-
-
-        const [rows] = await db.query(
-            `
-            SELECT *
-            FROM movies
-            ${whereClause}
-            ORDER BY created_at DESC
-            `,
-            queryParams
+        conditions.push(
+            "(name LIKE ? OR nationality LIKE ?)"
         );
 
+        const keyword = `%${search}%`;
 
-        // Không phân trang → trả thẳng array
-        return rows;
+        queryParams.push(
+            keyword,
+            keyword
+        );
     }
 
+    const whereClause =
+        conditions.length
+            ? `WHERE ${conditions.join(" AND ")}`
+            : "";
+
+    const [rows] = await db.query(
+        `
+        SELECT
+            actor_id,
+            name,
+            gender,
+            nationality,
+            actor_avatar,
+            biography,
+            birthday,
+            slug,
+            created_at,
+            updated_at
+        FROM actors
+        ${whereClause}
+        ORDER BY actor_id DESC
+        `,
+        queryParams
+    );
+
+    return rows;
+}
 
     /*=========================================================
         FIND ALL MOVIES - CÓ PHÂN TRANG (có search)

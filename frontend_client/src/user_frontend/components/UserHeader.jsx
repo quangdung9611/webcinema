@@ -72,7 +72,7 @@ const UserHeader = () => {
         const fetchCinemas = async () => {
             try {
                 const response = await api.get('/api/cinemas');
-                const raw = response.data;
+                const raw = response.data?.data;
                 let list = [];
                 if (Array.isArray(raw)) list = raw;
                 else if (raw?.data && Array.isArray(raw.data)) list = raw.data;

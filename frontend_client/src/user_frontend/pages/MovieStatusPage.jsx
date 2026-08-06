@@ -38,7 +38,7 @@ const MovieStatusPage = () => {
                 setError(null);
 
                 const res = await api.get('/api/movies');
-                setMovies(res.data || []);
+                setMovies(res.data?.data || []);
             } catch (err) {
                 console.error("Lỗi lấy danh sách phim:", err);
                 setError("Không thể tải danh sách phim. Vui lòng thử lại sau.");

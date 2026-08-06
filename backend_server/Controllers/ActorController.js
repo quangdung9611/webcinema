@@ -1,41 +1,89 @@
 
 const ActorService = require("../Services/ActorService");
 
+
 /* ==========================================================
-    PUBLIC/ADMIN - GET ALL ACTORS (KHÔNG PHÂN TRANG)
+PUBLIC/ADMIN - GET ALL ACTORS (KHÔNG PHÂN TRANG)
 ========================================================== */
 exports.getAllActorsAll = async (req, res) => {
+
     try {
+
         const {
             search = "",
             page,
             limit
         } = req.query;
 
-        // Không cho phép phân trang ở route này
-        if (page !== undefined || limit !== undefined) {
+
+        // ======================================================
+        // KHÔNG CHO PHÉP PHÂN TRANG
+        // ======================================================
+
+        if (
+            page !== undefined ||
+            limit !== undefined
+        ) {
+
             return res.status(400).json({
+
                 success: false,
+
                 message:
                     "Route /api/actors không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/actors/paginated để phân trang."
+
             });
+
         }
 
-        const data = await ActorService.getAllActorsAll(search);
+
+        // ======================================================
+        // GET ACTORS
+        // ======================================================
+
+        const data =
+            await ActorService.getAllActorsAll(
+                search
+            );
+
+
+        // ======================================================
+        // RESPONSE CHUẨN
+        // ======================================================
 
         return res.status(200).json({
-            success: true,
-            data
-        });
-    } catch (err) {
-        console.error("Get All Actors Error:", err);
 
-        return res.status(err.statusCode || 500).json({
-            success: false,
-            message: err.message || "Lỗi máy chủ"
+            success: true,
+
+            data: Array.isArray(data)
+                ? data
+                : []
+
         });
+
+    } catch (err) {
+
+        console.error(
+            "Get All Actors Error:",
+            err
+        );
+
+        return res.status(
+            err.statusCode || 500
+        ).json({
+
+            success: false,
+
+            message:
+                err.message ||
+                "Lỗi máy chủ"
+
+        });
+
     }
+
 };
+
 
 /* ==========================================================
     ADMIN - GET ACTORS WITH PAGINATION

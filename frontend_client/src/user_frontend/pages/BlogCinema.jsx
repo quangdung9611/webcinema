@@ -1,10 +1,24 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../api/api'; // ✅ Import api
-import { ChevronRight, Newspaper, AlertCircle } from 'lucide-react';
+import api from '../../api/api';
 
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, EffectFade } from 'swiper/modules';
+import {
+    ChevronRight,
+    Newspaper,
+    AlertCircle
+} from 'lucide-react';
+
+import {
+    Swiper,
+    SwiperSlide
+} from 'swiper/react';
+
+import {
+    Autoplay,
+    EffectFade
+} from 'swiper/modules';
+
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 
@@ -12,146 +26,404 @@ import CinemaCard from '../components/CinemaCard';
 import '../styles/BlogCinema.css';
 
 const BlogCinema = () => {
+
+    // ==========================================================
+    // BLOG STATE
+    // ==========================================================
+
     const [blogs, setBlogs] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // ===== STATE BANNER TỪ API =====
+
+    // ==========================================================
+    // BANNER STATE
+    // ==========================================================
+
     const [banners, setBanners] = useState([]);
     const [bannerLoading, setBannerLoading] = useState(true);
 
-    // ===== FETCH BANNER =====
+
+    // ==========================================================
+    // FETCH BANNERS
+    // ==========================================================
+
     useEffect(() => {
+
         const fetchBanners = async () => {
+
             try {
+
                 setBannerLoading(true);
-                const res = await api.get('/api/banners?page=BLOG');
-                const bannerData = res.data?.data || [];
-                setBanners(Array.isArray(bannerData) ? bannerData : []);
+
+                const res = await api.get(
+                    '/api/banners',
+                    {
+                        params: {
+                            page: 'BLOG'
+                        }
+                    }
+                );
+
+                /*
+                 * API banner hiện tại:
+                 *
+                 * {
+                 *     success: true,
+                 *     data: [
+                 *         {
+                 *             banner_id: 1,
+                 *             page: "BLOG",
+                 *             image_url: "...",
+                 *             is_active: 1,
+                 *             created_at: "...",
+                 *             updated_at: "..."
+                 *         }
+                 *     ]
+                 * }
+                 *
+                 * => Danh sách banner nằm tại:
+                 *
+                 * res.data.data
+                 */
+
+                const bannerData =
+                    res.data?.success === true &&
+                    Array.isArray(res.data?.data)
+                        ? res.data.data
+                        : [];
+
+                setBanners(bannerData);
+
             } catch (error) {
-                console.error('Lỗi tải banner:', error);
+
+                console.error(
+                    'Lỗi tải banner Blog:',
+                    error
+                );
+
                 setBanners([]);
+
             } finally {
+
                 setBannerLoading(false);
+
             }
         };
+
         fetchBanners();
+
     }, []);
 
-    // ===== FETCH BLOGS =====
+
+    // ==========================================================
+    // FETCH BLOGS
+    // ==========================================================
+
     useEffect(() => {
+
         const fetchBlogs = async () => {
+
             try {
+
                 setLoading(true);
-                const res = await api.get('/api/blog-cinema');
-                setBlogs(res.data || []);
+
+                const res = await api.get(
+                    '/api/blog-cinema'
+                );
+
+                /*
+                 * API Blog hiện tại:
+                 *
+                 * [
+                 *     {
+                 *         blog_id: 1,
+                 *         title: "...",
+                 *         slug: "...",
+                 *         blog_image: "..."
+                 *     }
+                 * ]
+                 *
+                 * => lấy trực tiếp res.data
+                 */
+
+                const blogData =
+                    Array.isArray(res.data?.data)
+                        ? res.data.data
+                        : [];
+
+                setBlogs(blogData);
+
             } catch (error) {
-                console.error("Lỗi khi tải bài viết:", error);
+
+                console.error(
+                    'Lỗi khi tải bài viết:',
+                    error
+                );
+
+                setBlogs([]);
+
             } finally {
+
                 setLoading(false);
+
             }
         };
+
         fetchBlogs();
+
     }, []);
+
+
+    // ==========================================================
+    // LOADING
+    // ==========================================================
 
     if (loading || bannerLoading) {
+
         return (
             <div className="blog-page">
+
                 <div className="blog-container">
+
                     <div className="blog-loading">
+
                         <div className="blog-loading-spinner" />
-                        <p>Đang tải bài viết...</p>
+
+                        <p>
+                            Đang tải bài viết...
+                        </p>
+
                     </div>
+
                 </div>
+
             </div>
         );
     }
 
+
+    // ==========================================================
+    // BANNER CHECK
+    // ==========================================================
+
     const hasBanners = banners.length > 0;
 
+
+    // ==========================================================
+    // RENDER
+    // ==========================================================
+
     return (
+
         <div className="blog-page">
 
-            {/* ===== BANNER SLIDER ===== */}
+
+            {/* ==================================================
+                BANNER SLIDER
+            ================================================== */}
+
             <div className="blog-hero">
+
                 <div className="blog-overlay"></div>
+
                 <div className="blog-light"></div>
+
                 <div className="blog-particles"></div>
 
+
                 <Swiper
-                    modules={[Autoplay, EffectFade]}
+                    modules={[
+                        Autoplay,
+                        EffectFade
+                    ]}
                     effect="fade"
+                    fadeEffect={{
+                        crossFade: true
+                    }}
                     speed={1200}
-                    autoplay={{ delay: 4500, disableOnInteraction: false }}
-                    loop={hasBanners && banners.length > 1}
+                    autoplay={{
+                        delay: 4500,
+                        disableOnInteraction: false
+                    }}
+                    loop={
+                        hasBanners &&
+                        banners.length > 1
+                    }
                     className="blog-swiper"
                 >
+
                     {hasBanners ? (
-                        banners.map((banner, idx) => (
-                            <SwiperSlide key={banner.banner_id || idx}>
-                                <img
-                                    src={banner.image_url}
-                                    alt={`Blog Banner ${idx + 1}`}
-                                    className="blog-banner-img"
-                                />
-                            </SwiperSlide>
-                        ))
+
+                        banners.map(
+                            (banner, index) => (
+
+                                <SwiperSlide
+                                    key={
+                                        banner.banner_id ||
+                                        index
+                                    }
+                                >
+
+                                    <img
+                                        src={banner.image_url}
+                                        alt={
+                                            `Blog Banner ${index + 1}`
+                                        }
+                                        className="blog-banner-img"
+                                    />
+
+                                </SwiperSlide>
+
+                            )
+                        )
+
                     ) : (
+
                         <SwiperSlide>
-                            <div style={{
-                                width: '100%',
-                                height: '100%',
-                                background: 'linear-gradient(135deg, #1a1a1a, #0a0a0a)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: '#888',
-                                fontSize: '1.5rem',
-                                fontWeight: 'bold'
-                            }}>
+
+                            <div
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    background:
+                                        'linear-gradient(135deg, #1a1a1a, #0a0a0a)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#888',
+                                    fontSize: '1.5rem',
+                                    fontWeight: 'bold'
+                                }}
+                            >
                                 📰 Blog Điện Ảnh
                             </div>
+
                         </SwiperSlide>
+
                     )}
+
                 </Swiper>
+
             </div>
+
+
+            {/* ==================================================
+                BLOG CONTENT
+            ================================================== */}
 
             <div className="blog-container">
+
+
+                {/* ==================================================
+                    HEADER
+                ================================================== */}
+
                 <div className="blog-header">
-                    <div className="blog-header-icon"><Newspaper size={48} /></div>
-                    <h1>Blog Điện Ảnh</h1>
-                    <p className="blog-header-desc">Cập nhật những tin tức mới nhất về phim ảnh, review phim và sự kiện điện ảnh tại CineStar.</p>
+
+                    <div className="blog-header-icon">
+
+                        <Newspaper size={48} />
+
+                    </div>
+
+                    <h1>
+                        Blog Điện Ảnh
+                    </h1>
+
+                    <p className="blog-header-desc">
+                        Cập nhật những tin tức mới nhất về phim ảnh,
+                        review phim và sự kiện điện ảnh tại CineStar.
+                    </p>
+
                     <div className="blog-header-line" />
+
                 </div>
+
+
+                {/* ==================================================
+                    BREADCRUMB
+                ================================================== */}
 
                 <div className="blog-breadcrumb">
-                    <Link to="/">Trang chủ</Link>
+
+                    <Link to="/">
+                        Trang chủ
+                    </Link>
+
                     <ChevronRight size={14} />
-                    <span>Góc điện ảnh</span>
+
+                    <span>
+                        Góc điện ảnh
+                    </span>
+
                 </div>
 
+
+                {/* ==================================================
+                    BLOG LIST
+                ================================================== */}
+
                 {blogs.length === 0 ? (
+
                     <div className="blog-empty">
+
                         <AlertCircle size={48} />
-                        <h3>Chưa có bài viết</h3>
-                        <p>Hiện tại chưa có bài viết nào. Vui lòng quay lại sau!</p>
-                        <Link to="/" className="blog-empty-btn">Về trang chủ</Link>
+
+                        <h3>
+                            Chưa có bài viết
+                        </h3>
+
+                        <p>
+                            Hiện tại chưa có bài viết nào.
+                            Vui lòng quay lại sau!
+                        </p>
+
+                        <Link
+                            to="/"
+                            className="blog-empty-btn"
+                        >
+                            Về trang chủ
+                        </Link>
+
                     </div>
+
                 ) : (
+
                     <div className="blog-grid">
-                        {blogs.map((blog) => (
-                            <CinemaCard
-                                key={blog.blog_id}
-                                type="news"
-                                image={blog.blog_image}
-                                title={blog.title}
-                                link={`/blog-cinema/${blog.slug}`}
-                            />
-                        ))}
+
+                        {blogs.map(
+                            (blog) => (
+
+                                <CinemaCard
+                                    key={
+                                        blog.blog_id
+                                    }
+                                    type="news"
+                                    image={
+                                        blog.blog_image ||
+                                        blog.image_url ||
+                                        null
+                                    }
+                                    title={
+                                        blog.title
+                                    }
+                                    link={
+                                        `/blog-cinema/${blog.slug}`
+                                    }
+                                />
+
+                            )
+                        )}
+
                     </div>
+
                 )}
+
             </div>
+
         </div>
     );
 };
 
 export default BlogCinema;
+
