@@ -9,25 +9,25 @@ const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
 // Lấy danh sách rạp (không phân trang)
 router.get('/', CinemaController.getAllCinemasAll);
 
-// Lấy chi tiết rạp theo slug (đặt SAU route ID để tránh xung đột)
+// Lấy chi tiết rạp theo slug
 router.get('/:slug', CinemaController.getCinemaBySlug);
 
 /* ==========================================================
     ADMIN ROUTES (cần auth admin)
 ========================================================== */
-// Lấy rạp có phân trang (đặt trước các route động)
+// Lấy rạp có phân trang
 router.get('/paginated', authenticateAdmin, CinemaController.getCinemasWithPagination);
 
-// Lấy chi tiết rạp theo ID (chỉ nhận số, đặt trước route slug)
-router.get('/:cinema_id(\\d+)', authenticateAdmin, CinemaController.getCinemaById);
+// Lấy chi tiết rạp theo ID (đặt TRƯỚC /:slug để tránh xung đột)
+router.get('/:cinema_id', authenticateAdmin, CinemaController.getCinemaById);
 
 // Tạo rạp mới
 router.post('/', authenticateAdmin, CinemaController.createCinema);
 
-// Cập nhật rạp (chỉ nhận số)
-router.put('/:cinema_id(\\d+)', authenticateAdmin, CinemaController.updateCinema);
+// Cập nhật rạp
+router.put('/:cinema_id', authenticateAdmin, CinemaController.updateCinema);
 
-// Xóa rạp (chỉ nhận số)
-router.delete('/:cinema_id(\\d+)', authenticateAdmin, CinemaController.deleteCinema);
+// Xóa rạp
+router.delete('/:cinema_id', authenticateAdmin, CinemaController.deleteCinema);
 
 module.exports = router;
