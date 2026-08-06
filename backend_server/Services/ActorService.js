@@ -203,42 +203,21 @@ const validateActorData = (
 class ActorService {
 
 
-    /* ======================================================
-        GET ALL ACTORS
-        KHÔNG PHÂN TRANG
-        PUBLIC
-    ====================================================== */
-    async getAllActorsAll(
-        search = ""
-    ) {
-
-        return await ActorRepository.findAllAll(
-            search
-        );
-
+    /* ==========================================================
+        GET ALL ACTORS - KHÔNG PHÂN TRANG
+        TRẢ VỀ MẢNG
+    ========================================================== */
+    async getAllActorsAll(search = "") {
+        return await ActorRepository.findAllAll(search);
     }
 
-
-    /* ======================================================
-        GET ALL ACTORS
-        CÓ PHÂN TRANG
-        ADMIN
-    ====================================================== */
-    async getAllActorsPaginated(
-        page = 1,
-        limit = 20,
-        search = ""
-    ) {
-
-        return await ActorRepository.findAll(
-            page,
-            limit,
-            search
-        );
-
+    /* ==========================================================
+        GET ALL ACTORS - CÓ PHÂN TRANG
+        TRẢ VỀ { data: [], pagination: {} }
+    ========================================================== */
+    async getAllActorsPaginated(page = 1, limit = 20, search = "") {
+        return await ActorRepository.findAll(page, limit, search);
     }
-
-
     /* ======================================================
         GET ACTOR BY ID
         ADMIN

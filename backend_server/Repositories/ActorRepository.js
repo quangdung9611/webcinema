@@ -3,100 +3,113 @@ const db = require("../Config/db");
 
 class ActorRepository {
 
-
-    /* ==========================================================
-        FIND ALL ACTORS
-        KHÔNG PHÂN TRANG - PUBLIC
+  /* ==========================================================
+        FIND ALL ACTORS - KHÔNG PHÂN TRANG (PUBLIC)
+        RETURN: rows[]
     ========================================================== */
     async findAllAll(search = "") {
-
-        search =
-            typeof search === "string"
-                ? search.trim()
-                : "";
-
-
+        search = typeof search === "string" ? search.trim() : "";
         const conditions = [];
         const queryParams = [];
 
-
         if (search) {
-
-            conditions.push(
-                "(name LIKE ? OR nationality LIKE ?)"
-            );
-
-            const keyword =
-                `%${search}%`;
-
-            queryParams.push(
-                keyword,
-                keyword
-            );
-
+            conditions.push("(name LIKE ? OR nationality LIKE ?)");
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword);
         }
 
+        const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
-        const whereClause =
-            conditions.length
-                ? `WHERE ${conditions.join(" AND ")}`
-                : "";
+        const [rows] = await db.query(
+            `
+            SELECT
+                actor_id,
+                name,
+                gender,
+                nationality,
+                actor_avatar,
+                biography,
+                birthday,
+                slug,
+                created_at,
+                updated_at
+            FROM actors
+            ${whereClause}
+            ORDER BY actor_id DESC
+            `,
+            queryParams
+        );
 
-
-        const [rows] =
-            await db.query(
-                `
-                SELECT
-                    actor_id,
-                    name,
-                    gender,
-                    nationality,
-                    actor_avatar,
-                    biography,
-                    birthday,
-                    slug,
-                    created_at,
-                    updated_at
-                FROM actors
-                ${whereClause}
-                ORDER BY actor_id DESC
-                `,
-                queryParams
-            );
-
-
-        /*
-         * Giữ object nội bộ để Service/Controller
-         * xử lý rõ ràng.
-         *
-         * Controller sẽ lấy result.data
-         * để trả API public.
-         */
-
-        return {
-
-            data: rows,
-
-            pagination: {
-
-                page: 1,
-
-                limit: rows.length,
-
-                total: rows.length,
-
-                totalPages: 1,
-
-                hasPreviousPage: false,
-
-                hasNextPage: false
-
-            }
-
-        };
-
+        // ✅ TRẢ VỀ THẲNG MẢNG, KHÔNG BỌC OBJECT
+        return rows;
     }
 
+    /* ==========================================================
+        FIND ALL ACTORS - CÓ PHÂN TRANG (ADMIN)
+        RETURN: { data: [], pagination: {} }
+    ========================================================== */
+    async findAll(page = 1, limit = 20, search = "") {
+        page = Number.parseInt(page, 10);
+        limit = Number.parseInt(limit, 10);
+
+        if (Number.isNaN(page) || page < 1) page = 1;
+        if (Number.isNaN(limit) || limit < 1) limit = 20;
+        if (limit > 100) limit = 100;
+
+        search = typeof search === "string" ? search.trim() : "";
+        const conditions = [];
+        const queryParams = [];
+
+        if (search) {
+            conditions.push("(name LIKE ? OR nationality LIKE ?)");
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword);
+        }
+
+        const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+        const offset = (page - 1) * limit;
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                actor_id,
+                name,
+                gender,
+                nationality,
+                actor_avatar,
+                biography,
+                birthday,
+                slug,
+                created_at,
+                updated_at
+            FROM actors
+            ${whereClause}
+            ORDER BY actor_id DESC
+            LIMIT ? OFFSET ?
+            `,
+            [...queryParams, limit, offset]
+        );
+
+        const [countRows] = await db.query(
+            `SELECT COUNT(*) AS total FROM actors ${whereClause}`,
+            queryParams
+        );
+
+        const total = Number(countRows[0]?.total || 0);
+        const totalPages = Math.ceil(total / limit) || 1;
+
+        return {
+            data: rows,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages,
+                hasPreviousPage: page > 1,
+                hasNextPage: page < totalPages
+            }
+        };
+    }
 
     /* ==========================================================
         FIND ALL ACTORS
