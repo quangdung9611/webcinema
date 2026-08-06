@@ -15,26 +15,19 @@ const getPosterUrl = (poster) => {
     return `https://api.quangdungcinema.id.vn/uploads/posters/${poster}`;
 };
 
-// Hàm parse dữ liệu an toàn
-const parseData = (response) => {
-    if (response?.data?.success && response.data.data?.data) {
-        return response.data.data.data;
-    }
-    if (response?.data?.data) {
-        return response.data.data;
-    }
-    if (Array.isArray(response?.data)) {
-        return response.data;
-    }
-    return [];
-};
-
-const parseAssignments = (response) => {
+// ✅ Hàm parse dữ liệu an toàn, hỗ trợ nhiều cấu trúc
+const extractData = (response) => {
+    // Ưu tiên lấy response.data.data nếu là mảng
     if (response?.data?.data && Array.isArray(response.data.data)) {
         return response.data.data;
     }
-    if (Array.isArray(response?.data)) {
+    // Nếu response.data là mảng
+    if (response?.data && Array.isArray(response.data)) {
         return response.data;
+    }
+    // Nếu response là mảng trực tiếp
+    if (Array.isArray(response)) {
+        return response;
     }
     return [];
 };
@@ -53,7 +46,7 @@ const MovieGenrePage = () => {
     const [saving, setSaving] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(4);
+    const [itemsPerPage] = useState(4);
 
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -67,9 +60,7 @@ const MovieGenrePage = () => {
         setAlertModal({ open: true, title, message, onConfirm, onCancel });
     };
 
-    const closeAlert = () => {
-        setAlertModal((prev) => ({ ...prev, open: false }));
-    };
+    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // =====================================================
     // FETCH DATA
@@ -80,12 +71,20 @@ const MovieGenrePage = () => {
             const [resMovies, resGenres, resAssignments] = await Promise.all([
                 api.get('/api/movies'),
                 api.get('/api/genres'),
-                api.get('/api/movie-genres/all-assignments'),
+                api.get('/api/movie-genres'),
             ]);
 
-            const moviesData = parseData(resMovies);
-            const genresData = parseData(resGenres);
-            const assignmentsData = parseAssignments(resAssignments);
+            console.log('🔍 Raw Movies:', resMovies.data);
+            console.log('🔍 Raw Genres:', resGenres.data);
+            console.log('🔍 Raw Assignments:', resAssignments.data);
+
+            const moviesData = extractData(resMovies);
+            const genresData = extractData(resGenres);
+            const assignmentsData = extractData(resAssignments);
+
+            console.log('✅ Parsed Movies:', moviesData);
+            console.log('✅ Parsed Genres:', genresData);
+            console.log('✅ Parsed Assignments:', assignmentsData);
 
             setMovies(Array.isArray(moviesData) ? moviesData : []);
             setGenres(Array.isArray(genresData) ? genresData : []);
@@ -103,9 +102,10 @@ const MovieGenrePage = () => {
                 });
             }
 
+            console.log('📦 Final Map:', initialMap);
             setMovieGenreMap(initialMap);
         } catch (error) {
-            console.error('Fetch data error:', error);
+            console.error('❌ Fetch error:', error);
             showAlert('Lỗi', 'Không thể tải dữ liệu hệ thống.');
         } finally {
             setLoading(false);

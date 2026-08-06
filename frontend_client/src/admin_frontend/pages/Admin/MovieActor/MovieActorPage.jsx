@@ -22,31 +22,16 @@ const getAvatarUrl = (avatar) => {
     return `https://api.quangdungcinema.id.vn/uploads/actors/${avatar}`;
 };
 
-// Hàm parse dữ liệu an toàn, hỗ trợ mọi cấu trúc API
-const parseData = (response) => {
-    // Nếu có success: true, data: { data: [...] } => lấy data.data
-    if (response?.data?.success && response.data.data?.data) {
-        return response.data.data.data;
-    }
-    // Nếu có data: [...] (không có success) => lấy data
-    if (response?.data?.data) {
-        return response.data.data;
-    }
-    // Nếu response là mảng trực tiếp
-    if (Array.isArray(response?.data)) {
-        return response.data;
-    }
-    // Trường hợp khác: trả về mảng rỗng
-    return [];
-};
-
-// Tương tự cho parse assignments (có thể không có success)
-const parseAssignments = (response) => {
+// ✅ Hàm parse dữ liệu an toàn
+const extractData = (response) => {
     if (response?.data?.data && Array.isArray(response.data.data)) {
         return response.data.data;
     }
-    if (Array.isArray(response?.data)) {
+    if (response?.data && Array.isArray(response.data)) {
         return response.data;
+    }
+    if (Array.isArray(response)) {
+        return response;
     }
     return [];
 };
@@ -88,30 +73,29 @@ const MovieActorPage = () => {
             const [resMovies, resActors, resAssignments] = await Promise.all([
                 api.get('/api/movies'),
                 api.get('/api/actors'),
-                api.get('/api/movie-actors/all-assignments'),
+                api.get('/api/movie-actors'),
             ]);
 
-            // 🟢 Log dữ liệu nhận được để kiểm tra (bạn có thể mở console F12 để xem)
-            console.log('Movies response:', resMovies.data);
-            console.log('Actors response:', resActors.data);
-            console.log('Assignments response:', resAssignments.data);
+            console.log('🔍 Raw Movies:', resMovies.data);
+            console.log('🔍 Raw Actors:', resActors.data);
+            console.log('🔍 Raw Assignments:', resAssignments.data);
 
-            // Parse movies
-            const moviesData = parseData(resMovies);
-            const actorsData = parseData(resActors);
-            const assignmentsData = parseAssignments(resAssignments);
+            const moviesData = extractData(resMovies);
+            const actorsData = extractData(resActors);
+            const assignmentsData = extractData(resAssignments);
 
-            // Đảm bảo là mảng
+            console.log('✅ Parsed Movies:', moviesData);
+            console.log('✅ Parsed Actors:', actorsData);
+            console.log('✅ Parsed Assignments:', assignmentsData);
+
             setMovies(Array.isArray(moviesData) ? moviesData : []);
             setActors(Array.isArray(actorsData) ? actorsData : []);
 
-            // Khởi tạo map actor cho mỗi phim
             const initialMap = {};
             (Array.isArray(moviesData) ? moviesData : []).forEach((movie) => {
                 initialMap[movie.movie_id] = [];
             });
 
-            // Điền actor_ids vào map
             if (Array.isArray(assignmentsData)) {
                 assignmentsData.forEach((item) => {
                     if (initialMap[item.movie_id] !== undefined) {
@@ -120,9 +104,10 @@ const MovieActorPage = () => {
                 });
             }
 
+            console.log('📦 Final Actor Map:', initialMap);
             setMovieActorMap(initialMap);
         } catch (error) {
-            console.error('Fetch data error:', error);
+            console.error('❌ Fetch error:', error);
             showAlert('Lỗi', 'Không thể tải dữ liệu hệ thống.');
         } finally {
             setLoading(false);
@@ -133,7 +118,9 @@ const MovieActorPage = () => {
         fetchData();
     }, []);
 
-    // Các handler giữ nguyên
+    // =====================================================
+    // HANDLERS
+    // =====================================================
     const handleCheckboxChange = (movieId, actorId) => {
         setMovieActorMap((prev) => {
             const currentActors = prev[movieId] || [];
@@ -169,7 +156,9 @@ const MovieActorPage = () => {
         }
     };
 
-    // Lọc & phân trang
+    // =====================================================
+    // FILTER & PAGINATION
+    // =====================================================
     const filteredMovies = useMemo(() => {
         return movies.filter((movie) => {
             const keyword = search.toLowerCase();
@@ -191,7 +180,9 @@ const MovieActorPage = () => {
         actor.name?.toLowerCase().includes(actorSearch.toLowerCase())
     );
 
-    // Render JSX
+    // =====================================================
+    // RENDER
+    // =====================================================
     return (
         <>
             <AdminPage

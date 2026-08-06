@@ -11,8 +11,8 @@ const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 // Lấy danh sách actor (không phân trang)
 router.get("/", ActorController.getAllActorsAll);
 
-// Lấy chi tiết actor theo slug
-router.get("/:slug", ActorController.getActorBySlug);
+// Lấy chi tiết actor theo slug (đặt sau route số để tránh xung đột)
+router.get("/:slug([a-zA-Z0-9-]+)", ActorController.getActorBySlug);
 
 /* ==========================================================
     ADMIN ROUTES (cần auth admin)
@@ -20,30 +20,16 @@ router.get("/:slug", ActorController.getActorBySlug);
 // Lấy actor có phân trang
 router.get("/paginated", authenticateAdmin, ActorController.getActorsWithPagination);
 
-// Lấy chi tiết actor theo ID (đặt TRƯỚC /:slug để tránh xung đột)
-router.get("/:actor_id", authenticateAdmin, ActorController.getActorById);
+// Lấy chi tiết actor theo ID (chỉ nhận số)
+router.get("/:actor_id(\\d+)", authenticateAdmin, ActorController.getActorById);
 
 // Thêm diễn viên
-router.post(
-    "/",
-    authenticateAdmin,
-    upload.single("actor_avatar"),
-    ActorController.createActor
-);
+router.post("/", authenticateAdmin, upload.single("actor_avatar"), ActorController.createActor);
 
 // Cập nhật diễn viên
-router.put(
-    "/:actor_id",
-    authenticateAdmin,
-    upload.single("actor_avatar"),
-    ActorController.updateActor
-);
+router.put("/:actor_id(\\d+)", authenticateAdmin, upload.single("actor_avatar"), ActorController.updateActor);
 
 // Xóa diễn viên
-router.delete(
-    "/:actor_id",
-    authenticateAdmin,
-    ActorController.deleteActor
-);
+router.delete("/:actor_id(\\d+)", authenticateAdmin, ActorController.deleteActor);
 
 module.exports = router;
