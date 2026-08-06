@@ -1,11 +1,16 @@
 const SeatService = require("../Services/SeatService");
 
-// PUBLIC
+// ==========================================================
+// PUBLIC - Lấy sơ đồ ghế theo suất chiếu
+// ==========================================================
 exports.getSeatMapByShowtime = async (req, res) => {
   try {
     const { showtimeId } = req.params;
     const data = await SeatService.getSeatMapByShowtime(showtimeId);
-    return res.status(200).json(data);
+    return res.status(200).json({
+      success: true,
+      data
+    });
   } catch (err) {
     console.error("getSeatMapByShowtime error:", err);
     return res.status(err.statusCode || 500).json({
@@ -15,12 +20,18 @@ exports.getSeatMapByShowtime = async (req, res) => {
   }
 };
 
-// ADMIN
+// ==========================================================
+// ADMIN - Lấy danh sách ghế theo phòng
+// ✅ TRẢ VỀ { success: true, data: [...] }
+// ==========================================================
 exports.getSeatsByRoom = async (req, res) => {
   try {
     const { roomId } = req.params;
     const data = await SeatService.getSeatsByRoom(roomId);
-    return res.status(200).json(data);
+    return res.status(200).json({
+      success: true,
+      data
+    });
   } catch (err) {
     console.error("getSeatsByRoom error:", err);
     return res.status(err.statusCode || 500).json({
@@ -30,6 +41,9 @@ exports.getSeatsByRoom = async (req, res) => {
   }
 };
 
+// ==========================================================
+// ADMIN - Khởi tạo ghế cho phòng
+// ==========================================================
 exports.initRoomSeats = async (req, res) => {
   try {
     const { roomId, roomType, cinemaId } = req.body;
@@ -48,6 +62,9 @@ exports.initRoomSeats = async (req, res) => {
   }
 };
 
+// ==========================================================
+// ADMIN - Xóa sạch ghế trong phòng
+// ==========================================================
 exports.deleteSeatsByRoom = async (req, res) => {
   try {
     const { roomId } = req.params;
@@ -65,6 +82,9 @@ exports.deleteSeatsByRoom = async (req, res) => {
   }
 };
 
+// ==========================================================
+// ADMIN - Bật/tắt bảo trì ghế
+// ==========================================================
 exports.toggleSeatActive = async (req, res) => {
   try {
     const { seatId, isActive } = req.body;
@@ -82,6 +102,9 @@ exports.toggleSeatActive = async (req, res) => {
   }
 };
 
+// ==========================================================
+// ADMIN - Cập nhật loại ghế và giá
+// ==========================================================
 exports.updateSeatTypeAndPrice = async (req, res) => {
   try {
     const { seatId, seatType, price } = req.body;
