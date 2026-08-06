@@ -1,32 +1,74 @@
-/*=========================================================
-    DEPENDENCIES
-=========================================================*/
 
 const express = require("express");
+
 const router = express.Router();
 
-const BannerController = require("../Controllers/BannerController");
-const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
-const upload = require("../Middlewares/MulterMiddleware");
+const BannerController =
+    require("../Controllers/BannerController");
 
-/*=========================================================
-    PUBLIC ROUTES - KHÔNG CẦN AUTH
-=========================================================*/
+const {
+    authenticateAdmin
+} = require("../Middlewares/AdminAuthMiddleware");
 
-// GET /api/banners → lấy tất cả banner (không phân trang, public)
-router.get("/", BannerController.getAllBannersAll);
+const upload =
+    require("../Middlewares/MulterMiddleware");
 
-// GET /api/banners/:banner_id → lấy banner theo ID (public)
-router.get("/:banner_id", BannerController.getBannerById);
 
-/*=========================================================
-    ADMIN ROUTES - CẦN AUTHENTICATE ADMIN
-=========================================================*/
+/* ==========================================================
+    PUBLIC ROUTES
+========================================================== */
 
-// GET /api/banners/paginated → lấy banner có phân trang (admin)
-router.get("/paginated", authenticateAdmin, BannerController.getBannersWithPagination);
 
-// Tạo banner mới (upload file field: "image_url")
+/*
+ * GET /api/banners
+ *
+ * Không phân trang
+ *
+ * Có thể:
+ *
+ * /api/banners
+ * /api/banners?page=HOME
+ * /api/banners?search=HOME
+ */
+router.get(
+    "/",
+    BannerController.getAllBannersAll
+);
+
+
+/* ==========================================================
+    ADMIN ROUTES
+========================================================== */
+
+
+/*
+ * GET /api/banners/paginated
+ *
+ * Phải đặt TRƯỚC /:banner_id
+ */
+router.get(
+    "/paginated",
+    authenticateAdmin,
+    BannerController.getBannersWithPagination
+);
+
+
+/*
+ * GET /api/banners/:banner_id
+ *
+ * Lấy banner theo ID
+ */
+router.get(
+    "/:banner_id",
+    BannerController.getBannerById
+);
+
+
+/*
+ * POST /api/banners
+ *
+ * Tạo banner
+ */
 router.post(
     "/",
     authenticateAdmin,
@@ -34,7 +76,12 @@ router.post(
     BannerController.createBanner
 );
 
-// Cập nhật banner (upload file field: "image_url")
+
+/*
+ * PUT /api/banners/:banner_id
+ *
+ * Cập nhật banner
+ */
 router.put(
     "/:banner_id",
     authenticateAdmin,
@@ -42,11 +89,18 @@ router.put(
     BannerController.updateBanner
 );
 
-// Xóa banner
+
+/*
+ * DELETE /api/banners/:banner_id
+ *
+ * Xóa banner
+ */
 router.delete(
     "/:banner_id",
     authenticateAdmin,
     BannerController.deleteBanner
 );
 
+
 module.exports = router;
+

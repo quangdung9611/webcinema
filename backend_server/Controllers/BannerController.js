@@ -1,29 +1,27 @@
 
 const BannerService = require("../Services/BannerService");
 
+
 /* ==========================================================
-    PUBLIC/ADMIN - GET ALL BANNERS
-    KHÔNG PHÂN TRANG - HỖ TRỢ PAGE KEY
+    PUBLIC / ADMIN
+    GET ALL BANNERS
+    KHÔNG PHÂN TRANG
 ========================================================== */
 exports.getAllBannersAll = async (req, res) => {
+
     try {
+
         const {
             search = "",
             page = ""
         } = req.query;
 
-        /*
-         * Route này không hỗ trợ phân trang.
-         * Nếu client truyền limit → từ chối request.
-         *
-         * page ở đây KHÔNG phải page number.
-         * page có thể là:
-         * HOME
-         * PROMOTION
-         * MOVIE
-         * ...
-         */
+
+        /* ======================================================
+            ROUTE NÀY KHÔNG HỖ TRỢ LIMIT
+        ====================================================== */
         if (req.query.limit !== undefined) {
+
             return res.status(400).json({
                 success: false,
                 message:
@@ -32,93 +30,165 @@ exports.getAllBannersAll = async (req, res) => {
             });
         }
 
-        const data = await BannerService.getAllBannersAll(
-            search,
-            page
-        );
 
+        const data =
+            await BannerService.getAllBannersAll(
+                search,
+                page
+            );
+
+
+        /*
+         * data ở đây ĐÃ LÀ ARRAY
+         *
+         * Không được:
+         * data: { data }
+         */
         return res.status(200).json({
             success: true,
             data
         });
-    } catch (err) {
-        console.error("Get All Banners Error:", err);
 
-        return res.status(err.statusCode || 500).json({
+    } catch (err) {
+
+        console.error(
+            "Get All Banners Error:",
+            err
+        );
+
+        return res.status(
+            err.statusCode || 500
+        ).json({
             success: false,
-            message: err.message || "Lỗi máy chủ"
+            message:
+                err.message ||
+                "Lỗi máy chủ"
         });
     }
 };
 
 
 /* ==========================================================
-    ADMIN - GET BANNERS WITH PAGINATION
+    ADMIN
+    GET BANNERS WITH PAGINATION
 ========================================================== */
-exports.getBannersWithPagination = async (req, res) => {
+exports.getBannersWithPagination = async (
+    req,
+    res
+) => {
+
     try {
+
         const {
             page = 1,
             limit = 20,
             search = ""
         } = req.query;
 
-        const data = await BannerService.getAllBannersPaginated(
-            page,
-            limit,
-            search
-        );
 
+        const data =
+            await BannerService.getAllBannersPaginated(
+                page,
+                limit,
+                search
+            );
+
+
+        /*
+         * Route pagination vẫn giữ:
+         *
+         * {
+         *     data: [],
+         *     pagination: {}
+         * }
+         */
         return res.status(200).json({
             success: true,
             data
         });
-    } catch (err) {
-        console.error("Get Banners Paginated Error:", err);
 
-        return res.status(err.statusCode || 500).json({
+    } catch (err) {
+
+        console.error(
+            "Get Banners Paginated Error:",
+            err
+        );
+
+        return res.status(
+            err.statusCode || 500
+        ).json({
             success: false,
-            message: err.message || "Lỗi máy chủ"
+            message:
+                err.message ||
+                "Lỗi máy chủ"
         });
     }
 };
 
 
 /* ==========================================================
-    PUBLIC - GET BANNER BY ID
+    PUBLIC / ADMIN
+    GET BANNER BY ID
 ========================================================== */
-exports.getBannerById = async (req, res) => {
-    try {
-        const { banner_id } = req.params;
+exports.getBannerById = async (
+    req,
+    res
+) => {
 
-        const banner = await BannerService.getBannerById(
+    try {
+
+        const {
             banner_id
-        );
+        } = req.params;
+
+
+        const banner =
+            await BannerService.getBannerById(
+                banner_id
+            );
+
 
         return res.status(200).json({
             success: true,
             data: banner
         });
-    } catch (err) {
-        console.error("Get Banner By ID Error:", err);
 
-        return res.status(err.statusCode || 500).json({
+    } catch (err) {
+
+        console.error(
+            "Get Banner By ID Error:",
+            err
+        );
+
+        return res.status(
+            err.statusCode || 500
+        ).json({
             success: false,
-            message: err.message || "Lỗi máy chủ"
+            message:
+                err.message ||
+                "Lỗi máy chủ"
         });
     }
 };
 
 
 /* ==========================================================
-    ADMIN - CREATE BANNER
+    ADMIN
+    CREATE BANNER
 ========================================================== */
-exports.createBanner = async (req, res) => {
+exports.createBanner = async (
+    req,
+    res
+) => {
+
     try {
-        const bannerId = await BannerService.createBanner(
-            req.body,
-            req.file
-        );
+
+        const bannerId =
+            await BannerService.createBanner(
+                req.body,
+                req.file
+            );
+
 
         return res.status(201).json({
             success: true,
@@ -127,24 +197,42 @@ exports.createBanner = async (req, res) => {
                 banner_id: bannerId
             }
         });
-    } catch (err) {
-        console.error("Create Banner Error:", err);
 
-        return res.status(err.statusCode || 500).json({
+    } catch (err) {
+
+        console.error(
+            "Create Banner Error:",
+            err
+        );
+
+        return res.status(
+            err.statusCode || 500
+        ).json({
             success: false,
             field: err.field || null,
-            message: err.message || "Lỗi máy chủ"
+            message:
+                err.message ||
+                "Lỗi máy chủ"
         });
     }
 };
 
 
 /* ==========================================================
-    ADMIN - UPDATE BANNER
+    ADMIN
+    UPDATE BANNER
 ========================================================== */
-exports.updateBanner = async (req, res) => {
+exports.updateBanner = async (
+    req,
+    res
+) => {
+
     try {
-        const { banner_id } = req.params;
+
+        const {
+            banner_id
+        } = req.params;
+
 
         await BannerService.updateBanner(
             banner_id,
@@ -152,43 +240,72 @@ exports.updateBanner = async (req, res) => {
             req.file
         );
 
+
         return res.status(200).json({
             success: true,
             message: "Cập nhật banner thành công"
         });
-    } catch (err) {
-        console.error("Update Banner Error:", err);
 
-        return res.status(err.statusCode || 500).json({
+    } catch (err) {
+
+        console.error(
+            "Update Banner Error:",
+            err
+        );
+
+        return res.status(
+            err.statusCode || 500
+        ).json({
             success: false,
             field: err.field || null,
-            message: err.message || "Lỗi máy chủ"
+            message:
+                err.message ||
+                "Lỗi máy chủ"
         });
     }
 };
 
 
 /* ==========================================================
-    ADMIN - DELETE BANNER
+    ADMIN
+    DELETE BANNER
 ========================================================== */
-exports.deleteBanner = async (req, res) => {
+exports.deleteBanner = async (
+    req,
+    res
+) => {
+
     try {
-        const { banner_id } = req.params;
+
+        const {
+            banner_id
+        } = req.params;
+
 
         await BannerService.deleteBanner(
             banner_id
         );
 
+
         return res.status(200).json({
             success: true,
             message: "Xóa banner thành công"
         });
-    } catch (err) {
-        console.error("Delete Banner Error:", err);
 
-        return res.status(err.statusCode || 500).json({
+    } catch (err) {
+
+        console.error(
+            "Delete Banner Error:",
+            err
+        );
+
+        return res.status(
+            err.statusCode || 500
+        ).json({
             success: false,
-            message: err.message || "Lỗi máy chủ"
+            message:
+                err.message ||
+                "Lỗi máy chủ"
         });
     }
 };

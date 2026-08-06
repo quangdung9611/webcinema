@@ -35,7 +35,10 @@ const extractPublicId = (url) => {
 /* ==========================================================
     NORMALIZE IS_ACTIVE
 ========================================================== */
-const normalizeActiveStatus = (value, defaultValue = 1) => {
+const normalizeActiveStatus = (
+    value,
+    defaultValue = 1
+) => {
 
     if (
         value === undefined ||
@@ -78,6 +81,7 @@ const validatePage = (page) => {
         typeof page !== "string" ||
         page.trim() === ""
     ) {
+
         const err = new Error(
             "Vui lòng chọn vị trí banner."
         );
@@ -94,21 +98,25 @@ const validatePage = (page) => {
 
 class BannerService {
 
-
     /* ==========================================================
         GET ALL BANNERS
         KHÔNG PHÂN TRANG
 
-        HỖ TRỢ:
-        - search
-        - page
+        RETURN:
+        [
+            {...},
+            {...}
+        ]
 
-        Ví dụ:
+        HỖ TRỢ:
         /api/banners
         /api/banners?search=HOME
         /api/banners?page=HOME
     ========================================================== */
-    async getAllBannersAll(search = "", page = "") {
+    async getAllBannersAll(
+        search = "",
+        page = ""
+    ) {
 
         return await BannerRepository.findAllAll(
             search,
@@ -120,8 +128,6 @@ class BannerService {
     /* ==========================================================
         GET ALL BANNERS
         CÓ PHÂN TRANG
-
-        ADMIN
     ========================================================== */
     async getAllBannersPaginated(
         page = 1,
@@ -140,13 +146,7 @@ class BannerService {
 
     /* ==========================================================
         GET ACTIVE BANNERS BY PAGE
-
-        DÙNG CHO FRONTEND
-
-        Ví dụ:
-        HOME
-        PROMOTION
-        BLOG
+        FRONTEND
     ========================================================== */
     async getActiveBannersByPage(page) {
 
@@ -163,9 +163,10 @@ class BannerService {
     ========================================================== */
     async getBannerById(bannerId) {
 
-        const banner = await BannerRepository.findById(
-            bannerId
-        );
+        const banner =
+            await BannerRepository.findById(
+                bannerId
+            );
 
         if (!banner) {
 
@@ -184,19 +185,11 @@ class BannerService {
 
     /* ==========================================================
         CREATE BANNER
-        ADMIN
-
-        🔥 LOGIC CŨ:
-        Banner mới tạo LUÔN is_active = 1
     ========================================================== */
     async createBanner(data, file) {
 
         const page = validatePage(data.page);
 
-
-        /*
-         * Bắt buộc phải có ảnh
-         */
         if (!file) {
 
             const err = new Error(
@@ -209,15 +202,11 @@ class BannerService {
             throw err;
         }
 
-
-        /*
-         * Upload ảnh lên Cloudinary
-         */
-        const result = await uploadToCloudinary(
-            file,
-            "cinema_shop/banners"
-        );
-
+        const result =
+            await uploadToCloudinary(
+                file,
+                "cinema_shop/banners"
+            );
 
         if (!result || !result.url) {
 
@@ -231,16 +220,9 @@ class BannerService {
             throw err;
         }
 
-
-        const imageUrl = result.url;
-
-
-        /*
-         * 🔥 CREATE LUÔN ACTIVE
-         */
         return await BannerRepository.create({
             page,
-            image_url: imageUrl,
+            image_url: result.url,
             is_active: 1
         });
     }
@@ -248,7 +230,6 @@ class BannerService {
 
     /* ==========================================================
         UPDATE BANNER
-        ADMIN
     ========================================================== */
     async updateBanner(
         bannerId,
@@ -256,12 +237,10 @@ class BannerService {
         file
     ) {
 
-        /*
-         * Kiểm tra banner tồn tại
-         */
-        const banner = await BannerRepository.findById(
-            bannerId
-        );
+        const banner =
+            await BannerRepository.findById(
+                bannerId
+            );
 
         if (!banner) {
 
@@ -274,7 +253,6 @@ class BannerService {
             throw err;
         }
 
-
         const updateData = {};
 
 
@@ -283,9 +261,8 @@ class BannerService {
         ====================================================== */
         if (data.page !== undefined) {
 
-            updateData.page = validatePage(
-                data.page
-            );
+            updateData.page =
+                validatePage(data.page);
         }
 
 
@@ -307,15 +284,11 @@ class BannerService {
         ====================================================== */
         if (file) {
 
-            /*
-             * Upload ảnh mới trước
-             */
             const result =
                 await uploadToCloudinary(
                     file,
                     "cinema_shop/banners"
                 );
-
 
             if (!result || !result.url) {
 
@@ -329,16 +302,13 @@ class BannerService {
                 throw err;
             }
 
-
-            /*
-             * Gán URL ảnh mới
-             */
-            updateData.image_url = result.url;
+            updateData.image_url =
+                result.url;
 
 
-            /*
-             * Xóa ảnh cũ khỏi Cloudinary
-             */
+            /* ==================================================
+                XÓA ẢNH CŨ
+            ================================================== */
             if (banner.image_url) {
 
                 const publicId =
@@ -367,9 +337,11 @@ class BannerService {
 
 
         /* ======================================================
-            KIỂM TRA CÓ THAY ĐỔI HAY KHÔNG
+            CHECK CHANGE
         ====================================================== */
-        if (Object.keys(updateData).length === 0) {
+        if (
+            Object.keys(updateData).length === 0
+        ) {
 
             const err = new Error(
                 "Không có thay đổi nào"
@@ -390,7 +362,6 @@ class BannerService {
                 updateData
             );
 
-
         if (affectedRows === 0) {
 
             const err = new Error(
@@ -402,25 +373,19 @@ class BannerService {
             throw err;
         }
 
-
         return true;
     }
 
 
     /* ==========================================================
         DELETE BANNER
-        ADMIN
     ========================================================== */
     async deleteBanner(bannerId) {
 
-        /*
-         * Kiểm tra banner tồn tại
-         */
         const banner =
             await BannerRepository.findById(
                 bannerId
             );
-
 
         if (!banner) {
 
@@ -435,7 +400,7 @@ class BannerService {
 
 
         /* ======================================================
-            XÓA ẢNH CLOUDINARY
+            DELETE CLOUDINARY IMAGE
         ====================================================== */
         if (banner.image_url) {
 
@@ -464,13 +429,12 @@ class BannerService {
 
 
         /* ======================================================
-            XÓA DATABASE
+            DELETE DATABASE
         ====================================================== */
         const affectedRows =
             await BannerRepository.delete(
                 bannerId
             );
-
 
         if (affectedRows === 0) {
 
@@ -482,7 +446,6 @@ class BannerService {
 
             throw err;
         }
-
 
         return true;
     }

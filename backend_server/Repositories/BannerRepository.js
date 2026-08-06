@@ -6,21 +6,35 @@ class BannerRepository {
     /* ==========================================================
         FIND ALL - KHÔNG PHÂN TRANG
         PUBLIC / ADMIN
-        HỖ TRỢ SEARCH + PAGE KEY
+
+        HỖ TRỢ:
+        - search
+        - page key
+
+        RETURN:
+        [
+            {...},
+            {...}
+        ]
     ========================================================== */
     async findAllAll(search = "", page = "") {
 
-        search = typeof search === "string" ? search.trim() : "";
-        page = typeof page === "string" ? page.trim() : "";
+        search = typeof search === "string"
+            ? search.trim()
+            : "";
+
+        page = typeof page === "string"
+            ? page.trim()
+            : "";
 
         const conditions = [];
         const params = [];
 
-        /*
-         * SEARCH
-         * Tìm theo page hoặc image_url
-         */
+        /* ======================================================
+            SEARCH
+        ====================================================== */
         if (search) {
+
             conditions.push(`
                 (
                     page LIKE ?
@@ -30,18 +44,24 @@ class BannerRepository {
 
             const keyword = `%${search}%`;
 
-            params.push(keyword, keyword);
+            params.push(
+                keyword,
+                keyword
+            );
         }
 
-        /*
-         * FILTER PAGE
-         * Ví dụ:
-         * HOME
-         * PROMOTION
-         * BLOG
-         */
+        /* ======================================================
+            FILTER PAGE
+            Ví dụ:
+            HOME
+            PROMOTION
+            BLOG
+            MOVIE
+        ====================================================== */
         if (page) {
+
             conditions.push(`page = ?`);
+
             params.push(page);
         }
 
@@ -65,24 +85,22 @@ class BannerRepository {
             params
         );
 
-        return {
-            data: rows,
-            pagination: {
-                page: 1,
-                limit: rows.length,
-                total: rows.length,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false
-            }
-        };
+        /*
+         * KHÔNG trả:
+         * {
+         *     data: rows,
+         *     pagination: ...
+         * }
+         *
+         * Vì đây là endpoint KHÔNG PHÂN TRANG.
+         */
+        return rows;
     }
 
 
     /* ==========================================================
         FIND ALL - CÓ PHÂN TRANG
         ADMIN
-        HỖ TRỢ SEARCH
     ========================================================== */
     async findAll(
         onlyActive = false,
@@ -91,49 +109,43 @@ class BannerRepository {
         search = ""
     ) {
 
-        /*
-         * Chuẩn hóa page
-         */
+        /* ======================================================
+            NORMALIZE PAGE
+        ====================================================== */
         page = Number.parseInt(page, 10);
 
         if (!Number.isFinite(page) || page < 1) {
             page = 1;
         }
 
-        /*
-         * Chuẩn hóa limit
-         */
+        /* ======================================================
+            NORMALIZE LIMIT
+        ====================================================== */
         limit = Number.parseInt(limit, 10);
 
         if (!Number.isFinite(limit) || limit < 1) {
             limit = 20;
         }
 
-        /*
-         * Giới hạn tối đa
-         */
         if (limit > 100) {
             limit = 100;
         }
 
-        /*
-         * Chuẩn hóa search
-         */
+        /* ======================================================
+            NORMALIZE SEARCH
+        ====================================================== */
         search = typeof search === "string"
             ? search.trim()
             : "";
 
-        /*
-         * Xây dựng WHERE dùng chung
-         * cho cả SELECT và COUNT
-         */
         const conditions = [];
         const params = [];
 
-        /*
-         * SEARCH
-         */
+        /* ======================================================
+            SEARCH
+        ====================================================== */
         if (search) {
+
             conditions.push(`
                 (
                     page LIKE ?
@@ -143,28 +155,34 @@ class BannerRepository {
 
             const keyword = `%${search}%`;
 
-            params.push(keyword, keyword);
+            params.push(
+                keyword,
+                keyword
+            );
         }
 
-        /*
-         * ONLY ACTIVE
-         */
+        /* ======================================================
+            ONLY ACTIVE
+        ====================================================== */
         if (onlyActive) {
-            conditions.push(`is_active = 1`);
+
+            conditions.push(
+                `is_active = 1`
+            );
         }
 
         const whereClause = conditions.length
             ? `WHERE ${conditions.join(" AND ")}`
             : "";
 
-        /*
-         * OFFSET
-         */
+        /* ======================================================
+            OFFSET
+        ====================================================== */
         const offset = (page - 1) * limit;
 
-        /*
-         * GET DATA
-         */
+        /* ======================================================
+            GET DATA
+        ====================================================== */
         const [rows] = await db.query(
             `
             SELECT
@@ -186,12 +204,9 @@ class BannerRepository {
             ]
         );
 
-        /*
-         * GET TOTAL
-         *
-         * Dùng chính WHERE của SELECT
-         * để tránh lỗi lệch điều kiện COUNT.
-         */
+        /* ======================================================
+            GET TOTAL
+        ====================================================== */
         const [countRows] = await db.query(
             `
             SELECT COUNT(*) AS total
@@ -201,12 +216,16 @@ class BannerRepository {
             params
         );
 
-        const total = Number(countRows[0]?.total || 0);
+        const total = Number(
+            countRows[0]?.total || 0
+        );
 
-        const totalPages = Math.ceil(total / limit) || 1;
+        const totalPages =
+            Math.ceil(total / limit) || 1;
 
         return {
             data: rows,
+
             pagination: {
                 page,
                 limit,
@@ -280,33 +299,24 @@ class BannerRepository {
         const fields = [];
         const values = [];
 
-        /*
-         * PAGE
-         */
         if (data.page !== undefined) {
+
             fields.push(`page = ?`);
             values.push(data.page);
         }
 
-        /*
-         * IMAGE
-         */
         if (data.image_url !== undefined) {
+
             fields.push(`image_url = ?`);
             values.push(data.image_url);
         }
 
-        /*
-         * STATUS
-         */
         if (data.is_active !== undefined) {
+
             fields.push(`is_active = ?`);
             values.push(data.is_active);
         }
 
-        /*
-         * Không có gì để update
-         */
         if (fields.length === 0) {
             return 0;
         }
@@ -347,7 +357,7 @@ class BannerRepository {
 
     /* ==========================================================
         GET IMAGE
-        DÙNG KHI CẦN XÓA ẢNH CLOUDINARY
+        DÙNG KHI XÓA CLOUDINARY
     ========================================================== */
     async getImage(bannerId) {
 
@@ -366,8 +376,8 @@ class BannerRepository {
 
 
     /* ==========================================================
-        GET ACTIVE BANNERS
-        DÙNG CHO FRONTEND
+        GET ACTIVE BANNERS BY PAGE
+        PUBLIC FRONTEND
     ========================================================== */
     async findActiveByPage(page) {
 
@@ -399,7 +409,6 @@ class BannerRepository {
         return rows;
     }
 }
-
 
 module.exports = new BannerRepository();
 
