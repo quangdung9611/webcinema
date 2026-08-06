@@ -6,6 +6,12 @@ class PromotionRepository {
     /* ==========================================================
         FIND ALL PROMOTIONS - KHÔNG PHÂN TRANG
         PUBLIC / ADMIN
+
+        RETURN:
+        [
+            {...},
+            {...}
+        ]
     ========================================================== */
     async findAllAll(search = "") {
 
@@ -16,7 +22,11 @@ class PromotionRepository {
         const conditions = [];
         const params = [];
 
+        /* ======================================================
+            SEARCH
+        ====================================================== */
         if (search) {
+
             conditions.push(`
                 (
                     title LIKE ?
@@ -64,18 +74,18 @@ class PromotionRepository {
             params
         );
 
-        return {
-            data: rows,
-
-            pagination: {
-                page: 1,
-                limit: rows.length,
-                total: rows.length,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false
-            }
-        };
+        /*
+         * QUAN TRỌNG:
+         * Route này KHÔNG PHÂN TRANG
+         * nên chỉ trả về ARRAY.
+         *
+         * Không trả:
+         * {
+         *     data: rows,
+         *     pagination: {...}
+         * }
+         */
+        return rows;
     }
 
 
@@ -233,6 +243,9 @@ class PromotionRepository {
         ) || 1;
 
 
+        /*
+         * Route PAGINATED vẫn trả object
+         */
         return {
             data: rows,
 
@@ -309,7 +322,6 @@ class PromotionRepository {
             slug
         ];
 
-
         if (
             excludePromotionId !== null &&
             excludePromotionId !== undefined
@@ -323,7 +335,6 @@ class PromotionRepository {
                 Number(excludePromotionId)
             );
         }
-
 
         const [rows] = await db.query(
             sql,
@@ -347,7 +358,6 @@ class PromotionRepository {
             likes,
             is_active
         } = data;
-
 
         const [result] = await db.query(
             `
@@ -402,7 +412,6 @@ class PromotionRepository {
             likes,
             is_active
         } = data;
-
 
         const [result] = await db.query(
             `
@@ -478,9 +487,7 @@ class PromotionRepository {
         const [result] = await db.query(
             `
             UPDATE promotions
-
             SET likes = likes + 1
-
             WHERE promotion_id = ?
             `,
             [promotionId]
@@ -498,9 +505,7 @@ class PromotionRepository {
         const [result] = await db.query(
             `
             UPDATE promotions
-
             SET views = views + 1
-
             WHERE promotion_id = ?
             `,
             [promotionId]
@@ -526,24 +531,19 @@ class PromotionRepository {
             [promotionId]
         );
 
-
         if (rows.length === 0) {
             return null;
         }
-
 
         const newStatus =
             Number(rows[0].is_active) === 1
                 ? 0
                 : 1;
 
-
         await db.query(
             `
             UPDATE promotions
-
             SET is_active = ?
-
             WHERE promotion_id = ?
             `,
             [
@@ -551,7 +551,6 @@ class PromotionRepository {
                 promotionId
             ]
         );
-
 
         return newStatus;
     }
@@ -561,7 +560,6 @@ class PromotionRepository {
         TRANSACTION - GET CONNECTION
     ========================================================== */
     async getConnection() {
-
         return await db.getConnection();
     }
 
@@ -570,7 +568,6 @@ class PromotionRepository {
         TRANSACTION - BEGIN
     ========================================================== */
     async beginTransaction(connection) {
-
         await connection.beginTransaction();
     }
 
@@ -579,7 +576,6 @@ class PromotionRepository {
         TRANSACTION - COMMIT
     ========================================================== */
     async commit(connection) {
-
         await connection.commit();
     }
 
@@ -588,7 +584,6 @@ class PromotionRepository {
         TRANSACTION - ROLLBACK
     ========================================================== */
     async rollback(connection) {
-
         await connection.rollback();
     }
 
@@ -610,7 +605,6 @@ class PromotionRepository {
             likes,
             is_active
         } = data;
-
 
         const [result] = await connection.query(
             `
@@ -637,7 +631,6 @@ class PromotionRepository {
             ]
         );
 
-
         return result.affectedRows;
     }
 
@@ -658,11 +651,9 @@ class PromotionRepository {
             [promotionId]
         );
 
-
         return result.affectedRows;
     }
 }
-
 
 module.exports = new PromotionRepository();
 

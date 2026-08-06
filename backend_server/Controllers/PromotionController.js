@@ -1,11 +1,16 @@
 
 const PromotionService = require("../Services/PromotionService");
 
+
 /* ==========================================================
 PUBLIC/ADMIN - GET ALL PROMOTIONS
 KHÔNG PHÂN TRANG
+
+GET /api/promotions
+GET /api/promotions?search=...
 ========================================================== */
 exports.getAllPromotionsAll = async (req, res) => {
+
     try {
 
         const {
@@ -14,28 +19,42 @@ exports.getAllPromotionsAll = async (req, res) => {
             limit
         } = req.query;
 
-        // Không cho phép page / limit ở route ALL
+
+        /*
+         * Route ALL không hỗ trợ pagination
+         */
         if (
             page !== undefined ||
             limit !== undefined
         ) {
+
             return res.status(400).json({
                 success: false,
                 message:
-                    "Route /api/promotions không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/promotions/paginated để phân trang."
+                    "Route /api/promotions không hỗ trợ tham số page hoặc limit. " +
+                    "Vui lòng sử dụng /api/promotions/paginated để phân trang."
             });
         }
+
 
         const data =
             await PromotionService.getAllPromotionsAll(
                 search
             );
 
-        // =====================================================
-        // GIỐNG CHUẨN /api/users
-        // Trả thẳng ARRAY JSON
-        // =====================================================
-        return res.status(200).json(data);
+
+        /*
+         * CHUẨN RESPONSE:
+         *
+         * {
+         *     success: true,
+         *     data: [...]
+         * }
+         */
+        return res.status(200).json({
+            success: true,
+            data
+        });
 
     } catch (err) {
 
@@ -58,8 +77,11 @@ exports.getAllPromotionsAll = async (req, res) => {
 
 /* ==========================================================
 ADMIN - GET PROMOTIONS WITH PAGINATION
+
+GET /api/promotions/paginated
 ========================================================== */
 exports.getPromotionsWithPagination = async (req, res) => {
+
     try {
 
         const {
@@ -68,6 +90,7 @@ exports.getPromotionsWithPagination = async (req, res) => {
             search = ""
         } = req.query;
 
+
         const data =
             await PromotionService.getAllPromotionsPaginated(
                 page,
@@ -75,6 +98,10 @@ exports.getPromotionsWithPagination = async (req, res) => {
                 search
             );
 
+
+        /*
+         * PAGINATED vẫn giữ pagination
+         */
         return res.status(200).json({
             success: true,
             data
@@ -103,6 +130,7 @@ exports.getPromotionsWithPagination = async (req, res) => {
 ADMIN - GET PROMOTION BY ID
 ========================================================== */
 exports.getPromotionById = async (req, res) => {
+
     try {
 
         const {
@@ -142,6 +170,7 @@ exports.getPromotionById = async (req, res) => {
 PUBLIC - GET PROMOTION BY SLUG
 ========================================================== */
 exports.getPromotionBySlug = async (req, res) => {
+
     try {
 
         const {
@@ -181,6 +210,7 @@ exports.getPromotionBySlug = async (req, res) => {
 ADMIN - CREATE PROMOTION
 ========================================================== */
 exports.createPromotion = async (req, res) => {
+
     try {
 
         const promotionId =
@@ -191,8 +221,7 @@ exports.createPromotion = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            message:
-                "Thêm khuyến mãi thành công!",
+            message: "Thêm khuyến mãi thành công!",
             data: {
                 promotion_id: promotionId
             }
@@ -221,6 +250,7 @@ exports.createPromotion = async (req, res) => {
 ADMIN - UPDATE PROMOTION
 ========================================================== */
 exports.updatePromotion = async (req, res) => {
+
     try {
 
         const {
@@ -262,6 +292,7 @@ exports.updatePromotion = async (req, res) => {
 ADMIN - DELETE PROMOTION
 ========================================================== */
 exports.deletePromotion = async (req, res) => {
+
     try {
 
         const {
@@ -301,6 +332,7 @@ exports.deletePromotion = async (req, res) => {
 PUBLIC - LIKE PROMOTION
 ========================================================== */
 exports.increaseLike = async (req, res) => {
+
     try {
 
         const {
@@ -340,6 +372,7 @@ exports.increaseLike = async (req, res) => {
 ADMIN - TOGGLE PROMOTION STATUS
 ========================================================== */
 exports.togglePromotionStatus = async (req, res) => {
+
     try {
 
         const {
