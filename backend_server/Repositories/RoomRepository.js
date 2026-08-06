@@ -2,9 +2,10 @@ const db = require("../Config/db");
 
 class RoomRepository {
 
-    /* ==========================================================
-        FIND ALL - KHÔNG PHÂN TRANG (DÙNG CHUNG)
-    ========================================================== */
+    /*=========================================================
+        FIND ALL - KHÔNG PHÂN TRANG (có search)
+        RETURN: rows[] (KHÔNG pagination, KHÔNG object data)
+    =========================================================*/
     async findAllAll(search = "") {
         search = typeof search === "string" ? search.trim() : "";
         let whereClause = "";
@@ -38,23 +39,13 @@ class RoomRepository {
         `;
 
         const [rows] = await db.query(sql, queryParams);
-
-        return {
-            data: rows,
-            pagination: {
-                page: 1,
-                limit: rows.length,
-                total: rows.length,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false
-            }
-        };
+        return rows; // 👈 TRẢ VỀ THẲNG rows[], không bọc object
     }
 
-    /* ==========================================================
+    /*=========================================================
         FIND ALL - CÓ PHÂN TRANG (ADMIN)
-    ========================================================== */
+        RETURN: { data: [], pagination: {} }
+    =========================================================*/
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -122,9 +113,9 @@ class RoomRepository {
         };
     }
 
-    /* ==========================================================
+    /*=========================================================
         FIND BY ID
-    ========================================================== */
+    =========================================================*/
     async findById(roomId) {
         const [rows] = await db.query(
             `SELECT * FROM rooms WHERE room_id = ? LIMIT 1`,
@@ -133,9 +124,9 @@ class RoomRepository {
         return rows[0] || null;
     }
 
-    /* ==========================================================
+    /*=========================================================
         FIND BY CINEMA (PUBLIC)
-    ========================================================== */
+    =========================================================*/
     async findByCinema(cinemaId) {
         const [rows] = await db.query(
             `
@@ -149,9 +140,9 @@ class RoomRepository {
         return rows;
     }
 
-    /* ==========================================================
+    /*=========================================================
         CHECK DUPLICATE ROOM NAME IN CINEMA
-    ========================================================== */
+    =========================================================*/
     async findByNameInCinema(roomName, cinemaId, excludeRoomId = null) {
         let sql = `SELECT room_id FROM rooms WHERE room_name = ? AND cinema_id = ?`;
         const params = [roomName.trim(), cinemaId];
@@ -163,9 +154,9 @@ class RoomRepository {
         return rows[0] || null;
     }
 
-    /* ==========================================================
+    /*=========================================================
         CREATE
-    ========================================================== */
+    =========================================================*/
     async create(data) {
         const { room_name, cinema_id, room_type } = data;
         const [result] = await db.query(
@@ -175,9 +166,9 @@ class RoomRepository {
         return result.insertId;
     }
 
-    /* ==========================================================
+    /*=========================================================
         UPDATE
-    ========================================================== */
+    =========================================================*/
     async update(roomId, data) {
         const { room_name, cinema_id, room_type } = data;
         const [result] = await db.query(
@@ -187,9 +178,9 @@ class RoomRepository {
         return result.affectedRows;
     }
 
-    /* ==========================================================
+    /*=========================================================
         DELETE
-    ========================================================== */
+    =========================================================*/
     async delete(roomId) {
         const [result] = await db.query(
             `DELETE FROM rooms WHERE room_id = ?`,

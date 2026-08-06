@@ -21,23 +21,25 @@ const validateRoom = (data) => {
 
 class RoomService {
 
-    /* ==========================================================
-        GET ALL ROOMS - KHÔNG PHÂN TRANG (DÙNG CHUNG)
-    ========================================================== */
+    /*=========================================================
+        GET ALL ROOMS - KHÔNG PHÂN TRANG
+        RETURN: rows[] (trực tiếp từ repository)
+    =========================================================*/
     async getAllRoomsAll(search = "") {
         return await RoomRepository.findAllAll(search);
     }
 
-    /* ==========================================================
-        GET ALL ROOMS - CÓ PHÂN TRANG (ADMIN)
-    ========================================================== */
+    /*=========================================================
+        GET ALL ROOMS - CÓ PHÂN TRANG
+        RETURN: { data: [], pagination: {} }
+    =========================================================*/
     async getAllRoomsPaginated(page = 1, limit = 20, search = "") {
         return await RoomRepository.findAll(page, limit, search);
     }
 
-    /* ==========================================================
+    /*=========================================================
         GET ROOM BY ID (ADMIN)
-    ========================================================== */
+    =========================================================*/
     async getRoomById(roomId) {
         const room = await RoomRepository.findById(roomId);
         if (!room) {
@@ -48,16 +50,16 @@ class RoomService {
         return room;
     }
 
-    /* ==========================================================
+    /*=========================================================
         GET ROOMS BY CINEMA (PUBLIC)
-    ========================================================== */
+    =========================================================*/
     async getRoomsByCinema(cinemaId) {
         return await RoomRepository.findByCinema(cinemaId);
     }
 
-    /* ==========================================================
+    /*=========================================================
         CREATE ROOM (ADMIN)
-    ========================================================== */
+    =========================================================*/
     async createRoom(data) {
         const { room_name, cinema_id, room_type } = data;
 
@@ -82,9 +84,9 @@ class RoomService {
         return await RoomRepository.create({ room_name: name, cinema_id, room_type });
     }
 
-    /* ==========================================================
+    /*=========================================================
         UPDATE ROOM (ADMIN)
-    ========================================================== */
+    =========================================================*/
     async updateRoom(roomId, data) {
         const { room_name, cinema_id, room_type } = data;
 
@@ -123,9 +125,9 @@ class RoomService {
         return true;
     }
 
-    /* ==========================================================
+    /*=========================================================
         DELETE ROOM (ADMIN)
-    ========================================================== */
+    =========================================================*/
     async deleteRoom(roomId) {
         const existing = await RoomRepository.findById(roomId);
         if (!existing) {

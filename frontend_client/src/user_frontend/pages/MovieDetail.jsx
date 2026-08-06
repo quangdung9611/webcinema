@@ -1,3 +1,4 @@
+
 import React, {
     useState,
     useEffect,
@@ -127,9 +128,9 @@ const MovieDetail = () => {
     // MOVIE PREVIEW
     // =========================================================
 
-    const handleMovieClick = (movie) => {
+    const handleMovieClick = (movieItem) => {
 
-        setSelectedMovie(movie);
+        setSelectedMovie(movieItem);
 
         setIsModalOpen(true);
 
@@ -162,15 +163,41 @@ const MovieDetail = () => {
                     `/api/reviews/${movieId}`
                 );
 
-                const sortedReviews = res.data.sort(
-                    (a, b) =>
-                        new Date(
-                            b.updated_at || b.created_at
-                        ) -
-                        new Date(
-                            a.updated_at || a.created_at
-                        )
-                );
+                /*
+                 * Chuẩn API:
+                 *
+                 * {
+                 *     success: true,
+                 *     data: [...]
+                 * }
+                 *
+                 * => lấy res.data.data
+                 */
+
+                const reviewData =
+                    res.data?.success === true
+                        ? res.data?.data
+                        : [];
+
+                const reviewList =
+                    Array.isArray(reviewData)
+                        ? reviewData
+                        : [];
+
+
+                const sortedReviews =
+                    [...reviewList].sort(
+                        (a, b) =>
+                            new Date(
+                                b.updated_at ||
+                                b.created_at
+                            ) -
+                            new Date(
+                                a.updated_at ||
+                                a.created_at
+                            )
+                    );
+
 
                 setReviews(sortedReviews);
 
@@ -180,6 +207,8 @@ const MovieDetail = () => {
                     "Lỗi lấy danh sách review:",
                     error
                 );
+
+                setReviews([]);
 
             }
 
@@ -200,8 +229,10 @@ const MovieDetail = () => {
                 !slug ||
                 slug === 'undefined'
             ) {
+                setLoading(false);
                 return;
             }
+
 
             try {
 
@@ -229,8 +260,23 @@ const MovieDetail = () => {
                 ]);
 
 
+                // =================================================
+                // MOVIE DETAIL
+                // =================================================
+
+                /*
+                 * API:
+                 *
+                 * {
+                 *     success: true,
+                 *     data: {...}
+                 * }
+                 */
+
                 const movieData =
-                    resMovie.data;
+                    resMovie.data?.success === true
+                        ? resMovie.data?.data
+                        : null;
 
 
                 setMovie(movieData);
@@ -242,9 +288,13 @@ const MovieDetail = () => {
 
                 if (movieData?.movie_id) {
 
-                    fetchReviews(
+                    await fetchReviews(
                         movieData.movie_id
                     );
+
+                } else {
+
+                    setReviews([]);
 
                 }
 
@@ -253,10 +303,31 @@ const MovieDetail = () => {
                 // RELATED MOVIES
                 // =================================================
 
+                /*
+                 * API:
+                 *
+                 * {
+                 *     success: true,
+                 *     data: [...]
+                 * }
+                 */
+
+                const movieListData =
+                    resRelated.data?.success === true
+                        ? resRelated.data?.data
+                        : [];
+
+
+                const movieList =
+                    Array.isArray(movieListData)
+                        ? movieListData
+                        : [];
+
+
                 const filtered =
-                    resRelated.data.filter(
-                        m =>
-                            m.slug !== slug
+                    movieList.filter(
+                        item =>
+                            item.slug !== slug
                     );
 
 
@@ -286,9 +357,27 @@ const MovieDetail = () => {
                 // ACTORS
                 // =================================================
 
+                /*
+                 * API:
+                 *
+                 * {
+                 *     success: true,
+                 *     data: [...]
+                 * }
+                 */
+
+                const actorData =
+                    resActors.data?.success === true
+                        ? resActors.data?.data
+                        : [];
+
+
                 setActors(
-                    resActors.data || []
+                    Array.isArray(actorData)
+                        ? actorData
+                        : []
                 );
+
 
             } catch (error) {
 
@@ -296,6 +385,16 @@ const MovieDetail = () => {
                     "Lỗi gọi API tổng hợp dữ liệu:",
                     error
                 );
+
+                setMovie(null);
+
+                setRelatedMovies([]);
+
+                setTrailerMovies([]);
+
+                setActors([]);
+
+                setReviews([]);
 
             } finally {
 
@@ -308,7 +407,10 @@ const MovieDetail = () => {
 
         fetchMovieData();
 
-        window.scrollTo(0, 0);
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
 
     }, [
         slug,
@@ -369,7 +471,8 @@ const MovieDetail = () => {
                     show: true,
                     type: 'error',
                     title: 'Thông báo',
-                    message: 'Bạn ơi, chọn số sao đã nhé!'
+                    message:
+                        'Bạn ơi, chọn số sao đã nhé!'
                 })
             );
 
@@ -391,7 +494,9 @@ const MovieDetail = () => {
 
 
             const user =
-                authResponse.data?.user;
+                authResponse.data?.user ||
+                authResponse.data?.data?.user ||
+                null;
 
 
             if (!user) {
@@ -467,9 +572,19 @@ const MovieDetail = () => {
                 );
 
 
-            setMovie(
-                response.data
-            );
+            const updatedMovie =
+                response.data?.success === true
+                    ? response.data?.data
+                    : null;
+
+
+            if (updatedMovie) {
+
+                setMovie(
+                    updatedMovie
+                );
+
+            }
 
 
             await fetchReviews(
@@ -496,7 +611,6 @@ const MovieDetail = () => {
 
         } catch (error) {
 
-            // Nếu API /auth/me trả 401
             if (
                 error.response?.status === 401
             ) {
@@ -567,7 +681,9 @@ const MovieDetail = () => {
 
 
             const user =
-                response.data?.user;
+                response.data?.user ||
+                response.data?.data?.user ||
+                null;
 
 
             if (!user) {
@@ -648,7 +764,9 @@ const MovieDetail = () => {
                 movie.trailer_url
             );
 
+
         if (!videoId) return;
+
 
         setTrailerModal({
             isOpen: true,
@@ -665,6 +783,7 @@ const MovieDetail = () => {
         ) {
             return;
         }
+
 
         setTrailerModal({
             isOpen: true,
@@ -730,6 +849,7 @@ const MovieDetail = () => {
 
                         const starValue =
                             index + 1;
+
 
                         const isActive =
                             starValue <=
@@ -874,9 +994,11 @@ const MovieDetail = () => {
 
         return (
             <div className="movie-loading-wrapper">
+
                 <span>
                     Đang tải thông tin phim...
                 </span>
+
             </div>
         );
 
@@ -887,7 +1009,9 @@ const MovieDetail = () => {
 
         return (
             <div className="movie-error-wrapper">
+
                 Không tìm thấy dữ liệu bộ phim yêu cầu.
+
             </div>
         );
 
@@ -918,6 +1042,7 @@ const MovieDetail = () => {
     return (
 
         <div className="cinema-movie-detail-page">
+
 
             {/* =================================================
                 MAIN MODAL
@@ -972,8 +1097,11 @@ const MovieDetail = () => {
                                 closeTrailerModal
                             }
                         >
+
                             <X size={24} />
+
                         </button>
+
 
                         {renderTrailerVideo(
                             trailerModal.url
@@ -1012,15 +1140,20 @@ const MovieDetail = () => {
                                 closeReviewModal
                             }
                         >
+
                             <X size={24} />
+
                         </button>
 
 
                         <div className="review-modal-header">
 
                             <h3>
+
                                 Đánh giá phim:{" "}
+
                                 {movie.title}
+
                             </h3>
 
                         </div>
@@ -1113,17 +1246,21 @@ const MovieDetail = () => {
                             <div className="info-header-row">
 
                                 <h1 className="movie-detail-title">
+
                                     {movie.title}
+
                                 </h1>
 
 
                                 <div className="info-rating-compact">
 
                                     <span className="rating-big-number">
+
                                         {
                                             movie.avg_rating ||
                                             "0.0"
                                         }
+
                                     </span>
 
 
@@ -1158,7 +1295,9 @@ const MovieDetail = () => {
 
 
                                         <span className="rating-count-text">
+
                                             ({reviews.length} đánh giá)
+
                                         </span>
 
                                     </div>
@@ -1205,6 +1344,7 @@ const MovieDetail = () => {
                                         movie.duration ||
                                         "--"
                                     }{" "}
+
                                     phút
 
                                 </span>
@@ -1264,6 +1404,7 @@ const MovieDetail = () => {
                                                         : 'Xem thêm'
                                                 }
 
+
                                                 <span className="toggle-icon">
 
                                                     {
@@ -1284,58 +1425,74 @@ const MovieDetail = () => {
                                 <div className="info-meta-col">
 
                                     <div className="meta-item">
+
                                         <span className="meta-label">
                                             Đạo diễn
                                         </span>
 
                                         <span className="meta-value">
+
                                             {
                                                 movie.director ||
                                                 "Đang cập nhật"
                                             }
+
                                         </span>
+
                                     </div>
 
 
                                     <div className="meta-item">
+
                                         <span className="meta-label">
                                             Diễn viên
                                         </span>
 
                                         <span className="meta-value">
+
                                             {
                                                 movie.cast ||
                                                 "Đang cập nhật"
                                             }
+
                                         </span>
+
                                     </div>
 
 
                                     <div className="meta-item">
+
                                         <span className="meta-label">
                                             Ngôn ngữ
                                         </span>
 
                                         <span className="meta-value">
+
                                             {
                                                 movie.language ||
                                                 "Đang cập nhật"
                                             }
+
                                         </span>
+
                                     </div>
 
 
                                     <div className="meta-item">
+
                                         <span className="meta-label">
                                             Quốc gia
                                         </span>
 
                                         <span className="meta-value">
+
                                             {
                                                 movie.country ||
                                                 "Đang cập nhật"
                                             }
+
                                         </span>
+
                                     </div>
 
                                 </div>
@@ -1423,14 +1580,14 @@ const MovieDetail = () => {
                     <div className="genre-movies-grid">
 
                         {relatedMovies.map(
-                            movie => (
+                            movieItem => (
 
                                 <MovieCard
                                     key={
-                                        movie.movie_id
+                                        movieItem.movie_id
                                     }
                                     movie={
-                                        movie
+                                        movieItem
                                     }
                                     onClick={
                                         handleMovieClick
@@ -1525,7 +1682,9 @@ const MovieDetail = () => {
 
 
                                         <span className="actor-real-name">
+
                                             {actor.name}
+
                                         </span>
 
                                     </div>
@@ -1550,11 +1709,13 @@ const MovieDetail = () => {
                                         const actorName =
                                             item.trim();
 
+
                                         if (
                                             !actorName
                                         ) {
                                             return null;
                                         }
+
 
                                         return (
 
@@ -1578,7 +1739,9 @@ const MovieDetail = () => {
 
 
                                                 <span className="actor-real-name">
+
                                                     {actorName}
+
                                                 </span>
 
                                             </div>
@@ -1591,7 +1754,9 @@ const MovieDetail = () => {
                         ) : (
 
                             <div className="empty-reviews-placeholder">
+
                                 Thông tin về dàn diễn viên của bộ phim đang được cập nhật...
+
                             </div>
 
                         )}
@@ -1668,7 +1833,9 @@ const MovieDetail = () => {
 
 
                                     <h4 className="other-trailer-title">
+
                                         {item.title}
+
                                     </h4>
 
                                 </div>
@@ -1714,15 +1881,18 @@ const MovieDetail = () => {
                             <div className="dashboard-big-score-left">
 
                                 <div className="huge-number">
+
                                     {
                                         movie.avg_rating ||
                                         "0.0"
                                     }
+
                                 </div>
 
                                 <div className="slash-ten">
                                     /10
                                 </div>
+
 
                                 <div className="stars-row-display">
 
@@ -1741,8 +1911,11 @@ const MovieDetail = () => {
 
                                 </div>
 
+
                                 <div className="total-votes-count-txt">
+
                                     {reviews.length} đánh giá
+
                                 </div>
 
                             </div>
@@ -1759,7 +1932,9 @@ const MovieDetail = () => {
                                         >
 
                                             <span className="star-line-label">
+
                                                 {stars} ★
+
                                             </span>
 
 
@@ -1782,12 +1957,14 @@ const MovieDetail = () => {
 
 
                                             <span className="progress-percent-text">
+
                                                 {
                                                     starPercentages[
                                                         stars
                                                     ] ||
                                                     0
                                                 }%
+
                                             </span>
 
                                         </div>
@@ -1805,7 +1982,10 @@ const MovieDetail = () => {
                             {reviews.length === 0 ? (
 
                                 <div className="empty-reviews-placeholder">
-                                    Chưa có bình luận nào. Hãy là người đầu tiên đánh giá!
+
+                                    Chưa có bình luận nào.
+                                    Hãy là người đầu tiên đánh giá!
+
                                 </div>
 
                             ) : (
@@ -1827,7 +2007,10 @@ const MovieDetail = () => {
 
                                                 <div
                                                     className="mini-comment-card"
-                                                    key={index}
+                                                    key={
+                                                        rev.review_id ||
+                                                        index
+                                                    }
                                                 >
 
                                                     <div className="comment-user-meta-header">
@@ -1856,10 +2039,12 @@ const MovieDetail = () => {
                                                         <div className="user-name-title-box">
 
                                                             <span className="comment-username">
+
                                                                 {
                                                                     rev.username ||
                                                                     "Khán giả"
                                                                 }
+
                                                             </span>
 
 
@@ -1891,16 +2076,20 @@ const MovieDetail = () => {
 
 
                                                         <span className="comment-time-ago">
+
                                                             Mới đây
+
                                                         </span>
 
                                                     </div>
 
 
                                                     <p className="comment-content-body-text">
+
                                                         {
                                                             rev.comment
                                                         }
+
                                                     </p>
 
                                                 </div>
@@ -1946,3 +2135,4 @@ const MovieDetail = () => {
 
 
 export default MovieDetail;
+
