@@ -5,7 +5,7 @@ const movieActorController = require('../Controllers/MovieActorController');
 // ⚠️ QUAN TRỌNG: Route cụ thể đặt TRƯỚC route động
 
 // 1. Lấy tất cả gán phim-diễn viên
-router.get('/all', movieActorController.getAllAssignments);
+router.get('/', movieActorController.getAllAssignments);
 
 // 2. Lấy actor_ids của 1 phim cụ thể
 router.get('/:movie_id', movieActorController.getActorsByMovieId);
