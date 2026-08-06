@@ -83,42 +83,66 @@ const ActorPage = () => {
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
-    
+
     const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }));
 
     // ======================================================
-    // FETCH ACTORS - GỌI /paginated
+    // FETCH ACTORS - GIỐNG MoviePage
     // ======================================================
     const fetchActors = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) return;
-        if (abortControllerRef.current) abortControllerRef.current.abort();
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
+        }
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
+
         isFetching.current = true;
         setLoading(true);
 
         try {
             const res = await api.get('/api/actors/paginated', {
-                params: { page, limit: 20, search: keyword.trim() },
+                params: {
+                    page,
+                    limit: 20,
+                    search: keyword.trim()
+                },
                 signal: controller.signal
             });
 
-            const responseData = res.data?.data;
-            const actorsData = responseData?.data || [];
-            const paginationData = responseData?.pagination || {
+            // ✅ Lấy trực tiếp từ res.data giống MoviePage
+            const actorsData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
                 page: 1,
                 limit: 20,
                 total: 0,
-                totalPages: 1
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
             };
 
             setActors(actorsData);
             setPagination(paginationData);
-
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
             console.error('FETCH ACTORS ERROR:', error);
+            setActors([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
             showAlert('Lỗi', 'Không thể tải danh sách diễn viên.', 'error');
         } finally {
             setLoading(false);
@@ -129,9 +153,12 @@ const ActorPage = () => {
         }
     }, []);
 
-    // Khởi tạo lần đầu
+    // ======================================================
+    // MOUNT
+    // ======================================================
     useEffect(() => {
         fetchActors(1, '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ======================================================
@@ -139,14 +166,22 @@ const ActorPage = () => {
     // ======================================================
     const prevSearchRef = useRef('');
     useEffect(() => {
-        if (search === prevSearchRef.current) return;
-        prevSearchRef.current = search;
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
 
-        const timer = setTimeout(() => fetchActors(1, search), 400);
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchActors(1, currentSearch);
+        }, 400);
+
         return () => clearTimeout(timer);
     }, [search, fetchActors]);
 
-    const handlePageChange = (page) => fetchActors(page, search);
+    const handlePageChange = (page) => {
+        fetchActors(page, search);
+    };
 
     // ======================================================
     // SLUG GENERATOR
@@ -237,10 +272,13 @@ const ActorPage = () => {
     const handleChange = (e) => {
         const { name, value, files } = e.target;
 
-        if (name === 'actor_avatar') {
-            const file = files[0];
-            setActorAvatarFile(file);
+        if (formErrors[name]) {
+            setFormErrors(prev => ({ ...prev, [name]: '' }));
+        }
 
+        if (name === 'actor_avatar') {
+            const file = files?.[0] || null;
+            setActorAvatarFile(file);
             if (file) {
                 if (filePreviews.actor_avatar?.url?.startsWith('blob:')) {
                     URL.revokeObjectURL(filePreviews.actor_avatar.url);
@@ -263,12 +301,10 @@ const ActorPage = () => {
                 name: value,
                 slug: generateSlug(value)
             }));
-            setFormErrors((prev) => ({ ...prev, [name]: '' }));
             return;
         }
 
         setFormData((prev) => ({ ...prev, [name]: value }));
-        setFormErrors((prev) => ({ ...prev, [name]: '' }));
     };
 
     // ======================================================
@@ -290,10 +326,8 @@ const ActorPage = () => {
             submitData.append('nationality', formData.nationality.trim());
             submitData.append('birthday', formData.birthday);
             submitData.append('biography', formData.biography.trim());
+            submitData.append('slug', formData.slug || generateSlug(formData.name.trim()));
 
-            const slug = formData.slug || generateSlug(formData.name.trim());
-            submitData.append('slug', slug);
-            
             if (actorAvatarFile) {
                 submitData.append('actor_avatar', actorAvatarFile);
             }
@@ -334,10 +368,10 @@ const ActorPage = () => {
                 try {
                     await api.delete(`/api/actors/${actor.actor_id}`);
                     closeAlert();
-                    
-                    const newPage = actors.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
+                    const currentPage = pagination.page;
+                    const newPage = actors.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
                     fetchActors(newPage, search);
                     showAlert('Thành công', 'Xóa diễn viên thành công.', 'success');
                 } catch (error) {
