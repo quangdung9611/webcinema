@@ -1,9 +1,14 @@
 
 const ActorService = require("../Services/ActorService");
 
-
 /* ==========================================================
-PUBLIC/ADMIN - GET ALL ACTORS (KHÔNG PHÂN TRANG)
+PUBLIC/ADMIN - GET ALL ACTORS
+KHÔNG PHÂN TRANG
+RESPONSE:
+{
+    success: true,
+    data: [...]
+}
 ========================================================== */
 exports.getAllActorsAll = async (req, res) => {
 
@@ -16,10 +21,7 @@ exports.getAllActorsAll = async (req, res) => {
         } = req.query;
 
 
-        // ======================================================
-        // KHÔNG CHO PHÉP PHÂN TRANG
-        // ======================================================
-
+        // Không cho phép phân trang
         if (
             page !== undefined ||
             limit !== undefined
@@ -37,27 +39,32 @@ exports.getAllActorsAll = async (req, res) => {
         }
 
 
-        // ======================================================
-        // GET ACTORS
-        // ======================================================
-
-        const data =
-            await ActorService.getAllActorsAll(
-                search
-            );
+        const result =
+            await ActorService.getAllActorsAll(search);
 
 
-        // ======================================================
-        // RESPONSE CHUẨN
-        // ======================================================
+        /*
+         * Repository hiện trả:
+         *
+         * {
+         *     data: [...],
+         *     pagination: {...}
+         * }
+         *
+         * Public API chỉ lấy mảng data
+         */
+
+        const actors =
+            Array.isArray(result?.data)
+                ? result.data
+                : [];
+
 
         return res.status(200).json({
 
             success: true,
 
-            data: Array.isArray(data)
-                ? data
-                : []
+            data: actors
 
         });
 
@@ -86,115 +93,221 @@ exports.getAllActorsAll = async (req, res) => {
 
 
 /* ==========================================================
-    ADMIN - GET ACTORS WITH PAGINATION
+ADMIN - GET ACTORS WITH PAGINATION
 ========================================================== */
 exports.getActorsWithPagination = async (req, res) => {
+
     try {
+
         const {
             page = 1,
             limit = 20,
             search = ""
         } = req.query;
 
-        const data = await ActorService.getAllActorsPaginated(
-            page,
-            limit,
-            search
-        );
+
+        const data =
+            await ActorService.getAllActorsPaginated(
+                page,
+                limit,
+                search
+            );
+
 
         return res.status(200).json({
-            success: true,
-            data
-        });
-    } catch (err) {
-        console.error("Get Actors Paginated Error:", err);
 
-        return res.status(err.statusCode || 500).json({
-            success: false,
-            message: err.message || "Lỗi máy chủ"
+            success: true,
+
+            data
+
         });
+
+    } catch (err) {
+
+        console.error(
+            "Get Actors Paginated Error:",
+            err
+        );
+
+        return res.status(
+            err.statusCode || 500
+        ).json({
+
+            success: false,
+
+            message:
+                err.message ||
+                "Lỗi máy chủ"
+
+        });
+
     }
+
 };
 
+
 /* ==========================================================
-    ADMIN - GET ACTOR BY ID
+ADMIN - GET ACTOR BY ID
 ========================================================== */
 exports.getActorById = async (req, res) => {
-    try {
-        const { actor_id } = req.params;
 
-        const actor = await ActorService.getActorById(actor_id);
+    try {
+
+        const {
+            actor_id
+        } = req.params;
+
+
+        const actor =
+            await ActorService.getActorById(
+                actor_id
+            );
+
 
         return res.status(200).json({
+
             success: true,
+
             data: actor
+
         });
+
     } catch (err) {
-        console.error("Get Actor By ID Error:", err);
 
-        return res.status(err.statusCode || 500).json({
-            success: false,
-            message: err.message || "Lỗi máy chủ"
-        });
-    }
-};
-
-/* ==========================================================
-    PUBLIC - GET ACTOR BY SLUG
-========================================================== */
-exports.getActorBySlug = async (req, res) => {
-    try {
-        const { slug } = req.params;
-
-        const actor = await ActorService.getActorBySlug(slug);
-
-        return res.status(200).json({
-            success: true,
-            data: actor
-        });
-    } catch (err) {
-        console.error("Get Actor By Slug Error:", err);
-
-        return res.status(err.statusCode || 500).json({
-            success: false,
-            message: err.message || "Lỗi máy chủ"
-        });
-    }
-};
-
-/* ==========================================================
-    ADMIN - CREATE ACTOR
-========================================================== */
-exports.createActor = async (req, res) => {
-    try {
-        const actorId = await ActorService.createActor(
-            req.body,
-            req.file
+        console.error(
+            "Get Actor By ID Error:",
+            err
         );
 
-        return res.status(201).json({
+        return res.status(
+            err.statusCode || 500
+        ).json({
+
+            success: false,
+
+            message:
+                err.message ||
+                "Lỗi máy chủ"
+
+        });
+
+    }
+
+};
+
+
+/* ==========================================================
+PUBLIC - GET ACTOR BY SLUG
+========================================================== */
+exports.getActorBySlug = async (req, res) => {
+
+    try {
+
+        const {
+            slug
+        } = req.params;
+
+
+        const actor =
+            await ActorService.getActorBySlug(
+                slug
+            );
+
+
+        return res.status(200).json({
+
             success: true,
-            message: "Thêm diễn viên thành công!",
+
+            data: actor
+
+        });
+
+    } catch (err) {
+
+        console.error(
+            "Get Actor By Slug Error:",
+            err
+        );
+
+        return res.status(
+            err.statusCode || 500
+        ).json({
+
+            success: false,
+
+            message:
+                err.message ||
+                "Lỗi máy chủ"
+
+        });
+
+    }
+
+};
+
+
+/* ==========================================================
+ADMIN - CREATE ACTOR
+========================================================== */
+exports.createActor = async (req, res) => {
+
+    try {
+
+        const actorId =
+            await ActorService.createActor(
+                req.body,
+                req.file
+            );
+
+
+        return res.status(201).json({
+
+            success: true,
+
+            message:
+                "Thêm diễn viên thành công!",
+
             data: {
                 actor_id: actorId
             }
-        });
-    } catch (err) {
-        console.error("Create Actor Error:", err);
 
-        return res.status(err.statusCode || 400).json({
-            success: false,
-            message: err.message || "Lỗi máy chủ"
         });
+
+    } catch (err) {
+
+        console.error(
+            "Create Actor Error:",
+            err
+        );
+
+        return res.status(
+            err.statusCode || 400
+        ).json({
+
+            success: false,
+
+            message:
+                err.message ||
+                "Lỗi máy chủ"
+
+        });
+
     }
+
 };
 
+
 /* ==========================================================
-    ADMIN - UPDATE ACTOR
+ADMIN - UPDATE ACTOR
 ========================================================== */
 exports.updateActor = async (req, res) => {
+
     try {
-        const { actor_id } = req.params;
+
+        const {
+            actor_id
+        } = req.params;
+
 
         await ActorService.updateActor(
             actor_id,
@@ -202,40 +315,86 @@ exports.updateActor = async (req, res) => {
             req.file
         );
 
-        return res.status(200).json({
-            success: true,
-            message: "Cập nhật diễn viên thành công!"
-        });
-    } catch (err) {
-        console.error("Update Actor Error:", err);
 
-        return res.status(err.statusCode || 400).json({
-            success: false,
-            message: err.message || "Lỗi máy chủ"
+        return res.status(200).json({
+
+            success: true,
+
+            message:
+                "Cập nhật diễn viên thành công!"
+
         });
+
+    } catch (err) {
+
+        console.error(
+            "Update Actor Error:",
+            err
+        );
+
+        return res.status(
+            err.statusCode || 400
+        ).json({
+
+            success: false,
+
+            message:
+                err.message ||
+                "Lỗi máy chủ"
+
+        });
+
     }
+
 };
 
+
 /* ==========================================================
-    ADMIN - DELETE ACTOR
+ADMIN - DELETE ACTOR
 ========================================================== */
 exports.deleteActor = async (req, res) => {
-    try {
-        const { actor_id } = req.params;
 
-        await ActorService.deleteActor(actor_id);
+    try {
+
+        const {
+            actor_id
+        } = req.params;
+
+
+        await ActorService.deleteActor(
+            actor_id
+        );
+
 
         return res.status(200).json({
-            success: true,
-            message: "Đã xóa diễn viên thành công."
-        });
-    } catch (err) {
-        console.error("Delete Actor Error:", err);
 
-        return res.status(err.statusCode || 500).json({
-            success: false,
-            message: err.message || "Lỗi máy chủ"
+            success: true,
+
+            message:
+                "Đã xóa diễn viên thành công."
+
         });
+
+    } catch (err) {
+
+        console.error(
+            "Delete Actor Error:",
+            err
+        );
+
+        return res.status(
+            err.statusCode || 500
+        ).json({
+
+            success: false,
+
+            message:
+                err.message ||
+                "Lỗi máy chủ"
+
+        });
+
     }
+
 };
 
