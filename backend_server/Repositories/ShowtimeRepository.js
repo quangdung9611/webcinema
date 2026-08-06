@@ -3,8 +3,8 @@ const db = require("../Config/db");
 class ShowtimeRepository {
 
     /*=========================================================
-        FIND ALL - KHÔNG PHÂN TRANG (có search)
-        RETURN: rows[] (KHÔNG pagination, KHÔNG object data)
+        FIND ALL - KHÔNG PHÂN TRANG (PUBLIC)
+        RETURN: rows[] (mảng trực tiếp)
     =========================================================*/
     async findAllAll(search = "") {
         search = typeof search === "string" ? search.trim() : "";
@@ -41,11 +41,13 @@ class ShowtimeRepository {
             queryParams
         );
 
-        return rows; // 👈 TRẢ VỀ THẲNG rows[], không bọc object
+        return rows;
     }
-    /* ==========================================================
+
+    /*=========================================================
         FIND ALL - CÓ PHÂN TRANG (ADMIN)
-    ========================================================== */
+        RETURN: { data: [], pagination: {} }
+    =========================================================*/
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -118,9 +120,9 @@ class ShowtimeRepository {
         };
     }
 
-     /*=========================================================
+    /*=========================================================
         FIND BY CINEMA AND ROOM (PUBLIC)
-        ✅ TRẢ VỀ MẢNG TRỰC TIẾP, KHÔNG BỌC OBJECT
+        ✅ TRẢ VỀ MẢNG TRỰC TIẾP (KHÔNG PAGINATION)
     =========================================================*/
     async findByCinemaAndRoom(cinemaId, roomId) {
         const [rows] = await db.query(
@@ -146,12 +148,12 @@ class ShowtimeRepository {
             [cinemaId, roomId]
         );
 
-        return rows;
+        return rows; // 👈 TRẢ VỀ MẢNG TRỰC TIẾP
     }
 
-    /* ==========================================================
+    /*=========================================================
         FIND BY ID
-    ========================================================== */
+    =========================================================*/
     async findById(showtimeId) {
         const [rows] = await db.query(
             `
@@ -180,9 +182,9 @@ class ShowtimeRepository {
         return rows[0] || null;
     }
 
-    /* ==========================================================
+    /*=========================================================
         FIND BY MOVIE (PUBLIC)
-    ========================================================== */
+    =========================================================*/
     async findByMovie(movieId) {
         const [rows] = await db.query(
             `
@@ -203,9 +205,9 @@ class ShowtimeRepository {
         return rows;
     }
 
-    /* ==========================================================
+    /*=========================================================
         CHECK CONFLICT
-    ========================================================== */
+    =========================================================*/
     async findConflict(roomId, startTime, excludeShowtimeId = null) {
         let sql = `
             SELECT showtime_id
@@ -222,9 +224,9 @@ class ShowtimeRepository {
         return rows[0] || null;
     }
 
-    /* ==========================================================
+    /*=========================================================
         CHECK IF PAST TIME
-    ========================================================== */
+    =========================================================*/
     async isPastTime(startTime) {
         const [rows] = await db.query(
             `
@@ -235,9 +237,9 @@ class ShowtimeRepository {
         return rows[0]?.isPast === 1;
     }
 
-    /* ==========================================================
+    /*=========================================================
         CHECK IF HAS TICKETS
-    ========================================================== */
+    =========================================================*/
     async hasTickets(showtimeId) {
         const [rows] = await db.query(
             `SELECT ticket_id FROM tickets WHERE showtime_id = ? LIMIT 1`,
@@ -246,9 +248,9 @@ class ShowtimeRepository {
         return rows[0] || null;
     }
 
-    /* ==========================================================
+    /*=========================================================
         QUICK BOOKING HELPERS (PUBLIC)
-    ========================================================== */
+    =========================================================*/
     async getQuickBookingMovies() {
         const [rows] = await db.query(
             `
@@ -344,9 +346,9 @@ class ShowtimeRepository {
         return rows;
     }
 
-    /* ==========================================================
+    /*=========================================================
         CREATE
-    ========================================================== */
+    =========================================================*/
     async create(data) {
         const { movie_id, cinema_id, room_id, start_time } = data;
         const [result] = await db.query(
@@ -359,9 +361,9 @@ class ShowtimeRepository {
         return result.insertId;
     }
 
-    /* ==========================================================
+    /*=========================================================
         UPDATE
-    ========================================================== */
+    =========================================================*/
     async update(showtimeId, data) {
         const { movie_id, cinema_id, room_id, start_time } = data;
         const [result] = await db.query(
@@ -375,9 +377,9 @@ class ShowtimeRepository {
         return result.affectedRows;
     }
 
-    /* ==========================================================
+    /*=========================================================
         DELETE
-    ========================================================== */
+    =========================================================*/
     async delete(showtimeId) {
         const [result] = await db.query(
             `DELETE FROM showtimes WHERE showtime_id = ?`,

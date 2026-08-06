@@ -31,7 +31,9 @@ exports.getAllShowtimesAll = async (req, res) => {
 exports.getShowtimesWithPagination = async (req, res) => {
     try {
         const { page = 1, limit = 20, search = "" } = req.query;
+
         const result = await ShowtimeService.getAllShowtimesPaginated(page, limit, search);
+
         return res.status(200).json({
             success: true,
             data: result.data,
@@ -65,7 +67,7 @@ exports.getShowtimeDetail = async (req, res) => {
 
 /*=========================================================
     PUBLIC - GET SHOWTIMES BY CINEMA AND ROOM
-    ✅ TRẢ VỀ MẢNG TRỰC TIẾP, KHÔNG BỌC OBJECT data
+    ✅ TRẢ VỀ MẢNG TRỰC TIẾP (KHÔNG PAGINATION)
 =========================================================*/
 exports.getShowtimesByCinemaAndRoom = async (req, res) => {
     try {
@@ -77,15 +79,9 @@ exports.getShowtimesByCinemaAndRoom = async (req, res) => {
             });
         }
 
-        // Service trả về { data: [], pagination: {} }
-        // Chỉ lấy data (mảng) để trả về
-        const result = await ShowtimeService.getShowtimesByCinemaAndRoom(cinema_id, room_id);
-        const data = result?.data || [];
-
-        return res.status(200).json({
-            success: true,
-            data
-        });
+        // Service trả về mảng trực tiếp
+        const data = await ShowtimeService.getShowtimesByCinemaAndRoom(cinema_id, room_id);
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("Lỗi lấy suất chiếu theo rạp và phòng:", err);
         return res.status(err.statusCode || 500).json({
