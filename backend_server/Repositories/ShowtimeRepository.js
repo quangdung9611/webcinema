@@ -2,9 +2,10 @@ const db = require("../Config/db");
 
 class ShowtimeRepository {
 
-    /* ==========================================================
-        FIND ALL - KHÔNG PHÂN TRANG (DÙNG CHUNG)
-    ========================================================== */
+    /*=========================================================
+        FIND ALL - KHÔNG PHÂN TRANG (có search)
+        RETURN: rows[] (KHÔNG pagination, KHÔNG object data)
+    =========================================================*/
     async findAllAll(search = "") {
         search = typeof search === "string" ? search.trim() : "";
         let whereClause = "";
@@ -40,19 +41,8 @@ class ShowtimeRepository {
             queryParams
         );
 
-        return {
-            data: rows,
-            pagination: {
-                page: 1,
-                limit: rows.length,
-                total: rows.length,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false
-            }
-        };
+        return rows; // 👈 TRẢ VỀ THẲNG rows[], không bọc object
     }
-
     /* ==========================================================
         FIND ALL - CÓ PHÂN TRANG (ADMIN)
     ========================================================== */
