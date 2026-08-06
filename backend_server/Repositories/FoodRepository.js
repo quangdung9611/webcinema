@@ -1,6 +1,50 @@
 const db = require("../Config/db");
 
 class FoodRepository {
+
+    /*=========================================================
+        FIND ALL - KHÔNG PHÂN TRANG (có search)
+        RETURN: rows[] (KHÔNG pagination)
+    =========================================================*/
+    async findAllAll(search = "") {
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `
+                WHERE
+                    product_name LIKE ?
+                    OR category LIKE ?
+            `;
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword);
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                product_id,
+                product_name,
+                price,
+                food_image,
+                category,
+                status,
+                created_at
+            FROM product_menu
+            ${whereClause}
+            ORDER BY product_id DESC
+            `,
+            queryParams
+        );
+
+        return rows; // 👈 trả về thẳng rows[]
+    }
+
+    /*=========================================================
+        FIND ALL - CÓ PHÂN TRANG (ADMIN)
+        RETURN: { data: [], pagination: {} }
+    =========================================================*/
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -67,6 +111,9 @@ class FoodRepository {
         };
     }
 
+    /*=========================================================
+        FIND BY ID
+    =========================================================*/
     async findById(productId) {
         const [rows] = await db.query(
             `
@@ -87,6 +134,9 @@ class FoodRepository {
         return rows[0] || null;
     }
 
+    /*=========================================================
+        FIND BY NAME (kiểm tra trùng tên)
+    =========================================================*/
     async findByName(name, excludeProductId = null) {
         let sql = `
             SELECT product_id
@@ -102,6 +152,9 @@ class FoodRepository {
         return rows[0] || null;
     }
 
+    /*=========================================================
+        CREATE
+    =========================================================*/
     async create(data) {
         const { product_name, price, food_image, category, status } = data;
         const [result] = await db.query(
@@ -115,6 +168,9 @@ class FoodRepository {
         return result.insertId;
     }
 
+    /*=========================================================
+        UPDATE
+    =========================================================*/
     async update(productId, data) {
         const { product_name, price, food_image, category, status } = data;
         const [result] = await db.query(
@@ -133,6 +189,9 @@ class FoodRepository {
         return result.affectedRows;
     }
 
+    /*=========================================================
+        DELETE
+    =========================================================*/
     async delete(productId) {
         const [result] = await db.query(
             `DELETE FROM product_menu WHERE product_id = ?`,
@@ -141,6 +200,9 @@ class FoodRepository {
         return result.affectedRows;
     }
 
+    /*=========================================================
+        GET IMAGE (để xóa trên Cloudinary)
+    =========================================================*/
     async getImage(productId) {
         const [rows] = await db.query(
             `SELECT food_image FROM product_menu WHERE product_id = ? LIMIT 1`,

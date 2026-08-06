@@ -4,8 +4,13 @@ const FoodController = require('../Controllers/FoodController');
 const upload = require('../Middlewares/MulterMiddleware');
 const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
 
-// PUBLIC (không auth)
-router.get('/', FoodController.getAllFoods);
+// PUBLIC - không phân trang (nếu có page/limit sẽ trả về lỗi 400)
+router.get('/', FoodController.getAllFoodsAll);
+
+// PUBLIC - có phân trang
+router.get('/paginated', FoodController.getFoodsWithPagination);
+
+// PUBLIC - lấy chi tiết
 router.get('/:product_id', FoodController.getFoodById);
 
 // ADMIN (cần auth) - RESTful chuẩn

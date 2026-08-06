@@ -3,14 +3,13 @@ const TicketService = require("../Services/TicketService");
 const PointsService = require("../Services/PointsService");
 const BookingRepository = require("../Repositories/BookingRepository");
 
-/* ==========================================================
+/*=========================================================
     ADMIN - GET ALL BOOKINGS (KHÔNG PHÂN TRANG)
-========================================================== */
+=========================================================*/
 exports.getAllBookingsAll = async (req, res) => {
     try {
         const { search = "", page, limit } = req.query;
 
-        // ⚠️ Nếu có page hoặc limit → từ chối yêu cầu, trả về 400
         if (page !== undefined || limit !== undefined) {
             return res.status(400).json({
                 success: false,
@@ -18,37 +17,45 @@ exports.getAllBookingsAll = async (req, res) => {
             });
         }
 
+        // Service trả về thẳng rows[]
         const data = await BookingService.getAllBookingsAll(search);
-        return res.json({ success: true, data });
+
+        return res.status(200).json({ success: true, data });
     } catch (error) {
         console.error(error);
         return res.status(500).json({
             success: false,
-            message: error.message || "Lỗi lấy danh sách booking",
+            message: error.message || "Lỗi lấy danh sách booking"
         });
     }
 };
 
-/* ==========================================================
+/*=========================================================
     ADMIN - GET BOOKINGS WITH PAGINATION
-========================================================== */
+=========================================================*/
 exports.getBookingsWithPagination = async (req, res) => {
     try {
         const { page = 1, limit = 20, search = "" } = req.query;
-        const data = await BookingService.getAllBookingsPaginated(page, limit, search);
-        return res.json({ success: true, data });
+
+        const result = await BookingService.getAllBookingsPaginated(page, limit, search);
+
+        return res.status(200).json({
+            success: true,
+            data: result.data,
+            pagination: result.pagination
+        });
     } catch (error) {
         console.error(error);
         return res.status(500).json({
             success: false,
-            message: error.message || "Lỗi lấy danh sách booking",
+            message: error.message || "Lỗi lấy danh sách booking"
         });
     }
 };
 
-/* ==========================================================
+/*=========================================================
     ADMIN - GET BOOKING DETAILS
-========================================================== */
+=========================================================*/
 exports.getBookingDetails = async (req, res) => {
     const connection = await BookingRepository.getConnection();
     try {
@@ -59,7 +66,7 @@ exports.getBookingDetails = async (req, res) => {
             connection.release();
             return res.status(404).json({
                 success: false,
-                message: "Không tìm thấy booking",
+                message: "Không tìm thấy booking"
             });
         }
 
@@ -84,9 +91,9 @@ exports.getBookingDetails = async (req, res) => {
     }
 };
 
-/* ==========================================================
+/*=========================================================
     ADMIN - UPDATE BOOKING STATUS
-========================================================== */
+=========================================================*/
 exports.updateBookingStatus = async (req, res) => {
     const connection = await BookingRepository.getConnection();
     try {
@@ -140,9 +147,9 @@ exports.updateBookingStatus = async (req, res) => {
     }
 };
 
-/* ==========================================================
+/*=========================================================
     ADMIN - DELETE BOOKING
-========================================================== */
+=========================================================*/
 exports.deleteBooking = async (req, res) => {
     try {
         const { booking_id } = req.params;
@@ -150,12 +157,12 @@ exports.deleteBooking = async (req, res) => {
         if (!affected) {
             return res.status(404).json({
                 success: false,
-                message: "Không tìm thấy booking",
+                message: "Không tìm thấy booking"
             });
         }
         return res.json({
             success: true,
-            message: "Xóa booking thành công",
+            message: "Xóa booking thành công"
         });
     } catch (error) {
         console.error(error);

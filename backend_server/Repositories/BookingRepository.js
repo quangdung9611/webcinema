@@ -2,9 +2,10 @@ const db = require("../Config/db");
 
 class BookingRepository {
 
-    /* ==========================================================
+    /*=========================================================
         FIND ALL - KHÔNG PHÂN TRANG (ADMIN)
-    ========================================================== */
+        RETURN: rows[] (KHÔNG pagination)
+    =========================================================*/
     async findAllAll(search = "") {
         search = typeof search === "string" ? search.trim() : "";
         let whereClause = "";
@@ -42,22 +43,13 @@ class BookingRepository {
             queryParams
         );
 
-        return {
-            data: rows,
-            pagination: {
-                page: 1,
-                limit: rows.length,
-                total: rows.length,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false
-            }
-        };
+        return rows; // 👈 trả về thẳng rows[]
     }
 
-    /* ==========================================================
+    /*=========================================================
         FIND ALL - CÓ PHÂN TRANG (ADMIN)
-    ========================================================== */
+        RETURN: { data: [], pagination: {} }
+    =========================================================*/
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -130,9 +122,9 @@ class BookingRepository {
         };
     }
 
-    /* ==========================================================
+    /*=========================================================
         FIND BY ID (Dùng transaction)
-    ========================================================== */
+    =========================================================*/
     async findById(connection, bookingId) {
         const [rows] = await connection.query(
             `SELECT * FROM bookings WHERE booking_id = ? LIMIT 1`,
@@ -141,9 +133,9 @@ class BookingRepository {
         return rows[0] || null;
     }
 
-    /* ==========================================================
+    /*=========================================================
         GET DETAIL (Dùng transaction)
-    ========================================================== */
+    =========================================================*/
     async getDetail(connection, bookingId) {
         const [rows] = await connection.query(
             `
@@ -176,9 +168,9 @@ class BookingRepository {
         return rows[0] || null;
     }
 
-    /* ==========================================================
+    /*=========================================================
         GET FOOD DETAILS (Dùng transaction)
-    ========================================================== */
+    =========================================================*/
     async getFoodDetails(connection, bookingId) {
         const [rows] = await connection.query(
             `
@@ -191,9 +183,9 @@ class BookingRepository {
         return rows;
     }
 
-    /* ==========================================================
+    /*=========================================================
         UPDATE STATUS (Dùng transaction)
-    ========================================================== */
+    =========================================================*/
     async updateStatus(connection, bookingId, status) {
         await connection.query(
             `UPDATE bookings SET status = ? WHERE booking_id = ?`,
@@ -201,9 +193,9 @@ class BookingRepository {
         );
     }
 
-    /* ==========================================================
+    /*=========================================================
         DELETE BOOKING
-    ========================================================== */
+    =========================================================*/
     async delete(bookingId) {
         const [result] = await db.query(
             `DELETE FROM bookings WHERE booking_id = ?`,
@@ -212,9 +204,9 @@ class BookingRepository {
         return result.affectedRows;
     }
 
-    /* ==========================================================
+    /*=========================================================
         CONNECTION & TRANSACTION
-    ========================================================== */
+    =========================================================*/
     async getConnection() {
         return db.getConnection();
     }

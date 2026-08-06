@@ -4,23 +4,25 @@ const TicketService = require("./TicketService");
 
 class BookingService {
 
-    /* ==========================================================
-        GET ALL BOOKINGS - KHÔNG PHÂN TRANG (ADMIN)
-    ========================================================== */
+    /*=========================================================
+        GET ALL BOOKINGS - KHÔNG PHÂN TRANG
+        RETURN: rows[] (trực tiếp từ repository)
+    =========================================================*/
     async getAllBookingsAll(search = "") {
         return await BookingRepository.findAllAll(search);
     }
 
-    /* ==========================================================
-        GET ALL BOOKINGS - CÓ PHÂN TRANG (ADMIN)
-    ========================================================== */
+    /*=========================================================
+        GET ALL BOOKINGS - CÓ PHÂN TRANG
+        RETURN: { data: [], pagination: {} }
+    =========================================================*/
     async getAllBookingsPaginated(page = 1, limit = 20, search = "") {
         return await BookingRepository.findAll(page, limit, search);
     }
 
-    /* ==========================================================
+    /*=========================================================
         GET BOOKING DETAIL
-    ========================================================== */
+    =========================================================*/
     async getBookingDetail(connection, bookingId) {
         const booking = await BookingRepository.getDetail(connection, bookingId);
         if (booking) {
@@ -32,44 +34,44 @@ class BookingService {
         return booking;
     }
 
-    /* ==========================================================
+    /*=========================================================
         GET FOOD DETAIL
-    ========================================================== */
+    =========================================================*/
     async getFoodDetail(connection, bookingId) {
         return await BookingDetailService.getFoodItems(connection, bookingId);
     }
 
-    /* ==========================================================
+    /*=========================================================
         GET TICKETS
-    ========================================================== */
+    =========================================================*/
     async getTickets(connection, bookingId) {
         return await TicketService.getTicketsByBooking(connection, bookingId);
     }
 
-    /* ==========================================================
+    /*=========================================================
         FIND BOOKING BY ID
-    ========================================================== */
+    =========================================================*/
     async findBookingById(connection, bookingId) {
         return await BookingRepository.findById(connection, bookingId);
     }
 
-    /* ==========================================================
+    /*=========================================================
         COMPLETE BOOKING
-    ========================================================== */
+    =========================================================*/
     async completeBooking(connection, bookingId) {
         await BookingRepository.updateStatus(connection, bookingId, "Completed");
     }
 
-    /* ==========================================================
+    /*=========================================================
         CANCEL BOOKING
-    ========================================================== */
+    =========================================================*/
     async cancelBooking(connection, bookingId) {
         await BookingRepository.updateStatus(connection, bookingId, "Cancelled");
     }
 
-    /* ==========================================================
+    /*=========================================================
         DELETE BOOKING
-    ========================================================== */
+    =========================================================*/
     async deleteBooking(bookingId) {
         return await BookingRepository.delete(bookingId);
     }
