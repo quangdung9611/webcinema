@@ -1,306 +1,224 @@
-
-// repositories/MovieRepository.js
-
 const db = require('../Config/db');
 
 class MovieRepository {
 
-   /* ==========================================================
-    FIND ALL ACTORS - KHÔNG PHÂN TRANG (PUBLIC)
-    RESPONSE CHỈ LÀ ARRAY
-========================================================== */
-async findAllAll(search = "") {
-
-    search =
-        typeof search === "string"
-            ? search.trim()
-            : "";
-
-    const conditions = [];
-    const queryParams = [];
-
-    if (search) {
-
-        conditions.push(
-            "(name LIKE ? OR nationality LIKE ?)"
-        );
-
-        const keyword = `%${search}%`;
-
-        queryParams.push(
-            keyword,
-            keyword
-        );
-    }
-
-    const whereClause =
-        conditions.length
-            ? `WHERE ${conditions.join(" AND ")}`
-            : "";
-
-    const [rows] = await db.query(
-        `
-        SELECT
-            actor_id,
-            name,
-            gender,
-            nationality,
-            actor_avatar,
-            biography,
-            birthday,
-            slug,
-            created_at,
-            updated_at
-        FROM actors
-        ${whereClause}
-        ORDER BY actor_id DESC
-        `,
-        queryParams
-    );
-
-    return rows;
-}
-
     /*=========================================================
-        FIND ALL MOVIES - CÓ PHÂN TRANG (có search)
-
-        RETURN:
-        {
-            data: [],
-            pagination: {}
-        }
+        FIND ALL MOVIES - KHÔNG PHÂN TRANG (PUBLIC/ADMIN)
+        RETURN: rows[] (trực tiếp, không bọc)
     =========================================================*/
-    async findAll(
-        page = 1,
-        limit = 20,
-        search = ""
-    ) {
-
-        page =
-            Number.parseInt(page, 10);
-
-        limit =
-            Number.parseInt(limit, 10);
-
-
-        if (page < 1) {
-            page = 1;
-        }
-
-        if (limit < 1) {
-            limit = 20;
-        }
-
-        if (limit > 100) {
-            limit = 100;
-        }
-
-
-        search =
-            typeof search === "string"
-                ? search.trim()
-                : "";
-
-
-        let whereClause = "";
-
+    async findAllAll(search = "") {
+        search = typeof search === "string" ? search.trim() : "";
+        const conditions = [];
         const queryParams = [];
 
-
         if (search) {
-
-            whereClause = `
-                WHERE
-                    title LIKE ?
-                    OR director LIKE ?
-                    OR nation LIKE ?
-            `;
-
+            conditions.push("(title LIKE ? OR director LIKE ? OR nation LIKE ?)");
             const keyword = `%${search}%`;
-
-            queryParams.push(
-                keyword,
-                keyword,
-                keyword
-            );
+            queryParams.push(keyword, keyword, keyword);
         }
 
-
-        const offset =
-            (page - 1) * limit;
-
+        const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
         const [rows] = await db.query(
             `
-            SELECT *
+            SELECT
+                movie_id,
+                title,
+                slug,
+                description,
+                director,
+                nation,
+                duration,
+                age_rating,
+                movie_poster,
+                movie_backdrop,
+                trailer_url,
+                release_date,
+                status,
+                total_likes,
+                views_count,
+                created_at,
+                updated_at
             FROM movies
             ${whereClause}
-            ORDER BY created_at DESC
-            LIMIT ? OFFSET ?
+            ORDER BY movie_id DESC
             `,
-            [
-                ...queryParams,
-                limit,
-                offset
-            ]
+            queryParams
         );
 
-
-        const [countRows] =
-            await db.query(
-                `
-                SELECT COUNT(*) AS total
-                FROM movies
-                ${whereClause}
-                `,
-                queryParams
-            );
-
-
-        const total =
-            Number(
-                countRows[0]?.total || 0
-            );
-
-
-        const totalPages =
-            Math.ceil(total / limit) || 1;
-
-
-        return {
-
-            data: rows,
-
-            pagination: {
-
-                page,
-
-                limit,
-
-                total,
-
-                totalPages:
-                    totalPages > 0
-                        ? totalPages
-                        : 1,
-
-                hasPreviousPage:
-                    page > 1,
-
-                hasNextPage:
-                    page < totalPages
-
-            }
-
-        };
+        return rows;
     }
 
+    /*=========================================================
+        FIND ALL MOVIES - CÓ PHÂN TRANG (ADMIN)
+        RETURN: { data: [], pagination: {} }
+    =========================================================*/
+    async findAll(page = 1, limit = 20, search = "") {
+        page = Number.parseInt(page, 10);
+        limit = Number.parseInt(limit, 10);
+
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 20;
+        if (limit > 100) limit = 100;
+
+        search = typeof search === "string" ? search.trim() : "";
+
+        const conditions = [];
+        const queryParams = [];
+
+        if (search) {
+            conditions.push("(title LIKE ? OR director LIKE ? OR nation LIKE ?)");
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword, keyword);
+        }
+
+        const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+        const offset = (page - 1) * limit;
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                movie_id,
+                title,
+                slug,
+                description,
+                director,
+                nation,
+                duration,
+                age_rating,
+                movie_poster,
+                movie_backdrop,
+                trailer_url,
+                release_date,
+                status,
+                total_likes,
+                views_count,
+                created_at,
+                updated_at
+            FROM movies
+            ${whereClause}
+            ORDER BY movie_id DESC
+            LIMIT ? OFFSET ?
+            `,
+            [...queryParams, limit, offset]
+        );
+
+        const [countRows] = await db.query(
+            `
+            SELECT COUNT(*) AS total
+            FROM movies
+            ${whereClause}
+            `,
+            queryParams
+        );
+
+        const total = Number(countRows[0]?.total || 0);
+        const totalPages = Math.ceil(total / limit) || 1;
+
+        return {
+            data: rows,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: totalPages > 0 ? totalPages : 1,
+                hasPreviousPage: page > 1,
+                hasNextPage: page < totalPages
+            }
+        };
+    }
 
     /*=========================================================
         FIND MOVIE BY ID
     =========================================================*/
     async findById(movieId) {
-
         const [rows] = await db.query(
             `
-            SELECT *
+            SELECT
+                movie_id,
+                title,
+                slug,
+                description,
+                director,
+                nation,
+                duration,
+                age_rating,
+                movie_poster,
+                movie_backdrop,
+                trailer_url,
+                release_date,
+                status,
+                total_likes,
+                views_count,
+                created_at,
+                updated_at
             FROM movies
             WHERE movie_id = ?
             LIMIT 1
             `,
             [movieId]
         );
-
-
         return rows[0] || null;
     }
 
-
     /*=========================================================
-        FIND MOVIE BY SLUG
+        FIND MOVIE BY SLUG (PUBLIC DETAIL)
+        KÈM GENRES, ACTORS, SHOWTIMES
     =========================================================*/
     async findBySlug(slug) {
-
         const [rows] = await db.query(
             `
             SELECT
                 m.*,
                 COUNT(r.review_id) AS total_reviews,
-                IFNULL(
-                    ROUND(
-                        AVG(r.rating_score),
-                        1
-                    ),
-                    0
-                ) AS avg_rating
+                IFNULL(ROUND(AVG(r.rating_score), 1), 0) AS avg_rating
             FROM movies m
-            LEFT JOIN reviews r
-                ON m.movie_id = r.movie_id
+            LEFT JOIN reviews r ON m.movie_id = r.movie_id
             WHERE m.slug = ?
             GROUP BY m.movie_id
             LIMIT 1
             `,
             [slug]
         );
-
-
         return rows[0] || null;
     }
-
 
     /*=========================================================
         GET GENRES BY MOVIE ID
     =========================================================*/
     async getGenresByMovieId(movieId) {
-
         const [rows] = await db.query(
             `
-            SELECT
-                g.genre_id,
-                g.genre_name
+            SELECT g.genre_id, g.genre_name, g.slug
             FROM genres g
-            JOIN movie_genres mg
-                ON g.genre_id = mg.genre_id
+            INNER JOIN movie_genres mg ON g.genre_id = mg.genre_id
             WHERE mg.movie_id = ?
             `,
             [movieId]
         );
-
-
         return rows;
     }
-
 
     /*=========================================================
         GET ACTORS BY MOVIE ID
     =========================================================*/
     async getActorsByMovieId(movieId) {
-
         const [rows] = await db.query(
             `
-            SELECT
-                a.actor_id,
-                a.name,
-                a.actor_avatar,
-                a.slug
+            SELECT a.actor_id, a.name, a.actor_avatar, a.slug
             FROM actors a
-            JOIN movie_actors ma
-                ON a.actor_id = ma.actor_id
+            INNER JOIN movie_actors ma ON a.actor_id = ma.actor_id
             WHERE ma.movie_id = ?
             `,
             [movieId]
         );
-
-
         return rows;
     }
 
-
     /*=========================================================
-        GET SHOWTIMES BY MOVIE ID
+        GET SHOWTIMES BY MOVIE ID (CHỈ LẤY TƯƠNG LAI)
     =========================================================*/
     async getShowtimesByMovieId(movieId) {
-
         const [rows] = await db.query(
             `
             SELECT
@@ -311,77 +229,42 @@ async findAllAll(search = "") {
                 c.cinema_name,
                 c.address
             FROM showtimes s
-            JOIN rooms r
-                ON s.room_id = r.room_id
-            JOIN cinemas c
-                ON r.cinema_id = c.cinema_id
-            WHERE
-                s.movie_id = ?
+            INNER JOIN rooms r ON s.room_id = r.room_id
+            INNER JOIN cinemas c ON r.cinema_id = c.cinema_id
+            WHERE s.movie_id = ?
                 AND s.start_time >= NOW()
             ORDER BY s.start_time ASC
             `,
             [movieId]
         );
-
-
         return rows;
     }
-
 
     /*=========================================================
         CHECK EXISTS BY TITLE OR SLUG
     =========================================================*/
-    async existsByTitleOrSlug(
-        title,
-        slug,
-        excludeId = null
-    ) {
-
+    async existsByTitleOrSlug(title, slug, excludeId = null) {
         let sql = `
             SELECT movie_id
             FROM movies
-            WHERE
-                (
-                    title = ?
-                    OR slug = ?
-                )
+            WHERE title = ? OR slug = ?
         `;
-
-
-        const params = [
-            title,
-            slug
-        ];
-
+        const params = [title, slug];
 
         if (excludeId != null) {
-
-            sql += `
-                AND movie_id != ?
-            `;
-
-            params.push(
-                Number(excludeId)
-            );
+            sql += ` AND movie_id != ?`;
+            params.push(Number(excludeId));
         }
+        sql += ` LIMIT 1`;
 
-
-        const [rows] =
-            await db.query(
-                sql,
-                params
-            );
-
-
+        const [rows] = await db.query(sql, params);
         return rows.length > 0;
     }
-
 
     /*=========================================================
         CREATE MOVIE
     =========================================================*/
     async create(movieData) {
-
         const {
             title,
             slug,
@@ -394,77 +277,39 @@ async findAllAll(search = "") {
             movie_backdrop,
             trailer_url,
             release_date,
-            status,
-            total_likes
+            status
         } = movieData;
 
-
-        const [result] =
-            await db.query(
-                `
-                INSERT INTO movies
-                (
-                    title,
-                    slug,
-                    description,
-                    director,
-                    nation,
-                    duration,
-                    age_rating,
-                    movie_poster,
-                    movie_backdrop,
-                    trailer_url,
-                    release_date,
-                    status,
-                    total_likes
-                )
-                VALUES
-                (
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?,
-                    ?
-                )
-                `,
-                [
-                    title,
-                    slug,
-                    description || "",
-                    director,
-                    nation,
-                    duration,
-                    age_rating,
-                    movie_poster || null,
-                    movie_backdrop || null,
-                    trailer_url || null,
-                    release_date,
-                    status,
-                    total_likes || 0
-                ]
-            );
-
-
+        const [result] = await db.query(
+            `
+            INSERT INTO movies (
+                title, slug, description, director, nation,
+                duration, age_rating, movie_poster, movie_backdrop,
+                trailer_url, release_date, status, total_likes, views_count
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)
+            `,
+            [
+                title,
+                slug,
+                description || "",
+                director,
+                nation,
+                duration,
+                age_rating,
+                movie_poster || null,
+                movie_backdrop || null,
+                trailer_url || null,
+                release_date,
+                status
+            ]
+        );
         return result.insertId;
     }
-
 
     /*=========================================================
         UPDATE MOVIE
     =========================================================*/
-    async update(
-        movieId,
-        movieData
-    ) {
-
+    async update(movieId, movieData) {
         const {
             title,
             slug,
@@ -477,120 +322,83 @@ async findAllAll(search = "") {
             description,
             movie_poster,
             movie_backdrop,
-            trailer_url,
-            total_likes
+            trailer_url
         } = movieData;
 
-
-        const [result] =
-            await db.query(
-                `
-                UPDATE movies
-                SET
-                    title = ?,
-                    slug = ?,
-                    director = ?,
-                    nation = ?,
-                    duration = ?,
-                    age_rating = ?,
-                    release_date = ?,
-                    status = ?,
-                    description = ?,
-                    movie_poster = ?,
-                    movie_backdrop = ?,
-                    trailer_url = ?,
-                    total_likes = ?
-                WHERE movie_id = ?
-                `,
-                [
-                    title,
-                    slug,
-                    director,
-                    nation,
-                    duration,
-                    age_rating,
-                    release_date,
-                    status,
-                    description || "",
-                    movie_poster,
-                    movie_backdrop,
-                    trailer_url || null,
-                    total_likes || 0,
-                    movieId
-                ]
-            );
-
-
+        const [result] = await db.query(
+            `
+            UPDATE movies
+            SET
+                title = ?,
+                slug = ?,
+                director = ?,
+                nation = ?,
+                duration = ?,
+                age_rating = ?,
+                release_date = ?,
+                status = ?,
+                description = ?,
+                movie_poster = ?,
+                movie_backdrop = ?,
+                trailer_url = ?
+            WHERE movie_id = ?
+            `,
+            [
+                title,
+                slug,
+                director,
+                nation,
+                duration,
+                age_rating,
+                release_date,
+                status,
+                description || "",
+                movie_poster,
+                movie_backdrop,
+                trailer_url || null,
+                movieId
+            ]
+        );
         return result.affectedRows;
     }
-
 
     /*=========================================================
         DELETE MOVIE
     =========================================================*/
     async delete(movieId) {
-
-        const [result] =
-            await db.query(
-                `
-                DELETE FROM movies
-                WHERE movie_id = ?
-                `,
-                [movieId]
-            );
-
-
+        const [result] = await db.query(
+            `DELETE FROM movies WHERE movie_id = ?`,
+            [movieId]
+        );
         return result.affectedRows;
     }
 
-
     /*=========================================================
-        FIND GROUPED BY STATUS
+        FIND GROUPED BY STATUS (PUBLIC HOME)
     =========================================================*/
-    async findGroupedByStatus(
-        limit = 4
-    ) {
+    async findGroupedByStatus(limit = 4) {
+        const [rows] = await db.query(
+            `
+            SELECT
+                movie_id,
+                title,
+                slug,
+                movie_poster,
+                movie_backdrop,
+                status,
+                age_rating,
+                trailer_url,
+                nation,
+                total_likes,
+                views_count
+            FROM movies
+            WHERE status != 'Ngừng chiếu'
+            ORDER BY release_date DESC
+            `
+        );
 
-        const [rows] =
-            await db.query(
-                `
-                SELECT
-                    movie_id,
-                    title,
-                    slug,
-                    movie_poster,
-                    movie_backdrop,
-                    status,
-                    age_rating,
-                    trailer_url,
-                    nation,
-                    total_likes
-                FROM movies
-                WHERE status != 'Ngừng chiếu'
-                ORDER BY release_date DESC
-                `
-            );
-
-
-        const nowShowing =
-            rows
-                .filter(
-                    movie =>
-                        movie.status ===
-                        'Đang chiếu'
-                )
-                .slice(0, limit);
-
-
-        const comingSoon =
-            rows
-                .filter(
-                    movie =>
-                        movie.status ===
-                        'Sắp chiếu'
-                )
-                .slice(0, limit);
-
+        const nowShowing = rows.filter(m => m.status === 'Đang chiếu').slice(0, limit);
+        const comingSoon = rows.filter(m => m.status === 'Sắp chiếu').slice(0, limit);
 
         return {
             'Đang chiếu': nowShowing,
@@ -598,261 +406,109 @@ async findAllAll(search = "") {
         };
     }
 
-
     /*=========================================================
-        INCREMENT LIKES
+        FIND BY STATUS (CÓ PHÂN TRANG)
     =========================================================*/
-    async incrementLikes(movieId) {
+    async findByStatus(status, page = 1, limit = 20, search = "") {
+        page = Number.parseInt(page, 10);
+        limit = Number.parseInt(limit, 10);
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 20;
+        if (limit > 100) limit = 100;
 
-        const [result] =
-            await db.query(
-                `
-                UPDATE movies
-                SET total_likes =
-                    total_likes + 1
-                WHERE movie_id = ?
-                `,
-                [movieId]
-            );
-
-
-        return result.affectedRows;
-    }
-
-
-    /*=========================================================
-        INCREMENT VIEWS
-    =========================================================*/
-    async incrementViews(movieId) {
-
-        const [result] =
-            await db.query(
-                `
-                UPDATE movies
-                SET views_count =
-                    views_count + 1
-                WHERE movie_id = ?
-                `,
-                [movieId]
-            );
-
-
-        return result.affectedRows;
-    }
-
-
-    /*=========================================================
-        FIND BY STATUS
-        CÓ PHÂN TRANG + SEARCH
-
-        RETURN:
-        {
-            data: [],
-            pagination: {}
-        }
-    =========================================================*/
-    async findByStatus(
-        status,
-        page = 1,
-        limit = 20,
-        search = ""
-    ) {
-
-        page =
-            Number.parseInt(page, 10);
-
-        limit =
-            Number.parseInt(limit, 10);
-
-
-        if (page < 1) {
-            page = 1;
-        }
-
-        if (limit < 1) {
-            limit = 20;
-        }
-
-        if (limit > 100) {
-            limit = 100;
-        }
-
-
-        search =
-            typeof search === "string"
-                ? search.trim()
-                : "";
-
+        search = typeof search === "string" ? search.trim() : "";
 
         let searchClause = "";
-
-        const queryParams = [
-            status
-        ];
-
+        const queryParams = [status];
 
         if (search) {
-
             searchClause = `
-                AND (
-                    m.title LIKE ?
-                    OR m.director LIKE ?
-                    OR m.nation LIKE ?
-                )
+                AND (m.title LIKE ? OR m.director LIKE ? OR m.nation LIKE ?)
             `;
-
-
-            const keyword =
-                `%${search}%`;
-
-
-            queryParams.push(
-                keyword,
-                keyword,
-                keyword
-            );
+            const keyword = `%${search}%`;
+            queryParams.push(keyword, keyword, keyword);
         }
 
+        const offset = (page - 1) * limit;
 
-        const offset =
-            (page - 1) * limit;
+        const [rows] = await db.query(
+            `
+            SELECT
+                m.movie_id,
+                m.title,
+                m.slug,
+                m.movie_poster,
+                m.movie_backdrop,
+                m.status,
+                m.age_rating,
+                m.release_date,
+                m.duration,
+                m.trailer_url,
+                m.nation,
+                m.total_likes,
+                m.views_count,
+                IFNULL(ROUND(AVG(r.rating_score), 1), 0) AS average_rating
+            FROM movies m
+            LEFT JOIN reviews r ON m.movie_id = r.movie_id
+            WHERE m.status = ?
+            ${searchClause}
+            GROUP BY m.movie_id
+            ORDER BY m.release_date DESC
+            LIMIT ? OFFSET ?
+            `,
+            [...queryParams, limit, offset]
+        );
 
+        const [countRows] = await db.query(
+            `
+            SELECT COUNT(*) AS total
+            FROM movies m
+            WHERE m.status = ?
+            ${searchClause}
+            `,
+            queryParams
+        );
 
-        const [rows] =
-            await db.query(
-                `
-                SELECT
-                    m.movie_id,
-                    m.title,
-                    m.slug,
-                    m.movie_poster,
-                    m.movie_backdrop,
-                    m.status,
-                    m.age_rating,
-                    m.release_date,
-                    m.duration,
-                    m.trailer_url,
-                    m.nation,
-                    m.total_likes,
-                    IFNULL(
-                        ROUND(
-                            AVG(r.rating_score),
-                            1
-                        ),
-                        0
-                    ) AS average_rating
-                FROM movies m
-                LEFT JOIN reviews r
-                    ON m.movie_id = r.movie_id
-                WHERE m.status = ?
-                ${searchClause}
-                GROUP BY m.movie_id
-                ORDER BY m.release_date DESC
-                LIMIT ? OFFSET ?
-                `,
-                [
-                    ...queryParams,
-                    limit,
-                    offset
-                ]
-            );
-
-
-        const [countRows] =
-            await db.query(
-                `
-                SELECT COUNT(*) AS total
-                FROM movies m
-                WHERE m.status = ?
-                ${searchClause}
-                `,
-                queryParams
-            );
-
-
-        const total =
-            Number(
-                countRows[0]?.total || 0
-            );
-
-
-        const totalPages =
-            Math.ceil(total / limit) || 1;
-
+        const total = Number(countRows[0]?.total || 0);
+        const totalPages = Math.ceil(total / limit) || 1;
 
         return {
-
             data: rows,
-
             pagination: {
-
                 page,
-
                 limit,
-
                 total,
-
                 totalPages,
-
-                hasPreviousPage:
-                    page > 1,
-
-                hasNextPage:
-                    page < totalPages
-
+                hasPreviousPage: page > 1,
+                hasNextPage: page < totalPages
             }
-
         };
     }
 
-
     /*=========================================================
-        FIND BY GENRE
-        CÓ PHÂN TRANG + SEARCH
-
-        RETURN:
-        {
-            data: [],
-            pagination: {}
-        }
+        FIND BY GENRE (CÓ PHÂN TRANG)
     =========================================================*/
-    async findByGenre(
-        genreSlug,
-        page = 1,
-        limit = 20,
-        search = ""
-    ) {
+    async findByGenre(genreSlug, page = 1, limit = 20, search = "") {
+        page = Number.parseInt(page, 10);
+        limit = Number.parseInt(limit, 10);
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 20;
+        if (limit > 100) limit = 100;
 
-        page =
-            Number.parseInt(page, 10);
+        search = typeof search === "string" ? search.trim() : "";
 
-        limit =
-            Number.parseInt(limit, 10);
+        let whereClause = genreSlug ? `WHERE g.slug = ?` : `WHERE 1=1`;
+        const params = genreSlug ? [genreSlug] : [];
 
-
-        if (page < 1) {
-            page = 1;
+        if (search) {
+            const keyword = `%${search}%`;
+            whereClause += ` AND (m.title LIKE ? OR m.director LIKE ? OR m.nation LIKE ?)`;
+            params.push(keyword, keyword, keyword);
         }
 
-        if (limit < 1) {
-            limit = 20;
-        }
+        const offset = (page - 1) * limit;
 
-        if (limit > 100) {
-            limit = 100;
-        }
-
-
-        search =
-            typeof search === "string"
-                ? search.trim()
-                : "";
-
-
-        const params = [];
-
-
-        let dataSql = `
+        const dataSql = `
             SELECT DISTINCT
                 m.movie_id,
                 m.title,
@@ -865,151 +521,61 @@ async findAllAll(search = "") {
                 m.nation,
                 m.created_at
             FROM movies m
-        `;
-
-
-        let countSql = `
-            SELECT COUNT(
-                DISTINCT m.movie_id
-            ) AS total
-            FROM movies m
-        `;
-
-
-        if (genreSlug) {
-
-            dataSql += `
-                JOIN movie_genres mg
-                    ON m.movie_id =
-                       mg.movie_id
-
-                JOIN genres g
-                    ON mg.genre_id =
-                       g.genre_id
-            `;
-
-
-            countSql += `
-                JOIN movie_genres mg
-                    ON m.movie_id =
-                       mg.movie_id
-
-                JOIN genres g
-                    ON mg.genre_id =
-                       g.genre_id
-            `;
-
-
-            params.push(
-                genreSlug
-            );
-        }
-
-
-        let whereClause =
-            genreSlug
-                ? `WHERE g.slug = ?`
-                : `WHERE 1=1`;
-
-
-        const whereParams =
-            [...params];
-
-
-        if (search) {
-
-            const keyword =
-                `%${search}%`;
-
-
-            whereClause += `
-                AND (
-                    m.title LIKE ?
-                    OR m.director LIKE ?
-                    OR m.nation LIKE ?
-                )
-            `;
-
-
-            whereParams.push(
-                keyword,
-                keyword,
-                keyword
-            );
-        }
-
-
-        const offset =
-            (page - 1) * limit;
-
-
-        dataSql += `
+            ${genreSlug ? `INNER JOIN movie_genres mg ON m.movie_id = mg.movie_id
+            INNER JOIN genres g ON mg.genre_id = g.genre_id` : ''}
             ${whereClause}
             ORDER BY m.created_at DESC
             LIMIT ? OFFSET ?
         `;
 
-
-        countSql += `
+        const countSql = `
+            SELECT COUNT(DISTINCT m.movie_id) AS total
+            FROM movies m
+            ${genreSlug ? `INNER JOIN movie_genres mg ON m.movie_id = mg.movie_id
+            INNER JOIN genres g ON mg.genre_id = g.genre_id` : ''}
             ${whereClause}
         `;
 
+        const [rows] = await db.query(dataSql, [...params, limit, offset]);
+        const [countRows] = await db.query(countSql, params);
 
-        const [rows] =
-            await db.query(
-                dataSql,
-                [
-                    ...whereParams,
-                    limit,
-                    offset
-                ]
-            );
-
-
-        const [countRows] =
-            await db.query(
-                countSql,
-                whereParams
-            );
-
-
-        const total =
-            Number(
-                countRows[0]?.total || 0
-            );
-
-
-        const totalPages =
-            Math.ceil(total / limit) || 1;
-
+        const total = Number(countRows[0]?.total || 0);
+        const totalPages = Math.ceil(total / limit) || 1;
 
         return {
-
             data: rows,
-
             pagination: {
-
                 page,
-
                 limit,
-
                 total,
-
                 totalPages,
-
-                hasPreviousPage:
-                    page > 1,
-
-                hasNextPage:
-                    page < totalPages
-
+                hasPreviousPage: page > 1,
+                hasNextPage: page < totalPages
             }
-
         };
+    }
+
+    /*=========================================================
+        INCREMENT LIKES
+    =========================================================*/
+    async incrementLikes(movieId) {
+        const [result] = await db.query(
+            `UPDATE movies SET total_likes = total_likes + 1 WHERE movie_id = ?`,
+            [movieId]
+        );
+        return result.affectedRows;
+    }
+
+    /*=========================================================
+        INCREMENT VIEWS
+    =========================================================*/
+    async incrementViews(movieId) {
+        const [result] = await db.query(
+            `UPDATE movies SET views_count = views_count + 1 WHERE movie_id = ?`,
+            [movieId]
+        );
+        return result.affectedRows;
     }
 }
 
-
-module.exports =
-    new MovieRepository();
-
+module.exports = new MovieRepository();
