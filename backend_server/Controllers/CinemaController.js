@@ -1,8 +1,8 @@
 const CinemaService = require("../Services/CinemaService");
 
 // ==========================================================
-// PUBLIC - GET ALL CINEMAS (KHÔNG PHÂN TRANG)
-// TRẢ VỀ TRỰC TIẾP MẢNG
+// PUBLIC / ADMIN - GET ALL CINEMAS (KHÔNG PHÂN TRANG)
+// RESPONSE: { success: true, data: [...] }
 // ==========================================================
 exports.getAllCinemasAll = async (req, res) => {
     try {
@@ -12,16 +12,12 @@ exports.getAllCinemasAll = async (req, res) => {
         if (page !== undefined || limit !== undefined) {
             return res.status(400).json({
                 success: false,
-                message:
-                    "Route /api/cinemas không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/cinemas/paginated để phân trang."
+                message: "Route /api/cinemas không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/cinemas/paginated để phân trang."
             });
         }
 
         const data = await CinemaService.getAllCinemasAll(search);
-
-        // ✅ Trả về trực tiếp mảng (không bọc success/data)
-        return res.status(200).json(data);
-
+        return res.status(200).json({ success: true, data });
     } catch (err) {
         console.error("Get All Cinemas Error:", err);
         return res.status(err.statusCode || 500).json({
@@ -33,14 +29,12 @@ exports.getAllCinemasAll = async (req, res) => {
 
 // ==========================================================
 // ADMIN - GET CINEMAS WITH PAGINATION
-// GIỮ NGUYÊN FORMAT { success, data, pagination }
+// RESPONSE: { success: true, data: [...], pagination: {...} }
 // ==========================================================
 exports.getCinemasWithPagination = async (req, res) => {
     try {
         const { page = 1, limit = 20, search = "" } = req.query;
-
         const result = await CinemaService.getAllCinemasPaginated(page, limit, search);
-
         return res.status(200).json({
             success: true,
             data: result.data,
@@ -62,10 +56,7 @@ exports.getCinemaById = async (req, res) => {
     try {
         const { cinema_id } = req.params;
         const cinema = await CinemaService.getCinemaById(cinema_id);
-        return res.status(200).json({
-            success: true,
-            data: cinema
-        });
+        return res.status(200).json({ success: true, data: cinema });
     } catch (err) {
         console.error("Get Cinema By ID Error:", err);
         return res.status(err.statusCode || 500).json({
@@ -82,10 +73,7 @@ exports.getCinemaBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
         const cinema = await CinemaService.getCinemaBySlug(slug);
-        return res.status(200).json({
-            success: true,
-            data: cinema
-        });
+        return res.status(200).json({ success: true, data: cinema });
     } catch (err) {
         console.error("Get Cinema By Slug Error:", err);
         return res.status(err.statusCode || 500).json({
