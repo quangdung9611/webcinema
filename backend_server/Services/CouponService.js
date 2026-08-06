@@ -1,121 +1,149 @@
 const CouponRepository = require("../Repositories/CouponRepository");
 
 const validateCouponData = (data) => {
-  const { coupon_code, discount_value, expiry_date } = data;
-  if (!coupon_code || !discount_value || !expiry_date) {
-    return { field: null, error: "Vui lòng nhập đầy đủ thông tin mã giảm giá" };
-  }
-  if (coupon_code.trim().length < 3) {
-    return { field: "coupon_code", error: "Mã giảm giá phải từ 3 ký tự trở lên" };
-  }
-  if (isNaN(discount_value) || Number(discount_value) <= 0) {
-    return { field: "discount_value", error: "Giá trị giảm phải lớn hơn 0" };
-  }
-  return null;
+    const { coupon_code, discount_value, expiry_date } = data;
+    if (!coupon_code || !discount_value || !expiry_date) {
+        return { field: null, error: "Vui lòng nhập đầy đủ thông tin mã giảm giá" };
+    }
+    if (coupon_code.trim().length < 3) {
+        return { field: "coupon_code", error: "Mã giảm giá phải từ 3 ký tự trở lên" };
+    }
+    if (isNaN(discount_value) || Number(discount_value) <= 0) {
+        return { field: "discount_value", error: "Giá trị giảm phải lớn hơn 0" };
+    }
+    return null;
 };
 
 class CouponService {
-  async getAllCoupons(page = 1, limit = 20, search = "") {
-    return await CouponRepository.findAll(page, limit, search);
-  }
 
-  async getCouponById(couponId) {
-    const coupon = await CouponRepository.findById(couponId);
-    if (!coupon) {
-      const err = new Error("Không tìm thấy mã giảm giá");
-      err.statusCode = 404;
-      throw err;
+    /*=========================================================
+        GET ALL COUPONS - KHÔNG PHÂN TRANG
+        RETURN: rows[] (trực tiếp từ repository)
+    =========================================================*/
+    async getAllCouponsAll(search = "") {
+        return await CouponRepository.findAllAll(search);
     }
-    return coupon;
-  }
 
-  async checkCoupon(code, userId) {
-    if (!code || !userId) {
-      const err = new Error("Thiếu thông tin mã hoặc người dùng");
-      err.statusCode = 400;
-      throw err;
+    /*=========================================================
+        GET ALL COUPONS - CÓ PHÂN TRANG
+        RETURN: { data: [], pagination: {} }
+    =========================================================*/
+    async getAllCouponsPaginated(page = 1, limit = 20, search = "") {
+        return await CouponRepository.findAll(page, limit, search);
     }
-    const coupon = await CouponRepository.findActiveByCode(code);
-    if (!coupon) {
-      const err = new Error("Mã giảm giá không tồn tại hoặc đã hết hạn");
-      err.statusCode = 404;
-      throw err;
-    }
-    const usedCount = await CouponRepository.countUsedByUser(userId, coupon.coupon_id);
-    if (usedCount > 0) {
-      const err = new Error("Bạn đã sử dụng mã này hoặc đang có đơn chờ");
-      err.statusCode = 400;
-      throw err;
-    }
-    return {
-      coupon_id: coupon.coupon_id,
-      discount_value: coupon.discount_value
-    };
-  }
 
-  async createCoupon(data) {
-    const error = validateCouponData(data);
-    if (error) {
-      const err = new Error(error.error);
-      err.field = error.field;
-      err.statusCode = 400;
-      throw err;
+    /*=========================================================
+        GET COUPON BY ID
+    =========================================================*/
+    async getCouponById(couponId) {
+        const coupon = await CouponRepository.findById(couponId);
+        if (!coupon) {
+            const err = new Error("Không tìm thấy mã giảm giá");
+            err.statusCode = 404;
+            throw err;
+        }
+        return coupon;
     }
-    const existing = await CouponRepository.findByCode(data.coupon_code);
-    if (existing) {
-      const err = new Error("Mã giảm giá đã tồn tại");
-      err.field = "coupon_code";
-      err.statusCode = 400;
-      throw err;
-    }
-    return await CouponRepository.create(data);
-  }
 
-  async updateCoupon(couponId, data) {
-    const existing = await CouponRepository.findById(couponId);
-    if (!existing) {
-      const err = new Error("Không tìm thấy mã giảm giá");
-      err.statusCode = 404;
-      throw err;
+    /*=========================================================
+        CHECK COUPON (PUBLIC)
+    =========================================================*/
+    async checkCoupon(code, userId) {
+        if (!code || !userId) {
+            const err = new Error("Thiếu thông tin mã hoặc người dùng");
+            err.statusCode = 400;
+            throw err;
+        }
+        const coupon = await CouponRepository.findActiveByCode(code);
+        if (!coupon) {
+            const err = new Error("Mã giảm giá không tồn tại hoặc đã hết hạn");
+            err.statusCode = 404;
+            throw err;
+        }
+        const usedCount = await CouponRepository.countUsedByUser(userId, coupon.coupon_id);
+        if (usedCount > 0) {
+            const err = new Error("Bạn đã sử dụng mã này hoặc đang có đơn chờ");
+            err.statusCode = 400;
+            throw err;
+        }
+        return {
+            coupon_id: coupon.coupon_id,
+            discount_value: coupon.discount_value
+        };
     }
-    const error = validateCouponData(data);
-    if (error) {
-      const err = new Error(error.error);
-      err.field = error.field;
-      err.statusCode = 400;
-      throw err;
-    }
-    const duplicate = await CouponRepository.findByCodeExcludingId(data.coupon_code, couponId);
-    if (duplicate) {
-      const err = new Error("Mã giảm giá đã tồn tại");
-      err.field = "coupon_code";
-      err.statusCode = 400;
-      throw err;
-    }
-    const affected = await CouponRepository.update(couponId, data);
-    if (affected === 0) {
-      const err = new Error("Không thể cập nhật mã giảm giá");
-      err.statusCode = 500;
-      throw err;
-    }
-    return true;
-  }
 
-  async deleteCoupon(couponId) {
-    const existing = await CouponRepository.findById(couponId);
-    if (!existing) {
-      const err = new Error("Không tìm thấy mã giảm giá");
-      err.statusCode = 404;
-      throw err;
+    /*=========================================================
+        CREATE COUPON (ADMIN)
+    =========================================================*/
+    async createCoupon(data) {
+        const error = validateCouponData(data);
+        if (error) {
+            const err = new Error(error.error);
+            err.field = error.field;
+            err.statusCode = 400;
+            throw err;
+        }
+        const existing = await CouponRepository.findByCode(data.coupon_code);
+        if (existing) {
+            const err = new Error("Mã giảm giá đã tồn tại");
+            err.field = "coupon_code";
+            err.statusCode = 400;
+            throw err;
+        }
+        return await CouponRepository.create(data);
     }
-    const affected = await CouponRepository.delete(couponId);
-    if (affected === 0) {
-      const err = new Error("Không thể xóa mã giảm giá");
-      err.statusCode = 500;
-      throw err;
+
+    /*=========================================================
+        UPDATE COUPON (ADMIN)
+    =========================================================*/
+    async updateCoupon(couponId, data) {
+        const existing = await CouponRepository.findById(couponId);
+        if (!existing) {
+            const err = new Error("Không tìm thấy mã giảm giá");
+            err.statusCode = 404;
+            throw err;
+        }
+        const error = validateCouponData(data);
+        if (error) {
+            const err = new Error(error.error);
+            err.field = error.field;
+            err.statusCode = 400;
+            throw err;
+        }
+        const duplicate = await CouponRepository.findByCodeExcludingId(data.coupon_code, couponId);
+        if (duplicate) {
+            const err = new Error("Mã giảm giá đã tồn tại");
+            err.field = "coupon_code";
+            err.statusCode = 400;
+            throw err;
+        }
+        const affected = await CouponRepository.update(couponId, data);
+        if (affected === 0) {
+            const err = new Error("Không thể cập nhật mã giảm giá");
+            err.statusCode = 500;
+            throw err;
+        }
+        return true;
     }
-    return true;
-  }
+
+    /*=========================================================
+        DELETE COUPON (ADMIN)
+    =========================================================*/
+    async deleteCoupon(couponId) {
+        const existing = await CouponRepository.findById(couponId);
+        if (!existing) {
+            const err = new Error("Không tìm thấy mã giảm giá");
+            err.statusCode = 404;
+            throw err;
+        }
+        const affected = await CouponRepository.delete(couponId);
+        if (affected === 0) {
+            const err = new Error("Không thể xóa mã giảm giá");
+            err.statusCode = 500;
+            throw err;
+        }
+        return true;
+    }
 }
 
 module.exports = new CouponService();

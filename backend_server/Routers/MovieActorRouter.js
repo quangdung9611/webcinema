@@ -2,14 +2,15 @@ const express = require('express');
 const router = express.Router();
 const movieActorController = require('../Controllers/MovieActorController');
 
-// 1. Route lấy TẤT CẢ các gán diễn viên (Để hiện cho danh sách Admin)
-// Đặt cái này TRÊN cùng để tránh bị nhầm lẫn với tham số :movie_id
-router.get('/all-assignments', movieActorController.getAllAssignments);
+// ⚠️ QUAN TRỌNG: Route cụ thể đặt TRƯỚC route động
 
-// 2. Route lấy danh sách ID diễn viên của DUY NHẤT 1 phim
+// 1. Lấy tất cả gán phim-diễn viên
+router.get('/all', movieActorController.getAllAssignments);
+
+// 2. Lấy actor_ids của 1 phim cụ thể
 router.get('/:movie_id', movieActorController.getActorsByMovieId);
 
-// 3. Route cập nhật (Xóa cũ - Thêm mới)
+// 3. Cập nhật danh sách diễn viên cho phim
 router.post('/update', movieActorController.updateMovieActors);
 
 module.exports = router;

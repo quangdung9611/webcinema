@@ -2,14 +2,15 @@ const express = require('express');
 const router = express.Router();
 const movieGenreController = require('../Controllers/MovieGenreController');
 
-// 1. Route lấy TẤT CẢ các gán thể loại (Để hiện checkbox cho toàn bộ danh sách Admin)
-// Quan trọng: Đặt cái này TRÊN cái /:movie_id để Express không nhầm "all-assignments" là một cái ID
-router.get('/all-assignments', movieGenreController.getAllAssignments);
+// ⚠️ QUAN TRỌNG: Route cụ thể phải đặt TRƯỚC route động (:movie_id)
 
-// 2. Route lấy danh sách thể loại của DUY NHẤT 1 phim (nếu cần dùng riêng)
+// 1. Lấy toàn bộ gán thể loại cho tất cả phim
+router.get('/all', movieGenreController.getAllAssignments);
+
+// 2. Lấy genre_ids của 1 phim cụ thể
 router.get('/:movie_id', movieGenreController.getGenresByMovieId);
 
-// 3. Route cập nhật (Xóa cũ - Thêm mới)
+// 3. Cập nhật thể loại cho phim (xóa cũ + thêm mới)
 router.post('/update', movieGenreController.updateMovieGenres);
 
 module.exports = router;

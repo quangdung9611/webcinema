@@ -2,6 +2,43 @@ const db = require("../Config/db");
 
 class CouponRepository {
 
+    /*=========================================================
+        FIND ALL - KHÔNG PHÂN TRANG (có search)
+        RETURN: rows[] (KHÔNG pagination)
+    =========================================================*/
+    async findAllAll(search = "") {
+        search = typeof search === "string" ? search.trim() : "";
+        let whereClause = "";
+        const queryParams = [];
+
+        if (search) {
+            whereClause = `WHERE coupon_code LIKE ?`;
+            queryParams.push(`%${search}%`);
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                coupon_id,
+                coupon_code,
+                discount_value,
+                expiry_date,
+                created_at,
+                updated_at
+            FROM coupons
+            ${whereClause}
+            ORDER BY expiry_date DESC
+            `,
+            queryParams
+        );
+
+        return rows; // 👈 trả về thẳng rows[]
+    }
+
+    /*=========================================================
+        FIND ALL - CÓ PHÂN TRANG (ADMIN)
+        RETURN: { data: [], pagination: {} }
+    =========================================================*/
     async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
@@ -62,6 +99,9 @@ class CouponRepository {
         };
     }
 
+    /*=========================================================
+        FIND BY ID
+    =========================================================*/
     async findById(couponId) {
         const [rows] = await db.query(
             `SELECT * FROM coupons WHERE coupon_id = ? LIMIT 1`,
@@ -70,6 +110,9 @@ class CouponRepository {
         return rows[0] || null;
     }
 
+    /*=========================================================
+        FIND BY CODE
+    =========================================================*/
     async findByCode(code) {
         const [rows] = await db.query(
             `SELECT * FROM coupons WHERE LOWER(coupon_code) = LOWER(?) LIMIT 1`,
@@ -78,6 +121,9 @@ class CouponRepository {
         return rows[0] || null;
     }
 
+    /*=========================================================
+        FIND ACTIVE BY CODE (còn hạn)
+    =========================================================*/
     async findActiveByCode(code) {
         const [rows] = await db.query(
             `
@@ -92,6 +138,9 @@ class CouponRepository {
         return rows[0] || null;
     }
 
+    /*=========================================================
+        FIND BY CODE EXCLUDING ID (kiểm tra trùng khi update)
+    =========================================================*/
     async findByCodeExcludingId(code, excludeCouponId) {
         const [rows] = await db.query(
             `
@@ -105,6 +154,9 @@ class CouponRepository {
         return rows[0] || null;
     }
 
+    /*=========================================================
+        CREATE
+    =========================================================*/
     async create(data) {
         const { coupon_code, discount_value, expiry_date } = data;
         const [result] = await db.query(
@@ -117,6 +169,9 @@ class CouponRepository {
         return result.insertId;
     }
 
+    /*=========================================================
+        UPDATE
+    =========================================================*/
     async update(couponId, data) {
         const { coupon_code, discount_value, expiry_date } = data;
         const [result] = await db.query(
@@ -130,6 +185,9 @@ class CouponRepository {
         return result.affectedRows;
     }
 
+    /*=========================================================
+        DELETE
+    =========================================================*/
     async delete(couponId) {
         const [result] = await db.query(
             `DELETE FROM coupons WHERE coupon_id = ?`,
@@ -138,6 +196,9 @@ class CouponRepository {
         return result.affectedRows;
     }
 
+    /*=========================================================
+        COUNT USED BY USER (cho kiểm tra coupon)
+    =========================================================*/
     async countUsedByUser(userId, couponId) {
         const [rows] = await db.query(
             `
