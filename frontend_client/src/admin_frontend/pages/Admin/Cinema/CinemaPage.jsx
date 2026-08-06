@@ -80,64 +80,102 @@ const CinemaPage = () => {
     };
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
+    // ------------------------------------------------------
+    // FETCH CINEMAS - GIỐNG HỆT MoviePage
+    // ------------------------------------------------------
     const fetchCinemas = useCallback(async (page = 1, keyword = '') => {
-    if (isFetching.current) return;
-    if (abortControllerRef.current) abortControllerRef.current.abort();
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    isFetching.current = true;
-    setLoading(true);
-
-    try {
-        const res = await api.get('/api/cinemas/paginated', {
-            params: {
-                page,
-                limit: 20,
-                search: keyword.trim()
-            },
-            signal: controller.signal
-        });
-
-        // Parse đơn giản như MoviePage
-        const cinemasData = res.data?.data || [];
-        const paginationData = res.data?.pagination || {
-            page: 1,
-            limit: 20,
-            total: 0,
-            totalPages: 1,
-            hasNextPage: false,
-            hasPreviousPage: false
-        };
-
-        setCinemas(cinemasData);
-        setPagination(paginationData);
-
-    } catch (error) {
-        // ... xử lý lỗi
-    } finally {
-        setLoading(false);
-        isFetching.current = false;
-        if (abortControllerRef.current === controller) {
-            abortControllerRef.current = null;
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
         }
-    }
-}, []);
 
-    useEffect(() => { fetchCinemas(1, ''); }, []);
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        isFetching.current = true;
+        setLoading(true);
+
+        try {
+            const res = await api.get('/api/cinemas/paginated', {
+                params: {
+                    page,
+                    limit: 20,
+                    search: keyword.trim()
+                },
+                signal: controller.signal
+            });
+
+            // ✅ Lấy trực tiếp từ res.data giống MoviePage
+            const cinemasData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            };
+
+            setCinemas(cinemasData);
+            setPagination(paginationData);
+        } catch (error) {
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
+            console.error('FETCH CINEMAS ERROR:', error);
+            setCinemas([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
+            showAlert('Lỗi', 'Không thể tải danh sách rạp.', 'error');
+        } finally {
+            setLoading(false);
+            isFetching.current = false;
+            if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
+            }
+        }
+    }, []);
+
+    // ------------------------------------------------------
+    // MOUNT
+    // ------------------------------------------------------
+    useEffect(() => {
+        fetchCinemas(1, '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // ------------------------------------------------------
     // SEARCH DEBOUNCE
     // ------------------------------------------------------
     const prevSearchRef = useRef('');
     useEffect(() => {
-        if (search === prevSearchRef.current) return;
-        prevSearchRef.current = search;
-        const timer = setTimeout(() => fetchCinemas(1, search), 400);
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
+
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchCinemas(1, currentSearch);
+        }, 400);
+
         return () => clearTimeout(timer);
     }, [search, fetchCinemas]);
 
-    const handlePageChange = (page) => fetchCinemas(page, search);
+    const handlePageChange = (page) => {
+        fetchCinemas(page, search);
+    };
 
     // ------------------------------------------------------
     // SLUG GENERATOR
@@ -304,9 +342,10 @@ const CinemaPage = () => {
                     await api.delete(`/api/cinemas/${cinema.cinema_id}`);
                     closeAlert();
 
-                    const newPage = cinemas.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
+                    const currentPage = pagination.page;
+                    const newPage = cinemas.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
                     fetchCinemas(newPage, search);
                     showAlert('Thành công', 'Xóa rạp thành công.', 'success');
                 } catch (error) {

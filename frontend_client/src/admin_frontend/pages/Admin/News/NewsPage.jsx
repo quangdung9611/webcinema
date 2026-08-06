@@ -85,19 +85,26 @@ const NewsPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ======================================================
-    // FETCH NEWS (PAGINATION + SEARCH) - GỌI /paginated
+    // FETCH NEWS (GIỐNG MOVIEPAGE)
     // ======================================================
     const fetchNews = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) return;
-        if (abortControllerRef.current) abortControllerRef.current.abort();
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
+        }
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
+
         isFetching.current = true;
         setLoading(true);
 
         try {
-            const res = await api.get('/api/news/paginated', {   // ← ĐỔI THÀNH /paginated
+            const res = await api.get('/api/news/paginated', {
                 params: {
                     page,
                     limit: 20,
@@ -106,20 +113,35 @@ const NewsPage = () => {
                 signal: controller.signal
             });
 
-            const responseData = res.data?.data;
-            const newsData = responseData?.data || [];
-            const paginationData = responseData?.pagination || {
+            // ✅ LẤY TRỰC TIẾP TỪ res.data (giống MoviePage)
+            const newsData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
                 page: 1,
                 limit: 20,
                 total: 0,
-                totalPages: 1
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
             };
 
             setNews(newsData);
             setPagination(paginationData);
+
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
             console.error('FETCH NEWS ERROR:', error);
+            setNews([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
             showAlert('Lỗi', 'Không thể tải danh sách tin tức.', 'error');
         } finally {
             setLoading(false);
@@ -130,24 +152,39 @@ const NewsPage = () => {
         }
     }, []);
 
-    // Khởi tạo lần đầu
+    // ======================================================
+    // MOUNT
+    // ======================================================
     useEffect(() => {
         fetchNews(1, '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ======================================================
-    // SEARCH DEBOUNCE
+    // SEARCH - DEBOUNCE 400ms
     // ======================================================
     const prevSearchRef = useRef('');
-    useEffect(() => {
-        if (search === prevSearchRef.current) return;
-        prevSearchRef.current = search;
 
-        const timer = setTimeout(() => fetchNews(1, search), 400);
+    useEffect(() => {
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
+
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchNews(1, currentSearch);
+        }, 400);
+
         return () => clearTimeout(timer);
     }, [search, fetchNews]);
 
-    const handlePageChange = (page) => fetchNews(page, search);
+    // ======================================================
+    // PAGE CHANGE
+    // ======================================================
+    const handlePageChange = (page) => {
+        fetchNews(page, search);
+    };
 
     // ======================================================
     // SLUG GENERATOR
@@ -449,7 +486,7 @@ const NewsPage = () => {
     ];
 
     // ======================================================
-    // HELPER: RENDER ALERT ICON
+    // RENDER ALERT ICON
     // ======================================================
     const renderAlertIcon = () => {
         switch (alertModal.type) {

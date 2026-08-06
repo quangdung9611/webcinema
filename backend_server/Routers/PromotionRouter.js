@@ -11,8 +11,8 @@ const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
 // Lấy danh sách khuyến mãi (không phân trang)
 router.get('/', PromotionController.getAllPromotionsAll);
 
-// Lấy chi tiết khuyến mãi theo slug
-router.get('/:slug', PromotionController.getPromotionBySlug);
+// ✅ Lấy chi tiết khuyến mãi theo SLUG - dùng route riêng để tránh xung đột với admin
+router.get('/detail/:slug', PromotionController.getPromotionBySlug);
 
 // Tăng lượt thích
 router.post('/like/:promotion_id', PromotionController.increaseLike);
@@ -23,7 +23,7 @@ router.post('/like/:promotion_id', PromotionController.increaseLike);
 // Lấy khuyến mãi có phân trang
 router.get('/paginated', authenticateAdmin, PromotionController.getPromotionsWithPagination);
 
-// Lấy chi tiết khuyến mãi theo ID (đặt TRƯỚC /:slug)
+// Lấy chi tiết khuyến mãi theo ID (admin)
 router.get('/:promotion_id', authenticateAdmin, PromotionController.getPromotionById);
 
 // Tạo khuyến mãi mới

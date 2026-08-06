@@ -11,8 +11,8 @@ const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
 // Lấy danh sách blog (không phân trang)
 router.get('/', BlogCinemaController.getAllBlogsAll);
 
-// Lấy chi tiết blog theo slug
-router.get('/:slug', BlogCinemaController.getBlogBySlug);
+// ✅ Lấy chi tiết blog theo SLUG - dùng route riêng để tránh xung đột
+router.get('/detail/:slug', BlogCinemaController.getBlogBySlug);
 
 // Tăng lượt thích
 router.post('/like/:blog_id', BlogCinemaController.increaseLike);
@@ -23,7 +23,7 @@ router.post('/like/:blog_id', BlogCinemaController.increaseLike);
 // Lấy blog có phân trang
 router.get('/paginated', authenticateAdmin, BlogCinemaController.getBlogsWithPagination);
 
-// Lấy chi tiết blog theo ID
+// Lấy chi tiết blog theo ID (admin)
 router.get('/:blog_id', authenticateAdmin, BlogCinemaController.getBlogById);
 
 // Tạo blog mới

@@ -88,14 +88,21 @@ const BlogCinemaPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ======================================================
-    // FETCH BLOGS (PAGINATION + SEARCH) - GỌI /paginated
+    // FETCH BLOGS - GIỐNG MoviePage
     // ======================================================
     const fetchBlogs = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) return;
-        if (abortControllerRef.current) abortControllerRef.current.abort();
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
+        }
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
+
         isFetching.current = true;
         setLoading(true);
 
@@ -109,20 +116,34 @@ const BlogCinemaPage = () => {
                 signal: controller.signal
             });
 
-            const responseData = res.data?.data;
-            const blogsData = responseData?.data || [];
-            const paginationData = responseData?.pagination || {
+            // ✅ Lấy trực tiếp từ res.data giống MoviePage
+            const blogsData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
                 page: 1,
                 limit: 20,
                 total: 0,
-                totalPages: 1
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
             };
 
             setBlogs(blogsData);
             setPagination(paginationData);
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
             console.error('FETCH BLOGS ERROR:', error);
+            setBlogs([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
             showAlert('Lỗi', 'Không thể tải danh sách blog.', 'error');
         } finally {
             setLoading(false);
@@ -133,9 +154,12 @@ const BlogCinemaPage = () => {
         }
     }, []);
 
-    // Khởi tạo lần đầu
+    // ======================================================
+    // MOUNT
+    // ======================================================
     useEffect(() => {
         fetchBlogs(1, '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ======================================================
@@ -143,14 +167,22 @@ const BlogCinemaPage = () => {
     // ======================================================
     const prevSearchRef = useRef('');
     useEffect(() => {
-        if (search === prevSearchRef.current) return;
-        prevSearchRef.current = search;
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
 
-        const timer = setTimeout(() => fetchBlogs(1, search), 400);
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchBlogs(1, currentSearch);
+        }, 400);
+
         return () => clearTimeout(timer);
     }, [search, fetchBlogs]);
 
-    const handlePageChange = (page) => fetchBlogs(page, search);
+    const handlePageChange = (page) => {
+        fetchBlogs(page, search);
+    };
 
     // ======================================================
     // SLUG GENERATOR
@@ -294,9 +326,10 @@ const BlogCinemaPage = () => {
                     await api.delete(`/api/blog-cinema/${item.blog_id}`);
                     closeAlert();
 
-                    const newPage = blogs.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
+                    const currentPage = pagination.page;
+                    const newPage = blogs.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
                     fetchBlogs(newPage, search);
                     showAlert('Thành công', 'Xóa blog thành công.', 'success');
                 } catch (error) {

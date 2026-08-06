@@ -88,14 +88,21 @@ const PromotionPage = () => {
     const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
 
     // ------------------------------------------------------
-    // FETCH PROMOTIONS - GỌI /paginated
+    // FETCH PROMOTIONS - GIỐNG MoviePage
     // ------------------------------------------------------
     const fetchPromotions = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) return;
-        if (abortControllerRef.current) abortControllerRef.current.abort();
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
+        }
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
+
         isFetching.current = true;
         setLoading(true);
 
@@ -109,20 +116,34 @@ const PromotionPage = () => {
                 signal: controller.signal
             });
 
-            const responseData = res.data?.data;
-            const promotionsData = responseData?.data || [];
-            const paginationData = responseData?.pagination || {
+            // ✅ Lấy trực tiếp từ res.data giống MoviePage
+            const promotionsData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
                 page: 1,
                 limit: 20,
                 total: 0,
-                totalPages: 1
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
             };
 
             setPromotions(promotionsData);
             setPagination(paginationData);
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
             console.error('FETCH PROMOTIONS ERROR:', error);
+            setPromotions([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
             showAlert('Lỗi', 'Không thể tải danh sách khuyến mãi.', 'error');
         } finally {
             setLoading(false);
@@ -133,8 +154,12 @@ const PromotionPage = () => {
         }
     }, []);
 
+    // ------------------------------------------------------
+    // MOUNT
+    // ------------------------------------------------------
     useEffect(() => {
         fetchPromotions(1, '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ------------------------------------------------------
@@ -142,13 +167,22 @@ const PromotionPage = () => {
     // ------------------------------------------------------
     const prevSearchRef = useRef('');
     useEffect(() => {
-        if (search === prevSearchRef.current) return;
-        prevSearchRef.current = search;
-        const timer = setTimeout(() => fetchPromotions(1, search), 400);
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
+
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchPromotions(1, currentSearch);
+        }, 400);
+
         return () => clearTimeout(timer);
     }, [search, fetchPromotions]);
 
-    const handlePageChange = (page) => fetchPromotions(page, search);
+    const handlePageChange = (page) => {
+        fetchPromotions(page, search);
+    };
 
     // ------------------------------------------------------
     // SLUG GENERATOR
@@ -207,14 +241,14 @@ const PromotionPage = () => {
         setErrors({});
         setPromotionImageFile(null);
 
-        const newPreviews = {};
+        const previews = {};
         if (item.promotion_image) {
-            newPreviews.promotion_image = {
+            previews.promotion_image = {
                 url: getImageUrl(item.promotion_image),
                 name: item.promotion_image
             };
         }
-        setFilePreviews(newPreviews);
+        setFilePreviews(previews);
         setIsFormOpen(true);
     };
 
@@ -223,18 +257,23 @@ const PromotionPage = () => {
     // ------------------------------------------------------
     const handleChange = (e) => {
         const { name, value, files } = e.target;
-        if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+
+        if (errors[name]) {
+            setErrors((prev) => ({ ...prev, [name]: '' }));
+        }
 
         if (name === 'promotion_image') {
-            const file = files[0];
+            const file = files?.[0] || null;
             setPromotionImageFile(file);
             if (file) {
                 if (filePreviews.promotion_image?.url?.startsWith('blob:')) {
                     URL.revokeObjectURL(filePreviews.promotion_image.url);
                 }
-                const blobUrl = URL.createObjectURL(file);
                 setFilePreviews({
-                    promotion_image: { url: blobUrl, name: file.name }
+                    promotion_image: {
+                        url: URL.createObjectURL(file),
+                        name: file.name
+                    }
                 });
             } else {
                 setFilePreviews({});
@@ -243,7 +282,11 @@ const PromotionPage = () => {
         }
 
         if (name === 'title') {
-            setFormData((prev) => ({ ...prev, title: value, slug: generateSlug(value) }));
+            setFormData((prev) => ({
+                ...prev,
+                title: value,
+                slug: generateSlug(value)
+            }));
             return;
         }
 
@@ -265,9 +308,14 @@ const PromotionPage = () => {
             submitData.append('description', formData.description || '');
             submitData.append('likes', formData.likes);
             submitData.append('is_active', formData.is_active);
-            if (promotionImageFile) submitData.append('promotion_image', promotionImageFile);
 
-            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+            if (promotionImageFile) {
+                submitData.append('promotion_image', promotionImageFile);
+            }
+
+            const config = {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            };
 
             if (editingPromotion) {
                 await api.put(`/api/promotions/${editingPromotion.promotion_id}`, submitData, config);
@@ -298,9 +346,10 @@ const PromotionPage = () => {
                 try {
                     await api.delete(`/api/promotions/${item.promotion_id}`);
                     closeAlert();
-                    const newPage = promotions.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
+                    const currentPage = pagination.page;
+                    const newPage = promotions.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
                     fetchPromotions(newPage, search);
                     showAlert('Thành công', 'Xóa khuyến mãi thành công.', 'success');
                 } catch (error) {
@@ -331,12 +380,20 @@ const PromotionPage = () => {
         {
             title: 'Lượt xem',
             key: 'views',
-            render: (row) => <span className="status-badge"><Eye size={12} /> {row.views || 0}</span>
+            render: (row) => (
+                <span className="status-badge">
+                    <Eye size={12} /> {row.views || 0}
+                </span>
+            )
         },
         {
             title: 'Lượt thích',
             key: 'likes',
-            render: (row) => <span className="status-badge"><Heart size={12} /> {row.likes || 0}</span>
+            render: (row) => (
+                <span className="status-badge">
+                    <Heart size={12} /> {row.likes || 0}
+                </span>
+            )
         },
         {
             title: 'Trạng thái',
@@ -352,7 +409,12 @@ const PromotionPage = () => {
             title: 'Xem',
             key: 'slug',
             render: (row) => (
-                <a href={`/promotion/${row.slug}`} target="_blank" rel="noreferrer" style={{ color: '#06b6d4' }}>
+                <a
+                    href={`/promotion/${row.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: '#06b6d4' }}
+                >
                     <ExternalLink size={18} />
                 </a>
             )
@@ -362,10 +424,16 @@ const PromotionPage = () => {
             key: 'actions',
             render: (row) => (
                 <div className="admin-table-actions">
-                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
+                    <button
+                        className="admin-action-btn edit-btn"
+                        onClick={() => handleOpenEdit(row)}
+                    >
                         <Edit size={16} />
                     </button>
-                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
+                    <button
+                        className="admin-action-btn delete-btn"
+                        onClick={() => handleDelete(row)}
+                    >
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -377,11 +445,35 @@ const PromotionPage = () => {
     // FORM FIELDS
     // ------------------------------------------------------
     const formFields = [
-        { label: 'Tiêu đề khuyến mãi', name: 'title', type: 'text', placeholder: 'Nhập tiêu đề' },
-        { label: 'Slug', name: 'slug', type: 'text', disabled: true },
-        { label: 'Mô tả ngắn', name: 'description', type: 'textarea', placeholder: 'Nhập mô tả' },
-        { label: 'Hình ảnh', name: 'promotion_image', type: 'file' },
-        { label: 'Likes', name: 'likes', type: 'number', placeholder: '0' },
+        {
+            label: 'Tiêu đề khuyến mãi',
+            name: 'title',
+            type: 'text',
+            placeholder: 'Nhập tiêu đề'
+        },
+        {
+            label: 'Slug',
+            name: 'slug',
+            type: 'text',
+            disabled: true
+        },
+        {
+            label: 'Mô tả ngắn',
+            name: 'description',
+            type: 'textarea',
+            placeholder: 'Nhập mô tả'
+        },
+        {
+            label: 'Hình ảnh',
+            name: 'promotion_image',
+            type: 'file'
+        },
+        {
+            label: 'Likes',
+            name: 'likes',
+            type: 'number',
+            placeholder: '0'
+        },
         {
             label: 'Trạng thái',
             name: 'is_active',
@@ -398,10 +490,14 @@ const PromotionPage = () => {
     // ------------------------------------------------------
     const renderAlertIcon = () => {
         switch (alertModal.type) {
-            case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error': return <XCircle size={58} color="#ef4444" />;
-            case 'warning': return <AlertTriangle size={58} color="#f59e0b" />;
-            default: return <Info size={58} color="#3b82f6" />;
+            case 'success':
+                return <CheckCircle2 size={58} color="#22c55e" />;
+            case 'error':
+                return <XCircle size={58} color="#ef4444" />;
+            case 'warning':
+                return <AlertTriangle size={58} color="#f59e0b" />;
+            default:
+                return <Info size={58} color="#3b82f6" />;
         }
     };
 
@@ -467,9 +563,14 @@ const PromotionPage = () => {
                     <p>{alertModal.message}</p>
                     <div className="admin-alert-actions">
                         {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>Hủy bỏ</button>
+                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
+                                Hủy bỏ
+                            </button>
                         )}
-                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
+                        <button
+                            className="admin-confirm-btn"
+                            onClick={alertModal.onConfirm || closeAlert}
+                        >
                             Xác nhận
                         </button>
                     </div>
