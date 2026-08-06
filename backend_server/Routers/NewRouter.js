@@ -8,23 +8,25 @@ const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 /* ==========================================================
    PUBLIC ROUTES (không cần đăng nhập)
 ========================================================== */
-// Lấy tất cả (không phân trang) - dành cho user
+// 1. Lấy tất cả (không phân trang)
 router.get("/", NewsController.getAllNewsAll);
 
-// Chi tiết theo slug (public) - đặt sau /paginated và /:news_id
-router.get("/:slug", NewsController.getNewsBySlug);
-
-// Tăng lượt thích
+// 2. Tăng lượt thích
 router.post("/like/:news_id", NewsController.likeNews);
+
+// 3. Chi tiết theo SLUG - dùng route riêng để tránh xung đột
+router.get("/detail/:slug", NewsController.getNewsBySlug);
 
 /* ==========================================================
    ADMIN ROUTES (cần quyền admin)
 ========================================================== */
-// Có phân trang - dành cho admin (route tĩnh)
+// 4. Có phân trang
 router.get("/paginated", authenticateAdmin, NewsController.getNewsWithPagination);
 
-// CRUD: lấy chi tiết theo ID (đặt TRƯỚC route /:slug)
+// 5. Lấy chi tiết theo ID (admin)
 router.get("/:news_id", authenticateAdmin, NewsController.getNewsById);
+
+// 6. CRUD
 router.post("/", authenticateAdmin, upload.single("news_image"), NewsController.createNews);
 router.put("/:news_id", authenticateAdmin, upload.single("news_image"), NewsController.updateNews);
 router.delete("/:news_id", authenticateAdmin, NewsController.deleteNews);
