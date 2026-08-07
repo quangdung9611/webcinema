@@ -8,56 +8,68 @@ class RedisService {
 
     async set(key, value, ttlSeconds = 300) {
         try {
-            await redis.set(key, value, { ex: ttlSeconds });
-            console.log(`✅ Redis SET success: ${key} = ${value}`);
+            await redis.set(key, value, {
+                ex: ttlSeconds
+            });
+
+            console.log(`✅ Redis SET: ${key}`);
+
             return true;
         } catch (error) {
-            console.error(`❌ Redis SET error: ${key}`, error);
-            return false;
+            console.error(`❌ Redis SET error (${key}):`, error);
+            throw error;
         }
     }
 
     async get(key) {
         try {
             const value = await redis.get(key);
-            console.log(`📥 Redis GET: ${key} => ${value}`);
+
+            console.log(`📥 Redis GET: ${key}`);
+
             return value;
         } catch (error) {
-            console.error(`❌ Redis GET error: ${key}`, error);
-            return null;
+            console.error(`❌ Redis GET error (${key}):`, error);
+            throw error;
         }
     }
 
     async delete(key) {
         try {
             await redis.del(key);
+
             console.log(`🗑️ Redis DEL: ${key}`);
+
             return true;
         } catch (error) {
-            console.error(`❌ Redis DEL error: ${key}`, error);
-            return false;
+            console.error(`❌ Redis DEL error (${key}):`, error);
+            throw error;
         }
     }
 
     async increment(key) {
         try {
             const result = await redis.incr(key);
+
             console.log(`📈 Redis INCR: ${key} => ${result}`);
+
             return result;
         } catch (error) {
-            console.error(`❌ Redis INCR error: ${key}`, error);
-            return 0;
+            console.error(`❌ Redis INCR error (${key}):`, error);
+            throw error;
         }
     }
 
     async expire(key, ttlSeconds) {
         try {
             await redis.expire(key, ttlSeconds);
-            console.log(`⏰ Redis EXPIRE: ${key} ${ttlSeconds}s`);
+
+            console.log(`⏰ Redis EXPIRE: ${key} (${ttlSeconds}s)`);
+
             return true;
         } catch (error) {
-            console.error(`❌ Redis EXPIRE error: ${key}`, error);
-            return false;
+            console.error(`❌ Redis EXPIRE error (${key}):`, error);
+            throw error;
         }
     }
 
@@ -69,59 +81,29 @@ class RedisService {
 
         const key = `otp:${email}:${purpose}`;
 
-        console.log("\n========== SAVE OTP ==========");
-        console.log("📧 Email   :", email);
-        console.log("🎯 Purpose :", purpose);
-        console.log("🔑 Key     :", key);
-        console.log("🔢 OTP     :", otp);
+        console.log(`🔐 Save OTP -> ${key}`);
 
-        const saved = await this.set(key, otp, ttlSeconds);
-
-        const value = await this.get(key);
-
-        console.log("📥 Redis value sau khi lưu :", value);
-        console.log("================================\n");
-
-        return saved;
+        return await this.set(key, otp, ttlSeconds);
     }
 
     async getOTP(email, purpose) {
 
         const key = `otp:${email}:${purpose}`;
 
-        console.log("\n========== GET OTP ==========");
-        console.log("📧 Email   :", email);
-        console.log("🎯 Purpose :", purpose);
-        console.log("🔑 Key     :", key);
-
-        const value = await this.get(key);
-
-        console.log("📥 OTP đọc từ Redis :", value);
-        console.log("==============================\n");
-
-        return value;
+        return await this.get(key);
     }
 
     async deleteOTP(email, purpose) {
 
         const key = `otp:${email}:${purpose}`;
 
-        console.log("\n========== DELETE OTP ==========");
-        console.log("📧 Email   :", email);
-        console.log("🎯 Purpose :", purpose);
-        console.log("🔑 Key     :", key);
-
         await this.delete(key);
         await this.deleteAttempts(email, purpose);
-
-        console.log("✅ OTP Deleted");
-        console.log("================================\n");
     }
 
     async deleteAttempts(email, purpose) {
-        const key = `otp:${email}:${purpose}:attempts`;
 
-        console.log(`🗑️ Delete attempts: ${key}`);
+        const key = `otp:${email}:${purpose}:attempts`;
 
         await this.delete(key);
     }
@@ -132,11 +114,7 @@ class RedisService {
 
         const attempts = await this.get(key);
 
-        const total = attempts ? parseInt(attempts) : 0;
-
-        console.log(`🔢 OTP Attempts: ${total}`);
-
-        return total;
+        return attempts ? Number(attempts) : 0;
     }
 
     async incrementOTPAttempts(email, purpose, ttlSeconds = 300) {
@@ -147,8 +125,6 @@ class RedisService {
 
         await this.expire(key, ttlSeconds);
 
-        console.log(`❌ OTP Sai lần thứ: ${attempts}`);
-
         return attempts;
     }
 
@@ -156,13 +132,7 @@ class RedisService {
 
         const attempts = await this.getOTPAttempts(email, purpose);
 
-        const locked = attempts >= maxAttempts;
-
-        console.log(
-            `🔒 OTP Locked? ${locked} (${attempts}/${maxAttempts})`
-        );
-
-        return locked;
+        return attempts >= maxAttempts;
     }
 
     /*=========================================================
@@ -173,51 +143,44 @@ class RedisService {
 
         const key = `otp:${email}:${purpose}:ratelimit`;
 
-        console.log("\n========== RATE LIMIT ==========");
-        console.log("Key:", key);
-
         const current = await this.get(key);
 
-        if (current) {
+        const count = current ? Number(current) : 0;
 
-            const count = parseInt(current);
-
-            console.log(`Current Count: ${count}`);
-
-            if (count >= limit) {
-
-                console.log("⛔ Rate Limit Block");
-
-                return {
-                    allowed: false,
-                    remaining: 0,
-                    message: `Quá nhiều yêu cầu. Vui lòng thử lại sau ${windowSeconds} giây`
-                };
-            }
+        if (count >= limit) {
+            return {
+                allowed: false,
+                remaining: 0,
+                message: `Quá nhiều yêu cầu. Vui lòng thử lại sau ${windowSeconds} giây`
+            };
         }
 
         const newCount = await this.increment(key);
 
         await this.expire(key, windowSeconds);
 
-        console.log(`✅ Rate Limit Count: ${newCount}`);
-        console.log("===============================\n");
-
         return {
             allowed: true,
-            remaining: limit - newCount
+            remaining: Math.max(0, limit - newCount)
         };
     }
+
+    /*=========================================================
+        HEALTH CHECK
+    =========================================================*/
+
     async ping() {
-    try {
-        const result = await redis.ping();
-        console.log("🏓 Redis Ping:", result);
-        return result;
-    } catch (err) {
-        console.error("❌ Redis Ping Error:", err);
-        throw err;
+        try {
+            const result = await redis.ping();
+
+            console.log("🏓 Redis Ping:", result);
+
+            return result;
+        } catch (error) {
+            console.error("❌ Redis Ping Error:", error);
+            throw error;
+        }
     }
-}
 }
 
 module.exports = new RedisService();
