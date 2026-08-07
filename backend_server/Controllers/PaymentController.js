@@ -1,68 +1,59 @@
 const PaymentService = require("../Services/PaymentService");
-const db = require("../Config/db"); // ✅ THÊM DÒNG NÀY
 
+/*=========================================================
+    PROCESS ORDER – LƯU TẠM, TRẢ VỀ tempBookingId
+=========================================================*/
 exports.processOrder = async (req, res) => {
-  const connection = await db.getConnection(); // ✅ lấy connection
-  try {
-    await connection.beginTransaction();
-    const result = await PaymentService.processOrder(connection, req.body);
-    await connection.commit();
-    return res.status(200).json({
-      success: true,
-      bookingId: result.bookingId,
-      memo: result.memo,
-    });
-  } catch (error) {
-    await connection.rollback();
-    console.error("Process Order Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  } finally {
-    connection.release();
-  }
-};
-
-exports.completePayment = async (req, res) => {
-  const connection = await db.getConnection();
-  try {
-    const { bookingId } = req.body;
-    await connection.beginTransaction();
-    await PaymentService.executeBankCompletion(bookingId, connection);
-    await connection.commit();
-    return res.json({
-      success: true,
-      message: "Thanh toán thành công",
-    });
-  } catch (error) {
-    await connection.rollback();
-    console.error("Complete Payment Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  } finally {
-    connection.release();
-  }
-};
-
-exports.momoCallback = async (req, res) => {
-  const { orderId, resultCode } = req.body;
-
-  if (resultCode === 0) {
-    const connection = await db.getConnection();
     try {
-      await connection.beginTransaction();
-      await PaymentService.executeMomoCompletion(orderId, connection);
-      await connection.commit();
+        const result = await PaymentService.processOrder(req.body);
+        return res.status(200).json({
+            success: true,
+            tempBookingId: result.tempBookingId,
+            message: "Đã lưu thông tin đặt vé tạm. Vui lòng xác thực OTP để hoàn tất."
+        });
     } catch (error) {
-      await connection.rollback();
-      console.error("MoMo Callback Error:", error);
-    } finally {
-      connection.release();
+        console.error("Process Order Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });
     }
-  }
+};
 
-  return res.status(204).send();
+/*=========================================================
+    COMMIT BOOKING (gọi từ BankAppController)
+=========================================================*/
+exports.commitBooking = async (connection, tempBookingId) => {
+    return await PaymentService.commitToDatabase(connection, tempBookingId);
+};
+
+/*=========================================================
+    GET TEMP DATA (kiểm tra session)
+=========================================================*/
+exports.getTempData = async (req, res) => {
+    try {
+        const { tempBookingId } = req.params;
+        const data = PaymentService.getTempData(tempBookingId);
+        if (!data) {
+            return res.status(404).json({
+                success: false,
+                message: "Phiên đặt vé không tồn tại hoặc đã hết hạn."
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            data: {
+                tempBookingId: data.tempBookingId,
+                totalAmount: data.totalAmount,
+                customerEmail: data.customerEmail,
+                customerName: data.customerName,
+                customerPhone: data.customerPhone
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
 };

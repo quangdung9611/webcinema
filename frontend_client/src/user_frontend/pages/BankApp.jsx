@@ -19,10 +19,10 @@ const BankApp = () => {
         {};
 
     const {
-        bookingId,
+        tempBookingId,      // ✅ dùng tempBookingId
         customerEmail,
-        customerName,   // ✅ lấy tên
-        customerPhone,  // ✅ lấy số điện thoại
+        customerName,
+        customerPhone,
         totalAmount,
         movie,
         selectedCinema,
@@ -121,32 +121,31 @@ const BankApp = () => {
     }, [otp]);
 
     // =========================
-    // CALL API CANCEL BOOKING
+    // CALL API CANCEL BOOKING (dùng tempBookingId)
     // =========================
     const cancelBookingOnServer = async () => {
         if (isCancellingRef.current) return;
         isCancellingRef.current = true;
         try {
             await api.post('/api/bank/cancel-timeout', {
-                bookingId,
-                email: customerEmail
+                tempBookingId // ✅ gửi tempBookingId
             });
-            console.log('✅ Booking cancelled on server');
+            console.log('✅ Temp booking cancelled on server');
         } catch (err) {
-            console.error('❌ Lỗi hủy booking:', err);
+            console.error('❌ Lỗi hủy temp booking:', err);
         } finally {
             isCancellingRef.current = false;
         }
     };
 
     // =========================
-    // CHECK PAYMENT COMPLETED
+    // CHECK PAYMENT COMPLETED (dùng tempBookingId để kiểm tra)
     // =========================
     useEffect(() => {
         const completed = sessionStorage.getItem('paymentCompleted');
         const completedId = sessionStorage.getItem('completedBookingId');
 
-        if (completed === 'true' && completedId === String(bookingId)) {
+        if (completed === 'true' && completedId === String(tempBookingId)) {
             paymentCompletedRef.current = true;
             hasSentOtp.current = true;
             sessionStorage.removeItem('bankOtpTimeLeft');
@@ -170,7 +169,7 @@ const BankApp = () => {
                 );
             }
         }
-    }, [bookingId]);
+    }, [tempBookingId]);
 
     // =========================
     // BEFORE UNLOAD (đóng tab)
@@ -190,7 +189,7 @@ const BankApp = () => {
     // CHECK DATA
     // =========================
     useEffect(() => {
-        if (!bookingId || !customerEmail) {
+        if (!tempBookingId || !customerEmail) {
             openModal(
                 'error',
                 'THIẾU THÔNG TIN',
@@ -201,7 +200,7 @@ const BankApp = () => {
                 }
             );
         }
-    }, [bookingId, customerEmail, navigate]);
+    }, [tempBookingId, customerEmail, navigate]);
 
     // =========================
     // TRACK MODAL STATE
@@ -221,7 +220,7 @@ const BankApp = () => {
     }, []);
 
     // =========================
-    // CLEAR ALL & GO HOME (có gọi API hủy + giải phóng blocker)
+    // CLEAR ALL & GO HOME – tự động về home, không cần modal confirm
     // =========================
     const clearAllAndGoHome = async () => {
         await cancelBookingOnServer();
@@ -238,6 +237,7 @@ const BankApp = () => {
         sessionStorage.removeItem('selectedSeats');
         sessionStorage.removeItem('currentShowtimeId');
         sessionStorage.removeItem('lastSuccessTicket');
+        sessionStorage.removeItem('tempBookingId');
         setShowBackConfirm(false);
 
         if (blocker.state === 'blocked') {
@@ -257,14 +257,14 @@ const BankApp = () => {
     };
 
     // =========================
-    // SEND OTP API
+    // SEND OTP API (dùng tempBookingId)
     // =========================
     const sendOtpApi = async () => {
         setLoadingSendOtp(true);
         try {
             await api.post('/api/bank/send-otp', {
                 email: customerEmail,
-                bookingId
+                tempBookingId // ✅ gửi tempBookingId
             });
             const now = Date.now();
             sessionStorage.setItem('bankLastOtpSentAt', String(now));
@@ -291,7 +291,7 @@ const BankApp = () => {
     useEffect(() => {
         const triggerSendOtp = async () => {
             if (paymentCompletedRef.current) return;
-            if (!customerEmail || !bookingId) return;
+            if (!customerEmail || !tempBookingId) return;
 
             if (!isPaymentInitiated.current) {
                 if (!modalConfig.show) {
@@ -323,34 +323,47 @@ const BankApp = () => {
         };
 
         triggerSendOtp();
-    }, [customerEmail, bookingId]);
+    }, [customerEmail, tempBookingId]);
 
     // =========================
-    // TIMER (không tự động gửi lại)
+    // TIMER – KHI HẾT 5 PHÚT, TỰ ĐỘNG VỀ HOME
     // =========================
     useEffect(() => {
         if (paymentCompletedRef.current) return;
 
         if (timeLeft <= 0) {
+            // Không hiện modal, trực tiếp về home sau 3s
             const handleTimeout = async () => {
                 await cancelBookingOnServer();
+                // Xóa toàn bộ session
+                sessionStorage.removeItem('bankHasSentOtp');
+                sessionStorage.removeItem('bankHasVisited');
+                sessionStorage.removeItem('bankOtpTimeLeft');
+                sessionStorage.removeItem('bankOtpInput');
+                sessionStorage.removeItem('bankLastOtpSentAt');
+                sessionStorage.removeItem('paymentInitiated');
+                sessionStorage.removeItem('paymentCompleted');
+                sessionStorage.removeItem('completedBookingId');
+                sessionStorage.removeItem('holdExpiresAt');
+                sessionStorage.removeItem('selectedSeats');
+                sessionStorage.removeItem('currentShowtimeId');
+                sessionStorage.removeItem('lastSuccessTicket');
+                sessionStorage.removeItem('tempBookingId');
+                setShowBackConfirm(false);
 
-                openModal(
-                    'error',
-                    'HẾT HẠN',
-                    'Phiên giao dịch đã hết hạn! Hệ thống sẽ tự động quay về trang chủ.',
-                    () => {
-                        if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current);
-                        clearAllAndGoHome();
-                    }
-                );
-
-                redirectTimeoutRef.current = setTimeout(() => {
-                    clearAllAndGoHome();
-                }, 3000);
+                if (blocker.state === 'blocked') {
+                    blocker.proceed();
+                }
+                navigate('/');
             };
 
-            handleTimeout();
+            // Đợi 1.5s để user thấy thông báo hết hạn (nếu có thể hiển thị ngắn)
+            // Nhưng do không có modal, có thể thêm một state để hiển thị thông báo ngắn nếu muốn.
+            // Ở đây ta sẽ chạy sau 1.5s
+            redirectTimeoutRef.current = setTimeout(() => {
+                handleTimeout();
+            }, 1500);
+
             return;
         }
 
@@ -359,10 +372,10 @@ const BankApp = () => {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [timeLeft, bookingId, customerEmail, navigate]);
+    }, [timeLeft, tempBookingId, customerEmail, navigate]);
 
     // =========================
-    // VERIFY OTP
+    // VERIFY OTP (dùng tempBookingId)
     // =========================
     const handleVerifyPayment = async () => {
         if (paymentCompletedRef.current) {
@@ -377,18 +390,18 @@ const BankApp = () => {
 
         setLoadingVerify(true);
         try {
-            // ✅ GỬI ĐẦY ĐỦ THÔNG TIN: email, otp, bookingId, full_name, phone
             const res = await api.post('/api/bank/verify-otp', {
                 email: customerEmail,
                 otp,
-                bookingId,
-                full_name: customerName,   // ✅ thêm tên
-                phone: customerPhone       // ✅ thêm số điện thoại
+                tempBookingId, // ✅ gửi tempBookingId
+                full_name: customerName,
+                phone: customerPhone
             });
 
             if (res.data.success) {
+                const realBookingId = res.data.data?.bookingId || tempBookingId; // nếu backend trả về
                 sessionStorage.setItem('paymentCompleted', 'true');
-                sessionStorage.setItem('completedBookingId', String(bookingId));
+                sessionStorage.setItem('completedBookingId', String(realBookingId));
                 paymentCompletedRef.current = true;
                 sessionStorage.removeItem('bankOtpTimeLeft');
                 sessionStorage.removeItem('bankOtpInput');

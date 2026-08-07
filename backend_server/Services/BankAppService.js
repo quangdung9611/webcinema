@@ -6,74 +6,55 @@ const { PURPOSE } = require("./OtpService");
 const MailServiceTicket = require("./MailServiceTicket");
 
 class BankAppService {
-  /**
-   * Hoàn tất thanh toán qua ngân hàng
-   */
-  async completeBankPayment(connection, bookingId) {
-    // 1. Cập nhật trạng thái booking thành Completed
-    await BookingService.completeBooking(connection, bookingId);
+    /**
+     * Gửi email vé sau khi thanh toán thành công
+     */
+    async sendTicketEmail(connection, bookingId) {
+        try {
+            const order = await BookingService.getBookingDetail(connection, bookingId);
+            if (!order) throw new Error("Không tìm thấy đơn hàng");
 
-    // 2. Đặt vé (book tickets)
-    await TicketService.bookTickets(connection, bookingId);
+            const foods = await BookingService.getFoodDetail(connection, bookingId);
+            const foodString = foods.length
+                ? foods.map(f => `${f.item_name} (x${f.quantity})`).join(", ")
+                : "Không có";
 
-    // 3. Lấy chi tiết đơn hàng
-    const order = await BookingService.getBookingDetail(connection, bookingId);
-    if (!order) throw new Error("Không tìm thấy đơn hàng");
+            const points = await PointsService.calculateBookingPoints(connection, bookingId);
 
-    // 4. Cộng điểm cho user
-    const points = await PointsService.calculateBookingPoints(connection, bookingId);
-    if (points > 0) {
-      await PointsService.addPointsToUser(connection, order.user_id, points);
+            const ticketData = {
+                bookingId: order.booking_id,
+                customerName: order.full_name,
+                movieTitle: order.movie_name,
+                moviePoster: order.movie_poster,
+                cinemaName: order.cinema_name,
+                startTime: order.start_time.split(" ")[1].substring(0, 5),
+                selectedDate: order.start_time.split(" ")[0].split("-").reverse().join("/"),
+                seatLabel: order.seat_label,
+                selectedFoods: foodString,
+                earnedPoints: points,
+            };
+
+            await MailServiceTicket.sendTicketEmail(order.email, ticketData);
+            console.log(`✅ Email ticket sent for booking ${bookingId}`);
+        } catch (err) {
+            console.error(`❌ Failed to send ticket email:`, err.message);
+            // Không throw lỗi
+        }
     }
 
-    // 5. Gửi email vé (chỉ gửi 1 lần, không retry)
-    const foods = await BookingService.getFoodDetail(connection, bookingId);
-    const foodString = foods.length
-      ? foods.map(f => `${f.item_name} (x${f.quantity})`).join(", ")
-      : "Không có";
-
-    const ticketData = {
-      bookingId: order.booking_id,
-      customerName: order.full_name,
-      movieTitle: order.movie_name,
-      moviePoster: order.movie_poster,
-      cinemaName: order.cinema_name,
-      startTime: order.start_time.split(" ")[1].substring(0, 5),
-      selectedDate: order.start_time.split(" ")[0].split("-").reverse().join("/"),
-      seatLabel: order.seat_label,
-      selectedFoods: foodString,
-      earnedPoints: points,
-    };
-
-    // Gửi email 1 lần duy nhất, nếu lỗi chỉ log
-    try {
-      await MailServiceTicket.sendTicketEmail(order.email, ticketData);
-      console.log(`✅ Email ticket sent successfully for booking ${bookingId}`);
-    } catch (err) {
-      console.error(`❌ Failed to send ticket email for booking ${bookingId}:`, err.message);
-      // Không throw lỗi vì giao dịch đã thành công, chỉ log để admin biết
+    /**
+     * Cộng điểm cho user
+     */
+    async addPoints(connection, bookingId, userId) {
+        try {
+            const points = await PointsService.calculateBookingPoints(connection, bookingId);
+            if (points > 0) {
+                await PointsService.addPointsToUser(connection, userId, points);
+            }
+        } catch (err) {
+            console.error(`❌ Failed to add points:`, err.message);
+        }
     }
-
-    return true;
-  }
-
-  /**
-   * Hủy booking khi hết thời gian thanh toán
-   */
-  async cancelBookingTimeout(connection, bookingId, email) {
-    // Hủy booking
-    await BookingService.cancelBooking(connection, bookingId);
-
-    // Giải phóng ghế
-    await TicketService.releaseTickets(connection, bookingId);
-
-    // Xóa OTP nếu có
-    if (email) {
-      await OtpService.deleteOTP(email, PURPOSE.PAYMENT);
-    }
-
-    return true;
-  }
 }
 
 module.exports = new BankAppService();

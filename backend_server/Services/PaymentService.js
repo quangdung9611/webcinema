@@ -1,57 +1,169 @@
 const db = require('../Config/db');
-const bookingService = require('./BookingService');
-const ticketService = require('./TicketService');
+const crypto = require('crypto');
 
-/* =========================================================
-    1. PROCESS ORDER
-========================================================= */
+// =========================================================
+// LƯU TẠM VÀO MEMORY (nên dùng Redis cho production)
+// =========================================================
+const tempBookings = new Map();
 
-exports.processOrder = async (connection, data) => {
+const generateTempBookingId = () => {
+    return crypto.randomBytes(8).toString('hex').toUpperCase();
+};
 
-    const {
-        userId,
-        showtimeId,
-        totalAmount,
-        couponId,
-        selectedSeats,
-        selectedFoods
-    } = data;
+class PaymentService {
 
-    // Get showtime info
-    const [rows] = await connection.execute(
-        `
-        SELECT room_id, cinema_id
-        FROM showtimes
-        WHERE showtime_id = ?
-        `,
-        [showtimeId]
-    );
+    /*=========================================================
+        1. PROCESS ORDER – CHỈ LƯU TẠM, KHÔNG VÀO DB
+    =========================================================*/
+    async processOrder(data) {
+        const {
+            userId,
+            showtimeId,
+            totalAmount,
+            couponId,
+            selectedSeats,
+            selectedFoods,
+            customerEmail,
+            customerName,
+            customerPhone,
+            movieTitle,
+            cinemaName,
+            startTime
+        } = data;
 
-    const room_id = rows[0]?.room_id || null;
-    const cinema_id = rows[0]?.cinema_id || null;
+        // 1. Lấy thông tin showtime
+        const [rows] = await db.execute(
+            `SELECT room_id, cinema_id FROM showtimes WHERE showtime_id = ?`,
+            [showtimeId]
+        );
 
-    const memo = `DUNG${Date.now()}`;
+        if (!rows.length) {
+            throw new Error('Không tìm thấy suất chiếu');
+        }
 
-    // Create booking
-    const [result] = await connection.execute(
-        `
-        INSERT INTO bookings
-        (user_id, showtime_id, total_amount, coupon_id, status, booking_date, memo)
-        VALUES (?, ?, ?, ?, 'Pending', NOW(), ?)
-        `,
-        [userId, showtimeId, totalAmount, couponId || null, memo]
-    );
+        const room_id = rows[0].room_id;
+        const cinema_id = rows[0].cinema_id;
 
-    const bookingId = result.insertId;
+        // 2. Tạo ID tạm
+        const tempBookingId = generateTempBookingId();
 
-    /* =========================
-        SEATS
-    ========================= */
-
-    if (selectedSeats?.length) {
-
+        // 3. Kiểm tra ghế có bị người khác đặt chưa (trong DB đã completed)
         for (const seat of selectedSeats) {
+            const [existing] = await db.execute(
+                `
+                SELECT t.ticket_id 
+                FROM tickets t
+                JOIN bookings b ON t.booking_id = b.booking_id
+                WHERE t.showtime_id = ? 
+                  AND t.cinema_id = ? 
+                  AND t.room_id = ? 
+                  AND t.seat_id = ?
+                  AND b.status = 'Completed'
+                `,
+                [showtimeId, cinema_id, room_id, seat.seat_id]
+            );
+            if (existing.length > 0) {
+                throw new Error(`Ghế ${seat.seat_row}${seat.seat_number} đã được đặt. Vui lòng chọn ghế khác.`);
+            }
+        }
 
+        // 4. Lưu vào temp
+        const tempData = {
+            tempBookingId,
+            userId,
+            showtimeId,
+            room_id,
+            cinema_id,
+            totalAmount,
+            couponId: couponId || null,
+            selectedSeats,
+            selectedFoods,
+            customerEmail,
+            customerName,
+            customerPhone,
+            movieTitle,
+            cinemaName,
+            startTime,
+            status: 'pending',
+            createdAt: Date.now()
+        };
+
+        tempBookings.set(tempBookingId, tempData);
+
+        // 5. Tự động xóa sau 10 phút
+        setTimeout(() => {
+            if (tempBookings.has(tempBookingId)) {
+                tempBookings.delete(tempBookingId);
+                console.log(`🗑️ Temp booking ${tempBookingId} expired and removed`);
+            }
+        }, 600000);
+
+        console.log(`✅ Temp booking created: ${tempBookingId}`);
+
+        return { tempBookingId };
+    }
+
+    /*=========================================================
+        2. COMMIT TO DATABASE – KHI OTP THÀNH CÔNG
+    =========================================================*/
+    async commitToDatabase(connection, tempBookingId) {
+        // 1. Lấy dữ liệu tạm
+        const tempData = tempBookings.get(tempBookingId);
+        if (!tempData) {
+            throw new Error('Phiên đặt vé đã hết hạn. Vui lòng đặt lại.');
+        }
+
+        const {
+            userId,
+            showtimeId,
+            room_id,
+            cinema_id,
+            totalAmount,
+            couponId,
+            selectedSeats,
+            selectedFoods,
+            customerEmail,
+            customerName,
+            customerPhone
+        } = tempData;
+
+        // 2. Kiểm tra ghế vẫn còn trống (phòng trường hợp timeout)
+        for (const seat of selectedSeats) {
+            const [existing] = await connection.execute(
+                `
+                SELECT t.ticket_id 
+                FROM tickets t
+                JOIN bookings b ON t.booking_id = b.booking_id
+                WHERE t.showtime_id = ? 
+                  AND t.cinema_id = ? 
+                  AND t.room_id = ? 
+                  AND t.seat_id = ?
+                  AND b.status = 'Completed'
+                `,
+                [showtimeId, cinema_id, room_id, seat.seat_id]
+            );
+            if (existing.length > 0) {
+                throw new Error(`Ghế ${seat.seat_row}${seat.seat_number} đã được đặt. Vui lòng chọn ghế khác.`);
+            }
+        }
+
+        // 3. Tạo booking
+        const memo = `DUNG${Date.now()}`;
+
+        const [result] = await connection.execute(
+            `
+            INSERT INTO bookings
+            (user_id, showtime_id, total_amount, coupon_id, status, booking_date, memo, email)
+            VALUES (?, ?, ?, ?, 'Completed', NOW(), ?, ?)
+            `,
+            [userId, showtimeId, totalAmount, couponId || null, memo, customerEmail]
+        );
+
+        const bookingId = result.insertId;
+
+        // 4. Tạo booking_details và tickets cho ghế
+        for (const seat of selectedSeats) {
+            // Booking detail
             await connection.execute(
                 `
                 INSERT INTO booking_details
@@ -66,8 +178,8 @@ exports.processOrder = async (connection, data) => {
                 ]
             );
 
-            const tempCode = `WAIT-${Date.now()}-${seat.seat_id}`;
-
+            // Ticket
+            const ticketCode = `TIC-${bookingId}-${seat.seat_id}-${Date.now()}`;
             await connection.execute(
                 `
                 INSERT INTO tickets
@@ -83,7 +195,7 @@ exports.processOrder = async (connection, data) => {
                     ticket_status,
                     created_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, 'Reserved', 'Valid', NOW())
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'Booked', 'Valid', NOW())
                 `,
                 [
                     bookingId,
@@ -91,21 +203,14 @@ exports.processOrder = async (connection, data) => {
                     room_id,
                     cinema_id,
                     seat.seat_id,
-                    tempCode,
+                    ticketCode,
                     seat.price
                 ]
             );
         }
-    }
 
-    /* =========================
-        FOODS
-    ========================= */
-
-    if (selectedFoods?.length) {
-
+        // 5. Tạo booking_details cho food
         for (const food of selectedFoods) {
-
             await connection.execute(
                 `
                 INSERT INTO booking_details
@@ -121,166 +226,43 @@ exports.processOrder = async (connection, data) => {
                 ]
             );
         }
-    }
 
-    return { bookingId, memo };
-};
-
-/* =========================================================
-    2. ADD POINTS
-========================================================= */
-
-exports.addPoints = async (bookingId, userId, connection) => {
-
-    const [rows] = await connection.execute(
-        `
-        SELECT price, quantity, seat_id
-        FROM booking_details
-        WHERE booking_id = ?
-        `,
-        [bookingId]
-    );
-
-    let points = 0;
-
-    for (const item of rows) {
-
-        const total = Number(item.price || 0) * Number(item.quantity || 0);
-
-        if (item.seat_id) {
-            points += Math.floor(total * 0.05);
-        } else {
-            points += Math.floor(total * 0.03);
+        // 6. Cộng điểm (nếu có)
+        if (userId) {
+            // Tính điểm dựa trên số tiền
+            const points = Math.floor(totalAmount * 0.05);
+            if (points > 0) {
+                await connection.execute(
+                    `UPDATE users SET points = points + ? WHERE user_id = ?`,
+                    [points, userId]
+                );
+            }
         }
+
+        // 7. Xóa temp sau khi commit thành công
+        tempBookings.delete(tempBookingId);
+        console.log(`✅ Booking ${bookingId} committed, temp ${tempBookingId} removed`);
+
+        return { bookingId, memo };
     }
 
-    if (points > 0) {
-        await connection.execute(
-            `
-            UPDATE users
-            SET points = points + ?
-            WHERE user_id = ?
-            `,
-            [points, userId]
-        );
+    /*=========================================================
+        3. GET TEMP DATA
+    =========================================================*/
+    getTempData(tempBookingId) {
+        return tempBookings.get(tempBookingId) || null;
     }
-};
 
-/* =========================================================
-    3. MOMO COMPLETION
-========================================================= */
+    /*=========================================================
+        4. DELETE TEMP DATA
+    =========================================================*/
+    deleteTempData(tempBookingId) {
+        const deleted = tempBookings.delete(tempBookingId);
+        if (deleted) {
+            console.log(`🗑️ Temp booking ${tempBookingId} deleted`);
+        }
+        return deleted;
+    }
+}
 
-exports.executeMomoCompletion = async (bookingId, connection) => {
-
-    const [rows] = await connection.execute(
-        `
-        SELECT user_id, status
-        FROM bookings
-        WHERE booking_id = ?
-        `,
-        [bookingId]
-    );
-
-    if (!rows.length) return;
-
-    const booking = rows[0];
-
-    if (String(booking.status).toLowerCase() === 'completed') return;
-
-    await connection.execute(
-        `
-        UPDATE bookings
-        SET status = 'Completed'
-        WHERE booking_id = ?
-        `,
-        [bookingId]
-    );
-
-    await connection.execute(
-        `
-        UPDATE tickets
-        SET
-            seat_status = 'Booked',
-            ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'),
-            updated_at = NOW()
-        WHERE booking_id = ?
-        AND seat_status = 'Reserved'
-        `,
-        [bookingId]
-    );
-
-    await connection.execute(
-        `
-        UPDATE seats s
-        JOIN booking_details bd ON s.seat_id = bd.seat_id
-        SET s.seat_status = 'Booked'
-        WHERE bd.booking_id = ?
-        `,
-        [bookingId]
-    );
-
-    await exports.addPoints(
-        bookingId,
-        booking.user_id,
-        connection
-    );
-};
-
-/* =========================================================
-    4. BANK COMPLETION
-========================================================= */
-
-exports.executeBankCompletion = async (bookingId, connection) => {
-
-    const [rows] = await connection.execute(
-        `
-        SELECT user_id, status
-        FROM bookings
-        WHERE booking_id = ?
-        `,
-        [bookingId]
-    );
-
-    if (!rows.length) return;
-
-    const booking = rows[0];
-
-    if (String(booking.status).toLowerCase() === 'completed') return;
-
-    await connection.execute(
-        `
-        UPDATE bookings
-        SET status = 'Completed'
-        WHERE booking_id = ?
-        `,
-        [bookingId]
-    );
-
-    await connection.execute(
-        `
-        UPDATE tickets
-        SET
-            seat_status = 'Booked',
-            ticket_code = REPLACE(ticket_code, 'WAIT-', 'TIC-'),
-            updated_at = NOW()
-        WHERE booking_id = ?
-        `,
-        [bookingId]
-    );
-
-    await connection.execute(
-        `
-        UPDATE seats s
-        JOIN booking_details bd ON s.seat_id = bd.seat_id
-        SET s.seat_status = 'Booked'
-        WHERE bd.booking_id = ?
-        `,
-        [bookingId]
-    );
-
-    await exports.addPoints(
-        bookingId,
-        booking.user_id,
-        connection
-    );
-};
+module.exports = new PaymentService();

@@ -49,6 +49,7 @@ const Payment = () => {
     const [isTimerActive, setIsTimerActive] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+    const [tempBookingId, setTempBookingId] = useState(null); // ✅ lưu tempBookingId
 
     const [userInfo, setUserInfo] = useState({
         user_id: user?.user_id || '',
@@ -99,7 +100,7 @@ const Payment = () => {
             return;
         }
 
-        // Xóa session cũ để tránh dùng email cũ
+        // Xóa session cũ
         sessionStorage.removeItem('lastSuccessTicket');
         sessionStorage.removeItem('bankHasSentOtp');
         sessionStorage.removeItem('bankHasVisited');
@@ -109,6 +110,7 @@ const Payment = () => {
         sessionStorage.removeItem('paymentCompleted');
         sessionStorage.removeItem('completedBookingId');
         sessionStorage.removeItem('paymentInitiated');
+        sessionStorage.removeItem('tempBookingId'); // ✅ xóa temp cũ
 
         const storedUser = getUserFromStorage();
         if (!storedUser || !storedUser.user_id) {
@@ -135,25 +137,22 @@ const Payment = () => {
     }, [movie, selectedSeats, navigate, location.pathname]);
 
     // =========================
-    // TIMER EXPIRE
+    // TIMER EXPIRE (giữ ghế - không dùng nữa vì giờ lưu session)
     // =========================
     const handleTimeExpire = async () => {
-        try {
-            if (selectedSeats?.length > 0) {
-                await api.post('/api/seats/release', {
-                    seatIds: selectedSeats.map(s => s.seat_id),
-                    showtimeId
-                });
+        // Nếu có tempBookingId thì hủy session
+        if (tempBookingId) {
+            try {
+                await api.post('/api/bank/cancel-timeout', { tempBookingId });
+            } catch (err) {
+                console.error('Lỗi hủy temp booking:', err);
             }
-        } catch (err) {
-            console.error('Lỗi nhả ghế:', err);
         }
-
         sessionStorage.clear();
         showNotice(
             'error',
             'HẾT THỜI GIAN',
-            'Ghế đã được mở khóa.',
+            'Phiên đặt vé đã hết hạn.',
             () => {
                 navigate('/');
                 window.location.reload();
@@ -196,7 +195,7 @@ const Payment = () => {
     };
 
     // =========================
-    // PAYMENT – XÓA OTP CŨ TRƯỚC KHI GỬI
+    // PAYMENT – GỌI API /payment/process, nhận tempBookingId
     // =========================
     const handleProceed = async () => {
         const latestUser = getUserFromStorage();
@@ -210,7 +209,6 @@ const Payment = () => {
             return;
         }
 
-        // Lấy thông tin mới nhất từ form
         const email = userInfo.email.trim();
         const fullName = userInfo.full_name.trim();
         const phone = userInfo.phone.trim();
@@ -221,7 +219,7 @@ const Payment = () => {
             return;
         }
 
-        // Xóa toàn bộ OTP cũ
+        // Xóa session cũ
         sessionStorage.removeItem('bankHasSentOtp');
         sessionStorage.removeItem('bankHasVisited');
         sessionStorage.removeItem('bankOtpTimeLeft');
@@ -259,6 +257,7 @@ const Payment = () => {
                 selectedFoods: foodsWithQuantity,
                 customerEmail: email,
                 customerName: fullName,
+                customerPhone: phone, // ✅ gửi cả số điện thoại
                 movieTitle: movie?.title || '',
                 cinemaName: selectedCinema?.cinema_name || '',
                 startTime: selectedShowtime?.start_time || '',
@@ -268,13 +267,16 @@ const Payment = () => {
             const response = await api.post('/api/payment/process', postData);
 
             if (response.data.success) {
+                const tempId = response.data.tempBookingId; // ✅ nhận tempBookingId
+                setTempBookingId(tempId);
+                sessionStorage.setItem('tempBookingId', tempId);
+
                 const finalState = {
-                    orderId: response.data.bookingId,
-                    bookingId: response.data.bookingId,
+                    tempBookingId: tempId, // ✅ dùng tempBookingId
                     totalAmount: Number(grandTotal),
                     customerName: fullName,
                     customerEmail: email,
-                    customerPhone: phone, // ✅ THÊM SỐ ĐIỆN THOẠI
+                    customerPhone: phone,
                     movie,
                     selectedCinema,
                     selectedDate,
@@ -308,21 +310,7 @@ const Payment = () => {
             console.error('Lỗi thanh toán:', err);
             const errorMessage = err.response?.data?.message || err.message || 'Không thể xử lý thanh toán.';
             sessionStorage.removeItem('paymentInitiated');
-
-            if (errorMessage.includes('Duplicate entry') || errorMessage.includes('uk_showtime_cinema_room_seat')) {
-                showNotice(
-                    'error',
-                    'GHẾ ĐÃ ĐƯỢC ĐẶT',
-                    'Ghế bạn chọn đã được đặt bởi người khác hoặc bạn đã có booking chưa hoàn tất. Vui lòng chọn ghế khác.',
-                    () => {
-                        sessionStorage.clear();
-                        navigate('/');
-                        window.location.reload();
-                    }
-                );
-            } else {
-                showNotice('error', 'LỖI', errorMessage);
-            }
+            showNotice('error', 'LỖI', errorMessage);
         } finally {
             setIsProcessing(false);
         }
