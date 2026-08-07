@@ -1,19 +1,18 @@
 const db = require('../Config/db');
+const RedisService = require('./RedisService'); // Dùng RedisService đã có
 const crypto = require('crypto');
-
-// =========================================================
-// LƯU TẠM VÀO MEMORY (nên dùng Redis cho production)
-// =========================================================
-const tempBookings = new Map();
 
 const generateTempBookingId = () => {
     return crypto.randomBytes(8).toString('hex').toUpperCase();
 };
 
+// Hằng số TTL 5 phút
+const TEMP_BOOKING_TTL = 300; // 5 phút
+
 class PaymentService {
 
     /*=========================================================
-        1. PROCESS ORDER – CHỈ LƯU TẠM, KHÔNG VÀO DB
+        1. PROCESS ORDER – LƯU TẠM VÀO REDIS (TTL 300s)
     =========================================================*/
     async processOrder(data) {
         const {
@@ -31,23 +30,16 @@ class PaymentService {
             startTime
         } = data;
 
-        // 1. Lấy thông tin showtime
+        // 1. Lấy room_id, cinema_id từ DB
         const [rows] = await db.execute(
             `SELECT room_id, cinema_id FROM showtimes WHERE showtime_id = ?`,
             [showtimeId]
         );
-
-        if (!rows.length) {
-            throw new Error('Không tìm thấy suất chiếu');
-        }
-
+        if (!rows.length) throw new Error('Không tìm thấy suất chiếu');
         const room_id = rows[0].room_id;
         const cinema_id = rows[0].cinema_id;
 
-        // 2. Tạo ID tạm
-        const tempBookingId = generateTempBookingId();
-
-        // 3. Kiểm tra ghế có bị người khác đặt chưa (trong DB đã completed)
+        // 2. Kiểm tra ghế đã có ai đặt Completed chưa (trong DB)
         for (const seat of selectedSeats) {
             const [existing] = await db.execute(
                 `
@@ -67,7 +59,8 @@ class PaymentService {
             }
         }
 
-        // 4. Lưu vào temp
+        // 3. Tạo tempId và lưu vào Redis (dùng RedisService.set)
+        const tempBookingId = generateTempBookingId();
         const tempData = {
             tempBookingId,
             userId,
@@ -88,17 +81,9 @@ class PaymentService {
             createdAt: Date.now()
         };
 
-        tempBookings.set(tempBookingId, tempData);
-
-        // 5. Tự động xóa sau 10 phút
-        setTimeout(() => {
-            if (tempBookings.has(tempBookingId)) {
-                tempBookings.delete(tempBookingId);
-                console.log(`🗑️ Temp booking ${tempBookingId} expired and removed`);
-            }
-        }, 600000);
-
-        console.log(`✅ Temp booking created: ${tempBookingId}`);
+        const key = `temp:${tempBookingId}`;
+        await RedisService.set(key, JSON.stringify(tempData), TEMP_BOOKING_TTL);
+        console.log(`✅ Temp booking saved to Redis: ${tempBookingId} (TTL ${TEMP_BOOKING_TTL}s)`);
 
         return { tempBookingId };
     }
@@ -107,12 +92,12 @@ class PaymentService {
         2. COMMIT TO DATABASE – KHI OTP THÀNH CÔNG
     =========================================================*/
     async commitToDatabase(connection, tempBookingId) {
-        // 1. Lấy dữ liệu tạm
-        const tempData = tempBookings.get(tempBookingId);
-        if (!tempData) {
+        const key = `temp:${tempBookingId}`;
+        const raw = await RedisService.get(key);
+        if (!raw) {
             throw new Error('Phiên đặt vé đã hết hạn. Vui lòng đặt lại.');
         }
-
+        const tempData = JSON.parse(raw);
         const {
             userId,
             showtimeId,
@@ -127,7 +112,7 @@ class PaymentService {
             customerPhone
         } = tempData;
 
-        // 2. Kiểm tra ghế vẫn còn trống (phòng trường hợp timeout)
+        // Kiểm tra lại ghế (phòng trường hợp có người khác đặt trong lúc chờ OTP)
         for (const seat of selectedSeats) {
             const [existing] = await connection.execute(
                 `
@@ -147,9 +132,8 @@ class PaymentService {
             }
         }
 
-        // 3. Tạo booking
+        // Tạo booking
         const memo = `DUNG${Date.now()}`;
-
         const [result] = await connection.execute(
             `
             INSERT INTO bookings
@@ -158,58 +142,31 @@ class PaymentService {
             `,
             [userId, showtimeId, totalAmount, couponId || null, memo, customerEmail]
         );
-
         const bookingId = result.insertId;
 
-        // 4. Tạo booking_details và tickets cho ghế
+        // Ghế -> booking_details + tickets
         for (const seat of selectedSeats) {
-            // Booking detail
             await connection.execute(
                 `
                 INSERT INTO booking_details
                 (booking_id, seat_id, price, item_name, quantity)
                 VALUES (?, ?, ?, ?, 1)
                 `,
-                [
-                    bookingId,
-                    seat.seat_id,
-                    seat.price,
-                    `Ghế ${seat.seat_row}${seat.seat_number}`
-                ]
+                [bookingId, seat.seat_id, seat.price, `Ghế ${seat.seat_row}${seat.seat_number}`]
             );
 
-            // Ticket
             const ticketCode = `TIC-${bookingId}-${seat.seat_id}-${Date.now()}`;
             await connection.execute(
                 `
                 INSERT INTO tickets
-                (
-                    booking_id,
-                    showtime_id,
-                    room_id,
-                    cinema_id,
-                    seat_id,
-                    ticket_code,
-                    price,
-                    seat_status,
-                    ticket_status,
-                    created_at
-                )
+                (booking_id, showtime_id, room_id, cinema_id, seat_id, ticket_code, price, seat_status, ticket_status, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, 'Booked', 'Valid', NOW())
                 `,
-                [
-                    bookingId,
-                    showtimeId,
-                    room_id,
-                    cinema_id,
-                    seat.seat_id,
-                    ticketCode,
-                    seat.price
-                ]
+                [bookingId, showtimeId, room_id, cinema_id, seat.seat_id, ticketCode, seat.price]
             );
         }
 
-        // 5. Tạo booking_details cho food
+        // Đồ ăn -> booking_details
         for (const food of selectedFoods) {
             await connection.execute(
                 `
@@ -217,19 +174,12 @@ class PaymentService {
                 (booking_id, product_id, item_name, quantity, price)
                 VALUES (?, ?, ?, ?, ?)
                 `,
-                [
-                    bookingId,
-                    food.product_id,
-                    food.product_name,
-                    food.quantity,
-                    food.price
-                ]
+                [bookingId, food.product_id, food.product_name, food.quantity, food.price]
             );
         }
 
-        // 6. Cộng điểm (nếu có)
+        // Cộng điểm
         if (userId) {
-            // Tính điểm dựa trên số tiền
             const points = Math.floor(totalAmount * 0.05);
             if (points > 0) {
                 await connection.execute(
@@ -239,9 +189,9 @@ class PaymentService {
             }
         }
 
-        // 7. Xóa temp sau khi commit thành công
-        tempBookings.delete(tempBookingId);
-        console.log(`✅ Booking ${bookingId} committed, temp ${tempBookingId} removed`);
+        // Xóa khỏi Redis sau khi commit thành công
+        await RedisService.delete(key);
+        console.log(`✅ Booking ${bookingId} committed, temp ${tempBookingId} removed from Redis`);
 
         return { bookingId, memo };
     }
@@ -249,18 +199,19 @@ class PaymentService {
     /*=========================================================
         3. GET TEMP DATA
     =========================================================*/
-    getTempData(tempBookingId) {
-        return tempBookings.get(tempBookingId) || null;
+    async getTempData(tempBookingId) {
+        const key = `temp:${tempBookingId}`;
+        const raw = await RedisService.get(key);
+        return raw ? JSON.parse(raw) : null;
     }
 
     /*=========================================================
         4. DELETE TEMP DATA
     =========================================================*/
-    deleteTempData(tempBookingId) {
-        const deleted = tempBookings.delete(tempBookingId);
-        if (deleted) {
-            console.log(`🗑️ Temp booking ${tempBookingId} deleted`);
-        }
+    async deleteTempData(tempBookingId) {
+        const key = `temp:${tempBookingId}`;
+        const deleted = await RedisService.delete(key);
+        if (deleted) console.log(`🗑️ Temp booking ${tempBookingId} deleted from Redis`);
         return deleted;
     }
 }

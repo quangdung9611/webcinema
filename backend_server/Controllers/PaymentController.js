@@ -33,7 +33,8 @@ exports.commitBooking = async (connection, tempBookingId) => {
 exports.getTempData = async (req, res) => {
     try {
         const { tempBookingId } = req.params;
-        const data = PaymentService.getTempData(tempBookingId);
+        // Sửa: gọi async và await
+        const data = await PaymentService.getTempData(tempBookingId);
         if (!data) {
             return res.status(404).json({
                 success: false,
@@ -51,6 +52,7 @@ exports.getTempData = async (req, res) => {
             }
         });
     } catch (error) {
+        console.error("Get Temp Data Error:", error);
         return res.status(500).json({
             success: false,
             message: error.message

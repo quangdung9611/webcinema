@@ -2,12 +2,9 @@ const BankAppService = require("../Services/BankAppService");
 const OtpService = require("../Services/OtpService");
 const { PURPOSE } = require("../Services/OtpService");
 const MailServiceTicket = require("../Services/MailServiceTicket");
+const PaymentService = require("../Services/PaymentService");
 const db = require("../Config/db");
-const PaymentController = require("./PaymentController");
 
-/*=========================================================
-    SEND OTP – dùng tempBookingId
-=========================================================*/
 exports.sendOTP = async (req, res) => {
     try {
         const { email, tempBookingId } = req.body;
@@ -18,11 +15,7 @@ exports.sendOTP = async (req, res) => {
             });
         }
 
-        // Kiểm tra temp booking tồn tại
-        const tempData = await PaymentController.getTempData({ params: { tempBookingId } });
-        // Cách check đơn giản: gọi trực tiếp service
-        const PaymentService = require("../Services/PaymentService");
-        const tempBooking = PaymentService.getTempData(tempBookingId);
+        const tempBooking = await PaymentService.getTempData(tempBookingId);
         if (!tempBooking) {
             return res.status(400).json({ 
                 success: false, 
@@ -50,15 +43,11 @@ exports.sendOTP = async (req, res) => {
     }
 };
 
-/*=========================================================
-    VERIFY OTP – COMMIT VÀO DB KHI OTP ĐÚNG
-=========================================================*/
 exports.verifyOTP = async (req, res) => {
     const connection = await db.getConnection();
     try {
         const { email, otp, tempBookingId } = req.body;
 
-        // 1. Xác thực OTP
         const verifyResult = await OtpService.verifyOTP(email, otp, PURPOSE.PAYMENT);
         if (!verifyResult.success) {
             return res.status(400).json(verifyResult);
@@ -66,10 +55,13 @@ exports.verifyOTP = async (req, res) => {
 
         await connection.beginTransaction();
 
-        // 2. Commit vào database
-        const result = await PaymentController.commitBooking(connection, tempBookingId);
+        const result = await PaymentService.commitToDatabase(connection, tempBookingId);
 
         await connection.commit();
+
+        // (Tùy chọn) Gửi email và cộng điểm
+        // await BankAppService.sendTicketEmail(connection, result.bookingId);
+        // await BankAppService.addPoints(connection, result.bookingId, userId);
 
         return res.json({
             success: true,
@@ -88,9 +80,6 @@ exports.verifyOTP = async (req, res) => {
     }
 };
 
-/*=========================================================
-    CANCEL TIMEOUT – XÓA SESSION
-=========================================================*/
 exports.cancelBookingTimeout = async (req, res) => {
     try {
         const { tempBookingId } = req.body;
@@ -101,8 +90,7 @@ exports.cancelBookingTimeout = async (req, res) => {
             });
         }
 
-        const PaymentService = require("../Services/PaymentService");
-        const deleted = PaymentService.deleteTempData(tempBookingId);
+        const deleted = await PaymentService.deleteTempData(tempBookingId);
 
         return res.json({
             success: true,
