@@ -45,13 +45,19 @@ exports.sendOTP = async (req, res) => {
         });
     }
 };
-
 exports.verifyOTP = async (req, res) => {
     const connection = await db.getConnection();
+
     try {
         const { email, otp, tempBookingId } = req.body;
 
-        const verifyResult = await OtpService.verifyOTP(email, otp, PURPOSE.PAYMENT);
+        // Xác thực OTP
+        const verifyResult = await OtpService.verifyOTP(
+            email,
+            otp,
+            PURPOSE.PAYMENT
+        );
+
         if (!verifyResult.success) {
             return res.status(400).json({
                 success: false,
@@ -60,27 +66,46 @@ exports.verifyOTP = async (req, res) => {
             });
         }
 
+        // Transaction
         await connection.beginTransaction();
 
-        const result = await PaymentService.commitToDatabase(connection, tempBookingId);
+        const result = await PaymentService.commitToDatabase(
+            connection,
+            tempBookingId
+        );
 
         await connection.commit();
 
-        // (Tùy chọn) Gửi email và cộng điểm
-        // await BankAppService.sendTicketEmail(connection, result.bookingId);
-        // await BankAppService.addPoints(connection, result.bookingId, userId);
+        // Gửi email vé sau khi commit thành công
+        try {
+            await BankAppService.sendTicketEmail(
+                connection,
+                result.bookingId
+            );
+        } catch (err) {
+            console.error("❌ Send Ticket Email Error:", err);
+        }
 
         return res.status(200).json({
             success: true,
-            data: { bookingId: result.bookingId }
+            data: {
+                bookingId: result.bookingId
+            }
         });
+
     } catch (error) {
-        await connection.rollback();
+
+        try {
+            await connection.rollback();
+        } catch (_) {}
+
         console.error("❌ verifyOTP error:", error);
+
         return res.status(500).json({
             success: false,
             message: error.message || "Lỗi máy chủ"
         });
+
     } finally {
         connection.release();
     }
