@@ -18,23 +18,27 @@ const BankApp = () => {
         JSON.parse(sessionStorage.getItem('lastSuccessTicket')) ||
         {};
 
-    const {
-        tempBookingId,      // ✅ dùng tempBookingId
-        customerEmail,
-        customerName,
-        customerPhone,
-        totalAmount,
-        movie,
-        selectedCinema,
-        selectedDate,
-        selectedShowtime,
-        selectedSeats,
-        selectedFoods,
-        foods,
-        totalTicketPrice,
-        totalFoodPrice,
-        showtimeDetail
-    } = bookingData;
+    // 🔥 Lấy tempBookingId từ sessionStorage TRƯỚC (luôn là string)
+    const tempBookingId = String(
+        sessionStorage.getItem('tempBookingId') ||
+        bookingData.tempBookingId ||
+        ''
+    );
+
+    const customerEmail = bookingData.customerEmail || sessionStorage.getItem('customerEmail') || '';
+    const customerName = bookingData.customerName || '';
+    const customerPhone = bookingData.customerPhone || '';
+    const totalAmount = bookingData.totalAmount || 0;
+    const movie = bookingData.movie || {};
+    const selectedCinema = bookingData.selectedCinema || {};
+    const selectedDate = bookingData.selectedDate || '';
+    const selectedShowtime = bookingData.selectedShowtime || {};
+    const selectedSeats = bookingData.selectedSeats || [];
+    const selectedFoods = bookingData.selectedFoods || [];
+    const foods = bookingData.foods || [];
+    const totalTicketPrice = bookingData.totalTicketPrice || 0;
+    const totalFoodPrice = bookingData.totalFoodPrice || 0;
+    const showtimeDetail = bookingData.showtimeDetail || {};
 
     // =========================
     // REFS
@@ -128,7 +132,9 @@ const BankApp = () => {
         isCancellingRef.current = true;
         try {
             await api.post('/api/bank/cancel-timeout', {
-                tempBookingId // ✅ gửi tempBookingId
+                tempBookingId: tempBookingId // đã là string
+            }, {
+                headers: { 'Content-Type': 'application/json' }
             });
             console.log('✅ Temp booking cancelled on server');
         } catch (err) {
@@ -145,7 +151,7 @@ const BankApp = () => {
         const completed = sessionStorage.getItem('paymentCompleted');
         const completedId = sessionStorage.getItem('completedBookingId');
 
-        if (completed === 'true' && completedId === String(tempBookingId)) {
+        if (completed === 'true' && completedId === tempBookingId) {
             paymentCompletedRef.current = true;
             hasSentOtp.current = true;
             sessionStorage.removeItem('bankOtpTimeLeft');
@@ -193,7 +199,7 @@ const BankApp = () => {
             openModal(
                 'error',
                 'THIẾU THÔNG TIN',
-                'Không tìm thấy thông tin đặt vé. Vui lòng đặt lại.',
+                `Không tìm thấy thông tin đặt vé (tempId: ${tempBookingId}, email: ${customerEmail}). Vui lòng đặt lại.`,
                 () => {
                     closeModal();
                     navigate('/');
@@ -262,10 +268,18 @@ const BankApp = () => {
     const sendOtpApi = async () => {
         setLoadingSendOtp(true);
         try {
-            await api.post('/api/bank/send-otp', {
+            const payload = {
                 email: customerEmail,
-                tempBookingId // ✅ gửi tempBookingId
+                tempBookingId: tempBookingId // đã là string
+            };
+            console.log('📤 [BankApp] sendOtp payload:', JSON.stringify(payload));
+
+            const response = await api.post('/api/bank/send-otp', payload, {
+                headers: { 'Content-Type': 'application/json' }
             });
+
+            console.log('✅ [BankApp] sendOtp response:', response.data);
+
             const now = Date.now();
             sessionStorage.setItem('bankLastOtpSentAt', String(now));
             hasSentOtp.current = true;
@@ -276,7 +290,7 @@ const BankApp = () => {
             setTimeLeft(300);
             return true;
         } catch (err) {
-            console.error('❌ Lỗi gửi OTP:', err);
+            console.error('❌ [BankApp] sendOtp error:', err.response?.data || err.message);
             const errorMsg = err.response?.data?.message || 'Không thể gửi mã OTP. Vui lòng thử lại.';
             openModal('error', 'LỖI GỬI OTP', errorMsg);
             return false;
@@ -332,10 +346,8 @@ const BankApp = () => {
         if (paymentCompletedRef.current) return;
 
         if (timeLeft <= 0) {
-            // Không hiện modal, trực tiếp về home sau 3s
             const handleTimeout = async () => {
                 await cancelBookingOnServer();
-                // Xóa toàn bộ session
                 sessionStorage.removeItem('bankHasSentOtp');
                 sessionStorage.removeItem('bankHasVisited');
                 sessionStorage.removeItem('bankOtpTimeLeft');
@@ -357,9 +369,6 @@ const BankApp = () => {
                 navigate('/');
             };
 
-            // Đợi 1.5s để user thấy thông báo hết hạn (nếu có thể hiển thị ngắn)
-            // Nhưng do không có modal, có thể thêm một state để hiển thị thông báo ngắn nếu muốn.
-            // Ở đây ta sẽ chạy sau 1.5s
             redirectTimeoutRef.current = setTimeout(() => {
                 handleTimeout();
             }, 1500);
@@ -390,16 +399,23 @@ const BankApp = () => {
 
         setLoadingVerify(true);
         try {
-            const res = await api.post('/api/bank/verify-otp', {
+            const payload = {
                 email: customerEmail,
                 otp,
-                tempBookingId, // ✅ gửi tempBookingId
+                tempBookingId: tempBookingId,
                 full_name: customerName,
                 phone: customerPhone
+            };
+            console.log('📤 [BankApp] verify payload:', JSON.stringify(payload));
+
+            const res = await api.post('/api/bank/verify-otp', payload, {
+                headers: { 'Content-Type': 'application/json' }
             });
 
+            console.log('✅ [BankApp] verify response:', res.data);
+
             if (res.data.success) {
-                const realBookingId = res.data.data?.bookingId || tempBookingId; // nếu backend trả về
+                const realBookingId = res.data.data?.bookingId || tempBookingId;
                 sessionStorage.setItem('paymentCompleted', 'true');
                 sessionStorage.setItem('completedBookingId', String(realBookingId));
                 paymentCompletedRef.current = true;
@@ -448,7 +464,7 @@ const BankApp = () => {
                 }
             }
         } catch (err) {
-            console.error('❌ Lỗi verify OTP:', err);
+            console.error('❌ [BankApp] verify error:', err.response?.data || err.message);
             const errorMsg = err.response?.data?.message || 'Mã OTP không đúng hoặc đã hết hạn!';
             if (err.response?.status === 429 || errorMsg.includes('khóa') || errorMsg.includes('quá nhiều lần')) {
                 openModal(

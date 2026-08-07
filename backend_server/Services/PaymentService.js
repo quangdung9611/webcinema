@@ -193,7 +193,7 @@ class PaymentService {
         await RedisService.delete(key);
         console.log(`✅ Booking ${bookingId} committed, temp ${tempBookingId} removed from Redis`);
 
-        return { bookingId, memo };
+        return { bookingId, memo, userId };
     }
 
     /*=========================================================

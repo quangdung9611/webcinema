@@ -49,7 +49,7 @@ const Payment = () => {
     const [isTimerActive, setIsTimerActive] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-    const [tempBookingId, setTempBookingId] = useState(null); // ✅ lưu tempBookingId
+    const [tempBookingId, setTempBookingId] = useState(null);
 
     const [userInfo, setUserInfo] = useState({
         user_id: user?.user_id || '',
@@ -100,7 +100,7 @@ const Payment = () => {
             return;
         }
 
-        // Xóa session cũ
+        // Xóa toàn bộ session cũ
         sessionStorage.removeItem('lastSuccessTicket');
         sessionStorage.removeItem('bankHasSentOtp');
         sessionStorage.removeItem('bankHasVisited');
@@ -110,7 +110,7 @@ const Payment = () => {
         sessionStorage.removeItem('paymentCompleted');
         sessionStorage.removeItem('completedBookingId');
         sessionStorage.removeItem('paymentInitiated');
-        sessionStorage.removeItem('tempBookingId'); // ✅ xóa temp cũ
+        sessionStorage.removeItem('tempBookingId');
 
         const storedUser = getUserFromStorage();
         if (!storedUser || !storedUser.user_id) {
@@ -140,7 +140,6 @@ const Payment = () => {
     // TIMER EXPIRE (giữ ghế - không dùng nữa vì giờ lưu session)
     // =========================
     const handleTimeExpire = async () => {
-        // Nếu có tempBookingId thì hủy session
         if (tempBookingId) {
             try {
                 await api.post('/api/bank/cancel-timeout', { tempBookingId });
@@ -219,7 +218,7 @@ const Payment = () => {
             return;
         }
 
-        // Xóa session cũ
+        // Xóa session cũ liên quan đến OTP
         sessionStorage.removeItem('bankHasSentOtp');
         sessionStorage.removeItem('bankHasVisited');
         sessionStorage.removeItem('bankOtpTimeLeft');
@@ -257,22 +256,22 @@ const Payment = () => {
                 selectedFoods: foodsWithQuantity,
                 customerEmail: email,
                 customerName: fullName,
-                customerPhone: phone, // ✅ gửi cả số điện thoại
+                customerPhone: phone,
                 movieTitle: movie?.title || '',
                 cinemaName: selectedCinema?.cinema_name || '',
-                startTime: selectedShowtime?.start_time || '',
-                status: 'pending'
+                startTime: selectedShowtime?.start_time || ''
+                // Không cần status: 'pending'
             };
 
             const response = await api.post('/api/payment/process', postData);
 
             if (response.data.success) {
-                const tempId = response.data.tempBookingId; // ✅ nhận tempBookingId
+                const tempId = response.data.tempBookingId;
                 setTempBookingId(tempId);
                 sessionStorage.setItem('tempBookingId', tempId);
 
                 const finalState = {
-                    tempBookingId: tempId, // ✅ dùng tempBookingId
+                    tempBookingId: tempId,
                     totalAmount: Number(grandTotal),
                     customerName: fullName,
                     customerEmail: email,

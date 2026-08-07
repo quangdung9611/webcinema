@@ -9,36 +9,39 @@ exports.sendOTP = async (req, res) => {
     try {
         const { email, tempBookingId } = req.body;
         if (!email || !tempBookingId) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Thiếu email hoặc tempBookingId" 
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu email hoặc tempBookingId"
             });
         }
 
         const tempBooking = await PaymentService.getTempData(tempBookingId);
         if (!tempBooking) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại." 
+            return res.status(400).json({
+                success: false,
+                message: "Phiên đặt vé đã hết hạn. Vui lòng đặt lại."
             });
         }
 
         const result = await OtpService.createOTP(email, PURPOSE.PAYMENT);
         if (!result.success) {
-            return res.status(400).json({ success: false, message: result.message });
+            return res.status(400).json({
+                success: false,
+                message: result.message
+            });
         }
 
         MailServiceTicket.sendOTP(email, result.otp, tempBookingId).catch(console.error);
 
-        return res.json({ 
-            success: true, 
-            message: "Mã OTP đang được gửi!" 
+        return res.status(200).json({
+            success: true,
+            message: "Mã OTP đang được gửi!"
         });
     } catch (error) {
         console.error("❌ sendOTP error:", error);
-        return res.status(500).json({ 
-            success: false, 
-            message: error.message 
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
         });
     }
 };
@@ -50,7 +53,11 @@ exports.verifyOTP = async (req, res) => {
 
         const verifyResult = await OtpService.verifyOTP(email, otp, PURPOSE.PAYMENT);
         if (!verifyResult.success) {
-            return res.status(400).json(verifyResult);
+            return res.status(400).json({
+                success: false,
+                message: verifyResult.message,
+                code: verifyResult.code
+            });
         }
 
         await connection.beginTransaction();
@@ -63,17 +70,16 @@ exports.verifyOTP = async (req, res) => {
         // await BankAppService.sendTicketEmail(connection, result.bookingId);
         // await BankAppService.addPoints(connection, result.bookingId, userId);
 
-        return res.json({
+        return res.status(200).json({
             success: true,
-            message: "Thanh toán thành công!",
-            data: { bookingId: result.bookingId },
+            data: { bookingId: result.bookingId }
         });
     } catch (error) {
         await connection.rollback();
         console.error("❌ verifyOTP error:", error);
-        return res.status(500).json({ 
-            success: false, 
-            message: error.message 
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
         });
     } finally {
         connection.release();
@@ -84,23 +90,23 @@ exports.cancelBookingTimeout = async (req, res) => {
     try {
         const { tempBookingId } = req.body;
         if (!tempBookingId) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Thiếu tempBookingId" 
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu tempBookingId"
             });
         }
 
         const deleted = await PaymentService.deleteTempData(tempBookingId);
 
-        return res.json({
+        return res.status(200).json({
             success: true,
-            message: deleted ? "Đã hủy phiên đặt vé." : "Không tìm thấy phiên đặt vé.",
+            message: deleted ? "Đã hủy phiên đặt vé." : "Không tìm thấy phiên đặt vé."
         });
     } catch (error) {
         console.error("❌ cancelBookingTimeout error:", error);
-        return res.status(500).json({ 
-            success: false, 
-            message: error.message 
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
         });
     }
 };
