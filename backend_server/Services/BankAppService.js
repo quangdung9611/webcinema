@@ -21,18 +21,40 @@ class BankAppService {
 
             const points = await PointsService.calculateBookingPoints(connection, bookingId);
 
-            const ticketData = {
-                bookingId: order.booking_id,
-                customerName: order.full_name,
-                movieTitle: order.movie_name,
-                moviePoster: order.movie_poster,
-                cinemaName: order.cinema_name,
-                startTime: order.start_time.split(" ")[1].substring(0, 5),
-                selectedDate: order.start_time.split(" ")[0].split("-").reverse().join("/"),
-                seatLabel: order.seat_label,
-                selectedFoods: foodString,
-                earnedPoints: points,
-            };
+           const ticketData = {
+    bookingId: order.booking_id,
+    customerName: order.full_name,
+
+    movieTitle: order.movie_name,
+    moviePoster: order.movie_poster,
+
+    cinemaName: order.cinema_name,
+
+    startTime: order.start_time
+        .split(" ")[1]
+        .substring(0, 5),
+
+    selectedDate: order.start_time
+        .split(" ")[0]
+        .split("-")
+        .reverse()
+        .join("/"),
+
+    seatLabel: order.seat_label,
+
+    selectedFoods: foodString,
+
+    earnedPoints: points,
+
+    // ===========================
+    // THÊM DÒNG NÀY
+    // ===========================
+
+    ticketPIN:
+        order.pin ||
+        (order.memo ? order.memo.slice(-6) : ""),
+
+};
 
             await MailServiceTicket.sendTicketEmail(order.email, ticketData);
             console.log(`✅ Email ticket sent for booking ${bookingId}`);

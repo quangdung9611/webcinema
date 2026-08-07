@@ -1,9 +1,4 @@
-const TicketEmailTemplate = (
-
-    ticketData,
-    fileExists
-
-) => {
+const TicketEmailTemplate = (ticketData, fileExists) => {
 
     const {
 
@@ -16,6 +11,9 @@ const TicketEmailTemplate = (
         selectedDate,
         selectedFoods,
         earnedPoints,
+
+        // thêm 2 dòng này
+        ticketPIN,
         qrCode
 
     } = ticketData;
@@ -166,57 +164,67 @@ const TicketEmailTemplate = (
                             : ''
 
                     }
-                                    <!-- QR CODE -->
+                    <!-- QR CODE -->
 
-                <div
-                    style="
-                        text-align:center;
-                        margin:30px 0;
-                    "
-                >
+${qrCode ? `
 
-                    <h2
-                        style="
-                            color:#333;
-                            margin-bottom:10px;
-                        "
-                    >
-                        QUÉT MÃ QR NHẬN VÉ
-                    </h2>
+<div
+    style="
+        text-align:center;
+        margin:35px 0;
+        padding:20px;
+        border:1px dashed #ddd;
+        border-radius:12px;
+        background:#fafafa;
+    "
+>
 
-                    <h1
-                        style="
-                            color:#e74c3c;
-                            font-size:30px;
-                            letter-spacing:5px;
-                            margin-bottom:20px;
-                        "
-                    >
-                        ${ticketPIN}
-                    </h1>
+    <h2
+        style="
+            margin:0;
+            color:#222;
+        "
+    >
+        MÃ NHẬN VÉ
+    </h2>
 
-                    <img
-                        src="${qrCode}"
-                        alt="QR Code"
-                        width="180"
-                        height="180"
-                        style="
-                            border:8px solid #fff;
-                            border-radius:12px;
-                            box-shadow:0 4px 12px rgba(0,0,0,.15);
-                        "
-                    />
+    <h1
+        style="
+            margin:15px 0;
+            color:#e74c3c;
+            font-size:34px;
+            letter-spacing:6px;
+        "
+    >
+        ${ticketPIN || ""}
+    </h1>
 
-                    <p
-                        style="
-                            color:#666;
-                            margin-top:15px;
-                        "
-                    >
-                        Quét mã QR tại quầy hoặc kiosk để nhận vé.
-                    </p>
+    <img
+        src="${qrCode}"
+        width="180"
+        height="180"
+        style="
+            display:block;
+            margin:auto;
+            border-radius:12px;
+            border:8px solid #fff;
+            box-shadow:0 4px 12px rgba(0,0,0,.15);
+        "
+    />
 
-                </div>
+    <p
+        style="
+            color:#666;
+            margin-top:18px;
+            line-height:24px;
+        "
+    >
+        Quét mã QR tại quầy hoặc kiosk để nhận vé.
+    </p>
+
+</div>
+
+` : ""}
                     <!-- FOOTER -->
 
                     <div
