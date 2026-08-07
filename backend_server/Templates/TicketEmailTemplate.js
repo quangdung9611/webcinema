@@ -166,65 +166,80 @@ const TicketEmailTemplate = (ticketData, fileExists) => {
                     }
                     <!-- QR CODE -->
 
-${qrCode ? `
+${
+    qrCode
+        ? `
+        <div
+            style="
+                margin:30px 0;
+                text-align:center;
+                padding:25px;
+                border:1px dashed #ddd;
+                border-radius:12px;
+                background:#fafafa;
+            "
+        >
 
-<div
-    style="
-        text-align:center;
-        margin:35px 0;
-        padding:20px;
-        border:1px dashed #ddd;
-        border-radius:12px;
-        background:#fafafa;
-    "
->
+            <h2
+                style="
+                    margin:0;
+                    color:#222;
+                    font-size:26px;
+                "
+            >
+                MÃ NHẬN VÉ
+            </h2>
 
-    <h2
-        style="
-            margin:0;
-            color:#222;
-        "
-    >
-        MÃ NHẬN VÉ
-    </h2>
+            <div
+                style="
+                    margin:15px 0;
+                    font-size:38px;
+                    font-weight:bold;
+                    color:#e74c3c;
+                    letter-spacing:8px;
+                "
+            >
+                ${ticketPIN || ""}
+            </div>
 
-    <h1
-        style="
-            margin:15px 0;
-            color:#e74c3c;
-            font-size:34px;
-            letter-spacing:6px;
-        "
-    >
-        ${ticketPIN || ""}
-    </h1>
+            <img
+                src="${qrCode}"
+                alt="QR Code"
+                style="
+                    width:220px;
+                    height:220px;
+                    display:block;
+                    margin:20px auto;
+                    border-radius:10px;
+                    border:8px solid #fff;
+                    box-shadow:0 4px 12px rgba(0,0,0,.15);
+                "
+            />
 
-    <img
-        src="${qrCode}"
-        width="180"
-        height="180"
-        style="
-            display:block;
-            margin:auto;
-            border-radius:12px;
-            border:8px solid #fff;
-            box-shadow:0 4px 12px rgba(0,0,0,.15);
-        "
-    />
+            <p
+                style="
+                    margin-top:15px;
+                    color:#666;
+                    line-height:24px;
+                "
+            >
+                Vui lòng quét mã QR tại quầy hoặc kiosk để in vé.
+            </p>
 
-    <p
-        style="
-            color:#666;
-            margin-top:18px;
-            line-height:24px;
-        "
-    >
-        Quét mã QR tại quầy hoặc kiosk để nhận vé.
-    </p>
-
-</div>
-
-` : ""}
+        </div>
+        `
+        : `
+        <div
+            style="
+                margin:30px 0;
+                text-align:center;
+                color:#999;
+            "
+        >
+            Không thể tạo mã QR.
+        </div>
+        `
+}               
                     <!-- FOOTER -->
 
                     <div
