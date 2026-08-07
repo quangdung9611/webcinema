@@ -267,7 +267,7 @@ const UserHome = () => {
 
     try {
       const res = await api.get(`/api/showtimes/detail/${selectedQuick.showtime}`);
-      const showtimeData = res.data;
+      const showtimeData = res.data?.data;
 
       navigate(`/booking/${showtimeData.slug}`, {
         state: {
@@ -429,7 +429,7 @@ const UserHome = () => {
                         fontSize: '1.5rem',
                         fontWeight: 'bold'
                       }}>
-                        🎬 Cinema Banner
+                         Cinema Banner
                       </div>
                       <div className="banner-particles"></div>
                       <div ref={spotlightRef} className="banner-spotlight" />

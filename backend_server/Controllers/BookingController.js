@@ -17,9 +17,7 @@ exports.getAllBookingsAll = async (req, res) => {
             });
         }
 
-        // Service trả về thẳng rows[]
         const data = await BookingService.getAllBookingsAll(search);
-
         return res.status(200).json({ success: true, data });
     } catch (error) {
         console.error(error);
@@ -112,10 +110,8 @@ exports.updateBookingStatus = async (req, res) => {
         const oldStatus = booking.status;
         const newStatus = String(status || "").toUpperCase();
 
-        // Update status
         await BookingService.completeBooking(connection, booking_id);
 
-        // Nếu chuyển sang Completed
         if (newStatus === "COMPLETED") {
             await TicketService.bookTickets(connection, booking_id);
             if (String(oldStatus).toUpperCase() !== "COMPLETED") {
@@ -124,7 +120,6 @@ exports.updateBookingStatus = async (req, res) => {
             }
         }
 
-        // Nếu chuyển sang Cancelled
         if (newStatus === "CANCELLED") {
             await TicketService.cancelTickets(connection, booking_id);
         }
@@ -143,6 +138,41 @@ exports.updateBookingStatus = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: error.message,
+        });
+    }
+};
+
+/*=========================================================
+    ✅ UPDATE CUSTOMER INFO (FULL_NAME, PHONE, EMAIL)
+=========================================================*/
+exports.updateBookingCustomerInfo = async (req, res) => {
+    const connection = await BookingRepository.getConnection();
+    try {
+        const { booking_id, full_name, phone, email } = req.body;
+
+        if (!booking_id || !full_name || !phone || !email) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu thông tin booking_id, full_name, phone hoặc email"
+            });
+        }
+
+        await BookingRepository.beginTransaction(connection);
+        await BookingService.updateBookingCustomerInfo(connection, booking_id, full_name, phone, email);
+        await BookingRepository.commit(connection);
+        connection.release();
+
+        return res.status(200).json({
+            success: true,
+            message: "Cập nhật thông tin khách hàng thành công"
+        });
+    } catch (error) {
+        await BookingRepository.rollback(connection);
+        connection.release();
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: error.message
         });
     }
 };

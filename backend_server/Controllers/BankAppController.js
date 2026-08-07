@@ -3,81 +3,81 @@ const OtpService = require("../Services/OtpService");
 const { PURPOSE } = require("../Services/OtpService");
 const MailServiceTicket = require("../Services/MailServiceTicket");
 const db = require("../Config/db");
-const BookingRepository = require("../Repositories/BookingRepository"); // 👈 THÊM DÒNG NÀY
+const BookingService = require("../Services/BookingService");
 
 exports.sendOTP = async (req, res) => {
-  try {
-    const { email, bookingId } = req.body;
-    if (!email || !bookingId) {
-      return res.status(400).json({ success: false, message: "Thiếu email hoặc bookingId" });
+    try {
+        const { email, bookingId } = req.body;
+        if (!email || !bookingId) {
+            return res.status(400).json({ success: false, message: "Thiếu email hoặc bookingId" });
+        }
+
+        const result = await OtpService.createOTP(email, PURPOSE.PAYMENT);
+        if (!result.success) {
+            return res.status(400).json({ success: false, message: result.message });
+        }
+
+        MailServiceTicket.sendOTP(email, result.otp, bookingId).catch(console.error);
+
+        return res.json({ success: true, message: "Mã OTP đang được gửi!" });
+    } catch (error) {
+        console.error("❌ sendOTP error:", error);
+        const status = error.statusCode || 500;
+        return res.status(status).json({ success: false, message: error.message });
     }
-
-    const result = await OtpService.createOTP(email, PURPOSE.PAYMENT);
-    if (!result.success) {
-      return res.status(400).json({ success: false, message: result.message });
-    }
-
-    MailServiceTicket.sendOTP(email, result.otp, bookingId).catch(console.error);
-
-    return res.json({ success: true, message: "Mã OTP đang được gửi!" });
-  } catch (error) {
-    console.error("❌ sendOTP error:", error);
-    const status = error.statusCode || 500;
-    return res.status(status).json({ success: false, message: error.message });
-  }
 };
 
 exports.verifyOTP = async (req, res) => {
-  const connection = await db.getConnection();
-  try {
-    const { email, otp, bookingId } = req.body;
+    const connection = await db.getConnection();
+    try {
+        const { email, otp, bookingId, full_name, phone } = req.body;
 
-    // 1. Xác thực OTP
-    const verifyResult = await OtpService.verifyOTP(email, otp, PURPOSE.PAYMENT);
-    if (!verifyResult.success) {
-      return res.status(400).json(verifyResult);
+        // 1. Xác thực OTP
+        const verifyResult = await OtpService.verifyOTP(email, otp, PURPOSE.PAYMENT);
+        if (!verifyResult.success) {
+            return res.status(400).json(verifyResult);
+        }
+
+        await connection.beginTransaction();
+
+        // 2. ✅ Cập nhật đầy đủ thông tin khách hàng (full_name, phone, email)
+        await BookingService.updateBookingCustomerInfo(connection, bookingId, full_name, phone, email);
+
+        // 3. Hoàn tất thanh toán
+        await BankAppService.completeBankPayment(connection, bookingId);
+
+        await connection.commit();
+
+        return res.json({
+            success: true,
+            message: "Thanh toán thành công!",
+            data: { orderId: bookingId },
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error("❌ verifyOTP error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    } finally {
+        connection.release();
     }
-
-    await connection.beginTransaction();
-
-    // 2. Cập nhật email của booking thành email B
-    await BookingRepository.updateEmail(connection, bookingId, email);
-
-    // 3. Hoàn tất thanh toán (lúc này email đã được cập nhật, nên gửi vé đúng)
-    await BankAppService.completeBankPayment(connection, bookingId);
-
-    await connection.commit();
-
-    return res.json({
-      success: true,
-      message: "Thanh toán thành công!",
-      data: { orderId: bookingId },
-    });
-  } catch (error) {
-    await connection.rollback();
-    console.error("❌ verifyOTP error:", error);
-    return res.status(500).json({ success: false, message: error.message });
-  } finally {
-    connection.release();
-  }
 };
 
 exports.cancelBookingTimeout = async (req, res) => {
-  const connection = await db.getConnection();
-  try {
-    const { bookingId, email } = req.body;
-    await connection.beginTransaction();
-    await BankAppService.cancelBookingTimeout(connection, bookingId, email);
-    await connection.commit();
-    return res.json({
-      success: true,
-      message: "Hết thời gian thanh toán, ghế đã được giải phóng.",
-    });
-  } catch (error) {
-    await connection.rollback();
-    console.error("❌ cancelBookingTimeout error:", error);
-    return res.status(500).json({ success: false, message: error.message });
-  } finally {
-    connection.release();
-  }
+    const connection = await db.getConnection();
+    try {
+        const { bookingId, email } = req.body;
+        await connection.beginTransaction();
+        await BankAppService.cancelBookingTimeout(connection, bookingId, email);
+        await connection.commit();
+        return res.json({
+            success: true,
+            message: "Hết thời gian thanh toán, ghế đã được giải phóng.",
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error("❌ cancelBookingTimeout error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    } finally {
+        connection.release();
+    }
 };

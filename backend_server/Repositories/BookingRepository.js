@@ -4,7 +4,7 @@ class BookingRepository {
 
     /*=========================================================
         FIND ALL - KHÔNG PHÂN TRANG (ADMIN)
-        RETURN: rows[] (KHÔNG pagination)
+        RETURN: rows[]
     =========================================================*/
     async findAllAll(search = "") {
         search = typeof search === "string" ? search.trim() : "";
@@ -43,7 +43,7 @@ class BookingRepository {
             queryParams
         );
 
-        return rows; // 👈 trả về thẳng rows[]
+        return rows;
     }
 
     /*=========================================================
@@ -191,6 +191,19 @@ class BookingRepository {
             `UPDATE bookings SET status = ? WHERE booking_id = ?`,
             [status, bookingId]
         );
+    }
+
+    /*=========================================================
+        ✅ UPDATE CUSTOMER INFO (FULL_NAME, PHONE, EMAIL)
+    =========================================================*/
+    async updateCustomerInfo(connection, bookingId, fullName, phone, email) {
+        const [result] = await connection.query(
+            `UPDATE bookings 
+             SET full_name = ?, phone = ?, email = ? 
+             WHERE booking_id = ?`,
+            [fullName, phone, email, bookingId]
+        );
+        return result.affectedRows;
     }
 
     /*=========================================================

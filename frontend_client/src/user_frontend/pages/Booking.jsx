@@ -73,28 +73,18 @@ const Booking = () => {
             ref.current.scrollLeft += offset;
         }
     };
-        // =========================================================
+
+    // =========================================================
     // ĐỒNG BỘ DỮ LIỆU TỪ QUICK BOOKING (LOCATION.STATE)
     // =========================================================
     useEffect(() => {
         const stateData = location.state;
         if (!stateData) return;
 
-        // 1. Cập nhật thông tin phim
         if (stateData.movie) setMovie(stateData.movie);
-
-        // 2. Cập nhật Ngày chiếu
         if (stateData.date) setSelectedDate(stateData.date);
-
-        // 3. Cập nhật tạm Rạp chiếu để sidebar hiện tên (sẽ được match ID chính xác ở effect tiếp theo)
-        if (stateData.cinema) {
-            setSelectedCinema(stateData.cinema);
-        }
-
-        // 4. Cập nhật tạm Suất chiếu (sẽ được match chính xác khi load danh sách suất xong)
-        if (stateData.showtime) {
-            setSelectedShowtime(stateData.showtime);
-        }
+        if (stateData.cinema) setSelectedCinema(stateData.cinema);
+        if (stateData.showtime) setSelectedShowtime(stateData.showtime);
     }, [location.state]);
 
     // Khi danh sách rạp (cinemas) đã load xong từ API, tìm rạp chính xác để dropdown có đủ ID
@@ -118,6 +108,7 @@ const Booking = () => {
             }
         }
     }, [availableShowtimes]);
+
     // =========================================================
     // LOAD MOVIE FROM SLUG – chỉ fetch nếu thiếu poster
     // =========================================================
@@ -130,7 +121,6 @@ const Booking = () => {
                 return;
             }
 
-            // Nếu đã có movie và có movie_poster → không fetch lại
             if (movie && movie.movie_poster) {
                 return;
             }
@@ -140,14 +130,13 @@ const Booking = () => {
                 setFetchError(null);
 
                 const res = await api.get(`/api/movies/detail/${slug}`);
-
+                // ✅ Lấy data bên trong
+                const movieData = res.data?.data;
                 console.log("===== MOVIE API =====");
-                console.log("Response:", res);
-                console.log("Response Data:", res.data);
-                console.log("movie_poster:", res.data?.movie_poster);
+                console.log("movie_poster:", movieData?.movie_poster);
                 console.log("=====================");
 
-                setMovie(res.data);
+                setMovie(movieData);
 
             } catch (error) {
                 console.error("Lỗi load movie theo slug:", error);
@@ -168,7 +157,10 @@ const Booking = () => {
             try {
                 setLoading(true);
                 const res = await api.get('/api/cinemas');
-                setCinemas(res.data);
+                // ✅ Lấy mảng data
+                const cinemaData = res.data?.data || [];
+                setCinemas(cinemaData);
+
                 const dates = [];
                 for (let i = 0; i < 7; i++) {
                     const d = new Date();
@@ -202,7 +194,9 @@ const Booking = () => {
                         movie_id: movie.movie_id || movie.id
                     }
                 });
-                setAvailableShowtimes(res.data);
+                // ✅ Lấy mảng data
+                const showtimeData = res.data?.data || [];
+                setAvailableShowtimes(showtimeData);
             } catch (err) {
                 console.error("Lỗi tải suất chiếu:", err);
                 setAvailableShowtimes([]);
@@ -222,8 +216,10 @@ const Booking = () => {
                 api.get(`/api/showtimes/detail/${showtimeId}`),
                 api.get(`/api/seats/showtime/${showtimeId}`)
             ]);
-            setShowtimeDetail(detailRes.data);
-            setSeats(seatsRes.data);
+            // ✅ Lấy data bên trong
+            setShowtimeDetail(detailRes.data?.data);
+            const seatsData = seatsRes.data?.data || [];
+            setSeats(seatsData);
 
             const savedSeats = sessionStorage.getItem('selectedSeats');
             const savedShowtime = sessionStorage.getItem('currentShowtimeId');
@@ -389,7 +385,6 @@ const Booking = () => {
     // =========================================================
     const movieWithPoster = useMemo(() => {
         if (!movie) return null;
-        // Giữ nguyên movie_poster (đã có sẵn URL tuyệt đối từ Cloudinary)
         return {
             ...movie,
             poster: movie.movie_poster,

@@ -6,7 +6,7 @@ class BookingService {
 
     /*=========================================================
         GET ALL BOOKINGS - KHÔNG PHÂN TRANG
-        RETURN: rows[] (trực tiếp từ repository)
+        RETURN: rows[]
     =========================================================*/
     async getAllBookingsAll(search = "") {
         return await BookingRepository.findAllAll(search);
@@ -67,6 +67,17 @@ class BookingService {
     =========================================================*/
     async cancelBooking(connection, bookingId) {
         await BookingRepository.updateStatus(connection, bookingId, "Cancelled");
+    }
+
+    /*=========================================================
+        ✅ UPDATE CUSTOMER INFO (FULL_NAME, PHONE, EMAIL)
+    =========================================================*/
+    async updateBookingCustomerInfo(connection, bookingId, fullName, phone, email) {
+        const affected = await BookingRepository.updateCustomerInfo(connection, bookingId, fullName, phone, email);
+        if (affected === 0) {
+            throw new Error("Không tìm thấy booking để cập nhật thông tin khách hàng");
+        }
+        return affected;
     }
 
     /*=========================================================

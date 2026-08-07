@@ -14,10 +14,10 @@ const Payment = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Lấy thông tin user từ localStorage (hoặc sessionStorage) thay vì useAuth
+    // Lấy thông tin user từ localStorage
     const getUserFromStorage = () => {
         try {
-            const userStr = localStorage.getItem('user'); // hoặc sessionStorage
+            const userStr = localStorage.getItem('user');
             return userStr ? JSON.parse(userStr) : null;
         } catch {
             return null;
@@ -99,7 +99,17 @@ const Payment = () => {
             return;
         }
 
-        // Kiểm tra user từ localStorage
+        // Xóa session cũ để tránh dùng email cũ
+        sessionStorage.removeItem('lastSuccessTicket');
+        sessionStorage.removeItem('bankHasSentOtp');
+        sessionStorage.removeItem('bankHasVisited');
+        sessionStorage.removeItem('bankOtpTimeLeft');
+        sessionStorage.removeItem('bankOtpInput');
+        sessionStorage.removeItem('bankLastOtpSentAt');
+        sessionStorage.removeItem('paymentCompleted');
+        sessionStorage.removeItem('completedBookingId');
+        sessionStorage.removeItem('paymentInitiated');
+
         const storedUser = getUserFromStorage();
         if (!storedUser || !storedUser.user_id) {
             showNotice(
@@ -118,18 +128,6 @@ const Payment = () => {
             email: storedUser.email || '',
             phone: storedUser.phone || ''
         });
-
-        // Reset OTP nếu không có giữ ghế
-        if (!sessionStorage.getItem('holdExpiresAt')) {
-            sessionStorage.removeItem('bankHasSentOtp');
-            sessionStorage.removeItem('bankHasVisited');
-            sessionStorage.removeItem('bankOtpTimeLeft');
-            sessionStorage.removeItem('bankOtpInput');
-            sessionStorage.removeItem('bankLastOtpSentAt');
-            sessionStorage.removeItem('paymentCompleted');
-            sessionStorage.removeItem('completedBookingId');
-            sessionStorage.removeItem('paymentInitiated');
-        }
 
         if (sessionStorage.getItem('holdExpiresAt')) {
             setIsTimerActive(true);
@@ -201,7 +199,6 @@ const Payment = () => {
     // PAYMENT – XÓA OTP CŨ TRƯỚC KHI GỬI
     // =========================
     const handleProceed = async () => {
-        // Lấy user mới nhất từ localStorage phòng trường hợp đã đăng xuất
         const latestUser = getUserFromStorage();
         if (!latestUser || !latestUser.user_id) {
             showNotice(
@@ -213,18 +210,18 @@ const Payment = () => {
             return;
         }
 
-        // Cập nhật userInfo từ localStorage
+        // Lấy thông tin mới nhất từ form
+        const email = userInfo.email.trim();
+        const fullName = userInfo.full_name.trim();
+        const phone = userInfo.phone.trim();
         const userId = latestUser.user_id;
-        const fullName = latestUser.full_name || '';
-        const email = latestUser.email || '';
-        const phone = latestUser.phone || '';
 
         if (!fullName || !email || !phone) {
             showNotice('error', 'THIẾU THÔNG TIN', 'Vui lòng nhập đầy đủ thông tin nhận vé.');
             return;
         }
 
-        // Xóa toàn bộ OTP cũ để bắt đầu phiên mới
+        // Xóa toàn bộ OTP cũ
         sessionStorage.removeItem('bankHasSentOtp');
         sessionStorage.removeItem('bankHasVisited');
         sessionStorage.removeItem('bankOtpTimeLeft');
@@ -233,6 +230,7 @@ const Payment = () => {
         sessionStorage.removeItem('paymentCompleted');
         sessionStorage.removeItem('completedBookingId');
         sessionStorage.removeItem('paymentInitiated');
+        sessionStorage.removeItem('lastSuccessTicket');
 
         setIsProcessing(true);
 
@@ -276,6 +274,7 @@ const Payment = () => {
                     totalAmount: Number(grandTotal),
                     customerName: fullName,
                     customerEmail: email,
+                    customerPhone: phone, // ✅ THÊM SỐ ĐIỆN THOẠI
                     movie,
                     selectedCinema,
                     selectedDate,
@@ -292,11 +291,6 @@ const Payment = () => {
                 sessionStorage.removeItem('holdExpiresAt');
                 sessionStorage.removeItem('selectedSeats');
                 sessionStorage.removeItem('currentShowtimeId');
-                sessionStorage.removeItem('bankHasSentOtp');
-                sessionStorage.removeItem('bankHasVisited');
-                sessionStorage.removeItem('bankOtpTimeLeft');
-                sessionStorage.removeItem('bankOtpInput');
-                sessionStorage.removeItem('bankLastOtpSentAt');
                 setIsTimerActive(false);
 
                 if (paymentMethod === 'bank') {

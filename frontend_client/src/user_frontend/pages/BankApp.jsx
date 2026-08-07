@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate, useBlocker } from 'react-router-dom';
-import api from '../../api/api'; // ✅ Import api
+import api from '../../api/api';
 
 import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
@@ -12,6 +12,7 @@ const BankApp = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    // Ưu tiên lấy từ location.state, fallback từ sessionStorage
     const bookingData =
         location.state ||
         JSON.parse(sessionStorage.getItem('lastSuccessTicket')) ||
@@ -20,6 +21,8 @@ const BankApp = () => {
     const {
         bookingId,
         customerEmail,
+        customerName,   // ✅ lấy tên
+        customerPhone,  // ✅ lấy số điện thoại
         totalAmount,
         movie,
         selectedCinema,
@@ -374,10 +377,13 @@ const BankApp = () => {
 
         setLoadingVerify(true);
         try {
+            // ✅ GỬI ĐẦY ĐỦ THÔNG TIN: email, otp, bookingId, full_name, phone
             const res = await api.post('/api/bank/verify-otp', {
                 email: customerEmail,
                 otp,
-                bookingId
+                bookingId,
+                full_name: customerName,   // ✅ thêm tên
+                phone: customerPhone       // ✅ thêm số điện thoại
             });
 
             if (res.data.success) {
@@ -493,7 +499,7 @@ const BankApp = () => {
 
                         <h3 className="otp-title">NHẬP MÃ OTP</h3>
                         <p className="otp-sub">
-                            Gửi đến: <strong>{customerEmail}</strong>
+                            Gửi đến: <strong>{customerEmail || 'Chưa có email'}</strong>
                         </p>
 
                         <div className="otp-input-wrapper">
