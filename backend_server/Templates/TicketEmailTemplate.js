@@ -11,10 +11,8 @@ const TicketEmailTemplate = (ticketData, fileExists) => {
         selectedDate,
         selectedFoods,
         earnedPoints,
-
-        // thêm 2 dòng này
         ticketPIN,
-        qrCode
+        qrCid          // lấy cid từ ticketData
 
     } = ticketData;
 
@@ -50,21 +48,8 @@ const TicketEmailTemplate = (ticketData, fileExists) => {
                     "
                 >
 
-                    <h1
-                        style="
-                            margin: 0;
-                            font-size: 24px;
-                        "
-                    >
-                        THANH TOÁN THÀNH CÔNG!
-                    </h1>
-
-                    <p
-                        style="
-                            margin-top: 5px;
-                            opacity: 0.9;
-                        "
-                    >
+                    <h1 style="margin:0; font-size:24px;">THANH TOÁN THÀNH CÔNG!</h1>
+                    <p style="margin-top:5px; opacity:0.9;">
                         Hệ thống Dũng Cinema đã ghi nhận đơn hàng
                     </p>
 
@@ -72,15 +57,9 @@ const TicketEmailTemplate = (ticketData, fileExists) => {
 
                 <!-- BODY -->
 
-                <div
-                    style="
-                        padding: 30px;
-                    "
-                >
+                <div style="padding:30px;">
 
-                    <p>
-                        Chào <b>${customerName}</b>,
-                    </p>
+                    <p>Chào <b>${customerName}</b>,</p>
 
                     <div
                         style="
@@ -91,184 +70,104 @@ const TicketEmailTemplate = (ticketData, fileExists) => {
                         "
                     >
 
-                        <h3
-                            style="
-                                color: #e74c3c;
-                                margin: 0 0 15px 0;
-                                font-size: 20px;
-                            "
-                        >
+                        <h3 style="color:#e74c3c; margin:0 0 15px 0; font-size:20px;">
                             ${movieTitle}
                         </h3>
 
-                        <p style="margin: 5px 0;">
-                            <b>📍 Rạp:</b>
-                            ${cinemaName}
+                        <p style="margin:5px 0;">
+                            <b>📍 Rạp:</b> ${cinemaName}
                         </p>
 
-                        <p style="margin: 5px 0;">
-                            <b>⏰ Suất:</b>
-                            ${startTime} | ${selectedDate}
+                        <p style="margin:5px 0;">
+                            <b>⏰ Suất:</b> ${startTime} | ${selectedDate}
                         </p>
 
-                        <p style="margin: 5px 0;">
-
+                        <p style="margin:5px 0;">
                             <b>💺 Ghế:</b>
-
-                            <span
-                                style="
-                                    font-size: 18px;
-                                    color: #e74c3c;
-                                    font-weight: bold;
-                                "
-                            >
+                            <span style="font-size:18px; color:#e74c3c; font-weight:bold;">
                                 ${seatLabel}
                             </span>
-
                         </p>
 
-                        <p style="margin: 5px 0;">
-                            <b>🍿 Đồ ăn:</b>
-                            ${selectedFoods || 'Không có'}
+                        <p style="margin:5px 0;">
+                            <b>🍿 Đồ ăn:</b> ${selectedFoods || 'Không có'}
                         </p>
 
                     </div>
 
-                    <!-- POSTER -->
+                    <!-- POSTER (nếu có) -->
 
-                    ${
+                    ${fileExists ? `
+                        <div style="text-align:center; margin:20px 0;">
+                            <img src="cid:poster_img" style="max-width:200px; border-radius:10px;" />
+                        </div>
+                    ` : ''}
 
-                        fileExists
+                    <!-- QR CODE (dùng cid) -->
 
-                            ? `
+                    <div
+                        style="
+                            margin:30px 0;
+                            text-align:center;
+                            padding:25px;
+                            border:1px dashed #ddd;
+                            border-radius:12px;
+                            background:#fafafa;
+                        "
+                    >
 
-                                <div
-                                    style="
-                                        text-align: center;
-                                        margin: 20px 0;
-                                    "
-                                >
+                        <h2 style="margin:0; color:#222; font-size:26px;">
+                            MÃ NHẬN VÉ
+                        </h2>
 
-                                    <img
-                                        src="cid:poster_img"
-                                        style="
-                                            max-width: 200px;
-                                            border-radius: 10px;
-                                        "
-                                    />
+                        <div
+                            style="
+                                margin:15px 0;
+                                font-size:38px;
+                                font-weight:bold;
+                                color:#e74c3c;
+                                letter-spacing:8px;
+                            "
+                        >
+                            ${ticketPIN || ""}
+                        </div>
 
-                                </div>
+                        <img
+                            src="cid:${qrCid || 'qr_img'}"
+                            alt="QR Code"
+                            style="
+                                width:220px;
+                                height:220px;
+                                display:block;
+                                margin:20px auto;
+                                border-radius:10px;
+                                border:8px solid #fff;
+                                box-shadow:0 4px 12px rgba(0,0,0,.15);
+                            "
+                        />
 
-                            `
+                        <p style="margin-top:15px; color:#666; line-height:24px;">
+                            Vui lòng quét mã QR tại quầy hoặc kiosk để in vé.
+                        </p>
 
-                            : ''
+                    </div>
 
-                    }
-                    <!-- QR CODE -->
-
-${
-    qrCode
-        ? `
-        <div
-            style="
-                margin:30px 0;
-                text-align:center;
-                padding:25px;
-                border:1px dashed #ddd;
-                border-radius:12px;
-                background:#fafafa;
-            "
-        >
-
-            <h2
-                style="
-                    margin:0;
-                    color:#222;
-                    font-size:26px;
-                "
-            >
-                MÃ NHẬN VÉ
-            </h2>
-
-            <div
-                style="
-                    margin:15px 0;
-                    font-size:38px;
-                    font-weight:bold;
-                    color:#e74c3c;
-                    letter-spacing:8px;
-                "
-            >
-                ${ticketPIN || ""}
-            </div>
-
-            <img
-                src="${qrCode}"
-                alt="QR Code"
-                style="
-                    width:220px;
-                    height:220px;
-                    display:block;
-                    margin:20px auto;
-                    border-radius:10px;
-                    border:8px solid #fff;
-                    box-shadow:0 4px 12px rgba(0,0,0,.15);
-                "
-            />
-
-            <p
-                style="
-                    margin-top:15px;
-                    color:#666;
-                    line-height:24px;
-                "
-            >
-                Vui lòng quét mã QR tại quầy hoặc kiosk để in vé.
-            </p>
-
-        </div>
-        `
-        : `
-        <div
-            style="
-                margin:30px 0;
-                text-align:center;
-                color:#999;
-            "
-        >
-            Không thể tạo mã QR.
-        </div>
-        `
-}               
                     <!-- FOOTER -->
 
                     <div
                         style="
-                            text-align: center;
-                            padding: 15px;
-                            background: #fff9f9;
-                            border-radius: 8px;
+                            text-align:center;
+                            padding:15px;
+                            background:#fff9f9;
+                            border-radius:8px;
                         "
                     >
 
-                        <p
-                            style="
-                                color: #27ae60;
-                                font-weight: bold;
-                                margin: 0;
-                            "
-                        >
-                            🌟 Bạn vừa tích lũy thêm:
-                            ${earnedPoints} điểm!
+                        <p style="color:#27ae60; font-weight:bold; margin:0;">
+                            🌟 Bạn vừa tích lũy thêm: ${earnedPoints} điểm!
                         </p>
 
-                        <h2
-                            style="
-                                margin: 10px 0 0 0;
-                                color: #333;
-                                font-size: 24px;
-                            "
-                        >
+                        <h2 style="margin:10px 0 0 0; color:#333; font-size:24px;">
                             Mã vé: #${bookingId}
                         </h2>
 

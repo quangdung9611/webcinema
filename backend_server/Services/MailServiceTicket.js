@@ -5,7 +5,6 @@
 const path = require("path");
 const fs = require("fs");
 const QRCode = require("qrcode");
-
 const { transporter } = require("../Config/mailer");
 
 const OtpEmailTemplate = require("../Templates/OtpEmailTemplate");
@@ -25,9 +24,7 @@ const MailServiceTicket = {
 
     sendOTP: async (email, otp, bookingId) => {
 
-        console.log(
-            `📨 SEND OTP -> ${email} | Booking: ${bookingId}`
-        );
+        console.log(`📨 SEND OTP -> ${email} | Booking: ${bookingId}`);
 
         if (!email) {
             throw new Error("Email người nhận không hợp lệ");
@@ -38,15 +35,9 @@ const MailServiceTicket = {
             const info = await transporter.sendMail({
 
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
-
                 to: email,
-
                 subject: `[${otp}] Mã xác thực thanh toán Dũng Cinema`,
-
-                html: OtpEmailTemplate(
-                    otp,
-                    bookingId
-                )
+                html: OtpEmailTemplate(otp, bookingId)
 
             });
 
@@ -59,7 +50,6 @@ const MailServiceTicket = {
 
             console.error("❌ OTP MAIL ERROR");
             console.error(error);
-
             throw error;
 
         }
@@ -67,58 +57,41 @@ const MailServiceTicket = {
     },
 
     // =====================================================
-    // SEND TICKET EMAIL
+    // SEND TICKET EMAIL (FIXED QR)
     // =====================================================
 
-    sendTicketEmail: async (
-        customerEmail,
-        ticketData
-    ) => {
+    sendTicketEmail: async (customerEmail, ticketData) => {
 
         try {
 
             //------------------------------------------------
-            // POSTER
+            // POSTER (giữ nguyên)
             //------------------------------------------------
 
             const { moviePoster } = ticketData;
 
-            const posterFile = moviePoster
-                ? path.basename(moviePoster)
-                : null;
-
+            const posterFile = moviePoster ? path.basename(moviePoster) : null;
             const posterPath = posterFile
-                ? path.join(
-                    __dirname,
-                    "..",
-                    "uploads",
-                    "posters",
-                    posterFile
-                )
+                ? path.join(__dirname, "..", "uploads", "posters", posterFile)
                 : null;
-
-            const posterExists =
-                posterPath &&
-                fs.existsSync(posterPath);
+            const posterExists = posterPath && fs.existsSync(posterPath);
 
             //------------------------------------------------
-            // QR CODE
+            // QR CODE – tạo buffer và gán cid
             //------------------------------------------------
 
-            const qrValue =
-                `TICKET-${ticketData.bookingId}-${ticketData.ticketPIN}`;
+            const qrValue = `TICKET-${ticketData.bookingId}-${ticketData.ticketPIN}`;
 
-            const qrCode = await QRCode.toDataURL(
-                qrValue,
-                {
-                    width: 280,
-                    margin: 2,
-                    errorCorrectionLevel: "H"
-                }
-            );
+            const qrBuffer = await QRCode.toBuffer(qrValue, {
+                width: 280,
+                margin: 2,
+                errorCorrectionLevel: "H"
+            });
 
-            ticketData.qrCode = qrCode;
-                        //------------------------------------------------
+            // Định danh để template tham chiếu
+            const qrCid = "qr_img";
+
+            //------------------------------------------------
             // ATTACHMENTS
             //------------------------------------------------
 
@@ -126,18 +99,23 @@ const MailServiceTicket = {
 
             // Poster phim
             if (posterExists) {
-
                 attachments.push({
-
                     filename: posterFile,
-
                     path: posterPath,
-
                     cid: "poster_img"
-
                 });
-
             }
+
+            // QR code (inline attachment)
+            attachments.push({
+                filename: "qrcode.png",
+                content: qrBuffer,
+                cid: qrCid,
+                contentType: "image/png"
+            });
+
+            // Gửi cid cho template để sử dụng trong src="cid:..."
+            ticketData.qrCid = qrCid;
 
             //------------------------------------------------
             // SEND MAIL
@@ -145,19 +123,10 @@ const MailServiceTicket = {
 
             const mailOptions = {
 
-                from:
-                    `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
-
+                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: customerEmail,
-
-                subject:
-                    `[VÉ ĐIỆN TỬ] ${ticketData.movieTitle.toUpperCase()} - MÃ ĐƠN #${ticketData.bookingId}`,
-
-                html: TicketEmailTemplate(
-                    ticketData,
-                    posterExists
-                ),
-
+                subject: `[VÉ ĐIỆN TỬ] ${ticketData.movieTitle.toUpperCase()} - MÃ ĐƠN #${ticketData.bookingId}`,
+                html: TicketEmailTemplate(ticketData, posterExists),
                 attachments
 
             };
@@ -167,9 +136,7 @@ const MailServiceTicket = {
             console.log("🎬 Movie:", ticketData.movieTitle);
             console.log("🎫 Booking:", ticketData.bookingId);
 
-            const info = await transporter.sendMail(
-                mailOptions
-            );
+            const info = await transporter.sendMail(mailOptions);
 
             console.log("✅ TICKET MAIL SENT SUCCESSFULLY");
             console.log(info.messageId);
@@ -180,7 +147,6 @@ const MailServiceTicket = {
 
             console.error("❌ TICKET MAIL ERROR");
             console.error(error);
-
             throw error;
 
         }
@@ -191,15 +157,9 @@ const MailServiceTicket = {
     // SEND RESET PASSWORD OTP
     // =====================================================
 
-    sendResetPasswordOTP: async (
-        email,
-        otp,
-        fullName = ""
-    ) => {
+    sendResetPasswordOTP: async (email, otp, fullName = "") => {
 
-        console.log(
-            `📨 RESET PASSWORD OTP -> ${email}`
-        );
+        console.log(`📨 RESET PASSWORD OTP -> ${email}`);
 
         if (!email) {
             throw new Error("Email người nhận không hợp lệ");
@@ -207,39 +167,22 @@ const MailServiceTicket = {
 
         try {
 
-            const info =
-                await transporter.sendMail({
+            const info = await transporter.sendMail({
 
-                    from:
-                        `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                to: email,
+                subject: `[${otp}] Mã OTP khôi phục mật khẩu`,
+                html: ResetPasswordOtpTemplate(otp, fullName)
 
-                    to: email,
+            });
 
-                    subject:
-                        `[${otp}] Mã OTP khôi phục mật khẩu`,
-
-                    html:
-                        ResetPasswordOtpTemplate(
-                            otp,
-                            fullName
-                        )
-
-                });
-
-            console.log(
-                "✅ RESET PASSWORD OTP SENT"
-            );
-
+            console.log("✅ RESET PASSWORD OTP SENT");
             return info;
 
         } catch (error) {
 
-            console.error(
-                "❌ RESET PASSWORD OTP ERROR"
-            );
-
+            console.error("❌ RESET PASSWORD OTP ERROR");
             console.error(error);
-
             throw error;
 
         }
@@ -250,32 +193,17 @@ const MailServiceTicket = {
     // ALIAS RESET PASSWORD
     // =====================================================
 
-    sendPasswordResetOTP: async (
-        email,
-        otp,
-        fullName = ""
-    ) => {
-
-        return await MailServiceTicket.sendResetPasswordOTP(
-            email,
-            otp,
-            fullName
-        );
-
+    sendPasswordResetOTP: async (email, otp, fullName = "") => {
+        return await MailServiceTicket.sendResetPasswordOTP(email, otp, fullName);
     },
-        // =====================================================
+
+    // =====================================================
     // SEND EMAIL VERIFICATION
     // =====================================================
 
-    sendEmailVerification: async (
-        email,
-        verifyToken,
-        fullName = ""
-    ) => {
+    sendEmailVerification: async (email, verifyToken, fullName = "") => {
 
-        console.log(
-            `📨 VERIFY EMAIL -> ${email}`
-        );
+        console.log(`📨 VERIFY EMAIL -> ${email}`);
 
         if (!email) {
             throw new Error("Email người nhận không hợp lệ");
@@ -283,46 +211,25 @@ const MailServiceTicket = {
 
         try {
 
-            const baseUrl =
-                process.env.FRONTEND_URL ||
-                "http://localhost:3000";
+            const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+            const verifyUrl = `${baseUrl}/verify-email?token=${verifyToken}`;
 
-            const verifyUrl =
-                `${baseUrl}/verify-email?token=${verifyToken}`;
+            const info = await transporter.sendMail({
 
-            const info =
-                await transporter.sendMail({
+                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                to: email,
+                subject: "Xác thực Email - Dũng Cinema",
+                html: VerifyEmailTemplate(fullName, verifyUrl)
 
-                    from:
-                        `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+            });
 
-                    to: email,
-
-                    subject:
-                        "Xác thực Email - Dũng Cinema",
-
-                    html:
-                        VerifyEmailTemplate(
-                            fullName,
-                            verifyUrl
-                        )
-
-                });
-
-            console.log(
-                "✅ VERIFY EMAIL SENT"
-            );
-
+            console.log("✅ VERIFY EMAIL SENT");
             return info;
 
         } catch (error) {
 
-            console.error(
-                "❌ VERIFY EMAIL ERROR"
-            );
-
+            console.error("❌ VERIFY EMAIL ERROR");
             console.error(error);
-
             throw error;
 
         }
@@ -333,14 +240,9 @@ const MailServiceTicket = {
     // SEND WELCOME EMAIL
     // =====================================================
 
-    sendWelcomeEmail: async (
-        email,
-        fullName = ""
-    ) => {
+    sendWelcomeEmail: async (email, fullName = "") => {
 
-        console.log(
-            `📨 WELCOME EMAIL -> ${email}`
-        );
+        console.log(`📨 WELCOME EMAIL -> ${email}`);
 
         if (!email) {
             throw new Error("Email người nhận không hợp lệ");
@@ -348,69 +250,31 @@ const MailServiceTicket = {
 
         try {
 
-            const info =
-                await transporter.sendMail({
+            const info = await transporter.sendMail({
 
-                    from:
-                        `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                to: email,
+                subject: "🎬 Chào mừng đến với Dũng Cinema",
 
-                    to: email,
+                html: `
+                    <div style="max-width:600px; margin:auto; padding:40px; background:#ffffff; border-radius:12px; font-family:Arial,sans-serif;">
+                        <h2 style="color:#d32f2f;">Xin chào ${fullName || "bạn"} 👋</h2>
+                        <p>Cảm ơn bạn đã đăng ký tài khoản tại <b>Dũng Cinema</b>.</p>
+                        <p>Chúc bạn có những trải nghiệm xem phim thật tuyệt vời cùng chúng tôi.</p>
+                        <hr>
+                        <p style="color:#888; font-size:13px;">© Dũng Cinema</p>
+                    </div>
+                `
 
-                    subject:
-                        "🎬 Chào mừng đến với Dũng Cinema",
+            });
 
-                    html: `
-                        <div style="
-                            max-width:600px;
-                            margin:auto;
-                            padding:40px;
-                            background:#ffffff;
-                            border-radius:12px;
-                            font-family:Arial,sans-serif;
-                        ">
-
-                            <h2 style="color:#d32f2f;">
-                                Xin chào ${fullName || "bạn"} 👋
-                            </h2>
-
-                            <p>
-                                Cảm ơn bạn đã đăng ký tài khoản tại
-                                <b>Dũng Cinema</b>.
-                            </p>
-
-                            <p>
-                                Chúc bạn có những trải nghiệm xem phim
-                                thật tuyệt vời cùng chúng tôi.
-                            </p>
-
-                            <hr>
-
-                            <p style="
-                                color:#888;
-                                font-size:13px;
-                            ">
-                                © Dũng Cinema
-                            </p>
-
-                        </div>
-                    `
-
-                });
-
-            console.log(
-                "✅ WELCOME EMAIL SENT"
-            );
-
+            console.log("✅ WELCOME EMAIL SENT");
             return info;
 
         } catch (error) {
 
-            console.error(
-                "❌ WELCOME EMAIL ERROR"
-            );
-
+            console.error("❌ WELCOME EMAIL ERROR");
             console.error(error);
-
             throw error;
 
         }
