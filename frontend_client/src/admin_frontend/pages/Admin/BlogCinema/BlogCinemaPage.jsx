@@ -7,11 +7,7 @@ import {
     Loader2,
     Eye,
     Heart,
-    ExternalLink,
-    CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Info
+    ExternalLink
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -69,6 +65,9 @@ const BlogCinemaPage = () => {
     const [errors, setErrors] = useState({});
     const [blogImageFile, setBlogImageFile] = useState(null);
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -78,14 +77,25 @@ const BlogCinemaPage = () => {
         onCancel: null
     });
 
-    // ======================================================
-    // ALERT HANDLER
-    // ======================================================
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
 
-    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // ======================================================
     // FETCH BLOGS - GIỐNG MoviePage
@@ -116,7 +126,6 @@ const BlogCinemaPage = () => {
                 signal: controller.signal
             });
 
-            // ✅ Lấy trực tiếp từ res.data giống MoviePage
             const blogsData = res.data?.data || [];
             const paginationData = res.data?.pagination || {
                 page: 1,
@@ -159,8 +168,12 @@ const BlogCinemaPage = () => {
     // ======================================================
     useEffect(() => {
         fetchBlogs(1, '');
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [fetchBlogs]);
 
     // ======================================================
     // SEARCH DEBOUNCE
@@ -246,6 +259,17 @@ const BlogCinemaPage = () => {
     };
 
     // ======================================================
+    // HANDLE CLOSE FORM
+    // ======================================================
+    const handleCloseForm = () => {
+        if (submitLoading) return;
+        setIsFormOpen(false);
+        setEditingBlog(null);
+        setErrors({});
+        setBlogImageFile(null);
+    };
+
+    // ======================================================
     // HANDLE FORM CHANGE
     // ======================================================
     const handleChange = (e) => {
@@ -298,15 +322,21 @@ const BlogCinemaPage = () => {
 
             if (editingBlog) {
                 await api.put(`/api/blog-cinema/${editingBlog.blog_id}`, submitData, config);
-                showAlert('Thành công', 'Cập nhật blog thành công.', 'success');
+                setIsFormOpen(false);
+                fetchBlogs(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Cập nhật blog thành công.', 'success');
+                }, 100);
             } else {
                 await api.post('/api/blog-cinema', submitData, config);
-                showAlert('Thành công', 'Tạo blog mới thành công.', 'success');
+                setIsFormOpen(false);
+                fetchBlogs(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Tạo blog mới thành công.', 'success');
+                }, 100);
             }
-
-            setIsFormOpen(false);
-            fetchBlogs(pagination.page, search);
         } catch (error) {
+            console.error('SUBMIT BLOG ERROR:', error);
             showAlert('Lỗi', error.response?.data?.message || 'Không thể lưu blog.', 'error');
         } finally {
             setSubmitLoading(false);
@@ -330,10 +360,16 @@ const BlogCinemaPage = () => {
                     const newPage = blogs.length === 1 && currentPage > 1
                         ? currentPage - 1
                         : currentPage;
-                    fetchBlogs(newPage, search);
-                    showAlert('Thành công', 'Xóa blog thành công.', 'success');
+                    await fetchBlogs(newPage, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Xóa blog thành công.', 'success');
+                    }, 100);
                 } catch (error) {
-                    showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa blog.', 'error');
+                    console.error('DELETE BLOG ERROR:', error);
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa blog.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -494,22 +530,6 @@ const BlogCinemaPage = () => {
     }
 
     // ======================================================
-    // HELPER: RENDER ALERT ICON
-    // ======================================================
-    const renderAlertIcon = () => {
-        switch (alertModal.type) {
-            case 'success':
-                return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error':
-                return <XCircle size={58} color="#ef4444" />;
-            case 'warning':
-                return <AlertTriangle size={58} color="#f59e0b" />;
-            default:
-                return <Info size={58} color="#3b82f6" />;
-        }
-    };
-
-    // ======================================================
     // RENDER
     // ======================================================
     return (
@@ -540,10 +560,15 @@ const BlogCinemaPage = () => {
                 )}
             </AdminPage>
 
+            {/* ==================================================
+                FORM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={handleCloseForm}
                 title={editingBlog ? 'Cập nhật Blog Cinema' : 'Thêm Blog Cinema mới'}
+                type="default"
+                size="lg"
             >
                 <AdminForm
                     fields={formFields}
@@ -557,31 +582,22 @@ const BlogCinemaPage = () => {
                 />
             </AdminModal>
 
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
                 size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
-                        {renderAlertIcon()}
-                    </div>
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy bỏ
-                            </button>
-                        )}
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={alertModal.onConfirm || closeAlert}
-                        >
-                            Xác nhận hành động
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

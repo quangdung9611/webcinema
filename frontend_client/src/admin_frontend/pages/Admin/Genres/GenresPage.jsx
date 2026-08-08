@@ -8,11 +8,7 @@ import {
     Tag,
     Hash,
     Navigation,
-    Sparkles,
-    CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Info
+    Sparkles
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -58,6 +54,9 @@ const GenresPage = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [formErrors, setFormErrors] = useState({});
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -67,21 +66,38 @@ const GenresPage = () => {
         onCancel: null
     });
 
-    // ======================================================
-    // ALERT HANDLER
-    // ======================================================
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
 
-    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // ======================================================
     // FETCH GENRES - GỌI /paginated
     // ======================================================
     const fetchGenres = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) return;
-        if (abortControllerRef.current) abortControllerRef.current.abort();
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
+        }
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
@@ -98,20 +114,34 @@ const GenresPage = () => {
                 signal: controller.signal
             });
 
-            const responseData = res.data?.data;
-            const genresData = responseData?.data || [];
-            const paginationData = responseData?.pagination || {
+            // ✅ Lấy trực tiếp từ res.data giống các trang khác
+            const genresData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
                 page: 1,
                 limit: 20,
                 total: 0,
-                totalPages: 1
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
             };
 
             setGenres(genresData);
             setPagination(paginationData);
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
             console.error('FETCH GENRES ERROR:', error);
+            setGenres([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
             showAlert('Lỗi', 'Không thể tải danh sách thể loại.', 'error');
         } finally {
             setLoading(false);
@@ -122,24 +152,39 @@ const GenresPage = () => {
         }
     }, []);
 
-    // Khởi tạo lần đầu
+    // ======================================================
+    // MOUNT
+    // ======================================================
     useEffect(() => {
         fetchGenres(1, '');
-    }, []);
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [fetchGenres]);
 
     // ======================================================
     // SEARCH DEBOUNCE
     // ======================================================
     const prevSearchRef = useRef('');
     useEffect(() => {
-        if (search === prevSearchRef.current) return;
-        prevSearchRef.current = search;
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
 
-        const timer = setTimeout(() => fetchGenres(1, search), 400);
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchGenres(1, currentSearch);
+        }, 400);
+
         return () => clearTimeout(timer);
     }, [search, fetchGenres]);
 
-    const handlePageChange = (page) => fetchGenres(page, search);
+    const handlePageChange = (page) => {
+        fetchGenres(page, search);
+    };
 
     // ======================================================
     // SLUG GENERATOR
@@ -167,7 +212,8 @@ const GenresPage = () => {
         } else if (formData.genre_name.trim().length < 2) {
             errors.genre_name = 'Tên thể loại phải từ 2 ký tự trở lên';
         }
-        return errors;
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     // ======================================================
@@ -191,10 +237,24 @@ const GenresPage = () => {
     };
 
     // ======================================================
+    // HANDLE CLOSE FORM
+    // ======================================================
+    const handleCloseForm = () => {
+        if (submitLoading) return;
+        setIsFormOpen(false);
+        setEditingGenre(null);
+        setFormErrors({});
+    };
+
+    // ======================================================
     // HANDLE FORM CHANGE
     // ======================================================
     const handleChange = (e) => {
         const { name, value } = e.target;
+
+        if (formErrors[name]) {
+            setFormErrors((prev) => ({ ...prev, [name]: '' }));
+        }
 
         if (name === 'genre_name') {
             setFormData((prev) => ({
@@ -202,20 +262,10 @@ const GenresPage = () => {
                 genre_name: value,
                 slug: generateSlug(value)
             }));
-
-            // Real-time validation
-            let errorMessage = '';
-            if (!value.trim()) {
-                errorMessage = 'Vui lòng nhập tên thể loại';
-            } else if (value.trim().length < 2) {
-                errorMessage = 'Tên thể loại phải từ 2 ký tự trở lên';
-            }
-            setFormErrors((prev) => ({ ...prev, genre_name: errorMessage }));
             return;
         }
 
         setFormData((prev) => ({ ...prev, [name]: value }));
-        setFormErrors((prev) => ({ ...prev, [name]: '' }));
     };
 
     // ======================================================
@@ -223,11 +273,7 @@ const GenresPage = () => {
     // ======================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const errors = validateForm();
-        if (Object.keys(errors).length > 0) {
-            setFormErrors(errors);
-            return;
-        }
+        if (!validateForm()) return;
 
         try {
             setSubmitLoading(true);
@@ -235,24 +281,28 @@ const GenresPage = () => {
 
             if (editingGenre) {
                 await api.put(`/api/genres/${editingGenre.genre_id}`, formData);
-                showAlert('Thành công', 'Cập nhật thể loại thành công.', 'success');
+                setIsFormOpen(false);
+                fetchGenres(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Cập nhật thể loại thành công.', 'success');
+                }, 100);
             } else {
                 await api.post('/api/genres', formData);
-                showAlert('Thành công', 'Thêm thể loại thành công.', 'success');
+                setIsFormOpen(false);
+                fetchGenres(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Thêm thể loại thành công.', 'success');
+                }, 100);
             }
-
-            setIsFormOpen(false);
-            fetchGenres(pagination.page, search);
         } catch (error) {
+            console.error('SUBMIT GENRE ERROR:', error);
             const backendField = error.response?.data?.field;
-            const backendError = error.response?.data?.error;
-
+            const backendError = error.response?.data?.error || 'Đã xảy ra lỗi.';
             if (backendField) {
                 setFormErrors({ [backendField]: backendError });
                 return;
             }
-
-            showAlert('Lỗi', backendError || 'Đã xảy ra lỗi.', 'error');
+            showAlert('Lỗi', backendError, 'error');
         } finally {
             setSubmitLoading(false);
         }
@@ -271,13 +321,20 @@ const GenresPage = () => {
                     await api.delete(`/api/genres/${genre.genre_id}`);
                     closeAlert();
 
-                    const newPage = genres.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
-                    fetchGenres(newPage, search);
-                    showAlert('Thành công', 'Xóa thể loại thành công.', 'success');
+                    const currentPage = pagination.page;
+                    const newPage = genres.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
+                    await fetchGenres(newPage, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Xóa thể loại thành công.', 'success');
+                    }, 100);
                 } catch (error) {
-                    showAlert('Lỗi', 'Không thể xóa thể loại.', 'error');
+                    console.error('DELETE GENRE ERROR:', error);
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', 'Không thể xóa thể loại.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -383,22 +440,6 @@ const GenresPage = () => {
     ];
 
     // ======================================================
-    // HELPER: RENDER ALERT ICON
-    // ======================================================
-    const renderAlertIcon = () => {
-        switch (alertModal.type) {
-            case 'success':
-                return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error':
-                return <XCircle size={58} color="#ef4444" />;
-            case 'warning':
-                return <AlertTriangle size={58} color="#f59e0b" />;
-            default:
-                return <Info size={58} color="#3b82f6" />;
-        }
-    };
-
-    // ======================================================
     // RENDER
     // ======================================================
     return (
@@ -429,10 +470,15 @@ const GenresPage = () => {
                 )}
             </AdminPage>
 
+            {/* ==================================================
+                FORM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={handleCloseForm}
                 title={editingGenre ? 'Cập nhật thể loại' : 'Thêm thể loại'}
+                type="default"
+                size="lg"
             >
                 <AdminForm
                     fields={formFields}
@@ -445,31 +491,22 @@ const GenresPage = () => {
                 />
             </AdminModal>
 
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
                 size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
-                        {renderAlertIcon()}
-                    </div>
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy
-                            </button>
-                        )}
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={alertModal.onConfirm || closeAlert}
-                        >
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

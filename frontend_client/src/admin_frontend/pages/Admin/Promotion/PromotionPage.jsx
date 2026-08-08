@@ -7,11 +7,7 @@ import {
     Loader2,
     Eye,
     Heart,
-    ExternalLink,
-    CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Info
+    ExternalLink
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -70,6 +66,9 @@ const PromotionPage = () => {
     const [promotionImageFile, setPromotionImageFile] = useState(null);
     const [filePreviews, setFilePreviews] = useState({});
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -79,13 +78,25 @@ const PromotionPage = () => {
         onCancel: null
     });
 
-    // ======================================================
-    // ALERT HANDLER
-    // ======================================================
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
-    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
+
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // ======================================================
     // FETCH PROMOTIONS - GIỐNG HỆT BlogCinemaPage
@@ -159,8 +170,12 @@ const PromotionPage = () => {
     // ======================================================
     useEffect(() => {
         fetchPromotions(1, '');
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [fetchPromotions]);
 
     // ======================================================
     // SEARCH DEBOUNCE
@@ -253,6 +268,18 @@ const PromotionPage = () => {
     };
 
     // ======================================================
+    // HANDLE CLOSE FORM
+    // ======================================================
+    const handleCloseForm = () => {
+        if (submitLoading) return;
+        setIsFormOpen(false);
+        setEditingPromotion(null);
+        setErrors({});
+        setPromotionImageFile(null);
+        setFilePreviews({});
+    };
+
+    // ======================================================
     // HANDLE CHANGE
     // ======================================================
     const handleChange = (e) => {
@@ -319,15 +346,21 @@ const PromotionPage = () => {
 
             if (editingPromotion) {
                 await api.put(`/api/promotions/${editingPromotion.promotion_id}`, submitData, config);
-                showAlert('Thành công', 'Cập nhật khuyến mãi thành công.', 'success');
+                setIsFormOpen(false);
+                fetchPromotions(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Cập nhật khuyến mãi thành công.', 'success');
+                }, 100);
             } else {
                 await api.post('/api/promotions', submitData, config);
-                showAlert('Thành công', 'Tạo khuyến mãi mới thành công.', 'success');
+                setIsFormOpen(false);
+                fetchPromotions(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Tạo khuyến mãi mới thành công.', 'success');
+                }, 100);
             }
-
-            setIsFormOpen(false);
-            fetchPromotions(pagination.page, search);
         } catch (error) {
+            console.error('SUBMIT PROMOTION ERROR:', error);
             showAlert('Lỗi', error.response?.data?.message || 'Không thể lưu dữ liệu.', 'error');
         } finally {
             setSubmitLoading(false);
@@ -350,10 +383,16 @@ const PromotionPage = () => {
                     const newPage = promotions.length === 1 && currentPage > 1
                         ? currentPage - 1
                         : currentPage;
-                    fetchPromotions(newPage, search);
-                    showAlert('Thành công', 'Xóa khuyến mãi thành công.', 'success');
+                    await fetchPromotions(newPage, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Xóa khuyến mãi thành công.', 'success');
+                    }, 100);
                 } catch (error) {
-                    showAlert('Lỗi', 'Không thể xóa khuyến mãi.', 'error');
+                    console.error('DELETE PROMOTION ERROR:', error);
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', 'Không thể xóa khuyến mãi.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -502,22 +541,6 @@ const PromotionPage = () => {
     ];
 
     // ======================================================
-    // HELPER: RENDER ALERT ICON
-    // ======================================================
-    const renderAlertIcon = () => {
-        switch (alertModal.type) {
-            case 'success':
-                return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error':
-                return <XCircle size={58} color="#ef4444" />;
-            case 'warning':
-                return <AlertTriangle size={58} color="#f59e0b" />;
-            default:
-                return <Info size={58} color="#3b82f6" />;
-        }
-    };
-
-    // ======================================================
     // RENDER
     // ======================================================
     return (
@@ -548,10 +571,15 @@ const PromotionPage = () => {
                 )}
             </AdminPage>
 
+            {/* ==================================================
+                FORM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={handleCloseForm}
                 title={editingPromotion ? 'Cập nhật khuyến mãi' : 'Thêm khuyến mãi mới'}
+                type="default"
+                size="lg"
             >
                 <AdminForm
                     fields={formFields}
@@ -565,31 +593,22 @@ const PromotionPage = () => {
                 />
             </AdminModal>
 
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
                 size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
-                        {renderAlertIcon()}
-                    </div>
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy bỏ
-                            </button>
-                        )}
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={alertModal.onConfirm || closeAlert}
-                        >
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

@@ -9,6 +9,9 @@ const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 /*=========================================================
     USER - PUBLIC ROUTES (không cần đăng nhập)
 =========================================================*/
+// Lấy toàn bộ phim (không phân trang) - dành cho admin
+router.get("/", MovieController.getAllMoviesAll);
+
 router.get("/status-group", MovieController.getMoviesByStatusGroup);
 router.get("/with-genre", MovieController.getMoviesWithGenre);
 router.get("/category/:statusSlug", MovieController.getMoviesByStatusSlug);
@@ -17,8 +20,6 @@ router.get("/detail/:slug", MovieController.getMovieBySlug);
 /*=========================================================
     ADMIN - QUẢN LÝ PHIM
 =========================================================*/
-// Lấy toàn bộ phim (không phân trang) - dành cho admin
-router.get("/", authenticateAdmin, MovieController.getAllMoviesAll);
 
 // Lấy phim có phân trang (thêm route này)
 router.get("/paginated", authenticateAdmin, MovieController.getMoviesWithPagination);

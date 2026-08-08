@@ -1,49 +1,60 @@
 /* ==========================================================
-   CINEMA CARD – MINIMALIST EDITION 🎬
-   HOVER BẠC RÕ RÀNG, NỔI BẬT TRÊN NỀN TỐI
+   CINEMA CARD – DEMO OVERLAY EDITION 🎬
+   HOVER MỜ HÌNH HIỆN NÚT XEM CHI TIẾT GIỐNG DEMO INDEX.HTML
    ========================================================== */
 
-/* ---- CARD (KHÔNG SCALE) ---- */
+/* ---- CARD WRAPPER ---- */
 .cinema-card {
   position: relative;
   width: 100%;
   cursor: pointer;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-md, 14px);
   z-index: 1;
-  overflow: visible;
+  overflow: hidden;
+  background: var(--cinema-card-bg, #11131c);
+  border: 2px solid rgba(232, 232, 232, 0.12);
+  box-shadow: var(--cinema-card-shadow, 0 8px 24px rgba(0, 0, 0, 0.4));
+  outline: none;
+  
+  /* Hiệu ứng nhích nguyên khối card mượt mà */
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.35s ease,
+              box-shadow 0.35s ease,
+              background 0.35s ease;
+  will-change: transform, box-shadow;
+  backface-visibility: hidden;
 }
 
+/* Hover nguyên card: Nhích nhẹ 6px + viền bạc mờ + bóng mờ */
+.cinema-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--border-silver-hover, rgba(232, 232, 232, 0.45)) !important;
+  background: var(--cinema-card-bg-hover, #181b28);
+  box-shadow: var(--cinema-card-shadow, 0 16px 40px rgba(0, 0, 0, 0.6)),
+              var(--shadow-silver, 0 0 22px rgba(232, 232, 232, 0.18)) !important;
+}
+
+.cinema-card:focus-visible {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(232, 232, 232, 0.4) !important;
+}
+
+/* ---- CARD INNER ---- */
 .cinema-card-inner {
   position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
-  border-radius: var(--radius-md);
-  background: var(--cinema-card-bg);
-  border: 2px solid rgba(232, 232, 232, 0.12);
-  box-shadow: var(--cinema-card-shadow);
-  transition: border-color 0.5s ease, box-shadow 0.5s ease, transform 0.3s ease;
 }
 
-.cinema-card:hover .cinema-card-inner {
-  border: var(--border-silver-hover) !important;
-  box-shadow:
-    var(--cinema-card-shadow),
-    var(--shadow-silver) !important;
-  transform: var(--hover-elevation) !important;
-}
-
-/* ===== ĐÃ XÓA HIỆU ỨNG ::before (ÁNH SÁNG QUÉT NGANG) ===== */
-
-/* ---- ẢNH (SCALE CHẬM RÃI) ---- */
+/* ---- KHUNG ẢNH ---- */
 .cinema-card-image {
   position: relative;
   width: 100%;
   aspect-ratio: 2 / 3;
   overflow: hidden;
-  background: var(--black-premium);
+  background: var(--black-premium, #08080a);
 }
 
 .cinema-card-image img {
@@ -53,32 +64,19 @@
   object-fit: cover;
   opacity: 0.94;
   transform: scale(1);
-  transform-origin: center center;
-  transition: transform 1s cubic-bezier(0.19, 1, 0.22, 1),
-              opacity 0.8s ease,
-              filter 0.8s ease;
+  transition: transform 0.5s ease, opacity 0.5s ease, filter 0.5s ease;
   will-change: transform, opacity;
   backface-visibility: hidden;
 }
 
-/* Hover: ảnh phóng to từ từ, sáng hơn */
+/* Hover: Ảnh phóng to nhẹ 5% từ từ */
 .cinema-card:hover .cinema-card-image img {
-  transform: scale(1.15);
+  transform: scale(1.05);
   opacity: 1;
-  filter: brightness(1.06) contrast(1.02);
+  filter: brightness(1.04);
 }
 
-/* ---- OVERLAY ---- */
-.cinema-card-image::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(30, 30, 40, 0.3) 50%, transparent 80%);
-  z-index: 1;
-  pointer-events: none;
-}
-
-/* ---- BADGE (dùng h4) ---- */
+/* ---- BADGE ---- */
 .cinema-card-badge {
   position: absolute;
   top: 12px;
@@ -86,33 +84,83 @@
   z-index: 5;
   margin: 0;
   padding: 4px 14px;
-  border-radius: var(--radius-round);
-  font-size: var(--font-size-h4);
-  font-weight: var(--fw-bold);
+  border-radius: var(--radius-round, 20px);
+  font-size: var(--font-size-h4, 0.75rem);
+  font-weight: var(--fw-bold, 800);
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: var(--black-premium);
-  background: var(--cinema-border-gradient);
+  color: var(--black-premium, #08080a);
+  background: var(--cinema-border-gradient, linear-gradient(135deg, #e8e8e8, #b8b8b8));
   box-shadow: 0 2px 12px rgba(232, 232, 232, 0.12);
   line-height: 1.4;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .cinema-card:hover .cinema-card-badge {
-  box-shadow: 0 2px 20px rgba(232, 232, 232, 0.25);
+  box-shadow: 0 2px 20px rgba(232, 232, 232, 0.3);
   transform: scale(1.05);
 }
 
-/* ---- TITLE (dùng h3) ---- */
+/* ---- OVERLAY LÀM MỜ VÀ HIỆN NÚT XEM CHI TIẾT (GIỐNG DEMO INDEX.HTML) ---- */
+.cinema-card-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: rgba(8, 9, 13, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Hover: Overlay hiện lên mượt mà */
+.cinema-card:hover .cinema-card-overlay {
+  opacity: 1;
+}
+
+/* NÚT XEM CHI TIẾT */
+.btn-card-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: none;
+  background: var(--cinema-border-gradient, linear-gradient(135deg, #ffffff 0%, #e2e8f0 50%, #cbd5e1 100%));
+  color: var(--black-premium, #08080a);
+  font-size: 0.813rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.25);
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+}
+
+.cinema-card:hover .btn-card-action {
+  transform: scale(1);
+}
+
+.btn-card-action:hover {
+  transform: scale(1.08) !important;
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+}
+
+/* ---- TITLE (DÙNG H3) ---- */
 .cinema-card-title {
   margin: 0;
   padding: 14px 12px 16px;
-  font-size: var(--font-size-h3);
-  font-weight: var(--fw-bold);
+  font-size: var(--font-size-h3, 0.938rem);
+  font-weight: var(--fw-bold, 700);
   line-height: 1.3;
   text-align: center;
-  color: var(--text-body);
-  background: var(--cinema-card-bg);
+  color: var(--text-body, #cbd5e1);
+  background: transparent;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -121,10 +169,9 @@
   transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
-/* 🔥 Hover: title chuyển sang bạc sáng rõ */
 .cinema-card:hover .cinema-card-title {
   color: #F5F5F5;
-  text-shadow: 0 0 30px rgba(232, 232, 232, 0.12);
+  text-shadow: 0 0 30px rgba(232, 232, 232, 0.15);
 }
 
 /* ---- RESPONSIVE ---- */
@@ -137,12 +184,12 @@
     top: 8px;
     right: 8px;
   }
-  .cinema-card:hover .cinema-card-image img {
-    transform: scale(1.1);
-    transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+  .btn-card-action {
+    padding: 8px 16px;
+    font-size: 0.75rem;
   }
-  .cinema-card:hover .cinema-card-inner {
-    transform: translateY(-2px);
+  .cinema-card:hover {
+    transform: translateY(-4px);
   }
 }
 
@@ -153,22 +200,7 @@
   .cinema-card-badge {
     padding: 2px 8px;
   }
-  .cinema-card:hover .cinema-card-image img {
-    transform: scale(1.06);
-    transition: transform 0.7s cubic-bezier(0.19, 1, 0.22, 1);
-  }
-  .cinema-card:hover .cinema-card-inner {
-    transform: translateY(-1px);
-  }
-}
-
-/* ---- PREFERS-REDUCED-MOTION ---- */
-@media (prefers-reduced-motion: reduce) {
-  .cinema-card:hover .cinema-card-image img {
-    transform: scale(1.05);
-    transition: transform 0.3s ease;
-  }
-  .cinema-card:hover .cinema-card-inner {
-    transform: translateY(0);
+  .cinema-card:hover {
+    transform: translateY(-2px);
   }
 }

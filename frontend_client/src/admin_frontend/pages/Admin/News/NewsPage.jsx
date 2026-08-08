@@ -7,11 +7,7 @@ import {
     Loader2,
     Eye,
     Heart,
-    ExternalLink,
-    CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Info
+    ExternalLink
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -66,6 +62,9 @@ const NewsPage = () => {
     const [newsImageFile, setNewsImageFile] = useState(null);
     const [filePreviews, setFilePreviews] = useState({});
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -75,14 +74,25 @@ const NewsPage = () => {
         onCancel: null
     });
 
-    // ======================================================
-    // ALERT HANDLER
-    // ======================================================
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
 
-    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // ======================================================
     // FETCH NEWS (GIỐNG MOVIEPAGE)
@@ -157,8 +167,12 @@ const NewsPage = () => {
     // ======================================================
     useEffect(() => {
         fetchNews(1, '');
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [fetchNews]);
 
     // ======================================================
     // SEARCH - DEBOUNCE 400ms
@@ -321,14 +335,19 @@ const NewsPage = () => {
 
             if (editingNews) {
                 await api.put(`/api/news/${editingNews.news_id}`, submitData, config);
-                showAlert('Thành công', 'Cập nhật bài viết thành công.', 'success');
+                setIsFormOpen(false);
+                fetchNews(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Cập nhật bài viết thành công.', 'success');
+                }, 100);
             } else {
                 await api.post('/api/news', submitData, config);
-                showAlert('Thành công', 'Đăng bài viết mới thành công.', 'success');
+                setIsFormOpen(false);
+                fetchNews(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Đăng bài viết mới thành công.', 'success');
+                }, 100);
             }
-
-            setIsFormOpen(false);
-            fetchNews(pagination.page, search);
         } catch (error) {
             if (error.response?.data?.errors) {
                 setErrors(error.response.data.errors);
@@ -356,10 +375,16 @@ const NewsPage = () => {
                     const newPage = news.length === 1 && pagination.page > 1
                         ? pagination.page - 1
                         : pagination.page;
-                    fetchNews(newPage, search);
-                    showAlert('Thành công', 'Xóa bài viết thành công.', 'success');
+                    await fetchNews(newPage, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Xóa bài viết thành công.', 'success');
+                    }, 100);
                 } catch (error) {
-                    showAlert('Lỗi', 'Không thể xóa bài viết.', 'error');
+                    console.error('DELETE NEWS ERROR:', error);
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', 'Không thể xóa bài viết.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -486,19 +511,15 @@ const NewsPage = () => {
     ];
 
     // ======================================================
-    // RENDER ALERT ICON
+    // HANDLE CLOSE FORM
     // ======================================================
-    const renderAlertIcon = () => {
-        switch (alertModal.type) {
-            case 'success':
-                return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error':
-                return <XCircle size={58} color="#ef4444" />;
-            case 'warning':
-                return <AlertTriangle size={58} color="#f59e0b" />;
-            default:
-                return <Info size={58} color="#3b82f6" />;
-        }
+    const handleCloseForm = () => {
+        if (submitLoading) return;
+        setIsFormOpen(false);
+        setEditingNews(null);
+        setErrors({});
+        setNewsImageFile(null);
+        setFilePreviews({});
     };
 
     // ======================================================
@@ -532,10 +553,15 @@ const NewsPage = () => {
                 )}
             </AdminPage>
 
+            {/* ==================================================
+                FORM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={handleCloseForm}
                 title={editingNews ? 'Cập nhật bài viết' : 'Thêm bài viết mới'}
+                type="default"
+                size="lg"
             >
                 <AdminForm
                     fields={formFields}
@@ -549,31 +575,22 @@ const NewsPage = () => {
                 />
             </AdminModal>
 
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
                 size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
-                        {renderAlertIcon()}
-                    </div>
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy bỏ
-                            </button>
-                        )}
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={alertModal.onConfirm || closeAlert}
-                        >
-                            Xác nhận hành động
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

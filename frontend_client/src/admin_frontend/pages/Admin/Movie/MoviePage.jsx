@@ -6,11 +6,7 @@ import {
     Edit,
     Trash2,
     Loader2,
-    PlayCircle,
-    CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Info
+    PlayCircle
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -92,7 +88,7 @@ const MoviePage = () => {
     const [formErrors, setFormErrors] = useState({});
 
     // ======================================================
-    // ALERT MODAL
+    // ALERT MODAL (giống UserPage)
     // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -104,87 +100,106 @@ const MoviePage = () => {
     });
 
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
 
     const closeAlert = () => {
-        setAlertModal(prev => ({ ...prev, open: false }));
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
     };
 
-   const fetchMovies = useCallback(async (page = 1, keyword = '') => {
-    if (isFetching.current) {
-        console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
-        return;
-    }
-
-    if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-    }
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    isFetching.current = true;
-    setLoading(true);
-
-    try {
-        const res = await api.get('/api/movies/paginated', {
-            params: {
-                page,
-                limit: 20,
-                search: keyword.trim()
-            },
-            signal: controller.signal
-        });
-
-        // ✅ LẤY TRỰC TIẾP TỪ res.data
-        const moviesData = res.data?.data || [];
-        const paginationData = res.data?.pagination || {
-            page: 1,
-            limit: 20,
-            total: 0,
-            totalPages: 1,
-            hasPreviousPage: false,
-            hasNextPage: false
-        };
-
-        setMovies(moviesData);
-        setPagination(paginationData);
-
-    } catch (error) {
-        if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
-            console.log('🛑 Request bị hủy');
+    // ======================================================
+    // FETCH MOVIES
+    // ======================================================
+    const fetchMovies = useCallback(async (page = 1, keyword = '') => {
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
             return;
         }
-        console.error('FETCH MOVIES ERROR:', error);
-        setMovies([]);
-        setPagination({
-            page: 1,
-            limit: 20,
-            total: 0,
-            totalPages: 1,
-            hasPreviousPage: false,
-            hasNextPage: false
-        });
-        showAlert('Lỗi', 'Không thể tải danh sách phim.', 'error');
-    } finally {
-        setLoading(false);
-        isFetching.current = false;
-        if (abortControllerRef.current === controller) {
-            abortControllerRef.current = null;
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
         }
-    }
-}, []);
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        isFetching.current = true;
+        setLoading(true);
+
+        try {
+            const res = await api.get('/api/movies/paginated', {
+                params: {
+                    page,
+                    limit: 20,
+                    search: keyword.trim()
+                },
+                signal: controller.signal
+            });
+
+            const moviesData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            };
+
+            setMovies(moviesData);
+            setPagination(paginationData);
+
+        } catch (error) {
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
+            console.error('FETCH MOVIES ERROR:', error);
+            setMovies([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
+            showAlert('Lỗi', 'Không thể tải danh sách phim.', 'error');
+        } finally {
+            setLoading(false);
+            isFetching.current = false;
+            if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
+            }
+        }
+    }, []);
+
     // ======================================================
     // MOUNT
     // ======================================================
     useEffect(() => {
         fetchMovies(1, '');
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [fetchMovies]);
 
     // ======================================================
-    // SEARCH - DEBOUNCE 400ms
+    // SEARCH DEBOUNCE
     // ======================================================
     const prevSearchRef = useRef('');
 
@@ -273,6 +288,15 @@ const MoviePage = () => {
         setIsFormOpen(true);
     };
 
+    const handleCloseForm = () => {
+        if (submitLoading) return;
+        setIsFormOpen(false);
+        setEditingMovie(null);
+        setFormErrors({});
+        setMoviePosterFile(null);
+        setMovieBackdropFile(null);
+    };
+
     // ======================================================
     // HANDLE CHANGE
     // ======================================================
@@ -312,13 +336,19 @@ const MoviePage = () => {
 
             if (editingMovie) {
                 await api.put(`/api/movies/${editingMovie.movie_id}`, submitData, config);
-                showAlert('Thành công', 'Cập nhật phim thành công.', 'success');
+                setIsFormOpen(false);
+                fetchMovies(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Cập nhật phim thành công.', 'success');
+                }, 100);
             } else {
                 await api.post('/api/movies', submitData, config);
-                showAlert('Thành công', 'Thêm phim thành công.', 'success');
+                setIsFormOpen(false);
+                fetchMovies(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Thêm phim thành công.', 'success');
+                }, 100);
             }
-            setIsFormOpen(false);
-            fetchMovies(pagination.page, search);
         } catch (error) {
             console.error('SUBMIT MOVIE ERROR:', error);
             const backendField = error.response?.data?.field;
@@ -349,11 +379,16 @@ const MoviePage = () => {
                     const newPage = movies.length === 1 && currentPage > 1
                         ? currentPage - 1
                         : currentPage;
-                    fetchMovies(newPage, search);
-                    showAlert('Thành công', 'Xóa phim thành công.', 'success');
+                    await fetchMovies(newPage, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Xóa phim thành công.', 'success');
+                    }, 100);
                 } catch (error) {
                     console.error('DELETE MOVIE ERROR:', error);
-                    showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa phim.', 'error');
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa phim.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -467,18 +502,6 @@ const MoviePage = () => {
     }
 
     // ======================================================
-    // RENDER ALERT ICON
-    // ======================================================
-    const renderAlertIcon = () => {
-        switch (alertModal.type) {
-            case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error': return <XCircle size={58} color="#ef4444" />;
-            case 'warning': return <AlertTriangle size={58} color="#f59e0b" />;
-            default: return <Info size={58} color="#3b82f6" />;
-        }
-    };
-
-    // ======================================================
     // RENDER
     // ======================================================
     return (
@@ -509,11 +532,15 @@ const MoviePage = () => {
                 )}
             </AdminPage>
 
-            {/* FORM MODAL */}
+            {/* ==================================================
+                FORM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={handleCloseForm}
                 title={editingMovie ? 'Cập nhật phim' : 'Thêm phim'}
+                type="default"
+                size="lg"
             >
                 <AdminForm
                     fields={formFields}
@@ -527,27 +554,22 @@ const MoviePage = () => {
                 />
             </AdminModal>
 
-            {/* ALERT MODAL */}
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
                 size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
-                        {renderAlertIcon()}
-                    </div>
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>Hủy</button>
-                        )}
-                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

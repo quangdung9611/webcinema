@@ -22,7 +22,6 @@ const getAvatarUrl = (avatar) => {
     return `https://api.quangdungcinema.id.vn/uploads/actors/${avatar}`;
 };
 
-// ✅ Hàm parse dữ liệu an toàn
 const extractData = (response) => {
     if (response?.data?.data && Array.isArray(response.data.data)) {
         return response.data.data;
@@ -50,19 +49,37 @@ const MovieActorPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(4);
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
         message: '',
+        type: 'default',
         onConfirm: null,
-        onCancel: null,
+        onCancel: null
     });
 
-    const showAlert = (title, message, onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, onConfirm, onCancel });
+    const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
 
-    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // =====================================================
     // FETCH DATA
@@ -108,7 +125,7 @@ const MovieActorPage = () => {
             setMovieActorMap(initialMap);
         } catch (error) {
             console.error('❌ Fetch error:', error);
-            showAlert('Lỗi', 'Không thể tải dữ liệu hệ thống.');
+            showAlert('Lỗi', 'Không thể tải dữ liệu hệ thống.', 'error');
         } finally {
             setLoading(false);
         }
@@ -150,9 +167,10 @@ const MovieActorPage = () => {
                 actor_ids: movieActorMap[selectedMovie.movie_id] || [],
             });
             setActorModalOpen(false);
-            showAlert('Thành công', `Đã cập nhật diễn viên cho phim "${selectedMovie.title}".`);
+            showAlert('Thành công', `Đã cập nhật diễn viên cho phim "${selectedMovie.title}".`, 'success');
         } catch (error) {
-            showAlert('Lỗi', 'Không thể cập nhật diễn viên.');
+            console.error('SAVE ACTORS ERROR:', error);
+            showAlert('Lỗi', 'Không thể cập nhật diễn viên.', 'error');
         }
     };
 
@@ -293,11 +311,14 @@ const MovieActorPage = () => {
                 )}
             </AdminPage>
 
-            {/* MODAL CHỌN DIỄN VIÊN */}
+            {/* ==================================================
+                MODAL CHỌN DIỄN VIÊN
+            ================================================== */}
             <AdminModal
                 open={actorModalOpen}
                 onClose={() => setActorModalOpen(false)}
                 title={`Chọn diễn viên cho "${selectedMovie?.title || ''}"`}
+                type="default"
                 size="md"
             >
                 <div className="actor-modal-content">
@@ -342,25 +363,32 @@ const MovieActorPage = () => {
                         )}
                     </div>
                     <div className="admin-form-footer">
-                        <button className="admin-form-cancel-btn" onClick={() => setActorModalOpen(false)}>
+                        <button className="admin-cancel-btn" onClick={() => setActorModalOpen(false)}>
                             Hủy
                         </button>
-                        <button className="admin-form-submit-btn" onClick={handleSaveActors}>
+                        <button className="admin-confirm-btn" onClick={handleSaveActors}>
                             <Save size={16} /> Lưu
                         </button>
                     </div>
                 </div>
             </AdminModal>
 
-            {/* ALERT MODAL */}
-            <AdminModal open={alertModal.open} onClose={closeAlert} title={alertModal.title}>
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
+            <AdminModal
+                open={alertModal.open}
+                onClose={closeAlert}
+                title={alertModal.title}
+                type={alertModal.type}
+                size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
+            >
                 <div className="admin-alert-content">
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

@@ -1,671 +1,443 @@
 /* =========================================================
-   ADMIN FORM OVERLAY – SILVER EDITION
-========================================================= */
-
-.admin-form-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-lg);
-    background: var(--overlay-dark);
-    backdrop-filter: blur(14px);
-    animation: adminFormFade var(--transition-slow);
-}
+   ADMIN FORM - DARK SILVER
+   CHỈ XỬ LÝ FORM, KHÔNG ẢNH HƯỞNG MODAL
+   ========================================================= */
 
 /* =========================================================
-   MODAL
-========================================================= */
-
-.admin-form-modal {
-    position: relative;
-    width: 100%;
-    max-width: 680px;
-    overflow: hidden;
-    border-radius: var(--radius-xl);
-    background: var(--cinema-card-bg);
-    border: var(--border-light);
-    box-shadow: var(--shadow-lg), 0 0 25px rgba(232, 232, 232, 0.08);
-    animation: adminFormScale var(--transition-normal);
-}
-
-/* =========================================================
-   GLOW – SILVER
-========================================================= */
-
-.admin-form-modal::before {
-    content: '';
-    position: absolute;
-    top: -120px;
-    right: -120px;
-    width: 260px;
-    height: 260px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(232, 232, 232, 0.16), transparent 70%);
-    pointer-events: none;
-}
-
-.admin-form-modal::after {
-    content: '';
-    position: absolute;
-    bottom: -120px;
-    left: -120px;
-    width: 260px;
-    height: 260px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(200, 200, 200, 0.10), transparent 70%);
-    pointer-events: none;
-}
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-.admin-form-header {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-lg) var(--space-xl);
-    background: linear-gradient(180deg, rgba(232, 232, 232, 0.05), transparent);
-    border-bottom: var(--border-silver);
-    z-index: 2;
-}
-
-.admin-form-header h2 {
-    margin: 0;
-    font-size: var(--font-size-h2);
-    font-weight: var(--fw-black);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: var(--white-pure);
-}
-
-/* =========================================================
-   CLOSE BUTTON – SILVER
-========================================================= */
-
-.admin-form-close-btn {
-    width: 46px;
-    height: 46px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-md);
-    border: var(--border-light);
-    background: var(--hover-bg);
-    color: var(--white-pure);
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-.admin-form-close-btn:hover {
-    background: rgba(232, 232, 232, 0.08);
-    border: 1px solid rgba(232, 232, 232, 0.35);
-    color: var(--white-pure);
-    transform: rotate(90deg);
-    box-shadow: 0 0 20px rgba(232, 232, 232, 0.14);
-}
-
-/* =========================================================
-   BODY
-========================================================= */
-
-.admin-form-body {
-    position: relative;
-    padding: var(--space-xl);
-    max-height: 80vh;
-    overflow-y: auto;
-    background: transparent;
-    z-index: 2;
-}
-
-/* =========================================================
-   FORM
-========================================================= */
-
+   FORM ROOT
+   ========================================================= */
 .admin-form {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: 0;
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   FIELDS CONTAINER
+   ========================================================= */
+.admin-form-fields {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 /* =========================================================
    FORM GROUP
-========================================================= */
-
+   ========================================================= */
 .admin-form-group {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 6px;
+    box-sizing: border-box;
 }
 
 /* =========================================================
    LABEL
-========================================================= */
-
+   ========================================================= */
 .admin-form-label {
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-bold);
-    letter-spacing: 0.3px;
-    color: var(--text-body);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    color: #c8c8c8;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.2px;
+}
+
+.admin-required {
+    color: #ff4757;
+    font-weight: 800;
+    font-size: 16px;
 }
 
 /* =========================================================
-   INPUT, TEXTAREA, SELECT – SILVER
-========================================================= */
-
+   INPUT BASE
+   ========================================================= */
 .admin-form-input,
 .admin-form-textarea,
-.admin-form-select,
-.admin-form-group input,
-.admin-form-group textarea,
-.admin-form-group select {
+.admin-form-select {
     width: 100%;
-    padding: var(--space-md) var(--space-lg);
-    border-radius: var(--radius-md);
-    border: var(--border-light);
+    padding: 12px 16px;
+    border: 1.5px solid rgba(255,255,255,0.10);
+    border-radius: 12px;
     outline: none;
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--white-pure);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-medium);
+    background: rgba(255,255,255,0.03);
+    color: #f0f0f0;
     font-family: inherit;
-    transition: transform var(--transition-normal),
-                border-color var(--transition-normal),
-                box-shadow var(--transition-normal),
-                background var(--transition-normal);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    transition: all 0.25s ease;
+    box-sizing: border-box;
 }
 
-/* =========================================================
-   PLACEHOLDER
-========================================================= */
-
+/* Placeholder */
 .admin-form-input::placeholder,
-.admin-form-textarea::placeholder,
-.admin-form-group input::placeholder,
-.admin-form-group textarea::placeholder {
-    color: var(--text-muted);
+.admin-form-textarea::placeholder {
+    color: #666;
+    opacity: 0.8;
+}
+
+/* Disabled */
+.admin-form-input:disabled,
+.admin-form-textarea:disabled,
+.admin-form-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(255,255,255,0.02);
+}
+
+/* Hover */
+.admin-form-input:hover:not(:disabled),
+.admin-form-textarea:hover:not(:disabled),
+.admin-form-select:hover:not(:disabled) {
+    border-color: rgba(255,255,255,0.20);
+    background: rgba(255,255,255,0.05);
+}
+
+/* Focus */
+.admin-form-input:focus,
+.admin-form-textarea:focus,
+.admin-form-select:focus {
+    border-color: rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.07);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.04), 0 0 20px rgba(255,255,255,0.06);
+    transform: translateY(-1px);
 }
 
 /* =========================================================
    TEXTAREA
-========================================================= */
-
-.admin-form-textarea,
-.admin-form-group textarea {
+   ========================================================= */
+.admin-form-textarea {
+    min-height: 120px;
     resize: vertical;
-    min-height: 140px;
+    line-height: 1.6;
 }
 
 /* =========================================================
    SELECT
-========================================================= */
-
-.admin-form-select,
-.admin-form-group select {
+   ========================================================= */
+.admin-form-select {
     cursor: pointer;
-    background: var(--cinema-card-bg);
-    color: var(--white-pure);
+    appearance: auto;
+    background-color: #1a1a1a;
 }
-
-.admin-form-select option,
-.admin-form-group select option {
-    background: var(--black-soft);
-    color: var(--white-pure);
-}
-
-/* =========================================================
-   HOVER – SILVER
-========================================================= */
-
-.admin-form-input:hover,
-.admin-form-textarea:hover,
-.admin-form-select:hover,
-.admin-form-group input:hover,
-.admin-form-group textarea:hover,
-.admin-form-group select:hover {
-    border: 1px solid rgba(232, 232, 232, 0.35);
-    box-shadow: 0 0 20px rgba(232, 232, 232, 0.10);
-}
-
-/* =========================================================
-   FOCUS – SILVER
-========================================================= */
-
-.admin-form-input:focus,
-.admin-form-textarea:focus,
-.admin-form-select:focus,
-.admin-form-group input:focus,
-.admin-form-group textarea:focus,
-.admin-form-group select:focus {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(232, 232, 232, 0.58);
-    box-shadow: 0 0 0 1px rgba(232, 232, 232, 0.14),
-                0 0 20px rgba(232, 232, 232, 0.24),
-                0 0 42px rgba(200, 200, 200, 0.20);
-    transform: translateY(-2px);
+.admin-form-select option {
+    background: #1a1a1a;
+    color: #f0f0f0;
 }
 
 /* =========================================================
    FILE INPUT
-========================================================= */
-
-.admin-form-group input[type="file"] {
-    padding: var(--space-md);
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--white-pure);
+   ========================================================= */
+.admin-file-input {
+    cursor: pointer;
+    padding: 10px 14px;
+}
+.admin-file-input::file-selector-button {
+    margin-right: 12px;
+    padding: 8px 16px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    color: #f0f0f0;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+.admin-file-input::file-selector-button:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.30);
 }
 
 /* =========================================================
-   ERROR INPUT – MÀU ĐỎ NỔI BẬT
-========================================================= */
+   FILE PREVIEW
+   ========================================================= */
+.admin-file-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 4px;
+}
+.admin-file-preview-image {
+    display: block;
+    max-width: 120px;
+    max-height: 160px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.30);
+}
+.admin-file-preview-image.avatar {
+    width: 60px !important;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.admin-file-preview-name {
+    color: rgba(255,255,255,0.35);
+    font-size: 12px;
+    font-family: monospace;
+    word-break: break-all;
+}
 
+/* =========================================================
+   VALIDATION STATES
+   ========================================================= */
+
+/* ----- ERROR ----- */
 .admin-form-input.error,
 .admin-form-textarea.error,
-.admin-form-select.error,
-.admin-form-group input.error,
-.admin-form-group textarea.error,
-.admin-form-group select.error {
-    border: 2px solid #ff4757 !important;           /* Đỏ tươi */
-    background: rgba(255, 71, 87, 0.08) !important;
-    color: #ff6b81;
-    box-shadow: 0 0 20px rgba(255, 71, 87, 0.2) !important;
-    animation: shakeInput var(--transition-fast);
+.admin-form-select.error {
+    border-color: #ff4757 !important;
+    background: rgba(255,71,87,0.07) !important;
+    box-shadow: 0 0 20px rgba(255,71,87,0.12) !important;
+    animation: inputShake 0.3s ease;
 }
 
-/* =========================================================
-   SUCCESS INPUT – MÀU XANH SÁNG
-========================================================= */
+@keyframes inputShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
 
+/* ----- SUCCESS ----- */
 .admin-form-input.success,
 .admin-form-textarea.success,
 .admin-form-select.success {
-    border: 2px solid #2ed573 !important;           /* Xanh lá tươi */
-    background: rgba(46, 213, 115, 0.08) !important;
-    box-shadow: 0 0 20px rgba(46, 213, 115, 0.15) !important;
+    border-color: #2ed573 !important;
+    background: rgba(46,213,115,0.05) !important;
+    box-shadow: 0 0 20px rgba(46,213,115,0.08) !important;
 }
 
 /* =========================================================
-   ERROR TEXT – MÀU ĐỎ
-========================================================= */
-
+   ERROR MESSAGE
+   ========================================================= */
 .admin-form-error {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    margin-top: var(--space-xs);
-    color: #ff4757 !important;           /* Đỏ tươi, rõ ràng */
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-bold);
-    animation: adminErrorFade var(--transition-fast);
-}
-
-.admin-form-error svg {
+    gap: 6px;
+    margin: 0;
     color: #ff4757 !important;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    animation: msgFade 0.25s ease;
+}
+.admin-form-error svg {
     flex-shrink: 0;
+    color: #ff4757 !important;
 }
 
 /* =========================================================
-   SUCCESS TEXT – MÀU XANH
-========================================================= */
-
+   SUCCESS MESSAGE
+   ========================================================= */
 .admin-form-success {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    margin-top: var(--space-xs);
-    color: #2ed573 !important;           /* Xanh lá sáng, rõ ràng */
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-bold);
-    animation: adminErrorFade var(--transition-fast);
+    gap: 6px;
+    margin: 0;
+    color: #2ed573 !important;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    animation: msgFade 0.25s ease;
+}
+.admin-form-success svg {
+    flex-shrink: 0;
+    color: #2ed573 !important;
 }
 
-.admin-form-success svg {
-    color: #2ed573 !important;
-    flex-shrink: 0;
+@keyframes msgFade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 /* =========================================================
-   PASSWORD STRENGTH – GIỮ NGUYÊN
-========================================================= */
-
-.admin-password-strength {
-    margin-top: var(--space-sm);
-}
-
-.admin-password-bar {
+   PASSWORD STRENGTH
+   ========================================================= */
+.password-strength-wrapper {
     width: 100%;
-    height: 8px;
-    border-radius: var(--radius-round);
-    background: rgba(255, 255, 255, 0.06);
+    margin-top: 2px;
+}
+.password-strength-bar {
+    position: relative;
+    width: 100%;
+    height: 6px;
     overflow: hidden;
+    border-radius: 99px;
+    background: rgba(255,255,255,0.06);
 }
-
-.admin-password-fill {
+.password-strength-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
     height: 100%;
+    width: 0;
     border-radius: inherit;
-    transition: all var(--transition-normal);
+    transition: width 0.35s ease, background 0.35s ease;
 }
 
-.admin-password-fill.weak {
+/* Weak */
+.password-strength-bar.weak .password-strength-fill {
     width: 33%;
-    background: #ff4d4d;
+    background: #ff4757;
+    box-shadow: 0 0 14px rgba(255,71,87,0.30);
+}
+.password-strength-text.weak {
+    color: #ff6b81;
 }
 
-.admin-password-fill.medium {
+/* Medium */
+.password-strength-bar.medium .password-strength-fill {
     width: 66%;
     background: #ffb020;
+    box-shadow: 0 0 14px rgba(255,176,32,0.25);
 }
-
-.admin-password-fill.strong {
-    width: 100%;
-    background: var(--silver-primary);
-}
-
-.admin-password-text {
-    margin-top: var(--space-xs);
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-bold);
-}
-
-.admin-password-text.weak {
-    color: #ff6b6b;
-}
-
-.admin-password-text.medium {
+.password-strength-text.medium {
     color: #ffb020;
 }
 
-.admin-password-text.strong {
-    color: var(--silver-primary);
+/* Strong */
+.password-strength-bar.strong .password-strength-fill {
+    width: 100%;
+    background: #2ed573;
+    box-shadow: 0 0 14px rgba(46,213,115,0.25);
+}
+.password-strength-text.strong {
+    color: #2ed573;
+}
+
+.password-strength-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 /* =========================================================
-   FOOTER
-========================================================= */
-
+   FORM FOOTER (SUBMIT)
+   ========================================================= */
 .admin-form-footer {
+    width: 100%;
+    margin-top: 24px;
+    padding-top: 20px;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: var(--space-md);
-    margin-top: var(--space-sm);
+    justify-content: center;
+    border-top: 1px solid rgba(255,255,255,0.06);
 }
-
-/* =========================================================
-   BUTTON BASE
-========================================================= */
-
-.admin-form-submit-btn,
-.admin-form-cancel-btn {
-    border: none;
-    outline: none;
-    padding: var(--space-md) var(--space-xl);
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-bold);
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-/* =========================================================
-   CANCEL BUTTON – SILVER
-========================================================= */
-
-.admin-form-cancel-btn {
-    background: var(--hover-bg);
-    border: var(--border-light);
-    color: var(--white-pure);
-}
-
-.admin-form-cancel-btn:hover {
-    background: rgba(232, 232, 232, 0.06);
-    border: 1px solid rgba(232, 232, 232, 0.35);
-    transform: translateY(-2px);
-    box-shadow: 0 0 20px rgba(232, 232, 232, 0.12);
-}
-
-/* =========================================================
-   SUBMIT BUTTON – SILVER
-========================================================= */
 
 .admin-form-submit-btn {
+    min-width: 180px;
+    padding: 13px 32px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-sm);
-    min-width: 180px;
-    color: var(--black-premium) !important;
-    background: var(--cinema-border-gradient);
-    box-shadow: 0 10px 24px rgba(232, 232, 232, 0.30);
+    gap: 8px;
+    border: none;
+    border-radius: 99px;
+    background: linear-gradient(135deg, #d0d0d0, #999999);
+    color: #1a1a1a;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(255,255,255,0.10);
+    transition: all 0.25s ease;
 }
-
-.admin-form-submit-btn:hover {
+.admin-form-submit-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    color: var(--black-premium) !important;
-    box-shadow: 0 0 0 1px rgba(232, 232, 232, 0.14),
-                0 0 20px rgba(232, 232, 232, 0.24),
-                0 0 42px rgba(200, 200, 200, 0.20),
-                0 0 75px rgba(232, 232, 232, 0.12);
+    box-shadow: 0 12px 32px rgba(255,255,255,0.16);
 }
-
+.admin-form-submit-btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+}
 .admin-form-submit-btn:disabled {
-    opacity: 0.65;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
-    box-shadow: none;
 }
-
-/* =========================================================
-   LOADING SPINNER
-========================================================= */
+.admin-form-submit-btn.loading {
+    opacity: 0.75;
+    cursor: wait;
+}
 
 .admin-btn-spinner {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.25);
-    border-top-color: var(--white-pure);
-    animation: adminSpin 0.7s linear infinite;
+    flex-shrink: 0;
+    animation: spin 0.7s linear infinite;
 }
 
-/* =========================================================
-   SHAKE FORM
-========================================================= */
-
-.admin-form.shake {
-    animation: formShake var(--transition-fast);
-}
-
-/* =========================================================
-   SCROLLBAR – SILVER
-========================================================= */
-
-.admin-form-body::-webkit-scrollbar {
-    width: 8px;
-}
-
-.admin-form-body::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.admin-form-body::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, var(--silver-primary), var(--silver-dark));
-    border-radius: var(--radius-round);
-}
-
-/* =========================================================
-   ANIMATIONS
-========================================================= */
-
-@keyframes adminFormFade {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes adminFormScale {
-    from {
-        opacity: 0;
-        transform: scale(0.92);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-@keyframes adminErrorFade {
-    from {
-        opacity: 0;
-        transform: translateY(-4px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes adminSpin {
-    to { transform: rotate(360deg); }
-}
-
-@keyframes shakeInput {
-    0%   { transform: translateX(0); }
-    25%  { transform: translateX(-4px); }
-    50%  { transform: translateX(4px); }
-    75%  { transform: translateX(-3px); }
-    100% { transform: translateX(0); }
-}
-
-@keyframes formShake {
-    0%   { transform: translateX(0); }
-    25%  { transform: translateX(-6px); }
-    50%  { transform: translateX(6px); }
-    75%  { transform: translateX(-4px); }
-    100% { transform: translateX(0); }
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
 }
 
 /* =========================================================
    RESPONSIVE
-========================================================= */
-
-@media screen and (max-width: 1200px) {
-    .admin-form-modal {
-        max-width: 92%;
-    }
-    .admin-form-header h2 {
-        font-size: var(--font-size-h2);
-    }
-}
-
-@media screen and (max-width: 992px) {
-    .admin-form-header {
-        padding: var(--space-lg) var(--space-xl);
-    }
-    .admin-form-body {
-        padding: var(--space-xl);
-    }
-    .admin-form-header h2 {
-        font-size: var(--font-size-h3);
+   ========================================================= */
+@media (max-width: 768px) {
+    .admin-form-fields {
+        gap: 16px;
     }
     .admin-form-input,
     .admin-form-textarea,
-    .admin-form-select,
-    .admin-form-group input,
-    .admin-form-group textarea,
-    .admin-form-group select {
-        padding: var(--space-md) var(--space-lg);
-    }
-}
-
-@media screen and (max-width: 768px) {
-    .admin-form-overlay {
-        padding: var(--space-md);
-    }
-    .admin-form-modal {
-        width: 100%;
-        border-radius: var(--radius-lg);
-    }
-    .admin-form-header {
-        padding: var(--space-lg);
-    }
-    .admin-form-header h2 {
-        font-size: var(--font-size-h3);
-    }
-    .admin-form-close-btn {
-        width: 42px;
-        height: 42px;
-    }
-    .admin-form-body {
-        padding: var(--space-lg);
-    }
-    .admin-form {
-        gap: var(--space-md);
+    .admin-form-select {
+        padding: 10px 14px;
+        font-size: 14px;
     }
     .admin-form-footer {
-        flex-direction: column;
-        align-items: stretch;
+        margin-top: 20px;
+        padding-top: 16px;
     }
-    .admin-form-submit-btn,
-    .admin-form-cancel-btn {
-        width: 100%;
+    .admin-form-submit-btn {
+        min-width: 140px;
+        padding: 12px 24px;
+        font-size: 14px;
     }
 }
 
-@media screen and (max-width: 480px) {
-    .admin-form-overlay {
-        padding: var(--space-sm);
-    }
-    .admin-form-modal {
-        border-radius: var(--radius-lg);
-    }
-    .admin-form-header {
-        padding: var(--space-md);
-    }
-    .admin-form-header h2 {
-        font-size: var(--font-size-h4);
-        line-height: 1.3;
-    }
-    .admin-form-close-btn {
-        width: 38px;
-        height: 38px;
-        border-radius: var(--radius-sm);
-    }
-    .admin-form-body {
-        padding: var(--space-md);
-    }
-    .admin-form {
-        gap: var(--space-md);
+@media (max-width: 480px) {
+    .admin-form-fields {
+        gap: 14px;
     }
     .admin-form-label {
-        font-size: var(--font-size-h6);
+        font-size: 13px;
     }
     .admin-form-input,
     .admin-form-textarea,
-    .admin-form-select,
-    .admin-form-group input,
-    .admin-form-group textarea,
-    .admin-form-group select {
-        padding: var(--space-md);
-        font-size: var(--font-size-h6);
-        border-radius: var(--radius-md);
+    .admin-form-select {
+        padding: 10px 12px;
+        font-size: 14px;
+        border-radius: 10px;
     }
-    .admin-form-textarea,
-    .admin-form-group textarea {
-        min-height: 110px;
+    .admin-form-textarea {
+        min-height: 100px;
     }
-    .admin-form-submit-btn,
-    .admin-form-cancel-btn {
+    .admin-form-footer {
+        margin-top: 16px;
+        padding-top: 14px;
+    }
+    .admin-form-submit-btn {
         width: 100%;
-        padding: var(--space-md) var(--space-lg);
-        font-size: var(--font-size-h6);
+        min-width: unset;
+        padding: 12px 20px;
+        font-size: 14px;
     }
     .admin-form-error,
     .admin-form-success,
-    .admin-password-text {
-        font-size: var(--font-size-h6);
+    .password-strength-text {
+        font-size: 12px;
     }
 }

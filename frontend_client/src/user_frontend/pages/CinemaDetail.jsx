@@ -84,7 +84,7 @@ const CinemaDetail = () => {
     const fetchCinema = async () => {
       try {
         setLoading(true);
-        const res = await api.get(`/api/cinemas/${slug}`);
+        const res = await api.get(`/api/cinemas/detail/${slug}`);
         let cinemaData = null;
         let moviesData = [];
         if (res.data.cinema_name) {

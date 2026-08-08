@@ -9,11 +9,7 @@ import {
     Building2,
     Navigation,
     Phone,
-    Map,
-    CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Info
+    Map
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -63,6 +59,9 @@ const CinemaPage = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [formErrors, setFormErrors] = useState({});
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -72,16 +71,28 @@ const CinemaPage = () => {
         onCancel: null
     });
 
-    // ------------------------------------------------------
-    // ALERT HANDLER
-    // ------------------------------------------------------
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
-    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
+
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // ------------------------------------------------------
-    // FETCH CINEMAS - GIỐNG HỆT MoviePage
+    // FETCH CINEMAS - GIỐNG MoviePage
     // ------------------------------------------------------
     const fetchCinemas = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) {
@@ -152,8 +163,12 @@ const CinemaPage = () => {
     // ------------------------------------------------------
     useEffect(() => {
         fetchCinemas(1, '');
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [fetchCinemas]);
 
     // ------------------------------------------------------
     // SEARCH DEBOUNCE
@@ -221,7 +236,8 @@ const CinemaPage = () => {
         if (!formData.map_link.trim()) {
             errors.map_link = 'Vui lòng nhập link Google Map';
         }
-        return errors;
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     // ------------------------------------------------------
@@ -249,10 +265,24 @@ const CinemaPage = () => {
     };
 
     // ------------------------------------------------------
+    // HANDLE CLOSE FORM
+    // ------------------------------------------------------
+    const handleCloseForm = () => {
+        if (submitLoading) return;
+        setIsFormOpen(false);
+        setEditingCinema(null);
+        setFormErrors({});
+    };
+
+    // ------------------------------------------------------
     // HANDLE CHANGE
     // ------------------------------------------------------
     const handleChange = (e) => {
         const { name, value } = e.target;
+
+        if (formErrors[name]) {
+            setFormErrors((prev) => ({ ...prev, [name]: '' }));
+        }
 
         if (name === 'cinema_name') {
             setFormData((prev) => ({
@@ -260,35 +290,10 @@ const CinemaPage = () => {
                 cinema_name: value,
                 slug: generateSlug(value)
             }));
-        } else {
-            setFormData((prev) => ({ ...prev, [name]: value }));
+            return;
         }
 
-        // Realtime validation
-        let errorMessage = '';
-        switch (name) {
-            case 'cinema_name':
-                if (!value.trim()) errorMessage = 'Vui lòng nhập tên rạp';
-                else if (value.trim().length < 5) errorMessage = 'Tên rạp phải từ 5 ký tự trở lên';
-                break;
-            case 'city':
-                if (!value.trim()) errorMessage = 'Vui lòng nhập thành phố';
-                else if (value.trim().length < 2) errorMessage = 'Tên thành phố quá ngắn';
-                break;
-            case 'address':
-                if (!value.trim()) errorMessage = 'Vui lòng nhập địa chỉ';
-                else if (value.trim().length < 5) errorMessage = 'Địa chỉ phải từ 5 ký tự trở lên';
-                break;
-            case 'hotline':
-                if (!value.trim()) errorMessage = 'Vui lòng nhập hotline';
-                else if (!/^[0-9]{9,11}$/.test(value.trim())) errorMessage = 'Hotline không hợp lệ';
-                break;
-            case 'map_link':
-                if (!value.trim()) errorMessage = 'Vui lòng nhập link Google Map';
-                break;
-            default: break;
-        }
-        setFormErrors((prev) => ({ ...prev, [name]: errorMessage }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     // ------------------------------------------------------
@@ -296,11 +301,7 @@ const CinemaPage = () => {
     // ------------------------------------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const errors = validateForm();
-        if (Object.keys(errors).length > 0) {
-            setFormErrors(errors);
-            return;
-        }
+        if (!validateForm()) return;
 
         try {
             setSubmitLoading(true);
@@ -308,15 +309,21 @@ const CinemaPage = () => {
 
             if (editingCinema) {
                 await api.put(`/api/cinemas/${editingCinema.cinema_id}`, formData);
-                showAlert('Thành công', 'Cập nhật rạp thành công.', 'success');
+                setIsFormOpen(false);
+                fetchCinemas(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Cập nhật rạp thành công.', 'success');
+                }, 100);
             } else {
                 await api.post('/api/cinemas', formData);
-                showAlert('Thành công', 'Thêm rạp thành công.', 'success');
+                setIsFormOpen(false);
+                fetchCinemas(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Thêm rạp thành công.', 'success');
+                }, 100);
             }
-
-            setIsFormOpen(false);
-            fetchCinemas(pagination.page, search);
         } catch (error) {
+            console.error('SUBMIT CINEMA ERROR:', error);
             const backendField = error.response?.data?.field;
             const backendError = error.response?.data?.error || 'Đã xảy ra lỗi.';
             if (backendField) {
@@ -346,10 +353,16 @@ const CinemaPage = () => {
                     const newPage = cinemas.length === 1 && currentPage > 1
                         ? currentPage - 1
                         : currentPage;
-                    fetchCinemas(newPage, search);
-                    showAlert('Thành công', 'Xóa rạp thành công.', 'success');
+                    await fetchCinemas(newPage, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Xóa rạp thành công.', 'success');
+                    }, 100);
                 } catch (error) {
-                    showAlert('Lỗi', 'Không thể xóa rạp.', 'error');
+                    console.error('DELETE CINEMA ERROR:', error);
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', 'Không thể xóa rạp.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -490,22 +503,6 @@ const CinemaPage = () => {
     ];
 
     // ------------------------------------------------------
-    // HELPER: RENDER ALERT ICON
-    // ------------------------------------------------------
-    const renderAlertIcon = () => {
-        switch (alertModal.type) {
-            case 'success':
-                return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error':
-                return <XCircle size={58} color="#ef4444" />;
-            case 'warning':
-                return <AlertTriangle size={58} color="#f59e0b" />;
-            default:
-                return <Info size={58} color="#3b82f6" />;
-        }
-    };
-
-    // ------------------------------------------------------
     // RENDER
     // ------------------------------------------------------
     return (
@@ -536,10 +533,15 @@ const CinemaPage = () => {
                 )}
             </AdminPage>
 
+            {/* ==================================================
+                FORM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={handleCloseForm}
                 title={editingCinema ? 'Cập nhật rạp' : 'Thêm rạp'}
+                type="default"
+                size="lg"
             >
                 <AdminForm
                     fields={formFields}
@@ -552,31 +554,22 @@ const CinemaPage = () => {
                 />
             </AdminModal>
 
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
                 size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
-                        {renderAlertIcon()}
-                    </div>
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy
-                            </button>
-                        )}
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={alertModal.onConfirm || closeAlert}
-                        >
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

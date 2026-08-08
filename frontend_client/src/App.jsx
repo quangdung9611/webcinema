@@ -325,7 +325,7 @@ function AppContent() {
                                         <Route path="movies/detail/:slug" element={<MovieDetail />} />
                                         <Route path="actors" element={<Actor />} />
                                         <Route path="actor/:slug" element={<ActorDetail />} />
-                                        <Route path="cinema/:slug" element={<CinemaDetail />} />
+                                        <Route path="cinema/detail/:slug" element={<CinemaDetail />} />
                                         <Route path="foods" element={<Food />} />
                                         <Route path="cinema-genre" element={<CinemaGenre />} />
                                         <Route path="film-review" element={<FilmReview />} />

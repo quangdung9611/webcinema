@@ -7,11 +7,7 @@ import {
     Loader2,
     Film,
     MapPin,
-    Clock,
-    CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Info
+    Clock
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -62,6 +58,9 @@ const ShowTimePage = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [formErrors, setFormErrors] = useState({});
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -71,13 +70,25 @@ const ShowTimePage = () => {
         onCancel: null
     });
 
-    // ------------------------------------------------------
-    // ALERT HANDLER
-    // ------------------------------------------------------
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
-    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
+
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // ------------------------------------------------------
     // TIMEZONE HELPERS
@@ -185,13 +196,35 @@ const ShowTimePage = () => {
     }, []);
 
     // ------------------------------------------------------
+    // FETCH ROOMS BY CINEMA
+    // ------------------------------------------------------
+    const fetchRoomsByCinema = useCallback(async (cinemaId) => {
+        if (!cinemaId) {
+            setRooms([]);
+            return;
+        }
+        try {
+            const res = await api.get(`/api/rooms/cinema/${cinemaId}`);
+            const roomsData = res.data?.data || [];
+            setRooms(roomsData);
+        } catch (error) {
+            console.error('Fetch rooms error:', error);
+            setRooms([]);
+        }
+    }, []);
+
+    // ------------------------------------------------------
     // MOUNT
     // ------------------------------------------------------
     useEffect(() => {
         fetchShowtimes(1, '');
         fetchInitialData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [fetchShowtimes, fetchInitialData]);
 
     // ------------------------------------------------------
     // SEARCH DEBOUNCE
@@ -216,24 +249,6 @@ const ShowTimePage = () => {
     };
 
     // ------------------------------------------------------
-    // FETCH ROOMS BY CINEMA
-    // ------------------------------------------------------
-    const fetchRoomsByCinema = useCallback(async (cinemaId) => {
-        if (!cinemaId) {
-            setRooms([]);
-            return;
-        }
-        try {
-            const res = await api.get(`/api/rooms/cinema/${cinemaId}`);
-            const roomsData = res.data?.data || [];
-            setRooms(roomsData);
-        } catch (error) {
-            console.error('Fetch rooms error:', error);
-            setRooms([]);
-        }
-    }, []);
-
-    // ------------------------------------------------------
     // VALIDATE FORM
     // ------------------------------------------------------
     const validateForm = () => {
@@ -242,7 +257,8 @@ const ShowTimePage = () => {
         if (!formData.cinema_id) errors.cinema_id = 'Vui lòng chọn rạp';
         if (!formData.room_id) errors.room_id = 'Vui lòng chọn phòng';
         if (!formData.start_time) errors.start_time = 'Vui lòng chọn thời gian chiếu';
-        return errors;
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     // ------------------------------------------------------
@@ -274,10 +290,22 @@ const ShowTimePage = () => {
             });
             setIsFormOpen(true);
         } catch (error) {
+            console.error('FETCH SHOWTIME DETAIL ERROR:', error);
             showAlert('Lỗi', 'Không thể tải dữ liệu suất chiếu.', 'error');
         } finally {
             setLoading(false);
         }
+    };
+
+    // ------------------------------------------------------
+    // HANDLE CLOSE FORM
+    // ------------------------------------------------------
+    const handleCloseForm = () => {
+        if (submitLoading) return;
+        setIsFormOpen(false);
+        setEditingShowtime(null);
+        setFormErrors({});
+        setRooms([]);
     };
 
     // ------------------------------------------------------
@@ -286,17 +314,11 @@ const ShowTimePage = () => {
     const handleChange = async (e) => {
         const { name, value } = e.target;
 
-        setFormData((prev) => ({ ...prev, [name]: value }));
-
-        let errorMessage = '';
-        switch (name) {
-            case 'movie_id': if (!value) errorMessage = 'Vui lòng chọn phim'; break;
-            case 'cinema_id': if (!value) errorMessage = 'Vui lòng chọn rạp'; break;
-            case 'room_id': if (!value) errorMessage = 'Vui lòng chọn phòng'; break;
-            case 'start_time': if (!value) errorMessage = 'Vui lòng chọn thời gian chiếu'; break;
-            default: break;
+        if (formErrors[name]) {
+            setFormErrors((prev) => ({ ...prev, [name]: '' }));
         }
-        setFormErrors((prev) => ({ ...prev, [name]: errorMessage }));
+
+        setFormData((prev) => ({ ...prev, [name]: value }));
 
         if (name === 'cinema_id' && value) {
             setFormData((prev) => ({ ...prev, cinema_id: value, room_id: '' }));
@@ -309,11 +331,7 @@ const ShowTimePage = () => {
     // ------------------------------------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const errors = validateForm();
-        if (Object.keys(errors).length > 0) {
-            setFormErrors(errors);
-            return;
-        }
+        if (!validateForm()) return;
 
         try {
             setSubmitLoading(true);
@@ -326,15 +344,21 @@ const ShowTimePage = () => {
 
             if (editingShowtime) {
                 await api.put(`/api/showtimes/${editingShowtime.showtime_id}`, submitData);
-                showAlert('Thành công', 'Cập nhật suất chiếu thành công.', 'success');
+                setIsFormOpen(false);
+                fetchShowtimes(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Cập nhật suất chiếu thành công.', 'success');
+                }, 100);
             } else {
                 await api.post('/api/showtimes', submitData);
-                showAlert('Thành công', 'Thêm suất chiếu thành công.', 'success');
+                setIsFormOpen(false);
+                fetchShowtimes(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Thêm suất chiếu thành công.', 'success');
+                }, 100);
             }
-
-            setIsFormOpen(false);
-            fetchShowtimes(pagination.page, search);
         } catch (error) {
+            console.error('SUBMIT SHOWTIME ERROR:', error);
             const backendField = error.response?.data?.field;
             const backendError = error.response?.data?.error || 'Đã xảy ra lỗi.';
             if (backendField) {
@@ -364,10 +388,16 @@ const ShowTimePage = () => {
                     const newPage = showtimes.length === 1 && currentPage > 1
                         ? currentPage - 1
                         : currentPage;
-                    fetchShowtimes(newPage, search);
-                    showAlert('Thành công', 'Xóa suất chiếu thành công.', 'success');
+                    await fetchShowtimes(newPage, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Xóa suất chiếu thành công.', 'success');
+                    }, 100);
                 } catch (error) {
-                    showAlert('Lỗi', error.response?.data?.error || 'Không thể xóa suất chiếu.', 'error');
+                    console.error('DELETE SHOWTIME ERROR:', error);
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', error.response?.data?.error || 'Không thể xóa suất chiếu.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -486,18 +516,6 @@ const ShowTimePage = () => {
     ];
 
     // ------------------------------------------------------
-    // HELPER: RENDER ALERT ICON
-    // ------------------------------------------------------
-    const renderAlertIcon = () => {
-        switch (alertModal.type) {
-            case 'success': return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error': return <XCircle size={58} color="#ef4444" />;
-            case 'warning': return <AlertTriangle size={58} color="#f59e0b" />;
-            default: return <Info size={58} color="#3b82f6" />;
-        }
-    };
-
-    // ------------------------------------------------------
     // RENDER
     // ------------------------------------------------------
     return (
@@ -528,11 +546,15 @@ const ShowTimePage = () => {
                 )}
             </AdminPage>
 
-            {/* FORM MODAL */}
+            {/* ==================================================
+                FORM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={handleCloseForm}
                 title={editingShowtime ? 'Cập nhật suất chiếu' : 'Thêm suất chiếu'}
+                type="default"
+                size="lg"
             >
                 <AdminForm
                     fields={formFields}
@@ -545,29 +567,22 @@ const ShowTimePage = () => {
                 />
             </AdminModal>
 
-            {/* ALERT MODAL */}
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
                 size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
-                        {renderAlertIcon()}
-                    </div>
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy
-                            </button>
-                        )}
-                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

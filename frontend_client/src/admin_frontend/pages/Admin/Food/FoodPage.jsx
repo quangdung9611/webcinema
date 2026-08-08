@@ -5,18 +5,11 @@ import {
     Edit,
     Trash2,
     Loader2,
-    Package,
-    BadgeDollarSign,
-    ImagePlus,
     Tag,
     CircleDollarSign,
     CircleCheck,
     CircleX,
-    UtensilsCrossed,
-    CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Info
+    UtensilsCrossed
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -74,6 +67,9 @@ const FoodPage = () => {
     const [filePreviews, setFilePreviews] = useState({});
     const [formErrors, setFormErrors] = useState({});
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -83,14 +79,25 @@ const FoodPage = () => {
         onCancel: null
     });
 
-    // ------------------------------------------------------
-    // ALERT HANDLER
-    // ------------------------------------------------------
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
 
-    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // ------------------------------------------------------
     // FETCH FOODS - GIỐNG MoviePage
@@ -164,8 +171,12 @@ const FoodPage = () => {
     // ------------------------------------------------------
     useEffect(() => {
         fetchFoods(1, '');
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [fetchFoods]);
 
     // ------------------------------------------------------
     // SEARCH DEBOUNCE
@@ -248,6 +259,18 @@ const FoodPage = () => {
     };
 
     // ------------------------------------------------------
+    // HANDLE CLOSE FORM
+    // ------------------------------------------------------
+    const handleCloseForm = () => {
+        if (submitLoading) return;
+        setIsFormOpen(false);
+        setEditingFood(null);
+        setFormErrors({});
+        setFoodImage(null);
+        setFilePreviews({});
+    };
+
+    // ------------------------------------------------------
     // HANDLE FORM CHANGE
     // ------------------------------------------------------
     const handleChange = (e) => {
@@ -258,7 +281,7 @@ const FoodPage = () => {
         }
 
         if (name === 'food_image') {
-            const file = files[0];
+            const file = files?.[0] || null;
             setFoodImage(file);
             if (file) {
                 if (filePreviews.food_image?.url?.startsWith('blob:')) {
@@ -301,15 +324,21 @@ const FoodPage = () => {
 
             if (editingFood) {
                 await api.put(`/api/foods/${editingFood.product_id}`, submitData, config);
-                showAlert('Thành công', 'Cập nhật sản phẩm thành công.', 'success');
+                setIsFormOpen(false);
+                fetchFoods(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Cập nhật sản phẩm thành công.', 'success');
+                }, 100);
             } else {
                 await api.post('/api/foods', submitData, config);
-                showAlert('Thành công', 'Thêm sản phẩm thành công.', 'success');
+                setIsFormOpen(false);
+                fetchFoods(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Thêm sản phẩm thành công.', 'success');
+                }, 100);
             }
-
-            setIsFormOpen(false);
-            fetchFoods(pagination.page, search);
         } catch (error) {
+            console.error('SUBMIT FOOD ERROR:', error);
             const backendError = error.response?.data?.message || 'Đã xảy ra lỗi hệ thống.';
             if (error.response?.data?.field) {
                 setFormErrors({ [error.response.data.field]: backendError });
@@ -338,10 +367,16 @@ const FoodPage = () => {
                     const newPage = foods.length === 1 && currentPage > 1
                         ? currentPage - 1
                         : currentPage;
-                    fetchFoods(newPage, search);
-                    showAlert('Thành công', 'Xóa sản phẩm thành công.', 'success');
+                    await fetchFoods(newPage, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Xóa sản phẩm thành công.', 'success');
+                    }, 100);
                 } catch (error) {
-                    showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa sản phẩm.', 'error');
+                    console.error('DELETE FOOD ERROR:', error);
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa sản phẩm.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -499,22 +534,6 @@ const FoodPage = () => {
     ];
 
     // ------------------------------------------------------
-    // HELPER: RENDER ALERT ICON
-    // ------------------------------------------------------
-    const renderAlertIcon = () => {
-        switch (alertModal.type) {
-            case 'success':
-                return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error':
-                return <XCircle size={58} color="#ef4444" />;
-            case 'warning':
-                return <AlertTriangle size={58} color="#f59e0b" />;
-            default:
-                return <Info size={58} color="#3b82f6" />;
-        }
-    };
-
-    // ------------------------------------------------------
     // RENDER
     // ------------------------------------------------------
     return (
@@ -545,10 +564,15 @@ const FoodPage = () => {
                 )}
             </AdminPage>
 
+            {/* ==================================================
+                FORM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={handleCloseForm}
                 title={editingFood ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'}
+                type="default"
+                size="lg"
             >
                 <AdminForm
                     fields={formFields}
@@ -562,31 +586,22 @@ const FoodPage = () => {
                 />
             </AdminModal>
 
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
                 size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
-                        {renderAlertIcon()}
-                    </div>
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy
-                            </button>
-                        )}
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={alertModal.onConfirm || closeAlert}
-                        >
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

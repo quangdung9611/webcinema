@@ -10,11 +10,7 @@ import {
     Tag,
     CircleDollarSign,
     Clock3,
-    Percent,
-    CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Info
+    Percent
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -61,6 +57,9 @@ const CouponPage = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [formErrors, setFormErrors] = useState({});
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -70,13 +69,25 @@ const CouponPage = () => {
         onCancel: null
     });
 
-    // ------------------------------------------------------
-    // ALERT HANDLER
-    // ------------------------------------------------------
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
-    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
+
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // ------------------------------------------------------
     // FETCH COUPONS - GIỐNG MoviePage
@@ -150,8 +161,12 @@ const CouponPage = () => {
     // ------------------------------------------------------
     useEffect(() => {
         fetchCoupons(1, '');
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [fetchCoupons]);
 
     // ------------------------------------------------------
     // SEARCH DEBOUNCE
@@ -200,7 +215,8 @@ const CouponPage = () => {
                 errors.expiry_date = 'Ngày hết hạn không được ở quá khứ';
             }
         }
-        return errors;
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     // ------------------------------------------------------
@@ -226,13 +242,25 @@ const CouponPage = () => {
     };
 
     // ------------------------------------------------------
+    // HANDLE CLOSE FORM
+    // ------------------------------------------------------
+    const handleCloseForm = () => {
+        if (submitLoading) return;
+        setIsFormOpen(false);
+        setEditingCoupon(null);
+        setFormErrors({});
+    };
+
+    // ------------------------------------------------------
     // HANDLE CHANGE
     // ------------------------------------------------------
     const handleChange = (e) => {
         const { name, value } = e.target;
         const finalValue = name === 'coupon_code' ? value.toUpperCase() : value;
         setFormData((prev) => ({ ...prev, [name]: finalValue }));
-        setFormErrors((prev) => ({ ...prev, [name]: '' }));
+        if (formErrors[name]) {
+            setFormErrors((prev) => ({ ...prev, [name]: '' }));
+        }
     };
 
     // ------------------------------------------------------
@@ -240,11 +268,7 @@ const CouponPage = () => {
     // ------------------------------------------------------
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const errors = validateForm();
-        if (Object.keys(errors).length > 0) {
-            setFormErrors(errors);
-            return;
-        }
+        if (!validateForm()) return;
 
         try {
             setSubmitLoading(true);
@@ -258,15 +282,21 @@ const CouponPage = () => {
 
             if (editingCoupon) {
                 await api.put(`/api/coupons/${editingCoupon.coupon_id}`, payload);
-                showAlert('Thành công', 'Cập nhật mã giảm giá thành công.', 'success');
+                setIsFormOpen(false);
+                fetchCoupons(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Cập nhật mã giảm giá thành công.', 'success');
+                }, 100);
             } else {
                 await api.post('/api/coupons', payload);
-                showAlert('Thành công', 'Thêm mã giảm giá thành công.', 'success');
+                setIsFormOpen(false);
+                fetchCoupons(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Thêm mã giảm giá thành công.', 'success');
+                }, 100);
             }
-
-            setIsFormOpen(false);
-            fetchCoupons(pagination.page, search);
         } catch (error) {
+            console.error('SUBMIT COUPON ERROR:', error);
             const backendField = error.response?.data?.field;
             const backendError = error.response?.data?.message || error.response?.data?.error || 'Đã xảy ra lỗi hệ thống.';
             if (backendField) {
@@ -296,10 +326,16 @@ const CouponPage = () => {
                     const newPage = coupons.length === 1 && currentPage > 1
                         ? currentPage - 1
                         : currentPage;
-                    fetchCoupons(newPage, search);
-                    showAlert('Thành công', 'Xóa mã giảm giá thành công.', 'success');
+                    await fetchCoupons(newPage, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Xóa mã giảm giá thành công.', 'success');
+                    }, 100);
                 } catch (error) {
-                    showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa mã giảm giá.', 'error');
+                    console.error('DELETE COUPON ERROR:', error);
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa mã giảm giá.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -421,22 +457,6 @@ const CouponPage = () => {
     ];
 
     // ------------------------------------------------------
-    // HELPER: RENDER ALERT ICON
-    // ------------------------------------------------------
-    const renderAlertIcon = () => {
-        switch (alertModal.type) {
-            case 'success':
-                return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error':
-                return <XCircle size={58} color="#ef4444" />;
-            case 'warning':
-                return <AlertTriangle size={58} color="#f59e0b" />;
-            default:
-                return <Info size={58} color="#3b82f6" />;
-        }
-    };
-
-    // ------------------------------------------------------
     // RENDER
     // ------------------------------------------------------
     return (
@@ -467,11 +487,15 @@ const CouponPage = () => {
                 )}
             </AdminPage>
 
-            {/* FORM MODAL */}
+            {/* ==================================================
+                FORM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={handleCloseForm}
                 title={editingCoupon ? 'Cập nhật mã giảm giá' : 'Thêm mã giảm giá'}
+                type="default"
+                size="lg"
             >
                 <AdminForm
                     fields={formFields}
@@ -484,32 +508,22 @@ const CouponPage = () => {
                 />
             </AdminModal>
 
-            {/* ALERT MODAL */}
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
                 size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
-                        {renderAlertIcon()}
-                    </div>
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy
-                            </button>
-                        )}
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={alertModal.onConfirm || closeAlert}
-                        >
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

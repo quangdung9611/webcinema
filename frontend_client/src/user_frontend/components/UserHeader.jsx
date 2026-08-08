@@ -189,7 +189,7 @@ const UserHeader = () => {
                         <ul className="sub-menu">
                             {cinemas.map((cinema) => (
                                 <li key={cinema.cinema_id}>
-                                    <Link to={`/cinema/${cinema.slug}`} onClick={closeMobileMenu}>{cinema.cinema_name}</Link>
+                                    <Link to={`/cinema/detail/${cinema.slug}`} onClick={closeMobileMenu}>{cinema.cinema_name}</Link>
                                 </li>
                             ))}
                         </ul>

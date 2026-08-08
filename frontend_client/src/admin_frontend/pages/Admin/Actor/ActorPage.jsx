@@ -4,11 +4,7 @@ import {
     Smile,
     Edit,
     Trash2,
-    Loader2,
-    CheckCircle2,
-    XCircle,
-    AlertTriangle,
-    Info
+    Loader2
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -68,6 +64,9 @@ const ActorPage = () => {
     const [formErrors, setFormErrors] = useState({});
     const [filePreviews, setFilePreviews] = useState({});
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -77,14 +76,25 @@ const ActorPage = () => {
         onCancel: null
     });
 
-    // ======================================================
-    // ALERT HANDLER
-    // ======================================================
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
 
-    const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }));
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // ======================================================
     // FETCH ACTORS - GIỐNG MoviePage
@@ -115,7 +125,6 @@ const ActorPage = () => {
                 signal: controller.signal
             });
 
-            // ✅ Lấy trực tiếp từ res.data giống MoviePage
             const actorsData = res.data?.data || [];
             const paginationData = res.data?.pagination || {
                 page: 1,
@@ -158,8 +167,12 @@ const ActorPage = () => {
     // ======================================================
     useEffect(() => {
         fetchActors(1, '');
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [fetchActors]);
 
     // ======================================================
     // SEARCH DEBOUNCE
@@ -226,7 +239,8 @@ const ActorPage = () => {
         if (!editingActor && !actorAvatarFile) {
             errors.actor_avatar = 'Vui lòng chọn ảnh đại diện';
         }
-        return errors;
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     // ======================================================
@@ -264,6 +278,18 @@ const ActorPage = () => {
                 : {}
         );
         setIsFormOpen(true);
+    };
+
+    // ======================================================
+    // HANDLE CLOSE FORM
+    // ======================================================
+    const handleCloseForm = () => {
+        if (submitLoading) return;
+        setIsFormOpen(false);
+        setEditingActor(null);
+        setFormErrors({});
+        setActorAvatarFile(null);
+        setFilePreviews({});
     };
 
     // ======================================================
@@ -312,11 +338,7 @@ const ActorPage = () => {
     // ======================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const errors = validateForm();
-        if (Object.keys(errors).length > 0) {
-            setFormErrors(errors);
-            return;
-        }
+        if (!validateForm()) return;
 
         try {
             setSubmitLoading(true);
@@ -336,15 +358,21 @@ const ActorPage = () => {
 
             if (editingActor) {
                 await api.put(`/api/actors/${editingActor.actor_id}`, submitData, config);
-                showAlert('Thành công', 'Cập nhật diễn viên thành công.', 'success');
+                setIsFormOpen(false);
+                fetchActors(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Cập nhật diễn viên thành công.', 'success');
+                }, 100);
             } else {
                 await api.post('/api/actors', submitData, config);
-                showAlert('Thành công', 'Thêm diễn viên thành công.', 'success');
+                setIsFormOpen(false);
+                fetchActors(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Thêm diễn viên thành công.', 'success');
+                }, 100);
             }
-
-            setIsFormOpen(false);
-            fetchActors(pagination.page, search);
         } catch (error) {
+            console.error('SUBMIT ACTOR ERROR:', error);
             const backendError = error.response?.data?.message || error.response?.data?.error || 'Đã xảy ra lỗi.';
             if (error.response?.data?.field) {
                 setFormErrors({ [error.response.data.field]: backendError });
@@ -372,10 +400,16 @@ const ActorPage = () => {
                     const newPage = actors.length === 1 && currentPage > 1
                         ? currentPage - 1
                         : currentPage;
-                    fetchActors(newPage, search);
-                    showAlert('Thành công', 'Xóa diễn viên thành công.', 'success');
+                    await fetchActors(newPage, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Xóa diễn viên thành công.', 'success');
+                    }, 100);
                 } catch (error) {
-                    showAlert('Lỗi', 'Không thể xóa diễn viên.', 'error');
+                    console.error('DELETE ACTOR ERROR:', error);
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', 'Không thể xóa diễn viên.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -475,22 +509,6 @@ const ActorPage = () => {
     ];
 
     // ======================================================
-    // HELPER: RENDER ALERT ICON
-    // ======================================================
-    const renderAlertIcon = () => {
-        switch (alertModal.type) {
-            case 'success':
-                return <CheckCircle2 size={58} color="#22c55e" />;
-            case 'error':
-                return <XCircle size={58} color="#ef4444" />;
-            case 'warning':
-                return <AlertTriangle size={58} color="#f59e0b" />;
-            default:
-                return <Info size={58} color="#3b82f6" />;
-        }
-    };
-
-    // ======================================================
     // RENDER
     // ======================================================
     return (
@@ -521,10 +539,15 @@ const ActorPage = () => {
                 )}
             </AdminPage>
 
+            {/* ==================================================
+                FORM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={handleCloseForm}
                 title={editingActor ? 'Cập nhật diễn viên' : 'Thêm diễn viên'}
+                type="default"
+                size="lg"
             >
                 <AdminForm
                     fields={formFields}
@@ -538,31 +561,22 @@ const ActorPage = () => {
                 />
             </AdminModal>
 
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
                 size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '18px' }}>
-                        {renderAlertIcon()}
-                    </div>
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy
-                            </button>
-                        )}
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={alertModal.onConfirm || closeAlert}
-                        >
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

@@ -15,17 +15,13 @@ const getPosterUrl = (poster) => {
     return `https://api.quangdungcinema.id.vn/uploads/posters/${poster}`;
 };
 
-// ✅ Hàm parse dữ liệu an toàn, hỗ trợ nhiều cấu trúc
 const extractData = (response) => {
-    // Ưu tiên lấy response.data.data nếu là mảng
     if (response?.data?.data && Array.isArray(response.data.data)) {
         return response.data.data;
     }
-    // Nếu response.data là mảng
     if (response?.data && Array.isArray(response.data)) {
         return response.data;
     }
-    // Nếu response là mảng trực tiếp
     if (Array.isArray(response)) {
         return response;
     }
@@ -48,19 +44,37 @@ const MovieGenrePage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(4);
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
         message: '',
+        type: 'default',
         onConfirm: null,
-        onCancel: null,
+        onCancel: null
     });
 
-    const showAlert = (title, message, onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, onConfirm, onCancel });
+    const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
 
-    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // =====================================================
     // FETCH DATA
@@ -106,7 +120,7 @@ const MovieGenrePage = () => {
             setMovieGenreMap(initialMap);
         } catch (error) {
             console.error('❌ Fetch error:', error);
-            showAlert('Lỗi', 'Không thể tải dữ liệu hệ thống.');
+            showAlert('Lỗi', 'Không thể tải dữ liệu hệ thống.', 'error');
         } finally {
             setLoading(false);
         }
@@ -157,10 +171,11 @@ const MovieGenrePage = () => {
                 [selectedMovie.movie_id]: tempGenres,
             }));
 
-            showAlert('Thành công', `Đã cập nhật thể loại cho phim "${selectedMovie.title}".`);
+            showAlert('Thành công', `Đã cập nhật thể loại cho phim "${selectedMovie.title}".`, 'success');
             closeGenreModal();
         } catch (error) {
-            showAlert('Lỗi', 'Không thể cập nhật thể loại.');
+            console.error('SAVE GENRES ERROR:', error);
+            showAlert('Lỗi', 'Không thể cập nhật thể loại.', 'error');
         } finally {
             setSaving(false);
         }
@@ -259,11 +274,14 @@ const MovieGenrePage = () => {
                 )}
             </AdminPage>
 
-            {/* GENRE MODAL */}
+            {/* ==================================================
+                MODAL CHỌN THỂ LOẠI
+            ================================================== */}
             <AdminModal
                 open={genreModalOpen}
                 onClose={closeGenreModal}
                 title={`Chọn thể loại - ${selectedMovie?.title || ''}`}
+                type="default"
                 size="md"
             >
                 <div className="movie-genre-modal-content">
@@ -296,17 +314,17 @@ const MovieGenrePage = () => {
                             ))}
                     </div>
 
-                    <div className="movie-genre-modal-actions">
+                    <div className="admin-form-footer">
                         <button
                             type="button"
-                            className="movie-genre-cancel-btn"
+                            className="admin-cancel-btn"
                             onClick={closeGenreModal}
                         >
                             Hủy
                         </button>
                         <button
                             type="button"
-                            className="movie-genre-save-btn"
+                            className="admin-confirm-btn"
                             onClick={handleSaveGenres}
                             disabled={saving}
                         >
@@ -326,18 +344,22 @@ const MovieGenrePage = () => {
                 </div>
             </AdminModal>
 
-            {/* ALERT MODAL */}
-            <AdminModal open={alertModal.open} onClose={closeAlert} title={alertModal.title}>
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
+            <AdminModal
+                open={alertModal.open}
+                onClose={closeAlert}
+                title={alertModal.title}
+                type={alertModal.type}
+                size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
+            >
                 <div className="admin-alert-content">
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={alertModal.onConfirm || closeAlert}
-                        >
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

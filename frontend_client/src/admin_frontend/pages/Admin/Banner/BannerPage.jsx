@@ -30,7 +30,13 @@ const initialFormData = {
     is_active: true
 };
 
+// ==========================================================
+// COMPONENT
+// ==========================================================
 const BannerPage = () => {
+    // ======================================================
+    // STATES
+    // ======================================================
     const [banners, setBanners] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -54,6 +60,9 @@ const BannerPage = () => {
     const [bannerImageFile, setBannerImageFile] = useState(null);
     const [formErrors, setFormErrors] = useState({});
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -64,17 +73,37 @@ const BannerPage = () => {
     });
 
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
 
-    const closeAlert = () => setAlertModal(prev => ({ ...prev, open: false }));
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // ======================================================
-    // FETCH BANNERS (PAGINATION + SEARCH) - GỌI /paginated
+    // FETCH BANNERS (PAGINATION + SEARCH)
     // ======================================================
     const fetchBanners = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) return;
-        if (abortControllerRef.current) abortControllerRef.current.abort();
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
+        }
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
@@ -83,27 +112,43 @@ const BannerPage = () => {
 
         try {
             const res = await api.get('/api/banners/paginated', {
-                params: { page, limit: 20, search: keyword.trim() },
+                params: {
+                    page,
+                    limit: 20,
+                    search: keyword.trim()
+                },
                 signal: controller.signal
             });
 
-            const responseData = res.data?.data;
-            const bannersData = responseData?.data || [];
-            const paginationData = responseData?.pagination || {
+            // ✅ Lấy trực tiếp từ res.data giống các trang khác
+            const bannersData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
                 page: 1,
                 limit: 20,
                 total: 0,
-                totalPages: 1
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
             };
 
             setBanners(bannersData);
             setPagination(paginationData);
-
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
             console.error('FETCH BANNERS ERROR:', error);
-            showAlert('Lỗi', 'Không thể tải danh sách banner.', 'error');
             setBanners([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
+            showAlert('Lỗi', 'Không thể tải danh sách banner.', 'error');
         } finally {
             setLoading(false);
             isFetching.current = false;
@@ -113,23 +158,39 @@ const BannerPage = () => {
         }
     }, []);
 
+    // ======================================================
+    // MOUNT
+    // ======================================================
     useEffect(() => {
         fetchBanners(1, '');
-    }, []);
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [fetchBanners]);
 
     // ======================================================
     // SEARCH DEBOUNCE
     // ======================================================
     const prevSearchRef = useRef('');
     useEffect(() => {
-        if (search === prevSearchRef.current) return;
-        prevSearchRef.current = search;
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
 
-        const timer = setTimeout(() => fetchBanners(1, search), 400);
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchBanners(1, currentSearch);
+        }, 400);
+
         return () => clearTimeout(timer);
     }, [search, fetchBanners]);
 
-    const handlePageChange = (page) => fetchBanners(page, search);
+    const handlePageChange = (page) => {
+        fetchBanners(page, search);
+    };
 
     // ======================================================
     // VALIDATE FORM
@@ -145,7 +206,8 @@ const BannerPage = () => {
         if (bannerImageFile && !bannerImageFile.type.startsWith('image/')) {
             errors.image_url = 'Vui lòng chọn file ảnh (jpg, png, ...)';
         }
-        return errors;
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
     // ======================================================
@@ -171,19 +233,33 @@ const BannerPage = () => {
     };
 
     // ======================================================
+    // HANDLE CLOSE FORM
+    // ======================================================
+    const handleCloseForm = () => {
+        if (submitLoading) return;
+        setIsFormOpen(false);
+        setEditingBanner(null);
+        setFormErrors({});
+        setBannerImageFile(null);
+    };
+
+    // ======================================================
     // HANDLE FORM CHANGE
     // ======================================================
     const handleChange = (e) => {
         const { name, value, type, checked, files } = e.target;
 
+        if (formErrors[name]) {
+            setFormErrors(prev => ({ ...prev, [name]: '' }));
+        }
+
         if (name === 'image_url') {
-            setBannerImageFile(files[0]);
+            setBannerImageFile(files?.[0] || null);
             return;
         }
 
         const newValue = type === 'checkbox' ? checked : value;
         setFormData((prev) => ({ ...prev, [name]: newValue }));
-        setFormErrors((prev) => ({ ...prev, [name]: '' }));
     };
 
     // ======================================================
@@ -191,11 +267,7 @@ const BannerPage = () => {
     // ======================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const errors = validateForm();
-        if (Object.keys(errors).length > 0) {
-            setFormErrors(errors);
-            return;
-        }
+        if (!validateForm()) return;
 
         try {
             setSubmitLoading(true);
@@ -210,15 +282,21 @@ const BannerPage = () => {
 
             if (editingBanner) {
                 await api.put(`/api/banners/${editingBanner.banner_id}`, submitData, config);
-                showAlert('Thành công', 'Cập nhật banner thành công.', 'success');
+                setIsFormOpen(false);
+                fetchBanners(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Cập nhật banner thành công.', 'success');
+                }, 100);
             } else {
                 await api.post('/api/banners', submitData, config);
-                showAlert('Thành công', 'Thêm banner thành công.', 'success');
+                setIsFormOpen(false);
+                fetchBanners(pagination.page, search);
+                setTimeout(() => {
+                    showAlert('Thành công', 'Thêm banner thành công.', 'success');
+                }, 100);
             }
-
-            setIsFormOpen(false);
-            fetchBanners(pagination.page, search);
         } catch (error) {
+            console.error('SUBMIT BANNER ERROR:', error);
             const backendField = error.response?.data?.field;
             const backendMessage = error.response?.data?.message || 'Đã xảy ra lỗi.';
             if (backendField) {
@@ -244,13 +322,20 @@ const BannerPage = () => {
                     await api.delete(`/api/banners/${banner.banner_id}`);
                     closeAlert();
 
-                    const newPage = banners.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
-                    fetchBanners(newPage, search);
-                    showAlert('Thành công', 'Xóa banner thành công.', 'success');
+                    const currentPage = pagination.page;
+                    const newPage = banners.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
+                    await fetchBanners(newPage, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Xóa banner thành công.', 'success');
+                    }, 100);
                 } catch (error) {
-                    showAlert('Lỗi', 'Không thể xóa banner.', 'error');
+                    console.error('DELETE BANNER ERROR:', error);
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', 'Không thể xóa banner.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -384,6 +469,9 @@ const BannerPage = () => {
         }
     ];
 
+    // ======================================================
+    // FILE PREVIEWS
+    // ======================================================
     const filePreviews = {};
     if (editingBanner && editingBanner.image_url) {
         filePreviews['image_url'] = {
@@ -424,10 +512,15 @@ const BannerPage = () => {
                 )}
             </AdminPage>
 
+            {/* ==================================================
+                FORM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
+                onClose={handleCloseForm}
                 title={editingBanner ? 'Cập nhật banner' : 'Thêm banner mới'}
+                type="default"
+                size="lg"
             >
                 <AdminForm
                     fields={formFields}
@@ -441,28 +534,22 @@ const BannerPage = () => {
                 />
             </AdminModal>
 
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
                 size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy
-                            </button>
-                        )}
-                        <button
-                            className="admin-confirm-btn"
-                            onClick={alertModal.onConfirm || closeAlert}
-                        >
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

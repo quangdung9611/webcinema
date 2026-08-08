@@ -74,29 +74,50 @@ const BookingPage = () => {
     const [bookingDetails, setBookingDetails] = useState([]);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
+    // ======================================================
+    // ALERT MODAL (giống UserPage)
+    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
         message: '',
+        type: 'default',
         onConfirm: null,
         onCancel: null
     });
 
-    // ------------------------------------------------------
-    // ALERT HANDLER
-    // ------------------------------------------------------
-    const showAlert = (title, message, onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, onConfirm, onCancel });
+    const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
 
-    const closeAlert = () => setAlertModal((prev) => ({ ...prev, open: false }));
+    const closeAlert = () => {
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
+    };
 
     // ------------------------------------------------------
     // FETCH BOOKINGS - GỌI /paginated
     // ------------------------------------------------------
     const fetchBookings = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) return;
-        if (abortControllerRef.current) abortControllerRef.current.abort();
+        if (isFetching.current) {
+            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
+            return;
+        }
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
 
         const controller = new AbortController();
         abortControllerRef.current = controller;
@@ -113,15 +134,35 @@ const BookingPage = () => {
                 signal: controller.signal
             });
 
-            const bookingsData = parseData(res);
-            const paginationData = parsePagination(res);
+            // ✅ Lấy trực tiếp từ res.data giống các trang khác
+            const bookingsData = res.data?.data || [];
+            const paginationData = res.data?.pagination || {
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            };
 
-            setBookings(Array.isArray(bookingsData) ? bookingsData : []);
+            setBookings(bookingsData);
             setPagination(paginationData);
         } catch (error) {
-            if (error.name === 'AbortError') return;
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+                console.log('🛑 Request bị hủy');
+                return;
+            }
             console.error('FETCH BOOKINGS ERROR:', error);
-            showAlert('Lỗi', 'Không thể tải danh sách đơn hàng.');
+            setBookings([]);
+            setPagination({
+                page: 1,
+                limit: 20,
+                total: 0,
+                totalPages: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            });
+            showAlert('Lỗi', 'Không thể tải danh sách đơn hàng.', 'error');
         } finally {
             setLoading(false);
             isFetching.current = false;
@@ -133,21 +174,34 @@ const BookingPage = () => {
 
     useEffect(() => {
         fetchBookings(1, '');
-    }, []);
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [fetchBookings]);
 
     // ------------------------------------------------------
     // SEARCH DEBOUNCE
     // ------------------------------------------------------
     const prevSearchRef = useRef('');
     useEffect(() => {
-        if (search === prevSearchRef.current) return;
-        prevSearchRef.current = search;
+        const currentSearch = search;
+        const prevSearch = prevSearchRef.current;
 
-        const timer = setTimeout(() => fetchBookings(1, search), 400);
+        if (currentSearch === prevSearch) return;
+        prevSearchRef.current = currentSearch;
+
+        const timer = setTimeout(() => {
+            fetchBookings(1, currentSearch);
+        }, 400);
+
         return () => clearTimeout(timer);
     }, [search, fetchBookings]);
 
-    const handlePageChange = (page) => fetchBookings(page, search);
+    const handlePageChange = (page) => {
+        fetchBookings(page, search);
+    };
 
     // ------------------------------------------------------
     // HANDLE VIEW DETAIL
@@ -182,7 +236,7 @@ const BookingPage = () => {
             setIsDetailOpen(true);
         } catch (error) {
             console.error('View detail error:', error);
-            showAlert('Lỗi', 'Không thể tải chi tiết đơn hàng.');
+            showAlert('Lỗi', 'Không thể tải chi tiết đơn hàng.', 'error');
         } finally {
             setLoading(false);
         }
@@ -196,13 +250,21 @@ const BookingPage = () => {
         showAlert(
             'Cập nhật trạng thái',
             `Bạn có chắc muốn chuyển đơn #${booking_id} sang "${nextStatus}"?`,
+            'warning',
             async () => {
                 try {
                     await api.put(`/api/bookings/update/${booking_id}/status`, { status: nextStatus });
                     closeAlert();
                     fetchBookings(pagination.page, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Cập nhật trạng thái thành công.', 'success');
+                    }, 100);
                 } catch (error) {
-                    showAlert('Lỗi', 'Không thể cập nhật trạng thái.');
+                    console.error('UPDATE STATUS ERROR:', error);
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', 'Không thể cập nhật trạng thái.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -216,16 +278,25 @@ const BookingPage = () => {
         showAlert(
             'Xác nhận xóa',
             `Bạn có chắc muốn xóa đơn "${memo}"?`,
+            'warning',
             async () => {
                 try {
                     await api.delete(`/api/bookings/delete/${booking_id}`);
                     closeAlert();
-                    const newPage = bookings.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
-                    fetchBookings(newPage, search);
+                    const currentPage = pagination.page;
+                    const newPage = bookings.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
+                    await fetchBookings(newPage, search);
+                    setTimeout(() => {
+                        showAlert('Thành công', 'Xóa đơn hàng thành công.', 'success');
+                    }, 100);
                 } catch (error) {
-                    showAlert('Lỗi', 'Không thể xóa đơn hàng.');
+                    console.error('DELETE BOOKING ERROR:', error);
+                    closeAlert();
+                    setTimeout(() => {
+                        showAlert('Lỗi', 'Không thể xóa đơn hàng.', 'error');
+                    }, 100);
                 }
             },
             closeAlert
@@ -346,11 +417,15 @@ const BookingPage = () => {
                 )}
             </AdminPage>
 
-            {/* DETAIL MODAL */}
+            {/* ==================================================
+                DETAIL MODAL
+            ================================================== */}
             <AdminModal
                 open={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
                 title={`CHI TIẾT ĐƠN HÀNG #${selectedBooking?.booking_id || ''}`}
+                type="info"
+                size="lg"
             >
                 {selectedBooking && (
                     <div className="booking-detail-wrapper">
@@ -447,24 +522,22 @@ const BookingPage = () => {
                 )}
             </AdminModal>
 
-            {/* ALERT MODAL */}
+            {/* ==================================================
+                ALERT / CONFIRM MODAL (giống UserPage)
+            ================================================== */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
+                type={alertModal.type || 'default'}
+                size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        {alertModal.onCancel && (
-                            <button className="admin-cancel-btn" onClick={alertModal.onCancel}>
-                                Hủy
-                            </button>
-                        )}
-                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

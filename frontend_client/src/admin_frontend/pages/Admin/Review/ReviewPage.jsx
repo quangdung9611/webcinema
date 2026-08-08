@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import api from '../../../../api/api';  // ✅ Import api thay vì axios
+import React, { useEffect, useState, useCallback } from 'react';
+import api from '../../../../api/api';
 import {
     Star,
-    User,
     Loader2,
     MessageSquare,
     Calendar
@@ -11,8 +10,6 @@ import {
 import AdminPage from '../../../components/AdminPage';
 import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
-
-// ❌ Xóa API_URL
 
 const ReviewPage = ({ movieId }) => {
 
@@ -23,7 +20,7 @@ const ReviewPage = ({ movieId }) => {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
     // =============================================
-    // ALERT MODAL
+    // ALERT MODAL (giống UserPage)
     // =============================================
 
     const [alertModal, setAlertModal] = useState({
@@ -36,34 +33,47 @@ const ReviewPage = ({ movieId }) => {
     });
 
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
+        setAlertModal({
+            open: true,
+            title,
+            message,
+            type,
+            onConfirm,
+            onCancel
+        });
     };
 
     const closeAlert = () => {
-        setAlertModal(prev => ({ ...prev, open: false }));
+        setAlertModal((prev) => ({
+            ...prev,
+            open: false,
+            onConfirm: null,
+            onCancel: null
+        }));
     };
 
     // =============================================
     // FETCH REVIEWS
     // =============================================
 
-    const fetchReviews = async () => {
+    const fetchReviews = useCallback(async () => {
         if (!movieId) return;
         setLoading(true);
         try {
-            const res = await api.get(`/api/reviews/${movieId}`);  // ✅ Dùng api
+            const res = await api.get(`/api/reviews/${movieId}`);
             setReviews(res.data);
         } catch (error) {
+            console.error('FETCH REVIEWS ERROR:', error);
             showAlert('Lỗi', 'Không thể tải danh sách bình luận.', 'error');
             setReviews([]);
         } finally {
             setLoading(false);
         }
-    };
+    }, [movieId]);
 
     useEffect(() => {
         fetchReviews();
-    }, [movieId]);
+    }, [fetchReviews]);
 
     // =============================================
     // VIEW DETAIL
@@ -204,7 +214,6 @@ const ReviewPage = ({ movieId }) => {
                 icon={<MessageSquare size={30} />}
                 searchValue={search}
                 onSearchChange={setSearch}
-                // Không có button thêm
             >
                 {loading ? (
                     <div className="admin-loading">
@@ -234,6 +243,7 @@ const ReviewPage = ({ movieId }) => {
                 open={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
                 title={`Chi tiết bình luận #${selectedReview?.review_id || ''}`}
+                type="info"
                 size="md"
             >
                 {selectedReview && (
@@ -306,7 +316,7 @@ const ReviewPage = ({ movieId }) => {
             </AdminModal>
 
             {/* =============================================
-                ALERT MODAL
+                ALERT / CONFIRM MODAL (giống UserPage)
             ============================================= */}
 
             <AdminModal
@@ -315,14 +325,13 @@ const ReviewPage = ({ movieId }) => {
                 title={alertModal.title}
                 type={alertModal.type}
                 size="sm"
+                onConfirm={alertModal.onConfirm || closeAlert}
+                onCancel={alertModal.onCancel || closeAlert}
+                confirmText="Xác nhận"
+                cancelText="Hủy"
             >
                 <div className="admin-alert-content">
                     <p>{alertModal.message}</p>
-                    <div className="admin-alert-actions">
-                        <button className="admin-confirm-btn" onClick={alertModal.onConfirm || closeAlert}>
-                            Xác nhận
-                        </button>
-                    </div>
                 </div>
             </AdminModal>
         </>

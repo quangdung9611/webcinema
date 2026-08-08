@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QUANG DUNG CINEMA - Trải Nghiệm Điện Ảnh Đẳng Cấp Quốc Tế</title>
+  
+  <!-- Google Fonts & FontAwesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="../styles//styles.css">
+</head>
+<body>
+
+  <!-- Ambient Glow Background Effects -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <!-- ===== TOP HEADER NAVIGATION ===== -->
+  <header class="navbar-header">
+    <div class="header-container">
+      <div class="brand-logo">
+        <div class="logo-icon">
+          <i class="fa-solid fa-film"></i>
+        </div>
+        <div class="logo-text">
+          <span class="brand-name">QUANG DUNG</span>
+          <span class="brand-sub">CINEMA</span>
+        </div>
+      </div>
+
+      <nav class="nav-links">
+        <a href="#hero" class="nav-item active"><i class="fa-solid fa-house"></i> Trang Chủ</a>
+        <a href="#movies" class="nav-item"><i class="fa-solid fa-clapperboard"></i> Phim Chiếu</a>
+        <a href="#booking" class="nav-item"><i class="fa-solid fa-ticket"></i> Mua Vé Nhanh</a>
+        <a href="#promotions" class="nav-item"><i class="fa-solid fa-gift"></i> Khuyến Mãi <span class="hot-pill">HOT</span></a>
+        <a href="#blog" class="nav-item"><i class="fa-solid fa-newspaper"></i> Góc Điện Ảnh</a>
+      </nav>
+
+      <div class="header-actions">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Tìm phim, rạp..." id="searchInput">
+          <kbd class="shortcut-key">Ctrl K</kbd>
+        </div>
+
+        <button class="btn-notification" aria-label="Thông báo">
+          <i class="fa-solid fa-bell"></i>
+          <span class="notification-dot"></span>
+        </button>
+
+        <div class="user-profile">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop" alt="User Avatar" class="avatar-img">
+          <div class="profile-info">
+            <span class="user-name">Quang Dũng</span>
+            <span class="user-rank"><i class="fa-solid fa-crown"></i> VIP Gold</span>
+          </div>
+          <i class="fa-solid fa-chevron-down dropdown-icon"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== HERO BANNER CAROUSEL ===== -->
+  <section class="hero-section" id="hero">
+    <div class="hero-slider">
+      
+      <!-- Slide 1 -->
+      <div class="hero-slide active" data-bg="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&auto=format&fit=crop">
+        <div class="slide-backdrop" style="background-image: url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&auto=format&fit=crop');"></div>
+        <div class="hero-vignette"></div>
+        <div class="hero-content">
+          <div class="format-badges">
+            <span class="badge badge-imax"><i class="fa-solid fa-bolt"></i> IMAX 3D</span>
+            <span class="badge badge-dolby"><i class="fa-solid fa-volume-high"></i> DOLBY ATMOS</span>
+            <span class="badge badge-rating">T18 - 148 Phút</span>
+          </div>
+          <h1 class="movie-hero-title">AVATAR: DÒNG CHẢY CỦA NƯỚC</h1>
+          <p class="movie-hero-desc">Trở lại hành tinh Pandora với chuyến phiêu lưu kỳ vĩ dưới lòng đại dương sâu thẫm. Trải nghiệm công nghệ hình ảnh Laser 4K sắc nét chưa từng có.</p>
+
+          <div class="hero-buttons">
+            <button class="btn-primary-gold" onclick="scrollToBooking('Avatar 2')">
+              <i class="fa-solid fa-ticket"></i> ĐẶT VÉ NGAY
+            </button>
+            <button class="btn-glass" onclick="openTrailerModal('https://www.youtube.com/embed/d9MyW72ELq0')">
+              <i class="fa-solid fa-play"></i> XEM TRAILER
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 2 -->
+      <div class="hero-slide" data-bg="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1600&auto=format&fit=crop">
+        <div class="slide-backdrop" style="background-image: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1600&auto=format&fit=crop');"></div>
+        <div class="hero-vignette"></div>
+        <div class="hero-content">
+          <div class="format-badges">
+            <span class="badge badge-imax"><i class="fa-solid fa-fire"></i> BOM TẤN 2026</span>
+            <span class="badge badge-dolby">DOLBY VISION</span>
+            <span class="badge badge-rating">P - MỌI LỨA TUỔI</span>
+          </div>
+          <h1 class="movie-hero-title">THỎ ƠI!! - MÙNG 1 TẾT</h1>
+          <p class="movie-hero-desc">Bộ phim hài gia đình ấm áp, đong đầy tiếng cười và cảm xúc lắng đọng dịp đầu năm mới từ đạo diễn Trấn Thành.</p>
+
+          <div class="hero-buttons">
+            <button class="btn-primary-gold" onclick="scrollToBooking('Thỏ Ơi')">
+              <i class="fa-solid fa-ticket"></i> ĐẶT VÉ NGAY
+            </button>
+            <button class="btn-glass" onclick="openTrailerModal('https://www.youtube.com/embed/d9MyW72ELq0')">
+              <i class="fa-solid fa-play"></i> XEM TRAILER
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Slider Controls -->
+    <div class="slider-controls">
+      <button class="slider-nav prev" id="prevSlide"><i class="fa-solid fa-chevron-left"></i></button>
+      <div class="slider-dots">
+        <span class="dot active"></span>
+        <span class="dot"></span>
+      </div>
+      <button class="slider-nav next" id="nextSlide"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+  </section>
+
+  <!-- ===== FLOATING GLASS QUICK BOOKING BAR ===== -->
+  <section class="booking-section-wrapper" id="booking">
+    <div class="booking-glass-card">
+      <div class="booking-card-header">
+        <div class="booking-title">
+          <i class="fa-solid fa-bolt-lightning icon-pulse"></i>
+          <span>MUA VÉ NHANH CHIẾU RẠP</span>
+        </div>
+        <div class="booking-subtitle">30 Giây Chọn Vé - Giữ Ghế Đẹp Nhất</div>
+      </div>
+
+      <div class="booking-steps-grid">
+        <!-- Step 1: Chọn Phim -->
+        <div class="step-input-group">
+          <label class="step-label"><span class="step-num">01</span> Chọn Phim</label>
+          <div class="custom-select-wrapper">
+            <i class="fa-solid fa-film input-icon"></i>
+            <select id="selectMovie">
+              <option value="">-- Chọn Phim --</option>
+              <option value="1">Avatar: Dòng Chảy Của Nước (IMAX 3D)</option>
+              <option value="2">Thỏ Ơi!! (Mùng 1 Tết)</option>
+              <option value="3">Quỷ Bắt Hồn (Kinh Dị T18)</option>
+              <option value="4">Thiên Đường Máu (Hành Động)</option>
+              <option value="5">Thám Tử Lừng Danh Conan (Hoạt Hình)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 2: Chọn Rạp -->
+        <div class="step-input-group">
+          <label class="step-label"><span class="step-num">02</span> Chọn Rạp</label>
+          <div class="custom-select-wrapper">
+            <i class="fa-solid fa-location-dot input-icon"></i>
+            <select id="selectCinema" disabled>
+              <option value="">-- Chọn Rạp Chiếu --</option>
+              <option value="c1">QD Cinema Landmark 81 (IMAX Laser)</option>
+              <option value="c2">QD Cinema Vạn Hạnh Mall</option>
+              <option value="c3">QD Cinema Tây Hồ Hà Nội</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 3: Chọn Ngày -->
+        <div class="step-input-group">
+          <label class="step-label"><span class="step-num">03</span> Chọn Ngày</label>
+          <div class="custom-select-wrapper">
+            <i class="fa-solid fa-calendar-days input-icon"></i>
+            <select id="selectDate" disabled>
+              <option value="">-- Chọn Ngày Xem --</option>
+              <option value="2026-08-08">Hôm nay - 08/08/2026</option>
+              <option value="2026-08-09">Ngày mai - 09/08/2026</option>
+              <option value="2026-08-10">Thứ Hai - 10/08/2026</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 4: Chọn Suất -->
+        <div class="step-input-group">
+          <label class="step-label"><span class="step-num">04</span> Suất Chiếu</label>
+          <div class="custom-select-wrapper">
+            <i class="fa-solid fa-clock input-icon"></i>
+            <select id="selectShowtime" disabled>
+              <option value="">-- Chọn Suất Chiếu --</option>
+              <option value="st1">18:30 - Phim 2D Sảnh VIP</option>
+              <option value="st2">19:45 - IMAX Laser 3D (Còn 32 ghế)</option>
+              <option value="st3">21:15 - Dolby Atmos (Còn 15 ghế)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-booking-submit" id="btnSubmitBooking">
+        <i class="fa-solid fa-ticket"></i> XÁC NHẬN ĐẶT VÉ
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== MAIN CONTAINER ===== -->
+  <main class="main-content">
+
+    <!-- 4 FEATURE HIGHLIGHTS -->
+    <section class="features-highlight-grid">
+      <div class="feature-card">
+        <div class="card-glow"></div>
+        <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div class="feature-body">
+          <h3>ĐẶT VÉ SIÊU TỐC</h3>
+          <p>Giữ ghế yêu thích chỉ trong 30 giây thanh toán</p>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="card-glow"></div>
+        <div class="feature-icon"><i class="fa-solid fa-crown"></i></div>
+        <div class="feature-body">
+          <h3>ĐẶC QUYỀN VIP</h3>
+          <p>Tích điểm đổi vé & ưu đãi quà tặng sinh nhật</p>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="card-glow"></div>
+        <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="feature-body">
+          <h3>THANH TOÁN AN TOÀN</h3>
+          <p>Hỗ trợ Momo, ZaloPay, VNPay, Visa/Mastercard</p>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="card-glow"></div>
+        <div class="feature-icon"><i class="fa-solid fa-vr-cardboard"></i></div>
+        <div class="feature-body">
+          <h3>ÂM THANH DOLBY</h3>
+          <p>Màn hình sắc nét IMAX 4K & Hệ thống âm thanh sống động</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MOVIE SPOTLIGHT & LISTING -->
+    <section class="movie-spotlight-section" id="movies">
+      <div class="section-top-bar">
+        <div class="section-title-wrap">
+          <span class="sub-tag"><i class="fa-solid fa-fire"></i> ĐANG KHỞI CHIẾU</span>
+          <h2 class="section-main-title">PHIM ĐANG CHIẾU TẠI RẠP</h2>
+        </div>
+
+        <div class="filter-chips">
+          <button class="chip active" data-filter="all">Tất Cả</button>
+          <button class="chip" data-filter="action">Hành Động</button>
+          <button class="chip" data-filter="horror">Kinh Dị</button>
+          <button class="chip" data-filter="animation">Hoạt Hình</button>
+          <button class="chip" data-filter="comedy">Hài Hước</button>
+        </div>
+      </div>
+
+      <!-- Movie Grid -->
+      <div class="movies-cards-grid">
+        
+        <!-- Movie Item 1 -->
+        <div class="movie-card" data-category="action">
+          <div class="poster-container">
+            <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&auto=format&fit=crop" alt="Avatar 2" class="poster-img">
+            <span class="badge-age age-t18">T18</span>
+            <div class="poster-overlay">
+              <button class="btn-quick-book-card" onclick="scrollToBooking('Avatar')">
+                <i class="fa-solid fa-ticket"></i> MUA VÉ
+              </button>
+              <button class="btn-play-trailer" onclick="openTrailerModal('https://www.youtube.com/embed/d9MyW72ELq0')">
+                <i class="fa-solid fa-play"></i>
+              </button>
+            </div>
+          </div>
+          <div class="movie-card-info">
+            <div class="rating-stars"><i class="fa-solid fa-star"></i> 9.8 / 10</div>
+            <h3 class="movie-title">AVATAR: DÒNG CHẢY CỦA NƯỚC</h3>
+            <div class="movie-meta"><span>Viễn Tưởng</span> • <span>192 Phút</span></div>
+          </div>
+        </div>
+
+        <!-- Movie Item 2 -->
+        <div class="movie-card" data-category="comedy">
+          <div class="poster-container">
+            <img src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&auto=format&fit=crop" alt="Thỏ Ơi" class="poster-img">
+            <span class="badge-age age-p">P</span>
+            <div class="poster-overlay">
+              <button class="btn-quick-book-card" onclick="scrollToBooking('Thỏ Ơi')">
+                <i class="fa-solid fa-ticket"></i> MUA VÉ
+              </button>
+              <button class="btn-play-trailer" onclick="openTrailerModal('https://www.youtube.com/embed/d9MyW72ELq0')">
+                <i class="fa-solid fa-play"></i>
+              </button>
+            </div>
+          </div>
+          <div class="movie-card-info">
+            <div class="rating-stars"><i class="fa-solid fa-star"></i> 9.5 / 10</div>
+            <h3 class="movie-title">THỎ ƠI!! - MÙNG 1 TẾT</h3>
+            <div class="movie-meta"><span>Hài Hước, Gia Đình</span> • <span>115 Phút</span></div>
+          </div>
+        </div>
+
+        <!-- Movie Item 3 -->
+        <div class="movie-card" data-category="horror">
+          <div class="poster-container">
+            <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop" alt="Quỷ Bắt Hồn" class="poster-img">
+            <span class="badge-age age-t18">T18</span>
+            <div class="poster-overlay">
+              <button class="btn-quick-book-card" onclick="scrollToBooking('Quỷ Bắt Hồn')">
+                <i class="fa-solid fa-ticket"></i> MUA VÉ
+              </button>
+              <button class="btn-play-trailer" onclick="openTrailerModal('https://www.youtube.com/embed/d9MyW72ELq0')">
+                <i class="fa-solid fa-play"></i>
+              </button>
+            </div>
+          </div>
+          <div class="movie-card-info">
+            <div class="rating-stars"><i class="fa-solid fa-star"></i> 9.2 / 10</div>
+            <h3 class="movie-title">QUỶ BẮT HỒN (T18)</h3>
+            <div class="movie-meta"><span>Kinh Dị, Giật Gân</span> • <span>108 Phút</span></div>
+          </div>
+        </div>
+
+        <!-- Movie Item 4 -->
+        <div class="movie-card" data-category="action">
+          <div class="poster-container">
+            <img src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop" alt="Thiên Đường Máu" class="poster-img">
+            <span class="badge-age age-t16">T16</span>
+            <div class="poster-overlay">
+              <button class="btn-quick-book-card" onclick="scrollToBooking('Thiên Đường Máu')">
+                <i class="fa-solid fa-ticket"></i> MUA VÉ
+              </button>
+              <button class="btn-play-trailer" onclick="openTrailerModal('https://www.youtube.com/embed/d9MyW72ELq0')">
+                <i class="fa-solid fa-play"></i>
+              </button>
+            </div>
+          </div>
+          <div class="movie-card-info">
+            <div class="rating-stars"><i class="fa-solid fa-star"></i> 9.0 / 10</div>
+            <h3 class="movie-title">THIÊN ĐƯỜNG MÁU</h3>
+            <div class="movie-meta"><span>Hành Động, Tội Phạm</span> • <span>124 Phút</span></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PROMOTIONS SECTION -->
+    <section class="promotions-section" id="promotions">
+      <div class="section-top-bar">
+        <div class="section-title-wrap">
+          <span class="sub-tag"><i class="fa-solid fa-gift"></i> ƯU ĐÃI NỔI BẬT</span>
+          <h2 class="section-main-title">KHUYẾN MÃI HẤP DẪN CỰC HOT</h2>
+        </div>
+        <a href="#promotions" class="btn-view-more">Xem Tất Cả <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+
+      <div class="promotions-grid">
+        <div class="promo-card">
+          <div class="promo-badge">GIẢM 50%</div>
+          <img src="https://images.unsplash.com/photo-1585647347384-2593bc35786b?w=600&auto=format&fit=crop" alt="Promo 1">
+          <div class="promo-body">
+            <h3>ƯU ĐÃI NHÓM BẠN THÂN</h3>
+            <p>Mua 4 vé tặng ngay 2 nước + 1 bắp ngọt khổng lồ cho nhóm bạn.</p>
+            <button class="btn-promo-action" onclick="copyCoupon('FRIENDS50')">NHẬN MÃ: FRIENDS50</button>
+          </div>
+        </div>
+
+        <div class="promo-card">
+          <div class="promo-badge">TÍCH ĐIỂM VIP</div>
+          <img src="https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=600&auto=format&fit=crop" alt="Promo 2">
+          <div class="promo-body">
+            <h3>THÀNH VIÊN NHẬN QUÀ KHỦNG</h3>
+            <p>X2 Điểm thưởng cho tất cả các giao dịch đặt vé online thứ 4 hàng tuần.</p>
+            <button class="btn-promo-action" onclick="copyCoupon('VIPDOUBLE')">NHẬN MÃ: VIPDOUBLE</button>
+          </div>
+        </div>
+
+        <div class="promo-card">
+          <div class="promo-badge">ĐỒNG GIÁ 45K</div>
+          <img src="https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=600&auto=format&fit=crop" alt="Promo 3">
+          <div class="promo-body">
+            <h3>THỨ 4 VUI VẺ - GIÁ CỰC ÊM</h3>
+            <p>Đồng giá 45.000 VNĐ/vé cho tất cả học sinh, sinh viên toàn quốc.</p>
+            <button class="btn-promo-action" onclick="copyCoupon('HAPPYWED')">NHẬN MÃ: HAPPYWED</button>
+          </div>
+        </div>
+
+        <div class="promo-card">
+          <div class="promo-badge">COMBO HOT</div>
+          <img src="https://images.unsplash.com/photo-1578849278619-e73505e9610f?w=600&auto=format&fit=crop" alt="Promo 4">
+          <div class="promo-body">
+            <h3>COMBO BẮP NƯỚC SIÊU TIẾT KIỆM</h3>
+            <p>Trọn bộ Bắp caramel thơm lừng + 2 ly Coca mát lạnh giá chỉ 79K.</p>
+            <button class="btn-promo-action" onclick="copyCoupon('COMBO79K')">NHẬN MÃ: COMBO79K</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CINEMA BLOG SECTION -->
+    <section class="blog-section" id="blog">
+      <div class="section-top-bar">
+        <div class="section-title-wrap">
+          <span class="sub-tag"><i class="fa-solid fa-newspaper"></i> TIN TỨC ĐIỆN ẢNH</span>
+          <h2 class="section-main-title">GÓC ĐIỆN ẢNH & REVIEWS</h2>
+        </div>
+        <a href="#blog" class="btn-view-more">Xem Tất Cả <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+
+      <div class="blog-grid">
+        <article class="blog-card">
+          <div class="blog-thumb">
+            <img src="https://images.unsplash.com/photo-1485846234645-a62644f84728?w=600&auto=format&fit=crop" alt="Blog 1">
+            <span class="blog-cat">TIN PHIM</span>
+          </div>
+          <div class="blog-content">
+            <div class="blog-date"><i class="fa-regular fa-calendar"></i> 08 Th08, 2026</div>
+            <h3>Cập Nhật Lịch Chiếu Phim Bom Tấn Mới Nhất Tháng 8</h3>
+            <p>Danh sách các tựa phim không thể bỏ lỡ tại hệ thống rạp Quang Dung Cinema tuần này.</p>
+            <a href="#blog" class="read-more">Đọc Thêm <i class="fa-solid fa-chevron-right"></i></a>
+          </div>
+        </article>
+
+        <article class="blog-card">
+          <div class="blog-thumb">
+            <img src="https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=600&auto=format&fit=crop" alt="Blog 2">
+            <span class="blog-cat">REVIEW</span>
+          </div>
+          <div class="blog-content">
+            <div class="blog-date"><i class="fa-regular fa-calendar"></i> 07 Th08, 2026</div>
+            <h3>Những Tựa Phim Tình Cảm Gây Sốt Phòng Vé Việt</h3>
+            <p>Đánh giá chi tiết những khoảnh khắc chạm tới trái tim người xem mùa lễ hội.</p>
+            <a href="#blog" class="read-more">Đọc Thêm <i class="fa-solid fa-chevron-right"></i></a>
+          </div>
+        </article>
+
+        <article class="blog-card">
+          <div class="blog-thumb">
+            <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&auto=format&fit=crop" alt="Blog 3">
+            <span class="blog-cat">TRẢI NGHIỆM</span>
+          </div>
+          <div class="blog-content">
+            <div class="blog-date"><i class="fa-regular fa-calendar"></i> 05 Th08, 2026</div>
+            <h3>Không Gian Rạp Chiếu Phim Hiện Đại Chuẩn Quốc Tế</h3>
+            <p>Trải nghiệm hệ thống ghế bọc da cao cấp và công nghệ âm thanh Dolby Atmos 7.1.</p>
+            <a href="#blog" class="read-more">Đọc Thêm <i class="fa-solid fa-chevron-right"></i></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-col brand-col">
+        <div class="brand-logo">
+          <div class="logo-icon"><i class="fa-solid fa-film"></i></div>
+          <div class="logo-text">
+            <span class="brand-name">QUANG DUNG</span>
+            <span class="brand-sub">CINEMA</span>
+          </div>
+        </div>
+        <p class="footer-about">Hệ thống rạp chiếu phim hàng đầu mang đến trải nghiệm giải trí điện ảnh đẳng cấp vượt trội với chất lượng âm thanh hình ảnh thế hệ mới.</p>
+        <div class="social-links">
+          <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+          <a href="#"><i class="fa-brands fa-youtube"></i></a>
+          <a href="#"><i class="fa-brands fa-tiktok"></i></a>
+          <a href="#"><i class="fa-brands fa-instagram"></i></a>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>DANH MỤC</h4>
+        <ul>
+          <li><a href="#hero">Trang Chủ</a></li>
+          <li><a href="#movies">Phim Đang Chiếu</a></li>
+          <li><a href="#movies">Phim Sắp Chiếu</a></li>
+          <li><a href="#promotions">Tin Khuyến Mãi</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>QUY ĐỊNH & ĐIỀU KHỎAN</h4>
+        <ul>
+          <li><a href="#">Điều Khoản Sử Dụng</a></li>
+          <li><a href="#">Chính Sách Bảo Mật</a></li>
+          <li><a href="#">Quy Định Đặt Vé</a></li>
+          <li><a href="#">Câu Hỏi Thường Gặp</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>HOTLINE CHIẾU RẠP</h4>
+        <div class="contact-info">
+          <p><i class="fa-solid fa-phone"></i> 1900 123 456</p>
+          <p><i class="fa-solid fa-envelope"></i> support@quangdungcinema.id.vn</p>
+          <p><i class="fa-solid fa-location-dot"></i> Landmark 81, TP. Hồ Chí Minh</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>© 2026 QUANG DUNG CINEMA. All rights reserved. Designed with Excellence.</p>
+    </div>
+  </footer>
+
+  <!-- TRAILER MODAL -->
+  <div class="modal-backdrop" id="trailerModal">
+    <div class="modal-dialog">
+      <button class="btn-close-modal" onclick="closeTrailerModal()"><i class="fa-solid fa-xmark"></i></button>
+      <div class="iframe-wrapper">
+        <iframe id="trailerIframe" src="" frameborder="0" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Script File -->
+  <script src="app.js"></script>
+</body>
+</html>

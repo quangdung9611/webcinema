@@ -3,8 +3,8 @@ import { X } from 'lucide-react';
 import '../styles/AdminModal.css';
 
 const AdminModal = ({
-    open, // đổi tên prop từ show -> open
-    onClose, // thay vì onCancel
+    open,
+    onClose,
     type = 'default',
     title,
     message,
@@ -52,12 +52,12 @@ const AdminModal = ({
                     {showActions && (
                         <div className="admin-modal-actions">
                             {onClose && (
-                                <button className="admin-modal-btn cancel" onClick={onClose}>
+                                <button className="admin-cancel-btn" onClick={onClose}>
                                     Hủy
                                 </button>
                             )}
                             {onConfirm && (
-                                <button className="admin-modal-btn confirm" onClick={onConfirm}>
+                                <button className="admin-confirm-btn" onClick={onConfirm}>
                                     Xác nhận
                                 </button>
                             )}
