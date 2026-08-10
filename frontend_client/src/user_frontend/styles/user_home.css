@@ -677,7 +677,16 @@
 .quick-booking-content {
   backface-visibility: hidden;
 }
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
 
+.section-icon {
+  color: var(--gold-primary, #f59e0b);
+  flex-shrink: 0;
+}
 /* ==========================================================
    15. RESPONSIVE – CLEAN, DỄ ĐỌC
    ========================================================== */

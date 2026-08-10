@@ -1,6 +1,6 @@
 /* ==========================================================
-   CINEMA CARD – DEMO OVERLAY EDITION 🎬
-   HOVER MỜ HÌNH HIỆN NÚT XEM CHI TIẾT GIỐNG DEMO INDEX.HTML
+   CINEMA CARD – SILVER EDITION 🎬
+   HOVER MỜ HÌNH HIỆN NÚT XEM CHI TIẾT
    ========================================================== */
 
 /* ---- CARD WRAPPER ---- */
@@ -16,7 +16,6 @@
   box-shadow: var(--cinema-card-shadow, 0 8px 24px rgba(0, 0, 0, 0.4));
   outline: none;
   
-  /* Hiệu ứng nhích nguyên khối card mượt mà */
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
               border-color 0.35s ease,
               box-shadow 0.35s ease,
@@ -25,13 +24,13 @@
   backface-visibility: hidden;
 }
 
-/* Hover nguyên card: Nhích nhẹ 6px + viền bạc mờ + bóng mờ */
+/* Hover: nâng 8px, viền bạc sáng, bóng bạc, nền sáng hơn */
 .cinema-card:hover {
-  transform: translateY(-6px);
-  border-color: var(--border-silver-hover, rgba(232, 232, 232, 0.45)) !important;
+  transform: translateY(-8px);
+  border-color: rgba(232, 232, 232, 0.45) !important;
   background: var(--cinema-card-bg-hover, #181b28);
-  box-shadow: var(--cinema-card-shadow, 0 16px 40px rgba(0, 0, 0, 0.6)),
-              var(--shadow-silver, 0 0 22px rgba(232, 232, 232, 0.18)) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6),
+              0 0 22px rgba(232, 232, 232, 0.18) !important;
 }
 
 .cinema-card:focus-visible {
@@ -64,14 +63,14 @@
   object-fit: cover;
   opacity: 0.94;
   transform: scale(1);
-  transition: transform 0.5s ease, opacity 0.5s ease, filter 0.5s ease;
+  transition: transform 0.6s ease, opacity 0.5s ease, filter 0.5s ease;
   will-change: transform, opacity;
   backface-visibility: hidden;
 }
 
-/* Hover: Ảnh phóng to nhẹ 5% từ từ */
+/* Hover: ảnh phóng to 8% */
 .cinema-card:hover .cinema-card-image img {
-  transform: scale(1.05);
+  transform: scale(1.08);
   opacity: 1;
   filter: brightness(1.04);
 }
@@ -101,7 +100,7 @@
   transform: scale(1.05);
 }
 
-/* ---- OVERLAY LÀM MỜ VÀ HIỆN NÚT XEM CHI TIẾT (GIỐNG DEMO INDEX.HTML) ---- */
+/* ---- OVERLAY LÀM MỜ VÀ HIỆN NÚT XEM CHI TIẾT ---- */
 .cinema-card-overlay {
   position: absolute;
   inset: 0;
@@ -121,7 +120,7 @@
   opacity: 1;
 }
 
-/* NÚT XEM CHI TIẾT */
+/* NÚT XEM CHI TIẾT – GRADIENT BẠC */
 .btn-card-action {
   display: inline-flex;
   align-items: center;
@@ -139,7 +138,8 @@
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(255, 255, 255, 0.25);
   transform: scale(0.9);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s ease;
 }
 
 .cinema-card:hover .btn-card-action {
@@ -169,6 +169,7 @@
   transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
+/* Hover title đổi màu trắng sáng + bóng bạc nhẹ */
 .cinema-card:hover .cinema-card-title {
   color: #F5F5F5;
   text-shadow: 0 0 30px rgba(232, 232, 232, 0.15);
@@ -189,7 +190,7 @@
     font-size: 0.75rem;
   }
   .cinema-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-6px);
   }
 }
 
@@ -201,6 +202,6 @@
     padding: 2px 8px;
   }
   .cinema-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
   }
 }

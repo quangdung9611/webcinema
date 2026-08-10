@@ -15,7 +15,9 @@ import {
   Star,
   CreditCard,
   Monitor,
-  ChevronRight
+  ChevronRight,
+  Gift,           // 👈 Icon cho khuyến mãi
+  Newspaper       // 👈 Icon cho góc điện ảnh
 } from 'lucide-react';
 
 import 'swiper/css';
@@ -101,7 +103,6 @@ const UserHome = () => {
     const fetchBanners = async () => {
       try {
         setBannerLoading(true);
-        // Chỉnh sửa: Dùng params object để tránh lỗi 400
         const res = await api.get('/api/banners', { params: { page: 'HOME' } });
         setBanners(unwrapArray(res.data));
       } catch (error) {
@@ -131,17 +132,14 @@ const UserHome = () => {
           api.get('/api/blog-cinema')
         ]);
 
-        // 1. Grouped Movies (Object chứa mảng, giữ nguyên dạng key-value)
         setGroupedMovies(statusRes.data || { "Đang chiếu": [], "Sắp chiếu": [] });
 
-        // 2. Quick Booking Movies (Dùng unwrapArray để lấy đúng mảng)
         const movieList = unwrapArray(movieRes.data);
         setQuickData({
           movies: movieList,
           cinemas: []
         });
 
-        // 3. Promotions và CinemaNews
         setPromotions(unwrapArray(promotionRes.data));
         setCinemaNews(unwrapArray(blogRes.data));
       } catch (error) {
@@ -161,7 +159,6 @@ const UserHome = () => {
   }, []);
 
   // ===== QUICK BOOKING EFFECTS =====
-  // Load Rạp khi chọn phim
   useEffect(() => {
     if (!selectedQuick.movie) {
       setQuickData(prev => ({ ...prev, cinemas: [] }));
@@ -190,7 +187,6 @@ const UserHome = () => {
     fetchCinemas();
   }, [selectedQuick.movie]);
 
-  // Load Ngày khi chọn rạp
   useEffect(() => {
     if (!selectedQuick.movie || !selectedQuick.cinema) {
       setAvailableDates([]);
@@ -203,7 +199,6 @@ const UserHome = () => {
         const res = await api.get('/api/showtimes/quick-booking', {
           params: { movie_id: selectedQuick.movie, cinema_id: selectedQuick.cinema }
         });
-        // unwrapArray rồi map lấy ngày
         const datesData = unwrapArray(res.data);
         setAvailableDates(datesData.map(d => d.show_date));
       } catch (error) {
@@ -220,7 +215,6 @@ const UserHome = () => {
     fetchDates();
   }, [selectedQuick.movie, selectedQuick.cinema]);
 
-  // Load Suất chiếu khi chọn ngày
   useEffect(() => {
     if (!selectedQuick.movie || !selectedQuick.cinema || !selectedQuick.date) {
       setAvailableShowtimes([]);
@@ -475,7 +469,6 @@ const UserHome = () => {
                   }
                 >
                   <option value="">Chọn phim</option>
-                  {/* SỬA LỖI QUAN TRỌNG: quickData.movies giờ đã là mảng thật sự */}
                   {quickData.movies.map(m => (
                     <option key={m.movie_id} value={m.movie_id}>{m.title}</option>
                   ))}
@@ -585,7 +578,7 @@ const UserHome = () => {
             </div>
           </ScrollReveal>
 
-          {/* Promotions */}
+          {/* Promotions – ĐÃ THÊM ICON */}
           <ScrollReveal
             direction="up"
             duration={0.6}
@@ -596,7 +589,10 @@ const UserHome = () => {
             <section className="promotions-section">
               <div className="section-header">
                 <div className="section-header-left">
-                  <h3 className="section-title">ƯU ĐÃI HẤP DẪN</h3>
+                  <h3 className="section-title">
+                    <Gift size={40} className="section-icon" />
+                    ƯU ĐÃI HẤP DẪN
+                  </h3>
                   <div className="title-underline"></div>
                 </div>
                 <button className="btn-view-all" onClick={() => navigate('/promotion')}>
@@ -630,7 +626,7 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
-          {/* Cinema corner */}
+          {/* Cinema corner – ĐÃ THÊM ICON */}
           <ScrollReveal
             direction="up"
             duration={0.6}
@@ -641,7 +637,10 @@ const UserHome = () => {
             <section className="cinema-corner-section">
               <div className="section-header">
                 <div className="section-header-left">
-                  <h3 className="section-title">GÓC ĐIỆN ẢNH</h3>
+                  <h3 className="section-title">
+                    <Newspaper size={40} className="section-icon" />
+                    GÓC ĐIỆN ẢNH
+                  </h3>
                   <div className="title-underline"></div>
                 </div>
                 <button className="btn-view-all" onClick={() => navigate('/blog-cinema')}>
@@ -680,4 +679,4 @@ const UserHome = () => {
   );
 };
 
-export default UserHome
+export default UserHome;
