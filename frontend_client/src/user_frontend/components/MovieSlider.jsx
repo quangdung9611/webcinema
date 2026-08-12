@@ -1,183 +1,163 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import MoviePreviewModal from "./MoviePreviewModal";
+import api from "../../api/api";
+import MovieCard from "./MovieCard";
+import MoviePreviewModal from "./MoviePreviewModal"; // thêm
 import "../styles/MovieSlider.css";
 
-const MovieSlider = ({ title, movies = [] }) => {
-    const navigate = useNavigate();
-    const cardRefs = useRef({});
+// Helper unwrap mảng
+const unwrapArray = (data) => {
+  if (Array.isArray(data)) return data;
+  if (data?.data && Array.isArray(data.data)) return data.data;
+  if (data?.movies && Array.isArray(data.movies)) return data.movies;
+  if (data?.result && Array.isArray(data.result)) return data.result;
+  if (data?.content && Array.isArray(data.content)) return data.content;
+  return [];
+};
 
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [hover, setHover] = useState(false);
-    const [isAnimating, setIsAnimating] = useState(false);
-    const [tiltValues, setTiltValues] = useState({});
+const MovieSlider = () => {
+  const navigate = useNavigate();
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedMovie, setSelectedMovie] = useState(null);
+  const [movies, setMovies] = useState([]);
+  const [genres, setGenres] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeGenre, setActiveGenre] = useState("");
 
-    useEffect(() => {
-        if (!movies.length || hover) return;
-        const timer = setInterval(() => nextSlide(), 4500);
-        return () => clearInterval(timer);
-    }, [hover, currentIndex, movies.length]);
+  // Modal state
+  const [selectedMovie, setSelectedMovie] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const nextSlide = () => {
-        if (isAnimating || !movies.length) return;
-        setIsAnimating(true);
-        setCurrentIndex((prev) => (prev + 1) % movies.length);
-        setTimeout(() => setIsAnimating(false), 700);
+  // Fetch movies theo genre
+  const fetchMovies = useCallback(async (genreSlug = "") => {
+    try {
+      setLoading(true);
+      const url = genreSlug
+        ? `/api/movies/with-genre?genre=${genreSlug}`
+        : `/api/movies`;
+      const response = await api.get(url);
+      const rawData = response.data;
+      const moviesArray = unwrapArray(rawData);
+      setMovies(moviesArray);
+    } catch (error) {
+      console.error("Lỗi tải phim:", error);
+      setMovies([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch genres
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const response = await api.get("/api/genres");
+        const rawData = response.data;
+        const genresArray = unwrapArray(rawData);
+        setGenres(genresArray);
+      } catch (error) {
+        console.error("Lỗi tải thể loại:", error);
+        setGenres([]);
+      }
     };
+    fetchGenres();
+  }, []);
 
-    const prevSlide = () => {
-        if (isAnimating || !movies.length) return;
-        setIsAnimating(true);
-        setCurrentIndex((prev) => (prev - 1 + movies.length) % movies.length);
-        setTimeout(() => setIsAnimating(false), 700);
-    };
+  // Load movies khi activeGenre thay đổi
+  useEffect(() => {
+    fetchMovies(activeGenre);
+  }, [activeGenre, fetchMovies]);
 
-    const positionMap = useMemo(() => {
-        const map = {};
-        if (!movies.length) return map;
-        movies.forEach(m => map[m.movie_id] = "hidden");
-        const total = movies.length;
-        const positions = [
-            (currentIndex - 2 + total) % total,
-            (currentIndex - 1 + total) % total,
-            currentIndex,
-            (currentIndex + 1) % total,
-            (currentIndex + 2) % total
-        ];
-        const posNames = ["position--2", "position--1", "position-0", "position-1", "position-2"];
-        positions.forEach((idx, i) => {
-            map[movies[idx].movie_id] = posNames[i];
-        });
-        return map;
-    }, [movies, currentIndex]);
+  // Phân loại phim theo status
+  const showingMovies = movies.filter((m) => m.status === "Đang chiếu");
+  const comingMovies = movies.filter((m) => m.status === "Sắp chiếu");
 
-    const handleMouseMove = (e, movieId) => {
-        const card = cardRefs.current[movieId];
-        if (!card) return;
-        const rect = card.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width - 0.5;
-        const y = (e.clientY - rect.top) / rect.height - 0.5;
-        setTiltValues(prev => ({
-            ...prev,
-            [movieId]: { rotateX: y * -12, rotateY: x * 15 }
-        }));
-    };
+  const handleCardClick = (movie) => {
+    setSelectedMovie(movie);
+    setIsModalOpen(true);
+  };
 
-    const handleMouseLeave = (movieId) => {
-        setTiltValues(prev => ({
-            ...prev,
-            [movieId]: { rotateX: 0, rotateY: 0 }
-        }));
-    };
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setSelectedMovie(null);
+    }, 850);
+  };
 
-    const getTiltStyle = (movieId, position) => {
-        const tilt = tiltValues[movieId];
-        if (!tilt || position !== 'position-0') return {};
-        return {
-            transform: `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) scale(1.03)`,
-            transition: 'transform 0.1s ease-out',
-            boxShadow: '0 40px 90px rgba(0, 0, 0, 0.7)'
-        };
-    };
+  // Component con để render một slider với title, movies và link xem tất cả
+  const renderSlider = (title, movieList, statusSlug) => {
+    if (movieList.length === 0) return null;
 
-    const handleCardClick = (movie) => {
-        setSelectedMovie(movie);
-        setIsModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setTimeout(() => {
-            setSelectedMovie(null);
-        }, 850);
-    };
-
-    if (!movies.length) return null;
+    const displayMovies = movieList.slice(0, 4);
+    const viewAllLink = `/movies/status/${statusSlug}`;
 
     return (
-        <section className="movie-slider">
-            <div className="movie-slider-header">
-                <div className="line"></div>
-                <h2>{title}</h2>
-                <div className="line"></div>
-            </div>
-
-            <div className="movie-slider-wrapper" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
-                <button className="slider-arrow slider-prev" onClick={prevSlide} aria-label="Previous">
-                    <ChevronLeft size={32} />
-                </button>
-
-                <div className="movie-stage">
-                    {movies.map((movie) => {
-                        const position = positionMap[movie.movie_id] || "hidden";
-                        const tiltStyle = getTiltStyle(movie.movie_id, position);
-                        const isCenter = position === 'position-0';
-
-                        // ✅ Chỉ lấy movie_poster, không xử lý gì thêm
-                        const posterUrl = movie.movie_poster || null;
-
-                        return (
-                            <div key={movie.movie_id} className={`movie-item ${position}`}>
-                                <div
-                                    ref={el => cardRefs.current[movie.movie_id] = el}
-                                    className="movie-card"
-                                    onClick={() => handleCardClick(movie)}
-                                    onMouseMove={(e) => { if (isCenter) handleMouseMove(e, movie.movie_id); }}
-                                    onMouseLeave={() => { if (isCenter) handleMouseLeave(movie.movie_id); }}
-                                    style={{
-                                        ...tiltStyle,
-                                        transition: isCenter ? 'transform 0.1s ease-out' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
-                                    }}
-                                >
-                                    {posterUrl ? (
-                                        <img
-                                            src={posterUrl}
-                                            alt={movie.title}
-                                            loading="lazy"
-                                            draggable={false}
-                                        />
-                                    ) : (
-                                        // Không có ảnh -> hiển thị khối trống (giữ layout)
-                                        <div className="movie-card-no-poster" />
-                                    )}
-                                    <div className="card-overlay"></div>
-                                    <div className="card-info">
-                                        <h3 className="card-title">{movie.title}</h3>
-                                        <span className="card-year">{movie.year || "2026"}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                <button className="slider-arrow slider-next" onClick={nextSlide} aria-label="Next">
-                    <ChevronRight size={32} />
-                </button>
-            </div>
-
-            <div className="movie-slider-dots">
-                {movies.map((movie, index) => (
-                    <button
-                        key={movie.movie_id}
-                        className={`slider-dot ${index === currentIndex ? "active" : ""}`}
-                        onClick={() => { if (!isAnimating) setCurrentIndex(index); }}
-                    />
-                ))}
-            </div>
-
-            <MoviePreviewModal
-                open={isModalOpen}
-                onClose={handleCloseModal}
-                movies={movies}
-                selectedMovie={selectedMovie}
+      <div className="movie-slider-group">
+        <div className="movie-slider-header">
+          <div className="section-header-left">
+            <h2 className="section-title">{title}</h2>
+            <div className="title-underline" />
+          </div>
+          <button className="btn-view-all" onClick={() => navigate(viewAllLink)}>
+            Xem tất cả
+          </button>
+        </div>
+        <div className="movie-grid">
+          {displayMovies.map((movie) => (
+            <MovieCard
+              key={movie.movie_id}
+              movie={movie}
+              onClick={() => handleCardClick(movie)}
             />
-        </section>
+          ))}
+        </div>
+      </div>
     );
+  };
+
+  return (
+    <div className="movie-slider-page">
+      {/* Tabs thể loại */}
+      <div className="genre-tabs">
+        <button
+          className={`genre-tab ${activeGenre === "" ? "active" : ""}`}
+          onClick={() => setActiveGenre("")}
+        >
+          Tất cả
+        </button>
+        {genres.map((genre) => (
+          <button
+            key={genre.genre_id}
+            className={`genre-tab ${activeGenre === genre.slug ? "active" : ""}`}
+            onClick={() => setActiveGenre(genre.slug)}
+          >
+            {genre.genre_name}
+          </button>
+        ))}
+      </div>
+
+      {/* Nội dung phim */}
+      <div className="movie-slider-content">
+        {loading ? (
+          <div className="loading-movies">Đang tải phim...</div>
+        ) : movies.length === 0 ? (
+          <div className="empty-movies">Không có phim nào</div>
+        ) : (
+          <>
+            {renderSlider("PHIM ĐANG CHIẾU", showingMovies, "phim-dang-chieu")}
+            {renderSlider("PHIM SẮP CHIẾU", comingMovies, "phim-sap-chieu")}
+          </>
+        )}
+      </div>
+
+      {/* Modal preview */}
+      <MoviePreviewModal
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        movies={movies}
+        selectedMovie={selectedMovie}
+      />
+    </div>
+  );
 };
 
 export default MovieSlider;

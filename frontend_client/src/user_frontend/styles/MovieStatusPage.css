@@ -1,13 +1,14 @@
 /* ============================================================
-   MOVIE STATUS PAGE – SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
+   MOVIE STATUS PAGE – SILVER PREMIUM EDITION 
+   SYNC WITH GLOBAL index.css
    KHÔNG BANNER
    ============================================================ */
 
 .movie-status-page {
     width: 100%;
-    background: var(--main-background);
+    min-height: 100dvh;
+    background: var(--bg-primary);
     color: var(--text-body);
-    min-height: 100vh;
 }
 
 /* ============================================================
@@ -19,9 +20,9 @@
     justify-content: space-between;
     align-items: center;
     gap: var(--space-lg);
-    max-width: 1300px;
+    max-width: var(--container-width);
     margin: var(--space-2xl) auto 0;
-    padding: 0 var(--space-lg);
+    padding: 0 var(--container-padding);
     flex-wrap: wrap;
 }
 
@@ -29,90 +30,121 @@
     display: flex;
     flex-direction: column;
     flex: 1;
+    min-width: 0;
 }
 
 .status-title {
     margin: 0;
     color: var(--text-heading);
     font-size: var(--font-size-h2);
-    font-weight: var(--fw-black);
-    letter-spacing: 0.02em;
+    font-weight: var(--fw-extrabold);
     text-transform: uppercase;
-    padding-bottom: 8px;
+    letter-spacing: 0.02em;
+    padding-bottom: var(--space-sm);
+    
+    /* Hiệu ứng glow nhẹ cho chữ */
+    text-shadow: 0 0 15px rgba(245, 245, 246, 0.08);
 }
 
+/* ==========================================================
+   TITLE UNDERLINE – MÀU XÁM BẠC LẤP LÁNH
+   ========================================================== */
 .title-underline {
-    width: 100%;
-    height: 4px;
+    width: fit-content;
+    min-width: 60px;
+    height: 3px;
     border-radius: var(--radius-round);
-    background: var(--cinema-border-gradient);
-    box-shadow: 0 0 20px rgba(232, 232, 232, 0.1);
+    
+    /* Gradient bạc lấp lánh */
+    background: var(--premium-gradient);
+    background-size: 200% 100%;
+    box-shadow: 0 0 12px rgba(245, 245, 246, 0.1);
+    
+    /* Animation shimmer nhẹ để tạo cảm giác premium */
+    animation: silverShimmer 4s linear infinite;
 }
 
-/* ============================================================
-   TABS
-   ============================================================ */
+@keyframes silverShimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* ==========================================================
+   TABS – NÚT CHỈ CÓ VIỀN KHI MẶC ĐỊNH
+   ========================================================== */
 
 .status-tabs {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
     flex-shrink: 0;
+    flex-wrap: wrap;
 }
 
 .status-tab {
-    border: var(--border-silver);
+    /* Mặc định: Chỉ có viền xám bạc sáng, nền trong suốt, chữ xám bạc */
     background: transparent;
+    border: var(--border-premium);
     color: var(--text-secondary);
+    
     padding: var(--space-sm) var(--space-xl);
     border-radius: var(--radius-round);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
     cursor: pointer;
-    transition: all var(--transition-normal);
     text-transform: uppercase;
     letter-spacing: 0.04em;
     min-width: 120px;
     text-align: center;
+    
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Hover: Giữ viền, sáng chữ lên một chút, nâng nhẹ */
 .status-tab:hover {
     transform: translateY(-2px);
-    border-color: var(--silver-primary);
-    color: var(--text-body);
-    background: rgba(232, 232, 232, 0.06);
-    box-shadow: var(--shadow-silver);
+    color: var(--text-heading);
+    border-color: var(--border-premium); /* Giữ nguyên viền sáng */
+    background: rgba(245, 245, 246, 0.04);
+    box-shadow: var(--shadow-sm);
 }
 
+/* Active: Nền Gradient Bạc, chữ đen tuyền (Premium) */
 .status-tab.active {
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
-    border-color: var(--silver-primary);
-    box-shadow: var(--shadow-silver);
+    background: var(--premium-gradient);
+    color: var(--bg-primary) !important;
+    border-color: transparent; /* Bỏ viền khi đã active vì nền đã nổi bật */
     font-weight: var(--fw-bold);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .status-tab.active:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 30px rgba(232, 232, 232, 0.3);
+    box-shadow: 0 4px 24px rgba(159, 183, 210, 0.3);
 }
 
-/* ============================================================
-   MOVIE LIST – 4 CỘT MẶC ĐỊNH
+/* ==========================================================
+   MOVIE LIST – GRID 4 CỘT
    ============================================================ */
 
 .movie-list {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--space-lg);
-    padding: var(--space-xl) var(--space-lg) var(--space-3xl);
-    max-width: 1320px;
+    padding: var(--space-xl) var(--container-padding) var(--space-3xl);
+    max-width: var(--container-width);
     margin: var(--space-xl) auto 0;
 }
 
-/* ============================================================
-   RESPONSIVE – DƯỚI 768px CHUYỂN 2 CỘT
+/* ==========================================================
+   RESPONSIVE – ĐỒNG BỘ VỚI INDEX.CSS
    ============================================================ */
+
+@media (max-width: 1200px) {
+    .movie-list {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
 
 @media (max-width: 992px) {
     .status-header {
@@ -124,15 +156,21 @@
         width: 100%;
         justify-content: flex-start;
     }
+    .movie-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 @media (max-width: 768px) {
     .status-header {
         margin-top: var(--space-xl);
-        padding: 0 var(--space-md);
+        padding: 0 var(--container-padding);
     }
     .status-title {
         font-size: var(--font-size-h3);
+    }
+    .title-underline {
+        height: 3px;
     }
     .status-tabs {
         gap: var(--space-xs);
@@ -141,43 +179,35 @@
         flex: 1;
         padding: var(--space-xs) var(--space-lg);
         font-size: var(--font-size-h6);
-        min-width: 100px;
+        min-width: 80px;
         letter-spacing: 0.02em;
     }
     .movie-list {
-        grid-template-columns: repeat(2, 1fr);
         gap: var(--space-md);
-        padding: var(--space-md) var(--space-md) var(--space-2xl);
+        padding: var(--space-md) var(--container-padding) var(--space-2xl);
         margin-top: var(--space-lg);
     }
 }
 
 @media (max-width: 480px) {
-    .status-header {
-        padding: 0 var(--space-sm);
-        margin-top: var(--space-lg);
-    }
     .status-title {
         font-size: var(--font-size-h4);
-    }
-    .status-tabs {
-        gap: var(--space-xs);
     }
     .status-tab {
         padding: var(--space-xs) var(--space-md);
         font-size: var(--font-size-h6);
-        min-width: 70px;
+        min-width: 60px;
         flex: 1;
     }
     .movie-list {
         grid-template-columns: repeat(2, 1fr);
         gap: var(--space-sm);
-        padding: var(--space-md) var(--space-sm) var(--space-xl);
+        padding: var(--space-md) var(--container-padding) var(--space-xl);
         margin-top: var(--space-md);
     }
 }
 
-/* ============================================================
+/* ==========================================================
    LOADING & EMPTY STATE
    ============================================================ */
 
@@ -195,16 +225,14 @@
 .loading-spinner {
     width: 48px;
     height: 48px;
-    border: 3px solid rgba(232, 232, 232, 0.1);
+    border: 3px solid rgba(245, 245, 246, 0.08);
     border-top-color: var(--silver-primary);
     border-radius: 50%;
     animation: spin 0.9s linear infinite;
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
 }
 
 .error-state {
@@ -212,22 +240,26 @@
     padding: var(--space-3xl) var(--space-lg);
 }
 
+/* Nút Retry – Chỉ có viền mặc định, hover đổi gradient */
 .retry-btn {
     margin-top: var(--space-md);
     padding: var(--space-sm) var(--space-xl);
-    border: none;
+    border: var(--border-premium); /* Viền xám bạc mặc định */
     border-radius: var(--radius-round);
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
+    background: transparent;
+    color: var(--text-body);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .retry-btn:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-silver);
+    background: var(--premium-gradient); /* Đổi nền thành bạc khi hover */
+    color: var(--bg-primary);
+    border-color: transparent;
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .empty-results {

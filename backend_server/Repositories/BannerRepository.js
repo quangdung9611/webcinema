@@ -1,414 +1,157 @@
-
 const db = require("../Config/db");
 
 class BannerRepository {
+  // Không phân trang → trả về mảng
+  async findAllAll(search = "", page = "") {
+    search = typeof search === "string" ? search.trim() : "";
+    page = typeof page === "string" ? page.trim() : "";
 
-    /* ==========================================================
-        FIND ALL - KHÔNG PHÂN TRANG
-        PUBLIC / ADMIN
+    const conditions = [];
+    const params = [];
 
-        HỖ TRỢ:
-        - search
-        - page key
-
-        RETURN:
-        [
-            {...},
-            {...}
-        ]
-    ========================================================== */
-    async findAllAll(search = "", page = "") {
-
-        search = typeof search === "string"
-            ? search.trim()
-            : "";
-
-        page = typeof page === "string"
-            ? page.trim()
-            : "";
-
-        const conditions = [];
-        const params = [];
-
-        /* ======================================================
-            SEARCH
-        ====================================================== */
-        if (search) {
-
-            conditions.push(`
-                (
-                    page LIKE ?
-                    OR image_url LIKE ?
-                )
-            `);
-
-            const keyword = `%${search}%`;
-
-            params.push(
-                keyword,
-                keyword
-            );
-        }
-
-        /* ======================================================
-            FILTER PAGE
-            Ví dụ:
-            HOME
-            PROMOTION
-            BLOG
-            MOVIE
-        ====================================================== */
-        if (page) {
-
-            conditions.push(`page = ?`);
-
-            params.push(page);
-        }
-
-        const whereClause = conditions.length
-            ? `WHERE ${conditions.join(" AND ")}`
-            : "";
-
-        const [rows] = await db.query(
-            `
-            SELECT
-                banner_id,
-                page,
-                image_url,
-                is_active,
-                created_at,
-                updated_at
-            FROM banners
-            ${whereClause}
-            ORDER BY created_at DESC, banner_id DESC
-            `,
-            params
-        );
-
-        /*
-         * KHÔNG trả:
-         * {
-         *     data: rows,
-         *     pagination: ...
-         * }
-         *
-         * Vì đây là endpoint KHÔNG PHÂN TRANG.
-         */
-        return rows;
+    if (search) {
+      conditions.push(`(page LIKE ? OR image_url LIKE ?)`);
+      const keyword = `%${search}%`;
+      params.push(keyword, keyword);
     }
 
-
-    /* ==========================================================
-        FIND ALL - CÓ PHÂN TRANG
-        ADMIN
-    ========================================================== */
-    async findAll(
-        onlyActive = false,
-        page = 1,
-        limit = 20,
-        search = ""
-    ) {
-
-        /* ======================================================
-            NORMALIZE PAGE
-        ====================================================== */
-        page = Number.parseInt(page, 10);
-
-        if (!Number.isFinite(page) || page < 1) {
-            page = 1;
-        }
-
-        /* ======================================================
-            NORMALIZE LIMIT
-        ====================================================== */
-        limit = Number.parseInt(limit, 10);
-
-        if (!Number.isFinite(limit) || limit < 1) {
-            limit = 20;
-        }
-
-        if (limit > 100) {
-            limit = 100;
-        }
-
-        /* ======================================================
-            NORMALIZE SEARCH
-        ====================================================== */
-        search = typeof search === "string"
-            ? search.trim()
-            : "";
-
-        const conditions = [];
-        const params = [];
-
-        /* ======================================================
-            SEARCH
-        ====================================================== */
-        if (search) {
-
-            conditions.push(`
-                (
-                    page LIKE ?
-                    OR image_url LIKE ?
-                )
-            `);
-
-            const keyword = `%${search}%`;
-
-            params.push(
-                keyword,
-                keyword
-            );
-        }
-
-        /* ======================================================
-            ONLY ACTIVE
-        ====================================================== */
-        if (onlyActive) {
-
-            conditions.push(
-                `is_active = 1`
-            );
-        }
-
-        const whereClause = conditions.length
-            ? `WHERE ${conditions.join(" AND ")}`
-            : "";
-
-        /* ======================================================
-            OFFSET
-        ====================================================== */
-        const offset = (page - 1) * limit;
-
-        /* ======================================================
-            GET DATA
-        ====================================================== */
-        const [rows] = await db.query(
-            `
-            SELECT
-                banner_id,
-                page,
-                image_url,
-                is_active,
-                created_at,
-                updated_at
-            FROM banners
-            ${whereClause}
-            ORDER BY created_at DESC, banner_id DESC
-            LIMIT ? OFFSET ?
-            `,
-            [
-                ...params,
-                limit,
-                offset
-            ]
-        );
-
-        /* ======================================================
-            GET TOTAL
-        ====================================================== */
-        const [countRows] = await db.query(
-            `
-            SELECT COUNT(*) AS total
-            FROM banners
-            ${whereClause}
-            `,
-            params
-        );
-
-        const total = Number(
-            countRows[0]?.total || 0
-        );
-
-        const totalPages =
-            Math.ceil(total / limit) || 1;
-
-        return {
-            data: rows,
-
-            pagination: {
-                page,
-                limit,
-                total,
-                totalPages,
-                hasPreviousPage: page > 1,
-                hasNextPage: page < totalPages
-            }
-        };
+    if (page) {
+      conditions.push(`page = ?`);
+      params.push(page);
     }
 
+    const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    /* ==========================================================
-        FIND BANNER BY ID
-    ========================================================== */
-    async findById(bannerId) {
+    const [rows] = await db.query(
+      `
+      SELECT banner_id, page, image_url, is_active, created_at, updated_at
+      FROM banners
+      ${whereClause}
+      ORDER BY created_at DESC, banner_id DESC
+      `,
+      params
+    );
 
-        const [rows] = await db.query(
-            `
-            SELECT *
-            FROM banners
-            WHERE banner_id = ?
-            LIMIT 1
-            `,
-            [bannerId]
-        );
+    return rows; // mảng
+  }
 
-        return rows[0] || null;
+  // Có phân trang → trả về { data: [], pagination: {} }
+  async findAll(onlyActive = false, page = 1, limit = 20, search = "") {
+    page = Number.parseInt(page, 10) || 1;
+    limit = Math.min(Number.parseInt(limit, 10) || 20, 100);
+    search = typeof search === "string" ? search.trim() : "";
+
+    const conditions = [];
+    const params = [];
+
+    if (search) {
+      conditions.push(`(page LIKE ? OR image_url LIKE ?)`);
+      const keyword = `%${search}%`;
+      params.push(keyword, keyword);
     }
 
-
-    /* ==========================================================
-        CREATE BANNER
-    ========================================================== */
-    async create(data) {
-
-        const {
-            page,
-            image_url,
-            is_active
-        } = data;
-
-        const [result] = await db.query(
-            `
-            INSERT INTO banners
-            (
-                page,
-                image_url,
-                is_active
-            )
-            VALUES (?, ?, ?)
-            `,
-            [
-                page,
-                image_url,
-                is_active !== undefined
-                    ? is_active
-                    : 1
-            ]
-        );
-
-        return result.insertId;
+    if (onlyActive) {
+      conditions.push(`is_active = 1`);
     }
 
+    const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const offset = (page - 1) * limit;
 
-    /* ==========================================================
-        UPDATE BANNER
-    ========================================================== */
-    async update(bannerId, data) {
+    const [rows] = await db.query(
+      `
+      SELECT banner_id, page, image_url, is_active, created_at, updated_at
+      FROM banners
+      ${whereClause}
+      ORDER BY created_at DESC, banner_id DESC
+      LIMIT ? OFFSET ?
+      `,
+      [...params, limit, offset]
+    );
 
-        const fields = [];
-        const values = [];
+    const [countRows] = await db.query(
+      `SELECT COUNT(*) AS total FROM banners ${whereClause}`,
+      params
+    );
 
-        if (data.page !== undefined) {
+    const total = Number(countRows[0]?.total || 0);
+    const totalPages = Math.ceil(total / limit) || 1;
 
-            fields.push(`page = ?`);
-            values.push(data.page);
-        }
+    return {
+      data: rows, // mảng
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages
+      }
+    };
+  }
 
-        if (data.image_url !== undefined) {
+  async findById(bannerId) {
+    const [rows] = await db.query(
+      `SELECT * FROM banners WHERE banner_id = ? LIMIT 1`,
+      [bannerId]
+    );
+    return rows[0] || null;
+  }
 
-            fields.push(`image_url = ?`);
-            values.push(data.image_url);
-        }
+  async create(data) {
+    const { page, image_url, is_active } = data;
+    const [result] = await db.query(
+      `INSERT INTO banners (page, image_url, is_active) VALUES (?, ?, ?)`,
+      [page, image_url, is_active !== undefined ? is_active : 1]
+    );
+    return result.insertId;
+  }
 
-        if (data.is_active !== undefined) {
+  async update(bannerId, data) {
+    const fields = [];
+    const values = [];
+    if (data.page !== undefined) { fields.push(`page = ?`); values.push(data.page); }
+    if (data.image_url !== undefined) { fields.push(`image_url = ?`); values.push(data.image_url); }
+    if (data.is_active !== undefined) { fields.push(`is_active = ?`); values.push(data.is_active); }
 
-            fields.push(`is_active = ?`);
-            values.push(data.is_active);
-        }
+    if (fields.length === 0) return 0;
 
-        if (fields.length === 0) {
-            return 0;
-        }
+    values.push(bannerId);
+    const [result] = await db.query(
+      `UPDATE banners SET ${fields.join(", ")}, updated_at = NOW() WHERE banner_id = ?`,
+      values
+    );
+    return result.affectedRows;
+  }
 
-        values.push(bannerId);
+  async delete(bannerId) {
+    const [result] = await db.query(
+      `DELETE FROM banners WHERE banner_id = ?`,
+      [bannerId]
+    );
+    return result.affectedRows;
+  }
 
-        const [result] = await db.query(
-            `
-            UPDATE banners
-            SET
-                ${fields.join(", ")},
-                updated_at = NOW()
-            WHERE banner_id = ?
-            `,
-            values
-        );
+  async getImage(bannerId) {
+    const [rows] = await db.query(
+      `SELECT image_url FROM banners WHERE banner_id = ? LIMIT 1`,
+      [bannerId]
+    );
+    return rows[0] || null;
+  }
 
-        return result.affectedRows;
-    }
-
-
-    /* ==========================================================
-        DELETE BANNER
-    ========================================================== */
-    async delete(bannerId) {
-
-        const [result] = await db.query(
-            `
-            DELETE FROM banners
-            WHERE banner_id = ?
-            `,
-            [bannerId]
-        );
-
-        return result.affectedRows;
-    }
-
-
-    /* ==========================================================
-        GET IMAGE
-        DÙNG KHI XÓA CLOUDINARY
-    ========================================================== */
-    async getImage(bannerId) {
-
-        const [rows] = await db.query(
-            `
-            SELECT image_url
-            FROM banners
-            WHERE banner_id = ?
-            LIMIT 1
-            `,
-            [bannerId]
-        );
-
-        return rows[0] || null;
-    }
-
-
-    /* ==========================================================
-        GET ACTIVE BANNERS BY PAGE
-        PUBLIC FRONTEND
-    ========================================================== */
-    async findActiveByPage(page) {
-
-        page = typeof page === "string"
-            ? page.trim()
-            : "";
-
-        if (!page) {
-            return [];
-        }
-
-        const [rows] = await db.query(
-            `
-            SELECT
-                banner_id,
-                page,
-                image_url,
-                is_active,
-                created_at,
-                updated_at
-            FROM banners
-            WHERE page = ?
-              AND is_active = 1
-            ORDER BY created_at DESC, banner_id DESC
-            `,
-            [page]
-        );
-
-        return rows;
-    }
+  async findActiveByPage(page) {
+    if (!page) return [];
+    const [rows] = await db.query(
+      `
+      SELECT banner_id, page, image_url, is_active, created_at, updated_at
+      FROM banners
+      WHERE page = ? AND is_active = 1
+      ORDER BY created_at DESC, banner_id DESC
+      `,
+      [page]
+    );
+    return rows;
+  }
 }
 
 module.exports = new BannerRepository();
-

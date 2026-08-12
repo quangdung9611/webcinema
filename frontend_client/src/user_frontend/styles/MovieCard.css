@@ -1,20 +1,28 @@
 /* ============================================================
-   FILM CARD – ULTIMATE PREMIUM EDITION (NO SPARKLE)
-   Tilt 3D, shadow động, glow, depth layering
+   FILM CARD – ULTIMATE PREMIUM EDITION
+   BUTTERY SMOOTH HOVER EXPERIENCE
    ============================================================ */
 
+/* ==========================================================
+   BASE CARD
+   ========================================================== */
 .film-card {
     position: relative;
     width: 100%;
     height: 100%;
     cursor: pointer;
     border-radius: var(--radius-md);
-    will-change: transform;
+
+    /* Kích hoạt GPU acceleration cho mọi chuyển động */
+    transform: translateZ(0);
     transform-style: preserve-3d;
+    will-change: transform, opacity;
+
+    /* Animation xuất hiện lần đầu */
     opacity: 0;
     transform: translateY(40px) scale(0.95);
-    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .film-card--visible {
@@ -33,63 +41,70 @@
     width: 100%;
     height: 100%;
     border-radius: var(--radius-md);
-    background: var(--cinema-card-bg);
-    border: 1.5px solid rgba(255, 255, 255, 0.06);
-    box-shadow: var(--cinema-card-shadow);
-    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.5s ease,
-                box-shadow 0.5s ease;
+
+    /* Đồng bộ thiết kế hệ thống */
+    background: var(--bg-card);
+    border: var(--border-premium); /* Viền xám bạc sáng */
+    box-shadow: var(--glass-shadow);
+
+    /* Kích hoạt GPU acceleration */
+    transform: translateZ(0);
     transform-style: preserve-3d;
     will-change: transform, box-shadow;
+
+    /* Chuyển động siêu mượt */
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .film-card--hover .film-card__inner {
-    transform: translateY(-12px) scale(1.03);
-    border-color: rgba(232, 232, 232, 0.25);
-    box-shadow: var(--cinema-card-shadow), 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(232, 232, 232, 0.05);
+    /* Chỉ nâng lên và phóng to cực nhẹ để tạo cảm giác trôi nổi */
+    transform: translateY(-6px) scale(1.015);
+    box-shadow: var(--card-shadow-hover);
 }
 
 /* ==========================================================
-   BORDER GLOW CHẠY – NÂNG CẤP
+   BORDER SHIMMER GLOW (Đơn giản hóa để mượt hơn)
    ========================================================== */
 .film-card__border-glow {
     position: absolute;
     inset: -2px;
     border-radius: var(--radius-md);
     padding: 2px;
-    background: conic-gradient(
-        from var(--border-angle, 0deg),
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+
+    /* Sử dụng gradient tuyến tính thay vì conic để giảm tải GPU */
+    background: linear-gradient(
+        105deg,
         transparent 0%,
-        rgba(232, 232, 232, 0.3) 15%,
-        rgba(255, 255, 255, 1) 35%,
-        rgba(232, 232, 232, 0.3) 55%,
-        rgba(255, 255, 255, 0.8) 75%,
+        transparent 30%,
+        rgba(244, 246, 248, 0.6) 50%,
+        transparent 70%,
         transparent 100%
     );
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    background-size: 300% 100%;
+    
+    /* Mask để chỉ viền ngoài mới có glow */
+    -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
-    opacity: 0;
-    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    pointer-events: none;
-    z-index: 10;
-    animation: borderRotate 6s linear infinite;
-    will-change: transform;
-}
 
-@keyframes borderRotate {
-    from { --border-angle: 0deg; }
-    to { --border-angle: 360deg; }
-}
-
-@property --border-angle {
-    syntax: '<angle>';
-    initial-value: 0deg;
-    inherits: false;
+    transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .film-card--hover .film-card__border-glow {
     opacity: 1;
+    /* Chạy hiệu ứng lấp lánh khi hover */
+    animation: shimmerSweep 1.8s linear infinite;
+}
+
+@keyframes shimmerSweep {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 300% 0%; }
 }
 
 /* ==========================================================
@@ -101,7 +116,8 @@
     width: 100%;
     aspect-ratio: 2 / 3;
     z-index: 2;
-    background: var(--black-soft);
+    background: var(--bg-secondary);
+    transform: translateZ(0);
     transform-style: preserve-3d;
 }
 
@@ -110,18 +126,20 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
-                filter 0.6s ease;
-    will-change: transform;
+    will-change: transform, filter;
+    
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                filter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .film-card--hover .film-card__poster img {
-    transform: scale(1.12);
-    filter: brightness(1.08) saturate(1.06) contrast(1.04);
+    /* Zoom nhẹ (1.04) để không bị giật cục */
+    transform: scale(1.04);
+    filter: brightness(1.05) saturate(1.02);
 }
 
 /* ==========================================================
-   3D DEPTH OVERLAY – HIỆU ỨNG ÁNH SÁNG THEO CHUỘT
+   DEPTH OVERLAY & SHADOW
    ========================================================== */
 .film-card__depth-overlay {
     position: absolute;
@@ -130,7 +148,7 @@
     pointer-events: none;
     background: radial-gradient(
         circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-        rgba(232, 232, 232, 0.08) 0%,
+        rgba(244, 246, 248, 0.06) 0%,
         transparent 60%
     );
     opacity: 0;
@@ -141,22 +159,19 @@
     opacity: 1;
 }
 
-/* ==========================================================
-   POSTER SHADOW (ĐÁY)
-   ========================================================== */
 .film-card__poster::before {
     content: "";
     position: absolute;
     inset: 0;
     background: linear-gradient(
         to top,
-        var(--overlay-dark) 0%,
-        rgba(0, 0, 0, 0.15) 35%,
-        transparent 65%
+        var(--overlay-deep) 0%,
+        rgba(0, 0, 0, 0.10) 40%,
+        transparent 70%
     );
     z-index: 3;
     pointer-events: none;
-    transition: opacity 0.6s ease;
+    transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .film-card--hover .film-card__poster::before {
@@ -171,20 +186,22 @@
     top: 14px;
     right: 14px;
     z-index: 5;
-    padding: 5px 12px;
+    padding: 4px 12px;
     border-radius: var(--radius-round);
     background: linear-gradient(135deg, #dc2626, #b91c1c);
-    color: var(--white-pure);
+    color: var(--silver-bright);
     font-size: 0.7rem;
     font-weight: var(--fw-extrabold);
     letter-spacing: 0.5px;
     box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    transform: translateZ(0);
+    
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
                 box-shadow 0.4s ease;
 }
 
 .film-card--hover .film-card__age {
-    transform: scale(1.08) translateY(-3px) rotate(-2deg);
+    transform: translateY(-2px) scale(1.03);
     box-shadow: 0 6px 24px rgba(220, 38, 38, 0.5);
 }
 
@@ -196,28 +213,32 @@
     top: 14px;
     left: 14px;
     z-index: 5;
-    padding: 4px 12px;
+    padding: 3px 12px;
     border-radius: var(--radius-round);
     font-size: 0.6rem;
     font-weight: var(--fw-extrabold);
     letter-spacing: 0.5px;
     text-transform: uppercase;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transform: translateZ(0);
+    
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.4s ease;
 }
 
 .film-card__badge.hot {
-    background: linear-gradient(135deg, #f59e0b, #ef4444);
-    color: #fff;
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
 }
 
 .film-card__badge.new {
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    color: #fff;
+    background: var(--accent-ice-bg);
+    border: var(--border-ice);
+    color: var(--accent-ice);
 }
 
 .film-card--hover .film-card__badge {
-    transform: scale(1.05) translateY(-2px);
+    transform: translateY(-2px) scale(1.03);
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
 }
 
@@ -231,9 +252,8 @@
     flex-direction: column;
     align-items: center;
     padding: 18px 16px 22px;
-    background: var(--cinema-card-bg);
+    background: var(--bg-card);
     flex: 1;
-    backdrop-filter: blur(6px);
     transform: translateZ(20px);
 }
 
@@ -252,12 +272,12 @@
 }
 
 .film-card--hover .film-card__title {
-    background: linear-gradient(135deg, var(--silver-primary), #fbbf24, var(--silver-light));
+    background: linear-gradient(135deg, var(--silver-primary), var(--silver-light), var(--silver-primary));
     background-size: 200% 200%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: titleGradient 2s ease-in-out infinite;
+    animation: titleGradient 3s ease-in-out infinite;
 }
 
 @keyframes titleGradient {
@@ -278,11 +298,11 @@
     width: 14px;
     height: 14px;
     color: var(--silver-primary);
-    transition: transform 0.3s ease;
+    transition: color 0.4s cubic-bezier(0.22, 1, 0.36, 1); 
 }
 
 .film-card--hover .film-card__stars svg {
-    transform: scale(1.1) rotate(5deg);
+    color: var(--silver-light);
 }
 
 /* ==========================================================
@@ -297,15 +317,15 @@
 }
 
 .film-card__score {
-    color: var(--silver-primary);
+    color: var(--text-heading);
     font-size: 0.875rem;
     font-weight: var(--fw-bold);
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .film-card--hover .film-card__score {
-    color: #fbbf24;
-    text-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+    color: var(--silver-primary);
+    text-shadow: 0 0 20px rgba(251, 191, 36, 0.25);
 }
 
 .film-card__reviews {
@@ -328,7 +348,7 @@
 }
 
 /* ==========================================================
-   PROGRESS BAR – NÂNG CẤP
+   PROGRESS BAR
    ========================================================== */
 .film-card__progress {
     width: 100%;
@@ -342,15 +362,15 @@
 
 .film-card__progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #E5C46B, var(--silver-primary), #fbbf24);
+    background: var(--premium-gradient);
     border-radius: 999px;
-    transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
     background-size: 200% 100%;
 }
 
 .film-card--hover .film-card__progress-bar {
     animation: progressGlow 2s ease-in-out infinite;
-    box-shadow: 0 0 12px rgba(251, 191, 36, 0.3);
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.25);
 }
 
 @keyframes progressGlow {
@@ -360,110 +380,44 @@
 }
 
 /* ==========================================================
-   MỞ CARD (ANIMATION KHI CLICK)
+   OPEN ANIMATION
    ========================================================== */
 .film-card--opening {
-    animation: cardOpen 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: cardOpen 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     z-index: 100;
 }
 
 @keyframes cardOpen {
-    0% {
-        transform: scale(1);
-        opacity: 1;
-        filter: brightness(1);
-    }
-    25% {
-        transform: scale(1.15);
-        opacity: 1;
-        filter: brightness(1.4);
-    }
-    100% {
-        transform: scale(0.85);
-        opacity: 0;
-        filter: brightness(0.6);
-    }
+    0% { transform: scale(1); opacity: 1; filter: brightness(1); }
+    25% { transform: scale(1.12); opacity: 1; filter: brightness(1.3); }
+    100% { transform: scale(0.85); opacity: 0; filter: brightness(0.6); }
 }
 
 /* ==========================================================
    RESPONSIVE
    ========================================================== */
 @media (max-width: 768px) {
-    .film-card__info {
-        padding: 14px 12px 18px;
-    }
-    .film-card__title {
-        font-size: 0.875rem;
-    }
-    .film-card__stars svg {
-        width: 12px;
-        height: 12px;
-    }
-    .film-card__score {
-        font-size: 0.75rem;
-    }
-    .film-card__reviews {
-        font-size: 0.6875rem;
-    }
-    .film-card__extra {
-        font-size: 0.6875rem;
-    }
-    .film-card__age {
-        top: 10px;
-        right: 10px;
-        font-size: 0.6rem;
-        padding: 4px 10px;
-    }
-    .film-card__badge {
-        top: 10px;
-        left: 10px;
-        font-size: 0.5rem;
-        padding: 3px 10px;
-    }
-    .film-card__border-glow {
-        display: none;
-    }
-    .film-card__depth-overlay {
-        display: none;
-    }
+    .film-card__info { padding: 14px 12px 18px; }
+    .film-card__title { font-size: 0.875rem; }
+    .film-card__stars svg { width: 12px; height: 12px; }
+    .film-card__score { font-size: 0.75rem; }
+    .film-card__reviews { font-size: 0.6875rem; }
+    .film-card__extra { font-size: 0.6875rem; }
+    .film-card__age { top: 10px; right: 10px; font-size: 0.6rem; padding: 4px 10px; }
+    .film-card__badge { top: 10px; left: 10px; font-size: 0.5rem; padding: 3px 10px; }
+    .film-card__border-glow { display: none; }
+    .film-card__depth-overlay { display: none; }
 }
 
 @media (max-width: 480px) {
-    .film-card__info {
-        padding: 10px 10px 14px;
-    }
-    .film-card__title {
-        font-size: 0.75rem;
-    }
-    .film-card__stars svg {
-        width: 10px;
-        height: 10px;
-    }
-    .film-card__score {
-        font-size: 0.6875rem;
-    }
-    .film-card__reviews {
-        font-size: 0.625rem;
-    }
-    .film-card__extra {
-        font-size: 0.625rem;
-    }
-    .film-card__age {
-        top: 8px;
-        right: 8px;
-        font-size: 0.5rem;
-        padding: 3px 8px;
-    }
-    .film-card__badge {
-        top: 8px;
-        left: 8px;
-        font-size: 0.45rem;
-        padding: 2px 8px;
-    }
-    .film-card__border-glow {
-        display: none;
-    }
-    .film-card__depth-overlay {
-        display: none;
-    }
+    .film-card__info { padding: 10px 10px 14px; }
+    .film-card__title { font-size: 0.75rem; }
+    .film-card__stars svg { width: 10px; height: 10px; }
+    .film-card__score { font-size: 0.6875rem; }
+    .film-card__reviews { font-size: 0.625rem; }
+    .film-card__extra { font-size: 0.625rem; }
+    .film-card__age { top: 8px; right: 8px; font-size: 0.5rem; padding: 3px 8px; }
+    .film-card__badge { top: 8px; left: 8px; font-size: 0.45rem; padding: 2px 8px; }
+    .film-card__border-glow { display: none; }
+    .film-card__depth-overlay { display: none; }
 }

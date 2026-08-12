@@ -1,207 +1,387 @@
 /* ==========================================================
-   CINEMA CARD – SILVER EDITION 🎬
-   HOVER MỜ HÌNH HIỆN NÚT XEM CHI TIẾT
+   CINEMA CARD – SILVER PREMIUM
+   SYNC WITH GLOBAL index.css
+   SMOOTH / SOFT HOVER
+   POSTER DỌC 2:3 - TITLE CĂN GIỮA – TỐI ĐA 2 DÒNG
    ========================================================== */
 
-/* ---- CARD WRAPPER ---- */
+/* ==========================================================
+   1. CARD WRAPPER
+   ========================================================== */
 .cinema-card {
-  position: relative;
-  width: 100%;
-  cursor: pointer;
-  border-radius: var(--radius-md, 14px);
-  z-index: 1;
-  overflow: hidden;
-  background: var(--cinema-card-bg, #11131c);
-  border: 2px solid rgba(232, 232, 232, 0.12);
-  box-shadow: var(--cinema-card-shadow, 0 8px 24px rgba(0, 0, 0, 0.4));
-  outline: none;
-  
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.35s ease,
-              box-shadow 0.35s ease,
-              background 0.35s ease;
-  will-change: transform, box-shadow;
-  backface-visibility: hidden;
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+
+    /* Nền card theo Global Design System */
+    background: var(--bg-card);
+    
+    /* ================= ĐÃ SỬA ================= */
+    /* Mặc định viền sáng rõ luôn (0.25) */
+    border: 1px solid rgba(244, 246, 248, 0.25);
+    /* ========================================== */
+    
+    /* Đổ bóng chuẩn Glassmorphism */
+    box-shadow: var(--glass-shadow);
+
+    transform: translate3d(0, 0, 0);
+    
+    /* Dùng easing chuẩn của hệ thống (Đã bỏ border-color vì không đổi màu nữa) */
+    transition: 
+        transform 520ms cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 520ms cubic-bezier(0.16, 1, 0.3, 1),
+        background 520ms cubic-bezier(0.16, 1, 0.3, 1);
+
+    will-change: transform, box-shadow;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* Hover: nâng 8px, viền bạc sáng, bóng bạc, nền sáng hơn */
+/* ==========================================================
+   2. CARD HOVER
+   ========================================================== */
 .cinema-card:hover {
-  transform: translateY(-8px);
-  border-color: rgba(232, 232, 232, 0.45) !important;
-  background: var(--cinema-card-bg-hover, #181b28);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6),
-              0 0 22px rgba(232, 232, 232, 0.18) !important;
+    /* Nâng nhẹ card lên */
+    transform: translate3d(0, -4px, 0);
+
+    /* ================= ĐÃ SỬA ================= */
+    /* Bỏ hẳn đổi màu viền, giữ màu sáng mặc định */
+    /* border-color: var(--border-premium-hover); <- Đã xóa */
+    /* ========================================== */
+
+    /* Shadow lan nhẹ */
+    box-shadow: var(--card-shadow-hover);
+
+    /* Nền sáng hơn một chút */
+    background: var(--bg-elevated);
 }
 
-.cinema-card:focus-visible {
-  border-color: #ffffff !important;
-  box-shadow: 0 0 0 3px rgba(232, 232, 232, 0.4) !important;
-}
-
-/* ---- CARD INNER ---- */
+/* ==========================================================
+   3. CARD INNER
+   ========================================================== */
 .cinema-card-inner {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
 }
 
-/* ---- KHUNG ẢNH ---- */
+/* ==========================================================
+   4. POSTER IMAGE
+   TỶ LỆ 2:3
+   ========================================================== */
 .cinema-card-image {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 2 / 3;
-  overflow: hidden;
-  background: var(--black-premium, #08080a);
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    background: var(--bg-secondary);
 }
 
+/* ==========================================================
+   5. IMAGE
+   ========================================================== */
 .cinema-card-image img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-  opacity: 0.94;
-  transform: scale(1);
-  transition: transform 0.6s ease, opacity 0.5s ease, filter 0.5s ease;
-  will-change: transform, opacity;
-  backface-visibility: hidden;
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    opacity: 0.94;
+    transform: scale(1);
+    transition: 
+        transform 900ms cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+        filter 700ms cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+    backface-visibility: hidden;
 }
 
-/* Hover: ảnh phóng to 8% */
+/* ==========================================================
+   6. IMAGE HOVER
+   ========================================================== */
 .cinema-card:hover .cinema-card-image img {
-  transform: scale(1.08);
-  opacity: 1;
-  filter: brightness(1.04);
+    transform: scale(1.055); /* Zoom rất nhẹ */
+    opacity: 1;
+    filter: brightness(1.045) contrast(1.015);
 }
 
-/* ---- BADGE ---- */
+/* ==========================================================
+   7. BADGE
+   ========================================================== */
 .cinema-card-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 5;
-  margin: 0;
-  padding: 4px 14px;
-  border-radius: var(--radius-round, 20px);
-  font-size: var(--font-size-h4, 0.75rem);
-  font-weight: var(--fw-bold, 800);
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: var(--black-premium, #08080a);
-  background: var(--cinema-border-gradient, linear-gradient(135deg, #e8e8e8, #b8b8b8));
-  box-shadow: 0 2px 12px rgba(232, 232, 232, 0.12);
-  line-height: 1.4;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
+    margin: 0;
+    padding: 4px 14px;
+    border-radius: var(--radius-round);
+
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-bold);
+    line-height: 1.4;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+
+    /* Gradient Bạc chuẩn hệ thống, chữ đen */
+    color: var(--bg-primary);
+    background: var(--premium-gradient);
+    box-shadow: 0 2px 12px rgba(245, 245, 246, 0.12);
+
+    transition: 
+        transform 500ms cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 400ms ease;
 }
 
+/* ==========================================================
+   8. BADGE HOVER
+   ========================================================== */
 .cinema-card:hover .cinema-card-badge {
-  box-shadow: 0 2px 20px rgba(232, 232, 232, 0.3);
-  transform: scale(1.05);
+    transform: translate3d(0, -1px, 0);
+    box-shadow: 0 5px 18px rgba(245, 245, 246, 0.18);
 }
 
-/* ---- OVERLAY LÀM MỜ VÀ HIỆN NÚT XEM CHI TIẾT ---- */
+/* ==========================================================
+   9. OVERLAY
+   ========================================================== */
 .cinema-card-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  background: rgba(8, 9, 13, 0.75);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, rgba(5, 6, 7, 0.48), rgba(5, 6, 7, 0.82));
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    opacity: 0;
+    transition: 
+        opacity 480ms cubic-bezier(0.16, 1, 0.3, 1),
+        backdrop-filter 600ms cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
 }
 
-/* Hover: Overlay hiện lên mượt mà */
+/* ==========================================================
+   10. OVERLAY HOVER
+   ========================================================== */
 .cinema-card:hover .cinema-card-overlay {
-  opacity: 1;
+    opacity: 1;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 }
 
-/* NÚT XEM CHI TIẾT – GRADIENT BẠC */
+/* ==========================================================
+   11. BUTTON XEM CHI TIẾT
+   ========================================================== */
 .btn-card-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 20px;
-  border-radius: 20px;
-  border: none;
-  background: var(--cinema-border-gradient, linear-gradient(135deg, #ffffff 0%, #e2e8f0 50%, #cbd5e1 100%));
-  color: var(--black-premium, #08080a);
-  font-size: 0.813rem;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.25);
-  transform: scale(0.9);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 21px;
+    border-radius: var(--radius-round);
+    border: none;
+
+    /* Gradient Bạc chuẩn hệ thống */
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.45px;
+    text-transform: uppercase;
+
+    box-shadow: var(--btn-silver-shadow);
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.94);
+    transition: 
+        opacity 420ms cubic-bezier(0.16, 1, 0.3, 1),
+        transform 520ms cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 300ms ease;
+    pointer-events: auto;
 }
 
+/* ==========================================================
+   12. BUTTON APPEAR
+   ========================================================== */
 .cinema-card:hover .btn-card-action {
-  transform: scale(1);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
 }
 
+/* ==========================================================
+   13. BUTTON HOVER
+   ========================================================== */
 .btn-card-action:hover {
-  transform: scale(1.08) !important;
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+    transform: translate3d(0, -2px, 0) scale(1.045) !important;
+    box-shadow: 0 10px 28px rgba(245, 245, 246, 0.22);
 }
 
-/* ---- TITLE (DÙNG H3) ---- */
+/* ==========================================================
+   14. MOVIE TITLE
+   CĂN GIỮA - TỐI ĐA 2 DÒNG
+   ========================================================== */
 .cinema-card-title {
-  margin: 0;
-  padding: 14px 12px 16px;
-  font-size: var(--font-size-h3, 0.938rem);
-  font-weight: var(--fw-bold, 700);
-  line-height: 1.3;
-  text-align: center;
-  color: var(--text-body, #cbd5e1);
-  background: transparent;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  flex: 1;
-  transition: color 0.3s ease, text-shadow 0.3s ease;
+    width: 100%;
+    min-width: 0;
+    min-height: 54px;
+    max-height: 54px;
+    margin: 0;
+    padding: 13px 12px 14px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+
+    color: var(--text-body);
+    background: transparent;
+
+    font-family: var(--font-primary);
+    font-size: var(--font-size-h5);
+    font-weight: var(--fw-bold);
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+
+    transition: 
+        color 450ms cubic-bezier(0.16, 1, 0.3, 1),
+        text-shadow 450ms cubic-bezier(0.16, 1, 0.3, 1),
+        transform 450ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Hover title đổi màu trắng sáng + bóng bạc nhẹ */
+/* ==========================================================
+   15. TITLE HOVER
+   ========================================================== */
 .cinema-card:hover .cinema-card-title {
-  color: #F5F5F5;
-  text-shadow: 0 0 30px rgba(232, 232, 232, 0.15);
+    color: var(--silver-light);
+    text-shadow: 0 0 24px rgba(245, 245, 246, 0.12);
+    transform: translate3d(0, -1px, 0);
 }
 
-/* ---- RESPONSIVE ---- */
+/* ==========================================================
+   16. FOCUS
+   ========================================================== */
+.cinema-card:focus-visible {
+    outline: 2px solid var(--silver-light);
+    outline-offset: 4px;
+    border-color: var(--silver-light);
+    box-shadow: 
+        0 0 0 4px rgba(245, 245, 246, 0.08),
+        var(--card-shadow-hover);
+}
+
+/* ==========================================================
+   17. ACCESSIBILITY - REDUCED MOTION
+   ========================================================== */
+@media (prefers-reduced-motion: reduce) {
+    .cinema-card,
+    .cinema-card-image img,
+    .cinema-card-overlay,
+    .btn-card-action,
+    .cinema-card-badge,
+    .cinema-card-title {
+        transition: none !important;
+    }
+    .cinema-card:hover, 
+    .cinema-card:hover .cinema-card-image img,
+    .cinema-card:hover .cinema-card-title {
+        transform: none !important;
+    }
+}
+
+/* ==========================================================
+   18. RESPONSIVE - 768px TABLET
+   ========================================================== */
 @media (max-width: 768px) {
-  .cinema-card-title {
-    padding: 10px 10px 12px;
-  }
-  .cinema-card-badge {
-    padding: 3px 10px;
-    top: 8px;
-    right: 8px;
-  }
-  .btn-card-action {
-    padding: 8px 16px;
-    font-size: 0.75rem;
-  }
-  .cinema-card:hover {
-    transform: translateY(-6px);
-  }
+    .cinema-card {
+        transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 420ms ease, background 420ms ease;
+    }
+    .cinema-card:hover {
+        transform: translate3d(0, -5px, 0);
+        /* Giữ nguyên border, không đổi màu */
+    }
+    .cinema-card:hover .cinema-card-image img {
+        transform: scale(1.035);
+    }
+    .cinema-card-title {
+        min-height: 50px;
+        max-height: 50px;
+        padding: 10px 10px 11px;
+        font-size: calc(var(--font-size-h5) * 0.875);
+        line-height: 1.4;
+        letter-spacing: -0.005em;
+    }
+    .cinema-card-badge {
+        top: 8px;
+        right: 8px;
+        padding: 3px 10px;
+        font-size: calc(var(--font-size-h6) * 0.75);
+    }
+    .btn-card-action {
+        padding: 8px 16px;
+        font-size: calc(var(--font-size-h6) * 0.86);
+    }
 }
 
+/* ==========================================================
+   19. RESPONSIVE - 480px MOBILE
+   ========================================================== */
 @media (max-width: 480px) {
-  .cinema-card-title {
-    padding: 8px 6px 10px;
-  }
-  .cinema-card-badge {
-    padding: 2px 8px;
-  }
-  .cinema-card:hover {
-    transform: translateY(-4px);
-  }
+    .cinema-card:hover {
+        transform: translate3d(0, -3px, 0);
+    }
+    .cinema-card:hover .cinema-card-image img {
+        transform: scale(1.025);
+    }
+    .cinema-card-title {
+        min-height: 46px;
+        max-height: 46px;
+        padding: 8px 6px 9px;
+        font-size: calc(var(--font-size-h5) * 0.78);
+        line-height: 1.4;
+        letter-spacing: 0;
+    }
+    .cinema-card-badge {
+        top: 7px;
+        right: 7px;
+        padding: 2px 8px;
+        font-size: calc(var(--font-size-h6) * 0.686);
+    }
+    .btn-card-action {
+        padding: 7px 13px;
+        font-size: calc(var(--font-size-h6) * 0.777);
+        gap: 5px;
+    }
+}
+
+/* ==========================================================
+   20. RESPONSIVE - 360px SMALL MOBILE
+   ========================================================== */
+@media (max-width: 360px) {
+    .cinema-card-title {
+        min-height: 44px;
+        max-height: 44px;
+        padding: 7px 5px 8px;
+        font-size: calc(var(--font-size-h5) * 0.72);
+        line-height: 1.38;
+    }
+    .cinema-card-badge {
+        top: 6px;
+        right: 6px;
+        padding: 2px 7px;
+        font-size: calc(var(--font-size-h6) * 0.64);
+    }
+    .btn-card-action {
+        padding: 6px 11px;
+        font-size: calc(var(--font-size-h6) * 0.72);
+    }
 }

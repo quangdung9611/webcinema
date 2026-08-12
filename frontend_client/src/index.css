@@ -1,0 +1,666 @@
+@import url('https://fonts.googleapis.com/css2?family=League+Gothic&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* ==========================================================
+   QUANG DŨNG CINEMA - REDESIGN 2026
+   GLOBAL DESIGN SYSTEM
+   Cinematic / Premium / Dark / Silver
+   ========================================================== */
+
+:root {
+    color-scheme: dark;
+
+    /* ======================================================
+       BACKGROUND - Cinematic Dark
+       ====================================================== */
+    --main-background:
+        radial-gradient(
+            ellipse at 20% 10%,
+            rgba(159, 183, 210, 0.04) 0%,
+            transparent 60%
+        ),
+        radial-gradient(
+            ellipse at 80% 80%,
+            rgba(159, 183, 210, 0.02) 0%,
+            transparent 50%
+        ),
+        linear-gradient(
+            180deg,
+            #07090b 0%,
+            #060709 40%,
+            #040506 100%
+        );
+
+    --bg-primary: #07080A;
+    --bg-secondary: #0B0D10;
+    --bg-tertiary: #101215;
+    --bg-card: #121518;
+    --bg-elevated: #181C21;
+
+    /* ======================================================
+       FONTS & TYPOGRAPHY
+       ====================================================== */
+    --font-primary:
+        'Plus Jakarta Sans',
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        sans-serif;
+
+    --font-heading: var(--font-primary);
+
+    --font-display:
+        'League Gothic',
+        Impact,
+        Haettenschweiler,
+        'Arial Narrow Bold',
+        sans-serif;
+
+    --font-size-base: 16px;
+    --line-height-base: 1.6;
+
+    --font-size-h1: clamp(2.25rem, 4.8vw, 4.75rem);
+    --font-size-h2: clamp(1.75rem, 3.2vw, 3.25rem);
+    --font-size-h3: clamp(1.25rem, 1.6vw, 1.65rem);
+    --font-size-h4: 1.125rem;
+    --font-size-h5: 1rem;
+    --font-size-h6: 0.875rem;
+
+    /* ======================================================
+       DISPLAY SIZES (Headings big)
+       ====================================================== */
+    --display-hero:
+        clamp(
+            4.5rem,
+            12vw,
+            10.5rem
+        );
+
+    --display-section:
+        clamp(
+            2.5rem,
+            4.2vw,
+            4.5rem
+        );
+
+    /* ======================================================
+       SILVER / PREMIUM SCALE (Main colors)
+       ====================================================== */
+    --silver-primary: #DDE2E8; /* Màu xám bạc chính của thương hiệu */
+    --silver-light: #F4F7FA;   /* Màu trắng xám bạc sáng (thay thế cho màu trắng tinh) */
+    --silver-bright: #FFFFFF;  /* Màu trắng tuyệt đối - Chỉ dùng cho icon hoặc nút nhấn mạnh, không dùng cho chữ tiêu đề dài */
+    --silver-dark: #A9B2BC;
+    --silver-muted: #737B86;
+
+    --premium-gradient:
+        linear-gradient(
+            135deg,
+            #F4F6F8 0%,
+            #C9CED5 40%,
+            #FFFFFF 100%
+        );
+
+    --premium-gradient-hover:
+        linear-gradient(
+            135deg,
+            #FFFFFF 0%,
+            #E1E6EC 100%
+        );
+
+    /* ======================================================
+       ACCENT - ICE BLUE (Numbers 01, 02, 03, icons)
+       ====================================================== */
+    --accent-ice: #A6C1D9;
+    --accent-ice-light: #C9DCE9;
+    --accent-ice-dark: #738FA9;
+
+    --accent-ice-soft:
+        rgba(166, 193, 217, 0.06);
+
+    --accent-ice-bg:
+        rgba(166, 193, 217, 0.10);
+
+    --accent-ice-border:
+        rgba(166, 193, 217, 0.18);
+
+    /* ======================================================
+       SURFACES & TEXT (MÀU XÁM BẠC - KHÔNG DÙNG TRẮNG TINH)
+       ====================================================== */
+    --text-heading: #F4F6F8;    /* Màu trắng xám bạc cho tiêu đề (dịu mắt thay vì chói) */
+    --text-body: #D9DDE2;      /* Màu xám bạc chuẩn cho nội dung, dễ đọc trên nền tối */
+    --text-secondary: #9EA8B3;
+    --text-muted: #6A737D;
+    --text-disabled: #444A51;
+
+    /* ======================================================
+       BORDERS (Subtle lines for cards) - ĐÃ CHỈNH SỬA THEO YÊU CẦU VIỀN SÁNG
+       ====================================================== */
+    --border-premium:
+        1px solid rgba(244, 246, 248, 0.25); /* Đã nâng Opacity lên 0.25 để viền sáng rõ mặc định */
+
+    --border-premium-hover:
+        1px solid rgba(244, 246, 248, 0.25); /* Giữ nguyên 0.25, không đổi màu khi hover */
+
+    --border-subtle:
+        1px solid rgba(255, 255, 255, 0.04);
+
+    --border-ice:
+        1px solid rgba(166, 193, 217, 0.15);
+
+    /* ======================================================
+       GLASS / CARD EFFECT
+       ====================================================== */
+    --glass-bg:
+        rgba(10, 12, 14, 0.80);
+
+    --glass-border:
+        1px solid rgba(255, 255, 255, 0.06);
+
+    --glass-blur: blur(16px);
+    --glass-shadow: 0 16px 48px rgba(0, 0, 0, 0.60);
+
+    --card-shadow-hover:
+        0 20px 56px rgba(0, 0, 0, 0.70),
+        var(--border-premium);
+
+    /* ======================================================
+       BUTTONS
+       ====================================================== */
+    --btn-silver-bg:
+        linear-gradient(135deg, #E8ECF1 0%, #F4F7FA 50%, #D5DAE1 100%);
+
+    --btn-silver-shadow:
+        0 4px 20px rgba(159, 183, 210, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.80);
+
+    --btn-silver-hover:
+        filter: brightness(1.1);
+        box-shadow: 0 4px 28px rgba(159, 183, 210, 0.40);
+
+    /* ======================================================
+       SEAT STATUS COLORS
+       ====================================================== */
+    --seat-standard-color: #7D7D86;
+    --seat-vip-color: #D1AD55;
+    --seat-couple-color: #B86BC7;
+    --seat-selected-color: #43B77A;
+    --seat-holding-color: #5F9FEA;
+    --seat-sold-color: #D85A5A;
+    --seat-maintenance-color: #555560;
+
+    /* ======================================================
+       BORDER RADIUS
+       ====================================================== */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-2xl: 24px;
+    --radius-round: 999px;
+
+    /* ======================================================
+       SPACING
+       ====================================================== */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+    --space-4xl: 88px;
+    --space-5xl: 120px;
+
+    /* ======================================================
+       CONTAINER WIDTH
+       ====================================================== */
+    --container-width: 1340px;
+    --container-padding: 24px;
+
+    /* ======================================================
+       FONT WEIGHTS
+       ====================================================== */
+    --fw-regular: 400;
+    --fw-medium: 500;
+    --fw-semibold: 600;
+    --fw-bold: 700;
+    --fw-extrabold: 800;
+}
+
+/* ==========================================================
+   RESET & BASE
+   ========================================================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    width: 100%;
+    min-height: 100%;
+    font-size: var(--font-size-base);
+    scroll-behavior: smooth;
+    scroll-padding-top: 96px;
+}
+
+body {
+    width: 100%;
+    min-height: 100dvh;
+    margin: 0;
+    overflow-x: hidden;
+    background: var(--main-background);
+    background-color: var(--bg-primary);
+    background-repeat: no-repeat;
+    color: var(--text-body); /* Màu xám bạc mềm mại cho toàn bộ nội dung body */
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-regular);
+    line-height: var(--line-height-base);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+    font-synthesis: none;
+}
+
+img, picture, svg, video, canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+button, input, select, textarea {
+    margin: 0;
+    color: inherit;
+    font: inherit;
+}
+
+button {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+button:disabled, input:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* ==========================================================
+   TYPOGRAPHY
+   ========================================================== */
+h1, h2, h3, h4, h5, h6, p {
+    margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-heading); /* Màu xám bạc nhạt, không phải trắng tinh để đỡ chói mắt */
+    font-family: var(--font-heading);
+    font-weight: var(--fw-extrabold);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+}
+
+h1 { font-size: var(--font-size-h1); }
+h2 { font-size: var(--font-size-h2); }
+h3 { font-size: var(--font-size-h3); }
+h4 { font-size: var(--font-size-h4); }
+h5 { font-size: var(--font-size-h5); }
+h6 { font-size: var(--font-size-h6); }
+
+p, li { overflow-wrap: break-word; }
+small { font-size: 0.875em; }
+
+/* ==========================================================
+   SELECTION & LINKS
+   ========================================================== */
+::selection {
+    background: var(--silver-primary);
+    color: var(--bg-primary);
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+    transition: color var(--transition-fast, 0.2s), opacity var(--transition-fast, 0.2s);
+}
+a:hover {
+    color: var(--silver-light);
+    opacity: 0.9;
+}
+
+ul, ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* ==========================================================
+   APP LAYOUT
+   ========================================================== */
+#root, .app-wrapper {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100dvh;
+}
+
+main, .main-content {
+    flex: 1 0 auto;
+}
+
+/* ==========================================================
+   CONTAINER
+   ========================================================== */
+.container {
+    width: min(100%, var(--container-width));
+    margin-inline: auto;
+    padding-inline: var(--container-padding);
+}
+
+/* ==========================================================
+   CINEMA SPECIFIC COMPONENTS
+   ========================================================== */
+
+/* 1. Premium Section Number (01, 02, 03...) */
+.section-number {
+    font-family: var(--font-display);
+    font-size: var(--display-section);
+    color: var(--accent-ice);
+    letter-spacing: -0.01em;
+    line-height: 1;
+    font-weight: var(--fw-bold);
+    opacity: 0.9;
+    text-shadow: 0 0 40px rgba(166, 193, 217, 0.15);
+}
+
+/* 2. Premium Card (Glass effect & hover) - ĐÃ CHỈNH SỬA VIỀN SÁNG */
+.card-premium {
+    background: var(--glass-bg);
+    border: var(--border-premium); /* Thay glass-border bằng border-premium với Opacity 0.25 để màu sáng rõ */
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-radius: var(--radius-md);
+    box-shadow: var(--glass-shadow);
+    transition: all 0.35s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.card-premium:hover {
+    border-color: var(--border-premium); /* Giữ nguyên viền sáng, không đổi màu khi hover */
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-6px);
+}
+
+/* 3. Silver Button (For "ĐẶT VÉ NGAY") */
+.btn-silver {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    background: var(--btn-silver-bg);
+    color: var(--bg-primary) !important;
+    font-weight: var(--fw-bold);
+    font-size: 0.95rem;
+    padding: 12px 32px;
+    border-radius: var(--radius-round);
+    box-shadow: var(--btn-silver-shadow);
+    transition: all 0.3s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.btn-silver:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 4px 32px rgba(159, 183, 210, 0.35);
+    transform: scale(1.02);
+    color: var(--bg-primary) !important;
+}
+
+.btn-silver:active {
+    transform: scale(0.96);
+}
+
+/* 4. Outline Button */
+.btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: var(--border-ice);
+    color: var(--text-body);
+    padding: 10px 24px;
+    border-radius: var(--radius-round);
+    font-weight: var(--fw-medium);
+    background: rgba(255, 255, 255, 0.02);
+    transition: 0.25s ease;
+}
+
+.btn-outline:hover {
+    background: var(--accent-ice-bg);
+    border-color: var(--accent-ice);
+    color: var(--silver-light);
+}
+
+/* ==========================================================
+   UTILITIES (ALIGNMENT, FLEX, GRID, GAP)
+   ========================================================== */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.hidden { display: none !important; }
+.block { display: block; }
+.inline-block { display: inline-block; }
+.flex { display: flex; }
+.inline-flex { display: inline-flex; }
+.grid { display: grid; }
+.contents { display: contents; }
+
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-1 { flex: 1; }
+.flex-grow { flex-grow: 1; }
+
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-start { justify-content: flex-start; }
+.justify-end { justify-content: flex-end; }
+
+.gap-xs { gap: var(--space-xs); }
+.gap-sm { gap: var(--space-sm); }
+.gap-md { gap: var(--space-md); }
+.gap-lg { gap: var(--space-lg); }
+.gap-xl { gap: var(--space-xl); }
+
+/* Grid Layouts */
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+/* Spacings */
+.p-xs { padding: var(--space-xs); }
+.p-sm { padding: var(--space-sm); }
+.p-md { padding: var(--space-md); }
+.p-lg { padding: var(--space-lg); }
+.p-xl { padding: var(--space-xl); }
+.p-2xl { padding: var(--space-2xl); }
+.p-3xl { padding: var(--space-3xl); }
+
+.m-xs { margin: var(--space-xs); }
+.m-sm { margin: var(--space-sm); }
+.m-md { margin: var(--space-md); }
+.m-lg { margin: var(--space-lg); }
+.m-xl { margin: var(--space-xl); }
+.m-2xl { margin: var(--space-2xl); }
+.m-3xl { margin: var(--space-3xl); }
+.m-auto { margin: auto; }
+.mx-auto { margin-inline: auto; }
+.my-auto { margin-block: auto; }
+
+/* Text Controls */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+.text-uppercase { text-transform: uppercase; }
+.text-lowercase { text-transform: lowercase; }
+.text-capitalize { text-transform: capitalize; }
+
+/* Text Colors - Đảm bảo tất cả đều là tông xám bạc (Silver) */
+.text-silver { color: var(--silver-primary); }
+.text-light { color: var(--silver-light); }
+.text-white { color: var(--silver-light); } /* Đã chỉnh lại: Thay vì text-heading, dùng silver-light để đảm bảo không có màu trắng tinh #FFF */
+.text-heading { color: var(--text-heading); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.text-body { color: var(--text-body); }
+.text-ice { color: var(--accent-ice); }
+
+/* Font Utilities */
+.font-regular { font-weight: var(--fw-regular); }
+.font-medium { font-weight: var(--fw-medium); }
+.font-semibold { font-weight: var(--fw-semibold); }
+.font-bold { font-weight: var(--fw-bold); }
+.font-extrabold { font-weight: var(--fw-extrabold); }
+
+.text-sm { font-size: 0.875rem; }
+.text-base { font-size: 1rem; }
+.text-lg { font-size: 1.25rem; }
+.text-xl { font-size: 1.5rem; }
+.text-2xl { font-size: 1.75rem; }
+
+/* Display Font (League Gothic) */
+.display-hero { font-family: var(--font-display); font-size: var(--display-hero); line-height: 0.95; text-transform: uppercase; font-weight: var(--fw-bold); letter-spacing: 0.01em; color: var(--text-heading); }
+.display-section { font-family: var(--font-display); font-size: var(--display-section); line-height: 1; text-transform: uppercase; font-weight: var(--fw-bold); }
+
+/* Backgrounds */
+.bg-dark { background: var(--bg-primary); }
+.bg-card { background: var(--bg-card); }
+.bg-elevated { background: var(--bg-elevated); }
+.bg-glass { background: var(--glass-bg); backdrop-filter: var(--glass-blur); }
+.bg-transparent { background: transparent; }
+
+/* Borders & Radius */
+.border-premium { border: var(--border-premium); }
+.border-subtle { border: var(--border-subtle); }
+.border-ice { border: var(--border-ice); }
+.border-none { border: none; }
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-round); }
+
+/* Shadows */
+.shadow-glass { box-shadow: var(--glass-shadow); }
+.shadow-premium { box-shadow: var(--btn-silver-shadow); }
+.shadow-none { box-shadow: none; }
+
+/* Object Fit */
+.object-cover { object-fit: cover; }
+.object-contain { object-fit: contain; }
+
+/* Position & Z-Index */
+.relative { position: relative; }
+.absolute { position: absolute; }
+.fixed { position: fixed; }
+.sticky { position: sticky; }
+.inset-0 { inset: 0; }
+.z-10 { z-index: 10; }
+.z-20 { z-index: 20; }
+.z-50 { z-index: 50; }
+.z-100 { z-index: 100; }
+
+/* Width & Height */
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.min-h-screen { min-height: 100dvh; }
+
+/* Utilities */
+.overflow-hidden { overflow: hidden; }
+.cursor-pointer { cursor: pointer; }
+.transition { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* ==========================================================
+   RESPONSIVE MEDIA QUERIES
+   ========================================================== */
+
+/* 1200px */
+@media (max-width: 1200px) {
+    .grid-cols-5 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid-cols-4 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* 992px */
+@media (max-width: 992px) {
+    .grid-cols-4, .grid-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .gap-xl { gap: var(--space-lg); }
+}
+
+/* 768px */
+@media (max-width: 768px) {
+    :root {
+        --container-padding: 16px;
+        --font-size-base: 15px;
+        --space-2xl: 32px;
+        --space-3xl: 48px;
+        --display-hero: clamp(3.5rem, 18vw, 6rem);
+    }
+    .grid-cols-4, .grid-cols-3, .grid-cols-2, .grid-cols-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .gap-xl { gap: 18px; }
+    .text-xl { font-size: 1.25rem; }
+    .btn-silver { padding: 10px 24px; font-size: 0.9rem; }
+}
+
+/* 480px */
+@media (max-width: 480px) {
+    :root {
+        --container-padding: 12px;
+        --space-lg: 16px;
+        --space-xl: 20px;
+        --space-2xl: 24px;
+        --display-hero: clamp(2.8rem, 22vw, 4.5rem);
+    }
+    .grid-cols-4, .grid-cols-3, .grid-cols-2, .grid-cols-5 { grid-template-columns: 1fr; }
+    .text-xl { font-size: 1.1rem; }
+    .section-number { font-size: clamp(2.2rem, 12vw, 3.5rem); }
+    .display-section { font-size: var(--section-number, 2.4rem); }
+}
+
+/* ==========================================================
+   ACCESSIBILITY
+   ========================================================== */
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ==========================================================
+   AUTO-FILL SUPPORT
+   ========================================================== */
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus,
+.auth-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #14181d inset;
+    -webkit-text-fill-color: var(--text-body);
+    caret-color: var(--text-body);
+    border-color: var(--border-premium);
+    transition: background-color 5000s ease-in-out 0s;
+}
