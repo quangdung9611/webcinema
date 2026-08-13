@@ -1,6 +1,6 @@
 /* =========================================
    LOADING SPINNER - DASH (NÉT ĐỨT) - SILVER PREMIUM THEME
-   (Dùng biến từ index.css)
+   SỬ DỤNG 100% BIẾN TỪ INDEX.CSS
 ========================================= */
 
 /* 1. OVERLAY */
@@ -11,7 +11,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--overlay-dark);
+    background: var(--bg-primary);
     animation: overlayFadeIn var(--transition-normal) ease;
 }
 
@@ -94,6 +94,6 @@
         background: rgba(0, 0, 0, 0.55);
     }
     .loading-message {
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-h6);
     }
 }

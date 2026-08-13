@@ -1,7 +1,7 @@
 /* ==========================================================
    CINEMA DETAIL – SILVER PREMIUM EDITION
    HIỆU ỨNG THỞ ẢNH, GLOW, SHINE, PARTICLE
-   ĐỒNG BỘ BIẾN CSS TỪ INDEX.CSS
+   SỬ DỤNG 100% BIẾN TỪ INDEX.CSS
    ========================================================= */
 
 /* ==========================================================
@@ -35,6 +35,22 @@
   50% { box-shadow: 0 0 0 12px rgba(232, 232, 232, 0.02); }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes borderRotate {
+  from { --border-angle: 0deg; }
+  to { --border-angle: 360deg; }
+}
+
+@property --border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
 /* ==========================================================
    PAGE
 ========================================================== */
@@ -43,6 +59,7 @@
   overflow: hidden;
   margin-top: 0 !important;
   padding-top: 0 !important;
+  background: var(--bg-primary);
 }
 
 .cinema-content {
@@ -68,10 +85,6 @@
   color: var(--silver-primary);
   animation: spin 1s linear infinite;
 }
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 
 /* ==========================================================
    HERO – BANNER SWIPER 2.5:1 + HIỆU ỨNG THỞ
@@ -83,14 +96,14 @@
   margin: 0 auto;
   aspect-ratio: 2.5 / 1;
   overflow: hidden;
-  background-color: var(--black-premium);
+  background-color: var(--bg-primary);
   border-radius: var(--radius-lg);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
-  transition: box-shadow 0.4s ease;
+  box-shadow: var(--glass-shadow);
+  transition: box-shadow var(--transition-normal);
 }
 
 .cinema-hero:hover {
-  box-shadow: 0 12px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(232, 232, 232, 0.05);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .hero-swiper {
@@ -171,7 +184,7 @@
   margin-bottom: var(--space-sm);
   border-radius: var(--radius-round);
   background: rgba(232, 232, 232, 0.08);
-  border: 1px solid rgba(232, 232, 232, 0.2);
+  border: var(--border-premium);
   color: var(--silver-primary);
   font-size: var(--font-size-base);
   font-weight: var(--fw-extrabold);
@@ -182,11 +195,11 @@
 
 .cinema-name {
   font-size: var(--font-size-h1);
-  font-weight: var(--fw-black);
+  font-weight: var(--fw-extrabold);
   line-height: 1;
   letter-spacing: -2px;
   text-transform: uppercase;
-  color: var(--text-body);
+  color: var(--text-heading);
   margin: 0 0 var(--space-md) 0;
 }
 
@@ -251,7 +264,7 @@
   filter: drop-shadow(0 0 12px rgba(232, 232, 232, 0.2));
 }
 .section-title h2 {
-  color: var(--text-body);
+  color: var(--text-heading);
   font-size: var(--font-size-h2);
   font-weight: var(--fw-extrabold);
   letter-spacing: 0.5px;
@@ -279,7 +292,7 @@
   color: var(--text-body);
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(10px);
-  border: var(--border-silver);
+  border: var(--border-premium);
   transition: all var(--transition-normal);
 }
 .date-nav svg {
@@ -290,7 +303,7 @@
   color: var(--silver-primary);
   transform: scale(1.08);
   background: rgba(232, 232, 232, 0.08);
-  border-color: var(--border-silver-hover);
+  border-color: var(--silver-primary);
   box-shadow: 0 0 25px rgba(232, 232, 232, 0.1);
 }
 .date-list {
@@ -315,18 +328,18 @@
   color: var(--text-body);
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(10px);
-  border: var(--border-silver);
+  border: var(--border-premium);
   transition: all var(--transition-normal);
 }
 
 .date-card:hover {
   transform: translateY(-5px);
   background: rgba(232, 232, 232, 0.06);
-  border-color: var(--border-silver-hover);
-  box-shadow: var(--cinema-card-shadow), 0 0 20px rgba(232, 232, 232, 0.06);
+  border-color: var(--silver-primary);
+  box-shadow: var(--glass-shadow);
 }
 .date-card.active {
-  background: var(--cinema-border-gradient);
+  background: var(--premium-gradient);
   border-color: transparent;
   box-shadow: 0 0 30px rgba(232, 232, 232, 0.2);
 }
@@ -338,12 +351,12 @@
 .date-number {
   font-size: var(--font-size-base);
   font-weight: var(--fw-medium);
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--text-secondary);
 }
 /* ✅ Nút ngày active – chữ đen */
 .date-card.active .date-day,
 .date-card.active .date-number {
-  color: var(--black-premium);
+  color: var(--bg-primary);
 }
 .date-list::-webkit-scrollbar {
   height: 5px;
@@ -368,20 +381,20 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-xl);
-  background: var(--cinema-card-bg);
+  background: var(--bg-card);
   backdrop-filter: blur(12px);
-  border: var(--border-silver);
+  border: var(--border-premium);
   transition: all var(--transition-normal);
   animation: cardGlowPulse 6s ease-in-out infinite;
 }
 .movie-card:hover {
   transform: translateY(-8px) scale(1.02);
-  border-color: var(--border-silver-hover);
-  box-shadow: var(--cinema-card-shadow), 0 0 30px rgba(232, 232, 232, 0.06);
+  border-color: var(--silver-primary);
+  box-shadow: var(--card-shadow-hover);
   animation-play-state: paused;
 }
 
-/* BORDER GLOW CHẠY (giống film-card) */
+/* BORDER GLOW CHẠY */
 .movie-card::before {
   content: '';
   position: absolute;
@@ -406,15 +419,6 @@
   z-index: 10;
   animation: borderRotate 6s linear infinite;
   will-change: transform;
-}
-@keyframes borderRotate {
-  from { --border-angle: 0deg; }
-  to { --border-angle: 360deg; }
-}
-@property --border-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
 }
 
 .movie-card:hover::before {
@@ -460,17 +464,17 @@
   cursor: pointer;
   padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-round);
-  color: var(--black-premium);
+  color: var(--bg-primary);
   font-size: var(--font-size-base);
   font-weight: var(--fw-bold);
-  background: var(--cinema-border-gradient);
+  background: var(--premium-gradient);
   transition: all var(--transition-normal);
-  box-shadow: 0 4px 20px rgba(232, 232, 232, 0.15);
+  box-shadow: var(--btn-silver-shadow);
   animation: subtlePulse 3s ease-in-out infinite;
 }
 .booking-btn:hover {
   transform: scale(1.08);
-  box-shadow: var(--shadow-silver);
+  box-shadow: var(--card-shadow-hover);
   animation-play-state: paused;
 }
 
@@ -484,7 +488,7 @@
   line-height: 1.4;
   min-height: 56px;
   margin-bottom: var(--space-md);
-  transition: color 0.3s ease;
+  transition: color var(--transition-normal);
 }
 .movie-card:hover .movie-info h3 {
   color: var(--silver-primary);
@@ -523,13 +527,13 @@
   gap: var(--space-xs);
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(10px);
-  border: var(--border-silver);
+  border: var(--border-premium);
   transition: all var(--transition-normal);
 }
 .showtime-btn:hover {
   transform: translateY(-2px);
   background: rgba(232, 232, 232, 0.06);
-  border-color: var(--border-silver-hover);
+  border-color: var(--silver-primary);
   color: var(--silver-light);
 }
 .showtime-btn svg {
@@ -548,7 +552,7 @@
   gap: var(--space-sm);
   border-radius: var(--radius-xl);
   background: rgba(255, 255, 255, 0.03);
-  border: var(--border-silver);
+  border: var(--border-premium);
 }
 .empty-box svg {
   color: var(--silver-primary);
@@ -571,8 +575,8 @@
 .map-wrapper {
   overflow: hidden;
   border-radius: var(--radius-xl);
-  border: var(--border-silver);
-  box-shadow: var(--cinema-card-shadow);
+  border: var(--border-premium);
+  box-shadow: var(--glass-shadow);
 }
 .map-wrapper iframe {
   display: block;

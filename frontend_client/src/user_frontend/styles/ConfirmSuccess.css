@@ -10,7 +10,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--main-background);
+    background: var(--bg-primary);
 }
 
 /* ======================================================
@@ -64,9 +64,9 @@
 
 .success-top h1 {
     margin-top: var(--space-lg);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     letter-spacing: 1px;
-    color: var(--silver-primary);
+    color: var(--text-heading);
 }
 
 .success-top p {
@@ -85,10 +85,10 @@
     width: fit-content;
     padding: var(--space-sm) var(--space-xl);
     border-radius: var(--radius-round);
-    border: var(--border-silver);
+    border: var(--border-premium);
     font-weight: var(--fw-bold);
     color: var(--text-secondary);
-    box-shadow: var(--cinema-card-shadow);
+    box-shadow: var(--glass-shadow);
 }
 
 .order-badge span {
@@ -105,9 +105,9 @@
     display: flex;
     overflow: hidden;
     border-radius: var(--radius-xl);
-    border: var(--border-silver);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
-    background: var(--cinema-card-bg);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
+    background: var(--bg-card);
 }
 
 /* ======================================================
@@ -132,7 +132,7 @@
     min-height: 360px;
     object-fit: cover;
     border-radius: var(--radius-lg);
-    box-shadow: var(--cinema-card-shadow);
+    box-shadow: var(--glass-shadow);
 }
 
 .no-poster {
@@ -156,7 +156,7 @@
 .ticket-info h2 {
     margin-bottom: var(--space-2xl);
     color: var(--silver-primary);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -173,7 +173,7 @@
     align-items: center;
     gap: var(--space-md);
     padding-bottom: var(--space-md);
-    border-bottom: var(--border-light);
+    border-bottom: var(--border-subtle);
 }
 
 .detail-row svg {
@@ -221,8 +221,8 @@
     height: 40px;
     border-radius: 50%;
     transform: translateX(-50%);
-    background: var(--black-premium);
-    border: var(--border-silver);
+    background: var(--bg-primary);
+    border: var(--border-premium);
 }
 
 .circle-top {
@@ -245,7 +245,7 @@
     align-items: center;
     justify-content: center;
     background: rgba(255, 255, 255, 0.02);
-    border-left: var(--border-light);
+    border-left: var(--border-subtle);
 }
 
 .pin-title {
@@ -256,7 +256,7 @@
 }
 
 .pin-code {
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     line-height: 1;
     margin-bottom: var(--space-lg);
     color: var(--silver-primary);
@@ -264,10 +264,10 @@
 }
 
 .qr-wrapper {
-    background: var(--white-pure);
+    background: var(--silver-light);
     padding: var(--space-sm);
     border-radius: var(--radius-md);
-    box-shadow: var(--cinema-card-shadow);
+    box-shadow: var(--glass-shadow);
 }
 
 .qr-note {
@@ -287,7 +287,7 @@
     margin-top: var(--space-2xl);
     padding: var(--space-lg) var(--space-xl);
     border-radius: var(--radius-lg);
-    border: var(--border-silver);
+    border: var(--border-premium);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -339,13 +339,13 @@
     font-weight: var(--fw-bold);
     cursor: pointer;
     transition: all var(--transition-normal);
-    color: var(--black-premium) !important; /* ✅ MÀU CHỮ ĐEN */
+    color: var(--bg-primary) !important; /* Màu chữ đen */
 }
 
-/* ✅ GIỮ MÀU CHỮ ĐEN KHI HOVER */
+/* Giữ màu chữ đen khi hover */
 .success-actions button:hover {
     transform: translateY(-4px);
-    color: var(--black-premium) !important; /* Đảm bảo hover vẫn đen */
+    color: var(--bg-primary) !important;
 }
 
 /* ======================================================
@@ -363,29 +363,29 @@
 ====================================================== */
 
 .home-btn {
-    background: var(--gold-gradient); /* vẫn giữ tên biến nhưng trong index.css đã map sang silver */
-    color: var(--black-premium) !important;
-    border: 1px solid rgba(232, 232, 232, 0.45);
-    box-shadow: var(--shadow-silver);
+    background: var(--premium-gradient);
+    color: var(--bg-primary) !important;
+    border: var(--border-premium);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .home-btn:hover {
     transform: translateY(-4px) scale(1.02);
     filter: brightness(1.08);
-    color: var(--black-premium) !important; /* Đảm bảo hover vẫn đen */
+    color: var(--bg-primary) !important;
 }
 
 .download-btn {
-    background: var(--gold-gradient);
-    color: var(--black-premium) !important;
-    border: 1px solid rgba(232, 232, 232, 0.3);
-    box-shadow: var(--shadow-silver);
+    background: var(--premium-gradient);
+    color: var(--bg-primary) !important;
+    border: var(--border-premium);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .download-btn:hover {
     transform: translateY(-4px) scale(1.02);
     filter: brightness(1.08);
-    color: var(--black-premium) !important; /* Đảm bảo hover vẫn đen */
+    color: var(--bg-primary) !important;
 }
 
 /* ======================================================
@@ -438,7 +438,7 @@
     .ticket-right {
         width: 100%;
         border-left: none;
-        border-top: var(--border-light);
+        border-top: var(--border-subtle);
     }
     .ticket-left {
         flex-direction: row;

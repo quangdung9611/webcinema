@@ -10,16 +10,16 @@
     margin-bottom: var(--space-lg);
     padding: var(--space-md) var(--space-lg);
     border-radius: var(--radius-lg);
-  
-    border: var(--border-silver);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 /* =========================================================
-   SILVER GLOW EFFECT (thay vì vàng)
+   SILVER GLOW EFFECT
 ========================================================= */
 
 .countdown-wrapper::before {
@@ -71,10 +71,10 @@
 
 .countdown-time {
     font-size: var(--font-size-h2);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     line-height: 1;
     color: var(--silver-primary);
-    text-shadow: var(--shadow-silver);
+    text-shadow: 0 0 20px rgba(232, 232, 232, 0.15);
 }
 
 /* =========================================================

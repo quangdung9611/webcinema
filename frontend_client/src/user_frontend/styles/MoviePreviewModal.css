@@ -1,266 +1,275 @@
-/*=========================================================
-    MOVIE PREVIEW MODAL - FULL CSS (ĐỒNG BỘ INDEX.CSS)
-    Banner 2.5/1 | Poster + Info | Slider 4/2
-=========================================================*/
+/* ==========================================================
+   MOVIE PREVIEW MODAL - SILVER PREMIUM
+   ----------------------------------------------------------
+   Layout: Poster 30% | Info 70%
+   Poster: aspect-ratio 2 / 3
+   Info: max-height 750px + vertical scrollbar
+   Font title: Oswald
+   SỬ DỤNG 100% BIẾN TỪ INDEX.CSS
+========================================================== */
 
-/* ========== SCROLL WRAPPER ========== */
+/* ==========================================================
+   FONT
+   ----------------------------------------------------------
+   Chỉ sử dụng Oswald cho TITLE PHIM.
+========================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap');
+
+/* ==========================================================
+   SCROLL WRAPPER
+========================================================== */
 .preview-scroll-wrapper {
     position: relative;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    background: var(--black-premium);
+    background: var(--bg-primary);
     border-radius: var(--radius-xl);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(222, 222, 226, 0.28) rgba(255, 255, 255, 0.03);
 }
 
-/* ========== NÚT ĐÓNG ========== */
+.preview-scroll-wrapper::-webkit-scrollbar {
+    width: 7px;
+}
+.preview-scroll-wrapper::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.025);
+    border-radius: 10px;
+}
+.preview-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(245, 245, 246, 0.42), rgba(172, 172, 180, 0.24));
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.preview-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(245, 245, 246, 0.62), rgba(172, 172, 180, 0.40));
+}
+
+/* ==========================================================
+   NÚT ĐÓNG
+========================================================== */
 .preview-close-btn {
-    position: fixed;
-    top: 16px;
-    right: 16px;
+    position: sticky;
+    top: var(--space-md);
+    right: var(--space-md);
     z-index: 50;
+    float: right;
     width: 44px;
     height: 44px;
     border: none;
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--white-pure);
+    border: var(--border-premium);
+    color: var(--silver-light);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all var(--transition-normal);
+    margin: var(--space-md) var(--space-md) 0 0;
 }
 
 .preview-close-btn:hover {
-    background: var(--gold-gradient);
-    color: var(--black-premium);
+    background: var(--silver-primary);
+    color: var(--bg-primary);
     transform: rotate(90deg) scale(1.08);
     border-color: transparent;
 }
 
-/* ========== HERO BANNER ========== */
-.preview-hero-stage {
-    position: relative;
+/* ==========================================================
+   MAIN CONTAINER
+========================================================== */
+.preview-main-container {
     width: 100%;
-    aspect-ratio: 2.5 / 1;
-    overflow: hidden;
-    background: var(--black-premium);
-}
-
-.cinema-hero-banner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: var(--black-premium);
-}
-
-.banner-horizontal-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center center;
-    display: block;
-    will-change: transform, filter;
-    transform-origin: center;
-    animation: heroBackdropZoom 900ms cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-/* ===== HERO LAYER ===== */
-.preview-hero-layer {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    will-change: transform, opacity;
-    backface-visibility: hidden;
-    transform: translate3d(0, 0, 0);
-}
-
-.preview-hero-layer.current {
-    position: relative;
-    z-index: 1;
-}
-
-.preview-hero-layer.next {
-    z-index: 2;
-}
-
-/* ===== SLIDE ANIMATION ===== */
-.hero-slide-out {
-    animation: heroSlideOut 700ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
-}
-
-.hero-slide-in {
-    animation: heroSlideIn 700ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
-}
-
-@keyframes heroSlideOut {
-    0% {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-        filter: blur(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateX(100%) scale(1.03);
-        filter: blur(2px);
-    }
-}
-
-@keyframes heroSlideIn {
-    0% {
-        opacity: 0.9;
-        transform: translateX(-100%) scale(1.03);
-        filter: blur(2px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-        filter: blur(0);
-    }
-}
-
-@keyframes heroBackdropZoom {
-    from {
-        transform: scale(1.08);
-        filter: brightness(0.82) blur(3px);
-    }
-    to {
-        transform: scale(1);
-        filter: brightness(1) blur(0);
-    }
-}
-
-/* ========== INFO SECTION ========== */
-.preview-info-section {
-    background: var(--black-premium);
-    padding: var(--space-2xl) var(--space-2xl) var(--space-xl);
-}
-
-.preview-info-content {
-    max-width: 1200px;
+    max-width: 1300px;
     margin: 0 auto;
+    padding: var(--space-lg) var(--space-2xl) var(--space-2xl);
 }
 
-/* ===== HÀNG POSTER + INFO ===== */
-.preview-info-row {
+/* ==========================================================
+   MAIN CONTENT
+========================================================== */
+.preview-main-content {
     display: flex;
     gap: var(--space-2xl);
-    align-items: center;
+    align-items: stretch;
+    max-height: 750px;
 }
 
-/* ===== POSTER ===== */
+/* ==========================================================
+   POSTER - 30%
+========================================================== */
 .preview-poster-wrapper {
-    flex: 0 0 180px;
-    border-radius: var(--radius-sm);
+    flex: 0 0 30%;
+    max-width: 30%;
+    border-radius: var(--radius-md);
     overflow: hidden;
-    transition: transform var(--transition-normal);
+    box-shadow: var(--glass-shadow);
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    align-self: flex-start;
 }
 
 .preview-poster-wrapper:hover {
     transform: scale(1.02);
+    box-shadow: var(--card-shadow-hover);
 }
 
 .preview-poster-img {
     width: 100%;
-    aspect-ratio: 2/3;
+    aspect-ratio: 2 / 3;
     object-fit: cover;
     display: block;
 }
 
-/* ===== THÔNG TIN ===== */
-.preview-info-details {
+.poster-placeholder {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    background: var(--bg-tertiary);
+}
+
+/* ==========================================================
+   INFO - 70%
+========================================================== */
+.preview-info-wrapper {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 0;
+    padding: var(--space-sm) 0;
     min-width: 0;
-    max-width: 100%;
-    overflow: hidden;
+    max-height: 750px;
+    overflow-y: auto;
+    padding-right: var(--space-md);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(222, 222, 226, 0.30) rgba(255, 255, 255, 0.025);
 }
 
-/* Tiêu đề H2 dùng style mặc định từ index.css */
+.preview-info-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+.preview-info-wrapper::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.025);
+    border-radius: 10px;
+}
+.preview-info-wrapper::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(245, 245, 246, 0.42), rgba(172, 172, 180, 0.22));
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.preview-info-wrapper::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(245, 245, 246, 0.65), rgba(172, 172, 180, 0.42));
+}
+
+/* ==========================================================
+   TITLE
+========================================================== */
+.preview-movie-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: var(--font-size-h1);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--text-heading);
+    margin: 0 0 var(--space-xs) 0;
+    text-shadow: 0 4px 20px rgba(232, 232, 232, 0.06);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+/* ==========================================================
+   AGE BADGE
+========================================================== */
 .age-badge {
     display: inline-flex;
     align-items: center;
-    padding: 2px 12px;
+    padding: 2px var(--space-md);
     border-radius: var(--radius-xs);
-    font-size: 0.75rem;
-    font-weight: var(--fw-extrabold);
-    background: rgba(201, 168, 76, 0.15);
-    color: var(--gold-primary);
-    border: 1px solid rgba(201, 168, 76, 0.2);
+    font-size: var(--font-size-h4);
+    font-weight: 700;
+    background: rgba(232, 232, 232, 0.10);
+    color: var(--silver-primary);
+    border: var(--border-premium);
     letter-spacing: 0.5px;
     white-space: nowrap;
-    text-transform: none;
-    margin-left: var(--space-xs);
 }
 
-/* ===== META ===== */
+/* ==========================================================
+   META ROW
+========================================================== */
 .preview-meta-row {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-md);
+    gap: var(--space-md) var(--space-lg);
     margin: var(--space-sm) 0 var(--space-md) 0;
-    max-width: 100%;
 }
 
+/* ==========================================================
+   RATING
+========================================================== */
 .preview-rating {
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: 4px 14px;
+    padding: 2px var(--space-md);
     border-radius: var(--radius-round);
-    background: rgba(201, 168, 76, 0.12);
-    border: 1px solid rgba(201, 168, 76, 0.15);
-    color: var(--gold-primary);
+    background: rgba(232, 232, 232, 0.04);
+    border: var(--border-premium);
+    color: var(--silver-primary);
     font-weight: var(--fw-bold);
-    font-size: 0.875rem;
-    white-space: nowrap;
+    font-size: var(--font-size-h6);
 }
 
+.preview-rating svg {
+    color: #ffd700;
+    fill: #ffd700;
+}
+
+/* ==========================================================
+   META ITEM
+========================================================== */
 .preview-meta-item {
     display: flex;
     align-items: center;
     gap: var(--space-xs);
     color: var(--text-secondary);
-    font-size: 0.875rem;
-    white-space: nowrap;
+    font-size: var(--font-size-h6);
 }
 
 .preview-meta-item .icon {
-    color: var(--gold-primary);
-    width: 16px;
-    height: 16px;
+    color: var(--silver-primary);
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
 }
 
+/* ==========================================================
+   META DIVIDER
+========================================================== */
 .preview-meta-divider {
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.10);
     flex-shrink: 0;
 }
 
-/* ===== DESCRIPTION (VỚI THANH CUỘN) ===== */
+/* ==========================================================
+   DESCRIPTION
+========================================================== */
 .preview-description-wrapper {
-    margin: var(--space-md) 0 var(--space-lg) 0;
-    max-width: 100%;
+    margin: var(--space-xs) 0 var(--space-md) 0;
 }
 
 .preview-description-scroll {
-    max-height: 100px;
+    max-height: 110px;
     overflow-y: auto;
-    padding-right: 8px;
-    font-size: 1rem;
-    line-height: 1.6;
+    padding-right: var(--space-sm);
+    font-size: var(--font-size-base);
+    line-height: 1.7;
     color: var(--text-secondary);
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -269,34 +278,30 @@
 .preview-description-scroll::-webkit-scrollbar {
     width: 4px;
 }
-
 .preview-description-scroll::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.02);
     border-radius: 4px;
 }
-
 .preview-description-scroll::-webkit-scrollbar-thumb {
-    background: rgba(201, 168, 76, 0.3);
+    background: rgba(232, 232, 232, 0.20);
     border-radius: 4px;
 }
-
 .preview-description-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(201, 168, 76, 0.5);
+    background: rgba(232, 232, 232, 0.35);
 }
-
-/* Firefox */
 .preview-description-scroll {
     scrollbar-width: thin;
-    scrollbar-color: rgba(201, 168, 76, 0.3) rgba(255, 255, 255, 0.03);
+    scrollbar-color: rgba(232, 232, 232, 0.20) rgba(255, 255, 255, 0.02);
 }
 
-/* ===== DETAILS GRID ===== */
+/* ==========================================================
+   DETAILS
+========================================================== */
 .preview-details {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-lg) var(--space-2xl);
-    margin-bottom: var(--space-lg);
-    max-width: 100%;
+    gap: var(--space-md) var(--space-2xl);
+    margin-bottom: var(--space-md);
 }
 
 .preview-detail {
@@ -304,34 +309,33 @@
     flex-direction: column;
     gap: 2px;
     flex: 1 0 auto;
-    min-width: 100px;
-    max-width: 100%;
+    min-width: 120px;
 }
 
 .preview-detail-label {
-    font-size: 0.75rem;
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 1px;
-    white-space: nowrap;
+    letter-spacing: 1.5px;
 }
 
 .preview-detail-value {
-    font-size: 0.875rem;
+    font-size: var(--font-size-base);
     font-weight: var(--fw-medium);
-    color: var(--white-pure);
+    color: var(--text-body);
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
 
-/* ===== ACTIONS – NÚT GIỐNG btn-view-all ===== */
+/* ==========================================================
+   ACTIONS
+========================================================== */
 .preview-actions {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-sm);
-    margin-top: var(--space-sm);
-    max-width: 100%;
+    margin-top: var(--space-xs);
 }
 
 .preview-btn-primary,
@@ -340,37 +344,51 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 10px 24px;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-xl);
     border-radius: var(--radius-round);
     text-decoration: none;
-    border: 2px solid rgba(232, 232, 232, 0.25);
+    border: var(--border-premium);
     color: var(--silver-primary);
-    background: rgba(255, 255, 255, 0.02);
-    transition: border-color var(--transition-normal), background var(--transition-normal), box-shadow var(--transition-normal);
-    font-size: 0.875rem;
-    font-weight: var(--fw-semibold);
+    background: transparent;
+    transition: all var(--transition-normal);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-bold);
     white-space: nowrap;
     cursor: pointer;
-    flex-shrink: 0;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
-.preview-btn-primary:hover,
+.preview-btn-primary {
+    background: var(--silver-primary);
+    color: var(--bg-primary);
+    border-color: var(--silver-primary);
+}
+
+.preview-btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--btn-silver-shadow);
+}
+
 .preview-btn-secondary:hover,
 .preview-btn-trailer:hover {
-    color: var(--black-premium);
-    background: var(--cinema-border-gradient);
-    border-color: transparent;
-    box-shadow: 0 4px 16px rgba(232, 232, 232, 0.20);
+    color: var(--bg-primary);
+    background: var(--silver-primary);
+    border-color: var(--silver-primary);
+    transform: translateY(-3px);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 /* ==========================================================
-    MOVIE STRIP - SLIDER FLEX 4/2
+   MOVIE STRIP
 ========================================================== */
 .preview-movie-strip {
-    background: rgba(10, 10, 10, 0.98);
+    background: var(--bg-secondary);
     padding: var(--space-xl) var(--space-2xl) var(--space-2xl);
-    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    border-top: var(--border-subtle);
+    max-width: 1300px;
+    margin: 0 auto;
 }
 
 .preview-strip-header {
@@ -381,29 +399,26 @@
 }
 
 .preview-strip-title {
-    font-size: var(--font-size-h4);
+    font-size: var(--font-size-h3);
     font-weight: var(--fw-extrabold);
     letter-spacing: 0.5px;
-    background: var(--gold-gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--text-heading);
+    margin: 0;
 }
 
-.preview-strip-subtitle {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-}
-
-/* ===== SLIDER WRAPPER ===== */
+/* ==========================================================
+   SLIDER WRAPPER
+========================================================== */
 .preview-strip-wrapper {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-sm);
 }
 
-/* ===== VIEWPORT ===== */
+/* ==========================================================
+   SLIDER VIEWPORT
+========================================================== */
 .preview-strip-slider {
     flex: 1;
     overflow-x: auto;
@@ -418,39 +433,46 @@
     display: none;
 }
 
-/* ===== TRACK - FLEX NGANG ===== */
+/* ==========================================================
+   TRACK
+========================================================== */
 .preview-strip-track {
     display: flex;
-    gap: 16px;
+    gap: var(--space-md);
     width: 100%;
 }
 
-/* ===== CARD ===== */
+/* ==========================================================
+   MOVIE CARD
+========================================================== */
 .preview-strip-card {
-    flex: 0 0 calc((100% - 48px) / 4); /* 4 card desktop */
+    flex: 0 0 calc((100% - 48px) / 4);
     min-width: 120px;
     border-radius: var(--radius-md);
     overflow: hidden;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.02);
-    border: 2px solid rgba(255, 255, 255, 0.04);
+    background: var(--bg-card);
+    border: var(--border-premium);
     transition: all var(--transition-normal);
     position: relative;
     aspect-ratio: 2 / 3;
 }
 
 .preview-strip-card:hover {
-    transform: translateY(-10px) scale(1.04);
-    border-color: rgba(201, 168, 76, 0.3);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 40px rgba(201, 168, 76, 0.04);
+    transform: translateY(-8px) scale(1.03);
+    border-color: var(--silver-primary);
+    box-shadow: var(--card-shadow-hover);
 }
 
 .preview-strip-card.active {
-    border-color: var(--gold-primary);
-    box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.2), 0 16px 48px rgba(0, 0, 0, 0.5);
-    transform: translateY(-6px);
+    border-color: var(--silver-primary);
+    box-shadow: 0 0 0 2px rgba(232, 232, 232, 0.15), var(--card-shadow-hover);
+    transform: translateY(-4px);
 }
 
+/* ==========================================================
+   STRIP IMAGE
+========================================================== */
 .preview-strip-image {
     width: 100%;
     height: 100%;
@@ -460,17 +482,23 @@
 }
 
 .preview-strip-card:hover .preview-strip-image {
-    transform: scale(1.08);
+    transform: scale(1.06);
 }
 
+/* ==========================================================
+   GRADIENT
+========================================================== */
 .preview-strip-gradient {
     position: absolute;
     inset: auto 0 0 0;
     height: 45%;
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.70));
     pointer-events: none;
 }
 
+/* ==========================================================
+   STRIP INFO
+========================================================== */
 .preview-strip-info {
     position: absolute;
     left: var(--space-sm);
@@ -480,27 +508,29 @@
 }
 
 .preview-strip-name {
-    color: var(--text-body);
-    font-size: 0.75rem;
+    color: var(--silver-light);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
-    line-height: 1.5;
+    line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-/* ===== NÚT ĐIỀU HƯỚNG ===== */
+/* ==========================================================
+   SLIDER BUTTON
+========================================================== */
 .preview-slider-btn {
     flex-shrink: 0;
     width: 44px;
     height: 44px;
     border: none;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    color: var(--white-pure);
+    border: var(--border-premium);
+    color: var(--silver-light);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -510,26 +540,18 @@
 }
 
 .preview-slider-btn:hover {
-    background: var(--gold-gradient);
-    color: var(--black-premium);
+    background: var(--silver-primary);
+    color: var(--bg-primary);
     transform: scale(1.08);
-    box-shadow: 0 0 30px rgba(201, 168, 76, 0.15);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .preview-slider-btn:active {
     transform: scale(0.95);
 }
 
-.preview-slider-left {
-    order: 0;
-}
-
-.preview-slider-right {
-    order: 2;
-}
-
 /* ==========================================================
-    TRAILER OVERLAY
+   TRAILER OVERLAY
 ========================================================== */
 .preview-trailer-overlay {
     position: fixed;
@@ -538,7 +560,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--overlay-dark);
+    background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(20px);
     animation: fadeIn var(--transition-normal) ease;
 }
@@ -546,11 +568,11 @@
 .preview-trailer-modal {
     position: relative;
     width: min(1100px, 92vw);
-    aspect-ratio: 16/9;
+    aspect-ratio: 16 / 9;
     border-radius: var(--radius-lg);
     overflow: hidden;
-    background: var(--black-premium);
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7);
+    background: var(--bg-primary);
+    box-shadow: var(--card-shadow-hover);
     animation: zoomIn var(--transition-normal) ease;
 }
 
@@ -570,7 +592,7 @@
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(12px);
-    color: var(--white-pure);
+    color: var(--silver-light);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -579,231 +601,17 @@
 }
 
 .preview-trailer-close:hover {
-    background: var(--gold-gradient);
-    color: var(--black-premium);
+    background: var(--silver-primary);
+    color: var(--bg-primary);
     transform: rotate(90deg);
 }
 
 /* ==========================================================
-    RESPONSIVE
-========================================================== */
-@media (max-width: 1200px) {
-    .preview-poster-wrapper {
-        flex: 0 0 160px;
-    }
-}
-
-@media (max-width: 992px) {
-    .preview-info-row {
-        gap: var(--space-lg);
-    }
-    .preview-poster-wrapper {
-        flex: 0 0 150px;
-    }
-    .preview-movie-strip {
-        padding: var(--space-lg) var(--space-xl) var(--space-xl);
-    }
-}
-
-@media (max-width: 768px) {
-    .preview-scroll-wrapper {
-        border-radius: var(--radius-lg);
-    }
-
-    .preview-hero-stage {
-        aspect-ratio: 2 / 1;
-    }
-
-    .preview-close-btn {
-        top: 12px;
-        right: 12px;
-        width: 38px;
-        height: 38px;
-    }
-    .preview-close-btn svg {
-        width: 20px;
-        height: 20px;
-    }
-
-    .preview-info-section {
-        padding: var(--space-xl) var(--space-md) var(--space-lg);
-    }
-
-    .preview-info-row {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: var(--space-md);
-    }
-
-    .preview-poster-wrapper {
-        flex: 0 0 130px;
-        width: 130px;
-    }
-
-    .preview-info-details {
-        align-items: center;
-        padding: 0;
-    }
-
-    .preview-meta-row {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .preview-description-wrapper {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-
-    .preview-description-scroll {
-        max-height: 80px;
-        font-size: 0.875rem;
-        text-align: center;
-        max-width: 100%;
-        padding-right: 4px;
-    }
-
-    .preview-details {
-        justify-content: center;
-        gap: var(--space-md) var(--space-lg);
-    }
-
-    .preview-detail {
-        align-items: center;
-        flex: 0 1 auto;
-    }
-
-    .preview-actions {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .preview-btn-primary,
-    .preview-btn-secondary,
-    .preview-btn-trailer {
-        padding: 8px 18px;
-        font-size: 0.75rem;
-        gap: 6px;
-    }
-
-    /* === SLIDER: 2 CỘT === */
-    .preview-strip-card {
-        flex: 0 0 calc((100% - 12px) / 2);
-        min-width: 100px;
-    }
-
-    .preview-strip-track {
-        gap: 12px;
-    }
-
-    .preview-slider-btn {
-        width: 36px;
-        height: 36px;
-    }
-
-    .preview-movie-strip {
-        padding: var(--space-lg) var(--space-md) var(--space-xl);
-    }
-
-    .preview-strip-title {
-        font-size: var(--font-size-h5);
-    }
-    .preview-strip-subtitle {
-        display: none;
-    }
-}
-
-@media (max-width: 480px) {
-    .preview-hero-stage {
-        aspect-ratio: 1.8 / 1;
-    }
-
-    .preview-close-btn {
-        top: 8px;
-        right: 8px;
-        width: 32px;
-        height: 32px;
-    }
-    .preview-close-btn svg {
-        width: 18px;
-        height: 18px;
-    }
-
-    .preview-info-section {
-        padding: var(--space-md) var(--space-sm) var(--space-lg);
-    }
-
-    .preview-poster-wrapper {
-        flex: 0 0 100px;
-        width: 100px;
-    }
-
-    .age-badge {
-        font-size: 0.625rem;
-        padding: 1px 8px;
-    }
-
-    .preview-meta-item {
-        font-size: 0.75rem;
-    }
-
-    .preview-description-scroll {
-        max-height: 60px;
-        font-size: 0.75rem;
-    }
-
-    .preview-details {
-        gap: var(--space-sm) var(--space-md);
-    }
-
-    .preview-detail-value {
-        font-size: 0.75rem;
-    }
-
-    .preview-btn-primary,
-    .preview-btn-secondary,
-    .preview-btn-trailer {
-        padding: 6px 14px;
-        font-size: 0.625rem;
-        gap: 4px;
-    }
-
-    .preview-strip-card {
-        flex: 0 0 calc((100% - 10px) / 2);
-        min-width: 80px;
-    }
-
-    .preview-strip-track {
-        gap: 10px;
-    }
-
-    .preview-slider-btn {
-        width: 30px;
-        height: 30px;
-    }
-    .preview-slider-btn svg {
-        width: 16px;
-        height: 16px;
-    }
-
-    .preview-trailer-modal {
-        width: 98vw;
-        border-radius: var(--radius-md);
-    }
-}
-
-/* ==========================================================
-    ANIMATIONS
+   ANIMATIONS
 ========================================================== */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes zoomIn {
@@ -814,5 +622,201 @@
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
+    }
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+/* Tablet */
+@media (max-width: 992px) {
+    .preview-main-container {
+        padding: var(--space-lg) var(--space-xl) var(--space-xl);
+    }
+    .preview-main-content {
+        gap: var(--space-xl);
+        max-height: 680px;
+    }
+    .preview-poster-wrapper {
+        flex: 0 0 35%;
+        max-width: 35%;
+    }
+    .preview-info-wrapper {
+        max-height: 680px;
+    }
+    .preview-movie-title {
+        font-size: var(--font-size-h2);
+    }
+    .preview-movie-strip {
+        padding: var(--space-lg) var(--space-xl) var(--space-xl);
+    }
+    .preview-strip-card {
+        flex: 0 0 calc((100% - 32px) / 3);
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .preview-scroll-wrapper {
+        border-radius: var(--radius-lg);
+    }
+    .preview-close-btn {
+        top: var(--space-sm);
+        right: var(--space-sm);
+        width: 38px;
+        height: 38px;
+        margin: var(--space-sm) var(--space-sm) 0 0;
+    }
+    .preview-close-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+    .preview-main-container {
+        padding: var(--space-md) var(--space-md) var(--space-lg);
+    }
+    .preview-main-content {
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-lg);
+        max-height: none;
+    }
+    .preview-poster-wrapper {
+        flex: 0 0 auto;
+        max-width: 220px;
+        width: 100%;
+    }
+    .preview-info-wrapper {
+        align-items: center;
+        text-align: center;
+        padding: 0;
+        padding-right: 0;
+        width: 100%;
+        max-height: none;
+        overflow-y: visible;
+    }
+    .preview-movie-title {
+        font-size: var(--font-size-h3);
+        justify-content: center;
+    }
+    .age-badge {
+        font-size: var(--font-size-h6);
+        padding: 2px var(--space-sm);
+    }
+    .preview-meta-row {
+        justify-content: center;
+    }
+    .preview-description-wrapper {
+        width: 100%;
+    }
+    .preview-description-scroll {
+        max-height: 80px;
+        font-size: var(--font-size-h6);
+        text-align: center;
+    }
+    .preview-details {
+        justify-content: center;
+        gap: var(--space-sm) var(--space-lg);
+    }
+    .preview-detail {
+        align-items: center;
+        flex: 0 1 auto;
+        min-width: 80px;
+    }
+    .preview-detail-value {
+        font-size: var(--font-size-h6);
+    }
+    .preview-actions {
+        justify-content: center;
+    }
+    .preview-btn-primary,
+    .preview-btn-secondary,
+    .preview-btn-trailer {
+        padding: var(--space-sm) var(--space-lg);
+        font-size: var(--font-size-h6);
+    }
+    /* SLIDER */
+    .preview-strip-card {
+        flex: 0 0 calc((100% - 12px) / 2);
+        min-width: 100px;
+    }
+    .preview-strip-track {
+        gap: var(--space-sm);
+    }
+    .preview-slider-btn {
+        width: 36px;
+        height: 36px;
+    }
+    .preview-movie-strip {
+        padding: var(--space-lg) var(--space-md) var(--space-xl);
+    }
+    .preview-strip-title {
+        font-size: var(--font-size-h4);
+    }
+}
+
+/* Mobile nhỏ */
+@media (max-width: 480px) {
+    .preview-close-btn {
+        top: var(--space-xs);
+        right: var(--space-xs);
+        width: 32px;
+        height: 32px;
+        margin: var(--space-xs) var(--space-xs) 0 0;
+    }
+    .preview-close-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+    .preview-main-container {
+        padding: var(--space-sm) var(--space-sm) var(--space-md);
+    }
+    .preview-poster-wrapper {
+        max-width: 160px;
+    }
+    .preview-movie-title {
+        font-size: var(--font-size-h4);
+    }
+    .age-badge {
+        font-size: var(--font-size-h6);
+        padding: 1px var(--space-sm);
+    }
+    .preview-meta-item {
+        font-size: var(--font-size-h6);
+    }
+    .preview-description-scroll {
+        max-height: 60px;
+        font-size: var(--font-size-h6);
+    }
+    .preview-detail-value {
+        font-size: var(--font-size-h6);
+    }
+    .preview-btn-primary,
+    .preview-btn-secondary,
+    .preview-btn-trailer {
+        padding: 6px var(--space-md);
+        font-size: var(--font-size-h6);
+        gap: 4px;
+    }
+    .preview-strip-card {
+        flex: 0 0 calc((100% - 8px) / 2);
+        min-width: 80px;
+    }
+    .preview-strip-track {
+        gap: var(--space-xs);
+    }
+    .preview-slider-btn {
+        width: 30px;
+        height: 30px;
+    }
+    .preview-slider-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+    .preview-movie-strip {
+        padding: var(--space-md) var(--space-sm) var(--space-lg);
+    }
+    .preview-strip-title {
+        font-size: var(--font-size-h5);
     }
 }

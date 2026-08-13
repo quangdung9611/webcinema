@@ -13,7 +13,7 @@
     z-index: 1300;
     backdrop-filter: blur(14px);
     background: rgba(10, 10, 10, 0.92);
-    border-bottom: 1px solid rgba(232, 232, 232, 0.06); /* bạc thay cho vàng */
+    border-bottom: var(--border-premium);
 }
 
 /* =========================================================
@@ -43,12 +43,12 @@
     color: var(--text-body);
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: var(--transition-fast);
+    transition: all var(--transition-fast);
 }
 
 .admin-hamburger-trigger:hover {
-    background: var(--hover-bg);
-    color: var(--silver-primary); /* bạc thay vàng */
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--silver-primary);
 }
 
 /* =========================================================
@@ -76,9 +76,8 @@
     padding: 0;
 }
 
-/* Nếu logo là text */
 .admin-brand-text {
-    color: var(--silver-primary); /* bạc thay vàng */
+    color: var(--silver-primary);
     font-size: 1.3rem;
     font-weight: var(--fw-extrabold);
     letter-spacing: 0.5px;
@@ -100,7 +99,7 @@
 }
 
 .admin-page-title span {
-    color: var(--silver-primary); /* bạc thay vàng */
+    color: var(--silver-primary);
 }
 
 /* =========================================================
@@ -114,7 +113,7 @@
     position: relative;
     display: flex;
     align-items: center;
-    border: 1px solid rgba(232, 232, 232, 0.08);
+    border: var(--border-premium);
     border-radius: var(--radius-md);
     overflow: hidden;
     margin: 0 var(--space-xl);
@@ -134,7 +133,7 @@
 }
 
 .admin-header-search-wrapper:focus-within .admin-search-icon {
-    color: var(--silver-primary); /* bạc thay vàng */
+    color: var(--silver-primary);
 }
 
 .admin-search-input {
@@ -180,12 +179,12 @@
     border-radius: var(--radius-md);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: var(--transition-fast);
+    transition: all var(--transition-fast);
 }
 
 .admin-notification-btn:hover {
-    background: var(--hover-bg);
-    color: var(--silver-primary); /* bạc thay vàng */
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--silver-primary);
 }
 
 .admin-notification-badge {
@@ -198,8 +197,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--silver-primary); /* bạc thay vàng */
-    color: var(--black-premium);
+    background: var(--silver-primary);
+    color: var(--bg-primary);
     font-size: 0.65rem;
     font-weight: var(--fw-extrabold);
 }
@@ -215,7 +214,7 @@
     cursor: pointer;
     padding: 4px 8px 4px 4px;
     border-radius: var(--radius-round);
-    transition: var(--transition-fast);
+    transition: all var(--transition-fast);
 }
 
 .admin-user-dropdown:hover {
@@ -233,7 +232,7 @@
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid rgba(232, 232, 232, 0.1);
+    border: var(--border-premium);
     background: rgba(232, 232, 232, 0.04);
     padding: 2px;
 }
@@ -244,7 +243,7 @@
 }
 
 .admin-user-greeting {
-    font-size: var(--font-size-h6); /* thay --font-size-sm */
+    font-size: var(--font-size-h6);
     color: var(--text-muted);
 }
 
@@ -267,21 +266,21 @@
     height: 44px;
     padding: 0 var(--space-md);
     border-radius: var(--radius-md);
-    border: 1px solid rgba(232, 232, 232, 0.06);
+    border: var(--border-premium);
     background: transparent;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
     gap: var(--space-xs);
     cursor: pointer;
-    transition: var(--transition-fast);
+    transition: all var(--transition-fast);
 }
 
 .admin-logout-btn:hover {
     background: rgba(232, 232, 232, 0.06);
     border-color: rgba(232, 232, 232, 0.12);
     color: var(--silver-primary);
-    box-shadow: 0 0 20px rgba(232, 232, 232, 0.04);
+    box-shadow: var(--glass-shadow);
 }
 
 /* =========================================================

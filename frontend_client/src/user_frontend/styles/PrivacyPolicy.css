@@ -5,7 +5,7 @@
 .policy-page {
   width: 100%;
   padding: var(--space-2xl) 0 var(--space-3xl);
-  background: var(--main-background);
+  background: var(--bg-primary);
   min-height: 70vh;
 }
 
@@ -31,16 +31,16 @@
   width: 88px;
   height: 88px;
   border-radius: 50%;
-  background: rgba(201, 168, 76, 0.08);
-  border: 1px solid rgba(201, 168, 76, 0.15);
-  color: var(--gold-primary);
+  background: rgba(232, 232, 232, 0.08);
+  border: var(--border-premium);
+  color: var(--silver-primary);
   margin-bottom: var(--space-md);
 }
 
 .policy-header h1 {
   font-size: var(--font-size-h2);
   font-weight: var(--fw-extrabold);
-  color: var(--text-body);
+  color: var(--text-heading);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin: 0 0 var(--space-xs);
@@ -56,7 +56,7 @@
   width: 80px;
   height: 3px;
   border-radius: var(--radius-round);
-  background: var(--gold-gradient);
+  background: var(--premium-gradient);
   margin: var(--space-md) auto 0;
 }
 
@@ -71,7 +71,7 @@
   padding: var(--space-md) 0 var(--space-xl);
   color: var(--text-muted);
   font-size: var(--font-size-base);
-  border-bottom: var(--border-light);
+  border-bottom: var(--border-premium);
   margin-bottom: var(--space-xl);
 }
 
@@ -81,7 +81,7 @@
   transition: color var(--transition-fast);
 }
 .policy-breadcrumb a:hover {
-  color: var(--gold-primary);
+  color: var(--silver-primary);
 }
 .policy-breadcrumb .current {
   color: var(--text-body);
@@ -99,15 +99,16 @@
 
 .policy-section {
   background: rgba(255, 255, 255, 0.02);
-  border: var(--border-light);
+  border: var(--border-premium);
   border-radius: var(--radius-lg);
   padding: var(--space-xl) var(--space-2xl);
   transition: all var(--transition-normal);
 }
 
 .policy-section:hover {
-  border-color: rgba(201, 168, 76, 0.12);
+  border-color: var(--silver-primary);
   background: rgba(255, 255, 255, 0.03);
+  box-shadow: var(--glass-shadow);
 }
 
 .policy-section h2 {
@@ -122,7 +123,7 @@
 }
 
 .policy-section h2 svg {
-  color: var(--gold-primary);
+  color: var(--silver-primary);
   flex-shrink: 0;
 }
 
@@ -166,8 +167,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--gold-primary);
-  opacity: 0.4;
+  background: var(--silver-primary);
+  opacity: 0.5;
 }
 
 .policy-section ul li strong {
@@ -206,6 +207,7 @@
   }
   .policy-section {
     padding: var(--space-lg);
+    border-radius: var(--radius-md);
   }
   .policy-section h2 {
     font-size: var(--font-size-h5);

@@ -1,6 +1,6 @@
 /* ============================================================
    ADMIN DASHBOARD – QUANG DUNG CINEMA
-   TÍCH HỢP VỚI INDEX.CSS
+   TÍCH HỢP VỚI INDEX.CSS (SILVER EDITION)
    BỐ CỤC: CHARTS (2 cột) → TRANSACTIONS (full) → SEAT + TOP MOVIES + BOOKING STATUS (3 cột)
 ============================================================ */
 
@@ -17,22 +17,16 @@
     --dash-red: #ef6a72;
     --dash-orange: #e6a15c;
 
-    --dash-bg: #08090b;
-    --dash-card: #101216;
-    --dash-card-hover: #14161b;
     --dash-border: rgba(255, 255, 255, 0.075);
     --dash-border-hover: rgba(214, 179, 106, 0.22);
-    --dash-text: #f4f4f5;
-    --dash-muted: #9297a3;
-    --dash-muted-2: #686d78;
+    --dash-text: var(--text-body);
+    --dash-muted: var(--text-secondary);
+    --dash-muted-2: var(--text-muted);
 
     min-height: 100vh;
     padding: var(--space-lg);
-    background:
-        radial-gradient(circle at 10% 0%, rgba(214, 179, 106, 0.055), transparent 28%),
-        radial-gradient(circle at 90% 15%, rgba(108, 158, 255, 0.035), transparent 25%),
-        var(--main-background);
-    color: var(--dash-text);
+    background: var(--bg-primary);
+    color: var(--text-body);
     font-family: var(--font-primary);
 }
 
@@ -60,15 +54,15 @@
     justify-content: center;
     flex-shrink: 0;
     border-radius: var(--radius-md);
-    background: linear-gradient(145deg, rgba(240, 215, 154, 0.16), rgba(214, 179, 106, 0.04));
-    border: 1px solid rgba(214, 179, 106, 0.18);
-    color: var(--dash-gold-light);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    background: rgba(232, 232, 232, 0.12);
+    border: var(--border-premium);
+    color: var(--silver-light);
+    box-shadow: var(--glass-shadow);
 }
 .dashboard-eyebrow {
     display: block;
     margin-bottom: var(--space-xs);
-    color: var(--dash-gold);
+    color: var(--silver-primary);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     letter-spacing: 2.2px;
@@ -77,12 +71,13 @@
 .dashboard-heading h1 {
     margin: 0;
     font-size: var(--font-size-h2);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     letter-spacing: -0.025em;
+    color: var(--text-heading);
 }
 .dashboard-heading p {
     margin: var(--space-xs) 0 0;
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .dashboard-actions {
@@ -97,10 +92,10 @@
     justify-content: center;
     gap: var(--space-sm);
     padding: 0 var(--space-md);
-    border: var(--border-light);
+    border: var(--border-premium);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.035);
-    color: var(--dash-text);
+    color: var(--text-body);
     font-family: inherit;
     font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
@@ -109,7 +104,7 @@
 }
 .refresh-button:hover {
     background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(214, 179, 106, 0.3);
+    border-color: var(--silver-primary);
 }
 .refresh-button:active {
     transform: scale(0.97);
@@ -136,9 +131,9 @@
     gap: var(--space-md);
     padding: var(--space-md) var(--space-lg);
     margin-bottom: var(--space-lg);
-    border: var(--border-light);
+    border: var(--border-premium);
     border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+    background: var(--bg-card);
 }
 .filter-left {
     display: flex;
@@ -150,12 +145,12 @@
     align-items: center;
     gap: var(--space-sm);
     white-space: nowrap;
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
 }
 .filter-label svg {
-    color: var(--dash-gold);
+    color: var(--silver-primary);
 }
 .period-tabs {
     display: flex;
@@ -171,7 +166,7 @@
     border: 0;
     border-radius: var(--radius-sm);
     background: transparent;
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-family: inherit;
     font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
@@ -179,11 +174,11 @@
     transition: background var(--transition-fast), color var(--transition-fast);
 }
 .period-tab:hover {
-    color: var(--dash-text);
+    color: var(--text-body);
 }
 .period-tab.active {
-    background: linear-gradient(135deg, rgba(214, 179, 106, 0.2), rgba(214, 179, 106, 0.08));
-    color: var(--dash-gold-light);
+    background: rgba(232, 232, 232, 0.12);
+    color: var(--silver-primary);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 .current-period {
@@ -194,13 +189,13 @@
     white-space: nowrap;
 }
 .current-period span {
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     font-size: var(--font-size-h6);
     letter-spacing: 1px;
     text-transform: uppercase;
 }
 .current-period strong {
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
 }
@@ -212,24 +207,24 @@
 .custom-date input {
     height: 34px;
     padding: 0 var(--space-sm);
-    border: var(--border-light);
+    border: var(--border-premium);
     border-radius: var(--radius-sm);
     outline: none;
-    background: #0a0b0e;
-    color: var(--dash-text);
+    background: var(--bg-secondary);
+    color: var(--text-body);
     font-family: inherit;
     font-size: var(--font-size-h6);
 }
 .custom-date input:focus {
-    border-color: rgba(214, 179, 106, 0.4);
+    border-color: var(--silver-primary);
 }
 .custom-date button {
     height: 34px;
     padding: 0 var(--space-md);
     border: 0;
     border-radius: var(--radius-sm);
-    background: var(--dash-gold);
-    color: #111;
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
     font-family: inherit;
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
@@ -262,7 +257,7 @@
     margin-left: auto;
     border: 0;
     background: transparent;
-    color: #fff;
+    color: var(--text-body);
     font-family: inherit;
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
@@ -283,9 +278,9 @@
     min-height: 145px;
     padding: var(--space-md);
     overflow: hidden;
-    border: var(--border-light);
+    border: var(--border-premium);
     border-radius: var(--radius-lg);
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012));
+    background: var(--bg-card);
     transition: transform var(--transition-normal), border-color var(--transition-normal), background var(--transition-normal);
 }
 .kpi-card::after {
@@ -300,8 +295,8 @@
 }
 .kpi-card:hover {
     transform: translateY(-2px);
-    border-color: rgba(214, 179, 106, 0.2);
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+    border-color: var(--silver-primary);
+    background: var(--bg-elevated);
 }
 .kpi-card-top {
     display: flex;
@@ -355,7 +350,7 @@
     margin-top: var(--space-md);
 }
 .kpi-title {
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
 }
@@ -364,10 +359,11 @@
     font-size: var(--font-size-h2);
     line-height: 1.2;
     letter-spacing: -0.5px;
+    color: var(--text-heading);
 }
 .kpi-comparison {
     margin-top: var(--space-xs);
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     font-size: var(--font-size-h6);
 }
 .kpi-detail {
@@ -376,9 +372,9 @@
     gap: var(--space-xs) var(--space-sm);
     margin-top: var(--space-xs);
     padding-top: var(--space-xs);
-    border-top: 1px solid var(--dash-border);
+    border-top: var(--border-subtle);
     font-size: var(--font-size-h6);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
 }
 .kpi-detail span {
     display: flex;
@@ -386,7 +382,7 @@
     gap: var(--space-xs);
 }
 .kpi-detail strong {
-    color: var(--dash-text);
+    color: var(--text-body);
 }
 
 /* ============================================================
@@ -413,10 +409,10 @@
 .dashboard-card {
     min-width: 0;
     padding: var(--space-md);
-    border: var(--border-light);
+    border: var(--border-premium);
     border-radius: var(--radius-lg);
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    background: var(--bg-card);
+    box-shadow: var(--glass-shadow);
 }
 .dashboard-card:hover {
     border-color: rgba(255, 255, 255, 0.095);
@@ -442,8 +438,8 @@
     justify-content: center;
     flex-shrink: 0;
     border-radius: var(--radius-sm);
-    background: rgba(214, 179, 106, 0.08);
-    color: var(--dash-gold);
+    background: rgba(232, 232, 232, 0.08);
+    color: var(--silver-primary);
 }
 .card-header-icon svg {
     width: 16px;
@@ -453,22 +449,23 @@
     margin: 0;
     font-size: var(--font-size-h4);
     font-weight: var(--fw-bold);
+    color: var(--text-heading);
 }
 .card-header-content p {
     margin: var(--space-xs) 0 0;
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .card-more {
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     transition: color var(--transition-fast);
 }
 .card-more:hover {
-    color: var(--dash-gold-light);
+    color: var(--silver-primary);
 }
 
 /* ============================================================
-   8. REVENUE SUMMARY (dùng trong transaction card)
+   8. REVENUE SUMMARY
 ============================================================ */
 .revenue-summary {
     display: grid;
@@ -478,22 +475,23 @@
 }
 .revenue-summary > div {
     padding: var(--space-sm) var(--space-md);
-    border: var(--border-light);
+    border: var(--border-premium);
     border-radius: var(--radius-sm);
     background: rgba(0, 0, 0, 0.14);
 }
 .revenue-summary span {
     display: block;
     margin-bottom: var(--space-xs);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .revenue-summary strong {
     font-size: var(--font-size-h4);
+    color: var(--text-heading);
 }
 
 /* ============================================================
-   9. TRANSACTION TABLE (Dùng TABLE CHUẨN, KHÔNG BAO GIỜ LỆCH)
+   9. TRANSACTION TABLE
 ============================================================ */
 .transaction-toolbar {
     display: flex;
@@ -505,27 +503,27 @@
 }
 .transaction-search input {
     padding: var(--space-sm) var(--space-md);
-    border: var(--border-light);
+    border: var(--border-premium);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.04);
-    color: var(--dash-text);
+    color: var(--text-body);
     font-size: var(--font-size-h6);
     min-width: 240px;
 }
 .transaction-search input::placeholder {
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
 }
 .transaction-status select {
     padding: var(--space-sm) var(--space-md);
-    border: var(--border-light);
+    border: var(--border-premium);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.04);
-    color: var(--dash-text);
+    color: var(--text-body);
     font-size: var(--font-size-h6);
     cursor: pointer;
 }
 .transaction-status select option {
-    background: #1a1a1a;
+    background: var(--bg-secondary);
 }
 
 .transaction-pagination {
@@ -535,53 +533,50 @@
     gap: var(--space-md);
     margin-top: var(--space-md);
     padding-top: var(--space-md);
-    border-top: var(--border-light);
+    border-top: var(--border-premium);
 }
 .transaction-pagination button {
     padding: var(--space-xs) var(--space-lg);
-    border: var(--border-light);
+    border: var(--border-premium);
     border-radius: var(--radius-sm);
     background: transparent;
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
     cursor: pointer;
     transition: background var(--transition-fast), color var(--transition-fast);
 }
 .transaction-pagination button:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.06);
-    color: var(--dash-text);
+    color: var(--text-body);
 }
 .transaction-pagination button:disabled {
     opacity: 0.3;
     cursor: not-allowed;
 }
 .transaction-pagination span {
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .transaction-pagination span strong {
-    color: var(--dash-text);
+    color: var(--text-body);
 }
 
-/* ===== CONTAINER BẢNG ===== */
 .revenue-table-wrapper {
     overflow-x: auto;
     border-radius: var(--radius-md);
-    border: 1px solid var(--dash-border); 
+    border: var(--border-premium);
     background: transparent;
 }
 
-/* ===== BẢNG CHÍNH ===== */
 .revenue-table {
     width: 100%;
     min-width: 1100px;
     border-collapse: separate;
     border-spacing: 0;
-    table-layout: fixed; /* CHỐT CỘT VĨNH VIỄN */
+    table-layout: fixed;
     font-size: var(--font-size-h6);
 }
 
-/* ===== ĐỊNH NGHĨA CHIỀU RỘNG 9 CỘT ===== */
 .revenue-table .col-date    { width: 100px; }
 .revenue-table .col-cust    { width: 180px; }
 .revenue-table .col-movie   { width: 160px; }
@@ -592,14 +587,13 @@
 .revenue-table .col-snack   { width: 85px; }
 .revenue-table .col-total   { width: 155px; }
 
-/* ===== HEADER BẢNG ===== */
 .revenue-table thead tr {
     background: rgba(255, 255, 255, 0.015);
     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 .revenue-table thead th {
     padding: 12px var(--space-md);
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     font-weight: var(--fw-bold);
     text-align: left;
     letter-spacing: 0.8px;
@@ -607,12 +601,11 @@
     vertical-align: middle;
 }
 .revenue-table thead th:last-child {
-    text-align: right; /* Căn phải cột tổng tiền */
+    text-align: right;
 }
 
-/* ===== ROW & CELL ===== */
 .revenue-table tbody tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+    border-bottom: var(--border-subtle);
     transition: background var(--transition-fast);
 }
 .revenue-table tbody tr:last-child {
@@ -626,18 +619,17 @@
     vertical-align: middle;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap; /* Ngăn chữ xuống dòng làm vỡ cột */
+    white-space: nowrap;
 }
 
-/* ===== NỘI DUNG TỪNG CỘT ===== */
 .revenue-date {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 2px;
 }
-.revenue-date strong { color: var(--dash-text); }
-.revenue-date span { color: var(--dash-muted); }
+.revenue-date strong { color: var(--text-body); }
+.revenue-date span { color: var(--text-secondary); }
 
 .revenue-customer {
     display: flex;
@@ -650,17 +642,16 @@
     min-width: 0;
     width: 100%;
 }
-.revenue-customer strong { color: var(--dash-text); overflow: hidden; text-overflow: ellipsis; }
-.revenue-customer span { color: var(--dash-muted); overflow: hidden; text-overflow: ellipsis; }
+.revenue-customer strong { color: var(--text-body); overflow: hidden; text-overflow: ellipsis; }
+.revenue-customer span { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; }
 
-.revenue-movie { color: var(--dash-text); font-weight: var(--fw-semibold); }
-.revenue-showtime { color: var(--dash-gold-light); font-weight: var(--fw-bold); }
-.revenue-cinema { color: var(--dash-text); display: flex; align-items: center; gap: 4px; }
-.revenue-cinema svg { color: var(--dash-muted); flex-shrink: 0; }
-.revenue-products { display: flex; align-items: center; gap: 4px; color: var(--dash-muted); }
-.no-product { color: var(--dash-muted-2); font-style: italic; }
+.revenue-movie { color: var(--text-body); font-weight: var(--fw-semibold); }
+.revenue-showtime { color: var(--silver-primary); font-weight: var(--fw-bold); }
+.revenue-cinema { color: var(--text-body); display: flex; align-items: center; gap: 4px; }
+.revenue-cinema svg { color: var(--text-secondary); flex-shrink: 0; }
+.revenue-products { display: flex; align-items: center; gap: 4px; color: var(--text-secondary); }
+.no-product { color: var(--text-muted); font-style: italic; }
 
-/* ===== CỘT TỔNG TIỀN (Căn lề phải chuẩn) ===== */
 .revenue-total-cell {
     display: flex;
     flex-direction: column;
@@ -670,12 +661,11 @@
     text-align: right;
 }
 .revenue-total-cell strong {
-    color: var(--dash-gold-light);
+    color: var(--silver-primary);
     font-weight: var(--fw-bold);
     font-size: var(--font-size-h5);
 }
 
-/* ===== BADGE TRẠNG THÁI ===== */
 .transaction-status-badge {
     display: inline-block;
     padding: 2px 10px;
@@ -703,11 +693,12 @@
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.06);
     font-size: var(--font-size-h6);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     white-space: nowrap;
 }
+
 /* ============================================================
-   10. REVENUE CHART (column chart cũ – vẫn giữ)
+   10. REVENUE CHART
 ============================================================ */
 .revenue-chart {
     position: relative;
@@ -736,22 +727,22 @@
     flex-direction: column;
     min-width: 80px;
     padding: 7px 9px;
-    border: 1px solid rgba(214, 179, 106, 0.18);
+    border: var(--border-premium);
     border-radius: var(--radius-sm);
-    background: #16181d;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    background: var(--bg-card);
+    box-shadow: var(--card-shadow-hover);
     opacity: 0;
     pointer-events: none;
     white-space: nowrap;
     transition: opacity var(--transition-fast), transform var(--transition-fast);
 }
 .chart-tooltip strong {
-    color: var(--dash-gold-light);
+    color: var(--silver-primary);
     font-size: var(--font-size-h6);
 }
 .chart-tooltip span {
     margin-top: 2px;
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .chart-column:hover .chart-tooltip {
@@ -768,8 +759,8 @@
     width: 100%;
     min-height: 3px;
     border-radius: 5px 5px 2px 2px;
-    background: linear-gradient(to top, rgba(214, 179, 106, 0.16), var(--dash-gold-light));
-    box-shadow: 0 -4px 18px rgba(214, 179, 106, 0.07);
+    background: linear-gradient(to top, rgba(232, 232, 232, 0.16), var(--silver-light));
+    box-shadow: 0 -4px 18px rgba(232, 232, 232, 0.07);
     transition: height 0.5s var(--ease-premium), opacity 0.2s ease, filter 0.2s ease;
 }
 .chart-bar::after {
@@ -788,13 +779,13 @@
 }
 .chart-date {
     margin-top: var(--space-sm);
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     font-size: var(--font-size-h6);
     text-align: center;
 }
 
 /* ============================================================
-   11. CHARTS (recharts – Bar + Line)
+   11. CHARTS
 ============================================================ */
 .chart-card {
     min-width: 0;
@@ -815,11 +806,11 @@
     border-radius: 10px;
 }
 .chart-container::-webkit-scrollbar-thumb {
-    background: rgba(214, 179, 106, 0.3);
+    background: rgba(232, 232, 232, 0.3);
     border-radius: 10px;
 }
 .chart-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(214, 179, 106, 0.5);
+    background: rgba(232, 232, 232, 0.5);
 }
 .chart-scroll-wrapper {
     min-width: 100%;
@@ -832,7 +823,7 @@
     flex-wrap: wrap;
     gap: var(--space-sm) var(--space-md);
     padding: var(--space-md) var(--space-xs) 0;
-    border-top: 1px solid var(--dash-border);
+    border-top: var(--border-premium);
     margin-top: var(--space-md);
 }
 .chart-legend-compact .legend-item {
@@ -840,7 +831,7 @@
     align-items: center;
     gap: var(--space-sm);
     font-size: var(--font-size-h6);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
 }
 .chart-legend-compact .legend-dot {
     width: 10px;
@@ -849,7 +840,7 @@
     flex-shrink: 0;
 }
 .chart-legend-compact strong {
-    color: var(--dash-text);
+    color: var(--text-body);
     font-weight: var(--fw-semibold);
 }
 .change-badge {
@@ -871,13 +862,13 @@
     display: flex;
     justify-content: space-between;
     padding: var(--space-sm) var(--space-xs);
-    border-top: 1px solid var(--dash-border);
+    border-top: var(--border-premium);
     margin-top: var(--space-sm);
     font-size: var(--font-size-h6);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
 }
 .chart-summary strong {
-    color: var(--dash-text);
+    color: var(--text-body);
 }
 
 /* ============================================================
@@ -900,14 +891,14 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: conic-gradient(var(--dash-gold) var(--progress), rgba(255, 255, 255, 0.055) var(--progress));
+    background: conic-gradient(var(--silver-primary) var(--progress), rgba(255, 255, 255, 0.055) var(--progress));
 }
 .seat-circle::before {
     content: "";
     position: absolute;
     inset: 8px;
     border-radius: 50%;
-    background: #101216;
+    background: var(--bg-card);
     box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.3);
 }
 .seat-circle-inner {
@@ -919,10 +910,11 @@
 }
 .seat-circle-inner strong {
     font-size: var(--font-size-h1);
+    color: var(--text-heading);
 }
 .seat-circle-inner span {
     margin-top: var(--space-xs);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .seat-stats {
@@ -939,11 +931,12 @@
     background: rgba(255, 255, 255, 0.025);
 }
 .seat-stats span {
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .seat-stats strong {
     font-size: var(--font-size-h6);
+    color: var(--text-body);
 }
 
 /* ============================================================
@@ -958,14 +951,14 @@
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-sm) 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+    border-bottom: var(--border-subtle);
 }
 .movie-ranking-item:last-child {
     border-bottom: 0;
 }
 .ranking-number {
     width: 24px;
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     text-align: center;
@@ -980,7 +973,7 @@
     flex-shrink: 0;
     border-radius: var(--radius-xs);
     background: rgba(255, 255, 255, 0.04);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
 }
 .movie-poster img {
     width: 100%;
@@ -995,18 +988,18 @@
 }
 .movie-info strong {
     overflow: hidden;
-    color: var(--dash-text);
+    color: var(--text-body);
     font-size: var(--font-size-h6);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .movie-info span {
     margin-top: var(--space-xs);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .movie-revenue {
-    color: var(--dash-gold-light);
+    color: var(--silver-primary);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     white-space: nowrap;
@@ -1029,14 +1022,14 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .status-dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: var(--dash-muted);
+    background: var(--text-secondary);
 }
 .status-dot.completed {
     background: var(--dash-green);
@@ -1050,6 +1043,7 @@
 }
 .status-row-top strong {
     font-size: var(--font-size-h6);
+    color: var(--text-body);
 }
 .progress-track {
     width: 100%;
@@ -1061,11 +1055,11 @@
 .progress-fill {
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, rgba(214, 179, 106, 0.55), var(--dash-gold));
+    background: linear-gradient(90deg, rgba(232, 232, 232, 0.55), var(--silver-primary));
 }
 .status-meta {
     margin-top: var(--space-xs);
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     font-size: var(--font-size-h6);
 }
 
@@ -1087,8 +1081,8 @@
 .table-head {
     min-height: 38px;
     padding: 0 var(--space-sm);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-    color: var(--dash-muted-2);
+    border-bottom: var(--border-premium);
+    color: var(--text-muted);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     letter-spacing: 0.8px;
@@ -1097,7 +1091,7 @@
 .table-row {
     min-height: 58px;
     padding: 0 var(--space-sm);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+    border-bottom: var(--border-subtle);
     font-size: var(--font-size-h6);
     transition: background var(--transition-fast), border-color var(--transition-fast);
 }
@@ -1106,21 +1100,21 @@
 }
 .table-row:hover {
     background: rgba(255, 255, 255, 0.018);
-    border-color: rgba(214, 179, 106, 0.08);
+    border-color: rgba(232, 232, 232, 0.08);
 }
 .table-row > span {
     min-width: 0;
     overflow: hidden;
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .table-row > span:first-child {
-    color: var(--dash-text);
+    color: var(--text-body);
     font-weight: var(--fw-semibold);
 }
 .table-row .money {
-    color: var(--dash-gold-light);
+    color: var(--silver-primary);
     font-weight: var(--fw-bold);
 }
 .mini-progress {
@@ -1133,7 +1127,7 @@
 .mini-progress div {
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, rgba(214, 179, 106, 0.3), var(--dash-gold));
+    background: linear-gradient(90deg, rgba(232, 232, 232, 0.3), var(--silver-primary));
     transition: width 0.5s ease;
 }
 
@@ -1161,11 +1155,12 @@
     font-size: var(--font-size-h6);
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--text-body);
 }
 .room-info span {
     margin-top: var(--space-xs);
     overflow: hidden;
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1179,12 +1174,12 @@
     margin-bottom: var(--space-xs);
 }
 .room-progress-top span {
-    color: var(--dash-gold-light);
+    color: var(--silver-primary);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
 }
 .room-progress-top strong {
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 
@@ -1200,7 +1195,7 @@
     align-items: center;
     gap: var(--space-md);
     padding: var(--space-sm) 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+    border-bottom: var(--border-subtle);
 }
 .showtime-item:last-child {
     border-bottom: 0;
@@ -1208,7 +1203,7 @@
 .showtime-time {
     width: 47px;
     flex-shrink: 0;
-    color: var(--dash-gold-light);
+    color: var(--silver-primary);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
 }
@@ -1223,11 +1218,12 @@
     font-size: var(--font-size-h6);
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--text-body);
 }
 .showtime-info span {
     margin-top: var(--space-xs);
     overflow: hidden;
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1243,7 +1239,7 @@
 }
 .showtime-occupancy span {
     margin-top: var(--space-xs);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 
@@ -1259,14 +1255,14 @@
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-sm) 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+    border-bottom: var(--border-subtle);
 }
 .customer-item:last-child {
     border-bottom: 0;
 }
 .customer-rank {
     width: 18px;
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     text-align: center;
@@ -1280,7 +1276,7 @@
     overflow: hidden;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.06);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
 }
 .customer-avatar img {
     width: 100%;
@@ -1298,11 +1294,12 @@
     font-size: var(--font-size-h6);
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--text-body);
 }
 .customer-info span {
     margin-top: var(--space-xs);
     overflow: hidden;
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1313,12 +1310,12 @@
     align-items: flex-end;
 }
 .customer-money strong {
-    color: var(--dash-gold-light);
+    color: var(--silver-primary);
     font-size: var(--font-size-h6);
 }
 .customer-money span {
     margin-top: var(--space-xs);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 
@@ -1334,7 +1331,7 @@
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-sm) 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+    border-bottom: var(--border-subtle);
 }
 .product-item:last-child {
     border-bottom: 0;
@@ -1349,7 +1346,7 @@
     overflow: hidden;
     border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.05);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
 }
 .product-image img {
     width: 100%;
@@ -1367,14 +1364,15 @@
     font-size: var(--font-size-h6);
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--text-body);
 }
 .product-info span {
     margin-top: var(--space-xs);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .product-revenue {
-    color: var(--dash-gold-light);
+    color: var(--silver-primary);
     font-size: var(--font-size-h6);
     white-space: nowrap;
 }
@@ -1393,11 +1391,12 @@
     margin-bottom: var(--space-sm);
 }
 .user-status-top span {
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .user-status-top strong {
     font-size: var(--font-size-h6);
+    color: var(--text-body);
 }
 
 /* ============================================================
@@ -1415,7 +1414,7 @@
     gap: var(--space-sm);
 }
 .growth-item > span {
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .growth-item > strong {
@@ -1449,15 +1448,15 @@
     gap: var(--space-sm);
     min-width: 0;
     padding: var(--space-md);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: var(--border-premium);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.02);
     transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 .content-item:hover {
     transform: translateY(-1px);
-    border-color: rgba(214, 179, 106, 0.14);
-    background: rgba(214, 179, 106, 0.025);
+    border-color: var(--silver-primary);
+    background: rgba(232, 232, 232, 0.025);
 }
 .content-item-icon {
     width: 30px;
@@ -1467,8 +1466,8 @@
     justify-content: center;
     flex-shrink: 0;
     border-radius: var(--radius-sm);
-    background: rgba(214, 179, 106, 0.08);
-    color: var(--dash-gold);
+    background: rgba(232, 232, 232, 0.08);
+    color: var(--silver-primary);
 }
 .content-item-icon svg {
     width: 14px;
@@ -1480,16 +1479,17 @@
     flex-direction: column;
 }
 .content-item-info span {
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .content-item-info strong {
     margin-top: var(--space-xs);
     font-size: var(--font-size-h4);
+    color: var(--text-heading);
 }
 .content-item-info small {
     margin-top: var(--space-xs);
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     font-size: var(--font-size-h6);
 }
 
@@ -1510,7 +1510,7 @@
     justify-content: space-between;
     gap: var(--space-sm);
     padding: var(--space-sm) 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+    border-bottom: var(--border-subtle);
 }
 .review-item:last-child,
 .coupon-item:last-child,
@@ -1531,25 +1531,26 @@
     font-size: var(--font-size-h6);
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--text-body);
 }
 .review-info span,
 .coupon-item > div span,
 .otp-item > div span {
     margin-top: var(--space-xs);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
     font-size: var(--font-size-h6);
 }
 .review-score {
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    color: var(--dash-gold-light);
+    color: var(--silver-primary);
 }
 .review-score strong {
     font-size: var(--font-size-h6);
 }
 .coupon-item > strong {
-    color: var(--dash-gold-light);
+    color: var(--silver-primary);
     white-space: nowrap;
 }
 .otp-item > strong {
@@ -1566,7 +1567,7 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-sm);
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     font-size: var(--font-size-h6);
 }
 .empty-chart {
@@ -1577,7 +1578,7 @@
     justify-content: center;
     flex-direction: column;
     gap: var(--space-sm);
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     font-size: var(--font-size-h6);
 }
 .revenue-empty {
@@ -1587,7 +1588,7 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-sm);
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     text-align: center;
 }
 .revenue-empty svg {
@@ -1595,11 +1596,11 @@
 }
 .revenue-empty strong {
     font-size: var(--font-size-h4);
-    color: var(--dash-text);
+    color: var(--text-body);
 }
 .revenue-empty span {
     font-size: var(--font-size-h6);
-    color: var(--dash-muted);
+    color: var(--text-secondary);
 }
 
 /* ============================================================
@@ -1610,7 +1611,7 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-md) var(--space-xs) var(--space-xs);
-    color: var(--dash-muted-2);
+    color: var(--text-muted);
     font-size: var(--font-size-h6);
 }
 .dashboard-footer > div {
@@ -1641,7 +1642,7 @@
     background: rgba(255, 255, 255, 0.1);
 }
 .dashboard-page ::-webkit-scrollbar-thumb:hover {
-    background: rgba(214, 179, 106, 0.3);
+    background: rgba(232, 232, 232, 0.3);
 }
 
 /* ============================================================
@@ -1759,11 +1760,6 @@
     }
     .revenue-table {
         min-width: 900px;
-    }
-    .revenue-table-head,
-    .revenue-table-row {
-        grid-template-columns: 100px 1fr 1.2fr 0.7fr 1fr 0.7fr 0.6fr 0.6fr 1fr;
-        font-size: var(--font-size-h6);
     }
     .chart-container {
         height: 200px;

@@ -11,14 +11,14 @@
     justify-content: center;
     padding: var(--space-2xl);
     border-radius: var(--radius-xl);
-    background: var(--cinema-card-bg);
-    border: var(--border-silver);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    background: var(--bg-card);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
     position: relative;
     overflow: hidden;
 }
 
-/* Glow bạc (thay vì vàng) */
+/* Glow bạc */
 .momo-payment-wrapper::before {
     content: "";
     position: absolute;
@@ -44,8 +44,8 @@
 .momo-title-box h2 {
     margin: 0 0 var(--space-sm);
     font-size: var(--font-size-h2);
-    font-weight: var(--fw-black);
-    color: var(--silver-primary);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-heading);
     letter-spacing: 1px;
     text-transform: uppercase;
 }
@@ -69,9 +69,9 @@
     max-width: 420px;
     padding: var(--space-lg);
     border-radius: var(--radius-xl);
-    background: var(--cinema-card-bg);
-    border: var(--border-silver);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    background: var(--bg-card);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
     position: relative;
     z-index: 2;
 }
@@ -86,7 +86,7 @@
     aspect-ratio: 1 / 1;
     overflow: hidden;
     border-radius: var(--radius-lg);
-    background: var(--white-pure);
+    background: var(--silver-light);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -134,8 +134,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: var(--overlay-dark);
+    background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(8px);
+    border-radius: var(--radius-lg);
 }
 
 .confirm-overlay p {

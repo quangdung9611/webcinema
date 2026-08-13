@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import api from '../../api/api'; // ✅ Import api
+import api from '../../api/api';
 import { Film } from "lucide-react";
 
 import MovieCard from "../components/MovieCard";
 import MoviePreviewModal from "../components/MoviePreviewModal";
 
 import "../styles/MovieStatusPage.css";
-
-// ❌ Xóa API_URL
 
 const statusMap = {
     "phim-dang-chieu": "Đang chiếu",
@@ -23,7 +21,6 @@ const MovieStatusPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState(null);
 
@@ -102,8 +99,11 @@ const MovieStatusPage = () => {
             {/* ===== HEADER ===== */}
             <div className="status-header">
                 <div className="status-header-left">
-                    <h2 className="status-title">{currentTabLabel}</h2>
-                    <div className="title-underline" />
+                    <h2 className="status-title">
+                        <Film size={32} className="section-icon" /> {/* ✅ Thêm icon */}
+                        {currentTabLabel}
+                    </h2>
+                    {/* ✅ Đã xóa <div className="title-underline" /> */}
                 </div>
 
                 <div className="status-tabs">

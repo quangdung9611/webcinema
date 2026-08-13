@@ -21,9 +21,9 @@
     width: 100%;
     overflow: hidden;
     border-radius: var(--radius-xl);
-    background: var(--cinema-card-bg);
-    border: var(--border-silver);
-    box-shadow: 0 0 25px rgba(232, 232, 232, 0.06), var(--cinema-card-shadow);
+    background: var(--bg-card);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
 }
 
 .poster-container img {
@@ -48,10 +48,10 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
-    background: var(--cinema-card-bg);
+    background: var(--bg-card);
     backdrop-filter: blur(14px);
-    border: var(--border-silver);
-    box-shadow: 0 0 25px rgba(232, 232, 232, 0.06), inset 0 0 20px rgba(232, 232, 232, 0.03), var(--cinema-card-shadow);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
 }
 
 /* =========================================================
@@ -67,7 +67,7 @@
     text-align: center;
     color: var(--silver-primary);
     padding-bottom: var(--space-md);
-    border-bottom: var(--border-silver);
+    border-bottom: var(--border-premium);
 }
 
 /* =========================================================
@@ -80,7 +80,7 @@
     align-items: flex-start;
     gap: var(--space-sm);
     padding-bottom: var(--space-sm);
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+    border-bottom: var(--border-subtle);
 }
 
 .detail-item:last-child {
@@ -110,7 +110,7 @@
 .food-selected-box {
     margin-top: var(--space-xs);
     padding-top: var(--space-md);
-    border-top: var(--border-silver);
+    border-top: var(--border-premium);
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
@@ -143,7 +143,7 @@
 .total-price-box {
     margin-top: var(--space-xs);
     padding-top: var(--space-md);
-    border-top: var(--border-silver);
+    border-top: var(--border-premium);
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
@@ -164,7 +164,7 @@
     margin-top: var(--space-sm);
     padding-top: var(--space-md);
     text-align: center;
-    border-top: 1px dashed rgba(255, 255, 255, 0.12);
+    border-top: var(--border-subtle);
 }
 
 .grand-total p {
@@ -178,9 +178,9 @@
 .grand-total h3 {
     margin: 0;
     font-size: var(--font-size-h2);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     color: var(--silver-primary);
-    text-shadow: 0 0 10px rgba(232, 232, 232, 0.25), 0 0 20px rgba(232, 232, 232, 0.12);
+    text-shadow: 0 0 10px rgba(232, 232, 232, 0.15);
 }
 
 /* =========================================================
@@ -211,14 +211,14 @@
 /* CONTINUE – SILVER GRADIENT */
 .btn-next-sidebar {
     border: none;
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
-    box-shadow: var(--shadow-silver);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .btn-next-sidebar:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 28px rgba(232, 232, 232, 0.25);
+    box-shadow: var(--card-shadow-hover);
 }
 
 .btn-next-sidebar:disabled {
@@ -229,7 +229,7 @@
 
 /* BACK – SILVER BORDER */
 .btn-back-food-sidebar {
-    border: var(--border-silver);
+    border: var(--border-premium);
     background: transparent;
     color: var(--text-secondary);
 }
@@ -237,7 +237,7 @@
 .btn-back-food-sidebar:hover {
     background: rgba(232, 232, 232, 0.08);
     color: var(--text-body);
-    border-color: var(--border-silver-hover);
+    border-color: var(--silver-primary);
 }
 
 /* =========================================================

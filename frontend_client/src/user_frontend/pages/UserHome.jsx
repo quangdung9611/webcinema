@@ -110,13 +110,87 @@ const QuickSelect = ({
 };
 
 // ==========================================================
+// Stats Section Component (mới)
+// ==========================================================
+
+const StatsSection = () => {
+  const statsRef = useRef(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  const statsData = [
+    { target: 1234, label: "Dự án đã thực hiện", suffix: "" },
+    { target: 567,  label: "Khách hàng hài lòng", suffix: "+" },
+    { target: 89,   label: "Giải thưởng đạt được", suffix: "" },
+    { target: 2026, label: "Ngày hoạt động", suffix: "" },
+  ];
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          // Bắt đầu đếm số
+          statsData.forEach((item, index) => {
+            const el = document.getElementById(`stat-${index}`);
+            if (!el) return;
+            const target = item.target;
+            const duration = 2000; // 2 giây
+            const startTime = performance.now();
+
+            const updateNumber = (currentTime) => {
+              const elapsed = currentTime - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+              // cubic ease-out
+              const eased = 1 - Math.pow(1 - progress, 3);
+              const currentValue = Math.floor(eased * target);
+              el.textContent = currentValue + (item.suffix || "");
+              if (progress < 1) {
+                requestAnimationFrame(updateNumber);
+              } else {
+                el.textContent = target + (item.suffix || "");
+              }
+            };
+            requestAnimationFrame(updateNumber);
+          });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    const current = statsRef.current;
+    if (current) observer.observe(current);
+    return () => {
+      if (current) observer.unobserve(current);
+    };
+  }, [hasAnimated, statsData]);
+
+  return (
+    <section ref={statsRef} className="stats-section">
+      <div className="container stats-container">
+        <h3 className="stats-title">Thống kê nổi bật</h3>
+        <div className="stats-grid">
+          {statsData.map((item, index) => (
+            <div key={index} className="stat-item">
+              <div className="stat-number" id={`stat-${index}`}>
+                0{item.suffix}
+              </div>
+              <div className="stat-label">{item.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ==========================================================
 // UserHome Component
 // ==========================================================
 
 const UserHome = () => {
   const navigate = useNavigate();
 
-  // State cho phim
   const [groupedMovies, setGroupedMovies] = useState({
     "Đang chiếu": [],
     "Sắp chiếu": []
@@ -125,7 +199,6 @@ const UserHome = () => {
   const [promotions, setPromotions] = useState([]);
   const [cinemaNews, setCinemaNews] = useState([]);
 
-  // Quick booking
   const [quickData, setQuickData] = useState({
     movies: [],
     cinemas: []
@@ -139,7 +212,6 @@ const UserHome = () => {
   const [availableDates, setAvailableDates] = useState([]);
   const [availableShowtimes, setAvailableShowtimes] = useState([]);
 
-  // Modal thông báo lỗi
   const [modal, setModal] = useState({
     show: false,
     type: 'error',
@@ -147,7 +219,6 @@ const UserHome = () => {
     message: ''
   });
 
-  // Modal preview phim
   const [previewModal, setPreviewModal] = useState({
     open: false,
     selectedMovie: null
@@ -182,9 +253,7 @@ const UserHome = () => {
           api.get('/api/blog-cinema')
         ]);
 
-        // ✅ Xử lý dữ liệu từ status-group
         const statusData = statusRes?.data?.data || statusRes?.data || {};
-        // Đảm bảo lấy đúng mảng, fallback là []
         const showing = Array.isArray(statusData["Đang chiếu"]) ? statusData["Đang chiếu"] : [];
         const coming = Array.isArray(statusData["Sắp chiếu"]) ? statusData["Sắp chiếu"] : [];
 
@@ -193,14 +262,12 @@ const UserHome = () => {
           "Sắp chiếu": coming
         });
 
-        // Quick booking movies
         const movieList = unwrapArray(movieRes.data);
         setQuickData({
           movies: movieList,
           cinemas: []
         });
 
-        // Promotions & news
         setPromotions(unwrapArray(promotionRes.data));
         setCinemaNews(unwrapArray(blogRes.data));
       } catch (error) {
@@ -211,7 +278,6 @@ const UserHome = () => {
           title: 'Lỗi tải dữ liệu',
           message: 'Không thể tải dữ liệu trang chủ. Vui lòng thử lại!'
         });
-        // Đặt mảng rỗng để không bị lỗi
         setGroupedMovies({ "Đang chiếu": [], "Sắp chiếu": [] });
       } finally {
         setLoading(false);
@@ -350,14 +416,12 @@ const UserHome = () => {
     }
   };
 
-  // ✅ Gộp phim với kiểm tra an toàn
   const showingMovies = Array.isArray(groupedMovies["Đang chiếu"]) ? groupedMovies["Đang chiếu"] : [];
   const comingMovies = Array.isArray(groupedMovies["Sắp chiếu"]) ? groupedMovies["Sắp chiếu"] : [];
   const allMovies = [...showingMovies, ...comingMovies];
 
   return (
     <>
-      {/* Modal thông báo lỗi */}
       <Modal
         show={modal.show}
         type={modal.type}
@@ -367,7 +431,6 @@ const UserHome = () => {
         onCancel={closeModal}
       />
 
-      {/* Modal preview phim */}
       <MoviePreviewModal
         open={previewModal.open}
         onClose={closePreviewModal}
@@ -376,16 +439,14 @@ const UserHome = () => {
       />
 
       <div className="user-home">
-        {/* ===== HERO BANNER ===== */}
         <HeroBanner videoSrc="/vutru_video.mp4" />
 
-        {/* ===== QUICK BOOKING ===== */}
         <ScrollReveal
           direction="up"
           duration={0.5}
           delay={0.2}
-          amount={0.15}
-          curtain={false}
+          threshold={0.08}
+          once
         >
           <section className="quick-booking-container">
             <div className="quick-booking-content">
@@ -437,14 +498,12 @@ const UserHome = () => {
           </section>
         </ScrollReveal>
 
-        {/* ===== CÁC PHẦN CÒN LẠI ===== */}
         <div className="home-container">
-          {/* Features */}
           <section className="home-features-section">
             <div className="features-grid">
               {[
                 { icon: Ticket, title: 'ĐẶT VÉ NHANH CHÓNG', desc: 'Tiết kiệm thời gian tối đa' },
-                { icon: Star, title: 'NHIỀU ƯU ĐÃI HẤP DẪN', desc: 'Săn deal hời mỗi ngày' },
+                { icon: Star, title: 'NHIỀU ƯU ĐÃI HẤP DẪN', desc: 'Săn deal tốt hời mỗi ngày' },
                 { icon: CreditCard, title: 'THANH TOÁN ĐA DẠNG', desc: 'Hỗ trợ mọi loại ví điện tử' },
                 { icon: Monitor, title: 'TRẢI NGHIỆM ĐỈNH CAO', desc: 'Âm thanh, hình ảnh sống động' }
               ].map((item, index) => (
@@ -452,9 +511,9 @@ const UserHome = () => {
                   key={index}
                   direction="up"
                   duration={0.4}
-                  delay={0.4 + index * 0.08}
-                  amount={0.15}
-                  curtain={false}
+                  delay={0.3 + index * 0.08}
+                  threshold={0.08}
+                  once
                 >
                   <div className="feature-item">
                     <div className="feature-icon-wrapper"><item.icon size={32} /></div>
@@ -468,13 +527,15 @@ const UserHome = () => {
             </div>
           </section>
 
-          {/* ===== MOVIE SLIDER ===== */}
+          {/* ====== PHẦN STATS MỚI ====== */}
+          <StatsSection />
+
           <ScrollReveal
             direction="up"
-            duration={0.6}
-            delay={0.6}
-            amount={0.15}
-            curtain={false}
+            duration={0.5}
+            delay={0.4}
+            threshold={0.08}
+            once
           >
             <div className="movie-container">
               {allMovies.length > 0 ? (
@@ -488,13 +549,12 @@ const UserHome = () => {
             </div>
           </ScrollReveal>
 
-          {/* Promotions */}
           <ScrollReveal
             direction="up"
-            duration={0.6}
-            delay={0.8}
-            amount={0.15}
-            curtain={false}
+            duration={0.5}
+            delay={0.5}
+            threshold={0.08}
+            once
           >
             <section className="promotions-section">
               <div className="section-header">
@@ -503,7 +563,6 @@ const UserHome = () => {
                     <Gift size={40} className="section-icon" />
                     ƯU ĐÃI HẤP DẪN
                   </h3>
-                  <div className="title-underline"></div>
                 </div>
                 <button className="btn-view-all" onClick={() => navigate('/promotion')}>
                   Xem tất cả <ChevronRight size={18} />
@@ -518,9 +577,9 @@ const UserHome = () => {
                       key={promo.promotion_id}
                       direction="up"
                       duration={0.4}
-                      delay={1.0 + index * 0.08}
-                      amount={0.15}
-                      curtain={false}
+                      delay={0.6 + index * 0.08}
+                      threshold={0.08}
+                      once
                     >
                       <CinemaCard
                         type="promotion"
@@ -536,13 +595,12 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
-          {/* Cinema corner */}
           <ScrollReveal
             direction="up"
-            duration={0.6}
-            delay={1.2}
-            amount={0.15}
-            curtain={false}
+            duration={0.5}
+            delay={0.7}
+            threshold={0.08}
+            once
           >
             <section className="cinema-corner-section">
               <div className="section-header">
@@ -551,7 +609,6 @@ const UserHome = () => {
                     <Newspaper size={40} className="section-icon" />
                     GÓC ĐIỆN ẢNH
                   </h3>
-                  <div className="title-underline"></div>
                 </div>
                 <button className="btn-view-all" onClick={() => navigate('/blog-cinema')}>
                   Xem tất cả <ChevronRight size={18} />
@@ -566,9 +623,9 @@ const UserHome = () => {
                       key={news.blog_id}
                       direction="up"
                       duration={0.4}
-                      delay={1.4 + index * 0.08}
-                      amount={0.15}
-                      curtain={false}
+                      delay={0.8 + index * 0.08}
+                      threshold={0.08}
+                      once
                     >
                       <CinemaCard
                         type="news"

@@ -5,7 +5,7 @@
 .bank-checkout-page {
     min-height: 100vh;
     padding: var(--space-2xl) 0 var(--space-3xl);
-    background: var(--main-background);
+    background: var(--bg-primary);
 }
 
 /* ================================
@@ -58,13 +58,13 @@
     overflow: hidden;
     padding: var(--space-2xl) var(--space-2xl);
     border-radius: var(--radius-xl);
-    border: var(--border-silver);
-    background: var(--cinema-card-bg);
+    border: var(--border-premium);
+    background: var(--bg-card);
     backdrop-filter: blur(20px);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    box-shadow: var(--glass-shadow);
 }
 
-/* Glow bạc (thay vì vàng) */
+/* Glow bạc */
 .otp-card::before {
     content: '';
     position: absolute;
@@ -87,9 +87,9 @@
     margin: 0 auto var(--space-xl);
     padding: var(--space-md);
     border-radius: var(--radius-xl);
-    background: var(--white-pure);
+    background: var(--silver-light);
     position: relative;
-    box-shadow: var(--cinema-card-shadow);
+    box-shadow: var(--glass-shadow);
 }
 
 .bank-qr-mini {
@@ -137,11 +137,11 @@
 
 .otp-title {
     font-size: var(--font-size-h1);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     line-height: 1.1;
     text-align: center;
     margin-bottom: var(--space-sm);
-    color: var(--silver-primary);
+    color: var(--text-heading);
 }
 
 .otp-sub {
@@ -168,7 +168,7 @@
     width: 100%;
     height: 82px;
     border-radius: var(--radius-lg);
-    border: 2px solid var(--border-silver);
+    border: var(--border-premium);
     background: rgba(255, 255, 255, 0.04);
     color: var(--text-body);
     text-align: center;
@@ -195,7 +195,7 @@
     border-radius: var(--radius-lg);
     text-align: center;
     background: rgba(255, 255, 255, 0.04);
-    border: var(--border-silver);
+    border: var(--border-premium);
     font-size: var(--font-size-base);
     font-weight: var(--fw-semibold);
     color: var(--text-secondary);
@@ -219,18 +219,18 @@
     height: 66px;
     border: none;
     border-radius: var(--radius-lg);
-    background: var(--gold-gradient); /* Đã map sang bạc trong index.css */
-    color: var(--black-premium);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
     font-size: var(--font-size-h4);
     font-weight: var(--fw-extrabold);
     cursor: pointer;
     transition: var(--transition-normal);
-    box-shadow: var(--shadow-silver);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .btn-confirm-payment:hover {
     transform: translateY(-2px);
-    box-shadow: 0 14px 28px rgba(232, 232, 232, 0.25);
+    box-shadow: var(--card-shadow-hover);
 }
 
 .btn-confirm-payment:disabled {

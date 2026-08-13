@@ -13,13 +13,13 @@
     padding: var(--space-3xl);
     background: radial-gradient(circle at top left, rgba(232, 232, 232, 0.08), transparent 30%),
                 radial-gradient(circle at bottom right, rgba(232, 232, 232, 0.06), transparent 35%),
-                var(--black-premium);
+                var(--bg-primary);
 }
 
 .admin-login-overlay {
     position: absolute;
     inset: 0;
-    background: var(--cinema-card-bg);
+    background: var(--bg-card);
     z-index: 1;
 }
 
@@ -33,7 +33,7 @@
     grid-template-columns: 1.15fr 0.85fr;
     border-radius: var(--radius-xl);
     overflow: hidden;
-    border: var(--border-light);
+    border: var(--border-premium);
     background: linear-gradient(135deg, rgba(10, 10, 10, 0.95), rgba(5, 5, 5, 0.92));
     backdrop-filter: blur(18px);
     box-shadow: 0 0 80px rgba(0, 0, 0, 0.55), 0 0 120px rgba(232, 232, 232, 0.04);
@@ -97,14 +97,14 @@
     justify-content: center;
     border-radius: 50%;
     background: rgba(232, 232, 232, 0.12);
-    border: 1px solid rgba(232, 232, 232, 0.2);
+    border: var(--border-premium);
     color: var(--silver-primary);
     box-shadow: 0 0 30px rgba(232, 232, 232, 0.15);
 }
 
 .admin-brand h1 {
     font-size: 74px;
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     letter-spacing: -3px;
     line-height: 1;
     color: var(--text-heading);
@@ -130,7 +130,7 @@
 }
 .admin-left-content h2 {
     font-size: var(--font-size-h1);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     line-height: 1.1;
     margin-bottom: var(--space-lg);
     color: var(--text-heading);
@@ -157,9 +157,9 @@
     border-radius: var(--radius-lg);
     text-align: center;
     background: rgba(255,255,255,0.04);
-    border: var(--border-light);
+    border: var(--border-premium);
     backdrop-filter: blur(12px);
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
 }
 .admin-feature-card:hover {
     transform: translateY(-6px);
@@ -186,7 +186,7 @@
     bottom: -50px;
     left: -20px;
     opacity: 0.05;
-    color: var(--white-soft);
+    color: var(--silver-light);
     transform: rotate(-15deg);
 }
 
@@ -198,7 +198,7 @@
     justify-content: center;
     padding: var(--space-3xl);
     background: linear-gradient(135deg, rgba(20,20,20,0.82), rgba(10,10,10,0.92));
-    border-left: var(--border-light);
+    border-left: var(--border-premium);
 }
 
 .admin-login-header {
@@ -215,12 +215,12 @@
     justify-content: center;
     color: var(--silver-primary);
     background: rgba(232, 232, 232, 0.12);
-    border: 1px solid rgba(232, 232, 232, 0.2);
+    border: var(--border-premium);
     box-shadow: 0 0 40px rgba(232, 232, 232, 0.12);
 }
 .admin-login-header h2 {
     font-size: var(--font-size-h1);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     margin-bottom: var(--space-md);
     color: var(--text-heading);
 }
@@ -251,9 +251,9 @@
     gap: var(--space-md);
     padding: 0 var(--space-lg);
     border-radius: var(--radius-lg);
-    border: var(--border-light);
+    border: var(--border-premium);
     background: rgba(255,255,255,0.04);
-    transition: var(--transition-normal);
+    transition: all var(--transition-normal);
 }
 .admin-input-box:focus-within {
     border-color: var(--silver-primary);
@@ -288,7 +288,7 @@
     color: var(--text-secondary);
 }
 .admin-error-text {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-h6);
     color: #ff4d6d;
     margin-left: 4px;
 }
@@ -305,16 +305,16 @@
     cursor: pointer;
     font-size: var(--font-size-base);
     font-weight: var(--fw-extrabold);
-    color: var(--black-premium);
-    background: var(--cinema-border-gradient);
-    transition: var(--transition-normal);
+    color: var(--bg-primary);
+    background: var(--premium-gradient);
+    transition: all var(--transition-normal);
     margin-top: var(--space-sm);
-    box-shadow: 0 12px 30px rgba(232, 232, 232, 0.25);
+    box-shadow: var(--btn-silver-shadow);
 }
 .btn-admin-login:hover {
     transform: translateY(-3px);
-    box-shadow: 0 18px 40px rgba(232, 232, 232, 0.35);
-    color: var(--black-premium) !important; /* 🔥 BẮT BUỘC CHỮ ĐEN KHI HOVER */
+    box-shadow: var(--card-shadow-hover);
+    color: var(--bg-primary) !important;
 }
 .btn-admin-login:disabled {
     opacity: 0.7;
@@ -324,7 +324,7 @@
 .admin-login-footer {
     margin-top: var(--space-2xl);
     text-align: center;
-    font-size: var(--font-size-h6); /* thay --font-size-sm */
+    font-size: var(--font-size-h6);
     color: var(--text-muted);
 }
 

@@ -2,7 +2,6 @@ const CinemaService = require('../Services/CinemaService');
 
 /* =========================================================
     ADMIN - GET ALL CINEMAS (KHÔNG PHÂN TRANG)
-    RESPONSE: { success: true, data: [] }
 ========================================================= */
 exports.getAllCinemasAll = async (req, res) => {
     try {
@@ -16,7 +15,6 @@ exports.getAllCinemasAll = async (req, res) => {
             });
         }
 
-        // Service trả về mảng trực tiếp
         const data = await CinemaService.getAllCinemasAll(search);
 
         return res.status(200).json({
@@ -34,7 +32,6 @@ exports.getAllCinemasAll = async (req, res) => {
 
 /* =========================================================
     ADMIN - GET CINEMAS WITH PAGINATION
-    RESPONSE: { success: true, data: [], pagination: {} }
 ========================================================= */
 exports.getCinemasWithPagination = async (req, res) => {
     try {
@@ -101,7 +98,7 @@ exports.getCinemaBySlug = async (req, res) => {
 ========================================================= */
 exports.createCinema = async (req, res) => {
     try {
-        const cinemaId = await CinemaService.createCinema(req.body);
+        const cinemaId = await CinemaService.createCinema(req.body, req.files || {});
         return res.status(201).json({
             success: true,
             message: "Thêm rạp thành công!",
@@ -123,7 +120,7 @@ exports.createCinema = async (req, res) => {
 exports.updateCinema = async (req, res) => {
     try {
         const { cinema_id } = req.params;
-        await CinemaService.updateCinema(cinema_id, req.body);
+        await CinemaService.updateCinema(cinema_id, req.body, req.files || {});
         return res.status(200).json({
             success: true,
             message: "Cập nhật rạp thành công!"

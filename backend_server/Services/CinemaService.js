@@ -1,7 +1,11 @@
 const CinemaRepository = require('../Repositories/CinemaRepository');
+const {
+    uploadToCloudinary,
+    deleteFromCloudinary
+} = require('../Middlewares/UploadCloudinary');
 
 // ==========================================================
-// CREATE SLUG
+// HELPER - CREATE SLUG
 // ==========================================================
 const createSlug = (text) => {
     if (!text) return "";
@@ -17,9 +21,20 @@ const createSlug = (text) => {
 };
 
 // ==========================================================
+// HELPER - EXTRACT PUBLIC_ID FROM CLOUDINARY URL
+// ==========================================================
+const extractPublicId = (url) => {
+    if (!url) return null;
+    const parts = url.split('/');
+    const uploadIndex = parts.indexOf('upload');
+    if (uploadIndex === -1) return null;
+    return parts.slice(uploadIndex + 1).join('/').split('.')[0];
+};
+
+// ==========================================================
 // VALIDATE CINEMA DATA
 // ==========================================================
-const validateCinema = (data) => {
+const validateCinema = (data, files = {}, isUpdate = false) => {
     const { cinema_name, address, city, hotline, map_link } = data;
 
     if (!cinema_name || cinema_name.trim() === "") {
@@ -38,7 +53,7 @@ const validateCinema = (data) => {
         return "Vui lòng nhập hotline.";
     }
     if (!/^[0-9]{8,15}$/.test(hotline.trim())) {
-        return "Hotline không hợp lệ.";
+        return "Hotline không hợp lệ (8-15 chữ số).";
     }
     if (!map_link || map_link.trim() === "") {
         return "Vui lòng nhập link Google Map.";
@@ -48,6 +63,8 @@ const validateCinema = (data) => {
     } catch {
         return "Link Google Map không hợp lệ.";
     }
+
+    // Không bắt buộc upload backdrop, chỉ kiểm tra nếu có file
     return null;
 };
 
@@ -55,7 +72,6 @@ class CinemaService {
 
     /* ==========================================================
         GET ALL CINEMAS - KHÔNG PHÂN TRANG
-        TRẢ VỀ MẢNG rows[]
     ========================================================== */
     async getAllCinemasAll(search = "") {
         return await CinemaRepository.findAllAll(search);
@@ -63,7 +79,6 @@ class CinemaService {
 
     /* ==========================================================
         GET ALL CINEMAS - CÓ PHÂN TRANG
-        TRẢ VỀ { data: [], pagination: {} }
     ========================================================== */
     async getAllCinemasPaginated(page = 1, limit = 20, search = "") {
         return await CinemaRepository.findAll(page, limit, search);
@@ -91,6 +106,7 @@ class CinemaService {
             err.statusCode = 400;
             throw err;
         }
+
         const cinema = await CinemaRepository.findBySlug(slug.trim());
         if (!cinema) {
             const err = new Error("Không tìm thấy rạp.");
@@ -98,7 +114,7 @@ class CinemaService {
             throw err;
         }
 
-        // Lấy danh sách phim và suất chiếu của rạp
+        // Lấy danh sách phim + suất chiếu
         const movies = await CinemaRepository.getMoviesByCinema(cinema.cinema_id);
         const movieMap = {};
         for (const item of movies) {
@@ -122,11 +138,12 @@ class CinemaService {
     /* ==========================================================
         CREATE CINEMA (ADMIN)
     ========================================================== */
-    async createCinema(data) {
-        const error = validateCinema(data);
+    async createCinema(data, files = {}) {
+        const error = validateCinema(data, files, false);
         if (error) {
             const err = new Error(error);
             err.statusCode = 400;
+            err.field = "general";
             throw err;
         }
 
@@ -134,45 +151,63 @@ class CinemaService {
         const cleanCinemaName = cinema_name.trim();
         const slug = createSlug(cleanCinemaName);
 
+        // Kiểm tra trùng tên
         const duplicateName = await CinemaRepository.findByName(cleanCinemaName);
         if (duplicateName) {
             const err = new Error("Tên rạp đã tồn tại.");
             err.statusCode = 400;
+            err.field = "cinema_name";
             throw err;
         }
 
+        // Kiểm tra trùng hotline
         const duplicateHotline = await CinemaRepository.findByHotline(hotline.trim());
         if (duplicateHotline) {
             const err = new Error("Hotline đã tồn tại.");
             err.statusCode = 400;
+            err.field = "hotline";
             throw err;
         }
 
-        return await CinemaRepository.create({
+        // Upload ảnh backdrop nếu có
+        let cinema_backdrop = null;
+        if (files['cinema_backdrop']?.[0]) {
+            const result = await uploadToCloudinary(
+                files['cinema_backdrop'][0],
+                'cinema_shop/backdrops'
+            );
+            cinema_backdrop = result.url;
+        }
+
+        const cinemaId = await CinemaRepository.create({
             cinema_name: cleanCinemaName,
             slug,
             address: address.trim(),
             city: city.trim(),
             hotline: hotline.trim(),
-            map_link: map_link.trim()
+            map_link: map_link.trim(),
+            cinema_backdrop
         });
+
+        return cinemaId;
     }
 
     /* ==========================================================
         UPDATE CINEMA (ADMIN)
     ========================================================== */
-    async updateCinema(cinemaId, data) {
-        const cinema = await CinemaRepository.findById(cinemaId);
-        if (!cinema) {
+    async updateCinema(cinemaId, data, files = {}) {
+        const existing = await CinemaRepository.findById(cinemaId);
+        if (!existing) {
             const err = new Error("Rạp không tồn tại.");
             err.statusCode = 404;
             throw err;
         }
 
-        const error = validateCinema(data);
+        const error = validateCinema(data, files, true);
         if (error) {
             const err = new Error(error);
             err.statusCode = 400;
+            err.field = "general";
             throw err;
         }
 
@@ -180,18 +215,40 @@ class CinemaService {
         const cleanCinemaName = cinema_name.trim();
         const slug = createSlug(cleanCinemaName);
 
+        // Kiểm tra trùng tên (không tính chính nó)
         const duplicateName = await CinemaRepository.findByName(cleanCinemaName, cinemaId);
         if (duplicateName) {
             const err = new Error("Tên rạp đã tồn tại.");
             err.statusCode = 400;
+            err.field = "cinema_name";
             throw err;
         }
 
+        // Kiểm tra trùng hotline (không tính chính nó)
         const duplicateHotline = await CinemaRepository.findByHotline(hotline.trim(), cinemaId);
         if (duplicateHotline) {
             const err = new Error("Hotline đã tồn tại.");
             err.statusCode = 400;
+            err.field = "hotline";
             throw err;
+        }
+
+        // Xử lý ảnh backdrop
+        let finalBackdrop = existing.cinema_backdrop;
+        if (files['cinema_backdrop']?.[0]) {
+            // Xóa ảnh cũ nếu có
+            if (existing.cinema_backdrop) {
+                const publicId = extractPublicId(existing.cinema_backdrop);
+                if (publicId) {
+                    await deleteFromCloudinary(publicId);
+                }
+            }
+            // Upload ảnh mới
+            const result = await uploadToCloudinary(
+                files['cinema_backdrop'][0],
+                'cinema_shop/backdrops'
+            );
+            finalBackdrop = result.url;
         }
 
         const affectedRows = await CinemaRepository.update(cinemaId, {
@@ -200,7 +257,8 @@ class CinemaService {
             address: address.trim(),
             city: city.trim(),
             hotline: hotline.trim(),
-            map_link: map_link.trim()
+            map_link: map_link.trim(),
+            cinema_backdrop: finalBackdrop
         });
 
         if (affectedRows === 0) {
@@ -220,6 +278,14 @@ class CinemaService {
             const err = new Error("Rạp không tồn tại.");
             err.statusCode = 404;
             throw err;
+        }
+
+        // Xóa ảnh backdrop trên Cloudinary nếu có
+        if (cinema.cinema_backdrop) {
+            const publicId = extractPublicId(cinema.cinema_backdrop);
+            if (publicId) {
+                await deleteFromCloudinary(publicId);
+            }
         }
 
         const affectedRows = await CinemaRepository.delete(cinemaId);

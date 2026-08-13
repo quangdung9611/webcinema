@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { Film } from "lucide-react"; // import icon
 import api from "../../api/api";
 import MovieCard from "./MovieCard";
-import MoviePreviewModal from "./MoviePreviewModal"; // thêm
+import MoviePreviewModal from "./MoviePreviewModal";
 import "../styles/MovieSlider.css";
 
 // Helper unwrap mảng
@@ -94,8 +95,10 @@ const MovieSlider = () => {
       <div className="movie-slider-group">
         <div className="movie-slider-header">
           <div className="section-header-left">
-            <h2 className="section-title">{title}</h2>
-            <div className="title-underline" />
+            <h2 className="section-title">
+              <Film size={32} className="section-icon" />
+              {title}
+            </h2>
           </div>
           <button className="btn-view-all" onClick={() => navigate(viewAllLink)}>
             Xem tất cả

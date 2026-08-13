@@ -1,19 +1,19 @@
 /* =========================================================
    MOVIE DETAIL – SILVER PREMIUM EDITION
-   Đồng bộ với index.css – dùng biến, heading h2
-   Hỗ trợ avatar thực trong bình luận
+   SỬ DỤNG 100% BIẾN TỪ INDEX.CSS
+   Đồng bộ font, màu, spacing, border-radius, shadow
    ========================================================= */
 
 .cinema-movie-detail-page {
     width: 100%;
-    background: var(--main-background);
+    background: var(--bg-primary);
     min-height: 100vh;
 }
 
 .cinema-main-content-container {
     max-width: 1300px;
     margin: 0 auto;
-    padding: 0 24px var(--space-3xl);
+    padding: 0 var(--space-lg) var(--space-3xl);
     box-sizing: border-box;
 }
 
@@ -42,10 +42,10 @@
 
 .section-header-row .section-title-label {
     font-size: var(--font-size-h2);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--silver-primary);
+    color: var(--text-heading);
     margin: 0;
     white-space: nowrap;
     font-family: var(--font-heading);
@@ -82,7 +82,7 @@
 .section-header-row .view-all-link-gold,
 .section-header-row .btn-write-review-small {
     flex-shrink: 0;
-    border: 2px solid var(--silver-primary);
+    border: var(--border-premium);
     outline: none;
     cursor: pointer;
     color: var(--silver-primary);
@@ -99,14 +99,13 @@
     gap: var(--space-xs);
 }
 
-/* ✨ NÂNG CẤP HOVER: NỀN BẠC, CHỮ ĐEN (ĐÃ FIX) ✨ */
 .section-header-row .view-all-link-gold:hover,
 .section-header-row .btn-write-review-small:hover {
     transform: translateY(-2px);
-    background: #e8e8e8 !important; /* Nền bạc sáng */
-    color: #000000 !important;      /* Chữ đen */
-    border-color: #e8e8e8;
-    box-shadow: 0 4px 20px rgba(232, 232, 232, 0.3);
+    background: var(--silver-primary);
+    color: var(--bg-primary);
+    border-color: var(--silver-primary);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 /* =========================================================
@@ -122,10 +121,10 @@
 
 .filmgenre-section-header h2 {
     font-size: var(--font-size-h2);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--silver-primary);
+    color: var(--text-heading);
     margin: 0;
     white-space: nowrap;
     font-family: var(--font-heading);
@@ -140,11 +139,11 @@
 }
 
 .movie-info-container {
-    background: var(--cinema-card-bg);
-    border: var(--border-silver);
+    background: var(--bg-card);
+    border: var(--border-premium);
     border-radius: var(--radius-xl);
     padding: var(--space-2xl) var(--space-3xl);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    box-shadow: var(--glass-shadow);
     display: grid;
     grid-template-columns: 240px 1fr;
     gap: var(--space-2xl);
@@ -160,7 +159,7 @@
     width: 100%;
     height: auto;
     border-radius: var(--radius-lg);
-    box-shadow: var(--cinema-card-shadow);
+    box-shadow: var(--glass-shadow);
     object-fit: cover;
     display: block;
 }
@@ -168,8 +167,8 @@
     width: 100%;
     aspect-ratio: 2/3;
     border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, var(--black-soft), var(--black-premium));
-    border: var(--border-silver);
+    background: var(--bg-tertiary);
+    border: var(--border-premium);
 }
 
 .movie-info-content {
@@ -196,8 +195,8 @@
     margin: 0;
     line-height: 1.1;
     letter-spacing: 2px;
-    color: var(--white-pure);
-    font-weight: var(--fw-black);
+    color: var(--text-heading);
+    font-weight: var(--fw-extrabold);
     font-family: var(--font-heading);
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -209,7 +208,7 @@
     align-items: center;
     gap: var(--space-md);
     background: rgba(255, 255, 255, 0.04);
-    border: var(--border-light);
+    border: var(--border-premium);
     border-radius: var(--radius-lg);
     padding: var(--space-sm) var(--space-lg);
     flex-shrink: 0;
@@ -219,7 +218,7 @@
     font-size: var(--font-size-h2);
     color: var(--silver-primary);
     line-height: 1;
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     font-family: var(--font-heading);
 }
 
@@ -247,8 +246,8 @@
     flex-wrap: wrap;
     gap: var(--space-sm);
     padding: var(--space-sm) 0;
-    border-top: var(--border-light);
-    border-bottom: var(--border-light);
+    border-top: var(--border-premium);
+    border-bottom: var(--border-premium);
 }
 
 .meta-tag {
@@ -258,7 +257,7 @@
     padding: var(--space-xs) var(--space-md);
     border-radius: var(--radius-round);
     background: rgba(255, 255, 255, 0.05);
-    border: var(--border-light);
+    border: var(--border-premium);
     font-size: var(--font-size-base);
     font-weight: var(--fw-semibold);
     color: var(--text-secondary);
@@ -276,11 +275,11 @@
     padding: 0;
 }
 .age-badge {
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
     padding: 2px 14px;
     border-radius: var(--radius-sm);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     font-size: var(--font-size-base);
     line-height: 1.8;
 }
@@ -389,7 +388,7 @@
     gap: var(--space-md);
     margin-top: var(--space-sm);
     padding-top: var(--space-md);
-    border-top: var(--border-light);
+    border-top: var(--border-premium);
     width: 100%;
 }
 
@@ -411,21 +410,20 @@
     cursor: pointer;
     transition: all var(--transition-normal);
     min-height: 48px;
-    background: transparent !important;
-    border: 2px solid var(--silver-primary);
+    background: transparent;
+    border: var(--border-premium);
     color: var(--silver-primary);
     white-space: nowrap;
 }
 
-/* ✨ NÂNG CẤP HOVER: NỀN BẠC, CHỮ ĐEN ✨ */
 .btn-book-now:hover,
 .btn-watch-trailer:hover,
 .btn-review:hover {
     transform: translateY(-2px);
-    background: #e8e8e8 !important; /* Nền bạc sáng */
-    color: #000000 !important;      /* Chữ đen */
-    border-color: #e8e8e8;
-    box-shadow: 0 4px 20px rgba(232, 232, 232, 0.3);
+    background: var(--silver-primary);
+    color: var(--bg-primary);
+    border-color: var(--silver-primary);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .btn-book-now:active,
@@ -433,6 +431,7 @@
 .btn-review:active {
     transform: scale(0.96);
 }
+
 /* =========================================================
    PHIM LIÊN QUAN – GRID 4 CỘT
    ========================================================= */
@@ -444,7 +443,7 @@
 .genre-movies-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    gap: var(--space-md);
     width: 100%;
 }
 
@@ -459,7 +458,7 @@
 .cast-avatars-horizontal-list {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    gap: var(--space-md);
     width: 100%;
 }
 
@@ -480,14 +479,14 @@
     aspect-ratio: 3/2;
     overflow: hidden;
     border-radius: var(--radius-lg);
-    background: var(--black-soft);
-    border: var(--cinema-card-border);
-    box-shadow: var(--cinema-card-shadow);
+    background: var(--bg-tertiary);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
     transition: all var(--transition-normal);
 }
 .actor-circle-card:hover .actor-avatar-frame {
-    border-color: var(--border-silver-hover);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    border-color: var(--silver-primary);
+    box-shadow: var(--card-shadow-hover);
 }
 
 .actor-avatar-frame::before {
@@ -532,7 +531,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--black-soft);
+    background: var(--bg-tertiary);
 }
 
 .actor-real-name {
@@ -550,7 +549,6 @@
 }
 .actor-circle-card:hover .actor-real-name {
     color: var(--silver-primary);
-    text-shadow: var(--shadow-silver);
 }
 
 /* =========================================================
@@ -559,7 +557,7 @@
 .other-trailers-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    gap: var(--space-md);
     width: 100%;
 }
 
@@ -577,14 +575,14 @@
     aspect-ratio: 3/2;
     overflow: hidden;
     border-radius: var(--radius-lg);
-    background: var(--black-soft);
-    border: var(--cinema-card-border);
-    box-shadow: var(--cinema-card-shadow);
+    background: var(--bg-tertiary);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
     transition: all var(--transition-normal);
 }
 .other-trailer-card:hover .other-trailer-thumb {
-    border-color: var(--border-silver-hover);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    border-color: var(--silver-primary);
+    box-shadow: var(--card-shadow-hover);
 }
 
 .other-trailer-thumb img {
@@ -636,7 +634,7 @@
     width: 72px;
     height: 72px;
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.9);
+    border: var(--border-premium);
     background: rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(6px);
     transition: all var(--transition-normal);
@@ -670,7 +668,6 @@
 }
 .other-trailer-card:hover .other-trailer-title {
     color: var(--silver-primary);
-    text-shadow: var(--shadow-silver);
 }
 
 /* =========================================================
@@ -684,9 +681,9 @@
 .split-right-column-box {
     padding: var(--space-2xl);
     border-radius: var(--radius-lg);
-    background: var(--cinema-card-bg);
-    border: var(--border-silver);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    background: var(--bg-card);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
     width: 100%;
     box-sizing: border-box;
 }
@@ -706,7 +703,7 @@
 }
 .huge-number {
     font-size: var(--font-size-h1);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     line-height: 1;
     color: var(--silver-primary);
     font-family: var(--font-heading);
@@ -755,7 +752,7 @@
 .progress-fill-active {
     height: 100%;
     border-radius: var(--radius-round);
-    background: var(--cinema-border-gradient);
+    background: var(--premium-gradient);
     transition: width 0.6s ease;
 }
 .progress-percent-text {
@@ -779,7 +776,7 @@
     padding: var(--space-md);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.03);
-    border: var(--border-light);
+    border: var(--border-premium);
     transition: all var(--transition-normal);
 }
 .mini-comment-card:hover {
@@ -800,8 +797,8 @@
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
-    border: 2px solid rgba(255, 255, 255, 0.08);
-    background: var(--black-soft);
+    border: var(--border-premium);
+    background: var(--bg-tertiary);
 }
 
 .user-avatar-placeholder-small {
@@ -809,8 +806,8 @@
     height: 50px;
     border-radius: 50%;
     flex-shrink: 0;
-    background: var(--cinema-border-gradient);
-    border: 2px solid rgba(255, 255, 255, 0.08);
+    background: var(--premium-gradient);
+    border: var(--border-premium);
 }
 .user-name-title-box {
     flex: 1;
@@ -854,7 +851,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--overlay-dark);
+    background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(4px);
     z-index: 9999;
 }
@@ -874,11 +871,11 @@
     justify-content: center;
     border: none;
     border-radius: 50%;
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
     cursor: pointer;
     z-index: 10001;
-    box-shadow: var(--shadow-silver);
+    box-shadow: var(--btn-silver-shadow);
     transition: all var(--transition-normal);
 }
 .trailer-close-btn:hover {
@@ -891,7 +888,7 @@
     padding-top: 56.25%;
     overflow: hidden;
     border-radius: var(--radius-lg);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    box-shadow: var(--card-shadow-hover);
 }
 .modal-trailer-iframe-container iframe {
     position: absolute;
@@ -910,7 +907,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--overlay-dark);
+    background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(4px);
     z-index: 9999;
     padding: var(--space-lg);
@@ -920,11 +917,11 @@
     position: relative;
     width: min(550px, 95vw);
     max-height: 90vh;
-    background: var(--cinema-card-bg);
-    border: var(--border-silver);
+    background: var(--bg-card);
+    border: var(--border-premium);
     border-radius: var(--radius-xl);
     padding: var(--space-2xl);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    box-shadow: var(--card-shadow-hover);
     overflow-y: auto;
 }
 
@@ -939,11 +936,11 @@
     justify-content: center;
     border: none;
     border-radius: 50%;
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
     cursor: pointer;
     z-index: 1;
-    box-shadow: var(--shadow-silver);
+    box-shadow: var(--btn-silver-shadow);
     transition: all var(--transition-normal);
 }
 .review-close-btn:hover {
@@ -970,7 +967,7 @@
     gap: var(--space-md);
     justify-content: flex-end;
     margin-top: var(--space-lg);
-    border-top: var(--border-light);
+    border-top: var(--border-premium);
     padding-top: var(--space-md);
 }
 
@@ -978,7 +975,7 @@
 .btn-submit-review {
     padding: var(--space-sm) var(--space-xl);
     border-radius: var(--radius-round);
-    border: 2px solid var(--silver-primary);
+    border: var(--border-premium);
     background: transparent;
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
@@ -1043,8 +1040,8 @@
     transform: scale(1.2);
 }
 .interactive-star.active {
-    color: var(--gold-primary);
-    fill: var(--gold-primary);
+    color: #ffd700;
+    fill: #ffd700;
 }
 
 .modal-review-textarea {
@@ -1053,7 +1050,7 @@
     padding: var(--space-md);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.05);
-    border: var(--border-light);
+    border: var(--border-premium);
     color: var(--text-body);
     font-size: var(--font-size-base);
     resize: vertical;
@@ -1069,13 +1066,13 @@
 }
 
 /* =========================================================
-   RESPONSIVE - TỐI ƯU CHO MOBILE & TABLET
+   RESPONSIVE
    ========================================================= */
 
 /* Tablet ≤ 992px */
 @media (max-width: 992px) {
     .cinema-main-content-container {
-        padding: 0 18px var(--space-2xl);
+        padding: 0 var(--space-md) var(--space-2xl);
     }
 
     .movie-info-container {
@@ -1116,27 +1113,27 @@
     }
 }
 
-/* Mobile ≤ 768px - CHUYỂN SANG BỐ CỤC 1 CỘT DỌC */
+/* Mobile ≤ 768px */
 @media (max-width: 768px) {
     .cinema-main-content-container {
-        padding: 0 16px var(--space-xl);
+        padding: 0 var(--space-md) var(--space-xl);
     }
 
     .movie-info-container {
-        grid-template-columns: 1fr !important; 
-        padding: var(--space-xl) var(--space-lg); /* Tăng padding để ảnh không bị sát lề */
+        grid-template-columns: 1fr !important;
+        padding: var(--space-xl) var(--space-lg);
         gap: var(--space-lg);
         border-radius: var(--radius-lg);
         text-align: center;
     }
 
     .movie-poster-col {
-        max-width: 240px; /* 💡 Tăng lên 240px để poster to, rõ nét */
+        max-width: 240px;
         margin: 0 auto;
     }
     .movie-poster-img {
         width: 100%;
-        height: auto; /* Chiều cao sẽ tự động co theo tỉ lệ 2/3 của ảnh gốc */
+        height: auto;
     }
 
     .movie-detail-title {
@@ -1188,7 +1185,8 @@
         gap: var(--space-xs) var(--space-md);
         text-align: center;
     }
-    .meta-label, .meta-value {
+    .meta-label,
+    .meta-value {
         text-align: center;
     }
 
@@ -1196,7 +1194,7 @@
     .cast-avatars-horizontal-list,
     .other-trailers-grid {
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 16px !important;
+        gap: var(--space-md) !important;
     }
 
     .split-right-column-box {
@@ -1228,10 +1226,10 @@
     }
 }
 
-/* Mobile cực nhỏ (Như iPhone SE) ≤ 480px */
+/* Mobile cực nhỏ ≤ 480px */
 @media (max-width: 480px) {
     .cinema-main-content-container {
-        padding: 0 12px var(--space-lg);
+        padding: 0 var(--space-sm) var(--space-lg);
     }
 
     .movie-info-container {
@@ -1241,7 +1239,7 @@
     }
 
     .movie-poster-col {
-        max-width: 180px; /* 💡 Vẫn giữ ảnh to rõ (180px) trên màn hình iPhone SE */
+        max-width: 180px;
     }
     .movie-poster-img {
         width: 100%;
@@ -1323,10 +1321,10 @@
     }
 }
 
-/* Màn hình siêu nhỏ (Dưới 360px) */
+/* Màn hình siêu nhỏ ≤ 360px */
 @media (max-width: 360px) {
     .cinema-main-content-container {
-        padding: 0 10px var(--space-md);
+        padding: 0 var(--space-xs) var(--space-md);
     }
 
     .movie-info-container {
@@ -1335,7 +1333,7 @@
     }
 
     .movie-poster-col {
-        max-width: 140px; /* 💡 Giảm nhẹ xuống 140px để vừa vặn với màn hình siêu nhỏ */
+        max-width: 140px;
     }
     .movie-poster-img {
         width: 100%;

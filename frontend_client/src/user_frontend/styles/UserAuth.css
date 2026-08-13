@@ -44,13 +44,13 @@
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--border-premium); /* Viền xám bạc sáng mặc định */
+    border: var(--border-premium);
     box-shadow: var(--glass-shadow);
     transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
 }
 
 .auth-card:hover {
-    border-color: var(--border-premium); /* Giữ nguyên viền sáng */
+    border-color: var(--border-premium);
     box-shadow: var(--card-shadow-hover);
 }
 
@@ -61,7 +61,7 @@
     text-align: center;
     color: var(--text-heading);
     font-size: var(--font-size-h2);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     letter-spacing: 1px;
     text-transform: uppercase;
     margin-bottom: var(--space-xs);
@@ -119,13 +119,13 @@
 }
 
 /* =========================================================
-   6. Inputs (Đồng bộ với index.css)
+   6. Inputs
 ========================================================= */
 .auth-input {
     width: 100%;
     padding: var(--space-md) var(--space-md);
     border-radius: var(--radius-md);
-    border: var(--border-premium); /* Viền xám bạc sáng */
+    border: var(--border-premium);
     background: rgba(255, 255, 255, 0.04);
     color: var(--text-body);
     font-size: var(--font-size-base);
@@ -259,7 +259,7 @@
     border: none;
     border-radius: var(--radius-md);
     background: var(--premium-gradient);
-    color: var(--bg-primary); /* Chữ đen trên nền bạc */
+    color: var(--bg-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     cursor: pointer;
@@ -273,7 +273,7 @@
 
 .btn-user:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: var(--btn-silver-hover);
+    box-shadow: var(--card-shadow-hover);
 }
 
 .btn-user:disabled {
@@ -319,9 +319,9 @@
     justify-content: center;
     padding: var(--space-lg);
     z-index: 9999;
-    background: var(--overlay-dark);
+    background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(6px);
-    animation: modalFade var(--transition-slow);
+    animation: modalFade var(--transition-normal);
 }
 
 .forgot-modal {
@@ -341,7 +341,7 @@
 .forgot-modal h3 {
     color: var(--text-heading);
     font-size: var(--font-size-h3);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     margin-bottom: var(--space-xs);
     text-align: center;
 }

@@ -33,40 +33,26 @@
     min-width: 0;
 }
 
+/* ==========================================================
+   STATUS TITLE – CÓ ICON
+   ========================================================== */
 .status-title {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-md);
     margin: 0;
     color: var(--text-heading);
     font-size: var(--font-size-h2);
     font-weight: var(--fw-extrabold);
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    padding-bottom: var(--space-sm);
-    
-    /* Hiệu ứng glow nhẹ cho chữ */
-    text-shadow: 0 0 15px rgba(245, 245, 246, 0.08);
+    /* ✅ Đã xóa padding-bottom và text-shadow */
 }
 
-/* ==========================================================
-   TITLE UNDERLINE – MÀU XÁM BẠC LẤP LÁNH
-   ========================================================== */
-.title-underline {
-    width: fit-content;
-    min-width: 60px;
-    height: 3px;
-    border-radius: var(--radius-round);
-    
-    /* Gradient bạc lấp lánh */
-    background: var(--premium-gradient);
-    background-size: 200% 100%;
-    box-shadow: 0 0 12px rgba(245, 245, 246, 0.1);
-    
-    /* Animation shimmer nhẹ để tạo cảm giác premium */
-    animation: silverShimmer 4s linear infinite;
-}
-
-@keyframes silverShimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+/* ✅ Style cho icon */
+.section-icon {
+    flex-shrink: 0;
+    color: var(--silver-primary);
 }
 
 /* ==========================================================
@@ -82,11 +68,9 @@
 }
 
 .status-tab {
-    /* Mặc định: Chỉ có viền xám bạc sáng, nền trong suốt, chữ xám bạc */
     background: transparent;
     border: var(--border-premium);
     color: var(--text-secondary);
-    
     padding: var(--space-sm) var(--space-xl);
     border-radius: var(--radius-round);
     font-size: var(--font-size-h6);
@@ -96,24 +80,21 @@
     letter-spacing: 0.04em;
     min-width: 120px;
     text-align: center;
-    
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Hover: Giữ viền, sáng chữ lên một chút, nâng nhẹ */
 .status-tab:hover {
     transform: translateY(-2px);
     color: var(--text-heading);
-    border-color: var(--border-premium); /* Giữ nguyên viền sáng */
+    border-color: var(--border-premium);
     background: rgba(245, 245, 246, 0.04);
     box-shadow: var(--shadow-sm);
 }
 
-/* Active: Nền Gradient Bạc, chữ đen tuyền (Premium) */
 .status-tab.active {
     background: var(--premium-gradient);
     color: var(--bg-primary) !important;
-    border-color: transparent; /* Bỏ viền khi đã active vì nền đã nổi bật */
+    border-color: transparent;
     font-weight: var(--fw-bold);
     box-shadow: var(--btn-silver-shadow);
 }
@@ -137,7 +118,7 @@
 }
 
 /* ==========================================================
-   RESPONSIVE – ĐỒNG BỘ VỚI INDEX.CSS
+   RESPONSIVE
    ============================================================ */
 
 @media (max-width: 1200px) {
@@ -168,9 +149,6 @@
     }
     .status-title {
         font-size: var(--font-size-h3);
-    }
-    .title-underline {
-        height: 3px;
     }
     .status-tabs {
         gap: var(--space-xs);
@@ -240,11 +218,10 @@
     padding: var(--space-3xl) var(--space-lg);
 }
 
-/* Nút Retry – Chỉ có viền mặc định, hover đổi gradient */
 .retry-btn {
     margin-top: var(--space-md);
     padding: var(--space-sm) var(--space-xl);
-    border: var(--border-premium); /* Viền xám bạc mặc định */
+    border: var(--border-premium);
     border-radius: var(--radius-round);
     background: transparent;
     color: var(--text-body);
@@ -256,7 +233,7 @@
 
 .retry-btn:hover {
     transform: translateY(-2px);
-    background: var(--premium-gradient); /* Đổi nền thành bạc khi hover */
+    background: var(--premium-gradient);
     color: var(--bg-primary);
     border-color: transparent;
     box-shadow: var(--btn-silver-shadow);

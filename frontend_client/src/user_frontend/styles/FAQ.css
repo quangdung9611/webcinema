@@ -5,7 +5,7 @@
 .faq-page {
   width: 100%;
   padding: var(--space-2xl) 0 var(--space-3xl);
-  background: var(--main-background);
+  background: var(--bg-primary);
   min-height: 70vh;
 }
 
@@ -28,16 +28,16 @@
   width: 88px;
   height: 88px;
   border-radius: 50%;
-  background: rgba(201, 168, 76, 0.08);
-  border: 1px solid rgba(201, 168, 76, 0.15);
-  color: var(--gold-primary);
+  background: rgba(232, 232, 232, 0.08);
+  border: var(--border-premium);
+  color: var(--silver-primary);
   margin-bottom: var(--space-md);
 }
 
 .faq-header h1 {
   font-size: var(--font-size-h2);
   font-weight: var(--fw-extrabold);
-  color: var(--text-body);
+  color: var(--text-heading);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin: 0 0 var(--space-sm);
@@ -55,7 +55,7 @@
   width: 80px;
   height: 3px;
   border-radius: var(--radius-round);
-  background: var(--gold-gradient);
+  background: var(--premium-gradient);
   margin: var(--space-lg) auto 0;
 }
 
@@ -67,7 +67,7 @@
   padding: var(--space-md) 0 var(--space-xl);
   color: var(--text-muted);
   font-size: var(--font-size-base);
-  border-bottom: var(--border-light);
+  border-bottom: var(--border-premium);
   margin-bottom: var(--space-2xl);
 }
 
@@ -77,7 +77,7 @@
   transition: color var(--transition-fast);
 }
 .faq-breadcrumb a:hover {
-  color: var(--gold-primary);
+  color: var(--silver-primary);
 }
 .faq-breadcrumb .current {
   color: var(--text-body);
@@ -90,7 +90,7 @@
   justify-content: center;
   gap: 48px;
   padding: var(--space-lg) 0 var(--space-2xl);
-  border-bottom: var(--border-light);
+  border-bottom: var(--border-premium);
   margin-bottom: var(--space-2xl);
   flex-wrap: wrap;
 }
@@ -105,7 +105,7 @@
 .faq-stat-number {
   font-size: var(--font-size-h3);
   font-weight: var(--fw-extrabold);
-  color: var(--gold-primary);
+  color: var(--silver-primary);
   line-height: 1.2;
 }
 
@@ -131,18 +131,18 @@
   font-weight: var(--fw-semibold);
   color: var(--text-secondary);
   background: rgba(255, 255, 255, 0.02);
-  border: var(--border-light);
+  border: var(--border-premium);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 .faq-category:hover {
   color: var(--text-body);
-  border-color: rgba(201, 168, 76, 0.2);
+  border-color: var(--silver-primary);
 }
 .faq-category.active {
   color: var(--text-body);
-  background: rgba(201, 168, 76, 0.12);
-  border-color: rgba(201, 168, 76, 0.3);
+  background: rgba(232, 232, 232, 0.12);
+  border-color: var(--silver-primary);
 }
 
 /* ===== FAQ LIST ===== */
@@ -154,19 +154,19 @@
 
 .faq-item {
   background: rgba(255, 255, 255, 0.02);
-  border: var(--border-light);
+  border: var(--border-premium);
   border-radius: var(--radius-md);
   overflow: hidden;
   transition: all var(--transition-normal);
   cursor: pointer;
 }
 .faq-item:hover {
-  border-color: rgba(201, 168, 76, 0.12);
+  border-color: var(--silver-primary);
   background: rgba(255, 255, 255, 0.03);
 }
 .faq-item.open {
-  border-color: rgba(201, 168, 76, 0.2);
-  background: rgba(201, 168, 76, 0.04);
+  border-color: var(--silver-primary);
+  background: rgba(232, 232, 232, 0.04);
 }
 
 .faq-question {
@@ -187,7 +187,7 @@
 
 .faq-question-icon {
   flex-shrink: 0;
-  color: var(--gold-primary);
+  color: var(--silver-primary);
   margin-top: 2px;
 }
 
@@ -197,8 +197,8 @@
   font-weight: var(--fw-bold);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(201, 168, 76, 0.7);
-  background: rgba(201, 168, 76, 0.08);
+  color: var(--silver-primary);
+  background: rgba(232, 232, 232, 0.08);
   padding: 2px var(--space-sm);
   border-radius: var(--radius-round);
   margin-bottom: var(--space-xs);
@@ -218,7 +218,7 @@
   transition: all var(--transition-normal);
 }
 .faq-item.open .faq-question-arrow {
-  color: var(--gold-primary);
+  color: var(--silver-primary);
 }
 
 /* ===== ANSWER ===== */
@@ -236,7 +236,7 @@
   color: var(--text-secondary);
   font-size: var(--font-size-base);
   line-height: var(--line-height-base);
-  border-top: var(--border-light);
+  border-top: var(--border-premium);
   padding-top: var(--space-lg);
 }
 
@@ -265,15 +265,15 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--gold-primary);
+  background: var(--silver-primary);
   opacity: 0.4;
 }
 
 .faq-answer-note {
   margin: var(--space-sm) 0 0;
   padding: var(--space-sm) var(--space-md);
-  background: rgba(201, 168, 76, 0.06);
-  border-left: 3px solid var(--gold-primary);
+  background: rgba(232, 232, 232, 0.06);
+  border-left: 3px solid var(--silver-primary);
   border-radius: var(--radius-sm);
   color: var(--text-body);
   font-weight: var(--fw-medium);
@@ -290,7 +290,7 @@
   padding: 44px 40px;
   text-align: center;
   background: rgba(255, 255, 255, 0.02);
-  border: var(--border-light);
+  border: var(--border-premium);
   border-radius: var(--radius-lg);
 }
 
@@ -324,8 +324,8 @@
   gap: var(--space-sm);
   padding: var(--space-md) var(--space-xl);
   border-radius: var(--radius-round);
-  background: var(--gold-gradient);
-  color: var(--black-premium);
+  background: var(--premium-gradient);
+  color: var(--bg-primary);
   font-weight: var(--fw-bold);
   font-size: var(--font-size-base);
   text-decoration: none;
@@ -334,26 +334,26 @@
 }
 .faq-support-btn:hover {
   transform: translateY(-3px);
-  box-shadow: var(--shadow-silver);
-  color: var(--black-premium);
+  box-shadow: var(--btn-silver-shadow);
+  color: var(--bg-primary);
 }
 
 .faq-support-btn.outline {
   background: transparent;
-  border: 1px solid rgba(201, 168, 76, 0.3);
-  color: var(--gold-primary);
+  border: var(--border-premium);
+  color: var(--silver-primary);
 }
 .faq-support-btn.outline:hover {
-  background: rgba(201, 168, 76, 0.08);
-  border-color: var(--gold-primary);
-  color: var(--gold-primary);
+  background: rgba(232, 232, 232, 0.08);
+  border-color: var(--silver-primary);
+  color: var(--silver-primary);
   box-shadow: none;
   transform: translateY(-3px);
 }
 
 .faq-support-btn.ghost {
   background: rgba(255, 255, 255, 0.02);
-  border: var(--border-light);
+  border: var(--border-premium);
   color: var(--text-secondary);
 }
 .faq-support-btn.ghost:hover {

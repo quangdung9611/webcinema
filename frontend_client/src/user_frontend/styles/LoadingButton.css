@@ -1,5 +1,6 @@
-/* styles/LoadingButton.css - SILVER EDITION
-   (Dùng biến từ index.css)
+/* =========================================================
+   LOADING BUTTON - SILVER EDITION
+   ĐỒNG BỘ 100% VỚI INDEX.CSS
 ========================================================= */
 
 .loading-btn {
@@ -13,19 +14,19 @@
     border-radius: var(--radius-round);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
-    color: var(--black-premium) !important; /* 🔥 BẮT BUỘC CHỮ ĐEN */
-    background: var(--cinema-border-gradient); /* gradient bạc */
+    color: var(--bg-primary) !important; /* ✅ Chữ đen */
+    background: var(--premium-gradient);
     cursor: pointer;
     transition: all var(--transition-normal);
     min-width: 160px;
     min-height: 52px;
     font-family: inherit;
-    box-shadow: var(--shadow-silver);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .loading-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(232, 232, 232, 0.35); /* glow bạc */
+    box-shadow: var(--card-shadow-hover);
 }
 
 .loading-btn:disabled {
@@ -34,7 +35,7 @@
 }
 
 .loading-btn.loading {
-    background: var(--cinema-border-gradient);
+    background: var(--premium-gradient);
     cursor: wait;
     gap: var(--space-sm);
     filter: brightness(0.92);
@@ -59,18 +60,24 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
+    background: var(--silver-light);
     opacity: 0.9;
     transform-origin: center center;
-    background: var(--white-pure);
 }
 
+/* ✅ Mỗi dot được xoay đúng vị trí trên vòng tròn */
+.spinner-dot:nth-child(1) { transform: rotate(0deg) translateX(12px); }
+.spinner-dot:nth-child(2) { transform: rotate(45deg) translateX(12px); }
+.spinner-dot:nth-child(3) { transform: rotate(90deg) translateX(12px); }
+.spinner-dot:nth-child(4) { transform: rotate(135deg) translateX(12px); }
+.spinner-dot:nth-child(5) { transform: rotate(180deg) translateX(12px); }
+.spinner-dot:nth-child(6) { transform: rotate(225deg) translateX(12px); }
+.spinner-dot:nth-child(7) { transform: rotate(270deg) translateX(12px); }
+.spinner-dot:nth-child(8) { transform: rotate(315deg) translateX(12px); }
+
 @keyframes spinCircle {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* =========================================
@@ -80,7 +87,7 @@
 .loading-btn-text {
     display: inline-block;
     line-height: 1;
-    color: var(--black-premium) !important; /* 🔥 CHỮ ĐEN TRÊN NỀN BẠC */
+    color: var(--bg-primary) !important;
 }
 
 /* =========================================
@@ -104,6 +111,14 @@
     .spinner-dot {
         width: 5px;
         height: 5px;
-        transform: rotate(0deg) translateX(9px);
     }
+    
+    .spinner-dot:nth-child(1) { transform: rotate(0deg) translateX(10px); }
+    .spinner-dot:nth-child(2) { transform: rotate(45deg) translateX(10px); }
+    .spinner-dot:nth-child(3) { transform: rotate(90deg) translateX(10px); }
+    .spinner-dot:nth-child(4) { transform: rotate(135deg) translateX(10px); }
+    .spinner-dot:nth-child(5) { transform: rotate(180deg) translateX(10px); }
+    .spinner-dot:nth-child(6) { transform: rotate(225deg) translateX(10px); }
+    .spinner-dot:nth-child(7) { transform: rotate(270deg) translateX(10px); }
+    .spinner-dot:nth-child(8) { transform: rotate(315deg) translateX(10px); }
 }

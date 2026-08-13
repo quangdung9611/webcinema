@@ -9,7 +9,8 @@ import {
     Building2,
     Navigation,
     Phone,
-    Map
+    Map,
+    Image
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -19,7 +20,16 @@ import AdminForm from '../../../components/AdminForm';
 import AdminPagination from '../../../components/AdminPagination';
 
 // ==========================================================
-// CONSTANTS
+// HELPERS: LẤY URL BACKDROP
+// ==========================================================
+const getBackdropUrl = (backdrop) => {
+    if (!backdrop) return '';
+    if (backdrop.startsWith('http://') || backdrop.startsWith('https://')) return backdrop;
+    return `https://api.quangdungcinema.id.vn/uploads/backdrops/${backdrop}`;
+};
+
+// ==========================================================
+// INITIAL FORM
 // ==========================================================
 const initialFormData = {
     cinema_name: '',
@@ -57,10 +67,11 @@ const CinemaPage = () => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingCinema, setEditingCinema] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
+    const [cinemaBackdropFile, setCinemaBackdropFile] = useState(null);
     const [formErrors, setFormErrors] = useState({});
 
     // ======================================================
-    // ALERT MODAL (giống UserPage)
+    // ALERT MODAL
     // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -92,7 +103,7 @@ const CinemaPage = () => {
     };
 
     // ------------------------------------------------------
-    // FETCH CINEMAS - GIỐNG MoviePage
+    // FETCH CINEMAS
     // ------------------------------------------------------
     const fetchCinemas = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) {
@@ -120,7 +131,6 @@ const CinemaPage = () => {
                 signal: controller.signal
             });
 
-            // ✅ Lấy trực tiếp từ res.data giống MoviePage
             const cinemasData = res.data?.data || [];
             const paginationData = res.data?.pagination || {
                 page: 1,
@@ -246,6 +256,7 @@ const CinemaPage = () => {
     const handleOpenAdd = () => {
         setEditingCinema(null);
         setFormData(initialFormData);
+        setCinemaBackdropFile(null);
         setFormErrors({});
         setIsFormOpen(true);
     };
@@ -261,6 +272,7 @@ const CinemaPage = () => {
             hotline: cinema.hotline || '',
             map_link: cinema.map_link || ''
         });
+        setCinemaBackdropFile(null);
         setIsFormOpen(true);
     };
 
@@ -272,16 +284,22 @@ const CinemaPage = () => {
         setIsFormOpen(false);
         setEditingCinema(null);
         setFormErrors({});
+        setCinemaBackdropFile(null);
     };
 
     // ------------------------------------------------------
     // HANDLE CHANGE
     // ------------------------------------------------------
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, files } = e.target;
 
         if (formErrors[name]) {
             setFormErrors((prev) => ({ ...prev, [name]: '' }));
+        }
+
+        if (name === 'cinema_backdrop') {
+            setCinemaBackdropFile(files?.[0] || null);
+            return;
         }
 
         if (name === 'cinema_name') {
@@ -307,15 +325,21 @@ const CinemaPage = () => {
             setSubmitLoading(true);
             setFormErrors({});
 
+            const submitData = new FormData();
+            Object.entries(formData).forEach(([key, value]) => submitData.append(key, value));
+            if (cinemaBackdropFile) submitData.append('cinema_backdrop', cinemaBackdropFile);
+
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+
             if (editingCinema) {
-                await api.put(`/api/cinemas/${editingCinema.cinema_id}`, formData);
+                await api.put(`/api/cinemas/${editingCinema.cinema_id}`, submitData, config);
                 setIsFormOpen(false);
                 fetchCinemas(pagination.page, search);
                 setTimeout(() => {
                     showAlert('Thành công', 'Cập nhật rạp thành công.', 'success');
                 }, 100);
             } else {
-                await api.post('/api/cinemas', formData);
+                await api.post('/api/cinemas', submitData, config);
                 setIsFormOpen(false);
                 fetchCinemas(pagination.page, search);
                 setTimeout(() => {
@@ -325,7 +349,7 @@ const CinemaPage = () => {
         } catch (error) {
             console.error('SUBMIT CINEMA ERROR:', error);
             const backendField = error.response?.data?.field;
-            const backendError = error.response?.data?.error || 'Đã xảy ra lỗi.';
+            const backendError = error.response?.data?.message || 'Đã xảy ra lỗi.';
             if (backendField) {
                 setFormErrors({ [backendField]: backendError });
             } else {
@@ -428,13 +452,16 @@ const CinemaPage = () => {
             )
         },
         {
-            title: 'Slug',
-            key: 'slug',
+            title: 'Backdrop',
+            key: 'cinema_backdrop',
             render: (row) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8' }}>
-                    <Navigation size={14} />
-                    <span>{row.slug}</span>
-                </div>
+                row.cinema_backdrop ? (
+                    <img
+                        src={getBackdropUrl(row.cinema_backdrop)}
+                        alt="backdrop"
+                        style={{ width: '100px', height: '60px', objectFit: 'cover', borderRadius: '6px' }}
+                    />
+                ) : <span style={{ color: '#94a3b8' }}>Chưa có</span>
             )
         },
         {
@@ -442,16 +469,10 @@ const CinemaPage = () => {
             key: 'actions',
             render: (row) => (
                 <div className="admin-table-actions">
-                    <button
-                        className="admin-action-btn edit-btn"
-                        onClick={() => handleOpenEdit(row)}
-                    >
+                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
                         <Edit size={16} />
                     </button>
-                    <button
-                        className="admin-action-btn delete-btn"
-                        onClick={() => handleDelete(row)}
-                    >
+                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -460,47 +481,28 @@ const CinemaPage = () => {
     ];
 
     // ------------------------------------------------------
-    // FORM FIELDS
+    // FORM FIELDS (thêm trường file)
     // ------------------------------------------------------
     const formFields = [
-        {
-            label: 'Tên rạp',
-            name: 'cinema_name',
-            type: 'text',
-            placeholder: 'Nhập tên rạp'
-        },
-        {
-            label: 'Slug',
-            name: 'slug',
-            type: 'text',
-            placeholder: 'Slug tự động',
-            disabled: true
-        },
-        {
-            label: 'Thành phố',
-            name: 'city',
-            type: 'text',
-            placeholder: 'Ví dụ: Hồ Chí Minh'
-        },
-        {
-            label: 'Hotline',
-            name: 'hotline',
-            type: 'text',
-            placeholder: 'Ví dụ: 19006017'
-        },
-        {
-            label: 'Google Map Link',
-            name: 'map_link',
-            type: 'text',
-            placeholder: 'Dán link Google Map'
-        },
-        {
-            label: 'Địa chỉ',
-            name: 'address',
-            type: 'textarea',
-            placeholder: 'Nhập địa chỉ chi tiết'
-        }
+        { label: 'Tên rạp', name: 'cinema_name', type: 'text', placeholder: 'Nhập tên rạp' },
+        { label: 'Slug', name: 'slug', type: 'text', placeholder: 'Slug tự động', disabled: true },
+        { label: 'Thành phố', name: 'city', type: 'text', placeholder: 'Ví dụ: Hồ Chí Minh' },
+        { label: 'Hotline', name: 'hotline', type: 'text', placeholder: 'Ví dụ: 19006017' },
+        { label: 'Google Map Link', name: 'map_link', type: 'text', placeholder: 'Dán link Google Map' },
+        { label: 'Backdrop', name: 'cinema_backdrop', type: 'file' },
+        { label: 'Địa chỉ', name: 'address', type: 'textarea', placeholder: 'Nhập địa chỉ chi tiết' }
     ];
+
+    // ------------------------------------------------------
+    // FILE PREVIEWS
+    // ------------------------------------------------------
+    const filePreviews = {};
+    if (editingCinema && editingCinema.cinema_backdrop) {
+        filePreviews['cinema_backdrop'] = {
+            url: getBackdropUrl(editingCinema.cinema_backdrop),
+            name: editingCinema.cinema_backdrop
+        };
+    }
 
     // ------------------------------------------------------
     // RENDER
@@ -533,9 +535,7 @@ const CinemaPage = () => {
                 )}
             </AdminPage>
 
-            {/* ==================================================
-                FORM MODAL (giống UserPage)
-            ================================================== */}
+            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={handleCloseForm}
@@ -551,12 +551,11 @@ const CinemaPage = () => {
                     onSubmit={handleSubmit}
                     loading={submitLoading}
                     submitText={editingCinema ? 'Lưu thay đổi' : 'Thêm rạp'}
+                    filePreviews={filePreviews}
                 />
             </AdminModal>
 
-            {/* ==================================================
-                ALERT / CONFIRM MODAL (giống UserPage)
-            ================================================== */}
+            {/* ALERT MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}

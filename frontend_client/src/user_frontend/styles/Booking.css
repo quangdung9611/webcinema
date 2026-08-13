@@ -1,13 +1,14 @@
 /* =========================================================
    BOOKING PAGE - SILVER EDITION
-   Sử dụng biến từ index.css - KHÔNG HOVER, KHÔNG SHADOW
-   Responsive: sidebar ngang (40% poster - 60% thông tin) trên tablet
-========================================================= */
+   SỬ DỤNG 100% BIẾN TỪ INDEX.CSS
+   ========================================================= */
+
 .booking-wrapper {
     min-height: 100vh;
     padding: var(--space-2xl) 0;
     color: var(--text-body);
     overflow: hidden;
+    background: var(--bg-primary);
 }
 
 .booking-container {
@@ -19,12 +20,15 @@
     gap: var(--space-lg);
     padding: var(--space-lg);
     border-radius: var(--radius-xl);
-    background: var(--cinema-card-bg);
-    border: var(--border-silver);
-    backdrop-filter: blur(12px);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    background: var(--bg-card);
+    border: var(--border-premium);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-shadow);
 }
 
+/* =========================================================
+   SIDEBAR (THÔNG TIN PHIM)
+========================================================= */
 .ticket-sidebar {
     width: 320px !important;
     flex-shrink: 0;
@@ -39,7 +43,7 @@
     margin: 0 auto var(--space-lg);
     overflow: hidden;
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-silver), var(--cinema-card-shadow);
+    box-shadow: var(--glass-shadow);
 }
 .poster-container img {
     width: 100%;
@@ -52,13 +56,18 @@
     transform: scale(1.03);
 }
 
+/* =========================================================
+   MAIN BOOKING AREA
+========================================================= */
 .main-booking-area {
     flex: 1;
     min-width: 0;
     padding: var(--space-xs);
 }
 
-/* NAV */
+/* =========================================================
+   NAVIGATION (RẠP, NGÀY, SUẤT)
+========================================================= */
 .booking-nav-flex {
     width: 100%;
     display: flex;
@@ -92,7 +101,7 @@
     height: 60px;
     padding: 0 var(--space-md);
     border-radius: var(--radius-md);
-    border: var(--border-silver);
+    border: var(--border-premium);
     background: rgba(0, 0, 0, 0.45);
     color: var(--text-body);
     outline: none;
@@ -105,10 +114,10 @@
 }
 .cinema-select select:focus {
     border-color: var(--silver-primary);
-    box-shadow: 0 0 0 4px rgba(232, 232, 232, 0.15), var(--shadow-silver);
+    box-shadow: 0 0 0 4px rgba(232, 232, 232, 0.15), var(--btn-silver-shadow);
 }
 .cinema-select option {
-    background: var(--black-soft);
+    background: var(--bg-tertiary);
     color: var(--text-body);
 }
 
@@ -155,9 +164,9 @@
     transition: var(--transition-normal);
 }
 .slide-btn:hover {
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
-    box-shadow: var(--shadow-silver);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    box-shadow: var(--btn-silver-shadow);
 }
 .slide-btn:disabled {
     opacity: 0.3;
@@ -173,7 +182,9 @@
     transition: var(--transition-normal);
 }
 
-/* DATE CARD */
+/* =========================================================
+   DATE CARD
+========================================================= */
 .date-slider .compact-card {
     width: 76px;
     min-width: 76px;
@@ -181,23 +192,25 @@
     border-radius: 50%;
     flex-direction: column;
     background: rgba(255, 255, 255, 0.04);
-    border: var(--border-light);
+    border: var(--border-premium);
     backdrop-filter: blur(10px);
 }
 .date-slider .compact-card:hover {
     transform: translateY(-3px) scale(1.05);
     border-color: var(--silver-primary);
     background: rgba(232, 232, 232, 0.08);
-    box-shadow: var(--shadow-silver);
+    box-shadow: var(--btn-silver-shadow);
 }
 
-/* TIME CARD */
+/* =========================================================
+   TIME CARD
+========================================================= */
 .time-card {
     min-width: 96px;
     height: 60px;
     border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.04);
-    border: var(--border-light);
+    border: var(--border-premium);
     color: var(--text-body);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
@@ -206,23 +219,23 @@
     transform: translateY(-2px);
     border-color: var(--silver-primary);
     background: rgba(232, 232, 232, 0.08);
-    box-shadow: var(--shadow-silver);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 /* =========================================================
-   ĐỒNG BỘ ACTIVE CHO NGÀY & SUẤT CHIẾU
+   ACTIVE STATE (ĐỒNG BỘ CHO NGÀY & SUẤT)
 ========================================================= */
 .compact-card.active {
-    background: var(--cinema-border-gradient) !important;
+    background: var(--premium-gradient) !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 0 0 0 5px rgba(232, 232, 232, 0.1), var(--shadow-silver) !important;
-    color: var(--black-premium) !important;
+    box-shadow: 0 0 0 5px rgba(232, 232, 232, 0.1), var(--btn-silver-shadow) !important;
+    color: var(--bg-primary) !important;
     transform: scale(1.02) !important;
 }
 .compact-card.active .day-txt,
 .compact-card.active .date-txt,
 .compact-card.active .time-txt {
-    color: var(--black-premium) !important;
+    color: var(--bg-primary) !important;
 }
 
 .day-txt {
@@ -252,7 +265,9 @@
     padding: 0 var(--space-sm);
 }
 
-/* SEAT AREA */
+/* =========================================================
+   SEAT AREA
+========================================================= */
 .seat-selection-content {
     width: 100%;
 }
@@ -274,7 +289,7 @@
     margin: 0 auto var(--space-sm);
     border-radius: var(--radius-round);
     background: linear-gradient(to right, transparent, var(--silver-primary), transparent);
-    box-shadow: var(--shadow-silver);
+    box-shadow: var(--btn-silver-shadow);
     transform: perspective(500px) rotateX(-45deg);
 }
 .screen-header span {
@@ -345,14 +360,14 @@
     left: 50%;
     transform: translate(-50%, -48%);
     font-size: 12px;
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     z-index: 2;
     pointer-events: none;
     user-select: none;
     padding: 0 2px;
     border-radius: 2px;
     background: rgba(255, 255, 255, 0.7);
-    color: #1a1a1a;
+    color: var(--bg-primary);
     text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
     line-height: 1.2;
 }
@@ -367,7 +382,7 @@
 .seat.STANDARD .seat-number,
 .seat.THUONG .seat-number {
     background: rgba(255, 255, 255, 0.8);
-    color: var(--seat-number-standard, #1a1a1a);
+    color: var(--seat-number-standard, var(--bg-primary));
 }
 
 /* ======== 2. GHẾ VIP (alias: VIP) ======== */
@@ -376,7 +391,7 @@
 }
 .seat.VIP .seat-number {
     background: rgba(0, 0, 0, 0.15);
-    color: var(--seat-number-vip, #1a1a1a);
+    color: var(--seat-number-vip, var(--bg-primary));
 }
 
 /* ======== 3. GHẾ ĐÔI (alias: COUPLE, DOUBLE) ======== */
@@ -387,7 +402,7 @@
 .seat.COUPLE .seat-number,
 .seat.DOUBLE .seat-number {
     background: rgba(255, 255, 255, 0.6);
-    color: var(--seat-number-couple, #1a1a1a);
+    color: var(--seat-number-couple, var(--bg-primary));
 }
 
 /* ======== 4. GHẾ ĐANG CHỌN ======== */
@@ -396,7 +411,7 @@
 }
 .seat.selected .seat-number {
     background: rgba(255, 255, 255, 0.9);
-    color: #000000 !important;
+    color: var(--bg-primary) !important;
 }
 
 /* ======== 5. GHẾ ĐÃ BÁN ======== */
@@ -407,7 +422,7 @@
 }
 .seat.sold .seat-number {
     background: rgba(0, 0, 0, 0.3);
-    color: var(--seat-number-sold, #eeeeee);
+    color: var(--seat-number-sold, var(--silver-light));
 }
 
 /* ======== 6. GHẾ BẢO TRÌ ======== */
@@ -418,7 +433,7 @@
 }
 .seat.maintenance .seat-number {
     background: rgba(0, 0, 0, 0.2);
-    color: var(--seat-number-maintenance, #9ca3af);
+    color: var(--seat-number-maintenance, var(--text-secondary));
 }
 
 /* =========================================================
@@ -443,7 +458,7 @@
     height: 20px;
     border-radius: var(--radius-xs);
     flex-shrink: 0;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: var(--border-premium);
 }
 .box.normal,
 .box.standard {
@@ -480,18 +495,18 @@
     height: 60px;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: var(--radius-round);
-    background: var(--cinema-border-gradient) !important;
-    color: var(--black-premium) !important;
+    background: var(--premium-gradient) !important;
+    color: var(--bg-primary) !important;
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     letter-spacing: 1px;
     cursor: pointer;
     transition: var(--transition-normal);
-    box-shadow: 0 0 0 5px rgba(232, 232, 232, 0.1), var(--shadow-silver) !important;
+    box-shadow: 0 0 0 5px rgba(232, 232, 232, 0.1), var(--btn-silver-shadow) !important;
 }
 .btn-next:hover {
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 0 30px rgba(232, 232, 232, 0.35), var(--shadow-silver) !important;
+    box-shadow: 0 0 30px rgba(232, 232, 232, 0.35), var(--btn-silver-shadow) !important;
 }
 .btn-next:active {
     transform: translateY(0) scale(0.99);
@@ -571,13 +586,12 @@
         padding: var(--space-md);
     }
 
-    /* Sidebar ngang, các phần tử con có chiều cao bằng nhau */
     .ticket-sidebar {
         width: 100% !important;
         position: static;
         display: flex !important;
         flex-direction: row !important;
-        align-items: stretch !important;  /* quan trọng: chiều cao bằng nhau */
+        align-items: stretch !important;
         gap: var(--space-lg);
         padding: var(--space-md);
         background: rgba(255, 255, 255, 0.03);
@@ -585,7 +599,6 @@
         flex-wrap: nowrap;
     }
 
-    /* Poster chiếm 40% */
     .poster-container {
         flex: 0 0 40% !important;
         max-width: 40% !important;
@@ -598,24 +611,22 @@
     }
     .poster-container img {
         width: 100%;
-        height: 100% !important;      /* chiều cao full container */
+        height: 100% !important;
         object-fit: cover;
-        aspect-ratio: auto;           /* bỏ tỷ lệ cố định để full khung */
+        aspect-ratio: auto;
         display: block;
     }
 
-    /* Ticket-details chiếm 60%, chiều cao tự động bằng với poster nhờ align-items: stretch */
     .ticket-details {
         flex: 0 0 60% !important;
         max-width: 60% !important;
         display: flex;
         flex-direction: column;
-        justify-content: center;       /* căn giữa nội dung theo chiều dọc */
+        justify-content: center;
         gap: var(--space-sm);
         padding: var(--space-sm) 0;
     }
 
-    /* Điều chỉnh các thành phần bên trong ticket-details cho gọn */
     .ticket-details .movie-name {
         font-size: var(--font-size-h4);
         margin-bottom: var(--space-xs);
@@ -633,7 +644,6 @@
         font-size: var(--font-size-h4);
     }
 
-    /* 3 bước chọn vẫn hàng ngang */
     .booking-nav-flex {
         flex-direction: row !important;
         flex-wrap: wrap;
@@ -672,7 +682,6 @@
         height: 54px;
     }
 
-    /* Ghế và các thành phần khác */
     .seat-legend {
         gap: var(--space-md);
     }

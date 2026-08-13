@@ -20,9 +20,9 @@
     gap: var(--space-lg);
     padding: var(--space-xl);
     border-radius: var(--radius-xl);
-    background: var(--cinema-card-bg);
-    border: var(--border-light);
-    box-shadow: var(--shadow-sm);
+    background: var(--bg-card);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
     overflow: hidden;
     position: relative;
 }
@@ -49,9 +49,9 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-lg);
-    color: var(--black-premium);
-    background: var(--cinema-border-gradient);
-    box-shadow: 0 10px 24px rgba(232, 232, 232, 0.20);
+    color: var(--bg-primary);
+    background: var(--premium-gradient);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .admin-page-icon-box svg {
@@ -67,7 +67,7 @@
     margin: 0;
     color: var(--text-heading);
     font-size: var(--font-size-h1);
-    font-weight: var(--fw-black);
+    font-weight: var(--fw-extrabold);
     line-height: 1.1;
     text-transform: uppercase;
 }
@@ -105,30 +105,29 @@
     cursor: pointer;
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
-    background: var(--cinema-border-gradient);
-    box-shadow: 0 10px 20px rgba(232, 232, 232, 0.18);
+    background: var(--premium-gradient);
+    box-shadow: var(--btn-silver-shadow);
     transition: all var(--transition-fast);
 }
 
-/* ✅ CHỮ ĐEN CHO CẢ NÚT VÀ SPAN */
 .admin-page .admin-page-add-btn,
 .admin-page .admin-page-add-btn-text {
-    color: var(--black-premium) !important;
+    color: var(--bg-primary) !important;
 }
 
 .admin-page .admin-page-add-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 20px rgba(232, 232, 232, 0.25);
+    box-shadow: var(--card-shadow-hover);
 }
 
 .admin-page .admin-page-add-btn:hover .admin-page-add-btn-text {
-    color: var(--black-premium) !important;
+    color: var(--bg-primary) !important;
 }
 
 .admin-page .admin-page-add-btn svg {
     width: 18px;
     height: 18px;
-    color: var(--black-premium) !important;
+    color: var(--bg-primary) !important;
 }
 
 /* =========================================================
@@ -153,8 +152,8 @@
     display: flex;
     align-items: center;
     border-radius: var(--radius-lg);
-    background: var(--black-soft);
-    border: var(--border-light);
+    background: var(--bg-secondary);
+    border: var(--border-premium);
     transition: all var(--transition-fast);
 }
 
@@ -163,7 +162,7 @@
 }
 
 .admin-page-search:focus-within {
-    border-color: rgba(232, 232, 232, 0.25);
+    border-color: var(--silver-primary);
     box-shadow: 0 0 0 3px rgba(232, 232, 232, 0.08);
 }
 

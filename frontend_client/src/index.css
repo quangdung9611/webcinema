@@ -641,7 +641,7 @@ main, .main-content {
 /* ==========================================================
    ACCESSIBILITY
    ========================================================== */
-@media (prefers-reduced-motion: reduce) {
+/* @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     *, *::before, *::after {
         scroll-behavior: auto !important;
@@ -649,7 +649,7 @@ main, .main-content {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
-}
+} */
 
 /* ==========================================================
    AUTO-FILL SUPPORT

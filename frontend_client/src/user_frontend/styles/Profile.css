@@ -1,10 +1,11 @@
 /* =========================================================
-   PROFILE LAYOUT - SILVER EDITION
+   PROFILE LAYOUT - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
    ========================================================= */
 
 .galaxy-profile-wrapper {
     min-height: 100vh;
     padding: var(--space-2xl) 0;
+    background: var(--bg-primary);
 }
 
 .galaxy-profile-wrapper .container {
@@ -30,9 +31,9 @@
     border-radius: var(--radius-xl);
     padding: var(--space-xl);
     overflow: hidden;
-    background: var(--cinema-card-bg);
-    border: var(--border-silver);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    background: var(--bg-card);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
     backdrop-filter: blur(20px);
 }
 
@@ -59,7 +60,7 @@
     gap: var(--space-md);
     padding-bottom: var(--space-lg);
     margin-bottom: var(--space-lg);
-    border-bottom: var(--border-light);
+    border-bottom: var(--border-subtle);
 }
 
 /* =========================================================
@@ -81,12 +82,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
     font-size: 1.8rem;
     font-weight: var(--fw-extrabold);
     border-radius: 50%;
-    box-shadow: var(--shadow-silver);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .avatar-wrapper .avatar-img {
@@ -109,9 +110,9 @@
     align-items: center;
     justify-content: center;
     background: var(--silver-primary);
-    color: var(--black-premium);
-    border: 2px solid var(--black-premium);
-    font-size: 12px;
+    color: var(--bg-primary);
+    border: 2px solid var(--bg-primary);
+    font-size: var(--font-size-h6);
 }
 
 .user-titles {
@@ -137,7 +138,7 @@
     background: rgba(232, 232, 232, 0.12);
     border: 1px solid rgba(232, 232, 232, 0.15);
     color: var(--silver-light);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
 }
 
@@ -150,7 +151,7 @@
     padding: var(--space-lg);
     border-radius: var(--radius-lg);
     background: linear-gradient(180deg, rgba(232, 232, 232, 0.08), rgba(255, 255, 255, 0.02));
-    border: var(--border-light);
+    border: var(--border-subtle);
 }
 
 .spending-header {
@@ -159,14 +160,14 @@
     align-items: center;
     margin-bottom: var(--space-sm);
     color: var(--text-secondary);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
 }
 
 .spending-value {
     font-size: var(--font-size-h2);
     font-weight: var(--fw-extrabold);
     color: var(--silver-primary);
-    text-shadow: var(--shadow-silver);
+    text-shadow: 0 0 20px rgba(232, 232, 232, 0.15);
 }
 
 /* =========================================================
@@ -188,8 +189,8 @@
 .progress-fill {
     height: 100%;
     border-radius: inherit;
-    background: var(--cinema-border-gradient);
-    box-shadow: var(--shadow-silver);
+    background: var(--premium-gradient);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .dot {
@@ -199,14 +200,14 @@
     height: 16px;
     border-radius: 50%;
     transform: translateY(-50%);
-    background: var(--black-soft);
+    background: var(--bg-secondary);
     border: 2px solid rgba(255, 255, 255, 0.06);
 }
 
 .dot.active {
     background: var(--silver-primary);
     border-color: var(--silver-primary);
-    box-shadow: var(--shadow-silver);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .d-0 { left: 0; }
@@ -218,7 +219,7 @@
     justify-content: space-between;
     margin-top: var(--space-sm);
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: var(--font-size-h6);
 }
 
 /* =========================================================
@@ -238,9 +239,9 @@
     padding: var(--space-md) var(--space-md);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.03);
-    border: var(--border-light);
+    border: var(--border-subtle);
     color: var(--text-secondary);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-medium);
     transition: all var(--transition-normal);
     cursor: pointer;
@@ -260,9 +261,9 @@
 .galaxy-content-area {
     overflow: hidden;
     border-radius: var(--radius-xl);
-    background: var(--cinema-card-bg);
-    border: var(--border-silver);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    background: var(--bg-card);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
 }
 
 /* =========================================================
@@ -273,7 +274,7 @@
     display: flex;
     align-items: center;
     overflow-x: auto;
-    border-bottom: var(--border-light);
+    border-bottom: var(--border-subtle);
     background: rgba(255, 255, 255, 0.02);
 }
 
@@ -284,7 +285,7 @@
     padding: var(--space-lg) var(--space-xl);
     background: transparent;
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     white-space: nowrap;
     cursor: pointer;
@@ -307,7 +308,7 @@
     width: 100%;
     height: 3px;
     border-radius: var(--radius-round);
-    background: var(--cinema-border-gradient);
+    background: var(--premium-gradient);
 }
 
 .tab-body {
@@ -315,7 +316,7 @@
 }
 
 /* =========================================================
-   PROFILE INFO VIEW (thay cho form cũ)
+   PROFILE INFO VIEW
    ========================================================= */
 
 .profile-info-view {
@@ -329,7 +330,7 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--space-md) 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: var(--border-subtle);
 }
 
 .profile-info-item:last-of-type {
@@ -338,13 +339,13 @@
 
 .profile-info-item .label {
     color: var(--text-secondary);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-medium);
 }
 
 .profile-info-item .value {
     color: var(--text-body);
-    font-size: 0.95rem;
+    font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     word-break: break-word;
     text-align: right;
@@ -374,20 +375,20 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-sm);
-    padding: 0 2rem;
+    padding: 0 var(--space-2xl);
     height: 54px;
     min-width: 180px;
     border: none;
     border-radius: var(--radius-round);
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
-    font-size: 0.875rem;
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     cursor: pointer;
     transition: all var(--transition-normal);
-    box-shadow: var(--shadow-silver);
+    box-shadow: var(--btn-silver-shadow);
     position: relative;
     overflow: hidden;
 }
@@ -396,8 +397,8 @@
 .btn-submit-galaxy:hover,
 .btn-book-now:hover {
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 40px rgba(232, 232, 232, 0.25);
-    color: var(--black-premium);
+    box-shadow: var(--card-shadow-hover);
+    color: var(--bg-primary);
 }
 
 .btn-edit-mode:active,
@@ -418,14 +419,14 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-sm);
-    padding: 0 1.5rem;
+    padding: 0 var(--space-xl);
     height: 54px;
     min-width: 140px;
-    border: 2px solid var(--border-silver);
+    border: var(--border-premium);
     border-radius: var(--radius-round);
     background: transparent;
     color: var(--silver-primary);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -434,23 +435,23 @@
 }
 
 .btn-cancel:hover {
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
     border-color: transparent;
     transform: translateY(-3px);
-    box-shadow: var(--shadow-silver);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .btn-clear-history {
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: 0.6rem 1.5rem;
+    padding: var(--space-sm) var(--space-xl);
     border: 2px solid transparent;
     border-radius: var(--radius-round);
     background: transparent;
     color: var(--text-secondary);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
     cursor: pointer;
     transition: all var(--transition-normal);
@@ -499,15 +500,15 @@
     align-items: stretch;
     overflow: hidden;
     border-radius: var(--radius-xl);
-    background: var(--cinema-card-bg);
-    border: var(--border-silver);
-    box-shadow: var(--cinema-card-shadow);
+    background: var(--bg-card);
+    border: var(--border-premium);
+    box-shadow: var(--glass-shadow);
     transition: all var(--transition-normal);
 }
 
 .history-ticket-item:hover {
     transform: translateY(-4px);
-    box-shadow: var(--cinema-card-shadow), var(--shadow-silver);
+    box-shadow: var(--card-shadow-hover);
 }
 
 /* =========================================================
@@ -518,7 +519,7 @@
     width: 180px;
     min-width: 180px;
     overflow: hidden;
-    background: var(--black-premium);
+    background: var(--bg-primary);
 }
 
 .ticket-thumb img {
@@ -562,7 +563,7 @@
     align-items: center;
     gap: var(--space-sm);
     color: var(--text-secondary);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
 }
 
 .info-row svg {
@@ -586,19 +587,19 @@
     background: rgba(232, 232, 232, 0.08);
     border: 1px solid rgba(232, 232, 232, 0.12);
     color: var(--silver-light);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
 }
 
 .price-text {
     margin: var(--space-xs) 0 0;
     color: var(--text-secondary);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
 }
 
 .price-text span {
     color: var(--silver-primary);
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     font-weight: var(--fw-extrabold);
 }
 
@@ -628,7 +629,7 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: var(--black-premium);
+    background: var(--bg-primary);
 }
 
 .ticket-qr-side::before {
@@ -641,7 +642,7 @@
 .status-label {
     padding: var(--space-xs) var(--space-sm);
     border-radius: var(--radius-round);
-    font-size: 0.75rem;
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     text-transform: uppercase;
 }
@@ -661,7 +662,7 @@
 .qr-container-mini {
     padding: var(--space-sm);
     border-radius: var(--radius-md);
-    background: var(--white-pure);
+    background: var(--silver-light);
 }
 
 .pin-text {
@@ -670,7 +671,7 @@
     background: rgba(255, 255, 255, 0.04);
     border: 1px dashed rgba(255, 255, 255, 0.06);
     color: var(--text-body);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     letter-spacing: 1px;
 }
@@ -687,7 +688,7 @@
 
 .empty-history p {
     margin: var(--space-md) 0;
-    font-size: 1rem;
+    font-size: var(--font-size-base);
 }
 
 /* =========================================================
@@ -699,7 +700,7 @@
     text-align: center;
     color: var(--text-secondary);
     padding: var(--space-2xl) 0;
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
 }
 
 /* =========================================================
@@ -729,9 +730,9 @@
 .edit-profile-modal {
     max-width: 520px;
     width: 100%;
-    background: #1e1e2f;
+    background: var(--bg-secondary);
     border-radius: var(--radius-xl);
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+    box-shadow: var(--card-shadow-hover);
     position: relative;
     animation: slideUp 0.3s ease-out;
     overflow: hidden;
@@ -753,12 +754,12 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--space-lg) var(--space-xl);
-    border-bottom: var(--border-light);
+    border-bottom: var(--border-subtle);
 }
 
 .edit-profile-modal .modal-header h2 {
     color: var(--text-body);
-    font-size: 1.25rem;
+    font-size: var(--font-size-h4);
     margin: 0;
     font-weight: var(--fw-extrabold);
 }
@@ -796,7 +797,7 @@
 .edit-profile-modal .form-group label {
     display: block;
     color: var(--text-secondary);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
     font-weight: var(--fw-semibold);
     margin-bottom: var(--space-xs);
 }
@@ -804,11 +805,11 @@
 .edit-profile-modal .form-group input {
     width: 100%;
     padding: 0.75rem 1rem;
-    border: var(--border-light);
+    border: var(--border-subtle);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.04);
     color: var(--text-body);
-    font-size: 0.95rem;
+    font-size: var(--font-size-base);
     transition: all var(--transition-normal);
     box-sizing: border-box;
 }
@@ -835,7 +836,7 @@
     align-items: center;
     gap: var(--space-sm);
     color: var(--silver-primary);
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     margin: 0 0 var(--space-md);
 }
@@ -851,7 +852,7 @@
 
 .password-wrapper input {
     width: 100%;
-    padding-right: 48px !important; /* Chừa chỗ cho nút mắt */
+    padding-right: 48px !important;
     box-sizing: border-box;
 }
 
@@ -862,18 +863,18 @@
     transform: translateY(-50%);
     background: transparent;
     border: none;
-    color: #8a8a9e;
+    color: var(--text-muted);
     cursor: pointer;
     padding: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.2s;
+    transition: color var(--transition-fast);
     border-radius: 4px;
 }
 
 .toggle-password:hover {
-    color: #d1d5db;
+    color: var(--text-body);
 }
 
 .toggle-password:focus {
@@ -885,15 +886,15 @@
     justify-content: flex-end;
     gap: var(--space-md);
     padding: var(--space-lg) var(--space-xl);
-    border-top: var(--border-light);
+    border-top: var(--border-subtle);
     background: rgba(255, 255, 255, 0.02);
 }
 
 .edit-profile-modal .modal-footer button {
-    padding: 0.6rem 1.8rem;
+    padding: var(--space-sm) var(--space-2xl);
     border-radius: var(--radius-round);
     font-weight: var(--fw-bold);
-    font-size: 0.875rem;
+    font-size: var(--font-size-h6);
     border: none;
     cursor: pointer;
     transition: all var(--transition-normal);
@@ -902,7 +903,7 @@
 .edit-profile-modal .modal-footer .btn-cancel {
     background: transparent;
     color: var(--text-secondary);
-    border: 2px solid var(--border-light);
+    border: var(--border-premium);
 }
 
 .edit-profile-modal .modal-footer .btn-cancel:hover {
@@ -911,17 +912,18 @@
 }
 
 .edit-profile-modal .modal-footer .btn-submit-galaxy {
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
-    box-shadow: var(--shadow-silver);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .edit-profile-modal .modal-footer .btn-submit-galaxy:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(232, 232, 232, 0.2);
+    box-shadow: var(--card-shadow-hover);
 }
+
 /* =========================================================
-   CHỐNG AUTOFILL CHO TẤT CẢ INPUT (Ngoài password wrapper)
+   CHỐNG AUTOFILL CHO TẤT CẢ INPUT
    ========================================================= */
 .auth-input:-webkit-autofill,
 .auth-input:-webkit-autofill:hover,
@@ -934,7 +936,7 @@ input:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 1000px rgba(30, 30, 47, 1) inset !important;
     -webkit-text-fill-color: var(--text-body) !important;
     transition: background-color 5000s ease-in-out 0s;
-    border-color: var(--border-light);
+    border-color: var(--border-premium);
 }
 
 input:-webkit-autofill:focus {
@@ -945,6 +947,23 @@ input:-webkit-autofill:focus {
 .auth-input.input-error:-webkit-autofill {
     border-color: rgba(255, 59, 92, 0.4) !important;
     -webkit-box-shadow: 0 0 0 1000px rgba(255, 59, 92, 0.06) inset !important;
+}
+
+/* =========================================================
+   SPINNER LOADING NHỎ
+   ========================================================= */
+.spinner-small {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--silver-primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* =========================================================
@@ -996,7 +1015,7 @@ input:-webkit-autofill:focus {
     }
     .tabs-header button {
         padding: var(--space-md) var(--space-md);
-        font-size: 0.875rem;
+        font-size: var(--font-size-h6);
     }
     .tab-body {
         padding: var(--space-lg);
@@ -1062,7 +1081,7 @@ input:-webkit-autofill:focus {
         padding: var(--space-md);
     }
     .edit-profile-modal .modal-header h2 {
-        font-size: 1.1rem;
+        font-size: var(--font-size-h5);
     }
     .toggle-password {
         right: 10px;
@@ -1070,21 +1089,4 @@ input:-webkit-autofill:focus {
     .password-wrapper input {
         padding-right: 40px !important;
     }
-}
-
-/* =========================================================
-   SPINNER LOADING NHỎ
-   ========================================================= */
-.spinner-small {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-top-color: var(--silver-primary);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
 }
