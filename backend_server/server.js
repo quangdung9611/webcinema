@@ -70,7 +70,7 @@ const newsRoutes = require("./Routers/NewRouter");
 const promotionRoutes = require("./Routers/PromotionRouter");
 const blogCinemaRoutes = require("./Routers/BlogCinemaRouter");
 const forgotPasswordRoutes = require("./Routers/ForgotPassRouter");
-const TestimonialRoutes = require('./Routes/TestimonialRouter');
+
 
 // =============================================================
 // 🔥 BANNER ROUTER – THÊM MỚI
@@ -221,7 +221,7 @@ app.use("/api/news", newsRoutes);
 app.use("/api/promotions", promotionRoutes);
 app.use("/api/blog-cinema", blogCinemaRoutes);
 app.use("/api/forgot-password", forgotPasswordRoutes);
-app.use('/api/testimonials', TestimonialRoutes);
+
 // =============================================================
 // 🔥 BANNER API – THÊM MỚI
 // =============================================================
