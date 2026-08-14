@@ -70,7 +70,7 @@ const newsRoutes = require("./Routers/NewRouter");
 const promotionRoutes = require("./Routers/PromotionRouter");
 const blogCinemaRoutes = require("./Routers/BlogCinemaRouter");
 const forgotPasswordRoutes = require("./Routers/ForgotPassRouter");
-const testimonialRoutes = require('./Routers/testimonialRoutes');
+const testimonialRoutes = require('./Routers/TestimonialRoutes');
 
 // =============================================================
 // 🔥 BANNER ROUTER – THÊM MỚI
