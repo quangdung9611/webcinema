@@ -12,11 +12,12 @@ import {
     Route,
     Navigate,
     useNavigate,
+    useLocation,
     Outlet
 } from "react-router-dom";
 
 import axios from "axios";
-import api from "./api/api"; // 🔥 Import api để dùng trong Guard
+import api from "./api/api";
 
 // ==========================================================
 // CONTEXT
@@ -63,10 +64,11 @@ const ConfirmSuccess = lazy(() => import("./user_frontend/pages/ConfirmSuccess")
 const BankApp = lazy(() => import("./user_frontend/pages/BankApp"));
 const MomoApp = lazy(() => import("./user_frontend/pages/MomoApp"));
 const MovieStatusPage = lazy(() => import("./user_frontend/pages/MovieStatusPage"));
+const Cinema = lazy(() => import("./user_frontend/pages/Cinema"));
 const CinemaDetail = lazy(() => import("./user_frontend/pages/CinemaDetail"));
 const CinemaGenre = lazy(() => import("./user_frontend/pages/CinemaGenre"));
-const FilmReview = lazy(() => import("./user_frontend/pages/FilmReview"));
-const FilmReviewDetail = lazy(() => import("./user_frontend/pages/FilmReviewDetail"));
+const News = lazy(() => import("./user_frontend/pages/News"));
+const NewsDetail = lazy(() => import("./user_frontend/pages/NewsDetail"));
 const Profile = lazy(() => import("./user_frontend/pages/Profile"));
 
 // ==========================================================
@@ -175,7 +177,7 @@ const NotFoundPage = () => {
 };
 
 /* ==========================================================
-    ROUTE GUARDS (THAY THẾ CHO PROTECT ROUTE CŨ)
+    ROUTE GUARDS
 ========================================================== */
 const AdminRouteGuard = ({ children }) => {
     const navigate = useNavigate();
@@ -240,6 +242,40 @@ const UserRouteGuard = ({ children }) => {
 };
 
 // ==========================================================
+// SCROLL TO TOP COMPONENT (TÍCH HỢP POPSTATE + ROUTE CHANGE)
+// ==========================================================
+
+const ScrollToTop = () => {
+    const { pathname } = useLocation();
+
+    useEffect(() => {
+        // Vô hiệu hóa scroll restoration mặc định của trình duyệt
+        if ('scrollRestoration' in window.history) {
+            window.history.scrollRestoration = 'manual';
+        }
+        // Cuộn lên đầu mỗi khi pathname thay đổi (click link, navigate...)
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }, [pathname]);
+
+    useEffect(() => {
+        // Bắt sự kiện popstate (back/forward của trình duyệt)
+        const handlePopState = () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
+    return null;
+};
+
+// ==========================================================
 // APP CONTENT
 // ==========================================================
 
@@ -247,14 +283,11 @@ function AppContent() {
     const { loading: routeLoading } = useRouteLoading();
     const hostname = window.location.hostname;
     const isAdminDomain = hostname === "admin.quangdungcinema.id.vn";
-    const navigate = useNavigate(); // 🔥 Cần dùng useNavigate ở đây
+    const navigate = useNavigate();
 
-    // ==========================================================
-    // 🔥 LẮNG NGHE SỰ KIỆN 401 TỪ API.JS (Bắt token hết hạn mọi lúc mọi nơi)
-    // ==========================================================
+    // Lắng nghe sự kiện 401 từ api.js
     useEffect(() => {
         const handleUnauthorized = () => {
-            // Tránh vòng lặp nếu đang ở trang login
             if (!window.location.pathname.includes('/login')) {
                 navigate('/login', { replace: true });
             }
@@ -271,6 +304,8 @@ function AppContent() {
                 <LoadingSpinner size={72} color="#dc2626" message="Đang chuyển trang..." blur={true} zIndex={10000} />
             )}
             <div className="app-wrapper">
+                <ScrollToTop />
+
                 <LazyErrorBoundary>
                     <Suspense fallback={<SuspenseLoading />}>
                         <Routes>
@@ -279,10 +314,7 @@ function AppContent() {
                             ================================================== */}
                             {isAdminDomain ? (
                                 <Route path="/">
-                                    {/* ADMIN LOGIN (Không cần bọc Guard) */}
                                     <Route path="login" element={<AdminLogin />} />
-
-                                    {/* ADMIN AREA (Dùng AdminRouteGuard bọc lại toàn bộ) */}
                                     <Route element={
                                         <AdminRouteGuard>
                                             <AdminLayout>
@@ -319,17 +351,17 @@ function AppContent() {
                                 ================================================== */
                                 <Route path="/">
                                     <Route element={<UserLayout />}>
-                                        {/* Công khai */}
                                         <Route index element={<UserHome />} />
                                         <Route path="movies/status/:statusSlug" element={<MovieStatusPage />} />
                                         <Route path="movies/detail/:slug" element={<MovieDetail />} />
                                         <Route path="actors" element={<Actor />} />
-                                        <Route path="actor/:slug" element={<ActorDetail />} />
+                                        <Route path="actor/detail/:slug" element={<ActorDetail />} />
+                                        <Route path="cinema" element={<Cinema />} />
                                         <Route path="cinema/detail/:slug" element={<CinemaDetail />} />
                                         <Route path="foods" element={<Food />} />
                                         <Route path="cinema-genre" element={<CinemaGenre />} />
-                                        <Route path="film-review" element={<FilmReview />} />
-                                        <Route path="film-review/:slug" element={<FilmReviewDetail />} />
+                                        <Route path="news" element={<News />} />
+                                        <Route path="news/detail/:slug" element={<NewsDetail />} />
                                         <Route path="promotion" element={<Promotion />} />
                                         <Route path="blog-cinema" element={<BlogCinema />} />
                                         <Route path="faq" element={<FAQ />} />
@@ -339,11 +371,9 @@ function AppContent() {
                                         <Route path="contact" element={<ContactSupport />} />
                                         <Route path="membership" element={<MemberShip />} />
 
-                                        {/* AUTH */}
                                         <Route path="login" element={<UserLogin />} />
                                         <Route path="register" element={<UserRegister />} />
 
-                                        {/* ===== YÊU CẦU ĐĂNG NHẬP (Đã bọc UserRouteGuard) ===== */}
                                         <Route path="profile" element={
                                             <UserRouteGuard><Profile /></UserRouteGuard>
                                         } />
@@ -364,7 +394,6 @@ function AppContent() {
                                         } />
                                     </Route>
 
-                                    {/* CHẶN /admin TRÊN USER DOMAIN */}
                                     <Route path="admin/*" element={<Navigate to="/" replace />} />
                                     <Route path="*" element={<NotFoundPage />} />
                                 </Route>
@@ -390,7 +419,7 @@ function AppWrapper() {
 }
 
 // ==========================================================
-// CREATE DATA ROUTER
+// DATA ROUTER
 // ==========================================================
 
 const router = createBrowserRouter([

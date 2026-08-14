@@ -1,0 +1,318 @@
+/* ==========================================================
+   NEWS PAGE – SILVER PREMIUM EDITION
+   SỬ DỤNG 100% BIẾN TỪ INDEX.CSS
+   ========================================================== */
+
+.news-page {
+    width: 100%;
+    padding: 0 0 var(--space-3xl);
+    background: var(--bg-primary);
+    min-height: 70vh;
+}
+
+.news-container {
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: 0 var(--container-padding);
+}
+
+/* ==========================================================
+   HERO BANNER
+   ========================================================== */
+
+.news-hero {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2.5 / 1;
+    overflow: hidden;
+    background: var(--bg-primary);
+    box-shadow: var(--glass-shadow);
+    transition: box-shadow var(--transition-normal, 0.3s);
+}
+
+.news-hero:hover {
+    box-shadow: var(--card-shadow-hover);
+}
+
+.news-swiper {
+    width: 100%;
+    height: 100%;
+}
+
+.news-swiper .swiper-slide {
+    width: 100%;
+    height: 100%;
+}
+
+.news-banner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: bannerBreath 10s ease-in-out infinite;
+    transition: transform 1.8s cubic-bezier(0.65, 0, 0.35, 1), opacity 1.4s ease;
+    will-change: transform, opacity;
+}
+
+@keyframes bannerBreath {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+}
+
+.news-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.15) 0%,
+        rgba(0, 0, 0, 0.45) 100%
+    );
+    pointer-events: none;
+}
+
+.news-light {
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 18%;
+    height: 100%;
+    z-index: 2;
+    opacity: 0.3;
+    background: linear-gradient(90deg, transparent, rgba(232, 232, 232, 0.08), transparent);
+    transform: skewX(-25deg);
+    animation: shineMove 12s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes shineMove {
+    0% { left: -40%; opacity: 0; }
+    20% { opacity: 0.2; }
+    50% { opacity: 0.4; }
+    100% { left: 140%; opacity: 0; }
+}
+
+.news-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: radial-gradient(rgba(232, 232, 232, 0.2) 1px, transparent 1px);
+    background-size: 160px 160px;
+    animation: particleMove 25s linear infinite;
+}
+
+@keyframes particleMove {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-180px); }
+}
+
+/* ==========================================================
+   HEADER
+   ========================================================== */
+
+.news-header {
+    text-align: center;
+    padding: var(--space-xl) 0 var(--space-xl);
+}
+
+.news-header-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: rgba(232, 232, 232, 0.04);
+    border: var(--border-premium);
+    color: var(--silver-primary);
+    margin-bottom: var(--space-md);
+}
+
+.news-header h1 {
+    font-size: var(--font-size-h2);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 var(--space-md);
+}
+
+.news-header-desc {
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+    max-width: 660px;
+    margin: 0 auto;
+}
+
+.news-header-line {
+    width: 80px;
+    height: 3px;
+    border-radius: var(--radius-round);
+    background: var(--premium-gradient);
+    margin: var(--space-xl) auto 0;
+}
+
+/* ==========================================================
+   GRID – 4 CỘT
+   ========================================================== */
+
+.news-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-lg);
+    margin-bottom: var(--space-3xl);
+}
+
+.news-grid .cinema-card {
+    height: 100%;
+    width: 100%;
+}
+
+.news-grid .cinema-card .cinema-card-inner {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================================================
+   EMPTY
+   ========================================================== */
+
+.news-empty {
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border: var(--border-premium);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-3xl);
+}
+
+.news-empty h3 {
+    font-size: var(--font-size-h4);
+    font-weight: var(--fw-bold);
+    color: var(--text-body);
+    margin: 0 0 var(--space-sm);
+}
+
+.news-empty p {
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    margin: 0 0 var(--space-xl);
+}
+
+/* ==========================================================
+   LOADING
+   ========================================================== */
+
+.news-loading {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.news-loading-spinner {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto var(--space-xl);
+    border: 3px solid rgba(232, 232, 232, 0.06);
+    border-top: 3px solid var(--silver-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.news-loading p {
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+}
+
+/* ==========================================================
+   RESPONSIVE – 4 CỘT → 2 CỘT → 1 CỘT
+   ========================================================== */
+
+@media (max-width: 1200px) {
+    .news-grid {
+        gap: var(--space-lg);
+    }
+}
+
+@media (max-width: 992px) {
+    .news-container {
+        padding: 0 var(--space-lg);
+    }
+    .news-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-md);
+        margin-bottom: var(--space-2xl);
+    }
+    .news-header h1 {
+        font-size: var(--font-size-h3);
+    }
+}
+
+@media (max-width: 768px) {
+    .news-page {
+        padding: 0 0 var(--space-2xl);
+    }
+    .news-hero {
+        aspect-ratio: 3 / 2;
+    }
+    .news-light,
+    .news-particles {
+        display: none;
+    }
+    .news-header h1 {
+        font-size: var(--font-size-h3);
+    }
+    .news-header-desc {
+        font-size: var(--font-size-base);
+    }
+    .news-header-icon {
+        width: 72px;
+        height: 72px;
+    }
+    .news-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-md);
+        margin-bottom: var(--space-2xl);
+    }
+    .news-empty {
+        margin-bottom: var(--space-2xl);
+    }
+}
+
+@media (max-width: 480px) {
+    .news-hero {
+        aspect-ratio: 4 / 3;
+    }
+    .news-container {
+        padding: 0 var(--space-md);
+    }
+    .news-header h1 {
+        font-size: var(--font-size-h4);
+    }
+    .news-header-icon {
+        width: 64px;
+        height: 64px;
+    }
+    .news-header-icon svg {
+        width: 32px;
+        height: 32px;
+    }
+    .news-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+        margin-bottom: var(--space-xl);
+    }
+    .news-empty {
+        margin-bottom: var(--space-xl);
+    }
+    .news-empty h3 {
+        font-size: var(--font-size-h5);
+    }
+}

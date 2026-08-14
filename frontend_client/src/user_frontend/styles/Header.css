@@ -1,6 +1,7 @@
-/* ==========================================
-   HEADER - DONG BO VOI INDEX.CSS
-========================================== */
+/* ==========================================================
+   HEADER - SILVER PREMIUM EDITION
+   ĐỒNG BỘ 100% VỚI INDEX.CSS
+   ========================================================== */
 
 .user-navbar a { text-decoration: none; }
 .user-navbar ul { list-style: none; }
@@ -13,8 +14,8 @@
     width: 100%;
     height: 74px;
     backdrop-filter: blur(20px);
-    background: var(--glass-bg); /* Đồng bộ nền glass với hệ thống */
-    border-bottom: var(--border-premium); /* Đổi từ --border-silver sang --border-premium để viền sáng */
+    background: var(--glass-bg);
+    border-bottom: var(--border-premium);
 }
 
 .nav-container {
@@ -38,10 +39,8 @@
 .header-logo img {
     width: 180px;
     display: block;
-    transition: opacity 220ms var(--ease-premium);
+    transition: opacity 220ms var(--ease-premium, cubic-bezier(0.16, 1, 0.3, 1));
 }
-
-/* Hover only: light fades softly, without changing layout. */
 .header-logo:hover img { opacity: 0.88; }
 
 /* ===== Menu Desktop ===== */
@@ -65,7 +64,7 @@
     align-items: center;
     gap: var(--space-xs);
     padding: 0 var(--space-lg);
-    color: var(--text-heading); /* Đổi từ màu trắng tinh sang màu trắng xám bạc */
+    color: var(--text-heading);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     text-transform: uppercase;
@@ -73,21 +72,23 @@
     transition: color 220ms var(--ease-premium), opacity 220ms var(--ease-premium);
     letter-spacing: 0.5px;
 }
-
 .menu-link:hover { color: var(--silver-primary); }
 
-/* Icon mui ten */
-.icon-down { transition: transform 220ms var(--ease-premium); }
+.icon-down {
+    transition: transform 220ms var(--ease-premium);
+}
 .has-dropdown:hover .icon-down { transform: rotate(180deg); }
 
-/* ===== Submenu Desktop ===== */
+/* ===== Submenu Desktop - CÓ SCROLLBAR ===== */
 .sub-menu {
     position: absolute;
     top: 100%;
     left: 0;
     min-width: 260px;
-    background: var(--bg-card); /* Đổi từ biến cũ sang bg-card */
-    border: var(--border-premium); /* Đổi viền xám bạc */
+    max-height: 150px; /* 👈 Giới hạn chiều cao */
+    overflow-y: auto;  /* 👈 Thêm scrollbar dọc */
+    background: var(--bg-card);
+    border: var(--border-premium);
     border-radius: var(--radius-lg);
     padding: var(--space-sm) 0;
     opacity: 0;
@@ -95,6 +96,19 @@
     transition: opacity 220ms var(--ease-premium), visibility 220ms var(--ease-premium), transform 220ms var(--ease-premium);
     transform: translateY(4px);
     z-index: 1000;
+}
+
+/* Custom scrollbar cho sub-menu */
+.sub-menu::-webkit-scrollbar {
+    width: 4px;
+}
+.sub-menu::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-round);
+}
+.sub-menu::-webkit-scrollbar-thumb {
+    background: var(--silver-primary);
+    border-radius: var(--radius-round);
 }
 
 .has-dropdown:hover > .sub-menu {
@@ -106,17 +120,15 @@
 .sub-menu li a {
     display: flex;
     padding: var(--space-md) var(--space-xl);
-    color: var(--text-secondary); /* Đổi sang xám bạc phụ */
+    color: var(--text-secondary);
     transition: color 180ms var(--ease-premium), background-color 180ms var(--ease-premium);
     font-size: var(--font-size-base);
     font-weight: var(--fw-medium);
     text-transform: none;
 }
-
-/* No padding shift: prevents the pointer from feeling like it jumps. */
 .sub-menu li a:hover {
-    color: var(--text-heading); /* Đổi từ --white-pure sang text-heading (xám bạc sáng) */
-    background: rgba(245, 245, 246, 0.06); /* Thay đổi giá trị rgba cho phù hợp global */
+    color: var(--text-heading);
+    background: rgba(245, 245, 246, 0.06);
 }
 
 /* ===== Account ===== */
@@ -131,11 +143,10 @@
     border-radius: var(--radius-round);
     cursor: pointer;
     color: var(--text-heading);
-    border: var(--border-premium); /* Đồng bộ viền */
+    border: var(--border-premium);
     background: rgba(255, 255, 255, 0.03);
     transition: border-color 220ms var(--ease-premium), background-color 220ms var(--ease-premium), box-shadow 220ms var(--ease-premium);
 }
-
 .account-trigger:hover {
     border-color: var(--silver-primary);
     background: rgba(255, 255, 255, 0.05);
@@ -160,8 +171,8 @@
     width: 270px;
     overflow: hidden;
     border-radius: var(--radius-lg);
-    background: var(--bg-card); /* Đổi từ biến cũ sang bg-card */
-    border: var(--border-premium); /* Viền sáng xám bạc */
+    background: var(--bg-card);
+    border: var(--border-premium);
     animation: dropdown 220ms var(--ease-premium) both;
 }
 
@@ -177,7 +188,7 @@
     font-size: var(--font-size-h6);
     font-weight: var(--fw-bold);
     color: var(--silver-primary);
-    background: var(--accent-ice-bg); /* Dùng biến accent xanh băng nền */
+    background: var(--accent-ice-bg);
 }
 
 .dropdown-divider {
@@ -193,21 +204,18 @@
     cursor: pointer;
     transition: background-color 180ms var(--ease-premium), color 180ms var(--ease-premium);
 }
-
 .dropdown-item svg { color: var(--text-secondary); transition: color 180ms var(--ease-premium); }
 .dropdown-item span { color: var(--text-secondary); transition: color 180ms var(--ease-premium); }
 .dropdown-item:hover { background: rgba(245, 245, 246, 0.05); }
 .dropdown-item:hover svg,
 .dropdown-item:hover span { color: var(--text-heading); }
 
-/* Keep the original visual cue but avoid a border that shifts content. */
 .admin-link:hover { box-shadow: inset 3px 0 0 var(--silver-primary); }
 
 .logout-btn:hover {
     background: rgba(255, 59, 92, 0.12);
     color: #ff4d6d;
 }
-
 .logout-btn:hover svg { color: #ff4d6d; }
 
 /* ===== Hamburger ===== */
@@ -227,10 +235,9 @@
     width: 24px;
     height: 2px;
     margin: 3px 0;
-    background: var(--text-heading); /* Đổi thành xám bạc sáng */
+    background: var(--text-heading);
     transition: transform 220ms var(--ease-premium), opacity 160ms ease;
 }
-
 .hamburger.active .bar:nth-child(1) { transform: translateY(8px) rotate(45deg); }
 .hamburger.active .bar:nth-child(2) { opacity: 0; }
 .hamburger.active .bar:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
@@ -239,13 +246,12 @@
 .menu-overlay {
     position: fixed;
     inset: 0;
-    background: var(--overlay-dark); /* Đổi từ rgba cứng sang biến overlay */
+    background: rgba(0, 0, 0, 0.6);
     opacity: 0;
     visibility: hidden;
     transition: opacity var(--transition-normal), visibility var(--transition-normal);
     z-index: 999;
 }
-
 .menu-overlay.active {
     opacity: 1;
     visibility: visible;
@@ -257,9 +263,9 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ==========================================
+/* ==========================================================
    BREAKPOINT: <= 1200px (HAMBURGER + MOBILE)
-========================================== */
+   ========================================================== */
 @media (max-width: 1200px) {
     .hamburger { display: flex; z-index: 1001; }
 
@@ -269,7 +275,6 @@
         transform: translateX(-50%);
         z-index: 1001;
     }
-
     .header-logo img { width: 150px; }
     .username-display { display: none; }
 
@@ -280,7 +285,7 @@
         width: 320px;
         max-width: 85vw;
         height: 100vh;
-        background: var(--bg-secondary); /* Đổi từ black-soft sang bg-secondary */
+        background: var(--bg-secondary);
         flex-direction: column;
         align-items: stretch;
         padding-top: 80px;
@@ -289,7 +294,6 @@
         z-index: 1000;
         gap: 0;
     }
-
     .nav-links.active { left: 0; }
 
     .nav-links > li {
@@ -310,13 +314,14 @@
         border-bottom: none;
     }
 
-    /* Submenu mobile */
+    /* Submenu mobile - CÓ SCROLLBAR KHI MỞ RỘNG */
     .sub-menu {
         position: static;
         opacity: 1;
         visibility: visible;
         max-height: 0;
-        overflow: hidden;
+        overflow-y: auto; /* 👈 Thêm scrollbar dọc */
+        overflow-x: hidden;
         border: none;
         border-radius: 0;
         background: transparent;
@@ -326,7 +331,22 @@
         transform: none;
     }
 
-    .has-dropdown.mobile-active .sub-menu { max-height: 800px; }
+    .has-dropdown.mobile-active .sub-menu {
+        max-height: 150px; /* 👈 Giới hạn chiều cao và có scroll */
+    }
+
+    /* Custom scrollbar cho sub-menu mobile */
+    .has-dropdown.mobile-active .sub-menu::-webkit-scrollbar {
+        width: 4px;
+    }
+    .has-dropdown.mobile-active .sub-menu::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: var(--radius-round);
+    }
+    .has-dropdown.mobile-active .sub-menu::-webkit-scrollbar-thumb {
+        background: var(--silver-primary);
+        border-radius: var(--radius-round);
+    }
 
     .sub-menu li a {
         padding: var(--space-md) var(--space-xl) var(--space-md) calc(var(--space-xl) * 2);
@@ -334,7 +354,6 @@
         font-weight: var(--fw-medium);
         border-bottom: var(--border-subtle);
     }
-
     .sub-menu li a:hover { background: rgba(245, 245, 246, 0.04); }
     .has-dropdown.mobile-active .icon-down { transform: rotate(180deg); }
 
@@ -345,19 +364,21 @@
     }
 }
 
-/* ==========================================
-   BREAKPOINT: 1201px - 1400px (DESKTOP VUA)
-========================================== */
+/* ==========================================================
+   BREAKPOINT: 1201px - 1400px (DESKTOP VỪA)
+   ========================================================== */
 @media (min-width: 1201px) and (max-width: 1400px) {
     .menu-link {
         padding: 0 var(--space-md);
         font-size: var(--font-size-base);
     }
-
     .header-logo img { width: 160px; }
     .nav-links { gap: var(--space-xs); }
 }
 
+/* ==========================================================
+   ACCESSIBILITY - REDUCED MOTION
+   ========================================================== */
 @media (prefers-reduced-motion: reduce) {
     .header-logo img,
     .menu-link,
@@ -367,7 +388,8 @@
     .dropdown-item,
     .dropdown-item svg,
     .dropdown-item span,
-    .bar { transition: none; }
-
-    .dropdown-content { animation: none; }
+    .bar {
+        transition: none !important;
+    }
+    .dropdown-content { animation: none !important; }
 }

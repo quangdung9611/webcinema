@@ -1,7 +1,6 @@
 /* ==========================================================
-   CINEMA DETAIL – SILVER PREMIUM EDITION
-   HIỆU ỨNG THỞ ẢNH, GLOW, SHINE, PARTICLE
-   SỬ DỤNG 100% BIẾN TỪ INDEX.CSS
+   CINEMA DETAIL – SILVER PREMIUM EDITION (2026)
+   BỐ CỤC MỚI: 2 CỘT (BACKDROP 3/2 + INFO)
    ========================================================= */
 
 /* ==========================================================
@@ -25,6 +24,11 @@
   100% { left: 140%; opacity: 0; }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 @keyframes cardGlowPulse {
   0%, 100% { box-shadow: 0 0 20px rgba(232, 232, 232, 0.02); }
   50% { box-shadow: 0 0 40px rgba(232, 232, 232, 0.06); }
@@ -33,11 +37,6 @@
 @keyframes subtlePulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(232, 232, 232, 0.15); }
   50% { box-shadow: 0 0 0 12px rgba(232, 232, 232, 0.02); }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 @keyframes borderRotate {
@@ -87,94 +86,103 @@
 }
 
 /* ==========================================================
-   HERO – BANNER SWIPER 2.5:1 + HIỆU ỨNG THỞ
+   HERO – 2 CỘT: BACKDROP (3/2) + INFO
 ========================================================== */
-.cinema-hero {
+.cinema-hero-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-3xl);
+  margin-top: var(--space-2xl);
+  align-items: stretch;
+}
+
+/* Cột trái: Backdrop */
+.cinema-hero-backdrop {
   position: relative;
-  width: 100%;
-  max-width: 2000px;
-  margin: 0 auto;
-  aspect-ratio: 2.5 / 1;
+  aspect-ratio: 3 / 2;
   overflow: hidden;
-  background-color: var(--bg-primary);
   border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  border: var(--border-premium);
   box-shadow: var(--glass-shadow);
   transition: box-shadow var(--transition-normal);
 }
 
-.cinema-hero:hover {
+.cinema-hero-backdrop:hover {
   box-shadow: var(--card-shadow-hover);
 }
 
-.hero-swiper {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  inset: 0;
-}
-
-.hero-swiper .swiper-slide {
-  width: 100%;
-  height: 100%;
-}
-
-.hero-bg {
+.cinema-backdrop-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  animation: bannerBreath 10s ease-in-out infinite;
-  transition: transform 1.8s cubic-bezier(0.65, 0, 0.35, 1),
-              opacity 1.4s ease;
-  will-change: transform, opacity;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
-/* Overlay – nhẹ hơn, không che ảnh quá nhiều */
-.cinema-overlay {
+.cinema-hero-backdrop:hover .cinema-backdrop-img {
+  transform: scale(1.04);
+}
+
+.cinema-backdrop-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+  color: var(--text-muted);
+  gap: var(--space-sm);
+}
+.cinema-backdrop-placeholder svg {
+  color: var(--silver-primary);
+  opacity: 0.4;
+}
+.cinema-backdrop-placeholder span {
+  font-size: var(--font-size-h6);
+  font-weight: var(--fw-bold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.cinema-hero-overlay {
   position: absolute;
   inset: 0;
   z-index: 1;
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0.15) 0%,
-    rgba(0, 0, 0, 0.45) 100%
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.5) 100%
   );
   pointer-events: none;
+  opacity: 0.4;
+  transition: opacity 0.6s ease;
 }
 
-/* Shine – quét sáng ngang */
-.hero-light {
-  position: absolute;
-  top: 0;
-  left: -40%;
-  width: 18%;
-  height: 100%;
-  z-index: 2;
-  opacity: 0.3;
-  background: linear-gradient(90deg, transparent, rgba(232, 232, 232, 0.15), transparent);
-  transform: skewX(-25deg);
-  animation: shineMove 12s ease-in-out infinite;
-  pointer-events: none;
+.cinema-hero-backdrop:hover .cinema-hero-overlay {
+  opacity: 0.2;
 }
 
-/* Particles – hạt sáng nền */
-.cinema-particles {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  opacity: 0.08;
-  background-image: radial-gradient(rgba(232, 232, 232, 0.3) 1px, transparent 1px);
-  background-size: 160px 160px;
-  animation: particleMove 25s linear infinite;
+/* Cột phải: Thông tin rạp */
+.cinema-hero-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-xl) var(--space-lg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: var(--border-premium);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
 }
 
-/* ==========================================================
-   THÔNG TIN RẠP (phía dưới banner)
-========================================================== */
-.cinema-info-block {
-  margin-bottom: var(--space-3xl);
-  padding-top: var(--space-2xl);
+.cinema-hero-info:hover {
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-4px);
 }
 
 .cinema-label {
@@ -204,7 +212,8 @@
 }
 
 .cinema-divider {
-  width: 220px;
+  width: 100%;
+  max-width: 220px;
   height: 4px;
   border-radius: var(--radius-round);
   margin-bottom: var(--space-lg);
@@ -212,7 +221,7 @@
   box-shadow: 0 0 20px rgba(232, 232, 232, 0.15);
 }
 
-.cinema-info-list {
+.cinema-info-grid {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
@@ -228,6 +237,7 @@
 }
 .info-item svg {
   color: var(--silver-primary);
+  flex-shrink: 0;
 }
 
 .cinema-map-link {
@@ -353,7 +363,6 @@
   font-weight: var(--fw-medium);
   color: var(--text-secondary);
 }
-/* ✅ Nút ngày active – chữ đen */
 .date-card.active .date-day,
 .date-card.active .date-number {
   color: var(--bg-primary);
@@ -370,147 +379,23 @@
 }
 
 /* ==========================================================
-   MOVIE GRID – CARD PREMIUM
+   MOVIE GRID
 ========================================================== */
 .movie-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-xl);
 }
-.movie-card {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-xl);
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  border: var(--border-premium);
-  transition: all var(--transition-normal);
-  animation: cardGlowPulse 6s ease-in-out infinite;
-}
-.movie-card:hover {
-  transform: translateY(-8px) scale(1.02);
-  border-color: var(--silver-primary);
-  box-shadow: var(--card-shadow-hover);
-  animation-play-state: paused;
-}
-
-/* BORDER GLOW CHẠY */
-.movie-card::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: var(--radius-xl);
-  padding: 2px;
-  background: conic-gradient(
-    from var(--border-angle, 0deg),
-    transparent 0%,
-    rgba(232, 232, 232, 0.3) 15%,
-    rgba(255, 255, 255, 1) 35%,
-    rgba(232, 232, 232, 0.3) 55%,
-    rgba(255, 255, 255, 0.8) 75%,
-    transparent 100%
-  );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: none;
-  z-index: 10;
-  animation: borderRotate 6s linear infinite;
-  will-change: transform;
-}
-
-.movie-card:hover::before {
-  opacity: 1;
-}
-
-.movie-poster {
-  position: relative;
-  overflow: hidden;
-  aspect-ratio: 2 / 3;
-}
-.movie-poster img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 0.6s ease;
-}
-.movie-card:hover .movie-poster img {
-  transform: scale(1.12);
-  filter: brightness(1.08) saturate(1.06) contrast(1.04);
-}
-
-.movie-overlay {
-  position: absolute;
-  inset: 0;
+.movie-card-wrapper {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  visibility: hidden;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.3));
-  transition: all var(--transition-normal);
-}
-.movie-card:hover .movie-overlay {
-  opacity: 1;
-  visibility: visible;
-}
-.booking-btn {
-  border: none;
-  outline: none;
-  cursor: pointer;
-  padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-round);
-  color: var(--bg-primary);
-  font-size: var(--font-size-base);
-  font-weight: var(--fw-bold);
-  background: var(--premium-gradient);
-  transition: all var(--transition-normal);
-  box-shadow: var(--btn-silver-shadow);
-  animation: subtlePulse 3s ease-in-out infinite;
-}
-.booking-btn:hover {
-  transform: scale(1.08);
-  box-shadow: var(--card-shadow-hover);
-  animation-play-state: paused;
+  flex-direction: column;
+  gap: var(--space-md);
 }
 
-.movie-info {
-  padding: var(--space-lg);
-}
-.movie-info h3 {
-  color: var(--text-body);
-  font-size: var(--font-size-h4);
-  font-weight: var(--fw-bold);
-  line-height: 1.4;
-  min-height: 56px;
-  margin-bottom: var(--space-md);
-  transition: color var(--transition-normal);
-}
-.movie-card:hover .movie-info h3 {
-  color: var(--silver-primary);
-}
-.movie-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
-}
-.movie-meta div {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  color: var(--text-secondary);
-  font-size: var(--font-size-base);
-}
-.movie-meta svg {
-  color: var(--silver-primary);
-}
-.showtime-list {
+/* ==========================================================
+   SHOWTIMES (bên dưới MovieCard)
+========================================================== */
+.movie-card-wrapper .showtime-list {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-sm);
@@ -529,6 +414,7 @@
   backdrop-filter: blur(10px);
   border: var(--border-premium);
   transition: all var(--transition-normal);
+  font-size: 0.85rem;
 }
 .showtime-btn:hover {
   transform: translateY(-2px);
@@ -538,6 +424,15 @@
 }
 .showtime-btn svg {
   color: var(--silver-primary);
+}
+.showtime-more {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: var(--fw-medium);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: var(--border-subtle);
 }
 
 /* ==========================================================
@@ -599,8 +494,13 @@
 }
 
 @media (max-width: 992px) {
-  .cinema-hero {
-    min-height: 350px;
+  .cinema-hero-split {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+    margin-top: var(--space-xl);
+  }
+  .cinema-hero-backdrop {
+    aspect-ratio: 16 / 9;
   }
   .cinema-name {
     font-size: var(--font-size-h2);
@@ -611,14 +511,17 @@
 }
 
 @media (max-width: 768px) {
-  .cinema-hero {
-    min-height: 250px;
+  .cinema-hero-backdrop {
+    aspect-ratio: 16 / 9;
+  }
+  .cinema-hero-info {
+    padding: var(--space-lg);
   }
   .cinema-name {
     font-size: var(--font-size-h3);
   }
   .cinema-divider {
-    width: 140px;
+    max-width: 140px;
   }
   .section-title h2 {
     font-size: var(--font-size-h3);
@@ -632,15 +535,18 @@
   .movie-grid {
     grid-template-columns: 1fr;
   }
-  .movie-card {
+  .movie-card-wrapper {
     max-width: 420px;
-    margin: auto;
+    margin: 0 auto;
   }
-  .cinema-info-block {
-    padding-top: var(--space-xl);
+  .cinema-hero-split {
+    margin-top: var(--space-md);
   }
-  .movie-card::before {
-    display: none; /* tắt border glow trên mobile để tiết kiệm tài nguyên */
+  .cinema-hero-backdrop {
+    border-radius: var(--radius-md);
+  }
+  .cinema-hero-info {
+    border-radius: var(--radius-md);
   }
 }
 
@@ -648,8 +554,11 @@
   .cinema-content {
     padding: 0 var(--space-sm) var(--space-2xl);
   }
-  .cinema-hero {
-    min-height: 200px;
+  .cinema-hero-backdrop {
+    aspect-ratio: 4 / 3;
+  }
+  .cinema-hero-info {
+    padding: var(--space-md);
   }
   .cinema-name {
     font-size: var(--font-size-h4);
@@ -661,7 +570,7 @@
   .info-item {
     font-size: var(--font-size-base);
   }
-  .movie-card {
+  .movie-card-wrapper {
     max-width: 100%;
   }
   .date-card {

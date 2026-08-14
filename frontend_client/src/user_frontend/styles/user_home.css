@@ -393,7 +393,8 @@
 .home-features-section,
 .movie-container,
 .promotions-section,
-.cinema-corner-section {
+.cinema-corner-section,
+.news-section {
     width: 100%;
     margin-top: var(--space-3xl);
 }
@@ -463,8 +464,8 @@
     font-size: clamp(2.8rem, 6vw, 4.5rem);
     font-weight: var(--fw-bold);
     line-height: 1;
-    color: var(--accent-ice);
-    text-shadow: 0 0 30px rgba(166, 193, 217, 0.15);
+    color: var(--silver-light);
+    text-shadow: 0 0 30px rgba(244, 246, 248, 0.15);
 }
 
 .stat-label {
@@ -477,7 +478,23 @@
 }
 
 /* ==========================================================
-   9. RESPONSIVE
+   9. CINEMA SECTION (BỔ SUNG)
+   ========================================================== */
+
+.cinema-section {
+    margin-top: var(--space-3xl);
+}
+
+/* ==========================================================
+   10. NEWS SECTION (BỔ SUNG)
+   ========================================================== */
+
+.news-section {
+    margin-top: var(--space-3xl);
+}
+
+/* ==========================================================
+   11. RESPONSIVE
    ========================================================== */
 
 /* 1200px */
@@ -492,7 +509,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .stats-grid {
-        grid-template-columns: repeat(4, 1fr); /* Vẫn 4 cột */
+        grid-template-columns: repeat(4, 1fr);
     }
 }
 
@@ -514,7 +531,7 @@
         min-width: 0;
     }
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 cột */
+        grid-template-columns: repeat(2, 1fr);
         gap: var(--space-md);
     }
     .stats-section {
@@ -567,7 +584,7 @@
         font-size: var(--font-size-h6);
     }
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr); /* Vẫn 2 cột */
+        grid-template-columns: repeat(2, 1fr);
         gap: var(--space-md);
     }
     .stats-section {
@@ -643,7 +660,7 @@
         font-size: 11px;
     }
     .stats-grid {
-        grid-template-columns: 1fr; /* 1 cột */
+        grid-template-columns: 1fr;
         gap: var(--space-md);
     }
     .stats-section {

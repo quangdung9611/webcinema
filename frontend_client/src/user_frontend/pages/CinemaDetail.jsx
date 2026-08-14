@@ -11,15 +11,9 @@ import {
   Loader2,
   Film,
   CalendarDays,
-  Clock3
+  Clock3,
+  Clock
 } from 'lucide-react';
-
-// SWIPER
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, EffectFade } from 'swiper/modules';
-
-import 'swiper/css';
-import 'swiper/css/effect-fade';
 
 // 👇 Import MovieCard
 import MovieCard from '../components/MovieCard';
@@ -27,11 +21,10 @@ import MovieCard from '../components/MovieCard';
 import '../styles/CinemaDetail.css';
 
 // ============================================================
-//  HELPER: Lấy URL poster từ nhiều trường
+//  HELPER: Lấy URL poster
 // ============================================================
 const getPosterUrl = (movie) => {
   if (!movie) return '';
-  // Ưu tiên poster_url (từ API cinema detail)
   const url = movie.poster_url || movie.movie_poster || '';
   if (!url) return '';
   if (url.startsWith('http')) return url;
@@ -50,43 +43,6 @@ const CinemaDetail = () => {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0]
   );
-
-  const [banners, setBanners] = useState([]);
-  const [bannerLoading, setBannerLoading] = useState(true);
-
-  // ===== FETCH BANNER =====
-  useEffect(() => {
-    const fetchBanners = async () => {
-      try {
-        setBannerLoading(true);
-        const res = await api.get('/api/banners?page=CINEMA');
-        const bannerData = res.data?.data || [];
-        setBanners(Array.isArray(bannerData) ? bannerData : []);
-      } catch (error) {
-        console.error('Lỗi tải banner:', error);
-        setBanners([]);
-      } finally {
-        setBannerLoading(false);
-      }
-    };
-    fetchBanners();
-  }, []);
-
-  // ===== DATE LIST =====
-  const dateList = useMemo(() => {
-    const weekdays = ['CN', 'THỨ 2', 'THỨ 3', 'THỨ 4', 'THỨ 5', 'THỨ 6', 'THỨ 7'];
-    const arr = [];
-    for (let i = 0; i < 8; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-      arr.push({
-        fullDate: date.toISOString().split('T')[0],
-        dayText: i === 0 ? 'HÔM NAY' : weekdays[date.getDay()],
-        dateDisplay: date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
-      });
-    }
-    return arr;
-  }, []);
 
   // ===== FETCH CINEMA DATA =====
   useEffect(() => {
@@ -115,11 +71,10 @@ const CinemaDetail = () => {
           }
         }
 
-        // Chuẩn hóa movies: thêm trường movie_poster để MovieCard nhận
+        // Chuẩn hóa movies
         const normalizedMovies = moviesData.map(movie => ({
           ...movie,
           movie_poster: getPosterUrl(movie),
-          // Các trường khác có thể thiếu, set default để MovieCard không bị lỗi
           average_rating: movie.avg_rating || movie.average_rating || 0,
           total_reviews: movie.total_reviews || 0,
           age_rating: movie.age_rating || 'T18',
@@ -139,6 +94,22 @@ const CinemaDetail = () => {
     fetchCinema();
     window.scrollTo(0, 0);
   }, [slug]);
+
+  // ===== DATE LIST =====
+  const dateList = useMemo(() => {
+    const weekdays = ['CN', 'THỨ 2', 'THỨ 3', 'THỨ 4', 'THỨ 5', 'THỨ 6', 'THỨ 7'];
+    const arr = [];
+    for (let i = 0; i < 8; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      arr.push({
+        fullDate: date.toISOString().split('T')[0],
+        dayText: i === 0 ? 'HÔM NAY' : weekdays[date.getDay()],
+        dateDisplay: date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
+      });
+    }
+    return arr;
+  }, []);
 
   // ============================================================
   //  LOADING / ERROR
@@ -172,90 +143,82 @@ const CinemaDetail = () => {
     movie.showtimes?.some(st => st.start_time.startsWith(selectedDate))
   );
 
-  const hasBanners = banners.length > 0;
-
   // ===== HANDLE CLICK CARD =====
   const handleMovieClick = (movie) => {
-    // Ví dụ: chuyển đến trang chi tiết phim
     navigate(`/movie/${movie.movie_id}`);
-    // Hoặc mở preview modal nếu bạn có
   };
+
+  // ============================================================
+  //  HELPER: Lấy backdrop URL
+  // ============================================================
+  const getBackdropUrl = (backdrop) => {
+    if (!backdrop) return '';
+    if (backdrop.startsWith('http')) return backdrop;
+    return `https://api.quangdungcinema.id.vn/uploads/backdrops/${backdrop}`;
+  };
+
+  const backdropImage = cinema.cinema_backdrop ? getBackdropUrl(cinema.cinema_backdrop) : null;
 
   // ============================================================
   //  RENDER
   // ============================================================
   return (
     <div className="cinema-detail-page">
-
-      {/* BANNER */}
-      <div className="cinema-hero">
-        <div className="cinema-overlay"></div>
-        <div className="hero-light"></div>
-        <div className="cinema-particles"></div>
-
-        <Swiper
-          modules={[Autoplay, EffectFade]}
-          effect="fade"
-          speed={1200}
-          autoplay={{ delay: 4500, disableOnInteraction: false }}
-          loop={hasBanners && banners.length > 1}
-          className="hero-swiper"
-        >
-          {hasBanners ? (
-            banners.map((banner, idx) => (
-              <SwiperSlide key={banner.banner_id || idx}>
-                <img
-                  src={banner.image_url}
-                  alt={`Banner ${idx + 1}`}
-                  className="hero-bg"
-                />
-              </SwiperSlide>
-            ))
-          ) : (
-            <SwiperSlide>
-              <div className="hero-bg" style={{
-                background: 'linear-gradient(135deg, #1a1a1a, #0a0a0a)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#888',
-                fontSize: '2rem',
-                fontWeight: 'bold'
-              }}>
-                🎬 Cinema Banner
-              </div>
-            </SwiperSlide>
-          )}
-        </Swiper>
-      </div>
-
-      {/* CONTENT */}
       <div className="cinema-content">
 
-        {/* INFO RẠP */}
-        <div className="cinema-info-block">
-          <span className="cinema-label">HỆ THỐNG RẠP</span>
-          <h1 className="cinema-name">{cinema.cinema_name || 'Rạp chiếu phim'}</h1>
-          <div className="cinema-divider"></div>
-          <div className="cinema-info-list">
-            <div className="info-item">
-              <MapPin size={18} />
-              <span>{cinema.address || 'Địa chỉ chưa cập nhật'}{cinema.city ? `, ${cinema.city}` : ''}</span>
-            </div>
-            <div className="info-item">
-              <Phone size={18} />
-              <span>{cinema.hotline || '1900 2224'}</span>
-            </div>
-            {cinema.map_link && (
-              <a href={cinema.map_link} target="_blank" rel="noreferrer" className="cinema-map-link">
-                <ExternalLink size={18} />
-                Xem Google Maps
-              </a>
+        {/* ============================================================
+            BỐ CỤC 2 CỘT 50-50: BACKDROP + THÔNG TIN RẠP
+        ============================================================ */}
+        <div className="cinema-hero-split">
+          {/* Cột trái: Backdrop (aspect-ratio 3/2) */}
+          <div className="cinema-hero-backdrop">
+            {backdropImage ? (
+              <img
+                src={backdropImage}
+                alt={`${cinema.cinema_name} backdrop`}
+                className="cinema-backdrop-img"
+              />
+            ) : (
+              <div className="cinema-backdrop-placeholder">
+                <Film size={60} />
+                <span>Cinema Backdrop</span>
+              </div>
             )}
+            <div className="cinema-hero-overlay"></div>
+          </div>
+
+          {/* Cột phải: Thông tin rạp */}
+          <div className="cinema-hero-info">
+            <span className="cinema-label">HỆ THỐNG RẠP</span>
+            <h1 className="cinema-name">{cinema.cinema_name || 'Rạp chiếu phim'}</h1>
+            <div className="cinema-divider"></div>
+            
+            <div className="cinema-info-grid">
+              <div className="info-item">
+                <MapPin size={18} />
+                <span>{cinema.address || 'Địa chỉ chưa cập nhật'}{cinema.city ? `, ${cinema.city}` : ''}</span>
+              </div>
+              <div className="info-item">
+                <Phone size={18} />
+                <span>{cinema.hotline || '1900 2224'}</span>
+              </div>
+              <div className="info-item">
+                <Clock size={18} />
+                <span>08:00 - 23:30 (Hằng ngày)</span>
+              </div>
+              {cinema.map_link && (
+                <a href={cinema.map_link} target="_blank" rel="noreferrer" className="cinema-map-link">
+                  <ExternalLink size={18} />
+                  Xem Google Maps
+                </a>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* PHIM ĐANG CHIẾU */}
+        {/* ============================================================
+            PHIM ĐANG CHIẾU
+        ============================================================ */}
         <div className="section-title">
           <Film size={24} />
           <h2>PHIM ĐANG CHIẾU</h2>
@@ -289,45 +252,20 @@ const CinemaDetail = () => {
           </button>
         </div>
 
-        {/* MOVIE GRID - SỬ DỤNG MOVIECARD */}
+        {/* MOVIE GRID */}
         {filteredMovies.length > 0 ? (
           <div className="movie-grid">
             {filteredMovies.map((movie, index) => {
               const movieShowtimes = movie.showtimes.filter(st =>
                 st.start_time.startsWith(selectedDate)
               );
-
               return (
                 <div key={movie.movie_id} className="movie-card-wrapper">
-                  {/* MovieCard */}
                   <MovieCard
                     movie={movie}
                     onClick={() => handleMovieClick(movie)}
                     index={index}
                   />
-
-                  {/* Showtimes - hiển thị bên dưới card */}
-                  {/* <div className="showtime-list">
-                    {movieShowtimes.slice(0, 4).map((st, idx) => (
-                      <button
-                        key={idx}
-                        className="showtime-btn"
-                        onClick={(e) => {
-                          e.stopPropagation(); // tránh kích hoạt click card
-                          navigate(`/booking/${st.showtime_id}`);
-                        }}
-                      >
-                        <Clock3 size={14} />
-                        {new Date(st.start_time).toLocaleTimeString(
-                          [],
-                          { hour: '2-digit', minute: '2-digit', hour12: false }
-                        )}
-                      </button>
-                    ))}
-                    {movieShowtimes.length > 4 && (
-                      <span className="showtime-more">+{movieShowtimes.length - 4} suất</span>
-                    )}
-                  </div> */}
                 </div>
               );
             })}
@@ -340,7 +278,7 @@ const CinemaDetail = () => {
           </div>
         )}
 
-        {/* MAP */}
+        {/* MAP (nếu có) */}
         {cinema.map_link && (
           <div className="map-section">
             <div className="section-title">

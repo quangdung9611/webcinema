@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import api from '../../api/api'; // ✅ Import api
+import api from '../../api/api';
 import { ThumbsUp, Eye, Calendar, ChevronLeft, User } from 'lucide-react';
-import '../styles/FilmReviewDetail.css';
+import '../styles/NewsDetail.css';
 
-const FilmReviewDetail = () => {
+const NewsDetail = () => {
     const { slug } = useParams();
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ const FilmReviewDetail = () => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const res = await api.get(`/api/news/${slug}`);
+                const res = await api.get(`/api/news/detail/${slug}`);
                 setItem(res.data);
                 setLoading(false);
             } catch (error) {
@@ -40,20 +40,20 @@ const FilmReviewDetail = () => {
     if (!item) return <div className="error-state">Không tìm thấy bài viết này.</div>;
 
     return (
-        <div className="review-detail-page">
-            <div className="review-detail-container-flex">
+        <div className="news-detail-page">
+            <div className="news-detail-container-flex">
                 
                 {/* CỘT TRÁI (7.5) */}
-                <div className="main-review-col">
-                    <div className="review-glass-card">
-                        <Link to="/film-review" className="back-to-list-btn">
+                <div className="main-news-col">
+                    <div className="news-glass-card">
+                        <Link to="/news" className="back-to-list-btn">
                             <ChevronLeft size={18} />
                             <span>Quay lại danh sách</span>
                         </Link>
 
-                        <header className="review-header">
-                            <h1 className="review-title-galaxy">{item.title}</h1>
-                            <div className="review-meta-bar">
+                        <header className="news-header">
+                            <h1 className="news-title-galaxy">{item.title}</h1>
+                            <div className="news-meta-bar">
                                 <div className="meta-left-group">
                                     <span className="meta-info-item">
                                         <Calendar size={14} />
@@ -75,7 +75,7 @@ const FilmReviewDetail = () => {
                             </div>
                         </header>
 
-                        <div className="review-featured-img">
+                        <div className="news-featured-img">
                             <img 
                                 src={`${IMAGE_BASE_URL}/news/${item.image_url}`} 
                                 alt={item.title} 
@@ -83,14 +83,14 @@ const FilmReviewDetail = () => {
                         </div>
 
                         <div 
-                            className="review-article-body"
+                            className="news-article-body"
                             dangerouslySetInnerHTML={{ __html: item.content }}
                         />
                     </div>
                 </div>
 
                 {/* CỘT PHẢI (2.5) */}
-                <div className="sidebar-review-col">
+                <div className="sidebar-news-col">
                     {/* <MovieSidebar 
                         IMAGE_BASE_URL={IMAGE_BASE_URL}
                         title="Phim Đang Chiếu"
@@ -102,4 +102,4 @@ const FilmReviewDetail = () => {
     );
 };
 
-export default FilmReviewDetail;
+export default NewsDetail;

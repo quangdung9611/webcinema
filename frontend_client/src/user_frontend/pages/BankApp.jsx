@@ -12,13 +12,11 @@ const BankApp = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Ưu tiên lấy từ location.state, fallback từ sessionStorage
     const bookingData =
         location.state ||
         JSON.parse(sessionStorage.getItem('lastSuccessTicket')) ||
         {};
 
-    // 🔥 Lấy tempBookingId từ sessionStorage TRƯỚC (luôn là string)
     const tempBookingId = String(
         sessionStorage.getItem('tempBookingId') ||
         bookingData.tempBookingId ||
@@ -125,14 +123,14 @@ const BankApp = () => {
     }, [otp]);
 
     // =========================
-    // CALL API CANCEL BOOKING (dùng tempBookingId)
+    // CALL API CANCEL BOOKING
     // =========================
     const cancelBookingOnServer = async () => {
         if (isCancellingRef.current) return;
         isCancellingRef.current = true;
         try {
             await api.post('/api/bank/cancel-timeout', {
-                tempBookingId: tempBookingId // đã là string
+                tempBookingId: tempBookingId
             }, {
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -145,7 +143,7 @@ const BankApp = () => {
     };
 
     // =========================
-    // CHECK PAYMENT COMPLETED (dùng tempBookingId để kiểm tra)
+    // CHECK PAYMENT COMPLETED
     // =========================
     useEffect(() => {
         const completed = sessionStorage.getItem('paymentCompleted');
@@ -178,7 +176,7 @@ const BankApp = () => {
     }, [tempBookingId]);
 
     // =========================
-    // BEFORE UNLOAD (đóng tab)
+    // BEFORE UNLOAD
     // =========================
     useEffect(() => {
         const handleBeforeUnload = (e) => {
@@ -226,7 +224,7 @@ const BankApp = () => {
     }, []);
 
     // =========================
-    // CLEAR ALL & GO HOME – tự động về home, không cần modal confirm
+    // CLEAR ALL & GO HOME
     // =========================
     const clearAllAndGoHome = async () => {
         await cancelBookingOnServer();
@@ -263,14 +261,14 @@ const BankApp = () => {
     };
 
     // =========================
-    // SEND OTP API (dùng tempBookingId)
+    // SEND OTP API
     // =========================
     const sendOtpApi = async () => {
         setLoadingSendOtp(true);
         try {
             const payload = {
                 email: customerEmail,
-                tempBookingId: tempBookingId // đã là string
+                tempBookingId: tempBookingId
             };
             console.log('📤 [BankApp] sendOtp payload:', JSON.stringify(payload));
 
@@ -300,7 +298,7 @@ const BankApp = () => {
     };
 
     // =========================
-    // TRIGGER SEND OTP (chỉ gửi 1 lần)
+    // TRIGGER SEND OTP
     // =========================
     useEffect(() => {
         const triggerSendOtp = async () => {
@@ -340,7 +338,7 @@ const BankApp = () => {
     }, [customerEmail, tempBookingId]);
 
     // =========================
-    // TIMER – KHI HẾT 5 PHÚT, TỰ ĐỘNG VỀ HOME
+    // TIMER
     // =========================
     useEffect(() => {
         if (paymentCompletedRef.current) return;
@@ -384,7 +382,7 @@ const BankApp = () => {
     }, [timeLeft, tempBookingId, customerEmail, navigate]);
 
     // =========================
-    // VERIFY OTP (dùng tempBookingId)
+    // VERIFY OTP
     // =========================
     const handleVerifyPayment = async () => {
         if (paymentCompletedRef.current) {
@@ -567,7 +565,7 @@ const BankApp = () => {
                 </div>
             </main>
 
-            {/* MODAL CHUNG */}
+            {/* ===== MODAL THÔNG BÁO CHUNG ===== */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}
@@ -578,84 +576,17 @@ const BankApp = () => {
                 onCancel={modalConfig.onCancel}
             />
 
-            {/* MODAL XÁC NHẬN BACK */}
-            {showBackConfirm && (
-                <div className="modal-overlay" style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(0,0,0,0.7)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 9999
-                }}>
-                    <div className="modal-content" style={{
-                        background: 'white',
-                        borderRadius: '12px',
-                        padding: '30px',
-                        maxWidth: '450px',
-                        width: '90%',
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-                        textAlign: 'center',
-                        animation: 'fadeIn 0.3s ease'
-                    }}>
-                        <div style={{ marginBottom: '20px' }}><span style={{ fontSize: '48px' }}>⚠️</span></div>
-                        <h3 style={{ color: '#e74c3c', fontSize: '22px', marginBottom: '15px' }}>CẢNH BÁO</h3>
-                        <p style={{ fontSize: '16px', color: '#333', marginBottom: '15px' }}>
-                            Bạn đang trong quá trình nhập OTP. Nếu thoát, toàn bộ thông tin đặt vé sẽ bị xóa!
-                        </p>
-                        <p style={{ fontSize: '14px', color: '#666', marginBottom: '25px' }}>
-                            Bạn có chắc chắn muốn rời khỏi?
-                        </p>
-                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                            <button
-                                onClick={handleStay}
-                                style={{
-                                    padding: '10px 30px',
-                                    background: '#3498db',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    fontSize: '16px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer'
-                                }}
-                                onMouseEnter={e => e.target.style.background = '#2980b9'}
-                                onMouseLeave={e => e.target.style.background = '#3498db'}
-                            >
-                                Ở LẠI
-                            </button>
-                            <button
-                                onClick={clearAllAndGoHome}
-                                style={{
-                                    padding: '10px 30px',
-                                    background: '#e74c3c',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    fontSize: '16px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer'
-                                }}
-                                onMouseEnter={e => e.target.style.background = '#c0392b'}
-                                onMouseLeave={e => e.target.style.background = '#e74c3c'}
-                            >
-                                XÁC NHẬN RỜI
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <style>{`
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: scale(0.9); }
-                    to { opacity: 1; transform: scale(1); }
-                }
-            `}</style>
+            {/* ===== MODAL XÁC NHẬN RỜI TRANG ===== */}
+            <Modal
+                show={showBackConfirm}
+                type="warning"
+                title="CẢNH BÁO"
+                message="Bạn đang trong quá trình nhập OTP. Nếu thoát, toàn bộ thông tin đặt vé sẽ bị xóa! Bạn có chắc chắn muốn rời khỏi?"
+                onConfirm={clearAllAndGoHome}
+                onCancel={handleStay}
+                confirmText="Xác nhận rời"
+                cancelText="Ở lại"
+            />
         </div>
     );
 };

@@ -110,7 +110,7 @@ const QuickSelect = ({
 };
 
 // ==========================================================
-// Stats Section Component (mới)
+// Stats Section Component
 // ==========================================================
 
 const StatsSection = () => {
@@ -129,18 +129,16 @@ const StatsSection = () => {
       ([entry]) => {
         if (entry.isIntersecting && !hasAnimated) {
           setHasAnimated(true);
-          // Bắt đầu đếm số
           statsData.forEach((item, index) => {
             const el = document.getElementById(`stat-${index}`);
             if (!el) return;
             const target = item.target;
-            const duration = 2000; // 2 giây
+            const duration = 2000;
             const startTime = performance.now();
 
             const updateNumber = (currentTime) => {
               const elapsed = currentTime - startTime;
               const progress = Math.min(elapsed / duration, 1);
-              // cubic ease-out
               const eased = 1 - Math.pow(1 - progress, 3);
               const currentValue = Math.floor(eased * target);
               el.textContent = currentValue + (item.suffix || "");
@@ -198,6 +196,8 @@ const UserHome = () => {
   const [loading, setLoading] = useState(true);
   const [promotions, setPromotions] = useState([]);
   const [cinemaNews, setCinemaNews] = useState([]);
+  const [cinemas, setCinemas] = useState([]);
+  const [newsItems, setNewsItems] = useState([]); // 👈 STATE CHO TIN TỨC
 
   const [quickData, setQuickData] = useState({
     movies: [],
@@ -236,6 +236,15 @@ const UserHome = () => {
     setPreviewModal({ open: false, selectedMovie: null });
   };
 
+  // ===== HÀM NAVIGATE + CUỘN LÊN ĐẦU =====
+  const navigateToTop = (path) => {
+    navigate(path);
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   // ===== FETCH DỮ LIỆU CHÍNH =====
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -245,12 +254,16 @@ const UserHome = () => {
           statusRes,
           movieRes,
           promotionRes,
-          blogRes
+          blogRes,
+          cinemaRes,
+          newsRes // 👈 THÊM API NEWS
         ] = await Promise.all([
           api.get('/api/movies/status-group'),
           api.get('/api/showtimes/quick-booking'),
           api.get('/api/promotions'),
-          api.get('/api/blog-cinema')
+          api.get('/api/blog-cinema'),
+          api.get('/api/cinemas'),
+          api.get('/api/news')
         ]);
 
         const statusData = statusRes?.data?.data || statusRes?.data || {};
@@ -270,6 +283,19 @@ const UserHome = () => {
 
         setPromotions(unwrapArray(promotionRes.data));
         setCinemaNews(unwrapArray(blogRes.data));
+        setCinemas(unwrapArray(cinemaRes.data));
+
+        // 👈 XỬ LÝ NEWS
+        const newsData = Array.isArray(newsRes.data)
+          ? newsRes.data
+          : Array.isArray(newsRes.data?.data)
+            ? newsRes.data.data
+            : [];
+        const sortedNews = [...newsData].sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+        setNewsItems(sortedNews);
+
       } catch (error) {
         console.error("Lỗi khi load data:", error);
         setModal({
@@ -420,6 +446,29 @@ const UserHome = () => {
   const comingMovies = Array.isArray(groupedMovies["Sắp chiếu"]) ? groupedMovies["Sắp chiếu"] : [];
   const allMovies = [...showingMovies, ...comingMovies];
 
+  // ===== HELPER BACKDROP URL =====
+  const getBackdropUrl = (backdrop) => {
+    if (!backdrop) return '';
+    if (backdrop.startsWith('http')) return backdrop;
+    return `https://api.quangdungcinema.id.vn/uploads/backdrops/${backdrop}`;
+  };
+
+  // ===== RENDER EXCERPT =====
+  const renderExcerpt = (content = '') => {
+    const cleanText = String(content)
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .trim();
+    return cleanText.length > 100 ? `${cleanText.slice(0, 100)}...` : cleanText;
+  };
+
+  // ===== FORMAT DATE =====
+  const formatDate = (date) => {
+    if (!date) return '';
+    const parsed = new Date(date);
+    return isNaN(parsed) ? '' : parsed.toLocaleDateString('vi-VN');
+  };
+
   return (
     <>
       <Modal
@@ -527,9 +576,10 @@ const UserHome = () => {
             </div>
           </section>
 
-          {/* ====== PHẦN STATS MỚI ====== */}
+          {/* ===== STATS ===== */}
           <StatsSection />
 
+          {/* ===== MOVIE SLIDER ===== */}
           <ScrollReveal
             direction="up"
             duration={0.5}
@@ -549,6 +599,7 @@ const UserHome = () => {
             </div>
           </ScrollReveal>
 
+          {/* ===== PROMOTIONS ===== */}
           <ScrollReveal
             direction="up"
             duration={0.5}
@@ -564,7 +615,7 @@ const UserHome = () => {
                     ƯU ĐÃI HẤP DẪN
                   </h3>
                 </div>
-                <button className="btn-view-all" onClick={() => navigate('/promotion')}>
+                <button className="btn-view-all" onClick={() => navigateToTop('/promotion')}>
                   Xem tất cả <ChevronRight size={18} />
                 </button>
               </div>
@@ -595,6 +646,7 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
+          {/* ===== BLOG ===== */}
           <ScrollReveal
             direction="up"
             duration={0.5}
@@ -610,7 +662,7 @@ const UserHome = () => {
                     GÓC ĐIỆN ẢNH
                   </h3>
                 </div>
-                <button className="btn-view-all" onClick={() => navigate('/blog-cinema')}>
+                <button className="btn-view-all" onClick={() => navigateToTop('/blog-cinema')}>
                   Xem tất cả <ChevronRight size={18} />
                 </button>
               </div>
@@ -640,6 +692,109 @@ const UserHome = () => {
               </div>
             </section>
           </ScrollReveal>
+
+          {/* ====== PHẦN TIN TỨC MỚI ====== */}
+          <ScrollReveal
+            direction="up"
+            duration={0.5}
+            delay={0.85}
+            threshold={0.08}
+            once
+          >
+            <section className="news-section">
+              <div className="section-header">
+                <div className="section-header-left">
+                  <h3 className="section-title">
+                    <Newspaper size={40} className="section-icon" />
+                    TIN TỨC
+                  </h3>
+                </div>
+                <button className="btn-view-all" onClick={() => navigateToTop('/news')}>
+                  Xem tất cả <ChevronRight size={18} />
+                </button>
+              </div>
+              <div className="cinema-grid">
+                {newsItems.slice(0, 4).map((item, index) => {
+                  const metaText = `${formatDate(item.created_at)} • ${item.views || 0} lượt xem`;
+                  const excerpt = renderExcerpt(item.content || '');
+
+                  return (
+                    <ScrollReveal
+                      key={item.news_id}
+                      direction="up"
+                      duration={0.4}
+                      delay={0.95 + index * 0.08}
+                      threshold={0.08}
+                      once
+                    >
+                      <CinemaCard
+                        type="news"
+                        image={item.news_image || null}
+                        title={item.title}
+                        buttonText="Đọc thêm"
+                        link={`/news/detail/${item.slug}`}
+                        subtitle={metaText}
+                        description={excerpt}
+                      />
+                    </ScrollReveal>
+                  );
+                })}
+              </div>
+            </section>
+          </ScrollReveal>
+
+          {/* ====== PHẦN RẠP ====== */}
+          <ScrollReveal
+            direction="up"
+            duration={0.5}
+            delay={0.9}
+            threshold={0.08}
+            once
+          >
+            <section className="cinema-section">
+              <div className="section-header">
+                <div className="section-header-left">
+                  <h3 className="section-title">
+                    <Building2 size={40} className="section-icon" />
+                    HỆ THỐNG RẠP
+                  </h3>
+                </div>
+                <button className="btn-view-all" onClick={() => navigateToTop('/cinema')}>
+                  Xem tất cả <ChevronRight size={18} />
+                </button>
+              </div>
+              <div className="cinema-grid">
+                {cinemas.slice(0, 4).map((cinema, index) => {
+                  const backdropUrl = cinema.cinema_backdrop
+                    ? getBackdropUrl(cinema.cinema_backdrop)
+                    : null;
+
+                  return (
+                    <ScrollReveal
+                      key={cinema.cinema_id}
+                      direction="up"
+                      duration={0.4}
+                      delay={1.0 + index * 0.08}
+                      threshold={0.08}
+                      once
+                    >
+                      <CinemaCard
+                        type="cinema"
+                        image={backdropUrl || '/cinema-placeholder.jpg'}
+                        title={cinema.cinema_name}
+                        buttonText="Xem chi tiết"
+                        link={`/cinema/detail/${cinema.slug}`}
+                        address={cinema.address}
+                        hotline={cinema.hotline}
+                        mapLink={cinema.map_link}
+                      />
+                    </ScrollReveal>
+                  );
+                })}
+              </div>
+            </section>
+          </ScrollReveal>
+
         </div>
       </div>
     </>

@@ -1,0 +1,248 @@
+/* ==========================================================
+   CINEMA PAGE – SILVER PREMIUM EDITION
+   BANNER 2.5:1 + GRID 4 CỘT (SỬ DỤNG CINEMACARD)
+   TUÂN THỦ BIẾN CỦA INDEX.CSS
+   ========================================================= */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bannerBreath {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cinema-page {
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+/* ===== BANNER 2.5:1 ===== */
+.cinema-banner {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2.5 / 1;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.cinema-banner-swiper {
+  width: 100%;
+  height: 100%;
+}
+.cinema-banner-swiper .swiper-slide {
+  width: 100%;
+  height: 100%;
+}
+
+.cinema-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  animation: bannerBreath 12s ease-in-out infinite;
+  will-change: transform;
+}
+
+.cinema-banner-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+  color: var(--text-muted);
+  gap: var(--space-md);
+}
+.cinema-banner-placeholder svg {
+  color: var(--silver-primary);
+  opacity: 0.3;
+}
+.cinema-banner-placeholder span {
+  font-size: var(--font-size-h2);
+  font-weight: var(--fw-extrabold);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+
+.cinema-banner-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+  pointer-events: none;
+}
+
+.cinema-banner-title {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff;
+  padding: var(--space-xl);
+  pointer-events: none;
+}
+.cinema-banner-title h1 {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: var(--fw-extrabold);
+  text-transform: uppercase;
+  letter-spacing: -2px;
+  color: #fff;
+  text-shadow: 0 4px 30px rgba(0,0,0,0.6);
+  margin-bottom: var(--space-sm);
+}
+.cinema-banner-title p {
+  font-size: var(--font-size-h4);
+  color: rgba(255,255,255,0.7);
+  font-weight: var(--fw-medium);
+  text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+  max-width: 600px;
+}
+
+/* ===== CONTENT ===== */
+.cinema-content {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: var(--space-2xl) var(--space-lg) var(--space-3xl);
+}
+
+.cinema-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+.cinema-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.cinema-header-icon {
+  color: var(--silver-primary);
+}
+.cinema-header h2 {
+  color: var(--text-heading);
+  font-size: var(--font-size-h2);
+  font-weight: var(--fw-extrabold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+.cinema-count {
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  font-weight: var(--fw-medium);
+  padding: var(--space-xs) var(--space-md);
+  border: var(--border-premium);
+  border-radius: var(--radius-round);
+  background: rgba(255,255,255,0.03);
+}
+
+/* ===== LOADING / EMPTY ===== */
+.cinema-loading,
+.cinema-empty {
+  min-height: 40vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  color: var(--text-body);
+}
+.spin-icon {
+  color: var(--silver-primary);
+  animation: spin 1s linear infinite;
+}
+.cinema-empty svg {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+.cinema-empty h3 {
+  color: var(--text-body);
+  font-size: var(--font-size-h3);
+}
+.cinema-empty p {
+  color: var(--text-secondary);
+}
+
+/* ===== GRID 4 CỘT ===== */
+.cinema-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-xl);
+  animation: fadeInUp 0.6s ease;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  .cinema-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+  }
+}
+
+@media (max-width: 992px) {
+  .cinema-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+  }
+}
+
+@media (max-width: 768px) {
+  .cinema-content {
+    padding: var(--space-xl) var(--space-md) var(--space-2xl);
+  }
+  .cinema-header h2 {
+    font-size: var(--font-size-h3);
+  }
+  .cinema-banner-title h1 {
+    font-size: clamp(2rem, 8vw, 3rem);
+  }
+  .cinema-banner-title p {
+    font-size: var(--font-size-base);
+  }
+  .cinema-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .cinema-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+  .cinema-content {
+    padding: var(--space-lg) var(--space-sm) var(--space-xl);
+  }
+  .cinema-banner-title h1 {
+    font-size: 1.8rem;
+  }
+  .cinema-banner-title p {
+    font-size: 0.9rem;
+  }
+  .cinema-header h2 {
+    font-size: var(--font-size-h4);
+  }
+  .cinema-count {
+    font-size: var(--font-size-h6);
+    padding: var(--space-xs) var(--space-sm);
+  }
+}

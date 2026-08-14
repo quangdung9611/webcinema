@@ -183,8 +183,9 @@ const UserHeader = () => {
                         </ul>
                     </li>
                     <li className={`has-dropdown ${activeSubMenu === 'rap' ? 'mobile-active' : ''}`}>
-                        <div className="menu-link mobile-parent" onClick={(e) => toggleSubMenu('rap', e)}>
-                            <span>Rạp</span><ChevronDown size={18} className="icon-down" />
+                        <div className="menu-link mobile-parent">
+                            <Link to="/cinema" onClick={closeMobileMenu}>Rạp</Link>
+                            <ChevronDown size={18} className="icon-down" onClick={(e) => toggleSubMenu('rap', e)} />
                         </div>
                         <ul className="sub-menu">
                             {cinemas.map((cinema) => (
@@ -202,7 +203,7 @@ const UserHeader = () => {
                         <ul className="sub-menu">
                             <li><Link to="/cinema-genre" onClick={closeMobileMenu}>Thể Loại Phim</Link></li>
                             <li><Link to="/actors" onClick={closeMobileMenu}>Diễn Viên</Link></li>
-                            <li><Link to="/film-review" onClick={closeMobileMenu}>Bình Luận Phim</Link></li>
+                            <li><Link to="/news" onClick={closeMobileMenu}>Tin Tức</Link></li>
                         </ul>
                     </li>
                     <li><Link to="/promotion" onClick={closeMobileMenu} className="menu-link">Khuyến mãi</Link></li>

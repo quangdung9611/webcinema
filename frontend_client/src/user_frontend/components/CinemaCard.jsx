@@ -1,16 +1,20 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, MapPin, Phone, ExternalLink } from "lucide-react";
 import "../styles/CinemaCard.css";
 
 const CinemaCard = ({
-    type = "movie",
+    type = "movie", // "movie" | "cinema"
     image,
     title,
     badge,
     buttonText = "Xem chi tiết",
     link,
-    onClick
+    onClick,
+    // Cinema props
+    address,
+    hotline,
+    mapLink,
 }) => {
 
     const navigate = useNavigate();
@@ -25,6 +29,8 @@ const CinemaCard = ({
         if (onClick) return onClick();
         if (link) navigate(link);
     };
+
+    const isCinema = type === "cinema";
 
     return (
         <div
@@ -45,14 +51,12 @@ const CinemaCard = ({
                         draggable={false}
                     />
 
-                    {/* BADGE - dùng h4 */}
                     {badge && (
                         <h4 className="cinema-card-badge">
                             {badge}
                         </h4>
                     )}
 
-                    {/* OVERLAY LÀM MỜ VÀ HIỆN NÚT XEM CHI TIẾT (GIỐNG DEMO INDEX.HTML) */}
                     <div className="cinema-card-overlay">
                         <button 
                             className="btn-card-action"
@@ -64,8 +68,39 @@ const CinemaCard = ({
                     </div>
                 </div>
 
-                {/* TITLE - dùng h3 */}
-                <h3 className="cinema-card-title">{title}</h3>
+                {/* INFO */}
+                <div className="cinema-card-info">
+                    <h3 className="cinema-card-title">{title}</h3>
+                    
+                    {isCinema && (
+                        <>
+                            {address && (
+                                <div className="cinema-card-address">
+                                    <MapPin size={14} />
+                                    <span>{address}</span>
+                                </div>
+                            )}
+                            {hotline && (
+                                <div className="cinema-card-hotline">
+                                    <Phone size={14} />
+                                    <span>{hotline}</span>
+                                </div>
+                            )}
+                            {mapLink && (
+                                <a
+                                    href={mapLink}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="cinema-card-map"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <ExternalLink size={14} />
+                                    Xem Google Maps
+                                </a>
+                            )}
+                        </>
+                    )}
+                </div>
 
             </div>
         </div>
