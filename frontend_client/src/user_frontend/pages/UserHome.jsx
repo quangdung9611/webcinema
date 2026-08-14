@@ -21,7 +21,8 @@ import {
   Building2,
   CalendarDays,
   Clock,
-  ChevronDown
+  ChevronDown,
+  Quote
 } from 'lucide-react';
 
 import '../styles/user_home.css';
@@ -197,7 +198,8 @@ const UserHome = () => {
   const [promotions, setPromotions] = useState([]);
   const [cinemaNews, setCinemaNews] = useState([]);
   const [cinemas, setCinemas] = useState([]);
-  const [newsItems, setNewsItems] = useState([]); // 👈 STATE CHO TIN TỨC
+  const [newsItems, setNewsItems] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
 
   const [quickData, setQuickData] = useState({
     movies: [],
@@ -256,14 +258,16 @@ const UserHome = () => {
           promotionRes,
           blogRes,
           cinemaRes,
-          newsRes // 👈 THÊM API NEWS
+          newsRes,
+          testimonialRes
         ] = await Promise.all([
           api.get('/api/movies/status-group'),
           api.get('/api/showtimes/quick-booking'),
           api.get('/api/promotions'),
           api.get('/api/blog-cinema'),
           api.get('/api/cinemas'),
-          api.get('/api/news')
+          api.get('/api/news'),
+          api.get('/api/testimonials/active?limit=4')
         ]);
 
         const statusData = statusRes?.data?.data || statusRes?.data || {};
@@ -285,7 +289,7 @@ const UserHome = () => {
         setCinemaNews(unwrapArray(blogRes.data));
         setCinemas(unwrapArray(cinemaRes.data));
 
-        // 👈 XỬ LÝ NEWS
+        // Xử lý NEWS
         const newsData = Array.isArray(newsRes.data)
           ? newsRes.data
           : Array.isArray(newsRes.data?.data)
@@ -295,6 +299,14 @@ const UserHome = () => {
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
         );
         setNewsItems(sortedNews);
+
+        // Xử lý TESTIMONIALS
+        const testimonialData = testimonialRes.data?.success === true
+          ? testimonialRes.data.data
+          : Array.isArray(testimonialRes.data)
+            ? testimonialRes.data
+            : [];
+        setTestimonials(testimonialData);
 
       } catch (error) {
         console.error("Lỗi khi load data:", error);
@@ -469,6 +481,23 @@ const UserHome = () => {
     return isNaN(parsed) ? '' : parsed.toLocaleDateString('vi-VN');
   };
 
+  // ===== RENDER STARS =====
+  const renderStars = (rating) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <Star
+          key={i}
+          size={16}
+          fill={i <= rating ? '#F5C518' : 'transparent'}
+          color={i <= rating ? '#F5C518' : '#737B86'}
+          strokeWidth={1.5}
+        />
+      );
+    }
+    return stars;
+  };
+
   return (
     <>
       <Modal
@@ -578,6 +607,67 @@ const UserHome = () => {
 
           {/* ===== STATS ===== */}
           <StatsSection />
+
+          {/* ===== TESTIMONIALS ===== */}
+          <ScrollReveal
+            direction="up"
+            duration={0.5}
+            delay={0.35}
+            threshold={0.08}
+            once
+          >
+            <section className="testimonials-section">
+              <div className="testimonials-header">
+                <div className="testimonials-title-group">
+                  <Quote size={32} className="testimonials-icon" />
+                  <h3 className="testimonials-title">Khách hàng nói gì về chúng tôi</h3>
+                </div>
+              </div>
+              <div className="testimonials-grid">
+                {testimonials.length > 0 ? (
+                  testimonials.map((item, index) => {
+                    const avatarUrl = item.customer_avatar
+                      ? (item.customer_avatar.startsWith('http') ? item.customer_avatar : `https://api.quangdungcinema.id.vn/uploads/avatars/${item.customer_avatar}`)
+                      : `https://ui-avatars.com/api/?name=${encodeURIComponent(item.customer_name || 'User')}&background=random&size=80&color=fff&bold=true`;
+                    return (
+                      <ScrollReveal
+                        key={item.testimonial_id || index}
+                        direction="up"
+                        duration={0.4}
+                        delay={0.5 + index * 0.08}
+                        threshold={0.08}
+                        once
+                      >
+                        <div className="testimonial-card">
+                          <div className="testimonial-header">
+                            <div className="testimonial-avatar">
+                              <img src={avatarUrl} alt={item.customer_name} loading="lazy" />
+                            </div>
+                            <div className="testimonial-user">
+                              <h4 className="testimonial-name">{item.customer_name || 'Khách hàng'}</h4>
+                              <div className="testimonial-stars">
+                                {renderStars(item.rating || 5)}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="testimonial-content">
+                            <p>"{item.content}"</p>
+                          </div>
+                          <div className="testimonial-date">
+                            <span>{formatDate(item.created_at)}</span>
+                          </div>
+                        </div>
+                      </ScrollReveal>
+                    );
+                  })
+                ) : (
+                  <div className="testimonials-empty">
+                    <p>Chưa có đánh giá nào.</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          </ScrollReveal>
 
           {/* ===== MOVIE SLIDER ===== */}
           <ScrollReveal

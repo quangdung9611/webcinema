@@ -1,4 +1,3 @@
-
 const Password = require("../utils/Password");
 const UserRepository = require("../Repositories/UserRepository");
 
@@ -632,25 +631,37 @@ class UserService {
 
 
     /*=========================================================
-        GET USER BOOKINGS
+        GET USER BOOKINGS (ĐÃ SỬA - LẤY DỮ LIỆU TỪ REPOSITORY)
     =========================================================*/
     async getUserBookings(userId) {
 
-        // TODO:
-        // Thêm logic lấy booking
-        // khi có BookingService
+        // Gọi repository để lấy danh sách booking
+        const bookings =
+            await UserRepository.getBookingsByUser(
+                userId
+            );
 
-        return [];
+        return bookings;
     }
 
 
     /*=========================================================
-        CLEAR BOOKING HISTORY
+        CLEAR BOOKING HISTORY (ĐÃ SỬA - XÓA BOOKING VÀ RESET ĐIỂM)
     =========================================================*/
     async clearHistory(userId) {
 
-        // TODO:
-        // Thêm logic xóa booking
+        const affected =
+            await UserRepository.clearBookingsByUser(
+                userId
+            );
+
+        if (affected === 0) {
+
+            throw {
+                statusCode: 404,
+                message: "Không tìm thấy booking để xóa"
+            };
+        }
 
         return true;
     }
@@ -684,4 +695,3 @@ class UserService {
 
 
 module.exports = new UserService();
-

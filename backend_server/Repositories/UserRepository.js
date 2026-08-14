@@ -1,4 +1,3 @@
-
 const db = require("../Config/db");
 
 class UserRepository {
@@ -692,7 +691,66 @@ class UserRepository {
 
         return result.affectedRows;
     }
+
+
+    /*=========================================================
+        THÊM MỚI: GET BOOKINGS BY USER ID
+    =========================================================*/
+    async getBookingsByUser(userId) {
+        const [rows] = await db.query(
+            `
+            SELECT
+                b.booking_id AS bookingId,
+                b.total_amount AS totalAmount,
+                b.status,
+                b.booking_date AS bookingDate,
+                m.title AS movieTitle,
+                m.movie_poster AS moviePoster,
+                c.cinema_name AS cinemaName,
+                r.room_name AS roomName,
+                s.start_time AS startTime,
+                DATE_FORMAT(s.start_time, '%d/%m/%Y') AS selectedDate,
+                DATE_FORMAT(s.start_time, '%H:%i') AS startTimeDisplay,
+                DATE_FORMAT(b.booking_date, '%d/%m/%Y %H:%i') AS bookingDateFull,
+                GROUP_CONCAT(
+                    CONCAT(st.seat_row, st.seat_number)
+                    ORDER BY st.seat_row, st.seat_number
+                    SEPARATOR ', '
+                ) AS seatDisplay,
+                CONCAT('PIN-', LPAD(b.booking_id, 6, '0')) AS ticketPIN
+            FROM bookings b
+            INNER JOIN showtimes s ON b.showtime_id = s.showtime_id
+            INNER JOIN movies m ON s.movie_id = m.movie_id
+            INNER JOIN rooms r ON s.room_id = r.room_id
+            INNER JOIN cinemas c ON r.cinema_id = c.cinema_id
+            LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
+            LEFT JOIN seats st ON bd.seat_id = st.seat_id
+            WHERE b.user_id = ?
+            GROUP BY b.booking_id
+            ORDER BY b.booking_date DESC
+            `,
+            [userId]
+        );
+        return rows;
+    }
+
+
+    /*=========================================================
+        THÊM MỚI: CLEAR BOOKINGS BY USER (xóa lịch sử và reset điểm)
+    =========================================================*/
+    async clearBookingsByUser(userId) {
+        // Xóa tất cả booking của user (cascade sẽ xóa booking_details, tickets)
+        const [result] = await db.query(
+            `DELETE FROM bookings WHERE user_id = ?`,
+            [userId]
+        );
+        // Reset điểm về 0
+        await db.query(
+            `UPDATE users SET points = 0 WHERE user_id = ?`,
+            [userId]
+        );
+        return result.affectedRows;
+    }
 }
 
 module.exports = new UserRepository();
-

@@ -1,4 +1,3 @@
-
 const UserService = require("../Services/UserService");
 
 
@@ -683,7 +682,7 @@ exports.uploadAvatar = async (
 
 
 /*=========================================================
-    USER - GET MY BOOKINGS
+    USER - GET MY BOOKINGS (ĐÃ SỬA - GỌI SERVICE THỰC TẾ)
 =========================================================*/
 exports.getMyBookings = async (
     req,
@@ -730,7 +729,7 @@ exports.getMyBookings = async (
 
 
 /*=========================================================
-    USER - CLEAR BOOKING HISTORY
+    USER - CLEAR BOOKING HISTORY (ĐÃ SỬA)
 =========================================================*/
 exports.clearBookingHistory = async (
     req,
@@ -749,7 +748,7 @@ exports.clearBookingHistory = async (
             success: true,
 
             message:
-                "Đã xóa lịch sử đặt vé"
+                "Đã xóa lịch sử đặt vé và reset điểm về 0"
 
         });
 
@@ -821,4 +820,3 @@ exports.resetMyPoints = async (
         });
     }
 };
-
