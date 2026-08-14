@@ -11,9 +11,7 @@ import '../styles/Profile.css';
 import {
     User,
     ClipboardList,
-    Bell,
     Pencil,
-    ShieldCheck,
     Star,
     Info,
     ChevronRight,
@@ -23,7 +21,6 @@ import {
     MapPin,
     ReceiptText,
     Armchair,
-    Trash2,
     X,
     Eye,
     EyeOff
@@ -86,17 +83,14 @@ const Profile = () => {
     });
 
     // =========================================================
-    // STATE: TAB
+    // STATE: TAB & FILTER
     // =========================================================
     const [activeTab, setActiveTab] = useState('orders');
-
-    // =========================================================
-    // STATE: BOOKING HISTORY
-    // =========================================================
     const [bookingHistory, setBookingHistory] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
-    const [loadingClear, setLoadingClear] = useState(false);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [filterFrom, setFilterFrom] = useState('');
+    const [filterTo, setFilterTo] = useState('');
 
     // =========================================================
     // FETCH USER PROFILE
@@ -120,7 +114,6 @@ const Profile = () => {
             }
         } catch (error) {
             console.error('Lỗi lấy profile:', error);
-            // Nếu 401, có thể redirect sang login
             if (error.response?.status === 401) {
                 window.location.href = '/login';
             }
@@ -245,7 +238,6 @@ const Profile = () => {
 
             await api.put('/api/users/profile', updateData);
 
-            // Cập nhật state local
             setFormData(prev => ({
                 ...prev,
                 full_name: editFormData.full_name,
@@ -253,9 +245,7 @@ const Profile = () => {
                 phone: editFormData.phone
             }));
 
-            // Refresh lại profile từ server
             await fetchUserProfile();
-
             closeEditModal();
             showModal('success', 'Thành công', 'Hồ sơ đã được cập nhật!');
 
@@ -271,37 +261,6 @@ const Profile = () => {
         } finally {
             setLoadingEdit(false);
         }
-    };
-
-    // =========================================================
-    // CLEAR BOOKING HISTORY
-    // =========================================================
-    const handleClearHistory = async () => {
-        setLoadingClear(true);
-        try {
-            const res = await api.delete('/api/users/booking-history');
-            if (res.data.success) {
-                setBookingHistory([]);
-                setFormData(prev => ({ ...prev, points: 0 }));
-                // Refresh lại profile để lấy điểm mới
-                await fetchUserProfile();
-                showModal('success', 'Thành công', 'Đã xóa sạch lịch sử và điểm thưởng!');
-            }
-        } catch (error) {
-            console.error('Lỗi xóa:', error);
-            showModal('error', 'Lỗi', 'Không thể xóa lịch sử lúc này.');
-        } finally {
-            setLoadingClear(false);
-        }
-    };
-
-    const confirmClearHistory = () => {
-        showModal(
-            'warning',
-            'Xác nhận xóa',
-            'Bạn có chắc muốn xóa sạch lịch sử và đưa điểm về 0 không?',
-            handleClearHistory
-        );
     };
 
     // =========================================================
@@ -329,7 +288,6 @@ const Profile = () => {
             return;
         }
 
-        // Preview
         const reader = new FileReader();
         reader.onloadend = () => setAvatarPreview(reader.result);
         reader.readAsDataURL(file);
@@ -378,13 +336,32 @@ const Profile = () => {
             : '');
 
     // =========================================================
+    // FILTER FUNCTION
+    // =========================================================
+    const getFilteredBookings = () => {
+        if (!filterFrom && !filterTo) return bookingHistory;
+        return bookingHistory.filter(item => {
+            const dateStr = item.bookingDateFull || item.bookingDate || '';
+            const parts = dateStr.split(' ')[0].split('/');
+            if (parts.length !== 3) return true;
+            const itemDate = new Date(parts[2], parts[1] - 1, parts[0]);
+            const fromDate = filterFrom ? new Date(filterFrom) : null;
+            const toDate = filterTo ? new Date(filterTo) : null;
+            if (fromDate && itemDate < fromDate) return false;
+            if (toDate && itemDate > toDate) return false;
+            return true;
+        });
+    };
+
+    const filteredBookings = getFilteredBookings();
+
+    // =========================================================
     // RENDER LOADING
     // =========================================================
     if (loadingUser) {
         return <div className="loader">Đang tải...</div>;
     }
 
-    // Nếu không có user (chưa đăng nhập) -> chuyển hướng hoặc hiển thị thông báo
     if (!user) {
         return (
             <div className="loader">
@@ -493,8 +470,6 @@ const Profile = () => {
                             >
                                 Thông tin cá nhân
                             </button>
-                            <button>Thông báo</button>
-                            <button>Quà tặng</button>
                         </div>
 
                         <div className="tab-body">
@@ -534,39 +509,42 @@ const Profile = () => {
                                 </div>
                             ) : (
                                 <div className="history-tab-content">
-                                    {bookingHistory.length > 0 && (
-                                        <div className="history-action-bar" style={{ textAlign: 'right', marginBottom: '15px' }}>
-                                            <LoadingButton
-                                                type="button"
-                                                loading={loadingClear}
-                                                loadingText="Đang xóa..."
-                                                onClick={confirmClearHistory}
-                                                disabled={loadingClear}
-                                                className="btn-clear-history"
-                                                spinnerColor="#ffffff"
-                                                style={{
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '5px',
-                                                    background: '#ff4d4f',
-                                                    border: 'none',
-                                                    color: '#fff',
-                                                    cursor: 'pointer',
-                                                    fontSize: '14px',
-                                                    padding: '8px 16px',
-                                                    borderRadius: '6px'
-                                                }}
-                                            >
-                                                <Trash2 size={16} /> Xóa lịch sử và điểm
-                                            </LoadingButton>
+                                    {/* Bộ lọc ngày */}
+                                    <div className="history-filter-bar">
+                                        <div className="filter-group">
+                                            <label>Từ ngày</label>
+                                            <input
+                                                type="date"
+                                                value={filterFrom}
+                                                onChange={e => setFilterFrom(e.target.value)}
+                                            />
                                         </div>
-                                    )}
+                                        <div className="filter-group">
+                                            <label>Đến ngày</label>
+                                            <input
+                                                type="date"
+                                                value={filterTo}
+                                                onChange={e => setFilterTo(e.target.value)}
+                                            />
+                                        </div>
+                                        <button className="btn-filter" onClick={() => {}}>
+                                            Lọc
+                                        </button>
+                                        {(filterFrom || filterTo) && (
+                                            <button
+                                                className="btn-filter-clear"
+                                                onClick={() => { setFilterFrom(''); setFilterTo(''); }}
+                                            >
+                                                Xóa lọc
+                                            </button>
+                                        )}
+                                    </div>
 
                                     {loadingHistory ? (
                                         <div className="loading-text">Đang tải lịch sử giao dịch...</div>
-                                    ) : bookingHistory.length > 0 ? (
+                                    ) : filteredBookings.length > 0 ? (
                                         <div className="ticket-list">
-                                            {bookingHistory.map((item, index) => (
+                                            {filteredBookings.map((item, index) => (
                                                 <div key={index} className="history-ticket-item">
                                                     <div className="ticket-thumb">
                                                         <img
@@ -576,6 +554,7 @@ const Profile = () => {
                                                                     : `https://api.quangdungcinema.id.vn/uploads/posters/${item.moviePoster}`
                                                             }
                                                             alt="poster"
+                                                            onError={(e) => e.target.src = '/default-poster.jpg'}
                                                         />
                                                     </div>
                                                     <div className="ticket-main-info">
@@ -599,7 +578,7 @@ const Profile = () => {
                                                             <span><strong>{item.seatDisplay}</strong></span>
                                                         </div>
                                                         <p className="price-text">
-                                                            Tổng tiền: <span>{Number(item.total_amount).toLocaleString()} đ</span>
+                                                            Tổng tiền: <span>{item.totalAmount ? Number(item.totalAmount).toLocaleString() : '0'} đ</span>
                                                         </p>
                                                     </div>
                                                     <div className="ticket-qr-side">
@@ -617,7 +596,11 @@ const Profile = () => {
                                     ) : (
                                         <div className="empty-history">
                                             <ClipboardList size={48} color="#444" />
-                                            <p>Bạn chưa có giao dịch nào trong năm 2026.</p>
+                                            <p>
+                                                {bookingHistory.length === 0
+                                                    ? 'Bạn chưa có giao dịch nào trong năm 2026.'
+                                                    : 'Không có giao dịch nào trong khoảng thời gian này.'}
+                                            </p>
                                             <Link to="/" className="btn-book-now">ĐẶT VÉ NGAY</Link>
                                         </div>
                                     )}

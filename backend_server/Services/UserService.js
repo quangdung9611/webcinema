@@ -631,14 +631,15 @@ class UserService {
 
 
     /*=========================================================
-        GET USER BOOKINGS (ĐÃ SỬA - LẤY DỮ LIỆU TỪ REPOSITORY)
+        GET USER BOOKINGS (CÓ HỖ TRỢ LỌC THEO NGÀY)
     =========================================================*/
-    async getUserBookings(userId) {
+    async getUserBookings(userId, from = null, to = null) {
 
-        // Gọi repository để lấy danh sách booking
         const bookings =
             await UserRepository.getBookingsByUser(
-                userId
+                userId,
+                from,
+                to
             );
 
         return bookings;
@@ -646,7 +647,7 @@ class UserService {
 
 
     /*=========================================================
-        CLEAR BOOKING HISTORY (ĐÃ SỬA - XÓA BOOKING VÀ RESET ĐIỂM)
+        CLEAR BOOKING HISTORY
     =========================================================*/
     async clearHistory(userId) {
 

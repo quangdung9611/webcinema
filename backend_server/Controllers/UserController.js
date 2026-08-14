@@ -682,7 +682,7 @@ exports.uploadAvatar = async (
 
 
 /*=========================================================
-    USER - GET MY BOOKINGS (ĐÃ SỬA - GỌI SERVICE THỰC TẾ)
+    USER - GET MY BOOKINGS (CÓ HỖ TRỢ LỌC THEO NGÀY)
 =========================================================*/
 exports.getMyBookings = async (
     req,
@@ -691,9 +691,17 @@ exports.getMyBookings = async (
 
     try {
 
+        const {
+            from,
+            to
+        } = req.query;
+
+
         const bookings =
             await UserService.getUserBookings(
-                req.user.user_id
+                req.user.user_id,
+                from,
+                to
             );
 
 
@@ -729,7 +737,7 @@ exports.getMyBookings = async (
 
 
 /*=========================================================
-    USER - CLEAR BOOKING HISTORY (ĐÃ SỬA)
+    USER - CLEAR BOOKING HISTORY
 =========================================================*/
 exports.clearBookingHistory = async (
     req,

@@ -63,10 +63,6 @@
     border-bottom: var(--border-subtle);
 }
 
-/* =========================================================
-   AVATAR - 60x60, TRÒN, KHÔNG MÉO
-   ========================================================= */
-
 .avatar-wrapper {
     position: relative;
     flex-shrink: 0;
@@ -98,7 +94,6 @@
     border-radius: 50%;
 }
 
-/* Camera icon */
 .camera-icon {
     position: absolute;
     bottom: 0;
@@ -442,43 +437,121 @@
     box-shadow: var(--btn-silver-shadow);
 }
 
-.btn-clear-history {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-xl);
-    border: 2px solid transparent;
-    border-radius: var(--radius-round);
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-semibold);
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.btn-clear-history:hover {
-    color: var(--silver-light);
-    background: rgba(232, 232, 232, 0.08);
-    border-color: rgba(232, 232, 232, 0.3);
-    transform: translateY(-2px);
-}
-
 /* =========================================================
-   HISTORY TAB
+   HISTORY TAB - CÓ SCROLLBAR DỌC
    ========================================================= */
 
 .history-tab-content {
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: var(--space-sm);
 }
 
-.history-action-bar {
+/* Custom scrollbar cho history-tab-content */
+.history-tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.history-tab-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: var(--radius-round);
+    margin: var(--space-sm) 0;
+}
+
+.history-tab-content::-webkit-scrollbar-thumb {
+    background: var(--silver-primary);
+    border-radius: var(--radius-round);
+}
+
+.history-tab-content::-webkit-scrollbar-thumb:hover {
+    background: var(--silver-light);
+}
+
+.history-tab-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--silver-primary) rgba(255, 255, 255, 0.04);
+}
+
+/* =========================================================
+   FILTER BAR (LỌC THEO NGÀY)
+   ========================================================= */
+
+.history-filter-bar {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-lg);
+    border: var(--border-subtle);
+    margin-bottom: var(--space-lg);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.filter-group label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-medium);
+    white-space: nowrap;
+}
+
+.filter-group input[type="date"] {
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    border: var(--border-premium);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-body);
+    font-size: var(--font-size-base);
+    transition: all var(--transition-normal);
+    min-width: 150px;
+}
+
+.filter-group input[type="date"]:focus {
+    outline: none;
+    border-color: var(--silver-primary);
+    box-shadow: 0 0 0 3px rgba(232, 232, 232, 0.1);
+}
+
+.btn-filter,
+.btn-filter-clear {
+    padding: var(--space-xs) var(--space-lg);
+    border-radius: var(--radius-round);
+    border: none;
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.btn-filter {
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    box-shadow: var(--btn-silver-shadow);
+}
+
+.btn-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.btn-filter-clear {
+    background: transparent;
+    color: var(--text-secondary);
+    border: var(--border-premium);
+}
+
+.btn-filter-clear:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-body);
 }
 
 /* =========================================================
@@ -841,10 +914,6 @@
     margin: 0 0 var(--space-md);
 }
 
-/* =========================================================
-   PASSWORD WRAPPER (NÚT MẮT NẰM TRONG INPUT)
-   ========================================================= */
-
 .password-wrapper {
     position: relative;
     width: 100%;
@@ -925,6 +994,7 @@
 /* =========================================================
    CHỐNG AUTOFILL CHO TẤT CẢ INPUT
    ========================================================= */
+
 .auth-input:-webkit-autofill,
 .auth-input:-webkit-autofill:hover,
 .auth-input:-webkit-autofill:focus,
@@ -943,7 +1013,6 @@ input:-webkit-autofill:focus {
     border-color: var(--silver-primary);
 }
 
-/* Nếu input bị lỗi mà có autofill thì vẫn giữ viền đỏ */
 .auth-input.input-error:-webkit-autofill {
     border-color: rgba(255, 59, 92, 0.4) !important;
     -webkit-box-shadow: 0 0 0 1000px rgba(255, 59, 92, 0.06) inset !important;
@@ -952,6 +1021,7 @@ input:-webkit-autofill:focus {
 /* =========================================================
    SPINNER LOADING NHỎ
    ========================================================= */
+
 .spinner-small {
     display: inline-block;
     width: 16px;
@@ -1002,6 +1072,10 @@ input:-webkit-autofill:focus {
     .ticket-qr-side::before,
     .ticket-qr-side::after {
         display: none;
+    }
+
+    .history-tab-content {
+        max-height: 500px;
     }
 }
 
@@ -1059,6 +1133,28 @@ input:-webkit-autofill:focus {
     .edit-profile-modal .modal-footer button {
         width: 100%;
     }
+
+    .history-tab-content {
+        max-height: 400px;
+    }
+
+    /* Filter bar trên mobile */
+    .history-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-group {
+        flex-wrap: wrap;
+    }
+    .filter-group input[type="date"] {
+        width: 100%;
+        min-width: unset;
+    }
+    .btn-filter,
+    .btn-filter-clear {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 /* --- 480px --- */
@@ -1088,5 +1184,9 @@ input:-webkit-autofill:focus {
     }
     .password-wrapper input {
         padding-right: 40px !important;
+    }
+
+    .history-tab-content {
+        max-height: 350px;
     }
 }

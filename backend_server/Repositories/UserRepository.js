@@ -694,9 +694,22 @@ class UserRepository {
 
 
     /*=========================================================
-        THÊM MỚI: GET BOOKINGS BY USER ID
+        GET BOOKINGS BY USER ID (CÓ HỖ TRỢ LỌC THEO NGÀY)
     =========================================================*/
-    async getBookingsByUser(userId) {
+    async getBookingsByUser(userId, from = null, to = null) {
+
+        let dateCondition = "";
+        const params = [userId];
+
+        if (from) {
+            dateCondition += " AND DATE(b.booking_date) >= ?";
+            params.push(from);
+        }
+        if (to) {
+            dateCondition += " AND DATE(b.booking_date) <= ?";
+            params.push(to);
+        }
+
         const [rows] = await db.query(
             `
             SELECT
@@ -726,17 +739,18 @@ class UserRepository {
             LEFT JOIN booking_details bd ON b.booking_id = bd.booking_id
             LEFT JOIN seats st ON bd.seat_id = st.seat_id
             WHERE b.user_id = ?
+            ${dateCondition}
             GROUP BY b.booking_id
             ORDER BY b.booking_date DESC
             `,
-            [userId]
+            params
         );
         return rows;
     }
 
 
     /*=========================================================
-        THÊM MỚI: CLEAR BOOKINGS BY USER (xóa lịch sử và reset điểm)
+        CLEAR BOOKINGS BY USER (xóa lịch sử và reset điểm)
     =========================================================*/
     async clearBookingsByUser(userId) {
         // Xóa tất cả booking của user (cascade sẽ xóa booking_details, tickets)
