@@ -10,7 +10,9 @@ import {
     Building2,
     Layers3,
     CircleDot,
-    Tv2
+    Tv2,
+    Crown,
+    Sparkles
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -26,6 +28,24 @@ const initialFormData = {
     room_name: '',
     cinema_id: '',
     room_type: ''
+};
+
+// Map giá trị room_type sang tên hiển thị (đúng với CSDL)
+const roomTypeMap = {
+    '2D': 'Phòng 2D',
+    '3D': 'Phòng 3D',
+    '4DMAX': 'Phòng 4DMAX',
+    'IMAX': 'Phòng IMAX',
+    'VIP': 'Phòng VIP'
+};
+
+// Cấu hình màu sắc và icon cho từng loại phòng
+const roomTypeConfig = {
+    '2D': { bg: '#e0f2fe', color: '#0284c7', icon: <CircleDot size={14} /> },
+    '3D': { bg: '#ede9fe', color: '#7c3aed', icon: <Layers3 size={14} /> },
+    '4DMAX': { bg: '#fef3c7', color: '#d97706', icon: <Sparkles size={14} /> },
+    'IMAX': { bg: '#dcfce7', color: '#16a34a', icon: <Tv2 size={14} /> },
+    'VIP': { bg: '#fce4ec', color: '#e91e63', icon: <Crown size={14} /> }
 };
 
 // ==========================================================
@@ -59,7 +79,7 @@ const RoomPage = () => {
     const [formErrors, setFormErrors] = useState({});
 
     // ======================================================
-    // ALERT MODAL (giống UserPage)
+    // ALERT MODAL
     // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -91,7 +111,7 @@ const RoomPage = () => {
     };
 
     // ------------------------------------------------------
-    // FETCH ROOMS - GIỐNG MoviePage
+    // FETCH ROOMS
     // ------------------------------------------------------
     const fetchRooms = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) {
@@ -119,7 +139,6 @@ const RoomPage = () => {
                 signal: controller.signal
             });
 
-            // ✅ Lấy trực tiếp từ res.data giống MoviePage
             const roomsData = res.data?.data || [];
             const paginationData = res.data?.pagination || {
                 page: 1,
@@ -158,12 +177,11 @@ const RoomPage = () => {
     }, []);
 
     // ------------------------------------------------------
-    // FETCH CINEMAS (cho dropdown)
+    // FETCH CINEMAS
     // ------------------------------------------------------
     const fetchCinemas = useCallback(async () => {
         try {
             const res = await api.get('/api/cinemas');
-            // Cinema API trả về { success: true, data: [...] }
             const cinemaList = res.data?.data || [];
             setCinemas(cinemaList);
         } catch (error) {
@@ -344,21 +362,17 @@ const RoomPage = () => {
     };
 
     // ------------------------------------------------------
-    // HELPER: RENDER TYPE BADGE
+    // HELPER: RENDER TYPE BADGE (hiển thị tên đầy đủ)
     // ------------------------------------------------------
     const renderTypeBadge = (type) => {
-        const config = {
-            '2D': { bg: '#e0f2fe', color: '#0284c7', icon: <CircleDot size={14} /> },
-            '3D': { bg: '#ede9fe', color: '#7c3aed', icon: <Layers3 size={14} /> },
-            'IMAX': { bg: '#dcfce7', color: '#16a34a', icon: <Tv2 size={14} /> }
-        };
-        const item = config[type] || { bg: '#e2e8f0', color: '#475569', icon: <Monitor size={14} /> };
+        const config = roomTypeConfig[type] || { bg: '#e2e8f0', color: '#475569', icon: <Monitor size={14} /> };
+        const displayName = roomTypeMap[type] || type;
 
         return (
             <span
                 style={{
-                    background: item.bg,
-                    color: item.color,
+                    background: config.bg,
+                    color: config.color,
                     padding: '7px 12px',
                     borderRadius: '999px',
                     fontSize: '12px',
@@ -368,8 +382,8 @@ const RoomPage = () => {
                     gap: '6px'
                 }}
             >
-                {item.icon}
-                {type}
+                {config.icon}
+                {displayName}
             </span>
         );
     };
@@ -464,7 +478,9 @@ const RoomPage = () => {
                 { label: '-- Chọn loại phòng --', value: '' },
                 { label: 'Phòng 2D', value: '2D' },
                 { label: 'Phòng 3D', value: '3D' },
-                { label: 'Phòng IMAX', value: 'IMAX' }
+                { label: 'Phòng 4DMAX', value: '4DMAX' },
+                { label: 'Phòng IMAX', value: 'IMAX' },
+                { label: 'Phòng VIP', value: 'VIP' }
             ]
         },
         {
@@ -513,7 +529,7 @@ const RoomPage = () => {
             </AdminPage>
 
             {/* ==================================================
-                FORM MODAL (giống UserPage)
+                FORM MODAL
             ================================================== */}
             <AdminModal
                 open={isFormOpen}
@@ -534,7 +550,7 @@ const RoomPage = () => {
             </AdminModal>
 
             {/* ==================================================
-                ALERT / CONFIRM MODAL (giống UserPage)
+                ALERT / CONFIRM MODAL
             ================================================== */}
             <AdminModal
                 open={alertModal.open}
