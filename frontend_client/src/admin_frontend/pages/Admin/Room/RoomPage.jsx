@@ -24,6 +24,7 @@ import AdminPagination from '../../../components/AdminPagination';
 // ==========================================================
 // CONSTANTS
 // ==========================================================
+
 const initialFormData = {
     room_name: '',
     cinema_id: '',
@@ -51,16 +52,28 @@ const roomTypeConfig = {
 // ==========================================================
 // COMPONENT
 // ==========================================================
+
 const RoomPage = () => {
-    // ------------------------------------------------------
-    // STATES
-    // ------------------------------------------------------
+
+    // ======================================================
+    // DATA
+    // ======================================================
+
     const [rooms, setRooms] = useState([]);
     const [cinemas, setCinemas] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
 
+    // ======================================================
+    // SEARCH
+    // ======================================================
+
     const [search, setSearch] = useState('');
+
+    // ======================================================
+    // PAGINATION
+    // ======================================================
+
     const [pagination, setPagination] = useState({
         page: 1,
         limit: 20,
@@ -70,8 +83,16 @@ const RoomPage = () => {
         hasPreviousPage: false
     });
 
+    // ======================================================
+    // FETCH CONTROL
+    // ======================================================
+
     const isFetching = useRef(false);
     const abortControllerRef = useRef(null);
+
+    // ======================================================
+    // FORM
+    // ======================================================
 
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingRoom, setEditingRoom] = useState(null);
@@ -79,8 +100,9 @@ const RoomPage = () => {
     const [formErrors, setFormErrors] = useState({});
 
     // ======================================================
-    // ALERT MODAL
+    // ALERT / CONFIRM MODAL
     // ======================================================
+
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -89,6 +111,10 @@ const RoomPage = () => {
         onConfirm: null,
         onCancel: null
     });
+
+    // ======================================================
+    // SHOW ALERT
+    // ======================================================
 
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
         setAlertModal({
@@ -101,6 +127,10 @@ const RoomPage = () => {
         });
     };
 
+    // ======================================================
+    // CLOSE ALERT
+    // ======================================================
+
     const closeAlert = () => {
         setAlertModal((prev) => ({
             ...prev,
@@ -110,9 +140,10 @@ const RoomPage = () => {
         }));
     };
 
-    // ------------------------------------------------------
+    // ======================================================
     // FETCH ROOMS
-    // ------------------------------------------------------
+    // ======================================================
+
     const fetchRooms = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) {
             console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
@@ -151,9 +182,10 @@ const RoomPage = () => {
 
             setRooms(roomsData);
             setPagination(paginationData);
+
         } catch (error) {
             if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
-                console.log('🛑 Request bị hủy');
+                console.log('🛑 Request rooms bị hủy');
                 return;
             }
             console.error('FETCH ROOMS ERROR:', error);
@@ -167,6 +199,7 @@ const RoomPage = () => {
                 hasNextPage: false
             });
             showAlert('Lỗi', 'Không thể tải danh sách phòng chiếu.', 'error');
+
         } finally {
             setLoading(false);
             isFetching.current = false;
@@ -176,9 +209,10 @@ const RoomPage = () => {
         }
     }, []);
 
-    // ------------------------------------------------------
-    // FETCH CINEMAS
-    // ------------------------------------------------------
+    // ======================================================
+    // FETCH CINEMAS (cho dropdown)
+    // ======================================================
+
     const fetchCinemas = useCallback(async () => {
         try {
             const res = await api.get('/api/cinemas');
@@ -189,12 +223,14 @@ const RoomPage = () => {
         }
     }, []);
 
-    // ------------------------------------------------------
-    // MOUNT
-    // ------------------------------------------------------
+    // ======================================================
+    // INITIAL FETCH
+    // ======================================================
+
     useEffect(() => {
         fetchRooms(1, '');
         fetchCinemas();
+
         return () => {
             if (abortControllerRef.current) {
                 abortControllerRef.current.abort();
@@ -202,15 +238,18 @@ const RoomPage = () => {
         };
     }, [fetchRooms, fetchCinemas]);
 
-    // ------------------------------------------------------
+    // ======================================================
     // SEARCH DEBOUNCE
-    // ------------------------------------------------------
+    // ======================================================
+
     const prevSearchRef = useRef('');
+
     useEffect(() => {
         const currentSearch = search;
-        const prevSearch = prevSearchRef.current;
+        const previousSearch = prevSearchRef.current;
 
-        if (currentSearch === prevSearch) return;
+        if (currentSearch === previousSearch) return;
+
         prevSearchRef.current = currentSearch;
 
         const timer = setTimeout(() => {
@@ -220,39 +259,52 @@ const RoomPage = () => {
         return () => clearTimeout(timer);
     }, [search, fetchRooms]);
 
+    // ======================================================
+    // PAGE CHANGE
+    // ======================================================
+
     const handlePageChange = (page) => {
         fetchRooms(page, search);
     };
 
-    // ------------------------------------------------------
+    // ======================================================
     // VALIDATE FORM
-    // ------------------------------------------------------
+    // ======================================================
+
     const validateForm = () => {
         const errors = {};
+
         if (!formData.room_name.trim()) {
             errors.room_name = 'Vui lòng nhập tên phòng';
         } else if (formData.room_name.trim().length < 2) {
             errors.room_name = 'Tên phòng phải từ 2 ký tự trở lên';
         }
+
         if (!formData.room_type) {
             errors.room_type = 'Vui lòng chọn loại phòng';
         }
+
         if (!formData.cinema_id) {
             errors.cinema_id = 'Vui lòng chọn rạp chiếu';
         }
-        setFormErrors(errors);
-        return Object.keys(errors).length === 0;
+
+        return errors;
     };
 
-    // ------------------------------------------------------
-    // HANDLE MODAL ACTIONS
-    // ------------------------------------------------------
+    // ======================================================
+    // OPEN ADD FORM
+    // ======================================================
+
     const handleOpenAdd = () => {
         setEditingRoom(null);
-        setFormData(initialFormData);
+        setFormData({ ...initialFormData });
         setFormErrors({});
         setIsFormOpen(true);
     };
+
+    // ======================================================
+    // OPEN EDIT FORM
+    // ======================================================
 
     const handleOpenEdit = (room) => {
         setEditingRoom(room);
@@ -265,9 +317,10 @@ const RoomPage = () => {
         setIsFormOpen(true);
     };
 
-    // ------------------------------------------------------
-    // HANDLE CLOSE FORM
-    // ------------------------------------------------------
+    // ======================================================
+    // CLOSE FORM
+    // ======================================================
+
     const handleCloseForm = () => {
         if (submitLoading) return;
         setIsFormOpen(false);
@@ -275,9 +328,10 @@ const RoomPage = () => {
         setFormErrors({});
     };
 
-    // ------------------------------------------------------
-    // HANDLE CHANGE
-    // ------------------------------------------------------
+    // ======================================================
+    // HANDLE FORM CHANGE
+    // ======================================================
+
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -288,12 +342,18 @@ const RoomPage = () => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // ------------------------------------------------------
-    // HANDLE SUBMIT
-    // ------------------------------------------------------
+    // ======================================================
+    // SUBMIT FORM
+    // ======================================================
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm()) return;
+
+        const errors = validateForm();
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            return;
+        }
 
         try {
             setSubmitLoading(true);
@@ -302,35 +362,48 @@ const RoomPage = () => {
             if (editingRoom) {
                 await api.put(`/api/rooms/${editingRoom.room_id}`, formData);
                 setIsFormOpen(false);
+                setEditingRoom(null);
+                setFormErrors({});
+
                 fetchRooms(pagination.page, search);
+
                 setTimeout(() => {
                     showAlert('Thành công', 'Cập nhật phòng chiếu thành công.', 'success');
                 }, 100);
+
             } else {
                 await api.post('/api/rooms', formData);
                 setIsFormOpen(false);
+                setFormErrors({});
+
                 fetchRooms(pagination.page, search);
+
                 setTimeout(() => {
                     showAlert('Thành công', 'Thêm phòng chiếu thành công.', 'success');
                 }, 100);
             }
+
         } catch (error) {
             console.error('SUBMIT ROOM ERROR:', error);
+
             const backendField = error.response?.data?.field;
             const backendError = error.response?.data?.error || 'Đã xảy ra lỗi.';
+
             if (backendField) {
                 setFormErrors({ [backendField]: backendError });
             } else {
                 showAlert('Lỗi', backendError, 'error');
             }
+
         } finally {
             setSubmitLoading(false);
         }
     };
 
-    // ------------------------------------------------------
-    // HANDLE DELETE
-    // ------------------------------------------------------
+    // ======================================================
+    // DELETE ROOM
+    // ======================================================
+
     const handleDelete = (room) => {
         showAlert(
             'Xác nhận xóa',
@@ -345,15 +418,23 @@ const RoomPage = () => {
                     const newPage = rooms.length === 1 && currentPage > 1
                         ? currentPage - 1
                         : currentPage;
+
                     await fetchRooms(newPage, search);
+
                     setTimeout(() => {
                         showAlert('Thành công', 'Xóa phòng chiếu thành công.', 'success');
                     }, 100);
+
                 } catch (error) {
                     console.error('DELETE ROOM ERROR:', error);
                     closeAlert();
+
                     setTimeout(() => {
-                        showAlert('Lỗi', error.response?.data?.error || 'Không thể xóa phòng chiếu.', 'error');
+                        showAlert(
+                            'Lỗi',
+                            error.response?.data?.error || 'Không thể xóa phòng chiếu.',
+                            'error'
+                        );
                     }, 100);
                 }
             },
@@ -361,11 +442,16 @@ const RoomPage = () => {
         );
     };
 
-    // ------------------------------------------------------
-    // HELPER: RENDER TYPE BADGE (hiển thị tên đầy đủ)
-    // ------------------------------------------------------
+    // ======================================================
+    // HELPER: RENDER TYPE BADGE
+    // ======================================================
+
     const renderTypeBadge = (type) => {
-        const config = roomTypeConfig[type] || { bg: '#e2e8f0', color: '#475569', icon: <Monitor size={14} /> };
+        const config = roomTypeConfig[type] || {
+            bg: '#e2e8f0',
+            color: '#475569',
+            icon: <Monitor size={14} />
+        };
         const displayName = roomTypeMap[type] || type;
 
         return (
@@ -388,9 +474,10 @@ const RoomPage = () => {
         );
     };
 
-    // ------------------------------------------------------
+    // ======================================================
     // TABLE COLUMNS
-    // ------------------------------------------------------
+    // ======================================================
+
     const columns = [
         {
             title: 'Phòng chiếu',
@@ -411,8 +498,16 @@ const RoomPage = () => {
                         <Monitor size={20} />
                     </div>
                     <div>
-                        <div style={{ fontWeight: '700', fontSize: '15px' }}>{row.room_name}</div>
-                        <small style={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                        <div style={{ fontWeight: '700', fontSize: '15px', color: 'var(--text-heading)' }}>
+                            {row.room_name}
+                        </div>
+                        <small style={{
+                            color: 'var(--text-muted)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            marginTop: '4px'
+                        }}>
                             <Building2 size={13} /> Room ID: #{row.room_id}
                         </small>
                     </div>
@@ -429,11 +524,26 @@ const RoomPage = () => {
             key: 'cinema_name',
             render: (row) => (
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', color: '#0f172a' }}>
-                        <Layout size={15} /> {row.cinema_name}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontWeight: '700',
+                        color: 'var(--text-heading)'
+                    }}>
+                        <Layout size={15} style={{ color: 'var(--silver-primary)' }} />
+                        {row.cinema_name}
                     </div>
-                    <div style={{ marginTop: '7px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px' }}>
-                        <MapPin size={13} /> {row.city}
+                    <div style={{
+                        marginTop: '7px',
+                        color: 'var(--text-secondary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '13px'
+                    }}>
+                        <MapPin size={13} style={{ color: 'var(--silver-primary)' }} />
+                        {row.city}
                     </div>
                 </div>
             )
@@ -444,14 +554,18 @@ const RoomPage = () => {
             render: (row) => (
                 <div className="admin-table-actions">
                     <button
+                        type="button"
                         className="admin-action-btn edit-btn"
                         onClick={() => handleOpenEdit(row)}
+                        title="Chỉnh sửa"
                     >
                         <Edit size={16} />
                     </button>
                     <button
+                        type="button"
                         className="admin-action-btn delete-btn"
                         onClick={() => handleDelete(row)}
+                        title="Xóa"
                     >
                         <Trash2 size={16} />
                     </button>
@@ -460,20 +574,23 @@ const RoomPage = () => {
         }
     ];
 
-    // ------------------------------------------------------
+    // ======================================================
     // FORM FIELDS
-    // ------------------------------------------------------
+    // ======================================================
+
     const formFields = [
         {
             label: 'Tên phòng',
             name: 'room_name',
             type: 'text',
-            placeholder: 'Ví dụ: Phòng 01'
+            placeholder: 'Ví dụ: Phòng 01',
+            required: true
         },
         {
             label: 'Loại phòng',
             name: 'room_type',
             type: 'select',
+            required: true,
             options: [
                 { label: '-- Chọn loại phòng --', value: '' },
                 { label: 'Phòng 2D', value: '2D' },
@@ -487,6 +604,7 @@ const RoomPage = () => {
             label: 'Rạp chiếu',
             name: 'cinema_id',
             type: 'select',
+            required: true,
             options: [
                 { label: '-- Chọn rạp --', value: '' },
                 ...cinemas.map(cinema => ({
@@ -497,11 +615,22 @@ const RoomPage = () => {
         }
     ];
 
-    // ------------------------------------------------------
+    // ======================================================
+    // ALERT VARIANT
+    // ======================================================
+
+    const alertVariant = alertModal.onConfirm ? 'confirm' : 'alert';
+
+    // ======================================================
     // RENDER
-    // ------------------------------------------------------
+    // ======================================================
+
     return (
         <>
+            {/* ==================================================
+                ADMIN PAGE
+            ================================================== */}
+
             <AdminPage
                 title="Quản lý phòng chiếu"
                 subtitle="Quản lý toàn bộ phòng chiếu trong hệ thống"
@@ -531,11 +660,13 @@ const RoomPage = () => {
             {/* ==================================================
                 FORM MODAL
             ================================================== */}
+
             <AdminModal
                 open={isFormOpen}
                 onClose={handleCloseForm}
                 title={editingRoom ? 'Cập nhật phòng chiếu' : 'Thêm phòng chiếu'}
                 type="default"
+                variant="custom"
                 size="lg"
             >
                 <AdminForm
@@ -552,11 +683,13 @@ const RoomPage = () => {
             {/* ==================================================
                 ALERT / CONFIRM MODAL
             ================================================== */}
+
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}
                 title={alertModal.title}
                 type={alertModal.type}
+                variant={alertVariant}
                 size="sm"
                 onConfirm={alertModal.onConfirm || closeAlert}
                 onCancel={alertModal.onCancel || closeAlert}

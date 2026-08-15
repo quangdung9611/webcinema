@@ -121,7 +121,7 @@
 }
 
 /* =========================================================
-   SELECT
+   SELECT - NATIVE DROPDOWN
    ========================================================= */
 .admin-form-select {
     cursor: pointer;
@@ -131,6 +131,52 @@
 .admin-form-select option {
     background: var(--bg-secondary);
     color: var(--text-body);
+}
+
+/* =========================================================
+   SELECT - LIST BOX (có size)
+   HIỂN THỊ DANH SÁCH CUỘN VỚI MAX-HEIGHT
+   ========================================================= */
+.admin-form-select[size] {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 4px 0;
+    border-color: rgba(255, 255, 255, 0.12);
+    background: var(--bg-secondary);
+    /* Scrollbar - Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: var(--silver-primary) transparent;
+}
+
+/* Scrollbar - Chrome / Safari / Edge */
+.admin-form-select[size]::-webkit-scrollbar {
+    width: 6px;
+}
+.admin-form-select[size]::-webkit-scrollbar-track {
+    background: transparent;
+}
+.admin-form-select[size]::-webkit-scrollbar-thumb {
+    background: var(--silver-primary);
+    border-radius: var(--radius-round);
+}
+.admin-form-select[size]::-webkit-scrollbar-thumb:hover {
+    background: var(--silver-light);
+}
+
+/* Style cho từng option trong list box */
+.admin-form-select[size] option {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 0;
+    transition: background 0.15s ease;
+}
+.admin-form-select[size] option:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+.admin-form-select[size] option:checked {
+    background: var(--silver-primary);
+    color: var(--bg-primary);
+    font-weight: var(--fw-bold);
 }
 
 /* =========================================================
@@ -387,6 +433,15 @@
 /* =========================================================
    RESPONSIVE
    ========================================================= */
+
+/* Tablet & small desktop */
+@media (max-width: 992px) {
+    .admin-form-select[size] {
+        max-height: 180px;
+    }
+}
+
+/* Mobile */
 @media (max-width: 768px) {
     .admin-form-fields {
         gap: var(--space-md);
@@ -406,8 +461,13 @@
         padding: var(--space-sm) var(--space-xl);
         font-size: var(--font-size-h6);
     }
+    /* Select có size - giảm max-height */
+    .admin-form-select[size] {
+        max-height: 160px;
+    }
 }
 
+/* Mobile nhỏ */
 @media (max-width: 480px) {
     .admin-form-fields {
         gap: var(--space-md);
@@ -439,5 +499,24 @@
     .admin-form-success,
     .password-strength-text {
         font-size: var(--font-size-h6);
+    }
+    /* Select có size - giảm max-height thêm */
+    .admin-form-select[size] {
+        max-height: 140px;
+    }
+    .admin-form-select[size] option {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+}
+
+/* Điện thoại siêu nhỏ */
+@media (max-width: 360px) {
+    .admin-form-select[size] {
+        max-height: 120px;
+    }
+    .admin-form-select[size] option {
+        padding: 5px 8px;
+        font-size: 12px;
     }
 }
