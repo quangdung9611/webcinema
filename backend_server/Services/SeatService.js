@@ -110,8 +110,8 @@ class SeatService {
       const isLastRow = (rowIndex === totalRows - 1);
       const isVipRow = vipRows.includes(rowIndex);
 
-      // Xử lý ghế Couple: chỉ ở hàng cuối và số ghế chẵn (1-2, 3-4, ...)
-      if (isLastRow && coupleRow === 'last' && seatNumber % 2 === 0) {
+      // 🔥 SỬA LỖI 1: Ghế đôi - toàn bộ hàng cuối đều là Couple (bỏ điều kiện % 2 === 0)
+      if (isLastRow && coupleRow === 'last') {
         seatType = 'Couple';
         price = couplePrice;
       } 
@@ -126,8 +126,8 @@ class SeatService {
         price = defaultPrice;
       }
 
-      // Đối với loại VIP (phòng VIP): tất cả ghế đều là VIP
-      if (roomType === 'VIP') {
+      // 🔥 SỬA LỖI 2: Nếu là phòng VIP, chỉ ép thành VIP những ghế chưa phải là Couple
+      if (roomType === 'VIP' && seatType !== 'Couple') {
         seatType = 'VIP';
         price = vipPrice;
       }
