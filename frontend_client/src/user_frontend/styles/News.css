@@ -156,6 +156,35 @@
 }
 
 /* ==========================================================
+   BREADCRUMB
+   ========================================================== */
+
+.news-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) 0 var(--space-xl);
+    color: var(--text-muted);
+    font-size: var(--font-size-base);
+    border-bottom: var(--border-premium);
+    margin-bottom: var(--space-xl);
+}
+
+.news-breadcrumb a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color var(--transition-fast, 0.2s);
+}
+
+.news-breadcrumb a:hover {
+    color: var(--silver-primary);
+}
+
+.news-breadcrumb .current {
+    color: var(--text-body);
+}
+
+/* ==========================================================
    GRID – 4 CỘT
    ========================================================== */
 
@@ -190,6 +219,11 @@
     margin-bottom: var(--space-3xl);
 }
 
+.news-empty svg {
+    color: var(--text-muted);
+    margin-bottom: var(--space-md);
+}
+
 .news-empty h3 {
     font-size: var(--font-size-h4);
     font-weight: var(--fw-bold);
@@ -201,6 +235,23 @@
     color: var(--text-secondary);
     font-size: var(--font-size-base);
     margin: 0 0 var(--space-xl);
+}
+
+.news-empty-btn {
+    display: inline-block;
+    padding: var(--space-md) var(--space-2xl);
+    border-radius: var(--radius-round);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    font-weight: var(--fw-bold);
+    font-size: var(--font-size-base);
+    text-decoration: none;
+    transition: all var(--transition-normal, 0.3s);
+}
+
+.news-empty-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 /* ==========================================================
@@ -235,12 +286,14 @@
    RESPONSIVE – 4 CỘT → 2 CỘT → 1 CỘT
    ========================================================== */
 
+/* --- 1200px: 4 cột vẫn giữ, chỉ thu nhỏ gap --- */
 @media (max-width: 1200px) {
     .news-grid {
         gap: var(--space-lg);
     }
 }
 
+/* --- 992px: xuống 2 cột --- */
 @media (max-width: 992px) {
     .news-container {
         padding: 0 var(--space-lg);
@@ -255,6 +308,7 @@
     }
 }
 
+/* --- 768px: vẫn 2 cột --- */
 @media (max-width: 768px) {
     .news-page {
         padding: 0 0 var(--space-2xl);
@@ -284,8 +338,12 @@
     .news-empty {
         margin-bottom: var(--space-2xl);
     }
+    .news-breadcrumb {
+        font-size: var(--font-size-base);
+    }
 }
 
+/* --- 480px: xuống 1 cột --- */
 @media (max-width: 480px) {
     .news-hero {
         aspect-ratio: 4 / 3;
@@ -314,5 +372,9 @@
     }
     .news-empty h3 {
         font-size: var(--font-size-h5);
+    }
+    .news-breadcrumb {
+        font-size: var(--font-size-h6);
+        flex-wrap: wrap;
     }
 }

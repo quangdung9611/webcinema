@@ -448,7 +448,7 @@
 }
 
 /* =========================================================
-   DIỄN VIÊN
+   DIỄN VIÊN – SỬ DỤNG CINEMACARD
    ========================================================= */
 .cinema-section-block {
     margin-top: var(--space-2xl);
@@ -462,97 +462,23 @@
     width: 100%;
 }
 
-.actor-circle-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-.actor-circle-card:hover {
-    transform: translateY(-8px);
-}
-
-.actor-avatar-frame {
-    position: relative;
+/* Wrapper cho CinemaCard để đồng bộ chiều cao */
+.actor-card-wrapper {
     width: 100%;
-    aspect-ratio: 3/2;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-    background: var(--bg-tertiary);
-    border: var(--border-premium);
-    box-shadow: var(--glass-shadow);
-    transition: all var(--transition-normal);
-}
-.actor-circle-card:hover .actor-avatar-frame {
-    border-color: var(--silver-primary);
-    box-shadow: var(--card-shadow-hover);
 }
 
-.actor-avatar-frame::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent 45%);
-    z-index: 2;
-    pointer-events: none;
+/* Ẩn button "Xem chi tiết" trên card diễn viên */
+.actor-card-wrapper .btn-card-action {
+    display: none !important;
 }
 
-.actor-avatar-frame::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -170%;
-    width: 45%;
+/* Đảm bảo card diễn viên chiếm hết chiều cao grid */
+.actor-card-wrapper .cinema-card {
     height: 100%;
-    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.25), transparent);
-    transform: skewX(-25deg);
-    transition: 1s;
-    z-index: 3;
-}
-.actor-circle-card:hover .actor-avatar-frame::after {
-    left: 170%;
-}
-
-.actor-real-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: all var(--transition-slow);
-}
-.actor-circle-card:hover .actor-real-img {
-    transform: scale(1.08);
-}
-
-.placeholder-avatar-bg {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-tertiary);
-}
-
-.actor-real-name {
-    margin-top: var(--space-md);
-    color: var(--text-body);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-bold);
-    line-height: 1.5;
-    text-align: center;
-    transition: all var(--transition-normal);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-.actor-circle-card:hover .actor-real-name {
-    color: var(--silver-primary);
 }
 
 /* =========================================================
-   TRAILER KHÁC
+   TRAILER KHÁC – SỬ DỤNG CINEMACARD + OVERLAY PLAY
    ========================================================= */
 .other-trailers-grid {
     display: grid;
@@ -561,74 +487,35 @@
     width: 100%;
 }
 
-.other-trailer-card {
+.trailer-card-wrapper {
+    position: relative;
+    width: 100%;
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: transform var(--transition-normal);
 }
-.other-trailer-card:hover {
+
+.trailer-card-wrapper:hover {
     transform: translateY(-8px);
 }
 
-.other-trailer-thumb {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 3/2;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-    background: var(--bg-tertiary);
-    border: var(--border-premium);
-    box-shadow: var(--glass-shadow);
-    transition: all var(--transition-normal);
-}
-.other-trailer-card:hover .other-trailer-thumb {
-    border-color: var(--silver-primary);
-    box-shadow: var(--card-shadow-hover);
+/* Ẩn button "Xem chi tiết" trên card trailer */
+.trailer-card-wrapper .btn-card-action {
+    display: none !important;
 }
 
-.other-trailer-thumb img {
-    width: 100%;
-    height: 100%;
-    display: block;
-    object-fit: cover;
-    transition: all var(--transition-slow);
-}
-.other-trailer-card:hover .other-trailer-thumb img {
-    transform: scale(1.08);
-}
-
-.other-trailer-thumb::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent 45%);
-    z-index: 2;
-}
-
-.other-trailer-thumb::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -180%;
-    width: 45%;
-    height: 100%;
-    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.25), transparent);
-    transform: skewX(-25deg);
-    z-index: 3;
-    transition: 1s;
-}
-.other-trailer-card:hover .other-trailer-thumb::after {
-    left: 180%;
-}
-
-.other-trailer-overlay {
+/* Overlay play */
+.trailer-play-overlay {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 5;
+    z-index: 10;
+    pointer-events: none; /* cho phép click xuyên qua để bắt sự kiện từ wrapper */
+    transition: all var(--transition-normal);
 }
-.other-trailer-overlay::before {
+
+.trailer-play-overlay::before {
     content: "";
     position: absolute;
     width: 72px;
@@ -639,35 +526,22 @@
     backdrop-filter: blur(6px);
     transition: all var(--transition-normal);
 }
-.other-trailer-overlay svg {
+
+.trailer-play-overlay svg {
     position: relative;
     z-index: 10;
     color: var(--text-body);
     transition: all var(--transition-normal);
 }
-.other-trailer-card:hover .other-trailer-overlay::before {
+
+.trailer-card-wrapper:hover .trailer-play-overlay::before {
     transform: scale(1.1);
     border-color: var(--silver-primary);
 }
-.other-trailer-card:hover .other-trailer-overlay svg {
-    transform: scale(1.15);
-}
 
-.other-trailer-title {
-    margin-top: var(--space-md);
-    color: var(--text-body);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-bold);
-    line-height: 1.5;
-    text-align: center;
-    transition: all var(--transition-normal);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-.other-trailer-card:hover .other-trailer-title {
-    color: var(--silver-primary);
+.trailer-card-wrapper:hover .trailer-play-overlay svg {
+    transform: scale(1.15);
+    color: var(--silver-light);
 }
 
 /* =========================================================
@@ -1190,6 +1064,7 @@
         text-align: center;
     }
 
+    /* 2 cột cho grid */
     .genre-movies-grid,
     .cast-avatars-horizontal-list,
     .other-trailers-grid {
@@ -1276,6 +1151,14 @@
     .meta-label,
     .meta-value {
         font-size: 0.75rem;
+    }
+
+    /* 1 cột cho grid */
+    .genre-movies-grid,
+    .cast-avatars-horizontal-list,
+    .other-trailers-grid {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-md) !important;
     }
 
     .section-header-row .section-title-label,

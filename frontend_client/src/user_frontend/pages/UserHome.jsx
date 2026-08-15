@@ -8,6 +8,7 @@ import MoviePreviewModal from '../components/MoviePreviewModal';
 import ScrollReveal from '../components/ScrollReveal';
 import CinemaCard from '../components/CinemaCard';
 import HeroBanner from '../components/HeroBanner';
+import ReviewModal from '../components/ReviewModal'; // 👈 Import ReviewModal
 
 import {
   Ticket,
@@ -190,6 +191,7 @@ const StatsSection = () => {
 const UserHome = () => {
   const navigate = useNavigate();
 
+  // ===== STATES =====
   const [groupedMovies, setGroupedMovies] = useState({
     "Đang chiếu": [],
     "Sắp chiếu": []
@@ -200,6 +202,7 @@ const UserHome = () => {
   const [cinemas, setCinemas] = useState([]);
   const [newsItems, setNewsItems] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
+  const [user, setUser] = useState(null); // 👈 Lưu thông tin user
 
   const [quickData, setQuickData] = useState({
     movies: [],
@@ -226,10 +229,20 @@ const UserHome = () => {
     selectedMovie: null
   });
 
+  // ===== REVIEW MODAL STATE =====
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+
+  // ===== MODAL HELPERS =====
   const closeModal = () => {
     setModal({ show: false, type: 'error', title: '', message: '' });
   };
 
+  const showModal = (type, title, message) => {
+    setModal({ show: true, type, title, message });
+  };
+
+  // ===== PREVIEW MODAL =====
   const handlePreview = (movie) => {
     setPreviewModal({ open: true, selectedMovie: movie });
   };
@@ -238,7 +251,7 @@ const UserHome = () => {
     setPreviewModal({ open: false, selectedMovie: null });
   };
 
-  // ===== HÀM NAVIGATE + CUỘN LÊN ĐẦU =====
+  // ===== NAVIGATE + SCROLL TOP =====
   const navigateToTop = (path) => {
     navigate(path);
     window.scrollTo({
@@ -247,7 +260,7 @@ const UserHome = () => {
     });
   };
 
-  // ===== FETCH DỮ LIỆU CHÍNH =====
+  // ===== FETCH INITIAL DATA =====
   useEffect(() => {
     const fetchInitialData = async () => {
       setLoading(true);
@@ -289,7 +302,7 @@ const UserHome = () => {
         setCinemaNews(unwrapArray(blogRes.data));
         setCinemas(unwrapArray(cinemaRes.data));
 
-        // Xử lý NEWS
+        // NEWS
         const newsData = Array.isArray(newsRes.data)
           ? newsRes.data
           : Array.isArray(newsRes.data?.data)
@@ -300,13 +313,21 @@ const UserHome = () => {
         );
         setNewsItems(sortedNews);
 
-        // Xử lý TESTIMONIALS
+        // TESTIMONIALS
         const testimonialData = testimonialRes.data?.success === true
           ? testimonialRes.data.data
           : Array.isArray(testimonialRes.data)
             ? testimonialRes.data
             : [];
         setTestimonials(testimonialData);
+
+        // FETCH CURRENT USER
+        try {
+          const userRes = await api.get('/api/auth/me');
+          setUser(userRes.data?.user || null);
+        } catch (err) {
+          setUser(null);
+        }
 
       } catch (error) {
         console.error("Lỗi khi load data:", error);
@@ -408,6 +429,7 @@ const UserHome = () => {
     fetchShowtimes();
   }, [selectedQuick.movie, selectedQuick.cinema, selectedQuick.date]);
 
+  // ===== HANDLE QUICK BOOK =====
   const handleQuickBook = async () => {
     if (!selectedQuick.movie) {
       setModal({ show: true, type: 'error', title: 'Thiếu thông tin', message: 'Vui lòng chọn phim!' });
@@ -454,18 +476,67 @@ const UserHome = () => {
     }
   };
 
+  // ==========================================================
+  // HANDLE SUBMIT REVIEW
+  // ==========================================================
+  const handleSubmitReview = async (reviewData) => {
+    if (!user) {
+      showModal('error', 'Chưa đăng nhập', 'Vui lòng đăng nhập để gửi đánh giá.');
+      return;
+    }
+
+    setReviewSubmitting(true);
+    try {
+      await api.post('/api/testimonials', {
+        content: reviewData.content,
+        rating: reviewData.rating
+      });
+
+      // Đóng modal review
+      setIsReviewModalOpen(false);
+
+      // Hiển thị modal thông báo thành công
+      showModal('success', 'Cảm ơn bạn!', 'Đánh giá của bạn đã được gửi và sẽ được duyệt sớm.');
+
+      // Refresh danh sách đánh giá
+      const res = await api.get('/api/testimonials/active?limit=4');
+      const newData = res.data?.success === true ? res.data.data : Array.isArray(res.data) ? res.data : [];
+      setTestimonials(newData);
+
+    } catch (error) {
+      console.error('Lỗi gửi đánh giá:', error);
+      showModal(
+        'error',
+        'Lỗi',
+        error.response?.data?.message || 'Không thể gửi đánh giá. Vui lòng thử lại.'
+      );
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  // ===== OPEN REVIEW MODAL =====
+  const handleOpenReviewModal = () => {
+    if (!user) {
+      showModal('error', 'Chưa đăng nhập', 'Vui lòng đăng nhập để gửi đánh giá.');
+      return;
+    }
+    setIsReviewModalOpen(true);
+  };
+
+  // ==========================================================
+  // RENDER HELPERS
+  // ==========================================================
   const showingMovies = Array.isArray(groupedMovies["Đang chiếu"]) ? groupedMovies["Đang chiếu"] : [];
   const comingMovies = Array.isArray(groupedMovies["Sắp chiếu"]) ? groupedMovies["Sắp chiếu"] : [];
   const allMovies = [...showingMovies, ...comingMovies];
 
-  // ===== HELPER BACKDROP URL =====
   const getBackdropUrl = (backdrop) => {
     if (!backdrop) return '';
     if (backdrop.startsWith('http')) return backdrop;
     return `https://api.quangdungcinema.id.vn/uploads/backdrops/${backdrop}`;
   };
 
-  // ===== RENDER EXCERPT =====
   const renderExcerpt = (content = '') => {
     const cleanText = String(content)
       .replace(/<[^>]*>/g, '')
@@ -474,14 +545,12 @@ const UserHome = () => {
     return cleanText.length > 100 ? `${cleanText.slice(0, 100)}...` : cleanText;
   };
 
-  // ===== FORMAT DATE =====
   const formatDate = (date) => {
     if (!date) return '';
     const parsed = new Date(date);
     return isNaN(parsed) ? '' : parsed.toLocaleDateString('vi-VN');
   };
 
-  // ===== RENDER STARS =====
   const renderStars = (rating) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -498,6 +567,9 @@ const UserHome = () => {
     return stars;
   };
 
+  // ==========================================================
+  // RENDER
+  // ==========================================================
   return (
     <>
       <Modal
@@ -514,6 +586,14 @@ const UserHome = () => {
         onClose={closePreviewModal}
         movies={allMovies}
         selectedMovie={previewModal.selectedMovie}
+      />
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        onSubmit={handleSubmitReview}
+        loading={reviewSubmitting}
       />
 
       <div className="user-home">
@@ -622,7 +702,17 @@ const UserHome = () => {
                   <Quote size={32} className="testimonials-icon" />
                   <h3 className="testimonials-title">Khách hàng nói gì về chúng tôi</h3>
                 </div>
+
+                {/* 👇 Nút "Gửi đánh giá" */}
+                <button
+                  className="btn-review-open"
+                  onClick={handleOpenReviewModal}
+                >
+                  <Star size={16} fill="var(--silver-primary)" color="var(--silver-primary)" />
+                  Gửi đánh giá
+                </button>
               </div>
+
               <div className="testimonials-grid">
                 {testimonials.length > 0 ? (
                   testimonials.map((item, index) => {

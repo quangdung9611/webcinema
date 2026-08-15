@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
-import { Star } from "lucide-react";
 import "../styles/MovieCard.css";
 
 const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
@@ -9,20 +8,18 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
     const cardRef = useRef(null);
     const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
+    // Dữ liệu rút gọn – chỉ lấy những gì cần hiển thị
     const movieData = useMemo(() => ({
-        rating: Number(movie?.average_rating) || 0,
-        totalStars: 10,
-        filledStars: Math.floor(Number(movie?.average_rating) || 0),
-        reviewCount: movie?.total_reviews || 0,
-        ageRating: movie?.age_rating || "T18",
         title: movie?.title || "Đang cập nhật",
         poster: movie?.movie_poster,
+        ageRating: movie?.age_rating || "T18",
         language: movie?.language || "Phụ đề",
+        releaseDate: movie?.release_date || null,
         isHot: movie?.is_hot || false,
         isNew: movie?.is_new || false,
     }), [movie]);
 
-    // Intersection Observer cho animation xuất hiện
+    // Intersection Observer
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
@@ -33,14 +30,11 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
             },
             { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
         );
-
-        if (cardRef.current) {
-            observer.observe(cardRef.current);
-        }
-
+        if (cardRef.current) observer.observe(cardRef.current);
         return () => observer.disconnect();
     }, []);
 
+    // Tilt hiệu ứng 3D
     const handleMouseMove = useCallback((e) => {
         if (!cardRef.current) return;
         const rect = cardRef.current.getBoundingClientRect();
@@ -69,9 +63,20 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
         }
     }, [handleClick]);
 
-    // Tính toán shadow động theo hướng tilt
-    const shadowX = tilt.x * 0.8;
-    const shadowY = tilt.y * 0.8;
+    // Format ngày chiếu (nếu có)
+    const formattedDate = useMemo(() => {
+        if (!movieData.releaseDate) return null;
+        const date = new Date(movieData.releaseDate);
+        return isNaN(date) ? null : date.toLocaleDateString("vi-VN");
+    }, [movieData.releaseDate]);
+
+    // Phụ đề: ngày chiếu + ngôn ngữ + độ tuổi
+    const subtitleParts = [];
+    if (formattedDate) subtitleParts.push(formattedDate);
+    if (movieData.language) subtitleParts.push(movieData.language);
+    if (movieData.ageRating) subtitleParts.push(movieData.ageRating);
+
+    const subtitle = subtitleParts.join(" • ");
 
     return (
         <div
@@ -91,20 +96,20 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
                 transitionDelay: `${index * 50}ms`,
             }}
         >
-            <div 
+            <div
                 className="film-card__inner"
                 style={{
-                    boxShadow: isHover 
-                        ? `0 30px 70px rgba(0,0,0,0.8), 
-                           0 ${shadowX}px ${shadowY}px 0px rgba(232,232,232,0.15),
+                    boxShadow: isHover
+                        ? `0 30px 70px rgba(0,0,0,0.8),
+                           0 ${tilt.x * 0.8}px ${tilt.y * 0.8}px 0px rgba(232,232,232,0.15),
                            0 0 60px rgba(232,232,232,0.05)`
-                        : "var(--cinema-card-shadow)"
+                        : "var(--glass-shadow)",
                 }}
             >
                 {/* Border glow chạy */}
                 <div className="film-card__border-glow" />
 
-                {/* Sparkle particles */}
+                {/* Sparkle particles (giữ lại trang trí) */}
                 <div className="film-card__sparkles">
                     <span className="sparkle s1" />
                     <span className="sparkle s2" />
@@ -125,12 +130,10 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
                         <div className="film-card__no-poster" />
                     )}
 
-                    {/* 3D depth overlay */}
                     <div className="film-card__depth-overlay" />
 
                     <div className="film-card__age">{movieData.ageRating}</div>
 
-                    {/* Badge Hot / New */}
                     {movieData.isHot && (
                         <div className="film-card__badge hot">🔥 Hot</div>
                     )}
@@ -140,34 +143,15 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
                 </div>
 
                 <div className="film-card__info">
+                    {/* Tên phim – dùng thẻ h3 */}
                     <h3 className="film-card__title">{movieData.title}</h3>
-                    <div className="film-card__stars">
-                        {[...Array(movieData.totalStars)].map((_, idx) => (
-                            <Star
-                                key={idx}
-                                size={14}
-                                strokeWidth={1.8}
-                                fill={idx < movieData.filledStars ? "#E5C46B" : "transparent"}
-                                color="#E5C46B"
-                            />
-                        ))}
-                    </div>
-                    <div className="film-card__meta">
-                        <span className="film-card__score">{movieData.rating.toFixed(1)}</span>
-                        <span className="film-card__dot">•</span>
-                        <span className="film-card__reviews">{movieData.reviewCount} đánh giá</span>
-                    </div>
-                    <div className="film-card__extra">
-                        <span>{movieData.ageRating}</span>
-                        <span className="film-card__dot">•</span>
-                        <span>{movieData.language}</span>
-                    </div>
-                    <div className="film-card__progress">
-                        <div 
-                            className="film-card__progress-bar" 
-                            style={{ width: `${Math.min(100, (movieData.rating / 10) * 100)}%` }} 
-                        />
-                    </div>
+
+                    {/* Phụ đề (ngày chiếu • ngôn ngữ • độ tuổi) */}
+                    {subtitle && (
+                        <div className="film-card__subtitle">
+                            <span>{subtitle}</span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

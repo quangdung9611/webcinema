@@ -1,11 +1,9 @@
 /* ============================================================
-   FILM CARD – ULTIMATE PREMIUM EDITION
-   BUTTERY SMOOTH HOVER EXPERIENCE
+   FILM CARD – SILVER PREMIUM (CHỈ GIỮ TÊN PHIM)
+   SỬ DỤNG 100% BIẾN TỪ INDEX.CSS
    ============================================================ */
 
-/* ==========================================================
-   BASE CARD
-   ========================================================== */
+/* BASE CARD */
 .film-card {
     position: relative;
     width: 100%;
@@ -13,12 +11,12 @@
     cursor: pointer;
     border-radius: var(--radius-md);
 
-    /* Kích hoạt GPU acceleration cho mọi chuyển động */
+    /* GPU acceleration */
     transform: translateZ(0);
     transform-style: preserve-3d;
     will-change: transform, opacity;
 
-    /* Animation xuất hiện lần đầu */
+    /* Animation xuất hiện */
     opacity: 0;
     transform: translateY(40px) scale(0.95);
     transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
@@ -30,9 +28,7 @@
     transform: translateY(0) scale(1);
 }
 
-/* ==========================================================
-   INNER CARD
-   ========================================================== */
+/* INNER CARD */
 .film-card__inner {
     position: relative;
     overflow: hidden;
@@ -42,30 +38,24 @@
     height: 100%;
     border-radius: var(--radius-md);
 
-    /* Đồng bộ thiết kế hệ thống */
     background: var(--bg-card);
-    border: var(--border-premium); /* Viền xám bạc sáng */
+    border: var(--border-premium);
     box-shadow: var(--glass-shadow);
 
-    /* Kích hoạt GPU acceleration */
     transform: translateZ(0);
     transform-style: preserve-3d;
     will-change: transform, box-shadow;
 
-    /* Chuyển động siêu mượt */
     transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
                 box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .film-card--hover .film-card__inner {
-    /* Chỉ nâng lên và phóng to cực nhẹ để tạo cảm giác trôi nổi */
     transform: translateY(-6px) scale(1.015);
     box-shadow: var(--card-shadow-hover);
 }
 
-/* ==========================================================
-   BORDER SHIMMER GLOW (Đơn giản hóa để mượt hơn)
-   ========================================================== */
+/* BORDER GLOW SHIMMER */
 .film-card__border-glow {
     position: absolute;
     inset: -2px;
@@ -75,7 +65,6 @@
     pointer-events: none;
     opacity: 0;
 
-    /* Sử dụng gradient tuyến tính thay vì conic để giảm tải GPU */
     background: linear-gradient(
         105deg,
         transparent 0%,
@@ -85,11 +74,8 @@
         transparent 100%
     );
     background-size: 300% 100%;
-    
-    /* Mask để chỉ viền ngoài mới có glow */
-    -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
+
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
 
@@ -98,7 +84,6 @@
 
 .film-card--hover .film-card__border-glow {
     opacity: 1;
-    /* Chạy hiệu ứng lấp lánh khi hover */
     animation: shimmerSweep 1.8s linear infinite;
 }
 
@@ -107,9 +92,7 @@
     100% { background-position: 300% 0%; }
 }
 
-/* ==========================================================
-   POSTER
-   ========================================================== */
+/* POSTER */
 .film-card__poster {
     position: relative;
     overflow: hidden;
@@ -127,20 +110,16 @@
     object-fit: cover;
     display: block;
     will-change: transform, filter;
-    
     transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
                 filter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .film-card--hover .film-card__poster img {
-    /* Zoom nhẹ (1.04) để không bị giật cục */
     transform: scale(1.04);
     filter: brightness(1.05) saturate(1.02);
 }
 
-/* ==========================================================
-   DEPTH OVERLAY & SHADOW
-   ========================================================== */
+/* DEPTH OVERLAY */
 .film-card__depth-overlay {
     position: absolute;
     inset: 0;
@@ -159,13 +138,14 @@
     opacity: 1;
 }
 
+/* Gradient overlay dưới cùng (giúp chữ nổi) */
 .film-card__poster::before {
     content: "";
     position: absolute;
     inset: 0;
     background: linear-gradient(
         to top,
-        var(--overlay-deep) 0%,
+        rgba(0, 0, 0, 0.7) 0%,
         rgba(0, 0, 0, 0.10) 40%,
         transparent 70%
     );
@@ -178,9 +158,7 @@
     opacity: 0.6;
 }
 
-/* ==========================================================
-   AGE BADGE
-   ========================================================== */
+/* AGE BADGE */
 .film-card__age {
     position: absolute;
     top: 14px;
@@ -195,7 +173,6 @@
     letter-spacing: 0.5px;
     box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
     transform: translateZ(0);
-    
     transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
                 box-shadow 0.4s ease;
 }
@@ -205,9 +182,7 @@
     box-shadow: 0 6px 24px rgba(220, 38, 38, 0.5);
 }
 
-/* ==========================================================
-   BADGE HOT / NEW
-   ========================================================== */
+/* BADGE HOT / NEW */
 .film-card__badge {
     position: absolute;
     top: 14px;
@@ -221,7 +196,6 @@
     text-transform: uppercase;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     transform: translateZ(0);
-    
     transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
                 box-shadow 0.4s ease;
 }
@@ -243,7 +217,7 @@
 }
 
 /* ==========================================================
-   INFO
+   INFO – CHỈ GIỮ TÊN (H3) VÀ PHỤ ĐỀ
    ========================================================== */
 .film-card__info {
     position: relative;
@@ -251,26 +225,31 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     padding: 18px 16px 22px;
     background: var(--bg-card);
     flex: 1;
     transform: translateZ(20px);
+    text-align: center;
+    gap: 2px;
 }
 
+/* TÊN PHIM – H3, TO, NỔI BẬT */
 .film-card__title {
-    font-size: 1rem;
-    font-weight: var(--fw-bold);
-    line-height: 1.4;
-    text-align: center;
-    color: var(--text-body);
-    margin-bottom: 8px;
+    font-size: var(--font-size-h3);          /* ✅ Dùng biến H3 từ index.css */
+    font-weight: var(--fw-extrabold);
+    line-height: 1.3;
+    color: var(--text-heading);
+    margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    transition: all 0.4s ease;
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    text-shadow: 0 0 10px rgba(232, 232, 232, 0.1);
 }
 
+/* Hover: đổi màu gradient bạc */
 .film-card--hover .film-card__title {
     background: linear-gradient(135deg, var(--silver-primary), var(--silver-light), var(--silver-primary));
     background-size: 200% 200%;
@@ -278,6 +257,7 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
     animation: titleGradient 3s ease-in-out infinite;
+    text-shadow: 0 0 30px rgba(232, 232, 232, 0.2);
 }
 
 @keyframes titleGradient {
@@ -285,98 +265,48 @@
     50% { background-position: 100% 50%; }
 }
 
-/* ==========================================================
-   STARS
-   ========================================================== */
-.film-card__stars {
+/* PHỤ ĐỀ – nhỏ, mờ, hiển thị thông tin thêm */
+.film-card__subtitle {
     display: flex;
-    gap: 3px;
-    margin-bottom: 6px;
-}
-
-.film-card__stars svg {
-    width: 14px;
-    height: 14px;
-    color: var(--silver-primary);
-    transition: color 0.4s cubic-bezier(0.22, 1, 0.36, 1); 
-}
-
-.film-card--hover .film-card__stars svg {
-    color: var(--silver-light);
-}
-
-/* ==========================================================
-   META
-   ========================================================== */
-.film-card__meta {
-    display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
     flex-wrap: wrap;
-    gap: 8px;
-}
-
-.film-card__score {
-    color: var(--text-heading);
-    font-size: 0.875rem;
-    font-weight: var(--fw-bold);
-    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.film-card--hover .film-card__score {
-    color: var(--silver-primary);
-    text-shadow: 0 0 20px rgba(251, 191, 36, 0.25);
-}
-
-.film-card__reviews {
-    color: var(--text-muted);
-    font-size: 0.75rem;
-}
-
-.film-card__extra {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    margin-top: 4px;
-}
-
-.film-card__dot {
-    opacity: 0.3;
+    margin-top: 2px;
 }
 
 /* ==========================================================
-   PROGRESS BAR
+   SPARKLE PARTICLES (giữ nguyên để trang trí)
    ========================================================== */
-.film-card__progress {
-    width: 100%;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 999px;
-    margin-top: 12px;
+.film-card__sparkles {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
     overflow: hidden;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.film-card__progress-bar {
-    height: 100%;
-    background: var(--premium-gradient);
-    border-radius: 999px;
-    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-    background-size: 200% 100%;
+.sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+    animation: sparkleFloat 8s infinite alternate;
 }
 
-.film-card--hover .film-card__progress-bar {
-    animation: progressGlow 2s ease-in-out infinite;
-    box-shadow: 0 0 8px rgba(251, 191, 36, 0.25);
-}
+.sparkle.s1 { top: 10%; left: 10%; animation-delay: 0s; }
+.sparkle.s2 { top: 20%; right: 15%; animation-delay: 1.2s; }
+.sparkle.s3 { bottom: 30%; left: 5%; animation-delay: 2.4s; }
+.sparkle.s4 { bottom: 15%; right: 10%; animation-delay: 3.6s; }
+.sparkle.s5 { top: 50%; left: 50%; animation-delay: 4.8s; }
 
-@keyframes progressGlow {
-    0% { background-position: 0% 0%; }
-    50% { background-position: 100% 0%; }
-    100% { background-position: 0% 0%; }
+@keyframes sparkleFloat {
+    0% { transform: translate(0, 0) scale(0.5); opacity: 0.2; }
+    100% { transform: translate(20px, -30px) scale(1.2); opacity: 0.6; }
 }
 
 /* ==========================================================
@@ -394,30 +324,27 @@
 }
 
 /* ==========================================================
-   RESPONSIVE
+   RESPONSIVE - KHÔNG CẦN SET RIÊNG FONT SIZE CHO TITLE
+   VÌ VAR(--FONT-SIZE-H3) ĐÃ TỰ ĐỘNG RESPONSIVE
    ========================================================== */
 @media (max-width: 768px) {
     .film-card__info { padding: 14px 12px 18px; }
-    .film-card__title { font-size: 0.875rem; }
-    .film-card__stars svg { width: 12px; height: 12px; }
-    .film-card__score { font-size: 0.75rem; }
-    .film-card__reviews { font-size: 0.6875rem; }
-    .film-card__extra { font-size: 0.6875rem; }
+    .film-card__subtitle { font-size: 0.6875rem; }
     .film-card__age { top: 10px; right: 10px; font-size: 0.6rem; padding: 4px 10px; }
     .film-card__badge { top: 10px; left: 10px; font-size: 0.5rem; padding: 3px 10px; }
-    .film-card__border-glow { display: none; }
-    .film-card__depth-overlay { display: none; }
+    .film-card__border-glow,
+    .film-card__depth-overlay {
+        display: none;
+    }
 }
 
 @media (max-width: 480px) {
     .film-card__info { padding: 10px 10px 14px; }
-    .film-card__title { font-size: 0.75rem; }
-    .film-card__stars svg { width: 10px; height: 10px; }
-    .film-card__score { font-size: 0.6875rem; }
-    .film-card__reviews { font-size: 0.625rem; }
-    .film-card__extra { font-size: 0.625rem; }
+    .film-card__subtitle { font-size: 0.625rem; }
     .film-card__age { top: 8px; right: 8px; font-size: 0.5rem; padding: 3px 8px; }
     .film-card__badge { top: 8px; left: 8px; font-size: 0.45rem; padding: 2px 8px; }
-    .film-card__border-glow { display: none; }
-    .film-card__depth-overlay { display: none; }
+    .film-card__border-glow,
+    .film-card__depth-overlay {
+        display: none;
+    }
 }

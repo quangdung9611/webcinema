@@ -379,13 +379,45 @@
     animation-play-state: paused;
 }
 
+/* ==========================================================
+   CINEMA GRID - DÙNG CHUNG CHO PROMOTIONS, BLOG, NEWS, CINEMA
+   ========================================================== */
 .cinema-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--space-md);
-    align-items: start;
+    align-items: stretch; /* ✅ Kéo giãn card đồng đều */
 }
 
+/* ✅ Card bên trong chiếm toàn bộ chiều cao */
+.cinema-grid .cinema-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ✅ Cinemacard inner cũng flex để title + info đẩy xuống */
+.cinema-grid .cinema-card .cinema-card-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* ✅ Title giới hạn 2 dòng cho tất cả card (promotion, news, cinema...) */
+.cinema-grid .cinema-card .cinema-card-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+    flex: 1; /* Đẩy các phần dưới xuống */
+    min-height: 48px; /* Đảm bảo chiều cao tối thiểu khi title ngắn */
+}
+
+/* ==========================================================
+   CINEMA CORNER
+   ========================================================== */
 .cinema-corner-section {
     padding-bottom: var(--space-lg);
 }
@@ -478,7 +510,7 @@
 }
 
 /* ==========================================================
-   9. TESTIMONIALS SECTION (BỔ SUNG)
+   9. TESTIMONIALS SECTION (BỔ SUNG - ĐÃ CHỈNH SỬA ĐỂ ĐỒNG ĐỀU CHIỀU CAO)
    ========================================================== */
 
 .testimonials-section {
@@ -487,8 +519,11 @@
 
 .testimonials-header {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+    gap: var(--space-md);
 }
 
 .testimonials-title-group {
@@ -511,13 +546,51 @@
     margin: 0;
 }
 
+/* ===== NÚT MỞ REVIEW MODAL ===== */
+.btn-review-open {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-xl);
+    border-radius: var(--radius-round);
+    border: var(--border-premium);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-body);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-semibold);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+}
+
+.btn-review-open:hover {
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    border-color: transparent;
+    transform: translateY(-3px);
+    box-shadow: var(--btn-silver-shadow);
+}
+
+.btn-review-open svg {
+    transition: transform 0.3s;
+}
+
+.btn-review-open:hover svg {
+    transform: scale(1.1);
+}
+
+/* ===== TESTIMONIALS GRID ===== */
 .testimonials-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--space-lg);
+    align-items: stretch;
 }
 
 .testimonial-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
@@ -526,8 +599,6 @@
     padding: var(--space-xl) var(--space-lg);
     box-shadow: var(--glass-shadow);
     transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-    display: flex;
-    flex-direction: column;
 }
 
 .testimonial-card:hover {
@@ -540,6 +611,7 @@
     align-items: center;
     gap: var(--space-md);
     margin-bottom: var(--space-md);
+    flex-shrink: 0;
 }
 
 .testimonial-avatar {
@@ -583,6 +655,7 @@
 .testimonial-content {
     flex: 1;
     margin-bottom: var(--space-md);
+    min-height: 80px;
 }
 
 .testimonial-content p {
@@ -602,6 +675,7 @@
     padding-top: var(--space-md);
     color: var(--text-muted);
     font-size: var(--font-size-base);
+    flex-shrink: 0;
 }
 
 .testimonials-empty {
@@ -763,6 +837,15 @@
     .testimonial-name {
         font-size: var(--font-size-h5);
     }
+    .testimonials-header {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--space-md);
+    }
+    .btn-review-open {
+        font-size: var(--font-size-base);
+        padding: var(--space-xs) var(--space-md);
+    }
 }
 
 /* 480px */
@@ -855,5 +938,9 @@
     }
     .testimonial-name {
         font-size: var(--font-size-h6);
+    }
+    .btn-review-open {
+        font-size: var(--font-size-h6);
+        padding: var(--space-xs) var(--space-sm);
     }
 }
