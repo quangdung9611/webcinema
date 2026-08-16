@@ -1,5 +1,9 @@
-const ShowtimeRepository = require("../Repositories/ShowtimeRepository");
-const ShowtimeScheduler = require("./ShowtimeScheduler");
+const ShowtimeRepository =
+    require("../Repositories/ShowtimeRepository");
+
+const ShowtimeScheduler =
+    require("./ShowtimeScheduler");
+
 
 // ==========================================================
 // ROOM CONFIG
@@ -7,6 +11,7 @@ const ShowtimeScheduler = require("./ShowtimeScheduler");
 // ==========================================================
 
 const ROOM_CONFIG = {
+
     "2D": {
         defaultPrice: 80000
     },
@@ -28,6 +33,7 @@ const ROOM_CONFIG = {
     }
 };
 
+
 // ==========================================================
 // FORMAT DATETIME
 // ==========================================================
@@ -42,6 +48,7 @@ const formatDateTime = (dateTime) => {
         .replace("T", " ")
         .substring(0, 16);
 };
+
 
 // ==========================================================
 // VALIDATE SHOWTIME
@@ -72,11 +79,13 @@ const validateShowtime = (data) => {
     return null;
 };
 
+
 // ==========================================================
 // SERVICE
 // ==========================================================
 
 class ShowtimeService {
+
 
     /*=========================================================
         GET ALL SHOWTIMES
@@ -89,6 +98,7 @@ class ShowtimeService {
             search
         );
     }
+
 
     /*=========================================================
         GET ALL SHOWTIMES
@@ -108,6 +118,7 @@ class ShowtimeService {
         );
     }
 
+
     /*=========================================================
         GET SHOWTIMES BY CINEMA + ROOM
     =========================================================*/
@@ -124,6 +135,7 @@ class ShowtimeService {
             );
     }
 
+
     /*=========================================================
         GET SHOWTIME DETAIL
     =========================================================*/
@@ -137,9 +149,10 @@ class ShowtimeService {
 
         if (!showtime) {
 
-            const err = new Error(
-                "Không tìm thấy suất chiếu"
-            );
+            const err =
+                new Error(
+                    "Không tìm thấy suất chiếu"
+                );
 
             err.statusCode = 404;
 
@@ -148,6 +161,7 @@ class ShowtimeService {
 
         return showtime;
     }
+
 
     /*=========================================================
         GET SHOWTIMES BY MOVIE
@@ -159,6 +173,7 @@ class ShowtimeService {
             movieId
         );
     }
+
 
     /*=========================================================
         GET SHOWTIMES FOR MOVIE DETAIL
@@ -179,6 +194,7 @@ class ShowtimeService {
                     date
                 );
 
+
         const enrichedShowtimes =
             showtimes.map((showtime) => {
 
@@ -188,6 +204,7 @@ class ShowtimeService {
                 const price =
                     ROOM_CONFIG[roomType]
                         ?.defaultPrice || 0;
+
 
                 return {
 
@@ -201,6 +218,7 @@ class ShowtimeService {
                         ) + "đ"
                 };
             });
+
 
         const grouped =
             enrichedShowtimes.reduce(
@@ -221,8 +239,10 @@ class ShowtimeService {
                 {}
             );
 
+
         return grouped;
     }
+
 
     /*=========================================================
         CREATE SHOWTIME
@@ -238,30 +258,44 @@ class ShowtimeService {
             start_time
         } = data;
 
+
         start_time =
             formatDateTime(start_time);
 
-        movie_id = Number(movie_id);
-        cinema_id = Number(cinema_id);
-        room_id = Number(room_id);
+
+        movie_id =
+            Number(movie_id);
+
+        cinema_id =
+            Number(cinema_id);
+
+        room_id =
+            Number(room_id);
+
 
         const validationError =
             validateShowtime({
+
                 movie_id,
                 cinema_id,
                 room_id,
                 start_time
+
             });
+
 
         if (validationError) {
 
             const err =
-                new Error(validationError);
+                new Error(
+                    validationError
+                );
 
             err.statusCode = 400;
 
             throw err;
         }
+
 
         // ------------------------------------------------------
         // KHÔNG CHO TẠO SUẤT TRONG QUÁ KHỨ
@@ -272,17 +306,20 @@ class ShowtimeService {
                 start_time
             );
 
+
         if (isPast) {
 
-            const err = new Error(
-                "Không thể tạo suất chiếu trong quá khứ"
-            );
+            const err =
+                new Error(
+                    "Không thể tạo suất chiếu trong quá khứ"
+                );
 
             err.statusCode = 400;
             err.field = "start_time";
 
             throw err;
         }
+
 
         // ------------------------------------------------------
         // KIỂM TRA TRÙNG LỊCH
@@ -294,11 +331,13 @@ class ShowtimeService {
                 start_time
             );
 
+
         if (conflict) {
 
-            const err = new Error(
-                "Phòng này đã có lịch chiếu vào giờ đó"
-            );
+            const err =
+                new Error(
+                    "Phòng này đã có lịch chiếu vào giờ đó"
+                );
 
             err.statusCode = 400;
             err.field = "start_time";
@@ -306,25 +345,33 @@ class ShowtimeService {
             throw err;
         }
 
+
         // ------------------------------------------------------
         // CREATE
         // ------------------------------------------------------
 
         return await ShowtimeRepository.create({
+
             movie_id,
+
             cinema_id,
+
             room_id,
+
             start_time
         });
     }
 
+
     /*=========================================================
-        🚀 AUTO SCHEDULE SHOWTIMES
+        AUTO SCHEDULE SHOWTIMES
         ADMIN
 
-        Đây là method mới.
+        Controller gọi:
 
-        Controller chỉ cần gửi:
+        scheduleShowtimes(data)
+
+        Dữ liệu:
 
         {
             movie_id,
@@ -337,7 +384,8 @@ class ShowtimeService {
             distribution: "high"
         }
 
-        Scheduler sẽ tự:
+        Scheduler sẽ:
+
         - lấy duration phim
         - lấy thông tin phòng
         - tính khoảng cách suất
@@ -361,6 +409,7 @@ class ShowtimeService {
             throw err;
         }
 
+
         const {
             movie_id,
             cinema_id,
@@ -371,6 +420,7 @@ class ShowtimeService {
             end_hour,
             distribution
         } = data;
+
 
         // ------------------------------------------------------
         // VALIDATE MOVIE
@@ -389,6 +439,7 @@ class ShowtimeService {
             throw err;
         }
 
+
         // ------------------------------------------------------
         // VALIDATE CINEMA
         // ------------------------------------------------------
@@ -405,6 +456,7 @@ class ShowtimeService {
 
             throw err;
         }
+
 
         // ------------------------------------------------------
         // VALIDATE ROOMS
@@ -426,6 +478,7 @@ class ShowtimeService {
             throw err;
         }
 
+
         // ------------------------------------------------------
         // VALIDATE DATE
         // ------------------------------------------------------
@@ -443,6 +496,7 @@ class ShowtimeService {
             throw err;
         }
 
+
         if (!end_date) {
 
             const err =
@@ -456,19 +510,30 @@ class ShowtimeService {
             throw err;
         }
 
+
         // ------------------------------------------------------
         // VALIDATE DATE RANGE
         // ------------------------------------------------------
 
         const startDate =
-            new Date(`${start_date}T00:00:00`);
+            new Date(
+                `${start_date}T00:00:00`
+            );
+
 
         const endDate =
-            new Date(`${end_date}T00:00:00`);
+            new Date(
+                `${end_date}T00:00:00`
+            );
+
 
         if (
-            Number.isNaN(startDate.getTime()) ||
-            Number.isNaN(endDate.getTime())
+            Number.isNaN(
+                startDate.getTime()
+            ) ||
+            Number.isNaN(
+                endDate.getTime()
+            )
         ) {
 
             const err =
@@ -480,6 +545,7 @@ class ShowtimeService {
 
             throw err;
         }
+
 
         if (endDate < startDate) {
 
@@ -494,6 +560,7 @@ class ShowtimeService {
             throw err;
         }
 
+
         // ------------------------------------------------------
         // DEFAULT TIME
         // ------------------------------------------------------
@@ -501,8 +568,10 @@ class ShowtimeService {
         const scheduleStartHour =
             start_hour || "09:00";
 
+
         const scheduleEndHour =
             end_hour || "24:00";
+
 
         // ------------------------------------------------------
         // DISTRIBUTION
@@ -518,8 +587,10 @@ class ShowtimeService {
             "high"
         ];
 
+
         const scheduleDistribution =
             distribution || "medium";
+
 
         if (
             !allowedDistribution.includes(
@@ -538,22 +609,25 @@ class ShowtimeService {
             throw err;
         }
 
+
         // ------------------------------------------------------
         // NORMALIZE ROOM IDS
         // ------------------------------------------------------
 
-        const normalizedRoomIds =
-            [
-                ...new Set(
-                    room_ids
-                        .map(Number)
-                        .filter(
-                            (id) =>
-                                Number.isInteger(id) &&
-                                id > 0
-                        )
-                )
-            ];
+        const normalizedRoomIds = [
+
+            ...new Set(
+
+                room_ids
+                    .map(Number)
+                    .filter(
+                        (id) =>
+                            Number.isInteger(id) &&
+                            id > 0
+                    )
+            )
+        ];
+
 
         if (
             normalizedRoomIds.length === 0
@@ -570,6 +644,7 @@ class ShowtimeService {
             throw err;
         }
 
+
         // ------------------------------------------------------
         // GỌI SCHEDULER
         // ------------------------------------------------------
@@ -577,9 +652,11 @@ class ShowtimeService {
         const result =
             await ShowtimeScheduler.generateSchedule({
 
-                movie_id: Number(movie_id),
+                movie_id:
+                    Number(movie_id),
 
-                cinema_id: Number(cinema_id),
+                cinema_id:
+                    Number(cinema_id),
 
                 room_ids:
                     normalizedRoomIds,
@@ -598,8 +675,10 @@ class ShowtimeService {
                     scheduleDistribution
             });
 
+
         return result;
     }
+
 
     /*=========================================================
         UPDATE SHOWTIME
@@ -617,10 +696,12 @@ class ShowtimeService {
             start_time
         } = data;
 
+
         const existing =
             await ShowtimeRepository.findById(
                 showtimeId
             );
+
 
         if (!existing) {
 
@@ -634,30 +715,46 @@ class ShowtimeService {
             throw err;
         }
 
+
         start_time =
             formatDateTime(start_time);
 
-        movie_id = Number(movie_id);
-        cinema_id = Number(cinema_id);
-        room_id = Number(room_id);
+
+        movie_id =
+            Number(movie_id);
+
+        cinema_id =
+            Number(cinema_id);
+
+        room_id =
+            Number(room_id);
+
 
         const validationError =
             validateShowtime({
+
                 movie_id,
+
                 cinema_id,
+
                 room_id,
+
                 start_time
             });
+
 
         if (validationError) {
 
             const err =
-                new Error(validationError);
+                new Error(
+                    validationError
+                );
 
             err.statusCode = 400;
 
             throw err;
         }
+
 
         // ------------------------------------------------------
         // KHÔNG CHO ĐỔI THÀNH THỜI GIAN QUÁ KHỨ
@@ -667,6 +764,7 @@ class ShowtimeService {
             await ShowtimeRepository.isPastTime(
                 start_time
             );
+
 
         if (isPast) {
 
@@ -681,6 +779,7 @@ class ShowtimeService {
             throw err;
         }
 
+
         // ------------------------------------------------------
         // KIỂM TRA CONFLICT
         // ------------------------------------------------------
@@ -691,6 +790,7 @@ class ShowtimeService {
                 start_time,
                 showtimeId
             );
+
 
         if (conflict) {
 
@@ -704,6 +804,7 @@ class ShowtimeService {
 
             throw err;
         }
+
 
         // ------------------------------------------------------
         // UPDATE
@@ -720,6 +821,7 @@ class ShowtimeService {
                 }
             );
 
+
         if (affected === 0) {
 
             const err =
@@ -732,8 +834,10 @@ class ShowtimeService {
             throw err;
         }
 
+
         return true;
     }
+
 
     /*=========================================================
         DELETE SHOWTIME
@@ -745,6 +849,7 @@ class ShowtimeService {
             await ShowtimeRepository.findById(
                 showtimeId
             );
+
 
         if (!existing) {
 
@@ -758,6 +863,7 @@ class ShowtimeService {
             throw err;
         }
 
+
         // ------------------------------------------------------
         // KHÔNG CHO XÓA NẾU ĐÃ CÓ VÉ
         // ------------------------------------------------------
@@ -766,6 +872,7 @@ class ShowtimeService {
             await ShowtimeRepository.hasTickets(
                 showtimeId
             );
+
 
         if (hasTickets) {
 
@@ -779,10 +886,12 @@ class ShowtimeService {
             throw err;
         }
 
+
         const affected =
             await ShowtimeRepository.delete(
                 showtimeId
             );
+
 
         if (affected === 0) {
 
@@ -796,8 +905,10 @@ class ShowtimeService {
             throw err;
         }
 
+
         return true;
     }
+
 
     /*=========================================================
         QUICK BOOKING DATA
@@ -819,6 +930,7 @@ class ShowtimeService {
                 .getQuickBookingMovies();
         }
 
+
         if (
             movie_id &&
             !cinema_id &&
@@ -830,6 +942,7 @@ class ShowtimeService {
                     movie_id
                 );
         }
+
 
         if (
             movie_id &&
@@ -843,6 +956,7 @@ class ShowtimeService {
                     cinema_id
                 );
         }
+
 
         if (
             movie_id &&
@@ -858,8 +972,10 @@ class ShowtimeService {
                 );
         }
 
+
         return [];
     }
+
 
     /*=========================================================
         GET SHOWTIMES FOR BOOKING
@@ -887,6 +1003,7 @@ class ShowtimeService {
             throw err;
         }
 
+
         return await ShowtimeRepository
             .getShowtimesForBooking(
                 movie_id,
@@ -894,6 +1011,7 @@ class ShowtimeService {
                 date
             );
     }
+
 
     /*=========================================================
         FILTER SHOWTIMES
@@ -921,6 +1039,7 @@ class ShowtimeService {
             throw err;
         }
 
+
         return await ShowtimeRepository
             .filterShowtimes(
                 movie_id,
@@ -930,8 +1049,10 @@ class ShowtimeService {
     }
 }
 
+
 // ==========================================================
 // EXPORT SINGLETON
 // ==========================================================
 
-module.exports = new ShowtimeService();
+module.exports =
+    new ShowtimeService();

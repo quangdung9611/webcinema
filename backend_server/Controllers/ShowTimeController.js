@@ -6,6 +6,7 @@ const ShowtimeService =
     PUBLIC / ADMIN
     GET ALL SHOWTIMES - KHÔNG PHÂN TRANG
 =========================================================*/
+
 exports.getAllShowtimesAll = async (req, res) => {
 
     try {
@@ -22,6 +23,7 @@ exports.getAllShowtimesAll = async (req, res) => {
          * Nếu frontend gửi page / limit
          * thì bắt buộc sử dụng route /paginated.
          */
+
         if (
             page !== undefined ||
             limit !== undefined
@@ -76,6 +78,7 @@ exports.getAllShowtimesAll = async (req, res) => {
     ADMIN
     GET SHOWTIMES - CÓ PHÂN TRANG
 =========================================================*/
+
 exports.getShowtimesWithPagination = async (
     req,
     res
@@ -136,6 +139,7 @@ exports.getShowtimesWithPagination = async (
     ADMIN
     GET SHOWTIME DETAIL BY ID
 =========================================================*/
+
 exports.getShowtimeDetail = async (
     req,
     res
@@ -191,6 +195,7 @@ exports.getShowtimeDetail = async (
     RETURN:
     data[]
 =========================================================*/
+
 exports.getShowtimesByCinemaAndRoom =
     async (req, res) => {
 
@@ -258,6 +263,7 @@ exports.getShowtimesByCinemaAndRoom =
     PUBLIC
     GET SHOWTIMES BY MOVIE
 =========================================================*/
+
 exports.getShowtimesByMovie =
     async (req, res) => {
 
@@ -308,6 +314,7 @@ exports.getShowtimesByMovie =
     PUBLIC
     QUICK BOOKING
 =========================================================*/
+
 exports.getQuickBookingData =
     async (req, res) => {
 
@@ -362,6 +369,7 @@ exports.getQuickBookingData =
     PUBLIC
     GET SHOWTIMES FOR BOOKING
 =========================================================*/
+
 exports.getShowtimesForBooking =
     async (req, res) => {
 
@@ -416,6 +424,7 @@ exports.getShowtimesForBooking =
     PUBLIC
     FILTER SHOWTIMES
 =========================================================*/
+
 exports.filterShowtimes =
     async (req, res) => {
 
@@ -470,6 +479,7 @@ exports.filterShowtimes =
     PUBLIC
     MOVIE DETAIL
 =========================================================*/
+
 exports.getShowtimesForMovieDetail =
     async (req, res) => {
 
@@ -540,6 +550,7 @@ exports.getShowtimesForMovieDetail =
     ADMIN
     CREATE SINGLE SHOWTIME
 =========================================================*/
+
 exports.createShowtime =
     async (req, res) => {
 
@@ -596,7 +607,7 @@ exports.createShowtime =
 
     POST /api/showtimes/auto-schedule
 
-    Đây là API mới cho chức năng:
+    Chức năng:
 
     - Chọn 1 phim
     - Chọn 1 rạp
@@ -609,14 +620,27 @@ exports.createShowtime =
     - Scheduler tự kiểm tra xung đột
     - Không tạo trùng suất đã tồn tại
 =========================================================*/
+
 exports.createAutoSchedule =
     async (req, res) => {
 
         try {
 
+            /*
+             * QUAN TRỌNG:
+             *
+             * ShowtimeService có method:
+             *
+             * scheduleShowtimes()
+             *
+             * KHÔNG phải:
+             *
+             * createAutoSchedule()
+             */
+
             const result =
                 await ShowtimeService
-                    .createAutoSchedule(
+                    .scheduleShowtimes(
                         req.body
                     );
 
@@ -628,7 +652,8 @@ exports.createAutoSchedule =
                 message:
                     "Tạo lịch chiếu tự động thành công",
 
-                data: result
+                data:
+                    result
             });
 
         } catch (err) {
@@ -660,6 +685,7 @@ exports.createAutoSchedule =
     ADMIN
     UPDATE SHOWTIME
 =========================================================*/
+
 exports.updateShowtime =
     async (req, res) => {
 
@@ -714,6 +740,7 @@ exports.updateShowtime =
     ADMIN
     DELETE SHOWTIME
 =========================================================*/
+
 exports.deleteShowtime =
     async (req, res) => {
 
