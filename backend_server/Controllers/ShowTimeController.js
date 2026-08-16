@@ -18,12 +18,22 @@ exports.getAllShowtimesAll =
             } = req.query;
 
 
+            /*
+             * Route này KHÔNG hỗ trợ pagination.
+             *
+             * Nếu frontend truyền page hoặc limit
+             * thì bắt buộc sử dụng:
+             *
+             * /api/showtimes/paginated
+             */
+
             if (
                 page !== undefined ||
                 limit !== undefined
             ) {
 
                 return res.status(400).json({
+
                     success: false,
 
                     message:
@@ -40,7 +50,9 @@ exports.getAllShowtimesAll =
 
 
             return res.status(200).json({
+
                 success: true,
+
                 data
             });
 
@@ -146,13 +158,14 @@ exports.getShowtimeDetail =
             return res.status(200).json({
 
                 success: true,
+
                 data
             });
 
         } catch (err) {
 
             console.error(
-                "Get showtime detail error:",
+                "Get Showtime Detail Error:",
                 err
             );
 
@@ -211,13 +224,14 @@ exports.getShowtimesByCinemaAndRoom =
             return res.status(200).json({
 
                 success: true,
+
                 data
             });
 
         } catch (err) {
 
             console.error(
-                "Get showtimes by cinema and room error:",
+                "Get Showtimes By Cinema And Room Error:",
                 err
             );
 
@@ -249,6 +263,18 @@ exports.getShowtimesByMovie =
             } = req.params;
 
 
+            if (!movieId) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Thiếu movieId"
+                });
+            }
+
+
             const data =
                 await ShowtimeService
                     .getShowtimesByMovie(
@@ -259,13 +285,14 @@ exports.getShowtimesByMovie =
             return res.status(200).json({
 
                 success: true,
+
                 data
             });
 
         } catch (err) {
 
             console.error(
-                "Get showtimes by movie error:",
+                "Get Showtimes By Movie Error:",
                 err
             );
 
@@ -286,6 +313,18 @@ exports.getShowtimesByMovie =
 /*=========================================================
     PUBLIC
     QUICK BOOKING
+
+    STEP 1:
+    GET /api/showtimes/quick-booking
+
+    STEP 2:
+    ?movie_id=1
+
+    STEP 3:
+    ?movie_id=1&cinema_id=2
+
+    STEP 4:
+    ?movie_id=1&cinema_id=2&date=2026-08-16
 =========================================================*/
 exports.getQuickBookingData =
     async (req, res) => {
@@ -311,13 +350,14 @@ exports.getQuickBookingData =
             return res.status(200).json({
 
                 success: true,
+
                 data
             });
 
         } catch (err) {
 
             console.error(
-                "Quick booking error:",
+                "Quick Booking Error:",
                 err
             );
 
@@ -337,7 +377,7 @@ exports.getQuickBookingData =
 
 /*=========================================================
     PUBLIC
-    FILTER BOOKING
+    BOOKING
 =========================================================*/
 exports.getShowtimesForBooking =
     async (req, res) => {
@@ -363,13 +403,14 @@ exports.getShowtimesForBooking =
             return res.status(200).json({
 
                 success: true,
+
                 data
             });
 
         } catch (err) {
 
             console.error(
-                "Booking showtime error:",
+                "Booking Showtime Error:",
                 err
             );
 
@@ -415,13 +456,14 @@ exports.filterShowtimes =
             return res.status(200).json({
 
                 success: true,
+
                 data
             });
 
         } catch (err) {
 
             console.error(
-                "Filter showtime error:",
+                "Filter Showtime Error:",
                 err
             );
 
@@ -442,6 +484,12 @@ exports.filterShowtimes =
 /*=========================================================
     PUBLIC
     MOVIE DETAIL
+
+    GET:
+    /api/showtimes/movie-detail
+        ?movie_id=1
+        &cinema_id=2
+        &date=2026-08-16
 =========================================================*/
 exports.getShowtimesForMovieDetail =
     async (req, res) => {
@@ -483,13 +531,14 @@ exports.getShowtimesForMovieDetail =
             return res.status(200).json({
 
                 success: true,
+
                 data
             });
 
         } catch (err) {
 
             console.error(
-                "Movie detail showtime error:",
+                "Movie Detail Showtime Error:",
                 err
             );
 
@@ -536,7 +585,7 @@ exports.createBulkShowtimes =
         } catch (err) {
 
             console.error(
-                "Bulk create showtimes error:",
+                "Bulk Create Showtimes Error:",
                 err
             );
 
@@ -571,6 +620,18 @@ exports.updateShowtime =
             } = req.params;
 
 
+            if (!showtime_id) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Thiếu showtime_id"
+                });
+            }
+
+
             await ShowtimeService
                 .updateShowtime(
                     showtime_id,
@@ -589,7 +650,7 @@ exports.updateShowtime =
         } catch (err) {
 
             console.error(
-                "Update showtime error:",
+                "Update Showtime Error:",
                 err
             );
 
@@ -624,6 +685,18 @@ exports.deleteShowtime =
             } = req.params;
 
 
+            if (!showtime_id) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Thiếu showtime_id"
+                });
+            }
+
+
             await ShowtimeService
                 .deleteShowtime(
                     showtime_id
@@ -641,7 +714,7 @@ exports.deleteShowtime =
         } catch (err) {
 
             console.error(
-                "Delete showtime error:",
+                "Delete Showtime Error:",
                 err
             );
 

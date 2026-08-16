@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import api from '../../../../api/api';
+
 import {
     CalendarDays,
-    Edit,
-    Trash2,
     Loader2,
     Film,
     MapPin,
-    Clock
+    Clock,
+    Plus,
+    Layers
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -17,8 +18,9 @@ import AdminForm from '../../../components/AdminForm';
 import AdminPagination from '../../../components/AdminPagination';
 
 // ==========================================================
-// CONSTANTS
+// INITIAL FORM
 // ==========================================================
+
 const initialFormData = {
     movie_id: '',
     cinema_id: '',
@@ -27,40 +29,91 @@ const initialFormData = {
 };
 
 // ==========================================================
+// INITIAL BULK FORM
+// ==========================================================
+
+const initialBulkFormData = {
+    movie_id: '',
+    cinema_id: '',
+    room_id: '',
+    date: '',
+    times: ''
+};
+
+// ==========================================================
+// DEFAULT PAGINATION
+// ==========================================================
+
+const defaultPagination = {
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false
+};
+
+// ==========================================================
 // COMPONENT
 // ==========================================================
+
 const ShowTimePage = () => {
-    // ------------------------------------------------------
-    // STATES
-    // ------------------------------------------------------
+
+    // ======================================================
+    // LIST DATA
+    // ======================================================
+
     const [showtimes, setShowtimes] = useState([]);
+
     const [movies, setMovies] = useState([]);
     const [cinemas, setCinemas] = useState([]);
     const [rooms, setRooms] = useState([]);
+
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
+    const [bulkLoading, setBulkLoading] = useState(false);
+
+    // ======================================================
+    // SEARCH / PAGINATION
+    // ======================================================
 
     const [search, setSearch] = useState('');
-    const [pagination, setPagination] = useState({
-        page: 1,
-        limit: 20,
-        total: 0,
-        totalPages: 1,
-        hasNextPage: false,
-        hasPreviousPage: false
-    });
+
+    const [pagination, setPagination] = useState(
+        defaultPagination
+    );
 
     const isFetching = useRef(false);
     const abortControllerRef = useRef(null);
 
+    // ======================================================
+    // ADD SHOWTIME MODAL
+    // ======================================================
+
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [editingShowtime, setEditingShowtime] = useState(null);
-    const [formData, setFormData] = useState(initialFormData);
+
+    const [formData, setFormData] = useState(
+        initialFormData
+    );
+
     const [formErrors, setFormErrors] = useState({});
 
     // ======================================================
-    // ALERT MODAL (giống UserPage)
+    // BULK MODAL
     // ======================================================
+
+    const [isBulkOpen, setIsBulkOpen] = useState(false);
+
+    const [bulkFormData, setBulkFormData] = useState(
+        initialBulkFormData
+    );
+
+    const [bulkErrors, setBulkErrors] = useState({});
+
+    // ======================================================
+    // ALERT MODAL
+    // ======================================================
+
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -70,7 +123,17 @@ const ShowTimePage = () => {
         onCancel: null
     });
 
-    const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
+    // ======================================================
+    // ALERT HELPERS
+    // ======================================================
+
+    const showAlert = (
+        title,
+        message,
+        type = 'default',
+        onConfirm = null,
+        onCancel = null
+    ) => {
         setAlertModal({
             open: true,
             title,
@@ -90,424 +153,1045 @@ const ShowTimePage = () => {
         }));
     };
 
-    // ------------------------------------------------------
-    // TIMEZONE HELPERS
-    // ------------------------------------------------------
+    // ======================================================
+    // DATE TIME HELPERS
+    // ======================================================
+
     const formatForInput = (dateString) => {
         if (!dateString) return '';
-        return dateString.slice(0, 16).replace(' ', 'T');
+
+        return dateString
+            .slice(0, 16)
+            .replace(' ', 'T');
     };
 
     const formatDateTime = (dateStr) => {
-        if (!dateStr) return { date: '--/--/----', time: '--:--' };
-        const [datePart, timePart] = dateStr.split(' ');
-        if (!datePart || !timePart) return { date: '--/--/----', time: '--:--' };
-        const [year, month, day] = datePart.split('-');
-        const [hour, minute] = timePart.split(':');
-        return { date: `${day}/${month}/${year}`, time: `${hour}:${minute}` };
+        if (!dateStr) {
+            return {
+                date: '--/--/----',
+                time: '--:--'
+            };
+        }
+
+        const [datePart, timePart] =
+            dateStr.split(' ');
+
+        if (!datePart || !timePart) {
+            return {
+                date: '--/--/----',
+                time: '--:--'
+            };
+        }
+
+        const [year, month, day] =
+            datePart.split('-');
+
+        const [hour, minute] =
+            timePart.split(':');
+
+        return {
+            date: `${day}/${month}/${year}`,
+            time: `${hour}:${minute}`
+        };
     };
 
-    // ------------------------------------------------------
-    // FETCH SHOWTIMES - GIỐNG MoviePage
-    // ------------------------------------------------------
-    const fetchShowtimes = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) {
-            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
-            return;
-        }
+    // ======================================================
+    // FETCH SHOWTIMES
+    // ======================================================
 
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
+    const fetchShowtimes = useCallback(
+        async (page = 1, keyword = '') => {
 
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-
-        isFetching.current = true;
-        setLoading(true);
-
-        try {
-            const res = await api.get('/api/showtimes/paginated', {
-                params: {
-                    page,
-                    limit: 20,
-                    search: keyword.trim()
-                },
-                signal: controller.signal
-            });
-
-            // ✅ Lấy trực tiếp từ res.data giống MoviePage
-            const showtimesData = res.data?.data || [];
-            const paginationData = res.data?.pagination || {
-                page: 1,
-                limit: 20,
-                total: 0,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false
-            };
-
-            setShowtimes(showtimesData);
-            setPagination(paginationData);
-        } catch (error) {
-            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
-                console.log('🛑 Request bị hủy');
+            if (isFetching.current) {
                 return;
             }
-            console.error('FETCH SHOWTIMES ERROR:', error);
-            setShowtimes([]);
-            setPagination({
-                page: 1,
-                limit: 20,
-                total: 0,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false
-            });
-            showAlert('Lỗi', 'Không thể tải danh sách suất chiếu.', 'error');
-        } finally {
-            setLoading(false);
-            isFetching.current = false;
-            if (abortControllerRef.current === controller) {
-                abortControllerRef.current = null;
-            }
-        }
-    }, []);
 
-    // ------------------------------------------------------
-    // FETCH INITIAL DATA (Movies & Cinemas)
-    // ------------------------------------------------------
-    const fetchInitialData = useCallback(async () => {
-        try {
-            const [movieRes, cinemaRes] = await Promise.all([
-                api.get('/api/movies'),
-                api.get('/api/cinemas')
-            ]);
-
-            // Movies: { success: true, data: [...] }
-            const moviesData = movieRes.data?.data || [];
-            const cinemasData = cinemaRes.data?.data || [];
-
-            setMovies(moviesData);
-            setCinemas(cinemasData);
-        } catch (error) {
-            console.error('Fetch initial data error:', error);
-        }
-    }, []);
-
-    // ------------------------------------------------------
-    // FETCH ROOMS BY CINEMA
-    // ------------------------------------------------------
-    const fetchRoomsByCinema = useCallback(async (cinemaId) => {
-        if (!cinemaId) {
-            setRooms([]);
-            return;
-        }
-        try {
-            const res = await api.get(`/api/rooms/cinema/${cinemaId}`);
-            const roomsData = res.data?.data || [];
-            setRooms(roomsData);
-        } catch (error) {
-            console.error('Fetch rooms error:', error);
-            setRooms([]);
-        }
-    }, []);
-
-    // ------------------------------------------------------
-    // MOUNT
-    // ------------------------------------------------------
-    useEffect(() => {
-        fetchShowtimes(1, '');
-        fetchInitialData();
-        return () => {
             if (abortControllerRef.current) {
                 abortControllerRef.current.abort();
             }
-        };
-    }, [fetchShowtimes, fetchInitialData]);
 
-    // ------------------------------------------------------
-    // SEARCH DEBOUNCE
-    // ------------------------------------------------------
-    const prevSearchRef = useRef('');
+            const controller = new AbortController();
+
+            abortControllerRef.current =
+                controller;
+
+            isFetching.current = true;
+            setLoading(true);
+
+            try {
+
+                const res = await api.get(
+                    '/api/showtimes/paginated',
+                    {
+                        params: {
+                            page,
+                            limit: 20,
+                            search: keyword.trim()
+                        },
+                        signal: controller.signal
+                    }
+                );
+
+                const showtimesData =
+                    res.data?.data || [];
+
+                const paginationData =
+                    res.data?.pagination ||
+                    defaultPagination;
+
+                setShowtimes(showtimesData);
+                setPagination(paginationData);
+
+            } catch (error) {
+
+                if (
+                    error.name === 'AbortError' ||
+                    error.code === 'ERR_CANCELED'
+                ) {
+                    return;
+                }
+
+                console.error(
+                    'FETCH SHOWTIMES ERROR:',
+                    error
+                );
+
+                setShowtimes([]);
+                setPagination(
+                    defaultPagination
+                );
+
+                showAlert(
+                    'Lỗi',
+                    'Không thể tải danh sách suất chiếu.',
+                    'error'
+                );
+
+            } finally {
+
+                setLoading(false);
+                isFetching.current = false;
+
+                if (
+                    abortControllerRef.current ===
+                    controller
+                ) {
+                    abortControllerRef.current = null;
+                }
+            }
+        },
+        []
+    );
+
+    // ======================================================
+    // FETCH MOVIES + CINEMAS
+    // ======================================================
+
+    const fetchInitialData = useCallback(
+        async () => {
+
+            try {
+
+                const [
+                    movieRes,
+                    cinemaRes
+                ] = await Promise.all([
+                    api.get('/api/movies'),
+                    api.get('/api/cinemas')
+                ]);
+
+                setMovies(
+                    movieRes.data?.data || []
+                );
+
+                setCinemas(
+                    cinemaRes.data?.data || []
+                );
+
+            } catch (error) {
+
+                console.error(
+                    'FETCH INITIAL DATA ERROR:',
+                    error
+                );
+
+                showAlert(
+                    'Lỗi',
+                    'Không thể tải danh sách phim hoặc rạp.',
+                    'error'
+                );
+            }
+        },
+        []
+    );
+
+    // ======================================================
+    // FETCH ROOMS BY CINEMA
+    // ======================================================
+
+    const fetchRoomsByCinema = useCallback(
+        async (cinemaId) => {
+
+            if (!cinemaId) {
+                setRooms([]);
+                return;
+            }
+
+            try {
+
+                const res = await api.get(
+                    `/api/rooms/cinema/${cinemaId}`
+                );
+
+                setRooms(
+                    res.data?.data || []
+                );
+
+            } catch (error) {
+
+                console.error(
+                    'FETCH ROOMS ERROR:',
+                    error
+                );
+
+                setRooms([]);
+
+                showAlert(
+                    'Lỗi',
+                    'Không thể tải danh sách phòng của rạp.',
+                    'error'
+                );
+            }
+        },
+        []
+    );
+
+    // ======================================================
+    // INITIAL LOAD
+    // ======================================================
+
     useEffect(() => {
-        const currentSearch = search;
-        const prevSearch = prevSearchRef.current;
 
-        if (currentSearch === prevSearch) return;
-        prevSearchRef.current = currentSearch;
+        fetchShowtimes(1, '');
+        fetchInitialData();
+
+        return () => {
+
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+
+        };
+
+    }, [
+        fetchShowtimes,
+        fetchInitialData
+    ]);
+
+    // ======================================================
+    // SEARCH DEBOUNCE
+    // ======================================================
+
+    const prevSearchRef = useRef('');
+
+    useEffect(() => {
+
+        const currentSearch = search;
+        const previousSearch =
+            prevSearchRef.current;
+
+        if (currentSearch === previousSearch) {
+            return;
+        }
+
+        prevSearchRef.current =
+            currentSearch;
 
         const timer = setTimeout(() => {
-            fetchShowtimes(1, currentSearch);
+
+            fetchShowtimes(
+                1,
+                currentSearch
+            );
+
         }, 400);
 
         return () => clearTimeout(timer);
-    }, [search, fetchShowtimes]);
+
+    }, [
+        search,
+        fetchShowtimes
+    ]);
+
+    // ======================================================
+    // PAGE CHANGE
+    // ======================================================
 
     const handlePageChange = (page) => {
-        fetchShowtimes(page, search);
+
+        fetchShowtimes(
+            page,
+            search
+        );
     };
 
-    // ------------------------------------------------------
-    // VALIDATE FORM
-    // ------------------------------------------------------
-    const validateForm = () => {
-        const errors = {};
-        if (!formData.movie_id) errors.movie_id = 'Vui lòng chọn phim';
-        if (!formData.cinema_id) errors.cinema_id = 'Vui lòng chọn rạp';
-        if (!formData.room_id) errors.room_id = 'Vui lòng chọn phòng';
-        if (!formData.start_time) errors.start_time = 'Vui lòng chọn thời gian chiếu';
-        setFormErrors(errors);
-        return Object.keys(errors).length === 0;
-    };
+    // ======================================================
+    // OPEN ADD
+    // ======================================================
 
-    // ------------------------------------------------------
-    // HANDLE MODAL ACTIONS
-    // ------------------------------------------------------
     const handleOpenAdd = () => {
-        setEditingShowtime(null);
-        setFormData(initialFormData);
-        setRooms([]);
+
+        setFormData(
+            initialFormData
+        );
+
         setFormErrors({});
+
+        setRooms([]);
+
         setIsFormOpen(true);
     };
 
-    const handleOpenEdit = async (showtime) => {
-        try {
-            setLoading(true);
-            const detailRes = await api.get(`/api/showtimes/detail/${showtime.showtime_id}`);
-            const st = detailRes.data?.data || detailRes.data;
+    // ======================================================
+    // CLOSE ADD
+    // ======================================================
 
-            await fetchRoomsByCinema(st.cinema_id);
-
-            setEditingShowtime(st);
-            setFormErrors({});
-            setFormData({
-                movie_id: st.movie_id,
-                cinema_id: st.cinema_id,
-                room_id: st.room_id,
-                start_time: formatForInput(st.start_time)
-            });
-            setIsFormOpen(true);
-        } catch (error) {
-            console.error('FETCH SHOWTIME DETAIL ERROR:', error);
-            showAlert('Lỗi', 'Không thể tải dữ liệu suất chiếu.', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // ------------------------------------------------------
-    // HANDLE CLOSE FORM
-    // ------------------------------------------------------
     const handleCloseForm = () => {
-        if (submitLoading) return;
+
+        if (submitLoading) {
+            return;
+        }
+
         setIsFormOpen(false);
-        setEditingShowtime(null);
+
+        setFormData(
+            initialFormData
+        );
+
         setFormErrors({});
+
         setRooms([]);
     };
 
-    // ------------------------------------------------------
-    // HANDLE CHANGE
-    // ------------------------------------------------------
-    const handleChange = async (e) => {
-        const { name, value } = e.target;
+    // ======================================================
+    // OPEN BULK
+    // ======================================================
 
-        if (formErrors[name]) {
-            setFormErrors((prev) => ({ ...prev, [name]: '' }));
+    const handleOpenBulk = () => {
+
+        setBulkFormData(
+            initialBulkFormData
+        );
+
+        setBulkErrors({});
+
+        setRooms([]);
+
+        setIsBulkOpen(true);
+    };
+
+    // ======================================================
+    // CLOSE BULK
+    // ======================================================
+
+    const handleCloseBulk = () => {
+
+        if (bulkLoading) {
+            return;
         }
 
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setIsBulkOpen(false);
 
-        if (name === 'cinema_id' && value) {
-            setFormData((prev) => ({ ...prev, cinema_id: value, room_id: '' }));
-            await fetchRoomsByCinema(value);
+        setBulkFormData(
+            initialBulkFormData
+        );
+
+        setBulkErrors({});
+
+        setRooms([]);
+    };
+
+    // ======================================================
+    // NORMAL FORM CHANGE
+    // ======================================================
+
+    const handleChange = async (e) => {
+
+        const {
+            name,
+            value
+        } = e.target;
+
+        if (formErrors[name]) {
+
+            setFormErrors(
+                (prev) => ({
+                    ...prev,
+                    [name]: ''
+                })
+            );
+        }
+
+        setFormData(
+            (prev) => ({
+                ...prev,
+                [name]: value
+            })
+        );
+
+        // Khi đổi rạp
+        if (
+            name === 'cinema_id'
+        ) {
+
+            setFormData(
+                (prev) => ({
+                    ...prev,
+                    cinema_id: value,
+                    room_id: ''
+                })
+            );
+
+            await fetchRoomsByCinema(
+                value
+            );
         }
     };
 
-    // ------------------------------------------------------
-    // HANDLE SUBMIT
-    // ------------------------------------------------------
+    // ======================================================
+    // BULK FORM CHANGE
+    // ======================================================
+
+    const handleBulkChange = async (e) => {
+
+        const {
+            name,
+            value
+        } = e.target;
+
+        if (bulkErrors[name]) {
+
+            setBulkErrors(
+                (prev) => ({
+                    ...prev,
+                    [name]: ''
+                })
+            );
+        }
+
+        setBulkFormData(
+            (prev) => ({
+                ...prev,
+                [name]: value
+            })
+        );
+
+        // Khi đổi rạp
+        if (
+            name === 'cinema_id'
+        ) {
+
+            setBulkFormData(
+                (prev) => ({
+                    ...prev,
+                    cinema_id: value,
+                    room_id: ''
+                })
+            );
+
+            await fetchRoomsByCinema(
+                value
+            );
+        }
+    };
+
+    // ======================================================
+    // VALIDATE NORMAL FORM
+    // ======================================================
+
+    const validateForm = () => {
+
+        const errors = {};
+
+        if (!formData.movie_id) {
+            errors.movie_id =
+                'Vui lòng chọn phim';
+        }
+
+        if (!formData.cinema_id) {
+            errors.cinema_id =
+                'Vui lòng chọn rạp';
+        }
+
+        if (!formData.room_id) {
+            errors.room_id =
+                'Vui lòng chọn phòng';
+        }
+
+        if (!formData.start_time) {
+            errors.start_time =
+                'Vui lòng chọn thời gian chiếu';
+        }
+
+        setFormErrors(errors);
+
+        return Object.keys(errors).length === 0;
+    };
+
+    // ======================================================
+    // SUBMIT NORMAL SHOWTIME
+    // ======================================================
+
     const handleSubmit = async (e) => {
+
         e.preventDefault();
-        if (!validateForm()) return;
+
+        if (!validateForm()) {
+            return;
+        }
 
         try {
+
             setSubmitLoading(true);
             setFormErrors({});
 
             const submitData = {
-                ...formData,
-                start_time: formData.start_time.replace('T', ' ')
+                movie_id:
+                    Number(formData.movie_id),
+
+                cinema_id:
+                    Number(formData.cinema_id),
+
+                room_id:
+                    Number(formData.room_id),
+
+                start_time:
+                    formData.start_time
+                        .replace('T', ' ')
             };
 
-            if (editingShowtime) {
-                await api.put(`/api/showtimes/${editingShowtime.showtime_id}`, submitData);
-                setIsFormOpen(false);
-                fetchShowtimes(pagination.page, search);
-                setTimeout(() => {
-                    showAlert('Thành công', 'Cập nhật suất chiếu thành công.', 'success');
-                }, 100);
-            } else {
-                await api.post('/api/showtimes', submitData);
-                setIsFormOpen(false);
-                fetchShowtimes(pagination.page, search);
-                setTimeout(() => {
-                    showAlert('Thành công', 'Thêm suất chiếu thành công.', 'success');
-                }, 100);
-            }
+            await api.post(
+                '/api/showtimes',
+                submitData
+            );
+
+            setIsFormOpen(false);
+
+            setFormData(
+                initialFormData
+            );
+
+            await fetchShowtimes(
+                pagination.page,
+                search
+            );
+
+            showAlert(
+                'Thành công',
+                'Thêm suất chiếu thành công.',
+                'success'
+            );
+
         } catch (error) {
-            console.error('SUBMIT SHOWTIME ERROR:', error);
-            const backendField = error.response?.data?.field;
-            const backendError = error.response?.data?.error || 'Đã xảy ra lỗi.';
+
+            console.error(
+                'CREATE SHOWTIME ERROR:',
+                error
+            );
+
+            const backendField =
+                error.response?.data?.field;
+
+            const backendMessage =
+                error.response?.data?.message ||
+                error.response?.data?.error ||
+                'Không thể thêm suất chiếu.';
+
             if (backendField) {
-                setFormErrors({ [backendField]: backendError });
+
+                setFormErrors({
+                    [backendField]:
+                        backendMessage
+                });
+
             } else {
-                showAlert('Lỗi', backendError, 'error');
+
+                showAlert(
+                    'Lỗi',
+                    backendMessage,
+                    'error'
+                );
             }
+
         } finally {
+
             setSubmitLoading(false);
         }
     };
 
-    // ------------------------------------------------------
-    // HANDLE DELETE
-    // ------------------------------------------------------
-    const handleDelete = (showtime) => {
-        showAlert(
-            'Xác nhận xóa',
-            `Bạn có chắc muốn xóa suất chiếu phim "${showtime.title}"?`,
-            'warning',
-            async () => {
-                try {
-                    await api.delete(`/api/showtimes/${showtime.showtime_id}`);
-                    closeAlert();
+    // ======================================================
+    // PARSE BULK TIMES
+    // ======================================================
 
-                    const currentPage = pagination.page;
-                    const newPage = showtimes.length === 1 && currentPage > 1
-                        ? currentPage - 1
-                        : currentPage;
-                    await fetchShowtimes(newPage, search);
-                    setTimeout(() => {
-                        showAlert('Thành công', 'Xóa suất chiếu thành công.', 'success');
-                    }, 100);
-                } catch (error) {
-                    console.error('DELETE SHOWTIME ERROR:', error);
-                    closeAlert();
-                    setTimeout(() => {
-                        showAlert('Lỗi', error.response?.data?.error || 'Không thể xóa suất chiếu.', 'error');
-                    }, 100);
+    const parseBulkTimes = (value) => {
+
+        if (!value) {
+            return [];
+        }
+
+        return value
+            .split(/[\n,;]+/)
+            .map((time) => time.trim())
+            .filter(Boolean)
+            .map((time) => {
+
+                // Cho phép:
+                // 09:00
+                // 9:00
+                // 09:30
+
+                const match =
+                    time.match(
+                        /^(\d{1,2}):(\d{2})$/
+                    );
+
+                if (!match) {
+                    return null;
                 }
-            },
-            closeAlert
-        );
+
+                const hour =
+                    Number(match[1]);
+
+                const minute =
+                    Number(match[2]);
+
+                if (
+                    hour < 0 ||
+                    hour > 23 ||
+                    minute < 0 ||
+                    minute > 59
+                ) {
+                    return null;
+                }
+
+                return (
+                    `${String(hour).padStart(2, '0')}:` +
+                    `${String(minute).padStart(2, '0')}`
+                );
+            })
+            .filter(Boolean);
     };
 
-    // ------------------------------------------------------
+    // ======================================================
+    // VALIDATE BULK FORM
+    // ======================================================
+
+    const validateBulkForm = () => {
+
+        const errors = {};
+
+        if (!bulkFormData.movie_id) {
+            errors.movie_id =
+                'Vui lòng chọn phim';
+        }
+
+        if (!bulkFormData.cinema_id) {
+            errors.cinema_id =
+                'Vui lòng chọn rạp';
+        }
+
+        if (!bulkFormData.room_id) {
+            errors.room_id =
+                'Vui lòng chọn phòng';
+        }
+
+        if (!bulkFormData.date) {
+            errors.date =
+                'Vui lòng chọn ngày chiếu';
+        }
+
+        const times =
+            parseBulkTimes(
+                bulkFormData.times
+            );
+
+        if (!bulkFormData.times.trim()) {
+
+            errors.times =
+                'Vui lòng nhập ít nhất một giờ chiếu';
+
+        } else if (!times.length) {
+
+            errors.times =
+                'Giờ chiếu không hợp lệ. Ví dụ: 09:00, 11:30, 14:00';
+
+        }
+
+        setBulkErrors(errors);
+
+        return Object.keys(errors).length === 0;
+    };
+
+    // ======================================================
+    // BULK CREATE
+    // ======================================================
+
+    const handleBulkSubmit = async (e) => {
+
+        e.preventDefault();
+
+        if (!validateBulkForm()) {
+            return;
+        }
+
+        const times =
+            parseBulkTimes(
+                bulkFormData.times
+            );
+
+        if (!times.length) {
+            return;
+        }
+
+        try {
+
+            setBulkLoading(true);
+            setBulkErrors({});
+
+            /*
+             * Gửi từng suất lên API hiện tại.
+             *
+             * Ví dụ:
+             * 09:00
+             * 11:30
+             * 14:00
+             * 16:30
+             *
+             * => tạo 4 suất chiếu.
+             */
+
+            const requests =
+                times.map((time) => {
+
+                    return api.post(
+                        '/api/showtimes',
+                        {
+                            movie_id:
+                                Number(
+                                    bulkFormData.movie_id
+                                ),
+
+                            cinema_id:
+                                Number(
+                                    bulkFormData.cinema_id
+                                ),
+
+                            room_id:
+                                Number(
+                                    bulkFormData.room_id
+                                ),
+
+                            start_time:
+                                `${bulkFormData.date} ${time}`
+                        }
+                    );
+                });
+
+            const results =
+                await Promise.allSettled(
+                    requests
+                );
+
+            const successCount =
+                results.filter(
+                    (result) =>
+                        result.status ===
+                        'fulfilled'
+                ).length;
+
+            const failedResults =
+                results.filter(
+                    (result) =>
+                        result.status ===
+                        'rejected'
+                );
+
+            const failedCount =
+                failedResults.length;
+
+            setIsBulkOpen(false);
+
+            setBulkFormData(
+                initialBulkFormData
+            );
+
+            await fetchShowtimes(
+                pagination.page,
+                search
+            );
+
+            // ==============================================
+            // TẤT CẢ THÀNH CÔNG
+            // ==============================================
+
+            if (failedCount === 0) {
+
+                showAlert(
+                    'Thành công',
+                    `Đã thêm ${successCount} suất chiếu thành công.`,
+                    'success'
+                );
+
+                return;
+            }
+
+            // ==============================================
+            // CÓ SUẤT BỊ LỖI
+            // ==============================================
+
+            const firstError =
+                failedResults[0]
+                    ?.reason
+                    ?.response
+                    ?.data
+                    ?.message ||
+                'Một số suất chiếu không thể thêm.';
+
+            showAlert(
+                'Kết quả thêm hàng loạt',
+                `Đã thêm thành công ${successCount}/${times.length} suất chiếu.\n\n${firstError}`,
+                failedCount === times.length
+                    ? 'error'
+                    : 'warning'
+            );
+
+        } catch (error) {
+
+            console.error(
+                'BULK CREATE SHOWTIMES ERROR:',
+                error
+            );
+
+            showAlert(
+                'Lỗi',
+                'Không thể thực hiện thêm hàng loạt suất chiếu.',
+                'error'
+            );
+
+        } finally {
+
+            setBulkLoading(false);
+        }
+    };
+
+    // ======================================================
     // TABLE COLUMNS
-    // ------------------------------------------------------
+    // ======================================================
+
     const columns = [
+
         {
             title: 'Phim',
             key: 'title',
+
             render: (row) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                        width: '42px',
-                        height: '42px',
-                        borderRadius: '12px',
-                        background: '#dbeafe',
-                        color: '#2563eb',
+
+                <div
+                    style={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
+                        gap: '12px'
+                    }}
+                >
+
+                    <div
+                        style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '12px',
+                            background: '#dbeafe',
+                            color: '#2563eb',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
                         <Film size={18} />
                     </div>
+
                     <div>
-                        <div style={{ fontWeight: '600' }}>{row.title}</div>
-                        <small style={{ color: '#64748b' }}>{row.duration} phút</small>
+
+                        <div
+                            style={{
+                                fontWeight: '600'
+                            }}
+                        >
+                            {row.title}
+                        </div>
+
+                        <small
+                            style={{
+                                color: '#64748b'
+                            }}
+                        >
+                            {row.duration} phút
+                        </small>
+
                     </div>
+
                 </div>
             )
         },
+
         {
             title: 'Rạp / Phòng',
             key: 'cinema_name',
+
             render: (row) => (
+
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600' }}>
-                        <MapPin size={14} /> {row.cinema_name}
+
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            fontWeight: '600'
+                        }}
+                    >
+
+                        <MapPin size={14} />
+
+                        {row.cinema_name}
+
                     </div>
-                    <div className="status-badge" style={{ marginTop: '6px', width: 'fit-content' }}>
-                        {row.room_name} ({row.room_type})
+
+                    <div
+                        className="status-badge"
+                        style={{
+                            marginTop: '6px',
+                            width: 'fit-content'
+                        }}
+                    >
+
+                        {row.room_name}
+
+                        {' '}
+
+                        ({row.room_type})
+
                     </div>
+
                 </div>
             )
         },
+
         {
             title: 'Ngày chiếu',
             key: 'start_time',
-            render: (row) => formatDateTime(row.start_time).date
+
+            render: (row) =>
+                formatDateTime(
+                    row.start_time
+                ).date
         },
+
         {
             title: 'Giờ chiếu',
             key: 'time',
+
             render: (row) => (
+
                 <span className="status-badge pending">
-                    <Clock size={13} style={{ marginRight: '4px' }} />
-                    {formatDateTime(row.start_time).time}
+
+                    <Clock
+                        size={13}
+                        style={{
+                            marginRight: '4px'
+                        }}
+                    />
+
+                    {
+                        formatDateTime(
+                            row.start_time
+                        ).time
+                    }
+
                 </span>
-            )
-        },
-        {
-            title: 'Thao tác',
-            key: 'actions',
-            render: (row) => (
-                <div className="admin-table-actions">
-                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
-                        <Edit size={16} />
-                    </button>
-                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
-                        <Trash2 size={16} />
-                    </button>
-                </div>
             )
         }
     ];
 
-    // ------------------------------------------------------
-    // FORM FIELDS
-    // ------------------------------------------------------
+    // ======================================================
+    // NORMAL FORM FIELDS
+    // ======================================================
+
     const formFields = [
+
         {
             label: 'Phim',
             name: 'movie_id',
             type: 'select',
+
             options: [
-                { label: '-- Chọn phim --', value: '' },
-                ...movies.map(movie => ({ label: movie.title, value: movie.movie_id }))
+                {
+                    label: '-- Chọn phim --',
+                    value: ''
+                },
+
+                ...movies.map(
+                    (movie) => ({
+                        label: movie.title,
+                        value: movie.movie_id
+                    })
+                )
             ]
         },
+
         {
             label: 'Rạp chiếu',
             name: 'cinema_id',
             type: 'select',
+
             options: [
-                { label: '-- Chọn rạp --', value: '' },
-                ...cinemas.map(cinema => ({ label: cinema.cinema_name, value: cinema.cinema_id }))
+                {
+                    label: '-- Chọn rạp --',
+                    value: ''
+                },
+
+                ...cinemas.map(
+                    (cinema) => ({
+                        label:
+                            cinema.cinema_name,
+                        value:
+                            cinema.cinema_id
+                    })
+                )
             ]
         },
+
         {
             label: 'Phòng chiếu',
             name: 'room_id',
             type: 'select',
+
             options: [
-                { label: '-- Chọn phòng --', value: '' },
-                ...rooms.map(room => ({ label: `${room.room_name} (${room.room_type})`, value: room.room_id }))
+                {
+                    label: '-- Chọn phòng --',
+                    value: ''
+                },
+
+                ...rooms.map(
+                    (room) => ({
+                        label:
+                            `${room.room_name} (${room.room_type})`,
+                        value:
+                            room.room_id
+                    })
+                )
             ]
         },
+
         {
             label: 'Thời gian chiếu',
             name: 'start_time',
@@ -515,75 +1199,403 @@ const ShowTimePage = () => {
         }
     ];
 
-    // ------------------------------------------------------
+    // ======================================================
+    // BULK FORM FIELDS
+    // ======================================================
+
+    const bulkFormFields = [
+
+        {
+            label: 'Phim',
+            name: 'movie_id',
+            type: 'select',
+
+            options: [
+                {
+                    label: '-- Chọn phim --',
+                    value: ''
+                },
+
+                ...movies.map(
+                    (movie) => ({
+                        label:
+                            movie.title,
+                        value:
+                            movie.movie_id
+                    })
+                )
+            ]
+        },
+
+        {
+            label: 'Rạp chiếu',
+            name: 'cinema_id',
+            type: 'select',
+
+            options: [
+                {
+                    label: '-- Chọn rạp --',
+                    value: ''
+                },
+
+                ...cinemas.map(
+                    (cinema) => ({
+                        label:
+                            cinema.cinema_name,
+                        value:
+                            cinema.cinema_id
+                    })
+                )
+            ]
+        },
+
+        {
+            label: 'Phòng chiếu',
+            name: 'room_id',
+            type: 'select',
+
+            options: [
+                {
+                    label: '-- Chọn phòng --',
+                    value: ''
+                },
+
+                ...rooms.map(
+                    (room) => ({
+                        label:
+                            `${room.room_name} (${room.room_type})`,
+                        value:
+                            room.room_id
+                    })
+                )
+            ]
+        },
+
+        {
+            label: 'Ngày chiếu',
+            name: 'date',
+            type: 'date'
+        },
+
+        {
+            label: 'Các giờ chiếu',
+            name: 'times',
+            type: 'textarea',
+
+            placeholder:
+                'Ví dụ:\n09:00\n11:30\n14:00\n16:30\n19:00\n21:30'
+        }
+    ];
+
+    // ======================================================
     // RENDER
-    // ------------------------------------------------------
+    // ======================================================
+
     return (
         <>
             <AdminPage
                 title="Quản lý lịch chiếu"
                 subtitle="Quản lý toàn bộ suất chiếu trong hệ thống"
-                icon={<CalendarDays size={30} />}
+                icon={
+                    <CalendarDays size={30} />
+                }
+
                 buttonText="Thêm suất chiếu"
-                onAdd={handleOpenAdd}
-                searchValue={search}
-                onSearchChange={setSearch}
+
+                onAdd={
+                    handleOpenAdd
+                }
+
+                searchValue={
+                    search
+                }
+
+                onSearchChange={
+                    setSearch
+                }
+
+                /*
+                 * Nếu AdminPage của bạn chưa hỗ trợ
+                 * button phụ thì bỏ phần này và dùng
+                 * nút bulk ở bên dưới.
+                 */
             >
+
+                {/* ==================================================
+                    BULK ACTION
+                ================================================== */}
+
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        marginBottom: '16px'
+                    }}
+                >
+
+                    <button
+                        type="button"
+                        onClick={
+                            handleOpenBulk
+                        }
+                        disabled={
+                            loading ||
+                            submitLoading ||
+                            bulkLoading
+                        }
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 16px',
+                            border: 'none',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            fontWeight: '600'
+                        }}
+                    >
+
+                        <Layers size={17} />
+
+                        Thêm hàng loạt
+
+                    </button>
+
+                </div>
+
+                {/* ==================================================
+                    TABLE
+                ================================================== */}
+
                 {loading ? (
+
                     <div className="admin-loading">
-                        <Loader2 size={32} className="spin-icon" />
-                        <span>Đang tải dữ liệu...</span>
-                    </div>
-                ) : (
-                    <>
-                        <AdminTable columns={columns} data={showtimes} />
-                        <AdminPagination
-                            currentPage={pagination.page}
-                            totalPages={pagination.totalPages}
-                            onPageChange={handlePageChange}
+
+                        <Loader2
+                            size={32}
+                            className="spin-icon"
                         />
+
+                        <span>
+                            Đang tải dữ liệu...
+                        </span>
+
+                    </div>
+
+                ) : (
+
+                    <>
+
+                        <AdminTable
+                            columns={columns}
+                            data={showtimes}
+                        />
+
+                        <AdminPagination
+                            currentPage={
+                                pagination.page
+                            }
+
+                            totalPages={
+                                pagination.totalPages
+                            }
+
+                            onPageChange={
+                                handlePageChange
+                            }
+                        />
+
                     </>
                 )}
+
             </AdminPage>
 
             {/* ==================================================
-                FORM MODAL (giống UserPage)
+                ADD SINGLE SHOWTIME
             ================================================== */}
+
             <AdminModal
                 open={isFormOpen}
-                onClose={handleCloseForm}
-                title={editingShowtime ? 'Cập nhật suất chiếu' : 'Thêm suất chiếu'}
+                onClose={
+                    handleCloseForm
+                }
+                title="Thêm suất chiếu"
                 type="default"
                 size="lg"
             >
+
                 <AdminForm
-                    fields={formFields}
-                    formData={formData}
-                    errors={formErrors}
-                    onChange={handleChange}
-                    onSubmit={handleSubmit}
-                    loading={submitLoading}
-                    submitText={editingShowtime ? 'Lưu thay đổi' : 'Thêm suất chiếu'}
+                    fields={
+                        formFields
+                    }
+
+                    formData={
+                        formData
+                    }
+
+                    errors={
+                        formErrors
+                    }
+
+                    onChange={
+                        handleChange
+                    }
+
+                    onSubmit={
+                        handleSubmit
+                    }
+
+                    loading={
+                        submitLoading
+                    }
+
+                    submitText="Thêm suất chiếu"
                 />
+
             </AdminModal>
 
             {/* ==================================================
-                ALERT / CONFIRM MODAL (giống UserPage)
+                BULK SHOWTIMES
             ================================================== */}
+
             <AdminModal
-                open={alertModal.open}
-                onClose={closeAlert}
-                title={alertModal.title}
-                type={alertModal.type}
+                open={isBulkOpen}
+                onClose={
+                    handleCloseBulk
+                }
+                title="Thêm hàng loạt suất chiếu"
+                type="default"
+                size="lg"
+            >
+
+                <div
+                    style={{
+                        marginBottom: '18px',
+                        padding: '14px 16px',
+                        borderRadius: '10px',
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0'
+                    }}
+                >
+
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontWeight: '600',
+                            marginBottom: '6px'
+                        }}
+                    >
+
+                        <Plus size={16} />
+
+                        Thêm nhiều suất trong cùng một ngày
+
+                    </div>
+
+                    <div
+                        style={{
+                            color: '#64748b',
+                            fontSize: '14px',
+                            lineHeight: '1.6'
+                        }}
+                    >
+
+                        Chọn phim, rạp, phòng và ngày.
+                        Sau đó nhập nhiều giờ chiếu.
+                        Mỗi giờ sẽ được tạo thành một suất riêng.
+
+                    </div>
+
+                </div>
+
+                <AdminForm
+                    fields={
+                        bulkFormFields
+                    }
+
+                    formData={
+                        bulkFormData
+                    }
+
+                    errors={
+                        bulkErrors
+                    }
+
+                    onChange={
+                        handleBulkChange
+                    }
+
+                    onSubmit={
+                        handleBulkSubmit
+                    }
+
+                    loading={
+                        bulkLoading
+                    }
+
+                    submitText={
+                        bulkLoading
+                            ? 'Đang thêm...'
+                            : 'Thêm hàng loạt'
+                    }
+                />
+
+            </AdminModal>
+
+            {/* ==================================================
+                ALERT / CONFIRM MODAL
+            ================================================== */}
+
+            <AdminModal
+                open={
+                    alertModal.open
+                }
+
+                onClose={
+                    closeAlert
+                }
+
+                title={
+                    alertModal.title
+                }
+
+                type={
+                    alertModal.type
+                }
+
                 size="sm"
-                onConfirm={alertModal.onConfirm || closeAlert}
-                onCancel={alertModal.onCancel || closeAlert}
+
+                onConfirm={
+                    alertModal.onConfirm ||
+                    closeAlert
+                }
+
+                onCancel={
+                    alertModal.onCancel ||
+                    closeAlert
+                }
+
                 confirmText="Xác nhận"
                 cancelText="Hủy"
             >
+
                 <div className="admin-alert-content">
-                    <p>{alertModal.message}</p>
+
+                    <p
+                        style={{
+                            whiteSpace:
+                                'pre-line'
+                        }}
+                    >
+                        {
+                            alertModal.message
+                        }
+                    </p>
+
                 </div>
+
             </AdminModal>
         </>
     );

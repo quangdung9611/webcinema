@@ -5,6 +5,7 @@ const db = require("../Config/db");
 /*=========================================================
     CẤU HÌNH GIÁ VÉ
 =========================================================*/
+
 const ROOM_CONFIG = {
     "2D": {
         defaultPrice: 80000
@@ -31,17 +32,18 @@ const ROOM_CONFIG = {
 /*=========================================================
     THỜI GIAN DỌN PHÒNG
 
-    KHÔNG dùng interval_minutes từ frontend.
-
-    Backend tự cộng:
-    duration phim + cleanup
+    Sau khi phim kết thúc:
+    + 15 phút
+    rồi mới bắt đầu suất tiếp theo.
 =========================================================*/
+
 const CLEANUP_MINUTES = 15;
 
 
 /*=========================================================
     FORMAT DATE TIME
 =========================================================*/
+
 const formatDateTime = (value) => {
 
     if (!value) {
@@ -57,7 +59,12 @@ const formatDateTime = (value) => {
 /*=========================================================
     PARSE DATE
 =========================================================*/
+
 const parseDate = (value) => {
+
+    if (!value) {
+        return null;
+    }
 
     const date = new Date(`${value}T00:00:00`);
 
@@ -72,6 +79,7 @@ const parseDate = (value) => {
 /*=========================================================
     FORMAT YYYY-MM-DD
 =========================================================*/
+
 const formatDate = (date) => {
 
     const year = date.getFullYear();
@@ -91,6 +99,7 @@ const formatDate = (date) => {
 /*=========================================================
     ADD DAYS
 =========================================================*/
+
 const addDays = (date, days) => {
 
     const result = new Date(date);
@@ -104,21 +113,20 @@ const addDays = (date, days) => {
 
 
 /*=========================================================
-    CREATE DATETIME
-=========================================================*/
-const combineDateTime = (
-    date,
-    time
-) => {
-
-    return `${formatDate(date)} ${time}`;
-};
-
-
-/*=========================================================
     MINUTES -> HH:mm
 =========================================================*/
+
 const minutesToTime = (minutes) => {
+
+    /*
+     * Cho phép 1440 = 24:00
+     * để xử lý trường hợp người dùng
+     * chọn khoảng 09:00 -> 00:00.
+     */
+
+    if (minutes === 1440) {
+        return "00:00";
+    }
 
     const hour = Math.floor(
         minutes / 60
@@ -126,25 +134,71 @@ const minutesToTime = (minutes) => {
 
     const minute = minutes % 60;
 
-    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    return (
+        `${String(hour).padStart(2, "0")}:` +
+        `${String(minute).padStart(2, "0")}`
+    );
 };
 
 
 /*=========================================================
     TIME -> MINUTES
-=========================================================*/
-const timeToMinutes = (time) => {
 
-    const [hour, minute] =
-        String(time)
-            .split(":")
-            .map(Number);
+    00:00 có thể được hiểu là 24:00
+    trong trường hợp dùng làm END TIME.
+=========================================================*/
+
+const timeToMinutes = (
+    time,
+    isEndTime = false
+) => {
+
+    if (!time) {
+        return null;
+    }
+
+    const parts = String(time)
+        .split(":")
+        .map(Number);
+
+    if (parts.length < 2) {
+        return null;
+    }
+
+    const hour = parts[0];
+    const minute = parts[1];
 
     if (
         Number.isNaN(hour) ||
         Number.isNaN(minute)
     ) {
         return null;
+    }
+
+    if (
+        hour < 0 ||
+        hour > 23 ||
+        minute < 0 ||
+        minute > 59
+    ) {
+        return null;
+    }
+
+    /*
+     * Khi END TIME = 00:00
+     * hiểu là 24:00.
+     *
+     * Ví dụ:
+     * 09:00 -> 00:00
+     * = 09:00 -> 24:00
+     */
+
+    if (
+        isEndTime &&
+        hour === 0 &&
+        minute === 0
+    ) {
+        return 1440;
     }
 
     return (
@@ -157,6 +211,7 @@ const timeToMinutes = (time) => {
 /*=========================================================
     VALIDATE BASIC SHOWTIME
 =========================================================*/
+
 const validateShowtime = (data) => {
 
     const {
@@ -172,12 +227,39 @@ const validateShowtime = (data) => {
         !room_id ||
         !start_time
     ) {
-        return "Vui lòng chọn đầy đủ: Phim, Rạp, Phòng và Thời gian chiếu";
+        return (
+            "Vui lòng chọn đầy đủ: " +
+            "Phim, Rạp, Phòng và Thời gian chiếu"
+        );
     }
 
     return null;
 };
 
+
+/*=========================================================
+    CREATE DATETIME
+=========================================================*/
+
+const combineDateTime = (
+    date,
+    minutes
+) => {
+
+    /*
+     * 1440 không được đưa vào DB
+     * vì đây chỉ là mốc kết thúc.
+     */
+
+    const time = minutesToTime(minutes);
+
+    return `${formatDate(date)} ${time}`;
+};
+
+
+/*=========================================================
+    CLASS
+=========================================================*/
 
 class ShowtimeService {
 
@@ -185,6 +267,7 @@ class ShowtimeService {
     /*=========================================================
         GET ALL - KHÔNG PHÂN TRANG
     =========================================================*/
+
     async getAllShowtimesAll(search = "") {
 
         return await ShowtimeRepository.findAllAll(
@@ -196,6 +279,7 @@ class ShowtimeService {
     /*=========================================================
         GET ALL - PHÂN TRANG
     =========================================================*/
+
     async getAllShowtimesPaginated(
         page = 1,
         limit = 20,
@@ -213,6 +297,7 @@ class ShowtimeService {
     /*=========================================================
         GET BY CINEMA + ROOM
     =========================================================*/
+
     async getShowtimesByCinemaAndRoom(
         cinemaId,
         roomId
@@ -229,6 +314,7 @@ class ShowtimeService {
     /*=========================================================
         GET DETAIL
     =========================================================*/
+
     async getShowtimeDetail(showtimeId) {
 
         const showtime =
@@ -254,6 +340,7 @@ class ShowtimeService {
     /*=========================================================
         GET BY MOVIE
     =========================================================*/
+
     async getShowtimesByMovie(movieId) {
 
         return await ShowtimeRepository.findByMovie(
@@ -265,6 +352,7 @@ class ShowtimeService {
     /*=========================================================
         MOVIE DETAIL
     =========================================================*/
+
     async getShowtimesForMovieDetail(
         movieId,
         cinemaId,
@@ -314,6 +402,7 @@ class ShowtimeService {
                     acc[key].push(item);
 
                     return acc;
+
                 },
                 {}
             );
@@ -324,8 +413,32 @@ class ShowtimeService {
 
     /*=========================================================
         CREATE BULK SHOWTIMES
-        ⭐ LOGIC CHÍNH CHO SHOWTIME PAGE
+
+        ⭐ SMART BULK SHOWTIME ENGINE
+
+        INPUT:
+
+        {
+            movie_ids: [],
+            cinema_ids: [],
+            room_ids: [],
+
+            start_date: "2026-08-20",
+            end_date: "2026-08-25",
+
+            start_time: "09:00",
+            end_time: "00:00"
+        }
+
+        BACKEND TỰ:
+
+        duration phim
+        +
+        cleanup 15 phút
+
+        để tạo lịch.
     =========================================================*/
+
     async createBulkShowtimes(data) {
 
         let {
@@ -343,8 +456,10 @@ class ShowtimeService {
             1. VALIDATE ARRAY
         =====================================================*/
 
-        if (!Array.isArray(movie_ids) ||
-            movie_ids.length === 0) {
+        if (
+            !Array.isArray(movie_ids) ||
+            movie_ids.length === 0
+        ) {
 
             const err = new Error(
                 "Vui lòng chọn ít nhất một bộ phim"
@@ -356,8 +471,10 @@ class ShowtimeService {
         }
 
 
-        if (!Array.isArray(cinema_ids) ||
-            cinema_ids.length === 0) {
+        if (
+            !Array.isArray(cinema_ids) ||
+            cinema_ids.length === 0
+        ) {
 
             const err = new Error(
                 "Vui lòng chọn ít nhất một rạp"
@@ -369,8 +486,10 @@ class ShowtimeService {
         }
 
 
-        if (!Array.isArray(room_ids) ||
-            room_ids.length === 0) {
+        if (
+            !Array.isArray(room_ids) ||
+            room_ids.length === 0
+        ) {
 
             const err = new Error(
                 "Vui lòng chọn ít nhất một phòng"
@@ -383,7 +502,39 @@ class ShowtimeService {
 
 
         /*=====================================================
-            2. VALIDATE DATE
+            2. NORMALIZE IDS
+        =====================================================*/
+
+        movie_ids = [
+            ...new Set(
+                movie_ids
+                    .map(Number)
+                    .filter(Number.isInteger)
+                    .filter(id => id > 0)
+            )
+        ];
+
+        cinema_ids = [
+            ...new Set(
+                cinema_ids
+                    .map(Number)
+                    .filter(Number.isInteger)
+                    .filter(id => id > 0)
+            )
+        ];
+
+        room_ids = [
+            ...new Set(
+                room_ids
+                    .map(Number)
+                    .filter(Number.isInteger)
+                    .filter(id => id > 0)
+            )
+        ];
+
+
+        /*=====================================================
+            3. VALIDATE DATE
         =====================================================*/
 
         if (
@@ -436,14 +587,20 @@ class ShowtimeService {
 
 
         /*=====================================================
-            3. VALIDATE TIME
+            4. VALIDATE TIME
         =====================================================*/
 
         const startMinutes =
-            timeToMinutes(start_time);
+            timeToMinutes(
+                start_time,
+                false
+            );
 
         const endMinutes =
-            timeToMinutes(end_time);
+            timeToMinutes(
+                end_time,
+                true
+            );
 
 
         if (
@@ -461,7 +618,9 @@ class ShowtimeService {
         }
 
 
-        if (startMinutes >= endMinutes) {
+        if (
+            startMinutes >= endMinutes
+        ) {
 
             const err = new Error(
                 "Giờ bắt đầu phải nhỏ hơn giờ kết thúc"
@@ -471,35 +630,6 @@ class ShowtimeService {
 
             throw err;
         }
-
-
-        /*=====================================================
-            4. NORMALIZE IDS
-        =====================================================*/
-
-        movie_ids = [
-            ...new Set(
-                movie_ids
-                    .map(Number)
-                    .filter(Boolean)
-            )
-        ];
-
-        cinema_ids = [
-            ...new Set(
-                cinema_ids
-                    .map(Number)
-                    .filter(Boolean)
-            )
-        ];
-
-        room_ids = [
-            ...new Set(
-                room_ids
-                    .map(Number)
-                    .filter(Boolean)
-            )
-        ];
 
 
         /*=====================================================
@@ -529,7 +659,36 @@ class ShowtimeService {
 
 
         /*=====================================================
-            6. LOAD ROOMS
+            6. VALIDATE MOVIE DURATION
+        =====================================================*/
+
+        const validMovies =
+            movies.filter(movie => {
+
+                const duration =
+                    Number(movie.duration);
+
+                return (
+                    Number.isFinite(duration) &&
+                    duration > 0
+                );
+            });
+
+
+        if (!validMovies.length) {
+
+            const err = new Error(
+                "Các phim đã chọn không có thời lượng hợp lệ"
+            );
+
+            err.statusCode = 400;
+
+            throw err;
+        }
+
+
+        /*=====================================================
+            7. LOAD ROOMS
         =====================================================*/
 
         const rooms =
@@ -555,25 +714,57 @@ class ShowtimeService {
 
 
         /*=====================================================
-            7. CHỈ CHO PHÉP ROOM THUỘC CINEMA ĐƯỢC CHỌN
+            8. VALIDATE ROOM ↔ CINEMA
+
+            Ví dụ:
+
+            Cinema A
+                Room A1
+                Room A2
+
+            Cinema B
+                Room B1
+
+            Nếu user chọn:
+
+            cinema_ids:
+                A, B
+
+            room_ids:
+                A1, B1
+
+            => hợp lệ.
+
+            Nếu chọn:
+
+            cinema_ids:
+                A
+
+            room_ids:
+                B1
+
+            => loại.
         =====================================================*/
 
         const selectedCinemaSet =
-            new Set(cinema_ids);
+            new Set(
+                cinema_ids.map(Number)
+            );
 
 
         const validRooms =
-            rooms.filter(room =>
-                selectedCinemaSet.has(
+            rooms.filter(room => {
+
+                return selectedCinemaSet.has(
                     Number(room.cinema_id)
-                )
-            );
+                );
+            });
 
 
         if (!validRooms.length) {
 
             const err = new Error(
-                "Các phòng đã chọn không thuộc những rạp đã chọn"
+                "Không có phòng nào thuộc các rạp đã chọn"
             );
 
             err.statusCode = 400;
@@ -583,10 +774,61 @@ class ShowtimeService {
 
 
         /*=====================================================
-            8. GENERATE SHOWTIMES
+            9. SMART MOVIE ORDER
+
+            Sắp xếp phim theo thời lượng.
+
+            Phim ngắn được ưu tiên trước.
+
+            Ví dụ:
+
+            Thỏ Ơi      90 phút
+            Phim B     110 phút
+            Phim C     125 phút
+
+            => 90
+            => 110
+            => 125
+
+            Sau đó lặp lại.
+        =====================================================*/
+
+        const sortedMovies =
+            [...validMovies]
+                .sort(
+                    (a, b) =>
+                        Number(a.duration) -
+                        Number(b.duration)
+                );
+
+
+        /*=====================================================
+            10. GENERATE
+
+            Mỗi ROOM có một lịch độc lập.
+
+            Ví dụ:
+
+            Phòng A1
+
+            09:00
+            Thỏ Ơi 90p
+            ↓
+            10:30
+            cleanup 15p
+            ↓
+            10:45
+            Phim B 120p
+            ↓
+            12:45
+            cleanup 15p
+            ↓
+            13:00
+            Thỏ Ơi
         =====================================================*/
 
         const generated = [];
+
 
         let currentDate =
             new Date(startDate);
@@ -600,56 +842,70 @@ class ShowtimeService {
                 formatDate(currentDate);
 
 
-            /*
-             * Mỗi ROOM sẽ có lịch riêng.
-             *
-             * Không dùng interval_minutes.
-             *
-             * Mỗi movie:
-             *
-             * start
-             * +
-             * duration
-             * +
-             * cleanup 15 phút
-             *
-             * = suất tiếp theo
-             */
+            /*=================================================
+                MỖI ROOM TỰ CHẠY LỊCH RIÊNG
+            =================================================*/
 
             for (
-                const room
-                of validRooms
+                const room of validRooms
             ) {
 
                 let currentMinutes =
                     startMinutes;
 
 
+                let movieIndex = 0;
+
+
+                /*
+                 * Chống vòng lặp vô hạn
+                 */
+                let safetyCounter = 0;
+
+                const maxIterations = 500;
+
+
                 while (
-                    currentMinutes < endMinutes
+                    currentMinutes < endMinutes &&
+                    safetyCounter < maxIterations
                 ) {
 
-                    let createdAny =
-                        false;
+                    safetyCounter++;
 
+
+                    /*=========================================
+                        TÌM PHIM TIẾP THEO PHÙ HỢP
+                    =========================================*/
+
+                    let selectedMovie = null;
+
+
+                    /*
+                     * Tìm từ movieIndex trở đi.
+                     */
 
                     for (
-                        const movie
-                        of movies
+                        let offset = 0;
+                        offset < sortedMovies.length;
+                        offset++
                     ) {
+
+                        const index =
+                            (
+                                movieIndex +
+                                offset
+                            ) %
+                            sortedMovies.length;
+
+
+                        const movie =
+                            sortedMovies[index];
+
 
                         const duration =
                             Number(
                                 movie.duration
                             );
-
-
-                        if (
-                            !duration ||
-                            duration <= 0
-                        ) {
-                            continue;
-                        }
 
 
                         const movieEnd =
@@ -658,80 +914,110 @@ class ShowtimeService {
 
 
                         /*
-                         * Suất phim phải kết thúc
-                         * trước hoặc bằng end_time.
+                         * Phim phải kết thúc
+                         * trong khung giờ cho phép.
                          */
 
                         if (
-                            movieEnd >
+                            movieEnd <=
                             endMinutes
                         ) {
-                            continue;
-                        }
 
-
-                        const startTime =
-                            minutesToTime(
-                                currentMinutes
-                            );
-
-
-                        const endTime =
-                            minutesToTime(
+                            selectedMovie = {
+                                movie,
+                                index,
+                                duration,
                                 movieEnd
-                            );
+                            };
+
+                            break;
+                        }
+                    }
 
 
-                        const fullStart =
-                            `${dateString} ${startTime}`;
+                    /*=========================================
+                        KHÔNG CÒN PHIM NÀO FIT
+                    =========================================*/
 
-
-                        const fullEnd =
-                            `${dateString} ${endTime}`;
-
-
-                        generated.push({
-
-                            movie_id:
-                                movie.movie_id,
-
-                            cinema_id:
-                                room.cinema_id,
-
-                            room_id:
-                                room.room_id,
-
-                            start_time:
-                                fullStart,
-
-                            end_time:
-                                fullEnd
-                        });
-
-
-                        createdAny = true;
-
-
-                        /*
-                         * Sau khi phim kết thúc:
-                         *
-                         * duration
-                         * +
-                         * cleanup
-                         */
-
-                        currentMinutes =
-                            movieEnd +
-                            CLEANUP_MINUTES;
-
-
+                    if (!selectedMovie) {
                         break;
                     }
 
 
-                    if (!createdAny) {
-                        break;
-                    }
+                    const {
+                        movie,
+                        index,
+                        duration,
+                        movieEnd
+                    } = selectedMovie;
+
+
+                    const startTime =
+                        minutesToTime(
+                            currentMinutes
+                        );
+
+
+                    const endTime =
+                        minutesToTime(
+                            movieEnd
+                        );
+
+
+                    const fullStart =
+                        `${dateString} ${startTime}`;
+
+
+                    const fullEnd =
+                        `${dateString} ${endTime}`;
+
+
+                    generated.push({
+
+                        movie_id:
+                            movie.movie_id,
+
+                        cinema_id:
+                            room.cinema_id,
+
+                        room_id:
+                            room.room_id,
+
+                        start_time:
+                            fullStart,
+
+                        end_time:
+                            fullEnd,
+
+                        duration,
+
+                        cleanupMinutes:
+                            CLEANUP_MINUTES
+                    });
+
+
+                    /*=========================================
+                        SUẤT TIẾP THEO
+
+                        movie end
+                        +
+                        cleanup 15 phút
+                    =========================================*/
+
+                    currentMinutes =
+                        movieEnd +
+                        CLEANUP_MINUTES;
+
+
+                    /*
+                     * Chuyển sang phim kế tiếp.
+                     */
+
+                    movieIndex =
+                        (
+                            index + 1
+                        ) %
+                        sortedMovies.length;
                 }
             }
 
@@ -745,13 +1031,13 @@ class ShowtimeService {
 
 
         /*=====================================================
-            9. KHÔNG CÓ SUẤT NÀO
+            11. KHÔNG CÓ SUẤT
         =====================================================*/
 
         if (!generated.length) {
 
             const err = new Error(
-                "Không thể tạo suất chiếu trong khoảng thời gian đã chọn. Hãy kiểm tra thời lượng phim và khoảng giờ."
+                "Không thể tạo suất chiếu trong khoảng thời gian đã chọn. Hãy kiểm tra thời lượng phim và khung giờ."
             );
 
             err.statusCode = 400;
@@ -761,21 +1047,28 @@ class ShowtimeService {
 
 
         /*=====================================================
-            10. LOẠI CÁC SUẤT TRÙNG NỘI BỘ
+            12. LOẠI TRÙNG NỘI BỘ
+
+            Cùng room + cùng start_time
+            chỉ được phép tồn tại 1 suất.
         =====================================================*/
 
         const uniqueMap =
             new Map();
 
+
         for (
-            const item
-            of generated
+            const item of generated
         ) {
 
             const key =
                 `${item.room_id}_${item.start_time}`;
 
-            if (!uniqueMap.has(key)) {
+
+            if (
+                !uniqueMap.has(key)
+            ) {
+
                 uniqueMap.set(
                     key,
                     item
@@ -791,7 +1084,7 @@ class ShowtimeService {
 
 
         /*=====================================================
-            11. KIỂM TRA QUÁ KHỨ
+            13. KIỂM TRA SUẤT TRONG QUÁ KHỨ
         =====================================================*/
 
         const now =
@@ -799,24 +1092,31 @@ class ShowtimeService {
 
 
         const futureShowtimes =
-            uniqueShowtimes.filter(item => {
+            uniqueShowtimes.filter(
+                item => {
 
-                const date =
-                    new Date(
-                        item.start_time.replace(
-                            " ",
-                            "T"
-                        )
+                    const itemDate =
+                        new Date(
+                            item.start_time
+                                .replace(
+                                    " ",
+                                    "T"
+                                )
+                        );
+
+                    return (
+                        itemDate > now
                     );
+                }
+            );
 
-                return date > now;
-            });
 
-
-        if (!futureShowtimes.length) {
+        if (
+            !futureShowtimes.length
+        ) {
 
             const err = new Error(
-                "Không có suất chiếu nào nằm trong thời gian hợp lệ"
+                "Không có suất chiếu nào nằm trong thời gian tương lai"
             );
 
             err.statusCode = 400;
@@ -826,7 +1126,27 @@ class ShowtimeService {
 
 
         /*=====================================================
-            12. KIỂM TRA TRÙNG VỚI DATABASE
+            14. CHECK DATABASE CONFLICT
+
+            Không được để:
+
+            existing:
+            09:00 -> 10:30
+
+            new:
+            10:00 -> 11:30
+
+            Vì bị overlap.
+
+            Đồng thời:
+
+            existing:
+            09:00 -> 10:30
+
+            new:
+            10:45 -> 12:15
+
+            => OK.
         =====================================================*/
 
         const finalShowtimes = [];
@@ -847,7 +1167,6 @@ class ShowtimeService {
 
 
             if (conflict) {
-
                 continue;
             }
 
@@ -859,10 +1178,12 @@ class ShowtimeService {
 
 
         /*=====================================================
-            13. KHÔNG CÒN SUẤT HỢP LỆ
+            15. KHÔNG CÒN SUẤT HỢP LỆ
         =====================================================*/
 
-        if (!finalShowtimes.length) {
+        if (
+            !finalShowtimes.length
+        ) {
 
             const err = new Error(
                 "Tất cả suất chiếu tạo ra đều bị trùng với lịch hiện tại"
@@ -875,33 +1196,40 @@ class ShowtimeService {
 
 
         /*=====================================================
-            14. INSERT DATABASE
+            16. INSERT DATABASE
+
+            Chỉ gửi các field thực sự tồn tại
+            trong bảng showtimes.
         =====================================================*/
 
         const insertData =
-            finalShowtimes.map(item => ({
-                movie_id:
-                    item.movie_id,
+            finalShowtimes.map(
+                item => ({
 
-                cinema_id:
-                    item.cinema_id,
+                    movie_id:
+                        item.movie_id,
 
-                room_id:
-                    item.room_id,
+                    cinema_id:
+                        item.cinema_id,
 
-                start_time:
-                    item.start_time
-            }));
+                    room_id:
+                        item.room_id,
 
-
-        const result =
-            await ShowtimeRepository.bulkCreate(
-                insertData
+                    start_time:
+                        item.start_time
+                })
             );
 
 
+        const result =
+            await ShowtimeRepository
+                .bulkCreate(
+                    insertData
+                );
+
+
         /*=====================================================
-            15. RETURN RESULT
+            17. RETURN RESULT
         =====================================================*/
 
         return {
@@ -917,7 +1245,25 @@ class ShowtimeService {
                 result.affectedRows,
 
             cleanupMinutes:
-                CLEANUP_MINUTES
+                CLEANUP_MINUTES,
+
+            roomsProcessed:
+                validRooms.length,
+
+            moviesProcessed:
+                sortedMovies.length,
+
+            startDate:
+                start_date,
+
+            endDate:
+                end_date,
+
+            startTime:
+                start_time,
+
+            endTime:
+                end_time
         };
     }
 
@@ -925,6 +1271,7 @@ class ShowtimeService {
     /*=========================================================
         QUICK BOOKING
     =========================================================*/
+
     async getQuickBookingData(
         movie_id,
         cinema_id,
@@ -991,6 +1338,7 @@ class ShowtimeService {
     /*=========================================================
         BOOKING
     =========================================================*/
+
     async getShowtimesForBooking(
         movie_id,
         cinema_id,
@@ -1025,6 +1373,7 @@ class ShowtimeService {
     /*=========================================================
         FILTER LEGACY
     =========================================================*/
+
     async filterShowtimes(
         movie_id,
         room_id,
@@ -1059,6 +1408,7 @@ class ShowtimeService {
     /*=========================================================
         UPDATE SHOWTIME
     =========================================================*/
+
     async updateShowtime(
         showtimeId,
         data
@@ -1091,7 +1441,9 @@ class ShowtimeService {
 
 
         start_time =
-            formatDateTime(start_time);
+            formatDateTime(
+                start_time
+            );
 
 
         movie_id =
@@ -1124,6 +1476,53 @@ class ShowtimeService {
         }
 
 
+        /*=====================================================
+            KIỂM TRA ROOM CÓ THUỘC CINEMA
+        =====================================================*/
+
+        const rooms =
+            await ShowtimeRepository
+                .findRoomsForBulk([
+                    room_id
+                ]);
+
+
+        const room =
+            rooms[0];
+
+
+        if (!room) {
+
+            const err = new Error(
+                "Không tìm thấy phòng chiếu"
+            );
+
+            err.statusCode = 400;
+
+            throw err;
+        }
+
+
+        if (
+            Number(room.cinema_id) !==
+            cinema_id
+        ) {
+
+            const err = new Error(
+                "Phòng chiếu không thuộc rạp đã chọn"
+            );
+
+            err.statusCode = 400;
+            err.field = "room_id";
+
+            throw err;
+        }
+
+
+        /*=====================================================
+            KIỂM TRA QUÁ KHỨ
+        =====================================================*/
+
         const isPast =
             await ShowtimeRepository
                 .isPastTime(
@@ -1144,18 +1543,113 @@ class ShowtimeService {
         }
 
 
-        const conflict =
-            await ShowtimeRepository.findConflict(
-                room_id,
-                start_time,
-                showtimeId
+        /*=====================================================
+            KIỂM TRA MOVIE
+        =====================================================*/
+
+        const movies =
+            await ShowtimeRepository
+                .findMoviesForBulk([
+                    movie_id
+                ]);
+
+
+        if (!movies.length) {
+
+            const err = new Error(
+                "Không tìm thấy phim"
             );
+
+            err.statusCode = 400;
+            err.field = "movie_id";
+
+            throw err;
+        }
+
+
+        const duration =
+            Number(
+                movies[0].duration
+            );
+
+
+        if (
+            !duration ||
+            duration <= 0
+        ) {
+
+            const err = new Error(
+                "Phim không có thời lượng hợp lệ"
+            );
+
+            err.statusCode = 400;
+            err.field = "movie_id";
+
+            throw err;
+        }
+
+
+        /*=====================================================
+            CHECK OVERLAP THẬT SỰ
+
+            start
+            +
+            duration
+            +
+            cleanup
+        =====================================================*/
+
+        const startDate =
+            new Date(
+                start_time.replace(
+                    " ",
+                    "T"
+                )
+            );
+
+
+        const endDate =
+            new Date(
+                startDate.getTime() +
+                (
+                    duration +
+                    CLEANUP_MINUTES
+                ) *
+                60 *
+                1000
+            );
+
+
+        const mysqlEnd =
+            `${endDate.getFullYear()}-` +
+            `${String(
+                endDate.getMonth() + 1
+            ).padStart(2, "0")}-` +
+            `${String(
+                endDate.getDate()
+            ).padStart(2, "0")} ` +
+            `${String(
+                endDate.getHours()
+            ).padStart(2, "0")}:` +
+            `${String(
+                endDate.getMinutes()
+            ).padStart(2, "0")}`;
+
+
+        const conflict =
+            await ShowtimeRepository
+                .findOverlappingShowtime(
+                    room_id,
+                    start_time,
+                    mysqlEnd,
+                    showtimeId
+                );
 
 
         if (conflict) {
 
             const err = new Error(
-                "Phòng này đã có lịch chiếu vào giờ đó"
+                "Phòng này đã có suất chiếu bị trùng thời gian"
             );
 
             err.statusCode = 400;
@@ -1164,6 +1658,10 @@ class ShowtimeService {
             throw err;
         }
 
+
+        /*=====================================================
+            UPDATE
+        =====================================================*/
 
         const affected =
             await ShowtimeRepository.update(
@@ -1196,7 +1694,10 @@ class ShowtimeService {
     /*=========================================================
         DELETE
     =========================================================*/
-    async deleteShowtime(showtimeId) {
+
+    async deleteShowtime(
+        showtimeId
+    ) {
 
         const existing =
             await ShowtimeRepository.findById(

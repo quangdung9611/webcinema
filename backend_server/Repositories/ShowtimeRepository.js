@@ -8,12 +8,17 @@ class ShowtimeRepository {
         RETURN: rows[]
     =========================================================*/
     async findAllAll(search = "") {
-        search = typeof search === "string" ? search.trim() : "";
+
+        search =
+            typeof search === "string"
+                ? search.trim()
+                : "";
 
         let whereClause = "";
         const queryParams = [];
 
         if (search) {
+
             whereClause = `
                 WHERE m.title LIKE ?
                    OR c.cinema_name LIKE ?
@@ -35,6 +40,7 @@ class ShowtimeRepository {
             `
             SELECT
                 s.showtime_id,
+
                 s.movie_id,
                 s.cinema_id,
                 s.room_id,
@@ -77,29 +83,51 @@ class ShowtimeRepository {
     /*=========================================================
         FIND ALL - CÓ PHÂN TRANG
         ADMIN
+
         RETURN:
         {
             data: [],
             pagination: {}
         }
     =========================================================*/
-    async findAll(page = 1, limit = 20, search = "") {
+    async findAll(
+        page = 1,
+        limit = 20,
+        search = ""
+    ) {
 
-        page = Number.parseInt(page, 10);
-        limit = Number.parseInt(limit, 10);
+        page = Number.parseInt(
+            page,
+            10
+        );
 
-        if (page < 1) page = 1;
-        if (limit < 1) limit = 20;
-        if (limit > 100) limit = 100;
+        limit = Number.parseInt(
+            limit,
+            10
+        );
 
-        search = typeof search === "string"
-            ? search.trim()
-            : "";
+        if (page < 1) {
+            page = 1;
+        }
+
+        if (limit < 1) {
+            limit = 20;
+        }
+
+        if (limit > 100) {
+            limit = 100;
+        }
+
+        search =
+            typeof search === "string"
+                ? search.trim()
+                : "";
 
         let whereClause = "";
         const queryParams = [];
 
         if (search) {
+
             whereClause = `
                 WHERE m.title LIKE ?
                    OR c.cinema_name LIKE ?
@@ -117,12 +145,14 @@ class ShowtimeRepository {
             );
         }
 
-        const offset = (page - 1) * limit;
+        const offset =
+            (page - 1) * limit;
 
         const [rows] = await db.query(
             `
             SELECT
                 s.showtime_id,
+
                 s.movie_id,
                 s.cinema_id,
                 s.room_id,
@@ -166,7 +196,8 @@ class ShowtimeRepository {
 
         const [countRows] = await db.query(
             `
-            SELECT COUNT(*) AS total
+            SELECT
+                COUNT(*) AS total
 
             FROM showtimes s
 
@@ -184,17 +215,22 @@ class ShowtimeRepository {
             queryParams
         );
 
-        const total = Number(
-            countRows[0]?.total || 0
-        );
+        const total =
+            Number(
+                countRows[0]?.total || 0
+            );
 
         const totalPages =
-            Math.ceil(total / limit) || 1;
+            Math.ceil(
+                total / limit
+            ) || 1;
 
         return {
+
             data: rows,
 
             pagination: {
+
                 page,
                 limit,
                 total,
@@ -223,6 +259,7 @@ class ShowtimeRepository {
             `
             SELECT
                 s.showtime_id,
+
                 s.movie_id,
                 s.cinema_id,
                 s.room_id,
@@ -413,61 +450,21 @@ class ShowtimeRepository {
 
     /*=========================================================
         CHECK CONFLICT
+
+        Dùng cho UPDATE SHOWTIME
+
+        Kiểm tra overlap thực sự:
+
+        new_start < existing_end
+        AND
+        new_end > existing_start
+
+        existing_end =
+            existing_start
+            + movie.duration
+            + 15 phút cleanup
     =========================================================*/
     async findConflict(
-        roomId,
-        startTime,
-        excludeShowtimeId = null
-    ) {
-
-        let sql = `
-            SELECT
-                showtime_id
-
-            FROM showtimes
-
-            WHERE room_id = ?
-
-              AND DATE_FORMAT(
-                    start_time,
-                    '%Y-%m-%d %H:%i'
-                  ) = ?
-        `;
-
-        const params = [
-            roomId,
-            startTime
-        ];
-
-        if (excludeShowtimeId) {
-            sql += `
-                AND showtime_id != ?
-            `;
-
-            params.push(
-                excludeShowtimeId
-            );
-        }
-
-        const [rows] = await db.query(
-            sql,
-            params
-        );
-
-        return rows[0] || null;
-    }
-
-
-    /*=========================================================
-        CHECK OVERLAPPING SHOWTIME
-
-        Dùng cho BULK CREATE
-
-        start_time < existing_end
-        AND
-        end_time > existing_start
-    =========================================================*/
-    async findOverlappingShowtime(
         roomId,
         startTime,
         endTime,
@@ -476,25 +473,32 @@ class ShowtimeRepository {
 
         let sql = `
             SELECT
-                showtime_id,
-                start_time
+                s.showtime_id,
 
-            FROM showtimes
+                s.movie_id,
 
-            WHERE room_id = ?
+                s.start_time,
 
-              AND start_time < ?
+                m.title,
+                m.duration
+
+            FROM showtimes s
+
+            JOIN movies m
+                ON s.movie_id = m.movie_id
+
+            WHERE s.room_id = ?
+
+              AND s.start_time < ?
 
               AND DATE_ADD(
-                    start_time,
+                    s.start_time,
                     INTERVAL (
-                        SELECT COALESCE(m.duration, 0)
-                        FROM movies m
-                        JOIN showtimes sx
-                            ON sx.movie_id = m.movie_id
-                        WHERE sx.showtime_id = showtimes.showtime_id
-                        LIMIT 1
-                    ) + 15 MINUTE
+                        COALESCE(
+                            m.duration,
+                            0
+                        ) + 15
+                    ) MINUTE
                   ) > ?
         `;
 
@@ -505,8 +509,9 @@ class ShowtimeRepository {
         ];
 
         if (excludeShowtimeId) {
+
             sql += `
-                AND showtime_id != ?
+                AND s.showtime_id != ?
             `;
 
             params.push(
@@ -515,13 +520,101 @@ class ShowtimeRepository {
         }
 
         sql += `
+            ORDER BY s.start_time ASC
             LIMIT 1
         `;
 
-        const [rows] = await db.query(
-            sql,
-            params
-        );
+        const [rows] =
+            await db.query(
+                sql,
+                params
+            );
+
+        return rows[0] || null;
+    }
+
+
+    /*=========================================================
+        CHECK OVERLAPPING SHOWTIME
+
+        Dùng cho BULK CREATE
+
+        Quy tắc:
+
+        new_start < existing_end
+        AND
+        new_end > existing_start
+
+        existing_end =
+            existing_start
+            + movie.duration
+            + 15 phút cleanup
+    =========================================================*/
+    async findOverlappingShowtime(
+        roomId,
+        startTime,
+        endTime,
+        excludeShowtimeId = null
+    ) {
+
+        let sql = `
+            SELECT
+                s.showtime_id,
+
+                s.movie_id,
+
+                s.start_time,
+
+                m.title,
+                m.duration
+
+            FROM showtimes s
+
+            JOIN movies m
+                ON s.movie_id = m.movie_id
+
+            WHERE s.room_id = ?
+
+              AND s.start_time < ?
+
+              AND DATE_ADD(
+                    s.start_time,
+                    INTERVAL (
+                        COALESCE(
+                            m.duration,
+                            0
+                        ) + 15
+                    ) MINUTE
+                  ) > ?
+        `;
+
+        const params = [
+            roomId,
+            endTime,
+            startTime
+        ];
+
+        if (excludeShowtimeId) {
+
+            sql += `
+                AND s.showtime_id != ?
+            `;
+
+            params.push(
+                excludeShowtimeId
+            );
+        }
+
+        sql += `
+            ORDER BY s.start_time ASC
+            LIMIT 1
+        `;
+
+        const [rows] =
+            await db.query(
+                sql,
+                params
+            );
 
         return rows[0] || null;
     }
@@ -547,7 +640,9 @@ class ShowtimeRepository {
             [startTime]
         );
 
-        return rows[0]?.isPast === 1;
+        return (
+            rows[0]?.isPast === 1
+        );
     }
 
 
@@ -576,6 +671,7 @@ class ShowtimeRepository {
 
     /*=========================================================
         QUICK BOOKING
+        GET MOVIES
     =========================================================*/
     async getQuickBookingMovies() {
 
@@ -600,7 +696,13 @@ class ShowtimeRepository {
     }
 
 
-    async getQuickBookingCinemas(movieId) {
+    /*=========================================================
+        QUICK BOOKING
+        GET CINEMAS
+    =========================================================*/
+    async getQuickBookingCinemas(
+        movieId
+    ) {
 
         const [rows] = await db.query(
             `
@@ -625,6 +727,10 @@ class ShowtimeRepository {
     }
 
 
+    /*=========================================================
+        QUICK BOOKING
+        GET DATES
+    =========================================================*/
     async getQuickBookingDates(
         movieId,
         cinemaId
@@ -656,6 +762,10 @@ class ShowtimeRepository {
     }
 
 
+    /*=========================================================
+        QUICK BOOKING
+        GET TIMES
+    =========================================================*/
     async getQuickBookingTimes(
         movieId,
         cinemaId,
@@ -697,6 +807,10 @@ class ShowtimeRepository {
     }
 
 
+    /*=========================================================
+        BOOKING
+        GET SHOWTIMES
+    =========================================================*/
     async getShowtimesForBooking(
         movieId,
         cinemaId,
@@ -739,6 +853,9 @@ class ShowtimeRepository {
     }
 
 
+    /*=========================================================
+        FILTER LEGACY
+    =========================================================*/
     async filterShowtimes(
         movieId,
         roomId,
@@ -778,16 +895,27 @@ class ShowtimeRepository {
 
     /*=========================================================
         MOVIES - BULK
-        LẤY THỜI LƯỢNG PHIM
-    =========================================================*/
-    async findMoviesForBulk(movieIds) {
 
-        if (!movieIds.length) {
+        Lấy thông tin phim được chọn.
+
+        duration cực kỳ quan trọng
+        cho Smart Bulk Showtime.
+    =========================================================*/
+    async findMoviesForBulk(
+        movieIds
+    ) {
+
+        if (
+            !Array.isArray(movieIds) ||
+            movieIds.length === 0
+        ) {
             return [];
         }
 
         const placeholders =
-            movieIds.map(() => "?").join(",");
+            movieIds
+                .map(() => "?")
+                .join(",");
 
         const [rows] = await db.query(
             `
@@ -798,7 +926,9 @@ class ShowtimeRepository {
 
             FROM movies
 
-            WHERE movie_id IN (${placeholders})
+            WHERE movie_id IN (
+                ${placeholders}
+            )
             `,
             movieIds
         );
@@ -809,15 +939,31 @@ class ShowtimeRepository {
 
     /*=========================================================
         ROOMS - BULK
-    =========================================================*/
-    async findRoomsForBulk(roomIds) {
 
-        if (!roomIds.length) {
+        Lấy phòng + cinema_id.
+
+        Dùng để đảm bảo:
+
+        room
+        thuộc
+        cinema
+        được chọn.
+    =========================================================*/
+    async findRoomsForBulk(
+        roomIds
+    ) {
+
+        if (
+            !Array.isArray(roomIds) ||
+            roomIds.length === 0
+        ) {
             return [];
         }
 
         const placeholders =
-            roomIds.map(() => "?").join(",");
+            roomIds
+                .map(() => "?")
+                .join(",");
 
         const [rows] = await db.query(
             `
@@ -829,7 +975,9 @@ class ShowtimeRepository {
 
             FROM rooms
 
-            WHERE room_id IN (${placeholders})
+            WHERE room_id IN (
+                ${placeholders}
+            )
             `,
             roomIds
         );
@@ -840,7 +988,9 @@ class ShowtimeRepository {
 
     /*=========================================================
         CREATE SINGLE
-        Giữ lại để phục vụ dữ liệu nội bộ nếu cần
+
+        Giữ lại để phục vụ
+        tạo suất đơn nếu cần.
     =========================================================*/
     async create(data) {
 
@@ -886,38 +1036,62 @@ class ShowtimeRepository {
 
     /*=========================================================
         BULK CREATE
-    =========================================================*/
-    async bulkCreate(showtimes, connection = db) {
 
-        if (!showtimes.length) {
-            return [];
+        INSERT nhiều suất cùng lúc.
+
+        item:
+        {
+            movie_id,
+            cinema_id,
+            room_id,
+            start_time
+        }
+    =========================================================*/
+    async bulkCreate(
+        showtimes,
+        connection = db
+    ) {
+
+        if (
+            !Array.isArray(showtimes) ||
+            showtimes.length === 0
+        ) {
+            return {
+                insertId: null,
+                affectedRows: 0
+            };
         }
 
-        const values = showtimes.map(item => [
-            item.movie_id,
-            item.cinema_id,
-            item.room_id,
-            item.start_time
-        ]);
+        const values =
+            showtimes.map(item => [
+                item.movie_id,
+                item.cinema_id,
+                item.room_id,
+                item.start_time
+            ]);
 
-        const [result] = await connection.query(
-            `
-            INSERT INTO showtimes
-            (
-                movie_id,
-                cinema_id,
-                room_id,
-                start_time
-            )
+        const [result] =
+            await connection.query(
+                `
+                INSERT INTO showtimes
+                (
+                    movie_id,
+                    cinema_id,
+                    room_id,
+                    start_time
+                )
 
-            VALUES ?
-            `,
-            [values]
-        );
+                VALUES ?
+                `,
+                [values]
+            );
 
         return {
-            insertId: result.insertId,
-            affectedRows: result.affectedRows
+            insertId:
+                result.insertId,
+
+            affectedRows:
+                result.affectedRows
         };
     }
 
@@ -969,7 +1143,9 @@ class ShowtimeRepository {
     /*=========================================================
         DELETE
     =========================================================*/
-    async delete(showtimeId) {
+    async delete(
+        showtimeId
+    ) {
 
         const [result] = await db.query(
             `
@@ -983,5 +1159,6 @@ class ShowtimeRepository {
         return result.affectedRows;
     }
 }
+
 
 module.exports = new ShowtimeRepository();
