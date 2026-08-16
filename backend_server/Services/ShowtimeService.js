@@ -246,6 +246,109 @@ class ShowtimeService {
         }
         return await ShowtimeRepository.filterShowtimes(movie_id, room_id, date);
     }
+    // Thêm vào cuối class ShowtimeService
+
+    /*=========================================================
+        BULK CREATE SHOWTIMES - TẠO HÀNG LOẠT
+        Hỗ trợ: nhiều phim, nhiều phòng, tự động khoảng cách dựa trên thời lượng phim
+    =========================================================*/
+    async bulkCreateShowtimes(data) {
+        let { cinema_id, movie_ids, room_ids, start_date, end_date, start_time, end_time, interval_minutes } = data;
+
+        // Validate đầu vào
+        if (!cinema_id || !movie_ids || !room_ids || !start_date || !end_date || !start_time || !end_time) {
+            const err = new Error("Vui lòng chọn đầy đủ: Rạp, Danh sách phim, Danh sách phòng, Ngày bắt đầu, Ngày kết thúc, Giờ bắt đầu, Giờ kết thúc.");
+            err.statusCode = 400;
+            throw err;
+        }
+
+        // Đảm bảo mảng
+        const movieIdList = Array.isArray(movie_ids) ? movie_ids : [movie_ids];
+        const roomIdList = Array.isArray(room_ids) ? room_ids : [room_ids];
+
+        if (movieIdList.length === 0 || roomIdList.length === 0) {
+            const err = new Error("Danh sách phim hoặc danh sách phòng không được để trống.");
+            err.statusCode = 400;
+            throw err;
+        }
+
+        // Tự động tính khoảng cách nếu không nhập (dựa vào phim đầu tiên)
+        if (!interval_minutes || interval_minutes === 0) {
+            const firstMovie = await ShowtimeRepository.getMovieInfo(movieIdList[0]);
+            if (!firstMovie) {
+                const err = new Error("Không tìm thấy phim đầu tiên để tính thời lượng.");
+                err.statusCode = 404;
+                throw err;
+            }
+            const duration = firstMovie.duration || 0;
+            const cleanup = 20;
+            interval_minutes = duration + cleanup;
+        }
+
+        // Sinh danh sách giờ chiếu
+        const timeSlots = [];
+        let currentTime = new Date(`1970-01-01T${start_time}:00`);
+        const endTime = new Date(`1970-01-01T${end_time}:00`);
+        while (currentTime <= endTime) {
+            timeSlots.push(currentTime.toTimeString().slice(0, 5));
+            currentTime.setMinutes(currentTime.getMinutes() + interval_minutes);
+        }
+
+        if (timeSlots.length === 0) {
+            const err = new Error("Không thể sinh danh sách giờ chiếu.");
+            err.statusCode = 400;
+            throw err;
+        }
+
+        // Duyệt qua tất cả các ngày
+        const showtimesToInsert = [];
+        const errors = [];
+        let currentDate = new Date(start_date);
+        const endDate = new Date(end_date);
+
+        while (currentDate <= endDate) {
+            const dateString = currentDate.toISOString().split('T')[0];
+
+            // Duyệt qua từng phim và phòng
+            for (const movie_id of movieIdList) {
+                for (const room_id of roomIdList) {
+                    for (const timeStr of timeSlots) {
+                        const startTime = `${dateString} ${timeStr}`;
+
+                        // Kiểm tra quá khứ
+                        const isPast = await ShowtimeRepository.isPastTime(startTime);
+                        if (isPast) {
+                            errors.push(`Bỏ qua ${movie_id}/${room_id} ${dateString} ${timeStr} vì quá khứ.`);
+                            continue;
+                        }
+
+                        // Kiểm tra trùng lịch
+                        const conflict = await ShowtimeRepository.findConflict(room_id, startTime);
+                        if (conflict) {
+                            errors.push(`Bỏ qua ${movie_id}/${room_id} ${dateString} ${timeStr} vì phòng đã có lịch chiếu.`);
+                            continue;
+                        }
+
+                        showtimesToInsert.push([movie_id, cinema_id, room_id, startTime]);
+                    }
+                }
+            }
+
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        // Insert hàng loạt
+        let insertedCount = 0;
+        if (showtimesToInsert.length > 0) {
+            insertedCount = await ShowtimeRepository.bulkInsert(showtimesToInsert);
+        }
+
+        return {
+            inserted: insertedCount,
+            errors: errors,
+            total_requested: showtimesToInsert.length + errors.length
+        };
+    }
 }
 
 module.exports = new ShowtimeService();

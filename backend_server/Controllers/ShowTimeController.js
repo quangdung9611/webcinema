@@ -241,4 +241,23 @@ exports.deleteShowtime = async (req, res) => {
             message: err.message || "Lỗi máy chủ"
         });
     }
+    /*=========================================================
+    ADMIN - BULK CREATE SHOWTIMES
+=========================================================*/
+exports.bulkCreateShowtimes = async (req, res) => {
+    try {
+        const result = await ShowtimeService.bulkCreateShowtimes(req.body);
+        return res.status(201).json({
+            success: true,
+            message: `Đã tạo thành công ${result.inserted} suất chiếu!`,
+            data: result
+        });
+    } catch (err) {
+        console.error("Bulk create showtime error:", err);
+        return res.status(err.statusCode || 400).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ khi tạo hàng loạt"
+        });
+    }
+};
 };

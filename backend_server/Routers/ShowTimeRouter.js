@@ -25,5 +25,6 @@ router.get("/:showtime_id", authenticateAdmin, ShowtimeController.getShowtimeDet
 router.post("/", authenticateAdmin, ShowtimeController.createShowtime);
 router.put("/:showtime_id", authenticateAdmin, ShowtimeController.updateShowtime);
 router.delete("/:showtime_id", authenticateAdmin, ShowtimeController.deleteShowtime);
-
+// Thêm vào nhóm ADMIN ROUTES
+router.post("/bulk", authenticateAdmin, ShowtimeController.bulkCreateShowtimes);
 module.exports = router;

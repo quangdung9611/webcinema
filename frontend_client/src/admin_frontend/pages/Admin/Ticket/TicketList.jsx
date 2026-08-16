@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../../../../api/api';
+
 import {
     Ticket,
     LayoutGrid,
@@ -13,7 +14,9 @@ import {
     Info,
     Check
 } from 'lucide-react';
+
 import AdminModal from '../../../components/AdminModal';
+import AdminTable from '../../../components/AdminTable';
 import '../../../styles/TicketList.css';
 
 const TicketList = () => {
@@ -23,8 +26,10 @@ const TicketList = () => {
     const [cinemas, setCinemas] = useState([]);
     const [rooms, setRooms] = useState([]);
     const [showtimes, setShowtimes] = useState([]);
+
     const [viewMode, setViewMode] = useState('table');
     const [searchTerm, setSearchTerm] = useState('');
+
     const [loadingTickets, setLoadingTickets] = useState(false);
     const [loadingShowtimes, setLoadingShowtimes] = useState(false);
     const [loadingRooms, setLoadingRooms] = useState(false);
@@ -40,40 +45,51 @@ const TicketList = () => {
 
     // ----- MODAL STATE -----
     const [modal, setModal] = useState({
-        show: false,
+        open: false,
         type: 'info',
         title: '',
         message: '',
-        onConfirm: null,
-        onCancel: null
+        onConfirm: null
     });
 
     // ----- MODAL HELPERS -----
-    const closeModal = () => setModal(prev => ({ ...prev, show: false }));
+    const closeModal = useCallback(() => {
+        setModal(prev => ({
+            ...prev,
+            open: false,
+            onConfirm: null
+        }));
+    }, []);
 
-    const showModal = (type, title, message, onConfirm = closeModal, onCancel = closeModal) => {
+    const showModal = useCallback(({
+        type = 'info',
+        title = '',
+        message = '',
+        onConfirm = null
+    }) => {
         setModal({
-            show: true,
+            open: true,
             type,
             title,
             message,
-            onConfirm: () => {
-                if (onConfirm) onConfirm();
-                closeModal();
-            },
-            onCancel: () => {
-                if (onCancel) onCancel();
-                closeModal();
-            }
+            onConfirm
         });
-    };
+    }, []);
 
-    const handleApiError = (error, fallbackMessage = 'Có lỗi xảy ra.') => {
-        console.error('API Error:', error);
-        showModal('error', 'Lỗi', error.response?.data?.message || fallbackMessage);
-    };
+    // ----- API ERROR -----
+    const handleApiError = useCallback(
+        (error, fallbackMessage = 'Có lỗi xảy ra.') => {
+            console.error('API Error:', error);
+            showModal({
+                type: 'error',
+                title: 'Lỗi',
+                message: error.response?.data?.message || fallbackMessage
+            });
+        },
+        [showModal]
+    );
 
-    // ----- 1. Lấy danh sách rạp (có parse) -----
+    // ----- 1. FETCH CINEMAS -----
     const fetchCinemas = useCallback(async () => {
         try {
             const res = await api.get('/api/cinemas');
@@ -83,13 +99,13 @@ const TicketList = () => {
         } catch (err) {
             handleApiError(err, 'Không thể tải danh sách rạp.');
         }
-    }, []);
+    }, [handleApiError]);
 
     useEffect(() => {
         fetchCinemas();
     }, [fetchCinemas]);
 
-    // ----- 2. Khi chọn rạp -> lấy phòng (có parse) -----
+    // ----- 2. FETCH ROOMS -----
     const fetchRooms = useCallback(async (cinemaId) => {
         if (!cinemaId) {
             setRooms([]);
@@ -115,13 +131,13 @@ const TicketList = () => {
         } finally {
             setLoadingRooms(false);
         }
-    }, []);
+    }, [handleApiError]);
 
     useEffect(() => {
         fetchRooms(filters.cinemaId);
     }, [filters.cinemaId, fetchRooms]);
 
-    // ----- 3. Khi chọn phòng -> lấy sơ đồ ghế + suất chiếu -----
+    // ----- 3. FETCH SHOWTIMES & SEATS -----
     const fetchShowtimesAndSeats = useCallback(async (cinemaId, roomId) => {
         if (!roomId) {
             setShowtimes([]);
@@ -145,18 +161,19 @@ const TicketList = () => {
             setFilters(prev => ({ ...prev, showtimeId: '' }));
             setTickets([]);
             console.log(`✅ [Showtimes] Đã tải cho room ${roomId}:`, showtimeList.length);
+            console.log(`✅ [Seats] Đã tải cho room ${roomId}:`, seatList.length);
         } catch (err) {
             handleApiError(err, 'Không thể tải suất chiếu.');
         } finally {
             setLoadingShowtimes(false);
         }
-    }, []);
+    }, [handleApiError]);
 
     useEffect(() => {
         fetchShowtimesAndSeats(filters.cinemaId, filters.roomId);
     }, [filters.cinemaId, filters.roomId, fetchShowtimesAndSeats]);
 
-    // ----- 4. Khi chọn suất chiếu -> lấy vé (có abort controller) -----
+    // ----- 4. FETCH TICKETS -----
     const fetchTickets = useCallback(async (showtimeId) => {
         if (!showtimeId) {
             setTickets([]);
@@ -179,7 +196,7 @@ const TicketList = () => {
             setTickets(Array.isArray(ticketsData) ? ticketsData : []);
             console.log(`✅ [Tickets] Đã tải cho showtime ${showtimeId}:`, ticketsData.length);
         } catch (err) {
-            if (err.name === 'AbortError') {
+            if (err.name === 'AbortError' || err.code === 'ERR_CANCELED' || err.code === 'ECONNABORTED') {
                 console.log('🛑 [Tickets] Request bị hủy');
                 return;
             }
@@ -191,43 +208,65 @@ const TicketList = () => {
                 abortControllerRef.current = null;
             }
         }
-    }, []);
+    }, [handleApiError]);
 
     useEffect(() => {
         fetchTickets(filters.showtimeId);
     }, [filters.showtimeId, fetchTickets]);
 
-    // ----- 5. Check-in vé -----
-    const handleCheckIn = (code) => {
-        showModal(
-            'confirm',
-            'Xác nhận soát vé',
-            `Bạn có chắc muốn soát vé mã: ${code}?`,
-            async () => {
+    // ----- 5. CHECK-IN -----
+    const handleCheckIn = useCallback((code) => {
+        if (!code) {
+            showModal({
+                type: 'error',
+                title: 'Lỗi',
+                message: 'Không tìm thấy mã vé.'
+            });
+            return;
+        }
+
+        showModal({
+            type: 'confirm',
+            title: 'Xác nhận soát vé',
+            message: `Bạn có chắc muốn soát vé mã: ${code}?`,
+            onConfirm: async () => {
+                closeModal();
                 try {
                     const response = await api.post('/api/tickets/check-in', { ticketCode: code });
-                    if (response.data.success) {
-                        showModal('success', 'Thành công', response.data.message || 'Đã soát vé thành công!');
+                    if (response.data?.success) {
                         await fetchTickets(filters.showtimeId);
+                        showModal({
+                            type: 'success',
+                            title: 'Soát vé thành công',
+                            message: response.data?.message || `Vé ${code} đã được soát thành công.`
+                        });
                     } else {
-                        showModal('error', 'Lỗi', response.data.message || 'Không thể soát vé.');
+                        showModal({
+                            type: 'error',
+                            title: 'Không thể soát vé',
+                            message: response.data?.message || 'Vé không thể được soát.'
+                        });
                     }
                 } catch (err) {
-                    const errorMsg = err.response?.data?.message || err.message || 'Lỗi hệ thống.';
-                    showModal('error', 'Lỗi soát vé', errorMsg);
+                    console.error('❌ [Check-in Error]:', err);
+                    showModal({
+                        type: 'error',
+                        title: 'Lỗi soát vé',
+                        message: err.response?.data?.message || err.message || 'Đã xảy ra lỗi khi soát vé.'
+                    });
                 }
             }
-        );
-    };
+        });
+    }, [showModal, closeModal, fetchTickets, filters.showtimeId]);
 
-    // ----- Thống kê -----
+    // ----- STATS -----
     const stats = {
         total: tickets.length,
         used: tickets.filter(t => t.ticket_status === 'Used').length,
         pending: tickets.filter(t => t.ticket_status === 'Valid').length
     };
 
-    // ----- Sơ đồ ghế -----
+    // ----- SEAT MAP LAYOUT -----
     const fullLayout = allSeats.reduce((acc, seat) => {
         const row = seat.seat_row || 'A';
         if (!acc[row]) acc[row] = [];
@@ -236,7 +275,7 @@ const TicketList = () => {
         return acc;
     }, {});
 
-    // ----- Format -----
+    // ----- FORMAT SHOWTIME LABEL -----
     const formatShowtimeLabel = (showtime) => {
         if (!showtime) return '';
         const datePart = showtime.start_time?.split(' ')[0] || '';
@@ -247,29 +286,99 @@ const TicketList = () => {
         return `${title} | ${dateVN} | ${timePart}`;
     };
 
-    // 📌 Format thời gian cho bảng vé
+    // ----- FORMAT DATE FOR TABLE (đã sửa để bỏ T và Z) -----
     const formatDateDisplay = (dateStr) => {
         if (!dateStr) return '--';
-        try {
-            const date = new Date(dateStr);
-            if (isNaN(date)) return '--';
-            return date.toLocaleString('vi-VN', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            });
-        } catch {
-            return '--';
+        // Cắt bỏ phần .000Z và thay T thành khoảng trắng
+        let cleanDateStr = dateStr.replace(/\.\d+Z$/, '').replace('T', ' ');
+        // Khớp định dạng YYYY-MM-DD HH:MM
+        const match = cleanDateStr.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/);
+        if (match) {
+            const [_, year, month, day, hour, minute] = match;
+            return `${day}/${month}/${year} ${hour}:${minute}`;
         }
+        return dateStr;
     };
 
+    // ----- COLUMNS FOR ADMIN TABLE -----
+    const columns = [
+        {
+            title: 'Mã Vé',
+            key: 'ticket_code',
+            render: (row) => <span className="ticket-code">{row.ticket_code}</span>
+        },
+        {
+            title: 'Ghế',
+            key: 'seat',
+            render: (row) => (
+                <span className="seat-label">
+                    {row.seat_row}{row.seat_number}
+                </span>
+            )
+        },
+        {
+            title: 'Khách hàng',
+            key: 'customer_name',
+            render: (row) => row.customer_name || row.full_name || 'N/A'
+        },
+      
+        {
+            title: 'Trạng thái',
+            key: 'ticket_status',
+            render: (row) => {
+                const isUsed = row.ticket_status === 'Used';
+                const className = isUsed ? 'used' : 'pending';
+                return (
+                    <span className={`status-badge ${className}`}>
+                        {isUsed ? <><Check size={12} /> Đã dùng</> : <><Clock size={12} /> Chưa dùng</>}
+                    </span>
+                );
+            }
+        },
+        {
+            title: 'Thời gian soát',
+            key: 'updated_at',
+            render: (row) => {
+                if (row.ticket_status === 'Used') {
+                    return formatDateDisplay(row.updated_at);
+                }
+                return '--';
+            }
+        },
+        {
+            title: 'Thao tác',
+            key: 'actions',
+            render: (row) => {
+                const isValid = row.ticket_status === 'Valid';
+                if (isValid) {
+                    return (
+                        <button
+                            type="button"
+                            className="checkin-btn"
+                            onClick={() => handleCheckIn(row.ticket_code)}
+                        >
+                            Soát vé
+                        </button>
+                    );
+                }
+                return (
+                    <button type="button" className="disabled-btn" disabled>
+                        {row.ticket_status === 'Used' ? 'Đã soát' : 'Không khả dụng'}
+                    </button>
+                );
+            }
+        }
+    ];
+
+    // ----- LOADING STATE -----
     const isLoading = loadingTickets || loadingShowtimes;
 
     // ----- RENDER -----
     return (
         <div className="admin-ticket-container">
             <AdminModal
-                show={modal.show}
-                onCancel={closeModal}
+                open={modal.open}
+                onClose={closeModal}
                 type={modal.type}
                 title={modal.title}
                 message={modal.message}
@@ -288,7 +397,10 @@ const TicketList = () => {
                             <label>Rạp chiếu:</label>
                             <select
                                 value={filters.cinemaId}
-                                onChange={(e) => setFilters({ ...filters, cinemaId: e.target.value })}
+                                onChange={(e) => {
+                                    setFilters({ cinemaId: e.target.value, roomId: '', showtimeId: '' });
+                                    setSearchTerm('');
+                                }}
                             >
                                 <option value="">-- Chọn Rạp --</option>
                                 {cinemas.map(c => (
@@ -301,7 +413,10 @@ const TicketList = () => {
                             <label>Phòng:</label>
                             <select
                                 value={filters.roomId}
-                                onChange={(e) => setFilters({ ...filters, roomId: e.target.value })}
+                                onChange={(e) => {
+                                    setFilters(prev => ({ ...prev, roomId: e.target.value, showtimeId: '' }));
+                                    setSearchTerm('');
+                                }}
                                 disabled={!filters.cinemaId || loadingRooms}
                             >
                                 <option value="">-- Chọn Phòng --</option>
@@ -315,7 +430,10 @@ const TicketList = () => {
                             <label>Chọn phim & Suất chiếu:</label>
                             <select
                                 value={filters.showtimeId}
-                                onChange={(e) => setFilters({ ...filters, showtimeId: e.target.value })}
+                                onChange={(e) => {
+                                    setFilters(prev => ({ ...prev, showtimeId: e.target.value }));
+                                    setSearchTerm('');
+                                }}
                                 disabled={!showtimes.length || loadingShowtimes}
                             >
                                 <option value="">-- Chọn Suất chiếu --</option>
@@ -383,69 +501,11 @@ const TicketList = () => {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <table className="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Mã Vé</th>
-                                    <th>Ghế</th>
-                                    <th>Khách hàng</th>
-                                    <th>Suất chiếu</th> {/* 👈 Cột mới */}
-                                    <th>Trạng thái</th>
-                                    <th>Thời gian soát</th> {/* 👈 Cột mới */}
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {tickets
-                                    .filter(t =>
-                                        t.ticket_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                        (t.customer_name || t.full_name || '').toLowerCase().includes(searchTerm.toLowerCase())
-                                    )
-                                    .map((ticket) => {
-                                        const isUsed = ticket.ticket_status === 'Used';
-                                        const isValid = ticket.ticket_status === 'Valid';
-                                        return (
-                                            <tr key={ticket.ticket_id}>
-                                                <td className="ticket-code">{ticket.ticket_code}</td>
-                                                <td>
-                                                    <span className="seat-label">
-                                                        {ticket.seat_row}{ticket.seat_number}
-                                                    </span>
-                                                </td>
-                                                <td>{ticket.customer_name || ticket.full_name || 'N/A'}</td>
-                                                <td>{formatDateDisplay(ticket.showtime)}</td> {/* 👈 Hiển thị ngày giờ suất chiếu */}
-                                                <td>
-                                                    <span className={`status-badge ${isUsed ? 'used' : 'pending'}`}>
-                                                        {isUsed ? (
-                                                            <><Check size={12} /> Đã dùng</>
-                                                        ) : (
-                                                            <><Clock size={12} /> Chưa dùng</>
-                                                        )}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    {/* 👈 Hiển thị thời gian soát thực tế */}
-                                                    {isUsed ? formatDateDisplay(ticket.updated_at) : '--'}
-                                                </td>
-                                                <td>
-                                                    {isValid ? (
-                                                        <button
-                                                            className="checkin-btn"
-                                                            onClick={() => handleCheckIn(ticket.ticket_code)}
-                                                        >
-                                                            Soát vé
-                                                        </button>
-                                                    ) : (
-                                                        <button className="disabled-btn" disabled>
-                                                            {isUsed ? 'Đã soát' : 'Không khả dụng'}
-                                                        </button>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                            </tbody>
-                        </table>
+                        <AdminTable
+                            columns={columns}
+                            data={tickets}
+                            emptyText="Không có vé nào cho suất chiếu này."
+                        />
                     </div>
                 ) : (
                     <div className="visual-monitor-container">

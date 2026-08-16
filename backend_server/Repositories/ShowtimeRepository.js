@@ -412,6 +412,20 @@ async findByMovieCinemaDateForDetail(movieId, cinemaId, date) {
     );
     return rows;
 }
+// Thêm vào cuối class ShowtimeRepository
+
+    /*=========================================================
+        BULK INSERT SHOWTIMES
+    =========================================================*/
+    async bulkInsert(showtimesData) {
+        if (!showtimesData.length) return 0;
+        const sql = `
+            INSERT INTO showtimes (movie_id, cinema_id, room_id, start_time)
+            VALUES ?
+        `;
+        const [result] = await db.query(sql, [showtimesData]);
+        return result.affectedRows;
+    }
 }
 
 module.exports = new ShowtimeRepository();
