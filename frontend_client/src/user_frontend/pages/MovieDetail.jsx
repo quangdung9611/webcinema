@@ -17,7 +17,6 @@ import {
     Calendar,
     Clock,
     Film,
-    User,
     Ticket,
     Play,
     X
@@ -27,7 +26,7 @@ import Modal from '../components/Modal';
 import MovieCard from "../components/MovieCard";
 import MoviePreviewModal from "../components/MoviePreviewModal";
 import MovieHeroBanner from '../components/MovieHeroBanner';
-import CinemaCard from '../components/CinemaCard'; // 👈 Import CinemaCard
+import CinemaCard from '../components/CinemaCard';
 
 import "../styles/MovieDetail.css";
 
@@ -66,6 +65,15 @@ const MovieDetail = () => {
         message: null,
         onConfirm: null
     });
+
+    // =========================================================
+    // NEW STATES FOR SHOWTIMES
+    // =========================================================
+    const [cinemas, setCinemas] = useState([]);
+    const [showtimesData, setShowtimesData] = useState({});
+    const [selectedCinema, setSelectedCinema] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [availableDates, setAvailableDates] = useState([]);
 
 
     // =========================================================
@@ -127,7 +135,7 @@ const MovieDetail = () => {
 
 
     // =========================================================
-    // FETCH MOVIE DATA
+    // FETCH MOVIE DATA, CINEMAS, SHOWTIMES
     // =========================================================
 
     useEffect(() => {
@@ -141,10 +149,12 @@ const MovieDetail = () => {
             try {
                 setLoading(true);
 
-                const [resMovie, resRelated, resActors] = await Promise.all([
+                // 1. Fetch Movie, Related Movies, Actors
+                const [resMovie, resRelated, resActors, resCinemas] = await Promise.all([
                     api.get(`/api/movies/detail/${slug}`),
                     api.get('/api/movies'),
-                    api.get('/api/actors')
+                    api.get('/api/actors'),
+                    api.get('/api/cinemas')
                 ]);
 
                 // Movie detail
@@ -164,7 +174,7 @@ const MovieDetail = () => {
                 const filtered = movieList.filter(item => item.slug !== slug);
                 setRelatedMovies(filtered);
 
-                // Trailers (only movies with trailer_url)
+                // Trailers
                 const trailerFiltered = filtered
                     .filter(item => item.trailer_url && item.trailer_url.trim() !== "")
                     .slice(0, 6);
@@ -173,6 +183,23 @@ const MovieDetail = () => {
                 // Actors
                 const actorData = resActors.data?.success === true ? resActors.data?.data : [];
                 setActors(Array.isArray(actorData) ? actorData : []);
+
+                // 2. Load Cinemas
+                const cinemaList = resCinemas.data?.data || [];
+                setCinemas(cinemaList);
+                if (cinemaList.length > 0) {
+                    setSelectedCinema(cinemaList[0]);
+                }
+
+                // 3. Generate Available Dates (Next 7 days)
+                const dates = [];
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() + i);
+                    dates.push(d.toISOString().split('T')[0]);
+                }
+                setAvailableDates(dates);
+                setSelectedDate(dates[0]);
 
             } catch (error) {
                 console.error("Lỗi gọi API tổng hợp dữ liệu:", error);
@@ -190,6 +217,35 @@ const MovieDetail = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
     }, [slug, fetchReviews]);
+
+
+    // =========================================================
+    // FETCH SHOWTIMES WHEN CINEMA OR DATE CHANGES
+    // =========================================================
+    useEffect(() => {
+        const fetchShowtimes = async () => {
+            if (!movie?.movie_id || !selectedCinema || !selectedDate) {
+                setShowtimesData({});
+                return;
+            }
+
+            try {
+                const res = await api.get('/api/showtimes/movie-detail', {
+                    params: {
+                        movie_id: movie.movie_id,
+                        cinema_id: selectedCinema.cinema_id,
+                        date: selectedDate
+                    }
+                });
+                setShowtimesData(res.data?.data || {});
+            } catch (err) {
+                console.error("Lỗi tải lịch chiếu:", err);
+                setShowtimesData({});
+            }
+        };
+
+        fetchShowtimes();
+    }, [movie, selectedCinema, selectedDate]);
 
 
     // =========================================================
@@ -602,6 +658,95 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
+                {/* ============================================== */}
+                {/* 🆕 SHOWTIME SECTION - LỊCH CHIẾU & SUẤT CHIẾU */}
+                {/* ============================================== */}
+                <div className="showtimes-section-wrapper">
+                    <div className="section-header-row">
+                        <h2 className="section-title-label">LỊCH CHIẾU & SUẤT CHIẾU</h2>
+                        <div className="filmgenre-line" />
+                    </div>
+
+                    <div className="showtimes-filter-bar">
+                        <div className="filter-group-cinema">
+                            <label className="filter-label">CHỌN RẠP</label>
+                            <select
+                                className="cinema-select-box"
+                                value={selectedCinema?.cinema_id || ''}
+                                onChange={(e) => {
+                                    const cinema = cinemas.find(c => c.cinema_id == e.target.value);
+                                    setSelectedCinema(cinema);
+                                }}
+                            >
+                                {cinemas.map(c => (
+                                    <option key={c.cinema_id} value={c.cinema_id}>
+                                        {c.cinema_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="filter-group-date">
+                            <label className="filter-label">CHỌN NGÀY</label>
+                            <div className="date-slider-horizontal">
+                                {availableDates.map(d => (
+                                    <button
+                                        key={d}
+                                        className={`date-btn ${selectedDate === d ? 'active' : ''}`}
+                                        onClick={() => setSelectedDate(d)}
+                                    >
+                                        <span className="day-text">
+                                            {new Date(d).toLocaleDateString('vi-VN', { weekday: 'short' })}
+                                        </span>
+                                        <span className="num-text">
+                                            {new Date(d).getDate()}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="showtimes-result-list">
+                        {!selectedCinema ? (
+                            <div className="empty-showtimes-msg">Vui lòng chọn rạp chiếu</div>
+                        ) : Object.keys(showtimesData).length === 0 ? (
+                            <div className="empty-showtimes-msg">
+                                Không có suất chiếu nào cho ngày này. Vui lòng chọn ngày khác.
+                            </div>
+                        ) : (
+                            Object.entries(showtimesData).map(([roomType, items]) => (
+                                <div key={roomType} className="room-type-block">
+                                    <div className="room-type-header">
+                                        <h4 className="room-type-title">{roomType}</h4>
+                                    </div>
+                                    <div className="showtimes-grid-items">
+                                        {items.map(st => (
+                                            <button
+                                                key={st.showtime_id}
+                                                className="showtime-btn"
+                                                onClick={() => navigate(`/booking/${movie.slug}`, {
+                                                    state: {
+                                                        movie: movie,
+                                                        cinema: selectedCinema,
+                                                        date: selectedDate,
+                                                        showtime: st
+                                                    }
+                                                })}
+                                            >
+                                                <span className="st-time">{st.start_time}</span>
+                                                <span className="st-room">{st.room_name}</span>
+                                                <span className="st-price">{st.priceDisplay}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+                {/* ============================================== */}
+
                 {/* RELATED MOVIES */}
                 <div className="filmgenre-container">
                     <div className="filmgenre-section-header">
@@ -615,7 +760,7 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                {/* ACTORS - SỬ DỤNG CINEMACARD */}
+                {/* ACTORS */}
                 <div className="cinema-section-block">
                     <div className="section-header-row">
                         <h2 className="section-title-label">DIỄN VIÊN</h2>
@@ -634,7 +779,7 @@ const MovieDetail = () => {
                                         image={actor.actor_avatar || null}
                                         title={actor.name}
                                         link={`/actor/detail/${actor.slug}`}
-                                        buttonText={null} // ẩn button
+                                        buttonText={null}
                                     />
                                 </div>
                             ))
@@ -662,7 +807,7 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                {/* OTHER TRAILERS - SỬ DỤNG CINEMACARD + OVERLAY PLAY */}
+                {/* OTHER TRAILERS */}
                 <div className="cinema-section-block">
                     <div className="section-header-row">
                         <h2 className="section-title-label">TRAILER KHÁC</h2>

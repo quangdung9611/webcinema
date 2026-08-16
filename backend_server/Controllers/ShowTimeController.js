@@ -158,7 +158,29 @@ exports.filterShowtimes = async (req, res) => {
         });
     }
 };
-
+/*=========================================================
+    PUBLIC - GET SHOWTIMES FOR MOVIE DETAIL
+    (Trả về dữ liệu đã nhóm sẵn cho Front-end)
+=========================================================*/
+exports.getShowtimesForMovieDetail = async (req, res) => {
+    try {
+        const { movie_id, cinema_id, date } = req.query;
+        if (!movie_id || !cinema_id || !date) {
+            return res.status(400).json({
+                success: false,
+                message: "Thiếu tham số movie_id, cinema_id hoặc date"
+            });
+        }
+        const data = await ShowtimeService.getShowtimesForMovieDetail(movie_id, cinema_id, date);
+        return res.status(200).json({ success: true, data });
+    } catch (err) {
+        console.error("getShowtimesForMovieDetail error:", err);
+        return res.status(err.statusCode || 500).json({
+            success: false,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
 /*=========================================================
     ADMIN - CREATE SHOWTIME
 =========================================================*/

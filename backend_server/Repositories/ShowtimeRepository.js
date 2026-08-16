@@ -387,6 +387,31 @@ class ShowtimeRepository {
         );
         return result.affectedRows;
     }
+    /*=========================================================
+    FIND SHOWTIMES FOR MOVIE DETAIL (PUBLIC)
+    Trả về: showtime_id, start_time (giờ:phút), room_id, room_name, room_type
+=========================================================*/
+async findByMovieCinemaDateForDetail(movieId, cinemaId, date) {
+    const [rows] = await db.query(
+        `
+        SELECT
+            s.showtime_id,
+            DATE_FORMAT(s.start_time, '%H:%i') AS start_time,
+            s.room_id,
+            r.room_name,
+            r.room_type
+        FROM showtimes s
+        JOIN rooms r ON s.room_id = r.room_id
+        WHERE s.movie_id = ?
+            AND s.cinema_id = ?
+            AND DATE(s.start_time) = ?
+            AND s.start_time >= NOW()
+        ORDER BY s.start_time ASC
+        `,
+        [movieId, cinemaId, date]
+    );
+    return rows;
+}
 }
 
 module.exports = new ShowtimeRepository();

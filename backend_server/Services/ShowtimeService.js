@@ -1,5 +1,14 @@
 const ShowtimeRepository = require("../Repositories/ShowtimeRepository");
 
+// Định nghĩa cấu hình giá vé theo loại phòng (đồng bộ với SeatService)
+const ROOM_CONFIG = {
+    '2D': { defaultPrice: 80000 },
+    '3D': { defaultPrice: 120000 },
+    '4DMAX': { defaultPrice: 180000 },
+    'IMAX': { defaultPrice: 250000 },
+    'VIP': { defaultPrice: 250000 }
+};
+
 const formatDateTime = (dateTime) => {
     if (!dateTime) return null;
     return dateTime.replace("T", " ").substring(0, 16);
@@ -17,7 +26,6 @@ class ShowtimeService {
 
     /*=========================================================
         GET ALL SHOWTIMES - KHÔNG PHÂN TRANG
-        TRẢ VỀ MẢNG
     =========================================================*/
     async getAllShowtimesAll(search = "") {
         return await ShowtimeRepository.findAllAll(search);
@@ -25,7 +33,6 @@ class ShowtimeService {
 
     /*=========================================================
         GET ALL SHOWTIMES - CÓ PHÂN TRANG
-        TRẢ VỀ { data: [], pagination: {} }
     =========================================================*/
     async getAllShowtimesPaginated(page = 1, limit = 20, search = "") {
         return await ShowtimeRepository.findAll(page, limit, search);
@@ -33,7 +40,6 @@ class ShowtimeService {
 
     /*=========================================================
         GET SHOWTIMES BY CINEMA AND ROOM
-        ✅ TRẢ VỀ MẢNG TRỰC TIẾP
     =========================================================*/
     async getShowtimesByCinemaAndRoom(cinema_id, room_id) {
         return await ShowtimeRepository.findByCinemaAndRoom(cinema_id, room_id);
@@ -57,6 +63,36 @@ class ShowtimeService {
     =========================================================*/
     async getShowtimesByMovie(movieId) {
         return await ShowtimeRepository.findByMovie(movieId);
+    }
+
+    /*=========================================================
+        🚀 NEW: GET SHOWTIMES FOR MOVIE DETAIL
+        Trả về dữ liệu đã nhóm theo loại phòng, kèm giá tiền
+    =========================================================*/
+    async getShowtimesForMovieDetail(movieId, cinemaId, date) {
+        // 1. Lấy danh sách suất chiếu từ Repository
+        const showtimes = await ShowtimeRepository.findByMovieCinemaDateForDetail(movieId, cinemaId, date);
+
+        // 2. Tính giá vé dựa trên loại phòng từ ROOM_CONFIG
+        const enrichedShowtimes = showtimes.map(st => {
+            const roomType = st.room_type;
+            const price = ROOM_CONFIG[roomType]?.defaultPrice || 0;
+            return {
+                ...st,
+                price: price,
+                priceDisplay: price.toLocaleString() + 'đ'
+            };
+        });
+
+        // 3. Nhóm theo room_type (2D, 3D, IMAX, ...)
+        const grouped = enrichedShowtimes.reduce((acc, item) => {
+            const key = item.room_type;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(item);
+            return acc;
+        }, {});
+
+        return grouped;
     }
 
     /*=========================================================

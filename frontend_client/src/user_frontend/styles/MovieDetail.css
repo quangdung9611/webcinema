@@ -940,6 +940,179 @@
 }
 
 /* =========================================================
+   🆕 SHOWTIME SECTION – LỊCH CHIẾU & SUẤT CHIẾU
+   ========================================================= */
+.showtimes-section-wrapper {
+    width: 100%;
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-lg);
+    border-top: var(--border-premium);
+}
+
+.showtimes-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-xl);
+    margin-bottom: var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border: var(--border-premium);
+    border-radius: var(--radius-lg);
+}
+
+.filter-group-cinema,
+.filter-group-date {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.filter-label {
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.cinema-select-box {
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--bg-tertiary);
+    color: var(--text-body);
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-primary);
+    font-size: var(--font-size-base);
+    min-width: 220px;
+    outline: none;
+    transition: all var(--transition-normal);
+}
+.cinema-select-box:focus {
+    border-color: var(--border-premium);
+}
+
+.date-slider-horizontal {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.date-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-tertiary);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: var(--font-primary);
+    gap: 2px;
+}
+.date-btn .day-text {
+    font-size: 0.7rem;
+    font-weight: var(--fw-medium);
+}
+.date-btn .num-text {
+    font-size: var(--font-size-h4);
+    font-weight: var(--fw-bold);
+}
+.date-btn:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-body);
+    background: var(--bg-elevated);
+}
+.date-btn.active {
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    border-color: var(--premium-gradient);
+    box-shadow: var(--btn-silver-shadow);
+}
+
+.showtimes-result-list {
+    width: 100%;
+}
+
+.empty-showtimes-msg {
+    padding: var(--space-xl);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: var(--font-size-base);
+    background: var(--bg-card);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
+}
+
+.room-type-block {
+    margin-bottom: var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border: var(--border-premium);
+    border-radius: var(--radius-md);
+}
+
+.room-type-header {
+    margin-bottom: var(--space-md);
+    border-bottom: var(--border-premium);
+    padding-bottom: var(--space-sm);
+}
+
+.room-type-title {
+    font-size: var(--font-size-h5);
+    font-weight: var(--fw-bold);
+    color: var(--text-heading);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.showtimes-grid-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.showtime-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bg-tertiary);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: var(--font-primary);
+    gap: 2px;
+}
+.showtime-btn:hover {
+    transform: translateY(-4px);
+    border-color: var(--silver-primary);
+    box-shadow: var(--btn-silver-shadow);
+    background: var(--bg-elevated);
+}
+.showtime-btn .st-time {
+    font-size: var(--font-size-h4);
+    font-weight: var(--fw-bold);
+    color: var(--text-heading);
+}
+.showtime-btn .st-room {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+}
+.showtime-btn .st-price {
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
+    color: var(--silver-primary);
+}
+
+/* =========================================================
    RESPONSIVE
    ========================================================= */
 
@@ -984,6 +1157,36 @@
         font-size: var(--font-size-base);
         padding: var(--space-md) var(--space-lg);
         min-height: 56px;
+    }
+
+    .showtimes-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-lg);
+    }
+    .cinema-select-box {
+        width: 100%;
+        min-width: unset;
+    }
+    .date-slider-horizontal {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: var(--space-xs);
+        -webkit-overflow-scrolling: touch;
+    }
+    .date-btn {
+        min-width: 48px;
+        padding: var(--space-sm);
+    }
+    .showtimes-grid-items {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: var(--space-xs);
+    }
+    .showtime-btn {
+        min-width: 80px;
+        padding: var(--space-md);
     }
 }
 

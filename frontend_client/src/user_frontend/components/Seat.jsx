@@ -13,13 +13,29 @@ const Seat = ({
   maintenance,
   locked,
   number,
-  onClick
+  onClick,
+
+  // =========================================================
+  // ADMIN MODE
+  //
+  // User:
+  //   false / không truyền
+  //   → ghế bảo trì không click được
+  //
+  // Admin:
+  //   true
+  //   → vẫn click được ghế bảo trì để mở lại
+  // =========================================================
+  adminMode = false
 }) => {
+
   // =========================================================
   // CHUẨN HÓA LOẠI GHẾ
   // =========================================================
 
-  const seatType = type?.toUpperCase();
+  const seatType =
+    type?.toUpperCase();
+
 
   // =========================================================
   // CHỌN ICON THEO LOẠI GHẾ
@@ -28,6 +44,7 @@ const Seat = ({
   let Icon = SeatNormal;
 
   switch (seatType) {
+
     case "VIP":
       Icon = SeatVIP;
       break;
@@ -50,20 +67,36 @@ const Seat = ({
       break;
   }
 
+
   // =========================================================
   // KIỂM TRA CÓ ĐƯỢC CLICK KHÔNG
+  //
+  // GHẾ ĐÃ BÁN:
+  //   → luôn không click
+  //
+  // GHẾ LOCKED:
+  //   → luôn không click
+  //
+  // GHẾ BẢO TRÌ:
+  //   User:
+  //      → không click
+  //
+  //   Admin:
+  //      → được click để mở bảo trì
   // =========================================================
 
   const isDisabled =
     sold ||
-    maintenance ||
-    locked;
+    locked ||
+    (maintenance && !adminMode);
+
 
   // =========================================================
   // RENDER
   // =========================================================
 
   return (
+
     <div
       className={`
         seat
@@ -79,11 +112,13 @@ const Seat = ({
           : undefined
       }
     >
+
       {/* =====================================================
           SEAT ICON
       ===================================================== */}
 
       <Icon className="seat-icon" />
+
 
       {/* =====================================================
           SEAT NUMBER
@@ -92,6 +127,7 @@ const Seat = ({
       <span className="seat-number">
         {number}
       </span>
+
     </div>
   );
 };

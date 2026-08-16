@@ -44,6 +44,15 @@ import '../../../styles/AdminSeat.css';
    - Chỉ COUPLE được xem là ghế đôi.
    - Không dựa vào hàng cuối để xác định ghế đôi.
    - seat_type từ database là nguồn xác định loại ghế.
+   - Couple hiển thị dạng:
+       L3-L4
+       L5-L6
+       L7-L8
+   - Database vẫn lưu từng seat riêng:
+       L3
+       L4
+       L5
+       L6
    ========================================================================== */
 
 
@@ -78,7 +87,9 @@ const SeatList = () => {
     ========================================================== */
 
     const fetchCinemas = useCallback(async () => {
+
         try {
+
             const res = await api.get('/api/cinemas');
 
             const cinemaList = res.data?.data || [];
@@ -86,13 +97,18 @@ const SeatList = () => {
             setCinemas(cinemaList);
 
         } catch (err) {
+
             console.error('❌ Lỗi lấy rạp:', err);
+
         }
+
     }, []);
 
 
     useEffect(() => {
+
         fetchCinemas();
+
     }, [fetchCinemas]);
 
 
@@ -103,9 +119,11 @@ const SeatList = () => {
     const fetchRooms = useCallback(async (cinemaId) => {
 
         if (!cinemaId) {
+
             setRooms([]);
             setSelectedRoom('');
             setSeats([]);
+
             return;
         }
 
@@ -127,13 +145,16 @@ const SeatList = () => {
             console.error('❌ Lỗi lấy phòng:', err);
 
             setRooms([]);
+
         }
 
     }, []);
 
 
     useEffect(() => {
+
         fetchRooms(selectedCinema);
+
     }, [selectedCinema, fetchRooms]);
 
 
@@ -144,13 +165,18 @@ const SeatList = () => {
     const fetchSeats = useCallback(async (roomId) => {
 
         if (!roomId) {
+
             setSeats([]);
+
             return;
         }
 
         /* Hủy request cũ nếu có */
+
         if (abortControllerRef.current) {
+
             abortControllerRef.current.abort();
+
         }
 
         const controller = new AbortController();
@@ -217,8 +243,11 @@ const SeatList = () => {
             isFetching.current = false;
 
             if (abortControllerRef.current === controller) {
+
                 abortControllerRef.current = null;
+
             }
+
         }
 
     }, []);
@@ -229,6 +258,111 @@ const SeatList = () => {
         fetchSeats(selectedRoom);
 
     }, [selectedRoom, fetchSeats]);
+
+
+    /* ==========================================================
+       HELPER:
+       LẤY TÊN GHẾ HIỂN THỊ
+
+       STANDARD:
+       L1
+
+       COUPLE:
+       L3 L4
+       L5 L6
+       L7 L8
+
+       Database vẫn lưu riêng từng seat.
+    ========================================================== */
+
+    const getSeatDisplayName = useCallback((seat) => {
+
+        if (!seat) {
+            return '';
+        }
+
+        const seatRow = seat.seat_row || '';
+
+        const seatType =
+            seat.seat_type?.toUpperCase() || 'STANDARD';
+
+        const seatNumber = Number(seat.seat_number);
+
+        /* ======================================================
+           GHẾ ĐÔI
+        ====================================================== */
+
+        if (
+            seatType === 'COUPLE' &&
+            !Number.isNaN(seatNumber)
+        ) {
+
+            /*
+             * Nếu click ghế số lẻ:
+             * 3 → 3 + 4
+             *
+             * Nếu vì lý do nào đó click ghế số chẵn:
+             * 4 → 3 + 4
+             */
+
+            const firstNumber =
+                seatNumber % 2 === 1
+                    ? seatNumber
+                    : seatNumber - 1;
+
+            const secondNumber =
+                firstNumber + 1;
+
+            return `${seatRow}${firstNumber} ${seatRow}${secondNumber}`;
+        }
+
+        /* ======================================================
+           GHẾ ĐƠN
+        ====================================================== */
+
+        return `${seatRow}${seat.seat_number}`;
+
+    }, []);
+
+
+    /* ==========================================================
+       HELPER:
+       LẤY SỐ HIỂN THỊ GHẾ
+
+       Couple:
+       3-4
+
+       Standard:
+       3
+    ========================================================== */
+
+    const getSeatDisplayNumber = useCallback((seat) => {
+
+        if (!seat) {
+            return '';
+        }
+
+        const seatType =
+            seat.seat_type?.toUpperCase() || 'STANDARD';
+
+        const seatNumber = Number(seat.seat_number);
+
+        if (
+            seatType === 'COUPLE' &&
+            !Number.isNaN(seatNumber)
+        ) {
+
+            const firstNumber =
+                seatNumber % 2 === 1
+                    ? seatNumber
+                    : seatNumber - 1;
+
+            return `${firstNumber}-${firstNumber + 1}`;
+        }
+
+        return seat.seat_number;
+
+    }, []);
 
 
     /* ==========================================================
@@ -252,12 +386,17 @@ const SeatList = () => {
         ) {
 
             if (modal.type === 'success') {
+
                 await fetchSeats(selectedRoom);
+
             }
 
             setModal({
+
                 ...modal,
+
                 isOpen: false
+
             });
 
             return;
@@ -271,10 +410,16 @@ const SeatList = () => {
         if (!selectedRoom) {
 
             setModal({
+
                 isOpen: true,
+
                 type: 'error',
+
                 title: 'Thiếu thông tin',
-                data: 'Vui lòng chọn phòng trước khi thực hiện thao tác.'
+
+                data:
+                    'Vui lòng chọn phòng trước khi thực hiện thao tác.'
+
             });
 
             return;
@@ -302,35 +447,125 @@ const SeatList = () => {
 
                 const seat = modal.data;
 
+                const seatType =
+                    seat.seat_type?.toUpperCase() ||
+                    'STANDARD';
+
+                const seatNumber =
+                    Number(seat.seat_number);
+
+                const isCouple =
+                    seatType === 'COUPLE';
+
+
+                /* ==================================================
+                   TÍNH TÊN GHẾ HIỂN THỊ
+
+                   STANDARD:
+                   L3
+
+                   COUPLE:
+                   L3 L4
+                   ================================================== */
+
+                const displaySeatName =
+                    getSeatDisplayName(seat);
+
+
+                /* ==================================================
+                   SỐ TRẠNG THÁI TIẾP THEO
+
+                   1 → 0
+                   đang hoạt động → khóa bảo trì
+
+                   0 → 1
+                   đang bảo trì → mở hoạt động
+                ================================================== */
+
+                const nextActive =
+                    seat.is_active
+                        ? 0
+                        : 1;
+
+
+                console.log(
+                    '🪑 Thay đổi trạng thái ghế:',
+                    {
+                        seatId: seat.seat_id,
+                        seatType,
+                        seatNumber,
+                        isCouple,
+                        displaySeatName,
+                        nextActive
+                    }
+                );
+
+
+                /* ==================================================
+                   GỌI BACKEND
+
+                   Backend hiện tại đã xử lý:
+                   COUPLE → khóa/mở cả 2 record.
+
+                   Ví dụ:
+                   seatId = L3
+
+                   Backend:
+                   L3 → inactive
+                   L4 → inactive
+                   ================================================== */
+
                 await api.put(
                     '/api/seats/toggle-active',
                     {
                         seatId: seat.seat_id,
 
-                        isActive: seat.is_active
-                            ? 0
-                            : 1
+                        isActive: nextActive
                     }
                 );
+
+
+                /* ==================================================
+                   LOAD LẠI SƠ ĐỒ
+                ================================================== */
 
                 await fetchSeats(selectedRoom);
 
 
+                /* ==================================================
+                   NỘI DUNG THÔNG BÁO
+                ================================================== */
+
+                const actionText =
+                    nextActive === 0
+                        ? 'khóa bảo trì'
+                        : 'mở hoạt động';
+
+
+                /*
+                 * KẾT QUẢ:
+                 *
+                 * Ghế thường:
+                 * Đã khóa bảo trì ghế L1
+                 *
+                 * Ghế đôi:
+                 * Đã khóa bảo trì ghế L3 L4
+                 *
+                 * Mở:
+                 * Đã mở hoạt động ghế L3 L4
+                 */
+
                 setModal({
+
                     isOpen: true,
+
                     type: 'success',
+
                     title: 'Thành công',
 
                     data:
-                        `Đã ${
-                            seat.is_active
-                                ? 'khóa bảo trì'
-                                : 'mở hoạt động'
-                        } ghế ${
-                            seat.seat_row
-                        }${
-                            seat.seat_number
-                        }`
+                        `Đã ${actionText} ghế ${displaySeatName}`
+
                 });
 
             }
@@ -351,6 +586,7 @@ const SeatList = () => {
 
                     cinemaId:
                         Number(selectedCinema)
+
                 };
 
 
@@ -376,8 +612,11 @@ const SeatList = () => {
 
 
                 setModal({
+
                     isOpen: true,
+
                     type: 'success',
+
                     title: 'Khởi tạo thành công',
 
                     data:
@@ -385,6 +624,7 @@ const SeatList = () => {
                         `Đã tạo phôi ghế cho phòng ${
                             roomInfo?.room_name || ''
                         }`
+
                 });
 
             }
@@ -405,35 +645,49 @@ const SeatList = () => {
 
 
                 setModal({
+
                     isOpen: true,
+
                     type: 'success',
+
                     title: 'Xóa thành công',
 
                     data:
                         'Đã xóa sạch sơ đồ ghế của phòng này.'
+
                 });
+
             }
 
         } catch (err) {
 
-            console.error('❌ Lỗi:', err);
+            console.error(
+                '❌ Lỗi:',
+                err
+            );
 
 
             setModal({
+
                 isOpen: true,
+
                 type: 'error',
+
                 title: 'Thao tác thất bại',
 
                 data:
                     err.response?.data?.message ||
                     err.message ||
                     'Đã xảy ra lỗi.'
+
             });
 
         } finally {
 
             setLoading(false);
+
         }
+
     };
 
 
@@ -442,27 +696,38 @@ const SeatList = () => {
     ========================================================== */
 
     const groupedSeats = seats.reduce(
+
         (acc, seat) => {
 
             const row =
                 seat.seat_row || '?';
 
+
             if (!acc[row]) {
+
                 acc[row] = [];
+
             }
+
 
             acc[row].push(seat);
 
+
             acc[row].sort(
+
                 (a, b) =>
                     Number(a.seat_number) -
                     Number(b.seat_number)
+
             );
+
 
             return acc;
 
         },
+
         {}
+
     );
 
 
@@ -472,10 +737,14 @@ const SeatList = () => {
 
     const sortedRows =
         Object.keys(groupedSeats).sort(
+
             (a, b) => {
 
-                const aNum = parseInt(a);
-                const bNum = parseInt(b);
+                const aNum =
+                    parseInt(a);
+
+                const bNum =
+                    parseInt(b);
 
 
                 if (
@@ -484,11 +753,14 @@ const SeatList = () => {
                 ) {
 
                     return aNum - bNum;
+
                 }
 
 
                 return a.localeCompare(b);
+
             }
+
         );
 
 
@@ -504,13 +776,7 @@ const SeatList = () => {
        COUPLE
        → chỉ hiển thị ghế số lẻ.
 
-       Ví dụ:
-
-       1-2
-       3-4
-       5-6
-
-       Database vẫn có:
+       Database:
 
        1
        2
@@ -519,7 +785,7 @@ const SeatList = () => {
        5
        6
 
-       Nhưng UI chỉ render:
+       UI:
 
        1-2
        3-4
@@ -529,8 +795,7 @@ const SeatList = () => {
     const shouldShowSeat = (seat) => {
 
         const seatType =
-            seat.seat_type
-                ?.toUpperCase() ||
+            seat.seat_type?.toUpperCase() ||
             'STANDARD';
 
 
@@ -539,11 +804,14 @@ const SeatList = () => {
             const num =
                 Number(seat.seat_number);
 
+
             return num % 2 === 1;
+
         }
 
 
         return true;
+
     };
 
 
@@ -573,12 +841,18 @@ const SeatList = () => {
                         fetchSeats(
                             selectedRoom
                         );
+
                     }
 
+
                     setModal({
+
                         ...modal,
+
                         isOpen: false
+
                     });
+
                 }}
 
                 title={modal.title}
@@ -592,6 +866,7 @@ const SeatList = () => {
                 }
 
                 confirmText={
+
                     [
                         'info',
                         'error',
@@ -599,11 +874,15 @@ const SeatList = () => {
                     ].includes(
                         modal.type
                     )
+
                         ? 'Đóng'
+
                         : 'Xác nhận'
+
                 }
 
                 cancelText={
+
                     [
                         'info',
                         'error',
@@ -611,9 +890,13 @@ const SeatList = () => {
                     ].includes(
                         modal.type
                     )
+
                         ? undefined
+
                         : 'Hủy'
+
                 }
+
             >
 
 
@@ -631,22 +914,44 @@ const SeatList = () => {
                             color="#ffc107"
                         />
 
+
                         <p>
+
                             Bạn có muốn{' '}
 
                             <strong>
+
                                 {
+                                    /* 🔥 SỬA LẠI Ở ĐÂY: Đã đảo ngược logic text để đúng với hành động */
                                     modal.data?.is_active
                                         ? 'KHÓA BẢO TRÌ'
                                         : 'MỞ HOẠT ĐỘNG'
                                 }
+
                             </strong>{' '}
-                            ghế này?
+
+                            ghế{' '}
+
+                            <strong>
+
+                                {
+                                    getSeatDisplayName(
+                                        modal.data
+                                    )
+                                }
+
+                            </strong>
+
+                            ?
+
                         </p>
 
+
                         <small className="text-muted">
+
                             * Ghế bảo trì sẽ không hiển thị
                             khi khách đặt vé.
+
                         </small>
 
                     </div>
@@ -665,15 +970,19 @@ const SeatList = () => {
                             <User size={18} />
 
                             <span>
+
                                 Khách hàng:{' '}
 
                                 <strong>
+
                                     {
                                         modal.data
                                             ?.customer_name ||
                                         'N/A'
                                     }
+
                                 </strong>
+
                             </span>
 
                         </div>
@@ -684,6 +993,7 @@ const SeatList = () => {
                             <Clock size={18} />
 
                             <span>
+
                                 Thời gian đặt:{' '}
 
                                 {
@@ -706,13 +1016,17 @@ const SeatList = () => {
 
 
                         <div className="status-badge booked">
+
                             ĐÃ CÓ VÉ
+
                         </div>
 
 
                         <p className="warning-text">
+
                             Ghế đã bán,
                             bạn chỉ được phép xem thông tin!
+
                         </p>
 
                     </div>
@@ -739,7 +1053,9 @@ const SeatList = () => {
                                 fontWeight: 'bold'
                             }}
                         >
+
                             {modal.data}
+
                         </p>
 
                     </div>
@@ -767,7 +1083,9 @@ const SeatList = () => {
                                 fontSize: '1.1rem'
                             }}
                         >
+
                             {modal.data}
+
                         </p>
 
                     </div>
@@ -799,6 +1117,7 @@ const SeatList = () => {
                                     ? 'Bạn có chắc chắn muốn XÓA SẠCH sơ đồ ghế của phòng này không?'
 
                                     : 'Bạn có chắc chắn muốn KHỞI TẠO lại sơ đồ ghế cho phòng này không?'
+
                             }
 
                         </p>
@@ -817,6 +1136,7 @@ const SeatList = () => {
                                     ? 'Hành động này sẽ xóa tất cả ghế hiện có và không thể khôi phục.'
 
                                     : 'Hành động này sẽ tạo mới toàn bộ ghế theo cấu hình mặc định.'
+
                             }
 
                         </small>
@@ -835,7 +1155,9 @@ const SeatList = () => {
             <div className="seat-list-header">
 
                 <h2>
+
                     QUẢN LÝ SƠ ĐỒ GHẾ
+
                 </h2>
 
 
@@ -847,10 +1169,14 @@ const SeatList = () => {
                     <div className="filter-group">
 
                         <label>
+
                             Rạp:
+
                         </label>
 
+
                         <select
+
                             value={
                                 selectedCinema
                             }
@@ -860,14 +1186,18 @@ const SeatList = () => {
                                     e.target.value
                                 )
                             }
+
                         >
 
                             <option value="">
+
                                 -- Chọn rạp --
+
                             </option>
 
 
                             {cinemas.map(
+
                                 cinema => (
 
                                     <option
@@ -878,12 +1208,15 @@ const SeatList = () => {
                                             cinema.cinema_id
                                         }
                                     >
+
                                         {
                                             cinema.cinema_name
                                         }
+
                                     </option>
 
                                 )
+
                             )}
 
                         </select>
@@ -896,10 +1229,14 @@ const SeatList = () => {
                     <div className="filter-group">
 
                         <label>
+
                             Phòng:
+
                         </label>
 
+
                         <select
+
                             value={
                                 selectedRoom
                             }
@@ -913,14 +1250,18 @@ const SeatList = () => {
                             disabled={
                                 !selectedCinema
                             }
+
                         >
 
                             <option value="">
+
                                 -- Chọn phòng --
+
                             </option>
 
 
                             {rooms.map(
+
                                 room => (
 
                                     <option
@@ -931,17 +1272,23 @@ const SeatList = () => {
                                             room.room_id
                                         }
                                     >
+
                                         {
                                             room.room_name
                                         }{' '}
+
                                         (
+
                                         {
                                             room.room_type
                                         }
+
                                         )
+
                                     </option>
 
                                 )
+
                             )}
 
                         </select>
@@ -1028,7 +1375,9 @@ const SeatList = () => {
                         />
 
                         <span>
+
                             Đang tải...
+
                         </span>
 
                     </div>
@@ -1047,7 +1396,9 @@ const SeatList = () => {
                         <div className="screen-big">
 
                             <span className="screen-label">
+
                                 MÀN HÌNH
+
                             </span>
 
                         </div>
@@ -1060,6 +1411,7 @@ const SeatList = () => {
                         <div className="seats-layout">
 
                             {sortedRows.map(
+
                                 row => {
 
                                     const rowSeats =
@@ -1081,10 +1433,13 @@ const SeatList = () => {
                                             className="seat-row"
                                         >
 
+
                                             {/* TÊN HÀNG */}
 
                                             <span className="row-id">
+
                                                 {row}
+
                                             </span>
 
 
@@ -1093,6 +1448,7 @@ const SeatList = () => {
                                             <div className="row-items">
 
                                                 {filteredSeats.map(
+
                                                     seat => {
 
 
@@ -1109,12 +1465,6 @@ const SeatList = () => {
 
                                                         /* ==================================================
                                                            LOẠI GHẾ
-
-                                                           STANDARD
-                                                           VIP
-                                                           DELUXE
-                                                           RECLINER
-                                                           COUPLE
                                                         ================================================== */
 
                                                         const seatType =
@@ -1124,40 +1474,13 @@ const SeatList = () => {
 
 
                                                         /* ==================================================
-                                                           SỐ GHẾ
-
-                                                           Ghế thường:
-                                                           1
-                                                           2
-                                                           3
-
-                                                           Ghế Couple:
-                                                           1-2
-                                                           3-4
-                                                           5-6
+                                                           SỐ GHẾ HIỂN THỊ
                                                         ================================================== */
 
-                                                        let displayNumber =
-                                                            seat.seat_number;
-
-
-                                                        const num =
-                                                            Number(
-                                                                seat.seat_number
+                                                        const displayNumber =
+                                                            getSeatDisplayNumber(
+                                                                seat
                                                             );
-
-
-                                                        if (
-                                                            seatType ===
-                                                                'COUPLE' &&
-                                                            num %
-                                                                2 ===
-                                                                1
-                                                        ) {
-
-                                                            displayNumber =
-                                                                `${num}-${num + 1}`;
-                                                        }
 
 
                                                         /* ==================================================
@@ -1167,13 +1490,17 @@ const SeatList = () => {
                                                         const handleClick =
                                                             () => {
 
-                                                                /* GHẾ ĐÃ BÁN */
+
+                                                                /* ==================================================
+                                                                   GHẾ ĐÃ BÁN
+                                                                ================================================== */
 
                                                                 if (
                                                                     isBooked
                                                                 ) {
 
                                                                     setModal({
+
                                                                         isOpen:
                                                                             true,
 
@@ -1184,17 +1511,24 @@ const SeatList = () => {
                                                                             seat,
 
                                                                         title:
-                                                                            `Thông tin Ghế ${seat.seat_row}${displayNumber}`
+                                                                            `Thông tin Ghế ${getSeatDisplayName(
+                                                                                seat
+                                                                            )}`
+
                                                                     });
 
                                                                     return;
+
                                                                 }
 
 
-                                                                /* GHẾ CHƯA BÁN
-                                                                   → CHO PHÉP BẢO TRÌ */
+                                                                /* ==================================================
+                                                                   GHẾ CHƯA BÁN
+                                                                   → CHO PHÉP BẢO TRÌ
+                                                                ================================================== */
 
                                                                 setModal({
+
                                                                     isOpen:
                                                                         true,
 
@@ -1205,7 +1539,10 @@ const SeatList = () => {
                                                                         seat,
 
                                                                     title:
-                                                                        `Chỉnh sửa bảo trì ghế ${seat.seat_row}${displayNumber}`
+                                                                        `Chỉnh sửa bảo trì ghế ${getSeatDisplayName(
+                                                                            seat
+                                                                        )}`
+
                                                                 });
 
                                                             };
@@ -1243,11 +1580,17 @@ const SeatList = () => {
                                                                     handleClick
                                                                 }
 
+                                                                /* ✅ SỬA LẠI Ở ĐÂY: Bật chế độ Admin để vẫn bấm được vào ghế bảo trì */
+                                                                adminMode={
+                                                                    true
+                                                                }
+
                                                             />
 
                                                         );
 
                                                     }
+
                                                 )}
 
                                             </div>
@@ -1257,6 +1600,7 @@ const SeatList = () => {
                                     );
 
                                 }
+
                             )}
 
                         </div>
@@ -1284,7 +1628,9 @@ const SeatList = () => {
                                 />
 
                                 <span>
+
                                     Thường
+
                                 </span>
 
                             </div>
@@ -1304,13 +1650,15 @@ const SeatList = () => {
                                 />
 
                                 <span>
+
                                     VIP
+
                                 </span>
 
                             </div>
 
 
-                            {/* DELUXE - MỚI */}
+                            {/* DELUXE */}
 
                             <div className="legend-item leg-item">
 
@@ -1324,13 +1672,15 @@ const SeatList = () => {
                                 />
 
                                 <span>
+
                                     Deluxe
+
                                 </span>
 
                             </div>
 
 
-                            {/* RECLINER - MỚI */}
+                            {/* RECLINER */}
 
                             <div className="legend-item leg-item">
 
@@ -1344,7 +1694,9 @@ const SeatList = () => {
                                 />
 
                                 <span>
+
                                     Recliner
+
                                 </span>
 
                             </div>
@@ -1364,7 +1716,9 @@ const SeatList = () => {
                                 />
 
                                 <span>
+
                                     Đôi
+
                                 </span>
 
                             </div>
@@ -1384,7 +1738,9 @@ const SeatList = () => {
                                 />
 
                                 <span>
+
                                     Đã đặt
+
                                 </span>
 
                             </div>
@@ -1404,7 +1760,9 @@ const SeatList = () => {
                                 />
 
                                 <span>
+
                                     Bảo trì
+
                                 </span>
 
                             </div>
@@ -1445,7 +1803,9 @@ const SeatList = () => {
             </div>
 
         </div>
+
     );
+
 };
 
 
