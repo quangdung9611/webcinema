@@ -118,7 +118,8 @@
 
     color: var(--text-body);
 
-    border: var(--border-subtle);
+    /* ── Đã đổi từ border-subtle sang border-premium ── */
+    border: var(--border-premium);
 
     border-radius: var(--radius-sm);
 
