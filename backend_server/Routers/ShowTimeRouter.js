@@ -72,9 +72,7 @@ router.get(
     ADMIN ROUTES
 ========================================================== */
 
-// ==========================================================
 // GET SHOWTIMES - PAGINATION
-// ==========================================================
 router.get(
     "/paginated",
     authenticateAdmin,
@@ -87,32 +85,17 @@ router.get(
 //
 // POST /api/showtimes/scheduler
 //
-// Dùng để:
-// - Chọn 1 phim
-// - Chọn 1 rạp
-// - Chọn nhiều phòng
-// - Chọn khoảng ngày
-// - Chọn khung giờ hoạt động
-// - Chọn mức độ phân bổ
-//
-// Scheduler sẽ tự:
-// - Đọc duration phim
-// - Kiểm tra lịch hiện tại
-// - Kiểm tra conflict từng phòng
-// - Tính khoảng trống
-// - Phân bổ suất
-// - Không tạo suất trùng
+// Controller:
+// ShowtimeController.createAutoSchedule
 // ==========================================================
 router.post(
     "/scheduler",
     authenticateAdmin,
-    ShowtimeController.scheduleShowtimes
+    ShowtimeController.createAutoSchedule
 );
 
 
-// ==========================================================
 // GET SHOWTIME DETAIL - ADMIN
-// ==========================================================
 router.get(
     "/:showtime_id",
     authenticateAdmin,
@@ -120,9 +103,7 @@ router.get(
 );
 
 
-// ==========================================================
 // CREATE SINGLE SHOWTIME
-// ==========================================================
 router.post(
     "/",
     authenticateAdmin,
@@ -130,9 +111,7 @@ router.post(
 );
 
 
-// ==========================================================
 // UPDATE SHOWTIME
-// ==========================================================
 router.put(
     "/:showtime_id",
     authenticateAdmin,
@@ -140,9 +119,7 @@ router.put(
 );
 
 
-// ==========================================================
 // DELETE SHOWTIME
-// ==========================================================
 router.delete(
     "/:showtime_id",
     authenticateAdmin,
