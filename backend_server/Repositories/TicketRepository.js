@@ -20,6 +20,7 @@ class TicketRepository {
             `
             SELECT
                 t.*,
+                t.updated_at,  -- 👈 THÊM DÒNG NÀY ĐỂ LẤY THỜI GIAN SOÁT VÉ
                 s.seat_row,
                 s.seat_number,
                 s.seat_type,
@@ -77,6 +78,7 @@ class TicketRepository {
             `
             SELECT
                 t.*,
+                t.updated_at,  -- 👈 THÊM DÒNG NÀY
                 s.seat_row,
                 s.seat_number,
                 s.seat_type,
@@ -116,7 +118,7 @@ class TicketRepository {
         return rows[0] || null;
     }
 
-    // Lấy sơ đồ ghế theo suất chiếu
+    // Lấy sơ đồ ghế theo suất chiếu (giữ nguyên)
     async getSeatMapByShowtime(connection, showtimeId) {
         const [rows] = await connection.query(
             `
@@ -143,7 +145,7 @@ class TicketRepository {
         return rows;
     }
 
-    // Bulk insert vé (nếu dùng)
+    // Bulk insert vé (giữ nguyên)
     async createBulk(connection, ticketsData) {
         if (!ticketsData.length) return 0;
         const [result] = await connection.query(
@@ -157,7 +159,7 @@ class TicketRepository {
         return result.affectedRows;
     }
 
-    // Đánh dấu vé đã sử dụng (check‑in)
+    // Đánh dấu vé đã sử dụng (check‑in) - Tự động cập nhật updated_at
     async markUsed(connection, ticketId) {
         const [result] = await connection.execute(
             `UPDATE tickets SET ticket_status = 'Used', updated_at = NOW() WHERE ticket_id = ?`,

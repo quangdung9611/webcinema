@@ -877,7 +877,7 @@ const MovieDetail = () => {
                                     Chưa có bình luận nào. Hãy là người đầu tiên đánh giá!
                                 </div>
                             ) : (
-                                reviews.slice(0, 3).map((rev, index) => {
+                                reviews.slice(0, 20).map((rev, index) => {
                                     const avatarUrl = rev.user_avatar ? getAvatarUrl(rev.user_avatar) : null;
                                     return (
                                         <div className="mini-comment-card" key={rev.review_id || index}>
@@ -895,7 +895,12 @@ const MovieDetail = () => {
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <span className="comment-time-ago">Mới đây</span>
+                                                <span className="comment-time-ago">
+                                                            {rev.formatted_date 
+                                                                ? rev.formatted_date.replace(' ', ' | ') 
+                                                                : "Mới đây"
+                                                            }
+                                                </span>
                                             </div>
                                             <p className="comment-content-body-text">{rev.comment}</p>
                                         </div>

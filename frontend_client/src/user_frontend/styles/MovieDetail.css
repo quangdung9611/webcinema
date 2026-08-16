@@ -545,7 +545,7 @@
 }
 
 /* =========================================================
-   ĐÁNH GIÁ – REVIEW SECTION
+   ĐÁNH GIÁ – REVIEW SECTION (ĐÃ CẢI TIẾN)
    ========================================================= */
 .reviews-section-fullwidth {
     width: 100%;
@@ -638,12 +638,44 @@
 }
 
 /* =========================================================
-   MINI COMMENTS – HIỂN THỊ AVATAR THỰC
+   MINI COMMENTS – CẢI TIẾN: SCROLLBAR, MAX-HEIGHT, NGÀY GIỜ
    ========================================================= */
 .mini-comments-list-viewport {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
+
+    /* 🔥 Giới hạn chiều cao và thêm thanh cuộn */
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: var(--space-sm); /* tránh che nội dung bởi scrollbar */
+}
+
+/* 🖱️ Thanh cuộn tùy chỉnh cho WebKit (Chrome, Safari, Edge) */
+.mini-comments-list-viewport::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.mini-comments-list-viewport::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-round);
+}
+
+.mini-comments-list-viewport::-webkit-scrollbar-thumb {
+    background: var(--silver-primary);
+    border-radius: var(--radius-round);
+    transition: background var(--transition-normal);
+}
+
+.mini-comments-list-viewport::-webkit-scrollbar-thumb:hover {
+    background: var(--silver-light);
+}
+
+/* 🖱️ Firefox */
+.mini-comments-list-viewport {
+    scrollbar-width: thin;
+    scrollbar-color: var(--silver-primary) rgba(255, 255, 255, 0.05);
 }
 
 .mini-comment-card {
@@ -698,11 +730,17 @@
     display: flex;
     gap: 2px;
 }
+
+/* 🔥 Cải tiến hiển thị ngày giờ: thêm dấu | hoặc khoảng trắng */
 .comment-time-ago {
     color: var(--text-muted);
     font-size: var(--font-size-base);
     white-space: nowrap;
+    margin-left: var(--space-sm);
+    padding-left: var(--space-sm);
+    border-left: 1px solid var(--border-subtle); /* dấu ngăn cách */
 }
+
 .comment-content-body-text {
     margin-top: var(--space-sm);
     color: var(--text-secondary);
@@ -1084,7 +1122,6 @@
     min-width: 100px;
     padding: var(--space-md) var(--space-lg);
     background: var(--bg-tertiary);
-    /* ── Đã đổi từ border-subtle thành border-premium ── */
     border: var(--border-premium);
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -1303,6 +1340,12 @@
         justify-content: center;
         padding: var(--space-md);
     }
+
+    /* ── Mobile scrollbar vẫn giữ kích thước nhỏ ── */
+    .mini-comments-list-viewport::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+    }
 }
 
 /* Mobile cực nhỏ ≤ 480px */
@@ -1389,8 +1432,11 @@
     }
     .comment-time-ago {
         width: 100%;
-        margin-left: 52px;
-        font-size: 11px;
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        margin-top: var(--space-xs);
+        white-space: normal;
     }
     .comment-username {
         font-size: 14px;

@@ -77,7 +77,6 @@ const TicketList = () => {
     const fetchCinemas = useCallback(async () => {
         try {
             const res = await api.get('/api/cinemas');
-            // ✅ Lấy mảng từ res.data.data
             const cinemaList = res.data?.data || [];
             setCinemas(cinemaList);
             console.log('✅ [Cinemas] Đã tải:', cinemaList.length);
@@ -104,7 +103,6 @@ const TicketList = () => {
         setLoadingRooms(true);
         try {
             const res = await api.get(`/api/rooms/cinema/${cinemaId}`);
-            // ✅ Lấy mảng từ res.data.data
             const roomList = res.data?.data || [];
             setRooms(roomList);
             setFilters(prev => ({ ...prev, roomId: '', showtimeId: '' }));
@@ -135,23 +133,18 @@ const TicketList = () => {
 
         setLoadingShowtimes(true);
         try {
-            // Lấy sơ đồ ghế (public)
             const seatsRes = await api.get(`/api/seats/room/${roomId}`);
-            // ✅ Lấy mảng từ res.data.data
             const seatList = seatsRes.data?.data || [];
             setAllSeats(seatList);
 
-            // Lấy suất chiếu theo rạp và phòng (admin)
             const showtimesRes = await api.get(
                 `/api/showtimes/by-cinema-room?cinema_id=${cinemaId}&room_id=${roomId}`
             );
-            // ✅ Lấy mảng từ res.data.data
             const showtimeList = showtimesRes.data?.data || [];
             setShowtimes(showtimeList);
             setFilters(prev => ({ ...prev, showtimeId: '' }));
             setTickets([]);
             console.log(`✅ [Showtimes] Đã tải cho room ${roomId}:`, showtimeList.length);
-            console.log(`✅ [Seats] Đã tải cho room ${roomId}:`, seatList.length);
         } catch (err) {
             handleApiError(err, 'Không thể tải suất chiếu.');
         } finally {
@@ -170,7 +163,6 @@ const TicketList = () => {
             return;
         }
 
-        // Hủy request cũ nếu có
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
         }
@@ -183,7 +175,6 @@ const TicketList = () => {
             const res = await api.get(`/api/tickets/showtime/${showtimeId}`, {
                 signal: controller.signal
             });
-            // ✅ Lấy mảng từ res.data.data
             const ticketsData = res.data?.data || [];
             setTickets(Array.isArray(ticketsData) ? ticketsData : []);
             console.log(`✅ [Tickets] Đã tải cho showtime ${showtimeId}:`, ticketsData.length);
@@ -254,6 +245,21 @@ const TicketList = () => {
         const dateVN = `${day}/${month}/${year}`;
         const title = showtime.title || 'Phim';
         return `${title} | ${dateVN} | ${timePart}`;
+    };
+
+    // 📌 Format thời gian cho bảng vé
+    const formatDateDisplay = (dateStr) => {
+        if (!dateStr) return '--';
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date)) return '--';
+            return date.toLocaleString('vi-VN', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        } catch {
+            return '--';
+        }
     };
 
     const isLoading = loadingTickets || loadingShowtimes;
@@ -383,7 +389,9 @@ const TicketList = () => {
                                     <th>Mã Vé</th>
                                     <th>Ghế</th>
                                     <th>Khách hàng</th>
+                                    <th>Suất chiếu</th> {/* 👈 Cột mới */}
                                     <th>Trạng thái</th>
+                                    <th>Thời gian soát</th> {/* 👈 Cột mới */}
                                     <th>Thao tác</th>
                                 </tr>
                             </thead>
@@ -405,6 +413,7 @@ const TicketList = () => {
                                                     </span>
                                                 </td>
                                                 <td>{ticket.customer_name || ticket.full_name || 'N/A'}</td>
+                                                <td>{formatDateDisplay(ticket.showtime)}</td> {/* 👈 Hiển thị ngày giờ suất chiếu */}
                                                 <td>
                                                     <span className={`status-badge ${isUsed ? 'used' : 'pending'}`}>
                                                         {isUsed ? (
@@ -413,6 +422,10 @@ const TicketList = () => {
                                                             <><Clock size={12} /> Chưa dùng</>
                                                         )}
                                                     </span>
+                                                </td>
+                                                <td>
+                                                    {/* 👈 Hiển thị thời gian soát thực tế */}
+                                                    {isUsed ? formatDateDisplay(ticket.updated_at) : '--'}
                                                 </td>
                                                 <td>
                                                     {isValid ? (
