@@ -177,16 +177,30 @@
         filter: brightness(1.1);
         box-shadow: 0 4px 28px rgba(159, 183, 210, 0.40);
 
-    /* ======================================================
-       SEAT STATUS COLORS
-       ====================================================== */
-    --seat-standard-color: #7D7D86;
-    --seat-vip-color: #D1AD55;
-    --seat-couple-color: #B86BC7;
-    --seat-selected-color: #43B77A;
-    --seat-holding-color: #5F9FEA;
-    --seat-sold-color: #D85A5A;
-    --seat-maintenance-color: #555560;
+   /* ======================================================
+   SEAT STATUS COLORS
+   ====================================================== */
+
+/* Ghế thường */
+--seat-standard-color: #7D7D86;
+
+/* Ghế VIP */
+--seat-vip-color: #D1AD55;
+
+/* Ghế đôi */
+--seat-couple-color: #B86BC7;
+
+/* Ghế RECLINER - ghế ngả cao cấp */
+--seat-recliner-color: #6F8FA8;
+
+/* Ghế DELUXE - hạng sang */
+--seat-deluxe-color: #B8C0C9;
+
+/* Trạng thái ghế */
+--seat-selected-color: #43B77A;
+--seat-holding-color: #5F9FEA;
+--seat-sold-color: #D85A5A;
+--seat-maintenance-color: #555560;
 
     /* ======================================================
        BORDER RADIUS

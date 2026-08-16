@@ -1,449 +1,1155 @@
 /* ==========================================================================
-   ADMIN SEAT – GIAO DIỆN PREMIUM DARK (ĐỒNG BỘ VỚI GLOBAL DESIGN)
-   Sử dụng Plus Jakarta Sans cho toàn bộ hệ thống font
+   ADMIN SEAT - PREMIUM DARK
+   ==========================================================================
+
+   HỆ THỐNG 5 LOẠI GHẾ:
+
+   1. STANDARD / NORMAL
+   2. VIP
+   3. DELUXE
+   4. RECLINER
+   5. COUPLE
+
+   STANDARD / VIP / DELUXE / RECLINER
+   → GHẾ ĐƠN
+
+   COUPLE
+   → GHẾ ĐÔI
+
+   Sử dụng toàn bộ biến từ INDEX.CSS
+   Font hệ thống: Plus Jakarta Sans
+   ========================================================================== */
+
+
+/* ==========================================================================
+   CONTAINER
    ========================================================================== */
 
 .admin-seat-container {
     width: 100%;
+    min-height: 60vh;
+
     padding: var(--space-lg);
+
     background: var(--bg-secondary);
     color: var(--text-body);
-    min-height: 60vh;
 }
 
-/* ========== HEADER & FILTER ========== */
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+
 .seat-list-header {
     margin-bottom: var(--space-lg);
 }
 
+
 .seat-list-header h2 {
     font-family: var(--font-heading);
+
     font-size: var(--display-section);
+
     font-weight: var(--fw-extrabold);
+
     color: var(--text-heading);
+
     margin-bottom: var(--space-lg);
+
     text-transform: uppercase;
+
     letter-spacing: 0.04em;
 }
 
+
+/* ==========================================================================
+   FILTER
+   ========================================================================== */
+
 .filter-controls {
     display: flex;
+
     flex-wrap: wrap;
+
     gap: var(--space-md);
+
     align-items: flex-end;
+
     padding: var(--space-lg);
+
     border-radius: var(--radius-md);
+
     background: var(--bg-card);
+
     border: var(--border-premium);
 }
+
 
 .filter-group {
     display: flex;
+
     flex-direction: column;
+
     gap: var(--space-xs);
+
     flex: 1;
+
     min-width: 180px;
 }
 
+
 .filter-group label {
     font-family: var(--font-primary);
+
     font-weight: var(--fw-semibold);
+
     color: var(--text-secondary);
+
     font-size: 0.85rem;
 }
 
+
 .filter-group select {
+    width: 100%;
+
     padding: var(--space-sm) var(--space-md);
+
     background: var(--bg-tertiary);
+
     color: var(--text-body);
+
     border: var(--border-subtle);
+
     border-radius: var(--radius-sm);
+
     outline: none;
+
     font-family: var(--font-primary);
+
     font-size: 0.95rem;
-    transition: border-color 0.2s;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
-.filter-group select:focus {
-    border-color: var(--border-premium);
+
+.filter-group select:hover {
+    border-color: var(--silver-primary);
 }
+
+
+.filter-group select:focus {
+    border-color: var(--silver-primary);
+
+    box-shadow:
+        0 0 0 3px rgba(232, 232, 232, 0.08);
+}
+
 
 .filter-group select:disabled {
     opacity: 0.5;
+
     cursor: not-allowed;
 }
 
+
+/* ==========================================================================
+   ACTION BUTTONS
+   ========================================================================== */
+
 .action-buttons {
     display: flex;
+
     gap: var(--space-sm);
+
     flex-wrap: wrap;
 }
 
-/* ========== BUTTONS ========== */
+
 .btn {
     display: inline-flex;
+
     align-items: center;
+
     justify-content: center;
+
     gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-lg);
-    border: none;
-    border-radius: var(--radius-round);
-    font-family: var(--font-primary);
-    font-weight: var(--fw-bold);
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
     height: 44px;
+
+    padding:
+        var(--space-sm)
+        var(--space-lg);
+
+    border: none;
+
+    border-radius: var(--radius-round);
+
+    font-family: var(--font-primary);
+
+    font-weight: var(--fw-bold);
+
     font-size: 0.95rem;
+
     white-space: nowrap;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+        filter 0.3s ease,
+        box-shadow 0.3s ease;
 }
+
+
+/* ==========================================================================
+   KHỞI TẠO
+   ========================================================================== */
 
 .btn-init {
     background: var(--btn-silver-bg);
+
     color: var(--bg-primary) !important;
+
     box-shadow: var(--btn-silver-shadow);
 }
 
+
 .btn-init:hover {
     filter: brightness(1.1);
-    box-shadow: 0 4px 28px rgba(159, 183, 210, 0.40);
+
+    box-shadow:
+        0 4px 28px
+        rgba(159, 183, 210, 0.40);
+
     transform: translateY(-2px);
 }
 
+
+/* ==========================================================================
+   XÓA
+   ========================================================================== */
+
 .btn-delete {
-    background: linear-gradient(135deg, #dc3545, #bd2130);
+    background:
+        linear-gradient(
+            135deg,
+            #dc3545,
+            #bd2130
+        );
+
     color: var(--silver-bright) !important;
 }
 
+
 .btn-delete:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(220, 53, 69, 0.35);
+
+    box-shadow:
+        0 6px 16px
+        rgba(220, 53, 69, 0.35);
 }
+
+
+.btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
 
 hr {
     border: 0;
+
     height: 1px;
+
     background: var(--border-subtle);
-    margin: var(--space-lg) 0;
+
+    margin:
+        var(--space-lg)
+        0;
 }
 
-/* ========== SEAT CONTENT ========== */
+
+/* ==========================================================================
+   SEAT CONTENT
+   ========================================================================== */
+
 .seat-content-area {
-    border-radius: var(--radius-lg);
-    padding: var(--space-lg);
-    min-height: 300px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     width: 100%;
+
+    min-height: 300px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    padding: var(--space-lg);
+
+    border-radius: var(--radius-lg);
+
     background: var(--bg-card);
+
     border: var(--border-premium);
 }
 
+
 .seat-map-wrapper {
     width: 100%;
+
     overflow-x: auto;
+
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
     padding-bottom: var(--space-sm);
 }
 
-/* ========== MÀN HÌNH LỚN ========== */
+
+/* ==========================================================================
+   MÀN HÌNH
+   ========================================================================== */
+
 .screen-big {
     width: 100%;
+
     max-width: 600px;
+
     height: 200px;
-    margin: 0 auto var(--space-lg) auto;
-    background: linear-gradient(135deg, var(--bg-primary), var(--bg-tertiary));
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
-    box-shadow: var(--glass-shadow), inset 0 0 40px rgba(255, 255, 255, 0.05);
+
+    margin:
+        0 auto
+        var(--space-lg);
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
-    border-bottom: 4px solid var(--border-premium);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--bg-primary),
+            var(--bg-tertiary)
+        );
+
+    border-radius:
+        var(--radius-md)
+        var(--radius-md)
+        0
+        0;
+
+    border-bottom:
+        4px solid
+        var(--border-premium);
+
+    box-shadow:
+        var(--glass-shadow),
+        inset
+        0 0 40px
+        rgba(255, 255, 255, 0.05);
 }
+
 
 .screen-label {
     font-family: var(--font-primary);
+
     font-size: 1.25rem;
+
     font-weight: var(--fw-bold);
+
     letter-spacing: var(--space-lg);
-    color: rgba(255, 255, 255, 0.20);
+
+    color:
+        rgba(255, 255, 255, 0.20);
+
     text-transform: uppercase;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+
+    text-shadow:
+        0 2px 10px
+        rgba(0, 0, 0, 0.5);
 }
 
-/* ========== SƠ ĐỒ GHẾ (CĂN GIỮA) ========== */
+
+/* ==========================================================================
+   SƠ ĐỒ GHẾ
+   ========================================================================== */
+
 .seats-layout {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-lg);
-    padding: 0 var(--space-sm);
-    margin-left: auto;
-    margin-right: auto;
-    max-width: fit-content;
     width: 100%;
+
+    max-width: fit-content;
+
+    display: flex;
+
+    flex-direction: column;
+
     align-items: flex-start;
+
+    gap: var(--space-sm);
+
+    margin:
+        0 auto
+        var(--space-lg);
+
+    padding:
+        0 var(--space-sm);
 }
+
 
 .seat-row {
     display: flex;
+
     align-items: center;
+
     gap: var(--space-sm);
+
+    width: max-content;
 }
+
 
 .row-id {
     width: 30px;
-    font-family: var(--font-primary);
-    font-weight: var(--fw-bold);
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    text-align: center;
+
     flex-shrink: 0;
+
+    text-align: center;
+
+    font-family: var(--font-primary);
+
+    font-size: 0.85rem;
+
+    font-weight: var(--fw-bold);
+
+    color: var(--text-muted);
 }
+
 
 .row-items {
     display: flex;
+
+    align-items: center;
+
     gap: 6px;
+
     flex-wrap: nowrap;
 }
 
-/* ========== STYLE CHO COMPONENT SEAT ========== */
+
+/* ==========================================================================
+   SEAT COMPONENT
+   ========================================================================== */
+
 .seat {
     position: relative;
+
     width: 38px;
+
     height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.15s;
-    user-select: none;
+
     flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    cursor: pointer;
+
+    user-select: none;
+
+    transition:
+        transform 0.15s ease;
 }
 
-.seat:hover:not(.sold):not(.maintenance) {
-    transform: scale(1.12);
-}
 
-/* Ghế đôi (COUPLE) rộng hơn */
+/* ==========================================================================
+   GHẾ ĐÔI
+
+   CHỈ COUPLE LÀ GHẾ ĐÔI.
+   ========================================================================== */
+
 .seat.COUPLE {
     width: 80px;
 }
 
+
+/* ==========================================================================
+   ICON GHẾ
+   ========================================================================== */
+
 .seat-icon {
     width: 100%;
+
     height: 100%;
+
     display: block;
 }
 
-/* Màu sắc ghế (Đồng bộ biến Design System) */
-.seat.NORMAL .seat-icon {
+
+/* ==========================================================================
+   1. STANDARD / NORMAL
+   GHẾ ĐƠN
+   ========================================================================== */
+
+.seat.NORMAL .seat-icon,
+.seat.STANDARD .seat-icon {
     color: var(--seat-standard-color);
 }
+
+
+/* ==========================================================================
+   2. VIP
+   GHẾ ĐƠN
+   ========================================================================== */
 
 .seat.VIP .seat-icon {
     color: var(--seat-vip-color);
 }
 
+
+/* ==========================================================================
+   3. DELUXE
+   GHẾ ĐƠN - MỚI
+   ========================================================================== */
+
+.seat.DELUXE .seat-icon {
+    color: var(--seat-deluxe-color);
+}
+
+
+/* ==========================================================================
+   4. RECLINER
+   GHẾ ĐƠN - MỚI
+   ========================================================================== */
+
+.seat.RECLINER .seat-icon {
+    color: var(--seat-recliner-color);
+}
+
+
+/* ==========================================================================
+   5. COUPLE
+   GHẾ ĐÔI
+   ========================================================================== */
+
 .seat.COUPLE .seat-icon {
     color: var(--seat-couple-color);
 }
 
-.seat.sold .seat-icon {
-    color: var(--seat-sold-color);
-    opacity: 0.7;
+
+/* ==========================================================================
+   HOVER GHẾ
+
+   Không hover ghế đã bán / bảo trì.
+   ========================================================================== */
+
+.seat:hover:not(.sold):not(.maintenance) {
+    transform: scale(1.12);
 }
 
-.seat.maintenance .seat-icon {
-    color: var(--seat-maintenance-color);
-    opacity: 0.5;
-}
+
+/* ==========================================================================
+   GHẾ ĐANG CHỌN
+   ========================================================================== */
 
 .seat.selected .seat-icon {
     color: var(--seat-selected-color);
 }
 
-/* Số ghế */
-.seat-number {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-family: var(--font-primary);
-    font-weight: var(--fw-bold);
-    color: var(--silver-light) !important;
-    pointer-events: none;
-    z-index: 1;
-    font-size: 10px;
-    line-height: 1;
-    text-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+
+/* ==========================================================================
+   GHẾ ĐÃ BÁN
+   ========================================================================== */
+
+.seat.sold {
+    cursor: not-allowed;
 }
 
+
+.seat.sold .seat-icon {
+    color: var(--seat-sold-color);
+
+    opacity: 0.7;
+}
+
+
 .seat.sold .seat-number {
-    color: rgba(255, 255, 255, 0.4) !important;
+    color:
+        rgba(255, 255, 255, 0.4)
+        !important;
+
     text-decoration: line-through;
 }
 
-.seat.maintenance .seat-number {
-    color: #ff6b6b !important;
+
+/* ==========================================================================
+   GHẾ BẢO TRÌ
+   ========================================================================== */
+
+.seat.maintenance {
+    cursor: not-allowed;
 }
+
+
+.seat.maintenance .seat-icon {
+    color:
+        var(--seat-maintenance-color);
+
+    opacity: 0.5;
+}
+
+
+.seat.maintenance .seat-number {
+    color:
+        #ff6b6b
+        !important;
+}
+
+
+/* ==========================================================================
+   SỐ GHẾ
+   ========================================================================== */
+
+.seat-number {
+    position: absolute;
+
+    top: 50%;
+
+    left: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    z-index: 1;
+
+    pointer-events: none;
+
+    font-family: var(--font-primary);
+
+    font-size: 10px;
+
+    font-weight: var(--fw-bold);
+
+    line-height: 1;
+
+    color:
+        var(--silver-light)
+        !important;
+
+    text-shadow:
+        0 0 6px
+        rgba(0, 0, 0, 0.8);
+}
+
 
 .seat.COUPLE .seat-number {
     font-size: 11px;
 }
 
-.seat.sold,
-.seat.maintenance {
-    cursor: not-allowed;
+
+/* ==========================================================================
+   LEGEND
+   ========================================================================== */
+
+.seat-legend {
+    width: 100%;
+
+    max-width: 900px;
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    justify-content: center;
+
+    gap: var(--space-md);
+
+    padding-top: var(--space-lg);
+
+    margin-top: var(--space-sm);
+
+    border-top:
+        1px solid
+        var(--border-subtle);
 }
 
-/* ========== LEGEND ========== */
-.seat-legend {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-md);
-    padding-top: var(--space-lg);
-    width: 100%;
-    max-width: 800px;
-    border-top: 1px solid var(--border-subtle);
-    margin-top: var(--space-sm);
-}
 
 .leg-item {
     display: flex;
+
     align-items: center;
+
     gap: var(--space-sm);
+
     color: var(--text-muted);
+
     font-family: var(--font-primary);
+
     font-size: 0.85rem;
+
     font-weight: var(--fw-medium);
 }
 
-/* Các box mẫu cho legend (thu nhỏ component Seat) */
+
+/* Thu nhỏ ghế mẫu trong legend */
+
 .leg-item .seat {
     transform: scale(0.7);
+
     pointer-events: none;
+
     margin: -8px;
 }
 
-/* ========== LOADING / EMPTY ========== */
+
+/* ==========================================================================
+   LOADING / EMPTY
+   ========================================================================== */
+
 .empty-text,
 .loading-text {
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
+    justify-content: center;
+
     gap: var(--space-md);
+
     text-align: center;
-    padding: var(--space-2xl) 0;
+
+    padding:
+        var(--space-2xl)
+        0;
+
     color: var(--text-muted);
 }
 
+
 .empty-text h3 {
-    font-family: var(--font-primary);
-    color: var(--text-secondary);
-    font-weight: var(--fw-semibold);
     margin: 0;
+
+    font-family: var(--font-primary);
+
+    color: var(--text-secondary);
+
+    font-weight: var(--fw-semibold);
 }
+
 
 .loading-text .spin-icon {
-    animation: spin 0.8s linear infinite;
+    animation:
+        spin 0.8s linear infinite;
 }
 
+
 @keyframes spin {
+
     to {
         transform: rotate(360deg);
     }
+
 }
 
-/* ========== MODAL ========== */
+
+/* ==========================================================================
+   MODAL
+   ========================================================================== */
+
 .modal-body-content,
 .modal-body-info,
 .modal-body-warning,
 .modal-body-success {
     padding: var(--space-sm) 0;
+
     font-family: var(--font-primary);
 }
+
 
 .modal-body-content p {
     margin-bottom: var(--space-sm);
 }
 
+
 .info-row {
     display: flex;
+
     align-items: center;
+
     gap: var(--space-sm);
+
+    margin-bottom: var(--space-sm);
 }
+
 
 .status-badge {
     align-self: flex-start;
-    padding: var(--space-xs) var(--space-md);
+
+    display: inline-flex;
+
+    padding:
+        var(--space-xs)
+        var(--space-md);
+
+    margin-top: var(--space-sm);
+
     border-radius: var(--radius-sm);
+
     font-family: var(--font-primary);
+
     font-weight: var(--fw-bold);
+
     font-size: 0.85rem;
 }
 
+
 .status-badge.booked {
-    background: rgba(216, 90, 90, 0.20);
-    color: var(--seat-sold-color);
-    border: 1px solid rgba(216, 90, 90, 0.30);
+    background:
+        rgba(216, 90, 90, 0.20);
+
+    color:
+        var(--seat-sold-color);
+
+    border:
+        1px solid
+        rgba(216, 90, 90, 0.30);
 }
+
 
 .warning-text {
     color: #ffc107;
+
     margin-top: 6px;
+
     font-size: 0.85rem;
 }
 
-/* ========== RESPONSIVE (Giữ breakpoints cũ) ========== */
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+
+/* ==========================================================================
+   ≤ 992px
+   ========================================================================== */
+
 @media (max-width: 992px) {
-    .admin-seat-container { padding: var(--space-md); }
-    .filter-controls { padding: var(--space-md); gap: var(--space-sm); }
-    .seat-content-area { padding: var(--space-md); }
-    .screen-big { max-width: 500px; height: 160px; }
-    .seat { width: 34px; height: 34px; }
-    .seat.COUPLE { width: 70px; }
+
+    .admin-seat-container {
+        padding: var(--space-md);
+    }
+
+
+    .filter-controls {
+        padding: var(--space-md);
+
+        gap: var(--space-sm);
+    }
+
+
+    .seat-content-area {
+        padding: var(--space-md);
+    }
+
+
+    .screen-big {
+        max-width: 500px;
+
+        height: 160px;
+    }
+
+
+    .seat {
+        width: 34px;
+
+        height: 34px;
+    }
+
+
+    .seat.COUPLE {
+        width: 70px;
+    }
+
+
+    .row-id {
+        width: 26px;
+    }
+
 }
+
+
+/* ==========================================================================
+   ≤ 768px
+   ========================================================================== */
 
 @media (max-width: 768px) {
-    .filter-controls { flex-direction: column; align-items: stretch; }
-    .action-buttons { margin-top: var(--space-sm); justify-content: stretch; }
-    .btn { flex: 1; justify-content: center; font-size: 0.85rem; padding: 6px 16px; }
-    .seat-content-area { padding: var(--space-sm); border-radius: var(--radius-md); }
-    .screen-big { max-width: 400px; height: 140px; }
-    .screen-label { font-size: 1rem; letter-spacing: var(--space-md); }
-    .row-id { width: 22px; font-size: 0.75rem; }
-    .seat { width: 30px; height: 30px; }
-    .seat.COUPLE { width: 62px; }
-    .seat-number { font-size: 8px; }
+
+    .filter-controls {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+
+    .filter-group {
+        width: 100%;
+
+        min-width: 0;
+    }
+
+
+    .action-buttons {
+        width: 100%;
+
+        margin-top: var(--space-sm);
+
+        justify-content: stretch;
+    }
+
+
+    .btn {
+        flex: 1;
+
+        justify-content: center;
+
+        font-size: 0.85rem;
+
+        padding:
+            6px
+            16px;
+    }
+
+
+    .seat-content-area {
+        padding: var(--space-sm);
+
+        border-radius:
+            var(--radius-md);
+    }
+
+
+    .screen-big {
+        max-width: 400px;
+
+        height: 140px;
+    }
+
+
+    .screen-label {
+        font-size: 1rem;
+
+        letter-spacing:
+            var(--space-md);
+    }
+
+
+    .row-id {
+        width: 22px;
+
+        font-size: 0.75rem;
+    }
+
+
+    .row-items {
+        gap: 4px;
+    }
+
+
+    .seat {
+        width: 30px;
+
+        height: 30px;
+    }
+
+
+    .seat.COUPLE {
+        width: 62px;
+    }
+
+
+    .seat-number {
+        font-size: 8px;
+    }
+
+
+    .seat.COUPLE .seat-number {
+        font-size: 9px;
+    }
+
+
+    .seat-legend {
+        gap: var(--space-sm);
+    }
+
 }
+
+
+/* ==========================================================================
+   ≤ 480px
+   ========================================================================== */
 
 @media (max-width: 480px) {
-    .admin-seat-container { padding: var(--space-sm); }
-    .seat-list-header h2 { font-size: 1.1rem; }
-    .filter-group { min-width: 120px; }
-    .filter-group select { padding: 6px 10px; font-size: 0.8rem; }
-    .btn { height: 36px; font-size: 0.8rem; padding: 4px 12px; }
-    .screen-big { max-width: 320px; height: 120px; }
-    .screen-label { font-size: 0.85rem; letter-spacing: var(--space-sm); }
-    .row-id { width: 18px; font-size: 0.7rem; }
-    .row-items { gap: 4px; }
-    .seat { width: 26px; height: 26px; }
-    .seat.COUPLE { width: 54px; }
-    .seat-number { font-size: 7px; }
-    .seat-legend { gap: var(--space-sm); }
-    .leg-item { font-size: 0.75rem; }
-    .seat-content-area { padding: 6px; }
+
+    .admin-seat-container {
+        padding: var(--space-sm);
+    }
+
+
+    .seat-list-header h2 {
+        font-size: 1.1rem;
+    }
+
+
+    .filter-group {
+        min-width: 120px;
+    }
+
+
+    .filter-group select {
+        padding:
+            6px
+            10px;
+
+        font-size: 0.8rem;
+    }
+
+
+    .btn {
+        height: 36px;
+
+        font-size: 0.8rem;
+
+        padding:
+            4px
+            12px;
+    }
+
+
+    .screen-big {
+        max-width: 320px;
+
+        height: 120px;
+    }
+
+
+    .screen-label {
+        font-size: 0.85rem;
+
+        letter-spacing:
+            var(--space-sm);
+    }
+
+
+    .row-id {
+        width: 18px;
+
+        font-size: 0.7rem;
+    }
+
+
+    .row-items {
+        gap: 3px;
+    }
+
+
+    .seat {
+        width: 26px;
+
+        height: 26px;
+    }
+
+
+    .seat.COUPLE {
+        width: 54px;
+    }
+
+
+    .seat-number {
+        font-size: 7px;
+    }
+
+
+    .seat.COUPLE .seat-number {
+        font-size: 8px;
+    }
+
+
+    .seat-legend {
+        gap: var(--space-sm);
+    }
+
+
+    .leg-item {
+        font-size: 0.75rem;
+    }
+
+
+    .seat-content-area {
+        padding: 6px;
+    }
+
 }
 
+
+/* ==========================================================================
+   ≤ 360px
+   ========================================================================== */
+
 @media (max-width: 360px) {
-    .screen-big { max-width: 280px; height: 100px; }
-    .row-id { width: 14px; font-size: 0.6rem; }
-    .row-items { gap: 2px; }
-    .seat { width: 22px; height: 22px; }
-    .seat.COUPLE { width: 46px; }
-    .seat-number { font-size: 6px; }
+
+    .screen-big {
+        max-width: 280px;
+
+        height: 100px;
+    }
+
+
+    .screen-label {
+        font-size: 0.75rem;
+    }
+
+
+    .row-id {
+        width: 14px;
+
+        font-size: 0.6rem;
+    }
+
+
+    .row-items {
+        gap: 2px;
+    }
+
+
+    .seat {
+        width: 22px;
+
+        height: 22px;
+    }
+
+
+    .seat.COUPLE {
+        width: 46px;
+    }
+
+
+    .seat-number {
+        font-size: 6px;
+    }
+
+
+    .seat.COUPLE .seat-number {
+        font-size: 7px;
+    }
+
 }

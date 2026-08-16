@@ -1,5 +1,6 @@
 const SeatRepository = require("../Repositories/SeatRepository");
 
+
 // ==========================================================
 // CẤU HÌNH GHẾ THEO TỪNG LOẠI PHÒNG
 // ==========================================================
@@ -13,10 +14,11 @@ const SeatRepository = require("../Repositories/SeatRepository");
 // COUPLE    → Ghế đôi
 //
 // QUY TẮC:
+//
 // - Chỉ COUPLE là ghế đôi.
-// - STANDARD / VIP / DELUXE / RECLINER đều là ghế đơn.
+// - STANDARD / VIP / DELUXE / RECLINER là ghế đơn.
 // - COUPLE vẫn lưu 2 seat record vật lý.
-// - IMAX và VIP KHÔNG CÓ STANDARD.
+// - IMAX và VIP không có STANDARD.
 // ==========================================================
 
 const ROOM_CONFIG = {
@@ -24,15 +26,9 @@ const ROOM_CONFIG = {
   // ========================================================
   // 2D
   // ========================================================
-  // 120 ghế = 12 hàng x 10 ghế
-  //
-  // A-G : STANDARD
-  // H-J : VIP
-  // K   : DELUXE
-  // L   : COUPLE
-  // ========================================================
 
   "2D": {
+
     totalSeats: 120,
     seatsPerRow: 10,
 
@@ -54,16 +50,9 @@ const ROOM_CONFIG = {
   // ========================================================
   // 3D
   // ========================================================
-  // 80 ghế = 8 hàng x 10 ghế
-  //
-  // A-B : STANDARD
-  // C-D : VIP
-  // E-F : DELUXE
-  // G   : RECLINER
-  // H   : COUPLE
-  // ========================================================
 
   "3D": {
+
     totalSeats: 80,
     seatsPerRow: 10,
 
@@ -85,16 +74,9 @@ const ROOM_CONFIG = {
   // ========================================================
   // 4DMAX
   // ========================================================
-  // 64 ghế = 8 hàng x 8 ghế
-  //
-  // A-B : STANDARD
-  // C-D : VIP
-  // E-F : DELUXE
-  // G   : RECLINER
-  // H   : COUPLE
-  // ========================================================
 
   "4DMAX": {
+
     totalSeats: 64,
     seatsPerRow: 8,
 
@@ -116,17 +98,9 @@ const ROOM_CONFIG = {
   // ========================================================
   // IMAX
   // ========================================================
-  // 48 ghế = 6 hàng x 8 ghế
-  //
-  // KHÔNG CÓ STANDARD
-  //
-  // A-B : VIP
-  // C-D : DELUXE
-  // E   : RECLINER
-  // F   : COUPLE
-  // ========================================================
 
   "IMAX": {
+
     totalSeats: 48,
     seatsPerRow: 8,
 
@@ -148,17 +122,9 @@ const ROOM_CONFIG = {
   // ========================================================
   // VIP
   // ========================================================
-  // 36 ghế = 6 hàng x 6 ghế
-  //
-  // KHÔNG CÓ STANDARD
-  //
-  // A-B : VIP
-  // C-D : DELUXE
-  // E   : RECLINER
-  // F   : COUPLE
-  // ========================================================
 
   "VIP": {
+
     totalSeats: 36,
     seatsPerRow: 6,
 
@@ -184,26 +150,35 @@ const ROOM_CONFIG = {
 
 class SeatService {
 
+
   // ==========================================================
+  // PUBLIC
   // LẤY SƠ ĐỒ GHẾ THEO SUẤT CHIẾU
   // ==========================================================
 
   async getSeatMapByShowtime(showtimeId) {
 
     const roomInfo =
-      await SeatRepository.getRoomInfo(showtimeId);
+      await SeatRepository.getRoomInfo(
+        showtimeId
+      );
 
     if (!roomInfo) {
 
       const err =
-        new Error("Không tìm thấy suất chiếu");
+        new Error(
+          "Không tìm thấy suất chiếu"
+        );
 
       err.statusCode = 404;
 
       throw err;
     }
 
-    const roomId = roomInfo.room_id;
+
+    const roomId =
+      roomInfo.room_id;
+
 
     const seats =
       await SeatRepository.findSeatsByShowtime(
@@ -211,38 +186,50 @@ class SeatService {
         roomId
       );
 
+
     return seats;
   }
 
 
   // ==========================================================
-  // LẤY DANH SÁCH GHẾ THEO PHÒNG - ADMIN
+  // ADMIN
+  // LẤY DANH SÁCH GHẾ THEO PHÒNG
   // ==========================================================
 
   async getSeatsByRoom(roomId) {
 
     const seats =
-      await SeatRepository.findSeatsByRoom(roomId);
+      await SeatRepository.findSeatsByRoom(
+        roomId
+      );
+
 
     console.log(
       `✅ [SeatService] getSeatsByRoom: ${seats.length} ghế cho room ${roomId}`
     );
+
 
     return seats;
   }
 
 
   // ==========================================================
+  // ADMIN
   // KHỞI TẠO GHẾ CHO PHÒNG
   // ==========================================================
 
-  async initRoomSeats(roomId, roomType, cinemaId) {
+  async initRoomSeats(
+    roomId,
+    roomType,
+    cinemaId
+  ) {
 
     // ========================================================
-    // LẤY CẤU HÌNH
+    // VALIDATE ROOM TYPE
     // ========================================================
 
-    const config = ROOM_CONFIG[roomType];
+    const config =
+      ROOM_CONFIG[roomType];
 
     if (!config) {
 
@@ -258,6 +245,7 @@ class SeatService {
 
 
     const {
+
       totalSeats,
       seatsPerRow,
 
@@ -278,10 +266,12 @@ class SeatService {
 
 
     // ========================================================
-    // XÓA GHẾ CŨ TRONG PHÒNG
+    // XÓA GHẾ CŨ
     // ========================================================
 
-    await SeatRepository.deleteAllByRoom(roomId);
+    await SeatRepository.deleteAllByRoom(
+      roomId
+    );
 
 
     // ========================================================
@@ -290,29 +280,35 @@ class SeatService {
 
     const seatsData = [];
 
-    const totalRows =
-      Math.ceil(totalSeats / seatsPerRow);
-
 
     // ========================================================
     // TẠO GHẾ
     // ========================================================
 
-    for (let i = 0; i < totalSeats; i++) {
+    for (
+      let i = 0;
+      i < totalSeats;
+      i++
+    ) {
 
       // ------------------------------------------------------
-      // Xác định hàng
+      // ROW
       // ------------------------------------------------------
 
       const rowIndex =
-        Math.floor(i / seatsPerRow);
+        Math.floor(
+          i / seatsPerRow
+        );
+
 
       const rowLetter =
-        String.fromCharCode(65 + rowIndex);
+        String.fromCharCode(
+          65 + rowIndex
+        );
 
 
       // ------------------------------------------------------
-      // Xác định số ghế
+      // SEAT NUMBER
       // ------------------------------------------------------
 
       const seatNumber =
@@ -320,35 +316,29 @@ class SeatService {
 
 
       // ------------------------------------------------------
-      // Mặc định
+      // DEFAULT
       // ------------------------------------------------------
 
-      let seatType = "STANDARD";
-      let price = standardPrice;
+      let seatType =
+        "STANDARD";
+
+      let price =
+        standardPrice;
 
 
       // ======================================================
       // COUPLE
       // ======================================================
-      //
-      // Chỉ hàng coupleRow mới là COUPLE.
-      //
-      // Ví dụ:
-      //
-      // Hàng F:
-      //
-      // F1 F2 → cặp 1
-      // F3 F4 → cặp 2
-      // F5 F6 → cặp 3
-      //
-      // Database vẫn lưu từng seat riêng.
-      //
-      // ======================================================
 
-      if (rowIndex === coupleRow) {
+      if (
+        rowIndex === coupleRow
+      ) {
 
-        seatType = "COUPLE";
-        price = couplePrice;
+        seatType =
+          "COUPLE";
+
+        price =
+          couplePrice;
       }
 
 
@@ -357,11 +347,16 @@ class SeatService {
       // ======================================================
 
       else if (
-        reclinerRows.includes(rowIndex)
+        reclinerRows.includes(
+          rowIndex
+        )
       ) {
 
-        seatType = "RECLINER";
-        price = reclinerPrice;
+        seatType =
+          "RECLINER";
+
+        price =
+          reclinerPrice;
       }
 
 
@@ -370,11 +365,16 @@ class SeatService {
       // ======================================================
 
       else if (
-        deluxeRows.includes(rowIndex)
+        deluxeRows.includes(
+          rowIndex
+        )
       ) {
 
-        seatType = "DELUXE";
-        price = deluxePrice;
+        seatType =
+          "DELUXE";
+
+        price =
+          deluxePrice;
       }
 
 
@@ -383,11 +383,16 @@ class SeatService {
       // ======================================================
 
       else if (
-        vipRows.includes(rowIndex)
+        vipRows.includes(
+          rowIndex
+        )
       ) {
 
-        seatType = "VIP";
-        price = vipPrice;
+        seatType =
+          "VIP";
+
+        price =
+          vipPrice;
       }
 
 
@@ -396,27 +401,21 @@ class SeatService {
       // ======================================================
 
       else if (
-        standardRows.includes(rowIndex)
+        standardRows.includes(
+          rowIndex
+        )
       ) {
 
-        seatType = "STANDARD";
-        price = standardPrice;
+        seatType =
+          "STANDARD";
+
+        price =
+          standardPrice;
       }
 
 
       // ======================================================
-      // FALLBACK
-      // ======================================================
-
-      else {
-
-        seatType = "STANDARD";
-        price = standardPrice;
-      }
-
-
-      // ======================================================
-      // THÊM GHẾ
+      // INSERT DATA
       // ======================================================
 
       seatsData.push([
@@ -435,7 +434,9 @@ class SeatService {
     // INSERT HÀNG LOẠT
     // ========================================================
 
-    if (seatsData.length > 0) {
+    if (
+      seatsData.length > 0
+    ) {
 
       await SeatRepository.bulkInsert(
         seatsData
@@ -444,7 +445,7 @@ class SeatService {
 
 
     // ========================================================
-    // CẬP NHẬT TỔNG GHẾ CỦA PHÒNG
+    // UPDATE TOTAL SEATS
     // ========================================================
 
     await SeatRepository.updateRoomTotalSeats(
@@ -454,16 +455,20 @@ class SeatService {
 
 
     // ========================================================
-    // THỐNG KÊ GHẾ
+    // THỐNG KÊ
     // ========================================================
 
     const summary =
       seatsData.reduce(
         (result, seat) => {
 
-          const type = seat[4];
+          const type =
+            seat[4];
 
-          if (!result[type]) {
+          if (
+            !result[type]
+          ) {
+
             result[type] = 0;
           }
 
@@ -486,22 +491,25 @@ class SeatService {
     );
 
 
-    // ========================================================
-    // KẾT QUẢ
-    // ========================================================
-
     return {
-      totalSeats: seatsData.length,
-      seatTypes: summary
+
+      totalSeats:
+        seatsData.length,
+
+      seatTypes:
+        summary
     };
   }
 
 
   // ==========================================================
+  // ADMIN
   // XÓA SẠCH GHẾ TRONG PHÒNG
   // ==========================================================
 
-  async deleteSeatsByRoom(roomId) {
+  async deleteSeatsByRoom(
+    roomId
+  ) {
 
     try {
 
@@ -511,7 +519,9 @@ class SeatService {
         );
 
 
-      if (affected === 0) {
+      if (
+        affected === 0
+      ) {
 
         const err =
           new Error(
@@ -529,7 +539,8 @@ class SeatService {
     } catch (err) {
 
       if (
-        err.code === "ER_ROW_IS_REFERENCED_2"
+        err.code ===
+        "ER_ROW_IS_REFERENCED_2"
       ) {
 
         const e =
@@ -542,13 +553,42 @@ class SeatService {
         throw e;
       }
 
+
       throw err;
     }
   }
 
 
   // ==========================================================
+  // ADMIN
   // BẬT / TẮT BẢO TRÌ GHẾ
+  //
+  // QUAN TRỌNG:
+  //
+  // STANDARD
+  // VIP
+  // DELUXE
+  // RECLINER
+  //
+  // → chỉ update 1 ghế.
+  //
+  // COUPLE
+  //
+  // → Repository tự động update cả cặp.
+  //
+  // Ví dụ:
+  //
+  // L1 + L2
+  //
+  // Click L1-2:
+  //
+  // L1 → 0
+  // L2 → 0
+  //
+  // Mở lại:
+  //
+  // L1 → 1
+  // L2 → 1
   // ==========================================================
 
   async toggleSeatActive(
@@ -556,14 +596,77 @@ class SeatService {
     isActive
   ) {
 
+    // ========================================================
+    // VALIDATE SEAT ID
+    // ========================================================
+
+    const normalizedSeatId =
+      Number(seatId);
+
+    if (
+      !Number.isInteger(
+        normalizedSeatId
+      ) ||
+      normalizedSeatId <= 0
+    ) {
+
+      const err =
+        new Error(
+          "seatId không hợp lệ"
+        );
+
+      err.statusCode = 400;
+
+      throw err;
+    }
+
+
+    // ========================================================
+    // VALIDATE ACTIVE STATUS
+    // ========================================================
+
+    const normalizedIsActive =
+      Number(isActive);
+
+    if (
+      normalizedIsActive !== 0 &&
+      normalizedIsActive !== 1
+    ) {
+
+      const err =
+        new Error(
+          "Trạng thái isActive không hợp lệ"
+        );
+
+      err.statusCode = 400;
+
+      throw err;
+    }
+
+
+    // ========================================================
+    // UPDATE
+    //
+    // Repository sẽ tự xác định:
+    //
+    // - Ghế đơn → 1 record
+    // - COUPLE → 2 records
+    // ========================================================
+
     const affected =
       await SeatRepository.updateActiveStatus(
-        seatId,
-        isActive
+        normalizedSeatId,
+        normalizedIsActive
       );
 
 
-    if (affected === 0) {
+    // ========================================================
+    // KHÔNG TÌM THẤY GHẾ
+    // ========================================================
+
+    if (
+      affected === 0
+    ) {
 
       const err =
         new Error(
@@ -581,6 +684,7 @@ class SeatService {
 
 
   // ==========================================================
+  // ADMIN
   // CẬP NHẬT LOẠI GHẾ + GIÁ
   // ==========================================================
 
@@ -591,7 +695,7 @@ class SeatService {
   ) {
 
     // ========================================================
-    // CHUẨN HÓA LOẠI GHẾ
+    // NORMALIZE TYPE
     // ========================================================
 
     const normalizedType =
@@ -603,11 +707,13 @@ class SeatService {
     // ========================================================
 
     const allowedTypes = [
+
       "STANDARD",
       "VIP",
       "DELUXE",
       "RECLINER",
       "COUPLE"
+
     ];
 
 
@@ -629,7 +735,7 @@ class SeatService {
 
 
     // ========================================================
-    // KIỂM TRA GIÁ
+    // VALIDATE PRICE
     // ========================================================
 
     const normalizedPrice =
@@ -637,7 +743,9 @@ class SeatService {
 
 
     if (
-      !Number.isFinite(normalizedPrice) ||
+      !Number.isFinite(
+        normalizedPrice
+      ) ||
       normalizedPrice < 0
     ) {
 
@@ -664,7 +772,9 @@ class SeatService {
       );
 
 
-    if (affected === 0) {
+    if (
+      affected === 0
+    ) {
 
       const err =
         new Error(
