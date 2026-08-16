@@ -1,29 +1,153 @@
 const express = require("express");
 const router = express.Router();
+
 const ShowtimeController = require("../Controllers/ShowTimeController");
-const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
+
+const {
+    authenticateAdmin
+} = require("../Middlewares/AdminAuthMiddleware");
+
 
 /* ==========================================================
     PUBLIC ROUTES
 ========================================================== */
-router.get("/", ShowtimeController.getAllShowtimesAll);
-router.get("/quick-booking", ShowtimeController.getQuickBookingData);
-router.get("/filter-booking", ShowtimeController.getShowtimesForBooking);
-router.get("/filter-legacy", ShowtimeController.filterShowtimes);
-router.get("/movie/:movieId", ShowtimeController.getShowtimesByMovie);
-router.get("/by-cinema-room", ShowtimeController.getShowtimesByCinemaAndRoom);
-router.get("/detail/:showtime_id", ShowtimeController.getShowtimeDetail);
 
-// 👇 ĐƯỜNG DẪN MỚI CHO TRANG MOVIE DETAIL
-router.get("/movie-detail", ShowtimeController.getShowtimesForMovieDetail);
+// GET ALL SHOWTIMES - KHÔNG PHÂN TRANG
+router.get(
+    "/",
+    ShowtimeController.getAllShowtimesAll
+);
+
+
+// QUICK BOOKING
+router.get(
+    "/quick-booking",
+    ShowtimeController.getQuickBookingData
+);
+
+
+// BOOKING SHOWTIMES
+router.get(
+    "/filter-booking",
+    ShowtimeController.getShowtimesForBooking
+);
+
+
+// LEGACY FILTER
+router.get(
+    "/filter-legacy",
+    ShowtimeController.filterShowtimes
+);
+
+
+// SHOWTIMES BY MOVIE
+router.get(
+    "/movie/:movieId",
+    ShowtimeController.getShowtimesByMovie
+);
+
+
+// SHOWTIMES BY CINEMA + ROOM
+router.get(
+    "/by-cinema-room",
+    ShowtimeController.getShowtimesByCinemaAndRoom
+);
+
+
+// SHOWTIME DETAIL - PUBLIC
+router.get(
+    "/detail/:showtime_id",
+    ShowtimeController.getShowtimeDetail
+);
+
+
+// MOVIE DETAIL
+router.get(
+    "/movie-detail",
+    ShowtimeController.getShowtimesForMovieDetail
+);
+
 
 /* ==========================================================
     ADMIN ROUTES
 ========================================================== */
-router.get("/paginated", authenticateAdmin, ShowtimeController.getShowtimesWithPagination);
-router.get("/:showtime_id", authenticateAdmin, ShowtimeController.getShowtimeDetail);
-router.post("/", authenticateAdmin, ShowtimeController.createShowtime);
-router.put("/:showtime_id", authenticateAdmin, ShowtimeController.updateShowtime);
-router.delete("/:showtime_id", authenticateAdmin, ShowtimeController.deleteShowtime);
+
+// ==========================================================
+// GET SHOWTIMES - PAGINATION
+// ==========================================================
+router.get(
+    "/paginated",
+    authenticateAdmin,
+    ShowtimeController.getShowtimesWithPagination
+);
+
+
+// ==========================================================
+// AUTO SHOWTIME SCHEDULER
+//
+// POST /api/showtimes/scheduler
+//
+// Dùng để:
+// - Chọn 1 phim
+// - Chọn 1 rạp
+// - Chọn nhiều phòng
+// - Chọn khoảng ngày
+// - Chọn khung giờ hoạt động
+// - Chọn mức độ phân bổ
+//
+// Scheduler sẽ tự:
+// - Đọc duration phim
+// - Kiểm tra lịch hiện tại
+// - Kiểm tra conflict từng phòng
+// - Tính khoảng trống
+// - Phân bổ suất
+// - Không tạo suất trùng
+// ==========================================================
+router.post(
+    "/scheduler",
+    authenticateAdmin,
+    ShowtimeController.scheduleShowtimes
+);
+
+
+// ==========================================================
+// GET SHOWTIME DETAIL - ADMIN
+// ==========================================================
+router.get(
+    "/:showtime_id",
+    authenticateAdmin,
+    ShowtimeController.getShowtimeDetail
+);
+
+
+// ==========================================================
+// CREATE SINGLE SHOWTIME
+// ==========================================================
+router.post(
+    "/",
+    authenticateAdmin,
+    ShowtimeController.createShowtime
+);
+
+
+// ==========================================================
+// UPDATE SHOWTIME
+// ==========================================================
+router.put(
+    "/:showtime_id",
+    authenticateAdmin,
+    ShowtimeController.updateShowtime
+);
+
+
+// ==========================================================
+// DELETE SHOWTIME
+// ==========================================================
+router.delete(
+    "/:showtime_id",
+    authenticateAdmin,
+    ShowtimeController.deleteShowtime
+);
+
 
 module.exports = router;

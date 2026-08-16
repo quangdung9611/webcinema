@@ -3,39 +3,66 @@ const db = require("../Config/db");
 class ShowtimeRepository {
 
     /*=========================================================
-        FIND ALL - KHÔNG PHÂN TRANG (PUBLIC)
-        RETURN: rows[] (mảng trực tiếp)
+        FIND ALL - KHÔNG PHÂN TRANG
     =========================================================*/
     async findAllAll(search = "") {
-        search = typeof search === "string" ? search.trim() : "";
+
+        search =
+            typeof search === "string"
+                ? search.trim()
+                : "";
+
         let whereClause = "";
         const queryParams = [];
 
         if (search) {
+
             whereClause = `
                 WHERE m.title LIKE ?
                 OR c.cinema_name LIKE ?
                 OR r.room_name LIKE ?
             `;
+
             const keyword = `%${search}%`;
-            queryParams.push(keyword, keyword, keyword);
+
+            queryParams.push(
+                keyword,
+                keyword,
+                keyword
+            );
         }
 
         const [rows] = await db.query(
             `
             SELECT
                 s.showtime_id,
-                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') AS start_time,
+
+                DATE_FORMAT(
+                    s.start_time,
+                    '%Y-%m-%d %H:%i'
+                ) AS start_time,
+
                 m.title,
                 m.duration,
+
                 c.cinema_name,
+
                 r.room_name,
                 r.room_type
+
             FROM showtimes s
-            JOIN movies m ON s.movie_id = m.movie_id
-            JOIN cinemas c ON s.cinema_id = c.cinema_id
-            JOIN rooms r ON s.room_id = r.room_id
+
+            JOIN movies m
+                ON s.movie_id = m.movie_id
+
+            JOIN cinemas c
+                ON s.cinema_id = c.cinema_id
+
+            JOIN rooms r
+                ON s.room_id = r.room_id
+
             ${whereClause}
+
             ORDER BY s.start_time DESC
             `,
             queryParams
@@ -44,375 +71,979 @@ class ShowtimeRepository {
         return rows;
     }
 
+
     /*=========================================================
-        FIND ALL - CÓ PHÂN TRANG (ADMIN)
-        RETURN: { data: [], pagination: {} }
+        FIND ALL - CÓ PHÂN TRANG
     =========================================================*/
-    async findAll(page = 1, limit = 20, search = "") {
+    async findAll(
+        page = 1,
+        limit = 20,
+        search = ""
+    ) {
+
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
-        if (page < 1) page = 1;
-        if (limit < 1) limit = 20;
-        if (limit > 100) limit = 100;
 
-        search = typeof search === "string" ? search.trim() : "";
+        if (page < 1) {
+            page = 1;
+        }
+
+        if (limit < 1) {
+            limit = 20;
+        }
+
+        if (limit > 100) {
+            limit = 100;
+        }
+
+        search =
+            typeof search === "string"
+                ? search.trim()
+                : "";
+
         let whereClause = "";
         const queryParams = [];
 
         if (search) {
+
             whereClause = `
                 WHERE m.title LIKE ?
                 OR c.cinema_name LIKE ?
                 OR r.room_name LIKE ?
             `;
+
             const keyword = `%${search}%`;
-            queryParams.push(keyword, keyword, keyword);
+
+            queryParams.push(
+                keyword,
+                keyword,
+                keyword
+            );
         }
 
-        const offset = (page - 1) * limit;
+        const offset =
+            (page - 1) * limit;
 
         const [rows] = await db.query(
             `
             SELECT
                 s.showtime_id,
-                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') AS start_time,
+
+                DATE_FORMAT(
+                    s.start_time,
+                    '%Y-%m-%d %H:%i'
+                ) AS start_time,
+
                 m.title,
                 m.duration,
+
                 c.cinema_name,
+
                 r.room_name,
                 r.room_type
+
             FROM showtimes s
-            JOIN movies m ON s.movie_id = m.movie_id
-            JOIN cinemas c ON s.cinema_id = c.cinema_id
-            JOIN rooms r ON s.room_id = r.room_id
+
+            JOIN movies m
+                ON s.movie_id = m.movie_id
+
+            JOIN cinemas c
+                ON s.cinema_id = c.cinema_id
+
+            JOIN rooms r
+                ON s.room_id = r.room_id
+
             ${whereClause}
+
             ORDER BY s.start_time DESC
+
             LIMIT ? OFFSET ?
             `,
-            [...queryParams, limit, offset]
+            [
+                ...queryParams,
+                limit,
+                offset
+            ]
         );
 
         const [countRows] = await db.query(
             `
             SELECT COUNT(*) AS total
+
             FROM showtimes s
-            JOIN movies m ON s.movie_id = m.movie_id
-            JOIN cinemas c ON s.cinema_id = c.cinema_id
-            JOIN rooms r ON s.room_id = r.room_id
+
+            JOIN movies m
+                ON s.movie_id = m.movie_id
+
+            JOIN cinemas c
+                ON s.cinema_id = c.cinema_id
+
+            JOIN rooms r
+                ON s.room_id = r.room_id
+
             ${whereClause}
             `,
             queryParams
         );
 
-        const total = Number(countRows[0]?.total || 0);
-        const totalPages = Math.ceil(total / limit) || 1;
+        const total =
+            Number(
+                countRows[0]?.total || 0
+            );
+
+        const totalPages =
+            Math.ceil(total / limit) || 1;
 
         return {
+
             data: rows,
+
             pagination: {
                 page,
                 limit,
                 total,
                 totalPages,
-                hasPreviousPage: page > 1,
-                hasNextPage: page < totalPages
+
+                hasPreviousPage:
+                    page > 1,
+
+                hasNextPage:
+                    page < totalPages
             }
         };
     }
 
+
     /*=========================================================
-        FIND BY CINEMA AND ROOM (PUBLIC)
-        ✅ TRẢ VỀ MẢNG TRỰC TIẾP (KHÔNG PAGINATION)
+        FIND BY CINEMA + ROOM
     =========================================================*/
-    async findByCinemaAndRoom(cinemaId, roomId) {
+    async findByCinemaAndRoom(
+        cinemaId,
+        roomId
+    ) {
+
         const [rows] = await db.query(
             `
             SELECT
+
                 s.showtime_id,
-                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') AS start_time,
+
+                DATE_FORMAT(
+                    s.start_time,
+                    '%Y-%m-%d %H:%i'
+                ) AS start_time,
+
                 m.title,
                 m.duration,
                 m.movie_id,
+
                 c.cinema_name,
                 c.cinema_id,
+
                 r.room_name,
                 r.room_id,
                 r.room_type
+
             FROM showtimes s
-            JOIN movies m ON s.movie_id = m.movie_id
-            JOIN cinemas c ON s.cinema_id = c.cinema_id
-            JOIN rooms r ON s.room_id = r.room_id
-            WHERE c.cinema_id = ? AND r.room_id = ?
-            ORDER BY s.start_time DESC
+
+            JOIN movies m
+                ON s.movie_id = m.movie_id
+
+            JOIN cinemas c
+                ON s.cinema_id = c.cinema_id
+
+            JOIN rooms r
+                ON s.room_id = r.room_id
+
+            WHERE
+                c.cinema_id = ?
+                AND r.room_id = ?
+
+            ORDER BY
+                s.start_time DESC
             `,
-            [cinemaId, roomId]
+            [
+                cinemaId,
+                roomId
+            ]
         );
 
-        return rows; // 👈 TRẢ VỀ MẢNG TRỰC TIẾP
+        return rows;
     }
+
 
     /*=========================================================
         FIND BY ID
     =========================================================*/
     async findById(showtimeId) {
+
         const [rows] = await db.query(
             `
             SELECT
+
                 s.showtime_id,
+
                 s.movie_id,
                 s.cinema_id,
                 s.room_id,
-                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i') AS start_time,
+
+                DATE_FORMAT(
+                    s.start_time,
+                    '%Y-%m-%d %H:%i'
+                ) AS start_time,
+
                 m.title,
                 m.slug,
                 m.movie_poster,
                 m.age_rating,
+                m.duration,
+
                 r.room_name,
                 r.room_type,
+
                 c.cinema_name
+
             FROM showtimes s
-            JOIN movies m ON s.movie_id = m.movie_id
-            JOIN rooms r ON s.room_id = r.room_id
-            JOIN cinemas c ON s.cinema_id = c.cinema_id
-            WHERE s.showtime_id = ?
+
+            JOIN movies m
+                ON s.movie_id = m.movie_id
+
+            JOIN rooms r
+                ON s.room_id = r.room_id
+
+            JOIN cinemas c
+                ON s.cinema_id = c.cinema_id
+
+            WHERE
+                s.showtime_id = ?
+
             LIMIT 1
             `,
             [showtimeId]
         );
+
         return rows[0] || null;
     }
 
+
     /*=========================================================
-        FIND BY MOVIE (PUBLIC)
+        FIND BY MOVIE
     =========================================================*/
     async findByMovie(movieId) {
+
         const [rows] = await db.query(
             `
             SELECT
+
                 s.showtime_id,
-                DATE_FORMAT(s.start_time, '%Y-%m-%d %H:%i:%s') AS start_time,
+
+                DATE_FORMAT(
+                    s.start_time,
+                    '%Y-%m-%d %H:%i:%s'
+                ) AS start_time,
+
                 r.room_name,
                 r.room_type,
+
                 c.cinema_name
+
             FROM showtimes s
-            JOIN rooms r ON s.room_id = r.room_id
-            JOIN cinemas c ON s.cinema_id = c.cinema_id
-            WHERE s.movie_id = ? AND s.start_time >= NOW()
-            ORDER BY s.start_time ASC
+
+            JOIN movies m
+                ON s.movie_id = m.movie_id
+
+            JOIN rooms r
+                ON s.room_id = r.room_id
+
+            JOIN cinemas c
+                ON s.cinema_id = c.cinema_id
+
+            WHERE
+                s.movie_id = ?
+                AND s.start_time >= NOW()
+
+            ORDER BY
+                s.start_time ASC
             `,
             [movieId]
         );
+
         return rows;
     }
 
+
     /*=========================================================
-        CHECK CONFLICT
+        FIND ROOM
+        Dùng để đảm bảo room thuộc đúng cinema
     =========================================================*/
-    async findConflict(roomId, startTime, excludeShowtimeId = null) {
-        let sql = `
-            SELECT showtime_id
-            FROM showtimes
-            WHERE room_id = ?
-                AND DATE_FORMAT(start_time, '%Y-%m-%d %H:%i') = ?
-        `;
-        const params = [roomId, startTime];
-        if (excludeShowtimeId) {
-            sql += ` AND showtime_id != ?`;
-            params.push(excludeShowtimeId);
-        }
-        const [rows] = await db.query(sql, params);
+    async findRoomInCinema(
+        roomId,
+        cinemaId
+    ) {
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                room_id,
+                cinema_id,
+                room_name,
+                room_type
+
+            FROM rooms
+
+            WHERE
+                room_id = ?
+                AND cinema_id = ?
+
+            LIMIT 1
+            `,
+            [
+                roomId,
+                cinemaId
+            ]
+        );
+
         return rows[0] || null;
     }
+
+
+    /*=========================================================
+        GET MOVIE DURATION
+    =========================================================*/
+    async getMovieDuration(movieId) {
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                movie_id,
+                duration
+
+            FROM movies
+
+            WHERE movie_id = ?
+
+            LIMIT 1
+            `,
+            [movieId]
+        );
+
+        return rows[0] || null;
+    }
+
+
+    /*=========================================================
+        CHECK CONFLICT
+
+        QUAN TRỌNG:
+
+        Không chỉ check:
+
+            18:00 == 18:00
+
+        Mà check khoảng thời gian:
+
+            start_time
+            +
+            duration
+
+        Ví dụ:
+
+            A: 18:00 -> 20:10
+            B: 20:00 -> 22:00
+
+        => CONFLICT
+
+        Có thể gọi:
+
+            findConflict(
+                roomId,
+                startTime,
+                endTime
+            )
+
+        Hoặc:
+
+            findConflict(
+                roomId,
+                startTime
+            )
+
+        để check đúng giờ bắt đầu.
+    =========================================================*/
+    async findConflict(
+        roomId,
+        startTime,
+        endTime = null,
+        excludeShowtimeId = null
+    ) {
+
+        /*
+         * Nếu tham số thứ 3 là ID suất chiếu
+         * thì tương thích với code cũ:
+         *
+         * findConflict(roomId, startTime, showtimeId)
+         */
+        if (
+            endTime !== null &&
+            Number.isInteger(
+                Number(endTime)
+            ) &&
+            Number(endTime) > 0
+        ) {
+
+            excludeShowtimeId =
+                endTime;
+
+            endTime = null;
+        }
+
+
+        let sql = `
+            SELECT
+
+                s.showtime_id,
+
+                s.movie_id,
+
+                s.room_id,
+
+                s.start_time,
+
+                m.duration
+
+            FROM showtimes s
+
+            JOIN movies m
+                ON s.movie_id = m.movie_id
+
+            WHERE
+                s.room_id = ?
+        `;
+
+        const params = [
+            roomId
+        ];
+
+
+        /*
+         * =====================================================
+         * TRƯỜNG HỢP CÓ END TIME
+         *
+         * Kiểm tra khoảng thời gian chồng lấn.
+         * =====================================================
+         */
+        if (endTime) {
+
+            sql += `
+                AND s.start_time < STR_TO_DATE(
+                    ?,
+                    '%Y-%m-%d %H:%i'
+                )
+
+                AND DATE_ADD(
+                    s.start_time,
+                    INTERVAL m.duration MINUTE
+                ) > STR_TO_DATE(
+                    ?,
+                    '%Y-%m-%d %H:%i'
+                )
+            `;
+
+            params.push(
+                endTime,
+                startTime
+            );
+
+        } else {
+
+            /*
+             * =================================================
+             * TRƯỜNG HỢP KHÔNG CÓ END TIME
+             *
+             * Kiểm tra suất bắt đầu đúng giờ.
+             * =================================================
+             */
+
+            sql += `
+                AND DATE_FORMAT(
+                    s.start_time,
+                    '%Y-%m-%d %H:%i'
+                ) = ?
+            `;
+
+            params.push(
+                startTime
+            );
+        }
+
+
+        /*
+         * Loại trừ chính suất hiện tại
+         * khi UPDATE.
+         */
+        if (excludeShowtimeId) {
+
+            sql += `
+                AND s.showtime_id != ?
+            `;
+
+            params.push(
+                excludeShowtimeId
+            );
+        }
+
+
+        sql += `
+            LIMIT 1
+        `;
+
+
+        const [rows] =
+            await db.query(
+                sql,
+                params
+            );
+
+        return rows[0] || null;
+    }
+
 
     /*=========================================================
         CHECK IF PAST TIME
     =========================================================*/
     async isPastTime(startTime) {
+
         const [rows] = await db.query(
             `
-            SELECT CASE WHEN STR_TO_DATE(?, '%Y-%m-%d %H:%i') < NOW() THEN 1 ELSE 0 END AS isPast
+            SELECT
+                CASE
+                    WHEN STR_TO_DATE(
+                        ?,
+                        '%Y-%m-%d %H:%i'
+                    ) < NOW()
+                    THEN 1
+                    ELSE 0
+                END AS isPast
             `,
             [startTime]
         );
+
         return rows[0]?.isPast === 1;
     }
+
 
     /*=========================================================
         CHECK IF HAS TICKETS
     =========================================================*/
     async hasTickets(showtimeId) {
+
         const [rows] = await db.query(
-            `SELECT ticket_id FROM tickets WHERE showtime_id = ? LIMIT 1`,
+            `
+            SELECT
+                ticket_id
+
+            FROM tickets
+
+            WHERE showtime_id = ?
+
+            LIMIT 1
+            `,
             [showtimeId]
         );
+
         return rows[0] || null;
     }
 
+
     /*=========================================================
-        QUICK BOOKING HELPERS (PUBLIC)
+        QUICK BOOKING - MOVIES
     =========================================================*/
     async getQuickBookingMovies() {
+
         const [rows] = await db.query(
             `
-            SELECT DISTINCT m.movie_id, m.title
+            SELECT DISTINCT
+
+                m.movie_id,
+                m.title
+
             FROM showtimes s
-            JOIN movies m ON s.movie_id = m.movie_id
-            WHERE s.start_time >= NOW()
+
+            JOIN movies m
+                ON s.movie_id = m.movie_id
+
+            WHERE
+                s.start_time >= NOW()
             `
         );
+
         return rows;
     }
 
-    async getQuickBookingCinemas(movieId) {
+
+    /*=========================================================
+        QUICK BOOKING - CINEMAS
+    =========================================================*/
+    async getQuickBookingCinemas(
+        movieId
+    ) {
+
         const [rows] = await db.query(
             `
-            SELECT DISTINCT c.cinema_id, c.cinema_name
+            SELECT DISTINCT
+
+                c.cinema_id,
+                c.cinema_name
+
             FROM showtimes s
-            JOIN cinemas c ON s.cinema_id = c.cinema_id
-            WHERE s.movie_id = ? AND s.start_time >= NOW()
+
+            JOIN cinemas c
+                ON s.cinema_id = c.cinema_id
+
+            WHERE
+                s.movie_id = ?
+                AND s.start_time >= NOW()
             `,
             [movieId]
         );
+
         return rows;
     }
 
-    async getQuickBookingDates(movieId, cinemaId) {
+
+    /*=========================================================
+        QUICK BOOKING - DATES
+    =========================================================*/
+    async getQuickBookingDates(
+        movieId,
+        cinemaId
+    ) {
+
         const [rows] = await db.query(
             `
-            SELECT DISTINCT DATE_FORMAT(start_time, '%Y-%m-%d') AS show_date
+            SELECT DISTINCT
+
+                DATE_FORMAT(
+                    start_time,
+                    '%Y-%m-%d'
+                ) AS show_date
+
             FROM showtimes
-            WHERE movie_id = ? AND cinema_id = ? AND start_time >= NOW()
-            ORDER BY show_date ASC
+
+            WHERE
+                movie_id = ?
+                AND cinema_id = ?
+                AND start_time >= NOW()
+
+            ORDER BY
+                show_date ASC
             `,
-            [movieId, cinemaId]
+            [
+                movieId,
+                cinemaId
+            ]
         );
+
         return rows;
     }
 
-    async getQuickBookingTimes(movieId, cinemaId, date) {
+
+    /*=========================================================
+        QUICK BOOKING - TIMES
+    =========================================================*/
+    async getQuickBookingTimes(
+        movieId,
+        cinemaId,
+        date
+    ) {
+
         const [rows] = await db.query(
             `
             SELECT
+
                 s.showtime_id,
-                DATE_FORMAT(s.start_time, '%H:%i') AS start_time,
+
+                DATE_FORMAT(
+                    s.start_time,
+                    '%H:%i'
+                ) AS start_time,
+
                 r.room_name
+
             FROM showtimes s
-            JOIN rooms r ON s.room_id = r.room_id
-            WHERE s.movie_id = ?
+
+            JOIN rooms r
+                ON s.room_id = r.room_id
+
+            WHERE
+                s.movie_id = ?
                 AND s.cinema_id = ?
                 AND DATE(s.start_time) = ?
                 AND s.start_time >= NOW()
-            ORDER BY s.start_time ASC
+
+            ORDER BY
+                s.start_time ASC
             `,
-            [movieId, cinemaId, date]
+            [
+                movieId,
+                cinemaId,
+                date
+            ]
         );
+
         return rows;
     }
 
-    async getShowtimesForBooking(movieId, cinemaId, date) {
+
+    /*=========================================================
+        SHOWTIMES FOR BOOKING
+    =========================================================*/
+    async getShowtimesForBooking(
+        movieId,
+        cinemaId,
+        date
+    ) {
+
         const [rows] = await db.query(
             `
             SELECT
+
                 s.showtime_id,
-                DATE_FORMAT(s.start_time, '%H:%i') AS start_time,
+
+                DATE_FORMAT(
+                    s.start_time,
+                    '%H:%i'
+                ) AS start_time,
+
                 r.room_name,
                 r.room_type
+
             FROM showtimes s
-            JOIN rooms r ON s.room_id = r.room_id
-            WHERE s.movie_id = ?
+
+            JOIN rooms r
+                ON s.room_id = r.room_id
+
+            WHERE
+                s.movie_id = ?
                 AND s.cinema_id = ?
                 AND DATE(s.start_time) = ?
                 AND s.start_time >= NOW()
-            ORDER BY s.start_time ASC
+
+            ORDER BY
+                s.start_time ASC
             `,
-            [movieId, cinemaId, date]
+            [
+                movieId,
+                cinemaId,
+                date
+            ]
         );
+
         return rows;
     }
 
-    async filterShowtimes(movieId, roomId, date) {
+
+    /*=========================================================
+        FILTER SHOWTIMES
+    =========================================================*/
+    async filterShowtimes(
+        movieId,
+        roomId,
+        date
+    ) {
+
         const [rows] = await db.query(
             `
             SELECT
+
                 showtime_id,
-                DATE_FORMAT(start_time, '%Y-%m-%d %H:%i') AS start_time,
+
+                DATE_FORMAT(
+                    start_time,
+                    '%Y-%m-%d %H:%i'
+                ) AS start_time,
+
                 room_id
+
             FROM showtimes
-            WHERE movie_id = ? AND room_id = ? AND DATE(start_time) = ?
-            ORDER BY start_time ASC
+
+            WHERE
+                movie_id = ?
+                AND room_id = ?
+                AND DATE(start_time) = ?
+
+            ORDER BY
+                start_time ASC
             `,
-            [movieId, roomId, date]
+            [
+                movieId,
+                roomId,
+                date
+            ]
         );
+
         return rows;
     }
+
+
+    /*=========================================================
+        FIND SHOWTIMES FOR MOVIE DETAIL
+    =========================================================*/
+    async findByMovieCinemaDateForDetail(
+        movieId,
+        cinemaId,
+        date
+    ) {
+
+        const [rows] = await db.query(
+            `
+            SELECT
+
+                s.showtime_id,
+
+                DATE_FORMAT(
+                    s.start_time,
+                    '%H:%i'
+                ) AS start_time,
+
+                s.room_id,
+
+                r.room_name,
+                r.room_type
+
+            FROM showtimes s
+
+            JOIN rooms r
+                ON s.room_id = r.room_id
+
+            WHERE
+                s.movie_id = ?
+                AND s.cinema_id = ?
+                AND DATE(s.start_time) = ?
+                AND s.start_time >= NOW()
+
+            ORDER BY
+                s.start_time ASC
+            `,
+            [
+                movieId,
+                cinemaId,
+                date
+            ]
+        );
+
+        return rows;
+    }
+
 
     /*=========================================================
         CREATE
     =========================================================*/
     async create(data) {
-        const { movie_id, cinema_id, room_id, start_time } = data;
+
+        const {
+            movie_id,
+            cinema_id,
+            room_id,
+            start_time
+        } = data;
+
         const [result] = await db.query(
             `
-            INSERT INTO showtimes (movie_id, cinema_id, room_id, start_time)
-            VALUES (?, ?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i'))
+            INSERT INTO showtimes
+            (
+                movie_id,
+                cinema_id,
+                room_id,
+                start_time
+            )
+
+            VALUES
+            (
+                ?,
+                ?,
+                ?,
+                STR_TO_DATE(
+                    ?,
+                    '%Y-%m-%d %H:%i'
+                )
+            )
             `,
-            [movie_id, cinema_id, room_id, start_time]
+            [
+                movie_id,
+                cinema_id,
+                room_id,
+                start_time
+            ]
         );
+
         return result.insertId;
     }
+
 
     /*=========================================================
         UPDATE
     =========================================================*/
-    async update(showtimeId, data) {
-        const { movie_id, cinema_id, room_id, start_time } = data;
+    async update(
+        showtimeId,
+        data
+    ) {
+
+        const {
+            movie_id,
+            cinema_id,
+            room_id,
+            start_time
+        } = data;
+
         const [result] = await db.query(
             `
             UPDATE showtimes
-            SET movie_id = ?, cinema_id = ?, room_id = ?, start_time = STR_TO_DATE(?, '%Y-%m-%d %H:%i')
-            WHERE showtime_id = ?
+
+            SET
+                movie_id = ?,
+                cinema_id = ?,
+                room_id = ?,
+
+                start_time =
+                    STR_TO_DATE(
+                        ?,
+                        '%Y-%m-%d %H:%i'
+                    )
+
+            WHERE
+                showtime_id = ?
             `,
-            [movie_id, cinema_id, room_id, start_time, showtimeId]
+            [
+                movie_id,
+                cinema_id,
+                room_id,
+                start_time,
+                showtimeId
+            ]
         );
+
         return result.affectedRows;
     }
+
 
     /*=========================================================
         DELETE
     =========================================================*/
     async delete(showtimeId) {
+
         const [result] = await db.query(
-            `DELETE FROM showtimes WHERE showtime_id = ?`,
+            `
+            DELETE FROM showtimes
+
+            WHERE showtime_id = ?
+            `,
             [showtimeId]
         );
+
         return result.affectedRows;
     }
-    /*=========================================================
-    FIND SHOWTIMES FOR MOVIE DETAIL (PUBLIC)
-    Trả về: showtime_id, start_time (giờ:phút), room_id, room_name, room_type
-=========================================================*/
-async findByMovieCinemaDateForDetail(movieId, cinemaId, date) {
-    const [rows] = await db.query(
-        `
-        SELECT
-            s.showtime_id,
-            DATE_FORMAT(s.start_time, '%H:%i') AS start_time,
-            s.room_id,
-            r.room_name,
-            r.room_type
-        FROM showtimes s
-        JOIN rooms r ON s.room_id = r.room_id
-        WHERE s.movie_id = ?
-            AND s.cinema_id = ?
-            AND DATE(s.start_time) = ?
-            AND s.start_time >= NOW()
-        ORDER BY s.start_time ASC
-        `,
-        [movieId, cinemaId, date]
-    );
-    return rows;
 }
 
-}
 
 module.exports = new ShowtimeRepository();
