@@ -89,7 +89,7 @@ router.get(
 // ShowtimeController.createAutoSchedule
 // ==========================================================
 router.post(
-    "/scheduler",
+    "/schedule",
     authenticateAdmin,
     ShowtimeController.createAutoSchedule
 );
