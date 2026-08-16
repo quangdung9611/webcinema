@@ -10,13 +10,9 @@
     justify-content: center;
     gap: var(--space-md);
     padding: var(--space-xl);
-    border-top: 1px solid rgba(232, 232, 232, 0.06);
-    background: linear-gradient(
-        145deg,
-        rgba(10, 10, 10, 0.98),
-        rgba(26, 26, 26, 0.95)
-    );
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+    border-top: var(--border-subtle);
+    background: var(--bg-card);
+    box-shadow: var(--glass-shadow);
 }
 
 /* =========================================================
@@ -37,42 +33,42 @@
 .admin-pagination-btn {
     min-width: 46px;
     height: 46px;
-    border: 1px solid rgba(232, 232, 232, 0.06);
+    border: var(--border-subtle);
     outline: none;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(232, 232, 232, 0.02);
+    background: var(--bg-tertiary);
     color: var(--text-secondary);
+    font-family: var(--font-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     cursor: pointer;
-    transition: all var(--transition-fast);
-    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* =========================================================
-   HOVER – SILVER
+   HOVER – SILVER PREMIUM
 ========================================================= */
 
 .admin-pagination-btn:hover {
-    background: rgba(232, 232, 232, 0.06);
-    border-color: rgba(232, 232, 232, 0.15);
+    background: var(--bg-elevated);
+    border-color: var(--border-premium);
     color: var(--text-body);
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(232, 232, 232, 0.08);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 /* =========================================================
-   ACTIVE – SILVER
+   ACTIVE – SILVER GRADIENT
 ========================================================= */
 
 .admin-pagination-btn.active {
-    background: var(--cinema-border-gradient);
-    color: var(--black-premium);
-    border: 1px solid rgba(232, 232, 232, 0.2);
-    box-shadow: 0 12px 28px rgba(232, 232, 232, 0.25);
+    background: var(--btn-silver-bg);
+    color: var(--bg-primary) !important;
+    border: var(--border-premium);
+    box-shadow: var(--card-shadow-hover);
 }
 
 /* =========================================================
@@ -80,12 +76,12 @@
 ========================================================= */
 
 .admin-pagination-btn.disabled {
-    opacity: 0.25;
+    opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;
     transform: none;
     box-shadow: none;
-    border-color: rgba(255, 255, 255, 0.03);
+    border-color: var(--border-subtle);
 }
 
 /* =========================================================
@@ -98,7 +94,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(232, 232, 232, 0.3);
+    color: var(--text-disabled);
+    font-family: var(--font-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
     user-select: none;
@@ -112,13 +109,14 @@
     width: 100%;
     text-align: center;
     margin-top: var(--space-xs);
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-muted);
+    font-family: var(--font-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-medium);
 }
 
 .admin-pagination-info span {
-    color: var(--silver-primary);
+    color: var(--text-heading);
     font-weight: var(--fw-bold);
     margin: 0 var(--space-xs);
 }
