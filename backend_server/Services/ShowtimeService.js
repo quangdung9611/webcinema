@@ -1,5 +1,5 @@
 const ShowtimeRepository = require("../Repositories/ShowtimeRepository");
-const ShowtimeScheduler = require("../ShowtimeScheduler");
+const ShowtimeScheduler = require("./ShowtimeScheduler");
 
 // ==========================================================
 // ROOM CONFIG
