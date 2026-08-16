@@ -67,7 +67,6 @@ exports.getShowtimeDetail = async (req, res) => {
 
 /*=========================================================
     PUBLIC - GET SHOWTIMES BY CINEMA AND ROOM
-    ✅ TRẢ VỀ MẢNG TRỰC TIẾP (KHÔNG PAGINATION)
 =========================================================*/
 exports.getShowtimesByCinemaAndRoom = async (req, res) => {
     try {
@@ -79,7 +78,6 @@ exports.getShowtimesByCinemaAndRoom = async (req, res) => {
             });
         }
 
-        // Service trả về mảng trực tiếp
         const data = await ShowtimeService.getShowtimesByCinemaAndRoom(cinema_id, room_id);
         return res.status(200).json({ success: true, data });
     } catch (err) {
@@ -158,9 +156,9 @@ exports.filterShowtimes = async (req, res) => {
         });
     }
 };
+
 /*=========================================================
     PUBLIC - GET SHOWTIMES FOR MOVIE DETAIL
-    (Trả về dữ liệu đã nhóm sẵn cho Front-end)
 =========================================================*/
 exports.getShowtimesForMovieDetail = async (req, res) => {
     try {
@@ -181,6 +179,7 @@ exports.getShowtimesForMovieDetail = async (req, res) => {
         });
     }
 };
+
 /*=========================================================
     ADMIN - CREATE SHOWTIME
 =========================================================*/
@@ -241,8 +240,10 @@ exports.deleteShowtime = async (req, res) => {
             message: err.message || "Lỗi máy chủ"
         });
     }
-    /*=========================================================
-    ADMIN - BULK CREATE SHOWTIMES
+};
+
+/*=========================================================
+    ADMIN - BULK CREATE SHOWTIMES (Đã sửa đúng vị trí)
 =========================================================*/
 exports.bulkCreateShowtimes = async (req, res) => {
     try {
@@ -259,5 +260,4 @@ exports.bulkCreateShowtimes = async (req, res) => {
             message: err.message || "Lỗi máy chủ khi tạo hàng loạt"
         });
     }
-};
 };

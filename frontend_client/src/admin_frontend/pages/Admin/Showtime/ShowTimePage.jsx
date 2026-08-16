@@ -7,7 +7,8 @@ import {
     Loader2,
     Film,
     MapPin,
-    Clock
+    Clock,
+    Zap // 👈 Import icon Zap để dùng cho nút Tạo hàng loạt
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -15,6 +16,9 @@ import AdminTable from '../../../components/AdminTable';
 import AdminModal from '../../../components/AdminModal';
 import AdminForm from '../../../components/AdminForm';
 import AdminPagination from '../../../components/AdminPagination';
+
+// 👈 Import component Tạo hàng loạt (đã tạo ở file trước)
+import BulkShowtimeCreator from './BulkShowtimeCreator';
 
 // ==========================================================
 // CONSTANTS
@@ -58,8 +62,11 @@ const ShowTimePage = () => {
     const [formData, setFormData] = useState(initialFormData);
     const [formErrors, setFormErrors] = useState({});
 
+    // 👈 NEW STATE: Hiển thị Modal Tạo hàng loạt
+    const [showBulkCreator, setShowBulkCreator] = useState(false);
+
     // ======================================================
-    // ALERT MODAL (giống UserPage)
+    // ALERT MODAL
     // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -108,7 +115,7 @@ const ShowTimePage = () => {
     };
 
     // ------------------------------------------------------
-    // FETCH SHOWTIMES - GIỐNG MoviePage
+    // FETCH SHOWTIMES
     // ------------------------------------------------------
     const fetchShowtimes = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) {
@@ -136,7 +143,6 @@ const ShowTimePage = () => {
                 signal: controller.signal
             });
 
-            // ✅ Lấy trực tiếp từ res.data giống MoviePage
             const showtimesData = res.data?.data || [];
             const paginationData = res.data?.pagination || {
                 page: 1,
@@ -184,7 +190,6 @@ const ShowTimePage = () => {
                 api.get('/api/cinemas')
             ]);
 
-            // Movies: { success: true, data: [...] }
             const moviesData = movieRes.data?.data || [];
             const cinemasData = cinemaRes.data?.data || [];
 
@@ -404,6 +409,12 @@ const ShowTimePage = () => {
         );
     };
 
+    // 👈 CALLBACK KHI BULK THÀNH CÔNG
+    const handleBulkSuccess = () => {
+        setShowBulkCreator(false);
+        fetchShowtimes(pagination.page, search);
+    };
+
     // ------------------------------------------------------
     // TABLE COLUMNS
     // ------------------------------------------------------
@@ -529,6 +540,17 @@ const ShowTimePage = () => {
                 searchValue={search}
                 onSearchChange={setSearch}
             >
+                {/* 👈 NÚT TẠO HÀNG LOẠT ĐƯỢC ĐẶT Ở ĐÂY */}
+                <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                    <button 
+                        className="btn btn-silver" 
+                        onClick={() => setShowBulkCreator(true)}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                    >
+                        <Zap size={18} /> Tạo hàng loạt
+                    </button>
+                </div>
+
                 {loading ? (
                     <div className="admin-loading">
                         <Loader2 size={32} className="spin-icon" />
@@ -547,7 +569,7 @@ const ShowTimePage = () => {
             </AdminPage>
 
             {/* ==================================================
-                FORM MODAL (giống UserPage)
+                FORM MODAL (THÊM / SỬA)
             ================================================== */}
             <AdminModal
                 open={isFormOpen}
@@ -568,7 +590,7 @@ const ShowTimePage = () => {
             </AdminModal>
 
             {/* ==================================================
-                ALERT / CONFIRM MODAL (giống UserPage)
+                ALERT / CONFIRM MODAL
             ================================================== */}
             <AdminModal
                 open={alertModal.open}
@@ -585,6 +607,18 @@ const ShowTimePage = () => {
                     <p>{alertModal.message}</p>
                 </div>
             </AdminModal>
+
+            {/* ==================================================
+                BULK CREATOR MODAL (TẠO HÀNG LOẠT)
+            ================================================== */}
+            {showBulkCreator && (
+                <div className="bulk-modal-overlay">
+                    <BulkShowtimeCreator
+                        onClose={() => setShowBulkCreator(false)}
+                        onSuccess={handleBulkSuccess}
+                    />
+                </div>
+            )}
         </>
     );
 };
