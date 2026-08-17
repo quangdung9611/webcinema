@@ -650,9 +650,9 @@ class ShowtimeService {
         // ------------------------------------------------------
 
         const result =
-            await ShowtimeScheduler.generateSchedule({
+            await ShowtimeScheduler.generate({
 
-                movie_id:
+                movieId: // SỬA LẠI TÊN BIẾN
                     Number(movie_id),
 
                 cinema_id:

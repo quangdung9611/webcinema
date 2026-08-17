@@ -605,7 +605,7 @@ exports.createShowtime =
     ADMIN
     AUTO GENERATE SHOWTIMES
 
-    POST /api/showtimes/auto-schedule
+    POST /api/showtimes/schedule
 
     Chức năng:
 

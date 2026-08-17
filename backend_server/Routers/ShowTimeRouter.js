@@ -83,7 +83,7 @@ router.get(
 // ==========================================================
 // AUTO SHOWTIME SCHEDULER
 //
-// POST /api/showtimes/scheduler
+// POST /api/showtimes/schedule
 //
 // Controller:
 // ShowtimeController.createAutoSchedule
