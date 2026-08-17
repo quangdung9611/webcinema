@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/api';
@@ -62,26 +61,6 @@ const Promotion = () => {
                         }
                     }
                 );
-
-                /*
-                 * API trả về:
-                 *
-                 * {
-                 *     success: true,
-                 *     data: [
-                 *         {
-                 *             banner_id: 1,
-                 *             page: "PROMOTION",
-                 *             image_url: "...",
-                 *             is_active: 1
-                 *         }
-                 *     ]
-                 * }
-                 *
-                 * => BANNER NẰM TẠI:
-                 *
-                 * res.data.data
-                 */
 
                 const bannerData =
                     res.data?.success === true &&
@@ -387,11 +366,11 @@ const Promotion = () => {
                                             promo.promotion_id
                                         }
                                         type="promotion"
+                                        detailType="promotion"
+                                        slug={promo.slug}
                                         image={imageUrl}
                                         title={promo.title}
-                                        link={
-                                            `/promotion/${promo.slug}`
-                                        }
+                                        buttonText="Xem chi tiết"
                                     />
 
                                 );
@@ -410,4 +389,3 @@ const Promotion = () => {
 };
 
 export default Promotion;
-

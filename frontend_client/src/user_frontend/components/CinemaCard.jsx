@@ -4,7 +4,7 @@ import { ChevronRight, MapPin, Phone, ExternalLink } from "lucide-react";
 import "../styles/CinemaCard.css";
 
 const CinemaCard = ({
-    type = "movie", // "movie" | "cinema"
+    type = "movie", // "movie" | "cinema" | "promotion" | "news" | "blog"
     image,
     title,
     badge,
@@ -15,19 +15,93 @@ const CinemaCard = ({
     address,
     hotline,
     mapLink,
+    // Detail props
+    slug,
+    detailType, // 'news' | 'promotion' | 'blog' | 'cinema'
 }) => {
 
     const navigate = useNavigate();
 
+    // ==========================================================
+    // HANDLE NAVIGATION TO DETAIL
+    // ==========================================================
+    const navigateToDetail = () => {
+        // Nếu có link custom thì dùng link đó
+        if (link) {
+            navigate(link);
+            return;
+        }
+
+        // Nếu có slug và detailType thì điều hướng đến trang chi tiết
+        if (slug && detailType) {
+            const paths = {
+                'promotion': `/promotion/detail/${slug}`,
+                'news': `/news/detail/${slug}`,
+                'blog': `/blog-cinema/detail/${slug}`,
+                'cinema': `/cinema/detail/${slug}`,
+                'movie': `/movie/detail/${slug}`
+            };
+            
+            const path = paths[detailType] || `/${detailType}/detail/${slug}`;
+            navigate(path);
+            return;
+        }
+
+        // Fallback: nếu có link thì dùng
+        if (link) {
+            navigate(link);
+        }
+    };
+
     const handleActionClick = (e) => {
         e.stopPropagation();
-        if (onClick) return onClick();
-        if (link) navigate(link);
+        if (onClick) {
+            onClick();
+            return;
+        }
+        navigateToDetail();
     };
 
     const handleCardClick = () => {
-        if (onClick) return onClick();
-        if (link) navigate(link);
+        if (onClick) {
+            onClick();
+            return;
+        }
+        navigateToDetail();
+    };
+
+    // ==========================================================
+    // DETERMINE BADGE COLOR & TEXT
+    // ==========================================================
+    const getBadgeClass = () => {
+        switch (detailType) {
+            case 'promotion':
+                return 'badge-promotion';
+            case 'news':
+                return 'badge-news';
+            case 'blog':
+                return 'badge-blog';
+            case 'cinema':
+                return 'badge-cinema';
+            default:
+                return '';
+        }
+    };
+
+    const getBadgeText = () => {
+        if (badge) return badge;
+        switch (detailType) {
+            case 'promotion':
+                return '🎁 Khuyến mãi';
+            case 'news':
+                return '📰 Tin tức';
+            case 'blog':
+                return '📝 Blog';
+            case 'cinema':
+                return '🎬 Rạp';
+            default:
+                return '';
+        }
     };
 
     const isCinema = type === "cinema";
@@ -51,9 +125,9 @@ const CinemaCard = ({
                         draggable={false}
                     />
 
-                    {badge && (
-                        <h4 className="cinema-card-badge">
-                            {badge}
+                    {(badge || detailType) && (
+                        <h4 className={`cinema-card-badge ${getBadgeClass()}`}>
+                            {getBadgeText()}
                         </h4>
                     )}
 

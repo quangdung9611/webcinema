@@ -1,3 +1,4 @@
+// pages/admin/BlogCinemaPage.js
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import api from '../../../../api/api';
 import {
@@ -17,7 +18,7 @@ import AdminForm from '../../../components/AdminForm';
 import AdminPagination from '../../../components/AdminPagination';
 
 // ==========================================================
-// HELPERS & CONSTANTS
+// IMAGE URL HELPERS
 // ==========================================================
 const getImageUrl = (image) => {
     if (!image) return '';
@@ -25,8 +26,9 @@ const getImageUrl = (image) => {
     return `https://api.quangdungcinema.id.vn/uploads/blog_cinema/${image}`;
 };
 
-const DEFAULT_IMAGE = 'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-blog.jpg';
-
+// ==========================================================
+// INITIAL FORM
+// ==========================================================
 const initialFormData = {
     title: '',
     slug: '',
@@ -39,13 +41,17 @@ const initialFormData = {
 // COMPONENT
 // ==========================================================
 const BlogCinemaPage = () => {
+
     // ======================================================
-    // STATES
+    // DATA
     // ======================================================
     const [blogs, setBlogs] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
 
+    // ======================================================
+    // SEARCH & PAGINATION
+    // ======================================================
     const [search, setSearch] = useState('');
     const [pagination, setPagination] = useState({
         page: 1,
@@ -56,17 +62,24 @@ const BlogCinemaPage = () => {
         hasPreviousPage: false
     });
 
+    // ======================================================
+    // CHỐNG GỌI TRÙNG
+    // ======================================================
     const isFetching = useRef(false);
     const abortControllerRef = useRef(null);
 
+    // ======================================================
+    // FORM
+    // ======================================================
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingBlog, setEditingBlog] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
-    const [errors, setErrors] = useState({});
     const [blogImageFile, setBlogImageFile] = useState(null);
+    const [blogBackdropFile, setBlogBackdropFile] = useState(null);
+    const [formErrors, setFormErrors] = useState({});
 
     // ======================================================
-    // ALERT MODAL (giống UserPage)
+    // ALERT MODAL
     // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -98,7 +111,7 @@ const BlogCinemaPage = () => {
     };
 
     // ======================================================
-    // FETCH BLOGS - GIỐNG MoviePage
+    // FETCH BLOGS
     // ======================================================
     const fetchBlogs = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) {
@@ -138,6 +151,7 @@ const BlogCinemaPage = () => {
 
             setBlogs(blogsData);
             setPagination(paginationData);
+
         } catch (error) {
             if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
                 console.log('🛑 Request bị hủy');
@@ -179,6 +193,7 @@ const BlogCinemaPage = () => {
     // SEARCH DEBOUNCE
     // ======================================================
     const prevSearchRef = useRef('');
+
     useEffect(() => {
         const currentSearch = search;
         const prevSearch = prevSearchRef.current;
@@ -193,13 +208,27 @@ const BlogCinemaPage = () => {
         return () => clearTimeout(timer);
     }, [search, fetchBlogs]);
 
+    // ======================================================
+    // PAGE CHANGE
+    // ======================================================
     const handlePageChange = (page) => {
         fetchBlogs(page, search);
     };
 
     // ======================================================
-    // SLUG GENERATOR
+    // VALIDATE FORM
     // ======================================================
+    const validateForm = () => {
+        const errors = {};
+        if (!formData.title.trim()) errors.title = 'Vui lòng nhập tiêu đề blog.';
+        if (!formData.description.trim()) errors.description = 'Vui lòng nhập mô tả blog.';
+        if (!editingBlog && !blogImageFile) {
+            errors.blog_image = 'Vui lòng chọn file hình ảnh cho blog.';
+        }
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
     const generateSlug = (str) => {
         if (!str) return '';
         return str
@@ -214,33 +243,14 @@ const BlogCinemaPage = () => {
     };
 
     // ======================================================
-    // VALIDATE FORM
-    // ======================================================
-    const validateForm = () => {
-        const newErrors = {};
-        if (!formData.title.trim()) {
-            newErrors.title = 'Vui lòng nhập tiêu đề blog.';
-        } else if (formData.title.trim().length < 5) {
-            newErrors.title = 'Tiêu đề blog phải từ 5 ký tự trở lên.';
-        }
-        if (!formData.description.trim()) {
-            newErrors.description = 'Vui lòng nhập mô tả blog.';
-        }
-        if (!editingBlog && !blogImageFile) {
-            newErrors.blog_image = 'Vui lòng chọn ảnh blog.';
-        }
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    // ======================================================
-    // HANDLE MODAL ACTIONS
+    // OPEN ADD / EDIT
     // ======================================================
     const handleOpenAdd = () => {
         setEditingBlog(null);
         setFormData(initialFormData);
-        setErrors({});
         setBlogImageFile(null);
+        setBlogBackdropFile(null);
+        setFormErrors({});
         setIsFormOpen(true);
     };
 
@@ -253,72 +263,57 @@ const BlogCinemaPage = () => {
             likes: item.likes || 0,
             is_active: item.is_active ?? 1
         });
-        setErrors({});
         setBlogImageFile(null);
+        setBlogBackdropFile(null);
+        setFormErrors({});
         setIsFormOpen(true);
     };
 
-    // ======================================================
-    // HANDLE CLOSE FORM
-    // ======================================================
     const handleCloseForm = () => {
         if (submitLoading) return;
         setIsFormOpen(false);
         setEditingBlog(null);
-        setErrors({});
+        setFormErrors({});
         setBlogImageFile(null);
+        setBlogBackdropFile(null);
     };
 
     // ======================================================
-    // HANDLE FORM CHANGE
+    // HANDLE CHANGE
     // ======================================================
     const handleChange = (e) => {
         const { name, value, files } = e.target;
-
-        if (errors[name]) {
-            setErrors((prev) => ({ ...prev, [name]: '' }));
-        }
+        if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
 
         if (name === 'blog_image') {
             setBlogImageFile(files?.[0] || null);
             return;
         }
-
-        if (name === 'title') {
-            setFormData((prev) => ({
-                ...prev,
-                title: value,
-                slug: generateSlug(value)
-            }));
+        if (name === 'blog_backdrop') {
+            setBlogBackdropFile(files?.[0] || null);
             return;
         }
-
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        if (name === 'title') {
+            setFormData(prev => ({ ...prev, title: value, slug: generateSlug(value) }));
+            return;
+        }
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     // ======================================================
-    // HANDLE SUBMIT
+    // SUBMIT
     // ======================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
-
         try {
             setSubmitLoading(true);
             const submitData = new FormData();
-            submitData.append('title', formData.title.trim());
-            submitData.append('slug', formData.slug);
-            submitData.append('description', formData.description.trim());
-            submitData.append('likes', formData.likes || 0);
-            submitData.append('is_active', formData.is_active);
+            Object.entries(formData).forEach(([key, value]) => submitData.append(key, value));
+            if (blogImageFile) submitData.append('blog_image', blogImageFile);
+            if (blogBackdropFile) submitData.append('blog_backdrop', blogBackdropFile);
 
-            if (blogImageFile) {
-                submitData.append('blog_image', blogImageFile);
-            }
-
-            const config = {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            };
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
 
             if (editingBlog) {
                 await api.put(`/api/blog-cinema/${editingBlog.blog_id}`, submitData, config);
@@ -332,30 +327,35 @@ const BlogCinemaPage = () => {
                 setIsFormOpen(false);
                 fetchBlogs(pagination.page, search);
                 setTimeout(() => {
-                    showAlert('Thành công', 'Tạo blog mới thành công.', 'success');
+                    showAlert('Thành công', 'Thêm blog thành công.', 'success');
                 }, 100);
             }
         } catch (error) {
             console.error('SUBMIT BLOG ERROR:', error);
-            showAlert('Lỗi', error.response?.data?.message || 'Không thể lưu blog.', 'error');
+            const backendField = error.response?.data?.field;
+            const backendError = error.response?.data?.message;
+            if (backendField) {
+                setFormErrors({ [backendField]: backendError });
+                return;
+            }
+            showAlert('Lỗi', backendError || 'Đã xảy ra lỗi.', 'error');
         } finally {
             setSubmitLoading(false);
         }
     };
 
     // ======================================================
-    // HANDLE DELETE
+    // DELETE
     // ======================================================
     const handleDelete = (item) => {
         showAlert(
-            'Xác nhận xóa Blog',
+            'Xác nhận xóa',
             `Bạn có chắc muốn xóa blog "${item.title}"?`,
             'warning',
             async () => {
                 try {
                     await api.delete(`/api/blog-cinema/${item.blog_id}`);
                     closeAlert();
-
                     const currentPage = pagination.page;
                     const newPage = blogs.length === 1 && currentPage > 1
                         ? currentPage - 1
@@ -377,14 +377,6 @@ const BlogCinemaPage = () => {
     };
 
     // ======================================================
-    // HELPER: IMAGE ERROR HANDLER
-    // ======================================================
-    const handleImageError = (e) => {
-        e.target.onerror = null;
-        e.target.src = DEFAULT_IMAGE;
-    };
-
-    // ======================================================
     // TABLE COLUMNS
     // ======================================================
     const columns = [
@@ -393,15 +385,10 @@ const BlogCinemaPage = () => {
             key: 'blog_image',
             render: (row) => (
                 <img
-                    src={getImageUrl(row.blog_image) || DEFAULT_IMAGE}
-                    alt="blog"
-                    style={{
-                        width: '120px',
-                        height: '70px',
-                        objectFit: 'cover',
-                        borderRadius: '10px'
-                    }}
-                    onError={handleImageError}
+                    src={getImageUrl(row.blog_image)}
+                    alt={row.title}
+                    style={{ width: '70px', height: '100px', objectFit: 'cover', borderRadius: '10px' }}
+                    onError={(e) => { e.target.src = 'https://via.placeholder.com/70x100?text=No+Image'; }}
                 />
             )
         },
@@ -428,7 +415,7 @@ const BlogCinemaPage = () => {
             title: 'Trạng thái',
             key: 'is_active',
             render: (row) => (
-                <span className={row.is_active ? 'status-badge success' : 'status-badge danger'}>
+                <span className={`status-badge ${row.is_active ? 'success' : 'danger'}`}>
                     {row.is_active ? 'Hiển thị' : 'Đã ẩn'}
                 </span>
             )
@@ -441,12 +428,7 @@ const BlogCinemaPage = () => {
             title: 'Xem',
             key: 'slug',
             render: (row) => (
-                <a
-                    href={`/blog/${row.slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: '#06b6d4' }}
-                >
+                <a href={`/blog-cinema/detail/${row.slug}`} target="_blank" rel="noreferrer" style={{ color: '#06b6d4' }}>
                     <ExternalLink size={18} />
                 </a>
             )
@@ -456,16 +438,10 @@ const BlogCinemaPage = () => {
             key: 'actions',
             render: (row) => (
                 <div className="admin-table-actions">
-                    <button
-                        className="admin-action-btn edit-btn"
-                        onClick={() => handleOpenEdit(row)}
-                    >
+                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
                         <Edit size={16} />
                     </button>
-                    <button
-                        className="admin-action-btn delete-btn"
-                        onClick={() => handleDelete(row)}
-                    >
+                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -477,36 +453,12 @@ const BlogCinemaPage = () => {
     // FORM FIELDS
     // ======================================================
     const formFields = [
-        {
-            label: 'Tiêu đề Blog',
-            name: 'title',
-            type: 'text',
-            placeholder: 'Nhập tiêu đề blog điện ảnh'
-        },
-        {
-            label: 'Slug',
-            name: 'slug',
-            type: 'text',
-            disabled: true,
-            placeholder: 'Tự động tạo từ tiêu đề'
-        },
-        {
-            label: 'Mô tả ngắn',
-            name: 'description',
-            type: 'textarea',
-            placeholder: 'Nhập mô tả ngắn cho blog'
-        },
-        {
-            label: 'Hình ảnh Blog',
-            name: 'blog_image',
-            type: 'file'
-        },
-        {
-            label: 'Likes',
-            name: 'likes',
-            type: 'number',
-            placeholder: '0'
-        },
+        { label: 'Tiêu đề blog', name: 'title', type: 'text', placeholder: 'Nhập tiêu đề blog' },
+        { label: 'Slug', name: 'slug', type: 'text', placeholder: 'Slug tự động', disabled: true },
+        { label: 'Mô tả', name: 'description', type: 'textarea', placeholder: 'Nhập mô tả blog' },
+        { label: 'Hình ảnh', name: 'blog_image', type: 'file' },
+        { label: 'Hình ảnh ngang (Backdrop)', name: 'blog_backdrop', type: 'file' },
+        { label: 'Likes', name: 'likes', type: 'number', placeholder: '0' },
         {
             label: 'Trạng thái',
             name: 'is_active',
@@ -522,11 +474,19 @@ const BlogCinemaPage = () => {
     // FILE PREVIEWS
     // ======================================================
     const filePreviews = {};
-    if (editingBlog && editingBlog.blog_image) {
-        filePreviews['blog_image'] = {
-            url: getImageUrl(editingBlog.blog_image),
-            name: editingBlog.blog_image
-        };
+    if (editingBlog) {
+        if (editingBlog.blog_image) {
+            filePreviews['blog_image'] = {
+                url: getImageUrl(editingBlog.blog_image),
+                name: editingBlog.blog_image
+            };
+        }
+        if (editingBlog.blog_backdrop) {
+            filePreviews['blog_backdrop'] = {
+                url: getImageUrl(editingBlog.blog_backdrop),
+                name: editingBlog.blog_backdrop
+            };
+        }
     }
 
     // ======================================================
@@ -538,7 +498,7 @@ const BlogCinemaPage = () => {
                 title="Quản lý Blog Cinema"
                 subtitle="Quản lý toàn bộ bài viết Blog điện ảnh"
                 icon={<BookOpen size={30} />}
-                buttonText="Thêm Blog"
+                buttonText="Thêm blog"
                 onAdd={handleOpenAdd}
                 searchValue={search}
                 onSearchChange={setSearch}
@@ -546,7 +506,7 @@ const BlogCinemaPage = () => {
                 {loading ? (
                     <div className="admin-loading">
                         <Loader2 size={32} className="spin-icon" />
-                        <span>Đang đồng bộ dữ liệu Blog...</span>
+                        <span>Đang tải dữ liệu...</span>
                     </div>
                 ) : (
                     <>
@@ -561,29 +521,29 @@ const BlogCinemaPage = () => {
             </AdminPage>
 
             {/* ==================================================
-                FORM MODAL (giống UserPage)
+                FORM MODAL
             ================================================== */}
             <AdminModal
                 open={isFormOpen}
                 onClose={handleCloseForm}
-                title={editingBlog ? 'Cập nhật Blog Cinema' : 'Thêm Blog Cinema mới'}
+                title={editingBlog ? 'Cập nhật blog' : 'Thêm blog mới'}
                 type="default"
                 size="lg"
             >
                 <AdminForm
                     fields={formFields}
                     formData={formData}
-                    errors={errors}
+                    errors={formErrors}
                     onChange={handleChange}
                     onSubmit={handleSubmit}
                     loading={submitLoading}
-                    submitText={editingBlog ? 'Lưu thay đổi Blog' : 'Đăng Blog'}
+                    submitText={editingBlog ? 'Lưu thay đổi' : 'Thêm blog'}
                     filePreviews={filePreviews}
                 />
             </AdminModal>
 
             {/* ==================================================
-                ALERT / CONFIRM MODAL (giống UserPage)
+                ALERT / CONFIRM MODAL
             ================================================== */}
             <AdminModal
                 open={alertModal.open}

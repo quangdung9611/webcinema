@@ -8,7 +8,7 @@ import MoviePreviewModal from '../components/MoviePreviewModal';
 import ScrollReveal from '../components/ScrollReveal';
 import CinemaCard from '../components/CinemaCard';
 import HeroBanner from '../components/HeroBanner';
-import ReviewModal from '../components/ReviewModal'; // 👈 Import ReviewModal
+import ReviewModal from '../components/ReviewModal';
 
 import {
   Ticket,
@@ -202,7 +202,7 @@ const UserHome = () => {
   const [cinemas, setCinemas] = useState([]);
   const [newsItems, setNewsItems] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
-  const [user, setUser] = useState(null); // 👈 Lưu thông tin user
+  const [user, setUser] = useState(null);
 
   const [quickData, setQuickData] = useState({
     movies: [],
@@ -492,13 +492,10 @@ const UserHome = () => {
         rating: reviewData.rating
       });
 
-      // Đóng modal review
       setIsReviewModalOpen(false);
 
-      // Hiển thị modal thông báo thành công
       showModal('success', 'Cảm ơn bạn!', 'Đánh giá của bạn đã được gửi và sẽ được duyệt sớm.');
 
-      // Refresh danh sách đánh giá
       const res = await api.get('/api/testimonials/active?limit=4');
       const newData = res.data?.success === true ? res.data.data : Array.isArray(res.data) ? res.data : [];
       setTestimonials(newData);
@@ -588,7 +585,6 @@ const UserHome = () => {
         selectedMovie={previewModal.selectedMovie}
       />
 
-      {/* Review Modal */}
       <ReviewModal
         isOpen={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
@@ -703,7 +699,6 @@ const UserHome = () => {
                   <h3 className="testimonials-title">Khách hàng nói gì về chúng tôi</h3>
                 </div>
 
-                {/* 👇 Nút "Gửi đánh giá" */}
                 <button
                   className="btn-review-open"
                   onClick={handleOpenReviewModal}
@@ -779,7 +774,7 @@ const UserHome = () => {
             </div>
           </ScrollReveal>
 
-          {/* ===== PROMOTIONS ===== */}
+          {/* ===== PROMOTIONS - SỬA LINK ===== */}
           <ScrollReveal
             direction="up"
             duration={0.5}
@@ -814,10 +809,11 @@ const UserHome = () => {
                     >
                       <CinemaCard
                         type="promotion"
+                        detailType="promotion"
+                        slug={promo.slug}
                         image={imageUrl}
                         title={promo.title}
                         buttonText="Xem chi tiết"
-                        link={`/promotion/${promo.slug}`}
                       />
                     </ScrollReveal>
                   );
@@ -826,7 +822,7 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
-          {/* ===== BLOG ===== */}
+          {/* ===== BLOG CINEMA - SỬA LINK ===== */}
           <ScrollReveal
             direction="up"
             duration={0.5}
@@ -860,11 +856,12 @@ const UserHome = () => {
                       once
                     >
                       <CinemaCard
-                        type="news"
+                        type="blog"
+                        detailType="blog"
+                        slug={news.slug}
                         image={imageUrl}
                         title={news.title}
                         buttonText="Đọc thêm"
-                        link={`/blog-cinema/${news.slug}`}
                       />
                     </ScrollReveal>
                   );
@@ -873,7 +870,7 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
-          {/* ====== PHẦN TIN TỨC MỚI ====== */}
+          {/* ===== NEWS - SỬA LINK ===== */}
           <ScrollReveal
             direction="up"
             duration={0.5}
@@ -909,10 +906,11 @@ const UserHome = () => {
                     >
                       <CinemaCard
                         type="news"
+                        detailType="news"
+                        slug={item.slug}
                         image={item.news_image || null}
                         title={item.title}
                         buttonText="Đọc thêm"
-                        link={`/news/detail/${item.slug}`}
                         subtitle={metaText}
                         description={excerpt}
                       />
@@ -923,7 +921,7 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
-          {/* ====== PHẦN RẠP ====== */}
+          {/* ===== CINEMA - GIỮ NGUYÊN ===== */}
           <ScrollReveal
             direction="up"
             duration={0.5}
@@ -960,10 +958,11 @@ const UserHome = () => {
                     >
                       <CinemaCard
                         type="cinema"
+                        detailType="cinema"
+                        slug={cinema.slug}
                         image={backdropUrl || '/cinema-placeholder.jpg'}
                         title={cinema.cinema_name}
                         buttonText="Xem chi tiết"
-                        link={`/cinema/detail/${cinema.slug}`}
                         address={cinema.address}
                         hotline={cinema.hotline}
                         mapLink={cinema.map_link}

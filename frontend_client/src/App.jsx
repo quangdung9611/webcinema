@@ -68,7 +68,7 @@ const Cinema = lazy(() => import("./user_frontend/pages/Cinema"));
 const CinemaDetail = lazy(() => import("./user_frontend/pages/CinemaDetail"));
 const CinemaGenre = lazy(() => import("./user_frontend/pages/CinemaGenre"));
 const News = lazy(() => import("./user_frontend/pages/News"));
-const NewsDetail = lazy(() => import("./user_frontend/pages/NewsDetail"));
+
 const Profile = lazy(() => import("./user_frontend/pages/Profile"));
 
 // ==========================================================
@@ -77,6 +77,12 @@ const Profile = lazy(() => import("./user_frontend/pages/Profile"));
 
 const Promotion = lazy(() => import("./user_frontend/pages/Promotion"));
 const BlogCinema = lazy(() => import("./user_frontend/pages/BlogCinema"));
+
+// ==========================================================
+// CINEMA CARD DETAIL - DÙNG CHO PROMOTION, BLOG, NEWS
+// ==========================================================
+
+const CinemaCardDetail = lazy(() => import("./user_frontend/components/CinemaCardDetail"));
 
 // ==========================================================
 // SUPPORT PAGES - LAZY
@@ -242,18 +248,16 @@ const UserRouteGuard = ({ children }) => {
 };
 
 // ==========================================================
-// SCROLL TO TOP COMPONENT (TÍCH HỢP POPSTATE + ROUTE CHANGE)
+// SCROLL TO TOP COMPONENT
 // ==========================================================
 
 const ScrollToTop = () => {
     const { pathname } = useLocation();
 
     useEffect(() => {
-        // Vô hiệu hóa scroll restoration mặc định của trình duyệt
         if ('scrollRestoration' in window.history) {
             window.history.scrollRestoration = 'manual';
         }
-        // Cuộn lên đầu mỗi khi pathname thay đổi (click link, navigate...)
         window.scrollTo({
             top: 0,
             behavior: 'smooth'
@@ -261,7 +265,6 @@ const ScrollToTop = () => {
     }, [pathname]);
 
     useEffect(() => {
-        // Bắt sự kiện popstate (back/forward của trình duyệt)
         const handlePopState = () => {
             window.scrollTo({
                 top: 0,
@@ -285,7 +288,6 @@ function AppContent() {
     const isAdminDomain = hostname === "admin.quangdungcinema.id.vn";
     const navigate = useNavigate();
 
-    // Lắng nghe sự kiện 401 từ api.js
     useEffect(() => {
         const handleUnauthorized = () => {
             if (!window.location.pathname.includes('/login')) {
@@ -352,18 +354,38 @@ function AppContent() {
                                 <Route path="/">
                                     <Route element={<UserLayout />}>
                                         <Route index element={<UserHome />} />
+                                        
+                                        {/* MOVIES */}
                                         <Route path="movies/status/:statusSlug" element={<MovieStatusPage />} />
                                         <Route path="movies/detail/:slug" element={<MovieDetail />} />
+                                        
+                                        {/* ACTORS */}
                                         <Route path="actors" element={<Actor />} />
                                         <Route path="actor/detail/:slug" element={<ActorDetail />} />
+                                        
+                                        {/* CINEMA */}
                                         <Route path="cinema" element={<Cinema />} />
                                         <Route path="cinema/detail/:slug" element={<CinemaDetail />} />
+                                        
+                                        {/* FOOD */}
                                         <Route path="foods" element={<Food />} />
+                                        
+                                        {/* CINEMA GENRE */}
                                         <Route path="cinema-genre" element={<CinemaGenre />} />
+                                        
+                                        {/* NEWS - DÙNG CINEMA CARD DETAIL */}
                                         <Route path="news" element={<News />} />
-                                        <Route path="news/detail/:slug" element={<NewsDetail />} />
+                                        <Route path="news/detail/:slug" element={<CinemaCardDetail type="news" />} />
+                                        
+                                        {/* PROMOTION - DÙNG CINEMA CARD DETAIL */}
                                         <Route path="promotion" element={<Promotion />} />
+                                        <Route path="promotion/detail/:slug" element={<CinemaCardDetail type="promotion" />} />
+                                        
+                                        {/* BLOG CINEMA - DÙNG CINEMA CARD DETAIL */}
                                         <Route path="blog-cinema" element={<BlogCinema />} />
+                                        <Route path="blog-cinema/detail/:slug" element={<CinemaCardDetail type="blog" />} />
+                                        
+                                        {/* SUPPORT PAGES */}
                                         <Route path="faq" element={<FAQ />} />
                                         <Route path="privacy-policy" element={<PrivacyPolicy />} />
                                         <Route path="terms" element={<TermsOfService />} />
@@ -371,9 +393,11 @@ function AppContent() {
                                         <Route path="contact" element={<ContactSupport />} />
                                         <Route path="membership" element={<MemberShip />} />
 
+                                        {/* AUTH */}
                                         <Route path="login" element={<UserLogin />} />
                                         <Route path="register" element={<UserRegister />} />
 
+                                        {/* PROTECTED ROUTES */}
                                         <Route path="profile" element={
                                             <UserRouteGuard><Profile /></UserRouteGuard>
                                         } />

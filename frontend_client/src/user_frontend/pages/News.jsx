@@ -60,26 +60,6 @@ const News = () => {
                     }
                 );
 
-                /*
-                 * API trả về:
-                 *
-                 * {
-                 *     success: true,
-                 *     data: [
-                 *         {
-                 *             banner_id: 1,
-                 *             page: "NEWS",
-                 *             image_url: "...",
-                 *             is_active: 1
-                 *         }
-                 *     ]
-                 * }
-                 *
-                 * => BANNER NẰM TẠI:
-                 *
-                 * res.data.data
-                 */
-
                 const bannerData =
                     res.data?.success === true &&
                     Array.isArray(res.data?.data)
@@ -380,11 +360,11 @@ const News = () => {
                                             item.news_id
                                         }
                                         type="news"
+                                        detailType="news"
+                                        slug={item.slug}
                                         image={imageUrl}
                                         title={item.title}
-                                        link={
-                                            `/news/${item.slug}`
-                                        }
+                                        buttonText="Đọc thêm"
                                     />
 
                                 );

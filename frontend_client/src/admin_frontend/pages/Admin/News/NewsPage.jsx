@@ -1,3 +1,4 @@
+// pages/admin/NewsPage.js
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import api from '../../../../api/api';
 import {
@@ -7,8 +8,7 @@ import {
     Loader2,
     Eye,
     Heart,
-    ExternalLink,
-    Image as ImageIcon
+    ExternalLink
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -18,7 +18,7 @@ import AdminForm from '../../../components/AdminForm';
 import AdminPagination from '../../../components/AdminPagination';
 
 // ==========================================================
-// HELPERS & CONSTANTS
+// IMAGE URL HELPERS
 // ==========================================================
 const getImageUrl = (image) => {
     if (!image) return '';
@@ -26,8 +26,9 @@ const getImageUrl = (image) => {
     return `https://api.quangdungcinema.id.vn/uploads/news/${image}`;
 };
 
-const DEFAULT_IMAGE = 'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-news.jpg';
-
+// ==========================================================
+// INITIAL FORM
+// ==========================================================
 const initialFormData = {
     title: '',
     slug: '',
@@ -39,13 +40,17 @@ const initialFormData = {
 // COMPONENT
 // ==========================================================
 const NewsPage = () => {
+
     // ======================================================
-    // STATES
+    // DATA
     // ======================================================
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
 
+    // ======================================================
+    // SEARCH & PAGINATION
+    // ======================================================
     const [search, setSearch] = useState('');
     const [pagination, setPagination] = useState({
         page: 1,
@@ -56,18 +61,21 @@ const NewsPage = () => {
         hasPreviousPage: false
     });
 
+    // ======================================================
+    // CHỐNG GỌI TRÙNG
+    // ======================================================
     const isFetching = useRef(false);
     const abortControllerRef = useRef(null);
 
+    // ======================================================
+    // FORM
+    // ======================================================
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingNews, setEditingNews] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
-    const [errors, setErrors] = useState({});
-    
-    // ===== FILE STATES =====
     const [newsImageFile, setNewsImageFile] = useState(null);
     const [newsBackdropFile, setNewsBackdropFile] = useState(null);
-    const [filePreviews, setFilePreviews] = useState({});
+    const [formErrors, setFormErrors] = useState({});
 
     // ======================================================
     // ALERT MODAL
@@ -181,7 +189,7 @@ const NewsPage = () => {
     }, [fetchNews]);
 
     // ======================================================
-    // SEARCH - DEBOUNCE 400ms
+    // SEARCH DEBOUNCE
     // ======================================================
     const prevSearchRef = useRef('');
 
@@ -207,8 +215,19 @@ const NewsPage = () => {
     };
 
     // ======================================================
-    // SLUG GENERATOR
+    // VALIDATE FORM
     // ======================================================
+    const validateForm = () => {
+        const errors = {};
+        if (!formData.title.trim()) errors.title = 'Vui lòng nhập tiêu đề bài viết.';
+        if (!formData.content.trim()) errors.content = 'Vui lòng nhập nội dung bài viết.';
+        if (!editingNews && !newsImageFile) {
+            errors.news_image = 'Vui lòng chọn file hình ảnh cho bài viết.';
+        }
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
     const generateSlug = (str) => {
         if (!str) return '';
         return str
@@ -223,35 +242,14 @@ const NewsPage = () => {
     };
 
     // ======================================================
-    // VALIDATE FORM
-    // ======================================================
-    const validateForm = () => {
-        const newErrors = {};
-        if (!formData.title.trim()) {
-            newErrors.title = 'Vui lòng nhập tiêu đề bài viết.';
-        } else if (formData.title.trim().length < 5) {
-            newErrors.title = 'Tiêu đề bài viết phải chứa ít nhất 5 ký tự.';
-        }
-        if (!formData.content.trim()) {
-            newErrors.content = 'Vui lòng nhập nội dung chi tiết bài viết.';
-        }
-        if (!editingNews && !newsImageFile) {
-            newErrors.news_image = 'Vui lòng chọn hình ảnh đại diện bài viết.';
-        }
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    // ======================================================
-    // HANDLE MODAL ACTIONS
+    // OPEN ADD / EDIT
     // ======================================================
     const handleOpenAdd = () => {
         setEditingNews(null);
         setFormData(initialFormData);
-        setErrors({});
         setNewsImageFile(null);
         setNewsBackdropFile(null);
-        setFilePreviews({});
+        setFormErrors({});
         setIsFormOpen(true);
     };
 
@@ -263,155 +261,57 @@ const NewsPage = () => {
             content: item.content || '',
             likes: item.likes || 0
         });
-        setErrors({});
         setNewsImageFile(null);
         setNewsBackdropFile(null);
-
-        const previews = {};
-        
-        // Ảnh chính
-        if (item.news_image) {
-            previews.news_image = {
-                url: getImageUrl(item.news_image),
-                name: item.news_image
-            };
-        }
-        
-        // Ảnh backdrop
-        if (item.news_backdrop) {
-            previews.news_backdrop = {
-                url: getImageUrl(item.news_backdrop),
-                name: item.news_backdrop
-            };
-        }
-        
-        setFilePreviews(previews);
+        setFormErrors({});
         setIsFormOpen(true);
     };
 
-    // ======================================================
-    // HANDLE FORM CHANGE
-    // ======================================================
-    const handleChange = (e) => {
-        const { name, value, files } = e.target;
-
-        if (errors[name]) {
-            setErrors((prev) => ({ ...prev, [name]: '' }));
-        }
-
-        // ===== FILE: NEWS IMAGE =====
-        if (name === 'news_image') {
-            const file = files?.[0] || null;
-            setNewsImageFile(file);
-            
-            if (filePreviews.news_image?.url?.startsWith('blob:')) {
-                URL.revokeObjectURL(filePreviews.news_image.url);
-            }
-            
-            if (file) {
-                setFilePreviews((prev) => ({
-                    ...prev,
-                    news_image: {
-                        url: URL.createObjectURL(file),
-                        name: file.name
-                    }
-                }));
-            } else {
-                setFilePreviews((prev) => {
-                    const newPreviews = { ...prev };
-                    delete newPreviews.news_image;
-                    return newPreviews;
-                });
-            }
-            return;
-        }
-
-        // ===== FILE: NEWS BACKDROP =====
-        if (name === 'news_backdrop') {
-            const file = files?.[0] || null;
-            setNewsBackdropFile(file);
-            
-            if (filePreviews.news_backdrop?.url?.startsWith('blob:')) {
-                URL.revokeObjectURL(filePreviews.news_backdrop.url);
-            }
-            
-            if (file) {
-                setFilePreviews((prev) => ({
-                    ...prev,
-                    news_backdrop: {
-                        url: URL.createObjectURL(file),
-                        name: file.name
-                    }
-                }));
-            } else {
-                setFilePreviews((prev) => {
-                    const newPreviews = { ...prev };
-                    delete newPreviews.news_backdrop;
-                    return newPreviews;
-                });
-            }
-            return;
-        }
-
-        if (name === 'title') {
-            setFormData((prev) => ({
-                ...prev,
-                title: value,
-                slug: generateSlug(value)
-            }));
-            return;
-        }
-
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
-
-    // ======================================================
-    // HANDLE CLOSE FORM
-    // ======================================================
     const handleCloseForm = () => {
         if (submitLoading) return;
         setIsFormOpen(false);
         setEditingNews(null);
-        setErrors({});
+        setFormErrors({});
         setNewsImageFile(null);
         setNewsBackdropFile(null);
-        
-        // Cleanup blob URLs
-        if (filePreviews.news_image?.url?.startsWith('blob:')) {
-            URL.revokeObjectURL(filePreviews.news_image.url);
-        }
-        if (filePreviews.news_backdrop?.url?.startsWith('blob:')) {
-            URL.revokeObjectURL(filePreviews.news_backdrop.url);
-        }
-        setFilePreviews({});
     };
 
     // ======================================================
-    // HANDLE SUBMIT
+    // HANDLE CHANGE
+    // ======================================================
+    const handleChange = (e) => {
+        const { name, value, files } = e.target;
+        if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
+
+        if (name === 'news_image') {
+            setNewsImageFile(files?.[0] || null);
+            return;
+        }
+        if (name === 'news_backdrop') {
+            setNewsBackdropFile(files?.[0] || null);
+            return;
+        }
+        if (name === 'title') {
+            setFormData(prev => ({ ...prev, title: value, slug: generateSlug(value) }));
+            return;
+        }
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // ======================================================
+    // SUBMIT
     // ======================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
-
         try {
             setSubmitLoading(true);
             const submitData = new FormData();
-            submitData.append('title', formData.title.trim());
-            submitData.append('slug', formData.slug);
-            submitData.append('content', formData.content.trim());
-            submitData.append('likes', formData.likes || 0);
+            Object.entries(formData).forEach(([key, value]) => submitData.append(key, value));
+            if (newsImageFile) submitData.append('news_image', newsImageFile);
+            if (newsBackdropFile) submitData.append('news_backdrop', newsBackdropFile);
 
-            if (newsImageFile) {
-                submitData.append('news_image', newsImageFile);
-            }
-
-            if (newsBackdropFile) {
-                submitData.append('news_backdrop', newsBackdropFile);
-            }
-
-            const config = {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            };
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
 
             if (editingNews) {
                 await api.put(`/api/news/${editingNews.news_id}`, submitData, config);
@@ -425,22 +325,25 @@ const NewsPage = () => {
                 setIsFormOpen(false);
                 fetchNews(pagination.page, search);
                 setTimeout(() => {
-                    showAlert('Thành công', 'Đăng bài viết mới thành công.', 'success');
+                    showAlert('Thành công', 'Thêm bài viết thành công.', 'success');
                 }, 100);
             }
         } catch (error) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
-            } else {
-                showAlert('Lỗi', error.response?.data?.message || 'Không thể lưu bài viết.', 'error');
+            console.error('SUBMIT NEWS ERROR:', error);
+            const backendField = error.response?.data?.field;
+            const backendError = error.response?.data?.message;
+            if (backendField) {
+                setFormErrors({ [backendField]: backendError });
+                return;
             }
+            showAlert('Lỗi', backendError || 'Đã xảy ra lỗi.', 'error');
         } finally {
             setSubmitLoading(false);
         }
     };
 
     // ======================================================
-    // HANDLE DELETE
+    // DELETE
     // ======================================================
     const handleDelete = (item) => {
         showAlert(
@@ -451,10 +354,10 @@ const NewsPage = () => {
                 try {
                     await api.delete(`/api/news/${item.news_id}`);
                     closeAlert();
-
-                    const newPage = news.length === 1 && pagination.page > 1
-                        ? pagination.page - 1
-                        : pagination.page;
+                    const currentPage = pagination.page;
+                    const newPage = news.length === 1 && currentPage > 1
+                        ? currentPage - 1
+                        : currentPage;
                     await fetchNews(newPage, search);
                     setTimeout(() => {
                         showAlert('Thành công', 'Xóa bài viết thành công.', 'success');
@@ -463,20 +366,12 @@ const NewsPage = () => {
                     console.error('DELETE NEWS ERROR:', error);
                     closeAlert();
                     setTimeout(() => {
-                        showAlert('Lỗi', 'Không thể xóa bài viết.', 'error');
+                        showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa bài viết.', 'error');
                     }, 100);
                 }
             },
             closeAlert
         );
-    };
-
-    // ======================================================
-    // HELPER: IMAGE ERROR HANDLER
-    // ======================================================
-    const handleImageError = (e) => {
-        e.target.onerror = null;
-        e.target.src = 'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-news.jpg';
     };
 
     // ======================================================
@@ -488,40 +383,11 @@ const NewsPage = () => {
             key: 'news_image',
             render: (row) => (
                 <img
-                    src={getImageUrl(row.news_image) || DEFAULT_IMAGE}
-                    alt="news"
-                    style={{
-                        width: '120px',
-                        height: '70px',
-                        objectFit: 'cover',
-                        borderRadius: '10px'
-                    }}
-                    onError={handleImageError}
+                    src={getImageUrl(row.news_image)}
+                    alt={row.title}
+                    style={{ width: '70px', height: '100px', objectFit: 'cover', borderRadius: '10px' }}
+                    onError={(e) => { e.target.src = 'https://via.placeholder.com/70x100?text=No+Image'; }}
                 />
-            )
-        },
-        {
-            title: 'Backdrop',
-            key: 'news_backdrop',
-            render: (row) => (
-                row.news_backdrop ? (
-                    <img
-                        src={getImageUrl(row.news_backdrop)}
-                        alt="backdrop"
-                        style={{
-                            width: '120px',
-                            height: '50px',
-                            objectFit: 'cover',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(255,255,255,0.1)'
-                        }}
-                        onError={handleImageError}
-                    />
-                ) : (
-                    <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
-                        <ImageIcon size={16} style={{ verticalAlign: 'middle' }} /> Chưa có
-                    </span>
-                )
             )
         },
         { title: 'Tiêu đề', key: 'title' },
@@ -546,19 +412,13 @@ const NewsPage = () => {
         {
             title: 'Ngày đăng',
             key: 'created_at',
-            render: (row) =>
-                new Date(row.created_at).toLocaleDateString('vi-VN')
+            render: (row) => new Date(row.created_at).toLocaleDateString('vi-VN')
         },
         {
             title: 'Xem',
             key: 'slug',
             render: (row) => (
-                <a
-                    href={`/news/${row.slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: '#06b6d4' }}
-                >
+                <a href={`/news/detail/${row.slug}`} target="_blank" rel="noreferrer" style={{ color: '#06b6d4' }}>
                     <ExternalLink size={18} />
                 </a>
             )
@@ -568,16 +428,10 @@ const NewsPage = () => {
             key: 'actions',
             render: (row) => (
                 <div className="admin-table-actions">
-                    <button
-                        className="admin-action-btn edit-btn"
-                        onClick={() => handleOpenEdit(row)}
-                    >
+                    <button className="admin-action-btn edit-btn" onClick={() => handleOpenEdit(row)}>
                         <Edit size={16} />
                     </button>
-                    <button
-                        className="admin-action-btn delete-btn"
-                        onClick={() => handleDelete(row)}
-                    >
+                    <button className="admin-action-btn delete-btn" onClick={() => handleDelete(row)}>
                         <Trash2 size={16} />
                     </button>
                 </div>
@@ -586,45 +440,35 @@ const NewsPage = () => {
     ];
 
     // ======================================================
-    // FORM FIELDS - THÊM TRƯỜNG BACKDROP
+    // FORM FIELDS
     // ======================================================
     const formFields = [
-        {
-            label: 'Tiêu đề bài viết',
-            name: 'title',
-            type: 'text',
-            placeholder: 'Nhập tiêu đề tin tức'
-        },
-        {
-            label: 'Đường dẫn (Slug)',
-            name: 'slug',
-            type: 'text',
-            disabled: true
-        },
-        {
-            label: 'Hình ảnh đại diện (vuông)',
-            name: 'news_image',
-            type: 'file'
-        },
-        {
-            label: 'Hình ảnh ngang (Backdrop)',
-            name: 'news_backdrop',
-            type: 'file'
-        },
-        {
-            label: 'Likes',
-            name: 'likes',
-            type: 'number',
-            placeholder: '0'
-        },
-        {
-            label: 'Nội dung chi tiết',
-            name: 'content',
-            type: 'textarea',
-            placeholder: 'Nhập nội dung bài viết...',
-            rows: 10
-        }
+        { label: 'Tiêu đề bài viết', name: 'title', type: 'text', placeholder: 'Nhập tiêu đề tin tức' },
+        { label: 'Slug', name: 'slug', type: 'text', placeholder: 'Slug tự động', disabled: true },
+        { label: 'Hình ảnh đại diện', name: 'news_image', type: 'file' },
+        { label: 'Hình ảnh ngang (Backdrop)', name: 'news_backdrop', type: 'file' },
+        { label: 'Likes', name: 'likes', type: 'number', placeholder: '0' },
+        { label: 'Nội dung', name: 'content', type: 'textarea', placeholder: 'Nhập nội dung bài viết', rows: 10 }
     ];
+
+    // ======================================================
+    // FILE PREVIEWS
+    // ======================================================
+    const filePreviews = {};
+    if (editingNews) {
+        if (editingNews.news_image) {
+            filePreviews['news_image'] = {
+                url: getImageUrl(editingNews.news_image),
+                name: editingNews.news_image
+            };
+        }
+        if (editingNews.news_backdrop) {
+            filePreviews['news_backdrop'] = {
+                url: getImageUrl(editingNews.news_backdrop),
+                name: editingNews.news_backdrop
+            };
+        }
+    }
 
     // ======================================================
     // RENDER
@@ -633,7 +477,7 @@ const NewsPage = () => {
         <>
             <AdminPage
                 title="Quản lý tin tức"
-                subtitle="Quản lý toàn bộ bài viết hệ thống"
+                subtitle="Quản lý toàn bộ tin tức trong hệ thống"
                 icon={<Newspaper size={30} />}
                 buttonText="Thêm bài viết"
                 onAdd={handleOpenAdd}
@@ -670,11 +514,11 @@ const NewsPage = () => {
                 <AdminForm
                     fields={formFields}
                     formData={formData}
-                    errors={errors}
+                    errors={formErrors}
                     onChange={handleChange}
                     onSubmit={handleSubmit}
                     loading={submitLoading}
-                    submitText={editingNews ? 'Lưu thay đổi' : 'Đăng bài viết'}
+                    submitText={editingNews ? 'Lưu thay đổi' : 'Thêm bài viết'}
                     filePreviews={filePreviews}
                 />
             </AdminModal>

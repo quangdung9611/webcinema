@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/api';
@@ -64,28 +63,6 @@ const BlogCinema = () => {
                     }
                 );
 
-                /*
-                 * API banner hiện tại:
-                 *
-                 * {
-                 *     success: true,
-                 *     data: [
-                 *         {
-                 *             banner_id: 1,
-                 *             page: "BLOG",
-                 *             image_url: "...",
-                 *             is_active: 1,
-                 *             created_at: "...",
-                 *             updated_at: "..."
-                 *         }
-                 *     ]
-                 * }
-                 *
-                 * => Danh sách banner nằm tại:
-                 *
-                 * res.data.data
-                 */
-
                 const bannerData =
                     res.data?.success === true &&
                     Array.isArray(res.data?.data)
@@ -130,21 +107,6 @@ const BlogCinema = () => {
                 const res = await api.get(
                     '/api/blog-cinema'
                 );
-
-                /*
-                 * API Blog hiện tại:
-                 *
-                 * [
-                 *     {
-                 *         blog_id: 1,
-                 *         title: "...",
-                 *         slug: "...",
-                 *         blog_image: "..."
-                 *     }
-                 * ]
-                 *
-                 * => lấy trực tiếp res.data
-                 */
 
                 const blogData =
                     Array.isArray(res.data?.data)
@@ -392,27 +354,30 @@ const BlogCinema = () => {
                     <div className="blog-grid">
 
                         {blogs.map(
-                            (blog) => (
+                            (blog) => {
 
-                                <CinemaCard
-                                    key={
-                                        blog.blog_id
-                                    }
-                                    type="news"
-                                    image={
-                                        blog.blog_image ||
-                                        blog.image_url ||
-                                        null
-                                    }
-                                    title={
-                                        blog.title
-                                    }
-                                    link={
-                                        `/blog-cinema/${blog.slug}`
-                                    }
-                                />
+                                const imageUrl =
+                                    blog.blog_image ||
+                                    blog.image_url ||
+                                    null;
 
-                            )
+                                return (
+
+                                    <CinemaCard
+                                        key={
+                                            blog.blog_id
+                                        }
+                                        type="blog"
+                                        detailType="blog"
+                                        slug={blog.slug}
+                                        image={imageUrl}
+                                        title={blog.title}
+                                        buttonText="Đọc thêm"
+                                    />
+
+                                );
+
+                            }
                         )}
 
                     </div>
@@ -426,4 +391,3 @@ const BlogCinema = () => {
 };
 
 export default BlogCinema;
-
