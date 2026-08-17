@@ -367,11 +367,7 @@ class ShowtimeService {
         AUTO SCHEDULE SHOWTIMES
         ADMIN
 
-        Controller gọi:
-
-        scheduleShowtimes(data)
-
-        Dữ liệu:
+        Frontend gửi:
 
         {
             movie_id,
@@ -380,19 +376,34 @@ class ShowtimeService {
             start_date: "2026-08-17",
             end_date: "2026-09-17",
             start_hour: "09:00",
-            end_hour: "24:00",
+            end_hour: "23:59",
             distribution: "high"
         }
 
-        Scheduler sẽ:
+        Scheduler cần:
 
-        - lấy duration phim
-        - lấy thông tin phòng
-        - tính khoảng cách suất
-        - phân bổ theo mức độ
-        - kiểm tra trùng
-        - bỏ qua suất xung đột
-        - tạo các suất hợp lệ
+        {
+            movieId,
+            roomIds,
+            startDate,
+            endDate,
+            duration,
+            startTime,
+            endTime,
+            distributionLevel
+        }
+
+        Service sẽ:
+
+        1. Validate dữ liệu
+        2. Lấy duration phim
+        3. Kiểm tra phòng thuộc rạp
+        4. Chuẩn hóa room IDs
+        5. Gọi Scheduler
+        6. Kiểm tra conflict với DB
+        7. Bỏ qua suất bị conflict
+        8. INSERT suất hợp lệ
+        9. Trả summary
     =========================================================*/
 
     async scheduleShowtimes(data) {
@@ -423,10 +434,29 @@ class ShowtimeService {
 
 
         // ------------------------------------------------------
+        // NORMALIZE MOVIE ID
+        // ------------------------------------------------------
+
+        const movieId =
+            Number(movie_id);
+
+
+        // ------------------------------------------------------
+        // NORMALIZE CINEMA ID
+        // ------------------------------------------------------
+
+        const cinemaId =
+            Number(cinema_id);
+
+
+        // ------------------------------------------------------
         // VALIDATE MOVIE
         // ------------------------------------------------------
 
-        if (!movie_id) {
+        if (
+            !Number.isInteger(movieId) ||
+            movieId <= 0
+        ) {
 
             const err =
                 new Error(
@@ -444,7 +474,10 @@ class ShowtimeService {
         // VALIDATE CINEMA
         // ------------------------------------------------------
 
-        if (!cinema_id) {
+        if (
+            !Number.isInteger(cinemaId) ||
+            cinemaId <= 0
+        ) {
 
             const err =
                 new Error(
@@ -474,137 +507,6 @@ class ShowtimeService {
 
             err.statusCode = 400;
             err.field = "room_ids";
-
-            throw err;
-        }
-
-
-        // ------------------------------------------------------
-        // VALIDATE DATE
-        // ------------------------------------------------------
-
-        if (!start_date) {
-
-            const err =
-                new Error(
-                    "Vui lòng chọn ngày bắt đầu"
-                );
-
-            err.statusCode = 400;
-            err.field = "start_date";
-
-            throw err;
-        }
-
-
-        if (!end_date) {
-
-            const err =
-                new Error(
-                    "Vui lòng chọn ngày kết thúc"
-                );
-
-            err.statusCode = 400;
-            err.field = "end_date";
-
-            throw err;
-        }
-
-
-        // ------------------------------------------------------
-        // VALIDATE DATE RANGE
-        // ------------------------------------------------------
-
-        const startDate =
-            new Date(
-                `${start_date}T00:00:00`
-            );
-
-
-        const endDate =
-            new Date(
-                `${end_date}T00:00:00`
-            );
-
-
-        if (
-            Number.isNaN(
-                startDate.getTime()
-            ) ||
-            Number.isNaN(
-                endDate.getTime()
-            )
-        ) {
-
-            const err =
-                new Error(
-                    "Khoảng thời gian không hợp lệ"
-                );
-
-            err.statusCode = 400;
-
-            throw err;
-        }
-
-
-        if (endDate < startDate) {
-
-            const err =
-                new Error(
-                    "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu"
-                );
-
-            err.statusCode = 400;
-            err.field = "end_date";
-
-            throw err;
-        }
-
-
-        // ------------------------------------------------------
-        // DEFAULT TIME
-        // ------------------------------------------------------
-
-        const scheduleStartHour =
-            start_hour || "09:00";
-
-
-        const scheduleEndHour =
-            end_hour || "24:00";
-
-
-        // ------------------------------------------------------
-        // DISTRIBUTION
-        //
-        // low    = ít
-        // medium = vừa
-        // high   = nhiều
-        // ------------------------------------------------------
-
-        const allowedDistribution = [
-            "low",
-            "medium",
-            "high"
-        ];
-
-
-        const scheduleDistribution =
-            distribution || "medium";
-
-
-        if (
-            !allowedDistribution.includes(
-                scheduleDistribution
-            )
-        ) {
-
-            const err =
-                new Error(
-                    "Mức độ phân bổ không hợp lệ"
-                );
-
-            err.statusCode = 400;
-            err.field = "distribution";
 
             throw err;
         }
@@ -646,37 +548,642 @@ class ShowtimeService {
 
 
         // ------------------------------------------------------
-        // GỌI SCHEDULER
+        // VALIDATE START DATE
         // ------------------------------------------------------
 
-        const result =
+        if (!start_date) {
+
+            const err =
+                new Error(
+                    "Vui lòng chọn ngày bắt đầu"
+                );
+
+            err.statusCode = 400;
+            err.field = "start_date";
+
+            throw err;
+        }
+
+
+        // ------------------------------------------------------
+        // VALIDATE END DATE
+        // ------------------------------------------------------
+
+        if (!end_date) {
+
+            const err =
+                new Error(
+                    "Vui lòng chọn ngày kết thúc"
+                );
+
+            err.statusCode = 400;
+            err.field = "end_date";
+
+            throw err;
+        }
+
+
+        // ------------------------------------------------------
+        // VALIDATE DATE FORMAT
+        // ------------------------------------------------------
+
+        const startDate =
+            new Date(
+                `${start_date}T00:00:00`
+            );
+
+
+        const endDate =
+            new Date(
+                `${end_date}T00:00:00`
+            );
+
+
+        if (
+            Number.isNaN(
+                startDate.getTime()
+            ) ||
+            Number.isNaN(
+                endDate.getTime()
+            )
+        ) {
+
+            const err =
+                new Error(
+                    "Khoảng thời gian không hợp lệ"
+                );
+
+            err.statusCode = 400;
+
+            throw err;
+        }
+
+
+        // ------------------------------------------------------
+        // VALIDATE DATE RANGE
+        // ------------------------------------------------------
+
+        if (endDate < startDate) {
+
+            const err =
+                new Error(
+                    "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu"
+                );
+
+            err.statusCode = 400;
+            err.field = "end_date";
+
+            throw err;
+        }
+
+
+        // ------------------------------------------------------
+        // DEFAULT TIME
+        // ------------------------------------------------------
+
+        const scheduleStartHour =
+            start_hour || "09:00";
+
+
+        const scheduleEndHour =
+            end_hour || "23:59";
+
+
+        // ------------------------------------------------------
+        // VALIDATE TIME FORMAT
+        // ------------------------------------------------------
+
+        const timeRegex =
+            /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+
+        if (
+            !timeRegex.test(
+                scheduleStartHour
+            )
+        ) {
+
+            const err =
+                new Error(
+                    "Giờ bắt đầu không hợp lệ"
+                );
+
+            err.statusCode = 400;
+            err.field = "start_hour";
+
+            throw err;
+        }
+
+
+        if (
+            !timeRegex.test(
+                scheduleEndHour
+            )
+        ) {
+
+            const err =
+                new Error(
+                    "Giờ kết thúc không hợp lệ"
+                );
+
+            err.statusCode = 400;
+            err.field = "end_hour";
+
+            throw err;
+        }
+
+
+        // ------------------------------------------------------
+        // KIỂM TRA GIỜ BẮT ĐẦU / KẾT THÚC
+        // ------------------------------------------------------
+
+        const [
+            startHour,
+            startMinute
+        ] =
+            scheduleStartHour
+                .split(":")
+                .map(Number);
+
+
+        const [
+            endHour,
+            endMinute
+        ] =
+            scheduleEndHour
+                .split(":")
+                .map(Number);
+
+
+        const startMinutes =
+            startHour * 60 +
+            startMinute;
+
+
+        const endMinutes =
+            endHour * 60 +
+            endMinute;
+
+
+        if (
+            endMinutes <=
+            startMinutes
+        ) {
+
+            const err =
+                new Error(
+                    "Giờ kết thúc phải lớn hơn giờ bắt đầu"
+                );
+
+            err.statusCode = 400;
+            err.field = "end_hour";
+
+            throw err;
+        }
+
+
+        // ------------------------------------------------------
+        // DISTRIBUTION
+        //
+        // low    = ít
+        // medium = vừa
+        // high   = nhiều
+        // ------------------------------------------------------
+
+        const allowedDistribution = [
+            "low",
+            "medium",
+            "high"
+        ];
+
+
+        const scheduleDistribution =
+            distribution || "medium";
+
+
+        if (
+            !allowedDistribution.includes(
+                scheduleDistribution
+            )
+        ) {
+
+            const err =
+                new Error(
+                    "Mức độ phân bổ không hợp lệ"
+                );
+
+            err.statusCode = 400;
+            err.field = "distribution";
+
+            throw err;
+        }
+
+
+        // ------------------------------------------------------
+        // LẤY THỜI LƯỢNG PHIM
+        // ------------------------------------------------------
+
+        const movie =
+            await ShowtimeRepository.getMovieDuration(
+                movieId
+            );
+
+
+        if (!movie) {
+
+            const err =
+                new Error(
+                    "Không tìm thấy phim"
+                );
+
+            err.statusCode = 404;
+            err.field = "movie_id";
+
+            throw err;
+        }
+
+
+        const duration =
+            Number(movie.duration);
+
+
+        if (
+            !Number.isFinite(duration) ||
+            duration <= 0
+        ) {
+
+            const err =
+                new Error(
+                    "Thời lượng phim không hợp lệ"
+                );
+
+            err.statusCode = 400;
+            err.field = "movie_id";
+
+            throw err;
+        }
+
+
+        // ------------------------------------------------------
+        // KIỂM TRA CÁC PHÒNG THUỘC ĐÚNG RẠP
+        // ------------------------------------------------------
+
+        for (
+            const roomId
+            of normalizedRoomIds
+        ) {
+
+            const room =
+                await ShowtimeRepository
+                    .findRoomInCinema(
+                        roomId,
+                        cinemaId
+                    );
+
+
+            if (!room) {
+
+                const err =
+                    new Error(
+                        `Phòng ${roomId} không thuộc rạp đã chọn`
+                    );
+
+                err.statusCode = 400;
+                err.field = "room_ids";
+
+                throw err;
+            }
+        }
+
+
+        // ------------------------------------------------------
+        // GỌI SCHEDULER
+        //
+        // QUAN TRỌNG:
+        //
+        // Scheduler KHÔNG nhận:
+        //
+        // room_ids
+        // start_date
+        // end_date
+        // start_hour
+        // end_hour
+        // distribution
+        //
+        // Scheduler nhận:
+        //
+        // roomIds
+        // startDate
+        // endDate
+        // duration
+        // startTime
+        // endTime
+        // distributionLevel
+        // ------------------------------------------------------
+
+        const generated =
             await ShowtimeScheduler.generate({
 
-                movieId: // SỬA LẠI TÊN BIẾN
-                    Number(movie_id),
+                movieId:
 
-                cinema_id:
-                    Number(cinema_id),
+                    movieId,
 
-                room_ids:
+                roomIds:
+
                     normalizedRoomIds,
 
-                start_date,
+                startDate:
 
-                end_date,
+                    start_date,
 
-                start_hour:
+                endDate:
+
+                    end_date,
+
+                duration:
+
+                    duration,
+
+                startTime:
+
                     scheduleStartHour,
 
-                end_hour:
+                endTime:
+
                     scheduleEndHour,
 
-                distribution:
+                distributionLevel:
+
                     scheduleDistribution
             });
 
 
-        return result;
+        // ------------------------------------------------------
+        // KIỂM TRA KẾT QUẢ SCHEDULER
+        // ------------------------------------------------------
+
+        if (
+            !generated ||
+            !Array.isArray(
+                generated.data
+            )
+        ) {
+
+            const err =
+                new Error(
+                    "Scheduler không trả về danh sách suất chiếu hợp lệ"
+                );
+
+            err.statusCode = 500;
+
+            throw err;
+        }
+
+
+        // ------------------------------------------------------
+        // INSERT CÁC SUẤT HỢP LỆ
+        //
+        // Scheduler chỉ GENERATE.
+        //
+        // Service mới là nơi INSERT DB.
+        // ------------------------------------------------------
+
+        const created = [];
+
+        const conflicts = [];
+
+        const skippedPast = [];
+
+
+        for (
+            const slot
+            of generated.data
+        ) {
+
+            const roomId =
+                Number(
+                    slot.room_id
+                );
+
+
+            const slotStartTime =
+                formatDateTime(
+                    slot.start_time
+                );
+
+
+            const slotEndTime =
+                formatDateTime(
+                    slot.end_time
+                );
+
+
+            // --------------------------------------------------
+            // VALIDATE SLOT
+            // --------------------------------------------------
+
+            if (
+                !Number.isInteger(roomId) ||
+                roomId <= 0 ||
+                !slotStartTime
+            ) {
+
+                conflicts.push({
+
+                    ...slot,
+
+                    reason:
+                        "Suất chiếu được Scheduler tạo ra không hợp lệ"
+                });
+
+                continue;
+            }
+
+
+            // --------------------------------------------------
+            // KHÔNG CHO INSERT SUẤT TRONG QUÁ KHỨ
+            // --------------------------------------------------
+
+            const isPast =
+                await ShowtimeRepository.isPastTime(
+                    slotStartTime
+                );
+
+
+            if (isPast) {
+
+                skippedPast.push({
+
+                    ...slot,
+
+                    reason:
+                        "Suất chiếu nằm trong quá khứ"
+                });
+
+                continue;
+            }
+
+
+            // --------------------------------------------------
+            // KIỂM TRA CONFLICT
+            //
+            // Dùng cả start_time và end_time
+            // để kiểm tra khoảng thời gian.
+            // --------------------------------------------------
+
+            const conflict =
+                await ShowtimeRepository.findConflict(
+                    roomId,
+                    slotStartTime,
+                    slotEndTime
+                );
+
+
+            if (conflict) {
+
+                conflicts.push({
+
+                    ...slot,
+
+                    reason:
+                        "Phòng đã có suất chiếu bị trùng thời gian",
+
+                    conflictShowtimeId:
+                        conflict.showtime_id ||
+                        conflict.id ||
+                        null
+                });
+
+                continue;
+            }
+
+
+            // --------------------------------------------------
+            // INSERT
+            // --------------------------------------------------
+
+            try {
+
+                const showtimeId =
+                    await ShowtimeRepository.create({
+
+                        movie_id:
+                            movieId,
+
+                        cinema_id:
+                            cinemaId,
+
+                        room_id:
+                            roomId,
+
+                        start_time:
+                            slotStartTime
+                    });
+
+
+                created.push({
+
+                    showtime_id:
+                        showtimeId,
+
+                    movie_id:
+                        movieId,
+
+                    cinema_id:
+                        cinemaId,
+
+                    room_id:
+                        roomId,
+
+                    start_time:
+                        slotStartTime,
+
+                    end_time:
+                        slotEndTime,
+
+                    duration:
+                        duration
+                });
+
+            } catch (error) {
+
+                /*
+                 * Nếu DB phát hiện conflict
+                 * do race condition thì không
+                 * làm chết toàn bộ batch.
+                 */
+
+                conflicts.push({
+
+                    ...slot,
+
+                    reason:
+                        error.message ||
+                        "Không thể tạo suất chiếu"
+                });
+            }
+        }
+
+
+        // ------------------------------------------------------
+        // RETURN
+        // ------------------------------------------------------
+
+        return {
+
+            success: true,
+
+            data: created,
+
+            conflicts,
+
+            skippedPast,
+
+            summary: {
+
+                movieId:
+                    movieId,
+
+                cinemaId:
+                    cinemaId,
+
+                roomCount:
+                    normalizedRoomIds.length,
+
+                generatedCount:
+                    generated.data.length,
+
+                createdCount:
+                    created.length,
+
+                conflictCount:
+                    conflicts.length,
+
+                skippedPastCount:
+                    skippedPast.length,
+
+                duration:
+                    duration,
+
+                startDate:
+                    start_date,
+
+                endDate:
+                    end_date,
+
+                startTime:
+                    scheduleStartHour,
+
+                endTime:
+                    scheduleEndHour,
+
+                distribution:
+                    scheduleDistribution
+            },
+
+            schedulerSummary:
+                generated.summary || null
+        };
     }
 
 

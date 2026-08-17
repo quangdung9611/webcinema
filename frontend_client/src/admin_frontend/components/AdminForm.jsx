@@ -345,6 +345,61 @@ const AdminForm = ({
         }
 
         /* ================================================
+           CHECKBOX GROUP (NEW)
+        ================================================= */
+
+        if (field.type === 'checkbox') {
+            const currentValues = formData[fieldName] || [];
+            const fieldError = errors?.[fieldName];
+
+            return (
+                <div
+                    key={fieldName}
+                    className="admin-form-group"
+                >
+
+                    {field.label && (
+                        <label className="admin-form-label">
+                            {field.label}
+                            {field.required && (
+                                <span className="admin-required">
+                                    *
+                                </span>
+                            )}
+                        </label>
+                    )}
+
+                    <div className="admin-checkbox-grid">
+                        {field.options?.map((option) => (
+                            <label
+                                key={option.value}
+                                className="admin-checkbox-item"
+                            >
+                                <input
+                                    type="checkbox"
+                                    name={fieldName}
+                                    value={option.value}
+                                    checked={currentValues.map(Number).includes(Number(option.value))}
+                                    onChange={onChange}
+                                />
+                                <span>{option.label}</span>
+                            </label>
+                        ))}
+                    </div>
+
+                    {renderError(fieldName)}
+                    {currentValues.length > 0 && !fieldError && (
+                        <div className="admin-form-success">
+                            <CheckCircle size={15} />
+                            <span>Đã chọn {currentValues.length} mục</span>
+                        </div>
+                    )}
+
+                </div>
+            );
+        }
+
+        /* ================================================
            INPUT THƯỜNG
         ================================================= */
 

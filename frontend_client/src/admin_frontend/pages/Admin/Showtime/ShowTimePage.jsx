@@ -536,7 +536,9 @@ const ShowTimePage = () => {
 
         const {
             name,
-            value
+            value,
+            type,
+            checked
         } = e.target;
 
 
@@ -569,21 +571,35 @@ const ShowTimePage = () => {
 
 
         // ----------------------------------------------
-        // ROOM MULTI SELECT
+        // ROOM CHECKBOX
         // ----------------------------------------------
 
         if (name === 'room_ids') {
 
-            const selected =
-                Array.from(
-                    e.target.selectedOptions,
-                    option => Number(option.value)
-                );
+            const roomId = Number(value);
 
-            setScheduleData(prev => ({
-                ...prev,
-                room_ids: selected
-            }));
+            setScheduleData(prev => {
+
+                const currentRoomIds = prev.room_ids || [];
+
+                if (checked) {
+                    // Thêm phòng
+                    if (!currentRoomIds.includes(roomId)) {
+                        return {
+                            ...prev,
+                            room_ids: [...currentRoomIds, roomId]
+                        };
+                    }
+                    return prev;
+                } else {
+                    // Xóa phòng
+                    return {
+                        ...prev,
+                        room_ids: currentRoomIds.filter(id => id !== roomId)
+                    };
+                }
+
+            });
 
             return;
         }
@@ -812,13 +828,13 @@ const ShowTimePage = () => {
                 end_date:
                     scheduleData.end_date,
 
-                operating_start:
+                start_hour:
                     scheduleData.operating_start,
 
-                operating_end:
+                end_hour:
                     scheduleData.operating_end,
 
-                distribution_level:
+                distribution:
                     scheduleData.distribution_level
 
             };
@@ -1154,7 +1170,7 @@ const ShowTimePage = () => {
 
 
     // ======================================================
-    // FORM FIELDS
+    // FORM FIELDS (Đã sửa room_ids thành checkbox)
     // ======================================================
 
     const formFields = [
@@ -1201,32 +1217,15 @@ const ShowTimePage = () => {
         },
 
 
+        // 👇 Đã chuyển thành checkbox thuần
         {
             label: 'Phòng chiếu',
             name: 'room_ids',
-            type: 'select',
-
-            multiple: true,
-
-            options: [
-
-                {
-                    label:
-                        rooms.length
-                            ? '-- Giữ Ctrl để chọn nhiều phòng --'
-                            : '-- Chọn rạp trước --',
-
-                    value: ''
-                },
-
-                ...rooms.map(room => ({
-                    label:
-                        `${room.room_name} (${room.room_type})`,
-
-                    value: room.room_id
-                }))
-
-            ]
+            type: 'checkbox',
+            options: rooms.map(room => ({
+                label: `${room.room_name} (${room.room_type})`,
+                value: room.room_id
+            }))
         },
 
 
