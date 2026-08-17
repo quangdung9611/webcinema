@@ -1,34 +1,45 @@
-const PromotionRepository = require("../Repositories/PromotionRepository");
+const PromotionRepository = require('../Repositories/PromotionRepository');
+
 const {
     uploadToCloudinary,
     deleteFromCloudinary
-} = require("../Middlewares/UploadCloudinary");
+} = require('../Middlewares/UploadCloudinary');
 
-// ==========================================================
-// CREATE SLUG
-// ==========================================================
+
+// =========================================================
+// HELPER - TẠO SLUG
+// =========================================================
 const createSlug = (title) => {
-    if (!title) return "";
+
+    if (!title) {
+        return "";
+    }
 
     return title
         .toLowerCase()
         .trim()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[đĐ]/g, "d")
-        .replace(/[^\w\s-]/g, "")
-        .replace(/[\s_-]+/g, "-")
-        .replace(/^-+|-+$/g, "");
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 };
 
-// ==========================================================
-// EXTRACT CLOUDINARY PUBLIC ID
-// ==========================================================
-const extractPublicId = (url) => {
-    if (!url) return null;
 
-    const parts = url.split("/");
-    const uploadIndex = parts.indexOf("upload");
+// =========================================================
+// HELPER - TRÍCH XUẤT PUBLIC_ID CLOUDINARY
+// =========================================================
+const extractPublicId = (url) => {
+
+    if (!url) {
+        return null;
+    }
+
+    const parts = url.split('/');
+
+    const uploadIndex =
+        parts.indexOf('upload');
 
     if (uploadIndex === -1) {
         return null;
@@ -36,14 +47,19 @@ const extractPublicId = (url) => {
 
     return parts
         .slice(uploadIndex + 1)
-        .join("/")
-        .split(".")[0];
+        .join('/')
+        .split('.')[0];
 };
 
-// ==========================================================
+
+// =========================================================
 // VALIDATE PROMOTION DATA
-// ==========================================================
-const validatePromotion = (data, file, backdropFile, isUpdate = false) => {
+// =========================================================
+const validatePromotionData = (
+    data,
+    files,
+    isUpdate = false
+) => {
 
     const {
         title,
@@ -52,32 +68,45 @@ const validatePromotion = (data, file, backdropFile, isUpdate = false) => {
         is_active
     } = data;
 
-    // ------------------------------------------------------
-    // TITLE
-    // ------------------------------------------------------
-    if (!title || title.trim() === "") {
-        return "Vui lòng nhập tiêu đề.";
+
+    if (
+        !title ||
+        title.trim() === ""
+    ) {
+
+        return "Vui lòng nhập tiêu đề khuyến mãi.";
     }
 
-    if (title.trim().length < 5) {
-        return "Tiêu đề phải từ 5 ký tự.";
+
+    if (
+        title.trim().length < 5
+    ) {
+
+        return "Tiêu đề khuyến mãi phải từ 5 ký tự trở lên.";
     }
 
-    // ------------------------------------------------------
-    // DESCRIPTION
-    // ------------------------------------------------------
-    if (!description || description.trim() === "") {
-        return "Vui lòng nhập mô tả.";
+
+    if (
+        !description ||
+        description.trim() === ""
+    ) {
+
+        return "Vui lòng nhập mô tả khuyến mãi.";
     }
 
-    if (description.trim().length < 10) {
-        return "Mô tả phải từ 10 ký tự.";
+
+    if (
+        description.trim().length < 10
+    ) {
+
+        return "Mô tả khuyến mãi phải từ 10 ký tự trở lên.";
     }
 
-    // ------------------------------------------------------
-    // LIKES
-    // ------------------------------------------------------
-    if (likes !== undefined && likes !== "") {
+
+    if (
+        likes !== undefined &&
+        likes !== ""
+    ) {
 
         const parsedLikes = Number(likes);
 
@@ -85,257 +114,165 @@ const validatePromotion = (data, file, backdropFile, isUpdate = false) => {
             !Number.isInteger(parsedLikes) ||
             parsedLikes < 0
         ) {
+
             return "Likes không hợp lệ.";
         }
     }
 
-    // ------------------------------------------------------
-    // IS ACTIVE
-    // ------------------------------------------------------
-    if (is_active !== undefined && is_active !== "") {
 
-        const parsedStatus = Number(is_active);
+    if (
+        !isUpdate &&
+        (
+            !files ||
+            !files['promotion_image']
+        )
+    ) {
 
-        if (
-            !Number.isInteger(parsedStatus) ||
-            ![0, 1].includes(parsedStatus)
-        ) {
-            return "Trạng thái hoạt động không hợp lệ.";
-        }
+        return "Vui lòng upload ảnh cho khuyến mãi.";
     }
 
-    // ------------------------------------------------------
-    // IMAGE (bắt buộc khi tạo mới)
-    // ------------------------------------------------------
-    if (!isUpdate && !file) {
-        return "Vui lòng chọn hình ảnh.";
-    }
 
     return null;
 };
 
+
 class PromotionService {
 
-    /* ==========================================================
+
+    /*=========================================================
         GET ALL PROMOTIONS - KHÔNG PHÂN TRANG
-        PUBLIC / ADMIN
-    ========================================================== */
+
+        Repository:
+            rows[]
+
+        Service:
+            rows[]
+
+        Controller:
+            {
+                success: true,
+                data: []
+            }
+    =========================================================*/
     async getAllPromotionsAll(search = "") {
-        return await PromotionRepository.findAllAll(search);
+
+        return await PromotionRepository.findAllAll(
+            search
+        );
     }
 
-    /* ==========================================================
+
+    /*=========================================================
         GET ALL PROMOTIONS - CÓ PHÂN TRANG
-        ADMIN
-    ========================================================== */
-    async getAllPromotionsPaginated(
+
+        Repository:
+            {
+                data: [],
+                pagination: {}
+            }
+
+        Service giữ nguyên cấu trúc này.
+
+        Controller sẽ tách thành:
+            {
+                success: true,
+                data: [],
+                pagination: {}
+            }
+    =========================================================*/
+    async getAllPromotions(
         page = 1,
         limit = 20,
         search = ""
     ) {
+
         return await PromotionRepository.findAll(
-            false,
             page,
             limit,
             search
         );
     }
 
-    /* ==========================================================
+
+    /*=========================================================
         GET PROMOTION BY ID
-        ADMIN
-    ========================================================== */
+    =========================================================*/
     async getPromotionById(promotionId) {
 
-        const promotion = await PromotionRepository.findById(
-            promotionId
-        );
-
-        if (!promotion) {
-            const err = new Error(
-                "Không tìm thấy khuyến mãi"
+        const promotion =
+            await PromotionRepository.findById(
+                promotionId
             );
 
-            err.statusCode = 404;
-            throw err;
+
+        if (!promotion) {
+
+            throw {
+                statusCode: 404,
+                message: "Không tìm thấy khuyến mãi"
+            };
         }
+
 
         return promotion;
     }
 
-    /* ==========================================================
+
+    /*=========================================================
         GET PROMOTION BY SLUG
-        PUBLIC
-    ========================================================== */
+    =========================================================*/
     async getPromotionBySlug(slug) {
 
         const promotion =
-            await PromotionRepository.findBySlug(slug);
-
-        if (!promotion) {
-            const err = new Error(
-                "Không tìm thấy khuyến mãi"
+            await PromotionRepository.findBySlug(
+                slug
             );
 
-            err.statusCode = 404;
-            throw err;
+
+        if (!promotion) {
+
+            throw {
+                statusCode: 404,
+                message: "Không tìm thấy khuyến mãi"
+            };
         }
+
 
         // Tăng lượt xem
         await PromotionRepository.incrementViews(
             promotion.promotion_id
         );
 
+
         return promotion;
     }
 
-    /* ==========================================================
+
+    /*=========================================================
         CREATE PROMOTION
-        ADMIN
-    ========================================================== */
-    async createPromotion(data, file, backdropFile) {
-
-        // ------------------------------------------------------
-        // VALIDATE
-        // ------------------------------------------------------
-        const error = validatePromotion(
-            data,
-            file,
-            backdropFile,
-            false
-        );
-
-        if (error) {
-            const err = new Error(error);
-
-            err.statusCode = 400;
-            err.field = "general";
-
-            throw err;
-        }
-
-        const {
-            title,
-            description,
-            likes
-        } = data;
-
-        // ------------------------------------------------------
-        // CREATE SLUG
-        // ------------------------------------------------------
-        const cleanTitle = title.trim();
-        const slug = createSlug(cleanTitle);
-
-        // ------------------------------------------------------
-        // CHECK DUPLICATE
-        // ------------------------------------------------------
-        const duplicate =
-            await PromotionRepository.findByTitleOrSlug(
-                cleanTitle,
-                slug
-            );
-
-        if (duplicate) {
-
-            const err = new Error(
-                "Tiêu đề hoặc slug đã tồn tại"
-            );
-
-            err.statusCode = 400;
-            err.field = "title";
-
-            throw err;
-        }
-
-        // ------------------------------------------------------
-        // UPLOAD IMAGE
-        // ------------------------------------------------------
-        let promotion_image = null;
-        let promotion_backdrop = null;
-
-        if (file) {
-            const result = await uploadToCloudinary(
-                file,
-                "cinema_shop/promotions"
-            );
-            promotion_image = result.url;
-        }
-
-        // Upload backdrop (hình ngang)
-        if (backdropFile) {
-            const result = await uploadToCloudinary(
-                backdropFile,
-                "cinema_shop/promotions/backdrops"
-            );
-            promotion_backdrop = result.url;
-        }
-
-        // ------------------------------------------------------
-        // CREATE DATABASE
-        // ------------------------------------------------------
-        const promotionId =
-            await PromotionRepository.create({
-                title: cleanTitle,
-                slug,
-                description: description.trim(),
-                promotion_image,
-                promotion_backdrop,
-                likes: Number(likes) || 0,
-                is_active: 1
-            });
-
-        return promotionId;
-    }
-
-    /* ==========================================================
-        UPDATE PROMOTION
-        ADMIN
-    ========================================================== */
-    async updatePromotion(
-        promotionId,
+    =========================================================*/
+    async createPromotion(
         data,
-        file,
-        backdropFile
+        files
     ) {
 
-        // ------------------------------------------------------
-        // GET EXISTING
-        // ------------------------------------------------------
-        const promotion =
-            await PromotionRepository.findById(
-                promotionId
+        const error =
+            validatePromotionData(
+                data,
+                files,
+                false
             );
 
-        if (!promotion) {
-
-            const err = new Error(
-                "Khuyến mãi không tồn tại"
-            );
-
-            err.statusCode = 404;
-
-            throw err;
-        }
-
-        // ------------------------------------------------------
-        // VALIDATE
-        // ------------------------------------------------------
-        const error = validatePromotion(
-            data,
-            file,
-            backdropFile,
-            true
-        );
 
         if (error) {
 
-            const err = new Error(error);
-
-            err.statusCode = 400;
-            err.field = "general";
-
-            throw err;
+            throw {
+                statusCode: 400,
+                field: "general",
+                message: error
+            };
         }
+
 
         const {
             title,
@@ -344,293 +281,373 @@ class PromotionService {
             is_active
         } = data;
 
-        // ------------------------------------------------------
-        // CREATE SLUG
-        // ------------------------------------------------------
-        const cleanTitle = title.trim();
-        const slug = createSlug(cleanTitle);
 
-        // ------------------------------------------------------
-        // CHECK DUPLICATE
-        // ------------------------------------------------------
-        const duplicate =
-            await PromotionRepository.findByTitleOrSlug(
-                cleanTitle,
+        const slug =
+            createSlug(title);
+
+
+        const exists =
+            await PromotionRepository.existsByTitleOrSlug(
+                title.trim(),
+                slug
+            );
+
+
+        if (exists) {
+
+            throw {
+                statusCode: 400,
+                field: "title",
+                message:
+                    "Khuyến mãi này đã tồn tại trong hệ thống (trùng tên hoặc slug)."
+            };
+        }
+
+
+        let promotion_image = null;
+        let promotion_backdrop = null;
+
+
+        if (
+            files['promotion_image']?.[0]
+        ) {
+
+            const result =
+                await uploadToCloudinary(
+                    files['promotion_image'][0],
+                    'cinema_shop/promotions'
+                );
+
+
+            promotion_image =
+                result.url;
+        }
+
+
+        if (
+            files['promotion_backdrop']?.[0]
+        ) {
+
+            const result =
+                await uploadToCloudinary(
+                    files['promotion_backdrop'][0],
+                    'cinema_shop/promotions/backdrops'
+                );
+
+
+            promotion_backdrop =
+                result.url;
+        }
+
+
+        const promotionId =
+            await PromotionRepository.create({
+
+                title:
+                    title.trim(),
+
+                slug,
+
+                description:
+                    description.trim(),
+
+                promotion_image,
+
+                promotion_backdrop,
+
+                likes:
+                    parseInt(
+                        likes,
+                        10
+                    ) || 0,
+
+                is_active:
+                    is_active !== undefined
+                        ? Number(is_active)
+                        : 1
+
+            });
+
+
+        return promotionId;
+    }
+
+
+    /*=========================================================
+        UPDATE PROMOTION
+    =========================================================*/
+    async updatePromotion(
+        promotionId,
+        data,
+        files
+    ) {
+
+        const existing =
+            await PromotionRepository.findById(
+                promotionId
+            );
+
+
+        if (!existing) {
+
+            throw {
+                statusCode: 404,
+                message: "Khuyến mãi không tồn tại"
+            };
+        }
+
+
+        const error =
+            validatePromotionData(
+                data,
+                files,
+                true
+            );
+
+
+        if (error) {
+
+            throw {
+                statusCode: 400,
+                field: "general",
+                message: error
+            };
+        }
+
+
+        const {
+            title,
+            description,
+            likes,
+            is_active
+        } = data;
+
+
+        const slug =
+            createSlug(title);
+
+
+        const exists =
+            await PromotionRepository.existsByTitleOrSlug(
+                title.trim(),
                 slug,
                 promotionId
             );
 
-        if (duplicate) {
 
-            const err = new Error(
-                "Tiêu đề hoặc slug đã tồn tại"
-            );
+        if (exists) {
 
-            err.statusCode = 400;
-            err.field = "title";
-
-            throw err;
+            throw {
+                statusCode: 400,
+                field: "title",
+                message:
+                    "Tên khuyến mãi hoặc slug đã trùng với khuyến mãi khác."
+            };
         }
 
-        // ------------------------------------------------------
-        // KEEP OLD IMAGES IF NO NEW IMAGES
-        // ------------------------------------------------------
-        let promotionImage =
-            promotion.promotion_image;
 
-        let promotionBackdrop =
-            promotion.promotion_backdrop;
+        let finalImage =
+            existing.promotion_image;
 
-        // ------------------------------------------------------
-        // NEW STATUS
-        // ------------------------------------------------------
-        const finalIsActive =
-            is_active !== undefined &&
-            is_active !== ""
-                ? Number(is_active)
-                : Number(promotion.is_active);
+        let finalBackdrop =
+            existing.promotion_backdrop;
 
-        // ------------------------------------------------------
-        // GET CONNECTION
-        // ------------------------------------------------------
-        const connection =
-            await PromotionRepository.getConnection();
 
-        try {
+        if (
+            files['promotion_image']?.[0]
+        ) {
 
-            await PromotionRepository.beginTransaction(
-                connection
-            );
+            if (
+                existing.promotion_image
+            ) {
 
-            // --------------------------------------------------
-            // HANDLE IMAGE
-            // --------------------------------------------------
-            if (file) {
-
-                // Xóa ảnh cũ trên Cloudinary
-                if (promotion.promotion_image) {
-
-                    const publicId =
-                        extractPublicId(
-                            promotion.promotion_image
-                        );
-
-                    if (publicId) {
-                        await deleteFromCloudinary(
-                            publicId
-                        );
-                    }
-                }
-
-                // Upload ảnh mới
-                const result =
-                    await uploadToCloudinary(
-                        file,
-                        "cinema_shop/promotions"
+                const publicId =
+                    extractPublicId(
+                        existing.promotion_image
                     );
 
-                promotionImage = result.url;
+
+                await deleteFromCloudinary(
+                    publicId
+                );
             }
 
-            // --------------------------------------------------
-            // HANDLE BACKDROP IMAGE
-            // --------------------------------------------------
-            if (backdropFile) {
 
-                // Xóa backdrop cũ trên Cloudinary
-                if (promotion.promotion_backdrop) {
-
-                    const publicId =
-                        extractPublicId(
-                            promotion.promotion_backdrop
-                        );
-
-                    if (publicId) {
-                        await deleteFromCloudinary(
-                            publicId
-                        );
-                    }
-                }
-
-                // Upload backdrop mới
-                const result =
-                    await uploadToCloudinary(
-                        backdropFile,
-                        "cinema_shop/promotions/backdrops"
-                    );
-
-                promotionBackdrop = result.url;
-            }
-
-            // --------------------------------------------------
-            // UPDATE DATABASE
-            // --------------------------------------------------
-            const affectedRows =
-                await PromotionRepository.updateWithConnection(
-                    connection,
-                    promotionId,
-                    {
-                        title: cleanTitle,
-                        slug,
-                        description: description.trim(),
-                        promotion_image: promotionImage,
-                        promotion_backdrop: promotionBackdrop,
-                        likes: Number(likes) || 0,
-                        is_active: finalIsActive
-                    }
+            const result =
+                await uploadToCloudinary(
+                    files['promotion_image'][0],
+                    'cinema_shop/promotions'
                 );
 
-            if (affectedRows === 0) {
 
-                const err = new Error(
+            finalImage =
+                result.url;
+        }
+
+
+        if (
+            files['promotion_backdrop']?.[0]
+        ) {
+
+            if (
+                existing.promotion_backdrop
+            ) {
+
+                const publicId =
+                    extractPublicId(
+                        existing.promotion_backdrop
+                    );
+
+
+                await deleteFromCloudinary(
+                    publicId
+                );
+            }
+
+
+            const result =
+                await uploadToCloudinary(
+                    files['promotion_backdrop'][0],
+                    'cinema_shop/promotions/backdrops'
+                );
+
+
+            finalBackdrop =
+                result.url;
+        }
+
+
+        const updateData = {
+
+            title:
+                title.trim(),
+
+            slug,
+
+            description:
+                description.trim(),
+
+            promotion_image:
+                finalImage,
+
+            promotion_backdrop:
+                finalBackdrop,
+
+            likes:
+                parseInt(
+                    likes,
+                    10
+                ) || 0,
+
+            is_active:
+                is_active !== undefined
+                    ? Number(is_active)
+                    : existing.is_active
+
+        };
+
+
+        const affected =
+            await PromotionRepository.update(
+                promotionId,
+                updateData
+            );
+
+
+        if (
+            affected === 0
+        ) {
+
+            throw {
+                statusCode: 500,
+                message:
                     "Không thể cập nhật khuyến mãi"
-                );
-
-                err.statusCode = 500;
-
-                throw err;
-            }
-
-            // --------------------------------------------------
-            // COMMIT
-            // --------------------------------------------------
-            await PromotionRepository.commit(
-                connection
-            );
-
-            return true;
-
-        } catch (err) {
-
-            await PromotionRepository.rollback(
-                connection
-            );
-
-            throw err;
-
-        } finally {
-
-            connection.release();
+            };
         }
+
+
+        return true;
     }
 
-    /* ==========================================================
+
+    /*=========================================================
         DELETE PROMOTION
-        ADMIN
-    ========================================================== */
+    =========================================================*/
     async deletePromotion(promotionId) {
 
-        // ------------------------------------------------------
-        // GET EXISTING
-        // ------------------------------------------------------
         const promotion =
             await PromotionRepository.findById(
                 promotionId
             );
 
+
         if (!promotion) {
 
-            const err = new Error(
-                "Khuyến mãi không tồn tại"
-            );
-
-            err.statusCode = 404;
-
-            throw err;
+            throw {
+                statusCode: 404,
+                message:
+                    "Khuyến mãi không tồn tại"
+            };
         }
 
-        // ------------------------------------------------------
-        // GET CONNECTION
-        // ------------------------------------------------------
-        const connection =
-            await PromotionRepository.getConnection();
 
-        try {
+        if (
+            promotion.promotion_image
+        ) {
 
-            await PromotionRepository.beginTransaction(
-                connection
-            );
-
-            // --------------------------------------------------
-            // DELETE CLOUDINARY IMAGES
-            // --------------------------------------------------
-            // Xóa ảnh chính
-            if (promotion.promotion_image) {
-
-                const publicId =
-                    extractPublicId(
-                        promotion.promotion_image
-                    );
-
-                if (publicId) {
-                    await deleteFromCloudinary(
-                        publicId
-                    );
-                }
-            }
-
-            // Xóa backdrop
-            if (promotion.promotion_backdrop) {
-
-                const publicId =
-                    extractPublicId(
-                        promotion.promotion_backdrop
-                    );
-
-                if (publicId) {
-                    await deleteFromCloudinary(
-                        publicId
-                    );
-                }
-            }
-
-            // --------------------------------------------------
-            // DELETE DATABASE
-            // --------------------------------------------------
-            const affectedRows =
-                await PromotionRepository.deleteWithConnection(
-                    connection,
-                    promotionId
+            const publicId =
+                extractPublicId(
+                    promotion.promotion_image
                 );
 
-            if (affectedRows === 0) {
 
-                const err = new Error(
+            await deleteFromCloudinary(
+                publicId
+            );
+        }
+
+
+        if (
+            promotion.promotion_backdrop
+        ) {
+
+            const publicId =
+                extractPublicId(
+                    promotion.promotion_backdrop
+                );
+
+
+            await deleteFromCloudinary(
+                publicId
+            );
+        }
+
+
+        const affected =
+            await PromotionRepository.delete(
+                promotionId
+            );
+
+
+        if (
+            affected === 0
+        ) {
+
+            throw {
+                statusCode: 500,
+                message:
                     "Xóa khuyến mãi thất bại"
-                );
-
-                err.statusCode = 500;
-
-                throw err;
-            }
-
-            // --------------------------------------------------
-            // COMMIT
-            // --------------------------------------------------
-            await PromotionRepository.commit(
-                connection
-            );
-
-            return true;
-
-        } catch (err) {
-
-            await PromotionRepository.rollback(
-                connection
-            );
-
-            throw err;
-
-        } finally {
-
-            connection.release();
+            };
         }
+
+
+        return true;
     }
 
-    /* ==========================================================
+
+    /*=========================================================
         LIKE PROMOTION
-        PUBLIC
-    ========================================================== */
+    =========================================================*/
     async likePromotion(promotionId) {
 
         const affected =
@@ -638,24 +655,26 @@ class PromotionService {
                 promotionId
             );
 
-        if (affected === 0) {
 
-            const err = new Error(
-                "Không tìm thấy khuyến mãi"
-            );
+        if (
+            affected === 0
+        ) {
 
-            err.statusCode = 404;
-
-            throw err;
+            throw {
+                statusCode: 404,
+                message:
+                    "Khuyến mãi không tồn tại"
+            };
         }
+
 
         return true;
     }
 
-    /* ==========================================================
+
+    /*=========================================================
         TOGGLE STATUS
-        ADMIN
-    ========================================================== */
+    =========================================================*/
     async toggleStatus(promotionId) {
 
         const status =
@@ -663,19 +682,23 @@ class PromotionService {
                 promotionId
             );
 
-        if (status === null) {
 
-            const err = new Error(
-                "Không tìm thấy khuyến mãi"
-            );
+        if (
+            status === null
+        ) {
 
-            err.statusCode = 404;
-
-            throw err;
+            throw {
+                statusCode: 404,
+                message:
+                    "Khuyến mãi không tồn tại"
+            };
         }
+
 
         return status;
     }
 }
 
-module.exports = new PromotionService();
+
+module.exports =
+    new PromotionService();

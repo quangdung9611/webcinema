@@ -1,49 +1,23 @@
-const db = require("../Config/db");
+const db = require('../Config/db');
 
 class PromotionRepository {
 
-    /* ==========================================================
+    /*=========================================================
         FIND ALL PROMOTIONS - KHÔNG PHÂN TRANG
-        PUBLIC / ADMIN
-
-        RETURN:
-        [
-            {...},
-            {...}
-        ]
-    ========================================================== */
+        RETURN: rows[] (trực tiếp, không bọc)
+    =========================================================*/
     async findAllAll(search = "") {
-
-        search = typeof search === "string"
-            ? search.trim()
-            : "";
-
+        search = typeof search === "string" ? search.trim() : "";
         const conditions = [];
-        const params = [];
+        const queryParams = [];
 
-        /* ======================================================
-            SEARCH
-        ====================================================== */
         if (search) {
-
-            conditions.push(`
-                (
-                    title LIKE ?
-                    OR description LIKE ?
-                )
-            `);
-
+            conditions.push("(title LIKE ? OR description LIKE ?)");
             const keyword = `%${search}%`;
-
-            params.push(
-                keyword,
-                keyword
-            );
+            queryParams.push(keyword, keyword);
         }
 
-        const whereClause = conditions.length
-            ? `WHERE ${conditions.join(" AND ")}`
-            : "";
+        const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
         const [rows] = await db.query(
             `
@@ -59,116 +33,43 @@ class PromotionRepository {
                 is_active,
                 created_at,
                 updated_at,
-                DATE_FORMAT(
-                    created_at,
-                    '%d/%m/%Y %H:%i'
-                ) AS full_date
+                DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS full_date
             FROM promotions
-
             ${whereClause}
-
-            ORDER BY
-                created_at DESC,
-                promotion_id DESC
+            ORDER BY promotion_id DESC
             `,
-            params
+            queryParams
         );
 
         return rows;
     }
 
-
-    /* ==========================================================
+    /*=========================================================
         FIND ALL PROMOTIONS - CÓ PHÂN TRANG
-        ADMIN
-    ========================================================== */
-    async findAll(
-        onlyActive = false,
-        page = 1,
-        limit = 20,
-        search = ""
-    ) {
-
-        /* ------------------------------------------------------
-            NORMALIZE PAGINATION
-        ------------------------------------------------------ */
+        RETURN: { data: [], pagination: {} }
+    =========================================================*/
+    async findAll(page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
-
         limit = Number.parseInt(limit, 10);
 
-        if (!Number.isFinite(page) || page < 1) {
-            page = 1;
-        }
+        if (page < 1) page = 1;
+        if (limit < 1) limit = 20;
+        if (limit > 100) limit = 100;
 
-        if (!Number.isFinite(limit) || limit < 1) {
-            limit = 20;
-        }
+        search = typeof search === "string" ? search.trim() : "";
 
-        if (limit > 100) {
-            limit = 100;
-        }
-
-
-        /* ------------------------------------------------------
-            NORMALIZE SEARCH
-        ------------------------------------------------------ */
-        search = typeof search === "string"
-            ? search.trim()
-            : "";
-
-
-        /* ------------------------------------------------------
-            BUILD WHERE
-        ------------------------------------------------------ */
         const conditions = [];
-        const params = [];
+        const queryParams = [];
 
         if (search) {
-
-            conditions.push(`
-                (
-                    title LIKE ?
-                    OR description LIKE ?
-                )
-            `);
-
+            conditions.push("(title LIKE ? OR description LIKE ?)");
             const keyword = `%${search}%`;
-
-            params.push(
-                keyword,
-                keyword
-            );
+            queryParams.push(keyword, keyword);
         }
 
-
-        /* ------------------------------------------------------
-            ONLY ACTIVE
-        ------------------------------------------------------ */
-        if (onlyActive) {
-
-            conditions.push(`
-                is_active = 1
-            `);
-        }
-
-
-        /* ------------------------------------------------------
-            WHERE CLAUSE
-        ------------------------------------------------------ */
-        const whereClause = conditions.length
-            ? `WHERE ${conditions.join(" AND ")}`
-            : "";
-
-
-        /* ------------------------------------------------------
-            OFFSET
-        ------------------------------------------------------ */
+        const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
         const offset = (page - 1) * limit;
 
-
-        /* ======================================================
-            GET DATA
-        ====================================================== */
         const [rows] = await db.query(
             `
             SELECT
@@ -183,59 +84,29 @@ class PromotionRepository {
                 is_active,
                 created_at,
                 updated_at,
-                DATE_FORMAT(
-                    created_at,
-                    '%d/%m/%Y %H:%i'
-                ) AS full_date
+                DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS full_date
             FROM promotions
-
             ${whereClause}
-
-            ORDER BY
-                created_at DESC,
-                promotion_id DESC
-
-            LIMIT ?
-            OFFSET ?
+            ORDER BY promotion_id DESC
+            LIMIT ? OFFSET ?
             `,
-            [
-                ...params,
-                limit,
-                offset
-            ]
+            [...queryParams, limit, offset]
         );
 
-
-        /* ======================================================
-            COUNT TOTAL
-        ====================================================== */
         const [countRows] = await db.query(
             `
-            SELECT
-                COUNT(*) AS total
+            SELECT COUNT(*) AS total
             FROM promotions
-
             ${whereClause}
             `,
-            params
+            queryParams
         );
 
-
-        /* ------------------------------------------------------
-            PAGINATION INFO
-        ------------------------------------------------------ */
-        const total = Number(
-            countRows[0]?.total || 0
-        );
-
-        const totalPages = Math.ceil(
-            total / limit
-        ) || 1;
-
+        const total = Number(countRows[0]?.total || 0);
+        const totalPages = Math.ceil(total / limit) || 1;
 
         return {
             data: rows,
-
             pagination: {
                 page,
                 limit,
@@ -247,12 +118,10 @@ class PromotionRepository {
         };
     }
 
-
-    /* ==========================================================
+    /*=========================================================
         FIND PROMOTION BY ID
-    ========================================================== */
+    =========================================================*/
     async findById(promotionId) {
-
         const [rows] = await db.query(
             `
             SELECT *
@@ -262,16 +131,13 @@ class PromotionRepository {
             `,
             [promotionId]
         );
-
         return rows[0] || null;
     }
 
-
-    /* ==========================================================
+    /*=========================================================
         FIND PROMOTION BY SLUG
-    ========================================================== */
+    =========================================================*/
     async findBySlug(slug) {
-
         const [rows] = await db.query(
             `
             SELECT *
@@ -281,62 +147,34 @@ class PromotionRepository {
             `,
             [slug]
         );
-
         return rows[0] || null;
     }
 
-
-    /* ==========================================================
-        CHECK DUPLICATE TITLE / SLUG
-    ========================================================== */
-    async findByTitleOrSlug(
-        title,
-        slug,
-        excludePromotionId = null
-    ) {
-
+    /*=========================================================
+        CHECK EXISTS BY TITLE OR SLUG
+    =========================================================*/
+    async existsByTitleOrSlug(title, slug, excludeId = null) {
         let sql = `
             SELECT promotion_id
             FROM promotions
-            WHERE (
-                title = ?
-                OR slug = ?
-            )
+            WHERE title = ? OR slug = ?
         `;
+        const params = [title, slug];
 
-        const params = [
-            title.trim(),
-            slug
-        ];
-
-        if (
-            excludePromotionId !== null &&
-            excludePromotionId !== undefined
-        ) {
-
-            sql += `
-                AND promotion_id != ?
-            `;
-
-            params.push(
-                Number(excludePromotionId)
-            );
+        if (excludeId != null) {
+            sql += ` AND promotion_id != ?`;
+            params.push(Number(excludeId));
         }
+        sql += ` LIMIT 1`;
 
-        const [rows] = await db.query(
-            sql,
-            params
-        );
-
-        return rows[0] || null;
+        const [rows] = await db.query(sql, params);
+        return rows.length > 0;
     }
 
-
-    /* ==========================================================
+    /*=========================================================
         CREATE PROMOTION
-    ========================================================== */
-    async create(data) {
-
+    =========================================================*/
+    async create(promotionData) {
         const {
             title,
             slug,
@@ -345,56 +183,32 @@ class PromotionRepository {
             promotion_backdrop,
             likes,
             is_active
-        } = data;
+        } = promotionData;
 
         const [result] = await db.query(
             `
-            INSERT INTO promotions
-            (
-                title,
-                slug,
-                description,
-                promotion_image,
-                promotion_backdrop,
-                likes,
-                views,
-                is_active
-            )
-            VALUES
-            (
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                0,
-                ?
-            )
+            INSERT INTO promotions (
+                title, slug, description, promotion_image, promotion_backdrop,
+                likes, views, is_active
+            ) VALUES (?, ?, ?, ?, ?, ?, 0, ?)
             `,
             [
-                title.trim(),
+                title,
                 slug,
-                description,
+                description || "",
                 promotion_image || null,
                 promotion_backdrop || null,
-                Number.parseInt(likes, 10) || 0,
-                is_active
+                likes || 0,
+                is_active || 1
             ]
         );
-
         return result.insertId;
     }
 
-
-    /* ==========================================================
+    /*=========================================================
         UPDATE PROMOTION
-    ========================================================== */
-    async update(
-        promotionId,
-        data
-    ) {
-
+    =========================================================*/
+    async update(promotionId, promotionData) {
         const {
             title,
             slug,
@@ -403,12 +217,11 @@ class PromotionRepository {
             promotion_backdrop,
             likes,
             is_active
-        } = data;
+        } = promotionData;
 
         const [result] = await db.query(
             `
             UPDATE promotions
-
             SET
                 title = ?,
                 slug = ?,
@@ -417,111 +230,64 @@ class PromotionRepository {
                 promotion_backdrop = ?,
                 likes = ?,
                 is_active = ?
-
             WHERE promotion_id = ?
             `,
             [
-                title.trim(),
+                title,
                 slug,
-                description,
-                promotion_image || null,
-                promotion_backdrop || null,
-                Number.parseInt(likes, 10) || 0,
+                description || "",
+                promotion_image,
+                promotion_backdrop,
+                likes || 0,
                 is_active,
                 promotionId
             ]
         );
-
         return result.affectedRows;
     }
 
-
-    /* ==========================================================
+    /*=========================================================
         DELETE PROMOTION
-    ========================================================== */
+    =========================================================*/
     async delete(promotionId) {
-
         const [result] = await db.query(
-            `
-            DELETE FROM promotions
-            WHERE promotion_id = ?
-            `,
+            `DELETE FROM promotions WHERE promotion_id = ?`,
             [promotionId]
         );
-
         return result.affectedRows;
     }
 
-
-    /* ==========================================================
-        GET PROMOTION IMAGE
-    ========================================================== */
-    async getImage(promotionId) {
-
-        const [rows] = await db.query(
-            `
-            SELECT
-                promotion_image,
-                promotion_backdrop
-            FROM promotions
-            WHERE promotion_id = ?
-            LIMIT 1
-            `,
-            [promotionId]
-        );
-
-        return rows[0] || null;
-    }
-
-
-    /* ==========================================================
+    /*=========================================================
         INCREMENT LIKES
-    ========================================================== */
+    =========================================================*/
     async incrementLikes(promotionId) {
-
         const [result] = await db.query(
-            `
-            UPDATE promotions
-            SET likes = likes + 1
-            WHERE promotion_id = ?
-            `,
+            `UPDATE promotions SET likes = likes + 1 WHERE promotion_id = ?`,
             [promotionId]
         );
-
         return result.affectedRows;
     }
 
-
-    /* ==========================================================
+    /*=========================================================
         INCREMENT VIEWS
-    ========================================================== */
+    =========================================================*/
     async incrementViews(promotionId) {
-
         const [result] = await db.query(
-            `
-            UPDATE promotions
-            SET views = views + 1
-            WHERE promotion_id = ?
-            `,
+            `UPDATE promotions SET views = views + 1 WHERE promotion_id = ?`,
             [promotionId]
         );
-
         return result.affectedRows;
     }
 
-
-    /* ==========================================================
+    /*=========================================================
         TOGGLE STATUS
-    ========================================================== */
+    =========================================================*/
     async toggleStatus(promotionId) {
-
         const [rows] = await db.query(
             `
-            SELECT
-                is_active
+            SELECT is_active
             FROM promotions
             WHERE promotion_id = ?
-            LIMIT 1
             `,
             [promotionId]
         );
@@ -530,10 +296,7 @@ class PromotionRepository {
             return null;
         }
 
-        const newStatus =
-            Number(rows[0].is_active) === 1
-                ? 0
-                : 1;
+        const newStatus = rows[0].is_active === 1 ? 0 : 1;
 
         await db.query(
             `
@@ -541,115 +304,10 @@ class PromotionRepository {
             SET is_active = ?
             WHERE promotion_id = ?
             `,
-            [
-                newStatus,
-                promotionId
-            ]
+            [newStatus, promotionId]
         );
 
         return newStatus;
-    }
-
-
-    /* ==========================================================
-        TRANSACTION - GET CONNECTION
-    ========================================================== */
-    async getConnection() {
-        return await db.getConnection();
-    }
-
-
-    /* ==========================================================
-        TRANSACTION - BEGIN
-    ========================================================== */
-    async beginTransaction(connection) {
-        await connection.beginTransaction();
-    }
-
-
-    /* ==========================================================
-        TRANSACTION - COMMIT
-    ========================================================== */
-    async commit(connection) {
-        await connection.commit();
-    }
-
-
-    /* ==========================================================
-        TRANSACTION - ROLLBACK
-    ========================================================== */
-    async rollback(connection) {
-        await connection.rollback();
-    }
-
-
-    /* ==========================================================
-        TRANSACTION - UPDATE
-    ========================================================== */
-    async updateWithConnection(
-        connection,
-        promotionId,
-        data
-    ) {
-
-        const {
-            title,
-            slug,
-            description,
-            promotion_image,
-            promotion_backdrop,
-            likes,
-            is_active
-        } = data;
-
-        const [result] = await connection.query(
-            `
-            UPDATE promotions
-
-            SET
-                title = ?,
-                slug = ?,
-                description = ?,
-                promotion_image = ?,
-                promotion_backdrop = ?,
-                likes = ?,
-                is_active = ?
-
-            WHERE promotion_id = ?
-            `,
-            [
-                title.trim(),
-                slug,
-                description,
-                promotion_image || null,
-                promotion_backdrop || null,
-                Number.parseInt(likes, 10) || 0,
-                is_active,
-                promotionId
-            ]
-        );
-
-        return result.affectedRows;
-    }
-
-
-    /* ==========================================================
-        TRANSACTION - DELETE
-    ========================================================== */
-    async deleteWithConnection(
-        connection,
-        promotionId
-    ) {
-
-        const [result] = await connection.query(
-            `
-            DELETE FROM promotions
-            WHERE promotion_id = ?
-            `,
-            [promotionId]
-        );
-
-        return result.affectedRows;
     }
 }
 
