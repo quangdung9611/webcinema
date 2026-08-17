@@ -7,7 +7,8 @@ import {
     Loader2,
     Eye,
     Heart,
-    ExternalLink
+    ExternalLink,
+    Image as ImageIcon
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -63,11 +64,14 @@ const PromotionPage = () => {
     const [editingPromotion, setEditingPromotion] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
+    
+    // ===== FILE STATES =====
     const [promotionImageFile, setPromotionImageFile] = useState(null);
+    const [promotionBackdropFile, setPromotionBackdropFile] = useState(null);
     const [filePreviews, setFilePreviews] = useState({});
 
     // ======================================================
-    // ALERT MODAL (giống UserPage)
+    // ALERT MODAL
     // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -99,7 +103,7 @@ const PromotionPage = () => {
     };
 
     // ======================================================
-    // FETCH PROMOTIONS - GIỐNG HỆT BlogCinemaPage
+    // FETCH PROMOTIONS
     // ======================================================
     const fetchPromotions = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) {
@@ -127,7 +131,6 @@ const PromotionPage = () => {
                 signal: controller.signal
             });
 
-            // ✅ Parse trực tiếp giống Blog (và Movie)
             const promotionsData = res.data?.data || [];
             const paginationData = res.data?.pagination || {
                 page: 1,
@@ -240,6 +243,7 @@ const PromotionPage = () => {
         setFormData(initialFormData);
         setErrors({});
         setPromotionImageFile(null);
+        setPromotionBackdropFile(null);
         setFilePreviews({});
         setIsFormOpen(true);
     };
@@ -255,14 +259,26 @@ const PromotionPage = () => {
         });
         setErrors({});
         setPromotionImageFile(null);
+        setPromotionBackdropFile(null);
 
         const previews = {};
+        
+        // Ảnh chính
         if (item.promotion_image) {
             previews.promotion_image = {
                 url: getImageUrl(item.promotion_image),
                 name: item.promotion_image
             };
         }
+        
+        // Ảnh backdrop (hình ngang)
+        if (item.promotion_backdrop) {
+            previews.promotion_backdrop = {
+                url: getImageUrl(item.promotion_backdrop),
+                name: item.promotion_backdrop
+            };
+        }
+        
         setFilePreviews(previews);
         setIsFormOpen(true);
     };
@@ -276,6 +292,14 @@ const PromotionPage = () => {
         setEditingPromotion(null);
         setErrors({});
         setPromotionImageFile(null);
+        setPromotionBackdropFile(null);
+        // Cleanup blob URLs
+        if (filePreviews.promotion_image?.url?.startsWith('blob:')) {
+            URL.revokeObjectURL(filePreviews.promotion_image.url);
+        }
+        if (filePreviews.promotion_backdrop?.url?.startsWith('blob:')) {
+            URL.revokeObjectURL(filePreviews.promotion_backdrop.url);
+        }
         setFilePreviews({});
     };
 
@@ -289,25 +313,63 @@ const PromotionPage = () => {
             setErrors((prev) => ({ ...prev, [name]: '' }));
         }
 
+        // ===== FILE: PROMOTION IMAGE =====
         if (name === 'promotion_image') {
             const file = files?.[0] || null;
             setPromotionImageFile(file);
+            
+            // Cleanup old blob URL
+            if (filePreviews.promotion_image?.url?.startsWith('blob:')) {
+                URL.revokeObjectURL(filePreviews.promotion_image.url);
+            }
+            
             if (file) {
-                if (filePreviews.promotion_image?.url?.startsWith('blob:')) {
-                    URL.revokeObjectURL(filePreviews.promotion_image.url);
-                }
-                setFilePreviews({
+                setFilePreviews((prev) => ({
+                    ...prev,
                     promotion_image: {
                         url: URL.createObjectURL(file),
                         name: file.name
                     }
-                });
+                }));
             } else {
-                setFilePreviews({});
+                setFilePreviews((prev) => {
+                    const newPreviews = { ...prev };
+                    delete newPreviews.promotion_image;
+                    return newPreviews;
+                });
             }
             return;
         }
 
+        // ===== FILE: PROMOTION BACKDROP =====
+        if (name === 'promotion_backdrop') {
+            const file = files?.[0] || null;
+            setPromotionBackdropFile(file);
+            
+            // Cleanup old blob URL
+            if (filePreviews.promotion_backdrop?.url?.startsWith('blob:')) {
+                URL.revokeObjectURL(filePreviews.promotion_backdrop.url);
+            }
+            
+            if (file) {
+                setFilePreviews((prev) => ({
+                    ...prev,
+                    promotion_backdrop: {
+                        url: URL.createObjectURL(file),
+                        name: file.name
+                    }
+                }));
+            } else {
+                setFilePreviews((prev) => {
+                    const newPreviews = { ...prev };
+                    delete newPreviews.promotion_backdrop;
+                    return newPreviews;
+                });
+            }
+            return;
+        }
+
+        // ===== AUTO GENERATE SLUG =====
         if (name === 'title') {
             setFormData((prev) => ({
                 ...prev,
@@ -336,8 +398,14 @@ const PromotionPage = () => {
             submitData.append('likes', formData.likes);
             submitData.append('is_active', formData.is_active);
 
+            // Ảnh chính
             if (promotionImageFile) {
                 submitData.append('promotion_image', promotionImageFile);
+            }
+
+            // Ảnh backdrop (hình ngang)
+            if (promotionBackdropFile) {
+                submitData.append('promotion_backdrop', promotionBackdropFile);
             }
 
             const config = {
@@ -428,6 +496,30 @@ const PromotionPage = () => {
                 />
             )
         },
+        {
+            title: 'Backdrop',
+            key: 'promotion_backdrop',
+            render: (row) => (
+                row.promotion_backdrop ? (
+                    <img
+                        src={getImageUrl(row.promotion_backdrop)}
+                        alt="backdrop"
+                        style={{
+                            width: '120px',
+                            height: '50px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255,255,255,0.1)'
+                        }}
+                        onError={handleImageError}
+                    />
+                ) : (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                        <ImageIcon size={16} style={{ verticalAlign: 'middle' }} /> Chưa có
+                    </span>
+                )
+            )
+        },
         { title: 'Tiêu đề', key: 'title' },
         {
             title: 'Lượt xem',
@@ -497,7 +589,7 @@ const PromotionPage = () => {
     ];
 
     // ======================================================
-    // FORM FIELDS
+    // FORM FIELDS - THÊM TRƯỜNG BACKDROP
     // ======================================================
     const formFields = [
         {
@@ -519,8 +611,13 @@ const PromotionPage = () => {
             placeholder: 'Nhập mô tả'
         },
         {
-            label: 'Hình ảnh',
+            label: 'Hình ảnh (vuông)',
             name: 'promotion_image',
+            type: 'file'
+        },
+        {
+            label: 'Hình ảnh ngang (Backdrop)',
+            name: 'promotion_backdrop',
             type: 'file'
         },
         {
@@ -572,7 +669,7 @@ const PromotionPage = () => {
             </AdminPage>
 
             {/* ==================================================
-                FORM MODAL (giống UserPage)
+                FORM MODAL
             ================================================== */}
             <AdminModal
                 open={isFormOpen}
@@ -594,7 +691,7 @@ const PromotionPage = () => {
             </AdminModal>
 
             {/* ==================================================
-                ALERT / CONFIRM MODAL (giống UserPage)
+                ALERT / CONFIRM MODAL
             ================================================== */}
             <AdminModal
                 open={alertModal.open}

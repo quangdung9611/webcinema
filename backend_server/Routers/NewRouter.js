@@ -26,9 +26,31 @@ router.get("/paginated", authenticateAdmin, NewsController.getNewsWithPagination
 // 5. Lấy chi tiết theo ID (admin)
 router.get("/:news_id", authenticateAdmin, NewsController.getNewsById);
 
-// 6. CRUD
-router.post("/", authenticateAdmin, upload.single("news_image"), NewsController.createNews);
-router.put("/:news_id", authenticateAdmin, upload.single("news_image"), NewsController.updateNews);
-router.delete("/:news_id", authenticateAdmin, NewsController.deleteNews);
+// 6. CRUD - hỗ trợ upload cả ảnh chính và backdrop
+router.post(
+    "/",
+    authenticateAdmin,
+    upload.fields([
+        { name: 'news_image', maxCount: 1 },
+        { name: 'news_backdrop', maxCount: 1 }
+    ]),
+    NewsController.createNews
+);
+
+router.put(
+    "/:news_id",
+    authenticateAdmin,
+    upload.fields([
+        { name: 'news_image', maxCount: 1 },
+        { name: 'news_backdrop', maxCount: 1 }
+    ]),
+    NewsController.updateNews
+);
+
+router.delete(
+    "/:news_id",
+    authenticateAdmin,
+    NewsController.deleteNews
+);
 
 module.exports = router;

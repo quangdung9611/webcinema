@@ -1,6 +1,3 @@
-
-// repositories/BlogCinemaRepository.js
-
 const db = require("../Config/db");
 
 
@@ -67,6 +64,7 @@ class BlogCinemaRepository {
                     slug,
                     description,
                     blog_image,
+                    blog_backdrop,
                     views,
                     likes,
                     is_active,
@@ -86,7 +84,6 @@ class BlogCinemaRepository {
             );
 
 
-        // API thường → trả array trực tiếp
         return rows;
     }
 
@@ -205,6 +202,7 @@ class BlogCinemaRepository {
                     slug,
                     description,
                     blog_image,
+                    blog_backdrop,
                     views,
                     likes,
                     is_active,
@@ -380,6 +378,28 @@ class BlogCinemaRepository {
 
 
     /* ==========================================================
+        GET IMAGES (cả ảnh chính và backdrop)
+    ========================================================== */
+    async getImages(blogId) {
+
+        const [rows] =
+            await db.query(
+                `
+                SELECT
+                    blog_image,
+                    blog_backdrop
+                FROM blog_cinema
+                WHERE blog_id = ?
+                `,
+                [blogId]
+            );
+
+
+        return rows[0] || null;
+    }
+
+
+    /* ==========================================================
         CREATE BLOG
     ========================================================== */
     async create(data) {
@@ -389,6 +409,7 @@ class BlogCinemaRepository {
             slug,
             description,
             blog_image,
+            blog_backdrop,
             likes,
             is_active
         } = data;
@@ -403,11 +424,12 @@ class BlogCinemaRepository {
                     slug,
                     description,
                     blog_image,
+                    blog_backdrop,
                     likes,
                     views,
                     is_active
                 )
-                VALUES (?, ?, ?, ?, ?, 0, ?)
+                VALUES (?, ?, ?, ?, ?, ?, 0, ?)
                 `,
                 [
 
@@ -418,6 +440,8 @@ class BlogCinemaRepository {
                     description,
 
                     blog_image || null,
+
+                    blog_backdrop || null,
 
                     parseInt(
                         likes,
@@ -447,6 +471,7 @@ class BlogCinemaRepository {
             slug,
             description,
             blog_image,
+            blog_backdrop,
             likes,
             is_active
         } = data;
@@ -462,6 +487,7 @@ class BlogCinemaRepository {
                     slug = ?,
                     description = ?,
                     blog_image = ?,
+                    blog_backdrop = ?,
                     likes = ?,
                     is_active = ?
 
@@ -476,6 +502,8 @@ class BlogCinemaRepository {
                     description,
 
                     blog_image || null,
+
+                    blog_backdrop || null,
 
                     parseInt(
                         likes,
@@ -558,28 +586,6 @@ class BlogCinemaRepository {
 
 
     /* ==========================================================
-        GET IMAGE
-    ========================================================== */
-    async getImage(
-        blogId
-    ) {
-
-        const [rows] =
-            await db.query(
-                `
-                SELECT blog_image
-                FROM blog_cinema
-                WHERE blog_id = ?
-                `,
-                [blogId]
-            );
-
-
-        return rows[0] || null;
-    }
-
-
-    /* ==========================================================
         TRANSACTION - GET CONNECTION
     ========================================================== */
     async getConnection() {
@@ -635,6 +641,7 @@ class BlogCinemaRepository {
             slug,
             description,
             blog_image,
+            blog_backdrop,
             likes,
             is_active
         } = data;
@@ -650,6 +657,7 @@ class BlogCinemaRepository {
                     slug = ?,
                     description = ?,
                     blog_image = ?,
+                    blog_backdrop = ?,
                     likes = ?,
                     is_active = ?
 
@@ -664,6 +672,8 @@ class BlogCinemaRepository {
                     description,
 
                     blog_image || null,
+
+                    blog_backdrop || null,
 
                     parseInt(
                         likes,
@@ -707,4 +717,3 @@ class BlogCinemaRepository {
 
 module.exports =
     new BlogCinemaRepository();
-

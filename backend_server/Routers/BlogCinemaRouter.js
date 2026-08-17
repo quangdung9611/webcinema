@@ -26,19 +26,25 @@ router.get('/paginated', authenticateAdmin, BlogCinemaController.getBlogsWithPag
 // Lấy chi tiết blog theo ID (admin)
 router.get('/:blog_id', authenticateAdmin, BlogCinemaController.getBlogById);
 
-// Tạo blog mới
+// Tạo blog mới - hỗ trợ upload cả ảnh chính và backdrop
 router.post(
     '/',
     authenticateAdmin,
-    upload.single('blog_image'),
+    upload.fields([
+        { name: 'blog_image', maxCount: 1 },
+        { name: 'blog_backdrop', maxCount: 1 }
+    ]),
     BlogCinemaController.createBlog
 );
 
-// Cập nhật blog
+// Cập nhật blog - hỗ trợ upload cả ảnh chính và backdrop
 router.put(
     '/:blog_id',
     authenticateAdmin,
-    upload.single('blog_image'),
+    upload.fields([
+        { name: 'blog_image', maxCount: 1 },
+        { name: 'blog_backdrop', maxCount: 1 }
+    ]),
     BlogCinemaController.updateBlog
 );
 

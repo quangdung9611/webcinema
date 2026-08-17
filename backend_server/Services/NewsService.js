@@ -31,7 +31,7 @@ const extractPublicId = (url) => {
 // ==========================================================
 // VALIDATE NEWS
 // ==========================================================
-const validateNews = (data, file, isUpdate = false) => {
+const validateNews = (data, file, backdropFile, isUpdate = false) => {
     const { title, content, likes } = data;
     if (!title || title.trim() === "") return "Vui lòng nhập tiêu đề.";
     if (title.trim().length < 5) return "Tiêu đề phải từ 5 ký tự.";
@@ -93,8 +93,8 @@ class NewsService {
     /*=========================================================
         CREATE NEWS (ADMIN)
     =========================================================*/
-    async createNews(data, file) {
-        const error = validateNews(data, file, false);
+    async createNews(data, file, backdropFile) {
+        const error = validateNews(data, file, backdropFile, false);
         if (error) {
             const err = new Error(error);
             err.statusCode = 400;
@@ -112,9 +112,18 @@ class NewsService {
         }
 
         let news_image = null;
+        let news_backdrop = null;
+
+        // Upload ảnh chính
         if (file) {
             const result = await uploadToCloudinary(file, "cinema_shop/news");
             news_image = result.url;
+        }
+
+        // Upload ảnh backdrop
+        if (backdropFile) {
+            const result = await uploadToCloudinary(backdropFile, "cinema_shop/news/backdrops");
+            news_backdrop = result.url;
         }
 
         return await NewsRepository.create({
@@ -122,6 +131,7 @@ class NewsService {
             slug,
             content: content.trim(),
             news_image,
+            news_backdrop,
             likes: Number(likes) || 0
         });
     }
@@ -129,7 +139,7 @@ class NewsService {
     /*=========================================================
         UPDATE NEWS (ADMIN)
     =========================================================*/
-    async updateNews(newsId, data, file) {
+    async updateNews(newsId, data, file, backdropFile) {
         const existing = await NewsRepository.findById(newsId);
         if (!existing) {
             const err = new Error("Bài viết không tồn tại");
@@ -137,7 +147,7 @@ class NewsService {
             throw err;
         }
 
-        const error = validateNews(data, file, true);
+        const error = validateNews(data, file, backdropFile, true);
         if (error) {
             const err = new Error(error);
             err.statusCode = 400;
@@ -158,7 +168,11 @@ class NewsService {
         try {
             await NewsRepository.beginTransaction(connection);
 
+            // Giữ ảnh cũ
             let news_image = existing.news_image;
+            let news_backdrop = existing.news_backdrop;
+
+            // Xử lý ảnh chính mới
             if (file) {
                 if (existing.news_image) {
                     const publicId = extractPublicId(existing.news_image);
@@ -168,11 +182,22 @@ class NewsService {
                 news_image = result.url;
             }
 
+            // Xử lý ảnh backdrop mới
+            if (backdropFile) {
+                if (existing.news_backdrop) {
+                    const publicId = extractPublicId(existing.news_backdrop);
+                    if (publicId) await deleteFromCloudinary(publicId);
+                }
+                const result = await uploadToCloudinary(backdropFile, "cinema_shop/news/backdrops");
+                news_backdrop = result.url;
+            }
+
             await NewsRepository.updateWithConnection(connection, newsId, {
                 title: title.trim(),
                 slug,
                 content: content.trim(),
                 news_image,
+                news_backdrop,
                 likes: Number(likes) || 0
             });
 
@@ -201,8 +226,15 @@ class NewsService {
         try {
             await NewsRepository.beginTransaction(connection);
 
+            // Xóa ảnh chính trên Cloudinary
             if (existing.news_image) {
                 const publicId = extractPublicId(existing.news_image);
+                if (publicId) await deleteFromCloudinary(publicId);
+            }
+
+            // Xóa ảnh backdrop trên Cloudinary
+            if (existing.news_backdrop) {
+                const publicId = extractPublicId(existing.news_backdrop);
                 if (publicId) await deleteFromCloudinary(publicId);
             }
 

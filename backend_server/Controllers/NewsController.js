@@ -89,7 +89,17 @@ exports.getNewsBySlug = async (req, res) => {
 =========================================================*/
 exports.createNews = async (req, res) => {
     try {
-        const newsId = await NewsService.createNews(req.body, req.file);
+        // req.file - ảnh chính (vuông)
+        // req.files?.backdrop - ảnh backdrop (ngang)
+        const imageFile = req.file;
+        const backdropFile = req.files?.backdrop ? req.files.backdrop[0] : req.fileBackdrop;
+
+        const newsId = await NewsService.createNews(
+            req.body,
+            imageFile,
+            backdropFile
+        );
+
         return res.status(201).json({
             success: true,
             message: "Thêm bài viết thành công!",
@@ -110,7 +120,16 @@ exports.createNews = async (req, res) => {
 exports.updateNews = async (req, res) => {
     try {
         const { news_id } = req.params;
-        await NewsService.updateNews(news_id, req.body, req.file);
+        const imageFile = req.file;
+        const backdropFile = req.files?.backdrop ? req.files.backdrop[0] : req.fileBackdrop;
+
+        await NewsService.updateNews(
+            news_id,
+            req.body,
+            imageFile,
+            backdropFile
+        );
+
         return res.status(200).json({
             success: true,
             message: "Cập nhật bài viết thành công!"

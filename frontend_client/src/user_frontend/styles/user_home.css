@@ -30,6 +30,17 @@
     }
 }
 
+@keyframes dropdownFade {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* ==========================================================
    2. PAGE WRAPPER
    ========================================================== */
@@ -55,7 +66,7 @@
 }
 
 /* ==========================================================
-   4. SECTION HEADER (Không gạch chân)
+   4. SECTION HEADER
    ========================================================== */
 
 .section-header {
@@ -97,7 +108,36 @@
 }
 
 /* ==========================================================
-   5. QUICK BOOKING & FEATURES
+   5. VIEW ALL BUTTON
+   ========================================================== */
+
+.btn-view-all {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    flex-shrink: 0;
+    padding: 10px 24px;
+    border: var(--border-ice);
+    border-radius: var(--radius-round);
+    background: transparent;
+    color: var(--text-body);
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-semibold);
+    transition: all var(--transition-normal);
+    animation: subtlePulse 4s ease-in-out infinite;
+}
+
+.btn-view-all:hover {
+    transform: translateY(-3px);
+    border-color: transparent;
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    animation-play-state: paused;
+}
+
+/* ==========================================================
+   6. QUICK BOOKING
    ========================================================== */
 
 .quick-booking-container {
@@ -117,9 +157,19 @@
     border-radius: var(--radius-xl);
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border: var(--border-premium);
     box-shadow: var(--glass-shadow);
-    transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+    position: relative;
+    /* 
+     * QUAN TRỌNG: overflow: hidden để giữ dropdown bên trong
+     * Khi dropdown mở, padding-bottom sẽ tăng lên
+     */
+    overflow: hidden;
+    transition: 
+        box-shadow var(--transition-normal),
+        transform var(--transition-normal),
+        padding-bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .quick-booking-content:hover {
@@ -127,12 +177,40 @@
     transform: translateY(-2px);
 }
 
+/* 
+ * KHI DROPDOWN MỞ - KHUNG TỰ ĐỘNG MỞ RỘNG
+ */
+.quick-booking-content:has(.quick-select-trigger.open) {
+    padding-bottom: calc(var(--space-xl) + 165px);
+}
+
+/* 
+ * KHI DROPDOWN MỞ TRÊN MOBILE - GIẢM PADDING
+ */
+@media (max-width: 768px) {
+    .quick-booking-content:has(.quick-select-trigger.open) {
+        padding-bottom: calc(var(--space-lg) + 145px);
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-booking-content:has(.quick-select-trigger.open) {
+        padding-bottom: calc(var(--space-md) + 135px);
+    }
+}
+
 .quick-booking-selects {
     flex: 1;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--space-md);
+    position: relative;
+    z-index: 1;
 }
+
+/* ==========================================================
+   7. CUSTOM SELECT - QUICK BOOKING
+   ========================================================== */
 
 .quick-select-item {
     position: relative;
@@ -150,6 +228,28 @@
     background: rgba(255, 255, 255, 0.04);
     cursor: pointer;
     transition: border-color var(--transition-fast), background var(--transition-fast);
+    width: 100%;
+    position: relative;
+    z-index: 2;
+}
+
+.quick-select-trigger:hover:not(.disabled) {
+    border: var(--border-premium-hover);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.quick-select-trigger.open {
+    border: var(--border-premium-hover);
+}
+
+.quick-select-trigger.open .quick-select-arrow {
+    transform: rotate(180deg);
+    color: var(--text-heading);
+}
+
+.quick-select-trigger.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .quick-select-left {
@@ -181,49 +281,64 @@
     transition: transform var(--transition-fast), color var(--transition-fast);
 }
 
-.quick-select-trigger:hover:not(.disabled) {
-    border: var(--border-premium-hover);
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.quick-select-trigger.open {
-    border: var(--border-premium-hover);
-}
-
-.quick-select-trigger.open .quick-select-arrow {
-    transform: rotate(180deg);
-    color: var(--text-heading);
-}
-
-.quick-select-trigger.disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
+/* ==========================================================
+   8. DROPDOWN - NẰM TRONG CONTAINER
+   ========================================================== */
 
 .quick-dropdown-list {
     position: absolute;
-    top: calc(100% + var(--space-sm));
+    top: calc(100% + 6px);
     left: 0;
-    width: 100%;
-    max-height: 250px;
+    right: 0;
+    max-height: 150px;
     overflow-y: auto;
-    background: var(--bg-secondary);
+    overflow-x: hidden;
+    background: #121518;
     border: var(--border-premium);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--card-shadow-hover);
-    z-index: 1000;
-    animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    padding: var(--space-sm) 0;
+    border-radius: var(--radius-md);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    z-index: 20;
+    padding: 6px 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--silver-primary) transparent;
+    animation: dropdownFade 0.2s ease;
 }
 
+/* Scrollbar - Chrome / Safari / Edge */
+.quick-dropdown-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.quick-dropdown-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-round);
+}
+
+.quick-dropdown-list::-webkit-scrollbar-thumb {
+    background: var(--silver-primary);
+    border-radius: var(--radius-round);
+}
+
+.quick-dropdown-list::-webkit-scrollbar-thumb:hover {
+    background: var(--silver-light);
+}
+
+/* ==========================================================
+   9. OPTION ITEMS
+   ========================================================== */
+
 .quick-option-item {
-    padding: var(--space-md) var(--space-md);
+    padding: 10px 16px;
     color: var(--text-body);
     font-size: var(--font-size-base);
     font-weight: var(--fw-medium);
     cursor: pointer;
     transition: background var(--transition-fast), color var(--transition-fast);
     text-align: left;
+    background: transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .quick-option-item:hover {
@@ -236,20 +351,9 @@
     background: rgba(245, 245, 246, 0.04);
 }
 
-.quick-dropdown-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.quick-dropdown-list::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: var(--radius-round);
-    margin: var(--space-sm) 0;
-}
-
-.quick-dropdown-list::-webkit-scrollbar-thumb {
-    background: var(--silver-primary);
-    border-radius: var(--radius-round);
-}
+/* ==========================================================
+   10. QUICK BOOKING BUTTON
+   ========================================================== */
 
 .btn-quick-booking {
     flex-shrink: 0;
@@ -268,6 +372,8 @@
     box-shadow: var(--btn-silver-shadow);
     transition: box-shadow var(--transition-normal), transform var(--transition-normal);
     animation: subtlePulse 3s ease-in-out infinite;
+    position: relative;
+    z-index: 2;
 }
 
 .btn-quick-booking:hover {
@@ -277,8 +383,13 @@
 }
 
 /* ==========================================================
-   6. FEATURES GRID
+   11. FEATURES GRID
    ========================================================== */
+
+.home-features-section {
+    width: 100%;
+    margin-top: var(--space-3xl);
+}
 
 .features-grid {
     display: grid;
@@ -351,94 +462,7 @@
 }
 
 /* ==========================================================
-   7. VIEW ALL & CINEMA GRID
-   ========================================================== */
-
-.btn-view-all {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-sm);
-    flex-shrink: 0;
-    padding: 10px 24px;
-    border: var(--border-ice);
-    border-radius: var(--radius-round);
-    background: transparent;
-    color: var(--text-body);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-semibold);
-    transition: all var(--transition-normal);
-    animation: subtlePulse 4s ease-in-out infinite;
-}
-
-.btn-view-all:hover {
-    transform: translateY(-3px);
-    border-color: transparent;
-    background: var(--premium-gradient);
-    color: var(--bg-primary);
-    animation-play-state: paused;
-}
-
-/* ==========================================================
-   CINEMA GRID - DÙNG CHUNG CHO PROMOTIONS, BLOG, NEWS, CINEMA
-   ========================================================== */
-.cinema-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--space-md);
-    align-items: stretch; /* ✅ Kéo giãn card đồng đều */
-}
-
-/* ✅ Card bên trong chiếm toàn bộ chiều cao */
-.cinema-grid .cinema-card {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* ✅ Cinemacard inner cũng flex để title + info đẩy xuống */
-.cinema-grid .cinema-card .cinema-card-inner {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-/* ✅ Title giới hạn 2 dòng cho tất cả card (promotion, news, cinema...) */
-.cinema-grid .cinema-card .cinema-card-title {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    word-break: break-word;
-    flex: 1; /* Đẩy các phần dưới xuống */
-    min-height: 48px; /* Đảm bảo chiều cao tối thiểu khi title ngắn */
-}
-
-/* ==========================================================
-   CINEMA CORNER
-   ========================================================== */
-.cinema-corner-section {
-    padding-bottom: var(--space-lg);
-}
-
-.home-features-section,
-.movie-container,
-.promotions-section,
-.cinema-corner-section,
-.news-section {
-    width: 100%;
-    margin-top: var(--space-3xl);
-}
-
-.feature-item,
-.cinema-card,
-.quick-booking-content {
-    backface-visibility: hidden;
-}
-
-/* ==========================================================
-   8. STATS SECTION (ĐỒNG BỘ VỚI GLOBAL DESIGN)
+   12. STATS SECTION
    ========================================================== */
 
 .stats-section {
@@ -510,7 +534,7 @@
 }
 
 /* ==========================================================
-   9. TESTIMONIALS SECTION (BỔ SUNG - ĐÃ CHỈNH SỬA ĐỂ ĐỒNG ĐỀU CHIỀU CAO)
+   13. TESTIMONIALS SECTION
    ========================================================== */
 
 .testimonials-section {
@@ -687,26 +711,82 @@
 }
 
 /* ==========================================================
-   10. CINEMA SECTION (BỔ SUNG)
+   14. MOVIE CONTAINER
    ========================================================== */
 
+.movie-container {
+    width: 100%;
+    margin-top: var(--space-3xl);
+}
+
+.empty-movies {
+    text-align: center;
+    padding: var(--space-2xl) 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-h4);
+}
+
+/* ==========================================================
+   15. CINEMA GRID - DÙNG CHUNG
+   ========================================================== */
+
+.promotions-section,
+.cinema-corner-section,
+.news-section,
 .cinema-section {
+    width: 100%;
     margin-top: var(--space-3xl);
 }
 
-/* ==========================================================
-   11. NEWS SECTION (BỔ SUNG)
-   ========================================================== */
+.cinema-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-md);
+    align-items: stretch;
+}
 
-.news-section {
-    margin-top: var(--space-3xl);
+/* Card bên trong chiếm toàn bộ chiều cao */
+.cinema-grid .cinema-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.cinema-grid .cinema-card .cinema-card-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Title giới hạn 2 dòng */
+.cinema-grid .cinema-card .cinema-card-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+    flex: 1;
+    min-height: 48px;
 }
 
 /* ==========================================================
-   12. RESPONSIVE
+   16. UTILITY
    ========================================================== */
 
-/* 1200px */
+.feature-item,
+.cinema-card,
+.quick-booking-content,
+.testimonial-card,
+.stat-item {
+    backface-visibility: hidden;
+}
+
+/* ==========================================================
+   17. RESPONSIVE
+   ========================================================== */
+
+/* ===== 1200px ===== */
 @media (max-width: 1200px) {
     .cinema-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -725,7 +805,7 @@
     }
 }
 
-/* 992px */
+/* ===== 992px ===== */
 @media (max-width: 992px) {
     .quick-booking-content {
         flex-direction: column;
@@ -733,15 +813,30 @@
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
         background: rgba(0, 0, 0, 0.85) !important;
+        padding: var(--space-lg);
+        gap: var(--space-md);
     }
+    
+    .quick-booking-content:has(.quick-select-trigger.open) {
+        padding-bottom: calc(var(--space-lg) + 155px);
+    }
+    
     .quick-booking-selects {
         width: 100%;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-md);
     }
+    
     .btn-quick-booking {
         width: 100%;
         min-width: 0;
+        height: 52px;
     }
+    
+    .quick-select-trigger {
+        height: 52px;
+    }
+    
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: var(--space-md);
@@ -761,47 +856,72 @@
     }
 }
 
-/* 768px */
+/* ===== 768px ===== */
 @media (max-width: 768px) {
     .cinema-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--space-lg);
     }
+    
     .section-title {
         font-size: var(--font-size-h3);
     }
+    
     .btn-view-all {
         padding: 8px 18px;
         font-size: var(--font-size-h6);
     }
+    
     .quick-booking-content {
         padding: var(--space-lg);
         gap: var(--space-md);
     }
+    
+    .quick-booking-content:has(.quick-select-trigger.open) {
+        padding-bottom: calc(var(--space-lg) + 145px);
+    }
+    
     .btn-quick-booking {
         height: 52px;
         width: 100%;
         min-width: 0;
+        font-size: var(--font-size-h6);
     }
+    
     .quick-select-trigger {
         height: 52px;
+        padding: 0 var(--space-md);
     }
+    
+    .quick-select-value {
+        font-size: var(--font-size-h6);
+    }
+    
     .quick-dropdown-list {
-        max-height: 200px;
+        max-height: 130px;
     }
+    
+    .quick-option-item {
+        padding: 8px 14px;
+        font-size: var(--font-size-h6);
+    }
+    
     .feature-item {
         padding: var(--space-md);
         gap: 14px;
     }
+    
     .feature-icon-wrapper {
         width: 60px;
         height: 60px;
         min-width: 60px;
     }
+    
     .feature-text h4,
     .feature-text p {
         font-size: var(--font-size-h6);
     }
+    
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: var(--space-md);
@@ -820,6 +940,7 @@
     .stat-label {
         font-size: 0.75rem;
     }
+    
     .testimonials-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: var(--space-md);
@@ -837,6 +958,7 @@
     .testimonial-name {
         font-size: var(--font-size-h5);
     }
+    
     .testimonials-header {
         flex-wrap: wrap;
         justify-content: center;
@@ -848,44 +970,84 @@
     }
 }
 
-/* 480px */
+/* ===== 480px ===== */
 @media (max-width: 480px) {
     .cinema-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         gap: var(--space-md);
     }
+    
     .section-title {
         font-size: var(--font-size-h4);
     }
+    
+    .section-icon {
+        width: 28px;
+        height: 28px;
+    }
+    
     .btn-view-all {
         padding: 6px 14px;
         font-size: 11px;
     }
+    
     .quick-booking-content {
         padding: var(--space-md);
         gap: 14px;
     }
+    
+    .quick-booking-content:has(.quick-select-trigger.open) {
+        padding-bottom: calc(var(--space-md) + 135px);
+    }
+    
+    .quick-booking-selects {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
     .quick-select-trigger {
         height: 48px;
         padding: 0 var(--space-sm);
+        border-radius: var(--radius-md);
     }
+    
     .quick-select-left {
         gap: var(--space-sm);
     }
+    
+    .quick-select-icon {
+        width: 18px;
+        height: 18px;
+    }
+    
     .quick-select-value {
         font-size: var(--font-size-h6);
     }
-    .quick-dropdown-list {
-        max-height: 160px;
+    
+    .quick-select-arrow {
+        width: 14px;
+        height: 14px;
     }
+    
+    .quick-dropdown-list {
+        max-height: 120px;
+        border-radius: var(--radius-md);
+        top: calc(100% + 4px);
+    }
+    
     .quick-option-item {
-        padding: var(--space-sm) var(--space-sm);
+        padding: 8px 14px;
         font-size: var(--font-size-h6);
     }
+    
     .btn-quick-booking {
         height: 48px;
         font-size: var(--font-size-h6);
+        min-width: 0;
+        padding-inline: var(--space-md);
+        border-radius: var(--radius-md);
     }
+    
     .features-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 14px;
@@ -894,16 +1056,26 @@
         padding: 14px;
         gap: 12px;
         align-items: flex-start;
+        border-radius: var(--radius-lg);
     }
     .feature-icon-wrapper {
         width: 48px;
         height: 48px;
         min-width: 48px;
+        border-radius: var(--radius-md);
     }
-    .feature-text h4,
+    .feature-icon-wrapper svg {
+        width: 24px;
+        height: 24px;
+    }
+    .feature-text h4 {
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
     .feature-text p {
         font-size: 11px;
     }
+    
     .stats-grid {
         grid-template-columns: 1fr;
         gap: var(--space-md);
@@ -911,6 +1083,7 @@
     .stats-section {
         padding: var(--space-xl) 0;
         margin-top: var(--space-xl);
+        border-radius: var(--radius-lg);
     }
     .stats-title {
         font-size: var(--font-size-h5);
@@ -922,6 +1095,7 @@
     .stat-number {
         font-size: clamp(2rem, 10vw, 2.8rem);
     }
+    
     .testimonials-grid {
         grid-template-columns: 1fr;
         gap: var(--space-md);
@@ -931,6 +1105,7 @@
     }
     .testimonial-card {
         padding: var(--space-md);
+        border-radius: var(--radius-md);
     }
     .testimonial-avatar {
         width: 44px;
@@ -939,8 +1114,58 @@
     .testimonial-name {
         font-size: var(--font-size-h6);
     }
+    .testimonial-content p {
+        font-size: var(--font-size-h6);
+    }
+    
     .btn-review-open {
         font-size: var(--font-size-h6);
         padding: var(--space-xs) var(--space-sm);
+    }
+    
+    .movie-container {
+        margin-top: var(--space-2xl);
+    }
+    
+    .promotions-section,
+    .cinema-corner-section,
+    .news-section,
+    .cinema-section {
+        margin-top: var(--space-2xl);
+    }
+}
+
+/* ===== 360px ===== */
+@media (max-width: 360px) {
+    .quick-booking-selects {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .quick-booking-content:has(.quick-select-trigger.open) {
+        padding-bottom: calc(var(--space-md) + 125px);
+    }
+    
+    .quick-dropdown-list {
+        max-height: 100px;
+    }
+    
+    .quick-option-item {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .cinema-grid {
+        grid-template-columns: 1fr !important;
+        gap: var(--space-md);
+    }
+    
+    .section-title {
+        font-size: var(--font-size-h5);
     }
 }

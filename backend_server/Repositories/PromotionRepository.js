@@ -1,4 +1,3 @@
-
 const db = require("../Config/db");
 
 class PromotionRepository {
@@ -54,6 +53,7 @@ class PromotionRepository {
                 slug,
                 description,
                 promotion_image,
+                promotion_backdrop,
                 views,
                 likes,
                 is_active,
@@ -74,17 +74,6 @@ class PromotionRepository {
             params
         );
 
-        /*
-         * QUAN TRỌNG:
-         * Route này KHÔNG PHÂN TRANG
-         * nên chỉ trả về ARRAY.
-         *
-         * Không trả:
-         * {
-         *     data: rows,
-         *     pagination: {...}
-         * }
-         */
         return rows;
     }
 
@@ -188,6 +177,7 @@ class PromotionRepository {
                 slug,
                 description,
                 promotion_image,
+                promotion_backdrop,
                 views,
                 likes,
                 is_active,
@@ -243,9 +233,6 @@ class PromotionRepository {
         ) || 1;
 
 
-        /*
-         * Route PAGINATED vẫn trả object
-         */
         return {
             data: rows,
 
@@ -355,6 +342,7 @@ class PromotionRepository {
             slug,
             description,
             promotion_image,
+            promotion_backdrop,
             likes,
             is_active
         } = data;
@@ -367,12 +355,14 @@ class PromotionRepository {
                 slug,
                 description,
                 promotion_image,
+                promotion_backdrop,
                 likes,
                 views,
                 is_active
             )
             VALUES
             (
+                ?,
                 ?,
                 ?,
                 ?,
@@ -387,6 +377,7 @@ class PromotionRepository {
                 slug,
                 description,
                 promotion_image || null,
+                promotion_backdrop || null,
                 Number.parseInt(likes, 10) || 0,
                 is_active
             ]
@@ -409,6 +400,7 @@ class PromotionRepository {
             slug,
             description,
             promotion_image,
+            promotion_backdrop,
             likes,
             is_active
         } = data;
@@ -422,6 +414,7 @@ class PromotionRepository {
                 slug = ?,
                 description = ?,
                 promotion_image = ?,
+                promotion_backdrop = ?,
                 likes = ?,
                 is_active = ?
 
@@ -432,6 +425,7 @@ class PromotionRepository {
                 slug,
                 description,
                 promotion_image || null,
+                promotion_backdrop || null,
                 Number.parseInt(likes, 10) || 0,
                 is_active,
                 promotionId
@@ -467,7 +461,8 @@ class PromotionRepository {
         const [rows] = await db.query(
             `
             SELECT
-                promotion_image
+                promotion_image,
+                promotion_backdrop
             FROM promotions
             WHERE promotion_id = ?
             LIMIT 1
@@ -602,6 +597,7 @@ class PromotionRepository {
             slug,
             description,
             promotion_image,
+            promotion_backdrop,
             likes,
             is_active
         } = data;
@@ -615,6 +611,7 @@ class PromotionRepository {
                 slug = ?,
                 description = ?,
                 promotion_image = ?,
+                promotion_backdrop = ?,
                 likes = ?,
                 is_active = ?
 
@@ -625,6 +622,7 @@ class PromotionRepository {
                 slug,
                 description,
                 promotion_image || null,
+                promotion_backdrop || null,
                 Number.parseInt(likes, 10) || 0,
                 is_active,
                 promotionId
@@ -656,4 +654,3 @@ class PromotionRepository {
 }
 
 module.exports = new PromotionRepository();
-

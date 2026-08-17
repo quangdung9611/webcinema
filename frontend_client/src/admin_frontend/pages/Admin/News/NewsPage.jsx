@@ -7,7 +7,8 @@ import {
     Loader2,
     Eye,
     Heart,
-    ExternalLink
+    ExternalLink,
+    Image as ImageIcon
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -25,10 +26,13 @@ const getImageUrl = (image) => {
     return `https://api.quangdungcinema.id.vn/uploads/news/${image}`;
 };
 
+const DEFAULT_IMAGE = 'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-news.jpg';
+
 const initialFormData = {
     title: '',
     slug: '',
-    content: ''
+    content: '',
+    likes: 0
 };
 
 // ==========================================================
@@ -59,11 +63,14 @@ const NewsPage = () => {
     const [editingNews, setEditingNews] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
+    
+    // ===== FILE STATES =====
     const [newsImageFile, setNewsImageFile] = useState(null);
+    const [newsBackdropFile, setNewsBackdropFile] = useState(null);
     const [filePreviews, setFilePreviews] = useState({});
 
     // ======================================================
-    // ALERT MODAL (giống UserPage)
+    // ALERT MODAL
     // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -95,7 +102,7 @@ const NewsPage = () => {
     };
 
     // ======================================================
-    // FETCH NEWS (GIỐNG MOVIEPAGE)
+    // FETCH NEWS
     // ======================================================
     const fetchNews = useCallback(async (page = 1, keyword = '') => {
         if (isFetching.current) {
@@ -123,7 +130,6 @@ const NewsPage = () => {
                 signal: controller.signal
             });
 
-            // ✅ LẤY TRỰC TIẾP TỪ res.data (giống MoviePage)
             const newsData = res.data?.data || [];
             const paginationData = res.data?.pagination || {
                 page: 1,
@@ -244,6 +250,7 @@ const NewsPage = () => {
         setFormData(initialFormData);
         setErrors({});
         setNewsImageFile(null);
+        setNewsBackdropFile(null);
         setFilePreviews({});
         setIsFormOpen(true);
     };
@@ -253,20 +260,32 @@ const NewsPage = () => {
         setFormData({
             title: item.title || '',
             slug: item.slug || '',
-            content: item.content || ''
+            content: item.content || '',
+            likes: item.likes || 0
         });
         setErrors({});
         setNewsImageFile(null);
-        setFilePreviews(
-            item.news_image
-                ? {
-                      news_image: {
-                          url: getImageUrl(item.news_image),
-                          name: item.news_image
-                      }
-                  }
-                : {}
-        );
+        setNewsBackdropFile(null);
+
+        const previews = {};
+        
+        // Ảnh chính
+        if (item.news_image) {
+            previews.news_image = {
+                url: getImageUrl(item.news_image),
+                name: item.news_image
+            };
+        }
+        
+        // Ảnh backdrop
+        if (item.news_backdrop) {
+            previews.news_backdrop = {
+                url: getImageUrl(item.news_backdrop),
+                name: item.news_backdrop
+            };
+        }
+        
+        setFilePreviews(previews);
         setIsFormOpen(true);
     };
 
@@ -280,21 +299,56 @@ const NewsPage = () => {
             setErrors((prev) => ({ ...prev, [name]: '' }));
         }
 
+        // ===== FILE: NEWS IMAGE =====
         if (name === 'news_image') {
-            const file = files[0];
+            const file = files?.[0] || null;
             setNewsImageFile(file);
+            
+            if (filePreviews.news_image?.url?.startsWith('blob:')) {
+                URL.revokeObjectURL(filePreviews.news_image.url);
+            }
+            
             if (file) {
-                if (filePreviews.news_image?.url?.startsWith('blob:')) {
-                    URL.revokeObjectURL(filePreviews.news_image.url);
-                }
-                setFilePreviews({
+                setFilePreviews((prev) => ({
+                    ...prev,
                     news_image: {
                         url: URL.createObjectURL(file),
                         name: file.name
                     }
-                });
+                }));
             } else {
-                setFilePreviews({});
+                setFilePreviews((prev) => {
+                    const newPreviews = { ...prev };
+                    delete newPreviews.news_image;
+                    return newPreviews;
+                });
+            }
+            return;
+        }
+
+        // ===== FILE: NEWS BACKDROP =====
+        if (name === 'news_backdrop') {
+            const file = files?.[0] || null;
+            setNewsBackdropFile(file);
+            
+            if (filePreviews.news_backdrop?.url?.startsWith('blob:')) {
+                URL.revokeObjectURL(filePreviews.news_backdrop.url);
+            }
+            
+            if (file) {
+                setFilePreviews((prev) => ({
+                    ...prev,
+                    news_backdrop: {
+                        url: URL.createObjectURL(file),
+                        name: file.name
+                    }
+                }));
+            } else {
+                setFilePreviews((prev) => {
+                    const newPreviews = { ...prev };
+                    delete newPreviews.news_backdrop;
+                    return newPreviews;
+                });
             }
             return;
         }
@@ -312,6 +366,27 @@ const NewsPage = () => {
     };
 
     // ======================================================
+    // HANDLE CLOSE FORM
+    // ======================================================
+    const handleCloseForm = () => {
+        if (submitLoading) return;
+        setIsFormOpen(false);
+        setEditingNews(null);
+        setErrors({});
+        setNewsImageFile(null);
+        setNewsBackdropFile(null);
+        
+        // Cleanup blob URLs
+        if (filePreviews.news_image?.url?.startsWith('blob:')) {
+            URL.revokeObjectURL(filePreviews.news_image.url);
+        }
+        if (filePreviews.news_backdrop?.url?.startsWith('blob:')) {
+            URL.revokeObjectURL(filePreviews.news_backdrop.url);
+        }
+        setFilePreviews({});
+    };
+
+    // ======================================================
     // HANDLE SUBMIT
     // ======================================================
     const handleSubmit = async (e) => {
@@ -324,9 +399,14 @@ const NewsPage = () => {
             submitData.append('title', formData.title.trim());
             submitData.append('slug', formData.slug);
             submitData.append('content', formData.content.trim());
+            submitData.append('likes', formData.likes || 0);
 
             if (newsImageFile) {
                 submitData.append('news_image', newsImageFile);
+            }
+
+            if (newsBackdropFile) {
+                submitData.append('news_backdrop', newsBackdropFile);
             }
 
             const config = {
@@ -396,7 +476,7 @@ const NewsPage = () => {
     // ======================================================
     const handleImageError = (e) => {
         e.target.onerror = null;
-        e.target.style.display = 'none';
+        e.target.src = 'https://res.cloudinary.com/mlznpd9x/image/upload/v1/default-news.jpg';
     };
 
     // ======================================================
@@ -408,7 +488,7 @@ const NewsPage = () => {
             key: 'news_image',
             render: (row) => (
                 <img
-                    src={getImageUrl(row.news_image)}
+                    src={getImageUrl(row.news_image) || DEFAULT_IMAGE}
                     alt="news"
                     style={{
                         width: '120px',
@@ -418,6 +498,30 @@ const NewsPage = () => {
                     }}
                     onError={handleImageError}
                 />
+            )
+        },
+        {
+            title: 'Backdrop',
+            key: 'news_backdrop',
+            render: (row) => (
+                row.news_backdrop ? (
+                    <img
+                        src={getImageUrl(row.news_backdrop)}
+                        alt="backdrop"
+                        style={{
+                            width: '120px',
+                            height: '50px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255,255,255,0.1)'
+                        }}
+                        onError={handleImageError}
+                    />
+                ) : (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                        <ImageIcon size={16} style={{ verticalAlign: 'middle' }} /> Chưa có
+                    </span>
+                )
             )
         },
         { title: 'Tiêu đề', key: 'title' },
@@ -482,7 +586,7 @@ const NewsPage = () => {
     ];
 
     // ======================================================
-    // FORM FIELDS
+    // FORM FIELDS - THÊM TRƯỜNG BACKDROP
     // ======================================================
     const formFields = [
         {
@@ -498,29 +602,29 @@ const NewsPage = () => {
             disabled: true
         },
         {
-            label: 'Hình ảnh đại diện',
+            label: 'Hình ảnh đại diện (vuông)',
             name: 'news_image',
             type: 'file'
+        },
+        {
+            label: 'Hình ảnh ngang (Backdrop)',
+            name: 'news_backdrop',
+            type: 'file'
+        },
+        {
+            label: 'Likes',
+            name: 'likes',
+            type: 'number',
+            placeholder: '0'
         },
         {
             label: 'Nội dung chi tiết',
             name: 'content',
             type: 'textarea',
-            placeholder: 'Nhập nội dung bài viết...'
+            placeholder: 'Nhập nội dung bài viết...',
+            rows: 10
         }
     ];
-
-    // ======================================================
-    // HANDLE CLOSE FORM
-    // ======================================================
-    const handleCloseForm = () => {
-        if (submitLoading) return;
-        setIsFormOpen(false);
-        setEditingNews(null);
-        setErrors({});
-        setNewsImageFile(null);
-        setFilePreviews({});
-    };
 
     // ======================================================
     // RENDER
@@ -554,7 +658,7 @@ const NewsPage = () => {
             </AdminPage>
 
             {/* ==================================================
-                FORM MODAL (giống UserPage)
+                FORM MODAL
             ================================================== */}
             <AdminModal
                 open={isFormOpen}
@@ -576,7 +680,7 @@ const NewsPage = () => {
             </AdminModal>
 
             {/* ==================================================
-                ALERT / CONFIRM MODAL (giống UserPage)
+                ALERT / CONFIRM MODAL
             ================================================== */}
             <AdminModal
                 open={alertModal.open}

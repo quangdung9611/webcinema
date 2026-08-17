@@ -34,7 +34,6 @@ exports.getPromotionsWithPagination = async (req, res) => {
 
         const result = await PromotionService.getAllPromotionsPaginated(page, limit, search);
 
-        // ✅ Tách data và pagination giống User/Movie
         return res.status(200).json({
             success: true,
             data: result.data,
@@ -88,7 +87,17 @@ exports.getPromotionBySlug = async (req, res) => {
 ========================================================== */
 exports.createPromotion = async (req, res) => {
     try {
-        const promotionId = await PromotionService.createPromotion(req.body, req.file);
+        // req.files nếu dùng multer với nhiều file
+        // Hoặc req.file và req.fileBackdrop nếu dùng riêng
+        const imageFile = req.file; // Ảnh chính (vuông)
+        const backdropFile = req.files?.backdrop ? req.files.backdrop[0] : req.fileBackdrop; // Ảnh backdrop (ngang)
+
+        const promotionId = await PromotionService.createPromotion(
+            req.body,
+            imageFile,
+            backdropFile
+        );
+
         return res.status(201).json({
             success: true,
             message: "Thêm khuyến mãi thành công!",
@@ -109,7 +118,16 @@ exports.createPromotion = async (req, res) => {
 exports.updatePromotion = async (req, res) => {
     try {
         const { promotion_id } = req.params;
-        await PromotionService.updatePromotion(promotion_id, req.body, req.file);
+        const imageFile = req.file;
+        const backdropFile = req.files?.backdrop ? req.files.backdrop[0] : req.fileBackdrop;
+
+        await PromotionService.updatePromotion(
+            promotion_id,
+            req.body,
+            imageFile,
+            backdropFile
+        );
+
         return res.status(200).json({
             success: true,
             message: "Cập nhật khuyến mãi thành công!"

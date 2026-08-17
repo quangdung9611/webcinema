@@ -1170,7 +1170,7 @@ const ShowTimePage = () => {
 
 
     // ======================================================
-    // FORM FIELDS (Đã sửa room_ids thành checkbox)
+    // FORM FIELDS - Đã đổi room_ids thành checkbox-select
     // ======================================================
 
     const formFields = [
@@ -1217,11 +1217,11 @@ const ShowTimePage = () => {
         },
 
 
-        // 👇 Đã chuyển thành checkbox thuần
+        // 👇 Đã đổi thành checkbox-select (có scrollbar như select)
         {
             label: 'Phòng chiếu',
             name: 'room_ids',
-            type: 'checkbox',
+            type: 'checkbox-select',  // Đã đổi từ checkbox sang checkbox-select
             options: rooms.map(room => ({
                 label: `${room.room_name} (${room.room_type})`,
                 value: room.room_id

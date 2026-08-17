@@ -43,7 +43,7 @@ const extractPublicId = (url) => {
 // ==========================================================
 // VALIDATE PROMOTION DATA
 // ==========================================================
-const validatePromotion = (data, file, isUpdate = false) => {
+const validatePromotion = (data, file, backdropFile, isUpdate = false) => {
 
     const {
         title,
@@ -105,7 +105,7 @@ const validatePromotion = (data, file, isUpdate = false) => {
     }
 
     // ------------------------------------------------------
-    // IMAGE
+    // IMAGE (bắt buộc khi tạo mới)
     // ------------------------------------------------------
     if (!isUpdate && !file) {
         return "Vui lòng chọn hình ảnh.";
@@ -193,7 +193,7 @@ class PromotionService {
         CREATE PROMOTION
         ADMIN
     ========================================================== */
-    async createPromotion(data, file) {
+    async createPromotion(data, file, backdropFile) {
 
         // ------------------------------------------------------
         // VALIDATE
@@ -201,6 +201,7 @@ class PromotionService {
         const error = validatePromotion(
             data,
             file,
+            backdropFile,
             false
         );
 
@@ -250,15 +251,23 @@ class PromotionService {
         // UPLOAD IMAGE
         // ------------------------------------------------------
         let promotion_image = null;
+        let promotion_backdrop = null;
 
         if (file) {
-
             const result = await uploadToCloudinary(
                 file,
                 "cinema_shop/promotions"
             );
-
             promotion_image = result.url;
+        }
+
+        // Upload backdrop (hình ngang)
+        if (backdropFile) {
+            const result = await uploadToCloudinary(
+                backdropFile,
+                "cinema_shop/promotions/backdrops"
+            );
+            promotion_backdrop = result.url;
         }
 
         // ------------------------------------------------------
@@ -270,6 +279,7 @@ class PromotionService {
                 slug,
                 description: description.trim(),
                 promotion_image,
+                promotion_backdrop,
                 likes: Number(likes) || 0,
                 is_active: 1
             });
@@ -284,7 +294,8 @@ class PromotionService {
     async updatePromotion(
         promotionId,
         data,
-        file
+        file,
+        backdropFile
     ) {
 
         // ------------------------------------------------------
@@ -312,6 +323,7 @@ class PromotionService {
         const error = validatePromotion(
             data,
             file,
+            backdropFile,
             true
         );
 
@@ -361,10 +373,13 @@ class PromotionService {
         }
 
         // ------------------------------------------------------
-        // KEEP OLD IMAGE IF NO NEW IMAGE
+        // KEEP OLD IMAGES IF NO NEW IMAGES
         // ------------------------------------------------------
         let promotionImage =
             promotion.promotion_image;
+
+        let promotionBackdrop =
+            promotion.promotion_backdrop;
 
         // ------------------------------------------------------
         // NEW STATUS
@@ -418,6 +433,36 @@ class PromotionService {
             }
 
             // --------------------------------------------------
+            // HANDLE BACKDROP IMAGE
+            // --------------------------------------------------
+            if (backdropFile) {
+
+                // Xóa backdrop cũ trên Cloudinary
+                if (promotion.promotion_backdrop) {
+
+                    const publicId =
+                        extractPublicId(
+                            promotion.promotion_backdrop
+                        );
+
+                    if (publicId) {
+                        await deleteFromCloudinary(
+                            publicId
+                        );
+                    }
+                }
+
+                // Upload backdrop mới
+                const result =
+                    await uploadToCloudinary(
+                        backdropFile,
+                        "cinema_shop/promotions/backdrops"
+                    );
+
+                promotionBackdrop = result.url;
+            }
+
+            // --------------------------------------------------
             // UPDATE DATABASE
             // --------------------------------------------------
             const affectedRows =
@@ -429,6 +474,7 @@ class PromotionService {
                         slug,
                         description: description.trim(),
                         promotion_image: promotionImage,
+                        promotion_backdrop: promotionBackdrop,
                         likes: Number(likes) || 0,
                         is_active: finalIsActive
                     }
@@ -506,13 +552,29 @@ class PromotionService {
             );
 
             // --------------------------------------------------
-            // DELETE CLOUDINARY IMAGE
+            // DELETE CLOUDINARY IMAGES
             // --------------------------------------------------
+            // Xóa ảnh chính
             if (promotion.promotion_image) {
 
                 const publicId =
                     extractPublicId(
                         promotion.promotion_image
+                    );
+
+                if (publicId) {
+                    await deleteFromCloudinary(
+                        publicId
+                    );
+                }
+            }
+
+            // Xóa backdrop
+            if (promotion.promotion_backdrop) {
+
+                const publicId =
+                    extractPublicId(
+                        promotion.promotion_backdrop
                     );
 
                 if (publicId) {

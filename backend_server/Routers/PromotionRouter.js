@@ -26,19 +26,25 @@ router.get('/paginated', authenticateAdmin, PromotionController.getPromotionsWit
 // Lấy chi tiết khuyến mãi theo ID (admin)
 router.get('/:promotion_id', authenticateAdmin, PromotionController.getPromotionById);
 
-// Tạo khuyến mãi mới
+// Tạo khuyến mãi mới - hỗ trợ upload cả ảnh chính và backdrop
 router.post(
     '/',
     authenticateAdmin,
-    upload.single('promotion_image'),
+    upload.fields([
+        { name: 'promotion_image', maxCount: 1 },
+        { name: 'promotion_backdrop', maxCount: 1 }
+    ]),
     PromotionController.createPromotion
 );
 
-// Cập nhật khuyến mãi
+// Cập nhật khuyến mãi - hỗ trợ upload cả ảnh chính và backdrop
 router.put(
     '/:promotion_id',
     authenticateAdmin,
-    upload.single('promotion_image'),
+    upload.fields([
+        { name: 'promotion_image', maxCount: 1 },
+        { name: 'promotion_backdrop', maxCount: 1 }
+    ]),
     PromotionController.updatePromotion
 );
 

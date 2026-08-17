@@ -24,6 +24,7 @@ class NewsRepository {
                 title,
                 slug,
                 news_image,
+                news_backdrop,
                 views,
                 likes,
                 DATE_FORMAT(created_at, '%d/%m/%Y') AS date,
@@ -69,6 +70,7 @@ class NewsRepository {
                 slug,
                 content,
                 news_image,
+                news_backdrop,
                 views,
                 likes,
                 created_at,
@@ -140,16 +142,33 @@ class NewsRepository {
     }
 
     /*=========================================================
+        GET IMAGES (cả ảnh chính và backdrop)
+    =========================================================*/
+    async getImages(newsId) {
+        const [rows] = await db.query(
+            `
+            SELECT
+                news_image,
+                news_backdrop
+            FROM news
+            WHERE news_id = ?
+            `,
+            [newsId]
+        );
+        return rows[0] || null;
+    }
+
+    /*=========================================================
         CREATE
     =========================================================*/
     async create(data) {
-        const { title, slug, content, news_image, likes } = data;
+        const { title, slug, content, news_image, news_backdrop, likes } = data;
         const [result] = await db.query(
             `
-            INSERT INTO news (title, slug, content, news_image, likes, views)
-            VALUES (?, ?, ?, ?, ?, 0)
+            INSERT INTO news (title, slug, content, news_image, news_backdrop, likes, views)
+            VALUES (?, ?, ?, ?, ?, ?, 0)
             `,
-            [title.trim(), slug, content.trim(), news_image || null, likes || 0]
+            [title.trim(), slug, content.trim(), news_image || null, news_backdrop || null, likes || 0]
         );
         return result.insertId;
     }
@@ -158,14 +177,14 @@ class NewsRepository {
         UPDATE
     =========================================================*/
     async update(newsId, data) {
-        const { title, slug, content, news_image, likes } = data;
+        const { title, slug, content, news_image, news_backdrop, likes } = data;
         const [result] = await db.query(
             `
             UPDATE news
-            SET title = ?, slug = ?, content = ?, news_image = ?, likes = ?
+            SET title = ?, slug = ?, content = ?, news_image = ?, news_backdrop = ?, likes = ?
             WHERE news_id = ?
             `,
-            [title.trim(), slug, content.trim(), news_image || null, likes || 0, newsId]
+            [title.trim(), slug, content.trim(), news_image || null, news_backdrop || null, likes || 0, newsId]
         );
         return result.affectedRows;
     }
@@ -220,26 +239,26 @@ class NewsRepository {
     }
 
     async createWithConnection(connection, data) {
-        const { title, slug, content, news_image, likes } = data;
+        const { title, slug, content, news_image, news_backdrop, likes } = data;
         const [result] = await connection.query(
             `
-            INSERT INTO news (title, slug, content, news_image, likes, views)
-            VALUES (?, ?, ?, ?, ?, 0)
+            INSERT INTO news (title, slug, content, news_image, news_backdrop, likes, views)
+            VALUES (?, ?, ?, ?, ?, ?, 0)
             `,
-            [title.trim(), slug, content.trim(), news_image || null, likes || 0]
+            [title.trim(), slug, content.trim(), news_image || null, news_backdrop || null, likes || 0]
         );
         return result.insertId;
     }
 
     async updateWithConnection(connection, newsId, data) {
-        const { title, slug, content, news_image, likes } = data;
+        const { title, slug, content, news_image, news_backdrop, likes } = data;
         const [result] = await connection.query(
             `
             UPDATE news
-            SET title = ?, slug = ?, content = ?, news_image = ?, likes = ?
+            SET title = ?, slug = ?, content = ?, news_image = ?, news_backdrop = ?, likes = ?
             WHERE news_id = ?
             `,
-            [title.trim(), slug, content.trim(), news_image || null, likes || 0, newsId]
+            [title.trim(), slug, content.trim(), news_image || null, news_backdrop || null, likes || 0, newsId]
         );
         return result.affectedRows;
     }

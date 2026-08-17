@@ -1,4 +1,3 @@
-
 const BlogCinemaService = require("../Services/BlogCinemaService");
 
 
@@ -96,22 +95,6 @@ exports.getBlogsWithPagination = async (
                 search
             );
 
-
-        /*
-            API PAGINATED:
-
-            {
-                success: true,
-                data: [],
-                pagination: {}
-            }
-
-            Không bọc thêm:
-            data: {
-                data: [],
-                pagination: {}
-            }
-        */
 
         return res.status(200).json({
 
@@ -265,10 +248,16 @@ exports.createBlog = async (
 
     try {
 
+        // req.file - ảnh chính (vuông)
+        // req.files?.backdrop - ảnh backdrop (ngang)
+        const imageFile = req.file;
+        const backdropFile = req.files?.backdrop ? req.files.backdrop[0] : req.fileBackdrop;
+
         const blogId =
             await BlogCinemaService.createBlog(
                 req.body,
-                req.file
+                imageFile,
+                backdropFile
             );
 
 
@@ -323,11 +312,14 @@ exports.updateBlog = async (
             blog_id
         } = req.params;
 
+        const imageFile = req.file;
+        const backdropFile = req.files?.backdrop ? req.files.backdrop[0] : req.fileBackdrop;
 
         await BlogCinemaService.updateBlog(
             blog_id,
             req.body,
-            req.file
+            imageFile,
+            backdropFile
         );
 
 
@@ -468,4 +460,3 @@ exports.increaseLike = async (
         });
     }
 };
-
