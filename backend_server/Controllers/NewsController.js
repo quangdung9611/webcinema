@@ -89,15 +89,9 @@ exports.getNewsBySlug = async (req, res) => {
 =========================================================*/
 exports.createNews = async (req, res) => {
     try {
-        // req.file - ảnh chính (vuông)
-        // req.files?.backdrop - ảnh backdrop (ngang)
-        const imageFile = req.file;
-        const backdropFile = req.files?.backdrop ? req.files.backdrop[0] : req.fileBackdrop;
-
         const newsId = await NewsService.createNews(
             req.body,
-            imageFile,
-            backdropFile
+            req.files || {}
         );
 
         return res.status(201).json({
@@ -109,6 +103,7 @@ exports.createNews = async (req, res) => {
         console.error("createNews error:", err);
         return res.status(err.statusCode || 400).json({
             success: false,
+            field: err.field || null,
             message: err.message || "Lỗi máy chủ"
         });
     }
@@ -120,14 +115,11 @@ exports.createNews = async (req, res) => {
 exports.updateNews = async (req, res) => {
     try {
         const { news_id } = req.params;
-        const imageFile = req.file;
-        const backdropFile = req.files?.backdrop ? req.files.backdrop[0] : req.fileBackdrop;
 
         await NewsService.updateNews(
             news_id,
             req.body,
-            imageFile,
-            backdropFile
+            req.files || {}
         );
 
         return res.status(200).json({
@@ -138,6 +130,7 @@ exports.updateNews = async (req, res) => {
         console.error("updateNews error:", err);
         return res.status(err.statusCode || 400).json({
             success: false,
+            field: err.field || null,
             message: err.message || "Lỗi máy chủ"
         });
     }

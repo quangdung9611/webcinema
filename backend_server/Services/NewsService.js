@@ -31,7 +31,7 @@ const extractPublicId = (url) => {
 // ==========================================================
 // VALIDATE NEWS
 // ==========================================================
-const validateNews = (data, file, backdropFile, isUpdate = false) => {
+const validateNews = (data, files, isUpdate = false) => {
     const { title, content, likes } = data;
     if (!title || title.trim() === "") return "Vui lòng nhập tiêu đề.";
     if (title.trim().length < 5) return "Tiêu đề phải từ 5 ký tự.";
@@ -41,7 +41,9 @@ const validateNews = (data, file, backdropFile, isUpdate = false) => {
         const value = Number(likes);
         if (Number.isNaN(value) || value < 0) return "Likes không hợp lệ.";
     }
-    if (!isUpdate && !file) return "Vui lòng chọn ảnh.";
+    if (!isUpdate && (!files || !files['news_image'])) {
+        return "Vui lòng chọn ảnh.";
+    }
     return null;
 };
 
@@ -93,11 +95,12 @@ class NewsService {
     /*=========================================================
         CREATE NEWS (ADMIN)
     =========================================================*/
-    async createNews(data, file, backdropFile) {
-        const error = validateNews(data, file, backdropFile, false);
+    async createNews(data, files) {
+        const error = validateNews(data, files, false);
         if (error) {
             const err = new Error(error);
             err.statusCode = 400;
+            err.field = "general";
             throw err;
         }
 
@@ -108,6 +111,7 @@ class NewsService {
         if (exists) {
             const err = new Error("Tiêu đề hoặc slug đã tồn tại");
             err.statusCode = 400;
+            err.field = "title";
             throw err;
         }
 
@@ -115,14 +119,14 @@ class NewsService {
         let news_backdrop = null;
 
         // Upload ảnh chính
-        if (file) {
-            const result = await uploadToCloudinary(file, "cinema_shop/news");
+        if (files['news_image']?.[0]) {
+            const result = await uploadToCloudinary(files['news_image'][0], "cinema_shop/news");
             news_image = result.url;
         }
 
         // Upload ảnh backdrop
-        if (backdropFile) {
-            const result = await uploadToCloudinary(backdropFile, "cinema_shop/news/backdrops");
+        if (files['news_backdrop']?.[0]) {
+            const result = await uploadToCloudinary(files['news_backdrop'][0], "cinema_shop/news/backdrops");
             news_backdrop = result.url;
         }
 
@@ -137,9 +141,9 @@ class NewsService {
     }
 
     /*=========================================================
-        UPDATE NEWS (ADMIN)
+        UPDATE NEWS (ADMIN) - SỬA LOGIC GIỐNG MOVIE
     =========================================================*/
-    async updateNews(newsId, data, file, backdropFile) {
+    async updateNews(newsId, data, files) {
         const existing = await NewsRepository.findById(newsId);
         if (!existing) {
             const err = new Error("Bài viết không tồn tại");
@@ -147,21 +151,33 @@ class NewsService {
             throw err;
         }
 
-        const error = validateNews(data, file, backdropFile, true);
+        const error = validateNews(data, files, true);
         if (error) {
             const err = new Error(error);
             err.statusCode = 400;
+            err.field = "general";
             throw err;
         }
 
         const { title, content, likes } = data;
         const slug = createSlug(title);
 
-        const exists = await NewsRepository.existsByTitleOrSlug(title.trim(), slug, newsId);
-        if (exists) {
-            const err = new Error("Tiêu đề hoặc slug đã trùng với bài viết khác");
-            err.statusCode = 400;
-            throw err;
+        // 👇 CHỈ KIỂM TRA TRÙNG KHI TITLE HOẶC SLUG THAY ĐỔI (GIỐNG MOVIE)
+        if (
+            title.trim() !== existing.title ||
+            slug !== existing.slug
+        ) {
+            const exists = await NewsRepository.existsByTitleOrSlug(
+                title.trim(),
+                slug,
+                newsId
+            );
+            if (exists) {
+                const err = new Error("Tiêu đề hoặc slug đã trùng với bài viết khác");
+                err.statusCode = 400;
+                err.field = "title";
+                throw err;
+            }
         }
 
         const connection = await NewsRepository.getConnection();
@@ -173,22 +189,22 @@ class NewsService {
             let news_backdrop = existing.news_backdrop;
 
             // Xử lý ảnh chính mới
-            if (file) {
+            if (files['news_image']?.[0]) {
                 if (existing.news_image) {
                     const publicId = extractPublicId(existing.news_image);
                     if (publicId) await deleteFromCloudinary(publicId);
                 }
-                const result = await uploadToCloudinary(file, "cinema_shop/news");
+                const result = await uploadToCloudinary(files['news_image'][0], "cinema_shop/news");
                 news_image = result.url;
             }
 
             // Xử lý ảnh backdrop mới
-            if (backdropFile) {
+            if (files['news_backdrop']?.[0]) {
                 if (existing.news_backdrop) {
                     const publicId = extractPublicId(existing.news_backdrop);
                     if (publicId) await deleteFromCloudinary(publicId);
                 }
-                const result = await uploadToCloudinary(backdropFile, "cinema_shop/news/backdrops");
+                const result = await uploadToCloudinary(files['news_backdrop'][0], "cinema_shop/news/backdrops");
                 news_backdrop = result.url;
             }
 
