@@ -53,6 +53,48 @@ const extractPublicId = (url) => {
 
 
 // =========================================================
+// HELPER - CHUẨN HÓA NỘI DUNG
+//
+// MỤC ĐÍCH:
+// - Chuẩn hóa xuống dòng
+// - Xóa khoảng trắng thừa đầu/cuối
+// - Giữ nguyên các đoạn văn
+// - KHÔNG cắt cứng theo số dòng
+//
+// Việc hiển thị khoảng 4 dòng/đoạn sẽ xử lý
+// ở frontend bằng CSS để responsive tốt hơn.
+// =========================================================
+const normalizeParagraphs = (content) => {
+
+    if (!content) {
+        return "";
+    }
+
+    if (typeof content !== "string") {
+        return content;
+    }
+
+    return content
+        // Chuẩn hóa Windows line break
+        .replace(/\r\n/g, '\n')
+
+        // Chuẩn hóa Mac line break cũ
+        .replace(/\r/g, '\n')
+
+        // Xóa khoảng trắng ở đầu/cuối từng dòng
+        .split('\n')
+        .map(line => line.trim())
+        .join('\n')
+
+        // Không cho phép quá 2 dòng trống liên tiếp
+        .replace(/\n{3,}/g, '\n\n')
+
+        // Xóa khoảng trắng đầu/cuối toàn bộ nội dung
+        .trim();
+};
+
+
+// =========================================================
 // VALIDATE PROMOTION DATA
 // =========================================================
 const validatePromotionData = (
@@ -68,6 +110,10 @@ const validatePromotionData = (
         is_active
     } = data;
 
+
+    // =====================================================
+    // TITLE
+    // =====================================================
 
     if (
         !title ||
@@ -86,6 +132,10 @@ const validatePromotionData = (
     }
 
 
+    // =====================================================
+    // DESCRIPTION
+    // =====================================================
+
     if (
         !description ||
         description.trim() === ""
@@ -103,12 +153,17 @@ const validatePromotionData = (
     }
 
 
+    // =====================================================
+    // LIKES
+    // =====================================================
+
     if (
         likes !== undefined &&
         likes !== ""
     ) {
 
-        const parsedLikes = Number(likes);
+        const parsedLikes =
+            Number(likes);
 
         if (
             !Number.isInteger(parsedLikes) ||
@@ -119,6 +174,10 @@ const validatePromotionData = (
         }
     }
 
+
+    // =====================================================
+    // CREATE BẮT BUỘC CÓ ẢNH
+    // =====================================================
 
     if (
         !isUpdate &&
@@ -136,24 +195,27 @@ const validatePromotionData = (
 };
 
 
+// =========================================================
+// CLASS PROMOTION SERVICE
+// =========================================================
 class PromotionService {
 
 
-    /*=========================================================
-        GET ALL PROMOTIONS - KHÔNG PHÂN TRANG
-
-        Repository:
-            rows[]
-
-        Service:
-            rows[]
-
-        Controller:
-            {
-                success: true,
-                data: []
-            }
-    =========================================================*/
+    // =====================================================
+    // GET ALL PROMOTIONS - KHÔNG PHÂN TRANG
+    //
+    // Repository:
+    //     rows[]
+    //
+    // Service:
+    //     rows[]
+    //
+    // Controller:
+    //     {
+    //         success: true,
+    //         data: []
+    //     }
+    // =====================================================
     async getAllPromotionsAll(search = "") {
 
         return await PromotionRepository.findAllAll(
@@ -162,24 +224,17 @@ class PromotionService {
     }
 
 
-    /*=========================================================
-        GET ALL PROMOTIONS - CÓ PHÂN TRANG
-
-        Repository:
-            {
-                data: [],
-                pagination: {}
-            }
-
-        Service giữ nguyên cấu trúc này.
-
-        Controller sẽ tách thành:
-            {
-                success: true,
-                data: [],
-                pagination: {}
-            }
-    =========================================================*/
+    // =====================================================
+    // GET ALL PROMOTIONS - CÓ PHÂN TRANG
+    //
+    // Repository:
+    //     {
+    //         data: [],
+    //         pagination: {}
+    //     }
+    //
+    // Service giữ nguyên cấu trúc.
+    // =====================================================
     async getAllPromotions(
         page = 1,
         limit = 20,
@@ -194,9 +249,9 @@ class PromotionService {
     }
 
 
-    /*=========================================================
-        GET PROMOTION BY ID
-    =========================================================*/
+    // =====================================================
+    // GET PROMOTION BY ID
+    // =====================================================
     async getPromotionById(promotionId) {
 
         const promotion =
@@ -218,9 +273,14 @@ class PromotionService {
     }
 
 
-    /*=========================================================
-        GET PROMOTION BY SLUG
-    =========================================================*/
+    // =====================================================
+    // GET PROMOTION BY SLUG
+    //
+    // Đây là API được CinemaCardDetail sử dụng.
+    //
+    // Tại đây chuẩn hóa description trước khi trả
+    // dữ liệu về frontend.
+    // =====================================================
     async getPromotionBySlug(slug) {
 
         const promotion =
@@ -238,7 +298,30 @@ class PromotionService {
         }
 
 
-        // Tăng lượt xem
+        // =================================================
+        // CHUẨN HÓA NỘI DUNG
+        //
+        // Không chia cứng thành 4 dòng.
+        //
+        // Chỉ đảm bảo dữ liệu:
+        // - sạch
+        // - giữ paragraph
+        // - không có khoảng trắng thừa
+        // =================================================
+
+        if (promotion.description) {
+
+            promotion.description =
+                normalizeParagraphs(
+                    promotion.description
+                );
+        }
+
+
+        // =================================================
+        // TĂNG LƯỢT XEM
+        // =================================================
+
         await PromotionRepository.incrementViews(
             promotion.promotion_id
         );
@@ -248,9 +331,9 @@ class PromotionService {
     }
 
 
-    /*=========================================================
-        CREATE PROMOTION
-    =========================================================*/
+    // =====================================================
+    // CREATE PROMOTION
+    // =====================================================
     async createPromotion(
         data,
         files
@@ -282,9 +365,17 @@ class PromotionService {
         } = data;
 
 
+        // =================================================
+        // TẠO SLUG
+        // =================================================
+
         const slug =
             createSlug(title);
 
+
+        // =================================================
+        // KIỂM TRA TRÙNG TITLE / SLUG
+        // =================================================
 
         const exists =
             await PromotionRepository.existsByTitleOrSlug(
@@ -304,11 +395,26 @@ class PromotionService {
         }
 
 
+        // =================================================
+        // IMAGE
+        // =================================================
+
         let promotion_image = null;
+
+
+        // =================================================
+        // BACKDROP
+        // =================================================
+
         let promotion_backdrop = null;
 
 
+        // =================================================
+        // UPLOAD PROMOTION IMAGE
+        // =================================================
+
         if (
+            files &&
             files['promotion_image']?.[0]
         ) {
 
@@ -324,7 +430,12 @@ class PromotionService {
         }
 
 
+        // =================================================
+        // UPLOAD PROMOTION BACKDROP
+        // =================================================
+
         if (
+            files &&
             files['promotion_backdrop']?.[0]
         ) {
 
@@ -340,6 +451,20 @@ class PromotionService {
         }
 
 
+        // =================================================
+        // CHUẨN HÓA DESCRIPTION
+        // =================================================
+
+        const normalizedDescription =
+            normalizeParagraphs(
+                description
+            );
+
+
+        // =================================================
+        // CREATE DATABASE
+        // =================================================
+
         const promotionId =
             await PromotionRepository.create({
 
@@ -349,7 +474,7 @@ class PromotionService {
                 slug,
 
                 description:
-                    description.trim(),
+                    normalizedDescription,
 
                 promotion_image,
 
@@ -373,14 +498,18 @@ class PromotionService {
     }
 
 
-    /*=========================================================
-        UPDATE PROMOTION - SỬA LOGIC GIỐNG MOVIE
-    =========================================================*/
+    // =====================================================
+    // UPDATE PROMOTION
+    // =====================================================
     async updatePromotion(
         promotionId,
         data,
         files
     ) {
+
+        // =================================================
+        // LẤY DỮ LIỆU HIỆN TẠI
+        // =================================================
 
         const existing =
             await PromotionRepository.findById(
@@ -396,6 +525,10 @@ class PromotionService {
             };
         }
 
+
+        // =================================================
+        // VALIDATE
+        // =================================================
 
         const error =
             validatePromotionData(
@@ -423,15 +556,25 @@ class PromotionService {
         } = data;
 
 
+        // =================================================
+        // TẠO SLUG MỚI
+        // =================================================
+
         const slug =
             createSlug(title);
 
 
-        // 👇 CHỈ KIỂM TRA TRÙNG KHI TITLE HOẶC SLUG THAY ĐỔI (GIỐNG MOVIE)
+        // =================================================
+        // KIỂM TRA TRÙNG TITLE / SLUG
+        //
+        // Chỉ kiểm tra nếu title hoặc slug thay đổi.
+        // =================================================
+
         if (
             title.trim() !== existing.title ||
             slug !== existing.slug
         ) {
+
             const exists =
                 await PromotionRepository.existsByTitleOrSlug(
                     title.trim(),
@@ -439,7 +582,9 @@ class PromotionService {
                     promotionId
                 );
 
+
             if (exists) {
+
                 throw {
                     statusCode: 400,
                     field: "title",
@@ -450,16 +595,34 @@ class PromotionService {
         }
 
 
+        // =================================================
+        // GIỮ IMAGE CŨ NẾU KHÔNG UPLOAD ẢNH MỚI
+        // =================================================
+
         let finalImage =
             existing.promotion_image;
+
+
+        // =================================================
+        // GIỮ BACKDROP CŨ NẾU KHÔNG UPLOAD MỚI
+        // =================================================
 
         let finalBackdrop =
             existing.promotion_backdrop;
 
 
+        // =================================================
+        // UPDATE PROMOTION IMAGE
+        // =================================================
+
         if (
+            files &&
             files['promotion_image']?.[0]
         ) {
+
+            // ---------------------------------------------
+            // XÓA ẢNH CŨ
+            // ---------------------------------------------
 
             if (
                 existing.promotion_image
@@ -471,11 +634,18 @@ class PromotionService {
                     );
 
 
-                await deleteFromCloudinary(
-                    publicId
-                );
+                if (publicId) {
+
+                    await deleteFromCloudinary(
+                        publicId
+                    );
+                }
             }
 
+
+            // ---------------------------------------------
+            // UPLOAD ẢNH MỚI
+            // ---------------------------------------------
 
             const result =
                 await uploadToCloudinary(
@@ -489,9 +659,18 @@ class PromotionService {
         }
 
 
+        // =================================================
+        // UPDATE PROMOTION BACKDROP
+        // =================================================
+
         if (
+            files &&
             files['promotion_backdrop']?.[0]
         ) {
+
+            // ---------------------------------------------
+            // XÓA BACKDROP CŨ
+            // ---------------------------------------------
 
             if (
                 existing.promotion_backdrop
@@ -503,11 +682,18 @@ class PromotionService {
                     );
 
 
-                await deleteFromCloudinary(
-                    publicId
-                );
+                if (publicId) {
+
+                    await deleteFromCloudinary(
+                        publicId
+                    );
+                }
             }
 
+
+            // ---------------------------------------------
+            // UPLOAD BACKDROP MỚI
+            // ---------------------------------------------
 
             const result =
                 await uploadToCloudinary(
@@ -521,6 +707,20 @@ class PromotionService {
         }
 
 
+        // =================================================
+        // CHUẨN HÓA DESCRIPTION
+        // =================================================
+
+        const normalizedDescription =
+            normalizeParagraphs(
+                description
+            );
+
+
+        // =================================================
+        // DATA UPDATE
+        // =================================================
+
         const updateData = {
 
             title:
@@ -529,7 +729,7 @@ class PromotionService {
             slug,
 
             description:
-                description.trim(),
+                normalizedDescription,
 
             promotion_image:
                 finalImage,
@@ -550,6 +750,10 @@ class PromotionService {
 
         };
 
+
+        // =================================================
+        // UPDATE DATABASE
+        // =================================================
 
         const affected =
             await PromotionRepository.update(
@@ -574,10 +778,12 @@ class PromotionService {
     }
 
 
-    /*=========================================================
-        DELETE PROMOTION
-    =========================================================*/
-    async deletePromotion(promotionId) {
+    // =====================================================
+    // DELETE PROMOTION
+    // =====================================================
+    async deletePromotion(
+        promotionId
+    ) {
 
         const promotion =
             await PromotionRepository.findById(
@@ -595,6 +801,10 @@ class PromotionService {
         }
 
 
+        // =================================================
+        // XÓA PROMOTION IMAGE
+        // =================================================
+
         if (
             promotion.promotion_image
         ) {
@@ -605,11 +815,18 @@ class PromotionService {
                 );
 
 
-            await deleteFromCloudinary(
-                publicId
-            );
+            if (publicId) {
+
+                await deleteFromCloudinary(
+                    publicId
+                );
+            }
         }
 
+
+        // =================================================
+        // XÓA PROMOTION BACKDROP
+        // =================================================
 
         if (
             promotion.promotion_backdrop
@@ -621,11 +838,18 @@ class PromotionService {
                 );
 
 
-            await deleteFromCloudinary(
-                publicId
-            );
+            if (publicId) {
+
+                await deleteFromCloudinary(
+                    publicId
+                );
+            }
         }
 
+
+        // =================================================
+        // XÓA DATABASE
+        // =================================================
 
         const affected =
             await PromotionRepository.delete(
@@ -649,10 +873,12 @@ class PromotionService {
     }
 
 
-    /*=========================================================
-        LIKE PROMOTION
-    =========================================================*/
-    async likePromotion(promotionId) {
+    // =====================================================
+    // LIKE PROMOTION
+    // =====================================================
+    async likePromotion(
+        promotionId
+    ) {
 
         const affected =
             await PromotionRepository.incrementLikes(
@@ -676,10 +902,12 @@ class PromotionService {
     }
 
 
-    /*=========================================================
-        TOGGLE STATUS
-    =========================================================*/
-    async toggleStatus(promotionId) {
+    // =====================================================
+    // TOGGLE STATUS
+    // =====================================================
+    async toggleStatus(
+        promotionId
+    ) {
 
         const status =
             await PromotionRepository.toggleStatus(
@@ -703,6 +931,10 @@ class PromotionService {
     }
 }
 
+
+// =========================================================
+// EXPORT
+// =========================================================
 
 module.exports =
     new PromotionService();
