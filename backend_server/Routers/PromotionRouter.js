@@ -10,7 +10,7 @@ const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 // Lấy toàn bộ khuyến mãi (không phân trang)
 router.get("/", PromotionController.getAllPromotionsAll);
 
-// Lấy chi tiết khuyến mãi theo SLUG
+// Lấy chi tiết khuyến mãi theo SLUG (PUBLIC)
 router.get("/detail/:slug", PromotionController.getPromotionBySlug);
 
 // Tăng lượt thích

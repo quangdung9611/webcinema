@@ -8,7 +8,8 @@ import {
     Loader2,
     Eye,
     Heart,
-    ExternalLink
+    ExternalLink,
+    Image as ImageIcon
 } from 'lucide-react';
 
 import AdminPage from '../../../components/AdminPage';
@@ -377,6 +378,14 @@ const PromotionPage = () => {
     };
 
     // ======================================================
+    // HELPER: IMAGE ERROR HANDLER
+    // ======================================================
+    const handleImageError = (e) => {
+        e.target.onerror = null;
+        e.target.src = 'https://via.placeholder.com/70x100?text=No+Image';
+    };
+
+    // ======================================================
     // TABLE COLUMNS
     // ======================================================
     const columns = [
@@ -388,8 +397,32 @@ const PromotionPage = () => {
                     src={getImageUrl(row.promotion_image)}
                     alt={row.title}
                     style={{ width: '70px', height: '100px', objectFit: 'cover', borderRadius: '10px' }}
-                    onError={(e) => { e.target.src = 'https://via.placeholder.com/70x100?text=No+Image'; }}
+                    onError={handleImageError}
                 />
+            )
+        },
+        {
+            title: 'Backdrop',
+            key: 'promotion_backdrop',
+            render: (row) => (
+                row.promotion_backdrop ? (
+                    <img
+                        src={getImageUrl(row.promotion_backdrop)}
+                        alt="backdrop"
+                        style={{
+                            width: '120px',
+                            height: '50px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255,255,255,0.1)'
+                        }}
+                        onError={handleImageError}
+                    />
+                ) : (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+                        <ImageIcon size={16} style={{ verticalAlign: 'middle' }} /> Chưa có
+                    </span>
+                )
             )
         },
         { title: 'Tiêu đề', key: 'title' },

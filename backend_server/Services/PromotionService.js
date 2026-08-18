@@ -374,7 +374,7 @@ class PromotionService {
 
 
     /*=========================================================
-        UPDATE PROMOTION
+        UPDATE PROMOTION - SỬA LOGIC GIỐNG MOVIE
     =========================================================*/
     async updatePromotion(
         promotionId,
@@ -427,22 +427,26 @@ class PromotionService {
             createSlug(title);
 
 
-        const exists =
-            await PromotionRepository.existsByTitleOrSlug(
-                title.trim(),
-                slug,
-                promotionId
-            );
+        // 👇 CHỈ KIỂM TRA TRÙNG KHI TITLE HOẶC SLUG THAY ĐỔI (GIỐNG MOVIE)
+        if (
+            title.trim() !== existing.title ||
+            slug !== existing.slug
+        ) {
+            const exists =
+                await PromotionRepository.existsByTitleOrSlug(
+                    title.trim(),
+                    slug,
+                    promotionId
+                );
 
-
-        if (exists) {
-
-            throw {
-                statusCode: 400,
-                field: "title",
-                message:
-                    "Tên khuyến mãi hoặc slug đã trùng với khuyến mãi khác."
-            };
+            if (exists) {
+                throw {
+                    statusCode: 400,
+                    field: "title",
+                    message:
+                        "Tên khuyến mãi hoặc slug đã trùng với khuyến mãi khác."
+                };
+            }
         }
 
 
