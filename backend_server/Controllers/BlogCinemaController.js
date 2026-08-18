@@ -16,7 +16,6 @@ exports.getAllBlogsAll = async (req, res) => {
         } = req.query;
 
 
-        // Không cho phép page / limit ở API thường
         if (
             page !== undefined ||
             limit !== undefined
@@ -248,16 +247,10 @@ exports.createBlog = async (
 
     try {
 
-        // req.file - ảnh chính (vuông)
-        // req.files?.backdrop - ảnh backdrop (ngang)
-        const imageFile = req.file;
-        const backdropFile = req.files?.backdrop ? req.files.backdrop[0] : req.fileBackdrop;
-
         const blogId =
             await BlogCinemaService.createBlog(
                 req.body,
-                imageFile,
-                backdropFile
+                req.files || {}
             );
 
 
@@ -289,6 +282,9 @@ exports.createBlog = async (
 
             success: false,
 
+            field:
+                err.field || null,
+
             message:
                 err.message ||
                 "Lỗi máy chủ"
@@ -312,14 +308,11 @@ exports.updateBlog = async (
             blog_id
         } = req.params;
 
-        const imageFile = req.file;
-        const backdropFile = req.files?.backdrop ? req.files.backdrop[0] : req.fileBackdrop;
 
         await BlogCinemaService.updateBlog(
             blog_id,
             req.body,
-            imageFile,
-            backdropFile
+            req.files || {}
         );
 
 
@@ -346,6 +339,9 @@ exports.updateBlog = async (
         ).json({
 
             success: false,
+
+            field:
+                err.field || null,
 
             message:
                 err.message ||
