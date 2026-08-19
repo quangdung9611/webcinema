@@ -1,4 +1,3 @@
-// routes/movieRoutes.js
 const express = require("express");
 const router = express.Router();
 const MovieController = require("../Controllers/MovieController");
@@ -7,11 +6,9 @@ const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
 const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 
 /*=========================================================
-    USER - PUBLIC ROUTES (không cần đăng nhập)
+    USER - PUBLIC ROUTES
 =========================================================*/
-// Lấy toàn bộ phim (không phân trang) - dành cho admin
 router.get("/", MovieController.getAllMoviesAll);
-
 router.get("/status-group", MovieController.getMoviesByStatusGroup);
 router.get("/with-genre", MovieController.getMoviesWithGenre);
 router.get("/category/:statusSlug", MovieController.getMoviesByStatusSlug);
@@ -20,10 +17,7 @@ router.get("/detail/:slug", MovieController.getMovieBySlug);
 /*=========================================================
     ADMIN - QUẢN LÝ PHIM
 =========================================================*/
-
-// Lấy phim có phân trang (thêm route này)
 router.get("/paginated", authenticateAdmin, MovieController.getMoviesWithPagination);
-
 router.get("/:movie_id", authenticateAdmin, MovieController.getMovieById);
 router.post(
     "/",

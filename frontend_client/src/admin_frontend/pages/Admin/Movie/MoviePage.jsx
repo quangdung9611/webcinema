@@ -1,4 +1,3 @@
-// pages/admin/MoviePage.js
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import api from '../../../../api/api';
 import {
@@ -88,7 +87,7 @@ const MoviePage = () => {
     const [formErrors, setFormErrors] = useState({});
 
     // ======================================================
-    // ALERT MODAL (giống UserPage)
+    // ALERT MODAL
     // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
@@ -532,9 +531,7 @@ const MoviePage = () => {
                 )}
             </AdminPage>
 
-            {/* ==================================================
-                FORM MODAL (giống UserPage)
-            ================================================== */}
+            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={handleCloseForm}
@@ -554,9 +551,7 @@ const MoviePage = () => {
                 />
             </AdminModal>
 
-            {/* ==================================================
-                ALERT / CONFIRM MODAL (giống UserPage)
-            ================================================== */}
+            {/* ALERT / CONFIRM MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}

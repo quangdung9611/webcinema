@@ -3,8 +3,8 @@ const db = require('../Config/db');
 class MovieRepository {
 
     /*=========================================================
-        FIND ALL MOVIES - KHÔNG PHÂN TRANG (PUBLIC/ADMIN)
-        RETURN: rows[] (trực tiếp, không bọc)
+        FIND ALL MOVIES - KHÔNG PHÂN TRANG
+        RETURN: rows[]
     =========================================================*/
     async findAllAll(search = "") {
         search = typeof search === "string" ? search.trim() : "";
@@ -50,7 +50,7 @@ class MovieRepository {
     }
 
     /*=========================================================
-        FIND ALL MOVIES - CÓ PHÂN TRANG (ADMIN)
+        FIND ALL MOVIES - CÓ PHÂN TRANG
         RETURN: { data: [], pagination: {} }
     =========================================================*/
     async findAll(page = 1, limit = 20, search = "") {
@@ -162,8 +162,7 @@ class MovieRepository {
     }
 
     /*=========================================================
-        FIND MOVIE BY SLUG (PUBLIC DETAIL)
-        KÈM GENRES, ACTORS, SHOWTIMES
+        FIND MOVIE BY SLUG
     =========================================================*/
     async findBySlug(slug) {
         const [rows] = await db.query(
@@ -216,7 +215,7 @@ class MovieRepository {
     }
 
     /*=========================================================
-        GET SHOWTIMES BY MOVIE ID (CHỈ LẤY TƯƠNG LAI)
+        GET SHOWTIMES BY MOVIE ID
     =========================================================*/
     async getShowtimesByMovieId(movieId) {
         const [rows] = await db.query(
@@ -238,27 +237,6 @@ class MovieRepository {
             [movieId]
         );
         return rows;
-    }
-
-    /*=========================================================
-        CHECK EXISTS BY TITLE OR SLUG
-    =========================================================*/
-    async existsByTitleOrSlug(title, slug, excludeId = null) {
-        let sql = `
-            SELECT movie_id
-            FROM movies
-            WHERE title = ? OR slug = ?
-        `;
-        const params = [title, slug];
-
-        if (excludeId != null) {
-            sql += ` AND movie_id != ?`;
-            params.push(Number(excludeId));
-        }
-        sql += ` LIMIT 1`;
-
-        const [rows] = await db.query(sql, params);
-        return rows.length > 0;
     }
 
     /*=========================================================
@@ -374,7 +352,7 @@ class MovieRepository {
     }
 
     /*=========================================================
-        FIND GROUPED BY STATUS (PUBLIC HOME)
+        FIND GROUPED BY STATUS
     =========================================================*/
     async findGroupedByStatus(limit = 4) {
         const [rows] = await db.query(
@@ -407,7 +385,7 @@ class MovieRepository {
     }
 
     /*=========================================================
-        FIND BY STATUS (CÓ PHÂN TRANG)
+        FIND BY STATUS
     =========================================================*/
     async findByStatus(status, page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
@@ -486,7 +464,7 @@ class MovieRepository {
     }
 
     /*=========================================================
-        FIND BY GENRE (CÓ PHÂN TRANG)
+        FIND BY GENRE
     =========================================================*/
     async findByGenre(genreSlug, page = 1, limit = 20, search = "") {
         page = Number.parseInt(page, 10);
