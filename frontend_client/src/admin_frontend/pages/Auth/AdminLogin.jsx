@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Thêm useEffect
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api/api';
 
@@ -16,6 +16,7 @@ import {
 
 import Modal from '../../components/AdminModal';
 import LoadingButton from '../../../user_frontend/components/LoadingButton';
+import SessionExpiredModal from '../../../user_frontend/components/SessionExpiredModal'; // 👈 THÊM IMPORT
 
 import '../../styles/AdminAuth.css';
 
@@ -32,30 +33,53 @@ const AdminLogin = () => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [serverError, setServerError] = useState('');
+    const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false); // 👈 THÊM STATE
 
     const navigate = useNavigate();
 
     /* =====================================================
-        CHECK SESSION (Nếu đã đăng nhập thì chuyển trang)
+        CHECK SESSION - Nếu đã đăng nhập thì chuyển trang
     ===================================================== */
     useEffect(() => {
         const checkAdminSession = async () => {
             try {
-                // Gọi API kiểm tra trạng thái đăng nhập
                 const res = await api.get('/admin/api/auth/me');
-                
-                // Nếu role là admin, đẩy thẳng vào dashboard, không cần login nữa
                 if (res.data?.user?.role === 'admin') {
                     navigate('/dashboard', { replace: true });
                 }
             } catch (error) {
-                // Nếu lỗi 401 (chưa login) hoặc lỗi khác, im lặng để hiển thị form login
                 console.log('Chưa đăng nhập, hiển thị form login.');
             }
         };
         checkAdminSession();
     }, [navigate]);
 
+    /* =====================================================
+        LẮNG NGHE SỰ KIỆN SESSION EXPIRED TỪ API INTERCEPTOR
+    ===================================================== */
+    useEffect(() => {
+        const handleSessionExpired = (event) => {
+            setShowSessionExpiredModal(true);
+        };
+
+        window.addEventListener('sessionExpired', handleSessionExpired);
+
+        return () => {
+            window.removeEventListener('sessionExpired', handleSessionExpired);
+        };
+    }, []);
+
+    /* =====================================================
+        HANDLE SESSION EXPIRED CONFIRM - Đăng nhập lại
+    ===================================================== */
+    const handleSessionExpiredConfirm = () => {
+        setShowSessionExpiredModal(false);
+        setEmail('');
+        setPassword('');
+        setErrors({});
+        setServerError('');
+        document.getElementById('admin-email')?.focus();
+    };
 
     /* =====================================================
         MODAL
@@ -67,7 +91,6 @@ const AdminLogin = () => {
         message: '',
         onConfirm: () => {}
     });
-
 
     /* =====================================================
         VALIDATE
@@ -88,7 +111,6 @@ const AdminLogin = () => {
         return Object.keys(tempErrors).length === 0;
     };
 
-
     /* =====================================================
         HANDLE LOGIN
     ===================================================== */
@@ -107,7 +129,8 @@ const AdminLogin = () => {
                 '/admin/api/auth/login',
                 {
                     email: email.trim(),
-                    password: password
+                    password: password,
+                    rememberMe: false
                 }
             );
 
@@ -131,22 +154,27 @@ const AdminLogin = () => {
 
         } catch (err) {
             console.error('Admin Login Error:', err);
-            const errorMessage = err.response?.data?.message ||
-                                 err.response?.data?.error ||
-                                 'Sai tài khoản hoặc mật khẩu quản trị.';
-
-            if (err.response?.data?.field === 'email') {
-                setErrors({ email: errorMessage });
-            } else if (err.response?.data?.field === 'password') {
-                setErrors({ password: errorMessage });
+            
+            // ✅ KIỂM TRA LỖI SESSION_EXPIRED TỪ BACKEND
+            if (err.response?.data?.code === 'SESSION_EXPIRED') {
+                setShowSessionExpiredModal(true);
             } else {
-                setServerError(errorMessage);
+                const errorMessage = err.response?.data?.message ||
+                                     err.response?.data?.error ||
+                                     'Sai tài khoản hoặc mật khẩu quản trị.';
+
+                if (err.response?.data?.field === 'email') {
+                    setErrors({ email: errorMessage });
+                } else if (err.response?.data?.field === 'password') {
+                    setErrors({ password: errorMessage });
+                } else {
+                    setServerError(errorMessage);
+                }
             }
         } finally {
             setLoading(false);
         }
     };
-
 
     /* =====================================================
         RENDER
@@ -211,6 +239,12 @@ const AdminLogin = () => {
                         <p>Đăng nhập để tiếp tục quản trị hệ thống.</p>
                     </div>
 
+                    {serverError && (
+                        <div className="admin-server-error" style={{ marginBottom: '16px' }}>
+                            {serverError}
+                        </div>
+                    )}
+
                     <form onSubmit={handleAdminLogin} noValidate className="admin-login-form">
                         {/* EMAIL */}
                         <div className="admin-input-group">
@@ -218,6 +252,7 @@ const AdminLogin = () => {
                             <div className={`admin-input-box ${errors.email ? 'error' : ''}`}>
                                 <Mail size={18} />
                                 <input
+                                    id="admin-email" // 👈 THÊM ID CHO FOCUS
                                     type="email"
                                     placeholder="admin@cinemastar.com"
                                     value={email}
@@ -262,8 +297,6 @@ const AdminLogin = () => {
                             {errors.password && <span className="admin-error-text">{errors.password}</span>}
                         </div>
 
-                        {serverError && <div className="admin-server-error">{serverError}</div>}
-
                         <LoadingButton
                             type="submit"
                             loading={loading}
@@ -289,6 +322,12 @@ const AdminLogin = () => {
                 title={modalConfig.title}
                 message={modalConfig.message}
                 onConfirm={modalConfig.onConfirm}
+            />
+
+            {/* 👈 THÊM SESSION EXPIRED MODAL */}
+            <SessionExpiredModal
+                isOpen={showSessionExpiredModal}
+                onConfirm={handleSessionExpiredConfirm}
             />
         </div>
     );

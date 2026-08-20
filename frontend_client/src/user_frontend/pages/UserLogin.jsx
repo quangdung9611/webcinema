@@ -10,6 +10,7 @@ import api from '../../api/api';
 
 import ForgotPassword from '../components/ForgotPassword';
 import LoadingButton from '../components/LoadingButton';
+import SessionExpiredModal from '../components/SessionExpiredModal'; // 👈 THÊM IMPORT
 
 import '../styles/UserAuth.css';
 
@@ -31,22 +32,18 @@ const UserLogin = () => {
     const [serverError, setServerError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotModal, setShowForgotModal] = useState(false);
+    const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false); // 👈 THÊM STATE
 
     const navigate = useNavigate();
     const location = useLocation();
 
-
     /* =====================================================
-        CHECK SESSION (Giống logic AdminLogin)
-        Nếu đã đăng nhập thì chuyển luôn về trang chủ
+        CHECK SESSION - Nếu đã đăng nhập thì chuyển về trang chủ
     ===================================================== */
     useEffect(() => {
         const checkUserSession = async () => {
             try {
-                // Gọi API kiểm tra trạng thái đăng nhập
                 const res = await api.get('/api/auth/me');
-                
-                // Nếu tồn tại user hợp lệ, đẩy thẳng về trang chủ
                 const raw = res.data;
                 const account = raw?.user || raw?.data?.user || raw;
                 
@@ -54,13 +51,46 @@ const UserLogin = () => {
                     navigate('/', { replace: true });
                 }
             } catch (error) {
-                // Nếu lỗi 401 (chưa login) hoặc lỗi khác, im lặng để hiển thị form login
                 console.log('Chưa đăng nhập, hiển thị form login.');
             }
         };
         checkUserSession();
     }, [navigate]);
 
+    /* =====================================================
+        LẮNG NGHE SỰ KIỆN SESSION EXPIRED TỪ API INTERCEPTOR
+    ===================================================== */
+    useEffect(() => {
+        const handleSessionExpired = (event) => {
+            // Hiển thị modal thay vì setServerError
+            setShowSessionExpiredModal(true);
+        };
+
+        // Lắng nghe sự kiện sessionExpired
+        window.addEventListener('sessionExpired', handleSessionExpired);
+
+        // Cleanup
+        return () => {
+            window.removeEventListener('sessionExpired', handleSessionExpired);
+        };
+    }, []);
+
+    /* =====================================================
+        HANDLE SESSION EXPIRED CONFIRM - Đăng nhập lại
+    ===================================================== */
+    const handleSessionExpiredConfirm = () => {
+        setShowSessionExpiredModal(false);
+        // Reset form
+        setFormData({
+            email: '',
+            password: '',
+            rememberMe: false
+        });
+        setErrors({});
+        setServerError('');
+        // Focus vào input email
+        document.getElementById('login-email')?.focus();
+    };
 
     /* =====================================================
         VALIDATE
@@ -86,7 +116,6 @@ const UserLogin = () => {
         return Object.keys(tempErrors).length === 0;
     };
 
-
     /* =====================================================
         HANDLE INPUT
     ===================================================== */
@@ -107,9 +136,8 @@ const UserLogin = () => {
         }
     };
 
-
     /* =====================================================
-        LOGIN (Có thêm Dispatch Event update Header)
+        LOGIN
     ===================================================== */
 
     const handleLogin = async (e) => {
@@ -127,7 +155,8 @@ const UserLogin = () => {
                 '/api/auth/login',
                 {
                     email: formData.email.trim(),
-                    password: formData.password
+                    password: formData.password,
+                    rememberMe: formData.rememberMe
                 }
             );
 
@@ -137,6 +166,7 @@ const UserLogin = () => {
                     'Vui lòng xác thực email trước khi đăng nhập. ' +
                     'Kiểm tra hộp thư của bạn.'
                 );
+                setLoading(false);
                 return;
             }
 
@@ -145,29 +175,35 @@ const UserLogin = () => {
             ================================================= */
             const from = location.state?.from?.pathname || '/';
             
-            // 🔥 QUAN TRỌNG: Dispatch event để UserHeader tự cập nhật ngay lập tức
+            // Dispatch event để UserHeader tự cập nhật
             window.dispatchEvent(new Event('userLoggedIn')); 
 
             navigate(from, { replace: true });
 
         } catch (err) {
             console.error('Login Error:', err);
-            const errorMessage = err.response?.data?.message ||
-                                 err.response?.data?.error ||
-                                 'Tài khoản hoặc mật khẩu không chính xác';
-
-            if (err.response?.data?.field === 'email') {
-                setErrors(prev => ({ ...prev, email: errorMessage }));
-            } else if (err.response?.data?.field === 'password') {
-                setErrors(prev => ({ ...prev, password: errorMessage }));
+            
+            // ✅ KIỂM TRA LỖI SESSION_EXPIRED TỪ BACKEND
+            if (err.response?.data?.code === 'SESSION_EXPIRED') {
+                // Hiển thị modal thay vì setServerError
+                setShowSessionExpiredModal(true);
             } else {
-                setServerError(errorMessage);
+                const errorMessage = err.response?.data?.message ||
+                                     err.response?.data?.error ||
+                                     'Tài khoản hoặc mật khẩu không chính xác';
+
+                if (err.response?.data?.field === 'email') {
+                    setErrors(prev => ({ ...prev, email: errorMessage }));
+                } else if (err.response?.data?.field === 'password') {
+                    setErrors(prev => ({ ...prev, password: errorMessage }));
+                } else {
+                    setServerError(errorMessage);
+                }
             }
         } finally {
             setLoading(false);
         }
     };
-
 
     /* =====================================================
         RENDER
@@ -190,6 +226,7 @@ const UserLogin = () => {
                     <div className="form-group">
                         <label>Email address</label>
                         <input
+                            id="login-email" // 👈 THÊM ID CHO FOCUS
                             type="email"
                             name="email"
                             placeholder="example@gmail.com"
@@ -271,6 +308,12 @@ const UserLogin = () => {
             {showForgotModal && (
                 <ForgotPassword onClose={() => setShowForgotModal(false)} />
             )}
+
+            {/* 👈 THÊM SESSION EXPIRED MODAL */}
+            <SessionExpiredModal
+                isOpen={showSessionExpiredModal}
+                onConfirm={handleSessionExpiredConfirm}
+            />
         </div>
     );
 };

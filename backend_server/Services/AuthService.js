@@ -6,6 +6,7 @@ const Jwt = require("../utils/Jwt");
 const Cookie = require("../utils/Cookie");
 const Password = require("../utils/Password");
 const Otp = require("../utils/Otp");
+const crypto = require("crypto");
 
 const UserRepository = require("../Repositories/UserRepository");
 const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
@@ -93,17 +94,43 @@ const validateLogin = (email, password) => {
 };
 
 /*=========================================================
-    GENERATE TOKEN & SET COOKIE
+    GENERATE TOKEN & SET COOKIE (CÓ TẠO REFRESH TOKEN)
 =========================================================*/
 
-const generateAndSetTokens = (user, res, rememberMe = false) => {
+const generateAndSetTokens = async (user, req, res, rememberMe = false) => {
+    // 1. Tạo access token
     const accessToken = Jwt.generateAccessToken(user);
+    
+    // 2. Tạo refresh token
+    const refreshToken = crypto.randomBytes(64).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
+    
+    // 3. Lấy thông tin thiết bị
+    const ipAddress = req?.ip || req?.connection?.remoteAddress || null;
+    const userAgent = req?.headers?.["user-agent"] || "Unknown";
+    const deviceName = req?.headers?.["device-name"] || "Unknown";
+    
+    // 4. Lưu refresh token vào DB
+    await RefreshTokenRepository.create({
+        user_id: user.user_id,
+        token_hash: tokenHash,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 ngày
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        device_name: deviceName
+    });
+    
+    // 5. Set cookies
     if (user.role === "admin") {
         Cookie.setAdminAccessToken(res, accessToken, rememberMe);
     } else {
         Cookie.setUserAccessToken(res, accessToken, rememberMe);
     }
-    return accessToken;
+    
+    // 6. Set refresh token cookie (httpOnly, không thể truy cập từ JS)
+    Cookie.setRefreshToken(res, refreshToken, rememberMe);
+    
+    return { accessToken, refreshToken };
 };
 
 /*=========================================================
@@ -173,7 +200,7 @@ exports.register = async (userData) => {
 };
 
 /*=========================================================
-    LOGIN (CHÍNH)
+    LOGIN (CHÍNH) - ĐÃ THÊM REVOKE TOKEN CŨ
 =========================================================*/
 
 exports.login = async (email, password, rememberMe = false, req, res) => {
@@ -197,10 +224,20 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
     }
 
-    // 5. Generate token và set cookie
-    generateAndSetTokens(user, res, rememberMe);
+    // ✅ 5. QUAN TRỌNG: Revoke tất cả token cũ (chỉ đăng nhập 1 thiết bị)
+    await RefreshTokenRepository.revokeByUser(
+        user.user_id,
+        "Đăng nhập ở thiết bị mới"
+    );
 
-    // 6. Trả về thông tin user (không trả token)
+    // 6. Generate token và set cookie (có tạo refresh token mới)
+    await generateAndSetTokens(user, req, res, rememberMe);
+
+    // 7. Update last login
+    const ipAddress = req?.ip || req?.connection?.remoteAddress || null;
+    await UserRepository.updateLastLogin(user.user_id, ipAddress);
+
+    // 8. Trả về thông tin user (không trả token)
     return {
         success: true,
         message: "Đăng nhập thành công",
@@ -238,20 +275,70 @@ exports.getMe = async (userId) => {
 };
 
 /*=========================================================
-    LOGOUT (NHẬN req VÀ res)
+    REFRESH TOKEN (THÊM MỚI)
+=========================================================*/
+
+exports.refreshToken = async (req, res) => {
+    // Lấy refresh token từ cookie
+    const refreshToken = Cookie.getRefreshToken(req);
+    
+    if (!refreshToken) {
+        throw { statusCode: 400, message: "Cần refresh token" };
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
+    
+    // Kiểm tra token hợp lệ
+    const tokenData = await RefreshTokenRepository.findValidTokenHash(tokenHash);
+    
+    if (!tokenData) {
+        throw { statusCode: 401, message: "Refresh token không hợp lệ hoặc đã hết hạn" };
+    }
+
+    // Lấy user
+    const user = await UserRepository.findById(tokenData.user_id);
+    if (!user || user.status === "banned") {
+        throw { statusCode: 401, message: "User không tồn tại hoặc đã bị khóa" };
+    }
+
+    // Tạo access token mới
+    const newAccessToken = Jwt.generateAccessToken({
+        user_id: user.user_id,
+        email: user.email,
+        role: user.role
+    });
+
+    // Cập nhật last_used_at
+    await RefreshTokenRepository.updateUsage(tokenHash);
+
+    // Set cookie mới
+    if (user.role === "admin") {
+        Cookie.setAdminAccessToken(res, newAccessToken, false);
+    } else {
+        Cookie.setUserAccessToken(res, newAccessToken, false);
+    }
+
+    return {
+        success: true,
+        message: "Refresh token thành công"
+    };
+};
+
+/*=========================================================
+    LOGOUT (NHẬN req VÀ res) - ĐÃ SỬA
 =========================================================*/
 
 exports.logout = async (req, res) => {
-    // Lấy token từ cookie (ưu tiên admin_token)
-    let token = Cookie.getAdminAccessToken(req);
-    if (token) {
-        Cookie.clearAdminCookies(res);
-    } else {
-        token = Cookie.getUserAccessToken(req);
-        if (token) {
-            Cookie.clearUserCookies(res);
-        }
+    // Lấy refresh token từ cookie
+    const refreshToken = Cookie.getRefreshToken(req);
+    
+    if (refreshToken) {
+        const tokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
+        await RefreshTokenRepository.revoke(tokenHash, "Logout");
     }
+
+    // Xóa tất cả cookie
+    Cookie.clearAllCookies(res);
 
     return {
         success: true,
@@ -260,14 +347,15 @@ exports.logout = async (req, res) => {
 };
 
 /*=========================================================
-    LOGOUT ALL DEVICES (NHẬN userId VÀ res)
+    LOGOUT ALL DEVICES (NHẬN userId VÀ res) - ĐÃ SỬA
 =========================================================*/
 
 exports.logoutAllDevices = async (userId, res) => {
+    // Revoke tất cả token của user
+    await RefreshTokenRepository.revokeByUser(userId, "Logout All Devices");
+    
     // Xóa tất cả cookie
     Cookie.clearAllCookies(res);
-
-    // TODO: Xóa tất cả refresh token của user trong DB (nếu có)
 
     return {
         success: true,
@@ -313,6 +401,9 @@ exports.changePassword = async (userId, passwordData) => {
 
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(userId, hashedPassword);
+
+    // ✅ Revoke tất cả token sau khi đổi mật khẩu (bắt đăng nhập lại)
+    await RefreshTokenRepository.revokeByUser(userId, "Đổi mật khẩu");
 
     return {
         success: true,
@@ -477,6 +568,9 @@ exports.resetPassword = async (resetToken, newPassword) => {
     // Update password
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(user.user_id, hashedPassword);
+
+    // ✅ Revoke tất cả token sau khi reset password
+    await RefreshTokenRepository.revokeByUser(user.user_id, "Reset mật khẩu");
 
     // Log
     await OtpRepository.create({

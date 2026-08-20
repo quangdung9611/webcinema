@@ -24,7 +24,6 @@ exports.register = async (req, res) => {
 
 /*=========================================================
     LOGIN (CHUNG - DÙNG CHO CẢ CUSTOMER VÀ ADMIN)
-    ✅ SỬA: GỌI SERVICE VỚI ĐẦY ĐỦ THAM SỐ, KHÔNG SET COOKIE THỦ CÔNG
 =========================================================*/
 
 exports.login = async (req, res) => {
@@ -49,7 +48,6 @@ exports.login = async (req, res) => {
 
 /*=========================================================
     LOGIN ADMIN (RIÊNG)
-    ✅ SỬA: DÙNG CHUNG SERVICE, KIỂM TRA ROLE SAU KHI LOGIN
 =========================================================*/
 
 exports.adminLogin = async (req, res) => {
@@ -99,17 +97,15 @@ exports.getMe = async (req, res) => {
 };
 
 /*=========================================================
-    REFRESH TOKEN
-    ⚠️ Tạm thời giữ nguyên (cần implement service refreshToken sau)
+    REFRESH TOKEN (ĐÃ SỬA)
 =========================================================*/
 
 exports.refreshToken = async (req, res) => {
     try {
-        // TODO: Implement AuthService.refreshToken(req, res)
-        // Hiện tại trả về lỗi 501 (Not Implemented)
-        return res.status(501).json({
-            success: false,
-            message: "Chức năng refresh token đang phát triển"
+        const result = await AuthService.refreshToken(req, res);
+        return res.status(200).json({
+            success: true,
+            message: "Refresh token thành công"
         });
     } catch (error) {
         console.error("Refresh Error:", error);
@@ -122,7 +118,6 @@ exports.refreshToken = async (req, res) => {
 
 /*=========================================================
     LOGOUT
-    ✅ SỬA: GỌI SERVICE XỬ LÝ XÓA COOKIE
 =========================================================*/
 
 exports.logout = async (req, res) => {
@@ -140,7 +135,6 @@ exports.logout = async (req, res) => {
 
 /*=========================================================
     LOGOUT ALL DEVICES
-    ✅ SỬA: GỌI SERVICE XỬ LÝ XÓA COOKIE
 =========================================================*/
 
 exports.logoutAllDevices = async (req, res) => {
