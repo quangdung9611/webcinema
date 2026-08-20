@@ -15,13 +15,17 @@ import {
     Timer
 } from 'lucide-react';
 
-import Modal from '../../components/Modal';
-import SessionExpiredModal from '../../../user_frontend/components/SessionExpiredModal';
+import Modal from '../../components/AdminModal';
 import LoadingButton from '../../../user_frontend/components/LoadingButton';
+import SessionExpiredModal from '../../../user_frontend/components/SessionExpiredModal';
 
 import '../../styles/AdminAuth.css';
 
 const AdminLogin = () => {
+
+    /* =====================================================
+        STATES
+    ===================================================== */
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -29,9 +33,13 @@ const AdminLogin = () => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [serverError, setServerError] = useState('');
+    const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
 
     const navigate = useNavigate();
 
+    /* =====================================================
+        MODAL THÔNG THƯỜNG
+    ===================================================== */
     const [modalConfig, setModalConfig] = useState({
         show: false,
         type: 'success',
@@ -40,14 +48,8 @@ const AdminLogin = () => {
         onConfirm: () => {}
     });
 
-    // 👉 STATE CHO SESSION EXPIRED MODAL
-    const [sessionExpiredModal, setSessionExpiredModal] = useState({
-        show: false,
-        message: ''
-    });
-
     /* =====================================================
-        CHECK SESSION
+        CHECK SESSION - Nếu đã đăng nhập thì chuyển trang
     ===================================================== */
     useEffect(() => {
         const checkAdminSession = async () => {
@@ -64,15 +66,12 @@ const AdminLogin = () => {
     }, [navigate]);
 
     /* =====================================================
-        👉 LẮNG NGHE SỰ KIỆN SESSION EXPIRED
+        LẮNG NGHE SỰ KIỆN SESSION EXPIRED TỪ API INTERCEPTOR
     ===================================================== */
     useEffect(() => {
         const handleSessionExpired = (event) => {
             console.log('🔴 [ADMIN LOGIN] Nhận sự kiện sessionExpired');
-            setSessionExpiredModal({
-                show: true,
-                message: event.detail?.message || 'Tài khoản admin đã đăng nhập ở thiết bị khác.'
-            });
+            setShowSessionExpiredModal(true);
             setLoading(false);
         };
 
@@ -87,7 +86,7 @@ const AdminLogin = () => {
         HANDLE SESSION EXPIRED CONFIRM
     ===================================================== */
     const handleSessionExpiredConfirm = () => {
-        setSessionExpiredModal({ show: false, message: '' });
+        setShowSessionExpiredModal(false);
         setEmail('');
         setPassword('');
         setErrors({});
@@ -157,13 +156,14 @@ const AdminLogin = () => {
 
         } catch (err) {
             console.error('Admin Login Error:', err);
-
-            // 👉 Nếu là lỗi SESSION_EXPIRED
+            
+            // 👉 Nếu là lỗi SESSION_EXPIRED từ backend
             if (err.response?.data?.code === 'SESSION_EXPIRED') {
+                setShowSessionExpiredModal(true);
                 setLoading(false);
                 return;
             }
-
+            
             const errorMessage = err.response?.data?.message ||
                                  err.response?.data?.error ||
                                  'Sai tài khoản hoặc mật khẩu quản trị.';
@@ -188,6 +188,7 @@ const AdminLogin = () => {
             <div className="admin-login-overlay"></div>
             <div className="admin-login-container">
 
+                {/* LEFT PANEL */}
                 <div className="admin-login-left">
                     <div className="admin-brand">
                         <div className="admin-brand-logo">
@@ -228,6 +229,7 @@ const AdminLogin = () => {
                     </div>
                 </div>
 
+                {/* RIGHT PANEL */}
                 <div className="admin-login-right">
                     <div className="admin-login-header">
                         <div className="admin-login-icon">
@@ -244,6 +246,7 @@ const AdminLogin = () => {
                     )}
 
                     <form onSubmit={handleAdminLogin} noValidate className="admin-login-form">
+                        {/* EMAIL */}
                         <div className="admin-input-group">
                             <label>Email quản trị</label>
                             <div className={`admin-input-box ${errors.email ? 'error' : ''}`}>
@@ -265,6 +268,7 @@ const AdminLogin = () => {
                             {errors.email && <span className="admin-error-text">{errors.email}</span>}
                         </div>
 
+                        {/* PASSWORD */}
                         <div className="admin-input-group">
                             <label>Mật khẩu</label>
                             <div className={`admin-input-box ${errors.password ? 'error' : ''}`}>
@@ -321,10 +325,9 @@ const AdminLogin = () => {
                 onConfirm={modalConfig.onConfirm}
             />
 
-            {/* 👉 SESSION EXPIRED MODAL */}
+            {/* MODAL SESSION EXPIRED */}
             <SessionExpiredModal
-                isOpen={sessionExpiredModal.show}
-                message={sessionExpiredModal.message}
+                isOpen={showSessionExpiredModal}
                 onConfirm={handleSessionExpiredConfirm}
             />
         </div>

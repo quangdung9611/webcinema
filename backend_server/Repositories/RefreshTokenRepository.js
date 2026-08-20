@@ -47,7 +47,7 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        KIỂM TRA TOKEN HỢP LỆ
+        LẤY TOKEN HỢP LỆ THEO HASH
     =========================================================*/
     async findValidTokenHash(tokenHash) {
         const [rows] = await db.query(
@@ -65,23 +65,26 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
-        REVOKE 1 TOKEN CỤ THỂ (LOGOUT)
+        REVOKE 1 TOKEN CỤ THỂ (DÙNG CHO LOGOUT)
     =========================================================*/
     async revoke(tokenHash, reason = "Đăng xuất") {
-        await db.query(
+        const [result] = await db.query(
             `
             UPDATE refresh_tokens
             SET is_revoked = 1,
                 revoked_at = NOW(),
                 revoked_reason = ?
             WHERE token_hash = ?
+              AND is_revoked = 0
             `,
             [reason, tokenHash]
         );
+        return result.affectedRows;
     }
 
     /*=========================================================
-        REVOKE TẤT CẢ TOKEN CỦA USER (ĐÁ THIẾT BỊ CŨ)
+        REVOKE TẤT CẢ TOKEN CỦA USER (DÙNG CHO LOGIN MỚI)
+        👉 ĐÂY LÀ HÀM QUAN TRỌNG NHẤT - ĐÁ THIẾT BỊ CŨ
     =========================================================*/
     async revokeByUser(userId, reason = "Đăng nhập từ thiết bị khác") {
         const [result] = await db.query(
@@ -90,29 +93,12 @@ class RefreshTokenRepository {
             SET is_revoked = 1,
                 revoked_at = NOW(),
                 revoked_reason = ?
-            WHERE user_id = ? AND is_revoked = 0
+            WHERE user_id = ?
+              AND is_revoked = 0
             `,
             [reason, userId]
         );
-        return result.affectedRows;
-    }
-
-    /*=========================================================
-        REVOKE ALL EXCEPT CURRENT (GIỮ LẠI TOKEN HIỆN TẠI)
-    =========================================================*/
-    async revokeAllExcept(userId, tokenHash, reason = "Đăng nhập từ thiết bị khác") {
-        const [result] = await db.query(
-            `
-            UPDATE refresh_tokens
-            SET is_revoked = 1,
-                revoked_at = NOW(),
-                revoked_reason = ?
-            WHERE user_id = ?
-              AND token_hash != ?
-              AND is_revoked = 0
-            `,
-            [reason, userId, tokenHash]
-        );
+        console.log(`🔄 [REVOKE] Đã revoke ${result.affectedRows} token của user ${userId} - Lý do: ${reason}`);
         return result.affectedRows;
     }
 
@@ -138,8 +124,10 @@ class RefreshTokenRepository {
             `
             DELETE FROM refresh_tokens
             WHERE expires_at < NOW()
-            `
+            `,
+            []
         );
+        console.log(`🧹 [CLEANUP] Đã xóa ${result.affectedRows} token hết hạn`);
         return result.affectedRows;
     }
 }

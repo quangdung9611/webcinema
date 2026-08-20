@@ -28,11 +28,12 @@ const authenticateAdmin = async (req, res, next) => {
         }
 
         // ==========================================================
-        // 👉 KIỂM TRA TOKEN CÓ BỊ REVOKE KHÔNG (SINGLE SESSION)
+        // 👉 KIỂM TRA TOKEN CÓ BỊ REVOKE KHÔNG
         // ==========================================================
         const activeTokens = await RefreshTokenRepository.getActiveByUser(payload.user_id);
         if (activeTokens.length === 0) {
             Cookie.clearAdminCookies(res);
+            console.log(`🔴 [ADMIN AUTH] Admin ${payload.user_id} - Token bị revoke`);
             return res.status(401).json({
                 success: false,
                 message: "Tài khoản admin đã đăng nhập ở thiết bị khác. Vui lòng đăng nhập lại!",

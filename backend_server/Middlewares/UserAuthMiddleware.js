@@ -28,11 +28,13 @@ const authenticateUser = async (req, res, next) => {
         }
 
         // ==========================================================
-        // 👉 KIỂM TRA TOKEN CÓ BỊ REVOKE KHÔNG (SINGLE SESSION)
+        // 👉 KIỂM TRA TOKEN CÓ BỊ REVOKE KHÔNG
+        // NẾU BỊ REVOKE -> TRẢ VỀ SESSION_EXPIRED
         // ==========================================================
         const activeTokens = await RefreshTokenRepository.getActiveByUser(payload.user_id);
         if (activeTokens.length === 0) {
             Cookie.clearUserCookies(res);
+            console.log(`🔴 [AUTH] User ${payload.user_id} - Token bị revoke, đá đăng nhập`);
             return res.status(401).json({
                 success: false,
                 message: "Tài khoản đã đăng nhập ở thiết bị khác. Vui lòng đăng nhập lại!",

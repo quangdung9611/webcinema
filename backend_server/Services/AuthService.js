@@ -78,9 +78,9 @@ const generateAndSetTokens = async (user, req, res, rememberMe = false) => {
     }
     Cookie.setRefreshToken(res, refreshToken, rememberMe);
 
+    console.log(`✅ [TOKEN] Đã tạo token mới cho user ${user.user_id}`);
     return { accessToken, refreshToken };
 };
-
 /*=========================================================
     PUBLIC METHODS
 =========================================================*/
@@ -118,7 +118,8 @@ exports.register = async (userData) => {
 };
 
 /*=========================================================
-    LOGIN - SINGLE SESSION (ĐÁ THIẾT BỊ CŨ)
+    LOGIN - QUAN TRỌNG NHẤT
+    👉 PHẢI REVOKE TOKEN CŨ TRƯỚC KHI TẠO MỚI
 =========================================================*/
 exports.login = async (email, password, rememberMe = false, req, res) => {
     validateLogin(email, password);
@@ -131,7 +132,8 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     if (!matched) throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
 
     // ==========================================================
-    // 👉 REVOKE TẤT CẢ TOKEN CŨ (ĐÁ THIẾT BỊ CŨ RA)
+    // 👉 BƯỚC QUAN TRỌNG: REVOKE TẤT CẢ TOKEN CŨ
+    // ĐÁ THIẾT BỊ CŨ RA, CHỈ CHO PHÉP 1 THIẾT BỊ ĐĂNG NHẬP
     // ==========================================================
     const revokedCount = await RefreshTokenRepository.revokeByUser(
         user.user_id,
@@ -139,7 +141,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     );
 
     if (revokedCount > 0) {
-        console.log(`🔴 [LOGIN] Đã revoke ${revokedCount} token cũ của user ${user.user_id}`);
+        console.log(`🔴 [LOGIN] Đã revoke ${revokedCount} token cũ, user ${user.user_id} bị đá khỏi thiết bị cũ`);
     }
 
     // Tạo token mới cho thiết bị hiện tại
@@ -163,7 +165,6 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         }
     };
 };
-
 /*=========================================================
     GET ME
 =========================================================*/

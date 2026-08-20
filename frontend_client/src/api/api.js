@@ -12,34 +12,30 @@ const api = axios.create({
 });
 
 // ==========================================================
-// INTERCEPTOR XỬ LÝ RESPONSE
+// RESPONSE INTERCEPTOR - BẮT LỖI SESSION_EXPIRED
 // ==========================================================
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         const status = error.response?.status;
         const errorCode = error.response?.data?.code;
-        const errorMessage = error.response?.data?.message;
 
-        console.log(`🔍 [API Interceptor] Status: ${status}, Code: ${errorCode}`);
+        console.log(`🔍 [API] Status: ${status}, Code: ${errorCode}`);
 
-        // ==========================================================
-        // 👉 BẮT LỖI SESSION EXPIRED (BỊ ĐÁ ĐĂNG NHẬP)
-        // ==========================================================
+        // 👉 BẮT LỖI SESSION EXPIRED
         if (status === 401 && errorCode === 'SESSION_EXPIRED') {
-            console.warn('🔴 [API] SESSION EXPIRED: Đã đăng nhập ở thiết bị khác!');
+            console.warn('🔴 [API] SESSION EXPIRED - Tài khoản đã đăng nhập ở thiết bị khác!');
 
             window.dispatchEvent(new CustomEvent('sessionExpired', {
                 detail: {
-                    message: errorMessage || 'Tài khoản đã đăng nhập ở thiết bị khác.',
-                    code: errorCode
+                    message: error.response?.data?.message || 'Tài khoản đã đăng nhập ở thiết bị khác.'
                 }
             }));
 
             return Promise.reject(error);
         }
 
-        // Lỗi 401 thông thường (chưa đăng nhập)
+        // Lỗi 401 thông thường
         if (status === 401) {
             console.warn('🟡 [API] Hết phiên đăng nhập hoặc chưa đăng nhập!');
             window.dispatchEvent(new CustomEvent('unauthorized'));
