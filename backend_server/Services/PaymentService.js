@@ -1,7 +1,7 @@
 const db = require("../Config/db");
 const RedisService = require("./RedisService");
 const crypto = require("crypto");
-const MailServiceTicket = require("../Services/MailServiceTicket"); // 👈 THÊM IMPORT
+const MailServiceTicket = require("../Services/MailServiceTicket");
 
 const TEMP_BOOKING_TTL = 300; // 5 phút
 
@@ -40,7 +40,7 @@ class PaymentService {
             SELECT 
                 s.room_id, 
                 s.cinema_id,
-                r.room_name          -- 👈 LẤY TÊN PHÒNG
+                r.room_name
             FROM showtimes s
             JOIN rooms r ON s.room_id = r.room_id
             WHERE s.showtime_id = ?
@@ -54,7 +54,7 @@ class PaymentService {
 
         const room_id = rows[0].room_id;
         const cinema_id = rows[0].cinema_id;
-        const room_name = rows[0].room_name || '---'; // 👈 LƯU TÊN PHÒNG
+        const room_name = rows[0].room_name || 'Chưa cập nhật';
 
         /*=====================================================
             KIỂM TRA GHẾ ĐÃ ĐƯỢC ĐẶT CHƯA
@@ -110,7 +110,7 @@ class PaymentService {
 
             cinema_id,
             
-            room_name,      // 👈 THÊM room_name VÀO TEMP DATA
+            room_name,      // 👈 LƯU room_name VÀO TEMP
 
             totalAmount,
 
@@ -153,6 +153,7 @@ class PaymentService {
         console.log(
             `✅ Temp booking ${tempBookingId} saved (${TEMP_BOOKING_TTL}s)`
         );
+        console.log(`🏠 Room name saved: ${room_name}`);
 
         return {
             tempBookingId
@@ -183,7 +184,7 @@ class PaymentService {
             showtimeId,
             room_id,
             cinema_id,
-            room_name,      // 👈 LẤY room_name TỪ TEMP DATA
+            room_name,      // 👈 LẤY room_name TỪ TEMP
             totalAmount,
             couponId,
             selectedSeats,
@@ -195,6 +196,9 @@ class PaymentService {
             cinemaName,
             startTime
         } = tempData;
+
+        // Log để debug
+        console.log(`🏠 Room name from temp: ${room_name}`);
 
         /*=====================================================
             KIỂM TRA GHẾ LẦN CUỐI
@@ -331,7 +335,6 @@ class PaymentService {
                 ]
             );
 
-            // Lưu lại label ghế để gửi email
             seatLabels.push(`${seat.seat_row}${seat.seat_number}`);
         }
 
@@ -414,6 +417,7 @@ class PaymentService {
         console.log(
             `✅ Booking ${bookingId} committed successfully`
         );
+        console.log(`🏠 Room name final: ${room_name}`);
 
         /*=====================================================
             🎫 GỬI EMAIL VÉ SAU KHI COMMIT
@@ -438,7 +442,7 @@ class PaymentService {
 
             const moviePoster = posterResult[0]?.movie_poster || null;
 
-            // Tạo ticket data với room_name
+            // 👉 Tạo ticket data với room_name
             const ticketData = {
                 bookingId: bookingId,
                 customerName: customerName || 'Khách hàng',
@@ -451,8 +455,11 @@ class PaymentService {
                 earnedPoints: earnedPoints,
                 ticketPIN: `#${bookingId}`,
                 moviePoster: moviePoster,
-                roomName: room_name || '---' // 👈 THÊM room_name VÀO EMAIL
+                roomName: room_name || 'Chưa cập nhật' // 👈 ĐẢM BẢO CÓ room_name
             };
+
+            // Log để debug
+            console.log('📧 Ticket Data for email:', JSON.stringify(ticketData, null, 2));
 
             // Gửi email
             await MailServiceTicket.sendTicketEmail(customerEmail, ticketData);
