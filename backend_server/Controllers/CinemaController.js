@@ -1,3 +1,4 @@
+// controllers/CinemaController.js
 const CinemaService = require('../Services/CinemaService');
 
 /* =========================================================

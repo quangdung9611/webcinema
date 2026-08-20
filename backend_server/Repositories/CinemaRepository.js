@@ -1,3 +1,4 @@
+// repositories/CinemaRepository.js
 const db = require('../Config/db');
 
 class CinemaRepository {

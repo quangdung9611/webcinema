@@ -1,3 +1,4 @@
+// pages/admin/CinemaPage.js
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import api from '../../../../api/api';
 import {
@@ -240,11 +241,17 @@ const CinemaPage = () => {
         }
         if (!formData.hotline.trim()) {
             errors.hotline = 'Vui lòng nhập hotline';
-        } else if (!/^[0-9]{9,11}$/.test(formData.hotline.trim())) {
-            errors.hotline = 'Hotline không hợp lệ';
+        } else if (!/^[0-9]{8,15}$/.test(formData.hotline.trim())) {
+            errors.hotline = 'Hotline không hợp lệ (8-15 chữ số)';
         }
         if (!formData.map_link.trim()) {
-            errors.map_link = 'Vui lòng nhập link Google Map';
+            errors.map_link = 'Vui lòng nhập iframe Google Map';
+        } else {
+            // Kiểm tra map_link có chứa iframe không
+            const trimmedMapLink = formData.map_link.trim();
+            if (!trimmedMapLink.includes('<iframe') || !trimmedMapLink.includes('</iframe>')) {
+                errors.map_link = 'Vui lòng nhập đúng thẻ iframe Google Map (ví dụ: <iframe src="..."></iframe>)';
+            }
         }
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
@@ -432,10 +439,36 @@ const CinemaPage = () => {
             key: 'map_link',
             render: (row) => (
                 <a
-                    href={row.map_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#60a5fa', textDecoration: 'none' }}
+                    href="#"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        // Mở modal xem map hoặc mở link nếu cần
+                        if (row.map_link && row.map_link.includes('<iframe')) {
+                            // Tạo popup hoặc modal để hiển thị iframe
+                            const win = window.open('', '_blank', 'width=800,height=600');
+                            if (win) {
+                                win.document.write(`
+                                    <html>
+                                        <head>
+                                            <title>Google Map - ${row.cinema_name}</title>
+                                            <style>
+                                                body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #1a1a2e; }
+                                                iframe { width: 100%; height: 100vh; border: none; }
+                                            </style>
+                                        </head>
+                                        <body>
+                                            ${row.map_link}
+                                        </body>
+                                    </html>
+                                `);
+                                win.document.close();
+                            }
+                        } else {
+                            // Fallback: mở link trực tiếp
+                            window.open(row.map_link, '_blank');
+                        }
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#60a5fa', textDecoration: 'none', cursor: 'pointer' }}
                 >
                     <Map size={15} />
                     Xem map
@@ -481,14 +514,20 @@ const CinemaPage = () => {
     ];
 
     // ------------------------------------------------------
-    // FORM FIELDS (thêm trường file)
+    // FORM FIELDS
     // ------------------------------------------------------
     const formFields = [
         { label: 'Tên rạp', name: 'cinema_name', type: 'text', placeholder: 'Nhập tên rạp' },
         { label: 'Slug', name: 'slug', type: 'text', placeholder: 'Slug tự động', disabled: true },
         { label: 'Thành phố', name: 'city', type: 'text', placeholder: 'Ví dụ: Hồ Chí Minh' },
         { label: 'Hotline', name: 'hotline', type: 'text', placeholder: 'Ví dụ: 19006017' },
-        { label: 'Google Map Link', name: 'map_link', type: 'text', placeholder: 'Dán link Google Map' },
+        {
+            label: 'Google Map Iframe',
+            name: 'map_link',
+            type: 'textarea',
+            placeholder: `Dán thẻ iframe Google Map vào đây, ví dụ:\n<iframe src="https://www.google.com/maps/embed?pb=..." width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>`,
+            rows: 4
+        },
         { label: 'Backdrop', name: 'cinema_backdrop', type: 'file' },
         { label: 'Địa chỉ', name: 'address', type: 'textarea', placeholder: 'Nhập địa chỉ chi tiết' }
     ];

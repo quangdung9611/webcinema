@@ -1,3 +1,4 @@
+// services/CinemaService.js
 const CinemaRepository = require('../Repositories/CinemaRepository');
 const {
     uploadToCloudinary,
@@ -56,15 +57,14 @@ const validateCinema = (data, files = {}, isUpdate = false) => {
         return "Hotline không hợp lệ (8-15 chữ số).";
     }
     if (!map_link || map_link.trim() === "") {
-        return "Vui lòng nhập link Google Map.";
+        return "Vui lòng nhập iframe Google Map.";
     }
-    try {
-        new URL(map_link.trim());
-    } catch {
-        return "Link Google Map không hợp lệ.";
+    // Kiểm tra map_link có chứa iframe không
+    const trimmedMapLink = map_link.trim();
+    if (!trimmedMapLink.includes('<iframe') || !trimmedMapLink.includes('</iframe>')) {
+        return "Vui lòng nhập đúng thẻ iframe Google Map.";
     }
 
-    // Không bắt buộc upload backdrop, chỉ kiểm tra nếu có file
     return null;
 };
 
@@ -185,7 +185,7 @@ class CinemaService {
             address: address.trim(),
             city: city.trim(),
             hotline: hotline.trim(),
-            map_link: map_link.trim(),
+            map_link: map_link.trim(), // Lưu trực tiếp iframe HTML
             cinema_backdrop
         });
 
@@ -257,7 +257,7 @@ class CinemaService {
             address: address.trim(),
             city: city.trim(),
             hotline: hotline.trim(),
-            map_link: map_link.trim(),
+            map_link: map_link.trim(), // Lưu trực tiếp iframe HTML
             cinema_backdrop: finalBackdrop
         });
 
