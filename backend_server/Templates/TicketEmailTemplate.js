@@ -12,7 +12,8 @@ const TicketEmailTemplate = (ticketData, fileExists) => {
         selectedFoods,
         earnedPoints,
         ticketPIN,
-        qrCid          // lấy cid từ ticketData
+        qrCid,
+        roomName      // 👈 Thêm roomName từ ticketData
 
     } = ticketData;
 
@@ -80,6 +81,11 @@ const TicketEmailTemplate = (ticketData, fileExists) => {
 
                         <p style="margin:5px 0;">
                             <b>⏰ Suất:</b> ${startTime} | ${selectedDate}
+                        </p>
+
+                        <!-- 👇 HIỂN THỊ THÊM TÊN PHÒNG -->
+                        <p style="margin:5px 0;">
+                            <b>🏠 Phòng:</b> ${roomName || '---'}
                         </p>
 
                         <p style="margin:5px 0;">

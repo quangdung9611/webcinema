@@ -44,6 +44,17 @@
   to { --border-angle: 360deg; }
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @property --border-angle {
   syntax: '<angle>';
   initial-value: 0deg;
@@ -80,9 +91,46 @@
   gap: var(--space-md);
   color: var(--text-body);
 }
+
 .spin-icon {
   color: var(--silver-primary);
   animation: spin 1s linear infinite;
+}
+
+.cinema-error svg {
+  color: var(--silver-primary);
+  opacity: 0.5;
+}
+
+.cinema-error h2 {
+  font-size: var(--font-size-h2);
+  color: var(--text-heading);
+  margin: var(--space-md) 0 var(--space-xs);
+}
+
+.cinema-error p {
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-lg);
+}
+
+.btn-back-home {
+  padding: var(--space-md) var(--space-2xl);
+  border: var(--border-premium);
+  border-radius: var(--radius-round);
+  background: transparent;
+  color: var(--silver-primary);
+  font-weight: var(--fw-bold);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-size: var(--font-size-base);
+}
+
+.btn-back-home:hover {
+  background: var(--silver-primary);
+  color: var(--bg-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--btn-silver-shadow);
 }
 
 /* ==========================================================
@@ -137,10 +185,12 @@
   color: var(--text-muted);
   gap: var(--space-sm);
 }
+
 .cinema-backdrop-placeholder svg {
   color: var(--silver-primary);
   opacity: 0.4;
 }
+
 .cinema-backdrop-placeholder span {
   font-size: var(--font-size-h6);
   font-weight: var(--fw-bold);
@@ -235,6 +285,7 @@
   font-size: var(--font-size-base);
   font-weight: var(--fw-medium);
 }
+
 .info-item svg {
   color: var(--silver-primary);
   flex-shrink: 0;
@@ -251,10 +302,16 @@
   font-weight: var(--fw-bold);
   transition: all var(--transition-normal);
   margin-top: var(--space-xs);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
 }
+
 .cinema-map-link svg {
   color: var(--silver-primary);
 }
+
 .cinema-map-link:hover {
   color: var(--silver-light);
   transform: translateX(5px);
@@ -269,10 +326,12 @@
   gap: var(--space-sm);
   margin-bottom: var(--space-xl);
 }
+
 .section-title svg {
   color: var(--silver-primary);
   filter: drop-shadow(0 0 12px rgba(232, 232, 232, 0.2));
 }
+
 .section-title h2 {
   color: var(--text-heading);
   font-size: var(--font-size-h2);
@@ -290,6 +349,7 @@
   gap: var(--space-md);
   margin-bottom: var(--space-2xl);
 }
+
 .date-nav {
   width: 52px;
   height: 52px;
@@ -305,10 +365,12 @@
   border: var(--border-premium);
   transition: all var(--transition-normal);
 }
+
 .date-nav svg {
   width: 18px;
   height: 18px;
 }
+
 .date-nav:hover {
   color: var(--silver-primary);
   transform: scale(1.08);
@@ -316,12 +378,31 @@
   border-color: var(--silver-primary);
   box-shadow: 0 0 25px rgba(232, 232, 232, 0.1);
 }
+
 .date-list {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: var(--space-md);
+  overflow-x: auto;
+  padding: var(--space-xs) 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--silver-primary) transparent;
 }
+
+.date-list::-webkit-scrollbar {
+  height: 5px;
+}
+
+.date-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.date-list::-webkit-scrollbar-thumb {
+  background: var(--silver-primary);
+  border-radius: var(--radius-round);
+}
+
 .date-card {
   position: relative;
   overflow: hidden;
@@ -340,6 +421,7 @@
   backdrop-filter: blur(10px);
   border: var(--border-premium);
   transition: all var(--transition-normal);
+  min-width: 80px;
 }
 
 .date-card:hover {
@@ -348,34 +430,28 @@
   border-color: var(--silver-primary);
   box-shadow: var(--glass-shadow);
 }
+
 .date-card.active {
   background: var(--premium-gradient);
   border-color: transparent;
   box-shadow: 0 0 30px rgba(232, 232, 232, 0.2);
 }
+
+.date-card.active .date-day,
+.date-card.active .date-number {
+  color: var(--bg-primary);
+}
+
 .date-day {
   font-size: var(--font-size-base);
   font-weight: var(--fw-bold);
   color: var(--text-body);
 }
+
 .date-number {
   font-size: var(--font-size-base);
   font-weight: var(--fw-medium);
   color: var(--text-secondary);
-}
-.date-card.active .date-day,
-.date-card.active .date-number {
-  color: var(--bg-primary);
-}
-.date-list::-webkit-scrollbar {
-  height: 5px;
-}
-.date-list::-webkit-scrollbar-thumb {
-  background: var(--silver-primary);
-  border-radius: var(--radius-round);
-}
-.date-list::-webkit-scrollbar-track {
-  background: transparent;
 }
 
 /* ==========================================================
@@ -385,7 +461,9 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-xl);
+  animation: fadeInUp 0.6s ease both;
 }
+
 .movie-card-wrapper {
   display: flex;
   flex-direction: column;
@@ -400,6 +478,7 @@
   flex-wrap: wrap;
   gap: var(--space-sm);
 }
+
 .showtime-btn {
   border: none;
   outline: none;
@@ -416,15 +495,18 @@
   transition: all var(--transition-normal);
   font-size: 0.85rem;
 }
+
 .showtime-btn:hover {
   transform: translateY(-2px);
   background: rgba(232, 232, 232, 0.06);
   border-color: var(--silver-primary);
   color: var(--silver-light);
 }
+
 .showtime-btn svg {
   color: var(--silver-primary);
 }
+
 .showtime-more {
   color: var(--text-secondary);
   font-size: 0.8rem;
@@ -449,33 +531,73 @@
   background: rgba(255, 255, 255, 0.03);
   border: var(--border-premium);
 }
+
 .empty-box svg {
   color: var(--silver-primary);
+  opacity: 0.5;
 }
+
 .empty-box h3 {
   color: var(--text-body);
   font-size: var(--font-size-h3);
   font-weight: var(--fw-extrabold);
 }
+
 .empty-box p {
   color: var(--text-secondary);
 }
 
 /* ==========================================================
-   MAP SECTION
+   MAP SECTION - HIỂN THỊ IFRAME
 ========================================================== */
 .map-section {
   margin-top: var(--space-2xl);
 }
+
 .map-wrapper {
   overflow: hidden;
   border-radius: var(--radius-xl);
   border: var(--border-premium);
   box-shadow: var(--glass-shadow);
+  background: var(--bg-secondary);
+  transition: box-shadow var(--transition-normal);
 }
-.map-wrapper iframe {
-  display: block;
+
+.map-wrapper:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* ==========================================================
+   IFRAME CONTAINER - DÙNG CHO dangerouslySetInnerHTML
+========================================================== */
+.cinema-iframe-container {
   width: 100%;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: var(--bg-secondary);
+  position: relative;
+}
+
+.cinema-iframe-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: var(--radius-xl);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.3);
+}
+
+.cinema-iframe-container iframe {
+  width: 100%;
+  height: 450px;
+  border: none;
+  display: block;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.map-wrapper:hover .cinema-iframe-container iframe {
+  transform: scale(1.01);
 }
 
 /* ==========================================================
@@ -485,11 +607,17 @@
   .movie-grid {
     grid-template-columns: repeat(3, 1fr);
   }
+  
   .date-list {
     grid-template-columns: repeat(4, 1fr);
   }
+  
   .cinema-name {
     font-size: var(--font-size-h2);
+  }
+  
+  .cinema-iframe-container iframe {
+    height: 400px;
   }
 }
 
@@ -499,88 +627,182 @@
     gap: var(--space-lg);
     margin-top: var(--space-xl);
   }
+  
   .cinema-hero-backdrop {
     aspect-ratio: 16 / 9;
   }
+  
   .cinema-name {
     font-size: var(--font-size-h2);
   }
+  
   .movie-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .cinema-iframe-container iframe {
+    height: 350px;
   }
 }
 
 @media (max-width: 768px) {
+  .cinema-content {
+    padding: 0 var(--space-md) var(--space-2xl);
+  }
+  
   .cinema-hero-backdrop {
     aspect-ratio: 16 / 9;
   }
+  
   .cinema-hero-info {
     padding: var(--space-lg);
   }
+  
   .cinema-name {
     font-size: var(--font-size-h3);
   }
+  
   .cinema-divider {
     max-width: 140px;
   }
+  
   .section-title h2 {
     font-size: var(--font-size-h3);
   }
+  
   .date-nav {
     display: none;
   }
+  
   .date-list {
     grid-template-columns: repeat(2, 1fr);
+    flex-wrap: nowrap;
+    overflow-x: auto;
   }
+  
+  .date-card {
+    min-width: 70px;
+    padding: var(--space-sm);
+  }
+  
   .movie-grid {
     grid-template-columns: 1fr;
   }
+  
   .movie-card-wrapper {
     max-width: 420px;
     margin: 0 auto;
   }
+  
   .cinema-hero-split {
     margin-top: var(--space-md);
   }
+  
   .cinema-hero-backdrop {
     border-radius: var(--radius-md);
   }
+  
   .cinema-hero-info {
     border-radius: var(--radius-md);
+  }
+  
+  .cinema-iframe-container iframe {
+    height: 300px;
+  }
+  
+  .map-wrapper {
+    border-radius: var(--radius-lg);
+  }
+  
+  .cinema-iframe-container {
+    border-radius: var(--radius-lg);
+  }
+  
+  .cinema-iframe-container::before {
+    border-radius: var(--radius-lg);
   }
 }
 
 @media (max-width: 480px) {
   .cinema-content {
-    padding: 0 var(--space-sm) var(--space-2xl);
+    padding: 0 var(--space-sm) var(--space-xl);
   }
+  
   .cinema-hero-backdrop {
     aspect-ratio: 4 / 3;
   }
+  
   .cinema-hero-info {
     padding: var(--space-md);
   }
+  
   .cinema-name {
     font-size: var(--font-size-h4);
   }
+  
   .cinema-label {
     font-size: var(--font-size-base);
     padding: var(--space-xs) var(--space-sm);
   }
+  
   .info-item {
     font-size: var(--font-size-base);
   }
+  
   .movie-card-wrapper {
     max-width: 100%;
   }
+  
   .date-card {
     border-radius: var(--radius-md);
     padding: var(--space-sm) var(--space-xs);
+    min-width: 60px;
   }
+  
   .date-day {
     font-size: var(--font-size-base);
   }
+  
   .date-number {
     font-size: var(--font-size-base);
+  }
+  
+  .cinema-iframe-container iframe {
+    height: 220px;
+  }
+  
+  .section-title h2 {
+    font-size: var(--font-size-h4);
+  }
+  
+  .section-title svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 360px) {
+  .cinema-iframe-container iframe {
+    height: 180px;
+  }
+  
+  .cinema-hero-info {
+    padding: var(--space-sm);
+  }
+  
+  .cinema-name {
+    font-size: 18px;
+  }
+  
+  .cinema-label {
+    font-size: 10px;
+  }
+  
+  .info-item {
+    font-size: 12px;
+  }
+  
+  .cinema-map-link {
+    font-size: 12px;
   }
 }

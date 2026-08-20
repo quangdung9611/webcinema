@@ -135,6 +135,8 @@ const MailServiceTicket = {
             console.log("📧 To:", customerEmail);
             console.log("🎬 Movie:", ticketData.movieTitle);
             console.log("🎫 Booking:", ticketData.bookingId);
+            // 👇 Log thêm tên phòng
+            console.log("🏠 Room:", ticketData.roomName || "Không có");
 
             const info = await transporter.sendMail(mailOptions);
 

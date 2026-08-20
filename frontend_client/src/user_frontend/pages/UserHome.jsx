@@ -57,7 +57,8 @@ const QuickSelect = ({
   icon: Icon,
   disabled = false,
   labelKey = 'title',
-  valueKey = 'id'
+  valueKey = 'id',
+  renderLabel = null // 👈 Thêm prop để custom render cho suất chiếu
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -75,6 +76,14 @@ const QuickSelect = ({
   const validOptions = options.filter(opt => opt && typeof opt === 'object' && opt[valueKey] !== undefined);
   const selectedOption = validOptions.find(opt => opt[valueKey] === value);
 
+  // 👇 Hàm render label cho option được chọn
+  const getDisplayLabel = (option) => {
+    if (renderLabel && typeof renderLabel === 'function') {
+      return renderLabel(option);
+    }
+    return option[labelKey];
+  };
+
   return (
     <div className="quick-select-item" ref={dropdownRef}>
       <div
@@ -84,7 +93,7 @@ const QuickSelect = ({
         <div className="quick-select-left">
           <Icon size={20} className="quick-select-icon" />
           <span className="quick-select-value">
-            {selectedOption ? selectedOption[labelKey] : placeholder}
+            {selectedOption ? getDisplayLabel(selectedOption) : placeholder}
           </span>
         </div>
         <ChevronDown size={16} className="quick-select-arrow" />
@@ -101,7 +110,7 @@ const QuickSelect = ({
                 setIsOpen(false);
               }}
             >
-              {option[labelKey]}
+              {getDisplayLabel(option)}
             </div>
           ))}
         </div>
@@ -414,6 +423,19 @@ const UserHome = () => {
     fetchShowtimes();
   }, [selectedQuick.movie, selectedQuick.cinema, selectedQuick.date]);
 
+  // ==========================================================
+  // 👇 RENDER LABEL CHO SUẤT CHIẾU (HIỂN THỊ GIỜ + TÊN PHÒNG)
+  // ==========================================================
+  const renderShowtimeLabel = (option) => {
+    if (!option) return '';
+    const time = option.start_time || '';
+    const room = option.room_name || '';
+    if (room) {
+      return `${time} - ${room}`;
+    }
+    return time;
+  };
+
   // ===== HANDLE QUICK BOOK =====
   const handleQuickBook = async () => {
     if (!selectedQuick.movie) {
@@ -612,6 +634,7 @@ const UserHome = () => {
                   labelKey="date"
                   valueKey="date"
                 />
+                {/* 👇 SUẤT CHIẾU - CÓ RENDER LABEL HIỂN THỊ GIỜ + PHÒNG */}
                 <QuickSelect
                   options={availableShowtimes}
                   value={selectedQuick.showtime}
@@ -621,6 +644,7 @@ const UserHome = () => {
                   icon={Clock}
                   labelKey="start_time"
                   valueKey="showtime_id"
+                  renderLabel={renderShowtimeLabel}
                 />
               </div>
               <button className="btn-quick-booking" onClick={handleQuickBook}>

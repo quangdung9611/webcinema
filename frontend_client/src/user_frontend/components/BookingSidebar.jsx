@@ -38,6 +38,9 @@ const BookingSidebar = ({
 
     const movieTitle = showtimeDetail?.title || movie?.title || 'Đang cập nhật';
 
+    // 👇 Lấy tên phòng từ showtimeDetail hoặc selectedShowtime
+    const roomName = showtimeDetail?.room_name || selectedShowtime?.room_name || '---';
+
     return (
         <aside className="ticket-sidebar">
 
@@ -73,8 +76,12 @@ const BookingSidebar = ({
                     <strong>{selectedDate || '---'}</strong>
                 </div>
                 <div className="detail-item">
-                    <span>Suất:</span>
-                    <strong>{selectedShowtime?.start_time || '---'}</strong>
+                    <span>Suất chiếu:</span>
+                    <strong>
+                        {selectedShowtime?.start_time || '---'}
+                        {/* 👇 Hiển thị thêm tên phòng bên cạnh suất chiếu */}
+                        {roomName !== '---' && ` - ${roomName}`}
+                    </strong>
                 </div>
                 <div className="detail-item">
                     <span>Ghế:</span>
