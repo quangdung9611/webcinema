@@ -65,10 +65,19 @@ exports.checkInTicket = async (req, res) => {
     await TicketService.markTicketUsed(connection, ticket.ticket_id);
     connection.release();
 
+    // 👇 Trả về thêm thông tin room_name
     return res.status(200).json({
       success: true,
       message: "Soát vé thành công! Mời khách vào phòng.",
-      ticket,
+      ticket: {
+        ...ticket,
+        room_name: ticket.room_name || '---',
+        cinema_name: ticket.cinema_name || '---',
+        movie_title: ticket.movie_title || '---',
+        showtime: ticket.showtime || '---',
+        seat_label: `${ticket.seat_row || ''}${ticket.seat_number || ''}`,
+        customer_name: ticket.customer_name || '---'
+      },
     });
   } catch (error) {
     if (connection) connection.release();

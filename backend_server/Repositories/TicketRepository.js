@@ -20,7 +20,7 @@ class TicketRepository {
             `
             SELECT
                 t.*,
-                t.updated_at,  -- 👈 THÊM DÒNG NÀY ĐỂ LẤY THỜI GIAN SOÁT VÉ
+                t.updated_at,
                 s.seat_row,
                 s.seat_number,
                 s.seat_type,
@@ -62,9 +62,21 @@ class TicketRepository {
     async findByBookingId(connection, bookingId) {
         const [rows] = await connection.query(
             `
-            SELECT t.*, s.seat_row, s.seat_number, s.seat_type
+            SELECT 
+                t.*, 
+                s.seat_row, 
+                s.seat_number, 
+                s.seat_type,
+                r.room_name,
+                c.cinema_name,
+                m.title AS movie_title,
+                DATE_FORMAT(sh.start_time, '%Y-%m-%d %H:%i') AS showtime
             FROM tickets t
             LEFT JOIN seats s ON t.seat_id = s.seat_id
+            LEFT JOIN showtimes sh ON t.showtime_id = sh.showtime_id
+            LEFT JOIN rooms r ON sh.room_id = r.room_id
+            LEFT JOIN cinemas c ON sh.cinema_id = c.cinema_id
+            LEFT JOIN movies m ON sh.movie_id = m.movie_id
             WHERE t.booking_id = ?
             `,
             [bookingId]
@@ -78,15 +90,23 @@ class TicketRepository {
             `
             SELECT
                 t.*,
-                t.updated_at,  -- 👈 THÊM DÒNG NÀY
+                t.updated_at,
                 s.seat_row,
                 s.seat_number,
                 s.seat_type,
-                u.full_name AS customer_name
+                u.full_name AS customer_name,
+                r.room_name,
+                c.cinema_name,
+                m.title AS movie_title,
+                DATE_FORMAT(sh.start_time, '%Y-%m-%d %H:%i') AS showtime
             FROM tickets t
             LEFT JOIN seats s ON t.seat_id = s.seat_id
             LEFT JOIN bookings b ON t.booking_id = b.booking_id
             LEFT JOIN users u ON b.user_id = u.user_id
+            LEFT JOIN showtimes sh ON t.showtime_id = sh.showtime_id
+            LEFT JOIN rooms r ON sh.room_id = r.room_id
+            LEFT JOIN cinemas c ON sh.cinema_id = c.cinema_id
+            LEFT JOIN movies m ON sh.movie_id = m.movie_id
             WHERE t.showtime_id = ?
             ORDER BY s.seat_row, s.seat_number
             `,
@@ -105,11 +125,19 @@ class TicketRepository {
                 s.seat_number,
                 s.seat_type,
                 u.full_name AS customer_name,
-                u.email AS customer_email
+                u.email AS customer_email,
+                r.room_name,
+                c.cinema_name,
+                m.title AS movie_title,
+                DATE_FORMAT(sh.start_time, '%Y-%m-%d %H:%i') AS showtime
             FROM tickets t
             LEFT JOIN seats s ON t.seat_id = s.seat_id
             LEFT JOIN bookings b ON t.booking_id = b.booking_id
             LEFT JOIN users u ON b.user_id = u.user_id
+            LEFT JOIN showtimes sh ON t.showtime_id = sh.showtime_id
+            LEFT JOIN rooms r ON sh.room_id = r.room_id
+            LEFT JOIN cinemas c ON sh.cinema_id = c.cinema_id
+            LEFT JOIN movies m ON sh.movie_id = m.movie_id
             WHERE t.ticket_code = ?
             LIMIT 1
             `,
