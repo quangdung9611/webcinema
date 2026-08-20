@@ -1,7 +1,6 @@
 const db = require("../Config/db");
 const RedisService = require("./RedisService");
 const crypto = require("crypto");
-const MailServiceTicket = require("../Services/MailServiceTicket");
 
 const TEMP_BOOKING_TTL = 300; // 5 phút
 
@@ -32,18 +31,14 @@ class PaymentService {
         } = data;
 
         /*=====================================================
-            LẤY room_id + cinema_id + room_name
+            LẤY room_id + cinema_id
         =====================================================*/
 
         const [rows] = await db.execute(
             `
-            SELECT 
-                s.room_id, 
-                s.cinema_id,
-                r.room_name
-            FROM showtimes s
-            JOIN rooms r ON s.room_id = r.room_id
-            WHERE s.showtime_id = ?
+            SELECT room_id, cinema_id
+            FROM showtimes
+            WHERE showtime_id = ?
             `,
             [showtimeId]
         );
@@ -54,7 +49,6 @@ class PaymentService {
 
         const room_id = rows[0].room_id;
         const cinema_id = rows[0].cinema_id;
-        const room_name = rows[0].room_name || 'Chưa cập nhật';
 
         /*=====================================================
             KIỂM TRA GHẾ ĐÃ ĐƯỢC ĐẶT CHƯA
@@ -109,8 +103,6 @@ class PaymentService {
             room_id,
 
             cinema_id,
-            
-            room_name,      // 👈 LƯU room_name VÀO TEMP
 
             totalAmount,
 
@@ -140,6 +132,7 @@ class PaymentService {
 
         /*=====================================================
             LƯU REDIS
+            Upstash Redis tự serialize object
         =====================================================*/
 
         const key = `temp:${tempBookingId}`;
@@ -153,15 +146,13 @@ class PaymentService {
         console.log(
             `✅ Temp booking ${tempBookingId} saved (${TEMP_BOOKING_TTL}s)`
         );
-        console.log(`🏠 Room name saved: ${room_name}`);
 
         return {
             tempBookingId
         };
 
     }
-
-    /*=========================================================
+        /*=========================================================
         2. COMMIT TO DATABASE – KHI OTP THÀNH CÔNG
     =========================================================*/
     async commitToDatabase(connection, tempBookingId) {
@@ -184,21 +175,12 @@ class PaymentService {
             showtimeId,
             room_id,
             cinema_id,
-            room_name,      // 👈 LẤY room_name TỪ TEMP
             totalAmount,
             couponId,
             selectedSeats,
             selectedFoods,
-            customerEmail,
-            customerName,
-            customerPhone,
-            movieTitle,
-            cinemaName,
-            startTime
+            customerEmail
         } = tempData;
-
-        // Log để debug
-        console.log(`🏠 Room name from temp: ${room_name}`);
 
         /*=====================================================
             KIỂM TRA GHẾ LẦN CUỐI
@@ -274,8 +256,6 @@ class PaymentService {
             THÊM GHẾ
         =====================================================*/
 
-        const seatLabels = [];
-
         for (const seat of selectedSeats) {
 
             await connection.execute(
@@ -334,17 +314,11 @@ class PaymentService {
                     seat.price
                 ]
             );
-
-            seatLabels.push(`${seat.seat_row}${seat.seat_number}`);
         }
-
-        const seatLabel = seatLabels.join(', ');
 
         /*=====================================================
             THÊM ĐỒ ĂN
         =====================================================*/
-
-        let foodNames = [];
 
         if (selectedFoods && selectedFoods.length > 0) {
 
@@ -373,26 +347,18 @@ class PaymentService {
                         food.price
                     ]
                 );
-
-                foodNames.push(`${food.product_name} x${food.quantity}`);
             }
         }
-
-        const selectedFoodsText = foodNames.length > 0 ? foodNames.join(', ') : 'Không có';
 
         /*=====================================================
             CỘNG ĐIỂM
         =====================================================*/
-
-        let earnedPoints = 0;
 
         if (userId) {
 
             const points = Math.floor(totalAmount * 0.05);
 
             if (points > 0) {
-
-                earnedPoints = points;
 
                 await connection.execute(
                     `
@@ -417,70 +383,15 @@ class PaymentService {
         console.log(
             `✅ Booking ${bookingId} committed successfully`
         );
-        console.log(`🏠 Room name final: ${room_name}`);
-
-        /*=====================================================
-            🎫 GỬI EMAIL VÉ SAU KHI COMMIT
-        =====================================================*/
-        
-        try {
-            
-            // Format lại thời gian
-            const formattedTime = startTime ? new Date(startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '---';
-            const formattedDate = startTime ? new Date(startTime).toLocaleDateString('vi-VN') : '---';
-
-            // Lấy poster từ database
-            const [posterResult] = await connection.execute(
-                `
-                SELECT m.movie_poster
-                FROM showtimes s
-                JOIN movies m ON s.movie_id = m.movie_id
-                WHERE s.showtime_id = ?
-                `,
-                [showtimeId]
-            );
-
-            const moviePoster = posterResult[0]?.movie_poster || null;
-
-            // 👉 Tạo ticket data với room_name
-            const ticketData = {
-                bookingId: bookingId,
-                customerName: customerName || 'Khách hàng',
-                seatLabel: seatLabel,
-                movieTitle: movieTitle || 'Phim',
-                cinemaName: cinemaName || 'Rạp',
-                startTime: formattedTime,
-                selectedDate: formattedDate,
-                selectedFoods: selectedFoodsText,
-                earnedPoints: earnedPoints,
-                ticketPIN: `#${bookingId}`,
-                moviePoster: moviePoster,
-                roomName: room_name || 'Chưa cập nhật' // 👈 ĐẢM BẢO CÓ room_name
-            };
-
-            // Log để debug
-            console.log('📧 Ticket Data for email:', JSON.stringify(ticketData, null, 2));
-
-            // Gửi email
-            await MailServiceTicket.sendTicketEmail(customerEmail, ticketData);
-
-            console.log(`📧 Ticket email sent to ${customerEmail} for booking ${bookingId}`);
-
-        } catch (emailError) {
-            // Không throw lỗi, chỉ log để không làm hỏng luồng thanh toán
-            console.error('❌ Failed to send ticket email:', emailError);
-        }
 
         return {
             bookingId,
             memo,
-            userId,
-            room_name
+            userId
         };
 
     }
-
-    /*=========================================================
+        /*=========================================================
         3. GET TEMP DATA
     =========================================================*/
     async getTempData(tempBookingId) {
