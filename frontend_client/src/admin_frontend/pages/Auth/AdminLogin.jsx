@@ -16,15 +16,12 @@ import {
 } from 'lucide-react';
 
 import Modal from '../../components/Modal';
+import SessionExpiredModal from '../../../user_frontend/components/SessionExpiredModal';
 import LoadingButton from '../../../user_frontend/components/LoadingButton';
 
 import '../../styles/AdminAuth.css';
 
 const AdminLogin = () => {
-
-    /* =====================================================
-        STATES
-    ===================================================== */
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -35,9 +32,6 @@ const AdminLogin = () => {
 
     const navigate = useNavigate();
 
-    /* =====================================================
-        MODAL
-    ===================================================== */
     const [modalConfig, setModalConfig] = useState({
         show: false,
         type: 'success',
@@ -46,10 +40,9 @@ const AdminLogin = () => {
         onConfirm: () => {}
     });
 
-    // 👉 STATE CHO MODAL BỊ CHẶN ĐĂNG NHẬP (DEVICE CONFLICT)
-    const [deviceConflictModal, setDeviceConflictModal] = useState({
+    // 👉 STATE CHO SESSION EXPIRED MODAL
+    const [sessionExpiredModal, setSessionExpiredModal] = useState({
         show: false,
-        title: 'Tài khoản admin đang được sử dụng!',
         message: ''
     });
 
@@ -71,28 +64,36 @@ const AdminLogin = () => {
     }, [navigate]);
 
     /* =====================================================
-        ✅ LẮNG NGHE SỰ KIỆN DEVICE_ALREADY_LOGGED_IN
+        👉 LẮNG NGHE SỰ KIỆN SESSION EXPIRED
     ===================================================== */
     useEffect(() => {
-        const handleDeviceConflict = (event) => {
-            console.log('🔴 [ADMIN LOGIN] Nhận được sự kiện deviceAlreadyLoggedIn!');
-            console.log('🔴 [ADMIN LOGIN] Message:', event.detail?.message);
-            
-            setDeviceConflictModal({
+        const handleSessionExpired = (event) => {
+            console.log('🔴 [ADMIN LOGIN] Nhận sự kiện sessionExpired');
+            setSessionExpiredModal({
                 show: true,
-                title: 'Tài khoản admin đang được sử dụng!',
-                message: event.detail?.message || 'Tài khoản admin của bạn đang đăng nhập trên thiết bị khác. Vui lòng đăng xuất thiết bị đó trước khi tiếp tục.'
+                message: event.detail?.message || 'Tài khoản admin đã đăng nhập ở thiết bị khác.'
             });
-            
             setLoading(false);
         };
 
-        window.addEventListener('deviceAlreadyLoggedIn', handleDeviceConflict);
+        window.addEventListener('sessionExpired', handleSessionExpired);
 
         return () => {
-            window.removeEventListener('deviceAlreadyLoggedIn', handleDeviceConflict);
+            window.removeEventListener('sessionExpired', handleSessionExpired);
         };
     }, []);
+
+    /* =====================================================
+        HANDLE SESSION EXPIRED CONFIRM
+    ===================================================== */
+    const handleSessionExpiredConfirm = () => {
+        setSessionExpiredModal({ show: false, message: '' });
+        setEmail('');
+        setPassword('');
+        setErrors({});
+        setServerError('');
+        document.getElementById('admin-email')?.focus();
+    };
 
     /* =====================================================
         VALIDATE
@@ -156,13 +157,13 @@ const AdminLogin = () => {
 
         } catch (err) {
             console.error('Admin Login Error:', err);
-            
-            // 👉 Nếu là lỗi DEVICE_ALREADY_LOGGED_IN
-            if (err.response?.status === 409) {
+
+            // 👉 Nếu là lỗi SESSION_EXPIRED
+            if (err.response?.data?.code === 'SESSION_EXPIRED') {
                 setLoading(false);
                 return;
             }
-            
+
             const errorMessage = err.response?.data?.message ||
                                  err.response?.data?.error ||
                                  'Sai tài khoản hoặc mật khẩu quản trị.';
@@ -187,7 +188,6 @@ const AdminLogin = () => {
             <div className="admin-login-overlay"></div>
             <div className="admin-login-container">
 
-                {/* LEFT PANEL */}
                 <div className="admin-login-left">
                     <div className="admin-brand">
                         <div className="admin-brand-logo">
@@ -228,7 +228,6 @@ const AdminLogin = () => {
                     </div>
                 </div>
 
-                {/* RIGHT PANEL */}
                 <div className="admin-login-right">
                     <div className="admin-login-header">
                         <div className="admin-login-icon">
@@ -238,13 +237,19 @@ const AdminLogin = () => {
                         <p>Đăng nhập để tiếp tục quản trị hệ thống.</p>
                     </div>
 
+                    {serverError && (
+                        <div className="admin-server-error" style={{ marginBottom: '16px' }}>
+                            {serverError}
+                        </div>
+                    )}
+
                     <form onSubmit={handleAdminLogin} noValidate className="admin-login-form">
-                        {/* EMAIL */}
                         <div className="admin-input-group">
                             <label>Email quản trị</label>
                             <div className={`admin-input-box ${errors.email ? 'error' : ''}`}>
                                 <Mail size={18} />
                                 <input
+                                    id="admin-email"
                                     type="email"
                                     placeholder="admin@cinemastar.com"
                                     value={email}
@@ -260,7 +265,6 @@ const AdminLogin = () => {
                             {errors.email && <span className="admin-error-text">{errors.email}</span>}
                         </div>
 
-                        {/* PASSWORD */}
                         <div className="admin-input-group">
                             <label>Mật khẩu</label>
                             <div className={`admin-input-box ${errors.password ? 'error' : ''}`}>
@@ -288,8 +292,6 @@ const AdminLogin = () => {
                             </div>
                             {errors.password && <span className="admin-error-text">{errors.password}</span>}
                         </div>
-
-                        {serverError && <div className="admin-server-error">{serverError}</div>}
 
                         <LoadingButton
                             type="submit"
@@ -319,20 +321,11 @@ const AdminLogin = () => {
                 onConfirm={modalConfig.onConfirm}
             />
 
-            {/* MODAL BỊ CHẶN ĐĂNG NHẬP (DEVICE CONFLICT) */}
-            <Modal
-                show={deviceConflictModal.show}
-                type="warning"
-                title={deviceConflictModal.title}
-                message={deviceConflictModal.message}
-                onConfirm={() => {
-                    setDeviceConflictModal({ show: false, title: '', message: '' });
-                    setEmail('');
-                    setPassword('');
-                    setErrors({});
-                    setServerError('');
-                }}
-                confirmText="Đã hiểu"
+            {/* 👉 SESSION EXPIRED MODAL */}
+            <SessionExpiredModal
+                isOpen={sessionExpiredModal.show}
+                message={sessionExpiredModal.message}
+                onConfirm={handleSessionExpiredConfirm}
             />
         </div>
     );

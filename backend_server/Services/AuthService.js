@@ -1,6 +1,4 @@
-/*=========================================================
-    DEPENDENCIES
-=========================================================*/
+// Services/AuthService.js
 const Jwt = require("../utils/Jwt");
 const Cookie = require("../utils/Cookie");
 const Password = require("../utils/Password");
@@ -22,14 +20,14 @@ const PHONE_REGEX = /^[0-9]{10}$/;
 const USERNAME_REGEX = /^[a-zA-Z0-9_.]{4,20}$/;
 
 /*=========================================================
-    PRIVATE METHODS
+    VALIDATION
 =========================================================*/
 const validateRegister = (data) => {
     const { username, full_name, phone, email, password } = data;
 
     if (!username?.trim()) throw { statusCode: 400, field: "username", message: "Tên đăng nhập không được để trống" };
     if (username.trim().length < 4) throw { statusCode: 400, field: "username", message: "Tên đăng nhập phải từ 4 ký tự" };
-    if (!USERNAME_REGEX.test(username)) throw { statusCode: 400, field: "username", message: "Tên đăng nhập chỉ được chứa chữ, số, dấu gạch dưới và dấu chấm" };
+    if (!USERNAME_REGEX.test(username)) throw { statusCode: 400, field: "username", message: "Tên đăng nhập không hợp lệ" };
 
     if (!full_name?.trim()) throw { statusCode: 400, field: "full_name", message: "Họ tên không được để trống" };
     if (full_name.trim().length < 6) throw { statusCode: 400, field: "full_name", message: "Họ tên phải từ 6 ký tự" };
@@ -52,21 +50,18 @@ const validateLogin = (email, password) => {
     if (!password?.trim()) throw { statusCode: 400, field: "password", message: "Mật khẩu không được để trống" };
 };
 
+/*=========================================================
+    TẠO TOKEN VÀ SET COOKIE
+=========================================================*/
 const generateAndSetTokens = async (user, req, res, rememberMe = false) => {
-    // 👉 REVOKE TOKEN CŨ TRƯỚC KHI TẠO MỚI
-    await RefreshTokenRepository.revokeByUser(
-        user.user_id,
-        `Đăng nhập từ thiết bị mới`
-    );
-
     const accessToken = Jwt.generateAccessToken(user);
     const refreshToken = crypto.randomBytes(64).toString("hex");
     const tokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
-    
+
     const ipAddress = req?.ip || req?.connection?.remoteAddress || null;
     const userAgent = req?.headers?.["user-agent"] || "Unknown";
     const deviceName = req?.headers?.["user-agent"]?.substring(0, 50) || "Unknown";
-    
+
     await RefreshTokenRepository.create({
         user_id: user.user_id,
         token_hash: tokenHash,
@@ -75,19 +70,23 @@ const generateAndSetTokens = async (user, req, res, rememberMe = false) => {
         user_agent: userAgent,
         device_name: deviceName
     });
-    
+
     if (user.role === "admin") {
         Cookie.setAdminAccessToken(res, accessToken, rememberMe);
     } else {
         Cookie.setUserAccessToken(res, accessToken, rememberMe);
     }
     Cookie.setRefreshToken(res, refreshToken, rememberMe);
-    
+
     return { accessToken, refreshToken };
 };
 
 /*=========================================================
     PUBLIC METHODS
+=========================================================*/
+
+/*=========================================================
+    REGISTER
 =========================================================*/
 exports.register = async (userData) => {
     validateRegister(userData);
@@ -119,11 +118,11 @@ exports.register = async (userData) => {
 };
 
 /*=========================================================
-    LOGIN (CHÍNH - ĐÃ SỬA THEO YÊU CẦU CHỈ CHO 1 THIẾT BỊ)
+    LOGIN - SINGLE SESSION (ĐÁ THIẾT BỊ CŨ)
 =========================================================*/
 exports.login = async (email, password, rememberMe = false, req, res) => {
     validateLogin(email, password);
-    
+
     const user = await UserRepository.findByEmail(email);
     if (!user) throw { statusCode: 401, field: "email", message: "Email không tồn tại" };
     if (user.status === "banned") throw { statusCode: 403, message: "Tài khoản đã bị khóa" };
@@ -132,35 +131,25 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     if (!matched) throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
 
     // ==========================================================
-    // ✅ KIỂM TRA CÓ THIẾT BỊ NÀO ĐANG ĐĂNG NHẬP KHÔNG
-    // NẾU CÓ -> CHẶN ĐĂNG NHẬP VÀ TRẢ VỀ LỖI 409
+    // 👉 REVOKE TẤT CẢ TOKEN CŨ (ĐÁ THIẾT BỊ CŨ RA)
     // ==========================================================
-    const activeTokens = await RefreshTokenRepository.getActiveByUser(user.user_id);
-    
-    if (activeTokens && activeTokens.length > 0) {
-        console.log(`🔴 User ${user.user_id} đang đăng nhập ở thiết bị khác. Số token active: ${activeTokens.length}`);
-        
-        // Lấy thông tin thiết bị đang đăng nhập
-        const deviceInfo = activeTokens[0];
-        const deviceName = deviceInfo.device_name || 'Unknown Device';
-        const loginTime = deviceInfo.created_at ? new Date(deviceInfo.created_at).toLocaleString('vi-VN') : 'không rõ';
-        
-        throw { 
-            statusCode: 409, // Conflict
-            field: null,
-            code: 'DEVICE_ALREADY_LOGGED_IN', // 👈 CODE QUAN TRỌNG CHO FRONTEND
-            message: `Tài khoản của bạn đang đăng nhập trên thiết bị "${deviceName}" vào lúc ${loginTime}. Vui lòng đăng xuất thiết bị đó trước khi đăng nhập ở đây.`
-        };
+    const revokedCount = await RefreshTokenRepository.revokeByUser(
+        user.user_id,
+        `Đăng nhập từ thiết bị mới - ${req?.headers?.["user-agent"]?.substring(0, 50) || 'Unknown'}`
+    );
+
+    if (revokedCount > 0) {
+        console.log(`🔴 [LOGIN] Đã revoke ${revokedCount} token cũ của user ${user.user_id}`);
     }
 
-    // Nếu không có thiết bị nào đang online, mới tạo token mới
+    // Tạo token mới cho thiết bị hiện tại
     await generateAndSetTokens(user, req, res, rememberMe);
-    
+
     const ipAddress = req?.ip || req?.connection?.remoteAddress || null;
     await UserRepository.updateLastLogin(user.user_id, ipAddress);
 
     return {
-        success: true, 
+        success: true,
         message: "Đăng nhập thành công",
         user: {
             user_id: user.user_id,
@@ -175,6 +164,9 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     };
 };
 
+/*=========================================================
+    GET ME
+=========================================================*/
 exports.getMe = async (userId) => {
     if (!userId) throw { statusCode: 401, message: "Chưa đăng nhập" };
     const user = await UserRepository.findProfile(userId);
@@ -182,40 +174,57 @@ exports.getMe = async (userId) => {
     return { success: true, user };
 };
 
+/*=========================================================
+    REFRESH TOKEN
+=========================================================*/
 exports.refreshToken = async (req, res) => {
     const refreshToken = Cookie.getRefreshToken(req);
     if (!refreshToken) throw { statusCode: 400, message: "Cần refresh token" };
+
     const tokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
     const tokenData = await RefreshTokenRepository.findValidTokenHash(tokenHash);
     if (!tokenData) throw { statusCode: 401, message: "Refresh token không hợp lệ hoặc đã hết hạn" };
+
     const user = await UserRepository.findById(tokenData.user_id);
     if (!user || user.status === "banned") throw { statusCode: 401, message: "User không tồn tại hoặc đã bị khóa" };
+
     const newAccessToken = Jwt.generateAccessToken({ user_id: user.user_id, email: user.email, role: user.role });
     await RefreshTokenRepository.updateUsage(tokenHash);
+
     if (user.role === "admin") {
         Cookie.setAdminAccessToken(res, newAccessToken, false);
     } else {
         Cookie.setUserAccessToken(res, newAccessToken, false);
     }
+
     return { success: true, message: "Refresh token thành công" };
 };
 
+/*=========================================================
+    LOGOUT
+=========================================================*/
 exports.logout = async (req, res) => {
     const refreshToken = Cookie.getRefreshToken(req);
     if (refreshToken) {
         const tokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
-        await RefreshTokenRepository.revoke(tokenHash, "Logout");
+        await RefreshTokenRepository.revoke(tokenHash, "Đăng xuất");
     }
     Cookie.clearAllCookies(res);
     return { success: true, message: "Đăng xuất thành công" };
 };
 
+/*=========================================================
+    LOGOUT ALL DEVICES
+=========================================================*/
 exports.logoutAllDevices = async (userId, res) => {
-    await RefreshTokenRepository.revokeByUser(userId, "Logout All Devices");
+    await RefreshTokenRepository.revokeByUser(userId, "Đăng xuất tất cả thiết bị");
     Cookie.clearAllCookies(res);
     return { success: true, message: "Đã đăng xuất tất cả thiết bị" };
 };
 
+/*=========================================================
+    CHANGE PASSWORD
+=========================================================*/
 exports.changePassword = async (userId, passwordData) => {
     const { currentPassword, newPassword } = passwordData;
     if (!currentPassword?.trim()) throw { statusCode: 400, field: "currentPassword", message: "Vui lòng nhập mật khẩu hiện tại" };
@@ -236,6 +245,9 @@ exports.changePassword = async (userId, passwordData) => {
     return { success: true, message: "Đổi mật khẩu thành công. Vui lòng đăng nhập lại." };
 };
 
+/*=========================================================
+    FORGOT PASSWORD
+=========================================================*/
 exports.forgotPassword = async (email, req) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
     if (!EMAIL_REGEX.test(email)) throw { statusCode: 400, field: "email", message: "Email không hợp lệ" };
@@ -249,12 +261,15 @@ exports.forgotPassword = async (email, req) => {
 
     const otpCode = Otp.generate6();
     await RedisService.saveOTP(email, "password-reset", otpCode, 300);
-    await OtpRepository.create({ email, purpose: "password-reset", ip_address: req?.ip || req?.connection?.remoteAddress || null, user_agent: req?.headers?.["user-agent"] || null });
+    await OtpRepository.create({ email, purpose: "password-reset", ip_address: req?.ip || null, user_agent: req?.headers?.["user-agent"] || null });
     await MailService.sendPasswordResetOTP(email, otpCode, user.full_name);
 
     return { success: true, message: "Mã OTP đã được gửi đến email của bạn", ...(process.env.NODE_ENV === "development" && { otp: otpCode }) };
 };
 
+/*=========================================================
+    VERIFY RESET OTP
+=========================================================*/
 exports.verifyResetOTP = async (email, otp) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
     if (!EMAIL_REGEX.test(email)) throw { statusCode: 400, field: "email", message: "Email không hợp lệ" };
@@ -275,6 +290,9 @@ exports.verifyResetOTP = async (email, otp) => {
     return { success: true, message: "Xác thực OTP thành công", resetToken };
 };
 
+/*=========================================================
+    RESET PASSWORD
+=========================================================*/
 exports.resetPassword = async (resetToken, newPassword) => {
     if (!resetToken) throw { statusCode: 400, message: "Token không được để trống" };
     if (!newPassword?.trim()) throw { statusCode: 400, field: "newPassword", message: "Mật khẩu mới không được để trống" };
@@ -292,6 +310,9 @@ exports.resetPassword = async (resetToken, newPassword) => {
     return { success: true, message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại." };
 };
 
+/*=========================================================
+    SEND VERIFICATION EMAIL
+=========================================================*/
 exports.sendVerificationEmail = async (email) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
     if (!EMAIL_REGEX.test(email)) throw { statusCode: 400, field: "email", message: "Email không hợp lệ" };
@@ -303,6 +324,9 @@ exports.sendVerificationEmail = async (email) => {
     return { success: true, message: "Email xác thực đã được gửi. Vui lòng kiểm tra hộp thư." };
 };
 
+/*=========================================================
+    VERIFY EMAIL
+=========================================================*/
 exports.verifyEmail = async (verifyToken) => {
     if (!verifyToken) throw { statusCode: 400, message: "Token không được để trống" };
     let payload;
