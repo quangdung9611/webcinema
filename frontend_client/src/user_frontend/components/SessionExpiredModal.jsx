@@ -1,6 +1,5 @@
-// components/SessionExpiredModal.jsx
 import React from 'react';
-import Modal from './Modal'; // 👈 DÙNG MODAL CÓ SẴN CỦA BẠN
+import Modal from './Modal'; 
 import '../styles/SessionExpiredModal.css';
 
 const SessionExpiredModal = ({ isOpen, onConfirm }) => {
@@ -11,9 +10,10 @@ const SessionExpiredModal = ({ isOpen, onConfirm }) => {
             show={isOpen}
             type="warning"
             title="Đã đăng nhập ở thiết bị khác!"
-            message="Tài khoản của bạn vừa được đăng nhập trên một thiết bị khác. Để bảo mật, phiên đăng nhập hiện tại sẽ bị đóng."
+            message="Tài khoản của bạn đang đăng nhập trên một thiết bị khác. Để đăng nhập thiết bị này, vui lòng đăng xuất thiết bị kia trước."
             onConfirm={onConfirm}
-            onCancel={onConfirm}
+            // 👇 SỬA Ở ĐÂY: Cả 2 nút đều dùng onConfirm để đóng modal
+            onCancel={onConfirm} 
             confirmText="Đăng nhập lại"
             cancelText="Đăng nhập lại"
             className="session-expired-modal-wrapper"

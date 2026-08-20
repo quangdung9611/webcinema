@@ -1,5 +1,5 @@
 import React from "react";
-import { X } from "lucide-react"; // giữ nút X từ lucide
+import { X } from "lucide-react"; 
 import "../styles/Modal.css";
 
 const Modal = ({
@@ -25,16 +25,11 @@ const Modal = ({
 
     const renderHeaderIcon = () => {
         switch (type) {
-            case "success":
-                return <span className="modal-icon success-icon">✅</span>;
-            case "error":
-                return <span className="modal-icon error-icon">❌</span>;
-            case "warning":
-                return <span className="modal-icon warning-icon">⚠️</span>;
-            case "info":
-                return <span className="modal-icon info-icon">ℹ️</span>;
-            default:
-                return null;
+            case "success": return <span className="modal-icon success-icon">✅</span>;
+            case "error": return <span className="modal-icon error-icon">❌</span>;
+            case "warning": return <span className="modal-icon warning-icon">⚠️</span>;
+            case "info": return <span className="modal-icon info-icon">ℹ️</span>;
+            default: return null;
         }
     };
 
@@ -44,7 +39,7 @@ const Modal = ({
                 className={`modal-container ${className}`}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Nút đóng (X) – gọi handleClose */}
+                {/* Nút đóng (X) */}
                 <button className="modal-close-btn" onClick={handleClose}>
                     <X size={20} />
                 </button>
@@ -63,7 +58,8 @@ const Modal = ({
 
                     {(onConfirm || onCancel) && (
                         <div className="modal-footer">
-                            <button className="modal-btn-cancel" onClick={onCancel || handleClose}>
+                            {/* 👇 Đã sửa: Khi bấm Cancel, nó gọi onCancel (nếu có), nếu không thì gọi onConfirm để chắc chắn modal đóng */}
+                            <button className="modal-btn-cancel" onClick={onCancel || onConfirm || handleClose}>
                                 {cancelText}
                             </button>
                             <button className="modal-btn-confirm" onClick={onConfirm}>

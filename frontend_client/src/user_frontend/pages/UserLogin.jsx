@@ -1,3 +1,4 @@
+// pages/UserLogin.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
@@ -7,13 +8,11 @@ import {
 } from 'lucide-react';
 
 import api from '../../api/api';
-
+import Modal from '../components/Modal';
 import ForgotPassword from '../components/ForgotPassword';
 import LoadingButton from '../components/LoadingButton';
-import SessionExpiredModal from '../components/SessionExpiredModal';
 
 import '../styles/UserAuth.css';
-
 
 const UserLogin = () => {
 
@@ -32,7 +31,13 @@ const UserLogin = () => {
     const [serverError, setServerError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotModal, setShowForgotModal] = useState(false);
-    const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
+
+    // 👉 STATE CHO MODAL BỊ CHẶN ĐĂNG NHẬP
+    const [deviceConflictModal, setDeviceConflictModal] = useState({
+        show: false,
+        title: 'Tài khoản đang được sử dụng!',
+        message: ''
+    });
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -58,53 +63,31 @@ const UserLogin = () => {
     }, [navigate]);
 
     /* =====================================================
-        ✅ LẮNG NGHE SỰ KIỆN SESSION EXPIRED
+        ✅ LẮNG NGHE SỰ KIỆN DEVICE_ALREADY_LOGGED_IN
     ===================================================== */
     useEffect(() => {
-        const handleSessionExpired = (event) => {
-            console.log('🔴 [USER LOGIN] Nhận được sự kiện sessionExpired!');
+        const handleDeviceConflict = (event) => {
+            console.log('🔴 [USER LOGIN] Nhận được sự kiện deviceAlreadyLoggedIn!');
             console.log('🔴 [USER LOGIN] Message:', event.detail?.message);
             
-            // ✅ HIỂN THỊ MODAL
-            setShowSessionExpiredModal(true);
+            // 👉 HIỂN THỊ MODAL THÔNG BÁO
+            setDeviceConflictModal({
+                show: true,
+                title: 'Tài khoản đang được sử dụng!',
+                message: event.detail?.message || 'Tài khoản của bạn đang đăng nhập trên thiết bị khác. Vui lòng đăng xuất thiết bị đó trước khi tiếp tục.'
+            });
             
-            // ✅ Xóa lỗi cũ
-            setServerError('');
-            setErrors({});
+            // Reset trạng thái loading
+            setLoading(false);
         };
 
         // Đăng ký lắng nghe
-        window.addEventListener('sessionExpired', handleSessionExpired);
-        console.log('✅ [USER LOGIN] Đã đăng ký lắng nghe sự kiện sessionExpired');
+        window.addEventListener('deviceAlreadyLoggedIn', handleDeviceConflict);
 
-        // Cleanup
         return () => {
-            window.removeEventListener('sessionExpired', handleSessionExpired);
-            console.log('🧹 [USER LOGIN] Đã hủy lắng nghe sự kiện sessionExpired');
+            window.removeEventListener('deviceAlreadyLoggedIn', handleDeviceConflict);
         };
     }, []);
-
-    /* =====================================================
-        HANDLE SESSION EXPIRED CONFIRM
-    ===================================================== */
-    const handleSessionExpiredConfirm = () => {
-        console.log('🔴 [USER LOGIN] User xác nhận đăng nhập lại');
-        setShowSessionExpiredModal(false);
-        
-        // Reset form
-        setFormData({
-            email: '',
-            password: '',
-            rememberMe: false
-        });
-        setErrors({});
-        setServerError('');
-        
-        // Focus vào input email
-        setTimeout(() => {
-            document.getElementById('login-email')?.focus();
-        }, 100);
-    };
 
     /* =====================================================
         VALIDATE
@@ -186,22 +169,24 @@ const UserLogin = () => {
         } catch (err) {
             console.error('Login Error:', err);
             
-            // ✅ Nếu là lỗi SESSION_EXPIRED từ backend
-            if (err.response?.data?.code === 'SESSION_EXPIRED') {
-                console.log('🔴 [USER LOGIN] Nhận lỗi SESSION_EXPIRED từ login API');
-                setShowSessionExpiredModal(true);
-            } else {
-                const errorMessage = err.response?.data?.message ||
-                                     err.response?.data?.error ||
-                                     'Tài khoản hoặc mật khẩu không chính xác';
+            // 👉 Nếu là lỗi DEVICE_ALREADY_LOGGED_IN (đã được interceptor xử lý)
+            // Modal sẽ được hiển thị qua event listener
+            if (err.response?.status === 409) {
+                // Đã được interceptor bắt và dispatch event
+                setLoading(false);
+                return;
+            }
+            
+            const errorMessage = err.response?.data?.message ||
+                                 err.response?.data?.error ||
+                                 'Tài khoản hoặc mật khẩu không chính xác';
 
-                if (err.response?.data?.field === 'email') {
-                    setErrors(prev => ({ ...prev, email: errorMessage }));
-                } else if (err.response?.data?.field === 'password') {
-                    setErrors(prev => ({ ...prev, password: errorMessage }));
-                } else {
-                    setServerError(errorMessage);
-                }
+            if (err.response?.data?.field === 'email') {
+                setErrors(prev => ({ ...prev, email: errorMessage }));
+            } else if (err.response?.data?.field === 'password') {
+                setErrors(prev => ({ ...prev, password: errorMessage }));
+            } else {
+                setServerError(errorMessage);
             }
         } finally {
             setLoading(false);
@@ -311,10 +296,26 @@ const UserLogin = () => {
                 <ForgotPassword onClose={() => setShowForgotModal(false)} />
             )}
 
-            {/* ✅ MODAL SESSION EXPIRED */}
-            <SessionExpiredModal
-                isOpen={showSessionExpiredModal}
-                onConfirm={handleSessionExpiredConfirm}
+            {/* =================================================
+                MODAL THÔNG BÁO BỊ CHẶN ĐĂNG NHẬP (DEVICE CONFLICT)
+            ================================================= */}
+            <Modal
+                show={deviceConflictModal.show}
+                type="warning"
+                title={deviceConflictModal.title}
+                message={deviceConflictModal.message}
+                onConfirm={() => {
+                    setDeviceConflictModal({ show: false, title: '', message: '' });
+                    // Reset form
+                    setFormData({
+                        email: '',
+                        password: '',
+                        rememberMe: false
+                    });
+                    setErrors({});
+                    setServerError('');
+                }}
+                confirmText="Đã hiểu"
             />
         </div>
     );

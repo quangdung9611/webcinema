@@ -53,13 +53,19 @@ const validateLogin = (email, password) => {
 };
 
 const generateAndSetTokens = async (user, req, res, rememberMe = false) => {
+    // 👉 REVOKE TOKEN CŨ TRƯỚC KHI TẠO MỚI
+    await RefreshTokenRepository.revokeByUser(
+        user.user_id,
+        `Đăng nhập từ thiết bị mới`
+    );
+
     const accessToken = Jwt.generateAccessToken(user);
     const refreshToken = crypto.randomBytes(64).toString("hex");
     const tokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
     
     const ipAddress = req?.ip || req?.connection?.remoteAddress || null;
     const userAgent = req?.headers?.["user-agent"] || "Unknown";
-    const deviceName = req?.headers?.["device-name"] || "Unknown";
+    const deviceName = req?.headers?.["user-agent"]?.substring(0, 50) || "Unknown";
     
     await RefreshTokenRepository.create({
         user_id: user.user_id,
@@ -113,10 +119,11 @@ exports.register = async (userData) => {
 };
 
 /*=========================================================
-    LOGIN (CHÍNH - ĐÃ SỬA THEO YÊU CẦU)
+    LOGIN (CHÍNH - ĐÃ SỬA THEO YÊU CẦU CHỈ CHO 1 THIẾT BỊ)
 =========================================================*/
 exports.login = async (email, password, rememberMe = false, req, res) => {
     validateLogin(email, password);
+    
     const user = await UserRepository.findByEmail(email);
     if (!user) throw { statusCode: 401, field: "email", message: "Email không tồn tại" };
     if (user.status === "banned") throw { statusCode: 403, message: "Tài khoản đã bị khóa" };
@@ -124,27 +131,46 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     const matched = await Password.compare(password, user.password);
     if (!matched) throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
 
-    // ✅ QUAN TRỌNG: Kiểm tra xem có thiết bị nào đang đăng nhập không
+    // ==========================================================
+    // ✅ KIỂM TRA CÓ THIẾT BỊ NÀO ĐANG ĐĂNG NHẬP KHÔNG
+    // NẾU CÓ -> CHẶN ĐĂNG NHẬP VÀ TRẢ VỀ LỖI 409
+    // ==========================================================
     const activeTokens = await RefreshTokenRepository.getActiveByUser(user.user_id);
+    
     if (activeTokens && activeTokens.length > 0) {
+        console.log(`🔴 User ${user.user_id} đang đăng nhập ở thiết bị khác. Số token active: ${activeTokens.length}`);
+        
+        // Lấy thông tin thiết bị đang đăng nhập
+        const deviceInfo = activeTokens[0];
+        const deviceName = deviceInfo.device_name || 'Unknown Device';
+        const loginTime = deviceInfo.created_at ? new Date(deviceInfo.created_at).toLocaleString('vi-VN') : 'không rõ';
+        
         throw { 
             statusCode: 409, // Conflict
             field: null,
-            message: "Tài khoản của bạn đang đăng nhập trên thiết bị khác. Vui lòng đăng xuất thiết bị đó trước."
+            code: 'DEVICE_ALREADY_LOGGED_IN', // 👈 CODE QUAN TRỌNG CHO FRONTEND
+            message: `Tài khoản của bạn đang đăng nhập trên thiết bị "${deviceName}" vào lúc ${loginTime}. Vui lòng đăng xuất thiết bị đó trước khi đăng nhập ở đây.`
         };
     }
 
     // Nếu không có thiết bị nào đang online, mới tạo token mới
     await generateAndSetTokens(user, req, res, rememberMe);
+    
     const ipAddress = req?.ip || req?.connection?.remoteAddress || null;
     await UserRepository.updateLastLogin(user.user_id, ipAddress);
 
     return {
-        success: true, message: "Đăng nhập thành công",
+        success: true, 
+        message: "Đăng nhập thành công",
         user: {
-            user_id: user.user_id, username: user.username, full_name: user.full_name,
-            email: user.email, phone: user.phone, role: user.role,
-            points: user.points, email_verified: user.email_verified || 0
+            user_id: user.user_id,
+            username: user.username,
+            full_name: user.full_name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            points: user.points,
+            email_verified: user.email_verified || 0
         }
     };
 };
