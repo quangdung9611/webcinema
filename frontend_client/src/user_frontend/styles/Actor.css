@@ -28,6 +28,23 @@
     display: block;
 }
 
+.actor-hero-swiper {
+    width: 100%;
+    height: 100%;
+}
+
+.hero-banner-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    color: var(--text-muted);
+    font-size: var(--font-size-h2);
+    font-weight: var(--fw-bold);
+}
+
 /* ==========================================================
    ACTOR SECTION
 ========================================================= */
@@ -56,7 +73,6 @@
     flex-direction: column;
 }
 
-/* ===== TIÊU ĐỀ + GẠCH DƯỚI BẠC ===== */
 .section-title {
     display: inline-block;
     position: relative;
@@ -86,7 +102,7 @@
 }
 
 /* =========================
-   GRID
+   GRID - SỬ DỤNG CINEMACARD
 ========================= */
 
 .actor-grid {
@@ -96,164 +112,31 @@
 }
 
 /* =========================
-   CARD
+   CINEMACARD TRONG ACTOR - HOVER VIỀN BẠC
 ========================= */
 
-.actor-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-    cursor: pointer;
-    background: var(--bg-card);
-    border: var(--border-premium);
-    backdrop-filter: blur(12px);
-    transition: all var(--transition-normal);
+.actor-grid .cinema-card {
+    height: 100%;
+    transition: border-color var(--transition-normal), 
+                box-shadow var(--transition-normal), 
+                transform var(--transition-normal);
 }
 
-.actor-card:hover {
-    transform: translateY(-10px);
+.actor-grid .cinema-card:hover {
     border-color: var(--silver-primary);
     box-shadow: var(--card-shadow-hover);
+    transform: translateY(-10px);
 }
 
 /* =========================
-   GLOW BORDER BẠC
+   EMPTY
 ========================= */
 
-.actor-card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: var(--radius-lg);
-    padding: 1px;
-    background: linear-gradient(135deg, var(--silver-primary), var(--silver-light), transparent);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0;
-    transition: all var(--transition-normal);
-    pointer-events: none;
-}
-
-.actor-card:hover::before {
-    opacity: 1;
-}
-
-/* =========================
-   SHINE EFFECT
-========================= */
-
-.actor-card::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -120%;
-    width: 50%;
-    height: 100%;
-    z-index: 5;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
-    transform: skewX(-25deg);
-    transition: 1s;
-}
-
-.actor-card:hover::after {
-    left: 150%;
-}
-
-/* =========================
-   IMAGE
-========================= */
-
-.actor-image {
-    display: block;
-    width: 100%;
-    aspect-ratio: 3/2;
-    overflow: hidden;
-}
-
-.actor-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.actor-image::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.35));
-    opacity: 0;
-    transition: all var(--transition-normal);
-}
-
-.actor-card:hover .actor-image::before {
-    opacity: 1;
-}
-
-.actor-card:hover .actor-image img {
-    transform: scale(1.08);
-}
-
-/* =========================
-   INFO
-========================= */
-
-.actor-info {
-    padding: var(--space-lg);
-}
-
-/* =========================
-   ACTOR NAME
-========================= */
-
-.actor-title {
-    display: block;
-    margin-bottom: var(--space-sm);
-    text-decoration: none;
-    font-size: var(--font-size-h3);
-    font-weight: var(--fw-extrabold);
-    line-height: 1.4;
-    color: var(--text-body);
-    transition: all var(--transition-normal);
-}
-
-.actor-card:hover .actor-title {
-    color: var(--silver-primary);
-}
-
-/* =========================
-   META
-========================= */
-
-.actor-meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-md);
-    color: var(--silver-primary);
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-semibold);
-}
-
-.actor-meta svg {
-    flex-shrink: 0;
-}
-
-/* =========================
-   DESCRIPTION
-========================= */
-
-.actor-info p {
-    font-size: var(--font-size-base);
-    line-height: 1.9;
+.actor-empty {
+    text-align: center;
+    padding: 60px 20px;
     color: var(--text-secondary);
-    text-align: justify;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    font-size: var(--font-size-h4);
 }
 
 /* =========================
@@ -284,10 +167,10 @@
 }
 
 /* =========================
-   RESPONSIVE
+   RESPONSIVE - 4 → 3 → 2 (KHÔNG 1 CỘT)
 ========================= */
 
-/* 1200px */
+/* 1200px: 4 -> 3 */
 @media (max-width: 1200px) {
     .actor-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -298,7 +181,7 @@
     }
 }
 
-/* 992px */
+/* 992px: 3 -> 2 */
 @media (max-width: 992px) {
     .actor-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -312,13 +195,13 @@
     }
 }
 
-/* 768px */
+/* 768px: vẫn 2 cột */
 @media (max-width: 768px) {
     .actor-hero {
         aspect-ratio: 2.5 / 1;
     }
     .actor-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: var(--space-md);
     }
     .actor-section-header {
@@ -331,12 +214,9 @@
     .section-title::after {
         height: 3px;
     }
-    .actor-title {
-        font-size: var(--font-size-h4);
-    }
 }
 
-/* 480px */
+/* 480px: vẫn 2 cột (không có 1 cột) */
 @media (max-width: 480px) {
     .actor-hero {
         aspect-ratio: 2.5 / 1;
@@ -344,23 +224,15 @@
     .actor-section {
         padding: 60px var(--space-md);
     }
+    .actor-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-sm);
+    }
     .section-title {
         font-size: var(--font-size-h4);
         padding-bottom: 4px;
     }
     .section-title::after {
         height: 3px;
-    }
-    .actor-info {
-        padding: var(--space-md);
-    }
-    .actor-title {
-        font-size: var(--font-size-h5);
-    }
-    .actor-info p {
-        font-size: var(--font-size-base);
-    }
-    .actor-meta {
-        font-size: var(--font-size-base);
     }
 }

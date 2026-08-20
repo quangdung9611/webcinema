@@ -1,24 +1,26 @@
-const db = require("../Config/db");
+// repositories/NewsRepository.js
+const db = require('../Config/db');
 
 class NewsRepository {
 
     /*=========================================================
         FIND ALL NEWS - KHÔNG PHÂN TRANG (PUBLIC)
-        RETURN: rows[] (KHÔNG pagination, KHÔNG object)
     =========================================================*/
-    async findAllAll(search = "") {
-        search = typeof search === "string" ? search.trim() : "";
-        let whereClause = "";
+    async findAllAll(search = '') {
+        search = typeof search === 'string' ? search.trim() : '';
+
+        const conditions = [];
         const queryParams = [];
 
         if (search) {
-            whereClause = `WHERE title LIKE ? OR content LIKE ?`;
+            conditions.push('(title LIKE ? OR content LIKE ?)');
             const keyword = `%${search}%`;
             queryParams.push(keyword, keyword);
         }
 
-        const [rows] = await db.query(
-            `
+        const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+        const [rows] = await db.query(`
             SELECT
                 news_id,
                 title,
@@ -27,43 +29,43 @@ class NewsRepository {
                 news_backdrop,
                 views,
                 likes,
+                created_at,
                 DATE_FORMAT(created_at, '%d/%m/%Y') AS date,
                 IF(LENGTH(content) > 150, CONCAT(LEFT(content, 150), '...'), content) AS short_content
             FROM news
             ${whereClause}
             ORDER BY created_at DESC, news_id DESC
-            `,
-            queryParams
-        );
+        `, queryParams);
 
-        return rows; // trả thẳng mảng
+        return rows;
     }
 
     /*=========================================================
         FIND ALL NEWS - CÓ PHÂN TRANG (ADMIN)
-        RETURN: { data: [], pagination: {} }
     =========================================================*/
-    async findAll(page = 1, limit = 20, search = "") {
+    async findAll(page = 1, limit = 20, search = '') {
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
+
         if (page < 1) page = 1;
         if (limit < 1) limit = 20;
         if (limit > 100) limit = 100;
 
-        search = typeof search === "string" ? search.trim() : "";
-        let whereClause = "";
+        search = typeof search === 'string' ? search.trim() : '';
+
+        const conditions = [];
         const queryParams = [];
 
         if (search) {
-            whereClause = `WHERE title LIKE ? OR content LIKE ?`;
+            conditions.push('(title LIKE ? OR content LIKE ?)');
             const keyword = `%${search}%`;
             queryParams.push(keyword, keyword);
         }
 
+        const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
         const offset = (page - 1) * limit;
 
-        const [rows] = await db.query(
-            `
+        const [rows] = await db.query(`
             SELECT
                 news_id,
                 title,
@@ -80,14 +82,13 @@ class NewsRepository {
             ${whereClause}
             ORDER BY created_at DESC, news_id DESC
             LIMIT ? OFFSET ?
-            `,
-            [...queryParams, limit, offset]
-        );
+        `, [...queryParams, limit, offset]);
 
-        const [countRows] = await db.query(
-            `SELECT COUNT(*) AS total FROM news ${whereClause}`,
-            queryParams
-        );
+        const [countRows] = await db.query(`
+            SELECT COUNT(*) AS total
+            FROM news
+            ${whereClause}
+        `, queryParams);
 
         const total = Number(countRows[0]?.total || 0);
         const totalPages = Math.ceil(total / limit) || 1;
@@ -109,10 +110,9 @@ class NewsRepository {
         FIND BY ID
     =========================================================*/
     async findById(newsId) {
-        const [rows] = await db.query(
-            `SELECT * FROM news WHERE news_id = ? LIMIT 1`,
-            [newsId]
-        );
+        const [rows] = await db.query(`
+            SELECT * FROM news WHERE news_id = ? LIMIT 1
+        `, [newsId]);
         return rows[0] || null;
     }
 
@@ -120,23 +120,24 @@ class NewsRepository {
         FIND BY SLUG
     =========================================================*/
     async findBySlug(slug) {
-        const [rows] = await db.query(
-            `SELECT * FROM news WHERE slug = ? LIMIT 1`,
-            [slug]
-        );
+        const [rows] = await db.query(`
+            SELECT * FROM news WHERE slug = ? LIMIT 1
+        `, [slug]);
         return rows[0] || null;
     }
 
     /*=========================================================
-        CHECK EXIST BY TITLE OR SLUG
+        CHECK EXISTS BY TITLE OR SLUG
     =========================================================*/
     async existsByTitleOrSlug(title, slug, excludeId = null) {
         let sql = `SELECT news_id FROM news WHERE (title = ? OR slug = ?)`;
         const params = [title.trim(), slug];
-        if (excludeId != null) {
+
+        if (excludeId !== null) {
             sql += ` AND news_id != ?`;
             params.push(Number(excludeId));
         }
+
         const [rows] = await db.query(sql, params);
         return rows.length > 0;
     }
@@ -145,16 +146,11 @@ class NewsRepository {
         GET IMAGES (cả ảnh chính và backdrop)
     =========================================================*/
     async getImages(newsId) {
-        const [rows] = await db.query(
-            `
-            SELECT
-                news_image,
-                news_backdrop
+        const [rows] = await db.query(`
+            SELECT news_image, news_backdrop
             FROM news
             WHERE news_id = ?
-            `,
-            [newsId]
-        );
+        `, [newsId]);
         return rows[0] || null;
     }
 
@@ -163,13 +159,20 @@ class NewsRepository {
     =========================================================*/
     async create(data) {
         const { title, slug, content, news_image, news_backdrop, likes } = data;
-        const [result] = await db.query(
-            `
-            INSERT INTO news (title, slug, content, news_image, news_backdrop, likes, views)
+
+        const [result] = await db.query(`
+            INSERT INTO news
+            (title, slug, content, news_image, news_backdrop, likes, views)
             VALUES (?, ?, ?, ?, ?, ?, 0)
-            `,
-            [title.trim(), slug, content.trim(), news_image || null, news_backdrop || null, likes || 0]
-        );
+        `, [
+            title.trim(),
+            slug,
+            content.trim(),
+            news_image || null,
+            news_backdrop || null,
+            Number(likes) || 0
+        ]);
+
         return result.insertId;
     }
 
@@ -178,14 +181,26 @@ class NewsRepository {
     =========================================================*/
     async update(newsId, data) {
         const { title, slug, content, news_image, news_backdrop, likes } = data;
-        const [result] = await db.query(
-            `
+
+        const [result] = await db.query(`
             UPDATE news
-            SET title = ?, slug = ?, content = ?, news_image = ?, news_backdrop = ?, likes = ?
+            SET title = ?,
+                slug = ?,
+                content = ?,
+                news_image = ?,
+                news_backdrop = ?,
+                likes = ?
             WHERE news_id = ?
-            `,
-            [title.trim(), slug, content.trim(), news_image || null, news_backdrop || null, likes || 0, newsId]
-        );
+        `, [
+            title.trim(),
+            slug,
+            content.trim(),
+            news_image || null,
+            news_backdrop || null,
+            Number(likes) || 0,
+            newsId
+        ]);
+
         return result.affectedRows;
     }
 
@@ -193,10 +208,7 @@ class NewsRepository {
         DELETE
     =========================================================*/
     async delete(newsId) {
-        const [result] = await db.query(
-            `DELETE FROM news WHERE news_id = ?`,
-            [newsId]
-        );
+        const [result] = await db.query(`DELETE FROM news WHERE news_id = ?`, [newsId]);
         return result.affectedRows;
     }
 
@@ -204,10 +216,9 @@ class NewsRepository {
         INCREMENT LIKES
     =========================================================*/
     async incrementLikes(newsId) {
-        const [result] = await db.query(
-            `UPDATE news SET likes = likes + 1 WHERE news_id = ?`,
-            [newsId]
-        );
+        const [result] = await db.query(`
+            UPDATE news SET likes = likes + 1 WHERE news_id = ?
+        `, [newsId]);
         return result.affectedRows;
     }
 
@@ -215,10 +226,9 @@ class NewsRepository {
         INCREMENT VIEWS
     =========================================================*/
     async incrementViews(newsId) {
-        const [result] = await db.query(
-            `UPDATE news SET views = views + 1 WHERE news_id = ?`,
-            [newsId]
-        );
+        const [result] = await db.query(`
+            UPDATE news SET views = views + 1 WHERE news_id = ?
+        `, [newsId]);
         return result.affectedRows;
     }
 
@@ -228,46 +238,65 @@ class NewsRepository {
     async getConnection() {
         return db.getConnection();
     }
+
     async beginTransaction(connection) {
         await connection.beginTransaction();
     }
+
     async commit(connection) {
         await connection.commit();
     }
+
     async rollback(connection) {
         await connection.rollback();
     }
 
     async createWithConnection(connection, data) {
         const { title, slug, content, news_image, news_backdrop, likes } = data;
-        const [result] = await connection.query(
-            `
-            INSERT INTO news (title, slug, content, news_image, news_backdrop, likes, views)
+
+        const [result] = await connection.query(`
+            INSERT INTO news
+            (title, slug, content, news_image, news_backdrop, likes, views)
             VALUES (?, ?, ?, ?, ?, ?, 0)
-            `,
-            [title.trim(), slug, content.trim(), news_image || null, news_backdrop || null, likes || 0]
-        );
+        `, [
+            title.trim(),
+            slug,
+            content.trim(),
+            news_image || null,
+            news_backdrop || null,
+            Number(likes) || 0
+        ]);
+
         return result.insertId;
     }
 
     async updateWithConnection(connection, newsId, data) {
         const { title, slug, content, news_image, news_backdrop, likes } = data;
-        const [result] = await connection.query(
-            `
+
+        const [result] = await connection.query(`
             UPDATE news
-            SET title = ?, slug = ?, content = ?, news_image = ?, news_backdrop = ?, likes = ?
+            SET title = ?,
+                slug = ?,
+                content = ?,
+                news_image = ?,
+                news_backdrop = ?,
+                likes = ?
             WHERE news_id = ?
-            `,
-            [title.trim(), slug, content.trim(), news_image || null, news_backdrop || null, likes || 0, newsId]
-        );
+        `, [
+            title.trim(),
+            slug,
+            content.trim(),
+            news_image || null,
+            news_backdrop || null,
+            Number(likes) || 0,
+            newsId
+        ]);
+
         return result.affectedRows;
     }
 
     async deleteWithConnection(connection, newsId) {
-        const [result] = await connection.query(
-            `DELETE FROM news WHERE news_id = ?`,
-            [newsId]
-        );
+        const [result] = await connection.query(`DELETE FROM news WHERE news_id = ?`, [newsId]);
         return result.affectedRows;
     }
 }

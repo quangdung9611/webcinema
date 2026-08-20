@@ -1,7 +1,10 @@
 import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Ticket, Info } from "lucide-react";
 import "../styles/MovieCard.css";
 
 const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
+    const navigate = useNavigate();
     const [isOpening, setIsOpening] = useState(false);
     const [isHover, setIsHover] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
@@ -17,6 +20,8 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
         releaseDate: movie?.release_date || null,
         isHot: movie?.is_hot || false,
         isNew: movie?.is_new || false,
+        slug: movie?.slug || movie?.movie_slug,
+        movie_id: movie?.movie_id || movie?.id,
     }), [movie]);
 
     // Intersection Observer
@@ -49,34 +54,67 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
         setTilt({ x: 0, y: 0 });
     };
 
-    const handleClick = useCallback((e) => {
+    // ==========================================================
+    // HANDLE NAVIGATION
+    // ==========================================================
+    const handleDetailClick = useCallback((e) => {
+        e.stopPropagation();
+        if (onClick) {
+            onClick(movie);
+            return;
+        }
+        const slug = movieData.slug;
+        if (slug) {
+            navigate(`/movies/detail/${slug}`);
+        }
+    }, [movie, movieData.slug, navigate, onClick]);
+
+    const handleBookingClick = useCallback((e) => {
+        e.stopPropagation();
+        const slug = movieData.slug;
+        if (slug) {
+            navigate(`/booking/${slug}`);
+        }
+    }, [movieData.slug, navigate]);
+
+    const handleCardClick = useCallback((e) => {
         if (isOpening) return;
         setIsOpening(true);
-        onClick?.(movie);
+        if (onClick) {
+            onClick(movie);
+        } else {
+            const slug = movieData.slug;
+            if (slug) {
+                navigate(`/movies/detail/${slug}`);
+            }
+        }
         setTimeout(() => setIsOpening(false), 900);
-    }, [isOpening, movie, onClick]);
+    }, [isOpening, movie, movieData.slug, navigate, onClick]);
 
     const handleKeyDown = useCallback((e) => {
         if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            handleClick(e);
+            handleCardClick(e);
         }
-    }, [handleClick]);
+    }, [handleCardClick]);
 
-    // Format ngày chiếu (nếu có)
+    // Format ngày chiếu
     const formattedDate = useMemo(() => {
         if (!movieData.releaseDate) return null;
         const date = new Date(movieData.releaseDate);
         return isNaN(date) ? null : date.toLocaleDateString("vi-VN");
     }, [movieData.releaseDate]);
 
-    // Phụ đề: ngày chiếu + ngôn ngữ + độ tuổi
+    // Phụ đề
     const subtitleParts = [];
     if (formattedDate) subtitleParts.push(formattedDate);
     if (movieData.language) subtitleParts.push(movieData.language);
     if (movieData.ageRating) subtitleParts.push(movieData.ageRating);
 
     const subtitle = subtitleParts.join(" • ");
+
+    // Lấy movie_id cho booking
+    const movieId = movieData.movie_id;
 
     return (
         <div
@@ -85,7 +123,7 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
             onMouseMove={handleMouseMove}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            onClick={handleClick}
+            onClick={handleCardClick}
             onKeyDown={handleKeyDown}
             role="button"
             tabIndex={0}
@@ -109,7 +147,7 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
                 {/* Border glow chạy */}
                 <div className="film-card__border-glow" />
 
-                {/* Sparkle particles (giữ lại trang trí) */}
+                {/* Sparkle particles */}
                 <div className="film-card__sparkles">
                     <span className="sparkle s1" />
                     <span className="sparkle s2" />
@@ -140,13 +178,34 @@ const MovieCard = React.memo(({ movie, onClick, index = 0 }) => {
                     {movieData.isNew && !movieData.isHot && (
                         <div className="film-card__badge new">✨ Mới</div>
                     )}
+
+                    {/* ==========================================================
+                        ACTION BUTTONS OVERLAY - XUẤT HIỆN KHI HOVER
+                    ========================================================== */}
+                    <div className="film-card__actions-overlay">
+                        <div className="film-card__actions-wrapper">
+                            <button
+                                className="film-card__action-btn btn-detail"
+                                onClick={handleDetailClick}
+                                aria-label="Xem chi tiết"
+                            >
+                                <Info size={18} />
+                                <span>Xem chi tiết</span>
+                            </button>
+                            <button
+                                className="film-card__action-btn btn-booking"
+                                onClick={handleBookingClick}
+                                aria-label="Đặt vé"
+                            >
+                                <Ticket size={18} />
+                                <span>Đặt vé</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="film-card__info">
-                    {/* Tên phim – dùng thẻ h3 */}
                     <h3 className="film-card__title">{movieData.title}</h3>
-
-                    {/* Phụ đề (ngày chiếu • ngôn ngữ • độ tuổi) */}
                     {subtitle && (
                         <div className="film-card__subtitle">
                             <span>{subtitle}</span>

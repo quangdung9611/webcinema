@@ -1,217 +1,139 @@
-const BlogCinemaRepository = require("../Repositories/BlogCinemaRepository");
+// services/BlogCinemaService.js
+const BlogCinemaRepository = require('../Repositories/BlogCinemaRepository');
 const {
     uploadToCloudinary,
     deleteFromCloudinary
-} = require("../Middlewares/UploadCloudinary");
+} = require('../Middlewares/UploadCloudinary');
 
-// ==========================================================
-// CREATE SLUG
-// ==========================================================
+// =========================================================
+// HELPER - CREATE SLUG
+// =========================================================
 const createSlug = (title) => {
-    if (!title) return "";
-
+    if (!title) return '';
     return title
         .toLowerCase()
         .trim()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[đĐ]/g, "d")
-        .replace(/[^\w\s-]/g, "")
-        .replace(/[\s_-]+/g, "-")
-        .replace(/^-+|-+$/g, "");
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 };
 
-// ==========================================================
-// CLOUDINARY PUBLIC ID
-// ==========================================================
+// =========================================================
+// HELPER - EXTRACT PUBLIC ID FROM CLOUDINARY URL
+// =========================================================
 const extractPublicId = (url) => {
     if (!url) return null;
-
-    const parts = url.split("/");
-    const uploadIndex = parts.indexOf("upload");
-
+    const parts = url.split('/');
+    const uploadIndex = parts.indexOf('upload');
     if (uploadIndex === -1) return null;
-
-    return parts
-        .slice(uploadIndex + 1)
-        .join("/")
-        .split(".")[0];
+    return parts.slice(uploadIndex + 1).join('/').split('.')[0];
 };
 
-// ==========================================================
-// VALIDATE BLOG DATA
-// ==========================================================
-const validateBlogData = (data, files, isUpdate = false) => {
-    const {
-        title,
-        description,
-        likes
-    } = data;
+// =========================================================
+// HELPER - GET FILE NAME FROM URL
+// =========================================================
+const getFileNameFromUrl = (url) => {
+    if (!url) return null;
+    const parts = url.split('/');
+    return parts[parts.length - 1];
+};
 
-    // TITLE
-    if (!title || title.trim() === "") {
-        return "Vui lòng nhập tiêu đề.";
+// =========================================================
+// VALIDATE BLOG DATA
+// =========================================================
+const validateBlogData = (data, files, isUpdate = false) => {
+    const { title, description, likes } = data;
+
+    if (!title || title.trim() === '') {
+        return 'Vui lòng nhập tiêu đề blog.';
     }
 
     if (title.trim().length < 5) {
-        return "Tiêu đề phải từ 5 ký tự.";
+        return 'Tiêu đề blog phải từ 5 ký tự trở lên.';
     }
 
-    // DESCRIPTION
-    if (!description || description.trim() === "") {
-        return "Vui lòng nhập mô tả.";
+    if (!description || description.trim() === '') {
+        return 'Vui lòng nhập mô tả blog.';
     }
 
     if (description.trim().length < 10) {
-        return "Mô tả quá ngắn.";
+        return 'Mô tả blog phải từ 10 ký tự trở lên.';
     }
 
-    // LIKES
-    if (likes !== undefined && likes !== "") {
-        const num = Number(likes);
-
-        if (Number.isNaN(num) || num < 0) {
-            return "Likes không hợp lệ.";
-        }
+    if (likes !== undefined && likes !== '' && Number(likes) < 0) {
+        return 'Số lượt thích không hợp lệ.';
     }
 
-    // IMAGE (bắt buộc khi tạo mới)
     if (!isUpdate && (!files || !files['blog_image'])) {
-        return "Vui lòng upload ảnh.";
+        return 'Vui lòng upload ảnh cho blog.';
     }
 
     return null;
 };
 
-// ==========================================================
-// BLOG CINEMA SERVICE
-// ==========================================================
 class BlogCinemaService {
 
-    /* ==========================================================
+    /* =========================================================
         GET ALL BLOGS - KHÔNG PHÂN TRANG
-
-        Route:
-        GET /api/blog-cinema
-
-        Kết quả:
-        [
-            {...},
-            {...}
-        ]
-
-        KHÔNG:
-        {
-            data: [],
-            pagination: {}
-        }
-    ========================================================== */
-    async getAllBlogsAll(search = "") {
+    ========================================================= */
+    async getAllBlogsAll(search = '') {
         return await BlogCinemaRepository.findAllAll(search);
     }
 
-    /* ==========================================================
+    /* =========================================================
         GET ALL BLOGS - CÓ PHÂN TRANG
-
-        Route:
-        GET /api/blog-cinema/paginated?page=1&limit=20
-
-        Kết quả:
-        {
-            data: [],
-            pagination: {}
-        }
-    ========================================================== */
-    async getAllBlogsPaginated(
-        page = 1,
-        limit = 20,
-        search = ""
-    ) {
-        return await BlogCinemaRepository.findAll(
-            false,
-            page,
-            limit,
-            search
-        );
+    ========================================================= */
+    async getAllBlogsPaginated(page = 1, limit = 20, search = '') {
+        return await BlogCinemaRepository.findAll(false, page, limit, search);
     }
 
-    /* ==========================================================
+    /* =========================================================
         GET BLOG BY ID
-    ========================================================== */
+    ========================================================= */
     async getBlogById(blogId) {
-
         const blog = await BlogCinemaRepository.findById(blogId);
-
         if (!blog) {
-            const err = new Error("Không tìm thấy blog");
-            err.statusCode = 404;
-            throw err;
+            throw { statusCode: 404, message: 'Không tìm thấy blog' };
         }
-
         return blog;
     }
 
-    /* ==========================================================
+    /* =========================================================
         GET BLOG BY SLUG
-    ========================================================== */
+    ========================================================= */
     async getBlogBySlug(slug) {
-
         const blog = await BlogCinemaRepository.findBySlug(slug);
-
         if (!blog) {
-            const err = new Error("Không tìm thấy blog");
-            err.statusCode = 404;
-            throw err;
+            throw { statusCode: 404, message: 'Không tìm thấy blog' };
         }
-
         // Tăng lượt xem
         await BlogCinemaRepository.incrementViews(blog.blog_id);
-
         return blog;
     }
 
-    /* ==========================================================
+    /* =========================================================
         CREATE BLOG
-    ========================================================== */
+    ========================================================= */
     async createBlog(data, files) {
-
-        const error = validateBlogData(
-            data,
-            files,
-            false
-        );
-
+        const error = validateBlogData(data, files, false);
         if (error) {
-            const err = new Error(error);
-            err.statusCode = 400;
-            err.field = "general";
-            throw err;
+            throw { statusCode: 400, field: 'general', message: error };
         }
 
-        const {
-            title,
-            description,
-            likes
-        } = data;
-
-        // Tạo slug
+        const { title, description, likes } = data;
         const slug = createSlug(title);
 
-        // Kiểm tra trùng title / slug
-        const exists =
-            await BlogCinemaRepository.existsByTitleOrSlug(
-                title.trim(),
-                slug
-            );
-
+        // Kiểm tra trùng title/slug
+        const exists = await BlogCinemaRepository.existsByTitleOrSlug(title.trim(), slug);
         if (exists) {
-            const err = new Error(
-                "Tiêu đề hoặc slug đã tồn tại"
-            );
-
-            err.statusCode = 400;
-            err.field = "title";
-            throw err;
+            throw {
+                statusCode: 400,
+                field: 'title',
+                message: `Tiêu đề "${title}" đã tồn tại trong hệ thống.`
+            };
         }
 
         // Upload ảnh
@@ -221,7 +143,7 @@ class BlogCinemaService {
         if (files['blog_image']?.[0]) {
             const result = await uploadToCloudinary(
                 files['blog_image'][0],
-                "cinema_shop/blog_cinema"
+                'cinema_shop/blog_cinema'
             );
             blog_image = result.url;
         }
@@ -229,307 +151,173 @@ class BlogCinemaService {
         if (files['blog_backdrop']?.[0]) {
             const result = await uploadToCloudinary(
                 files['blog_backdrop'][0],
-                "cinema_shop/blog_cinema/backdrops"
+                'cinema_shop/blog_cinema/backdrops'
             );
             blog_backdrop = result.url;
         }
 
-        // CREATE
-        const blogId =
-            await BlogCinemaRepository.create({
+        const blogId = await BlogCinemaRepository.create({
+            title: title.trim(),
+            slug,
+            description: description.trim(),
+            blog_image,
+            blog_backdrop,
+            likes: Number(likes) || 0,
+            is_active: 1
+        });
+
+        return blogId;
+    }
+
+    /* =========================================================
+        UPDATE BLOG
+    ========================================================= */
+    async updateBlog(blogId, data, files) {
+        const existing = await BlogCinemaRepository.findById(blogId);
+        if (!existing) {
+            throw { statusCode: 404, message: 'Blog không tồn tại' };
+        }
+
+        const error = validateBlogData(data, files, true);
+        if (error) {
+            throw { statusCode: 400, field: 'general', message: error };
+        }
+
+        const { title, description, likes, is_active } = data;
+        const slug = createSlug(title);
+
+        // Kiểm tra trùng với các blog khác
+        if (title.trim() !== existing.title || slug !== existing.slug) {
+            const exists = await BlogCinemaRepository.existsByTitleOrSlug(
+                title.trim(),
+                slug,
+                blogId
+            );
+            if (exists) {
+                throw {
+                    statusCode: 400,
+                    field: 'title',
+                    message: `Tiêu đề "${title}" đã tồn tại trong hệ thống.`
+                };
+            }
+        }
+
+        const conn = await BlogCinemaRepository.getConnection();
+
+        try {
+            await BlogCinemaRepository.beginTransaction(conn);
+
+            let blog_image = existing.blog_image;
+            let blog_backdrop = existing.blog_backdrop;
+
+            // Xử lý ảnh chính
+            if (files['blog_image']?.[0]) {
+                if (existing.blog_image) {
+                    const publicId = extractPublicId(existing.blog_image);
+                    if (publicId) {
+                        await deleteFromCloudinary(publicId);
+                    }
+                }
+                const result = await uploadToCloudinary(
+                    files['blog_image'][0],
+                    'cinema_shop/blog_cinema'
+                );
+                blog_image = result.url;
+            }
+
+            // Xử lý backdrop
+            if (files['blog_backdrop']?.[0]) {
+                if (existing.blog_backdrop) {
+                    const publicId = extractPublicId(existing.blog_backdrop);
+                    if (publicId) {
+                        await deleteFromCloudinary(publicId);
+                    }
+                }
+                const result = await uploadToCloudinary(
+                    files['blog_backdrop'][0],
+                    'cinema_shop/blog_cinema/backdrops'
+                );
+                blog_backdrop = result.url;
+            }
+
+            const affected = await BlogCinemaRepository.updateWithConnection(conn, blogId, {
                 title: title.trim(),
                 slug,
                 description: description.trim(),
                 blog_image,
                 blog_backdrop,
                 likes: Number(likes) || 0,
-                is_active: 1
+                is_active: is_active !== undefined ? Number(is_active) : existing.is_active
             });
 
-        return blogId;
-    }
-
-    /* ==========================================================
-        UPDATE BLOG - SỬA LOGIC GIỐNG MOVIE
-    ========================================================== */
-    async updateBlog(blogId, data, files) {
-
-        // Lấy blog hiện tại
-        const existing =
-            await BlogCinemaRepository.findById(blogId);
-
-        if (!existing) {
-            const err = new Error(
-                "Blog không tồn tại"
-            );
-
-            err.statusCode = 404;
-            throw err;
-        }
-
-        // Validate
-        const error = validateBlogData(
-            data,
-            files,
-            true
-        );
-
-        if (error) {
-            const err = new Error(error);
-            err.statusCode = 400;
-            err.field = "general";
-            throw err;
-        }
-
-        const {
-            title,
-            description,
-            likes,
-            is_active
-        } = data;
-
-        // Tạo slug mới
-        const slug = createSlug(title);
-
-        // 👇 CHỈ KIỂM TRA TRÙNG KHI TITLE HOẶC SLUG THAY ĐỔI (GIỐNG MOVIE)
-        if (
-            title.trim() !== existing.title ||
-            slug !== existing.slug
-        ) {
-            const exists =
-                await BlogCinemaRepository.existsByTitleOrSlug(
-                    title.trim(),
-                    slug,
-                    blogId
-                );
-
-            if (exists) {
-                const err = new Error(
-                    "Tiêu đề hoặc slug đã trùng với blog khác"
-                );
-                err.statusCode = 400;
-                err.field = "title";
-                throw err;
-            }
-        }
-
-        // Lấy connection
-        const conn =
-            await BlogCinemaRepository.getConnection();
-
-        try {
-
-            await BlogCinemaRepository.beginTransaction(
-                conn
-            );
-
-            // Giữ ảnh cũ nếu không upload ảnh mới
-            let blog_image = existing.blog_image;
-            let blog_backdrop = existing.blog_backdrop;
-
-            // Upload ảnh mới (chính)
-            if (files['blog_image']?.[0]) {
-
-                // Xóa ảnh cũ trên Cloudinary
-                if (existing.blog_image) {
-
-                    const publicId =
-                        extractPublicId(
-                            existing.blog_image
-                        );
-
-                    if (publicId) {
-                        await deleteFromCloudinary(
-                            publicId
-                        );
-                    }
-                }
-
-                // Upload ảnh mới
-                const result =
-                    await uploadToCloudinary(
-                        files['blog_image'][0],
-                        "cinema_shop/blog_cinema"
-                    );
-
-                blog_image = result.url;
-            }
-
-            // Upload ảnh backdrop mới
-            if (files['blog_backdrop']?.[0]) {
-
-                // Xóa backdrop cũ trên Cloudinary
-                if (existing.blog_backdrop) {
-
-                    const publicId =
-                        extractPublicId(
-                            existing.blog_backdrop
-                        );
-
-                    if (publicId) {
-                        await deleteFromCloudinary(
-                            publicId
-                        );
-                    }
-                }
-
-                // Upload backdrop mới
-                const result =
-                    await uploadToCloudinary(
-                        files['blog_backdrop'][0],
-                        "cinema_shop/blog_cinema/backdrops"
-                    );
-
-                blog_backdrop = result.url;
-            }
-
-            // UPDATE
-            const affected =
-                await BlogCinemaRepository.updateWithConnection(
-                    conn,
-                    blogId,
-                    {
-                        title: title.trim(),
-                        slug,
-                        description: description.trim(),
-                        blog_image,
-                        blog_backdrop,
-                        likes: Number(likes) || 0,
-                        is_active:
-                            is_active !== undefined
-                                ? Number(is_active)
-                                : existing.is_active
-                    }
-                );
-
             if (affected === 0) {
-                throw new Error(
-                    "Không thể cập nhật blog"
-                );
+                throw new Error('Không thể cập nhật blog');
             }
 
             await BlogCinemaRepository.commit(conn);
-
             return true;
 
         } catch (err) {
-
             await BlogCinemaRepository.rollback(conn);
-
             throw err;
-
         } finally {
-
             conn.release();
         }
     }
 
-    /* ==========================================================
+    /* =========================================================
         DELETE BLOG
-    ========================================================== */
+    ========================================================= */
     async deleteBlog(blogId) {
-
-        // Kiểm tra blog
-        const existing =
-            await BlogCinemaRepository.findById(blogId);
-
+        const existing = await BlogCinemaRepository.findById(blogId);
         if (!existing) {
-            const err = new Error(
-                "Blog không tồn tại"
-            );
-
-            err.statusCode = 404;
-            throw err;
+            throw { statusCode: 404, message: 'Blog không tồn tại' };
         }
 
-        const conn =
-            await BlogCinemaRepository.getConnection();
+        const conn = await BlogCinemaRepository.getConnection();
 
         try {
+            await BlogCinemaRepository.beginTransaction(conn);
 
-            await BlogCinemaRepository.beginTransaction(
-                conn
-            );
-
-            // Xóa ảnh Cloudinary (cả ảnh chính và backdrop)
+            // Xóa ảnh trên Cloudinary
             if (existing.blog_image) {
-
-                const publicId =
-                    extractPublicId(
-                        existing.blog_image
-                    );
-
+                const publicId = extractPublicId(existing.blog_image);
                 if (publicId) {
-                    await deleteFromCloudinary(
-                        publicId
-                    );
+                    await deleteFromCloudinary(publicId);
                 }
             }
 
             if (existing.blog_backdrop) {
-
-                const publicId =
-                    extractPublicId(
-                        existing.blog_backdrop
-                    );
-
+                const publicId = extractPublicId(existing.blog_backdrop);
                 if (publicId) {
-                    await deleteFromCloudinary(
-                        publicId
-                    );
+                    await deleteFromCloudinary(publicId);
                 }
             }
 
-            // Xóa database
-            const affected =
-                await BlogCinemaRepository.deleteWithConnection(
-                    conn,
-                    blogId
-                );
-
+            const affected = await BlogCinemaRepository.deleteWithConnection(conn, blogId);
             if (affected === 0) {
-                throw new Error(
-                    "Xóa blog thất bại"
-                );
+                throw new Error('Xóa blog thất bại');
             }
 
             await BlogCinemaRepository.commit(conn);
-
             return true;
 
         } catch (err) {
-
             await BlogCinemaRepository.rollback(conn);
-
             throw err;
-
         } finally {
-
             conn.release();
         }
     }
 
-    /* ==========================================================
+    /* =========================================================
         LIKE BLOG
-    ========================================================== */
+    ========================================================= */
     async likeBlog(blogId) {
-
-        const affected =
-            await BlogCinemaRepository.incrementLikes(
-                blogId
-            );
-
+        const affected = await BlogCinemaRepository.incrementLikes(blogId);
         if (affected === 0) {
-
-            const err = new Error(
-                "Không tìm thấy blog"
-            );
-
-            err.statusCode = 404;
-
-            throw err;
+            throw { statusCode: 404, message: 'Không tìm thấy blog' };
         }
-
         return true;
     }
 }

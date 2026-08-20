@@ -4,7 +4,6 @@ import api from '../../api/api';
 import { Film } from "lucide-react";
 
 import MovieCard from "../components/MovieCard";
-import MoviePreviewModal from "../components/MoviePreviewModal";
 
 import "../styles/MovieStatusPage.css";
 
@@ -20,9 +19,6 @@ const MovieStatusPage = () => {
     const [movies, setMovies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedMovie, setSelectedMovie] = useState(null);
 
     const activeStatus = useMemo(() => {
         return statusMap[statusSlug] || "Đang chiếu";
@@ -52,18 +48,6 @@ const MovieStatusPage = () => {
     const filteredMovies = useMemo(() => {
         return movies.filter((movie) => movie.status === activeStatus);
     }, [movies, activeStatus]);
-
-    const handleMovieClick = (movie) => {
-        setSelectedMovie(movie);
-        setIsModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setTimeout(() => {
-            setSelectedMovie(null);
-        }, 850);
-    };
 
     if (loading) {
         return (
@@ -100,10 +84,9 @@ const MovieStatusPage = () => {
             <div className="status-header">
                 <div className="status-header-left">
                     <h2 className="status-title">
-                        <Film size={32} className="section-icon" /> {/* ✅ Thêm icon */}
+                        <Film size={32} className="section-icon" />
                         {currentTabLabel}
                     </h2>
-                    {/* ✅ Đã xóa <div className="title-underline" /> */}
                 </div>
 
                 <div className="status-tabs">
@@ -133,7 +116,6 @@ const MovieStatusPage = () => {
                         <MovieCard
                             key={movie.movie_id}
                             movie={movie}
-                            onClick={handleMovieClick}
                         />
                     ))
                 ) : (
@@ -143,14 +125,6 @@ const MovieStatusPage = () => {
                     </div>
                 )}
             </section>
-
-            {/* ===== MODAL ===== */}
-            <MoviePreviewModal
-                open={isModalOpen}
-                onClose={handleCloseModal}
-                movies={filteredMovies}
-                selectedMovie={selectedMovie}
-            />
         </main>
     );
 };

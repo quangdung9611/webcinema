@@ -520,9 +520,7 @@ const BlogCinemaPage = () => {
                 )}
             </AdminPage>
 
-            {/* ==================================================
-                FORM MODAL
-            ================================================== */}
+            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={handleCloseForm}
@@ -542,9 +540,7 @@ const BlogCinemaPage = () => {
                 />
             </AdminModal>
 
-            {/* ==================================================
-                ALERT / CONFIRM MODAL
-            ================================================== */}
+            {/* ALERT / CONFIRM MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}

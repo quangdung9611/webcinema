@@ -56,7 +56,7 @@ const UserLogin = lazy(() => import("./user_frontend/pages/UserLogin"));
 const UserRegister = lazy(() => import("./user_frontend/pages/UserRegister"));
 const MovieDetail = lazy(() => import("./user_frontend/pages/MovieDetail"));
 const Actor = lazy(() => import("./user_frontend/pages/Actor"));
-const ActorDetail = lazy(() => import("./user_frontend/pages/ActorDetail"));
+
 const Booking = lazy(() => import("./user_frontend/pages/Booking"));
 const Food = lazy(() => import("./user_frontend/pages/Food"));
 const Payment = lazy(() => import("./user_frontend/pages/Payment"));
@@ -361,7 +361,7 @@ function AppContent() {
                                         
                                         {/* ACTORS */}
                                         <Route path="actors" element={<Actor />} />
-                                        <Route path="actor/detail/:slug" element={<ActorDetail />} />
+                                     
                                         
                                         {/* CINEMA */}
                                         <Route path="cinema" element={<Cinema />} />

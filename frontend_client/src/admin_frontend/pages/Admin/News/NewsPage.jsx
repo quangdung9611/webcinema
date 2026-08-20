@@ -41,16 +41,12 @@ const initialFormData = {
 // ==========================================================
 const NewsPage = () => {
 
-    // ======================================================
     // DATA
-    // ======================================================
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
 
-    // ======================================================
     // SEARCH & PAGINATION
-    // ======================================================
     const [search, setSearch] = useState('');
     const [pagination, setPagination] = useState({
         page: 1,
@@ -61,15 +57,11 @@ const NewsPage = () => {
         hasPreviousPage: false
     });
 
-    // ======================================================
     // CHỐNG GỌI TRÙNG
-    // ======================================================
     const isFetching = useRef(false);
     const abortControllerRef = useRef(null);
 
-    // ======================================================
     // FORM
-    // ======================================================
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingNews, setEditingNews] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
@@ -77,9 +69,7 @@ const NewsPage = () => {
     const [newsBackdropFile, setNewsBackdropFile] = useState(null);
     const [formErrors, setFormErrors] = useState({});
 
-    // ======================================================
     // ALERT MODAL
-    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -90,14 +80,7 @@ const NewsPage = () => {
     });
 
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({
-            open: true,
-            title,
-            message,
-            type,
-            onConfirm,
-            onCancel
-        });
+        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
 
     const closeAlert = () => {
@@ -109,14 +92,9 @@ const NewsPage = () => {
         }));
     };
 
-    // ======================================================
     // FETCH NEWS
-    // ======================================================
     const fetchNews = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) {
-            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
-            return;
-        }
+        if (isFetching.current) return;
 
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -130,35 +108,12 @@ const NewsPage = () => {
 
         try {
             const res = await api.get('/api/news/paginated', {
-                params: {
-                    page,
-                    limit: 20,
-                    search: keyword.trim()
-                },
+                params: { page, limit: 20, search: keyword.trim() },
                 signal: controller.signal
             });
 
-            const newsData = res.data?.data || [];
-            const paginationData = res.data?.pagination || {
-                page: 1,
-                limit: 20,
-                total: 0,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false
-            };
-
-            setNews(newsData);
-            setPagination(paginationData);
-
-        } catch (error) {
-            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
-                console.log('🛑 Request bị hủy');
-                return;
-            }
-            console.error('FETCH NEWS ERROR:', error);
-            setNews([]);
-            setPagination({
+            setNews(res.data?.data || []);
+            setPagination(res.data?.pagination || {
                 page: 1,
                 limit: 20,
                 total: 0,
@@ -166,6 +121,10 @@ const NewsPage = () => {
                 hasPreviousPage: false,
                 hasNextPage: false
             });
+
+        } catch (error) {
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') return;
+            console.error('FETCH NEWS ERROR:', error);
             showAlert('Lỗi', 'Không thể tải danh sách tin tức.', 'error');
         } finally {
             setLoading(false);
@@ -176,9 +135,7 @@ const NewsPage = () => {
         }
     }, []);
 
-    // ======================================================
     // MOUNT
-    // ======================================================
     useEffect(() => {
         fetchNews(1, '');
         return () => {
@@ -188,15 +145,11 @@ const NewsPage = () => {
         };
     }, [fetchNews]);
 
-    // ======================================================
     // SEARCH DEBOUNCE
-    // ======================================================
     const prevSearchRef = useRef('');
-
     useEffect(() => {
         const currentSearch = search;
         const prevSearch = prevSearchRef.current;
-
         if (currentSearch === prevSearch) return;
         prevSearchRef.current = currentSearch;
 
@@ -207,16 +160,12 @@ const NewsPage = () => {
         return () => clearTimeout(timer);
     }, [search, fetchNews]);
 
-    // ======================================================
     // PAGE CHANGE
-    // ======================================================
     const handlePageChange = (page) => {
         fetchNews(page, search);
     };
 
-    // ======================================================
     // VALIDATE FORM
-    // ======================================================
     const validateForm = () => {
         const errors = {};
         if (!formData.title.trim()) errors.title = 'Vui lòng nhập tiêu đề bài viết.';
@@ -241,9 +190,7 @@ const NewsPage = () => {
             .trim();
     };
 
-    // ======================================================
     // OPEN ADD / EDIT
-    // ======================================================
     const handleOpenAdd = () => {
         setEditingNews(null);
         setFormData(initialFormData);
@@ -276,9 +223,7 @@ const NewsPage = () => {
         setNewsBackdropFile(null);
     };
 
-    // ======================================================
     // HANDLE CHANGE
-    // ======================================================
     const handleChange = (e) => {
         const { name, value, files } = e.target;
         if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
@@ -298,12 +243,11 @@ const NewsPage = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // ======================================================
     // SUBMIT
-    // ======================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
+
         try {
             setSubmitLoading(true);
             const submitData = new FormData();
@@ -317,16 +261,12 @@ const NewsPage = () => {
                 await api.put(`/api/news/${editingNews.news_id}`, submitData, config);
                 setIsFormOpen(false);
                 fetchNews(pagination.page, search);
-                setTimeout(() => {
-                    showAlert('Thành công', 'Cập nhật bài viết thành công.', 'success');
-                }, 100);
+                showAlert('Thành công', 'Cập nhật bài viết thành công.', 'success');
             } else {
                 await api.post('/api/news', submitData, config);
                 setIsFormOpen(false);
                 fetchNews(pagination.page, search);
-                setTimeout(() => {
-                    showAlert('Thành công', 'Thêm bài viết thành công.', 'success');
-                }, 100);
+                showAlert('Thành công', 'Thêm bài viết thành công.', 'success');
             }
         } catch (error) {
             console.error('SUBMIT NEWS ERROR:', error);
@@ -342,9 +282,7 @@ const NewsPage = () => {
         }
     };
 
-    // ======================================================
     // DELETE
-    // ======================================================
     const handleDelete = (item) => {
         showAlert(
             'Xác nhận xóa',
@@ -359,24 +297,18 @@ const NewsPage = () => {
                         ? currentPage - 1
                         : currentPage;
                     await fetchNews(newPage, search);
-                    setTimeout(() => {
-                        showAlert('Thành công', 'Xóa bài viết thành công.', 'success');
-                    }, 100);
+                    showAlert('Thành công', 'Xóa bài viết thành công.', 'success');
                 } catch (error) {
                     console.error('DELETE NEWS ERROR:', error);
                     closeAlert();
-                    setTimeout(() => {
-                        showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa bài viết.', 'error');
-                    }, 100);
+                    showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa bài viết.', 'error');
                 }
             },
             closeAlert
         );
     };
 
-    // ======================================================
     // TABLE COLUMNS
-    // ======================================================
     const columns = [
         {
             title: 'Hình ảnh',
@@ -439,9 +371,7 @@ const NewsPage = () => {
         }
     ];
 
-    // ======================================================
     // FORM FIELDS
-    // ======================================================
     const formFields = [
         { label: 'Tiêu đề bài viết', name: 'title', type: 'text', placeholder: 'Nhập tiêu đề tin tức' },
         { label: 'Slug', name: 'slug', type: 'text', placeholder: 'Slug tự động', disabled: true },
@@ -451,9 +381,7 @@ const NewsPage = () => {
         { label: 'Nội dung', name: 'content', type: 'textarea', placeholder: 'Nhập nội dung bài viết', rows: 10 }
     ];
 
-    // ======================================================
     // FILE PREVIEWS
-    // ======================================================
     const filePreviews = {};
     if (editingNews) {
         if (editingNews.news_image) {
@@ -470,9 +398,7 @@ const NewsPage = () => {
         }
     }
 
-    // ======================================================
     // RENDER
-    // ======================================================
     return (
         <>
             <AdminPage
@@ -501,9 +427,7 @@ const NewsPage = () => {
                 )}
             </AdminPage>
 
-            {/* ==================================================
-                FORM MODAL
-            ================================================== */}
+            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={handleCloseForm}
@@ -523,9 +447,7 @@ const NewsPage = () => {
                 />
             </AdminModal>
 
-            {/* ==================================================
-                ALERT / CONFIRM MODAL
-            ================================================== */}
+            {/* ALERT / CONFIRM MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}

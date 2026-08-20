@@ -1,3 +1,4 @@
+// routes/blogCinemaRoutes.js
 const express = require('express');
 const router = express.Router();
 
@@ -5,28 +6,28 @@ const BlogCinemaController = require('../Controllers/BlogCinemaController');
 const upload = require('../Middlewares/MulterMiddleware');
 const { authenticateAdmin } = require('../Middlewares/AdminAuthMiddleware');
 
-/* ==========================================================
+/* =========================================================
     PUBLIC ROUTES (không cần auth)
-========================================================== */
+========================================================= */
 // Lấy danh sách blog (không phân trang)
 router.get('/', BlogCinemaController.getAllBlogsAll);
 
-// ✅ Lấy chi tiết blog theo SLUG - dùng route riêng để tránh xung đột
+// Lấy chi tiết blog theo SLUG
 router.get('/detail/:slug', BlogCinemaController.getBlogBySlug);
 
 // Tăng lượt thích
 router.post('/like/:blog_id', BlogCinemaController.increaseLike);
 
-/* ==========================================================
+/* =========================================================
     ADMIN ROUTES (cần auth admin)
-========================================================== */
+========================================================= */
 // Lấy blog có phân trang
 router.get('/paginated', authenticateAdmin, BlogCinemaController.getBlogsWithPagination);
 
 // Lấy chi tiết blog theo ID (admin)
 router.get('/:blog_id', authenticateAdmin, BlogCinemaController.getBlogById);
 
-// Tạo blog mới - hỗ trợ upload cả ảnh chính và backdrop
+// Tạo blog mới
 router.post(
     '/',
     authenticateAdmin,
@@ -37,7 +38,7 @@ router.post(
     BlogCinemaController.createBlog
 );
 
-// Cập nhật blog - hỗ trợ upload cả ảnh chính và backdrop
+// Cập nhật blog
 router.put(
     '/:blog_id',
     authenticateAdmin,

@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Film } from "lucide-react"; // import icon
+import { Film } from "lucide-react";
 import api from "../../api/api";
 import MovieCard from "./MovieCard";
-import MoviePreviewModal from "./MoviePreviewModal";
 import "../styles/MovieSlider.css";
 
 // Helper unwrap mảng
@@ -23,10 +22,6 @@ const MovieSlider = () => {
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeGenre, setActiveGenre] = useState("");
-
-  // Modal state
-  const [selectedMovie, setSelectedMovie] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch movies theo genre
   const fetchMovies = useCallback(async (genreSlug = "") => {
@@ -72,18 +67,6 @@ const MovieSlider = () => {
   const showingMovies = movies.filter((m) => m.status === "Đang chiếu");
   const comingMovies = movies.filter((m) => m.status === "Sắp chiếu");
 
-  const handleCardClick = (movie) => {
-    setSelectedMovie(movie);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setTimeout(() => {
-      setSelectedMovie(null);
-    }, 850);
-  };
-
   // Component con để render một slider với title, movies và link xem tất cả
   const renderSlider = (title, movieList, statusSlug) => {
     if (movieList.length === 0) return null;
@@ -109,7 +92,6 @@ const MovieSlider = () => {
             <MovieCard
               key={movie.movie_id}
               movie={movie}
-              onClick={() => handleCardClick(movie)}
             />
           ))}
         </div>
@@ -151,14 +133,6 @@ const MovieSlider = () => {
           </>
         )}
       </div>
-
-      {/* Modal preview */}
-      <MoviePreviewModal
-        open={isModalOpen}
-        onClose={handleCloseModal}
-        movies={movies}
-        selectedMovie={selectedMovie}
-      />
     </div>
   );
 };

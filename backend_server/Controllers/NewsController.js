@@ -1,28 +1,28 @@
-const NewsService = require("../Services/NewsService");
+// controllers/NewsController.js
+const NewsService = require('../Services/NewsService');
 
 /*=========================================================
     PUBLIC/ADMIN - GET ALL NEWS (KHÔNG PHÂN TRANG)
 =========================================================*/
 exports.getAllNewsAll = async (req, res) => {
     try {
-        const { search = "", page, limit } = req.query;
+        const { search = '', page, limit } = req.query;
 
-        // Không cho phép page / limit trên API không phân trang
+        // Không cho phép page/limit ở route này
         if (page !== undefined || limit !== undefined) {
             return res.status(400).json({
                 success: false,
-                message: "Route /api/news không hỗ trợ tham số page hoặc limit. Vui lòng sử dụng /api/news/paginated để phân trang."
+                message: 'Route /api/news không hỗ trợ page/limit. Vui lòng dùng /api/news/paginated'
             });
         }
 
-        // Service trả về mảng trực tiếp
         const data = await NewsService.getAllNewsAll(search);
         return res.status(200).json({ success: true, data });
     } catch (err) {
-        console.error("Get All News Error:", err);
+        console.error('Get All News Error:', err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi máy chủ"
+            message: err.message || 'Lỗi máy chủ'
         });
     }
 };
@@ -32,20 +32,18 @@ exports.getAllNewsAll = async (req, res) => {
 =========================================================*/
 exports.getNewsWithPagination = async (req, res) => {
     try {
-        const { page = 1, limit = 20, search = "" } = req.query;
+        const { page = 1, limit = 20, search = '' } = req.query;
         const result = await NewsService.getAllNewsPaginated(page, limit, search);
-
-        // Service trả: { data: [], pagination: {} }
         return res.status(200).json({
             success: true,
             data: result.data,
             pagination: result.pagination
         });
     } catch (err) {
-        console.error("Get News Paginated Error:", err);
+        console.error('Get News Paginated Error:', err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi máy chủ"
+            message: err.message || 'Lỗi máy chủ'
         });
     }
 };
@@ -59,10 +57,10 @@ exports.getNewsById = async (req, res) => {
         const news = await NewsService.getNewsById(news_id);
         return res.status(200).json({ success: true, data: news });
     } catch (err) {
-        console.error("getNewsById error:", err);
+        console.error('Get News By ID Error:', err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi máy chủ"
+            message: err.message || 'Lỗi máy chủ'
         });
     }
 };
@@ -76,10 +74,10 @@ exports.getNewsBySlug = async (req, res) => {
         const news = await NewsService.getNewsBySlug(slug);
         return res.status(200).json({ success: true, data: news });
     } catch (err) {
-        console.error("getNewsBySlug error:", err);
+        console.error('Get News By Slug Error:', err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi máy chủ"
+            message: err.message || 'Lỗi máy chủ'
         });
     }
 };
@@ -89,22 +87,18 @@ exports.getNewsBySlug = async (req, res) => {
 =========================================================*/
 exports.createNews = async (req, res) => {
     try {
-        const newsId = await NewsService.createNews(
-            req.body,
-            req.files || {}
-        );
-
+        const newsId = await NewsService.createNews(req.body, req.files || {});
         return res.status(201).json({
             success: true,
-            message: "Thêm bài viết thành công!",
+            message: 'Thêm bài viết thành công!',
             data: { news_id: newsId }
         });
     } catch (err) {
-        console.error("createNews error:", err);
+        console.error('Create News Error:', err);
         return res.status(err.statusCode || 400).json({
             success: false,
             field: err.field || null,
-            message: err.message || "Lỗi máy chủ"
+            message: err.message || 'Lỗi máy chủ'
         });
     }
 };
@@ -115,23 +109,17 @@ exports.createNews = async (req, res) => {
 exports.updateNews = async (req, res) => {
     try {
         const { news_id } = req.params;
-
-        await NewsService.updateNews(
-            news_id,
-            req.body,
-            req.files || {}
-        );
-
+        await NewsService.updateNews(news_id, req.body, req.files || {});
         return res.status(200).json({
             success: true,
-            message: "Cập nhật bài viết thành công!"
+            message: 'Cập nhật bài viết thành công!'
         });
     } catch (err) {
-        console.error("updateNews error:", err);
+        console.error('Update News Error:', err);
         return res.status(err.statusCode || 400).json({
             success: false,
             field: err.field || null,
-            message: err.message || "Lỗi máy chủ"
+            message: err.message || 'Lỗi máy chủ'
         });
     }
 };
@@ -145,13 +133,13 @@ exports.deleteNews = async (req, res) => {
         await NewsService.deleteNews(news_id);
         return res.status(200).json({
             success: true,
-            message: "Đã xóa bài viết thành công."
+            message: 'Đã xóa bài viết thành công.'
         });
     } catch (err) {
-        console.error("deleteNews error:", err);
+        console.error('Delete News Error:', err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi máy chủ"
+            message: err.message || 'Lỗi máy chủ'
         });
     }
 };
@@ -165,13 +153,13 @@ exports.likeNews = async (req, res) => {
         await NewsService.likeNews(news_id);
         return res.status(200).json({
             success: true,
-            message: "Đã tăng lượt thích!"
+            message: 'Đã tăng lượt thích!'
         });
     } catch (err) {
-        console.error("likeNews error:", err);
+        console.error('Like News Error:', err);
         return res.status(err.statusCode || 500).json({
             success: false,
-            message: err.message || "Lỗi máy chủ"
+            message: err.message || 'Lỗi máy chủ'
         });
     }
 };

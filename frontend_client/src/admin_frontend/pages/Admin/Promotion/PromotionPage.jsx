@@ -43,16 +43,12 @@ const initialFormData = {
 // ==========================================================
 const PromotionPage = () => {
 
-    // ======================================================
     // DATA
-    // ======================================================
     const [promotions, setPromotions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
 
-    // ======================================================
     // SEARCH & PAGINATION
-    // ======================================================
     const [search, setSearch] = useState('');
     const [pagination, setPagination] = useState({
         page: 1,
@@ -63,15 +59,11 @@ const PromotionPage = () => {
         hasPreviousPage: false
     });
 
-    // ======================================================
     // CHỐNG GỌI TRÙNG
-    // ======================================================
     const isFetching = useRef(false);
     const abortControllerRef = useRef(null);
 
-    // ======================================================
     // FORM
-    // ======================================================
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingPromotion, setEditingPromotion] = useState(null);
     const [formData, setFormData] = useState(initialFormData);
@@ -79,9 +71,7 @@ const PromotionPage = () => {
     const [promotionBackdropFile, setPromotionBackdropFile] = useState(null);
     const [formErrors, setFormErrors] = useState({});
 
-    // ======================================================
     // ALERT MODAL
-    // ======================================================
     const [alertModal, setAlertModal] = useState({
         open: false,
         title: '',
@@ -92,14 +82,7 @@ const PromotionPage = () => {
     });
 
     const showAlert = (title, message, type = 'default', onConfirm = null, onCancel = null) => {
-        setAlertModal({
-            open: true,
-            title,
-            message,
-            type,
-            onConfirm,
-            onCancel
-        });
+        setAlertModal({ open: true, title, message, type, onConfirm, onCancel });
     };
 
     const closeAlert = () => {
@@ -111,14 +94,9 @@ const PromotionPage = () => {
         }));
     };
 
-    // ======================================================
     // FETCH PROMOTIONS
-    // ======================================================
     const fetchPromotions = useCallback(async (page = 1, keyword = '') => {
-        if (isFetching.current) {
-            console.log('⏳ Đang fetch, bỏ qua lần gọi mới');
-            return;
-        }
+        if (isFetching.current) return;
 
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -132,35 +110,12 @@ const PromotionPage = () => {
 
         try {
             const res = await api.get('/api/promotions/paginated', {
-                params: {
-                    page,
-                    limit: 20,
-                    search: keyword.trim()
-                },
+                params: { page, limit: 20, search: keyword.trim() },
                 signal: controller.signal
             });
 
-            const promotionsData = res.data?.data || [];
-            const paginationData = res.data?.pagination || {
-                page: 1,
-                limit: 20,
-                total: 0,
-                totalPages: 1,
-                hasPreviousPage: false,
-                hasNextPage: false
-            };
-
-            setPromotions(promotionsData);
-            setPagination(paginationData);
-
-        } catch (error) {
-            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
-                console.log('🛑 Request bị hủy');
-                return;
-            }
-            console.error('FETCH PROMOTIONS ERROR:', error);
-            setPromotions([]);
-            setPagination({
+            setPromotions(res.data?.data || []);
+            setPagination(res.data?.pagination || {
                 page: 1,
                 limit: 20,
                 total: 0,
@@ -168,6 +123,10 @@ const PromotionPage = () => {
                 hasPreviousPage: false,
                 hasNextPage: false
             });
+
+        } catch (error) {
+            if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') return;
+            console.error('FETCH PROMOTIONS ERROR:', error);
             showAlert('Lỗi', 'Không thể tải danh sách khuyến mãi.', 'error');
         } finally {
             setLoading(false);
@@ -178,9 +137,7 @@ const PromotionPage = () => {
         }
     }, []);
 
-    // ======================================================
     // MOUNT
-    // ======================================================
     useEffect(() => {
         fetchPromotions(1, '');
         return () => {
@@ -190,15 +147,11 @@ const PromotionPage = () => {
         };
     }, [fetchPromotions]);
 
-    // ======================================================
     // SEARCH DEBOUNCE
-    // ======================================================
     const prevSearchRef = useRef('');
-
     useEffect(() => {
         const currentSearch = search;
         const prevSearch = prevSearchRef.current;
-
         if (currentSearch === prevSearch) return;
         prevSearchRef.current = currentSearch;
 
@@ -209,16 +162,12 @@ const PromotionPage = () => {
         return () => clearTimeout(timer);
     }, [search, fetchPromotions]);
 
-    // ======================================================
     // PAGE CHANGE
-    // ======================================================
     const handlePageChange = (page) => {
         fetchPromotions(page, search);
     };
 
-    // ======================================================
     // VALIDATE FORM
-    // ======================================================
     const validateForm = () => {
         const errors = {};
         if (!formData.title.trim()) errors.title = 'Vui lòng nhập tiêu đề khuyến mãi.';
@@ -243,9 +192,7 @@ const PromotionPage = () => {
             .trim();
     };
 
-    // ======================================================
     // OPEN ADD / EDIT
-    // ======================================================
     const handleOpenAdd = () => {
         setEditingPromotion(null);
         setFormData(initialFormData);
@@ -279,9 +226,7 @@ const PromotionPage = () => {
         setPromotionBackdropFile(null);
     };
 
-    // ======================================================
     // HANDLE CHANGE
-    // ======================================================
     const handleChange = (e) => {
         const { name, value, files } = e.target;
         if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
@@ -301,12 +246,11 @@ const PromotionPage = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // ======================================================
     // SUBMIT
-    // ======================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
+
         try {
             setSubmitLoading(true);
             const submitData = new FormData();
@@ -320,16 +264,12 @@ const PromotionPage = () => {
                 await api.put(`/api/promotions/${editingPromotion.promotion_id}`, submitData, config);
                 setIsFormOpen(false);
                 fetchPromotions(pagination.page, search);
-                setTimeout(() => {
-                    showAlert('Thành công', 'Cập nhật khuyến mãi thành công.', 'success');
-                }, 100);
+                showAlert('Thành công', 'Cập nhật khuyến mãi thành công.', 'success');
             } else {
                 await api.post('/api/promotions', submitData, config);
                 setIsFormOpen(false);
                 fetchPromotions(pagination.page, search);
-                setTimeout(() => {
-                    showAlert('Thành công', 'Thêm khuyến mãi thành công.', 'success');
-                }, 100);
+                showAlert('Thành công', 'Thêm khuyến mãi thành công.', 'success');
             }
         } catch (error) {
             console.error('SUBMIT PROMOTION ERROR:', error);
@@ -345,9 +285,7 @@ const PromotionPage = () => {
         }
     };
 
-    // ======================================================
     // DELETE
-    // ======================================================
     const handleDelete = (item) => {
         showAlert(
             'Xác nhận xóa',
@@ -362,32 +300,18 @@ const PromotionPage = () => {
                         ? currentPage - 1
                         : currentPage;
                     await fetchPromotions(newPage, search);
-                    setTimeout(() => {
-                        showAlert('Thành công', 'Xóa khuyến mãi thành công.', 'success');
-                    }, 100);
+                    showAlert('Thành công', 'Xóa khuyến mãi thành công.', 'success');
                 } catch (error) {
                     console.error('DELETE PROMOTION ERROR:', error);
                     closeAlert();
-                    setTimeout(() => {
-                        showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa khuyến mãi.', 'error');
-                    }, 100);
+                    showAlert('Lỗi', error.response?.data?.message || 'Không thể xóa khuyến mãi.', 'error');
                 }
             },
             closeAlert
         );
     };
 
-    // ======================================================
-    // HELPER: IMAGE ERROR HANDLER
-    // ======================================================
-    const handleImageError = (e) => {
-        e.target.onerror = null;
-        e.target.src = 'https://via.placeholder.com/70x100?text=No+Image';
-    };
-
-    // ======================================================
     // TABLE COLUMNS
-    // ======================================================
     const columns = [
         {
             title: 'Hình ảnh',
@@ -397,7 +321,7 @@ const PromotionPage = () => {
                     src={getImageUrl(row.promotion_image)}
                     alt={row.title}
                     style={{ width: '70px', height: '100px', objectFit: 'cover', borderRadius: '10px' }}
-                    onError={handleImageError}
+                    onError={(e) => { e.target.src = 'https://via.placeholder.com/70x100?text=No+Image'; }}
                 />
             )
         },
@@ -416,7 +340,7 @@ const PromotionPage = () => {
                             borderRadius: '8px',
                             border: '1px solid rgba(255,255,255,0.1)'
                         }}
-                        onError={handleImageError}
+                        onError={(e) => { e.target.src = 'https://via.placeholder.com/120x50?text=No+Image'; }}
                     />
                 ) : (
                     <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
@@ -482,9 +406,7 @@ const PromotionPage = () => {
         }
     ];
 
-    // ======================================================
     // FORM FIELDS
-    // ======================================================
     const formFields = [
         { label: 'Tiêu đề khuyến mãi', name: 'title', type: 'text', placeholder: 'Nhập tiêu đề khuyến mãi' },
         { label: 'Slug', name: 'slug', type: 'text', placeholder: 'Slug tự động', disabled: true },
@@ -503,9 +425,7 @@ const PromotionPage = () => {
         }
     ];
 
-    // ======================================================
     // FILE PREVIEWS
-    // ======================================================
     const filePreviews = {};
     if (editingPromotion) {
         if (editingPromotion.promotion_image) {
@@ -522,9 +442,7 @@ const PromotionPage = () => {
         }
     }
 
-    // ======================================================
     // RENDER
-    // ======================================================
     return (
         <>
             <AdminPage
@@ -553,9 +471,7 @@ const PromotionPage = () => {
                 )}
             </AdminPage>
 
-            {/* ==================================================
-                FORM MODAL
-            ================================================== */}
+            {/* FORM MODAL */}
             <AdminModal
                 open={isFormOpen}
                 onClose={handleCloseForm}
@@ -575,9 +491,7 @@ const PromotionPage = () => {
                 />
             </AdminModal>
 
-            {/* ==================================================
-                ALERT / CONFIRM MODAL
-            ================================================== */}
+            {/* ALERT / CONFIRM MODAL */}
             <AdminModal
                 open={alertModal.open}
                 onClose={closeAlert}

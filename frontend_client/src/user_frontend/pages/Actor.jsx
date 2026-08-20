@@ -86,10 +86,6 @@ const Actor = () => {
 
             {/* ===== BANNER 2.5/1 ===== */}
             <div className="actor-hero">
-                <div className="actor-hero-overlay"></div>
-                <div className="actor-hero-light"></div>
-                <div className="actor-hero-particles"></div>
-
                 <Swiper
                     modules={[Autoplay, EffectFade]}
                     effect="fade"
@@ -140,9 +136,11 @@ const Actor = () => {
                                     type="cinema"
                                     image={avatarUrl || '/actor-placeholder.jpg'}
                                     title={actor.name}
-                                    link={`/actor/${actor.slug}`}
+                                    slug={actor.slug}
+                                    detailType="cinema"
                                     subtitle={`${actor.views || 0} lượt xem`}
                                     description={cleanBiography(actor.biography)}
+                                    buttonText="Xem chi tiết"
                                 />
                             );
                         })}

@@ -24,8 +24,6 @@ import {
 
 import Modal from '../components/Modal';
 import MovieCard from "../components/MovieCard";
-import MoviePreviewModal from "../components/MoviePreviewModal";
-import MovieHeroBanner from '../components/MovieHeroBanner';
 import CinemaCard from '../components/CinemaCard';
 
 import "../styles/MovieDetail.css";
@@ -56,8 +54,6 @@ const MovieDetail = () => {
     const [reviews, setReviews] = useState([]);
     const [isExpanded, setIsExpanded] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedMovie, setSelectedMovie] = useState(null);
     const [modalConfig, setModalConfig] = useState({
         show: false,
         type: '',
@@ -96,21 +92,6 @@ const MovieDetail = () => {
         if (!avatar) return null;
         if (avatar.startsWith('http')) return avatar;
         return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
-    };
-
-
-    // =========================================================
-    // MOVIE PREVIEW
-    // =========================================================
-
-    const handleMovieClick = (movieItem) => {
-        setSelectedMovie(movieItem);
-        setIsModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setTimeout(() => setSelectedMovie(null), 850);
     };
 
 
@@ -174,9 +155,9 @@ const MovieDetail = () => {
                 const filtered = movieList.filter(item => item.slug !== slug);
                 setRelatedMovies(filtered);
 
-                // Trailers
+                // Trailers - Lọc phim có trailer và có movie_backdrop
                 const trailerFiltered = filtered
-                    .filter(item => item.trailer_url && item.trailer_url.trim() !== "")
+                    .filter(item => item.trailer_url && item.trailer_url.trim() !== "" && item.movie_backdrop)
                     .slice(0, 6);
                 setTrailerMovies(trailerFiltered);
 
@@ -492,12 +473,6 @@ const MovieDetail = () => {
         );
     }
 
-    const movieForBanner = {
-        ...movie,
-        poster_url: movie.movie_poster || null,
-        backdrop_url: movie.movie_backdrop || null
-    };
-
 
     // =========================================================
     // RENDER
@@ -505,6 +480,29 @@ const MovieDetail = () => {
 
     return (
         <div className="cinema-movie-detail-page">
+
+            {/* ==================================================
+                HERO BANNER
+            ================================================== */}
+            <section className="cinema-hero-banner">
+                {movie.movie_backdrop ? (
+                    <img
+                        className="banner-image"
+                        src={movie.movie_backdrop}
+                        alt={movie.title}
+                        loading="eager"
+                    />
+                ) : (
+                    <div className="banner-placeholder" />
+                )}
+                <button
+                    className="hero-play-btn"
+                    onClick={openTrailerModal}
+                    aria-label="Xem trailer"
+                >
+                    <Play size={48} fill="white" stroke="white" />
+                </button>
+            </section>
 
             {/* MODALS */}
             <Modal
@@ -548,9 +546,6 @@ const MovieDetail = () => {
                     </div>
                 </div>
             )}
-
-            {/* HERO BANNER */}
-            <MovieHeroBanner movie={movieForBanner} onTrailer={openTrailerModal} />
 
             {/* MAIN CONTENT */}
             <div className="cinema-main-content-container">
@@ -659,7 +654,7 @@ const MovieDetail = () => {
                 </div>
 
                 {/* ============================================== */}
-                {/* 🆕 SHOWTIME SECTION - LỊCH CHIẾU & SUẤT CHIẾU */}
+                {/* SHOWTIME SECTION - LỊCH CHIẾU & SUẤT CHIẾU */}
                 {/* ============================================== */}
                 <div className="showtimes-section-wrapper">
                     <div className="section-header-row">
@@ -755,7 +750,7 @@ const MovieDetail = () => {
                     </div>
                     <div className="genre-movies-grid">
                         {relatedMovies.map(movieItem => (
-                            <MovieCard key={movieItem.movie_id} movie={movieItem} onClick={handleMovieClick} />
+                            <MovieCard key={movieItem.movie_id} movie={movieItem} />
                         ))}
                     </div>
                 </div>
@@ -807,33 +802,42 @@ const MovieDetail = () => {
                     </div>
                 </div>
 
-                {/* OTHER TRAILERS */}
-                <div className="cinema-section-block">
-                    <div className="section-header-row">
-                        <h2 className="section-title-label">TRAILER KHÁC</h2>
-                        <div className="filmgenre-line" />
-                    </div>
-                    <div className="other-trailers-grid">
-                        {trailerMovies.map(item => (
-                            <div
-                                key={item.movie_id}
-                                className="trailer-card-wrapper"
-                                onClick={() => openTrailerByMovie(item)}
-                            >
-                                <CinemaCard
-                                    type="cinema"
-                                    image={item.movie_poster || null}
-                                    title={item.title}
-                                    link={null}
-                                    buttonText={null}
-                                />
-                                <div className="trailer-play-overlay">
-                                    <Play size={42} strokeWidth={2.5} />
+                {/* ==================================================
+                        OTHER TRAILERS - SỬ DỤNG CINEMACARD (GIỐNG DIỄN VIÊN)
+                    ================================================== */}
+                    <div className="cinema-section-block">
+                        <div className="section-header-row">
+                            <h2 className="section-title-label">TRAILER KHÁC</h2>
+                            <div className="filmgenre-line" />
+                        </div>
+
+                        <div className="other-trailers-grid">
+                            {trailerMovies.length > 0 ? (
+                                trailerMovies.map((item) => (
+                                    <div
+                                        key={item.movie_id}
+                                        className="trailer-card-wrapper"
+                                        onClick={() => openTrailerByMovie(item)}
+                                    >
+                                        <CinemaCard
+                                            type="cinema"
+                                            image={item.movie_backdrop || null}
+                                            title={item.title}
+                                            link={null}
+                                            buttonText={null}
+                                        />
+                                        <div className="trailer-play-overlay">
+                                            <Play size={42} strokeWidth={2.5} />
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="empty-reviews-placeholder">
+                                    Chưa có trailer khác.
                                 </div>
-                            </div>
-                        ))}
+                            )}
+                        </div>
                     </div>
-                </div>
 
                 {/* REVIEWS */}
                 <div className="reviews-section-fullwidth">
@@ -896,10 +900,10 @@ const MovieDetail = () => {
                                                     </div>
                                                 </div>
                                                 <span className="comment-time-ago">
-                                                            {rev.formatted_date 
-                                                                ? rev.formatted_date.replace(' ', ' | ') 
-                                                                : "Mới đây"
-                                                            }
+                                                    {rev.formatted_date 
+                                                        ? rev.formatted_date.replace(' ', ' | ') 
+                                                        : "Mới đây"
+                                                    }
                                                 </span>
                                             </div>
                                             <p className="comment-content-body-text">{rev.comment}</p>
@@ -912,14 +916,6 @@ const MovieDetail = () => {
                 </div>
 
             </div>
-
-            {/* MOVIE PREVIEW MODAL */}
-            <MoviePreviewModal
-                open={isModalOpen}
-                onClose={handleCloseModal}
-                movies={relatedMovies}
-                selectedMovie={selectedMovie}
-            />
 
         </div>
     );

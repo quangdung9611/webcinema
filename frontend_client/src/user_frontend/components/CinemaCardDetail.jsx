@@ -199,12 +199,15 @@ const CinemaCardDetail = ({ type = 'news', apiEndpoint = '' }) => {
     return getImageUrl(movie.movie_backdrop, movieImageBaseUrl);
   };
 
+  // ==========================================================
+  // ĐƯỜNG DẪN PHIM: /movie/detail/:slug
+  // ==========================================================
   const getMoviePath = (movie) => {
     if (!movie) return '/movies';
     const movieSlug = movie.slug || movie.movie_slug;
-    if (movieSlug) return `/movie/${movieSlug}`;
+    if (movieSlug) return `/movies/detail/${movieSlug}`;
     const movieId = movie.movie_id || movie.id;
-    if (movieId) return `/movie/${movieId}`;
+    if (movieId) return `/movies/detail/${movieId}`;
     return '/movies';
   };
 
@@ -337,14 +340,13 @@ const CinemaCardDetail = ({ type = 'news', apiEndpoint = '' }) => {
               RIGHT - 40% - PHIM ĐANG CHIẾU DỌC
           ================================================== */}
           <aside className="detail-sidebar">
-              <div className="sidebar-section-heading">
-                <div className="sidebar-title-wrap">
-                  <Film size={28} />
-                  <span>PHIM ĐANG CHIẾU</span>
-                </div>
+            <div className="sidebar-section-heading">
+              <div className="sidebar-title-wrap">
+                <Film size={28} />
+                <span>PHIM ĐANG CHIẾU</span>
               </div>
+            </div>
             <section className="now-showing-section">
-            
 
               {moviesLoading ? (
                 <div className="movies-loading">

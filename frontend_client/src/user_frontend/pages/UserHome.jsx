@@ -4,7 +4,6 @@ import api from '../../api/api';
 
 import Modal from '../components/Modal';
 import MovieSlider from '../components/MovieSlider';
-import MoviePreviewModal from '../components/MoviePreviewModal';
 import ScrollReveal from '../components/ScrollReveal';
 import CinemaCard from '../components/CinemaCard';
 import HeroBanner from '../components/HeroBanner';
@@ -224,11 +223,6 @@ const UserHome = () => {
     message: ''
   });
 
-  const [previewModal, setPreviewModal] = useState({
-    open: false,
-    selectedMovie: null
-  });
-
   // ===== REVIEW MODAL STATE =====
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
@@ -240,15 +234,6 @@ const UserHome = () => {
 
   const showModal = (type, title, message) => {
     setModal({ show: true, type, title, message });
-  };
-
-  // ===== PREVIEW MODAL =====
-  const handlePreview = (movie) => {
-    setPreviewModal({ open: true, selectedMovie: movie });
-  };
-
-  const closePreviewModal = () => {
-    setPreviewModal({ open: false, selectedMovie: null });
   };
 
   // ===== NAVIGATE + SCROLL TOP =====
@@ -578,13 +563,6 @@ const UserHome = () => {
         onCancel={closeModal}
       />
 
-      <MoviePreviewModal
-        open={previewModal.open}
-        onClose={closePreviewModal}
-        movies={allMovies}
-        selectedMovie={previewModal.selectedMovie}
-      />
-
       <ReviewModal
         isOpen={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
@@ -766,7 +744,6 @@ const UserHome = () => {
               {allMovies.length > 0 ? (
                 <MovieSlider
                   movies={allMovies}
-                  onCardClick={handlePreview}
                 />
               ) : (
                 !loading && <div className="empty-movies">Hiện chưa có phim nào</div>
@@ -774,7 +751,7 @@ const UserHome = () => {
             </div>
           </ScrollReveal>
 
-          {/* ===== PROMOTIONS - SỬA LINK ===== */}
+          {/* ===== PROMOTIONS ===== */}
           <ScrollReveal
             direction="up"
             duration={0.5}
@@ -822,7 +799,7 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
-          {/* ===== BLOG CINEMA - SỬA LINK ===== */}
+          {/* ===== BLOG CINEMA ===== */}
           <ScrollReveal
             direction="up"
             duration={0.5}
@@ -870,7 +847,7 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
-          {/* ===== NEWS - SỬA LINK ===== */}
+          {/* ===== NEWS ===== */}
           <ScrollReveal
             direction="up"
             duration={0.5}
@@ -921,7 +898,7 @@ const UserHome = () => {
             </section>
           </ScrollReveal>
 
-          {/* ===== CINEMA - GIỮ NGUYÊN ===== */}
+          {/* ===== CINEMA ===== */}
           <ScrollReveal
             direction="up"
             duration={0.5}
