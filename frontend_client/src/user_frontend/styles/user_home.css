@@ -279,32 +279,11 @@
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
     z-index: 20;
     padding: 6px 0;
-    scrollbar-width: thin;
-    scrollbar-color: var(--silver-primary) transparent;
     animation: dropdownFade 0.2s ease;
 }
 
-.quick-dropdown-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.quick-dropdown-list::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: var(--radius-round);
-}
-
-.quick-dropdown-list::-webkit-scrollbar-thumb {
-    background: var(--silver-primary);
-    border-radius: var(--radius-round);
-}
-
-.quick-dropdown-list::-webkit-scrollbar-thumb:hover {
-    background: var(--silver-light);
-}
-
-/* ==========================================================
-   9. OPTION ITEMS
-   ========================================================== */
+/* 👉 ĐÃ XÓA TOÀN BỘ SCROLLBAR CỦA .quick-dropdown-list */
+/* Vì index.css đã có scrollbar toàn cục */
 
 .quick-option-item {
     padding: 10px 16px;
@@ -331,7 +310,7 @@
 }
 
 /* ==========================================================
-   10. QUICK BOOKING BUTTON
+   9. QUICK BOOKING BUTTON
    ========================================================== */
 
 .btn-quick-booking {
@@ -360,7 +339,7 @@
 }
 
 /* ==========================================================
-   11. FEATURES GRID
+   10. FEATURES GRID
    ========================================================== */
 
 .home-features-section {
@@ -440,7 +419,7 @@
 }
 
 /* ==========================================================
-   12. STATS SECTION - 4 CỘT
+   11. STATS SECTION - 4 CỘT
    ========================================================== */
 
 .stats-section {
@@ -513,7 +492,7 @@
 }
 
 /* ==========================================================
-   13. TESTIMONIALS SECTION - 4 CỘT
+   12. TESTIMONIALS SECTION - 4 CỘT
    ========================================================== */
 
 .testimonials-section {
@@ -681,7 +660,7 @@
 }
 
 /* ==========================================================
-   14. MOVIE CONTAINER
+   13. MOVIE CONTAINER
    ========================================================== */
 
 .movie-container {
@@ -697,7 +676,7 @@
 }
 
 /* ==========================================================
-   15. CINEMA GRID
+   14. CINEMA GRID
    ========================================================== */
 
 .promotions-section,
@@ -744,7 +723,7 @@
 }
 
 /* ==========================================================
-   16. UTILITY
+   15. UTILITY
    ========================================================== */
 
 .feature-item,
@@ -756,7 +735,7 @@
 }
 
 /* ==========================================================
-   17. RESPONSIVE
+   16. RESPONSIVE
    ========================================================== */
 
 /* 1200px - từ 4 cột xuống 2 cột */

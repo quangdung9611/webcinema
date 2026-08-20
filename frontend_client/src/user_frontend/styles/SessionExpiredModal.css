@@ -1,0 +1,42 @@
+/* ==========================================================
+   SESSION EXPIRED MODAL - CUSTOM STYLE
+   ========================================================== */
+
+/* Custom style cho Modal warning */
+.session-expired-modal-wrapper .modal-title-group.warning {
+    gap: var(--space-sm);
+}
+
+.session-expired-modal-wrapper .modal-title-group.warning .modal-icon {
+    font-size: 28px;
+}
+
+/* Override màu sắc cho modal warning */
+.session-expired-modal-wrapper .modal-title-group.warning .modal-title {
+    color: #ff6b81;
+}
+
+/* Thêm hiệu ứng pulse cho icon warning */
+.session-expired-modal-wrapper .modal-icon.warning-icon {
+    animation: warningPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes warningPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+/* Responsive cho modal */
+@media (max-width: 480px) {
+    .session-expired-modal-wrapper .modal-title-group.warning .modal-title {
+        font-size: var(--font-size-h4);
+    }
+    
+    .session-expired-modal-wrapper .modal-body p {
+        font-size: var(--font-size-h6);
+    }
+}

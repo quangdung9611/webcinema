@@ -29,12 +29,11 @@
             #060709 40%,
             #040506 100%
         );
-    /* Thêm vào */
+    
     --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     --transition-normal: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     --transition-slow: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 
-    
     --bg-primary: #07080A;
     --bg-secondary: #0B0D10;
     --bg-tertiary: #101215;
@@ -91,9 +90,9 @@
     /* ======================================================
        SILVER / PREMIUM SCALE (Main colors)
        ====================================================== */
-    --silver-primary: #DDE2E8; /* Màu xám bạc chính của thương hiệu */
-    --silver-light: #F4F7FA;   /* Màu trắng xám bạc sáng (thay thế cho màu trắng tinh) */
-    --silver-bright: #FFFFFF;  /* Màu trắng tuyệt đối - Chỉ dùng cho icon hoặc nút nhấn mạnh, không dùng cho chữ tiêu đề dài */
+    --silver-primary: #DDE2E8;
+    --silver-light: #F4F7FA;
+    --silver-bright: #FFFFFF;
     --silver-dark: #A9B2BC;
     --silver-muted: #737B86;
 
@@ -129,22 +128,22 @@
         rgba(166, 193, 217, 0.18);
 
     /* ======================================================
-       SURFACES & TEXT (MÀU XÁM BẠC - KHÔNG DÙNG TRẮNG TINH)
+       SURFACES & TEXT
        ====================================================== */
-    --text-heading: #F4F6F8;    /* Màu trắng xám bạc cho tiêu đề (dịu mắt thay vì chói) */
-    --text-body: #D9DDE2;      /* Màu xám bạc chuẩn cho nội dung, dễ đọc trên nền tối */
+    --text-heading: #F4F6F8;
+    --text-body: #D9DDE2;
     --text-secondary: #9EA8B3;
     --text-muted: #6A737D;
     --text-disabled: #444A51;
 
     /* ======================================================
-       BORDERS (Subtle lines for cards) - ĐÃ CHỈNH SỬA THEO YÊU CẦU VIỀN SÁNG
+       BORDERS
        ====================================================== */
     --border-premium:
-        1px solid rgba(244, 246, 248, 0.25); /* Đã nâng Opacity lên 0.25 để viền sáng rõ mặc định */
+        1px solid rgba(244, 246, 248, 0.25);
 
     --border-premium-hover:
-        1px solid rgba(244, 246, 248, 0.25); /* Giữ nguyên 0.25, không đổi màu khi hover */
+        1px solid rgba(244, 246, 248, 0.25);
 
     --border-subtle:
         1px solid rgba(255, 255, 255, 0.04);
@@ -182,30 +181,18 @@
         filter: brightness(1.1);
         box-shadow: 0 4px 28px rgba(159, 183, 210, 0.40);
 
-   /* ======================================================
-   SEAT STATUS COLORS
-   ====================================================== */
-
-/* Ghế thường */
---seat-standard-color: #7D7D86;
-
-/* Ghế VIP */
---seat-vip-color: #D1AD55;
-
-/* Ghế đôi */
---seat-couple-color: #B86BC7;
-
-/* Ghế RECLINER - ghế ngả cao cấp */
---seat-recliner-color: #6F8FA8;
-
-/* Ghế DELUXE - hạng sang */
---seat-deluxe-color: #B8C0C9;
-
-/* Trạng thái ghế */
---seat-selected-color: #43B77A;
---seat-holding-color: #5F9FEA;
---seat-sold-color: #D85A5A;
---seat-maintenance-color: #555560;
+    /* ======================================================
+       SEAT STATUS COLORS
+       ====================================================== */
+    --seat-standard-color: #7D7D86;
+    --seat-vip-color: #D1AD55;
+    --seat-couple-color: #B86BC7;
+    --seat-recliner-color: #6F8FA8;
+    --seat-deluxe-color: #B8C0C9;
+    --seat-selected-color: #43B77A;
+    --seat-holding-color: #5F9FEA;
+    --seat-sold-color: #D85A5A;
+    --seat-maintenance-color: #555560;
 
     /* ======================================================
        BORDER RADIUS
@@ -256,23 +243,100 @@
     box-sizing: border-box;
 }
 
+/* ==========================================================
+   GLOBAL SCROLLBAR - DÀY VÀ TO HƠN
+   DÙNG CHUNG CHO TOÀN BỘ WEBSITE
+   VERTICAL + HORIZONTAL
+   ========================================================== */
+
+/* ==========================================================
+   FIREFOX
+   ========================================================== */
+* {
+    scrollbar-width: auto; /* 👈 TỪ thin -> auto (dày hơn) */
+    scrollbar-color: var(--silver-primary) var(--bg-primary);
+}
+
+/* ==========================================================
+   CHROME / EDGE / SAFARI
+   ========================================================== */
+
+/* Scrollbar dọc + ngang - TĂNG KÍCH THƯỚC */
+::-webkit-scrollbar {
+    width: 14px;  /* 👈 TỪ 10px -> 14px (dày hơn) */
+    height: 14px; /* 👈 TỪ 10px -> 14px (dày hơn) */
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm); /* 👈 THÊM BO TRÒN CHO TRACK */
+}
+
+/* Thumb */
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+        180deg,
+        var(--silver-dark) 0%,
+        var(--silver-primary) 50%,
+        var(--silver-dark) 100%
+    );
+    border: 3px solid var(--bg-primary); /* 👈 TỪ 2px -> 3px */
+    border-radius: var(--radius-round);
+    background-clip: padding-box;
+    min-height: 60px; /* 👈 THÊM CHIỀU CAO TỐI THIỂU */
+    min-width: 60px;  /* 👈 THÊM CHIỀU RỘNG TỐI THIỂU */
+    transition: background 0.2s ease;
+}
+
+/* Hover */
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+        180deg,
+        var(--silver-primary) 0%,
+        var(--silver-light) 50%,
+        var(--silver-primary) 100%
+    );
+    background-clip: padding-box;
+}
+
+/* Active (khi đang kéo) */
+::-webkit-scrollbar-thumb:active {
+    background: var(--silver-light);
+    background-clip: padding-box;
+}
+
+/* Góc giữa scrollbar dọc + ngang */
+::-webkit-scrollbar-corner {
+    background: var(--bg-primary);
+}
+
+/* ==========================================================
+   HTML
+   ========================================================== */
 html {
     width: 100%;
     min-height: 100%;
     font-size: var(--font-size-base);
     scroll-behavior: smooth;
     scroll-padding-top: 96px;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
+/* ==========================================================
+   BODY
+   ========================================================== */
 body {
     width: 100%;
     min-height: 100dvh;
     margin: 0;
     overflow-x: hidden;
+    overflow-y: auto;
     background: var(--main-background);
     background-color: var(--bg-primary);
     background-repeat: no-repeat;
-    color: var(--text-body); /* Màu xám bạc mềm mại cho toàn bộ nội dung body */
+    color: var(--text-body);
     font-family: var(--font-primary);
     font-size: var(--font-size-base);
     font-weight: var(--fw-regular);
@@ -290,12 +354,18 @@ textarea {
     font-synthesis: none;
 }
 
+/* ==========================================================
+   MEDIA
+   ========================================================== */
 img, picture, svg, video, canvas {
     display: block;
     max-width: 100%;
     height: auto;
 }
 
+/* ==========================================================
+   FORM ELEMENTS
+   ========================================================== */
 button, input, select, textarea {
     margin: 0;
     color: inherit;
@@ -321,7 +391,7 @@ h1, h2, h3, h4, h5, h6, p {
 }
 
 h1, h2, h3, h4, h5, h6 {
-    color: var(--text-heading); /* Màu xám bạc nhạt, không phải trắng tinh để đỡ chói mắt */
+    color: var(--text-heading);
     font-family: var(--font-heading);
     font-weight: var(--fw-extrabold);
     line-height: 1.15;
@@ -350,7 +420,7 @@ small { font-size: 0.875em; }
 a {
     color: inherit;
     text-decoration: none;
-    transition: color var(--transition-fast, 0.2s), opacity var(--transition-fast, 0.2s);
+    transition: color var(--transition-fast), opacity var(--transition-fast);
 }
 a:hover {
     color: var(--silver-light);
@@ -403,24 +473,24 @@ main, .main-content {
     text-shadow: 0 0 40px rgba(166, 193, 217, 0.15);
 }
 
-/* 2. Premium Card (Glass effect & hover) - ĐÃ CHỈNH SỬA VIỀN SÁNG */
+/* 2. Premium Card (Glass effect & hover) */
 .card-premium {
     background: var(--glass-bg);
-    border: var(--border-premium); /* Thay glass-border bằng border-premium với Opacity 0.25 để màu sáng rõ */
+    border: var(--border-premium);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border-radius: var(--radius-md);
     box-shadow: var(--glass-shadow);
-    transition: all 0.35s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card-premium:hover {
-    border-color: var(--border-premium); /* Giữ nguyên viền sáng, không đổi màu khi hover */
+    border-color: var(--border-premium);
     box-shadow: var(--card-shadow-hover);
     transform: translateY(-6px);
 }
 
-/* 3. Silver Button (For "ĐẶT VÉ NGAY") */
+/* 3. Silver Button */
 .btn-silver {
     display: inline-flex;
     align-items: center;
@@ -433,7 +503,7 @@ main, .main-content {
     padding: 12px 32px;
     border-radius: var(--radius-round);
     box-shadow: var(--btn-silver-shadow);
-    transition: all 0.3s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1));
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
@@ -536,10 +606,10 @@ main, .main-content {
 .text-lowercase { text-transform: lowercase; }
 .text-capitalize { text-transform: capitalize; }
 
-/* Text Colors - Đảm bảo tất cả đều là tông xám bạc (Silver) */
+/* Text Colors */
 .text-silver { color: var(--silver-primary); }
 .text-light { color: var(--silver-light); }
-.text-white { color: var(--silver-light); } /* Đã chỉnh lại: Thay vì text-heading, dùng silver-light để đảm bảo không có màu trắng tinh #FFF */
+.text-white { color: var(--silver-light); }
 .text-heading { color: var(--text-heading); }
 .text-secondary { color: var(--text-secondary); }
 .text-muted { color: var(--text-muted); }
