@@ -1,46 +1,28 @@
-// api/api.js
 import axios from 'axios';
 
 const API_BASE = 'https://api.quangdungcinema.id.vn';
 
 const api = axios.create({
     baseURL: API_BASE,
-    withCredentials: true,
+    withCredentials: true, // Tự động gửi cookie (usertoken, admintoken)
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// ==========================================================
-// RESPONSE INTERCEPTOR - BẮT LỖI SESSION_EXPIRED
-// ==========================================================
+// Interceptor xử lý lỗi
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        const status = error.response?.status;
-        const errorCode = error.response?.data?.code;
-
-        console.log(`🔍 [API] Status: ${status}, Code: ${errorCode}`);
-
-        // 👉 BẮT LỖI SESSION EXPIRED
-        if (status === 401 && errorCode === 'SESSION_EXPIRED') {
-            console.warn('🔴 [API] SESSION EXPIRED - Tài khoản đã đăng nhập ở thiết bị khác!');
-
-            window.dispatchEvent(new CustomEvent('sessionExpired', {
-                detail: {
-                    message: error.response?.data?.message || 'Tài khoản đã đăng nhập ở thiết bị khác.'
-                }
-            }));
-
-            return Promise.reject(error);
+        // QUAN TRỌNG: Chỉ log lỗi, TUYỆT ĐỐI KHÔNG dùng window.location.href ở đây!
+        if (error.response?.status === 401) {
+            console.warn('Hết phiên đăng nhập hoặc chưa đăng nhập!');
+            
+            // (Tùy chọn nâng cao) Bạn có thể dùng window.dispatchEvent để React biết và chuyển trang
+            // window.dispatchEvent(new Event('unauthorized'));
         }
-
-        // Lỗi 401 thông thường
-        if (status === 401) {
-            console.warn('🟡 [API] Hết phiên đăng nhập hoặc chưa đăng nhập!');
-            window.dispatchEvent(new CustomEvent('unauthorized'));
-        }
-
+        
+        // Trả về lỗi để các component (UserLogin, AdminLogin) bắt được và tự xử lý
         return Promise.reject(error);
     }
 );

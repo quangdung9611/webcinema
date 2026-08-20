@@ -1,13 +1,17 @@
-// Middlewares/UserAuthMiddleware.js
+/*=========================================================
+    DEPENDENCIES
+=========================================================*/
+
 const Jwt = require("../utils/Jwt");
 const Cookie = require("../utils/Cookie");
-const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
 
 /*=========================================================
     AUTHENTICATE USER (CUSTOMER)
 =========================================================*/
-const authenticateUser = async (req, res, next) => {
+
+const authenticateUser = (req, res, next) => {
     try {
+        // ✅ Lấy user_token (cookie riêng của customer)
         const accessToken = Cookie.getUserAccessToken(req);
 
         if (!accessToken) {
@@ -27,21 +31,7 @@ const authenticateUser = async (req, res, next) => {
             });
         }
 
-        // ==========================================================
-        // 👉 KIỂM TRA TOKEN CÓ BỊ REVOKE KHÔNG
-        // NẾU BỊ REVOKE -> TRẢ VỀ SESSION_EXPIRED
-        // ==========================================================
-        const activeTokens = await RefreshTokenRepository.getActiveByUser(payload.user_id);
-        if (activeTokens.length === 0) {
-            Cookie.clearUserCookies(res);
-            console.log(`🔴 [AUTH] User ${payload.user_id} - Token bị revoke, đá đăng nhập`);
-            return res.status(401).json({
-                success: false,
-                message: "Tài khoản đã đăng nhập ở thiết bị khác. Vui lòng đăng nhập lại!",
-                code: "SESSION_EXPIRED"
-            });
-        }
-
+        // Kiểm tra role customer
         if (payload.role !== "customer") {
             return res.status(403).json({
                 success: false,
@@ -51,9 +41,7 @@ const authenticateUser = async (req, res, next) => {
 
         req.user = payload;
         next();
-
     } catch (error) {
-        console.error("Authenticate User Error:", error);
         Cookie.clearUserCookies(res);
         return res.status(401).json({
             success: false,

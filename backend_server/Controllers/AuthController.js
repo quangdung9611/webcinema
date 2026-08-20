@@ -1,11 +1,13 @@
 /*=========================================================
     DEPENDENCIES
 =========================================================*/
+
 const AuthService = require("../Services/AuthService");
 
 /*=========================================================
     REGISTER
 =========================================================*/
+
 exports.register = async (req, res) => {
     try {
         const result = await AuthService.register(req.body);
@@ -22,10 +24,13 @@ exports.register = async (req, res) => {
 
 /*=========================================================
     LOGIN (CHUNG - DÙNG CHO CẢ CUSTOMER VÀ ADMIN)
+    ✅ SỬA: GỌI SERVICE VỚI ĐẦY ĐỦ THAM SỐ, KHÔNG SET COOKIE THỦ CÔNG
 =========================================================*/
+
 exports.login = async (req, res) => {
     try {
         const { email, password, rememberMe } = req.body;
+        // Service tự động set cookie user_token hoặc admin_token
         const result = await AuthService.login(email, password, rememberMe, req, res);
         return res.status(200).json({
             success: true,
@@ -44,17 +49,23 @@ exports.login = async (req, res) => {
 
 /*=========================================================
     LOGIN ADMIN (RIÊNG)
+    ✅ SỬA: DÙNG CHUNG SERVICE, KIỂM TRA ROLE SAU KHI LOGIN
 =========================================================*/
+
 exports.adminLogin = async (req, res) => {
     try {
         const { email, password, rememberMe } = req.body;
+        // Service tự động set cookie admin_token
         const result = await AuthService.login(email, password, rememberMe, req, res);
+
+        // Kiểm tra role (dự phòng, service đã check, nhưng vẫn giữ)
         if (result.user.role !== 'admin') {
             return res.status(403).json({
                 success: false,
                 message: "Tài khoản không có quyền quản trị."
             });
         }
+
         return res.status(200).json({
             success: true,
             message: "Đăng nhập admin thành công",
@@ -73,6 +84,7 @@ exports.adminLogin = async (req, res) => {
 /*=========================================================
     GET ME
 =========================================================*/
+
 exports.getMe = async (req, res) => {
     try {
         const result = await AuthService.getMe(req.user.user_id);
@@ -88,13 +100,16 @@ exports.getMe = async (req, res) => {
 
 /*=========================================================
     REFRESH TOKEN
+    ⚠️ Tạm thời giữ nguyên (cần implement service refreshToken sau)
 =========================================================*/
+
 exports.refreshToken = async (req, res) => {
     try {
-        const result = await AuthService.refreshToken(req, res);
-        return res.status(200).json({
-            success: true,
-            message: "Refresh token thành công"
+        // TODO: Implement AuthService.refreshToken(req, res)
+        // Hiện tại trả về lỗi 501 (Not Implemented)
+        return res.status(501).json({
+            success: false,
+            message: "Chức năng refresh token đang phát triển"
         });
     } catch (error) {
         console.error("Refresh Error:", error);
@@ -107,7 +122,9 @@ exports.refreshToken = async (req, res) => {
 
 /*=========================================================
     LOGOUT
+    ✅ SỬA: GỌI SERVICE XỬ LÝ XÓA COOKIE
 =========================================================*/
+
 exports.logout = async (req, res) => {
     try {
         const result = await AuthService.logout(req, res);
@@ -123,7 +140,9 @@ exports.logout = async (req, res) => {
 
 /*=========================================================
     LOGOUT ALL DEVICES
+    ✅ SỬA: GỌI SERVICE XỬ LÝ XÓA COOKIE
 =========================================================*/
+
 exports.logoutAllDevices = async (req, res) => {
     try {
         const result = await AuthService.logoutAllDevices(req.user.user_id, res);
@@ -140,6 +159,7 @@ exports.logoutAllDevices = async (req, res) => {
 /*=========================================================
     CHANGE PASSWORD
 =========================================================*/
+
 exports.changePassword = async (req, res) => {
     try {
         const result = await AuthService.changePassword(req.user.user_id, req.body);
@@ -157,6 +177,7 @@ exports.changePassword = async (req, res) => {
 /*=========================================================
     FORGOT PASSWORD - SEND OTP
 =========================================================*/
+
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
@@ -175,6 +196,7 @@ exports.forgotPassword = async (req, res) => {
 /*=========================================================
     VERIFY RESET OTP
 =========================================================*/
+
 exports.verifyResetOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
@@ -193,6 +215,7 @@ exports.verifyResetOTP = async (req, res) => {
 /*=========================================================
     RESET PASSWORD
 =========================================================*/
+
 exports.resetPassword = async (req, res) => {
     try {
         const { resetToken, newPassword } = req.body;
@@ -211,6 +234,7 @@ exports.resetPassword = async (req, res) => {
 /*=========================================================
     SEND VERIFICATION EMAIL
 =========================================================*/
+
 exports.sendVerificationEmail = async (req, res) => {
     try {
         const { email } = req.body;
@@ -229,6 +253,7 @@ exports.sendVerificationEmail = async (req, res) => {
 /*=========================================================
     VERIFY EMAIL
 =========================================================*/
+
 exports.verifyEmail = async (req, res) => {
     try {
         const { token } = req.query;

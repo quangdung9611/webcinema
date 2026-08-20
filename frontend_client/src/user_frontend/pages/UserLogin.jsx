@@ -1,4 +1,3 @@
-// pages/UserLogin.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
@@ -8,14 +7,19 @@ import {
 } from 'lucide-react';
 
 import api from '../../api/api';
-import Modal from '../components/Modal';
-import SessionExpiredModal from '../components/SessionExpiredModal';
+
 import ForgotPassword from '../components/ForgotPassword';
 import LoadingButton from '../components/LoadingButton';
+import SessionExpiredModal from '../components/SessionExpiredModal';
 
 import '../styles/UserAuth.css';
 
+
 const UserLogin = () => {
+
+    /* =====================================================
+        STATES
+    ===================================================== */
 
     const [formData, setFormData] = useState({
         email: '',
@@ -28,12 +32,7 @@ const UserLogin = () => {
     const [serverError, setServerError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotModal, setShowForgotModal] = useState(false);
-
-    // 👉 STATE CHO SESSION EXPIRED MODAL
-    const [sessionExpiredModal, setSessionExpiredModal] = useState({
-        show: false,
-        message: ''
-    });
+    const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -47,7 +46,7 @@ const UserLogin = () => {
                 const res = await api.get('/api/auth/me');
                 const raw = res.data;
                 const account = raw?.user || raw?.data?.user || raw;
-
+                
                 if (account) {
                     navigate('/', { replace: true });
                 }
@@ -59,22 +58,29 @@ const UserLogin = () => {
     }, [navigate]);
 
     /* =====================================================
-        👉 LẮNG NGHE SỰ KIỆN SESSION EXPIRED
+        ✅ LẮNG NGHE SỰ KIỆN SESSION EXPIRED
     ===================================================== */
     useEffect(() => {
         const handleSessionExpired = (event) => {
-            console.log('🔴 [USER LOGIN] Nhận sự kiện sessionExpired');
-            setSessionExpiredModal({
-                show: true,
-                message: event.detail?.message || 'Tài khoản đã đăng nhập ở thiết bị khác.'
-            });
-            setLoading(false);
+            console.log('🔴 [USER LOGIN] Nhận được sự kiện sessionExpired!');
+            console.log('🔴 [USER LOGIN] Message:', event.detail?.message);
+            
+            // ✅ HIỂN THỊ MODAL
+            setShowSessionExpiredModal(true);
+            
+            // ✅ Xóa lỗi cũ
+            setServerError('');
+            setErrors({});
         };
 
+        // Đăng ký lắng nghe
         window.addEventListener('sessionExpired', handleSessionExpired);
+        console.log('✅ [USER LOGIN] Đã đăng ký lắng nghe sự kiện sessionExpired');
 
+        // Cleanup
         return () => {
             window.removeEventListener('sessionExpired', handleSessionExpired);
+            console.log('🧹 [USER LOGIN] Đã hủy lắng nghe sự kiện sessionExpired');
         };
     }, []);
 
@@ -82,7 +88,10 @@ const UserLogin = () => {
         HANDLE SESSION EXPIRED CONFIRM
     ===================================================== */
     const handleSessionExpiredConfirm = () => {
-        setSessionExpiredModal({ show: false, message: '' });
+        console.log('🔴 [USER LOGIN] User xác nhận đăng nhập lại');
+        setShowSessionExpiredModal(false);
+        
+        // Reset form
         setFormData({
             email: '',
             password: '',
@@ -90,7 +99,11 @@ const UserLogin = () => {
         });
         setErrors({});
         setServerError('');
-        document.getElementById('login-email')?.focus();
+        
+        // Focus vào input email
+        setTimeout(() => {
+            document.getElementById('login-email')?.focus();
+        }, 100);
     };
 
     /* =====================================================
@@ -172,24 +185,23 @@ const UserLogin = () => {
 
         } catch (err) {
             console.error('Login Error:', err);
-
-            // 👉 Nếu là lỗi SESSION_EXPIRED (đã được interceptor bắt)
+            
+            // ✅ Nếu là lỗi SESSION_EXPIRED từ backend
             if (err.response?.data?.code === 'SESSION_EXPIRED') {
-                // Modal đã được hiển thị qua event listener
-                setLoading(false);
-                return;
-            }
-
-            const errorMessage = err.response?.data?.message ||
-                                 err.response?.data?.error ||
-                                 'Tài khoản hoặc mật khẩu không chính xác';
-
-            if (err.response?.data?.field === 'email') {
-                setErrors(prev => ({ ...prev, email: errorMessage }));
-            } else if (err.response?.data?.field === 'password') {
-                setErrors(prev => ({ ...prev, password: errorMessage }));
+                console.log('🔴 [USER LOGIN] Nhận lỗi SESSION_EXPIRED từ login API');
+                setShowSessionExpiredModal(true);
             } else {
-                setServerError(errorMessage);
+                const errorMessage = err.response?.data?.message ||
+                                     err.response?.data?.error ||
+                                     'Tài khoản hoặc mật khẩu không chính xác';
+
+                if (err.response?.data?.field === 'email') {
+                    setErrors(prev => ({ ...prev, email: errorMessage }));
+                } else if (err.response?.data?.field === 'password') {
+                    setErrors(prev => ({ ...prev, password: errorMessage }));
+                } else {
+                    setServerError(errorMessage);
+                }
             }
         } finally {
             setLoading(false);
@@ -299,10 +311,9 @@ const UserLogin = () => {
                 <ForgotPassword onClose={() => setShowForgotModal(false)} />
             )}
 
-            {/* 👉 SESSION EXPIRED MODAL */}
+            {/* ✅ MODAL SESSION EXPIRED */}
             <SessionExpiredModal
-                isOpen={sessionExpiredModal.show}
-                message={sessionExpiredModal.message}
+                isOpen={showSessionExpiredModal}
                 onConfirm={handleSessionExpiredConfirm}
             />
         </div>

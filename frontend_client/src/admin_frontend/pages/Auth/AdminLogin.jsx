@@ -1,4 +1,3 @@
-// pages/admin/AdminLogin.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api/api';
@@ -17,9 +16,10 @@ import {
 
 import Modal from '../../components/AdminModal';
 import LoadingButton from '../../../user_frontend/components/LoadingButton';
-import SessionExpiredModal from '../../../user_frontend/components/SessionExpiredModal';
+import SessionExpiredModal from '../../../user_frontend/components/SessionExpiredModal'; // 👈 THÊM IMPORT
 
 import '../../styles/AdminAuth.css';
+
 
 const AdminLogin = () => {
 
@@ -33,20 +33,9 @@ const AdminLogin = () => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [serverError, setServerError] = useState('');
-    const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
+    const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false); // 👈 THÊM STATE
 
     const navigate = useNavigate();
-
-    /* =====================================================
-        MODAL THÔNG THƯỜNG
-    ===================================================== */
-    const [modalConfig, setModalConfig] = useState({
-        show: false,
-        type: 'success',
-        title: '',
-        message: '',
-        onConfirm: () => {}
-    });
 
     /* =====================================================
         CHECK SESSION - Nếu đã đăng nhập thì chuyển trang
@@ -70,9 +59,7 @@ const AdminLogin = () => {
     ===================================================== */
     useEffect(() => {
         const handleSessionExpired = (event) => {
-            console.log('🔴 [ADMIN LOGIN] Nhận sự kiện sessionExpired');
             setShowSessionExpiredModal(true);
-            setLoading(false);
         };
 
         window.addEventListener('sessionExpired', handleSessionExpired);
@@ -83,7 +70,7 @@ const AdminLogin = () => {
     }, []);
 
     /* =====================================================
-        HANDLE SESSION EXPIRED CONFIRM
+        HANDLE SESSION EXPIRED CONFIRM - Đăng nhập lại
     ===================================================== */
     const handleSessionExpiredConfirm = () => {
         setShowSessionExpiredModal(false);
@@ -93,6 +80,17 @@ const AdminLogin = () => {
         setServerError('');
         document.getElementById('admin-email')?.focus();
     };
+
+    /* =====================================================
+        MODAL
+    ===================================================== */
+    const [modalConfig, setModalConfig] = useState({
+        show: false,
+        type: 'success',
+        title: '',
+        message: '',
+        onConfirm: () => {}
+    });
 
     /* =====================================================
         VALIDATE
@@ -157,23 +155,21 @@ const AdminLogin = () => {
         } catch (err) {
             console.error('Admin Login Error:', err);
             
-            // 👉 Nếu là lỗi SESSION_EXPIRED từ backend
+            // ✅ KIỂM TRA LỖI SESSION_EXPIRED TỪ BACKEND
             if (err.response?.data?.code === 'SESSION_EXPIRED') {
                 setShowSessionExpiredModal(true);
-                setLoading(false);
-                return;
-            }
-            
-            const errorMessage = err.response?.data?.message ||
-                                 err.response?.data?.error ||
-                                 'Sai tài khoản hoặc mật khẩu quản trị.';
-
-            if (err.response?.data?.field === 'email') {
-                setErrors({ email: errorMessage });
-            } else if (err.response?.data?.field === 'password') {
-                setErrors({ password: errorMessage });
             } else {
-                setServerError(errorMessage);
+                const errorMessage = err.response?.data?.message ||
+                                     err.response?.data?.error ||
+                                     'Sai tài khoản hoặc mật khẩu quản trị.';
+
+                if (err.response?.data?.field === 'email') {
+                    setErrors({ email: errorMessage });
+                } else if (err.response?.data?.field === 'password') {
+                    setErrors({ password: errorMessage });
+                } else {
+                    setServerError(errorMessage);
+                }
             }
         } finally {
             setLoading(false);
@@ -188,7 +184,9 @@ const AdminLogin = () => {
             <div className="admin-login-overlay"></div>
             <div className="admin-login-container">
 
-                {/* LEFT PANEL */}
+                {/* =================================================
+                    LEFT PANEL
+                ================================================= */}
                 <div className="admin-login-left">
                     <div className="admin-brand">
                         <div className="admin-brand-logo">
@@ -229,7 +227,9 @@ const AdminLogin = () => {
                     </div>
                 </div>
 
-                {/* RIGHT PANEL */}
+                {/* =================================================
+                    RIGHT PANEL
+                ================================================= */}
                 <div className="admin-login-right">
                     <div className="admin-login-header">
                         <div className="admin-login-icon">
@@ -252,7 +252,7 @@ const AdminLogin = () => {
                             <div className={`admin-input-box ${errors.email ? 'error' : ''}`}>
                                 <Mail size={18} />
                                 <input
-                                    id="admin-email"
+                                    id="admin-email" // 👈 THÊM ID CHO FOCUS
                                     type="email"
                                     placeholder="admin@cinemastar.com"
                                     value={email}
@@ -316,7 +316,6 @@ const AdminLogin = () => {
 
             </div>
 
-            {/* MODAL THÔNG THƯỜNG */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}
@@ -325,7 +324,7 @@ const AdminLogin = () => {
                 onConfirm={modalConfig.onConfirm}
             />
 
-            {/* MODAL SESSION EXPIRED */}
+            {/* 👈 THÊM SESSION EXPIRED MODAL */}
             <SessionExpiredModal
                 isOpen={showSessionExpiredModal}
                 onConfirm={handleSessionExpiredConfirm}

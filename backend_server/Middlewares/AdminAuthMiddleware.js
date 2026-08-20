@@ -1,13 +1,17 @@
-// Middlewares/AdminAuthMiddleware.js
+/*=========================================================
+    DEPENDENCIES
+=========================================================*/
+
 const Jwt = require("../utils/Jwt");
 const Cookie = require("../utils/Cookie");
-const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
 
 /*=========================================================
     AUTHENTICATE ADMIN
 =========================================================*/
-const authenticateAdmin = async (req, res, next) => {
+
+const authenticateAdmin = (req, res, next) => {
     try {
+        // Lấy token từ cookie admin_token
         const accessToken = Cookie.getAdminAccessToken(req);
 
         if (!accessToken) {
@@ -27,20 +31,7 @@ const authenticateAdmin = async (req, res, next) => {
             });
         }
 
-        // ==========================================================
-        // 👉 KIỂM TRA TOKEN CÓ BỊ REVOKE KHÔNG
-        // ==========================================================
-        const activeTokens = await RefreshTokenRepository.getActiveByUser(payload.user_id);
-        if (activeTokens.length === 0) {
-            Cookie.clearAdminCookies(res);
-            console.log(`🔴 [ADMIN AUTH] Admin ${payload.user_id} - Token bị revoke`);
-            return res.status(401).json({
-                success: false,
-                message: "Tài khoản admin đã đăng nhập ở thiết bị khác. Vui lòng đăng nhập lại!",
-                code: "SESSION_EXPIRED"
-            });
-        }
-
+        // Kiểm tra role admin
         if (payload.role !== "admin") {
             return res.status(403).json({
                 success: false,
@@ -50,9 +41,7 @@ const authenticateAdmin = async (req, res, next) => {
 
         req.user = payload;
         next();
-
     } catch (error) {
-        console.error("Authenticate Admin Error:", error);
         Cookie.clearAdminCookies(res);
         return res.status(401).json({
             success: false,
