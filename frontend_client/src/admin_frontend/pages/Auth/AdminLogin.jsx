@@ -1,5 +1,4 @@
-// pages/admin/AdminLogin.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Thêm useEffect
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api/api';
 
@@ -20,6 +19,7 @@ import LoadingButton from '../../../user_frontend/components/LoadingButton';
 
 import '../../styles/AdminAuth.css';
 
+
 const AdminLogin = () => {
 
     /* =====================================================
@@ -36,6 +36,28 @@ const AdminLogin = () => {
     const navigate = useNavigate();
 
     /* =====================================================
+        CHECK SESSION (Nếu đã đăng nhập thì chuyển trang)
+    ===================================================== */
+    useEffect(() => {
+        const checkAdminSession = async () => {
+            try {
+                // Gọi API kiểm tra trạng thái đăng nhập
+                const res = await api.get('/admin/api/auth/me');
+                
+                // Nếu role là admin, đẩy thẳng vào dashboard, không cần login nữa
+                if (res.data?.user?.role === 'admin') {
+                    navigate('/dashboard', { replace: true });
+                }
+            } catch (error) {
+                // Nếu lỗi 401 (chưa login) hoặc lỗi khác, im lặng để hiển thị form login
+                console.log('Chưa đăng nhập, hiển thị form login.');
+            }
+        };
+        checkAdminSession();
+    }, [navigate]);
+
+
+    /* =====================================================
         MODAL
     ===================================================== */
     const [modalConfig, setModalConfig] = useState({
@@ -46,43 +68,6 @@ const AdminLogin = () => {
         onConfirm: () => {}
     });
 
-    // 👉 THÊM STATE CHO SESSION EXPIRED MODAL
-    const [sessionExpiredModal, setSessionExpiredModal] = useState({
-        show: false,
-        title: '',
-        message: ''
-    });
-
-    /* =====================================================
-        CHECK SESSION (Nếu đã đăng nhập thì chuyển trang)
-    ===================================================== */
-    useEffect(() => {
-        const checkAdminSession = async () => {
-            try {
-                const res = await api.get('/admin/api/auth/me');
-                if (res.data?.user?.role === 'admin') {
-                    navigate('/dashboard', { replace: true });
-                }
-            } catch (error) {
-                console.log('Chưa đăng nhập, hiển thị form login.');
-            }
-        };
-        checkAdminSession();
-    }, [navigate]);
-
-    // 👉 KIỂM TRA URL PARAM SESSION_EXPIRED
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('session_expired') === 'true') {
-            setSessionExpiredModal({
-                show: true,
-                title: 'Đã đăng nhập ở thiết bị khác!',
-                message: 'Tài khoản admin của bạn vừa được đăng nhập ở thiết bị khác. Vui lòng đăng nhập lại để tiếp tục.'
-            });
-            // Xóa param trên URL để tránh hiển thị lại khi refresh
-            window.history.replaceState({}, '', '/admin/login');
-        }
-    }, []);
 
     /* =====================================================
         VALIDATE
@@ -102,6 +87,7 @@ const AdminLogin = () => {
         setErrors(tempErrors);
         return Object.keys(tempErrors).length === 0;
     };
+
 
     /* =====================================================
         HANDLE LOGIN
@@ -149,15 +135,7 @@ const AdminLogin = () => {
                                  err.response?.data?.error ||
                                  'Sai tài khoản hoặc mật khẩu quản trị.';
 
-            // 👉 KIỂM TRA NẾU LỖI LÀ SESSION EXPIRED
-            if (err.response?.status === 401 && 
-                err.response?.data?.code === 'SESSION_EXPIRED') {
-                setSessionExpiredModal({
-                    show: true,
-                    title: 'Đã đăng nhập ở thiết bị khác!',
-                    message: 'Tài khoản admin đang được đăng nhập ở thiết bị khác. Vui lòng đăng nhập lại.'
-                });
-            } else if (err.response?.data?.field === 'email') {
+            if (err.response?.data?.field === 'email') {
                 setErrors({ email: errorMessage });
             } else if (err.response?.data?.field === 'password') {
                 setErrors({ password: errorMessage });
@@ -168,6 +146,7 @@ const AdminLogin = () => {
             setLoading(false);
         }
     };
+
 
     /* =====================================================
         RENDER
@@ -304,30 +283,12 @@ const AdminLogin = () => {
 
             </div>
 
-            {/* =================================================
-                MODAL THÔNG THƯỜNG
-            ================================================= */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}
                 title={modalConfig.title}
                 message={modalConfig.message}
                 onConfirm={modalConfig.onConfirm}
-            />
-
-            {/* =================================================
-                MODAL SESSION EXPIRED
-            ================================================= */}
-            <Modal
-                show={sessionExpiredModal.show}
-                type="warning"
-                title={sessionExpiredModal.title}
-                message={sessionExpiredModal.message}
-                onConfirm={() => {
-                    setSessionExpiredModal({ show: false, title: '', message: '' });
-                    navigate('/admin/login');
-                }}
-                confirmText="Đăng nhập lại"
             />
         </div>
     );

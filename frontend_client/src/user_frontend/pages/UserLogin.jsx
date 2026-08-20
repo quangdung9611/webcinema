@@ -1,4 +1,3 @@
-// pages/UserLogin.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
@@ -8,11 +7,12 @@ import {
 } from 'lucide-react';
 
 import api from '../../api/api';
-import Modal from '../components/Modal'; // 👈 THÊM IMPORT MODAL
+
 import ForgotPassword from '../components/ForgotPassword';
 import LoadingButton from '../components/LoadingButton';
 
 import '../styles/UserAuth.css';
+
 
 const UserLogin = () => {
 
@@ -32,23 +32,21 @@ const UserLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotModal, setShowForgotModal] = useState(false);
 
-    // 👉 THÊM STATE CHO SESSION EXPIRED MODAL
-    const [sessionExpiredModal, setSessionExpiredModal] = useState({
-        show: false,
-        title: '',
-        message: ''
-    });
-
     const navigate = useNavigate();
     const location = useLocation();
 
+
     /* =====================================================
-        CHECK SESSION
+        CHECK SESSION (Giống logic AdminLogin)
+        Nếu đã đăng nhập thì chuyển luôn về trang chủ
     ===================================================== */
     useEffect(() => {
         const checkUserSession = async () => {
             try {
+                // Gọi API kiểm tra trạng thái đăng nhập
                 const res = await api.get('/api/auth/me');
+                
+                // Nếu tồn tại user hợp lệ, đẩy thẳng về trang chủ
                 const raw = res.data;
                 const account = raw?.user || raw?.data?.user || raw;
                 
@@ -56,25 +54,13 @@ const UserLogin = () => {
                     navigate('/', { replace: true });
                 }
             } catch (error) {
+                // Nếu lỗi 401 (chưa login) hoặc lỗi khác, im lặng để hiển thị form login
                 console.log('Chưa đăng nhập, hiển thị form login.');
             }
         };
         checkUserSession();
     }, [navigate]);
 
-    // 👉 KIỂM TRA URL PARAM SESSION_EXPIRED
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('session_expired') === 'true') {
-            setSessionExpiredModal({
-                show: true,
-                title: 'Đã đăng nhập ở thiết bị khác!',
-                message: 'Tài khoản của bạn vừa được đăng nhập ở thiết bị khác. Vui lòng đăng nhập lại để tiếp tục.'
-            });
-            // Xóa param trên URL để tránh hiển thị lại khi refresh
-            window.history.replaceState({}, '', '/login');
-        }
-    }, []);
 
     /* =====================================================
         VALIDATE
@@ -100,6 +86,7 @@ const UserLogin = () => {
         return Object.keys(tempErrors).length === 0;
     };
 
+
     /* =====================================================
         HANDLE INPUT
     ===================================================== */
@@ -120,8 +107,9 @@ const UserLogin = () => {
         }
     };
 
+
     /* =====================================================
-        LOGIN
+        LOGIN (Có thêm Dispatch Event update Header)
     ===================================================== */
 
     const handleLogin = async (e) => {
@@ -157,7 +145,7 @@ const UserLogin = () => {
             ================================================= */
             const from = location.state?.from?.pathname || '/';
             
-            // Dispatch event để UserHeader tự cập nhật
+            // 🔥 QUAN TRỌNG: Dispatch event để UserHeader tự cập nhật ngay lập tức
             window.dispatchEvent(new Event('userLoggedIn')); 
 
             navigate(from, { replace: true });
@@ -168,15 +156,7 @@ const UserLogin = () => {
                                  err.response?.data?.error ||
                                  'Tài khoản hoặc mật khẩu không chính xác';
 
-            // 👉 KIỂM TRA NẾU LỖI LÀ SESSION EXPIRED
-            if (err.response?.status === 401 && 
-                err.response?.data?.code === 'SESSION_EXPIRED') {
-                setSessionExpiredModal({
-                    show: true,
-                    title: 'Đã đăng nhập ở thiết bị khác!',
-                    message: 'Tài khoản của bạn đang được đăng nhập ở thiết bị khác. Vui lòng đăng nhập lại.'
-                });
-            } else if (err.response?.data?.field === 'email') {
+            if (err.response?.data?.field === 'email') {
                 setErrors(prev => ({ ...prev, email: errorMessage }));
             } else if (err.response?.data?.field === 'password') {
                 setErrors(prev => ({ ...prev, password: errorMessage }));
@@ -188,126 +168,110 @@ const UserLogin = () => {
         }
     };
 
+
     /* =====================================================
         RENDER
     ===================================================== */
 
     return (
-        <>
-            <div className="auth-container">
-                <div className="auth-card">
-                    <h2>ĐĂNG NHẬP</h2>
-                    <p className="auth-subtitle">Chào mừng bạn quay trở lại Cinema Star</p>
+        <div className="auth-container">
+            <div className="auth-card">
+                <h2>ĐĂNG NHẬP</h2>
+                <p className="auth-subtitle">Chào mừng bạn quay trở lại Cinema Star</p>
 
-                    {serverError && (
-                        <div className="error-message">
-                            <AlertCircle size={18} />
-                            <span>{serverError}</span>
-                        </div>
-                    )}
+                {serverError && (
+                    <div className="error-message">
+                        <AlertCircle size={18} />
+                        <span>{serverError}</span>
+                    </div>
+                )}
 
-                    <form onSubmit={handleLogin} noValidate>
-                        <div className="form-group">
-                            <label>Email address</label>
+                <form onSubmit={handleLogin} noValidate>
+                    <div className="form-group">
+                        <label>Email address</label>
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="example@gmail.com"
+                            className={`auth-input ${errors.email ? 'input-error' : ''}`}
+                            value={formData.email}
+                            onChange={handleChange}
+                            autoComplete="email"
+                            disabled={loading}
+                        />
+                        {errors.email && <span className="error-text">{errors.email}</span>}
+                    </div>
+
+                    <div className="form-group">
+                        <label>Password</label>
+                        <div className="password-wrapper">
                             <input
-                                type="email"
-                                name="email"
-                                placeholder="example@gmail.com"
-                                className={`auth-input ${errors.email ? 'input-error' : ''}`}
-                                value={formData.email}
+                                type={showPassword ? 'text' : 'password'}
+                                name="password"
+                                placeholder="••••••••"
+                                className={`auth-input ${errors.password ? 'input-error' : ''}`}
+                                value={formData.password}
                                 onChange={handleChange}
-                                autoComplete="email"
+                                autoComplete="current-password"
                                 disabled={loading}
                             />
-                            {errors.email && <span className="error-text">{errors.email}</span>}
-                        </div>
-
-                        <div className="form-group">
-                            <label>Password</label>
-                            <div className="password-wrapper">
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    name="password"
-                                    placeholder="••••••••"
-                                    className={`auth-input ${errors.password ? 'input-error' : ''}`}
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    autoComplete="current-password"
-                                    disabled={loading}
-                                />
-                                <button
-                                    type="button"
-                                    className="toggle-password"
-                                    onClick={() => setShowPassword(prev => !prev)}
-                                    tabIndex="-1"
-                                    disabled={loading}
-                                >
-                                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                                </button>
-                            </div>
-                            {errors.password && <span className="error-text">{errors.password}</span>}
-                        </div>
-
-                        <div className="form-options">
-                            <label className="remember-me">
-                                <input
-                                    type="checkbox"
-                                    name="rememberMe"
-                                    checked={formData.rememberMe}
-                                    onChange={handleChange}
-                                    disabled={loading}
-                                />
-                                Remember me
-                            </label>
-
                             <button
                                 type="button"
-                                className="forgot-link"
-                                onClick={() => setShowForgotModal(true)}
+                                className="toggle-password"
+                                onClick={() => setShowPassword(prev => !prev)}
+                                tabIndex="-1"
                                 disabled={loading}
                             >
-                                Forgot password?
+                                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                             </button>
                         </div>
-
-                        <LoadingButton
-                            type="submit"
-                            loading={loading}
-                            loadingText="Đang đăng nhập..."
-                            disabled={loading}
-                            className="btn-user"
-                            spinnerColor="#000000"
-                        >
-                            SIGN IN
-                        </LoadingButton>
-                    </form>
-
-                    <div className="auth-footer">
-                        <span>Chưa có tài khoản?</span>
-                        <Link to="/register" className="btn-link">Đăng ký ngay</Link>
+                        {errors.password && <span className="error-text">{errors.password}</span>}
                     </div>
-                </div>
 
-                {showForgotModal && (
-                    <ForgotPassword onClose={() => setShowForgotModal(false)} />
-                )}
+                    <div className="form-options">
+                        <label className="remember-me">
+                            <input
+                                type="checkbox"
+                                name="rememberMe"
+                                checked={formData.rememberMe}
+                                onChange={handleChange}
+                                disabled={loading}
+                            />
+                            Remember me
+                        </label>
+
+                        <button
+                            type="button"
+                            className="forgot-link"
+                            onClick={() => setShowForgotModal(true)}
+                            disabled={loading}
+                        >
+                            Forgot password?
+                        </button>
+                    </div>
+
+                    <LoadingButton
+                        type="submit"
+                        loading={loading}
+                        loadingText="Đang đăng nhập..."
+                        disabled={loading}
+                        className="btn-user"
+                        spinnerColor="#000000"
+                    >
+                        SIGN IN
+                    </LoadingButton>
+                </form>
+
+                <div className="auth-footer">
+                    <span>Chưa có tài khoản?</span>
+                    <Link to="/register" className="btn-link">Đăng ký ngay</Link>
+                </div>
             </div>
 
-            {/* =================================================
-                MODAL SESSION EXPIRED
-            ================================================= */}
-            <Modal
-                show={sessionExpiredModal.show}
-                type="warning"
-                title={sessionExpiredModal.title}
-                message={sessionExpiredModal.message}
-                onConfirm={() => {
-                    setSessionExpiredModal({ show: false, title: '', message: '' });
-                    navigate('/login');
-                }}
-                confirmText="Đăng nhập lại"
-            />
-        </>
+            {showForgotModal && (
+                <ForgotPassword onClose={() => setShowForgotModal(false)} />
+            )}
+        </div>
     );
 };
 

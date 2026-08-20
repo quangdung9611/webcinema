@@ -93,41 +93,17 @@ const validateLogin = (email, password) => {
 };
 
 /*=========================================================
-    GENERATE TOKEN & SET COOKIE (CÓ REVOKE TOKEN CŨ)
+    GENERATE TOKEN & SET COOKIE
 =========================================================*/
 
-const generateAndSetTokens = async (user, res, rememberMe = false, req) => {
-    // 👉 REVOKE TẤT CẢ TOKEN CŨ CỦA USER (SINGLE SESSION)
-    await RefreshTokenRepository.revokeByUser(
-        user.user_id,
-        `Đăng nhập từ thiết bị mới (${req?.headers?.['user-agent']?.substring(0, 50) || 'Unknown'})`
-    );
-
-    // Tạo access token
+const generateAndSetTokens = (user, res, rememberMe = false) => {
     const accessToken = Jwt.generateAccessToken(user);
-    
-    // Tạo refresh token và lưu vào DB
-    const refreshToken = Jwt.generateRefreshToken();
-    const tokenHash = Jwt.hashToken(refreshToken);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 ngày
-
-    await RefreshTokenRepository.create({
-        user_id: user.user_id,
-        token_hash: tokenHash,
-        expires_at: expiresAt,
-        ip_address: req?.ip || req?.connection?.remoteAddress || null,
-        user_agent: req?.headers?.['user-agent'] || null,
-        device_name: req?.headers?.['user-agent']?.substring(0, 50) || 'Unknown'
-    });
-
-    // Set cookie
     if (user.role === "admin") {
         Cookie.setAdminAccessToken(res, accessToken, rememberMe);
     } else {
         Cookie.setUserAccessToken(res, accessToken, rememberMe);
     }
-
-    return { accessToken, refreshToken };
+    return accessToken;
 };
 
 /*=========================================================
@@ -197,7 +173,7 @@ exports.register = async (userData) => {
 };
 
 /*=========================================================
-    LOGIN (CHÍNH) - 👉 THÊM REVOKE TOKEN CŨ
+    LOGIN (CHÍNH)
 =========================================================*/
 
 exports.login = async (email, password, rememberMe = false, req, res) => {
@@ -221,10 +197,10 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
     }
 
-    // 5. 👉 REVOKE TOKEN CŨ VÀ TẠO TOKEN MỚI
-    await generateAndSetTokens(user, res, rememberMe, req);
+    // 5. Generate token và set cookie
+    generateAndSetTokens(user, res, rememberMe);
 
-    // 6. Trả về thông tin user
+    // 6. Trả về thông tin user (không trả token)
     return {
         success: true,
         message: "Đăng nhập thành công",
@@ -262,22 +238,17 @@ exports.getMe = async (userId) => {
 };
 
 /*=========================================================
-    LOGOUT
+    LOGOUT (NHẬN req VÀ res)
 =========================================================*/
 
 exports.logout = async (req, res) => {
-    // Lấy token từ cookie
+    // Lấy token từ cookie (ưu tiên admin_token)
     let token = Cookie.getAdminAccessToken(req);
     if (token) {
-        // Revoke token trên DB
-        const tokenHash = Jwt.hashToken(token);
-        await RefreshTokenRepository.revoke(tokenHash, "Đăng xuất");
         Cookie.clearAdminCookies(res);
     } else {
         token = Cookie.getUserAccessToken(req);
         if (token) {
-            const tokenHash = Jwt.hashToken(token);
-            await RefreshTokenRepository.revoke(tokenHash, "Đăng xuất");
             Cookie.clearUserCookies(res);
         }
     }
@@ -289,15 +260,14 @@ exports.logout = async (req, res) => {
 };
 
 /*=========================================================
-    LOGOUT ALL DEVICES
+    LOGOUT ALL DEVICES (NHẬN userId VÀ res)
 =========================================================*/
 
 exports.logoutAllDevices = async (userId, res) => {
-    // Revoke tất cả token của user
-    await RefreshTokenRepository.revokeByUser(userId, "Đăng xuất tất cả thiết bị");
-    
-    // Xóa cookie
+    // Xóa tất cả cookie
     Cookie.clearAllCookies(res);
+
+    // TODO: Xóa tất cả refresh token của user trong DB (nếu có)
 
     return {
         success: true,
@@ -343,9 +313,6 @@ exports.changePassword = async (userId, passwordData) => {
 
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(userId, hashedPassword);
-
-    // 👉 REVOKE TẤT CẢ TOKEN SAU KHI ĐỔI MẬT KHẨU
-    await RefreshTokenRepository.revokeByUser(userId, "Đổi mật khẩu");
 
     return {
         success: true,
@@ -510,9 +477,6 @@ exports.resetPassword = async (resetToken, newPassword) => {
     // Update password
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(user.user_id, hashedPassword);
-
-    // 👉 REVOKE TẤT CẢ TOKEN SAU KHI RESET MẬT KHẨU
-    await RefreshTokenRepository.revokeByUser(user.user_id, "Reset mật khẩu");
 
     // Log
     await OtpRepository.create({

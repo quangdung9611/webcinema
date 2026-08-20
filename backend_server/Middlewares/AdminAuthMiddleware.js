@@ -4,13 +4,12 @@
 
 const Jwt = require("../utils/Jwt");
 const Cookie = require("../utils/Cookie");
-const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
 
 /*=========================================================
     AUTHENTICATE ADMIN
 =========================================================*/
 
-const authenticateAdmin = async (req, res, next) => {
+const authenticateAdmin = (req, res, next) => {
     try {
         // Lấy token từ cookie admin_token
         const accessToken = Cookie.getAdminAccessToken(req);
@@ -22,7 +21,6 @@ const authenticateAdmin = async (req, res, next) => {
             });
         }
 
-        // Verify token
         const payload = Jwt.verifyAccessToken(accessToken);
 
         if (!payload) {
@@ -30,18 +28,6 @@ const authenticateAdmin = async (req, res, next) => {
             return res.status(401).json({
                 success: false,
                 message: "Token admin không hợp lệ."
-            });
-        }
-
-        // 👉 KIỂM TRA TOKEN CÓ BỊ REVOKE KHÔNG (SINGLE SESSION)
-        // Kiểm tra xem user có refresh token hợp lệ không
-        const activeTokens = await RefreshTokenRepository.getActiveByUser(payload.user_id);
-        if (activeTokens.length === 0) {
-            Cookie.clearAdminCookies(res);
-            return res.status(401).json({
-                success: false,
-                message: "Tài khoản admin đã đăng nhập ở thiết bị khác. Vui lòng đăng nhập lại!",
-                code: "SESSION_EXPIRED" // 👈 CODE QUAN TRỌNG CHO FRONTEND
             });
         }
 
@@ -55,9 +41,7 @@ const authenticateAdmin = async (req, res, next) => {
 
         req.user = payload;
         next();
-
     } catch (error) {
-        console.error("Admin Auth Error:", error);
         Cookie.clearAdminCookies(res);
         return res.status(401).json({
             success: false,
