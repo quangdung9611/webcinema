@@ -7,7 +7,7 @@ const Cookie = require("../utils/Cookie");
 const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
 
 /*=========================================================
-    AUTHENTICATE USER (CUSTOMER) - ĐÃ SỬA HOÀN CHỈNH
+    AUTHENTICATE USER (CUSTOMER) - ĐÃ SỬA LẦN 2
 =========================================================*/
 
 const authenticateUser = async (req, res, next) => {
@@ -41,10 +41,14 @@ const authenticateUser = async (req, res, next) => {
         }
 
         // ============================================================
-        // 🔥 SỬA QUAN TRỌNG: Chỉ kiểm tra DB nếu KHÔNG phải route auth/me
+        // 🔥 SỬA QUAN TRỌNG: Bỏ qua check DB nếu là route /auth/me HOẶC là từ Socket
         // ============================================================
-        // Nếu là request kiểm tra user (từ UserHome), bỏ qua check DB để tránh lỗi 401 làm sập Promise.all FE
-        if (!req.path.includes('/auth/me') && !req.originalUrl.includes('/auth/me')) {
+        // 1. Nếu là request kiểm tra user (UserHome), bỏ qua check DB
+        // 2. Nếu request có thuộc tính socket (tức là từ Socket.io), cũng bỏ qua check DB để tránh vòng lặp session expired
+        const isSocketRequest = req.socket && req.socket.remoteAddress;
+        const isAuthMeRoute = req.path.includes('/auth/me') || req.originalUrl.includes('/auth/me');
+
+        if (!isSocketRequest && !isAuthMeRoute) {
             const tokenHash = Jwt.hashRefreshToken(accessToken);
             const validToken = await RefreshTokenRepository.findValidTokenHash(tokenHash);
             
