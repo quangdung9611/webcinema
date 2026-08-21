@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api/api';
+import socketService from '../../api/socket'; // 🟢 THÊM: Import socket service
 import {
     ChevronDown,
     UserCircle,
@@ -28,6 +29,7 @@ const UserHeader = () => {
     // 🟢 THÊM: State cho modal session expired
     const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
     const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
+    const [newDevice, setNewDevice] = useState('');
 
     /* =====================================================
         REFS
@@ -50,11 +52,17 @@ const UserHeader = () => {
                 else if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) account = rawData;
                 
                 setUser(account);
+
+                // 🟢 Nếu có user, kết nối WebSocket
+                if (account) {
+                    // Lấy token từ cookie (không cần lấy ra vì HttpOnly)
+                    // Kết nối socket với user_id
+                    socketService.connect(account.user_id, account.user_id);
+                }
             } catch (error) {
                 console.error('Lỗi kiểm tra đăng nhập:', error);
                 setUser(null);
 
-                // ✅ CHỈ chuyển hướng nếu lỗi khác 401
                 if (error.response?.status !== 401) {
                     navigate('/login', { replace: true });
                 }
@@ -66,14 +74,18 @@ const UserHeader = () => {
     }, [navigate]);
 
     /* =====================================================
-        🟢 LẮNG NGHE SỰ KIỆN SESSION EXPIRED TỪ API INTERCEPTOR
+        🟢 LẮNG NGHE SỰ KIỆN SESSION EXPIRED
     ===================================================== */
     useEffect(() => {
         const handleSessionExpired = (event) => {
             console.log('🔴 [HEADER] Session expired:', event.detail);
             
-            const message = event.detail?.message || 'Tài khoản đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.';
+            const detail = event.detail || {};
+            const message = detail.message || 'Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.';
+            const device = detail.newDevice || '';
+            
             setSessionExpiredMessage(message);
+            setNewDevice(device);
             setShowSessionExpiredModal(true);
             
             // Xóa user state
@@ -93,6 +105,11 @@ const UserHeader = () => {
                     else if (rawData?.data?.user) account = rawData.data.user;
                     else if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) account = rawData;
                     setUser(account);
+                    
+                    // 🟢 Kết nối WebSocket sau khi login
+                    if (account) {
+                        socketService.connect(account.user_id, account.user_id);
+                    }
                 } catch (error) {
                     console.error('Lỗi fetch user sau login:', error);
                     setUser(null);
@@ -103,12 +120,30 @@ const UserHeader = () => {
             fetchUser();
         };
 
+        // 🟢 Lắng nghe sự kiện tokenInvalid
+        const handleTokenInvalid = (event) => {
+            console.log('🔴 [HEADER] Token invalid:', event.detail);
+            setUser(null);
+            socketService.disconnect();
+        };
+
+        // 🟢 Lắng nghe sự kiện unauthorized
+        const handleUnauthorized = (event) => {
+            console.log('🔴 [HEADER] Unauthorized:', event.detail);
+            setUser(null);
+            socketService.disconnect();
+        };
+
         window.addEventListener('sessionExpired', handleSessionExpired);
         window.addEventListener('userLoggedIn', handleUserLoggedIn);
+        window.addEventListener('tokenInvalid', handleTokenInvalid);
+        window.addEventListener('unauthorized', handleUnauthorized);
 
         return () => {
             window.removeEventListener('sessionExpired', handleSessionExpired);
             window.removeEventListener('userLoggedIn', handleUserLoggedIn);
+            window.removeEventListener('tokenInvalid', handleTokenInvalid);
+            window.removeEventListener('unauthorized', handleUnauthorized);
         };
     }, []);
 
@@ -167,6 +202,9 @@ const UserHeader = () => {
         } catch (error) {
             console.error('Lỗi khi logout:', error);
         } finally {
+            // 🟢 Ngắt kết nối WebSocket
+            socketService.disconnect();
+            
             setUser(null);
             setShowDropdown(false);
             window.dispatchEvent(new Event('userLoggedIn')); 
@@ -181,6 +219,11 @@ const UserHeader = () => {
         console.log('🔴 [HEADER] User xác nhận đăng nhập lại');
         setShowSessionExpiredModal(false);
         setSessionExpiredMessage('');
+        setNewDevice('');
+        
+        // Ngắt kết nối WebSocket
+        socketService.disconnect();
+        
         navigate('/login', { replace: true, state: { expired: true } });
     };
 
@@ -318,15 +361,19 @@ const UserHeader = () => {
                 </div>
             </nav>
 
-            {/* 🟢 MODAL SESSION EXPIRED - CHO HEADER */}
+            {/* 🟢 MODAL SESSION EXPIRED */}
             {showSessionExpiredModal && (
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <div className="modal-icon">🔐</div>
                         <h2>Phiên đăng nhập đã hết hạn</h2>
-                        <p>{sessionExpiredMessage}</p>
+                        <p className="message">{sessionExpiredMessage}</p>
+                        {newDevice && (
+                            <div className="device-info">
+                                <span>📱 Thiết bị mới: <strong>{newDevice}</strong></span>
+                            </div>
+                        )}
                         <p className="warning">
-                            Tài khoản của bạn đã được đăng nhập trên thiết bị khác.
                             Để đảm bảo an toàn, vui lòng đăng nhập lại.
                         </p>
                         <button 

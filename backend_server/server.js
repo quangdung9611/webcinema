@@ -72,9 +72,7 @@ const blogCinemaRoutes = require("./Routers/BlogCinemaRouter");
 const forgotPasswordRoutes = require("./Routers/ForgotPassRouter");
 const testimonialRoutes = require('./Routers/TestimonialRouter');
 
-// =============================================================
-// 🔥 BANNER ROUTER – THÊM MỚI
-// =============================================================
+// BANNER ROUTER
 const bannerRoutes = require("./Routers/BannerRouter");
 
 // ADMIN API - DASHBOARD
@@ -116,7 +114,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 /*=========================================================
-    SOCKET.IO
+    SOCKET.IO - ĐÃ SỬA: THÊM MIDDLEWARE AUTH
 =========================================================*/
 
 const io = new Server(server, {
@@ -124,12 +122,69 @@ const io = new Server(server, {
     transports: ["websocket", "polling"]
 });
 
+// 🟢 Lưu io vào app để các service có thể dùng
+app.set('io', io);
+
+// ============================================================
+// 🟢 THÊM: MIDDLEWARE XÁC THỰC SOCKET
+// ============================================================
+const Jwt = require("./utils/Jwt");
+
+io.use((socket, next) => {
+    try {
+        // Lấy token từ handshake auth
+        const token = socket.handshake.auth.token;
+        
+        if (!token) {
+            console.warn('🔴 [SOCKET] Không có token, từ chối kết nối');
+            return next(new Error('Authentication required'));
+        }
+        
+        // Verify token
+        const payload = Jwt.verifyAccessToken(token);
+        if (!payload) {
+            console.warn('🔴 [SOCKET] Token không hợp lệ');
+            return next(new Error('Invalid token'));
+        }
+        
+        // Lưu user info vào socket
+        socket.userId = payload.user_id;
+        socket.userRole = payload.role;
+        
+        console.log(`🟢 [SOCKET] Xác thực thành công: user ${socket.userId}`);
+        next();
+    } catch (error) {
+        console.error('❌ [SOCKET] Lỗi xác thực:', error.message);
+        next(new Error('Authentication error'));
+    }
+});
+
+// ============================================================
+// 🟢 BIẾN LƯU GHẾ ĐANG GIỮ
+// ============================================================
 let holdingSeats = [];
 
+// ============================================================
+// 🟢 XỬ LÝ KẾT NỐI SOCKET - ĐÃ SỬA
+// ============================================================
 io.on("connection", (socket) => {
-    console.log("⚡ Socket connected:", socket.id);
+    const userId = socket.userId;
+    console.log(`⚡ Socket connected: ${socket.id}, User: ${userId}`);
+
+    // 🟢 THAM GIA ROOM RIÊNG CỦA USER
+    if (userId) {
+        socket.join(`user_${userId}`);
+        console.log(`📌 [SOCKET] User ${userId} joined room: user_${userId}`);
+    }
+
+    // ============================================================
+    // EVENT: SERVER GỬI DANH SÁCH GHẾ ĐANG GIỮ
+    // ============================================================
     socket.emit("server-gui-danh-sach-dang-giu", holdingSeats);
 
+    // ============================================================
+    // EVENT: CLIENT CHỌN GHẾ
+    // ============================================================
     socket.on("client-chon-ghe", (data) => {
         holdingSeats = holdingSeats.filter(
             seat => !(Number(seat.seatId) === Number(data.seatId) && 
@@ -139,6 +194,9 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("server-khoa-ghe", data);
     });
 
+    // ============================================================
+    // EVENT: CLIENT HỦY CHỌN GHẾ
+    // ============================================================
     socket.on("client-huy-chon-ghe", (data) => {
         holdingSeats = holdingSeats.filter(
             seat => !(Number(seat.seatId) === Number(data.seatId) && 
@@ -147,7 +205,27 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("server-mo-khoa-ghe", data);
     });
 
+    // ============================================================
+    // 🟢 THÊM: EVENT CLIENT XÁC NHẬN ĐÃ NHẬN SESSION_EXPIRED
+    // ============================================================
+    socket.on("session_expired_ack", (data) => {
+        console.log(`📥 [SOCKET] User ${userId} đã xác nhận session_expired:`, data);
+    });
+
+    // ============================================================
+    // 🟢 THÊM: EVENT PING GIỮ KẾT NỐI
+    // ============================================================
+    socket.on("ping", (callback) => {
+        if (typeof callback === 'function') {
+            callback({ status: 'pong', timestamp: new Date().toISOString() });
+        }
+    });
+
+    // ============================================================
+    // XỬ LÝ NGẮT KẾT NỐI
+    // ============================================================
     socket.on("disconnect", () => {
+        // Xử lý ghế đang giữ
         const releasedSeats = holdingSeats.filter(seat => seat.socketId === socket.id);
         releasedSeats.forEach(seat => {
             socket.broadcast.emit("server-mo-khoa-ghe", {
@@ -156,19 +234,60 @@ io.on("connection", (socket) => {
             });
         });
         holdingSeats = holdingSeats.filter(seat => seat.socketId !== socket.id);
+        
+        // Rời khỏi room user
+        if (userId) {
+            socket.leave(`user_${userId}`);
+            console.log(`🔴 [SOCKET] User ${userId} left room`);
+        }
+        
+        console.log(`🔴 [SOCKET] Client disconnected: ${socket.id}`);
+    });
+
+    // ============================================================
+    // XỬ LÝ LỖI
+    // ============================================================
+    socket.on("error", (error) => {
+        console.error(`❌ [SOCKET] Error from ${socket.id}:`, error);
     });
 });
 
+// ============================================================
+// 🟢 THÊM: HÀM GỬI SESSION EXPIRED QUA WEBSOCKET
+// ============================================================
+const sendSessionExpired = (io, userId, newDeviceInfo) => {
+    try {
+        if (!io) {
+            console.warn('⚠️ [WEBSOCKET] io chưa được khởi tạo');
+            return false;
+        }
+        
+        // Gửi event đến room của user đó
+        io.to(`user_${userId}`).emit('session_expired', {
+            type: 'session_expired',
+            message: 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác',
+            newDevice: newDeviceInfo || 'Unknown Device',
+            timestamp: new Date().toISOString(),
+            requiresReLogin: true
+        });
+        
+        console.log(`📤 [WEBSOCKET] Đã gửi session_expired đến user ${userId}`);
+        return true;
+    } catch (error) {
+        console.error('❌ [WEBSOCKET] Lỗi gửi session_expired:', error.message);
+        return false;
+    }
+};
+
 /*=========================================================
-    API ROUTES
+    API ROUTES (GIỮ NGUYÊN)
 =========================================================*/
 
-// ✅ ROOT ROUTE (CHỈ 1 LẦN)
+// ROOT ROUTE
 app.get("/", (req, res) => {
     res.send("🚀 Cinema Backend is flying!");
 });
 
-// API Routes
 app.get("/api", (req, res) => {
     res.send("🚀 Cinema Backend is flying!");
 });
@@ -222,9 +341,6 @@ app.use("/api/promotions", promotionRoutes);
 app.use("/api/blog-cinema", blogCinemaRoutes);
 app.use("/api/forgot-password", forgotPasswordRoutes);
 app.use('/api/testimonials', testimonialRoutes);
-// =============================================================
-// 🔥 BANNER API – THÊM MỚI
-// =============================================================
 app.use("/api/banners", bannerRoutes);
 
 // ADMIN API - DASHBOARD
@@ -279,4 +395,4 @@ server.listen(PORT, "0.0.0.0", async () => {
     EXPORT
 =========================================================*/
 
-module.exports = { app, server, io };
+module.exports = { app, server, io, sendSessionExpired };

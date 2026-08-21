@@ -1,4 +1,5 @@
 import axios from 'axios';
+import socketService from './socket'; // 🟢 THÊM: Import socket service
 
 const API_BASE = 'https://api.quangdungcinema.id.vn';
 
@@ -29,16 +30,21 @@ api.interceptors.response.use(
             if (errorCode === 'SESSION_EXPIRED') {
                 console.warn('🔴 [SESSION_EXPIRED] Tài khoản đã đăng nhập trên thiết bị khác!');
 
+                // 🟢 Ngắt kết nối WebSocket
+                socketService.disconnect();
+
                 // Xóa token trong localStorage (nếu có lưu)
                 localStorage.removeItem('user_info');
                 localStorage.removeItem('admin_info');
+                localStorage.removeItem('access_token');
 
                 // Dispatch event để các component bắt và hiển thị modal
                 window.dispatchEvent(new CustomEvent('sessionExpired', {
                     detail: {
                         code: 'SESSION_EXPIRED',
                         message: errorMessage,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        fromAPI: true // Đánh dấu là từ API
                     }
                 }));
 
@@ -49,8 +55,10 @@ api.interceptors.response.use(
             else if (errorCode === 'TOKEN_INVALID') {
                 console.warn('🔴 [TOKEN_INVALID] Token không hợp lệ, xóa cookie...');
 
+                socketService.disconnect();
                 localStorage.removeItem('user_info');
                 localStorage.removeItem('admin_info');
+                localStorage.removeItem('access_token');
 
                 window.dispatchEvent(new CustomEvent('tokenInvalid', {
                     detail: {
@@ -63,6 +71,8 @@ api.interceptors.response.use(
             // 3. UNAUTHORIZED - Chưa đăng nhập
             else if (errorCode === 'UNAUTHORIZED') {
                 console.warn('🔴 [UNAUTHORIZED] Vui lòng đăng nhập');
+
+                socketService.disconnect();
 
                 window.dispatchEvent(new CustomEvent('unauthorized', {
                     detail: {

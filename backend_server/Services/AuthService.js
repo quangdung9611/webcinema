@@ -14,6 +14,11 @@ const OtpRepository = require("../Repositories/OtpRepository");
 const MailService = require("./MailServiceTicket");
 const RedisService = require("./RedisService");
 
+// ============================================================
+// 🟢 THÊM: IMPORT HÀM GỬI WEBSOCKET TỪ SERVER
+// ============================================================
+const { sendSessionExpired } = require("../server");
+
 /*=========================================================
     REGEX
 =========================================================*/
@@ -173,7 +178,7 @@ exports.register = async (userData) => {
 };
 
 /*=========================================================
-    LOGIN (CHÍNH) - ĐÃ SỬA: THÊM REVOKE TOKEN CŨ
+    LOGIN (CHÍNH) - ĐÃ SỬA: THÊM REVOKE TOKEN CŨ + WEBSOCKET
 =========================================================*/
 
 exports.login = async (email, password, rememberMe = false, req, res) => {
@@ -197,7 +202,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
     }
 
-    // ========== 🟢 THÊM MỚI: REVOKE TẤT CẢ TOKEN CŨ ==========
+    // ========== REVOKE TẤT CẢ TOKEN CŨ ==========
     // Đá thiết bị cũ ra khỏi hệ thống
     const revokedCount = await RefreshTokenRepository.revokeByUser(
         user.user_id,
@@ -206,8 +211,20 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
 
     if (revokedCount > 0) {
         console.log(`🔴 [REVOKE] Đã kick ${revokedCount} thiết bị cũ của user: ${user.user_id} - ${user.email}`);
+        
+        // ========== 🟢 GỬI THÔNG BÁO QUA WEBSOCKET ==========
+        try {
+            const io = req.app.get('io');
+            const newDeviceInfo = req.headers?.['user-agent']?.substring(0, 100) || 'Unknown Device';
+            
+            // Gọi hàm gửi thông báo đến thiết bị cũ
+            sendSessionExpired(io, user.user_id, newDeviceInfo);
+        } catch (wsError) {
+            console.error('❌ [WEBSOCKET] Lỗi gửi thông báo:', wsError.message);
+            // Không throw lỗi, vẫn cho login thành công
+        }
+        // ========== KẾT THÚC ==========
     }
-    // ========== KẾT THÚC ==========
 
     // 5. Generate token và set cookie
     generateAndSetTokens(user, res, rememberMe);
