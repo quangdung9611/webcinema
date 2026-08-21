@@ -178,8 +178,13 @@ io.use(async (socket, next) => {
         const validToken = await RefreshTokenRepository.findValidTokenHash(tokenHash);
         
         if (!validToken) {
-            console.warn(`🔴 [SOCKET] Token revoked for user ${payload.user_id}`);
-            return next(new Error('SESSION_EXPIRED')); // Gửi lỗi đặc biệt
+            console.warn(`🔴 [SOCKET] Token revoked for user ${payload.user_id}. Rejecting permanently.`);
+            
+            // 🔥 QUAN TRỌNG: Ngắt kết nối socket ngay lập tức, không cho reconnect nữa
+            socket.disconnect(true);
+            
+            // Trả về lỗi để Socket.io từ chối kết nối hoàn toàn
+            return next(new Error('SESSION_EXPIRED'));
         }
         // ============================================================
         // KẾT THÚC SỬA
@@ -198,7 +203,7 @@ io.use(async (socket, next) => {
 });
 
 // ============================================================
-// 🔥 SOCKET CONNECTION HANDLER - ĐÃ THÊM REGISTER_SOCKET
+// 🔥 SOCKET CONNECTION HANDLER - ĐÃ SỬA (Thêm kiểm tra user trước khi lưu Redis)
 // ============================================================
 
 let holdingSeats = [];
@@ -211,7 +216,8 @@ io.on("connection", async (socket) => {
     // ============================================================
     socket.on("register_socket", async (data) => {
         const { userId } = data;
-        if (userId) {
+        // 🔥 CHỈ lưu vào Redis NẾU userId khớp với socket.userId (tránh lưu nhầm)
+        if (userId && Number(userId) === Number(socket.userId)) {
             try {
                 await RedisService.saveUserSocket(userId, socket.id);
                 console.log(`✅ [SOCKET] Registered socket ${socket.id} for user ${userId}`);
@@ -223,6 +229,8 @@ io.on("connection", async (socket) => {
             } catch (error) {
                 console.error(`❌ [SOCKET] Failed to register socket:`, error.message);
             }
+        } else {
+            console.warn(`⚠️ [SOCKET] User ${socket.userId} attempted to register as ${userId}. Blocked.`);
         }
     });
 
