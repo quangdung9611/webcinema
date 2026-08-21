@@ -1,42 +1,66 @@
+// ============================================================
+// SOCKET SERVICE
+// JWT AUTHENTICATION VIA HTTPONLY COOKIE
+// ============================================================
+
 import { io } from 'socket.io-client';
+
+
+// ============================================================
+// CONFIG
+// ============================================================
 
 const SOCKET_URL = 'https://api.quangdungcinema.id.vn';
 
+
+// ============================================================
+// SOCKET SERVICE CLASS
+// ============================================================
+
 class SocketService {
+
     constructor() {
         this.socket = null;
         this.isConnected = false;
         this.userId = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
-        this.token = null;
+        this.eventListeners = new Map(); // Lưu listeners để cleanup
     }
 
-    /**
-     * Kết nối WebSocket với token
-     * @param {string} token - Access token (lấy từ cookie hoặc state)
-     * @param {string|number} userId - User ID
-     */
-    connect(token, userId) {
-        // Nếu đã kết nối và cùng user + token, không làm gì
-        if (this.socket && this.isConnected && this.userId === userId && this.token === token) {
+
+    // ============================================================
+    // CONNECT SOCKET
+    // ============================================================
+
+    connect(userId) {
+        // Nếu đã kết nối với đúng user
+        if (
+            this.socket &&
+            this.socket.connected &&
+            String(this.userId) === String(userId)
+        ) {
             console.log('🟢 [SOCKET] Đã kết nối sẵn với user:', userId);
             return this.socket;
         }
 
-        // Ngắt kết nối cũ nếu có
+        // Nếu đang có socket cũ thì ngắt
         if (this.socket) {
+            console.log('🟡 [SOCKET] Phát hiện socket cũ, tiến hành ngắt...');
             this.disconnect();
         }
 
-        console.log('🔄 [SOCKET] Đang kết nối với user:', userId);
+        // Lưu user hiện tại
         this.userId = userId;
-        this.token = token;
+        console.log('🔄 [SOCKET] Đang kết nối với user:', userId);
+
+        // ========================================================
+        // CREATE SOCKET
+        // ========================================================
 
         this.socket = io(SOCKET_URL, {
-            auth: { token: token },
-            transports: ['websocket', 'polling'],
             withCredentials: true,
+            transports: ['websocket', 'polling'],
             reconnection: true,
             reconnectionAttempts: this.maxReconnectAttempts,
             reconnectionDelay: 1000,
@@ -44,120 +68,299 @@ class SocketService {
             timeout: 10000
         });
 
-        // ============================================================
-        // LẮNG NGHE CÁC SỰ KIỆN
-        // ============================================================
+        // ========================================================
+        // CONNECT SUCCESS
+        // ========================================================
 
-        // ✅ Kết nối thành công
         this.socket.on('connect', () => {
-            console.log(`🟢 [SOCKET] Kết nối thành công! User: ${this.userId}`);
+            console.log('🟢 [SOCKET] Kết nối thành công!');
+            console.log('👤 [SOCKET] User:', this.userId);
+            console.log('🔌 [SOCKET] Socket ID:', this.socket.id);
+
             this.isConnected = true;
             this.reconnectAttempts = 0;
 
-            // Dispatch event cho toàn app
-            window.dispatchEvent(new CustomEvent('socketConnected', {
-                detail: { userId: this.userId }
-            }));
+            window.dispatchEvent(
+                new CustomEvent('socketConnected', {
+                    detail: {
+                        userId: this.userId,
+                        socketId: this.socket.id
+                    }
+                })
+            );
         });
 
-        // ✅ Ngắt kết nối
+        // ========================================================
+        // DISCONNECT
+        // ========================================================
+
         this.socket.on('disconnect', (reason) => {
-            console.log(`🔴 [SOCKET] Ngắt kết nối: ${reason}`);
+            console.warn('🔴 [SOCKET] Đã ngắt kết nối');
+            console.warn('📌 [SOCKET] Lý do:', reason);
+
             this.isConnected = false;
+
+            window.dispatchEvent(
+                new CustomEvent('socketDisconnected', {
+                    detail: {
+                        userId: this.userId,
+                        reason
+                    }
+                })
+            );
         });
 
-        // ✅ Lỗi kết nối
+        // ========================================================
+        // CONNECT ERROR
+        // ========================================================
+
         this.socket.on('connect_error', (error) => {
             console.error('🔴 [SOCKET] Lỗi kết nối:', error.message);
+
+            this.isConnected = false;
             this.reconnectAttempts++;
 
+            // AUTH ERROR - Session expired
+            if (
+                error.message === 'Authentication required' ||
+                error.message === 'Unauthorized' ||
+                error.message === 'Invalid token' ||
+                error.message === 'Session expired - logged in on another device'
+            ) {
+                console.warn('🔐 [SOCKET] Lỗi xác thực Socket - Session expired');
+
+                // Dispatch event sessionExpired
+                window.dispatchEvent(
+                    new CustomEvent('sessionExpired', {
+                        detail: {
+                            code: 'SESSION_EXPIRED',
+                            message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                            timestamp: new Date().toISOString(),
+                            fromSocket: true
+                        }
+                    })
+                );
+
+                this.disconnect();
+            }
+
+            // TOO MANY RECONNECT ATTEMPTS
             if (this.reconnectAttempts >= this.maxReconnectAttempts) {
                 console.error('🔴 [SOCKET] Đã quá số lần thử kết nối');
                 this.disconnect();
             }
         });
 
-        // ============================================================
-        // 🟢 QUAN TRỌNG: LẮNG NGHE SESSION_EXPIRED TỪ SERVER
-        // ============================================================
-        this.socket.on('session_expired', (data) => {
-            console.log('🔴 [SOCKET] Nhận event session_expired:', data);
+        // ========================================================
+        // RECONNECT
+        // ========================================================
 
-            // Gửi ACK xác nhận đã nhận
-            this.socket.emit('session_expired_ack', {
-                received: true,
-                timestamp: new Date().toISOString()
-            });
-
-            // Dispatch event để component xử lý
-            window.dispatchEvent(new CustomEvent('sessionExpired', {
-                detail: {
-                    code: 'SESSION_EXPIRED',
-                    message: data.message || 'Tài khoản đã được đăng nhập trên thiết bị khác',
-                    newDevice: data.newDevice || 'Unknown Device',
-                    timestamp: data.timestamp || new Date().toISOString(),
-                    fromSocket: true // Đánh dấu là từ WebSocket
-                }
-            }));
-
-            // Tự động ngắt kết nối
-            this.disconnect();
+        this.socket.io.on('reconnect_attempt', (attemptNumber) => {
+            console.log(`🔄 [SOCKET] Đang thử kết nối lại lần ${attemptNumber}`);
         });
 
-        // ✅ Reconnect thành công
-        this.socket.on('reconnect', (attemptNumber) => {
-            console.log(`🔄 [SOCKET] Reconnect thành công lần ${attemptNumber}`);
+        this.socket.io.on('reconnect', (attemptNumber) => {
+            console.log(`🟢 [SOCKET] Reconnect thành công lần ${attemptNumber}`);
             this.isConnected = true;
+            this.reconnectAttempts = 0;
         });
 
-        this.socket.on('reconnect_failed', () => {
-            console.error('🔴 [SOCKET] Reconnect thất bại');
+        this.socket.io.on('reconnect_failed', () => {
+            console.error('🔴 [SOCKET] Reconnect thất bại hoàn toàn');
+            this.isConnected = false;
+        });
+
+        // ========================================================
+        // SESSION EXPIRED - User login on another device
+        // ========================================================
+
+        this.socket.on('session_expired', (data = {}) => {
+            console.warn('🔴 [SOCKET] SESSION EXPIRED - Bị đá khỏi thiết bị cũ!');
+            console.log('📨 [SOCKET] Data:', data);
+
+            // ACK SERVER
+            if (this.socket && this.socket.connected) {
+                this.socket.emit('session_expired_ack', {
+                    received: true,
+                    userId: this.userId,
+                    timestamp: new Date().toISOString()
+                });
+            }
+
+            // Dispatch event cho React
+            window.dispatchEvent(
+                new CustomEvent('sessionExpired', {
+                    detail: {
+                        code: 'SESSION_EXPIRED',
+                        message: data.message || 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
+                        newDevice: data.newDevice || null,
+                        timestamp: data.timestamp || new Date().toISOString(),
+                        fromSocket: true
+                    }
+                })
+            );
+
+            // Ngắt kết nối socket
             this.disconnect();
         });
+
+        // ========================================================
+        // FORCE LOGOUT - Admin logout from server
+        // ========================================================
+
+        this.socket.on('force_logout', (data = {}) => {
+            console.warn('🔴 [SOCKET] FORCE LOGOUT - Bị admin đăng xuất từ xa');
+
+            window.dispatchEvent(
+                new CustomEvent('sessionExpired', {
+                    detail: {
+                        code: 'FORCE_LOGOUT',
+                        message: data.message || 'Tài khoản của bạn đã bị đăng xuất từ xa.',
+                        timestamp: new Date().toISOString(),
+                        fromSocket: true
+                    }
+                })
+            );
+
+            this.disconnect();
+        });
+
+        // ========================================================
+        // KICK - Bị đá từ thiết bị khác (alias)
+        // ========================================================
+
+        this.socket.on('kicked', (data = {}) => {
+            console.warn('🔴 [SOCKET] KICKED - Bị đá từ thiết bị khác');
+
+            window.dispatchEvent(
+                new CustomEvent('sessionExpired', {
+                    detail: {
+                        code: 'SESSION_EXPIRED',
+                        message: data.message || 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
+                        timestamp: new Date().toISOString(),
+                        fromSocket: true
+                    }
+                })
+            );
+
+            this.disconnect();
+        });
+
+        // ========================================================
+        // RETURN SOCKET
+        // ========================================================
 
         return this.socket;
     }
 
-    /**
-     * Ngắt kết nối WebSocket
-     */
+
+    // ============================================================
+    // DISCONNECT
+    // ============================================================
+
     disconnect() {
-        if (this.socket) {
-            this.socket.disconnect();
-            this.socket = null;
-            this.isConnected = false;
-            this.userId = null;
-            this.token = null;
-            console.log('🔴 [SOCKET] Đã ngắt kết nối');
+        if (!this.socket) {
+            return;
         }
+
+        console.log('🔴 [SOCKET] Đang ngắt kết nối...');
+
+        // Remove all listeners
+        this.socket.removeAllListeners();
+
+        // Disconnect
+        this.socket.disconnect();
+
+        // Reset
+        this.socket = null;
+        this.isConnected = false;
+        this.userId = null;
+        this.reconnectAttempts = 0;
+
+        console.log('🔴 [SOCKET] Đã ngắt kết nối');
     }
 
-    /**
-     * Kiểm tra trạng thái kết nối
-     */
+
+    // ============================================================
+    // GET CONNECTION STATUS
+    // ============================================================
+
     isConnectedStatus() {
-        return this.isConnected && this.socket?.connected;
+        return Boolean(
+            this.socket &&
+            this.socket.connected &&
+            this.isConnected
+        );
     }
 
-    /**
-     * Lấy socket instance (dùng cho các chức năng khác như ghế)
-     */
+
+    // ============================================================
+    // GET SOCKET
+    // ============================================================
+
     getSocket() {
         return this.socket;
     }
 
-    /**
-     * Gửi event lên server
-     */
-    emit(event, data) {
-        if (this.socket && this.isConnected) {
-            this.socket.emit(event, data);
+
+    // ============================================================
+    // EMIT EVENT
+    // ============================================================
+
+    emit(event, data = {}) {
+        if (!this.socket || !this.socket.connected) {
+            console.warn(`⚠️ [SOCKET] Không thể emit "${event}" vì chưa kết nối`);
+            return false;
+        }
+
+        this.socket.emit(event, data);
+        return true;
+    }
+
+
+    // ============================================================
+    // GET SOCKET ID
+    // ============================================================
+
+    getSocketId() {
+        return this.socket?.id || null;
+    }
+
+
+    // ============================================================
+    // ON EVENT (wrapper)
+    // ============================================================
+
+    on(event, callback) {
+        if (!this.socket) {
+            console.warn(`⚠️ [SOCKET] Không thể đăng ký event "${event}" vì chưa kết nối`);
+            return;
+        }
+        this.socket.on(event, callback);
+    }
+
+
+    // ============================================================
+    // OFF EVENT (wrapper)
+    // ============================================================
+
+    off(event, callback) {
+        if (!this.socket) {
+            return;
+        }
+        if (callback) {
+            this.socket.off(event, callback);
         } else {
-            console.warn('⚠️ [SOCKET] Không thể gửi event, chưa kết nối');
+            this.socket.off(event);
         }
     }
+
 }
 
-// Export singleton
+
+// ============================================================
+// SINGLETON
+// ============================================================
+
 const socketService = new SocketService();
 export default socketService;

@@ -29,6 +29,12 @@ import {
 } from "./context/RouteLoadingContext";
 
 // ==========================================================
+// 🟢 THÊM: SOCKET SERVICE
+// ==========================================================
+
+import socketService from "./api/socket";
+
+// ==========================================================
 // GLOBAL CONFIG
 // ==========================================================
 
@@ -279,6 +285,131 @@ const ScrollToTop = () => {
 };
 
 // ==========================================================
+// 🟢 SESSION EXPIRED MODAL COMPONENT
+// ==========================================================
+
+const SessionExpiredModal = () => {
+    const [visible, setVisible] = useState(false);
+    const [message, setMessage] = useState('');
+    const [deviceInfo, setDeviceInfo] = useState(null);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const handleSessionExpired = (event) => {
+            const { message, newDevice, fromSocket, code } = event.detail || {};
+            
+            console.warn('🔴 [SESSION_EXPIRED]', event.detail);
+            
+            setMessage(message || 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.');
+            setDeviceInfo(newDevice || null);
+            setVisible(true);
+
+            // Xóa token và thông tin user
+            localStorage.removeItem('user_info');
+            localStorage.removeItem('admin_info');
+            localStorage.removeItem('access_token');
+
+            // Ngắt kết nối socket
+            socketService.disconnect();
+        };
+
+        // Lắng nghe từ API interceptor và socket
+        window.addEventListener('sessionExpired', handleSessionExpired);
+        window.addEventListener('socketAuthError', handleSessionExpired);
+
+        return () => {
+            window.removeEventListener('sessionExpired', handleSessionExpired);
+            window.removeEventListener('socketAuthError', handleSessionExpired);
+        };
+    }, []);
+
+    const handleOk = () => {
+        setVisible(false);
+        // Redirect về trang login
+        navigate('/login', { replace: true });
+        window.location.reload();
+    };
+
+    if (!visible) return null;
+
+    return (
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 99999,
+            backdropFilter: 'blur(4px)'
+        }}>
+            <div style={{
+                background: 'white',
+                padding: '32px 40px',
+                borderRadius: '12px',
+                maxWidth: '480px',
+                width: '90%',
+                textAlign: 'center',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                animation: 'modalFadeIn 0.3s ease'
+            }}>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>⚠️</div>
+                <h2 style={{ color: '#dc2626', marginBottom: '12px', fontSize: '24px' }}>
+                    Phiên đăng nhập đã hết hạn
+                </h2>
+                <p style={{ color: '#374151', fontSize: '16px', lineHeight: '1.6', marginBottom: '16px' }}>
+                    {message}
+                </p>
+                
+                {deviceInfo && (
+                    <div style={{
+                        background: '#f3f4f6',
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        marginBottom: '16px',
+                        textAlign: 'left',
+                        fontSize: '14px'
+                    }}>
+                        <p style={{ margin: '4px 0', color: '#6b7280' }}>
+                            <strong>📱 IP:</strong> {deviceInfo.ip || 'Không xác định'}
+                        </p>
+                        <p style={{ margin: '4px 0', color: '#6b7280' }}>
+                            <strong>🖥️ Thiết bị:</strong> {deviceInfo.userAgent || 'Không xác định'}
+                        </p>
+                    </div>
+                )}
+
+                <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '20px' }}>
+                    💡 Vui lòng đăng nhập lại để tiếp tục sử dụng dịch vụ.
+                </p>
+
+                <button
+                    onClick={handleOk}
+                    style={{
+                        background: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        padding: '12px 40px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        transition: 'background 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.background = '#b91c1c'}
+                    onMouseLeave={(e) => e.target.style.background = '#dc2626'}
+                >
+                    Đăng nhập lại
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// ==========================================================
 // APP CONTENT
 // ==========================================================
 
@@ -288,6 +419,37 @@ function AppContent() {
     const isAdminDomain = hostname === "admin.quangdungcinema.id.vn";
     const navigate = useNavigate();
 
+    // ==========================================================
+    // 🟢 KẾT NỐI SOCKET KHI APP LOAD
+    // ==========================================================
+    useEffect(() => {
+        const connectSocket = () => {
+            // Lấy thông tin user từ localStorage
+            const userInfo = localStorage.getItem('user_info');
+            if (userInfo) {
+                try {
+                    const user = JSON.parse(userInfo);
+                    if (user?.user_id) {
+                        console.log('🔄 [APP] Connecting socket for user:', user.user_id);
+                        socketService.connect(user.user_id);
+                    }
+                } catch (e) {
+                    console.error('Error parsing user info:', e);
+                }
+            }
+        };
+
+        connectSocket();
+
+        // Cleanup khi unmount
+        return () => {
+            socketService.disconnect();
+        };
+    }, []);
+
+    // ==========================================================
+    // XỬ LÝ UNAUTHORIZED
+    // ==========================================================
     useEffect(() => {
         const handleUnauthorized = () => {
             if (!window.location.pathname.includes('/login')) {
@@ -307,6 +469,9 @@ function AppContent() {
             )}
             <div className="app-wrapper">
                 <ScrollToTop />
+                
+                {/* 🟢 THÊM SESSION EXPIRED MODAL */}
+                <SessionExpiredModal />
 
                 <LazyErrorBoundary>
                     <Suspense fallback={<SuspenseLoading />}>

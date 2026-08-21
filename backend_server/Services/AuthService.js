@@ -14,10 +14,16 @@ const OtpRepository = require("../Repositories/OtpRepository");
 const MailService = require("./MailServiceTicket");
 const RedisService = require("./RedisService");
 
-// ============================================================
-// 🟢 THÊM: IMPORT HÀM GỬI WEBSOCKET TỪ SERVER
-// ============================================================
-const { sendSessionExpired } = require("../server");
+/*=========================================================
+    🔥 THÊM: LƯU IO INSTANCE ĐỂ EMIT SOCKET
+=========================================================*/
+
+let ioInstance = null;
+
+const setIO = (io) => {
+    ioInstance = io;
+    console.log('✅ [AUTH] Socket.IO instance set successfully');
+};
 
 /*=========================================================
     REGEX
@@ -178,7 +184,7 @@ exports.register = async (userData) => {
 };
 
 /*=========================================================
-    LOGIN (CHÍNH) - ĐÃ SỬA: THÊM REVOKE TOKEN CŨ + WEBSOCKET
+    LOGIN (CHÍNH) - ĐÃ SỬA: THÊM REVOKE TOKEN CŨ + EMIT SOCKET
 =========================================================*/
 
 exports.login = async (email, password, rememberMe = false, req, res) => {
@@ -202,8 +208,14 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
     }
 
-    // ========== REVOKE TẤT CẢ TOKEN CŨ ==========
-    // Đá thiết bị cũ ra khỏi hệ thống
+    // ============================================================
+    // 🔥 REVOKE TẤT CẢ TOKEN CŨ + EMIT SOCKET ĐẾN THIẾT BỊ CŨ
+    // ============================================================
+    
+    // Lấy socketId cũ trước khi revoke
+    const oldSocketId = await RedisService.getUserSocket(user.user_id);
+    
+    // Revoke tất cả token cũ
     const revokedCount = await RefreshTokenRepository.revokeByUser(
         user.user_id,
         "Đăng nhập từ thiết bị khác"
@@ -211,20 +223,43 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
 
     if (revokedCount > 0) {
         console.log(`🔴 [REVOKE] Đã kick ${revokedCount} thiết bị cũ của user: ${user.user_id} - ${user.email}`);
-        
-        // ========== 🟢 GỬI THÔNG BÁO QUA WEBSOCKET ==========
-        try {
-            const io = req.app.get('io');
-            const newDeviceInfo = req.headers?.['user-agent']?.substring(0, 100) || 'Unknown Device';
-            
-            // Gọi hàm gửi thông báo đến thiết bị cũ
-            sendSessionExpired(io, user.user_id, newDeviceInfo);
-        } catch (wsError) {
-            console.error('❌ [WEBSOCKET] Lỗi gửi thông báo:', wsError.message);
-            // Không throw lỗi, vẫn cho login thành công
-        }
-        // ========== KẾT THÚC ==========
     }
+
+    // ============================================================
+    // 🟢 EMIT SOCKET EVENT ĐẾN THIẾT BỊ CŨ
+    // ============================================================
+    if (oldSocketId && ioInstance) {
+        try {
+            console.log(`📤 [SOCKET] Đang gửi session_expired đến socket: ${oldSocketId}`);
+            
+            ioInstance.to(oldSocketId).emit('session_expired', {
+                message: 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác',
+                timestamp: new Date().toISOString(),
+                newDevice: {
+                    ip: req.ip || req.connection?.remoteAddress || 'Unknown',
+                    userAgent: req.headers?.['user-agent']?.substring(0, 100) || 'Unknown'
+                }
+            });
+            
+            console.log(`✅ [SOCKET] Đã gửi session_expired đến thiết bị cũ: ${oldSocketId}`);
+            
+            // Xóa socketId cũ khỏi Redis
+            await RedisService.deleteUserSocket(user.user_id);
+            
+        } catch (error) {
+            console.error(`❌ [SOCKET] Lỗi khi gửi session_expired:`, error.message);
+        }
+    } else {
+        if (!oldSocketId) {
+            console.log(`ℹ️ [SOCKET] User ${user.user_id} không có socket cũ để gửi`);
+        }
+        if (!ioInstance) {
+            console.warn(`⚠️ [SOCKET] ioInstance chưa được set, không thể emit socket`);
+        }
+    }
+    // ============================================================
+    // KẾT THÚC EMIT SOCKET
+    // ============================================================
 
     // 5. Generate token và set cookie
     generateAndSetTokens(user, res, rememberMe);
@@ -301,6 +336,16 @@ exports.logout = async (req, res) => {
         await RefreshTokenRepository.revoke(tokenHash, "Đăng xuất");
     }
 
+    // Xóa socketId khỏi Redis
+    try {
+        if (req.user?.user_id) {
+            await RedisService.deleteUserSocket(req.user.user_id);
+            console.log(`🗑️ [LOGOUT] Đã xóa socket của user ${req.user.user_id}`);
+        }
+    } catch (error) {
+        console.error(`❌ [LOGOUT] Lỗi khi xóa socket:`, error.message);
+    }
+
     return {
         success: true,
         message: "Đăng xuất thành công"
@@ -315,6 +360,14 @@ exports.logoutAllDevices = async (userId, res) => {
     // Revoke tất cả token của user
     await RefreshTokenRepository.revokeByUser(userId, "Đăng xuất tất cả thiết bị");
 
+    // Xóa socketId khỏi Redis
+    try {
+        await RedisService.deleteUserSocket(userId);
+        console.log(`🗑️ [LOGOUT_ALL] Đã xóa socket của user ${userId}`);
+    } catch (error) {
+        console.error(`❌ [LOGOUT_ALL] Lỗi khi xóa socket:`, error.message);
+    }
+
     // Xóa tất cả cookie
     Cookie.clearAllCookies(res);
 
@@ -325,7 +378,7 @@ exports.logoutAllDevices = async (userId, res) => {
 };
 
 /*=========================================================
-    🟢 THÊM MỚI: LẤY DANH SÁCH THIẾT BỊ ĐANG ĐĂNG NHẬP
+    LẤY DANH SÁCH THIẾT BỊ ĐANG ĐĂNG NHẬP
 =========================================================*/
 
 exports.getActiveDevices = async (userId) => {
@@ -350,7 +403,7 @@ exports.getActiveDevices = async (userId) => {
 };
 
 /*=========================================================
-    🟢 THÊM MỚI: REVOKE 1 THIẾT BỊ CỤ THỂ
+    REVOKE 1 THIẾT BỊ CỤ THỂ
 =========================================================*/
 
 exports.revokeDeviceById = async (userId, tokenId) => {
@@ -420,6 +473,14 @@ exports.changePassword = async (userId, passwordData) => {
 
     // Revoke all tokens sau khi đổi mật khẩu
     await RefreshTokenRepository.revokeByUser(userId, "Đổi mật khẩu");
+
+    // Xóa socketId khỏi Redis
+    try {
+        await RedisService.deleteUserSocket(userId);
+        console.log(`🗑️ [CHANGE_PASSWORD] Đã xóa socket của user ${userId}`);
+    } catch (error) {
+        console.error(`❌ [CHANGE_PASSWORD] Lỗi khi xóa socket:`, error.message);
+    }
 
     return {
         success: true,
@@ -588,6 +649,14 @@ exports.resetPassword = async (resetToken, newPassword) => {
     // Revoke all tokens sau khi reset password
     await RefreshTokenRepository.revokeByUser(user.user_id, "Đặt lại mật khẩu");
 
+    // Xóa socketId khỏi Redis
+    try {
+        await RedisService.deleteUserSocket(user.user_id);
+        console.log(`🗑️ [RESET_PASSWORD] Đã xóa socket của user ${user.user_id}`);
+    } catch (error) {
+        console.error(`❌ [RESET_PASSWORD] Lỗi khi xóa socket:`, error.message);
+    }
+
     // Log
     await OtpRepository.create({
         email: user.email,
@@ -670,3 +739,9 @@ exports.verifyEmail = async (verifyToken) => {
         message: "Xác thực email thành công"
     };
 };
+
+/*=========================================================
+    🟢 EXPORT setIO ĐỂ SET SOCKET.IO INSTANCE
+=========================================================*/
+
+exports.setIO = setIO;

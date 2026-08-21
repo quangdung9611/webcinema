@@ -22,6 +22,13 @@ const db = require("./Config/db");
 const RedisService = require("./Services/RedisService");
 
 /*=========================================================
+    JWT & COOKIE (CHO SOCKET AUTH)
+=========================================================*/
+
+const Jwt = require("./utils/Jwt");
+const RefreshTokenRepository = require("./Repositories/RefreshTokenRepository");
+
+/*=========================================================
     MAILER
 =========================================================*/
 
@@ -71,8 +78,6 @@ const promotionRoutes = require("./Routers/PromotionRouter");
 const blogCinemaRoutes = require("./Routers/BlogCinemaRouter");
 const forgotPasswordRoutes = require("./Routers/ForgotPassRouter");
 const testimonialRoutes = require('./Routers/TestimonialRouter');
-
-// BANNER ROUTER
 const bannerRoutes = require("./Routers/BannerRouter");
 
 // ADMIN API - DASHBOARD
@@ -114,7 +119,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 /*=========================================================
-    SOCKET.IO - ĐÃ SỬA: THÊM MIDDLEWARE AUTH
+    SOCKET.IO WITH AUTHENTICATION
 =========================================================*/
 
 const io = new Server(server, {
@@ -122,69 +127,87 @@ const io = new Server(server, {
     transports: ["websocket", "polling"]
 });
 
-// 🟢 Lưu io vào app để các service có thể dùng
-app.set('io', io);
-
 // ============================================================
-// 🟢 THÊM: MIDDLEWARE XÁC THỰC SOCKET
+// 🔥 SOCKET AUTHENTICATION MIDDLEWARE
 // ============================================================
-const Jwt = require("./utils/Jwt");
 
-io.use((socket, next) => {
+io.use(async (socket, next) => {
     try {
-        // Lấy token từ handshake auth
-        const token = socket.handshake.auth.token;
-        
-        if (!token) {
-            console.warn('🔴 [SOCKET] Không có token, từ chối kết nối');
+        // Lấy cookie từ handshake
+        const cookieHeader = socket.handshake.headers.cookie;
+        if (!cookieHeader) {
+            console.warn('🔴 [SOCKET] No cookie found');
             return next(new Error('Authentication required'));
         }
+
+        // Parse cookie
+        const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+            const [key, value] = cookie.trim().split('=');
+            acc[key] = value;
+            return acc;
+        }, {});
+
+        // Lấy token (ưu tiên user_token)
+        let token = cookies['user_token'] || cookies['admin_token'];
         
+        if (!token) {
+            console.warn('🔴 [SOCKET] No token found in cookies');
+            return next(new Error('Authentication required'));
+        }
+
         // Verify token
         const payload = Jwt.verifyAccessToken(token);
         if (!payload) {
-            console.warn('🔴 [SOCKET] Token không hợp lệ');
+            console.warn('🔴 [SOCKET] Invalid token');
             return next(new Error('Invalid token'));
         }
+
+        // ========== 🔥 KIỂM TRA TOKEN CÓ BỊ REVOKE KHÔNG ==========
+        const activeTokens = await RefreshTokenRepository.getActiveByUser(payload.user_id);
         
-        // Lưu user info vào socket
+        if (activeTokens.length === 0) {
+            console.warn(`🔴 [SOCKET] User ${payload.user_id} has no active tokens - kicked from another device`);
+            return next(new Error('Session expired - logged in on another device'));
+        }
+        // ========== KẾT THÚC ==========
+
+        // Lưu user vào socket
         socket.userId = payload.user_id;
         socket.userRole = payload.role;
-        
-        console.log(`🟢 [SOCKET] Xác thực thành công: user ${socket.userId}`);
+        socket.userEmail = payload.email;
+
+        console.log(`✅ [SOCKET] Authenticated: User ${payload.user_id} - ${payload.email}`);
+
         next();
     } catch (error) {
-        console.error('❌ [SOCKET] Lỗi xác thực:', error.message);
-        next(new Error('Authentication error'));
+        console.error('🔴 [SOCKET] Auth error:', error.message);
+        next(new Error('Authentication failed'));
     }
 });
 
 // ============================================================
-// 🟢 BIẾN LƯU GHẾ ĐANG GIỮ
+// 🔥 SOCKET CONNECTION HANDLER
 // ============================================================
+
 let holdingSeats = [];
 
-// ============================================================
-// 🟢 XỬ LÝ KẾT NỐI SOCKET - ĐÃ SỬA
-// ============================================================
-io.on("connection", (socket) => {
-    const userId = socket.userId;
-    console.log(`⚡ Socket connected: ${socket.id}, User: ${userId}`);
+io.on("connection", async (socket) => {
+    console.log(`⚡ Socket connected: ${socket.id} - User: ${socket.userId}`);
 
-    // 🟢 THAM GIA ROOM RIÊNG CỦA USER
-    if (userId) {
-        socket.join(`user_${userId}`);
-        console.log(`📌 [SOCKET] User ${userId} joined room: user_${userId}`);
+    // ========== LƯU SOCKET ID VÀO REDIS ==========
+    if (socket.userId) {
+        try {
+            await RedisService.saveUserSocket(socket.userId, socket.id);
+            console.log(`✅ [SOCKET] Saved socket ${socket.id} for user ${socket.userId}`);
+        } catch (error) {
+            console.error(`❌ [SOCKET] Failed to save socket for user ${socket.userId}:`, error.message);
+        }
     }
 
-    // ============================================================
-    // EVENT: SERVER GỬI DANH SÁCH GHẾ ĐANG GIỮ
-    // ============================================================
+    // Gửi danh sách ghế đang giữ
     socket.emit("server-gui-danh-sach-dang-giu", holdingSeats);
 
-    // ============================================================
-    // EVENT: CLIENT CHỌN GHẾ
-    // ============================================================
+    // Xử lý chọn ghế
     socket.on("client-chon-ghe", (data) => {
         holdingSeats = holdingSeats.filter(
             seat => !(Number(seat.seatId) === Number(data.seatId) && 
@@ -194,9 +217,7 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("server-khoa-ghe", data);
     });
 
-    // ============================================================
-    // EVENT: CLIENT HỦY CHỌN GHẾ
-    // ============================================================
+    // Xử lý hủy chọn ghế
     socket.on("client-huy-chon-ghe", (data) => {
         holdingSeats = holdingSeats.filter(
             seat => !(Number(seat.seatId) === Number(data.seatId) && 
@@ -206,26 +227,19 @@ io.on("connection", (socket) => {
     });
 
     // ============================================================
-    // 🟢 THÊM: EVENT CLIENT XÁC NHẬN ĐÃ NHẬN SESSION_EXPIRED
+    // 🟢 XỬ LÝ SESSION EXPIRED ACK TỪ CLIENT
     // ============================================================
     socket.on("session_expired_ack", (data) => {
-        console.log(`📥 [SOCKET] User ${userId} đã xác nhận session_expired:`, data);
+        console.log(`📨 [SOCKET] Received session_expired_ack from user ${socket.userId}:`, data);
     });
 
     // ============================================================
-    // 🟢 THÊM: EVENT PING GIỮ KẾT NỐI
-    // ============================================================
-    socket.on("ping", (callback) => {
-        if (typeof callback === 'function') {
-            callback({ status: 'pong', timestamp: new Date().toISOString() });
-        }
-    });
-
-    // ============================================================
-    // XỬ LÝ NGẮT KẾT NỐI
+    // 🟢 XỬ LÝ DISCONNECT
     // ============================================================
     socket.on("disconnect", () => {
-        // Xử lý ghế đang giữ
+        console.log(`🔴 Socket disconnected: ${socket.id} - User: ${socket.userId}`);
+
+        // Giải phóng ghế đang giữ
         const releasedSeats = holdingSeats.filter(seat => seat.socketId === socket.id);
         releasedSeats.forEach(seat => {
             socket.broadcast.emit("server-mo-khoa-ghe", {
@@ -234,56 +248,24 @@ io.on("connection", (socket) => {
             });
         });
         holdingSeats = holdingSeats.filter(seat => seat.socketId !== socket.id);
-        
-        // Rời khỏi room user
-        if (userId) {
-            socket.leave(`user_${userId}`);
-            console.log(`🔴 [SOCKET] User ${userId} left room`);
-        }
-        
-        console.log(`🔴 [SOCKET] Client disconnected: ${socket.id}`);
-    });
 
-    // ============================================================
-    // XỬ LÝ LỖI
-    // ============================================================
-    socket.on("error", (error) => {
-        console.error(`❌ [SOCKET] Error from ${socket.id}:`, error);
+        // Xóa socketId khỏi Redis
+        if (socket.userId) {
+            try {
+                RedisService.deleteUserSocket(socket.userId);
+                console.log(`🗑️ [SOCKET] Removed socket for user ${socket.userId}`);
+            } catch (error) {
+                console.error(`❌ [SOCKET] Failed to remove socket for user ${socket.userId}:`, error.message);
+            }
+        }
     });
 });
 
-// ============================================================
-// 🟢 THÊM: HÀM GỬI SESSION EXPIRED QUA WEBSOCKET
-// ============================================================
-const sendSessionExpired = (io, userId, newDeviceInfo) => {
-    try {
-        if (!io) {
-            console.warn('⚠️ [WEBSOCKET] io chưa được khởi tạo');
-            return false;
-        }
-        
-        // Gửi event đến room của user đó
-        io.to(`user_${userId}`).emit('session_expired', {
-            type: 'session_expired',
-            message: 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác',
-            newDevice: newDeviceInfo || 'Unknown Device',
-            timestamp: new Date().toISOString(),
-            requiresReLogin: true
-        });
-        
-        console.log(`📤 [WEBSOCKET] Đã gửi session_expired đến user ${userId}`);
-        return true;
-    } catch (error) {
-        console.error('❌ [WEBSOCKET] Lỗi gửi session_expired:', error.message);
-        return false;
-    }
-};
-
 /*=========================================================
-    API ROUTES (GIỮ NGUYÊN)
+    API ROUTES
 =========================================================*/
 
-// ROOT ROUTE
+// ✅ ROOT ROUTE
 app.get("/", (req, res) => {
     res.send("🚀 Cinema Backend is flying!");
 });
@@ -395,4 +377,4 @@ server.listen(PORT, "0.0.0.0", async () => {
     EXPORT
 =========================================================*/
 
-module.exports = { app, server, io, sendSessionExpired };
+module.exports = { app, server, io };
