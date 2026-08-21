@@ -43,8 +43,7 @@ import LoadingSpinner from "./user_frontend/components/LoadingSpinner";
 // ==========================================================
 // SOCKET SERVICE
 // ==========================================================
-
-import socketService from "./user_frontend/services/SocketService"; // Nếu nằm ở user_frontend/services/
+import socketService from "./api/socket";
 
 // ==========================================================
 // LAYOUT

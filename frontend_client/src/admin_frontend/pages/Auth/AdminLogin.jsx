@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../../api/api';
-import socketService from '../../../api/socket'; // 🟢 THÊM: Import socket service
+import socketService from '../../../api/socket';
 
 import {
     ShieldCheck,
@@ -17,7 +17,7 @@ import {
 
 import Modal from '../../components/AdminModal';
 import LoadingButton from '../../../user_frontend/components/LoadingButton';
-import SessionExpiredModal from '../../../user_frontend/components/SessionExpiredModal';
+// 🔥 XÓA import SessionExpiredModal - Không dùng nữa
 
 import '../../styles/AdminAuth.css';
 
@@ -34,17 +34,46 @@ const AdminLogin = () => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [serverError, setServerError] = useState('');
-    const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
-    const [sessionExpiredMessage, setSessionExpiredMessage] = useState(''); // 🟢 THÊM
-    const [newDevice, setNewDevice] = useState(''); // 🟢 THÊM
+    // 🔥 XÓA các state liên quan đến SessionExpiredModal
+    // const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
+    // const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
+    // const [newDevice, setNewDevice] = useState('');
+    // const [countdown, setCountdown] = useState(10);
 
     const navigate = useNavigate();
+    const location = useLocation();
 
-    // 🟢 Kiểm tra nếu bị redirect từ session expired
+    // ============================================================
+    // 🔥 XỬ LÝ SESSION EXPIRED - CHỈ HIỂN THỊ LỖI ĐƠN GIẢN
+    // ============================================================
+    const handleSessionExpired = (detail) => {
+        console.log('🔴 [ADMIN LOGIN] Session expired:', detail);
+        
+        // 🔥 Chỉ hiển thị lỗi đơn giản, KHÔNG hiển thị modal
+        setServerError('Tài khoản admin đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
+        setErrors({});
+        socketService.disconnect();
+    };
+
+    // ============================================================
+    // 🔥 ĐĂNG KÝ CALLBACK CHO SOCKET
+    // ============================================================
+    useEffect(() => {
+        socketService.setOnSessionExpired(handleSessionExpired);
+        console.log('✅ [ADMIN LOGIN] Đã đăng ký callback cho socket');
+
+        return () => {
+            socketService.setOnSessionExpired(null);
+        };
+    }, []);
+
+    // ============================================================
+    // Kiểm tra nếu bị redirect từ session expired
+    // ============================================================
     useEffect(() => {
         if (location.state?.expired) {
-            setSessionExpiredMessage('Tài khoản admin đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
-            setShowSessionExpiredModal(true);
+            // 🔥 Chỉ hiển thị lỗi, KHÔNG hiển thị modal
+            setServerError('Tài khoản admin đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
             window.history.replaceState({}, document.title);
         }
     }, [location.state]);
@@ -57,9 +86,9 @@ const AdminLogin = () => {
             try {
                 const res = await api.get('/admin/api/auth/me');
                 if (res.data?.user?.role === 'admin') {
-                    // 🟢 Kết nối WebSocket cho admin
                     const adminUser = res.data.user;
-                    socketService.connect(adminUser.user_id, adminUser.user_id);
+                    socketService.setOnSessionExpired(handleSessionExpired);
+                    socketService.connect(adminUser.user_id);
                     navigate('/dashboard', { replace: true });
                 }
             } catch (error) {
@@ -70,68 +99,36 @@ const AdminLogin = () => {
     }, [navigate]);
 
     /* =====================================================
-        LẮNG NGHE SỰ KIỆN SESSION EXPIRED TỪ API INTERCEPTOR
+        LẮNG NGHE SỰ KIỆN WINDOW - FALLBACK
     ===================================================== */
     useEffect(() => {
-        const handleSessionExpired = (event) => {
-            console.log('🔴 [ADMIN LOGIN] Nhận được sự kiện sessionExpired!');
-            console.log('🔴 [ADMIN LOGIN] Detail:', event.detail);
-            
-            const detail = event.detail || {};
-            const message = detail.message || 'Tài khoản admin đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.';
-            const device = detail.newDevice || '';
-            
-            setSessionExpiredMessage(message);
-            setNewDevice(device);
-            setShowSessionExpiredModal(true);
-            
-            // Reset form
-            setServerError('');
-            setErrors({});
+        const handleWindowSessionExpired = (event) => {
+            console.log('🔴 [ADMIN LOGIN] Nhận sự kiện sessionExpired từ window:', event.detail);
+            setServerError('Tài khoản admin đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
+            socketService.disconnect();
         };
 
-        // 🟢 THÊM: Lắng nghe sự kiện TOKEN_INVALID
         const handleTokenInvalid = (event) => {
             console.log('🔴 [ADMIN LOGIN] Token invalid:', event.detail);
             setServerError('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
             socketService.disconnect();
         };
 
-        // 🟢 THÊM: Lắng nghe sự kiện UNAUTHORIZED
         const handleUnauthorized = (event) => {
             console.log('🔴 [ADMIN LOGIN] Unauthorized:', event.detail);
             socketService.disconnect();
         };
 
-        window.addEventListener('sessionExpired', handleSessionExpired);
+        window.addEventListener('sessionExpired', handleWindowSessionExpired);
         window.addEventListener('tokenInvalid', handleTokenInvalid);
         window.addEventListener('unauthorized', handleUnauthorized);
 
         return () => {
-            window.removeEventListener('sessionExpired', handleSessionExpired);
+            window.removeEventListener('sessionExpired', handleWindowSessionExpired);
             window.removeEventListener('tokenInvalid', handleTokenInvalid);
             window.removeEventListener('unauthorized', handleUnauthorized);
         };
     }, []);
-
-    /* =====================================================
-        HANDLE SESSION EXPIRED CONFIRM - Đăng nhập lại
-    ===================================================== */
-    const handleSessionExpiredConfirm = () => {
-        console.log('🔴 [ADMIN LOGIN] User xác nhận đăng nhập lại');
-        setShowSessionExpiredModal(false);
-        setSessionExpiredMessage('');
-        setNewDevice('');
-        
-        // Ngắt kết nối WebSocket
-        socketService.disconnect();
-        
-        setEmail('');
-        setPassword('');
-        setErrors({});
-        setServerError('');
-        document.getElementById('admin-email')?.focus();
-    };
 
     /* =====================================================
         MODAL
@@ -202,10 +199,11 @@ const AdminLogin = () => {
                 return;
             }
 
-            // 🟢 THÊM: Kết nối WebSocket sau khi login thành công
+            // 🔥 ĐĂNG KÝ CALLBACK TRƯỚC KHI KẾT NỐI SOCKET
             if (adminUser) {
                 try {
-                    socketService.connect(adminUser.user_id, adminUser.user_id);
+                    socketService.setOnSessionExpired(handleSessionExpired);
+                    socketService.connect(adminUser.user_id);
                     console.log('🟢 [ADMIN LOGIN] Đã kết nối WebSocket cho admin:', adminUser.user_id);
                 } catch (socketError) {
                     console.warn('⚠️ Không thể kết nối WebSocket:', socketError);
@@ -216,28 +214,20 @@ const AdminLogin = () => {
 
         } catch (err) {
             console.error('Admin Login Error:', err);
-            
-            // 🟢 Xử lý các mã lỗi từ backend
+
             const errorCode = err.response?.data?.code;
             const errorMessage = err.response?.data?.message || 'Sai tài khoản hoặc mật khẩu quản trị.';
 
-            // SESSION_EXPIRED
             if (errorCode === 'SESSION_EXPIRED') {
-                setSessionExpiredMessage(errorMessage);
-                setShowSessionExpiredModal(true);
-            } 
-            // TOKEN_INVALID
-            else if (errorCode === 'TOKEN_INVALID') {
+                console.log('🔴 [ADMIN LOGIN] Nhận lỗi SESSION_EXPIRED từ login API');
+                setServerError('Tài khoản admin đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
+            } else if (errorCode === 'TOKEN_INVALID') {
                 setServerError('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
                 socketService.disconnect();
-            }
-            // UNAUTHORIZED
-            else if (errorCode === 'UNAUTHORIZED') {
+            } else if (errorCode === 'UNAUTHORIZED') {
                 setServerError('Vui lòng đăng nhập để tiếp tục.');
                 socketService.disconnect();
-            }
-            // Lỗi field
-            else if (err.response?.data?.field === 'email') {
+            } else if (err.response?.data?.field === 'email') {
                 setErrors({ email: errorMessage });
             } else if (err.response?.data?.field === 'password') {
                 setErrors({ password: errorMessage });
@@ -257,9 +247,7 @@ const AdminLogin = () => {
             <div className="admin-login-overlay"></div>
             <div className="admin-login-container">
 
-                {/* =================================================
-                    LEFT PANEL
-                ================================================= */}
+                {/* LEFT PANEL */}
                 <div className="admin-login-left">
                     <div className="admin-brand">
                         <div className="admin-brand-logo">
@@ -300,9 +288,7 @@ const AdminLogin = () => {
                     </div>
                 </div>
 
-                {/* =================================================
-                    RIGHT PANEL
-                ================================================= */}
+                {/* RIGHT PANEL */}
                 <div className="admin-login-right">
                     <div className="admin-login-header">
                         <div className="admin-login-icon">
@@ -397,13 +383,7 @@ const AdminLogin = () => {
                 onConfirm={modalConfig.onConfirm}
             />
 
-            {/* 🟢 SESSION EXPIRED MODAL - ĐÃ CẬP NHẬT */}
-            <SessionExpiredModal
-                isOpen={showSessionExpiredModal}
-                onConfirm={handleSessionExpiredConfirm}
-                message={sessionExpiredMessage}
-                newDevice={newDevice}
-            />
+            {/* 🔥 KHÔNG CÓ SessionExpiredModal ở đây - Chỉ hiển thị lỗi trên form */}
         </div>
     );
 };

@@ -41,10 +41,13 @@ const authenticateAdmin = async (req, res, next) => {
         }
 
         // ============================================================
-        // 🔥 SỬA QUAN TRỌNG: Chỉ kiểm tra DB nếu KHÔNG phải route auth/me
+        // 🔥 SỬA QUAN TRỌNG: Kiểm tra đúng đường dẫn /auth/me
         // ============================================================
-        // Nếu là request kiểm tra user (từ UserHome), bỏ qua check DB để tránh lỗi 401 làm sập Promise.all FE
-        if (!req.path.includes('/auth/me') && !req.originalUrl.includes('/auth/me')) {
+        // Kiểm tra cả req.path và req.originalUrl để chắc chắn bỏ qua check DB
+        // cho request kiểm tra user (cả user và admin)
+        const isAuthMeRoute = req.path.includes('/auth/me') || req.originalUrl.includes('/auth/me');
+
+        if (!isAuthMeRoute) {
             const tokenHash = Jwt.hashRefreshToken(accessToken);
             const validToken = await RefreshTokenRepository.findValidTokenHash(tokenHash);
             

@@ -27,13 +27,93 @@ const UserHeader = () => {
     const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
     const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
     const [newDevice, setNewDevice] = useState('');
+    const [countdown, setCountdown] = useState(10);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const dropdownRef = useRef(null);
     const navRef = useRef(null);
+    const countdownIntervalRef = useRef(null);
+    // 🔥 Thêm ref để kiểm tra đã xử lý chưa
+    const isProcessingRef = useRef(false);
 
-    /* =====================================================
-        FETCH USER INFO - CHỈ KẾT NỐI SOCKET KHI CÓ USER
-    ===================================================== */
+    // ============================================================
+    // 🔥 HÀM LOGOUT THỰC TẾ
+    // ============================================================
+    const performLogout = async () => {
+        if (isLoggingOut) return;
+        setIsLoggingOut(true);
+        isProcessingRef.current = false;
+
+        console.log('🔴 [HEADER] Đang thực hiện logout...');
+
+        try {
+            await api.post('/api/auth/logout');
+        } catch (error) {
+            console.error('Lỗi khi logout:', error);
+        } finally {
+            localStorage.removeItem('user_info');
+            localStorage.removeItem('admin_info');
+            socketService.disconnect();
+            setUser(null);
+            setShowDropdown(false);
+            setShowSessionExpiredModal(false);
+            setSessionExpiredMessage('');
+            setNewDevice('');
+            setCountdown(10);
+            setIsLoggingOut(false);
+            delete api.defaults.headers.common['Authorization'];
+            navigate('/login', { replace: true, state: { expired: true } });
+            console.log('✅ [HEADER] Logout thành công, chuyển về login');
+        }
+    };
+
+    // ============================================================
+    // 🔥 HÀM XỬ LÝ SESSION EXPIRED - DÙNG CHUNG CHO CẢ 2 NGUỒN
+    // ============================================================
+    const handleSessionExpired = (detail) => {
+        // 🔥 Nếu đang xử lý hoặc đã có modal thì bỏ qua
+        if (isProcessingRef.current || showSessionExpiredModal) {
+            console.log('⚠️ [HEADER] Đang xử lý session expired, bỏ qua...');
+            return;
+        }
+
+        isProcessingRef.current = true;
+        console.log('🔴 [HEADER] Xử lý session expired:', detail);
+
+        const message = detail?.message || 'Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.';
+        const device = detail?.newDevice || '';
+
+        setSessionExpiredMessage(message);
+        setNewDevice(device);
+        setShowSessionExpiredModal(true);
+        setCountdown(10);
+
+        setUser(null);
+        socketService.disconnect();
+
+        // Clear interval cũ
+        if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+        }
+
+        // Bắt đầu đếm ngược 10 giây
+        countdownIntervalRef.current = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(countdownIntervalRef.current);
+                    countdownIntervalRef.current = null;
+                    performLogout();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    // ============================================================
+    // FETCH USER INFO - ĐĂNG KÝ CALLBACK
+    // ============================================================
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -47,7 +127,9 @@ const UserHeader = () => {
                 
                 setUser(account);
 
-                // 🔥 CHỈ KẾT NỐI SOCKET KHI CÓ USER
+                // 🔥 ĐĂNG KÝ CALLBACK CHO SOCKET
+                socketService.setOnSessionExpired(handleSessionExpired);
+                
                 if (account) {
                     socketService.connect(account.user_id);
                 }
@@ -63,25 +145,24 @@ const UserHeader = () => {
             }
         };
         fetchUser();
-    }, [navigate]);
 
-    /* =====================================================
-        LẮNG NGHE SỰ KIỆN SESSION EXPIRED
-    ===================================================== */
+        return () => {
+            if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+                countdownIntervalRef.current = null;
+            }
+            isProcessingRef.current = false;
+        };
+    }, []);
+
+    // ============================================================
+    // LẮNG NGHE SỰ KIỆN WINDOW - FALLBACK
+    // ============================================================
     useEffect(() => {
-        const handleSessionExpired = (event) => {
-            console.log('🔴 [HEADER] Session expired:', event.detail);
-            
-            const detail = event.detail || {};
-            const message = detail.message || 'Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.';
-            const device = detail.newDevice || '';
-            
-            setSessionExpiredMessage(message);
-            setNewDevice(device);
-            setShowSessionExpiredModal(true);
-            
-            setUser(null);
-            socketService.disconnect();
+        const handleWindowSessionExpired = (event) => {
+            console.log('🔴 [HEADER] Session expired event từ window:', event.detail);
+            // 🔥 Gọi hàm xử lý chung
+            handleSessionExpired(event.detail);
         };
 
         const handleUserLoggedIn = () => {
@@ -97,8 +178,8 @@ const UserHeader = () => {
                     else if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) account = rawData;
                     setUser(account);
                     
-                    // 🔥 CHỈ KẾT NỐI SOCKET KHI CÓ USER
                     if (account) {
+                        socketService.setOnSessionExpired(handleSessionExpired);
                         socketService.connect(account.user_id);
                     }
                 } catch (error) {
@@ -111,34 +192,38 @@ const UserHeader = () => {
             fetchUser();
         };
 
-        const handleTokenInvalid = (event) => {
-            console.log('🔴 [HEADER] Token invalid:', event.detail);
+        const handleTokenInvalid = () => {
+            console.log('🔴 [HEADER] Token invalid');
             setUser(null);
             socketService.disconnect();
+            isProcessingRef.current = false;
         };
 
-        const handleUnauthorized = (event) => {
-            console.log('🔴 [HEADER] Unauthorized:', event.detail);
+        const handleUnauthorized = () => {
+            console.log('🔴 [HEADER] Unauthorized');
             setUser(null);
             socketService.disconnect();
+            isProcessingRef.current = false;
         };
 
-        window.addEventListener('sessionExpired', handleSessionExpired);
+        window.addEventListener('sessionExpired', handleWindowSessionExpired);
         window.addEventListener('userLoggedIn', handleUserLoggedIn);
         window.addEventListener('tokenInvalid', handleTokenInvalid);
         window.addEventListener('unauthorized', handleUnauthorized);
 
         return () => {
-            window.removeEventListener('sessionExpired', handleSessionExpired);
+            window.removeEventListener('sessionExpired', handleWindowSessionExpired);
             window.removeEventListener('userLoggedIn', handleUserLoggedIn);
             window.removeEventListener('tokenInvalid', handleTokenInvalid);
             window.removeEventListener('unauthorized', handleUnauthorized);
         };
     }, []);
 
-    /* =====================================================
-        FETCH CINEMAS
-    ===================================================== */
+    // ... Phần còn lại giữ nguyên (fetch cinemas, click outside, UI helpers, render)
+
+    // ============================================================
+    // FETCH CINEMAS
+    // ============================================================
     useEffect(() => {
         const fetchCinemas = async () => {
             try {
@@ -157,9 +242,9 @@ const UserHeader = () => {
         fetchCinemas();
     }, []);
 
-    /* =====================================================
-        CLICK OUTSIDE & RESIZE
-    ===================================================== */
+    // ============================================================
+    // CLICK OUTSIDE & RESIZE
+    // ============================================================
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (navRef.current && navRef.current.contains(event.target)) return;
@@ -182,39 +267,31 @@ const UserHeader = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    /* =====================================================
-        LOGOUT
-    ===================================================== */
+    // ============================================================
+    // LOGOUT THỦ CÔNG
+    // ============================================================
     const handleLogout = async () => {
-        try {
-            await api.post('/api/auth/logout');
-        } catch (error) {
-            console.error('Lỗi khi logout:', error);
-        } finally {
-            socketService.disconnect();
-            setUser(null);
-            setShowDropdown(false);
-            window.dispatchEvent(new Event('userLoggedIn')); 
-            navigate('/login', { replace: true });
-        }
+        await performLogout();
     };
 
-    /* =====================================================
-        HANDLE SESSION EXPIRED CONFIRM
-    ===================================================== */
+    // ============================================================
+    // HANDLE SESSION EXPIRED CONFIRM
+    // ============================================================
     const handleSessionExpiredConfirm = () => {
         console.log('🔴 [HEADER] User xác nhận đăng nhập lại');
-        setShowSessionExpiredModal(false);
-        setSessionExpiredMessage('');
-        setNewDevice('');
         
-        socketService.disconnect();
-        navigate('/login', { replace: true, state: { expired: true } });
+        if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+        }
+        
+        isProcessingRef.current = false;
+        performLogout();
     };
 
-    /* =====================================================
-        UI HELPERS
-    ===================================================== */
+    // ============================================================
+    // UI HELPERS
+    // ============================================================
     const closeMobileMenu = () => {
         setIsMenuOpen(false);
         setActiveSubMenu(null);
@@ -236,9 +313,9 @@ const UserHeader = () => {
     const avatarUrl = avatarSource ? getAvatarUrl(avatarSource) : null;
     const displayName = user?.username || user?.full_name || 'Tài khoản';
 
-    /* =====================================================
-        RENDER
-    ===================================================== */
+    // ============================================================
+    // RENDER
+    // ============================================================
     return (
         <>
             <nav className="user-navbar">
@@ -343,14 +420,13 @@ const UserHeader = () => {
                 </div>
             </nav>
 
-            {/* 🔥 SESSION EXPIRED MODAL - CHỈ HIỂN THỊ KHI THỰC SỰ BỊ ĐÁ */}
             <SessionExpiredModal
                 isOpen={showSessionExpiredModal}
                 onConfirm={handleSessionExpiredConfirm}
                 message={sessionExpiredMessage}
                 newDevice={newDevice}
                 autoRedirect={true}
-                redirectDelay={3000}
+                redirectDelay={countdown}
             />
         </>
     );

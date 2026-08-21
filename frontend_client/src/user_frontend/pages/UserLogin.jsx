@@ -11,7 +11,8 @@ import socketService from '../../api/socket';
 
 import ForgotPassword from '../components/ForgotPassword';
 import LoadingButton from '../components/LoadingButton';
-import SessionExpiredModal from '../components/SessionExpiredModal';
+// 🔥 XÓA IMPORT SessionExpiredModal
+// import SessionExpiredModal from '../components/SessionExpiredModal';
 
 import '../styles/UserAuth.css';
 
@@ -32,25 +33,53 @@ const UserLogin = () => {
     const [serverError, setServerError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotModal, setShowForgotModal] = useState(false);
-    const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
-    const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
-    const [newDevice, setNewDevice] = useState('');
+    // 🔥 XÓA các state liên quan đến SessionExpiredModal
+    // const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
+    // const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
+    // const [newDevice, setNewDevice] = useState('');
+    // const [countdown, setCountdown] = useState(10);
 
     const navigate = useNavigate();
     const location = useLocation();
 
-    // 🔥 Kiểm tra nếu bị redirect từ session expired
+    // ============================================================
+    // 🔥 XỬ LÝ SESSION EXPIRED - CHỈ HIỂN THỊ LỖI ĐƠN GIẢN
+    // ============================================================
+    const handleSessionExpired = (detail) => {
+        console.log('🔴 [LOGIN] Session expired:', detail);
+        
+        // 🔥 Chỉ hiển thị lỗi đơn giản, KHÔNG hiển thị modal
+        setServerError('Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
+        setErrors({});
+        socketService.disconnect();
+    };
+
+    // ============================================================
+    // 🔥 ĐĂNG KÝ CALLBACK CHO SOCKET
+    // ============================================================
+    useEffect(() => {
+        socketService.setOnSessionExpired(handleSessionExpired);
+        console.log('✅ [LOGIN] Đã đăng ký callback cho socket');
+
+        return () => {
+            socketService.setOnSessionExpired(null);
+        };
+    }, []);
+
+    // ============================================================
+    // Kiểm tra nếu bị redirect từ session expired
+    // ============================================================
     useEffect(() => {
         if (location.state?.expired) {
-            setSessionExpiredMessage('Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
-            setShowSessionExpiredModal(true);
+            // 🔥 Chỉ hiển thị lỗi, KHÔNG hiển thị modal
+            setServerError('Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
             window.history.replaceState({}, document.title);
         }
     }, [location.state]);
 
-    /* =====================================================
-        CHECK SESSION
-    ===================================================== */
+    // ============================================================
+    // CHECK SESSION
+    // ============================================================
     useEffect(() => {
         const checkUserSession = async () => {
             try {
@@ -68,77 +97,42 @@ const UserLogin = () => {
         checkUserSession();
     }, [navigate]);
 
-    /* =====================================================
-        LẮNG NGHE SỰ KIỆN SESSION EXPIRED
-        🔥 CHỈ LẮNG NGHE, KHÔNG TỰ ĐỘNG KẾT NỐI SOCKET
-    ===================================================== */
+    // ============================================================
+    // LẮNG NGHE SỰ KIỆN WINDOW - FALLBACK
+    // ============================================================
     useEffect(() => {
-        const handleSessionExpired = (event) => {
-            console.log('🔴 [USER LOGIN] Nhận được sự kiện sessionExpired!');
-            console.log('🔴 [USER LOGIN] Detail:', event.detail);
-            
-            const detail = event.detail || {};
-            const message = detail.message || 'Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.';
-            const device = detail.newDevice || '';
-            
-            setSessionExpiredMessage(message);
-            setNewDevice(device);
-            setShowSessionExpiredModal(true);
-            setServerError('');
-            setErrors({});
-
-            // Ngắt socket nếu đang kết nối
+        const handleWindowSessionExpired = (event) => {
+            console.log('🔴 [LOGIN] Nhận sự kiện sessionExpired từ window:', event.detail);
+            setServerError('Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
             socketService.disconnect();
         };
 
         const handleTokenInvalid = (event) => {
-            console.log('🔴 [USER LOGIN] Token invalid:', event.detail);
+            console.log('🔴 [LOGIN] Token invalid:', event.detail);
             setServerError('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
         };
 
         const handleUnauthorized = (event) => {
-            console.log('🔴 [USER LOGIN] Unauthorized:', event.detail);
+            console.log('🔴 [LOGIN] Unauthorized:', event.detail);
         };
 
-        window.addEventListener('sessionExpired', handleSessionExpired);
+        window.addEventListener('sessionExpired', handleWindowSessionExpired);
         window.addEventListener('tokenInvalid', handleTokenInvalid);
         window.addEventListener('unauthorized', handleUnauthorized);
         
-        console.log('✅ [USER LOGIN] Đã đăng ký lắng nghe sự kiện auth');
+        console.log('✅ [LOGIN] Đã đăng ký lắng nghe sự kiện auth');
 
         return () => {
-            window.removeEventListener('sessionExpired', handleSessionExpired);
+            window.removeEventListener('sessionExpired', handleWindowSessionExpired);
             window.removeEventListener('tokenInvalid', handleTokenInvalid);
             window.removeEventListener('unauthorized', handleUnauthorized);
-            console.log('🧹 [USER LOGIN] Đã hủy lắng nghe sự kiện auth');
+            console.log('🧹 [LOGIN] Đã hủy lắng nghe sự kiện auth');
         };
     }, []);
 
-    /* =====================================================
-        HANDLE SESSION EXPIRED CONFIRM
-    ===================================================== */
-    const handleSessionExpiredConfirm = () => {
-        console.log('🔴 [USER LOGIN] User xác nhận đăng nhập lại');
-        setShowSessionExpiredModal(false);
-        setSessionExpiredMessage('');
-        setNewDevice('');
-        
-        setFormData({
-            email: '',
-            password: '',
-            rememberMe: false
-        });
-        setErrors({});
-        setServerError('');
-        
-        setTimeout(() => {
-            document.getElementById('login-email')?.focus();
-        }, 100);
-    };
-
-    /* =====================================================
-        VALIDATE
-    ===================================================== */
+    // ============================================================
+    // VALIDATE
+    // ============================================================
     const validate = () => {
         const tempErrors = {};
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -159,9 +153,9 @@ const UserLogin = () => {
         return Object.keys(tempErrors).length === 0;
     };
 
-    /* =====================================================
-        HANDLE INPUT
-    ===================================================== */
+    // ============================================================
+    // HANDLE INPUT
+    // ============================================================
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
 
@@ -178,10 +172,9 @@ const UserLogin = () => {
         }
     };
 
-    /* =====================================================
-        LOGIN
-        🔥 QUAN TRỌNG: CHỈ KẾT NỐI SOCKET SAU KHI LOGIN THÀNH CÔNG
-    ===================================================== */
+    // ============================================================
+    // LOGIN
+    // ============================================================
     const handleLogin = async (e) => {
         e.preventDefault();
 
@@ -210,18 +203,14 @@ const UserLogin = () => {
                 return;
             }
 
-            // ============================================================
-            // 🔥 QUAN TRỌNG: CHỈ KẾT NỐI SOCKET SAU KHI LOGIN THÀNH CÔNG
-            // ============================================================
             const userData = response.data?.user;
             if (userData) {
                 try {
-                    // Đợi 1 chút để cookie được set
                     await new Promise(resolve => setTimeout(resolve, 500));
                     
-                    // Kết nối WebSocket với user_id
+                    socketService.setOnSessionExpired(handleSessionExpired);
                     socketService.connect(userData.user_id);
-                    console.log('✅ [USER LOGIN] Socket connected for user:', userData.user_id);
+                    console.log('✅ [LOGIN] Socket connected for user:', userData.user_id);
                 } catch (socketError) {
                     console.warn('⚠️ Không thể kết nối WebSocket:', socketError);
                 }
@@ -238,9 +227,8 @@ const UserLogin = () => {
             const errorMessage = err.response?.data?.message || 'Tài khoản hoặc mật khẩu không chính xác';
 
             if (errorCode === 'SESSION_EXPIRED') {
-                console.log('🔴 [USER LOGIN] Nhận lỗi SESSION_EXPIRED từ login API');
-                setSessionExpiredMessage(errorMessage);
-                setShowSessionExpiredModal(true);
+                console.log('🔴 [LOGIN] Nhận lỗi SESSION_EXPIRED từ login API');
+                setServerError('Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
             } else if (errorCode === 'TOKEN_INVALID') {
                 setServerError('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
             } else if (errorCode === 'UNAUTHORIZED') {
@@ -257,9 +245,9 @@ const UserLogin = () => {
         }
     };
 
-    /* =====================================================
-        RENDER
-    ===================================================== */
+    // ============================================================
+    // RENDER
+    // ============================================================
     return (
         <div className="auth-container">
             <div className="auth-card">
@@ -360,13 +348,8 @@ const UserLogin = () => {
                 <ForgotPassword onClose={() => setShowForgotModal(false)} />
             )}
 
-            <SessionExpiredModal
-                isOpen={showSessionExpiredModal}
-                onConfirm={handleSessionExpiredConfirm}
-                message={sessionExpiredMessage}
-                newDevice={newDevice}
-                autoRedirect={false}
-            />
+            {/* 🔥 XÓA SessionExpiredModal ở đây */}
+            {/* <SessionExpiredModal ... /> */}
         </div>
     );
 };

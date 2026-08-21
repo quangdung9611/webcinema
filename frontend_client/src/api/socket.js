@@ -1,5 +1,5 @@
 // ============================================================
-// SOCKET SERVICE
+// SOCKET SERVICE - src/api/socket.js
 // ============================================================
 
 import { io } from 'socket.io-client';
@@ -14,6 +14,13 @@ class SocketService {
         this.userId = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
+        // 🔥 CALLBACK XỬ LÝ SESSION EXPIRED
+        this.onSessionExpired = null;
+    }
+
+    // 🔥 ĐĂNG KÝ CALLBACK
+    setOnSessionExpired(callback) {
+        this.onSessionExpired = callback;
     }
 
     connect(userId) {
@@ -51,7 +58,6 @@ class SocketService {
             this.isConnected = true;
             this.reconnectAttempts = 0;
 
-            // 🔥 Đăng ký socket với server
             if (this.userId) {
                 this.socket.emit('register_socket', { userId: this.userId });
                 console.log('📤 [SOCKET] Đã gửi register_socket cho user:', this.userId);
@@ -63,7 +69,7 @@ class SocketService {
         });
 
         // ============================================================
-        // 🔥 SESSION EXPIRED - BỊ ĐÁ KHỎI THIẾT BỊ
+        // 🔥 SESSION EXPIRED - GỌI CALLBACK ĐỂ LOGOUT
         // ============================================================
         this.socket.on('session_expired', (data = {}) => {
             console.warn('🔴 [SOCKET] SESSION EXPIRED - Bị đá khỏi thiết bị!');
@@ -78,7 +84,18 @@ class SocketService {
                 });
             }
 
-            // 🔥 Dispatch event SESSION_EXPIRED
+            // 🔥 GỌI CALLBACK NẾU CÓ
+            if (typeof this.onSessionExpired === 'function') {
+                this.onSessionExpired({
+                    code: 'SESSION_EXPIRED',
+                    message: data.message || 'Tài khoản đã được đăng nhập trên thiết bị khác.',
+                    newDevice: data.newDevice || null,
+                    timestamp: data.timestamp || new Date().toISOString(),
+                    fromSocket: true
+                });
+            }
+
+            // 🔥 VẪN DISPATCH EVENT CHO CÁC COMPONENT KHÁC
             window.dispatchEvent(new CustomEvent('sessionExpired', {
                 detail: {
                     code: 'SESSION_EXPIRED',
@@ -114,9 +131,16 @@ class SocketService {
             this.isConnected = false;
             this.reconnectAttempts++;
 
-            // 🔥 Nếu là SESSION_EXPIRED từ socket auth
             if (error.message === 'SESSION_EXPIRED') {
-                console.warn('🔴 [SOCKET] Session expired - bị đá khỏi thiết bị cũ');
+                console.warn('🔴 [SOCKET] Session expired - bị đá khỏi thiết bị');
+
+                if (typeof this.onSessionExpired === 'function') {
+                    this.onSessionExpired({
+                        code: 'SESSION_EXPIRED',
+                        message: 'Tài khoản đã đăng nhập trên thiết bị khác',
+                        fromSocket: true
+                    });
+                }
 
                 window.dispatchEvent(new CustomEvent('sessionExpired', {
                     detail: {
