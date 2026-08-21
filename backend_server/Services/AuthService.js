@@ -109,11 +109,13 @@ const validateLogin = (email, password) => {
 
 const generateAndSetTokens = (user, res, rememberMe = false) => {
     const accessToken = Jwt.generateAccessToken(user);
+    
     if (user.role === "admin") {
         Cookie.setAdminAccessToken(res, accessToken, rememberMe);
     } else {
         Cookie.setUserAccessToken(res, accessToken, rememberMe);
     }
+    
     return accessToken;
 };
 
@@ -184,7 +186,7 @@ exports.register = async (userData) => {
 };
 
 /*=========================================================
-    LOGIN (CHÍNH) - ĐÃ SỬA: KHÔNG REVOKE TOKEN CŨ, CHỈ KICK SOCKET CŨ
+    LOGIN (CHÍNH) - ĐÃ SỬA ĐÚNG CHUẨN
 =========================================================*/
 
 exports.login = async (email, password, rememberMe = false, req, res) => {
@@ -209,68 +211,52 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     }
 
     // ============================================================
-    // 🔥 SỬA QUAN TRỌNG: KHÔNG REVOKE TOKEN CŨ!
-    // Chỉ kick socket cũ, KHÔNG xóa token của thiết bị cũ.
-    // Điều này giúp thiết bị đầu tiên không bị tự đăng xuất.
+    // 🔥 BƯỚC 1: REVOKE TẤT CẢ TOKEN CŨ (ĐÁ THIẾT BỊ CŨ)
     // ============================================================
+    await RefreshTokenRepository.revokeByUser(
+        user.user_id,
+        "Đăng nhập từ thiết bị khác"
+    );
+    console.log(`🔴 [REVOKE] Đã revoke tất cả token cũ của user: ${user.user_id}`);
 
-    // Lấy socketId cũ (nếu có)
+    // ============================================================
+    // BƯỚC 2: EMIT SOCKET EVENT ĐẾN THIẾT BỊ CŨ (NẾU CÓ)
+    // ============================================================
     const oldSocketId = await RedisService.getUserSocket(user.user_id);
-
-    // ============================================================
-    // 🟢 EMIT SOCKET EVENT ĐẾN THIẾT BỊ CŨ (KICK SOCKET)
-    // ============================================================
     if (oldSocketId && ioInstance) {
         try {
-            console.log(`📤 [SOCKET] Đang kick socket cũ: ${oldSocketId}`);
-            
-            // Gửi lệnh đăng xuất cho socket cũ (nhưng KHÔNG xóa token của nó)
             ioInstance.to(oldSocketId).emit('session_expired', {
-                message: 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.',
+                message: 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
                 timestamp: new Date().toISOString(),
                 newDevice: {
                     ip: req.ip || req.connection?.remoteAddress || 'Unknown',
                     userAgent: req.headers?.['user-agent']?.substring(0, 100) || 'Unknown'
                 }
             });
-            
-            console.log(`✅ [SOCKET] Đã gửi session_expired đến thiết bị cũ: ${oldSocketId}`);
-            
-            // Chỉ xóa socketId cũ khỏi Redis (để thiết bị mới đăng ký socket mới)
             await RedisService.deleteUserSocket(user.user_id);
-            
         } catch (error) {
             console.error(`❌ [SOCKET] Lỗi khi gửi session_expired:`, error.message);
         }
-    } else {
-        if (!oldSocketId) {
-            console.log(`ℹ️ [SOCKET] User ${user.user_id} không có socket cũ để gửi`);
-        }
-        if (!ioInstance) {
-            console.warn(`⚠️ [SOCKET] ioInstance chưa được set, không thể emit socket`);
-        }
     }
-    // ============================================================
-    // KẾT THÚC EMIT SOCKET
-    // ============================================================
 
-    // 5. Generate token và set cookie (TẠO TOKEN MỚI CHO THIẾT BỊ NÀY)
-    generateAndSetTokens(user, res, rememberMe);
-
-    // 6. Lưu refresh token mới vào DB
-    const refreshToken = Jwt.generateRefreshToken(user);
-    const tokenHash = Jwt.hashRefreshToken(refreshToken);
+    // ============================================================
+    // BƯỚC 3: TẠO TOKEN MỚI VÀ LƯU VÀO DB
+    // ============================================================
+    const accessToken = generateAndSetTokens(user, res, rememberMe);
+    const accessTokenHash = Jwt.hashRefreshToken(accessToken);
 
     await RefreshTokenRepository.create({
         user_id: user.user_id,
-        token_hash: tokenHash,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 ngày
+        token_hash: accessTokenHash,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 giờ
         ip_address: req.ip || req.connection?.remoteAddress || null,
         user_agent: req.headers?.["user-agent"] || null,
         device_name: req.headers?.["user-agent"]?.substring(0, 50) || "Unknown Device"
     });
 
-    // 7. Trả về thông tin user
+    // ============================================================
+    // BƯỚC 4: TRẢ VỀ THÔNG TIN USER
+    // ============================================================
     return {
         success: true,
         message: "Đăng nhập thành công",

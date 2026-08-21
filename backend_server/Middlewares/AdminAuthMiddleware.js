@@ -4,9 +4,10 @@
 
 const Jwt = require("../utils/Jwt");
 const Cookie = require("../utils/Cookie");
+const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
 
 /*=========================================================
-    AUTHENTICATE ADMIN - ĐÃ SỬA HOÀN CHỈNH
+    AUTHENTICATE ADMIN - ĐÃ SỬA THEO CHUẨN
 =========================================================*/
 
 const authenticateAdmin = async (req, res, next) => {
@@ -39,7 +40,24 @@ const authenticateAdmin = async (req, res, next) => {
             });
         }
 
-        // ✅ KHÔNG CHECK DB! Chỉ cần token JWT hợp lệ là đủ
+        // ============================================================
+        // 🔥 CHECK DB: KIỂM TRA TOKEN CÓ CÒN HỢP LỆ KHÔNG
+        // ============================================================
+        const accessTokenHash = Jwt.hashRefreshToken(accessToken);
+        const validToken = await RefreshTokenRepository.findValidTokenHash(accessTokenHash);
+
+        if (!validToken) {
+            Cookie.clearAdminCookies(res);
+            return res.status(401).json({
+                success: false,
+                code: "SESSION_EXPIRED",
+                message: "Tài khoản admin đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại."
+            });
+        }
+        // ============================================================
+        // KẾT THÚC CHECK DB
+        // ============================================================
+
         req.user = payload;
         next();
     } catch (error) {
