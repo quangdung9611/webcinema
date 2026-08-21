@@ -1,18 +1,17 @@
 import axios from 'axios';
-import socketService from './socket';
 
 const API_BASE = 'https://api.quangdungcinema.id.vn';
 
 const api = axios.create({
     baseURL: API_BASE,
-    withCredentials: true,
+    withCredentials: true, // Tự động gửi cookie (user_token, admin_token)
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
 // ============================================================
-// INTERCEPTOR XỬ LÝ LỖI
+// 🟢 INTERCEPTOR XỬ LÝ LỖI - ĐÃ SỬA
 // ============================================================
 api.interceptors.response.use(
     (response) => response,
@@ -24,46 +23,39 @@ api.interceptors.response.use(
 
             console.warn('🔴 [API] Lỗi 401:', errorCode, errorMessage);
 
-            // ========== XỬ LÝ CÁC TRƯỜNG HỢP CỤ THỂ ==========
+            // ========== 🔥 XỬ LÝ CÁC TRƯỜNG HỢP CỤ THỂ ==========
 
             // 1. SESSION_EXPIRED - Tài khoản đã đăng nhập trên thiết bị khác
             if (errorCode === 'SESSION_EXPIRED') {
                 console.warn('🔴 [SESSION_EXPIRED] Tài khoản đã đăng nhập trên thiết bị khác!');
 
-                // Ngắt kết nối WebSocket
-                socketService.disconnect();
-
-                // Xóa token trong localStorage
+                // Xóa token trong localStorage (nếu có lưu)
                 localStorage.removeItem('user_info');
                 localStorage.removeItem('admin_info');
-                localStorage.removeItem('access_token');
 
                 // Dispatch event để các component bắt và hiển thị modal
                 window.dispatchEvent(new CustomEvent('sessionExpired', {
                     detail: {
                         code: 'SESSION_EXPIRED',
                         message: errorMessage,
-                        timestamp: new Date().toISOString(),
-                        fromAPI: true
+                        timestamp: new Date().toISOString()
                     }
                 }));
+
+                // KHÔNG redirect ở đây! Để component xử lý UI
             }
 
             // 2. TOKEN_INVALID - Token không hợp lệ
             else if (errorCode === 'TOKEN_INVALID') {
                 console.warn('🔴 [TOKEN_INVALID] Token không hợp lệ, xóa cookie...');
 
-                socketService.disconnect();
                 localStorage.removeItem('user_info');
                 localStorage.removeItem('admin_info');
-                localStorage.removeItem('access_token');
 
-                window.dispatchEvent(new CustomEvent('sessionExpired', {
+                window.dispatchEvent(new CustomEvent('tokenInvalid', {
                     detail: {
                         code: 'TOKEN_INVALID',
-                        message: errorMessage || 'Token không hợp lệ. Vui lòng đăng nhập lại.',
-                        timestamp: new Date().toISOString(),
-                        fromAPI: true
+                        message: errorMessage
                     }
                 }));
             }
@@ -72,14 +64,10 @@ api.interceptors.response.use(
             else if (errorCode === 'UNAUTHORIZED') {
                 console.warn('🔴 [UNAUTHORIZED] Vui lòng đăng nhập');
 
-                socketService.disconnect();
-
-                window.dispatchEvent(new CustomEvent('sessionExpired', {
+                window.dispatchEvent(new CustomEvent('unauthorized', {
                     detail: {
                         code: 'UNAUTHORIZED',
-                        message: errorMessage || 'Vui lòng đăng nhập để tiếp tục.',
-                        timestamp: new Date().toISOString(),
-                        fromAPI: true
+                        message: errorMessage
                     }
                 }));
             }
@@ -88,14 +76,11 @@ api.interceptors.response.use(
             else {
                 console.warn('🔴 [401] Lỗi xác thực không xác định:', errorMessage);
 
-                socketService.disconnect();
-
-                window.dispatchEvent(new CustomEvent('sessionExpired', {
+                window.dispatchEvent(new CustomEvent('authError', {
                     detail: {
                         code: errorCode || 'AUTH_ERROR',
-                        message: errorMessage || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-                        timestamp: new Date().toISOString(),
-                        fromAPI: true
+                        message: errorMessage,
+                        status: error.response?.status
                     }
                 }));
             }
@@ -103,7 +88,7 @@ api.interceptors.response.use(
 
         // ========== XỬ LÝ CÁC LỖI KHÁC ==========
 
-        // Lỗi 403 - Forbidden
+        // Lỗi 403 - Forbidden (Không có quyền)
         if (error.response?.status === 403) {
             console.warn('🔴 [403] Không có quyền truy cập:', error.response?.data?.message);
 
@@ -114,7 +99,7 @@ api.interceptors.response.use(
             }));
         }
 
-        // Lỗi 429 - Too Many Requests
+        // Lỗi 429 - Too Many Requests (Rate Limit)
         if (error.response?.status === 429) {
             console.warn('🔴 [429] Quá nhiều yêu cầu:', error.response?.data?.message);
 
@@ -149,14 +134,19 @@ api.interceptors.response.use(
             }));
         }
 
+        // Trả về lỗi để component xử lý tiếp nếu cần
         return Promise.reject(error);
     }
 );
 
 // ============================================================
-// HÀM TIỆN ÍCH
+// 🟢 THÊM MỚI: HÀM TIỆN ÍCH KIỂM TRA TRẠNG THÁI ĐĂNG NHẬP
 // ============================================================
 
+/**
+ * Kiểm tra xem user đã đăng nhập chưa (dựa vào cookie)
+ * Cookie được tự động gửi qua withCredentials
+ */
 export const isAuthenticated = async () => {
     try {
         const response = await api.get('/auth/me');
@@ -166,17 +156,28 @@ export const isAuthenticated = async () => {
     }
 };
 
+/**
+ * Lấy danh sách thiết bị đang đăng nhập
+ */
 export const getDevices = async () => {
     const response = await api.get('/auth/devices');
     return response.data;
 };
 
+/**
+ * Đăng xuất 1 thiết bị cụ thể
+ */
 export const revokeDevice = async (deviceId) => {
     const response = await api.delete(`/auth/devices/${deviceId}`);
     return response.data;
 };
 
+// ============================================================
+// 🟢 CLEANUP: Dọn dẹp event listeners khi cần
+// ============================================================
+
 export const removeAllListeners = () => {
+    // Có thể mở rộng nếu cần cleanup
     console.log('🧹 [API] Cleanup listeners');
 };
 
