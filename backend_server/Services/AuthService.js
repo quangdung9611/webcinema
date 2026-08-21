@@ -173,7 +173,7 @@ exports.register = async (userData) => {
 };
 
 /*=========================================================
-    LOGIN (CHÍNH)
+    LOGIN (CHÍNH) - ĐÃ SỬA: THÊM REVOKE TOKEN CŨ
 =========================================================*/
 
 exports.login = async (email, password, rememberMe = false, req, res) => {
@@ -197,10 +197,35 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
     }
 
+    // ========== 🟢 THÊM MỚI: REVOKE TẤT CẢ TOKEN CŨ ==========
+    // Đá thiết bị cũ ra khỏi hệ thống
+    const revokedCount = await RefreshTokenRepository.revokeByUser(
+        user.user_id,
+        "Đăng nhập từ thiết bị khác"
+    );
+
+    if (revokedCount > 0) {
+        console.log(`🔴 [REVOKE] Đã kick ${revokedCount} thiết bị cũ của user: ${user.user_id} - ${user.email}`);
+    }
+    // ========== KẾT THÚC ==========
+
     // 5. Generate token và set cookie
     generateAndSetTokens(user, res, rememberMe);
 
-    // 6. Trả về thông tin user (không trả token)
+    // 6. Lưu refresh token mới vào DB
+    const refreshToken = Jwt.generateRefreshToken(user);
+    const tokenHash = Jwt.hashRefreshToken(refreshToken);
+
+    await RefreshTokenRepository.create({
+        user_id: user.user_id,
+        token_hash: tokenHash,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 ngày
+        ip_address: req.ip || req.connection?.remoteAddress || null,
+        user_agent: req.headers?.["user-agent"] || null,
+        device_name: req.headers?.["user-agent"]?.substring(0, 50) || "Unknown Device"
+    });
+
+    // 7. Trả về thông tin user
     return {
         success: true,
         message: "Đăng nhập thành công",
@@ -253,6 +278,12 @@ exports.logout = async (req, res) => {
         }
     }
 
+    // Revoke token hiện tại (nếu có)
+    if (token) {
+        const tokenHash = Jwt.hashRefreshToken(token);
+        await RefreshTokenRepository.revoke(tokenHash, "Đăng xuất");
+    }
+
     return {
         success: true,
         message: "Đăng xuất thành công"
@@ -264,14 +295,70 @@ exports.logout = async (req, res) => {
 =========================================================*/
 
 exports.logoutAllDevices = async (userId, res) => {
+    // Revoke tất cả token của user
+    await RefreshTokenRepository.revokeByUser(userId, "Đăng xuất tất cả thiết bị");
+
     // Xóa tất cả cookie
     Cookie.clearAllCookies(res);
-
-    // TODO: Xóa tất cả refresh token của user trong DB (nếu có)
 
     return {
         success: true,
         message: "Đã đăng xuất tất cả thiết bị"
+    };
+};
+
+/*=========================================================
+    🟢 THÊM MỚI: LẤY DANH SÁCH THIẾT BỊ ĐANG ĐĂNG NHẬP
+=========================================================*/
+
+exports.getActiveDevices = async (userId) => {
+    if (!userId) {
+        throw { statusCode: 401, message: "Chưa đăng nhập" };
+    }
+
+    const tokens = await RefreshTokenRepository.getActiveByUser(userId);
+
+    return {
+        success: true,
+        devices: tokens.map(token => ({
+            device_id: token.token_id,
+            device_name: token.device_name || "Unknown Device",
+            ip_address: token.ip_address || "Unknown",
+            last_used_at: token.last_used_at || token.created_at,
+            created_at: token.created_at,
+            expires_at: token.expires_at,
+            is_current: false // Frontend sẽ xác định cái nào là hiện tại
+        }))
+    };
+};
+
+/*=========================================================
+    🟢 THÊM MỚI: REVOKE 1 THIẾT BỊ CỤ THỂ
+=========================================================*/
+
+exports.revokeDeviceById = async (userId, tokenId) => {
+    if (!userId) {
+        throw { statusCode: 401, message: "Chưa đăng nhập" };
+    }
+
+    // Lấy token cần revoke (kiểm tra quyền sở hữu)
+    const tokens = await RefreshTokenRepository.getActiveByUser(userId);
+    const targetToken = tokens.find(t => t.token_id === parseInt(tokenId));
+
+    if (!targetToken) {
+        throw { statusCode: 404, message: "Không tìm thấy thiết bị hoặc thiết bị đã bị đăng xuất" };
+    }
+
+    // Revoke token đó
+    await RefreshTokenRepository.revoke(targetToken.token_hash, "Người dùng chủ động đăng xuất");
+
+    return {
+        success: true,
+        message: "Đã đăng xuất thiết bị thành công",
+        device: {
+            device_name: targetToken.device_name,
+            ip_address: targetToken.ip_address
+        }
     };
 };
 
@@ -313,6 +400,9 @@ exports.changePassword = async (userId, passwordData) => {
 
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(userId, hashedPassword);
+
+    // Revoke all tokens sau khi đổi mật khẩu
+    await RefreshTokenRepository.revokeByUser(userId, "Đổi mật khẩu");
 
     return {
         success: true,
@@ -477,6 +567,9 @@ exports.resetPassword = async (resetToken, newPassword) => {
     // Update password
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(user.user_id, hashedPassword);
+
+    // Revoke all tokens sau khi reset password
+    await RefreshTokenRepository.revokeByUser(user.user_id, "Đặt lại mật khẩu");
 
     // Log
     await OtpRepository.create({

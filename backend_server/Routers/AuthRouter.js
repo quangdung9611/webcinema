@@ -89,6 +89,48 @@ router.post("/logout", AuthMiddleware.authenticate, AuthController.logout);
 router.post("/logout-all", AuthMiddleware.authenticate, AuthController.logoutAllDevices);
 
 /*=========================================================
+    🟢 THÊM MỚI: QUẢN LÝ THIẾT BỊ (DEVICE MANAGEMENT)
+=========================================================*/
+
+/**
+ * Lấy danh sách thiết bị đang đăng nhập
+ * GET /api/auth/devices
+ * 
+ * Response:
+ * {
+ *   success: true,
+ *   devices: [
+ *     {
+ *       device_id: 1,
+ *       device_name: "Windows Chrome",
+ *       ip_address: "192.168.1.1",
+ *       last_used_at: "2026-08-21T10:00:00.000Z",
+ *       created_at: "2026-08-21T09:00:00.000Z",
+ *       expires_at: "2026-08-28T09:00:00.000Z",
+ *       is_current: true
+ *     }
+ *   ]
+ * }
+ */
+router.get("/devices", AuthMiddleware.authenticate, AuthController.getDevices);
+
+/**
+ * Đăng xuất 1 thiết bị cụ thể (khóa thiết bị từ xa)
+ * DELETE /api/auth/devices/:deviceId
+ * 
+ * Response:
+ * {
+ *   success: true,
+ *   message: "Đã đăng xuất thiết bị thành công",
+ *   device: {
+ *     device_name: "Windows Chrome",
+ *     ip_address: "192.168.1.1"
+ *   }
+ * }
+ */
+router.delete("/devices/:deviceId", AuthMiddleware.authenticate, AuthController.revokeDevice);
+
+/*=========================================================
     EXPORT
 =========================================================*/
 

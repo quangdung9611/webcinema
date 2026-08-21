@@ -33,6 +33,7 @@ const UserLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotModal, setShowForgotModal] = useState(false);
     const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
+    const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -63,7 +64,11 @@ const UserLogin = () => {
     useEffect(() => {
         const handleSessionExpired = (event) => {
             console.log('🔴 [USER LOGIN] Nhận được sự kiện sessionExpired!');
-            console.log('🔴 [USER LOGIN] Message:', event.detail?.message);
+            console.log('🔴 [USER LOGIN] Detail:', event.detail);
+            
+            // ✅ Lưu message để hiển thị trong modal
+            const message = event.detail?.message || 'Tài khoản đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.';
+            setSessionExpiredMessage(message);
             
             // ✅ HIỂN THỊ MODAL
             setShowSessionExpiredModal(true);
@@ -73,14 +78,31 @@ const UserLogin = () => {
             setErrors({});
         };
 
+        // 🟢 THÊM: Lắng nghe sự kiện TOKEN_INVALID
+        const handleTokenInvalid = (event) => {
+            console.log('🔴 [USER LOGIN] Token invalid:', event.detail);
+            setServerError('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+        };
+
+        // 🟢 THÊM: Lắng nghe sự kiện UNAUTHORIZED
+        const handleUnauthorized = (event) => {
+            console.log('🔴 [USER LOGIN] Unauthorized:', event.detail);
+            // Không làm gì, vì đã ở trang login
+        };
+
         // Đăng ký lắng nghe
         window.addEventListener('sessionExpired', handleSessionExpired);
-        console.log('✅ [USER LOGIN] Đã đăng ký lắng nghe sự kiện sessionExpired');
+        window.addEventListener('tokenInvalid', handleTokenInvalid);
+        window.addEventListener('unauthorized', handleUnauthorized);
+        
+        console.log('✅ [USER LOGIN] Đã đăng ký lắng nghe sự kiện auth');
 
         // Cleanup
         return () => {
             window.removeEventListener('sessionExpired', handleSessionExpired);
-            console.log('🧹 [USER LOGIN] Đã hủy lắng nghe sự kiện sessionExpired');
+            window.removeEventListener('tokenInvalid', handleTokenInvalid);
+            window.removeEventListener('unauthorized', handleUnauthorized);
+            console.log('🧹 [USER LOGIN] Đã hủy lắng nghe sự kiện auth');
         };
     }, []);
 
@@ -90,6 +112,7 @@ const UserLogin = () => {
     const handleSessionExpiredConfirm = () => {
         console.log('🔴 [USER LOGIN] User xác nhận đăng nhập lại');
         setShowSessionExpiredModal(false);
+        setSessionExpiredMessage('');
         
         // Reset form
         setFormData({
@@ -186,22 +209,31 @@ const UserLogin = () => {
         } catch (err) {
             console.error('Login Error:', err);
             
-            // ✅ Nếu là lỗi SESSION_EXPIRED từ backend
-            if (err.response?.data?.code === 'SESSION_EXPIRED') {
-                console.log('🔴 [USER LOGIN] Nhận lỗi SESSION_EXPIRED từ login API');
-                setShowSessionExpiredModal(true);
-            } else {
-                const errorMessage = err.response?.data?.message ||
-                                     err.response?.data?.error ||
-                                     'Tài khoản hoặc mật khẩu không chính xác';
+            // ✅ Xử lý các mã lỗi từ backend
+            const errorCode = err.response?.data?.code;
+            const errorMessage = err.response?.data?.message || 'Tài khoản hoặc mật khẩu không chính xác';
 
-                if (err.response?.data?.field === 'email') {
-                    setErrors(prev => ({ ...prev, email: errorMessage }));
-                } else if (err.response?.data?.field === 'password') {
-                    setErrors(prev => ({ ...prev, password: errorMessage }));
-                } else {
-                    setServerError(errorMessage);
-                }
+            // 🔥 SESSION_EXPIRED - Tài khoản đã đăng nhập trên thiết bị khác
+            if (errorCode === 'SESSION_EXPIRED') {
+                console.log('🔴 [USER LOGIN] Nhận lỗi SESSION_EXPIRED từ login API');
+                setSessionExpiredMessage(errorMessage);
+                setShowSessionExpiredModal(true);
+            } 
+            // 🔥 TOKEN_INVALID
+            else if (errorCode === 'TOKEN_INVALID') {
+                setServerError('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+            }
+            // 🔥 UNAUTHORIZED
+            else if (errorCode === 'UNAUTHORIZED') {
+                setServerError('Vui lòng đăng nhập để tiếp tục.');
+            }
+            // Lỗi field (email/password)
+            else if (err.response?.data?.field === 'email') {
+                setErrors(prev => ({ ...prev, email: errorMessage }));
+            } else if (err.response?.data?.field === 'password') {
+                setErrors(prev => ({ ...prev, password: errorMessage }));
+            } else {
+                setServerError(errorMessage);
             }
         } finally {
             setLoading(false);
@@ -311,10 +343,11 @@ const UserLogin = () => {
                 <ForgotPassword onClose={() => setShowForgotModal(false)} />
             )}
 
-            {/* ✅ MODAL SESSION EXPIRED */}
+            {/* ✅ MODAL SESSION EXPIRED - ĐÃ CẬP NHẬT */}
             <SessionExpiredModal
                 isOpen={showSessionExpiredModal}
                 onConfirm={handleSessionExpiredConfirm}
+                message={sessionExpiredMessage}
             />
         </div>
     );

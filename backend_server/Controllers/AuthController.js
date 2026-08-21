@@ -24,13 +24,11 @@ exports.register = async (req, res) => {
 
 /*=========================================================
     LOGIN (CHUNG - DÙNG CHO CẢ CUSTOMER VÀ ADMIN)
-    ✅ SỬA: GỌI SERVICE VỚI ĐẦY ĐỦ THAM SỐ, KHÔNG SET COOKIE THỦ CÔNG
 =========================================================*/
 
 exports.login = async (req, res) => {
     try {
         const { email, password, rememberMe } = req.body;
-        // Service tự động set cookie user_token hoặc admin_token
         const result = await AuthService.login(email, password, rememberMe, req, res);
         return res.status(200).json({
             success: true,
@@ -49,16 +47,13 @@ exports.login = async (req, res) => {
 
 /*=========================================================
     LOGIN ADMIN (RIÊNG)
-    ✅ SỬA: DÙNG CHUNG SERVICE, KIỂM TRA ROLE SAU KHI LOGIN
 =========================================================*/
 
 exports.adminLogin = async (req, res) => {
     try {
         const { email, password, rememberMe } = req.body;
-        // Service tự động set cookie admin_token
         const result = await AuthService.login(email, password, rememberMe, req, res);
 
-        // Kiểm tra role (dự phòng, service đã check, nhưng vẫn giữ)
         if (result.user.role !== 'admin') {
             return res.status(403).json({
                 success: false,
@@ -100,13 +95,11 @@ exports.getMe = async (req, res) => {
 
 /*=========================================================
     REFRESH TOKEN
-    ⚠️ Tạm thời giữ nguyên (cần implement service refreshToken sau)
 =========================================================*/
 
 exports.refreshToken = async (req, res) => {
     try {
         // TODO: Implement AuthService.refreshToken(req, res)
-        // Hiện tại trả về lỗi 501 (Not Implemented)
         return res.status(501).json({
             success: false,
             message: "Chức năng refresh token đang phát triển"
@@ -122,7 +115,6 @@ exports.refreshToken = async (req, res) => {
 
 /*=========================================================
     LOGOUT
-    ✅ SỬA: GỌI SERVICE XỬ LÝ XÓA COOKIE
 =========================================================*/
 
 exports.logout = async (req, res) => {
@@ -140,7 +132,6 @@ exports.logout = async (req, res) => {
 
 /*=========================================================
     LOGOUT ALL DEVICES
-    ✅ SỬA: GỌI SERVICE XỬ LÝ XÓA COOKIE
 =========================================================*/
 
 exports.logoutAllDevices = async (req, res) => {
@@ -261,6 +252,41 @@ exports.verifyEmail = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Verify Email Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    🟢 THÊM MỚI: LẤY DANH SÁCH THIẾT BỊ ĐANG ĐĂNG NHẬP
+=========================================================*/
+
+exports.getDevices = async (req, res) => {
+    try {
+        const result = await AuthService.getActiveDevices(req.user.user_id);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Get Devices Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    🟢 THÊM MỚI: REVOKE 1 THIẾT BỊ CỤ THỂ
+=========================================================*/
+
+exports.revokeDevice = async (req, res) => {
+    try {
+        const { deviceId } = req.params;
+        const result = await AuthService.revokeDeviceById(req.user.user_id, deviceId);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Revoke Device Error:", error);
         return res.status(error.statusCode || 500).json({
             success: false,
             message: error.message || "Lỗi máy chủ"
