@@ -11,20 +11,22 @@ const api = axios.create({
 });
 
 // ============================================================
-// 🟢 INTERCEPTOR XỬ LÝ LỖI - ĐÃ SỬA HOÀN CHỈNH
+// 🔥 INTERCEPTOR XỬ LÝ LỖI - ĐÃ SỬA HOÀN CHỈNH
 // ============================================================
 
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Chỉ xử lý lỗi 401 (Unauthorized)
+        // ============================================================
+        // 🔥 QUAN TRỌNG: XỬ LÝ 401 - SESSION EXPIRED
+        // ============================================================
         if (error.response?.status === 401) {
             const errorCode = error.response?.data?.code;
             const errorMessage = error.response?.data?.message || 'Phiên đăng nhập đã hết hạn';
 
             console.warn('🔴 [API] Lỗi 401:', errorCode, errorMessage);
 
-            // ========== XỬ LÝ SESSION_EXPIRED ==========
+            // ========== SESSION_EXPIRED - BỊ ĐÁ KHỎI THIẾT BỊ ==========
             if (errorCode === 'SESSION_EXPIRED') {
                 console.warn('🔴 [SESSION_EXPIRED] Tài khoản đã đăng nhập trên thiết bị khác!');
 
@@ -32,7 +34,7 @@ api.interceptors.response.use(
                 localStorage.removeItem('user_info');
                 localStorage.removeItem('admin_info');
 
-                // Dispatch event để các component bắt
+                // 🔥 Dispatch event SESSION_EXPIRED để các component bắt
                 window.dispatchEvent(new CustomEvent('sessionExpired', {
                     detail: {
                         code: 'SESSION_EXPIRED',
@@ -41,12 +43,13 @@ api.interceptors.response.use(
                         fromAPI: true
                     }
                 }));
+
+                // Không redirect ở đây, để component xử lý
             }
 
-            // ========== XỬ LÝ TOKEN_INVALID ==========
+            // ========== TOKEN_INVALID ==========
             else if (errorCode === 'TOKEN_INVALID') {
                 console.warn('🔴 [TOKEN_INVALID] Token không hợp lệ');
-
                 localStorage.removeItem('user_info');
                 localStorage.removeItem('admin_info');
 
@@ -58,7 +61,7 @@ api.interceptors.response.use(
                 }));
             }
 
-            // ========== XỬ LÝ UNAUTHORIZED ==========
+            // ========== UNAUTHORIZED - Chưa đăng nhập ==========
             else if (errorCode === 'UNAUTHORIZED') {
                 console.warn('🔴 [UNAUTHORIZED] Vui lòng đăng nhập');
 
@@ -84,10 +87,9 @@ api.interceptors.response.use(
             }
         }
 
-        // ========== XỬ LÝ LỖI 403 - FORBIDDEN ==========
+        // ========== LỖI 403 - FORBIDDEN ==========
         if (error.response?.status === 403) {
-            console.warn('🔴 [403] Không có quyền truy cập:', error.response?.data?.message);
-
+            console.warn('🔴 [403] Không có quyền truy cập');
             window.dispatchEvent(new CustomEvent('forbidden', {
                 detail: {
                     message: error.response?.data?.message || 'Bạn không có quyền truy cập',
@@ -95,37 +97,32 @@ api.interceptors.response.use(
             }));
         }
 
-        // ========== XỬ LÝ LỖI 429 - RATE LIMIT ==========
+        // ========== LỖI 429 - RATE LIMIT ==========
         if (error.response?.status === 429) {
-            console.warn('🔴 [429] Quá nhiều yêu cầu:', error.response?.data?.message);
-
+            console.warn('🔴 [429] Quá nhiều yêu cầu');
             window.dispatchEvent(new CustomEvent('rateLimited', {
                 detail: {
-                    message: error.response?.data?.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.',
-                    retryAfter: error.response?.headers?.['retry-after'] || 60
+                    message: error.response?.data?.message || 'Quá nhiều yêu cầu. Vui lòng thử lại sau.',
                 }
             }));
         }
 
-        // ========== XỬ LÝ LỖI 500 - SERVER ERROR ==========
+        // ========== LỖI 500 - SERVER ERROR ==========
         if (error.response?.status >= 500) {
-            console.error('🔴 [500] Lỗi máy chủ:', error.response?.data?.message || error.message);
-
+            console.error('🔴 [500] Lỗi máy chủ');
             window.dispatchEvent(new CustomEvent('serverError', {
                 detail: {
                     message: 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.',
-                    status: error.response?.status
                 }
             }));
         }
 
-        // ========== XỬ LÝ LỖI MẠNG ==========
+        // ========== LỖI MẠNG ==========
         if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
             console.error('🔴 [NETWORK] Mất kết nối mạng');
-
             window.dispatchEvent(new CustomEvent('networkError', {
                 detail: {
-                    message: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.',
+                    message: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.',
                 }
             }));
         }
@@ -133,61 +130,5 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
-
-// ============================================================
-// 🟢 THÊM MỚI: HÀM TIỆN ÍCH
-// ============================================================
-
-/**
- * Kiểm tra user đã đăng nhập chưa
- */
-export const isAuthenticated = async () => {
-    try {
-        const response = await api.get('/api/auth/me');
-        return response.data.success;
-    } catch (error) {
-        return false;
-    }
-};
-
-/**
- * Lấy danh sách thiết bị đang đăng nhập
- */
-export const getDevices = async () => {
-    const response = await api.get('/api/auth/devices');
-    return response.data;
-};
-
-/**
- * Đăng xuất 1 thiết bị cụ thể
- */
-export const revokeDevice = async (deviceId) => {
-    const response = await api.delete(`/api/auth/devices/${deviceId}`);
-    return response.data;
-};
-
-/**
- * Đăng xuất tất cả thiết bị
- */
-export const logoutAllDevices = async () => {
-    const response = await api.post('/api/auth/logout-all');
-    return response.data;
-};
-
-/**
- * Lấy thông tin user hiện tại
- */
-export const getCurrentUser = async () => {
-    const response = await api.get('/api/auth/me');
-    return response.data;
-};
-
-// ============================================================
-// 🟢 CLEANUP
-// ============================================================
-
-export const removeAllListeners = () => {
-    console.log('🧹 [API] Cleanup listeners');
-};
 
 export default api;

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api/api';
 import socketService from '../../api/socket';
+import SessionExpiredModal from '../components/SessionExpiredModal';
 import {
     ChevronDown,
     UserCircle,
@@ -17,9 +18,6 @@ import '../styles/Header.css';
 const UserHeader = () => {
     const navigate = useNavigate();
 
-    /* =====================================================
-        STATES
-    ===================================================== */
     const [user, setUser] = useState(null);
     const [showDropdown, setShowDropdown] = useState(false);
     const [cinemas, setCinemas] = useState([]);
@@ -30,14 +28,11 @@ const UserHeader = () => {
     const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
     const [newDevice, setNewDevice] = useState('');
 
-    /* =====================================================
-        REFS
-    ===================================================== */
     const dropdownRef = useRef(null);
     const navRef = useRef(null);
 
     /* =====================================================
-        FETCH USER INFO
+        FETCH USER INFO - CHỈ KẾT NỐI SOCKET KHI CÓ USER
     ===================================================== */
     useEffect(() => {
         const fetchUser = async () => {
@@ -52,15 +47,14 @@ const UserHeader = () => {
                 
                 setUser(account);
 
+                // 🔥 CHỈ KẾT NỐI SOCKET KHI CÓ USER
                 if (account) {
-                    // 🔥 SỬA: connect(userId) chỉ truyền 1 tham số
                     socketService.connect(account.user_id);
                 }
             } catch (error) {
                 console.error('Lỗi kiểm tra đăng nhập:', error);
                 setUser(null);
 
-                // 🟢 Nếu lỗi 401, ngắt socket
                 if (error.response?.status === 401) {
                     socketService.disconnect();
                 }
@@ -103,6 +97,7 @@ const UserHeader = () => {
                     else if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) account = rawData;
                     setUser(account);
                     
+                    // 🔥 CHỈ KẾT NỐI SOCKET KHI CÓ USER
                     if (account) {
                         socketService.connect(account.user_id);
                     }
@@ -248,7 +243,6 @@ const UserHeader = () => {
         <>
             <nav className="user-navbar">
                 <div className="nav-container">
-                    {/* Mobile Hamburger */}
                     <button 
                         className={`hamburger ${isMenuOpen ? 'active' : ''}`} 
                         onClick={() => setIsMenuOpen(prev => !prev)} 
@@ -263,7 +257,6 @@ const UserHeader = () => {
 
                     <div className={`menu-overlay ${isMenuOpen ? 'active' : ''}`} onClick={closeMobileMenu} />
 
-                    {/* NAVIGATION LINKS */}
                     <ul ref={navRef} className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
                         <li><Link to="/" onClick={closeMobileMenu} className="menu-link">Trang chủ</Link></li>
                         <li className={`has-dropdown ${activeSubMenu === 'phim' ? 'mobile-active' : ''}`}>
@@ -302,7 +295,6 @@ const UserHeader = () => {
                         <li><Link to="/blog-cinema" onClick={closeMobileMenu} className="menu-link">Blog Điện Ảnh</Link></li>
                     </ul>
 
-                    {/* USER MENU */}
                     <div className="user-menu" ref={dropdownRef}>
                         <div className="account-trigger" onClick={() => setShowDropdown(prev => !prev)}>
                             {avatarUrl ? (
@@ -351,30 +343,15 @@ const UserHeader = () => {
                 </div>
             </nav>
 
-            {/* MODAL SESSION EXPIRED */}
-            {showSessionExpiredModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <div className="modal-icon">🔐</div>
-                        <h2>Phiên đăng nhập đã hết hạn</h2>
-                        <p className="message">{sessionExpiredMessage}</p>
-                        {newDevice && (
-                            <div className="device-info">
-                                <span>📱 Thiết bị mới: <strong>{typeof newDevice === 'string' ? newDevice : JSON.stringify(newDevice)}</strong></span>
-                            </div>
-                        )}
-                        <p className="warning">
-                            Để đảm bảo an toàn, vui lòng đăng nhập lại.
-                        </p>
-                        <button 
-                            className="btn-primary" 
-                            onClick={handleSessionExpiredConfirm}
-                        >
-                            Đăng nhập lại
-                        </button>
-                    </div>
-                </div>
-            )}
+            {/* 🔥 SESSION EXPIRED MODAL - CHỈ HIỂN THỊ KHI THỰC SỰ BỊ ĐÁ */}
+            <SessionExpiredModal
+                isOpen={showSessionExpiredModal}
+                onConfirm={handleSessionExpiredConfirm}
+                message={sessionExpiredMessage}
+                newDevice={newDevice}
+                autoRedirect={true}
+                redirectDelay={3000}
+            />
         </>
     );
 };

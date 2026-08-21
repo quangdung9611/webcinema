@@ -7,7 +7,7 @@ const Cookie = require("../utils/Cookie");
 const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
 
 /*=========================================================
-    AUTHENTICATE ADMIN - ĐÃ SỬA
+    AUTHENTICATE ADMIN - ĐÃ SỬA HOÀN CHỈNH
 =========================================================*/
 
 const authenticateAdmin = async (req, res, next) => {
@@ -41,18 +41,21 @@ const authenticateAdmin = async (req, res, next) => {
         }
 
         // ============================================================
-        // 🔥 SỬA: KIỂM TRA TOKEN HIỆN TẠI
+        // 🔥 SỬA QUAN TRỌNG: Chỉ kiểm tra DB nếu KHÔNG phải route auth/me
         // ============================================================
-        const tokenHash = Jwt.hashRefreshToken(accessToken);
-        const validToken = await RefreshTokenRepository.findValidTokenHash(tokenHash);
-        
-        if (!validToken) {
-            Cookie.clearAdminCookies(res);
-            return res.status(401).json({
-                success: false,
-                code: "SESSION_EXPIRED",
-                message: "Tài khoản admin đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại."
-            });
+        // Nếu là request kiểm tra user (từ UserHome), bỏ qua check DB để tránh lỗi 401 làm sập Promise.all FE
+        if (!req.path.includes('/auth/me') && !req.originalUrl.includes('/auth/me')) {
+            const tokenHash = Jwt.hashRefreshToken(accessToken);
+            const validToken = await RefreshTokenRepository.findValidTokenHash(tokenHash);
+            
+            if (!validToken) {
+                Cookie.clearAdminCookies(res);
+                return res.status(401).json({
+                    success: false,
+                    code: "SESSION_EXPIRED",
+                    message: "Tài khoản admin đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại."
+                });
+            }
         }
         // ============================================================
         // KẾT THÚC SỬA

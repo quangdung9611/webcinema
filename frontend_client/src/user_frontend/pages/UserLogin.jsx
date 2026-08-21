@@ -11,37 +11,9 @@ import socketService from '../../api/socket';
 
 import ForgotPassword from '../components/ForgotPassword';
 import LoadingButton from '../components/LoadingButton';
+import SessionExpiredModal from '../components/SessionExpiredModal';
 
 import '../styles/UserAuth.css';
-
-// ============================================================
-// 🟢 SESSION EXPIRED MODAL COMPONENT
-// ============================================================
-
-const SessionExpiredModal = ({ isOpen, onConfirm, message, newDevice }) => {
-    if (!isOpen) return null;
-
-    return (
-        <div className="modal-overlay">
-            <div className="modal-content">
-                <div className="modal-icon">🔐</div>
-                <h2>Phiên đăng nhập đã hết hạn</h2>
-                <p className="message">{message || 'Tài khoản đã được đăng nhập trên thiết bị khác.'}</p>
-                {newDevice && (
-                    <div className="device-info">
-                        <span>📱 Thiết bị mới: <strong>{typeof newDevice === 'string' ? newDevice : JSON.stringify(newDevice)}</strong></span>
-                    </div>
-                )}
-                <p className="warning">
-                    Để đảm bảo an toàn, vui lòng đăng nhập lại.
-                </p>
-                <button className="btn-primary" onClick={onConfirm}>
-                    Đăng nhập lại
-                </button>
-            </div>
-        </div>
-    );
-};
 
 const UserLogin = () => {
 
@@ -67,7 +39,7 @@ const UserLogin = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // 🔥 SỬA: Kiểm tra location.state
+    // 🔥 Kiểm tra nếu bị redirect từ session expired
     useEffect(() => {
         if (location.state?.expired) {
             setSessionExpiredMessage('Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
@@ -98,6 +70,7 @@ const UserLogin = () => {
 
     /* =====================================================
         LẮNG NGHE SỰ KIỆN SESSION EXPIRED
+        🔥 CHỈ LẮNG NGHE, KHÔNG TỰ ĐỘNG KẾT NỐI SOCKET
     ===================================================== */
     useEffect(() => {
         const handleSessionExpired = (event) => {
@@ -114,7 +87,7 @@ const UserLogin = () => {
             setServerError('');
             setErrors({});
 
-            // Ngắt socket
+            // Ngắt socket nếu đang kết nối
             socketService.disconnect();
         };
 
@@ -207,6 +180,7 @@ const UserLogin = () => {
 
     /* =====================================================
         LOGIN
+        🔥 QUAN TRỌNG: CHỈ KẾT NỐI SOCKET SAU KHI LOGIN THÀNH CÔNG
     ===================================================== */
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -236,10 +210,15 @@ const UserLogin = () => {
                 return;
             }
 
-            // 🔥 SỬA: Kết nối socket sau khi login
+            // ============================================================
+            // 🔥 QUAN TRỌNG: CHỈ KẾT NỐI SOCKET SAU KHI LOGIN THÀNH CÔNG
+            // ============================================================
             const userData = response.data?.user;
             if (userData) {
                 try {
+                    // Đợi 1 chút để cookie được set
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
                     // Kết nối WebSocket với user_id
                     socketService.connect(userData.user_id);
                     console.log('✅ [USER LOGIN] Socket connected for user:', userData.user_id);
@@ -381,12 +360,12 @@ const UserLogin = () => {
                 <ForgotPassword onClose={() => setShowForgotModal(false)} />
             )}
 
-            {/* MODAL SESSION EXPIRED */}
             <SessionExpiredModal
                 isOpen={showSessionExpiredModal}
                 onConfirm={handleSessionExpiredConfirm}
                 message={sessionExpiredMessage}
                 newDevice={newDevice}
+                autoRedirect={false}
             />
         </div>
     );
