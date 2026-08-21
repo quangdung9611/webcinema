@@ -44,7 +44,7 @@ import LoadingSpinner from "./user_frontend/components/LoadingSpinner";
 // SOCKET SERVICE
 // ==========================================================
 
-import socketService from "../../backend_server/Services/SocketService"; // Đường dẫn đúng theo cấu trúc của bạn
+import socketService from "./user_frontend/services/SocketService"; // Nếu nằm ở user_frontend/services/
 
 // ==========================================================
 // LAYOUT
