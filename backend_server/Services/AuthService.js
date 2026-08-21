@@ -184,7 +184,7 @@ exports.register = async (userData) => {
 };
 
 /*=========================================================
-    LOGIN (CHÍNH) - ĐÃ SỬA: THÊM REVOKE TOKEN CŨ + EMIT SOCKET
+    LOGIN (CHÍNH) - ĐÃ SỬA: KHÔNG REVOKE TOKEN CŨ, CHỈ KICK SOCKET CŨ
 =========================================================*/
 
 exports.login = async (email, password, rememberMe = false, req, res) => {
@@ -209,31 +209,24 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     }
 
     // ============================================================
-    // 🔥 REVOKE TẤT CẢ TOKEN CŨ + EMIT SOCKET ĐẾN THIẾT BỊ CŨ
+    // 🔥 SỬA QUAN TRỌNG: KHÔNG REVOKE TOKEN CŨ!
+    // Chỉ kick socket cũ, KHÔNG xóa token của thiết bị cũ.
+    // Điều này giúp thiết bị đầu tiên không bị tự đăng xuất.
     // ============================================================
-    
-    // Lấy socketId cũ trước khi revoke
+
+    // Lấy socketId cũ (nếu có)
     const oldSocketId = await RedisService.getUserSocket(user.user_id);
-    
-    // Revoke tất cả token cũ
-    const revokedCount = await RefreshTokenRepository.revokeByUser(
-        user.user_id,
-        "Đăng nhập từ thiết bị khác"
-    );
-
-    if (revokedCount > 0) {
-        console.log(`🔴 [REVOKE] Đã kick ${revokedCount} thiết bị cũ của user: ${user.user_id} - ${user.email}`);
-    }
 
     // ============================================================
-    // 🟢 EMIT SOCKET EVENT ĐẾN THIẾT BỊ CŨ
+    // 🟢 EMIT SOCKET EVENT ĐẾN THIẾT BỊ CŨ (KICK SOCKET)
     // ============================================================
     if (oldSocketId && ioInstance) {
         try {
-            console.log(`📤 [SOCKET] Đang gửi session_expired đến socket: ${oldSocketId}`);
+            console.log(`📤 [SOCKET] Đang kick socket cũ: ${oldSocketId}`);
             
+            // Gửi lệnh đăng xuất cho socket cũ (nhưng KHÔNG xóa token của nó)
             ioInstance.to(oldSocketId).emit('session_expired', {
-                message: 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác',
+                message: 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.',
                 timestamp: new Date().toISOString(),
                 newDevice: {
                     ip: req.ip || req.connection?.remoteAddress || 'Unknown',
@@ -243,7 +236,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
             
             console.log(`✅ [SOCKET] Đã gửi session_expired đến thiết bị cũ: ${oldSocketId}`);
             
-            // Xóa socketId cũ khỏi Redis
+            // Chỉ xóa socketId cũ khỏi Redis (để thiết bị mới đăng ký socket mới)
             await RedisService.deleteUserSocket(user.user_id);
             
         } catch (error) {
@@ -261,7 +254,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     // KẾT THÚC EMIT SOCKET
     // ============================================================
 
-    // 5. Generate token và set cookie
+    // 5. Generate token và set cookie (TẠO TOKEN MỚI CHO THIẾT BỊ NÀY)
     generateAndSetTokens(user, res, rememberMe);
 
     // 6. Lưu refresh token mới vào DB

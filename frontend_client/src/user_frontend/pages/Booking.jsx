@@ -47,15 +47,10 @@ const Booking = () => {
      * selectedSeats:
      *
      * Ghế đơn:
-     * [
-     *   seat A1
-     * ]
+     * [ seat A1 ]
      *
      * Ghế Couple:
-     * [
-     *   seat A9,
-     *   seat A10
-     * ]
+     * [ seat A9, seat A10 ]
      *
      * => Sidebar sẽ nhận đúng số ghế vật lý.
      */
@@ -83,7 +78,7 @@ const Booking = () => {
     const timeRef = useRef(null);
 
     // =========================================================
-    // SOCKET
+    // SOCKET - ĐÃ THÊM XỬ LÝ LỖI CONNECT_ERROR
     // =========================================================
 
     const socket = useMemo(
@@ -95,8 +90,25 @@ const Booking = () => {
         []
     );
 
-    const showtimeId =
-        selectedShowtime?.showtime_id || selectedShowtime?.id;
+    // 🔥 XỬ LÝ LỖI KẾT NỐI SOCKET (Ngăn vòng lặp reconnect vô tận)
+    useEffect(() => {
+        const handleConnectError = (err) => {
+            console.error('🔴 [SOCKET] Lỗi kết nối:', err.message);
+            // Nếu lỗi do token hết hạn hoặc bị revoke (Backend trả lỗi), ngắt kết nối hoàn toàn
+            if (err.message === 'SESSION_EXPIRED' || err.message.includes('Authentication')) {
+                console.warn('🔴 [SOCKET] Token hết hạn, ngắt kết nối vĩnh viễn để tránh vòng lặp.');
+                socket.disconnect(); // Ngắt hoàn toàn, không cho reconnect
+            }
+        };
+
+        socket.on('connect_error', handleConnectError);
+
+        return () => {
+            socket.off('connect_error', handleConnectError);
+        };
+    }, [socket]);
+
+    const showtimeId = selectedShowtime?.showtime_id || selectedShowtime?.id;
 
     // =========================================================
     // SCROLL
@@ -535,15 +547,18 @@ const Booking = () => {
                 }
 
                 parsed.forEach((s) => {
-                    socket.emit(
-                        'client-chon-ghe',
-                        {
-                            seatId:
-                                s.seat_id,
+                    // Kiểm tra socket còn kết nối trước khi emit
+                    if (socket.connected) {
+                        socket.emit(
+                            'client-chon-ghe',
+                            {
+                                seatId:
+                                    s.seat_id,
 
-                            showtimeId
-                        }
-                    );
+                                showtimeId
+                            }
+                        );
+                    }
                 });
             }
         } catch (err) {
@@ -645,13 +660,16 @@ const Booking = () => {
 
     const clearBookingSession = useCallback(() => {
         selectedSeats.forEach((s) => {
-            socket.emit(
-                'client-huy-chon-ghe',
-                {
-                    seatId: s.seat_id,
-                    showtimeId
-                }
-            );
+            // Chỉ emit nếu socket vẫn đang kết nối
+            if (socket.connected) {
+                socket.emit(
+                    'client-huy-chon-ghe',
+                    {
+                        seatId: s.seat_id,
+                        showtimeId
+                    }
+                );
+            }
         });
 
         sessionStorage.removeItem(
@@ -699,6 +717,20 @@ const Booking = () => {
             Number(seat.is_active) === 0 ||
             seat.is_locked_by_user
         ) {
+            return;
+        }
+
+        // =====================================================
+        // KIỂM TRA SOCKET CÒN KẾT NỐI KHÔNG
+        // =====================================================
+        if (!socket.connected) {
+            setModalConfig({
+                show: true,
+                type: 'error',
+                title: 'Phiên làm việc hết hạn',
+                message: 'Socket đã ngắt kết nối. Vui lòng tải lại trang để bắt đầu lại.',
+                onConfirm: () => window.location.reload()
+            });
             return;
         }
 
@@ -812,15 +844,17 @@ const Booking = () => {
 
             seatsToToggle.forEach(
                 (targetSeat) => {
-                    socket.emit(
-                        'client-huy-chon-ghe',
-                        {
-                            seatId:
-                                targetSeat.seat_id,
+                    if (socket.connected) {
+                        socket.emit(
+                            'client-huy-chon-ghe',
+                            {
+                                seatId:
+                                    targetSeat.seat_id,
 
-                            showtimeId
-                        }
-                    );
+                                showtimeId
+                            }
+                        );
+                    }
                 }
             );
 
@@ -911,15 +945,17 @@ const Booking = () => {
                         targetSeat
                     );
 
-                    socket.emit(
-                        'client-chon-ghe',
-                        {
-                            seatId:
-                                targetSeat.seat_id,
+                    if (socket.connected) {
+                        socket.emit(
+                            'client-chon-ghe',
+                            {
+                                seatId:
+                                    targetSeat.seat_id,
 
-                            showtimeId
-                        }
-                    );
+                                showtimeId
+                            }
+                        );
+                    }
                 }
             }
         );

@@ -141,7 +141,7 @@ AuthService.setIO(io);
 console.log("✅ Socket.IO instance set to AuthService");
 
 // ============================================================
-// 🔥 SOCKET AUTHENTICATION MIDDLEWARE - ĐÃ SỬA
+// 🔥 SOCKET AUTHENTICATION MIDDLEWARE - ĐÃ SỬA: KHÔNG CHECK DB
 // ============================================================
 
 io.use(async (socket, next) => {
@@ -172,22 +172,8 @@ io.use(async (socket, next) => {
         }
 
         // ============================================================
-        // 🔥 SỬA: KIỂM TRA TOKEN HIỆN TẠI CÓ BỊ REVOKE KHÔNG
-        // ============================================================
-        const tokenHash = Jwt.hashRefreshToken(token);
-        const validToken = await RefreshTokenRepository.findValidTokenHash(tokenHash);
-        
-        if (!validToken) {
-            console.warn(`🔴 [SOCKET] Token revoked for user ${payload.user_id}. Rejecting permanently.`);
-            
-            // 🔥 QUAN TRỌNG: Ngắt kết nối socket ngay lập tức, không cho reconnect nữa
-            socket.disconnect(true);
-            
-            // Trả về lỗi để Socket.io từ chối kết nối hoàn toàn
-            return next(new Error('SESSION_EXPIRED'));
-        }
-        // ============================================================
-        // KẾT THÚC SỬA
+        // 🔥 QUAN TRỌNG: KHÔNG CHECK DB CHO SOCKET!
+        // Socket chỉ cần xác thực bằng JWT là được.
         // ============================================================
 
         socket.userId = payload.user_id;
