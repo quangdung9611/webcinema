@@ -29,7 +29,7 @@ import {
 } from "./context/RouteLoadingContext";
 
 // ==========================================================
-// 🟢 THÊM: SOCKET SERVICE
+// SOCKET SERVICE
 // ==========================================================
 
 import socketService from "./api/socket";
@@ -85,7 +85,7 @@ const Promotion = lazy(() => import("./user_frontend/pages/Promotion"));
 const BlogCinema = lazy(() => import("./user_frontend/pages/BlogCinema"));
 
 // ==========================================================
-// CINEMA CARD DETAIL - DÙNG CHO PROMOTION, BLOG, NEWS
+// CINEMA CARD DETAIL
 // ==========================================================
 
 const CinemaCardDetail = lazy(() => import("./user_frontend/components/CinemaCardDetail"));
@@ -285,7 +285,7 @@ const ScrollToTop = () => {
 };
 
 // ==========================================================
-// 🟢 SESSION EXPIRED MODAL COMPONENT
+// SESSION EXPIRED MODAL COMPONENT
 // ==========================================================
 
 const SessionExpiredModal = () => {
@@ -304,16 +304,13 @@ const SessionExpiredModal = () => {
             setDeviceInfo(newDevice || null);
             setVisible(true);
 
-            // Xóa token và thông tin user
             localStorage.removeItem('user_info');
             localStorage.removeItem('admin_info');
             localStorage.removeItem('access_token');
 
-            // Ngắt kết nối socket
             socketService.disconnect();
         };
 
-        // Lắng nghe từ API interceptor và socket
         window.addEventListener('sessionExpired', handleSessionExpired);
         window.addEventListener('socketAuthError', handleSessionExpired);
 
@@ -325,9 +322,7 @@ const SessionExpiredModal = () => {
 
     const handleOk = () => {
         setVisible(false);
-        // Redirect về trang login
-        navigate('/login', { replace: true });
-        window.location.reload();
+        navigate('/login', { replace: true, state: { expired: true } });
     };
 
     if (!visible) return null;
@@ -420,11 +415,10 @@ function AppContent() {
     const navigate = useNavigate();
 
     // ==========================================================
-    // 🟢 KẾT NỐI SOCKET KHI APP LOAD
+    // KẾT NỐI SOCKET KHI APP LOAD
     // ==========================================================
     useEffect(() => {
         const connectSocket = () => {
-            // Lấy thông tin user từ localStorage
             const userInfo = localStorage.getItem('user_info');
             if (userInfo) {
                 try {
@@ -441,7 +435,6 @@ function AppContent() {
 
         connectSocket();
 
-        // Cleanup khi unmount
         return () => {
             socketService.disconnect();
         };
@@ -470,7 +463,6 @@ function AppContent() {
             <div className="app-wrapper">
                 <ScrollToTop />
                 
-                {/* 🟢 THÊM SESSION EXPIRED MODAL */}
                 <SessionExpiredModal />
 
                 <LazyErrorBoundary>
@@ -538,15 +530,15 @@ function AppContent() {
                                         {/* CINEMA GENRE */}
                                         <Route path="cinema-genre" element={<CinemaGenre />} />
                                         
-                                        {/* NEWS - DÙNG CINEMA CARD DETAIL */}
+                                        {/* NEWS */}
                                         <Route path="news" element={<News />} />
                                         <Route path="news/detail/:slug" element={<CinemaCardDetail type="news" />} />
                                         
-                                        {/* PROMOTION - DÙNG CINEMA CARD DETAIL */}
+                                        {/* PROMOTION */}
                                         <Route path="promotion" element={<Promotion />} />
                                         <Route path="promotion/detail/:slug" element={<CinemaCardDetail type="promotion" />} />
                                         
-                                        {/* BLOG CINEMA - DÙNG CINEMA CARD DETAIL */}
+                                        {/* BLOG CINEMA */}
                                         <Route path="blog-cinema" element={<BlogCinema />} />
                                         <Route path="blog-cinema/detail/:slug" element={<CinemaCardDetail type="blog" />} />
                                         

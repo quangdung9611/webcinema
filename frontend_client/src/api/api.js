@@ -4,15 +4,16 @@ const API_BASE = 'https://api.quangdungcinema.id.vn';
 
 const api = axios.create({
     baseURL: API_BASE,
-    withCredentials: true, // Tự động gửi cookie (user_token, admin_token)
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
 // ============================================================
-// 🟢 INTERCEPTOR XỬ LÝ LỖI - ĐÃ SỬA
+// 🟢 INTERCEPTOR XỬ LÝ LỖI - ĐÃ SỬA HOÀN CHỈNH
 // ============================================================
+
 api.interceptors.response.use(
     (response) => response,
     (error) => {
@@ -23,31 +24,28 @@ api.interceptors.response.use(
 
             console.warn('🔴 [API] Lỗi 401:', errorCode, errorMessage);
 
-            // ========== 🔥 XỬ LÝ CÁC TRƯỜNG HỢP CỤ THỂ ==========
-
-            // 1. SESSION_EXPIRED - Tài khoản đã đăng nhập trên thiết bị khác
+            // ========== XỬ LÝ SESSION_EXPIRED ==========
             if (errorCode === 'SESSION_EXPIRED') {
                 console.warn('🔴 [SESSION_EXPIRED] Tài khoản đã đăng nhập trên thiết bị khác!');
 
-                // Xóa token trong localStorage (nếu có lưu)
+                // Xóa localStorage
                 localStorage.removeItem('user_info');
                 localStorage.removeItem('admin_info');
 
-                // Dispatch event để các component bắt và hiển thị modal
+                // Dispatch event để các component bắt
                 window.dispatchEvent(new CustomEvent('sessionExpired', {
                     detail: {
                         code: 'SESSION_EXPIRED',
                         message: errorMessage,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        fromAPI: true
                     }
                 }));
-
-                // KHÔNG redirect ở đây! Để component xử lý UI
             }
 
-            // 2. TOKEN_INVALID - Token không hợp lệ
+            // ========== XỬ LÝ TOKEN_INVALID ==========
             else if (errorCode === 'TOKEN_INVALID') {
-                console.warn('🔴 [TOKEN_INVALID] Token không hợp lệ, xóa cookie...');
+                console.warn('🔴 [TOKEN_INVALID] Token không hợp lệ');
 
                 localStorage.removeItem('user_info');
                 localStorage.removeItem('admin_info');
@@ -60,7 +58,7 @@ api.interceptors.response.use(
                 }));
             }
 
-            // 3. UNAUTHORIZED - Chưa đăng nhập
+            // ========== XỬ LÝ UNAUTHORIZED ==========
             else if (errorCode === 'UNAUTHORIZED') {
                 console.warn('🔴 [UNAUTHORIZED] Vui lòng đăng nhập');
 
@@ -72,7 +70,7 @@ api.interceptors.response.use(
                 }));
             }
 
-            // 4. Các lỗi 401 khác (mặc định)
+            // ========== Các lỗi 401 khác ==========
             else {
                 console.warn('🔴 [401] Lỗi xác thực không xác định:', errorMessage);
 
@@ -86,9 +84,7 @@ api.interceptors.response.use(
             }
         }
 
-        // ========== XỬ LÝ CÁC LỖI KHÁC ==========
-
-        // Lỗi 403 - Forbidden (Không có quyền)
+        // ========== XỬ LÝ LỖI 403 - FORBIDDEN ==========
         if (error.response?.status === 403) {
             console.warn('🔴 [403] Không có quyền truy cập:', error.response?.data?.message);
 
@@ -99,7 +95,7 @@ api.interceptors.response.use(
             }));
         }
 
-        // Lỗi 429 - Too Many Requests (Rate Limit)
+        // ========== XỬ LÝ LỖI 429 - RATE LIMIT ==========
         if (error.response?.status === 429) {
             console.warn('🔴 [429] Quá nhiều yêu cầu:', error.response?.data?.message);
 
@@ -111,7 +107,7 @@ api.interceptors.response.use(
             }));
         }
 
-        // Lỗi 500 - Server Error
+        // ========== XỬ LÝ LỖI 500 - SERVER ERROR ==========
         if (error.response?.status >= 500) {
             console.error('🔴 [500] Lỗi máy chủ:', error.response?.data?.message || error.message);
 
@@ -123,7 +119,7 @@ api.interceptors.response.use(
             }));
         }
 
-        // Mất kết nối mạng
+        // ========== XỬ LÝ LỖI MẠNG ==========
         if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
             console.error('🔴 [NETWORK] Mất kết nối mạng');
 
@@ -134,22 +130,20 @@ api.interceptors.response.use(
             }));
         }
 
-        // Trả về lỗi để component xử lý tiếp nếu cần
         return Promise.reject(error);
     }
 );
 
 // ============================================================
-// 🟢 THÊM MỚI: HÀM TIỆN ÍCH KIỂM TRA TRẠNG THÁI ĐĂNG NHẬP
+// 🟢 THÊM MỚI: HÀM TIỆN ÍCH
 // ============================================================
 
 /**
- * Kiểm tra xem user đã đăng nhập chưa (dựa vào cookie)
- * Cookie được tự động gửi qua withCredentials
+ * Kiểm tra user đã đăng nhập chưa
  */
 export const isAuthenticated = async () => {
     try {
-        const response = await api.get('/auth/me');
+        const response = await api.get('/api/auth/me');
         return response.data.success;
     } catch (error) {
         return false;
@@ -160,7 +154,7 @@ export const isAuthenticated = async () => {
  * Lấy danh sách thiết bị đang đăng nhập
  */
 export const getDevices = async () => {
-    const response = await api.get('/auth/devices');
+    const response = await api.get('/api/auth/devices');
     return response.data;
 };
 
@@ -168,16 +162,31 @@ export const getDevices = async () => {
  * Đăng xuất 1 thiết bị cụ thể
  */
 export const revokeDevice = async (deviceId) => {
-    const response = await api.delete(`/auth/devices/${deviceId}`);
+    const response = await api.delete(`/api/auth/devices/${deviceId}`);
+    return response.data;
+};
+
+/**
+ * Đăng xuất tất cả thiết bị
+ */
+export const logoutAllDevices = async () => {
+    const response = await api.post('/api/auth/logout-all');
+    return response.data;
+};
+
+/**
+ * Lấy thông tin user hiện tại
+ */
+export const getCurrentUser = async () => {
+    const response = await api.get('/api/auth/me');
     return response.data;
 };
 
 // ============================================================
-// 🟢 CLEANUP: Dọn dẹp event listeners khi cần
+// 🟢 CLEANUP
 // ============================================================
 
 export const removeAllListeners = () => {
-    // Có thể mở rộng nếu cần cleanup
     console.log('🧹 [API] Cleanup listeners');
 };
 

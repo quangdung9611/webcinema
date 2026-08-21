@@ -29,6 +29,12 @@ const Jwt = require("./utils/Jwt");
 const RefreshTokenRepository = require("./Repositories/RefreshTokenRepository");
 
 /*=========================================================
+    AUTH SERVICE (ĐỂ SET IO)
+=========================================================*/
+
+const AuthService = require("./Services/AuthService");
+
+/*=========================================================
     MAILER
 =========================================================*/
 
@@ -128,26 +134,30 @@ const io = new Server(server, {
 });
 
 // ============================================================
-// 🔥 SOCKET AUTHENTICATION MIDDLEWARE
+// 🔥 ĐẶT IO VÀO AUTH SERVICE
+// ============================================================
+
+AuthService.setIO(io);
+console.log("✅ Socket.IO instance set to AuthService");
+
+// ============================================================
+// 🔥 SOCKET AUTHENTICATION MIDDLEWARE - ĐÃ SỬA
 // ============================================================
 
 io.use(async (socket, next) => {
     try {
-        // Lấy cookie từ handshake
         const cookieHeader = socket.handshake.headers.cookie;
         if (!cookieHeader) {
             console.warn('🔴 [SOCKET] No cookie found');
             return next(new Error('Authentication required'));
         }
 
-        // Parse cookie
         const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
             const [key, value] = cookie.trim().split('=');
             acc[key] = value;
             return acc;
         }, {});
 
-        // Lấy token (ưu tiên user_token)
         let token = cookies['user_token'] || cookies['admin_token'];
         
         if (!token) {
@@ -155,28 +165,30 @@ io.use(async (socket, next) => {
             return next(new Error('Authentication required'));
         }
 
-        // Verify token
         const payload = Jwt.verifyAccessToken(token);
         if (!payload) {
             console.warn('🔴 [SOCKET] Invalid token');
             return next(new Error('Invalid token'));
         }
 
-        // ========== 🔥 KIỂM TRA TOKEN CÓ BỊ REVOKE KHÔNG ==========
-        const activeTokens = await RefreshTokenRepository.getActiveByUser(payload.user_id);
+        // ============================================================
+        // 🔥 SỬA: KIỂM TRA TOKEN HIỆN TẠI CÓ BỊ REVOKE KHÔNG
+        // ============================================================
+        const tokenHash = Jwt.hashRefreshToken(token);
+        const validToken = await RefreshTokenRepository.findValidTokenHash(tokenHash);
         
-        if (activeTokens.length === 0) {
-            console.warn(`🔴 [SOCKET] User ${payload.user_id} has no active tokens - kicked from another device`);
-            return next(new Error('Session expired - logged in on another device'));
+        if (!validToken) {
+            console.warn(`🔴 [SOCKET] Token revoked for user ${payload.user_id}`);
+            return next(new Error('SESSION_EXPIRED')); // Gửi lỗi đặc biệt
         }
-        // ========== KẾT THÚC ==========
+        // ============================================================
+        // KẾT THÚC SỬA
+        // ============================================================
 
-        // Lưu user vào socket
         socket.userId = payload.user_id;
         socket.userRole = payload.role;
-        socket.userEmail = payload.email;
 
-        console.log(`✅ [SOCKET] Authenticated: User ${payload.user_id} - ${payload.email}`);
+        console.log(`✅ [SOCKET] Authenticated: User ${payload.user_id}`);
 
         next();
     } catch (error) {
@@ -186,7 +198,7 @@ io.use(async (socket, next) => {
 });
 
 // ============================================================
-// 🔥 SOCKET CONNECTION HANDLER
+// 🔥 SOCKET CONNECTION HANDLER - ĐÃ THÊM REGISTER_SOCKET
 // ============================================================
 
 let holdingSeats = [];
@@ -194,15 +206,25 @@ let holdingSeats = [];
 io.on("connection", async (socket) => {
     console.log(`⚡ Socket connected: ${socket.id} - User: ${socket.userId}`);
 
-    // ========== LƯU SOCKET ID VÀO REDIS ==========
-    if (socket.userId) {
-        try {
-            await RedisService.saveUserSocket(socket.userId, socket.id);
-            console.log(`✅ [SOCKET] Saved socket ${socket.id} for user ${socket.userId}`);
-        } catch (error) {
-            console.error(`❌ [SOCKET] Failed to save socket for user ${socket.userId}:`, error.message);
+    // ============================================================
+    // 🟢 LẮNG NGHE REGISTER SOCKET TỪ CLIENT
+    // ============================================================
+    socket.on("register_socket", async (data) => {
+        const { userId } = data;
+        if (userId) {
+            try {
+                await RedisService.saveUserSocket(userId, socket.id);
+                console.log(`✅ [SOCKET] Registered socket ${socket.id} for user ${userId}`);
+                
+                socket.emit("socket_registered", { 
+                    success: true, 
+                    message: "Socket registered successfully" 
+                });
+            } catch (error) {
+                console.error(`❌ [SOCKET] Failed to register socket:`, error.message);
+            }
         }
-    }
+    });
 
     // Gửi danh sách ghế đang giữ
     socket.emit("server-gui-danh-sach-dang-giu", holdingSeats);
@@ -226,20 +248,15 @@ io.on("connection", async (socket) => {
         socket.broadcast.emit("server-mo-khoa-ghe", data);
     });
 
-    // ============================================================
-    // 🟢 XỬ LÝ SESSION EXPIRED ACK TỪ CLIENT
-    // ============================================================
+    // Xử lý session expired ack từ client
     socket.on("session_expired_ack", (data) => {
         console.log(`📨 [SOCKET] Received session_expired_ack from user ${socket.userId}:`, data);
     });
 
-    // ============================================================
-    // 🟢 XỬ LÝ DISCONNECT
-    // ============================================================
+    // Xử lý disconnect
     socket.on("disconnect", () => {
         console.log(`🔴 Socket disconnected: ${socket.id} - User: ${socket.userId}`);
 
-        // Giải phóng ghế đang giữ
         const releasedSeats = holdingSeats.filter(seat => seat.socketId === socket.id);
         releasedSeats.forEach(seat => {
             socket.broadcast.emit("server-mo-khoa-ghe", {
@@ -249,7 +266,6 @@ io.on("connection", async (socket) => {
         });
         holdingSeats = holdingSeats.filter(seat => seat.socketId !== socket.id);
 
-        // Xóa socketId khỏi Redis
         if (socket.userId) {
             try {
                 RedisService.deleteUserSocket(socket.userId);
@@ -265,7 +281,6 @@ io.on("connection", async (socket) => {
     API ROUTES
 =========================================================*/
 
-// ✅ ROOT ROUTE
 app.get("/", (req, res) => {
     res.send("🚀 Cinema Backend is flying!");
 });
@@ -274,7 +289,6 @@ app.get("/api", (req, res) => {
     res.send("🚀 Cinema Backend is flying!");
 });
 
-// Health Check
 app.get("/api/health", async (req, res) => {
     try {
         const conn = await db.getConnection();
@@ -337,7 +351,6 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, "0.0.0.0", async () => {
     console.log(`🚀 Server running on port ${PORT}`);
 
-    // DATABASE
     try {
         const conn = await db.getConnection();
         console.log("✅ Database Cinema connected!");
@@ -346,7 +359,6 @@ server.listen(PORT, "0.0.0.0", async () => {
         console.error("❌ Database Error:", error.message);
     }
 
-    // REDIS
     try {
         const redisHealthy = await RedisService.ping();
         if (redisHealthy) {
@@ -358,7 +370,6 @@ server.listen(PORT, "0.0.0.0", async () => {
         console.error("❌ Redis Error:", error.message);
     }
 
-    // KEEP RENDER ALIVE
     const SELF_URL = process.env.BACKEND_URL || "https://api.quangdungcinema.id.vn";
 
     setInterval(async () => {
@@ -372,9 +383,5 @@ server.listen(PORT, "0.0.0.0", async () => {
         }
     }, 5 * 60 * 1000);
 });
-
-/*=========================================================
-    EXPORT
-=========================================================*/
 
 module.exports = { app, server, io };

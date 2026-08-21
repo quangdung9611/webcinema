@@ -7,18 +7,17 @@ const Cookie = require("../utils/Cookie");
 const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
 
 /*=========================================================
-    AUTHENTICATE USER (CUSTOMER) - ĐÃ SỬA: THÊM KIỂM TRA TOKEN ACTIVE
+    AUTHENTICATE USER (CUSTOMER) - ĐÃ SỬA
 =========================================================*/
 
-const authenticateUser = async (req, res, next) => { // ✅ Thêm async
+const authenticateUser = async (req, res, next) => {
     try {
-        // Lấy user_token (cookie riêng của customer)
         const accessToken = Cookie.getUserAccessToken(req);
 
         if (!accessToken) {
             return res.status(401).json({
                 success: false,
-                code: "UNAUTHORIZED", // ✅ Thêm mã lỗi cho frontend
+                code: "UNAUTHORIZED",
                 message: "Vui lòng đăng nhập."
             });
         }
@@ -34,7 +33,6 @@ const authenticateUser = async (req, res, next) => { // ✅ Thêm async
             });
         }
 
-        // Kiểm tra role customer
         if (payload.role !== "customer") {
             return res.status(403).json({
                 success: false,
@@ -42,23 +40,23 @@ const authenticateUser = async (req, res, next) => { // ✅ Thêm async
             });
         }
 
-        // ========== 🟢 THÊM MỚI: KIỂM TRA TOKEN CÓ BỊ REVOKE KHÔNG ==========
-        // Kiểm tra xem user có token active nào không
-        const activeTokens = await RefreshTokenRepository.getActiveByUser(payload.user_id);
+        // ============================================================
+        // 🔥 SỬA: KIỂM TRA TOKEN HIỆN TẠI CÓ BỊ REVOKE KHÔNG
+        // ============================================================
+        const tokenHash = Jwt.hashRefreshToken(accessToken);
+        const validToken = await RefreshTokenRepository.findValidTokenHash(tokenHash);
         
-        if (activeTokens.length === 0) {
-            // User đã bị kick, không còn token nào active
+        if (!validToken) {
             Cookie.clearUserCookies(res);
             return res.status(401).json({
                 success: false,
-                code: "SESSION_EXPIRED", // ✅ Mã lỗi này để frontend bắt
+                code: "SESSION_EXPIRED",
                 message: "Tài khoản đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại."
             });
         }
-
-        // Optional: Kiểm tra token hiện tại có trong danh sách active không
-        // Nếu muốn chính xác hơn, có thể kiểm tra token hash khớp với token hiện tại
-        // ========== KẾT THÚC ==========
+        // ============================================================
+        // KẾT THÚC SỬA
+        // ============================================================
 
         req.user = payload;
         next();

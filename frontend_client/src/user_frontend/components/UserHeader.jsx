@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api/api';
-import socketService from '../../api/socket'; // 🟢 THÊM: Import socket service
+import socketService from '../../api/socket';
 import {
     ChevronDown,
     UserCircle,
@@ -26,7 +26,6 @@ const UserHeader = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [activeSubMenu, setActiveSubMenu] = useState(null);
     const [authLoading, setAuthLoading] = useState(true);
-    // 🟢 THÊM: State cho modal session expired
     const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
     const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
     const [newDevice, setNewDevice] = useState('');
@@ -53,18 +52,17 @@ const UserHeader = () => {
                 
                 setUser(account);
 
-                // 🟢 Nếu có user, kết nối WebSocket
                 if (account) {
-                    // Lấy token từ cookie (không cần lấy ra vì HttpOnly)
-                    // Kết nối socket với user_id
-                    socketService.connect(account.user_id, account.user_id);
+                    // 🔥 SỬA: connect(userId) chỉ truyền 1 tham số
+                    socketService.connect(account.user_id);
                 }
             } catch (error) {
                 console.error('Lỗi kiểm tra đăng nhập:', error);
                 setUser(null);
 
-                if (error.response?.status !== 401) {
-                    navigate('/login', { replace: true });
+                // 🟢 Nếu lỗi 401, ngắt socket
+                if (error.response?.status === 401) {
+                    socketService.disconnect();
                 }
             } finally {
                 setAuthLoading(false);
@@ -74,7 +72,7 @@ const UserHeader = () => {
     }, [navigate]);
 
     /* =====================================================
-        🟢 LẮNG NGHE SỰ KIỆN SESSION EXPIRED
+        LẮNG NGHE SỰ KIỆN SESSION EXPIRED
     ===================================================== */
     useEffect(() => {
         const handleSessionExpired = (event) => {
@@ -88,11 +86,10 @@ const UserHeader = () => {
             setNewDevice(device);
             setShowSessionExpiredModal(true);
             
-            // Xóa user state
             setUser(null);
+            socketService.disconnect();
         };
 
-        // 🟢 Lắng nghe sự kiện userLoggedIn để reload user
         const handleUserLoggedIn = () => {
             console.log('🟢 [HEADER] User logged in, fetching user...');
             setAuthLoading(true);
@@ -106,9 +103,8 @@ const UserHeader = () => {
                     else if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) account = rawData;
                     setUser(account);
                     
-                    // 🟢 Kết nối WebSocket sau khi login
                     if (account) {
-                        socketService.connect(account.user_id, account.user_id);
+                        socketService.connect(account.user_id);
                     }
                 } catch (error) {
                     console.error('Lỗi fetch user sau login:', error);
@@ -120,14 +116,12 @@ const UserHeader = () => {
             fetchUser();
         };
 
-        // 🟢 Lắng nghe sự kiện tokenInvalid
         const handleTokenInvalid = (event) => {
             console.log('🔴 [HEADER] Token invalid:', event.detail);
             setUser(null);
             socketService.disconnect();
         };
 
-        // 🟢 Lắng nghe sự kiện unauthorized
         const handleUnauthorized = (event) => {
             console.log('🔴 [HEADER] Unauthorized:', event.detail);
             setUser(null);
@@ -148,7 +142,7 @@ const UserHeader = () => {
     }, []);
 
     /* =====================================================
-        FETCH CINEMAS (Giữ nguyên)
+        FETCH CINEMAS
     ===================================================== */
     useEffect(() => {
         const fetchCinemas = async () => {
@@ -169,7 +163,7 @@ const UserHeader = () => {
     }, []);
 
     /* =====================================================
-        CLICK OUTSIDE & RESIZE (Giữ nguyên)
+        CLICK OUTSIDE & RESIZE
     ===================================================== */
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -202,9 +196,7 @@ const UserHeader = () => {
         } catch (error) {
             console.error('Lỗi khi logout:', error);
         } finally {
-            // 🟢 Ngắt kết nối WebSocket
             socketService.disconnect();
-            
             setUser(null);
             setShowDropdown(false);
             window.dispatchEvent(new Event('userLoggedIn')); 
@@ -213,7 +205,7 @@ const UserHeader = () => {
     };
 
     /* =====================================================
-        🟢 HANDLE SESSION EXPIRED CONFIRM
+        HANDLE SESSION EXPIRED CONFIRM
     ===================================================== */
     const handleSessionExpiredConfirm = () => {
         console.log('🔴 [HEADER] User xác nhận đăng nhập lại');
@@ -221,14 +213,12 @@ const UserHeader = () => {
         setSessionExpiredMessage('');
         setNewDevice('');
         
-        // Ngắt kết nối WebSocket
         socketService.disconnect();
-        
         navigate('/login', { replace: true, state: { expired: true } });
     };
 
     /* =====================================================
-        UI HELPERS (Giữ nguyên)
+        UI HELPERS
     ===================================================== */
     const closeMobileMenu = () => {
         setIsMenuOpen(false);
@@ -361,7 +351,7 @@ const UserHeader = () => {
                 </div>
             </nav>
 
-            {/* 🟢 MODAL SESSION EXPIRED */}
+            {/* MODAL SESSION EXPIRED */}
             {showSessionExpiredModal && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -370,7 +360,7 @@ const UserHeader = () => {
                         <p className="message">{sessionExpiredMessage}</p>
                         {newDevice && (
                             <div className="device-info">
-                                <span>📱 Thiết bị mới: <strong>{newDevice}</strong></span>
+                                <span>📱 Thiết bị mới: <strong>{typeof newDevice === 'string' ? newDevice : JSON.stringify(newDevice)}</strong></span>
                             </div>
                         )}
                         <p className="warning">

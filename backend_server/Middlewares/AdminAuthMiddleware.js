@@ -7,12 +7,11 @@ const Cookie = require("../utils/Cookie");
 const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
 
 /*=========================================================
-    AUTHENTICATE ADMIN - ĐÃ SỬA: THÊM KIỂM TRA TOKEN ACTIVE
+    AUTHENTICATE ADMIN - ĐÃ SỬA
 =========================================================*/
 
-const authenticateAdmin = async (req, res, next) => { // ✅ Thêm async
+const authenticateAdmin = async (req, res, next) => {
     try {
-        // Lấy token từ cookie admin_token
         const accessToken = Cookie.getAdminAccessToken(req);
 
         if (!accessToken) {
@@ -34,7 +33,6 @@ const authenticateAdmin = async (req, res, next) => { // ✅ Thêm async
             });
         }
 
-        // Kiểm tra role admin
         if (payload.role !== "admin") {
             return res.status(403).json({
                 success: false,
@@ -42,10 +40,13 @@ const authenticateAdmin = async (req, res, next) => { // ✅ Thêm async
             });
         }
 
-        // ========== 🟢 THÊM MỚI: KIỂM TRA TOKEN CÓ BỊ REVOKE KHÔNG ==========
-        const activeTokens = await RefreshTokenRepository.getActiveByUser(payload.user_id);
+        // ============================================================
+        // 🔥 SỬA: KIỂM TRA TOKEN HIỆN TẠI
+        // ============================================================
+        const tokenHash = Jwt.hashRefreshToken(accessToken);
+        const validToken = await RefreshTokenRepository.findValidTokenHash(tokenHash);
         
-        if (activeTokens.length === 0) {
+        if (!validToken) {
             Cookie.clearAdminCookies(res);
             return res.status(401).json({
                 success: false,
@@ -53,7 +54,9 @@ const authenticateAdmin = async (req, res, next) => { // ✅ Thêm async
                 message: "Tài khoản admin đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại."
             });
         }
-        // ========== KẾT THÚC ==========
+        // ============================================================
+        // KẾT THÚC SỬA
+        // ============================================================
 
         req.user = payload;
         next();
