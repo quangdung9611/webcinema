@@ -41,6 +41,12 @@ axios.defaults.withCredentials = true;
 import LoadingSpinner from "./user_frontend/components/LoadingSpinner";
 
 // ==========================================================
+// SOCKET SERVICE
+// ==========================================================
+
+import socketService from "../../backend_server/Services/SocketService"; // Đường dẫn đúng theo cấu trúc của bạn
+
+// ==========================================================
 // LAYOUT
 // ==========================================================
 
@@ -288,8 +294,36 @@ function AppContent() {
     const isAdminDomain = hostname === "admin.quangdungcinema.id.vn";
     const navigate = useNavigate();
 
+    // 🔥 THÊM ĐOẠN NÀY ĐỂ KẾT NỐI SOCKET TỰ ĐỘNG SAU KHI ĐĂNG NHẬP
+    useEffect(() => {
+        const checkAuthAndConnectSocket = async () => {
+            try {
+                const res = await api.get('/api/auth/me');
+                const raw = res.data;
+                const user = raw?.user || raw?.data?.user || raw;
+
+                if (user) {
+                    // Đã đăng nhập -> Kết nối socket
+                    socketService.connect(user.user_id);
+                    console.log('✅ [APP] Socket connected for user:', user.user_id);
+                } else {
+                    // Chưa đăng nhập -> Ngắt socket
+                    socketService.disconnect();
+                }
+            } catch (error) {
+                // Nếu lỗi -> Ngắt socket
+                socketService.disconnect();
+                console.log('🔴 [APP] Không thể kết nối socket do lỗi xác thực');
+            }
+        };
+
+        checkAuthAndConnectSocket();
+    }, []);
+
+    // Lắng nghe sự kiện unauthorized để ngắt socket
     useEffect(() => {
         const handleUnauthorized = () => {
+            socketService.disconnect();
             if (!window.location.pathname.includes('/login')) {
                 navigate('/login', { replace: true });
             }
