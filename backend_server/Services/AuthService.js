@@ -196,9 +196,8 @@ exports.register = async (userData) => {
         emailSent: true  // 🔴 Thêm flag để frontend biết đã gửi email
     };
 };
-
 /*=========================================================
-    LOGIN (CHÍNH) - ĐÃ SỬA ĐÚNG CHUẨN
+    LOGIN (CHÍNH) - KIỂM TRA EMAIL_VERIFIED TRƯỚC KHI TẠO TOKEN
 =========================================================*/
 
 exports.login = async (email, password, rememberMe = false, req, res) => {
@@ -216,14 +215,23 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         throw { statusCode: 403, message: "Tài khoản đã bị khóa" };
     }
 
-    // 4. Check password
+    // ✅ 4. KIỂM TRA MẬT KHẨU TRƯỚC
     const matched = await Password.compare(password, user.password);
     if (!matched) {
         throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
     }
 
+    // ✅ 5. KIỂM TRA EMAIL_VERIFIED - CHỈ CHO ĐĂNG NHẬP KHI ĐÃ XÁC THỰC
+    if (!user.email_verified) {
+        throw { 
+            statusCode: 403, 
+            field: "email",
+            message: "Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn." 
+        };
+    }
+
     // ============================================================
-    // 🔥 BƯỚC 1: REVOKE TẤT CẢ TOKEN CŨ (ĐÁ THIẾT BỊ CŨ)
+    // 🔥 CHỈ TẠO TOKEN KHI ĐÃ XÁC THỰC EMAIL
     // ============================================================
     await RefreshTokenRepository.revokeByUser(
         user.user_id,
@@ -231,9 +239,6 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     );
     console.log(`🔴 [REVOKE] Đã revoke tất cả token cũ của user: ${user.user_id}`);
 
-    // ============================================================
-    // BƯỚC 2: EMIT SOCKET EVENT ĐẾN THIẾT BỊ CŨ (NẾU CÓ)
-    // ============================================================
     const oldSocketId = await RedisService.getUserSocket(user.user_id);
     if (oldSocketId && ioInstance) {
         try {
@@ -251,24 +256,18 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         }
     }
 
-    // ============================================================
-    // BƯỚC 3: TẠO TOKEN MỚI VÀ LƯU VÀO DB
-    // ============================================================
     const accessToken = generateAndSetTokens(user, res, rememberMe);
     const accessTokenHash = Jwt.hashRefreshToken(accessToken);
 
     await RefreshTokenRepository.create({
         user_id: user.user_id,
         token_hash: accessTokenHash,
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 giờ
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
         ip_address: req.ip || req.connection?.remoteAddress || null,
         user_agent: req.headers?.["user-agent"] || null,
         device_name: req.headers?.["user-agent"]?.substring(0, 50) || "Unknown Device"
     });
 
-    // ============================================================
-    // BƯỚC 4: TRẢ VỀ THÔNG TIN USER
-    // ============================================================
     return {
         success: true,
         message: "Đăng nhập thành công",
@@ -280,7 +279,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
             phone: user.phone,
             role: user.role,
             points: user.points,
-            email_verified: user.email_verified || 0
+            email_verified: user.email_verified  // ✅ Trả về giá trị thực tế
         }
     };
 };

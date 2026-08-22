@@ -1,6 +1,6 @@
-/* VerifyEmail.css - Giao diện xác thực email với chữ màu trắng */
+/* VerifyEmail.css - Trang xác thực email (full page) */
 
-.verify-container {
+.verify-page-container {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -9,7 +9,7 @@
     padding: 20px;
 }
 
-.verify-card {
+.verify-page-card {
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -59,24 +59,34 @@
     margin-bottom: 20px;
 }
 
-.verify-card h2 {
+.verify-page-card h2 {
     margin-bottom: 10px;
     font-size: 28px;
     font-weight: 700;
     color: #ffffff;
 }
 
-.verify-card h3 {
+.verify-page-card h3 {
     color: #ffffff;
     margin-bottom: 10px;
     font-size: 22px;
     font-weight: 600;
 }
 
-.verify-card p {
+.verify-page-card p {
     color: #d1d5db;
     line-height: 1.8;
     margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.verify-message {
+    color: #d1d5db !important;
+    font-size: 16px;
+}
+
+.verify-error {
+    color: #f87171 !important;
     font-size: 16px;
 }
 
@@ -161,19 +171,19 @@
 ========================================================= */
 
 @media (max-width: 480px) {
-    .verify-card {
+    .verify-page-card {
         padding: 30px 20px;
     }
 
-    .verify-card h2 {
+    .verify-page-card h2 {
         font-size: 22px;
     }
 
-    .verify-card h3 {
+    .verify-page-card h3 {
         font-size: 18px;
     }
 
-    .verify-card p {
+    .verify-page-card p {
         font-size: 14px;
     }
 

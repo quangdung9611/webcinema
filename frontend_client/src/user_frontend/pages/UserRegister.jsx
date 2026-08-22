@@ -5,8 +5,7 @@ import { Eye, EyeOff } from 'lucide-react';
 
 import Modal from '../components/Modal';
 import LoadingButton from '../components/LoadingButton';
-import VerifyEmail from '../components/VerifyEmail';
-import ResendVerification from '../components/ResendVerification';
+// ✅ KHÔNG cần import VerifyEmail và ResendVerification nữa
 import '../styles/UserAuth.css';
 
 const UserRegister = () => {
@@ -32,14 +31,10 @@ const UserRegister = () => {
         message: ''
     });
 
-    const [showVerifyModal, setShowVerifyModal] = useState(false);
-    const [showResendModal, setShowResendModal] = useState(false);
-    const [userEmail, setUserEmail] = useState('');
-
     const navigate = useNavigate();
 
     // ==========================================
-    // VALIDATE FIELD - NHẬN THAM SỐ PASSWORD/CONFIRM
+    // VALIDATE FIELD
     // ==========================================
 
     const validateField = (name, value, password = formData.password, confirmPassword = formData.confirmPassword) => {
@@ -112,17 +107,14 @@ const UserRegister = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // ✅ Lấy giá trị mới nhất
         const newPassword = name === 'password' ? value : formData.password;
         const newConfirmPassword = name === 'confirmPassword' ? value : formData.confirmPassword;
 
         setFormData(prev => ({ ...prev, [name]: value }));
 
-        // Validate field hiện tại
         const error = validateField(name, value, newPassword, newConfirmPassword);
         setErrors(prev => ({ ...prev, [name]: error }));
 
-        // ✅ Nếu đang sửa password hoặc confirmPassword, validate cả 2
         if (name === 'password' || name === 'confirmPassword') {
             const confirmError = validateField('confirmPassword', newConfirmPassword, newPassword, newConfirmPassword);
             setErrors(prev => ({ ...prev, confirmPassword: confirmError }));
@@ -168,8 +160,13 @@ const UserRegister = () => {
                 address: formData.address || ''
             });
 
-            setUserEmail(formData.email);
-            setShowVerifyModal(true);
+            // ✅ Hiển thị MODAL thông báo đăng ký thành công
+            setModalConfig({
+                show: true,
+                type: 'success',
+                title: '🎉 Đăng ký thành công!',
+                message: `Chúng tôi đã gửi email xác thực đến ${formData.email}. Vui lòng kiểm tra hộp thư của bạn để xác thực tài khoản.`
+            });
 
         } catch (err) {
             console.error('Register Error:', err);
@@ -177,9 +174,7 @@ const UserRegister = () => {
             const serverMsg = err.response?.data?.message;
             const field = err.response?.data?.field;
 
-            if (serverMsg && (serverMsg.includes('đã được xác thực') || serverMsg.includes('verified'))) {
-                setShowResendModal(true);
-            } else if (field) {
+            if (field) {
                 setErrors(prev => ({ ...prev, [field]: serverMsg }));
             } else {
                 setModalConfig({
@@ -203,15 +198,6 @@ const UserRegister = () => {
         if (modalConfig.type === 'success') {
             navigate('/login');
         }
-    };
-
-    const handleVerifyModalClose = () => {
-        setShowVerifyModal(false);
-        navigate('/login');
-    };
-
-    const handleResendModalClose = () => {
-        setShowResendModal(false);
     };
 
     // ==========================================
@@ -377,7 +363,7 @@ const UserRegister = () => {
                 </div>
             </div>
 
-            {/* MODAL THÔNG BÁO LỖI */}
+            {/* ✅ MODAL THÔNG BÁO ĐĂNG KÝ THÀNH CÔNG */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}
@@ -385,31 +371,6 @@ const UserRegister = () => {
                 message={modalConfig.message}
                 onClose={handleModalClose}
             />
-
-            {/* MODAL XÁC THỰC EMAIL */}
-            <Modal
-                show={showVerifyModal}
-                onClose={handleVerifyModalClose}
-                type="info"
-                title="Xác thực email"
-            >
-                <VerifyEmail 
-                    email={userEmail}
-                    onClose={handleVerifyModalClose}
-                />
-            </Modal>
-
-            {/* MODAL GỬI LẠI EMAIL */}
-            <Modal
-                show={showResendModal}
-                onClose={handleResendModalClose}
-                type="info"
-                title="Gửi lại email xác thực"
-            >
-                <ResendVerification 
-                    onClose={handleResendModalClose}
-                />
-            </Modal>
         </div>
     );
 };

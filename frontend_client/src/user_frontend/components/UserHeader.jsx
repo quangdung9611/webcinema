@@ -33,7 +33,6 @@ const UserHeader = () => {
     const dropdownRef = useRef(null);
     const navRef = useRef(null);
     const countdownIntervalRef = useRef(null);
-    // 🔥 Thêm ref để kiểm tra đã xử lý chưa
     const isProcessingRef = useRef(false);
 
     // ============================================================
@@ -62,16 +61,23 @@ const UserHeader = () => {
             setCountdown(10);
             setIsLoggingOut(false);
             delete api.defaults.headers.common['Authorization'];
+            
+            // Xóa cookie
+            document.cookie.split(";").forEach((c) => {
+                document.cookie = c
+                    .replace(/^ +/, "")
+                    .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+            
             navigate('/login', { replace: true, state: { expired: true } });
             console.log('✅ [HEADER] Logout thành công, chuyển về login');
         }
     };
 
     // ============================================================
-    // 🔥 HÀM XỬ LÝ SESSION EXPIRED - DÙNG CHUNG CHO CẢ 2 NGUỒN
+    // 🔥 HÀM XỬ LÝ SESSION EXPIRED
     // ============================================================
     const handleSessionExpired = (detail) => {
-        // 🔥 Nếu đang xử lý hoặc đã có modal thì bỏ qua
         if (isProcessingRef.current || showSessionExpiredModal) {
             console.log('⚠️ [HEADER] Đang xử lý session expired, bỏ qua...');
             return;
@@ -91,13 +97,11 @@ const UserHeader = () => {
         setUser(null);
         socketService.disconnect();
 
-        // Clear interval cũ
         if (countdownIntervalRef.current) {
             clearInterval(countdownIntervalRef.current);
             countdownIntervalRef.current = null;
         }
 
-        // Bắt đầu đếm ngược 10 giây
         countdownIntervalRef.current = setInterval(() => {
             setCountdown(prev => {
                 if (prev <= 1) {
@@ -127,7 +131,6 @@ const UserHeader = () => {
                 
                 setUser(account);
 
-                // 🔥 ĐĂNG KÝ CALLBACK CHO SOCKET
                 socketService.setOnSessionExpired(handleSessionExpired);
                 
                 if (account) {
@@ -161,7 +164,6 @@ const UserHeader = () => {
     useEffect(() => {
         const handleWindowSessionExpired = (event) => {
             console.log('🔴 [HEADER] Session expired event từ window:', event.detail);
-            // 🔥 Gọi hàm xử lý chung
             handleSessionExpired(event.detail);
         };
 
@@ -218,8 +220,6 @@ const UserHeader = () => {
             window.removeEventListener('unauthorized', handleUnauthorized);
         };
     }, []);
-
-    // ... Phần còn lại giữ nguyên (fetch cinemas, click outside, UI helpers, render)
 
     // ============================================================
     // FETCH CINEMAS
@@ -309,9 +309,40 @@ const UserHeader = () => {
         return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
     };
 
+    // ✅ KIỂM TRA USER CÓ HỢP LỆ KHÔNG (ĐÃ ĐĂNG NHẬP VÀ ĐÃ XÁC THỰC EMAIL)
+    const isValidUser = user && user.email_verified === 1;
+
     const avatarSource = user?.user_avatar || user?.avatar;
     const avatarUrl = avatarSource ? getAvatarUrl(avatarSource) : null;
     const displayName = user?.username || user?.full_name || 'Tài khoản';
+
+    // ============================================================
+    // HANDLE ĐĂNG NHẬP - XÓA TOKEN CŨ
+    // ============================================================
+    const handleLoginClick = () => {
+        console.log('🟢 [HEADER] Bấm đăng nhập, xóa token cũ và chuyển đến /login');
+        setShowDropdown(false);
+        
+        // ✅ Xóa token cũ
+        delete api.defaults.headers.common['Authorization'];
+        localStorage.removeItem('user_info');
+        localStorage.removeItem('admin_info');
+        
+        // ✅ Xóa cookie
+        document.cookie.split(";").forEach((c) => {
+            document.cookie = c
+                .replace(/^ +/, "")
+                .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+        
+        navigate('/login');
+    };
+
+    const handleRegisterClick = () => {
+        console.log('🟢 [HEADER] Bấm đăng ký, chuyển đến /register');
+        setShowDropdown(false);
+        navigate('/register');
+    };
 
     // ============================================================
     // RENDER
@@ -374,18 +405,21 @@ const UserHeader = () => {
 
                     <div className="user-menu" ref={dropdownRef}>
                         <div className="account-trigger" onClick={() => setShowDropdown(prev => !prev)}>
-                            {avatarUrl ? (
+                            {isValidUser && avatarUrl ? (
                                 <img src={avatarUrl} alt="avatar" className="header-avatar" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }} />
                             ) : (
                                 <UserCircle size={22} className="user-icon" />
                             )}
-                            <span className="username-display">{authLoading ? 'Đang tải...' : displayName}</span>
+                            <span className="username-display">
+                                {authLoading ? 'Đang tải...' : isValidUser ? displayName : 'Tài khoản'}
+                            </span>
                             <ChevronDown size={14} className={showDropdown ? 'rotate' : ''} />
                         </div>
 
                         {showDropdown && (
                             <div className="dropdown-content show">
-                                {user ? (
+                                {isValidUser ? (
+                                    // ✅ ĐÃ ĐĂNG NHẬP VÀ ĐÃ XÁC THỰC EMAIL
                                     <>
                                         <div className="dropdown-user-info">
                                             <p>Chào, <strong>{displayName}</strong></p>
@@ -405,11 +439,20 @@ const UserHeader = () => {
                                         </div>
                                     </>
                                 ) : (
+                                    // ✅ CHƯA ĐĂNG NHẬP HOẶC CHƯA XÁC THỰC EMAIL
                                     <>
-                                        <div className="dropdown-item" onClick={() => { navigate('/login'); setShowDropdown(false); }}>
+                                        <div className="dropdown-user-info">
+                                            <p style={{ color: '#f87171' }}>
+                                                {user && !user.email_verified 
+                                                    ? '⚠️ Vui lòng xác thực email' 
+                                                    : 'Chưa đăng nhập'}
+                                            </p>
+                                        </div>
+                                        <div className="dropdown-divider" />
+                                        <div className="dropdown-item" onClick={handleLoginClick}>
                                             <LogIn size={18} /><span>Đăng nhập</span>
                                         </div>
-                                        <div className="dropdown-item" onClick={() => { navigate('/register'); setShowDropdown(false); }}>
+                                        <div className="dropdown-item" onClick={handleRegisterClick}>
                                             <UserPlus size={18} /><span>Đăng Ký</span>
                                         </div>
                                     </>
