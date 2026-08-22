@@ -1,106 +1,86 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/api';
 import '../styles/VerifyEmail.css';
 
-const VerifyEmail = ({ show = false, onClose = () => {} }) => {
-    const [searchParams] = useSearchParams();
+const VerifyEmail = ({ email, onClose = () => {} }) => {
     const navigate = useNavigate();
     const [status, setStatus] = useState('verifying');
     const [message, setMessage] = useState('');
+    const [countdown, setCountdown] = useState(5);
 
     useEffect(() => {
-        if (!show) return; // ✅ Nếu không hiển thị thì không chạy
+        // Không cần token nữa vì đã xử lý ở backend
+        // Chỉ hiển thị thông báo kiểm tra email
+        setStatus('success');
+        setMessage(`Chúng tôi đã gửi email xác thực đến ${email}. Vui lòng kiểm tra hộp thư của bạn.`);
 
-        const token = searchParams.get('token');
-
-        if (!token) {
-            setStatus('error');
-            setMessage('Token xác thực không hợp lệ');
-            return;
-        }
-
-        const verifyEmail = async () => {
-            try {
-                const response = await api.get(`/api/auth/verify-email?token=${token}`);
-                setStatus('success');
-                setMessage(response.data.message || 'Xác thực email thành công!');
-
-                setTimeout(() => {
+        // Đếm ngược và tự động đóng
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
                     onClose();
                     navigate('/login');
-                }, 3000);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
 
-            } catch (error) {
-                setStatus('error');
-                setMessage(error.response?.data?.message || 'Xác thực email thất bại');
-            }
-        };
+        return () => clearInterval(timer);
+    }, [email, onClose, navigate]);
 
-        verifyEmail();
-    }, [searchParams, navigate, show, onClose]);
-
-    if (!show) return null; // ✅ Nếu không hiển thị thì return null
+    const handleResend = async () => {
+        try {
+            await api.post('/api/auth/resend-verification', { email });
+            setMessage('Email xác thực đã được gửi lại! Vui lòng kiểm tra hộp thư.');
+            setStatus('success');
+        } catch (error) {
+            setMessage(error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+            setStatus('error');
+        }
+    };
 
     return (
-        <div className="verify-container">
-            <div className="verify-card">
-                {status === 'verifying' && (
-                    <>
-                        <div className="spinner"></div>
-                        <h3>Đang xác thực tài khoản...</h3>
-                        <p>Vui lòng đợi trong giây lát</p>
-                    </>
-                )}
+        <div className="verify-content">
+            <div className="verify-icon">📧</div>
+            
+            {status === 'verifying' && (
+                <>
+                    <div className="spinner-small"></div>
+                    <p>Đang xác thực...</p>
+                </>
+            )}
 
-                {status === 'success' && (
-                    <>
-                        <div className="icon-success">✅</div>
-                        <h2 style={{ color: '#28a745' }}>Xác thực thành công!</h2>
-                        <p>{message}</p>
-                        <p style={{ fontSize: '14px', color: '#666' }}>
-                            Chuyển đến trang đăng nhập sau 3 giây...
-                        </p>
-                        <button
-                            className="btn-login"
-                            onClick={() => {
-                                onClose();
-                                navigate('/login');
-                            }}
-                        >
+            {status === 'success' && (
+                <>
+                    <p className="verify-message">{message}</p>
+                    <p className="verify-note">
+                        Chuyển đến trang đăng nhập sau <strong>{countdown}</strong> giây...
+                    </p>
+                    <div className="verify-actions">
+                        <button className="btn-resend" onClick={handleResend}>
+                            Gửi lại email
+                        </button>
+                        <button className="btn-login-small" onClick={() => {
+                            onClose();
+                            navigate('/login');
+                        }}>
                             Đăng nhập ngay
                         </button>
-                    </>
-                )}
+                    </div>
+                </>
+            )}
 
-                {status === 'error' && (
-                    <>
-                        <div className="icon-error">❌</div>
-                        <h2 style={{ color: '#dc3545' }}>Xác thực thất bại</h2>
-                        <p>{message}</p>
-                        <div className="error-actions">
-                            <button
-                                className="btn-retry"
-                                onClick={() => {
-                                    onClose();
-                                    navigate('/resend-verification');
-                                }}
-                            >
-                                Gửi lại email xác thực
-                            </button>
-                            <button
-                                className="btn-back"
-                                onClick={() => {
-                                    onClose();
-                                    navigate('/login');
-                                }}
-                            >
-                                Quay lại đăng nhập
-                            </button>
-                        </div>
-                    </>
-                )}
-            </div>
+            {status === 'error' && (
+                <>
+                    <p className="verify-error">{message}</p>
+                    <button className="btn-resend" onClick={handleResend}>
+                        Thử lại
+                    </button>
+                </>
+            )}
         </div>
     );
 };

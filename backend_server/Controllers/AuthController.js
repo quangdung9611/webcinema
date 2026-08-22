@@ -242,7 +242,7 @@ exports.sendVerificationEmail = async (req, res) => {
 };
 
 /*=========================================================
-    VERIFY EMAIL - 🔴 ĐÃ SỬA: TRẢ VỀ HTML THAY VÌ JSON
+    VERIFY EMAIL - TRẢ VỀ HTML (ĐÃ SỬA DOMAIN)
 =========================================================*/
 
 exports.verifyEmail = async (req, res) => {
@@ -250,7 +250,9 @@ exports.verifyEmail = async (req, res) => {
         const { token } = req.query;
         const result = await AuthService.verifyEmail(token);
         
-        // 🔴 TRẢ VỀ HTML THÀNH CÔNG
+        // 🔴 SỬA: Dùng domain quangdungcinema.id.vn
+        const FRONTEND_URL = 'https://quangdungcinema.id.vn';
+        
         return res.send(`
             <!DOCTYPE html>
             <html>
@@ -319,7 +321,7 @@ exports.verifyEmail = async (req, res) => {
                     <div class="icon">✅</div>
                     <h1>Xác thực thành công!</h1>
                     <p>Email của bạn đã được xác thực thành công.<br>Bạn có thể đăng nhập ngay bây giờ.</p>
-                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login" class="btn">Đăng nhập ngay</a>
+                    <a href="${FRONTEND_URL}/login" class="btn">Đăng nhập ngay</a>
                     <p class="countdown">Tự động chuyển đến trang đăng nhập sau <span id="countdown">5</span> giây...</p>
                 </div>
                 <script>
@@ -329,7 +331,7 @@ exports.verifyEmail = async (req, res) => {
                         seconds--;
                         if (seconds <= 0) {
                             clearInterval(interval);
-                            window.location.href = '${process.env.FRONTEND_URL || 'http://localhost:3000'}/login';
+                            window.location.href = '${FRONTEND_URL}/login';
                         } else {
                             countdownEl.textContent = seconds;
                         }
@@ -342,7 +344,8 @@ exports.verifyEmail = async (req, res) => {
     } catch (error) {
         console.error("Verify Email Error:", error);
         
-        // 🔴 TRẢ VỀ HTML LỖI
+        const FRONTEND_URL = 'https://quangdungcinema.id.vn';
+        
         return res.status(400).send(`
             <!DOCTYPE html>
             <html>
@@ -407,8 +410,8 @@ exports.verifyEmail = async (req, res) => {
                     <h1>Xác thực thất bại</h1>
                     <p>${error.message || 'Token không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu gửi lại email xác thực.'}</p>
                     <div class="btn-group">
-                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/resend-verification" class="btn btn-primary">Gửi lại email</a>
-                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login" class="btn btn-danger">Quay lại đăng nhập</a>
+                        <a href="${FRONTEND_URL}/resend-verification" class="btn btn-primary">Gửi lại email</a>
+                        <a href="${FRONTEND_URL}/login" class="btn btn-danger">Quay lại đăng nhập</a>
                     </div>
                 </div>
             </body>

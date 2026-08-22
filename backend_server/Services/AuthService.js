@@ -34,6 +34,13 @@ const PHONE_REGEX = /^[0-9]{10}$/;
 const USERNAME_REGEX = /^[a-zA-Z0-9_.]{4,20}$/;
 
 /*=========================================================
+    CONSTANTS
+=========================================================*/
+
+// 🔥 SỬA: Dùng domain chính thức
+const FRONTEND_URL = 'https://quangdungcinema.id.vn';
+
+/*=========================================================
     PRIVATE METHODS
 =========================================================*/
 
@@ -124,7 +131,7 @@ const generateAndSetTokens = (user, res, rememberMe = false) => {
 =========================================================*/
 
 /*=========================================================
-    REGISTER - ĐÃ SỬA
+    REGISTER - ĐÃ SỬA DOMAIN
 =========================================================*/
 
 exports.register = async (userData) => {
@@ -167,15 +174,16 @@ exports.register = async (userData) => {
         user_agent: null
     });
 
-    // 🔥 GỬI EMAIL XÁC THỰC - ĐÃ SỬA: gửi URL đầy đủ
+    // 🔥 GỬI EMAIL XÁC THỰC - DÙNG DOMAIN CHÍNH THỨC
     try {
         const verifyToken = Jwt.generateEmailVerifyToken({
             user_id: userId,
             email: email
         });
-        const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verifyToken}`;
+        const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
         await MailService.sendEmailVerification(email, verifyUrl, full_name);
         console.log(`✅ [REGISTER] Đã gửi email xác thực tới: ${email}`);
+        console.log(`🔗 [REGISTER] Verify URL: ${verifyUrl}`);
     } catch (error) {
         console.error("❌ [REGISTER] Không thể gửi email xác thực:", error.message);
         // Không throw lỗi, vẫn cho đăng ký thành công
@@ -658,7 +666,7 @@ exports.resetPassword = async (resetToken, newPassword) => {
 };
 
 /*=========================================================
-    SEND VERIFICATION EMAIL - ĐÃ SỬA
+    SEND VERIFICATION EMAIL - ĐÃ SỬA DOMAIN
 =========================================================*/
 
 exports.sendVerificationEmail = async (email) => {
@@ -684,8 +692,8 @@ exports.sendVerificationEmail = async (email) => {
         email: user.email
     });
 
-    // 🔴 SỬA: Tạo URL đầy đủ
-    const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verifyToken}`;
+    // 🔥 DÙNG DOMAIN CHÍNH THỨC
+    const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
     await MailService.sendEmailVerification(email, verifyUrl, user.full_name);
 
     return {

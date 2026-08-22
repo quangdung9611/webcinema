@@ -54,6 +54,40 @@
     box-shadow: var(--card-shadow-hover);
 }
 
+/* ✅ THÊM: Form wrapper với max-height và scrollbar */
+.auth-form-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
+    margin-bottom: var(--space-sm);
+}
+
+/* ✅ THÊM: Custom scrollbar */
+.auth-form-wrapper::-webkit-scrollbar {
+    width: 5px;
+}
+
+.auth-form-wrapper::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+}
+
+.auth-form-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(232, 232, 232, 0.2);
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+
+.auth-form-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(232, 232, 232, 0.4);
+}
+
+/* Firefox scrollbar */
+.auth-form-wrapper {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(232, 232, 232, 0.2) transparent;
+}
+
 /* =========================================================
    3. Tiêu đề & Phụ đề
 ========================================================= */
@@ -427,6 +461,10 @@
     .forgot-modal {
         padding: var(--space-xl) var(--space-lg);
     }
+    /* ✅ Responsive scrollbar nhỏ hơn */
+    .auth-form-wrapper {
+        max-height: 300px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -443,5 +481,9 @@
     .btn-user {
         font-size: var(--font-size-h6);
         padding: var(--space-sm) var(--space-md);
+    }
+    /* ✅ Responsive scrollbar nhỏ hơn */
+    .auth-form-wrapper {
+        max-height: 250px;
     }
 }

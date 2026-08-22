@@ -34,10 +34,6 @@ const UserLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotModal, setShowForgotModal] = useState(false);
     // 🔥 XÓA các state liên quan đến SessionExpiredModal
-    // const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
-    // const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
-    // const [newDevice, setNewDevice] = useState('');
-    // const [countdown, setCountdown] = useState(10);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -173,7 +169,7 @@ const UserLogin = () => {
     };
 
     // ============================================================
-    // LOGIN
+    // 🔥 LOGIN - ĐÃ SỬA
     // ============================================================
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -186,6 +182,11 @@ const UserLogin = () => {
         setServerError('');
 
         try {
+            // 🔥 Xóa token cũ trước khi đăng nhập
+            delete api.defaults.headers.common['Authorization'];
+            localStorage.removeItem('user_info');
+            localStorage.removeItem('admin_info');
+
             const response = await api.post(
                 '/api/auth/login',
                 {
@@ -195,7 +196,10 @@ const UserLogin = () => {
                 }
             );
 
-            if (response.data?.user && !response.data.user.email_verified) {
+            const userData = response.data?.user;
+            
+            // 🔥 Kiểm tra email_verified
+            if (userData && !userData.email_verified) {
                 setServerError(
                     'Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn.'
                 );
@@ -203,7 +207,7 @@ const UserLogin = () => {
                 return;
             }
 
-            const userData = response.data?.user;
+            // 🔥 Đăng nhập thành công
             if (userData) {
                 try {
                     await new Promise(resolve => setTimeout(resolve, 500));
