@@ -141,7 +141,7 @@ AuthService.setIO(io);
 console.log("✅ Socket.IO instance set to AuthService");
 
 // ============================================================
-// 🔥 SOCKET AUTHENTICATION MIDDLEWARE - ĐÃ SỬA: KHÔNG CHECK DB
+// 🔥 SOCKET AUTHENTICATION MIDDLEWARE
 // ============================================================
 
 io.use(async (socket, next) => {
@@ -171,11 +171,6 @@ io.use(async (socket, next) => {
             return next(new Error('Invalid token'));
         }
 
-        // ============================================================
-        // 🔥 QUAN TRỌNG: KHÔNG CHECK DB CHO SOCKET!
-        // Socket chỉ cần xác thực bằng JWT là được.
-        // ============================================================
-
         socket.userId = payload.user_id;
         socket.userRole = payload.role;
 
@@ -189,7 +184,7 @@ io.use(async (socket, next) => {
 });
 
 // ============================================================
-// 🔥 SOCKET CONNECTION HANDLER - ĐÃ SỬA HOÀN CHỈNH
+// 🔥 SOCKET CONNECTION HANDLER
 // ============================================================
 
 let holdingSeats = [];
@@ -208,7 +203,6 @@ io.on("connection", async (socket) => {
     // ============================================================
     socket.on("register_socket", async (data) => {
         const { userId } = data;
-        // 🔥 CHỈ lưu vào Redis NẾU userId khớp với socket.userId (tránh lưu nhầm)
         if (userId && Number(userId) === Number(socket.userId)) {
             try {
                 await RedisService.saveUserSocket(userId, socket.id);
@@ -227,27 +221,21 @@ io.on("connection", async (socket) => {
     });
 
     // ============================================================
-    // 🔥 XỬ LÝ CHỌN GHẾ (BROADCAST CHO TẤT CẢ, BAO GỒM NGƯỜI CHỌN)
+    // 🔥 XỬ LÝ CHỌN GHẾ (BROADCAST CHO TẤT CẢ)
     // ============================================================
     socket.on("client-chon-ghe", (data) => {
-        // Kiểm tra xem ghế đã có người chọn chưa (tránh trùng)
         const existingSeat = holdingSeats.find(
             seat => Number(seat.seatId) === Number(data.seatId) && 
                      Number(seat.showtimeId) === Number(data.showtimeId)
         );
 
         if (existingSeat) {
-            // Nếu ghế đã có người giữ, không cho chọn nữa
             console.log(`⚠️ [SOCKET] Ghế ${data.seatId} đã có người giữ. Từ chối!`);
-            // 🔥 Gửi lại sự kiện khóa cho client để đồng bộ
             socket.emit("server-khoa-ghe", data);
             return;
         }
 
-        // Thêm ghế mới vào danh sách
         holdingSeats.push({ ...data, socketId: socket.id });
-        
-        // 🔥 Gửi cho TẤT CẢ MỌI NGƯỜI (bao gồm cả người chọn)
         io.emit("server-khoa-ghe", data);
         console.log(`🔒 [SOCKET] User ${socket.userId} đã giữ ghế: ${data.seatId} - Showtime: ${data.showtimeId}`);
     });
@@ -260,8 +248,6 @@ io.on("connection", async (socket) => {
             seat => !(Number(seat.seatId) === Number(data.seatId) && 
                      Number(seat.showtimeId) === Number(data.showtimeId))
         );
-        
-        // 🔥 Gửi cho TẤT CẢ MỌI NGƯỜI (bao gồm cả người hủy)
         io.emit("server-mo-khoa-ghe", data);
         console.log(`🔓 [SOCKET] User ${socket.userId} đã hủy giữ ghế: ${data.seatId} - Showtime: ${data.showtimeId}`);
     });
@@ -287,7 +273,6 @@ io.on("connection", async (socket) => {
     socket.on("disconnect", () => {
         console.log(`🔴 Socket disconnected: ${socket.id} - User: ${socket.userId}`);
 
-        // Khi user rời đi, hủy tất cả ghế họ đang giữ
         const releasedSeats = holdingSeats.filter(seat => seat.socketId === socket.id);
         releasedSeats.forEach(seat => {
             io.emit("server-mo-khoa-ghe", {
