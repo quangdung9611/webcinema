@@ -124,7 +124,7 @@ const generateAndSetTokens = (user, res, rememberMe = false) => {
 =========================================================*/
 
 /*=========================================================
-    REGISTER
+    REGISTER - ĐÃ SỬA
 =========================================================*/
 
 exports.register = async (userData) => {
@@ -155,7 +155,8 @@ exports.register = async (userData) => {
         address: address || "",
         email,
         password: hashedPassword,
-        role: "customer"
+        role: "customer",
+        email_verified: 0  // 🔴 Mặc định chưa xác thực
     });
 
     // Log OTP
@@ -166,22 +167,25 @@ exports.register = async (userData) => {
         user_agent: null
     });
 
-    // Gửi email xác thực sau khi đăng ký
+    // 🔥 GỬI EMAIL XÁC THỰC - ĐÃ SỬA: gửi URL đầy đủ
     try {
         const verifyToken = Jwt.generateEmailVerifyToken({
             user_id: userId,
             email: email
         });
-        await MailService.sendEmailVerification(email, verifyToken, full_name);
+        const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verifyToken}`;
+        await MailService.sendEmailVerification(email, verifyUrl, full_name);
+        console.log(`✅ [REGISTER] Đã gửi email xác thực tới: ${email}`);
     } catch (error) {
-        console.error("Không thể gửi email xác thực:", error.message);
+        console.error("❌ [REGISTER] Không thể gửi email xác thực:", error.message);
         // Không throw lỗi, vẫn cho đăng ký thành công
     }
 
     return {
         success: true,
         message: "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.",
-        userId
+        userId,
+        emailSent: true  // 🔴 Thêm flag để frontend biết đã gửi email
     };
 };
 
@@ -605,6 +609,9 @@ exports.resetPassword = async (resetToken, newPassword) => {
     let payload;
     try {
         payload = Jwt.verifyResetToken(resetToken);
+        if (!payload) {
+            throw new Error('Invalid token');
+        }
     } catch (error) {
         throw { statusCode: 401, message: "Token không hợp lệ hoặc đã hết hạn" };
     }
@@ -651,7 +658,7 @@ exports.resetPassword = async (resetToken, newPassword) => {
 };
 
 /*=========================================================
-    SEND VERIFICATION EMAIL
+    SEND VERIFICATION EMAIL - ĐÃ SỬA
 =========================================================*/
 
 exports.sendVerificationEmail = async (email) => {
@@ -677,8 +684,9 @@ exports.sendVerificationEmail = async (email) => {
         email: user.email
     });
 
-    // Send email
-    await MailService.sendEmailVerification(email, verifyToken, user.full_name);
+    // 🔴 SỬA: Tạo URL đầy đủ
+    const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verifyToken}`;
+    await MailService.sendEmailVerification(email, verifyUrl, user.full_name);
 
     return {
         success: true,
@@ -687,7 +695,7 @@ exports.sendVerificationEmail = async (email) => {
 };
 
 /*=========================================================
-    VERIFY EMAIL
+    VERIFY EMAIL - ĐÃ SỬA
 =========================================================*/
 
 exports.verifyEmail = async (verifyToken) => {
@@ -698,6 +706,10 @@ exports.verifyEmail = async (verifyToken) => {
     let payload;
     try {
         payload = Jwt.verifyEmailVerifyToken(verifyToken);
+        // 🔴 THÊM KIỂM TRA NÀY
+        if (!payload) {
+            throw new Error('Invalid token');
+        }
     } catch (error) {
         throw { statusCode: 401, message: "Token không hợp lệ hoặc đã hết hạn" };
     }

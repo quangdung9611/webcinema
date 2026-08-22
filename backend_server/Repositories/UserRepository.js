@@ -60,6 +60,7 @@ class UserRepository {
                 role,
                 status,
                 email_verified,
+                email_verified_at,
                 address,
                 points,
                 last_login_at,
@@ -164,6 +165,7 @@ class UserRepository {
                 role,
                 status,
                 email_verified,
+                email_verified_at,
                 address,
                 points,
                 last_login_at,
@@ -200,6 +202,7 @@ class UserRepository {
                 role,
                 status,
                 email_verified,
+                email_verified_at,
                 points,
                 last_login_at,
                 last_login_ip,
@@ -234,6 +237,7 @@ class UserRepository {
                 role,
                 status,
                 email_verified,
+                email_verified_at,
                 points,
                 last_login_at,
                 last_login_ip,
@@ -269,6 +273,7 @@ class UserRepository {
                 role,
                 status,
                 email_verified,
+                email_verified_at,
                 points,
                 last_login_at,
                 last_login_ip
@@ -302,6 +307,7 @@ class UserRepository {
                 role,
                 status,
                 email_verified,
+                email_verified_at,
                 points,
                 last_login_at,
                 last_login_ip
@@ -328,7 +334,8 @@ class UserRepository {
                 password,
                 role,
                 status,
-                email_verified
+                email_verified,
+                email_verified_at
             FROM users
             WHERE user_id = ?
             LIMIT 1
@@ -431,9 +438,10 @@ class UserRepository {
                 role,
                 status,
                 email_verified,
+                email_verified_at,
                 points
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
             [
                 user.username,
@@ -446,6 +454,7 @@ class UserRepository {
                 user.role || "customer",
                 user.status || "active",
                 user.email_verified || 0,
+                user.email_verified_at || null,
                 user.points || 0
             ]
         );
@@ -580,7 +589,7 @@ class UserRepository {
 
 
     /*=========================================================
-        UPDATE EMAIL VERIFIED
+        UPDATE EMAIL VERIFIED - ĐÃ CẬP NHẬT THÊM email_verified_at
     =========================================================*/
     async updateEmailVerified(
         userId,
@@ -592,11 +601,13 @@ class UserRepository {
             UPDATE users
             SET
                 email_verified = ?,
+                email_verified_at = ?,
                 updated_at = NOW()
             WHERE user_id = ?
             `,
             [
                 verified ? 1 : 0,
+                verified ? new Date() : null,
                 userId
             ]
         );
@@ -616,6 +627,7 @@ class UserRepository {
             SET
                 email = ?,
                 email_verified = 0,
+                email_verified_at = NULL,
                 updated_at = NOW()
             WHERE user_id = ?
             `,

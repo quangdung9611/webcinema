@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../../api/api'; // ✅ Import api
+import api from '../../api/api';
 import { Eye, EyeOff } from 'lucide-react';
 
 import Modal from '../components/Modal';
 import LoadingButton from '../components/LoadingButton';
+import VerifyEmail from '../components/VerifyEmail';           // ✅ Import VerifyEmail
+import ResendVerification from '../components/ResendVerification'; // ✅ Import ResendVerification
 import '../styles/UserAuth.css';
 
 const UserRegister = () => {
@@ -13,6 +15,7 @@ const UserRegister = () => {
         full_name: '',
         email: '',
         password: '',
+        confirmPassword: '',
         phone: '',
         address: ''
     });
@@ -20,6 +23,7 @@ const UserRegister = () => {
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [modalConfig, setModalConfig] = useState({
         show: false,
@@ -27,6 +31,10 @@ const UserRegister = () => {
         title: '',
         message: ''
     });
+
+    // ✅ State để điều khiển hiển thị VerifyEmail và ResendVerification
+    const [showVerifyModal, setShowVerifyModal] = useState(false);
+    const [showResendModal, setShowResendModal] = useState(false);
 
     const navigate = useNavigate();
 
@@ -71,6 +79,12 @@ const UserRegister = () => {
             tempErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt';
         }
 
+        if (!formData.confirmPassword.trim()) {
+            tempErrors.confirmPassword = 'Vui lòng nhập lại mật khẩu';
+        } else if (formData.password !== formData.confirmPassword) {
+            tempErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+        }
+
         setErrors(tempErrors);
         return Object.keys(tempErrors).length === 0;
     };
@@ -83,6 +97,11 @@ const UserRegister = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
         if (errors[e.target.name]) {
             setErrors({ ...errors, [e.target.name]: '' });
+        }
+        if (e.target.name === 'password' || e.target.name === 'confirmPassword') {
+            if (errors.confirmPassword) {
+                setErrors({ ...errors, confirmPassword: '' });
+            }
         }
     };
 
@@ -106,12 +125,8 @@ const UserRegister = () => {
                 address: formData.address || ''
             });
 
-            setModalConfig({
-                show: true,
-                type: 'success',
-                title: '🎉 Đăng ký thành công!',
-                message: 'Chào mừng bạn gia nhập Cinema Star. Vui lòng kiểm tra email để xác thực tài khoản.'
-            });
+            // ✅ Đăng ký thành công -> hiển thị modal VerifyEmail
+            setShowVerifyModal(true);
 
         } catch (err) {
             console.error('Register Error:', err);
@@ -119,7 +134,10 @@ const UserRegister = () => {
             const serverMsg = err.response?.data?.message;
             const field = err.response?.data?.field;
 
-            if (field) {
+            // ✅ Kiểm tra nếu lỗi là "Email đã được xác thực" -> mở modal ResendVerification
+            if (serverMsg && (serverMsg.includes('đã được xác thực') || serverMsg.includes('verified'))) {
+                setShowResendModal(true);
+            } else if (field) {
                 setErrors({ [field]: serverMsg });
             } else {
                 setModalConfig({
@@ -145,6 +163,23 @@ const UserRegister = () => {
         }
     };
 
+    // ==========================================
+    // HANDLE VERIFY MODAL CLOSE
+    // ==========================================
+
+    const handleVerifyModalClose = () => {
+        setShowVerifyModal(false);
+        navigate('/login');
+    };
+
+    // ==========================================
+    // HANDLE RESEND MODAL CLOSE
+    // ==========================================
+
+    const handleResendModalClose = () => {
+        setShowResendModal(false);
+    };
+
     return (
         <div className="auth-container">
             <div className="auth-card">
@@ -167,9 +202,7 @@ const UserRegister = () => {
                             autoComplete="username"
                             disabled={loading}
                         />
-                        {errors.username && (
-                            <span className="error-text">{errors.username}</span>
-                        )}
+                        {errors.username && <span className="error-text">{errors.username}</span>}
                     </div>
 
                     {/* FULL NAME */}
@@ -185,9 +218,7 @@ const UserRegister = () => {
                             autoComplete="name"
                             disabled={loading}
                         />
-                        {errors.full_name && (
-                            <span className="error-text">{errors.full_name}</span>
-                        )}
+                        {errors.full_name && <span className="error-text">{errors.full_name}</span>}
                     </div>
 
                     {/* EMAIL */}
@@ -203,9 +234,7 @@ const UserRegister = () => {
                             autoComplete="email"
                             disabled={loading}
                         />
-                        {errors.email && (
-                            <span className="error-text">{errors.email}</span>
-                        )}
+                        {errors.email && <span className="error-text">{errors.email}</span>}
                     </div>
 
                     {/* PHONE */}
@@ -221,9 +250,7 @@ const UserRegister = () => {
                             autoComplete="tel"
                             disabled={loading}
                         />
-                        {errors.phone && (
-                            <span className="error-text">{errors.phone}</span>
-                        )}
+                        {errors.phone && <span className="error-text">{errors.phone}</span>}
                     </div>
 
                     {/* PASSWORD */}
@@ -249,12 +276,36 @@ const UserRegister = () => {
                                 {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                             </button>
                         </div>
-                        {errors.password && (
-                            <span className="error-text">{errors.password}</span>
-                        )}
+                        {errors.password && <span className="error-text">{errors.password}</span>}
                     </div>
 
-                    {/* ADDRESS (Optional) */}
+                    {/* CONFIRM PASSWORD */}
+                    <div className="form-group">
+                        <label>Xác nhận mật khẩu</label>
+                        <div className="password-wrapper">
+                            <input
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                name="confirmPassword"
+                                className={`auth-input ${errors.confirmPassword ? 'input-error' : ''}`}
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                placeholder="••••••••"
+                                autoComplete="new-password"
+                                disabled={loading}
+                            />
+                            <button
+                                type="button"
+                                className="toggle-password"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                tabIndex="-1"
+                            >
+                                {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                            </button>
+                        </div>
+                        {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
+                    </div>
+
+                    {/* ADDRESS */}
                     <div className="form-group">
                         <label>Địa chỉ (không bắt buộc)</label>
                         <input
@@ -282,19 +333,29 @@ const UserRegister = () => {
 
                 <div className="auth-footer">
                     <span>Đã có tài khoản? </span>
-                    <Link to="/login" className="btn-link">
-                        Đăng nhập
-                    </Link>
+                    <Link to="/login" className="btn-link">Đăng nhập</Link>
                 </div>
             </div>
 
-            {/* MODAL - sửa thành onClose */}
+            {/* MODAL THÔNG BÁO LỖI */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}
                 title={modalConfig.title}
                 message={modalConfig.message}
                 onClose={handleModalClose}
+            />
+
+            {/* ✅ MODAL XÁC THỰC EMAIL - HIỂN THỊ SAU KHI ĐĂNG KÝ THÀNH CÔNG */}
+            <VerifyEmail
+                show={showVerifyModal}
+                onClose={handleVerifyModalClose}
+            />
+
+            {/* ✅ MODAL GỬI LẠI EMAIL - HIỂN THỊ KHI TOKEN HẾT HẠN HOẶC EMAIL CHƯA XÁC THỰC */}
+            <ResendVerification
+                show={showResendModal}
+                onClose={handleResendModalClose}
             />
         </div>
     );

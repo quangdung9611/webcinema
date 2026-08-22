@@ -1,305 +1,868 @@
 /* =========================================================
-   BOOKING SIDEBAR - SILVER EDITION (ĐỒNG BỘ INDEX.CSS)
+   BOOKING SIDEBAR - SILVER EDITION
+
+   RESPONSIBILITY:
+   - Sidebar layout
+   - Poster
+   - Movie details
+   - Food section
+   - Price
+   - Total
+   - Sidebar actions
+
+   KHÔNG QUẢN LÝ:
+   - booking-container
+   - booking navigation
+   - cinema select
+   - date slider
+   - time slider
+   - seats
+   - screen
+   - legend
+
+   Những phần trên thuộc Booking.css
+========================================================= */
+
+
+/* =========================================================
+   SIDEBAR
 ========================================================= */
 
 .ticket-sidebar {
-    width: 340px;
+    width: 320px;
+
     flex-shrink: 0;
+
     position: sticky;
+
     top: 20px;
+
     display: flex;
+
     flex-direction: column;
+
     gap: var(--space-lg);
+
     height: fit-content;
 }
 
+
 /* =========================================================
-   POSTER – SILVER
+   POSTER
 ========================================================= */
 
 .poster-container {
     width: 100%;
+
+    max-width: 300px;
+
+    margin: 0 auto;
+
     overflow: hidden;
+
     border-radius: var(--radius-xl);
+
     background: var(--bg-card);
+
     border: var(--border-premium);
+
     box-shadow: var(--glass-shadow);
 }
 
+
 .poster-container img {
     width: 100%;
+
     aspect-ratio: 2 / 3;
-    object-fit: cover;
+
+    object-fit: contain;
+
     display: block;
-    transition: transform var(--transition-normal);
+
+    transition:
+        transform
+        var(--transition-normal);
 }
+
 
 .poster-container:hover img {
     transform: scale(1.03);
 }
 
+
 /* =========================================================
-   DETAILS BOX – SILVER
+   DETAILS BOX
 ========================================================= */
 
 .ticket-details {
+    width: 100%;
+
     padding: var(--space-lg);
+
     border-radius: var(--radius-xl);
+
     display: flex;
+
     flex-direction: column;
+
     gap: var(--space-md);
+
     background: var(--bg-card);
+
     backdrop-filter: blur(14px);
+
     border: var(--border-premium);
+
     box-shadow: var(--glass-shadow);
 }
 
+
 /* =========================================================
-   MOVIE NAME – SILVER
+   MOVIE NAME
 ========================================================= */
 
 .movie-name {
     margin: 0;
+
     font-size: var(--font-size-h4);
+
     font-weight: var(--fw-extrabold);
+
     line-height: 1.5;
+
     text-transform: uppercase;
+
     text-align: center;
+
     color: var(--silver-primary);
+
     padding-bottom: var(--space-md);
+
     border-bottom: var(--border-premium);
 }
 
+
 /* =========================================================
-   DETAIL ITEMS – SILVER
+   DETAIL ITEMS
 ========================================================= */
 
 .detail-item {
     display: flex;
+
     justify-content: space-between;
+
     align-items: flex-start;
+
     gap: var(--space-sm);
+
     padding-bottom: var(--space-sm);
+
     border-bottom: var(--border-subtle);
 }
+
 
 .detail-item:last-child {
     border-bottom: none;
 }
 
+
 .detail-item span {
+    flex-shrink: 0;
+
     color: var(--text-secondary);
+
     font-size: var(--font-size-base);
 }
 
+
 .detail-item strong {
+    min-width: 0;
+
     color: var(--text-body);
+
     text-align: right;
+
     font-size: var(--font-size-base);
+
     font-weight: var(--fw-semibold);
+
+    overflow-wrap: anywhere;
 }
+
 
 .seats-list {
     color: var(--silver-light);
 }
 
+
 /* =========================================================
-   FOOD SECTION – SILVER
+   FOOD SECTION
 ========================================================= */
 
 .food-selected-box {
     margin-top: var(--space-xs);
+
     padding-top: var(--space-md);
+
     border-top: var(--border-premium);
+
     display: flex;
+
     flex-direction: column;
+
     gap: var(--space-sm);
 }
+
 
 .food-selected-title {
     margin: 0;
+
     color: var(--silver-primary);
+
     font-size: var(--font-size-base);
+
     letter-spacing: 2px;
+
     text-transform: uppercase;
 }
 
+
 .food-selected-item {
     display: flex;
+
     justify-content: space-between;
+
+    align-items: flex-start;
+
     gap: var(--space-sm);
+
     color: var(--text-secondary);
+
     font-size: var(--font-size-base);
 }
 
+
 .food-selected-item strong {
     color: var(--silver-light);
+
+    text-align: right;
+
+    overflow-wrap: anywhere;
 }
 
+
 /* =========================================================
-   TOTAL – SILVER
+   TOTAL PRICE
 ========================================================= */
 
 .total-price-box {
     margin-top: var(--space-xs);
+
     padding-top: var(--space-md);
+
     border-top: var(--border-premium);
+
     display: flex;
+
     flex-direction: column;
+
     gap: var(--space-sm);
 }
 
+
 .price-row {
     display: flex;
+
     justify-content: space-between;
+
+    gap: var(--space-sm);
+
     color: var(--text-secondary);
+
     font-size: var(--font-size-base);
 }
+
 
 .price-row strong {
     color: var(--text-body);
+
+    text-align: right;
 }
+
+
+/* =========================================================
+   GRAND TOTAL
+========================================================= */
 
 .grand-total {
     margin-top: var(--space-sm);
+
     padding-top: var(--space-md);
+
     text-align: center;
+
     border-top: var(--border-subtle);
 }
 
+
 .grand-total p {
-    margin: 0 0 var(--space-sm);
+    margin:
+        0
+        0
+        var(--space-sm);
+
     color: var(--text-muted);
+
     letter-spacing: 2px;
+
     font-size: var(--font-size-base);
+
     text-transform: uppercase;
 }
 
+
 .grand-total h3 {
     margin: 0;
+
     font-size: var(--font-size-h2);
+
     font-weight: var(--fw-extrabold);
+
     color: var(--silver-primary);
-    text-shadow: 0 0 10px rgba(232, 232, 232, 0.15);
+
+    text-shadow:
+        0 0 10px
+        rgba(232, 232, 232, 0.15);
 }
 
+
 /* =========================================================
-   ACTION BUTTONS – SILVER
+   SIDEBAR ACTIONS
 ========================================================= */
 
 .food-sidebar-actions {
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
     gap: var(--space-sm);
+
     margin-top: var(--space-md);
 }
 
-/* Nút chung cho sidebar */
+
+/* =========================================================
+   SIDEBAR BUTTON COMMON
+========================================================= */
+
 .btn-next-sidebar,
 .btn-back-food-sidebar {
-    width: 260px !important;
-    height: 54px !important;
-    max-width: 100% !important;
-    border-radius: var(--radius-md) !important;
+    width: 100%;
+
+    height: 54px;
+
+    max-width: 100%;
+
+    border-radius: var(--radius-md);
+
     font-size: var(--font-size-base);
+
     font-weight: var(--fw-bold);
+
     cursor: pointer;
-    transition: all var(--transition-normal);
+
+    transition: var(--transition-normal);
 }
 
-/* CONTINUE – SILVER GRADIENT */
+
+/* =========================================================
+   CONTINUE BUTTON
+========================================================= */
+
 .btn-next-sidebar {
     border: none;
+
     background: var(--premium-gradient);
+
     color: var(--bg-primary);
+
     box-shadow: var(--btn-silver-shadow);
 }
 
-.btn-next-sidebar:hover {
+
+.btn-next-sidebar:hover:not(:disabled) {
     transform: translateY(-2px);
+
     box-shadow: var(--card-shadow-hover);
 }
 
+
+.btn-next-sidebar:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+
 .btn-next-sidebar:disabled {
     opacity: 0.45;
+
     cursor: not-allowed;
+
     transform: none;
 }
 
-/* BACK – SILVER BORDER */
+
+/* =========================================================
+   BACK BUTTON
+========================================================= */
+
 .btn-back-food-sidebar {
     border: var(--border-premium);
+
     background: transparent;
+
     color: var(--text-secondary);
 }
 
+
 .btn-back-food-sidebar:hover {
     background: rgba(232, 232, 232, 0.08);
+
     color: var(--text-body);
+
     border-color: var(--silver-primary);
+
+    transform: translateY(-2px);
 }
 
+
+.btn-back-food-sidebar:active {
+    transform: translateY(0);
+}
+
+
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE <= 1200px
 ========================================================= */
 
 @media (max-width: 1200px) {
-    .ticket-sidebar {
-        width: 300px;
-    }
-}
 
-@media (max-width: 992px) {
     .ticket-sidebar {
-        width: 100%;
-        position: static;
-        display: grid;
-        grid-template-columns: 260px 1fr;
-        gap: var(--space-lg);
+        width: 280px;
     }
-    .poster-container {
-        max-width: 260px;
-    }
-}
 
-@media (max-width: 768px) {
-    .ticket-sidebar {
-        grid-template-columns: 1fr;
-    }
+
     .poster-container {
         max-width: 240px;
-        margin: 0 auto;
     }
+
+
     .ticket-details {
         padding: var(--space-md);
     }
+
+
+    .movie-name {
+        font-size: var(--font-size-h5);
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE <= 992px
+
+   SIDEBAR:
+   POSTER + DETAILS
+
+   Dùng grid để tránh:
+   - width 32% + flex
+   - max-width conflict
+   - height bị sai
+========================================================= */
+
+@media (max-width: 992px) {
+
+    .ticket-sidebar {
+        width: 100%;
+
+        position: static;
+
+        display: grid;
+
+        grid-template-columns:
+            minmax(220px, 260px)
+            minmax(0, 1fr);
+
+        gap: var(--space-lg);
+
+        align-items: stretch;
+    }
+
+
+    .poster-container {
+        width: 100%;
+
+        max-width: none;
+
+        height: 100%;
+
+        margin: 0;
+    }
+
+
+    .poster-container img {
+        width: 100%;
+
+        height: 100%;
+
+        aspect-ratio: auto;
+
+        object-fit: cover;
+    }
+
+
+    .ticket-details {
+        min-width: 0;
+
+        display: flex;
+
+        flex-direction: column;
+
+        justify-content: center;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE <= 768px
+
+   POSTER 40%
+   DETAILS 60%
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .ticket-sidebar {
+        grid-template-columns:
+            minmax(0, 40fr)
+            minmax(0, 60fr);
+
+        gap: var(--space-md);
+
+        align-items: stretch;
+    }
+
+
+    /* POSTER */
+
+    .poster-container {
+        width: 100%;
+
+        max-width: none;
+
+        height: 100%;
+
+        margin: 0;
+
+        border-radius: var(--radius-lg);
+    }
+
+
+    .poster-container img {
+        width: 100%;
+
+        height: 100%;
+
+        aspect-ratio: auto;
+
+        object-fit: cover;
+    }
+
+
+    /* DETAILS */
+
+    .ticket-details {
+        min-width: 0;
+
+        padding: var(--space-md);
+
+        gap: var(--space-sm);
+    }
+
+
     .movie-name {
         font-size: var(--font-size-base);
+
+        line-height: 1.4;
+
+        padding-bottom: var(--space-sm);
     }
+
+
+    .detail-item {
+        gap: var(--space-xs);
+
+        padding-bottom: var(--space-xs);
+    }
+
+
+    .detail-item span,
+    .detail-item strong {
+        font-size: var(--font-size-sm);
+    }
+
+
+    /* FOOD */
+
+    .food-selected-box,
+    .total-price-box {
+        padding-top: var(--space-sm);
+    }
+
+
+    .food-selected-title,
+    .food-selected-item,
+    .price-row {
+        font-size: var(--font-size-sm);
+    }
+
+
+    /* TOTAL */
+
+    .grand-total {
+        margin-top: var(--space-xs);
+
+        padding-top: var(--space-sm);
+    }
+
+
+    .grand-total p {
+        margin-bottom: var(--space-xs);
+
+        font-size: var(--font-size-xs);
+    }
+
+
     .grand-total h3 {
         font-size: var(--font-size-h3);
     }
+
+
+    /* BUTTON */
+
+    .food-sidebar-actions {
+        margin-top: var(--space-sm);
+    }
+
+
     .btn-next-sidebar,
     .btn-back-food-sidebar {
-        width: 100% !important;
-        height: 50px !important;
+        height: 50px;
+
+        font-size: var(--font-size-sm);
     }
 }
 
-@media (max-width: 480px) {
+
+/* =========================================================
+   RESPONSIVE <= 600px
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .ticket-sidebar {
+        gap: var(--space-sm);
+    }
+
+
     .ticket-details {
-        padding: var(--space-md);
+        padding: var(--space-sm);
     }
-    .detail-item {
-        flex-direction: column;
-        gap: var(--space-xs);
+
+
+    .movie-name {
+        font-size: var(--font-size-sm);
     }
+
+
+    .detail-item span,
     .detail-item strong {
-        text-align: left;
+        font-size: var(--font-size-xs);
     }
+
+
+    .food-selected-title,
+    .food-selected-item,
+    .price-row {
+        font-size: var(--font-size-xs);
+    }
+
+
+    .grand-total h3 {
+        font-size: var(--font-size-h4);
+    }
+
+
     .btn-next-sidebar,
     .btn-back-food-sidebar {
-        height: 48px !important;
+        height: 46px;
+
+        font-size: var(--font-size-xs);
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVE <= 480px
+
+   VẪN GIỮ 40 / 60
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .ticket-sidebar {
+        grid-template-columns:
+            minmax(0, 40fr)
+            minmax(0, 60fr);
+
+        gap: var(--space-sm);
+    }
+
+
+    /* POSTER */
+
+    .poster-container {
+        border-radius: var(--radius-md);
+    }
+
+
+    /* DETAILS */
+
+    .ticket-details {
+        padding: var(--space-sm);
+
+        gap: var(--space-xs);
+    }
+
+
+    .movie-name {
+        font-size: var(--font-size-sm);
+
+        line-height: 1.35;
+
+        padding-bottom: var(--space-xs);
+    }
+
+
+    /* DETAIL ITEM */
+
+    .detail-item {
+        flex-direction: row;
+
+        justify-content: space-between;
+
+        gap: var(--space-xs);
+
+        padding-bottom: var(--space-xs);
+    }
+
+
+    .detail-item span {
+        flex-shrink: 0;
+
+        font-size: var(--font-size-xs);
+    }
+
+
+    .detail-item strong {
+        min-width: 0;
+
+        text-align: right;
+
+        font-size: var(--font-size-xs);
+
+        overflow-wrap: anywhere;
+    }
+
+
+    /* FOOD */
+
+    .food-selected-box {
+        margin-top: 0;
+
+        padding-top: var(--space-xs);
+
+        gap: var(--space-xs);
+    }
+
+
+    .food-selected-title {
+        font-size: var(--font-size-xs);
+
+        letter-spacing: 1px;
+    }
+
+
+    .food-selected-item {
+        gap: var(--space-xs);
+
+        font-size: var(--font-size-xs);
+    }
+
+
+    /* TOTAL */
+
+    .total-price-box {
+        margin-top: 0;
+
+        padding-top: var(--space-xs);
+
+        gap: var(--space-xs);
+    }
+
+
+    .price-row {
+        gap: var(--space-xs);
+
+        font-size: var(--font-size-xs);
+    }
+
+
+    .grand-total {
+        margin-top: var(--space-xs);
+
+        padding-top: var(--space-xs);
+    }
+
+
+    .grand-total p {
+        font-size: 10px;
+
+        letter-spacing: 1px;
+    }
+
+
+    .grand-total h3 {
+        font-size: var(--font-size-h5);
+    }
+
+
+    /* BUTTON */
+
+    .food-sidebar-actions {
+        gap: var(--space-xs);
+
+        margin-top: var(--space-xs);
+    }
+
+
+    .btn-next-sidebar,
+    .btn-back-food-sidebar {
+        width: 100%;
+
+        height: 44px;
+
+        font-size: var(--font-size-xs);
     }
 }

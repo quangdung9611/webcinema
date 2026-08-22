@@ -55,6 +55,13 @@ router.post("/reset-password", AuthController.resetPassword);
 router.post("/send-verification", AuthController.sendVerificationEmail);
 
 /**
+ * Gửi lại email xác thực
+ * POST /api/auth/resend-verification
+ * 🔴 THÊM MỚI: Dùng để gửi lại email xác thực khi token hết hạn
+ */
+router.post("/resend-verification", AuthController.sendVerificationEmail);
+
+/**
  * Xác thực email
  * GET /api/auth/verify-email?token=xxx
  */
