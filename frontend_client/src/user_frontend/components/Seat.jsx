@@ -12,6 +12,7 @@ const Seat = ({
   sold,
   maintenance,
   locked,
+  heldByOther, // 🔥 THÊM PROP NÀY
   number,
   onClick,
 
@@ -75,7 +76,10 @@ const Seat = ({
   //   → luôn không click
   //
   // GHẾ LOCKED:
-  //   → luôn không click
+  //   → luôn không click (ghế đang bị giữ bởi chính user)
+  //
+  // GHẾ HELD BY OTHER:
+  //   → luôn không click (ghế đang bị người khác giữ)
   //
   // GHẾ BẢO TRÌ:
   //   User:
@@ -88,6 +92,7 @@ const Seat = ({
   const isDisabled =
     sold ||
     locked ||
+    heldByOther || // 🔥 THÊM ĐIỀU KIỆN NÀY
     (maintenance && !adminMode);
 
 
@@ -95,8 +100,8 @@ const Seat = ({
   // RENDER
   // =========================================================
 
+  // 🔥 THÊM CLASS held-by-other
   return (
-
     <div
       className={`
         seat
@@ -105,6 +110,7 @@ const Seat = ({
         ${sold ? "sold" : ""}
         ${maintenance ? "maintenance" : ""}
         ${locked ? "locked" : ""}
+        ${heldByOther ? "held-by-other" : ""} {/* 🔥 THÊM CLASS NÀY */}
       `}
       onClick={
         !isDisabled

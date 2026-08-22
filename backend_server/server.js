@@ -239,6 +239,8 @@ io.on("connection", async (socket) => {
         if (existingSeat) {
             // Nếu ghế đã có người giữ, không cho chọn nữa
             console.log(`⚠️ [SOCKET] Ghế ${data.seatId} đã có người giữ. Từ chối!`);
+            // 🔥 Gửi lại sự kiện khóa cho client để đồng bộ
+            socket.emit("server-khoa-ghe", data);
             return;
         }
 
@@ -262,6 +264,14 @@ io.on("connection", async (socket) => {
         // 🔥 Gửi cho TẤT CẢ MỌI NGƯỜI (bao gồm cả người hủy)
         io.emit("server-mo-khoa-ghe", data);
         console.log(`🔓 [SOCKET] User ${socket.userId} đã hủy giữ ghế: ${data.seatId} - Showtime: ${data.showtimeId}`);
+    });
+
+    // ============================================================
+    // 🔥 THÊM SỰ KIỆN YÊU CẦU DANH SÁCH GHẾ ĐANG GIỮ
+    // ============================================================
+    socket.on("request-holding-seats", () => {
+        socket.emit("server-gui-danh-sach-dang-giu", holdingSeats);
+        console.log(`📤 [SOCKET] Đã gửi danh sách ghế đang giữ cho ${socket.id}`);
     });
 
     // ============================================================

@@ -566,6 +566,44 @@
 
 
 /* =========================================================
+   🔥 9. GHẾ ĐANG BỊ NGƯỜI KHÁC GIỮ (HELD BY OTHER)
+========================================================= */
+
+.seat.held-by-other {
+    color: #f39c12 !important;
+    cursor: not-allowed !important;
+    opacity: 0.9;
+    position: relative;
+}
+
+.seat.held-by-other .seat-icon {
+    color: #f39c12 !important;
+    fill: #f39c12 !important;
+}
+
+.seat.held-by-other .seat-number {
+    background: rgba(243, 156, 18, 0.85);
+    color: #1a1a1a !important;
+}
+
+/* 🔒 Icon khóa nhỏ trên góc */
+.seat.held-by-other::after {
+    content: "🔒";
+    font-size: 10px;
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 50%;
+    padding: 1px 3px;
+    color: #fff;
+    z-index: 5;
+    line-height: 1;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+
+/* =========================================================
    CHÚ THÍCH
 ========================================================= */
 
@@ -665,6 +703,31 @@
 
 .box.maintenance {
     background: var(--seat-maintenance-color) !important;
+}
+
+
+/* =========================================================
+   🔥 LEGEND - HELD BY OTHER (ĐANG ĐƯỢC CHỌN)
+========================================================= */
+
+.box.held-by-other {
+    background: #f39c12 !important;
+    border-color: #e67e22 !important;
+    position: relative;
+}
+
+/* Thêm icon khóa nhỏ cho legend */
+.box.held-by-other::after {
+    content: "🔒";
+    font-size: 8px;
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    padding: 1px 3px;
+    color: #fff;
+    line-height: 1;
 }
 
 
@@ -1318,5 +1381,40 @@
     .no-showtimes {
         height: 42px;
         font-size: var(--font-size-xs);
+    }
+}
+
+
+/* =========================================================
+   🔥 BỔ SUNG: HELD-BY-OTHER RESPONSIVE
+========================================================= */
+
+/* Tablet */
+@media (max-width: 992px) {
+    .seat.held-by-other::after {
+        font-size: 9px;
+        top: -3px;
+        right: -3px;
+        padding: 1px 3px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .seat.held-by-other::after {
+        font-size: 8px;
+        top: -2px;
+        right: -2px;
+        padding: 1px 2px;
+    }
+}
+
+/* Mobile nhỏ */
+@media (max-width: 480px) {
+    .seat.held-by-other::after {
+        font-size: 7px;
+        top: -2px;
+        right: -2px;
+        padding: 0 2px;
     }
 }

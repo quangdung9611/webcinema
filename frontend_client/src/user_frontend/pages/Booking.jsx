@@ -15,7 +15,8 @@ import {
 
 import api from '../../api/api';
 
-import { io } from 'socket.io-client';
+// 🔥 THAY ĐỔI: Import socketService thay vì io
+import socketService from '../../api/socket';
 
 import Modal from '../components/Modal';
 import CountdownTimer from './CountdownTimer';
@@ -78,35 +79,11 @@ const Booking = () => {
     const timeRef = useRef(null);
 
     // =========================================================
-    // SOCKET - ĐÃ THÊM XỬ LÝ LỖI CONNECT_ERROR
+    // 🔥 LẤY SOCKET TỪ socketService (dùng chung với App)
     // =========================================================
 
-    const socket = useMemo(
-        () =>
-            io('https://api.quangdungcinema.id.vn', {
-                withCredentials: true,
-                transports: ['websocket', 'polling']
-            }),
-        []
-    );
-
-    // 🔥 XỬ LÝ LỖI KẾT NỐI SOCKET (Ngăn vòng lặp reconnect vô tận)
-    useEffect(() => {
-        const handleConnectError = (err) => {
-            console.error('🔴 [SOCKET] Lỗi kết nối:', err.message);
-            // Nếu lỗi do token hết hạn hoặc bị revoke (Backend trả lỗi), ngắt kết nối hoàn toàn
-            if (err.message === 'SESSION_EXPIRED' || err.message.includes('Authentication')) {
-                console.warn('🔴 [SOCKET] Token hết hạn, ngắt kết nối vĩnh viễn để tránh vòng lặp.');
-                socket.disconnect(); // Ngắt hoàn toàn, không cho reconnect
-            }
-        };
-
-        socket.on('connect_error', handleConnectError);
-
-        return () => {
-            socket.off('connect_error', handleConnectError);
-        };
-    }, [socket]);
+    const socket = socketService.getSocket();
+    const isSocketConnected = socketService.isConnectedStatus();
 
     const showtimeId = selectedShowtime?.showtime_id || selectedShowtime?.id;
 
@@ -483,7 +460,7 @@ const Booking = () => {
     ]);
 
     // =========================================================
-    // FETCH SEATS
+    // FETCH SEATS - SỬA LẠI
     // =========================================================
 
     const fetchSeats = useCallback(async () => {
@@ -509,10 +486,8 @@ const Booking = () => {
                 detailRes.data?.data
             );
 
-            const seatsData =
+            let seatsData =
                 seatsRes.data?.data || [];
-
-            setSeats(seatsData);
 
             // =================================================
             // RESTORE SESSION
@@ -536,6 +511,21 @@ const Booking = () => {
                 const parsed =
                     JSON.parse(savedSeats);
 
+                // 🔥 ĐÁNH DẤU GHẾ ĐÃ CHỌN TRONG seatsData
+                seatsData = seatsData.map((s) => {
+                    const isSelected = parsed.some(
+                        (p) => Number(p.seat_id) === Number(s.seat_id)
+                    );
+                    if (isSelected) {
+                        return {
+                            ...s,
+                            is_locked_by_user: true,
+                            held_by_other: false // Ghế của chính mình
+                        };
+                    }
+                    return s;
+                });
+
                 setSelectedSeats(parsed);
 
                 if (
@@ -545,22 +535,15 @@ const Booking = () => {
                 ) {
                     setIsTimerActive(true);
                 }
-
-                parsed.forEach((s) => {
-                    // Kiểm tra socket còn kết nối trước khi emit
-                    if (socket.connected) {
-                        socket.emit(
-                            'client-chon-ghe',
-                            {
-                                seatId:
-                                    s.seat_id,
-
-                                showtimeId
-                            }
-                        );
-                    }
-                });
             }
+
+            setSeats(seatsData);
+
+            // 🔥 YÊU CẦU DANH SÁCH GHẾ ĐANG GIỮ TỪ SERVER
+            if (isSocketConnected) {
+                socketService.emit('request-holding-seats');
+            }
+
         } catch (err) {
             console.error(
                 'Lỗi tải sơ đồ ghế:',
@@ -569,7 +552,7 @@ const Booking = () => {
         } finally {
             setLoading(false);
         }
-    }, [showtimeId, socket]);
+    }, [showtimeId, isSocketConnected]);
 
     useEffect(() => {
         if (showtimeId) {
@@ -581,11 +564,15 @@ const Booking = () => {
     ]);
 
     // =========================================================
-    // SOCKET REALTIME - ĐÃ THÊM NHẬN DANH SÁCH GHẾ ĐANG GIỮ
+    // SOCKET REALTIME - SỬA LẠI HOÀN CHỈNH
     // =========================================================
 
     useEffect(() => {
         if (!showtimeId) return;
+
+        // 🔥 LẤY SOCKET HIỆN TẠI
+        const currentSocket = socketService.getSocket();
+        if (!currentSocket) return;
 
         const handleSeatLocked = (data) => {
             if (
@@ -601,8 +588,8 @@ const Booking = () => {
                     Number(data.seatId)
                         ? {
                               ...s,
-                              is_locked_by_user:
-                                  true
+                              is_locked_by_user: true,
+                              held_by_other: true // 🔥 Đánh dấu ghế của người khác
                           }
                         : s
                 )
@@ -623,8 +610,8 @@ const Booking = () => {
                     Number(data.seatId)
                         ? {
                               ...s,
-                              is_locked_by_user:
-                                  false
+                              is_locked_by_user: false,
+                              held_by_other: false
                           }
                         : s
                 )
@@ -635,16 +622,33 @@ const Booking = () => {
         const handleSeatList = (seatList) => {
             if (!Array.isArray(seatList)) return;
 
-            seatList.forEach((data) => {
-                if (Number(data.showtimeId) === Number(showtimeId)) {
-                    setSeats((prev) =>
-                        prev.map((s) =>
-                            Number(s.seat_id) === Number(data.seatId)
-                                ? { ...s, is_locked_by_user: true }
-                                : s
-                        )
-                    );
-                }
+            setSeats((prev) => {
+                const updated = [...prev];
+                seatList.forEach((data) => {
+                    if (Number(data.showtimeId) === Number(showtimeId)) {
+                        const index = updated.findIndex(
+                            s => Number(s.seat_id) === Number(data.seatId)
+                        );
+                        if (index !== -1) {
+                            // Kiểm tra nếu ghế này không phải do user hiện tại chọn
+                            const savedSeats = sessionStorage.getItem('selectedSeats');
+                            let isOwnSeat = false;
+                            if (savedSeats) {
+                                const parsed = JSON.parse(savedSeats);
+                                isOwnSeat = parsed.some(
+                                    p => Number(p.seat_id) === Number(data.seatId)
+                                );
+                            }
+
+                            updated[index] = {
+                                ...updated[index],
+                                is_locked_by_user: true,
+                                held_by_other: !isOwnSeat
+                            };
+                        }
+                    }
+                });
+                return updated;
             });
         };
 
@@ -657,7 +661,7 @@ const Booking = () => {
             socket.off('server-khoa-ghe', handleSeatLocked);
             socket.off('server-mo-khoa-ghe', handleSeatUnlocked);
         };
-    }, [showtimeId, socket]);
+    }, [showtimeId]);
 
     // =========================================================
     // CLEAR BOOKING SESSION
@@ -666,8 +670,8 @@ const Booking = () => {
     const clearBookingSession = useCallback(() => {
         selectedSeats.forEach((s) => {
             // Chỉ emit nếu socket vẫn đang kết nối
-            if (socket.connected) {
-                socket.emit(
+            if (isSocketConnected) {
+                socketService.emit(
                     'client-huy-chon-ghe',
                     {
                         seatId: s.seat_id,
@@ -693,12 +697,12 @@ const Booking = () => {
         setSelectedSeats([]);
     }, [
         selectedSeats,
-        socket,
+        isSocketConnected,
         showtimeId
     ]);
 
     // =========================================================
-    // HANDLE SEAT CLICK
+    // HANDLE SEAT CLICK - SỬA LẠI
     // =========================================================
     /*
      * LOGIC MỚI:
@@ -720,7 +724,8 @@ const Booking = () => {
         if (
             seat.seat_status === 'Booked' ||
             Number(seat.is_active) === 0 ||
-            seat.is_locked_by_user
+            seat.is_locked_by_user ||
+            seat.held_by_other // 🔥 KHÔNG CHO CHỌN GHẾ BỊ NGƯỜI KHÁC GIỮ
         ) {
             return;
         }
@@ -728,7 +733,7 @@ const Booking = () => {
         // =====================================================
         // KIỂM TRA SOCKET CÒN KẾT NỐI KHÔNG
         // =====================================================
-        if (!socket.connected) {
+        if (!isSocketConnected) {
             setModalConfig({
                 show: true,
                 type: 'error',
@@ -784,7 +789,8 @@ const Booking = () => {
                 Number(
                     pairSeat.is_active
                 ) === 0 ||
-                pairSeat.is_locked_by_user
+                pairSeat.is_locked_by_user ||
+                pairSeat.held_by_other
             ) {
                 setModalConfig({
                     show: true,
@@ -829,11 +835,11 @@ const Booking = () => {
             );
 
         // =====================================================
-        // HỦY CHỌN
+        // HỦY CHỌN - SỬA LẠI
         // =====================================================
 
         if (allSelected) {
-            let updated =
+            const updated =
                 selectedSeats.filter(
                     (selectedSeat) =>
                         !seatsToToggle.some(
@@ -849,19 +855,21 @@ const Booking = () => {
 
             seatsToToggle.forEach(
                 (targetSeat) => {
-                    if (socket.connected) {
-                        socket.emit(
+                    if (isSocketConnected) {
+                        socketService.emit(
                             'client-huy-chon-ghe',
                             {
                                 seatId:
                                     targetSeat.seat_id,
-
                                 showtimeId
                             }
                         );
                     }
                 }
             );
+
+            // 🔥 Cập nhật state ngay lập tức
+            setSelectedSeats(updated);
 
             // =================================================
             // KHÔNG CÒN GHẾ
@@ -871,27 +879,38 @@ const Booking = () => {
                 sessionStorage.removeItem(
                     'selectedSeats'
                 );
-
                 sessionStorage.removeItem(
                     'holdExpiresAt'
                 );
-
                 sessionStorage.removeItem(
                     'currentShowtimeId'
                 );
-
                 setIsTimerActive(false);
             } else {
                 sessionStorage.setItem(
                     'selectedSeats',
-                    JSON.stringify(
-                        updated
-                    )
+                    JSON.stringify(updated)
                 );
             }
 
-            setSelectedSeats(
-                updated
+            // 🔥 Cập nhật seats để đồng bộ UI
+            setSeats((prev) =>
+                prev.map((s) => {
+                    const isInUpdated = updated.some(
+                        (u) => Number(u.seat_id) === Number(s.seat_id)
+                    );
+                    const wasSelected = selectedSeats.some(
+                        (old) => Number(old.seat_id) === Number(s.seat_id)
+                    );
+                    if (wasSelected && !isInUpdated) {
+                        return {
+                            ...s,
+                            is_locked_by_user: false,
+                            held_by_other: false
+                        };
+                    }
+                    return s;
+                })
             );
 
             return;
@@ -950,13 +969,12 @@ const Booking = () => {
                         targetSeat
                     );
 
-                    if (socket.connected) {
-                        socket.emit(
+                    if (isSocketConnected) {
+                        socketService.emit(
                             'client-chon-ghe',
                             {
                                 seatId:
                                     targetSeat.seat_id,
-
                                 showtimeId
                             }
                         );
@@ -1578,8 +1596,7 @@ const Booking = () => {
                                                                 seat
                                                             ) =>
                                                                 isCoupleDisplaySeat(
-                                                                    seat
-                                                                )
+                                                                    seat                                                                )
                                                         );
 
                                                     return (
@@ -1677,6 +1694,10 @@ const Booking = () => {
                                                                                     seat.is_locked_by_user
                                                                                 }
 
+                                                                                heldByOther={
+                                                                                    seat.held_by_other
+                                                                                }
+
                                                                                 number={
                                                                                     displayNumber
                                                                                 }
@@ -1734,6 +1755,11 @@ const Booking = () => {
                                         <div className="leg-item">
                                             <div className="box sold"></div>
                                             Đã bán
+                                        </div>
+
+                                        <div className="leg-item">
+                                            <div className="box held-by-other"></div>
+                                            Đang được chọn
                                         </div>
 
                                     </div>
