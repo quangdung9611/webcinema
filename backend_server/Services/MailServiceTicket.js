@@ -135,7 +135,6 @@ const MailServiceTicket = {
             console.log("📧 To:", customerEmail);
             console.log("🎬 Movie:", ticketData.movieTitle);
             console.log("🎫 Booking:", ticketData.bookingId);
-            // 👇 Log thêm tên phòng
             console.log("🏠 Room:", ticketData.roomName || "Không có");
 
             const info = await transporter.sendMail(mailOptions);
@@ -200,10 +199,11 @@ const MailServiceTicket = {
     },
 
     // =====================================================
-    // SEND EMAIL VERIFICATION
+    // SEND EMAIL VERIFICATION - 🔴 ĐÃ SỬA
     // =====================================================
 
-    sendEmailVerification: async (email, verifyToken, fullName = "") => {
+    sendEmailVerification: async (email, verifyUrl, fullName = "") => {
+        //                         ^^^^^^^^^^ Nhận URL trực tiếp, không phải token
 
         console.log(`📨 VERIFY EMAIL -> ${email}`);
 
@@ -211,21 +211,22 @@ const MailServiceTicket = {
             throw new Error("Email người nhận không hợp lệ");
         }
 
+        if (!verifyUrl) {
+            throw new Error("URL xác thực không hợp lệ");
+        }
+
         try {
-
-            const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-            const verifyUrl = `${baseUrl}/verify-email?token=${verifyToken}`;
-
             const info = await transporter.sendMail({
 
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: email,
                 subject: "Xác thực Email - Dũng Cinema",
-                html: VerifyEmailTemplate(fullName, verifyUrl)
+                html: VerifyEmailTemplate(fullName, verifyUrl) // ✅ Dùng URL trực tiếp
 
             });
 
             console.log("✅ VERIFY EMAIL SENT");
+            console.log(`🔗 Verify URL: ${verifyUrl}`);
             return info;
 
         } catch (error) {
