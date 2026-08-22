@@ -1,84 +1,195 @@
-/* VerifyEmail.css - Component con */
-.verify-content {
+/* VerifyEmail.css - Giao diện xác thực email với chữ màu trắng */
+
+.verify-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 20px;
+}
+
+.verify-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 50px 40px;
+    border-radius: 20px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
     text-align: center;
-    padding: 10px 0;
+    max-width: 450px;
+    width: 100%;
+    animation: fadeIn 0.6s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.verify-icon {
-    font-size: 56px;
-    margin-bottom: 15px;
-    display: block;
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.spinner-small {
-    width: 30px;
-    height: 30px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #667eea;
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top: 4px solid #818cf8;
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin: 15px auto;
+    margin: 0 auto 20px;
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
-.verify-message {
-    color: #333;
-    font-size: 15px;
-    line-height: 1.6;
+.icon-success,
+.icon-error {
+    font-size: 72px;
+    margin-bottom: 20px;
+}
+
+.verify-card h2 {
     margin-bottom: 10px;
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
 }
 
-.verify-note {
-    color: #888;
-    font-size: 13px;
-    margin-bottom: 15px;
+.verify-card h3 {
+    color: #ffffff;
+    margin-bottom: 10px;
+    font-size: 22px;
+    font-weight: 600;
 }
 
-.verify-error {
-    color: #dc3545;
+.verify-card p {
+    color: #d1d5db;
+    line-height: 1.8;
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.sub-text {
     font-size: 14px;
-    margin-bottom: 15px;
+    color: #9ca3af;
 }
 
-.verify-actions {
+.sub-text strong {
+    color: #818cf8;
+    font-weight: 700;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.btn-login {
+    padding: 14px 48px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.3);
+}
+
+.btn-login:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(99, 102, 241, 0.5);
+}
+
+.error-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     justify-content: center;
     flex-wrap: wrap;
     margin-top: 10px;
 }
 
-.btn-resend {
-    padding: 8px 20px;
-    background: none;
-    border: 1px solid #667eea;
-    color: #667eea;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.2s;
-}
-
-.btn-resend:hover {
-    background: #667eea;
-    color: white;
-}
-
-.btn-login-small {
-    padding: 8px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+.btn-retry {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #ffffff;
     border: none;
-    border-radius: 6px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
-    font-size: 14px;
-    transition: transform 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.25);
 }
 
-.btn-login-small:hover {
+.btn-retry:hover {
     transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(99, 102, 241, 0.4);
+}
+
+.btn-back {
+    padding: 12px 28px;
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+    transform: translateY(-2px);
+    background: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 8px 30px rgba(239, 68, 68, 0.2);
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 480px) {
+    .verify-card {
+        padding: 30px 20px;
+    }
+
+    .verify-card h2 {
+        font-size: 22px;
+    }
+
+    .verify-card h3 {
+        font-size: 18px;
+    }
+
+    .verify-card p {
+        font-size: 14px;
+    }
+
+    .btn-login {
+        padding: 12px 32px;
+        font-size: 14px;
+    }
+
+    .btn-retry,
+    .btn-back {
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+
+    .icon-success,
+    .icon-error {
+        font-size: 56px;
+    }
 }

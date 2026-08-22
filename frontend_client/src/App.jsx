@@ -90,13 +90,6 @@ const BlogCinema = lazy(() => import("./user_frontend/pages/BlogCinema"));
 const CinemaCardDetail = lazy(() => import("./user_frontend/components/CinemaCardDetail"));
 
 // ==========================================================
-// ✅ THÊM MỚI: VERIFY EMAIL & RESEND VERIFICATION
-// ==========================================================
-
-const VerifyEmail = lazy(() => import("./user_frontend/components/VerifyEmail"));
-const ResendVerification = lazy(() => import("./user_frontend/components/ResendVerification"));
-
-// ==========================================================
 // SUPPORT PAGES - LAZY
 // ==========================================================
 
@@ -300,7 +293,7 @@ function AppContent() {
     const isAdminDomain = hostname === "admin.quangdungcinema.id.vn";
     const navigate = useNavigate();
 
-    // 🔥 KẾT NỐI SOCKET TỰ ĐỘNG
+    // 🔥 THÊM ĐOẠN NÀY ĐỂ KẾT NỐI SOCKET TỰ ĐỘNG SAU KHI ĐĂNG NHẬP
     useEffect(() => {
         const checkAuthAndConnectSocket = async () => {
             try {
@@ -309,12 +302,15 @@ function AppContent() {
                 const user = raw?.user || raw?.data?.user || raw;
 
                 if (user) {
+                    // Đã đăng nhập -> Kết nối socket
                     socketService.connect(user.user_id);
                     console.log('✅ [APP] Socket connected for user:', user.user_id);
                 } else {
+                    // Chưa đăng nhập -> Ngắt socket
                     socketService.disconnect();
                 }
             } catch (error) {
+                // Nếu lỗi -> Ngắt socket
                 socketService.disconnect();
                 console.log('🔴 [APP] Không thể kết nối socket do lỗi xác thực');
             }
@@ -433,10 +429,6 @@ function AppContent() {
                                         {/* AUTH */}
                                         <Route path="login" element={<UserLogin />} />
                                         <Route path="register" element={<UserRegister />} />
-
-                                        {/* ✅ THÊM MỚI: VERIFY EMAIL & RESEND - ĐẶT NGOÀI LAYOUT */}
-                                        <Route path="verify-email" element={<VerifyEmail />} />
-                                        <Route path="resend-verification" element={<ResendVerification />} />
 
                                         {/* PROTECTED ROUTES */}
                                         <Route path="profile" element={
