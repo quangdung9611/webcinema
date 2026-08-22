@@ -242,12 +242,21 @@ exports.sendVerificationEmail = async (req, res) => {
 };
 
 /*=========================================================
-    VERIFY EMAIL - 🔴 ĐÃ SỬA: TRẢ VỀ JSON
+    VERIFY EMAIL - ĐÃ SỬA: TRẢ VỀ JSON
 =========================================================*/
 
 exports.verifyEmail = async (req, res) => {
     try {
         const { token } = req.query;
+        
+        // ✅ Kiểm tra token
+        if (!token) {
+            return res.status(400).json({
+                success: false,
+                message: "Token xác thực không hợp lệ"
+            });
+        }
+        
         const result = await AuthService.verifyEmail(token);
         
         // ✅ Trả về JSON để Frontend xử lý
@@ -266,7 +275,6 @@ exports.verifyEmail = async (req, res) => {
         });
     }
 };
-
 /*=========================================================
     🟢 THÊM MỚI: LẤY DANH SÁCH THIẾT BỊ ĐANG ĐĂNG NHẬP
 =========================================================*/

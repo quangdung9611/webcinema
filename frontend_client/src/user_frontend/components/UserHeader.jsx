@@ -62,7 +62,6 @@ const UserHeader = () => {
             setIsLoggingOut(false);
             delete api.defaults.headers.common['Authorization'];
             
-            // Xóa cookie
             document.cookie.split(";").forEach((c) => {
                 document.cookie = c
                     .replace(/^ +/, "")
@@ -116,7 +115,7 @@ const UserHeader = () => {
     };
 
     // ============================================================
-    // FETCH USER INFO - ĐĂNG KÝ CALLBACK
+    // FETCH USER INFO - KHÔNG REDIRECT KHI CHƯA ĐĂNG NHẬP
     // ============================================================
     useEffect(() => {
         const fetchUser = async () => {
@@ -137,12 +136,10 @@ const UserHeader = () => {
                     socketService.connect(account.user_id);
                 }
             } catch (error) {
-                console.error('Lỗi kiểm tra đăng nhập:', error);
+                // ✅ KHÔNG REDIRECT - Chỉ log lỗi và set user = null
+                console.log('🔵 [HEADER] Chưa đăng nhập (hoặc token hết hạn), hiển thị header mặc định');
                 setUser(null);
-
-                if (error.response?.status === 401) {
-                    socketService.disconnect();
-                }
+                socketService.disconnect();
             } finally {
                 setAuthLoading(false);
             }
@@ -159,7 +156,7 @@ const UserHeader = () => {
     }, []);
 
     // ============================================================
-    // LẮNG NGHE SỰ KIỆN WINDOW - FALLBACK
+    // LẮNG NGHE SỰ KIỆN WINDOW
     // ============================================================
     useEffect(() => {
         const handleWindowSessionExpired = (event) => {
@@ -309,7 +306,7 @@ const UserHeader = () => {
         return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
     };
 
-    // ✅ KIỂM TRA USER CÓ HỢP LỆ KHÔNG (ĐÃ ĐĂNG NHẬP VÀ ĐÃ XÁC THỰC EMAIL)
+    // ✅ KIỂM TRA USER HỢP LỆ (ĐÃ ĐĂNG NHẬP VÀ ĐÃ XÁC THỰC EMAIL)
     const isValidUser = user && user.email_verified === 1;
 
     const avatarSource = user?.user_avatar || user?.avatar;
@@ -323,12 +320,10 @@ const UserHeader = () => {
         console.log('🟢 [HEADER] Bấm đăng nhập, xóa token cũ và chuyển đến /login');
         setShowDropdown(false);
         
-        // ✅ Xóa token cũ
         delete api.defaults.headers.common['Authorization'];
         localStorage.removeItem('user_info');
         localStorage.removeItem('admin_info');
         
-        // ✅ Xóa cookie
         document.cookie.split(";").forEach((c) => {
             document.cookie = c
                 .replace(/^ +/, "")

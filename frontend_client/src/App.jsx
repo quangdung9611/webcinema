@@ -59,6 +59,7 @@ import AdminLayout from "./admin_frontend/layouts/AdminLayout";
 const UserHome = lazy(() => import("./user_frontend/pages/UserHome"));
 const UserLogin = lazy(() => import("./user_frontend/pages/UserLogin"));
 const UserRegister = lazy(() => import("./user_frontend/pages/UserRegister"));
+const VerifyEmail = lazy(() => import("./user_frontend/pages/VerifyEmail")); // ✅ THÊM DÒNG NÀY
 const MovieDetail = lazy(() => import("./user_frontend/pages/MovieDetail"));
 const Actor = lazy(() => import("./user_frontend/pages/Actor"));
 
@@ -293,7 +294,7 @@ function AppContent() {
     const isAdminDomain = hostname === "admin.quangdungcinema.id.vn";
     const navigate = useNavigate();
 
-    // 🔥 THÊM ĐOẠN NÀY ĐỂ KẾT NỐI SOCKET TỰ ĐỘNG SAU KHI ĐĂNG NHẬP
+    // 🔥 KẾT NỐI SOCKET TỰ ĐỘNG - KHÔNG REDIRECT KHI CHƯA ĐĂNG NHẬP
     useEffect(() => {
         const checkAuthAndConnectSocket = async () => {
             try {
@@ -308,30 +309,33 @@ function AppContent() {
                 } else {
                     // Chưa đăng nhập -> Ngắt socket
                     socketService.disconnect();
+                    console.log('🔵 [APP] Chưa đăng nhập, socket đã ngắt');
                 }
             } catch (error) {
-                // Nếu lỗi -> Ngắt socket
+                // Nếu lỗi -> Ngắt socket, KHÔNG CHUYỂN HƯỚNG VỀ LOGIN
                 socketService.disconnect();
-                console.log('🔴 [APP] Không thể kết nối socket do lỗi xác thực');
+                console.log('🔵 [APP] Chưa đăng nhập (lỗi xác thực), socket đã ngắt');
+                // ✅ KHÔNG navigate('/login') ở đây
             }
         };
 
         checkAuthAndConnectSocket();
     }, []);
 
-    // Lắng nghe sự kiện unauthorized để ngắt socket
+    // Lắng nghe sự kiện unauthorized - KHÔNG REDIRECT
     useEffect(() => {
         const handleUnauthorized = () => {
             socketService.disconnect();
-            if (!window.location.pathname.includes('/login')) {
-                navigate('/login', { replace: true });
-            }
+            console.log('🔴 [APP] Unauthorized - socket disconnected');
+            // ✅ KHÔNG CHUYỂN HƯỚNG VỀ LOGIN
+            // Chỉ ngắt socket, để header tự xử lý UI
         };
+        
         window.addEventListener('unauthorized', handleUnauthorized);
         return () => {
             window.removeEventListener('unauthorized', handleUnauthorized);
         };
-    }, [navigate]);
+    }, []);
 
     return (
         <>
@@ -429,8 +433,11 @@ function AppContent() {
                                         {/* AUTH */}
                                         <Route path="login" element={<UserLogin />} />
                                         <Route path="register" element={<UserRegister />} />
+                                        
+                                        {/* ✅ THÊM ROUTE VERIFY EMAIL - NẰM NGOÀI UserLayout */}
+                                        <Route path="verify-email" element={<VerifyEmail />} />
 
-                                        {/* PROTECTED ROUTES */}
+                                        {/* PROTECTED ROUTES - CHỈ NHỮNG ROUTE NÀY MỚI CẦN ĐĂNG NHẬP */}
                                         <Route path="profile" element={
                                             <UserRouteGuard><Profile /></UserRouteGuard>
                                         } />

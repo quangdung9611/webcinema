@@ -587,35 +587,31 @@ class UserRepository {
         return result.affectedRows;
     }
 
-
-    /*=========================================================
-        UPDATE EMAIL VERIFIED - ĐÃ CẬP NHẬT THÊM email_verified_at
-    =========================================================*/
-    async updateEmailVerified(
-        userId,
-        verified = true
-    ) {
-
-        const [result] = await db.query(
-            `
-            UPDATE users
-            SET
-                email_verified = ?,
-                email_verified_at = ?,
-                updated_at = NOW()
-            WHERE user_id = ?
-            `,
-            [
-                verified ? 1 : 0,
-                verified ? new Date() : null,
-                userId
-            ]
-        );
-
-        return result.affectedRows;
-    }
-
-
+/*=========================================================
+    UPDATE EMAIL VERIFIED - ĐÃ CẬP NHẬT THÊM email_verified_at
+=========================================================*/
+async updateEmailVerified(userId, verified = true) {
+    console.log(`🟢 [REPO] Updating email_verified for user ${userId} to ${verified}`);
+    
+    const [result] = await db.query(
+        `
+        UPDATE users
+        SET
+            email_verified = ?,
+            email_verified_at = ?,
+            updated_at = NOW()
+        WHERE user_id = ?
+        `,
+        [
+            verified ? 1 : 0,
+            verified ? new Date() : null,
+            userId
+        ]
+    );
+    
+    console.log(`✅ [REPO] Updated ${result.affectedRows} rows`);
+    return result.affectedRows;
+}
     /*=========================================================
         UPDATE EMAIL
     =========================================================*/

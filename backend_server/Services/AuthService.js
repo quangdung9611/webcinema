@@ -700,7 +700,6 @@ exports.sendVerificationEmail = async (email) => {
         message: "Email xác thực đã được gửi. Vui lòng kiểm tra hộp thư."
     };
 };
-
 /*=========================================================
     VERIFY EMAIL - ĐÃ SỬA
 =========================================================*/
@@ -713,7 +712,6 @@ exports.verifyEmail = async (verifyToken) => {
     let payload;
     try {
         payload = Jwt.verifyEmailVerifyToken(verifyToken);
-        // 🔴 THÊM KIỂM TRA NÀY
         if (!payload) {
             throw new Error('Invalid token');
         }
@@ -730,11 +728,18 @@ exports.verifyEmail = async (verifyToken) => {
         throw { statusCode: 400, message: "Email đã được xác thực" };
     }
 
+    // ✅ Cập nhật email_verified = 1
     await UserRepository.updateEmailVerified(user.user_id, true);
 
     return {
         success: true,
-        message: "Xác thực email thành công"
+        message: "Xác thực email thành công!",
+        user: {
+            user_id: user.user_id,
+            email: user.email,
+            full_name: user.full_name,
+            email_verified: 1
+        }
     };
 };
 

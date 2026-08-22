@@ -3,7 +3,8 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
     AlertCircle,
     Eye,
-    EyeOff
+    EyeOff,
+    CheckCircle // ✅ THÊM ICON NÀY
 } from 'lucide-react';
 
 import api from '../../api/api';
@@ -11,8 +12,6 @@ import socketService from '../../api/socket';
 
 import ForgotPassword from '../components/ForgotPassword';
 import LoadingButton from '../components/LoadingButton';
-// 🔥 XÓA IMPORT SessionExpiredModal
-// import SessionExpiredModal from '../components/SessionExpiredModal';
 
 import '../styles/UserAuth.css';
 
@@ -33,14 +32,29 @@ const UserLogin = () => {
     const [serverError, setServerError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotModal, setShowForgotModal] = useState(false);
-    // 🔥 XÓA các state liên quan đến SessionExpiredModal
-    // const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
-    // const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
-    // const [newDevice, setNewDevice] = useState('');
-    // const [countdown, setCountdown] = useState(10);
+    const [successMessage, setSuccessMessage] = useState(''); // ✅ THÊM STATE NÀY
 
     const navigate = useNavigate();
     const location = useLocation();
+
+    // ============================================================
+    // ✅ KIỂM TRA STATE TỪ VERIFY-EMAIL
+    // ============================================================
+    useEffect(() => {
+        // Kiểm tra nếu được chuyển từ trang verify-email
+        if (location.state?.verified) {
+            setSuccessMessage(location.state.message || 'Email đã được xác thực thành công! Vui lòng đăng nhập.');
+            // Xóa state để không hiển thị lại
+            window.history.replaceState({}, document.title);
+            
+            // Tự động xóa thông báo sau 5 giây
+            const timer = setTimeout(() => {
+                setSuccessMessage('');
+            }, 5000);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [location.state]);
 
     // ============================================================
     // 🔥 XỬ LÝ SESSION EXPIRED - CHỈ HIỂN THỊ LỖI ĐƠN GIẢN
@@ -170,6 +184,9 @@ const UserLogin = () => {
         if (serverError) {
             setServerError('');
         }
+        if (successMessage) {
+            setSuccessMessage(''); // Xóa thông báo thành công khi người dùng nhập
+        }
     };
 
     // ============================================================
@@ -184,6 +201,7 @@ const UserLogin = () => {
 
         setLoading(true);
         setServerError('');
+        setSuccessMessage('');
 
         try {
             const response = await api.post(
@@ -253,6 +271,24 @@ const UserLogin = () => {
             <div className="auth-card">
                 <h2>ĐĂNG NHẬP</h2>
                 <p className="auth-subtitle">Chào mừng bạn quay trở lại Cinema Star</p>
+
+                {/* ✅ THÊM THÔNG BÁO THÀNH CÔNG */}
+                {successMessage && (
+                    <div className="success-message" style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '10px',
+                        padding: '12px 16px',
+                        backgroundColor: '#22c55e20',
+                        border: '1px solid #22c55e',
+                        borderRadius: '8px',
+                        color: '#22c55e',
+                        marginBottom: '16px'
+                    }}>
+                        <CheckCircle size={20} />
+                        <span>{successMessage}</span>
+                    </div>
+                )}
 
                 {serverError && (
                     <div className="error-message">
@@ -347,9 +383,6 @@ const UserLogin = () => {
             {showForgotModal && (
                 <ForgotPassword onClose={() => setShowForgotModal(false)} />
             )}
-
-            {/* 🔥 XÓA SessionExpiredModal ở đây */}
-            {/* <SessionExpiredModal ... /> */}
         </div>
     );
 };
