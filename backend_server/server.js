@@ -189,13 +189,19 @@ io.use(async (socket, next) => {
 });
 
 // ============================================================
-// 🔥 SOCKET CONNECTION HANDLER - ĐÃ SỬA (Thêm kiểm tra user trước khi lưu Redis)
+// 🔥 SOCKET CONNECTION HANDLER - ĐÃ SỬA HOÀN CHỈNH
 // ============================================================
 
 let holdingSeats = [];
 
 io.on("connection", async (socket) => {
     console.log(`⚡ Socket connected: ${socket.id} - User: ${socket.userId}`);
+
+    // ============================================================
+    // 🟢 GỬI DANH SÁCH GHẾ ĐANG GIỮ CHO USER MỚI VÀO
+    // ============================================================
+    socket.emit("server-gui-danh-sach-dang-giu", holdingSeats);
+    console.log("📤 [SOCKET] Đã gửi danh sách ghế đang giữ cho user mới:", holdingSeats);
 
     // ============================================================
     // 🟢 LẮNG NGHE REGISTER SOCKET TỪ CLIENT
@@ -220,40 +226,61 @@ io.on("connection", async (socket) => {
         }
     });
 
-    // Gửi danh sách ghế đang giữ
-    socket.emit("server-gui-danh-sach-dang-giu", holdingSeats);
-
-    // Xử lý chọn ghế
+    // ============================================================
+    // 🔥 XỬ LÝ CHỌN GHẾ (BROADCAST CHO TẤT CẢ, BAO GỒM NGƯỜI CHỌN)
+    // ============================================================
     socket.on("client-chon-ghe", (data) => {
-        holdingSeats = holdingSeats.filter(
-            seat => !(Number(seat.seatId) === Number(data.seatId) && 
-                     Number(seat.showtimeId) === Number(data.showtimeId))
+        // Kiểm tra xem ghế đã có người chọn chưa (tránh trùng)
+        const existingSeat = holdingSeats.find(
+            seat => Number(seat.seatId) === Number(data.seatId) && 
+                     Number(seat.showtimeId) === Number(data.showtimeId)
         );
+
+        if (existingSeat) {
+            // Nếu ghế đã có người giữ, không cho chọn nữa
+            console.log(`⚠️ [SOCKET] Ghế ${data.seatId} đã có người giữ. Từ chối!`);
+            return;
+        }
+
+        // Thêm ghế mới vào danh sách
         holdingSeats.push({ ...data, socketId: socket.id });
-        socket.broadcast.emit("server-khoa-ghe", data);
+        
+        // 🔥 Gửi cho TẤT CẢ MỌI NGƯỜI (bao gồm cả người chọn)
+        io.emit("server-khoa-ghe", data);
+        console.log(`🔒 [SOCKET] User ${socket.userId} đã giữ ghế: ${data.seatId} - Showtime: ${data.showtimeId}`);
     });
 
-    // Xử lý hủy chọn ghế
+    // ============================================================
+    // 🔥 XỬ LÝ HỦY CHỌN GHẾ (BROADCAST CHO TẤT CẢ)
+    // ============================================================
     socket.on("client-huy-chon-ghe", (data) => {
         holdingSeats = holdingSeats.filter(
             seat => !(Number(seat.seatId) === Number(data.seatId) && 
                      Number(seat.showtimeId) === Number(data.showtimeId))
         );
-        socket.broadcast.emit("server-mo-khoa-ghe", data);
+        
+        // 🔥 Gửi cho TẤT CẢ MỌI NGƯỜI (bao gồm cả người hủy)
+        io.emit("server-mo-khoa-ghe", data);
+        console.log(`🔓 [SOCKET] User ${socket.userId} đã hủy giữ ghế: ${data.seatId} - Showtime: ${data.showtimeId}`);
     });
 
-    // Xử lý session expired ack từ client
+    // ============================================================
+    // XỬ LÝ SESSION EXPIRED ACK
+    // ============================================================
     socket.on("session_expired_ack", (data) => {
         console.log(`📨 [SOCKET] Received session_expired_ack from user ${socket.userId}:`, data);
     });
 
-    // Xử lý disconnect
+    // ============================================================
+    // XỬ LÝ DISCONNECT
+    // ============================================================
     socket.on("disconnect", () => {
         console.log(`🔴 Socket disconnected: ${socket.id} - User: ${socket.userId}`);
 
+        // Khi user rời đi, hủy tất cả ghế họ đang giữ
         const releasedSeats = holdingSeats.filter(seat => seat.socketId === socket.id);
         releasedSeats.forEach(seat => {
-            socket.broadcast.emit("server-mo-khoa-ghe", {
+            io.emit("server-mo-khoa-ghe", {
                 seatId: seat.seatId,
                 showtimeId: seat.showtimeId
             });

@@ -581,7 +581,7 @@ const Booking = () => {
     ]);
 
     // =========================================================
-    // SOCKET REALTIME
+    // SOCKET REALTIME - ĐÃ THÊM NHẬN DANH SÁCH GHẾ ĐANG GIỮ
     // =========================================================
 
     useEffect(() => {
@@ -631,26 +631,31 @@ const Booking = () => {
             );
         };
 
-        socket.on(
-            'server-khoa-ghe',
-            handleSeatLocked
-        );
+        // 🔥 THÊM: Nhận danh sách ghế đang giữ khi vào trang
+        const handleSeatList = (seatList) => {
+            if (!Array.isArray(seatList)) return;
 
-        socket.on(
-            'server-mo-khoa-ghe',
-            handleSeatUnlocked
-        );
+            seatList.forEach((data) => {
+                if (Number(data.showtimeId) === Number(showtimeId)) {
+                    setSeats((prev) =>
+                        prev.map((s) =>
+                            Number(s.seat_id) === Number(data.seatId)
+                                ? { ...s, is_locked_by_user: true }
+                                : s
+                        )
+                    );
+                }
+            });
+        };
+
+        socket.on('server-gui-danh-sach-dang-giu', handleSeatList);
+        socket.on('server-khoa-ghe', handleSeatLocked);
+        socket.on('server-mo-khoa-ghe', handleSeatUnlocked);
 
         return () => {
-            socket.off(
-                'server-khoa-ghe',
-                handleSeatLocked
-            );
-
-            socket.off(
-                'server-mo-khoa-ghe',
-                handleSeatUnlocked
-            );
+            socket.off('server-gui-danh-sach-dang-giu', handleSeatList);
+            socket.off('server-khoa-ghe', handleSeatLocked);
+            socket.off('server-mo-khoa-ghe', handleSeatUnlocked);
         };
     }, [showtimeId, socket]);
 
