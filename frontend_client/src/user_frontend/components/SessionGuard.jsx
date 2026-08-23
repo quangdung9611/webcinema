@@ -150,8 +150,6 @@ const SessionGuard = ({ children }) => {
         window.addEventListener('userSessionExpired', handleSessionExpired);
         window.addEventListener('tokenInvalid', handleSessionExpired);
         window.addEventListener('unauthorized', handleSessionExpired);
-        
-        // 🔥 THÊM: Lắng nghe cookieExpired
         window.addEventListener('cookieExpired', handleSessionExpired);
 
         socketService.setOnSessionExpired((detail) => {

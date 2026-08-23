@@ -136,12 +136,19 @@ const UserLogin = () => {
             console.log('🔴 [LOGIN] Unauthorized:', event.detail);
         };
 
+        const handleCookieExpiredEvent = (event) => {
+            console.log('🔴 [LOGIN] Cookie expired:', event.detail);
+            setServerError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+            socketService.disconnect();
+            localStorage.removeItem('user_info');
+            localStorage.removeItem('admin_info');
+            delete api.defaults.headers.common['Authorization'];
+        };
+
         window.addEventListener('sessionExpired', handleWindowSessionExpired);
         window.addEventListener('tokenInvalid', handleTokenInvalid);
         window.addEventListener('unauthorized', handleUnauthorized);
-        
-        // 🔥 THÊM: Lắng nghe cookieExpired
-        window.addEventListener('cookieExpired', handleCookieExpired);
+        window.addEventListener('cookieExpired', handleCookieExpiredEvent);
         
         console.log('✅ [LOGIN] Đã đăng ký lắng nghe sự kiện auth');
 
@@ -149,7 +156,7 @@ const UserLogin = () => {
             window.removeEventListener('sessionExpired', handleWindowSessionExpired);
             window.removeEventListener('tokenInvalid', handleTokenInvalid);
             window.removeEventListener('unauthorized', handleUnauthorized);
-            window.removeEventListener('cookieExpired', handleCookieExpired);
+            window.removeEventListener('cookieExpired', handleCookieExpiredEvent);
             console.log('🧹 [LOGIN] Đã hủy lắng nghe sự kiện auth');
         };
     }, []);

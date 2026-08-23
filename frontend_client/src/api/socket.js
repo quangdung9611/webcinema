@@ -74,7 +74,6 @@ class SocketService {
             console.warn('🔴 [SOCKET] SESSION EXPIRED - Bị đá khỏi thiết bị!');
             console.log('📨 [SOCKET] Data:', data);
 
-            // Gửi ACK cho server
             if (this.socket && this.socket.connected) {
                 this.socket.emit('session_expired_ack', {
                     received: true,
@@ -83,7 +82,6 @@ class SocketService {
                 });
             }
 
-            // 🔥 GỌI CALLBACK NẾU CÓ
             if (typeof this.onSessionExpired === 'function') {
                 this.onSessionExpired({
                     code: 'SESSION_EXPIRED',
@@ -94,7 +92,6 @@ class SocketService {
                 });
             }
 
-            // 🔥 VẪN DISPATCH EVENT CHO CÁC COMPONENT KHÁC
             window.dispatchEvent(new CustomEvent('sessionExpired', {
                 detail: {
                     code: 'SESSION_EXPIRED',
@@ -105,7 +102,6 @@ class SocketService {
                 }
             }));
 
-            // Ngắt socket
             this.disconnect();
         });
 
@@ -130,7 +126,6 @@ class SocketService {
             this.isConnected = false;
             this.reconnectAttempts++;
 
-            // ========== SESSION_EXPIRED ==========
             if (error.message === 'SESSION_EXPIRED') {
                 console.warn('🔴 [SOCKET] Session expired - bị đá khỏi thiết bị');
 
@@ -151,10 +146,7 @@ class SocketService {
                 }));
 
                 this.disconnect();
-            }
-
-            // ========== TOKEN_EXPIRED / UNAUTHORIZED ==========
-            else if (error.message === 'TOKEN_EXPIRED' || error.message === 'UNAUTHORIZED') {
+            } else if (error.message === 'TOKEN_EXPIRED' || error.message === 'UNAUTHORIZED') {
                 console.warn('🔴 [SOCKET] Token hết hạn, cần đăng nhập lại');
 
                 if (typeof this.onSessionExpired === 'function') {

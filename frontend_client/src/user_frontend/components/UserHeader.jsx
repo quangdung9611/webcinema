@@ -248,8 +248,6 @@ const UserHeader = () => {
         window.addEventListener('userLoggedIn', handleUserLoggedIn);
         window.addEventListener('tokenInvalid', handleTokenInvalid);
         window.addEventListener('unauthorized', handleUnauthorized);
-        
-        // 🔥 THÊM: Lắng nghe cookieExpired
         window.addEventListener('cookieExpired', handleCookieExpired);
 
         return () => {

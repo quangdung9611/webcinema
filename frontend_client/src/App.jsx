@@ -20,6 +20,11 @@ import axios from "axios";
 import api from "./api/api";
 
 // ==========================================================
+// 🔥 THÊM: SESSION GUARD
+// ==========================================================
+import SessionGuard from "./user_frontend/components/SessionGuard";
+
+// ==========================================================
 // CONTEXT
 // ==========================================================
 
@@ -59,7 +64,7 @@ import AdminLayout from "./admin_frontend/layouts/AdminLayout";
 const UserHome = lazy(() => import("./user_frontend/pages/UserHome"));
 const UserLogin = lazy(() => import("./user_frontend/pages/UserLogin"));
 const UserRegister = lazy(() => import("./user_frontend/pages/UserRegister"));
-const VerifyEmail = lazy(() => import("./user_frontend/pages/VerifyEmail")); // ✅ THÊM DÒNG NÀY
+const VerifyEmail = lazy(() => import("./user_frontend/pages/VerifyEmail"));
 const MovieDetail = lazy(() => import("./user_frontend/pages/MovieDetail"));
 const Actor = lazy(() => import("./user_frontend/pages/Actor"));
 
@@ -303,19 +308,15 @@ function AppContent() {
                 const user = raw?.user || raw?.data?.user || raw;
 
                 if (user) {
-                    // Đã đăng nhập -> Kết nối socket
                     socketService.connect(user.user_id);
                     console.log('✅ [APP] Socket connected for user:', user.user_id);
                 } else {
-                    // Chưa đăng nhập -> Ngắt socket
                     socketService.disconnect();
                     console.log('🔵 [APP] Chưa đăng nhập, socket đã ngắt');
                 }
             } catch (error) {
-                // Nếu lỗi -> Ngắt socket, KHÔNG CHUYỂN HƯỚNG VỀ LOGIN
                 socketService.disconnect();
                 console.log('🔵 [APP] Chưa đăng nhập (lỗi xác thực), socket đã ngắt');
-                // ✅ KHÔNG navigate('/login') ở đây
             }
         };
 
@@ -327,8 +328,6 @@ function AppContent() {
         const handleUnauthorized = () => {
             socketService.disconnect();
             console.log('🔴 [APP] Unauthorized - socket disconnected');
-            // ✅ KHÔNG CHUYỂN HƯỚNG VỀ LOGIN
-            // Chỉ ngắt socket, để header tự xử lý UI
         };
         
         window.addEventListener('unauthorized', handleUnauthorized);
@@ -343,125 +342,130 @@ function AppContent() {
                 <LoadingSpinner size={72} color="#dc2626" message="Đang chuyển trang..." blur={true} zIndex={10000} />
             )}
             <div className="app-wrapper">
-                <ScrollToTop />
+                {/* ==========================================================
+                    🔥 SESSION GUARD BAO BỌC TOÀN BỘ APP
+                ========================================================== */}
+                <SessionGuard>
+                    <ScrollToTop />
 
-                <LazyErrorBoundary>
-                    <Suspense fallback={<SuspenseLoading />}>
-                        <Routes>
-                            {/* ==================================================
-                                ADMIN DOMAIN
-                            ================================================== */}
-                            {isAdminDomain ? (
-                                <Route path="/">
-                                    <Route path="login" element={<AdminLogin />} />
-                                    <Route element={
-                                        <AdminRouteGuard>
-                                            <AdminLayout>
-                                                <Outlet />
-                                            </AdminLayout>
-                                        </AdminRouteGuard>
-                                    }>
-                                        <Route index element={<AdminDashboard />} />
-                                        <Route path="dashboard" element={<Navigate to="/" replace />} />
-                                        <Route path="users" element={<UserPage />} />
-                                        <Route path="movies" element={<MoviePage />} />
-                                        <Route path="rooms" element={<RoomPage />} />
-                                        <Route path="news" element={<NewsPage />} />
-                                        <Route path="blog-cinema" element={<BlogCinemaPage />} />
-                                        <Route path="promotions" element={<PromotionPage />} />
-                                        <Route path="coupons" element={<CouponPage />} />
-                                        <Route path="genres" element={<GenresPage />} />
-                                        <Route path="cinemas" element={<CinemaPage />} />
-                                        <Route path="showtimes" element={<ShowTimePage />} />
-                                        <Route path="seats" element={<SeatList />} />
-                                        <Route path="movie-genres" element={<MovieGenrePage />} />
-                                        <Route path="movie-actors" element={<MovieActorPage />} />
-                                        <Route path="bookings" element={<BookingPage />} />
-                                        <Route path="tickets" element={<TicketList />} />
-                                        <Route path="actors" element={<ActorPage />} />
-                                        <Route path="foods" element={<FoodPage />} />
-                                        <Route path="banners" element={<BannerPage />} />
+                    <LazyErrorBoundary>
+                        <Suspense fallback={<SuspenseLoading />}>
+                            <Routes>
+                                {/* ==================================================
+                                    ADMIN DOMAIN
+                                ================================================== */}
+                                {isAdminDomain ? (
+                                    <Route path="/">
+                                        <Route path="login" element={<AdminLogin />} />
+                                        <Route element={
+                                            <AdminRouteGuard>
+                                                <AdminLayout>
+                                                    <Outlet />
+                                                </AdminLayout>
+                                            </AdminRouteGuard>
+                                        }>
+                                            <Route index element={<AdminDashboard />} />
+                                            <Route path="dashboard" element={<Navigate to="/" replace />} />
+                                            <Route path="users" element={<UserPage />} />
+                                            <Route path="movies" element={<MoviePage />} />
+                                            <Route path="rooms" element={<RoomPage />} />
+                                            <Route path="news" element={<NewsPage />} />
+                                            <Route path="blog-cinema" element={<BlogCinemaPage />} />
+                                            <Route path="promotions" element={<PromotionPage />} />
+                                            <Route path="coupons" element={<CouponPage />} />
+                                            <Route path="genres" element={<GenresPage />} />
+                                            <Route path="cinemas" element={<CinemaPage />} />
+                                            <Route path="showtimes" element={<ShowTimePage />} />
+                                            <Route path="seats" element={<SeatList />} />
+                                            <Route path="movie-genres" element={<MovieGenrePage />} />
+                                            <Route path="movie-actors" element={<MovieActorPage />} />
+                                            <Route path="bookings" element={<BookingPage />} />
+                                            <Route path="tickets" element={<TicketList />} />
+                                            <Route path="actors" element={<ActorPage />} />
+                                            <Route path="foods" element={<FoodPage />} />
+                                            <Route path="banners" element={<BannerPage />} />
+                                        </Route>
+                                        <Route path="*" element={<NotFoundPage />} />
                                     </Route>
-                                    <Route path="*" element={<NotFoundPage />} />
-                                </Route>
-                            ) : (
-                                /* ==================================================
-                                   USER DOMAIN
-                                ================================================== */
-                                <Route path="/">
-                                    <Route element={<UserLayout />}>
-                                        <Route index element={<UserHome />} />
-                                        
-                                        {/* MOVIES */}
-                                        <Route path="movies/status/:statusSlug" element={<MovieStatusPage />} />
-                                        <Route path="movies/detail/:slug" element={<MovieDetail />} />
-                                        
-                                        {/* ACTORS */}
-                                        <Route path="actors" element={<Actor />} />
-                                     
-                                        
-                                        {/* CINEMA */}
-                                        <Route path="cinema" element={<Cinema />} />
-                                        <Route path="cinema/detail/:slug" element={<CinemaDetail />} />
-                                        
-                                        {/* FOOD */}
-                                        <Route path="foods" element={<Food />} />
-                                        
-                                        {/* NEWS - DÙNG CINEMA CARD DETAIL */}
-                                        <Route path="news" element={<News />} />
-                                        <Route path="news/detail/:slug" element={<CinemaCardDetail type="news" />} />
-                                        
-                                        {/* PROMOTION - DÙNG CINEMA CARD DETAIL */}
-                                        <Route path="promotion" element={<Promotion />} />
-                                        <Route path="promotion/detail/:slug" element={<CinemaCardDetail type="promotion" />} />
-                                        
-                                        {/* BLOG CINEMA - DÙNG CINEMA CARD DETAIL */}
-                                        <Route path="blog-cinema" element={<BlogCinema />} />
-                                        <Route path="blog-cinema/detail/:slug" element={<CinemaCardDetail type="blog" />} />
-                                        
-                                        {/* SUPPORT PAGES */}
-                                        <Route path="faq" element={<FAQ />} />
-                                        <Route path="privacy-policy" element={<PrivacyPolicy />} />
-                                        <Route path="terms" element={<TermsOfService />} />
-                                        <Route path="booking-guide" element={<BookingGuide />} />
-                                        <Route path="contact" element={<ContactSupport />} />
-                                        <Route path="membership" element={<MemberShip />} />
+                                ) : (
+                                    /* ==================================================
+                                       USER DOMAIN
+                                    ================================================== */
+                                    <Route path="/">
+                                        <Route element={<UserLayout />}>
+                                            <Route index element={<UserHome />} />
+                                            
+                                            {/* MOVIES */}
+                                            <Route path="movies/status/:statusSlug" element={<MovieStatusPage />} />
+                                            <Route path="movies/detail/:slug" element={<MovieDetail />} />
+                                            
+                                            {/* ACTORS */}
+                                            <Route path="actors" element={<Actor />} />
+                                         
+                                            
+                                            {/* CINEMA */}
+                                            <Route path="cinema" element={<Cinema />} />
+                                            <Route path="cinema/detail/:slug" element={<CinemaDetail />} />
+                                            
+                                            {/* FOOD */}
+                                            <Route path="foods" element={<Food />} />
+                                            
+                                            {/* NEWS - DÙNG CINEMA CARD DETAIL */}
+                                            <Route path="news" element={<News />} />
+                                            <Route path="news/detail/:slug" element={<CinemaCardDetail type="news" />} />
+                                            
+                                            {/* PROMOTION - DÙNG CINEMA CARD DETAIL */}
+                                            <Route path="promotion" element={<Promotion />} />
+                                            <Route path="promotion/detail/:slug" element={<CinemaCardDetail type="promotion" />} />
+                                            
+                                            {/* BLOG CINEMA - DÙNG CINEMA CARD DETAIL */}
+                                            <Route path="blog-cinema" element={<BlogCinema />} />
+                                            <Route path="blog-cinema/detail/:slug" element={<CinemaCardDetail type="blog" />} />
+                                            
+                                            {/* SUPPORT PAGES */}
+                                            <Route path="faq" element={<FAQ />} />
+                                            <Route path="privacy-policy" element={<PrivacyPolicy />} />
+                                            <Route path="terms" element={<TermsOfService />} />
+                                            <Route path="booking-guide" element={<BookingGuide />} />
+                                            <Route path="contact" element={<ContactSupport />} />
+                                            <Route path="membership" element={<MemberShip />} />
 
-                                        {/* AUTH */}
-                                        <Route path="login" element={<UserLogin />} />
-                                        <Route path="register" element={<UserRegister />} />
-                                        
-                                        {/* ✅ THÊM ROUTE VERIFY EMAIL - NẰM NGOÀI UserLayout */}
-                                        <Route path="verify-email" element={<VerifyEmail />} />
+                                            {/* AUTH */}
+                                            <Route path="login" element={<UserLogin />} />
+                                            <Route path="register" element={<UserRegister />} />
+                                            
+                                            {/* ✅ VERIFY EMAIL */}
+                                            <Route path="verify-email" element={<VerifyEmail />} />
 
-                                        {/* PROTECTED ROUTES - CHỈ NHỮNG ROUTE NÀY MỚI CẦN ĐĂNG NHẬP */}
-                                        <Route path="profile" element={
-                                            <UserRouteGuard><Profile /></UserRouteGuard>
-                                        } />
-                                        <Route path="booking/:slug" element={
-                                            <UserRouteGuard><Booking /></UserRouteGuard>
-                                        } />
-                                        <Route path="payment" element={
-                                            <UserRouteGuard><Payment /></UserRouteGuard>
-                                        } />
-                                        <Route path="confirm-success" element={
-                                            <UserRouteGuard><ConfirmSuccess /></UserRouteGuard>
-                                        } />
-                                        <Route path="bank-app" element={
-                                            <UserRouteGuard><BankApp /></UserRouteGuard>
-                                        } />
-                                        <Route path="momo-app" element={
-                                            <UserRouteGuard><MomoApp /></UserRouteGuard>
-                                        } />
+                                            {/* PROTECTED ROUTES */}
+                                            <Route path="profile" element={
+                                                <UserRouteGuard><Profile /></UserRouteGuard>
+                                            } />
+                                            <Route path="booking/:slug" element={
+                                                <UserRouteGuard><Booking /></UserRouteGuard>
+                                            } />
+                                            <Route path="payment" element={
+                                                <UserRouteGuard><Payment /></UserRouteGuard>
+                                            } />
+                                            <Route path="confirm-success" element={
+                                                <UserRouteGuard><ConfirmSuccess /></UserRouteGuard>
+                                            } />
+                                            <Route path="bank-app" element={
+                                                <UserRouteGuard><BankApp /></UserRouteGuard>
+                                            } />
+                                            <Route path="momo-app" element={
+                                                <UserRouteGuard><MomoApp /></UserRouteGuard>
+                                            } />
+                                        </Route>
+
+                                        <Route path="admin/*" element={<Navigate to="/" replace />} />
+                                        <Route path="*" element={<NotFoundPage />} />
                                     </Route>
-
-                                    <Route path="admin/*" element={<Navigate to="/" replace />} />
-                                    <Route path="*" element={<NotFoundPage />} />
-                                </Route>
-                            )}
-                        </Routes>
-                    </Suspense>
-                </LazyErrorBoundary>
+                                )}
+                            </Routes>
+                        </Suspense>
+                    </LazyErrorBoundary>
+                </SessionGuard>
             </div>
         </>
     );
