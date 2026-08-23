@@ -115,7 +115,47 @@ const UserHeader = () => {
     };
 
     // ============================================================
-    // FETCH USER INFO - KHÔNG REDIRECT KHI CHƯA ĐĂNG NHẬP
+    // 🔥 XỬ LÝ COOKIE EXPIRED
+    // ============================================================
+    const handleCookieExpired = (event) => {
+        console.log('🔴 [HEADER] Cookie expired:', event?.detail);
+        
+        if (isProcessingRef.current) return;
+        isProcessingRef.current = true;
+        
+        setUser(null);
+        socketService.disconnect();
+        localStorage.removeItem('user_info');
+        localStorage.removeItem('admin_info');
+        delete api.defaults.headers.common['Authorization'];
+        
+        setSessionExpiredMessage('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        setNewDevice('');
+        setShowSessionExpiredModal(true);
+        setCountdown(5);
+        
+        if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+        }
+        
+        countdownIntervalRef.current = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(countdownIntervalRef.current);
+                    countdownIntervalRef.current = null;
+                    isProcessingRef.current = false;
+                    setShowSessionExpiredModal(false);
+                    navigate('/login', { replace: true, state: { expired: true } });
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    // ============================================================
+    // FETCH USER INFO
     // ============================================================
     useEffect(() => {
         const fetchUser = async () => {
@@ -136,7 +176,6 @@ const UserHeader = () => {
                     socketService.connect(account.user_id);
                 }
             } catch (error) {
-                // ✅ KHÔNG REDIRECT - Chỉ log lỗi và set user = null
                 console.log('🔵 [HEADER] Chưa đăng nhập (hoặc token hết hạn), hiển thị header mặc định');
                 setUser(null);
                 socketService.disconnect();
@@ -209,12 +248,16 @@ const UserHeader = () => {
         window.addEventListener('userLoggedIn', handleUserLoggedIn);
         window.addEventListener('tokenInvalid', handleTokenInvalid);
         window.addEventListener('unauthorized', handleUnauthorized);
+        
+        // 🔥 THÊM: Lắng nghe cookieExpired
+        window.addEventListener('cookieExpired', handleCookieExpired);
 
         return () => {
             window.removeEventListener('sessionExpired', handleWindowSessionExpired);
             window.removeEventListener('userLoggedIn', handleUserLoggedIn);
             window.removeEventListener('tokenInvalid', handleTokenInvalid);
             window.removeEventListener('unauthorized', handleUnauthorized);
+            window.removeEventListener('cookieExpired', handleCookieExpired);
         };
     }, []);
 
@@ -306,7 +349,6 @@ const UserHeader = () => {
         return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
     };
 
-    // ✅ KIỂM TRA USER HỢP LỆ (ĐÃ ĐĂNG NHẬP VÀ ĐÃ XÁC THỰC EMAIL)
     const isValidUser = user && user.email_verified === 1;
 
     const avatarSource = user?.user_avatar || user?.avatar;
@@ -314,7 +356,7 @@ const UserHeader = () => {
     const displayName = user?.username || user?.full_name || 'Tài khoản';
 
     // ============================================================
-    // HANDLE ĐĂNG NHẬP - XÓA TOKEN CŨ
+    // HANDLE ĐĂNG NHẬP
     // ============================================================
     const handleLoginClick = () => {
         console.log('🟢 [HEADER] Bấm đăng nhập, xóa token cũ và chuyển đến /login');
@@ -389,7 +431,6 @@ const UserHeader = () => {
                                 <span>Góc Điện Ảnh</span><ChevronDown size={18} className="icon-down" />
                             </div>
                             <ul className="sub-menu">
-                                <li><Link to="/cinema-genre" onClick={closeMobileMenu}>Thể Loại Phim</Link></li>
                                 <li><Link to="/actors" onClick={closeMobileMenu}>Diễn Viên</Link></li>
                                 <li><Link to="/news" onClick={closeMobileMenu}>Tin Tức</Link></li>
                             </ul>
@@ -414,7 +455,6 @@ const UserHeader = () => {
                         {showDropdown && (
                             <div className="dropdown-content show">
                                 {isValidUser ? (
-                                    // ✅ ĐÃ ĐĂNG NHẬP VÀ ĐÃ XÁC THỰC EMAIL
                                     <>
                                         <div className="dropdown-user-info">
                                             <p>Chào, <strong>{displayName}</strong></p>
@@ -434,7 +474,6 @@ const UserHeader = () => {
                                         </div>
                                     </>
                                 ) : (
-                                    // ✅ CHƯA ĐĂNG NHẬP HOẶC CHƯA XÁC THỰC EMAIL
                                     <>
                                         <div className="dropdown-user-info">
                                             <p style={{ color: '#f87171' }}>

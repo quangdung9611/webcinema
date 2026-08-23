@@ -54,7 +54,7 @@
     box-shadow: var(--card-shadow-hover);
 }
 
-/* ✅ THÊM: Form wrapper với max-height và scrollbar */
+/* ✅ Form wrapper với max-height và scrollbar */
 .auth-form-wrapper {
     max-height: 400px;
     overflow-y: auto;
@@ -62,7 +62,7 @@
     margin-bottom: var(--space-sm);
 }
 
-/* ✅ THÊM: Custom scrollbar */
+/* ✅ Custom scrollbar cho form wrapper */
 .auth-form-wrapper::-webkit-scrollbar {
     width: 5px;
 }
@@ -112,7 +112,7 @@
 }
 
 /* =========================================================
-   4. Error Message
+   4. Error & Success Message
 ========================================================= */
 .error-message {
     display: flex;
@@ -132,6 +132,26 @@
 .error-message svg {
     flex-shrink: 0;
     color: #ff6b8a;
+}
+
+.success-message {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    color: #4ade80;
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-medium);
+    margin-bottom: var(--space-lg);
+    backdrop-filter: blur(4px);
+}
+
+.success-message svg {
+    flex-shrink: 0;
+    color: #4ade80;
 }
 
 /* =========================================================
@@ -409,7 +429,122 @@
 }
 
 /* =========================================================
-   12. Animations
+   12. Session Expired Modal - THÊM MỚI
+========================================================= */
+.session-expired-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 99999;
+    padding: var(--space-lg);
+    animation: modalFade 0.3s ease;
+}
+
+.session-expired-modal {
+    max-width: 480px;
+    width: 100%;
+    background: var(--bg-card);
+    border: var(--border-premium);
+    border-radius: var(--radius-xl);
+    padding: var(--space-2xl);
+    box-shadow: var(--card-shadow-hover);
+    animation: modalScale 0.3s ease;
+}
+
+.session-expired-modal .modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.session-expired-modal .modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    justify-content: center;
+}
+
+.session-expired-modal .modal-title-group .modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(220, 38, 38, 0.15);
+    color: #dc2626;
+}
+
+.session-expired-modal .modal-title-group .modal-icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+.session-expired-modal .modal-title {
+    font-size: var(--font-size-h3);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-heading);
+    margin: 0;
+    text-align: center;
+    font-family: var(--font-heading);
+}
+
+.session-expired-modal .modal-divider {
+    height: 1px;
+    background: var(--border-premium);
+    margin: var(--space-sm) 0;
+}
+
+.session-expired-modal .modal-body {
+    padding: var(--space-md) 0;
+    text-align: center;
+}
+
+.session-expired-modal .modal-body p {
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    line-height: 1.7;
+    margin: 0;
+}
+
+.session-expired-modal .modal-footer {
+    display: flex;
+    justify-content: center;
+    padding-top: var(--space-md);
+    border-top: var(--border-premium);
+}
+
+.session-expired-modal .modal-btn-confirm {
+    padding: 12px 48px;
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-bold);
+    background: var(--premium-gradient);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: var(--radius-round);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--btn-silver-shadow);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.session-expired-modal .modal-btn-confirm:hover {
+    transform: scale(1.05);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.session-expired-modal .modal-btn-confirm:active {
+    transform: scale(0.95);
+}
+
+/* =========================================================
+   13. Animations
 ========================================================= */
 @keyframes modalFade {
     from { opacity: 0; }
@@ -428,42 +563,74 @@
 }
 
 /* =========================================================
-   13. Responsive
+   14. Responsive
 ========================================================= */
 @media (max-width: 768px) {
     .auth-container {
         padding: var(--space-md);
     }
+    
     .auth-card {
         padding: var(--space-xl) var(--space-lg);
         border-radius: var(--radius-lg);
         max-width: 100%;
     }
+    
     .auth-card h2 {
         font-size: var(--font-size-h3);
     }
+    
     .auth-subtitle {
         font-size: var(--font-size-h6);
     }
+    
     .auth-input {
         padding: var(--space-md) var(--space-md);
         font-size: var(--font-size-h6);
     }
+    
     .form-options {
         flex-direction: column;
         align-items: flex-start;
         gap: var(--space-sm);
     }
+    
     .btn-user {
         font-size: var(--font-size-h6);
         padding: var(--space-md);
     }
+    
     .forgot-modal {
         padding: var(--space-xl) var(--space-lg);
     }
-    /* ✅ Responsive scrollbar nhỏ hơn */
+    
+    /* Responsive scrollbar nhỏ hơn */
     .auth-form-wrapper {
         max-height: 300px;
+    }
+
+    /* Session expired modal responsive */
+    .session-expired-modal {
+        padding: var(--space-xl);
+    }
+    
+    .session-expired-modal .modal-title {
+        font-size: var(--font-size-h4);
+    }
+    
+    .session-expired-modal .modal-title-group .modal-icon {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .session-expired-modal .modal-title-group .modal-icon svg {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .session-expired-modal .modal-btn-confirm {
+        padding: 10px 32px;
+        font-size: var(--font-size-h6);
     }
 }
 
@@ -472,18 +639,80 @@
         padding: var(--space-lg) var(--space-md);
         border-radius: var(--radius-md);
     }
+    
     .auth-card h2 {
         font-size: var(--font-size-h4);
     }
+    
     .auth-input {
         padding: var(--space-sm) var(--space-md);
     }
+    
     .btn-user {
         font-size: var(--font-size-h6);
         padding: var(--space-sm) var(--space-md);
     }
-    /* ✅ Responsive scrollbar nhỏ hơn */
+    
+    /* Responsive scrollbar nhỏ hơn */
     .auth-form-wrapper {
         max-height: 250px;
+    }
+
+    /* Session expired modal responsive nhỏ */
+    .session-expired-overlay {
+        padding: var(--space-sm);
+    }
+    
+    .session-expired-modal {
+        padding: var(--space-lg);
+        border-radius: var(--radius-lg);
+    }
+    
+    .session-expired-modal .modal-title {
+        font-size: var(--font-size-h5);
+    }
+    
+    .session-expired-modal .modal-title-group {
+        gap: var(--space-sm);
+    }
+    
+    .session-expired-modal .modal-title-group .modal-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .session-expired-modal .modal-title-group .modal-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .session-expired-modal .modal-body p {
+        font-size: var(--font-size-h6);
+    }
+    
+    .session-expired-modal .modal-btn-confirm {
+        padding: 8px 24px;
+        font-size: var(--font-size-h6);
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   15. Accessibility - Reduced Motion
+========================================================= */
+@media (prefers-reduced-motion: reduce) {
+    .session-expired-overlay,
+    .session-expired-modal,
+    .forgot-modal-overlay,
+    .forgot-modal {
+        animation: none !important;
+    }
+    
+    .session-expired-modal .modal-btn-confirm {
+        transition: none !important;
+    }
+    
+    .session-expired-modal .modal-btn-confirm:hover {
+        transform: none !important;
     }
 }

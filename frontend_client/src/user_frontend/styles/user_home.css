@@ -1,8 +1,6 @@
 /* ==========================================================
    USER HOME - SILVER PREMIUM
    DARK CINEMA / PREMIUM SILVER
-   SYNC WITH GLOBAL index.css
-   MAX WIDTH: 1300px
 ========================================================== */
 
 
@@ -87,6 +85,7 @@
     flex-direction: column;
 
     flex: 1;
+
     min-width: 0;
 }
 
@@ -111,6 +110,7 @@
     line-height: 1.1;
 
     text-transform: uppercase;
+
     letter-spacing: 0.02em;
 
     transition:
@@ -150,6 +150,8 @@
     font-size: var(--font-size-base);
     font-weight: var(--fw-semibold);
 
+    cursor: pointer;
+
     transition: all var(--transition-normal);
 }
 
@@ -165,11 +167,12 @@
 
 
 /* ==========================================================
-   6. QUICK BOOKING
+   6. QUICK BOOKING CONTAINER
 ========================================================== */
 
 .quick-booking-container {
     position: relative;
+
     z-index: 10;
 
     width: min(100%, var(--container-width));
@@ -178,19 +181,21 @@
     margin-inline: auto;
 
     padding-inline: var(--container-padding);
+
+    box-sizing: border-box;
 }
 
 .quick-booking-content {
     position: relative;
 
     display: flex;
-    align-items: center;
+    flex-direction: column;
 
-    gap: var(--space-lg);
+    width: 100%;
 
-    padding: var(--space-xl);
+    padding: var(--space-lg);
 
-    overflow: visible;
+    overflow: hidden;
 
     border: var(--border-premium);
     border-radius: var(--radius-xl);
@@ -201,6 +206,8 @@
     -webkit-backdrop-filter: var(--glass-blur);
 
     box-shadow: var(--glass-shadow);
+
+    box-sizing: border-box;
 
     transition:
         box-shadow var(--transition-normal),
@@ -216,15 +223,30 @@
     box-shadow: var(--card-shadow-hover);
 }
 
+
+/* ==========================================================
+   7. QUICK BOOKING ROW
+   SELECTS TRÊN - BUTTON DƯỚI
+========================================================== */
+
+.quick-booking-row {
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+
+    gap: var(--space-md);
+}
+
 .quick-booking-selects {
-    position: relative;
-    z-index: 5;
-
-    flex: 1;
-
     display: grid;
 
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(
+        4,
+        minmax(0, 1fr)
+    );
+
+    width: 100%;
 
     gap: var(--space-md);
 
@@ -233,35 +255,45 @@
 
 
 /* ==========================================================
-   7. CUSTOM SELECT - QUICK BOOKING
+   8. CUSTOM SELECT
 ========================================================== */
 
 .quick-select-item {
-    position: relative;
+    display: flex;
+    flex-direction: column;
 
     width: 100%;
     min-width: 0;
+    max-width: 100%;
+
+    overflow: hidden;
 }
 
 .quick-select-trigger {
-    position: relative;
-    z-index: 2;
-
     display: flex;
     align-items: center;
     justify-content: space-between;
 
     width: 100%;
-    height: 58px;
+    height: 52px;
 
     padding: 0 var(--space-md);
 
     border: var(--border-premium);
     border-radius: var(--radius-lg);
 
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(
+        255,
+        255,
+        255,
+        0.04
+    );
 
     cursor: pointer;
+
+    box-sizing: border-box;
+
+    overflow: hidden;
 
     transition:
         border-color var(--transition-fast),
@@ -271,14 +303,20 @@
 .quick-select-trigger:hover:not(.disabled) {
     border-color: var(--silver-primary);
 
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(
+        255,
+        255,
+        255,
+        0.06
+    );
 }
 
 .quick-select-trigger.open {
     border-color: var(--silver-primary);
 }
 
-.quick-select-trigger.open .quick-select-arrow {
+.quick-select-trigger.open
+.quick-select-arrow {
     transform: rotate(180deg);
 
     color: var(--text-heading);
@@ -294,7 +332,7 @@
     display: flex;
     align-items: center;
 
-    gap: var(--space-md);
+    gap: var(--space-sm);
 
     width: 100%;
     min-width: 0;
@@ -307,7 +345,8 @@
 
     color: var(--silver-primary);
 
-    transition: color var(--transition-fast);
+    transition:
+        color var(--transition-fast);
 }
 
 .quick-select-value {
@@ -319,6 +358,7 @@
     font-weight: var(--fw-semibold);
 
     white-space: nowrap;
+
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -335,18 +375,18 @@
 
 
 /* ==========================================================
-   8. DROPDOWN
-   DESKTOP: FLOATING
+   9. DROPDOWN
+   NẰM TRONG QUICK BOOKING
 ========================================================== */
 
 .quick-dropdown-list {
-    position: absolute;
+    position: static;
 
-    top: calc(100% + 6px);
-    left: 0;
-    right: 0;
+    width: 100%;
 
-    max-height: 150px;
+    max-height: 180px;
+
+    margin-top: 4px;
 
     overflow-y: auto;
     overflow-x: hidden;
@@ -358,12 +398,46 @@
 
     background: #121518;
 
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    box-shadow:
+        0 16px 40px
+        rgba(0, 0, 0, 0.55);
 
-    z-index: 50;
+    box-sizing: border-box;
 
-    animation: dropdownFade 0.2s ease;
+    animation:
+        dropdownFade 0.2s ease;
 }
+
+
+/* ==========================================================
+   DROPDOWN SCROLLBAR
+========================================================== */
+
+.quick-dropdown-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.quick-dropdown-list::-webkit-scrollbar-track {
+    background: rgba(
+        255,
+        255,
+        255,
+        0.02
+    );
+
+    border-radius: var(--radius-round);
+}
+
+.quick-dropdown-list::-webkit-scrollbar-thumb {
+    background: var(--silver-primary);
+
+    border-radius: var(--radius-round);
+}
+
+
+/* ==========================================================
+   DROPDOWN OPTION
+========================================================== */
 
 .quick-option-item {
     width: 100%;
@@ -383,17 +457,25 @@
 
     cursor: pointer;
 
+    box-sizing: border-box;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+
     transition:
         background var(--transition-fast),
         color var(--transition-fast);
-
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .quick-option-item:hover {
-    background: rgba(245, 245, 246, 0.06);
+    background: rgba(
+        245,
+        245,
+        246,
+        0.06
+    );
 
     color: var(--text-heading);
 }
@@ -401,22 +483,30 @@
 .quick-option-item.active {
     color: var(--silver-primary);
 
-    background: rgba(245, 245, 246, 0.04);
+    background: rgba(
+        245,
+        245,
+        246,
+        0.04
+    );
 }
 
 
 /* ==========================================================
-   9. QUICK BOOKING BUTTON
+   10. QUICK BOOKING BUTTON
+   FULL WIDTH
 ========================================================== */
 
 .btn-quick-booking {
-    position: relative;
-    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    flex-shrink: 0;
+    width: 100%;
 
-    min-width: 220px;
-    height: 58px;
+    min-width: 0;
+
+    height: 52px;
 
     padding-inline: var(--space-xl);
 
@@ -431,6 +521,7 @@
     font-weight: var(--fw-bold);
 
     letter-spacing: 0.5px;
+
     text-transform: uppercase;
 
     cursor: pointer;
@@ -445,12 +536,14 @@
 .btn-quick-booking:hover {
     transform: translateY(-3px);
 
-    box-shadow: 0 4px 28px rgba(159, 183, 210, 0.35);
+    box-shadow:
+        0 4px 28px
+        rgba(159, 183, 210, 0.35);
 }
 
 
 /* ==========================================================
-   10. FEATURES GRID
+   11. FEATURES GRID
 ========================================================== */
 
 .home-features-section {
@@ -462,7 +555,8 @@
 .features-grid {
     display: grid;
 
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
 
     gap: var(--space-md);
 }
@@ -478,7 +572,12 @@
     border: var(--border-premium);
     border-radius: var(--radius-xl);
 
-    background: rgba(245, 245, 246, 0.03);
+    background: rgba(
+        245,
+        245,
+        246,
+        0.03
+    );
 
     box-shadow: var(--shadow-sm);
 
@@ -496,7 +595,12 @@
 
     box-shadow: var(--card-shadow-hover);
 
-    background: rgba(245, 245, 246, 0.06);
+    background: rgba(
+        245,
+        245,
+        246,
+        0.06
+    );
 }
 
 .feature-icon-wrapper {
@@ -512,7 +616,12 @@
     border: var(--border-premium);
     border-radius: var(--radius-lg);
 
-    background: rgba(245, 245, 246, 0.08);
+    background: rgba(
+        245,
+        245,
+        246,
+        0.08
+    );
 
     color: var(--silver-primary);
 
@@ -523,16 +632,25 @@
         border-color var(--transition-normal);
 }
 
-.feature-item:hover .feature-icon-wrapper {
+.feature-item:hover
+.feature-icon-wrapper {
     border-color: var(--silver-primary);
 
-    box-shadow: 0 0 20px rgba(245, 245, 246, 0.1);
+    box-shadow:
+        0 0 20px
+        rgba(245, 245, 246, 0.1);
 
-    background: rgba(245, 245, 246, 0.12);
+    background: rgba(
+        245,
+        245,
+        246,
+        0.12
+    );
 }
 
 .feature-text {
     flex: 1;
+
     min-width: 0;
 
     display: flex;
@@ -548,7 +666,8 @@
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
 
-    transition: color var(--transition-normal);
+    transition:
+        color var(--transition-normal);
 }
 
 .feature-item:hover h4 {
@@ -565,7 +684,7 @@
 
 
 /* ==========================================================
-   11. STATS SECTION - 4 CỘT
+   12. STATS
 ========================================================== */
 
 .stats-section {
@@ -573,7 +692,9 @@
 
     width: 100%;
 
-    padding: var(--space-4xl) 0;
+    padding:
+        var(--space-4xl)
+        0;
 
     margin-top: var(--space-3xl);
 
@@ -586,48 +707,71 @@
 }
 
 .stats-container {
-    width: min(100%, var(--container-width));
+    width: min(
+        100%,
+        var(--container-width)
+    );
+
     max-width: 1200px;
 
     margin: 0 auto;
 
-    padding-inline: var(--container-padding);
+    padding-inline:
+        var(--container-padding);
 }
 
 .stats-title {
-    margin-bottom: var(--space-2xl);
+    margin-bottom:
+        var(--space-2xl);
 
-    font-family: var(--font-heading);
+    font-family:
+        var(--font-heading);
 
-    font-size: var(--font-size-h2);
-    font-weight: var(--fw-extrabold);
+    font-size:
+        var(--font-size-h2);
 
-    color: var(--silver-primary);
+    font-weight:
+        var(--fw-extrabold);
+
+    color:
+        var(--silver-primary);
 
     text-transform: uppercase;
+
     letter-spacing: 0.02em;
 }
 
 .stats-grid {
     display: grid;
 
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns:
+        repeat(4, 1fr);
 
     gap: var(--space-lg);
 }
 
 .stat-item {
-    padding: var(--space-xl) var(--space-md);
+    padding:
+        var(--space-xl)
+        var(--space-md);
 
-    border: var(--border-premium);
-    border-radius: var(--radius-lg);
+    border:
+        var(--border-premium);
 
-    background: var(--glass-bg);
+    border-radius:
+        var(--radius-lg);
 
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    background:
+        var(--glass-bg);
 
-    box-shadow: var(--glass-shadow);
+    backdrop-filter:
+        var(--glass-blur);
+
+    -webkit-backdrop-filter:
+        var(--glass-blur);
+
+    box-shadow:
+        var(--glass-shadow);
 
     transition:
         transform var(--transition-normal),
@@ -638,43 +782,70 @@
 .stat-item:hover {
     transform: translateY(-6px);
 
-    border-color: var(--silver-primary);
+    border-color:
+        var(--silver-primary);
 
-    box-shadow: var(--card-shadow-hover);
+    box-shadow:
+        var(--card-shadow-hover);
 }
 
 .stat-number {
-    font-family: var(--font-display);
+    font-family:
+        var(--font-display);
 
-    font-size: clamp(2.8rem, 6vw, 4.5rem);
-    font-weight: var(--fw-bold);
+    font-size:
+        clamp(
+            2.8rem,
+            6vw,
+            4.5rem
+        );
+
+    font-weight:
+        var(--fw-bold);
 
     line-height: 1;
 
-    color: var(--silver-light);
+    color:
+        var(--silver-light);
 
-    text-shadow: 0 0 30px rgba(244, 246, 248, 0.15);
+    text-shadow:
+        0 0 30px
+        rgba(
+            244,
+            246,
+            248,
+            0.15
+        );
 }
 
 .stat-label {
-    margin-top: var(--space-md);
+    margin-top:
+        var(--space-md);
 
-    color: var(--text-secondary);
+    color:
+        var(--text-secondary);
 
-    font-size: var(--font-size-h6);
-    font-weight: var(--fw-semibold);
+    font-size:
+        var(--font-size-h6);
 
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-weight:
+        var(--fw-semibold);
+
+    text-transform:
+        uppercase;
+
+    letter-spacing:
+        0.06em;
 }
 
 
 /* ==========================================================
-   12. TESTIMONIALS SECTION - 4 CỘT
+   13. TESTIMONIALS
 ========================================================== */
 
 .testimonials-section {
-    margin-top: var(--space-3xl);
+    margin-top:
+        var(--space-3xl);
 }
 
 .testimonials-header {
@@ -684,7 +855,8 @@
 
     gap: var(--space-md);
 
-    margin-bottom: var(--space-xl);
+    margin-bottom:
+        var(--space-xl);
 
     flex-wrap: wrap;
 }
@@ -697,21 +869,30 @@
 }
 
 .testimonials-icon {
-    color: var(--silver-primary);
+    color:
+        var(--silver-primary);
 }
 
 .testimonials-title {
     margin: 0;
 
-    font-family: var(--font-heading);
+    font-family:
+        var(--font-heading);
 
-    font-size: var(--font-size-h2);
-    font-weight: var(--fw-extrabold);
+    font-size:
+        var(--font-size-h2);
 
-    color: var(--text-heading);
+    font-weight:
+        var(--fw-extrabold);
 
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
+    color:
+        var(--text-heading);
+
+    text-transform:
+        uppercase;
+
+    letter-spacing:
+        0.02em;
 }
 
 .btn-review-open {
@@ -720,45 +901,69 @@
 
     gap: var(--space-sm);
 
-    padding: var(--space-sm) var(--space-xl);
+    padding:
+        var(--space-sm)
+        var(--space-xl);
 
-    border: var(--border-premium);
-    border-radius: var(--radius-round);
+    border:
+        var(--border-premium);
 
-    background: rgba(255, 255, 255, 0.04);
+    border-radius:
+        var(--radius-round);
 
-    color: var(--text-body);
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.04
+        );
 
-    font-size: var(--font-size-base);
-    font-weight: var(--fw-semibold);
+    color:
+        var(--text-body);
+
+    font-size:
+        var(--font-size-base);
+
+    font-weight:
+        var(--fw-semibold);
 
     cursor: pointer;
 
     white-space: nowrap;
 
-    transition: all var(--transition-normal);
+    transition:
+        all var(--transition-normal);
 }
 
 .btn-review-open:hover {
-    transform: translateY(-3px);
+    transform:
+        translateY(-3px);
 
-    border-color: var(--silver-primary);
+    border-color:
+        var(--silver-primary);
 
-    background: var(--premium-gradient);
+    background:
+        var(--premium-gradient);
 
-    color: var(--bg-primary);
+    color:
+        var(--bg-primary);
 
-    box-shadow: var(--btn-silver-shadow);
+    box-shadow:
+        var(--btn-silver-shadow);
 }
 
 .testimonials-grid {
     display: grid;
 
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns:
+        repeat(4, 1fr);
 
-    gap: var(--space-lg);
+    gap:
+        var(--space-lg);
 
-    align-items: stretch;
+    align-items:
+        stretch;
 }
 
 .testimonial-card {
@@ -767,17 +972,27 @@
 
     height: 100%;
 
-    padding: var(--space-xl) var(--space-lg);
+    padding:
+        var(--space-xl)
+        var(--space-lg);
 
-    border: var(--border-premium);
-    border-radius: var(--radius-lg);
+    border:
+        var(--border-premium);
 
-    background: var(--glass-bg);
+    border-radius:
+        var(--radius-lg);
 
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    background:
+        var(--glass-bg);
 
-    box-shadow: var(--glass-shadow);
+    backdrop-filter:
+        var(--glass-blur);
+
+    -webkit-backdrop-filter:
+        var(--glass-blur);
+
+    box-shadow:
+        var(--glass-shadow);
 
     transition:
         transform var(--transition-normal),
@@ -786,20 +1001,25 @@
 }
 
 .testimonial-card:hover {
-    transform: translateY(-6px);
+    transform:
+        translateY(-6px);
 
-    border-color: var(--silver-primary);
+    border-color:
+        var(--silver-primary);
 
-    box-shadow: var(--card-shadow-hover);
+    box-shadow:
+        var(--card-shadow-hover);
 }
 
 .testimonial-header {
     display: flex;
     align-items: center;
 
-    gap: var(--space-md);
+    gap:
+        var(--space-md);
 
-    margin-bottom: var(--space-md);
+    margin-bottom:
+        var(--space-md);
 
     flex-shrink: 0;
 }
@@ -812,7 +1032,10 @@
 
     overflow: hidden;
 
-    border: 2px solid var(--silver-primary);
+    border:
+        2px solid
+        var(--silver-primary);
+
     border-radius: 50%;
 }
 
@@ -827,16 +1050,24 @@
 
 .testimonial-user {
     flex: 1;
+
     min-width: 0;
 }
 
 .testimonial-name {
-    margin: 0 0 var(--space-xs);
+    margin:
+        0
+        0
+        var(--space-xs);
 
-    color: var(--text-heading);
+    color:
+        var(--text-heading);
 
-    font-size: var(--font-size-h4);
-    font-weight: var(--fw-bold);
+    font-size:
+        var(--font-size-h4);
+
+    font-weight:
+        var(--fw-bold);
 }
 
 .testimonial-stars {
@@ -855,17 +1086,21 @@
 
     min-height: 80px;
 
-    margin-bottom: var(--space-md);
+    margin-bottom:
+        var(--space-md);
 }
 
 .testimonial-content p {
     margin: 0;
 
-    color: var(--text-body);
+    color:
+        var(--text-body);
 
-    font-size: var(--font-size-base);
+    font-size:
+        var(--font-size-base);
 
     line-height: 1.7;
+
     font-style: italic;
 
     display: -webkit-box;
@@ -879,51 +1114,64 @@
 .testimonial-date {
     flex-shrink: 0;
 
-    padding-top: var(--space-md);
+    padding-top:
+        var(--space-md);
 
-    border-top: var(--border-subtle);
+    border-top:
+        var(--border-subtle);
 
-    color: var(--text-muted);
+    color:
+        var(--text-muted);
 
-    font-size: var(--font-size-base);
+    font-size:
+        var(--font-size-base);
 }
 
 .testimonials-empty {
     grid-column: 1 / -1;
 
-    padding: var(--space-2xl) 0;
+    padding:
+        var(--space-2xl)
+        0;
 
-    color: var(--text-secondary);
+    color:
+        var(--text-secondary);
 
-    font-size: var(--font-size-h4);
+    font-size:
+        var(--font-size-h4);
 
     text-align: center;
 }
 
 
 /* ==========================================================
-   13. MOVIE CONTAINER
+   14. MOVIE CONTAINER
 ========================================================== */
 
 .movie-container {
     width: 100%;
 
-    margin-top: var(--space-3xl);
+    margin-top:
+        var(--space-3xl);
 }
 
 .empty-movies {
-    padding: var(--space-2xl) 0;
+    padding:
+        var(--space-2xl)
+        0;
 
-    color: var(--text-secondary);
+    color:
+        var(--text-secondary);
 
-    font-size: var(--font-size-h4);
+    font-size:
+        var(--font-size-h4);
 
     text-align: center;
 }
 
 
 /* ==========================================================
-   14. CINEMA GRID
+   15. CINEMA GRID
 ========================================================== */
 
 .promotions-section,
@@ -932,17 +1180,24 @@
 .cinema-section {
     width: 100%;
 
-    margin-top: var(--space-3xl);
+    margin-top:
+        var(--space-3xl);
 }
 
 .cinema-grid {
     display: grid;
 
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0, 1fr)
+        );
 
-    gap: var(--space-md);
+    gap:
+        var(--space-md);
 
-    align-items: stretch;
+    align-items:
+        stretch;
 }
 
 .cinema-grid .cinema-card {
@@ -958,17 +1213,22 @@
 }
 
 .cinema-grid .cinema-card:hover {
-    border-color: var(--silver-primary);
+    border-color:
+        var(--silver-primary);
 }
 
-.cinema-grid .cinema-card .cinema-card-inner {
+.cinema-grid
+.cinema-card
+.cinema-card-inner {
     display: flex;
     flex-direction: column;
 
     height: 100%;
 }
 
-.cinema-grid .cinema-card .cinema-card-title {
+.cinema-grid
+.cinema-card
+.cinema-card-title {
     display: -webkit-box;
 
     flex: 1;
@@ -987,7 +1247,7 @@
 
 
 /* ==========================================================
-   15. UTILITY
+   16. UTILITY
 ========================================================== */
 
 .feature-item,
@@ -1000,209 +1260,266 @@
 
 
 /* ==========================================================
-   16. RESPONSIVE - 1200px
-   4 CỘT -> 2 CỘT
+   17. DESKTOP NHỎ
+========================================================== */
+
+@media (
+    min-width: 1201px
+) and (
+    max-width: 1400px
+) {
+
+    .quick-booking-selects {
+        gap: var(--space-sm);
+    }
+
+    .quick-select-trigger {
+        height: 48px;
+
+        padding:
+            0
+            var(--space-sm);
+    }
+
+    .quick-select-value {
+        font-size:
+            var(--font-size-h6);
+    }
+
+    .btn-quick-booking {
+        height: 48px;
+
+        font-size:
+            var(--font-size-h6);
+
+        padding-inline:
+            var(--space-lg);
+    }
+
+    .quick-dropdown-list {
+        max-height: 150px;
+    }
+
+    .quick-option-item {
+        padding: 8px 14px;
+
+        font-size:
+            var(--font-size-h6);
+    }
+}
+
+
+/* ==========================================================
+   18. <= 1200px
 ========================================================== */
 
 @media (max-width: 1200px) {
 
     .features-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
 
-        gap: var(--space-md);
+        gap:
+            var(--space-md);
     }
 
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns:
+            repeat(2, 1fr);
 
-        gap: var(--space-md);
+        gap:
+            var(--space-md);
     }
 
     .testimonials-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns:
+            repeat(2, 1fr);
 
-        gap: var(--space-md);
+        gap:
+            var(--space-md);
     }
 
     .cinema-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
 
-        gap: var(--space-md);
+        gap:
+            var(--space-md);
     }
 
     .quick-booking-selects {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
 
-        gap: var(--space-md);
+        gap:
+            var(--space-md);
+    }
+
+    .quick-dropdown-list {
+        max-height: 160px;
     }
 }
 
 
 /* ==========================================================
-   17. RESPONSIVE - TABLET
-   <= 992px
-
-   QUAN TRỌNG:
-   DROPDOWN CHUYỂN SANG POSITION STATIC
-   NÊN SẼ THAM GIA VÀO LAYOUT
-   VÀ TỰ ĐỘNG ĐẨY NÚT ĐẶT VÉ XUỐNG
+   19. <= 992px
 ========================================================== */
 
 @media (max-width: 992px) {
 
     .quick-booking-content {
-        flex-direction: column;
-        align-items: stretch;
+        padding:
+            var(--space-lg);
 
-        gap: var(--space-md);
+        backdrop-filter:
+            none !important;
 
-        padding: var(--space-lg);
+        -webkit-backdrop-filter:
+            none !important;
 
-        overflow: visible;
+        background:
+            rgba(
+                0,
+                0,
+                0,
+                0.85
+            ) !important;
+    }
 
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-
-        background: rgba(0, 0, 0, 0.85) !important;
+    .quick-booking-row {
+        gap:
+            var(--space-md);
     }
 
     .quick-booking-selects {
         width: 100%;
 
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-
-        gap: var(--space-md);
-    }
-
-    /*
-       Dropdown trở thành một phần của layout.
-
-       Khi mở dropdown:
-       - Select phía dưới bị đẩy xuống
-       - Nút ĐẶT VÉ NGAY bị đẩy xuống
-       - Container tự giãn chiều cao
-    */
-
-    .quick-select-item {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .quick-dropdown-list {
-        position: static;
-
-        width: 100%;
-
-        margin-top: 6px;
-
-        max-height: 180px;
-
-        box-sizing: border-box;
-
-        z-index: auto;
-
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
-    }
-
-    .btn-quick-booking {
-        width: 100%;
-        min-width: 0;
-
-        height: 52px;
-
-        margin-top: 0;
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
     }
 
     .quick-select-trigger {
         height: 52px;
     }
 
+    .btn-quick-booking {
+        width: 100%;
+
+        min-width: 0;
+
+        height: 52px;
+    }
+
     .stats-section {
-        padding: var(--space-3xl) 0;
+        padding:
+            var(--space-3xl)
+            0;
     }
 
     .stats-title {
-        font-size: var(--font-size-h3);
+        font-size:
+            var(--font-size-h3);
     }
 
     .testimonials-title {
-        font-size: var(--font-size-h3);
+        font-size:
+            var(--font-size-h3);
     }
 }
 
 
 /* ==========================================================
-   18. RESPONSIVE - TABLET / MOBILE
-   <= 768px
+   20. <= 768px
 ========================================================== */
 
 @media (max-width: 768px) {
 
     .section-title {
-        font-size: var(--font-size-h3);
+        font-size:
+            var(--font-size-h3);
     }
 
     .btn-view-all {
         padding: 8px 18px;
 
-        font-size: var(--font-size-h6);
+        font-size:
+            var(--font-size-h6);
     }
 
-
-    /* QUICK BOOKING */
-
     .quick-booking-content {
-        gap: var(--space-md);
+        gap:
+            var(--space-md);
 
-        padding: var(--space-lg);
+        padding:
+            var(--space-lg);
+    }
+
+    .quick-booking-row {
+        gap:
+            var(--space-md);
     }
 
     .quick-booking-selects {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
 
-        gap: var(--space-md);
+        gap:
+            var(--space-md);
     }
 
     .quick-select-trigger {
-        height: 52px;
+        height: 48px;
 
-        padding: 0 var(--space-md);
+        padding:
+            0
+            var(--space-md);
     }
 
     .quick-select-value {
-        font-size: var(--font-size-h6);
+        font-size:
+            var(--font-size-h6);
     }
 
     .quick-dropdown-list {
-        position: static;
-
-        margin-top: 6px;
-
         max-height: 160px;
     }
 
     .quick-option-item {
         padding: 9px 14px;
 
-        font-size: var(--font-size-h6);
+        font-size:
+            var(--font-size-h6);
     }
 
     .btn-quick-booking {
         width: 100%;
-        min-width: 0;
 
-        height: 52px;
+        height: 48px;
 
-        font-size: var(--font-size-h6);
+        font-size:
+            var(--font-size-h6);
     }
-
-
-    /* FEATURES */
 
     .feature-item {
         gap: 14px;
 
-        padding: var(--space-md);
+        padding:
+            var(--space-md);
     }
 
     .feature-icon-wrapper {
@@ -1214,41 +1531,50 @@
 
     .feature-text h4,
     .feature-text p {
-        font-size: var(--font-size-h6);
+        font-size:
+            var(--font-size-h6);
     }
 
-
-    /* STATS */
-
     .stats-section {
-        padding: var(--space-2xl) 0;
+        padding:
+            var(--space-2xl)
+            0;
 
-        margin-top: var(--space-2xl);
+        margin-top:
+            var(--space-2xl);
     }
 
     .stats-title {
-        margin-bottom: var(--space-xl);
+        margin-bottom:
+            var(--space-xl);
 
-        font-size: var(--font-size-h4);
+        font-size:
+            var(--font-size-h4);
     }
 
     .stat-number {
-        font-size: clamp(2.2rem, 8vw, 3.2rem);
+        font-size:
+            clamp(
+                2.2rem,
+                8vw,
+                3.2rem
+            );
     }
 
     .stat-label {
-        font-size: 0.75rem;
+        font-size:
+            0.75rem;
     }
 
-
-    /* TESTIMONIALS */
-
     .testimonials-title {
-        font-size: var(--font-size-h4);
+        font-size:
+            var(--font-size-h4);
     }
 
     .testimonial-card {
-        padding: var(--space-lg) var(--space-md);
+        padding:
+            var(--space-lg)
+            var(--space-md);
     }
 
     .testimonial-avatar {
@@ -1257,36 +1583,46 @@
     }
 
     .testimonial-name {
-        font-size: var(--font-size-h5);
+        font-size:
+            var(--font-size-h5);
     }
 
     .testimonials-header {
-        justify-content: center;
+        justify-content:
+            center;
 
-        gap: var(--space-md);
+        gap:
+            var(--space-md);
 
-        flex-wrap: wrap;
+        flex-wrap:
+            wrap;
     }
 
     .btn-review-open {
-        padding: var(--space-xs) var(--space-md);
+        padding:
+            var(--space-xs)
+            var(--space-md);
 
-        font-size: var(--font-size-base);
+        font-size:
+            var(--font-size-base);
     }
 }
 
 
 /* ==========================================================
-   19. RESPONSIVE - MOBILE
-   <= 480px
+   21. <= 480px
 ========================================================== */
 
 @media (max-width: 480px) {
 
-    /* FEATURES - VẪN 2 CỘT */
+    /* FEATURES */
 
     .features-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
 
         gap: 12px;
     }
@@ -1295,7 +1631,8 @@
     /* SECTION HEADER */
 
     .section-title {
-        font-size: var(--font-size-h4);
+        font-size:
+            var(--font-size-h4);
     }
 
     .section-icon {
@@ -1315,32 +1652,45 @@
     .quick-booking-content {
         gap: 14px;
 
-        padding: var(--space-md);
+        padding:
+            var(--space-md);
+    }
+
+    .quick-booking-row {
+        gap: 14px;
     }
 
     .quick-booking-selects {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
 
         gap: 12px;
     }
 
     .quick-select-item {
-        display: flex;
-        flex-direction: column;
+        width: 100%;
 
         min-width: 0;
+        max-width: 100%;
     }
 
     .quick-select-trigger {
-        height: 48px;
+        height: 44px;
 
-        padding: 0 var(--space-sm);
+        padding:
+            0
+            var(--space-sm);
 
-        border-radius: var(--radius-md);
+        border-radius:
+            var(--radius-md);
     }
 
     .quick-select-left {
-        gap: var(--space-sm);
+        gap:
+            var(--space-sm);
     }
 
     .quick-select-icon {
@@ -1349,7 +1699,8 @@
     }
 
     .quick-select-value {
-        font-size: var(--font-size-h6);
+        font-size:
+            var(--font-size-h6);
     }
 
     .quick-select-arrow {
@@ -1357,55 +1708,52 @@
         height: 14px;
     }
 
-    /*
-       Dropdown nằm trong normal document flow.
-       Mở ra sẽ tự đẩy phần tử phía dưới.
-    */
-
     .quick-dropdown-list {
-        position: static;
-
         width: 100%;
-
-        margin-top: 4px;
 
         max-height: 150px;
 
-        border-radius: var(--radius-md);
-
-        box-sizing: border-box;
+        border-radius:
+            var(--radius-md);
     }
 
     .quick-option-item {
         padding: 8px 12px;
 
-        font-size: var(--font-size-h6);
+        font-size:
+            var(--font-size-h6);
     }
 
     .btn-quick-booking {
         width: 100%;
+
         min-width: 0;
 
-        height: 48px;
+        height: 44px;
 
-        padding-inline: var(--space-md);
+        padding-inline:
+            var(--space-md);
 
-        border-radius: var(--radius-md);
+        border-radius:
+            var(--radius-md);
 
-        font-size: var(--font-size-h6);
+        font-size:
+            var(--font-size-h6);
     }
 
 
     /* FEATURES */
 
     .feature-item {
-        align-items: flex-start;
+        align-items:
+            flex-start;
 
         gap: 12px;
 
         padding: 14px;
 
-        border-radius: var(--radius-lg);
+        border-radius:
+            var(--radius-lg);
     }
 
     .feature-icon-wrapper {
@@ -1414,7 +1762,8 @@
 
         min-width: 48px;
 
-        border-radius: var(--radius-md);
+        border-radius:
+            var(--radius-md);
     }
 
     .feature-icon-wrapper svg {
@@ -1433,53 +1782,73 @@
     }
 
 
-    /* STATS - VẪN 2 CỘT */
+    /* STATS */
 
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns:
+            repeat(2, 1fr);
 
-        gap: var(--space-md);
+        gap:
+            var(--space-md);
     }
 
     .stats-section {
-        padding: var(--space-xl) 0;
+        padding:
+            var(--space-xl)
+            0;
 
-        margin-top: var(--space-xl);
+        margin-top:
+            var(--space-xl);
 
-        border-radius: var(--radius-lg);
+        border-radius:
+            var(--radius-lg);
     }
 
     .stats-title {
-        margin-bottom: var(--space-lg);
+        margin-bottom:
+            var(--space-lg);
 
-        font-size: var(--font-size-h5);
+        font-size:
+            var(--font-size-h5);
     }
 
     .stat-item {
-        padding: var(--space-lg) var(--space-md);
+        padding:
+            var(--space-lg)
+            var(--space-md);
     }
 
     .stat-number {
-        font-size: clamp(2rem, 10vw, 2.8rem);
+        font-size:
+            clamp(
+                2rem,
+                10vw,
+                2.8rem
+            );
     }
 
 
-    /* TESTIMONIALS - VẪN 2 CỘT */
+    /* TESTIMONIALS */
 
     .testimonials-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns:
+            repeat(2, 1fr);
 
-        gap: var(--space-md);
+        gap:
+            var(--space-md);
     }
 
     .testimonials-title {
-        font-size: var(--font-size-h5);
+        font-size:
+            var(--font-size-h5);
     }
 
     .testimonial-card {
-        padding: var(--space-md);
+        padding:
+            var(--space-md);
 
-        border-radius: var(--radius-md);
+        border-radius:
+            var(--radius-md);
     }
 
     .testimonial-avatar {
@@ -1488,39 +1857,51 @@
     }
 
     .testimonial-name {
-        font-size: var(--font-size-h6);
+        font-size:
+            var(--font-size-h6);
     }
 
     .testimonial-content p {
-        font-size: var(--font-size-h6);
+        font-size:
+            var(--font-size-h6);
     }
 
     .btn-review-open {
-        padding: var(--space-xs) var(--space-sm);
+        padding:
+            var(--space-xs)
+            var(--space-sm);
 
-        font-size: var(--font-size-h6);
+        font-size:
+            var(--font-size-h6);
     }
 
 
     /* SECTIONS */
 
     .movie-container {
-        margin-top: var(--space-2xl);
+        margin-top:
+            var(--space-2xl);
     }
 
     .promotions-section,
     .cinema-corner-section,
     .news-section,
     .cinema-section {
-        margin-top: var(--space-2xl);
+        margin-top:
+            var(--space-2xl);
     }
 
 
-    /* CINEMA GRID - VẪN 2 CỘT */
+    /* CINEMA GRID */
 
     .cinema-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
 
-        gap: var(--space-md);
+        gap:
+            var(--space-md);
     }
 }

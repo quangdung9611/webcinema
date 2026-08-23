@@ -4,7 +4,7 @@ import {
     AlertCircle,
     Eye,
     EyeOff,
-    CheckCircle // ✅ THÊM ICON NÀY
+    CheckCircle
 } from 'lucide-react';
 
 import api from '../../api/api';
@@ -32,7 +32,7 @@ const UserLogin = () => {
     const [serverError, setServerError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotModal, setShowForgotModal] = useState(false);
-    const [successMessage, setSuccessMessage] = useState(''); // ✅ THÊM STATE NÀY
+    const [successMessage, setSuccessMessage] = useState('');
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -41,13 +41,10 @@ const UserLogin = () => {
     // ✅ KIỂM TRA STATE TỪ VERIFY-EMAIL
     // ============================================================
     useEffect(() => {
-        // Kiểm tra nếu được chuyển từ trang verify-email
         if (location.state?.verified) {
             setSuccessMessage(location.state.message || 'Email đã được xác thực thành công! Vui lòng đăng nhập.');
-            // Xóa state để không hiển thị lại
             window.history.replaceState({}, document.title);
             
-            // Tự động xóa thông báo sau 5 giây
             const timer = setTimeout(() => {
                 setSuccessMessage('');
             }, 5000);
@@ -57,15 +54,25 @@ const UserLogin = () => {
     }, [location.state]);
 
     // ============================================================
-    // 🔥 XỬ LÝ SESSION EXPIRED - CHỈ HIỂN THỊ LỖI ĐƠN GIẢN
+    // 🔥 XỬ LÝ SESSION EXPIRED
     // ============================================================
     const handleSessionExpired = (detail) => {
         console.log('🔴 [LOGIN] Session expired:', detail);
-        
-        // 🔥 Chỉ hiển thị lỗi đơn giản, KHÔNG hiển thị modal
         setServerError('Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
         setErrors({});
         socketService.disconnect();
+    };
+
+    // ============================================================
+    // 🔥 XỬ LÝ COOKIE EXPIRED
+    // ============================================================
+    const handleCookieExpired = (event) => {
+        console.log('🔴 [LOGIN] Cookie expired:', event?.detail);
+        setServerError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        socketService.disconnect();
+        localStorage.removeItem('user_info');
+        localStorage.removeItem('admin_info');
+        delete api.defaults.headers.common['Authorization'];
     };
 
     // ============================================================
@@ -85,7 +92,6 @@ const UserLogin = () => {
     // ============================================================
     useEffect(() => {
         if (location.state?.expired) {
-            // 🔥 Chỉ hiển thị lỗi, KHÔNG hiển thị modal
             setServerError('Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
             window.history.replaceState({}, document.title);
         }
@@ -134,12 +140,16 @@ const UserLogin = () => {
         window.addEventListener('tokenInvalid', handleTokenInvalid);
         window.addEventListener('unauthorized', handleUnauthorized);
         
+        // 🔥 THÊM: Lắng nghe cookieExpired
+        window.addEventListener('cookieExpired', handleCookieExpired);
+        
         console.log('✅ [LOGIN] Đã đăng ký lắng nghe sự kiện auth');
 
         return () => {
             window.removeEventListener('sessionExpired', handleWindowSessionExpired);
             window.removeEventListener('tokenInvalid', handleTokenInvalid);
             window.removeEventListener('unauthorized', handleUnauthorized);
+            window.removeEventListener('cookieExpired', handleCookieExpired);
             console.log('🧹 [LOGIN] Đã hủy lắng nghe sự kiện auth');
         };
     }, []);
@@ -185,7 +195,7 @@ const UserLogin = () => {
             setServerError('');
         }
         if (successMessage) {
-            setSuccessMessage(''); // Xóa thông báo thành công khi người dùng nhập
+            setSuccessMessage('');
         }
     };
 
@@ -247,7 +257,7 @@ const UserLogin = () => {
             if (errorCode === 'SESSION_EXPIRED') {
                 console.log('🔴 [LOGIN] Nhận lỗi SESSION_EXPIRED từ login API');
                 setServerError('Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.');
-            } else if (errorCode === 'TOKEN_INVALID') {
+            } else if (errorCode === 'TOKEN_EXPIRED' || errorCode === 'TOKEN_INVALID') {
                 setServerError('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
             } else if (errorCode === 'UNAUTHORIZED') {
                 setServerError('Vui lòng đăng nhập để tiếp tục.');
@@ -272,7 +282,6 @@ const UserLogin = () => {
                 <h2>ĐĂNG NHẬP</h2>
                 <p className="auth-subtitle">Chào mừng bạn quay trở lại Cinema Star</p>
 
-                {/* ✅ THÊM THÔNG BÁO THÀNH CÔNG */}
                 {successMessage && (
                     <div className="success-message" style={{ 
                         display: 'flex', 

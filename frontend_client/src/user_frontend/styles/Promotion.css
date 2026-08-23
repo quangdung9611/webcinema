@@ -283,98 +283,185 @@
 }
 
 /* ==========================================================
-   RESPONSIVE – 4 CỘT → 2 CỘT → 1 CỘT
+   RESPONSIVE – 4 CỘT → 2 CỘT
+   GIẢM KÍCH THƯỚC HÌNH, TĂNG GAP, THÊM PADDING
    ========================================================== */
 
-/* --- 1200px: 4 cột vẫn giữ, chỉ thu nhỏ gap --- */
+/* --- 1200px: 4 cột vẫn giữ, gap vừa phải --- */
 @media (max-width: 1200px) {
     .promotion-grid {
         gap: var(--space-lg);
     }
 }
 
-/* --- 992px: xuống 2 cột --- */
+/* --- 992px: xuống 2 cột, tăng gap, thêm padding --- */
 @media (max-width: 992px) {
     .promotion-container {
-        padding: 0 var(--space-lg);
+        padding: 0 var(--space-xl);
     }
+    
     .promotion-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-md);
+        gap: var(--space-xl);
         margin-bottom: var(--space-2xl);
     }
+    
     .promotion-header h1 {
         font-size: var(--font-size-h3);
     }
+    
+    .promotion-hero {
+        aspect-ratio: 2.5 / 1;
+    }
 }
 
-/* --- 768px: vẫn 2 cột --- */
+/* --- 768px: 2 cột, giảm kích thước hình, tăng gap --- */
 @media (max-width: 768px) {
     .promotion-page {
         padding: 0 0 var(--space-2xl);
     }
-    .promotion-hero {
-        aspect-ratio: 3 / 2;
+    
+    .promotion-container {
+        padding: 0 var(--space-lg);
     }
+    
+    .promotion-hero {
+        aspect-ratio: 2.5 / 1;
+    }
+    
     .promotion-light,
     .promotion-particles {
         display: none;
     }
+    
     .promotion-header h1 {
         font-size: var(--font-size-h3);
     }
+    
     .promotion-header-desc {
         font-size: var(--font-size-base);
     }
+    
     .promotion-header-icon {
         width: 72px;
         height: 72px;
     }
+    
+    /* GIẢM KÍCH THƯỚC CARD, TĂNG GAP */
     .promotion-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: var(--space-md);
+        gap: var(--space-xl);
         margin-bottom: var(--space-2xl);
     }
+    
+    /* Giảm kích thước card trên tablet */
+    .promotion-grid .cinema-card {
+        max-width: 100%;
+    }
+    
+    .promotion-grid .cinema-card .cinema-card-inner {
+        padding: var(--space-sm);
+    }
+    
     .promotion-empty {
         margin-bottom: var(--space-2xl);
     }
+    
     .promotion-breadcrumb {
         font-size: var(--font-size-base);
     }
 }
 
-/* --- 480px: xuống 1 cột --- */
+/* --- 480px: 2 cột, giảm kích thước hình nhiều hơn, tăng gap --- */
 @media (max-width: 480px) {
     .promotion-hero {
-        aspect-ratio: 4 / 3;
+        aspect-ratio: 2.5 / 1;
     }
+    
     .promotion-container {
         padding: 0 var(--space-md);
     }
+    
     .promotion-header h1 {
         font-size: var(--font-size-h4);
     }
+    
     .promotion-header-icon {
         width: 64px;
         height: 64px;
     }
+    
     .promotion-header-icon svg {
         width: 32px;
         height: 32px;
     }
+    
+    /* GIẢM KÍCH THƯỚC CARD HƠN, GAP LỚN HƠN */
     .promotion-grid {
-        grid-template-columns: 1fr;
-        gap: var(--space-md);
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-lg);
         margin-bottom: var(--space-xl);
     }
+    
+    /* Giảm kích thước card trên mobile */
+    .promotion-grid .cinema-card {
+        max-width: 100%;
+    }
+    
+    .promotion-grid .cinema-card .cinema-card-inner {
+        padding: var(--space-xs);
+    }
+    
+    /* Giảm font size cho card trên mobile */
+    .promotion-grid .cinema-card .cinema-card-title {
+        font-size: var(--font-size-h6);
+    }
+    
+    .promotion-grid .cinema-card .cinema-card-btn {
+        font-size: var(--font-size-h6);
+        padding: var(--space-xs) var(--space-md);
+    }
+    
     .promotion-empty {
         margin-bottom: var(--space-xl);
     }
+    
     .promotion-empty h3 {
         font-size: var(--font-size-h5);
     }
+    
     .promotion-breadcrumb {
         font-size: var(--font-size-h6);
         flex-wrap: wrap;
+    }
+}
+
+/* --- 360px: 2 cột, gap nhỏ hơn cho màn hình rất nhỏ --- */
+@media (max-width: 360px) {
+    .promotion-container {
+        padding: 0 var(--space-sm);
+    }
+    
+    .promotion-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-md);
+    }
+    
+    .promotion-hero {
+        aspect-ratio: 2.5 / 1;
+    }
+    
+    /* Giảm kích thước card tối đa */
+    .promotion-grid .cinema-card .cinema-card-inner {
+        padding: var(--space-xs);
+    }
+    
+    .promotion-grid .cinema-card .cinema-card-title {
+        font-size: var(--font-size-h6);
+    }
+    
+    .promotion-grid .cinema-card .cinema-card-btn {
+        font-size: 10px;
+        padding: var(--space-xs) var(--space-sm);
     }
 }

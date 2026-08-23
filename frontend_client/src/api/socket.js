@@ -14,7 +14,6 @@ class SocketService {
         this.userId = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
-        // 🔥 CALLBACK XỬ LÝ SESSION EXPIRED
         this.onSessionExpired = null;
     }
 
@@ -124,13 +123,14 @@ class SocketService {
         });
 
         // ============================================================
-        // CONNECT ERROR
+        // 🔥 CONNECT ERROR - XỬ LÝ TOKEN EXPIRED
         // ============================================================
         this.socket.on('connect_error', (error) => {
             console.error('🔴 [SOCKET] Lỗi kết nối:', error.message);
             this.isConnected = false;
             this.reconnectAttempts++;
 
+            // ========== SESSION_EXPIRED ==========
             if (error.message === 'SESSION_EXPIRED') {
                 console.warn('🔴 [SOCKET] Session expired - bị đá khỏi thiết bị');
 
@@ -146,6 +146,29 @@ class SocketService {
                     detail: {
                         code: 'SESSION_EXPIRED',
                         message: 'Tài khoản đã đăng nhập trên thiết bị khác',
+                        fromSocket: true
+                    }
+                }));
+
+                this.disconnect();
+            }
+
+            // ========== TOKEN_EXPIRED / UNAUTHORIZED ==========
+            else if (error.message === 'TOKEN_EXPIRED' || error.message === 'UNAUTHORIZED') {
+                console.warn('🔴 [SOCKET] Token hết hạn, cần đăng nhập lại');
+
+                if (typeof this.onSessionExpired === 'function') {
+                    this.onSessionExpired({
+                        code: 'TOKEN_EXPIRED',
+                        message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                        fromSocket: true
+                    });
+                }
+
+                window.dispatchEvent(new CustomEvent('cookieExpired', {
+                    detail: {
+                        code: 'TOKEN_EXPIRED',
+                        message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
                         fromSocket: true
                     }
                 }));

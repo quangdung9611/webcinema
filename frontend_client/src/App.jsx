@@ -72,7 +72,7 @@ const MomoApp = lazy(() => import("./user_frontend/pages/MomoApp"));
 const MovieStatusPage = lazy(() => import("./user_frontend/pages/MovieStatusPage"));
 const Cinema = lazy(() => import("./user_frontend/pages/Cinema"));
 const CinemaDetail = lazy(() => import("./user_frontend/pages/CinemaDetail"));
-const CinemaGenre = lazy(() => import("./user_frontend/pages/CinemaGenre"));
+
 const News = lazy(() => import("./user_frontend/pages/News"));
 
 const Profile = lazy(() => import("./user_frontend/pages/Profile"));
@@ -406,9 +406,6 @@ function AppContent() {
                                         
                                         {/* FOOD */}
                                         <Route path="foods" element={<Food />} />
-                                        
-                                        {/* CINEMA GENRE */}
-                                        <Route path="cinema-genre" element={<CinemaGenre />} />
                                         
                                         {/* NEWS - DÙNG CINEMA CARD DETAIL */}
                                         <Route path="news" element={<News />} />

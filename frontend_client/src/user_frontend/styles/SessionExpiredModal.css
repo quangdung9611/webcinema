@@ -30,13 +30,281 @@
     }
 }
 
-/* Responsive cho modal */
-@media (max-width: 480px) {
+/* ==========================================================
+   BỔ SUNG: STYLE RIÊNG CHO TOKEN EXPIRED
+   ========================================================== */
+
+/* Container chính cho modal */
+.session-expired-modal-wrapper {
+    animation: sessionExpiredFadeIn 0.4s ease;
+}
+
+/* Override modal container */
+.session-expired-modal-wrapper .modal-container {
+    max-width: 480px !important;
+    width: 100% !important;
+    background: var(--bg-card) !important;
+    border: var(--border-premium) !important;
+    border-radius: var(--radius-xl) !important;
+    padding: var(--space-2xl) !important;
+    box-shadow: var(--card-shadow-hover) !important;
+}
+
+/* Animation fade in */
+@keyframes sessionExpiredFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Style cho thông tin thiết bị mới */
+.session-expired-device-info {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #f3f4f6;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+.session-expired-device-info p {
+    margin: 4px 0;
+    color: #4b5563;
+    font-size: 14px;
+}
+
+/* Style cho thông báo token hết hạn */
+.session-expired-token-info {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #fef2f2;
+    border-radius: 6px;
+    border: 1px solid #fca5a5;
+}
+
+.session-expired-token-info p {
+    margin: 4px 0;
+    color: #991b1b;
+    font-size: 14px;
+}
+
+/* Style cho countdown */
+.session-expired-countdown {
+    margin-top: 12px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.session-expired-countdown span {
+    font-size: 16px;
+    color: #92400e;
+}
+
+.session-expired-countdown strong {
+    font-size: 20px;
+}
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+/* Tablet */
+@media (max-width: 768px) {
+    .session-expired-modal-wrapper .modal-container {
+        padding: var(--space-xl) !important;
+        border-radius: var(--radius-lg) !important;
+    }
+    
     .session-expired-modal-wrapper .modal-title-group.warning .modal-title {
         font-size: var(--font-size-h4);
     }
     
+    .session-expired-modal-wrapper .modal-title-group.warning .modal-icon {
+        font-size: 24px;
+    }
+    
+    .session-expired-modal-wrapper .modal-body p {
+        font-size: var(--font-size-base);
+    }
+    
+    .session-expired-countdown span {
+        font-size: 15px;
+    }
+    
+    .session-expired-countdown strong {
+        font-size: 18px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .session-expired-modal-wrapper .modal-container {
+        padding: var(--space-lg) !important;
+        border-radius: var(--radius-lg) !important;
+        margin: var(--space-sm) !important;
+        max-width: 95vw !important;
+    }
+    
+    .session-expired-modal-wrapper .modal-title-group.warning {
+        gap: var(--space-xs);
+    }
+    
+    .session-expired-modal-wrapper .modal-title-group.warning .modal-title {
+        font-size: var(--font-size-h5);
+    }
+    
+    .session-expired-modal-wrapper .modal-title-group.warning .modal-icon {
+        font-size: 20px;
+    }
+    
     .session-expired-modal-wrapper .modal-body p {
         font-size: var(--font-size-h6);
+        line-height: 1.5;
     }
+    
+    .session-expired-countdown {
+        padding: 8px 12px;
+    }
+    
+    .session-expired-countdown span {
+        font-size: 14px;
+    }
+    
+    .session-expired-countdown strong {
+        font-size: 16px;
+    }
+    
+    .session-expired-device-info p,
+    .session-expired-token-info p {
+        font-size: 12px;
+    }
+    
+    /* Nút đăng nhập lại full width trên mobile */
+    .session-expired-modal-wrapper .modal-footer {
+        flex-direction: column !important;
+        gap: var(--space-sm) !important;
+    }
+    
+    .session-expired-modal-wrapper .modal-btn-confirm,
+    .session-expired-modal-wrapper .modal-btn-cancel {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: var(--space-md) !important;
+    }
+}
+
+/* Mobile nhỏ */
+@media (max-width: 360px) {
+    .session-expired-modal-wrapper .modal-container {
+        padding: var(--space-md) !important;
+        border-radius: var(--radius-md) !important;
+    }
+    
+    .session-expired-modal-wrapper .modal-title-group.warning .modal-title {
+        font-size: var(--font-size-h6);
+    }
+    
+    .session-expired-modal-wrapper .modal-title-group.warning .modal-icon {
+        font-size: 18px;
+    }
+    
+    .session-expired-modal-wrapper .modal-body p {
+        font-size: 13px;
+    }
+    
+    .session-expired-countdown span {
+        font-size: 13px;
+    }
+    
+    .session-expired-countdown strong {
+        font-size: 15px;
+    }
+}
+
+/* ==========================================================
+   ACCESSIBILITY - REDUCED MOTION
+   ========================================================== */
+@media (prefers-reduced-motion: reduce) {
+    .session-expired-modal-wrapper {
+        animation: none !important;
+    }
+    
+    .session-expired-modal-wrapper .modal-icon.warning-icon {
+        animation: none !important;
+    }
+    
+    .session-expired-modal-wrapper .modal-container {
+        transition: none !important;
+    }
+    
+    .session-expired-modal-wrapper .modal-btn-confirm,
+    .session-expired-modal-wrapper .modal-btn-cancel {
+        transition: none !important;
+    }
+    
+    .session-expired-modal-wrapper .modal-btn-confirm:hover,
+    .session-expired-modal-wrapper .modal-btn-cancel:hover {
+        transform: none !important;
+    }
+}
+
+/* ==========================================================
+   DARK MODE COMPATIBILITY
+   ========================================================== */
+@media (prefers-color-scheme: dark) {
+    .session-expired-device-info {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .session-expired-device-info p {
+        color: var(--text-secondary);
+    }
+    
+    .session-expired-token-info {
+        background: rgba(220, 38, 38, 0.1);
+        border-color: rgba(220, 38, 38, 0.2);
+    }
+    
+    .session-expired-token-info p {
+        color: #fca5a5;
+    }
+}
+
+/* ==========================================================
+   CUSTOM SCROLLBAR CHO MODAL (nếu có nội dung dài)
+   ========================================================== */
+.session-expired-modal-wrapper .modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: var(--space-xs);
+}
+
+.session-expired-modal-wrapper .modal-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.session-expired-modal-wrapper .modal-body::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+}
+
+.session-expired-modal-wrapper .modal-body::-webkit-scrollbar-thumb {
+    background: rgba(232, 232, 232, 0.2);
+    border-radius: 10px;
+}
+
+.session-expired-modal-wrapper .modal-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(232, 232, 232, 0.4);
+}
+
+/* Firefox scrollbar */
+.session-expired-modal-wrapper .modal-body {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(232, 232, 232, 0.2) transparent;
 }

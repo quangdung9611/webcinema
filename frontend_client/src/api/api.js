@@ -11,14 +11,14 @@ const api = axios.create({
 });
 
 // ============================================================
-// 🔥 INTERCEPTOR XỬ LÝ LỖI - ĐÃ SỬA HOÀN CHỈNH
+// 🔥 INTERCEPTOR XỬ LÝ LỖI - HOÀN CHỈNH
 // ============================================================
 
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         // ============================================================
-        // 🔥 QUAN TRỌNG: XỬ LÝ 401 - SESSION EXPIRED
+        // 🔥 XỬ LÝ 401 - SESSION EXPIRED / TOKEN EXPIRED
         // ============================================================
         if (error.response?.status === 401) {
             const errorCode = error.response?.data?.code;
@@ -30,11 +30,9 @@ api.interceptors.response.use(
             if (errorCode === 'SESSION_EXPIRED') {
                 console.warn('🔴 [SESSION_EXPIRED] Tài khoản đã đăng nhập trên thiết bị khác!');
 
-                // Xóa localStorage
                 localStorage.removeItem('user_info');
                 localStorage.removeItem('admin_info');
 
-                // 🔥 Dispatch event SESSION_EXPIRED để các component bắt
                 window.dispatchEvent(new CustomEvent('sessionExpired', {
                     detail: {
                         code: 'SESSION_EXPIRED',
@@ -43,11 +41,43 @@ api.interceptors.response.use(
                         fromAPI: true
                     }
                 }));
-
-                // Không redirect ở đây, để component xử lý
             }
 
-            // ========== TOKEN_INVALID ==========
+            // ========== TOKEN_EXPIRED - TOKEN HẾT HẠN ==========
+            else if (errorCode === 'TOKEN_EXPIRED') {
+                console.warn('🔴 [TOKEN_EXPIRED] Token đã hết hạn!');
+
+                localStorage.removeItem('user_info');
+                localStorage.removeItem('admin_info');
+
+                window.dispatchEvent(new CustomEvent('cookieExpired', {
+                    detail: {
+                        code: 'TOKEN_EXPIRED',
+                        message: errorMessage || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                        timestamp: new Date().toISOString(),
+                        fromAPI: true
+                    }
+                }));
+            }
+
+            // ========== COOKIE_EXPIRED - Cookie hết hạn (không có code) ==========
+            else if (!errorCode || errorCode === 'UNAUTHORIZED') {
+                console.warn('🔴 [COOKIE_EXPIRED] Cookie hết hạn hoặc không hợp lệ');
+
+                localStorage.removeItem('user_info');
+                localStorage.removeItem('admin_info');
+
+                window.dispatchEvent(new CustomEvent('cookieExpired', {
+                    detail: {
+                        code: 'COOKIE_EXPIRED',
+                        message: errorMessage || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                        timestamp: new Date().toISOString(),
+                        fromAPI: true
+                    }
+                }));
+            }
+
+            // ========== TOKEN_INVALID - Token không hợp lệ ==========
             else if (errorCode === 'TOKEN_INVALID') {
                 console.warn('🔴 [TOKEN_INVALID] Token không hợp lệ');
                 localStorage.removeItem('user_info');
@@ -56,18 +86,6 @@ api.interceptors.response.use(
                 window.dispatchEvent(new CustomEvent('tokenInvalid', {
                     detail: {
                         code: 'TOKEN_INVALID',
-                        message: errorMessage
-                    }
-                }));
-            }
-
-            // ========== UNAUTHORIZED - Chưa đăng nhập ==========
-            else if (errorCode === 'UNAUTHORIZED') {
-                console.warn('🔴 [UNAUTHORIZED] Vui lòng đăng nhập');
-
-                window.dispatchEvent(new CustomEvent('unauthorized', {
-                    detail: {
-                        code: 'UNAUTHORIZED',
                         message: errorMessage
                     }
                 }));

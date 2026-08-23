@@ -154,11 +154,20 @@
 }
 
 .user-icon { color: var(--text-heading); }
+/* ==========================================================
+   SỬA PHẦN USERNAME DISPLAY - GIỚI HẠN ĐỘ RỘNG
+   ========================================================== */
 
 .username-display {
     color: var(--text-heading);
     font-size: var(--font-size-base);
     font-weight: var(--fw-semibold);
+    max-width: 150px;           /* 👈 Giới hạn chiều rộng tối đa */
+    white-space: nowrap;        /* 👈 Không xuống dòng */
+    overflow: hidden;           /* 👈 Ẩn phần vượt quá */
+    text-overflow: ellipsis;    /* 👈 Hiển thị dấu ... khi quá dài */
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .rotate { transform: rotate(180deg); }
