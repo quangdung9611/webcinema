@@ -11,21 +11,54 @@ const api = axios.create({
 });
 
 // ============================================================
-// 🔥 THÊM: CHECK SESSION NHANH (KHÔNG LOAD FULL USER)
+// 🔥 CHECK SESSION - DÙNG /me (VÌ NÓ ĐÃ CHECK TOKEN SẴN)
 // ============================================================
 
-api.checkSession = async function() {
+let cachedSessionResult = null;
+let cachedSessionTime = 0;
+const CACHE_DURATION = 5000;
+
+api.checkSession = async function(force = false) {
+    if (!force && cachedSessionResult && (Date.now() - cachedSessionTime) < CACHE_DURATION) {
+        console.log('💾 [API] Return cached session result');
+        return cachedSessionResult;
+    }
+
     try {
-        const response = await this.get('/api/auth/check-session', {
-            timeout: 3000 // 3 giây timeout
+        console.log('🔄 [API] Checking session via /me...');
+        const response = await this.get('/api/auth/me', {
+            timeout: 3000
         });
-        return response.data;
+        
+        const raw = response?.data;
+        const user = raw?.user || raw?.data?.user || null;
+        
+        const result = {
+            success: true,
+            valid: !!user,
+            user: user
+        };
+        
+        cachedSessionResult = result;
+        cachedSessionTime = Date.now();
+        
+        return result;
     } catch (error) {
-        // Nếu có lỗi (401, 403, network...), coi như session không hợp lệ
         console.log('🔵 [API] Check session failed:', error?.response?.status || error?.message);
+        cachedSessionResult = null;
+        cachedSessionTime = Date.now() - CACHE_DURATION + 1000;
         return null;
     }
 };
+
+api.resetSessionCache = function() {
+    console.log('🔄 [API] Reset session cache');
+    cachedSessionResult = null;
+    cachedSessionTime = 0;
+};
+
+window.addEventListener('authCleanedUp', () => api.resetSessionCache());
+window.addEventListener('userLoggedIn', () => api.resetSessionCache());
 
 // ============================================================
 // RESPONSE INTERCEPTOR
@@ -37,50 +70,16 @@ api.interceptors.response.use(
     (error) => {
         const status = error?.response?.status;
 
-        // ========================================================
-        // 401 - SESSION / TOKEN KHÔNG CÒN HỢP LỆ
-        //
-        // QUAN TRỌNG:
-        // Chỉ dispatch DUY NHẤT 1 event: sessionExpired
-        //
-        // SessionGuard là nơi DUY NHẤT:
-        // - cleanup auth
-        // - disconnect socket
-        // - hiện modal
-        // - redirect login
-        // ========================================================
-
         if (status === 401) {
-            const errorCode =
-                error?.response?.data?.code ||
-                'UNAUTHORIZED';
+            const errorCode = error?.response?.data?.code || 'UNAUTHORIZED';
+            const errorMessage = error?.response?.data?.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+            const newDevice = error?.response?.data?.newDevice || null;
+            const type = errorCode === 'SESSION_EXPIRED' ? 'device' : 'token';
 
-            const errorMessage =
-                error?.response?.data?.message ||
-                'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+            console.warn('🔴 [API] 401 Unauthorized:', { code: errorCode, message: errorMessage, type, newDevice });
 
-            const newDevice =
-                error?.response?.data?.newDevice ||
-                null;
+            api.resetSessionCache();
 
-            // SESSION_EXPIRED
-            // = tài khoản đã đăng nhập phiên khác
-            const type =
-                errorCode === 'SESSION_EXPIRED'
-                    ? 'device'
-                    : 'token';
-
-            console.warn(
-                '🔴 [API] 401 Unauthorized:',
-                {
-                    code: errorCode,
-                    message: errorMessage,
-                    type,
-                    newDevice
-                }
-            );
-
-            // Chỉ dispatch 1 event duy nhất
             window.dispatchEvent(
                 new CustomEvent('sessionExpired', {
                     detail: {
@@ -94,83 +93,45 @@ api.interceptors.response.use(
             );
         }
 
-        // ========================================================
-        // 403
-        // ========================================================
-
         if (status === 403) {
-            console.warn(
-                '🟠 [API] 403 Forbidden'
-            );
-
+            console.warn('🟠 [API] 403 Forbidden');
             window.dispatchEvent(
                 new CustomEvent('forbidden', {
                     detail: {
-                        message:
-                            error?.response?.data?.message ||
-                            'Bạn không có quyền truy cập.'
+                        message: error?.response?.data?.message || 'Bạn không có quyền truy cập.'
                     }
                 })
             );
         }
 
-        // ========================================================
-        // 429
-        // ========================================================
-
         if (status === 429) {
-            console.warn(
-                '🟡 [API] 429 Rate Limited'
-            );
-
+            console.warn('🟡 [API] 429 Rate Limited');
             window.dispatchEvent(
                 new CustomEvent('rateLimited', {
                     detail: {
-                        message:
-                            error?.response?.data?.message ||
-                            'Quá nhiều yêu cầu. Vui lòng thử lại sau.'
+                        message: error?.response?.data?.message || 'Quá nhiều yêu cầu. Vui lòng thử lại sau.'
                     }
                 })
             );
         }
 
-        // ========================================================
-        // 500+
-        // ========================================================
-
         if (status >= 500) {
-            console.error(
-                '🔴 [API] Server Error:',
-                status
-            );
-
+            console.error('🔴 [API] Server Error:', status);
             window.dispatchEvent(
                 new CustomEvent('serverError', {
                     detail: {
-                        message:
-                            'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.'
+                        message: 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.'
                     }
                 })
             );
         }
 
-        // ========================================================
-        // NETWORK ERROR
-        // ========================================================
-
-        if (
-            error?.code === 'ERR_NETWORK' ||
-            error?.message === 'Network Error'
-        ) {
-            console.error(
-                '🔴 [API] Network Error'
-            );
-
+        if (error?.code === 'ERR_NETWORK' || error?.message === 'Network Error') {
+            console.error('🔴 [API] Network Error');
             window.dispatchEvent(
                 new CustomEvent('networkError', {
                     detail: {
-                        message:
-                            'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.'
+                        message: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.'
                     }
                 })
             );

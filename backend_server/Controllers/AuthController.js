@@ -3,10 +3,6 @@
 =========================================================*/
 
 const AuthService = require("../Services/AuthService");
-const Cookie = require("../utils/Cookie"); // 🔥 THÊM: Để đọc cookie
-const Jwt = require("../utils/Jwt"); // 🔥 THÊM: Để verify token
-const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository"); // 🔥 THÊM: Để check token trong DB
-const UserRepository = require("../Repositories/UserRepository"); // 🔥 THÊM: Để check user
 
 /*=========================================================
     REGISTER
@@ -81,7 +77,8 @@ exports.adminLogin = async (req, res) => {
 };
 
 /*=========================================================
-    GET ME
+    🔥 GET ME - DÙNG ĐỂ CHECK SESSION LUÔN
+    Vì nó đã check token và trả về user info
 =========================================================*/
 
 exports.getMe = async (req, res) => {
@@ -103,7 +100,6 @@ exports.getMe = async (req, res) => {
 
 exports.refreshToken = async (req, res) => {
     try {
-        // TODO: Implement AuthService.refreshToken(req, res)
         return res.status(501).json({
             success: false,
             message: "Chức năng refresh token đang phát triển"
@@ -118,7 +114,8 @@ exports.refreshToken = async (req, res) => {
 };
 
 /*=========================================================
-    LOGOUT
+    🔥 LOGOUT - CŨNG LÀ CHECK SESSION
+    Khi logout, token bị revoke → session hết hạn
 =========================================================*/
 
 exports.logout = async (req, res) => {
@@ -246,14 +243,13 @@ exports.sendVerificationEmail = async (req, res) => {
 };
 
 /*=========================================================
-    VERIFY EMAIL - ĐÃ SỬA: TRẢ VỀ JSON
+    VERIFY EMAIL
 =========================================================*/
 
 exports.verifyEmail = async (req, res) => {
     try {
         const { token } = req.query;
         
-        // ✅ Kiểm tra token
         if (!token) {
             return res.status(400).json({
                 success: false,
@@ -263,7 +259,6 @@ exports.verifyEmail = async (req, res) => {
         
         const result = await AuthService.verifyEmail(token);
         
-        // ✅ Trả về JSON để Frontend xử lý
         return res.status(200).json({
             success: true,
             message: "Xác thực email thành công!",
@@ -272,7 +267,6 @@ exports.verifyEmail = async (req, res) => {
         
     } catch (error) {
         console.error("Verify Email Error:", error);
-        
         return res.status(400).json({
             success: false,
             message: error.message || "Token không hợp lệ hoặc đã hết hạn"
@@ -281,115 +275,7 @@ exports.verifyEmail = async (req, res) => {
 };
 
 /*=========================================================
-    🟢 THÊM MỚI: CHECK SESSION NHANH (KHÔNG LOAD FULL USER)
-=========================================================*/
-
-exports.checkSession = async (req, res) => {
-    try {
-        // Lấy token từ cookie (ưu tiên user_token, sau đó admin_token)
-        let token = Cookie.getUserAccessToken(req);
-        
-        if (!token) {
-            token = Cookie.getAdminAccessToken(req);
-        }
-
-        if (!token) {
-            return res.status(401).json({
-                success: false,
-                valid: false,
-                code: "NO_TOKEN",
-                message: "Không tìm thấy phiên đăng nhập"
-            });
-        }
-
-        // Verify token
-        let payload;
-        try {
-            payload = Jwt.verifyAccessToken(token);
-        } catch (error) {
-            // Token hết hạn
-            if (error.name === 'TokenExpiredError') {
-                return res.status(401).json({
-                    success: false,
-                    valid: false,
-                    code: "TOKEN_EXPIRED",
-                    message: "Phiên đăng nhập đã hết hạn"
-                });
-            }
-            // Token không hợp lệ
-            return res.status(401).json({
-                success: false,
-                valid: false,
-                code: "TOKEN_INVALID",
-                message: "Token không hợp lệ"
-            });
-        }
-
-        if (!payload) {
-            return res.status(401).json({
-                success: false,
-                valid: false,
-                code: "TOKEN_INVALID",
-                message: "Token không hợp lệ"
-            });
-        }
-
-        // Kiểm tra token trong DB (có bị revoke không)
-        const tokenHash = Jwt.hashRefreshToken(token);
-        const validToken = await RefreshTokenRepository.findValidTokenHash(tokenHash);
-
-        if (!validToken) {
-            return res.status(401).json({
-                success: false,
-                valid: false,
-                code: "SESSION_EXPIRED",
-                message: "Phiên đăng nhập đã bị vô hiệu hóa. Vui lòng đăng nhập lại."
-            });
-        }
-
-        // Kiểm tra user có tồn tại và không bị ban
-        const user = await UserRepository.findById(payload.user_id);
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                valid: false,
-                code: "USER_NOT_FOUND",
-                message: "Người dùng không tồn tại"
-            });
-        }
-
-        if (user.status === "banned") {
-            return res.status(403).json({
-                success: false,
-                valid: false,
-                code: "ACCOUNT_BANNED",
-                message: "Tài khoản đã bị khóa"
-            });
-        }
-
-        // ✅ Session hợp lệ - Trả về minimal data
-        return res.status(200).json({
-            success: true,
-            valid: true,
-            user_id: payload.user_id,
-            role: payload.role,
-            email_verified: user.email_verified || 0,
-            timestamp: new Date().toISOString()
-        });
-
-    } catch (error) {
-        console.error("Check session error:", error);
-        return res.status(500).json({
-            success: false,
-            valid: false,
-            code: "SERVER_ERROR",
-            message: "Lỗi máy chủ. Vui lòng thử lại sau."
-        });
-    }
-};
-
-/*=========================================================
-    🟢 THÊM MỚI: LẤY DANH SÁCH THIẾT BỊ ĐANG ĐĂNG NHẬP
+    GET DEVICES
 =========================================================*/
 
 exports.getDevices = async (req, res) => {
@@ -406,7 +292,7 @@ exports.getDevices = async (req, res) => {
 };
 
 /*=========================================================
-    🟢 THÊM MỚI: REVOKE 1 THIẾT BỊ CỤ THỂ
+    REVOKE DEVICE
 =========================================================*/
 
 exports.revokeDevice = async (req, res) => {

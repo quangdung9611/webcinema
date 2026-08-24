@@ -18,13 +18,17 @@ import Modal from './Modal';
 import '../styles/SessionGuard.css';
 
 // ============================================================
-// CONFIG - TỐC ĐỘ CỰC NHANH
+// CONFIG - TỐI ƯU KHÔNG SPAM
 // ============================================================
 
-const SESSION_CHECK_INTERVAL = 100;
-const SESSION_CHECK_TIMEOUT = 1000;
-const USER_ACTIVITY_DEBOUNCE = 50;
-const SESSION_EXPIRED_DEBOUNCE = 300;
+// 🔥 KHÔNG POLLING - KHÔNG GỌI checkSession TỰ ĐỘNG
+const SESSION_CHECK_INTERVAL = null;
+
+// 🔥 CHECK KHI USER TƯƠNG TÁC (debounce 3s)
+const USER_ACTIVITY_DEBOUNCE = 3000;
+
+// 🔥 DEBOUNCE TRÁNH GỌI NHIỀU LẦN
+const SESSION_EXPIRED_DEBOUNCE = 500;
 
 // ============================================================
 // SESSION GUARD
@@ -47,6 +51,7 @@ const SessionGuard = ({ children }) => {
     const hasRedirectedRef = useRef(false);
     const hasShownModalRef = useRef(false);
     const sessionExpiredTimeoutRef = useRef(null);
+    const isFirstCheckRef = useRef(true);
 
     // ========================================================
     // MODAL STATE
@@ -318,11 +323,11 @@ const SessionGuard = ({ children }) => {
     }, [showModal, countdown, handleModalConfirm]);
 
     // ========================================================
-    // SESSION HEALTH CHECK
+    // 🔥 SESSION HEALTH CHECK - DÙNG FORCE ĐỂ BỎ QUA CACHE
     // ========================================================
 
     const checkSession = useCallback(
-        async () => {
+        async (force = false) => {
             if (!isMountedRef.current) return;
             if (showModal || isProcessingRef.current || hasRedirectedRef.current || hasShownModalRef.current) return;
             if (isCheckingSessionRef.current) return;
@@ -331,7 +336,8 @@ const SessionGuard = ({ children }) => {
             isCheckingSessionRef.current = true;
 
             try {
-                const result = await api.checkSession();
+                // 🔥 Truyền force để bỏ qua cache nếu cần
+                const result = await api.checkSession(force);
 
                 if (!result || !result.valid) {
                     console.warn('🔴 [SESSION GUARD] Session invalid!');
@@ -339,7 +345,7 @@ const SessionGuard = ({ children }) => {
                         code: result?.code || 'SESSION_INVALID',
                         message: result?.message || 'Phiên đăng nhập không còn hợp lệ.',
                         type: 'token',
-                        source: 'polling'
+                        source: 'manual_check'
                     });
                     return;
                 }
@@ -355,7 +361,7 @@ const SessionGuard = ({ children }) => {
     );
 
     // ========================================================
-    // CHECK KHI USER TƯƠNG TÁC
+    // 🔥 CHECK KHI USER TƯƠNG TÁC (DEBOUNCE 3s)
     // ========================================================
 
     const handleUserActivity = useCallback(() => {
@@ -365,10 +371,48 @@ const SessionGuard = ({ children }) => {
 
         userActivityTimeoutRef.current = setTimeout(() => {
             if (hasLocalAuthState() && !showModal && !isProcessingRef.current && !hasRedirectedRef.current && !hasShownModalRef.current) {
-                checkSession();
+                // 🔥 force = true để bỏ cache, check thực tế
+                checkSession(true);
             }
         }, USER_ACTIVITY_DEBOUNCE);
     }, [hasLocalAuthState, showModal, checkSession]);
+
+    // ========================================================
+    // 🔥 PHÁT HIỆN KHI LOCALSTORAGE BỊ XÓA (XÓA TOKEN)
+    // ========================================================
+
+    useEffect(() => {
+        const handleStorageChange = (event) => {
+            const authKeys = ['user_info', 'admin_info', 'user_id'];
+            if (!authKeys.includes(event.key)) return;
+            if (event.oldValue && !event.newValue) {
+                console.warn('🔐 [SESSION GUARD] Auth removed from localStorage! Token may be deleted!');
+                // 🔥 Reset cache và check ngay
+                api.resetSessionCache();
+                checkSession(true);
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, [checkSession]);
+
+    // ========================================================
+    // 🔥 LẮNG NGHE SOCKET DISCONNECT
+    // ========================================================
+
+    useEffect(() => {
+        const handleSocketDisconnect = (event) => {
+            console.warn('🔴 [SESSION GUARD] Socket disconnected:', event?.detail);
+            if (hasLocalAuthState() && !showModal && !isProcessingRef.current) {
+                // 🔥 force = true để check thực tế
+                setTimeout(() => checkSession(true), 1000);
+            }
+        };
+
+        window.addEventListener('socketDisconnected', handleSocketDisconnect);
+        return () => window.removeEventListener('socketDisconnected', handleSocketDisconnect);
+    }, [checkSession, hasLocalAuthState, showModal]);
 
     // ========================================================
     // RESET FLAGS KHI UNMOUNT
@@ -439,46 +483,21 @@ const SessionGuard = ({ children }) => {
     }, [handleSessionExpired]);
 
     // ========================================================
-    // STORAGE CHANGE
-    // ========================================================
-
-    useEffect(() => {
-        const handleStorageChange = (event) => {
-            const authKeys = ['user_info', 'admin_info', 'user_id'];
-            if (!authKeys.includes(event.key)) return;
-            if (event.oldValue && !event.newValue) {
-                console.warn('🔐 [SESSION GUARD] Auth removed from another tab');
-                handleSessionExpired({
-                    code: 'LOCAL_AUTH_REMOVED',
-                    message: 'Phiên đăng nhập đã được kết thúc.',
-                    type: 'token',
-                    source: 'storage'
-                });
-            }
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, [handleSessionExpired]);
-
-    // ========================================================
-    // START SESSION HEALTH CHECK
+    // START SESSION GUARD - CHỈ CHECK 1 LẦN ĐẦU, KHÔNG POLLING
     // ========================================================
 
     useEffect(() => {
         isMountedRef.current = true;
-        console.log('🛡️ [SESSION GUARD] Started');
+        console.log('🛡️ [SESSION GUARD] Started - NO POLLING, only 1 initial check');
 
-        setTimeout(() => checkSession(), 10);
-
-        if (SESSION_CHECK_INTERVAL !== null) {
-            console.log(`🔄 [SESSION GUARD] Polling every ${SESSION_CHECK_INTERVAL}ms`);
-            sessionCheckIntervalRef.current = setInterval(() => {
-                checkSession();
-            }, SESSION_CHECK_INTERVAL);
-        } else {
-            console.log('🔄 [SESSION GUARD] Polling DISABLED - using socket + activity only');
+        // 🔥 CHỈ CHECK 1 LẦN DUY NHẤT KHI COMPONENT MOUNT
+        if (isFirstCheckRef.current) {
+            isFirstCheckRef.current = false;
+            // force = true để check thực tế, không dùng cache
+            setTimeout(() => checkSession(true), 1000);
         }
+
+        // 🔥 KHÔNG POLLING - BỎ setInterval
 
         return () => {
             console.log('🛡️ [SESSION GUARD] Stopped');
@@ -488,34 +507,47 @@ const SessionGuard = ({ children }) => {
     }, [checkSession, stopSessionCheck]);
 
     // ========================================================
-    // CHECK KHI QUAY LẠI TAB + USER ACTIVITY
+    // CHECK KHI QUAY LẠI TAB
     // ========================================================
 
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
-                checkSession();
+                // 🔥 force = true để check thực tế
+                checkSession(true);
             }
         };
 
-        const handleFocus = () => checkSession();
+        const handleFocus = () => {
+            // 🔥 force = true để check thực tế
+            checkSession(true);
+        };
 
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [checkSession]);
+
+    // ========================================================
+    // CHECK KHI USER TƯƠNG TÁC
+    // ========================================================
+
+    useEffect(() => {
         const activityEvents = [
             'click', 'mousedown', 'mouseup', 'mousemove',
             'keydown', 'keyup', 'scroll',
             'touchstart', 'touchmove', 'touchend', 'wheel'
         ];
 
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        window.addEventListener('focus', handleFocus);
-
         activityEvents.forEach((event) => {
             document.addEventListener(event, handleUserActivity, { passive: true });
         });
 
         return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            window.removeEventListener('focus', handleFocus);
             activityEvents.forEach((event) => {
                 document.removeEventListener(event, handleUserActivity);
             });
@@ -523,7 +555,7 @@ const SessionGuard = ({ children }) => {
                 clearTimeout(userActivityTimeoutRef.current);
             }
         };
-    }, [checkSession, handleUserActivity]);
+    }, [handleUserActivity]);
 
     // ========================================================
     // RENDER
