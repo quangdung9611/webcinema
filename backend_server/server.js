@@ -777,6 +777,84 @@ io.on(
 
 
         // =====================================================
+        // 🔥 CLEAR ALL HOLDING SEATS - THÊM MỚI
+        // =====================================================
+
+        socket.on(
+            'clear_all_holding_seats',
+
+            (data) => {
+
+                console.log(
+                    `🧹 [SOCKET] Clearing all holding seats for user ${socket.userId}`
+                );
+
+                console.log(
+                    `📨 [SOCKET] Data:`,
+                    data
+                );
+
+                // Tìm tất cả ghế của user này
+                const userSeats =
+                    holdingSeats.filter(
+                        seat => seat.socketId === socket.id
+                    );
+
+                if (userSeats.length > 0) {
+
+                    // Gửi event mở khóa cho từng ghế
+                    userSeats.forEach(
+                        (seat) => {
+
+                            io.emit(
+                                'server-mo-khoa-ghe',
+                                {
+                                    seatId: seat.seatId,
+                                    showtimeId: seat.showtimeId
+                                }
+                            );
+
+                            console.log(
+                                `🔓 [SOCKET] Released seat ${seat.seatId} - Showtime: ${seat.showtimeId}`
+                            );
+
+                        }
+                    );
+
+                    // Xóa khỏi danh sách
+                    holdingSeats =
+                        holdingSeats.filter(
+                            seat => seat.socketId !== socket.id
+                        );
+
+                    console.log(
+                        `✅ [SOCKET] Cleared ${userSeats.length} seats for user ${socket.userId}`
+                    );
+
+                } else {
+
+                    console.log(
+                        `ℹ️ [SOCKET] No holding seats found for user ${socket.userId}`
+                    );
+
+                }
+
+                // Gửi xác nhận về client
+                socket.emit(
+                    'clear_all_holding_seats_ack',
+                    {
+                        success: true,
+                        cleared: userSeats.length,
+                        userId: socket.userId,
+                        timestamp: new Date().toISOString()
+                    }
+                );
+
+            }
+        );
+
+
+        // =====================================================
         // SESSION EXPIRED ACK
         // =====================================================
 

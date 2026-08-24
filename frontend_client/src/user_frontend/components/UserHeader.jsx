@@ -1,7 +1,8 @@
 import React, {
     useState,
     useEffect,
-    useRef
+    useRef,
+    useCallback // 🔥 THÊM
 } from 'react';
 
 import {
@@ -61,6 +62,54 @@ const UserHeader = () => {
 
     const navRef = useRef(null);
 
+    const checkIntervalRef = useRef(null); // 🔥 THÊM
+    const isCheckingRef = useRef(false); // 🔥 THÊM
+
+    // ========================================================
+    // 🔥 CHECK SESSION NHANH
+    // ========================================================
+
+    const checkSession = useCallback(async () => {
+        // Không check nếu đang loading hoặc đã có user
+        if (authLoading) return;
+        if (isCheckingRef.current) return;
+        if (!user) return; // Chỉ check khi đã có user
+
+        isCheckingRef.current = true;
+
+        try {
+            const result = await api.checkSession();
+
+            if (!result || !result.valid) {
+                // Session không hợp lệ -> reset user
+                console.warn('🔴 [HEADER] Session invalid, resetting user...');
+                setUser(null);
+                setShowDropdown(false);
+                setAuthLoading(false);
+
+                // Ngắt socket
+                try {
+                    socketService.disconnect();
+                } catch (error) {
+                    console.warn('Socket disconnect error:', error);
+                }
+
+                // Dispatch event để đồng bộ
+                window.dispatchEvent(new CustomEvent('authCleanedUp', {
+                    detail: {
+                        reason: 'SESSION_INVALID',
+                        message: 'Phiên đăng nhập không còn hợp lệ',
+                        timestamp: new Date().toISOString()
+                    }
+                }));
+            }
+        } catch (error) {
+            // Bỏ qua lỗi
+        } finally {
+            isCheckingRef.current = false;
+        }
+    }, [user, authLoading]);
+
     // ========================================================
     // FETCH USER
     // ========================================================
@@ -109,6 +158,69 @@ const UserHeader = () => {
             // disconnect socket ở đây nếu SessionGuard quản lý.
         };
     }, []);
+
+    // ========================================================
+    // 🔥 START POLLING KHI CÓ USER
+    // ========================================================
+
+    useEffect(() => {
+        // Clear interval cũ
+        if (checkIntervalRef.current) {
+            clearInterval(checkIntervalRef.current);
+            checkIntervalRef.current = null;
+        }
+
+        // Chỉ start polling khi có user
+        if (user) {
+            console.log('🔄 [HEADER] Start polling session check every 3s');
+            checkIntervalRef.current = setInterval(() => {
+                checkSession();
+            }, 3000); // Check mỗi 3 giây
+        }
+
+        return () => {
+            if (checkIntervalRef.current) {
+                clearInterval(checkIntervalRef.current);
+                checkIntervalRef.current = null;
+            }
+        };
+    }, [user, checkSession]);
+
+    // ========================================================
+    // 🔥 CHECK KHI USER TƯƠNG TÁC
+    // ========================================================
+
+    useEffect(() => {
+        if (!user) return;
+
+        let activityTimeout = null;
+
+        const handleActivity = () => {
+            // Debounce
+            if (activityTimeout) {
+                clearTimeout(activityTimeout);
+            }
+
+            activityTimeout = setTimeout(() => {
+                checkSession();
+            }, 500);
+        };
+
+        // Lắng nghe các sự kiện tương tác
+        const events = ['click', 'mousemove', 'keydown', 'scroll', 'touchstart'];
+        events.forEach(event => {
+            document.addEventListener(event, handleActivity, { passive: true });
+        });
+
+        return () => {
+            events.forEach(event => {
+                document.removeEventListener(event, handleActivity);
+            });
+            if (activityTimeout) {
+                clearTimeout(activityTimeout);
+            }
+        };
+    }, [user, checkSession]);
 
     // ========================================================
     // 🔥 AUTH EVENTS - THÊM XỬ LÝ SESSION EXPIRED REAL-TIME
