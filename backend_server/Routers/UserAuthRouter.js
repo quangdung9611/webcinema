@@ -17,6 +17,34 @@ router.post("/send-verification", AuthController.sendVerificationEmail);
 router.get("/verify-email", AuthController.verifyEmail);
 
 // ============================================================
+// 🟢 THÊM MỚI: CHECK SESSION NHANH (PUBLIC - KHÔNG CẦN AUTH)
+// ============================================================
+
+/**
+ * Kiểm tra session nhanh
+ * GET /api/auth/check-session
+ * 
+ * Response thành công:
+ * {
+ *   success: true,
+ *   valid: true,
+ *   user_id: 123,
+ *   role: "customer",
+ *   email_verified: 1,
+ *   timestamp: "2026-08-24T10:00:00.000Z"
+ * }
+ * 
+ * Response thất bại:
+ * {
+ *   success: false,
+ *   valid: false,
+ *   code: "TOKEN_EXPIRED",
+ *   message: "Phiên đăng nhập đã hết hạn"
+ * }
+ */
+router.get("/check-session", AuthController.checkSession);
+
+// ============================================================
 // PRIVATE ROUTES (Cần xác thực)
 // ============================================================
 
@@ -26,7 +54,7 @@ router.post("/logout", authenticateUser, AuthController.logout);
 router.post("/logout-all", authenticateUser, AuthController.logoutAllDevices);
 
 // ============================================================
-// 🟢 THÊM MỚI: QUẢN LÝ THIẾT BỊ (DEVICE MANAGEMENT)
+// 🟢 QUẢN LÝ THIẾT BỊ (DEVICE MANAGEMENT)
 // ============================================================
 
 /**

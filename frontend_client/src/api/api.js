@@ -11,138 +11,169 @@ const api = axios.create({
 });
 
 // ============================================================
-// 🔥 INTERCEPTOR XỬ LÝ LỖI - HOÀN CHỈNH
+// 🔥 THÊM: CHECK SESSION NHANH (KHÔNG LOAD FULL USER)
+// ============================================================
+
+api.checkSession = async function() {
+    try {
+        const response = await this.get('/api/auth/check-session', {
+            timeout: 3000 // 3 giây timeout
+        });
+        return response.data;
+    } catch (error) {
+        // Nếu có lỗi (401, 403, network...), coi như session không hợp lệ
+        console.log('🔵 [API] Check session failed:', error?.response?.status || error?.message);
+        return null;
+    }
+};
+
+// ============================================================
+// RESPONSE INTERCEPTOR
 // ============================================================
 
 api.interceptors.response.use(
     (response) => response,
+
     (error) => {
-        // ============================================================
-        // 🔥 XỬ LÝ 401 - SESSION EXPIRED / TOKEN EXPIRED
-        // ============================================================
-        if (error.response?.status === 401) {
-            const errorCode = error.response?.data?.code;
-            const errorMessage = error.response?.data?.message || 'Phiên đăng nhập đã hết hạn';
+        const status = error?.response?.status;
 
-            console.warn('🔴 [API] Lỗi 401:', errorCode, errorMessage);
+        // ========================================================
+        // 401 - SESSION / TOKEN KHÔNG CÒN HỢP LỆ
+        //
+        // QUAN TRỌNG:
+        // Chỉ dispatch DUY NHẤT 1 event: sessionExpired
+        //
+        // SessionGuard là nơi DUY NHẤT:
+        // - cleanup auth
+        // - disconnect socket
+        // - hiện modal
+        // - redirect login
+        // ========================================================
 
-            // ========== SESSION_EXPIRED - BỊ ĐÁ KHỎI THIẾT BỊ ==========
-            if (errorCode === 'SESSION_EXPIRED') {
-                console.warn('🔴 [SESSION_EXPIRED] Tài khoản đã đăng nhập trên thiết bị khác!');
+        if (status === 401) {
+            const errorCode =
+                error?.response?.data?.code ||
+                'UNAUTHORIZED';
 
-                localStorage.removeItem('user_info');
-                localStorage.removeItem('admin_info');
+            const errorMessage =
+                error?.response?.data?.message ||
+                'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
 
-                window.dispatchEvent(new CustomEvent('sessionExpired', {
+            const newDevice =
+                error?.response?.data?.newDevice ||
+                null;
+
+            // SESSION_EXPIRED
+            // = tài khoản đã đăng nhập phiên khác
+            const type =
+                errorCode === 'SESSION_EXPIRED'
+                    ? 'device'
+                    : 'token';
+
+            console.warn(
+                '🔴 [API] 401 Unauthorized:',
+                {
+                    code: errorCode,
+                    message: errorMessage,
+                    type,
+                    newDevice
+                }
+            );
+
+            // Chỉ dispatch 1 event duy nhất
+            window.dispatchEvent(
+                new CustomEvent('sessionExpired', {
                     detail: {
-                        code: 'SESSION_EXPIRED',
+                        code: errorCode,
                         message: errorMessage,
-                        timestamp: new Date().toISOString(),
-                        fromAPI: true
+                        type,
+                        newDevice,
+                        timestamp: new Date().toISOString()
                     }
-                }));
-            }
-
-            // ========== TOKEN_EXPIRED - TOKEN HẾT HẠN ==========
-            else if (errorCode === 'TOKEN_EXPIRED') {
-                console.warn('🔴 [TOKEN_EXPIRED] Token đã hết hạn!');
-
-                localStorage.removeItem('user_info');
-                localStorage.removeItem('admin_info');
-
-                window.dispatchEvent(new CustomEvent('cookieExpired', {
-                    detail: {
-                        code: 'TOKEN_EXPIRED',
-                        message: errorMessage || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-                        timestamp: new Date().toISOString(),
-                        fromAPI: true
-                    }
-                }));
-            }
-
-            // ========== COOKIE_EXPIRED - Cookie hết hạn (không có code) ==========
-            else if (!errorCode || errorCode === 'UNAUTHORIZED') {
-                console.warn('🔴 [COOKIE_EXPIRED] Cookie hết hạn hoặc không hợp lệ');
-
-                localStorage.removeItem('user_info');
-                localStorage.removeItem('admin_info');
-
-                window.dispatchEvent(new CustomEvent('cookieExpired', {
-                    detail: {
-                        code: 'COOKIE_EXPIRED',
-                        message: errorMessage || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-                        timestamp: new Date().toISOString(),
-                        fromAPI: true
-                    }
-                }));
-            }
-
-            // ========== TOKEN_INVALID - Token không hợp lệ ==========
-            else if (errorCode === 'TOKEN_INVALID') {
-                console.warn('🔴 [TOKEN_INVALID] Token không hợp lệ');
-                localStorage.removeItem('user_info');
-                localStorage.removeItem('admin_info');
-
-                window.dispatchEvent(new CustomEvent('tokenInvalid', {
-                    detail: {
-                        code: 'TOKEN_INVALID',
-                        message: errorMessage
-                    }
-                }));
-            }
-
-            // ========== Các lỗi 401 khác ==========
-            else {
-                console.warn('🔴 [401] Lỗi xác thực không xác định:', errorMessage);
-
-                window.dispatchEvent(new CustomEvent('authError', {
-                    detail: {
-                        code: errorCode || 'AUTH_ERROR',
-                        message: errorMessage,
-                        status: error.response?.status
-                    }
-                }));
-            }
+                })
+            );
         }
 
-        // ========== LỖI 403 - FORBIDDEN ==========
-        if (error.response?.status === 403) {
-            console.warn('🔴 [403] Không có quyền truy cập');
-            window.dispatchEvent(new CustomEvent('forbidden', {
-                detail: {
-                    message: error.response?.data?.message || 'Bạn không có quyền truy cập',
-                }
-            }));
+        // ========================================================
+        // 403
+        // ========================================================
+
+        if (status === 403) {
+            console.warn(
+                '🟠 [API] 403 Forbidden'
+            );
+
+            window.dispatchEvent(
+                new CustomEvent('forbidden', {
+                    detail: {
+                        message:
+                            error?.response?.data?.message ||
+                            'Bạn không có quyền truy cập.'
+                    }
+                })
+            );
         }
 
-        // ========== LỖI 429 - RATE LIMIT ==========
-        if (error.response?.status === 429) {
-            console.warn('🔴 [429] Quá nhiều yêu cầu');
-            window.dispatchEvent(new CustomEvent('rateLimited', {
-                detail: {
-                    message: error.response?.data?.message || 'Quá nhiều yêu cầu. Vui lòng thử lại sau.',
-                }
-            }));
+        // ========================================================
+        // 429
+        // ========================================================
+
+        if (status === 429) {
+            console.warn(
+                '🟡 [API] 429 Rate Limited'
+            );
+
+            window.dispatchEvent(
+                new CustomEvent('rateLimited', {
+                    detail: {
+                        message:
+                            error?.response?.data?.message ||
+                            'Quá nhiều yêu cầu. Vui lòng thử lại sau.'
+                    }
+                })
+            );
         }
 
-        // ========== LỖI 500 - SERVER ERROR ==========
-        if (error.response?.status >= 500) {
-            console.error('🔴 [500] Lỗi máy chủ');
-            window.dispatchEvent(new CustomEvent('serverError', {
-                detail: {
-                    message: 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.',
-                }
-            }));
+        // ========================================================
+        // 500+
+        // ========================================================
+
+        if (status >= 500) {
+            console.error(
+                '🔴 [API] Server Error:',
+                status
+            );
+
+            window.dispatchEvent(
+                new CustomEvent('serverError', {
+                    detail: {
+                        message:
+                            'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.'
+                    }
+                })
+            );
         }
 
-        // ========== LỖI MẠNG ==========
-        if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-            console.error('🔴 [NETWORK] Mất kết nối mạng');
-            window.dispatchEvent(new CustomEvent('networkError', {
-                detail: {
-                    message: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.',
-                }
-            }));
+        // ========================================================
+        // NETWORK ERROR
+        // ========================================================
+
+        if (
+            error?.code === 'ERR_NETWORK' ||
+            error?.message === 'Network Error'
+        ) {
+            console.error(
+                '🔴 [API] Network Error'
+            );
+
+            window.dispatchEvent(
+                new CustomEvent('networkError', {
+                    detail: {
+                        message:
+                            'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.'
+                    }
+                })
+            );
         }
 
         return Promise.reject(error);

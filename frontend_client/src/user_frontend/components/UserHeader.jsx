@@ -1,8 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, {
+    useState,
+    useEffect,
+    useRef
+} from 'react';
+
+import {
+    useNavigate,
+    Link
+} from 'react-router-dom';
+
 import api from '../../api/api';
 import socketService from '../../api/socket';
-import SessionExpiredModal from '../components/SessionExpiredModal';
+
+import {
+    logout
+} from '../../utils/authCleanup';
+
 import {
     ChevronDown,
     UserCircle,
@@ -15,284 +28,322 @@ import {
 
 import '../styles/Header.css';
 
+// ============================================================
+// USER HEADER
+// ============================================================
+
 const UserHeader = () => {
     const navigate = useNavigate();
 
+    // ========================================================
+    // STATE
+    // ========================================================
+
     const [user, setUser] = useState(null);
+
     const [showDropdown, setShowDropdown] = useState(false);
+
     const [cinemas, setCinemas] = useState([]);
+
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+
     const [activeSubMenu, setActiveSubMenu] = useState(null);
+
     const [authLoading, setAuthLoading] = useState(true);
-    const [showSessionExpiredModal, setShowSessionExpiredModal] = useState(false);
-    const [sessionExpiredMessage, setSessionExpiredMessage] = useState('');
-    const [newDevice, setNewDevice] = useState('');
-    const [countdown, setCountdown] = useState(10);
+
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+    // ========================================================
+    // REFS
+    // ========================================================
+
     const dropdownRef = useRef(null);
+
     const navRef = useRef(null);
-    const countdownIntervalRef = useRef(null);
-    const isProcessingRef = useRef(false);
 
-    // ============================================================
-    // 🔥 HÀM LOGOUT THỰC TẾ
-    // ============================================================
-    const performLogout = async () => {
-        if (isLoggingOut) return;
-        setIsLoggingOut(true);
-        isProcessingRef.current = false;
+    // ========================================================
+    // FETCH USER
+    // ========================================================
 
-        console.log('🔴 [HEADER] Đang thực hiện logout...');
-
+    const fetchUser = async () => {
         try {
-            await api.post('/api/auth/logout');
-        } catch (error) {
-            console.error('Lỗi khi logout:', error);
-        } finally {
-            localStorage.removeItem('user_info');
-            localStorage.removeItem('admin_info');
-            socketService.disconnect();
-            setUser(null);
-            setShowDropdown(false);
-            setShowSessionExpiredModal(false);
-            setSessionExpiredMessage('');
-            setNewDevice('');
-            setCountdown(10);
-            setIsLoggingOut(false);
-            delete api.defaults.headers.common['Authorization'];
-            
-            document.cookie.split(";").forEach((c) => {
-                document.cookie = c
-                    .replace(/^ +/, "")
-                    .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-            });
-            
-            navigate('/login', { replace: true, state: { expired: true } });
-            console.log('✅ [HEADER] Logout thành công, chuyển về login');
-        }
-    };
+            const res = await api.get('/api/auth/me');
 
-    // ============================================================
-    // 🔥 HÀM XỬ LÝ SESSION EXPIRED
-    // ============================================================
-    const handleSessionExpired = (detail) => {
-        if (isProcessingRef.current || showSessionExpiredModal) {
-            console.log('⚠️ [HEADER] Đang xử lý session expired, bỏ qua...');
-            return;
-        }
+            const raw = res?.data;
 
-        isProcessingRef.current = true;
-        console.log('🔴 [HEADER] Xử lý session expired:', detail);
+            const account = raw?.user ||
+                raw?.data?.user ||
+                (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : null);
 
-        const message = detail?.message || 'Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.';
-        const device = detail?.newDevice || '';
+            setUser(account);
 
-        setSessionExpiredMessage(message);
-        setNewDevice(device);
-        setShowSessionExpiredModal(true);
-        setCountdown(10);
-
-        setUser(null);
-        socketService.disconnect();
-
-        if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-        }
-
-        countdownIntervalRef.current = setInterval(() => {
-            setCountdown(prev => {
-                if (prev <= 1) {
-                    clearInterval(countdownIntervalRef.current);
-                    countdownIntervalRef.current = null;
-                    performLogout();
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-    };
-
-    // ============================================================
-    // 🔥 XỬ LÝ COOKIE EXPIRED
-    // ============================================================
-    const handleCookieExpired = (event) => {
-        console.log('🔴 [HEADER] Cookie expired:', event?.detail);
-        
-        if (isProcessingRef.current) return;
-        isProcessingRef.current = true;
-        
-        setUser(null);
-        socketService.disconnect();
-        localStorage.removeItem('user_info');
-        localStorage.removeItem('admin_info');
-        delete api.defaults.headers.common['Authorization'];
-        
-        setSessionExpiredMessage('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-        setNewDevice('');
-        setShowSessionExpiredModal(true);
-        setCountdown(5);
-        
-        if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-        }
-        
-        countdownIntervalRef.current = setInterval(() => {
-            setCountdown(prev => {
-                if (prev <= 1) {
-                    clearInterval(countdownIntervalRef.current);
-                    countdownIntervalRef.current = null;
-                    isProcessingRef.current = false;
-                    setShowSessionExpiredModal(false);
-                    navigate('/login', { replace: true, state: { expired: true } });
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-    };
-
-    // ============================================================
-    // FETCH USER INFO
-    // ============================================================
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const res = await api.get('/api/auth/me');
-                
-                const rawData = res.data;
-                let account = null;
-                if (rawData?.user) account = rawData.user;
-                else if (rawData?.data?.user) account = rawData.data.user;
-                else if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) account = rawData;
-                
-                setUser(account);
-
-                socketService.setOnSessionExpired(handleSessionExpired);
-                
-                if (account) {
-                    socketService.connect(account.user_id);
-                }
-            } catch (error) {
-                console.log('🔵 [HEADER] Chưa đăng nhập (hoặc token hết hạn), hiển thị header mặc định');
-                setUser(null);
-                socketService.disconnect();
-            } finally {
-                setAuthLoading(false);
+            if (account?.user_id) {
+                socketService.connect(account.user_id);
             }
-        };
+
+            console.log('🟢 [HEADER] User loaded:', account?.user_id);
+        } catch (error) {
+            console.log('🔵 [HEADER] No active user session');
+
+            setUser(null);
+
+            try {
+                socketService.disconnect();
+            } catch (socketError) {
+                console.warn('Socket disconnect error:', socketError);
+            }
+        } finally {
+            setAuthLoading(false);
+        }
+    };
+
+    // ========================================================
+    // INITIAL FETCH USER
+    // ========================================================
+
+    useEffect(() => {
         fetchUser();
 
         return () => {
-            if (countdownIntervalRef.current) {
-                clearInterval(countdownIntervalRef.current);
-                countdownIntervalRef.current = null;
-            }
-            isProcessingRef.current = false;
+            // Header unmount thì không bắt buộc
+            // disconnect socket ở đây nếu SessionGuard quản lý.
         };
     }, []);
 
-    // ============================================================
-    // LẮNG NGHE SỰ KIỆN WINDOW
-    // ============================================================
+    // ========================================================
+    // 🔥 AUTH EVENTS - THÊM XỬ LÝ SESSION EXPIRED REAL-TIME
+    // ========================================================
+
     useEffect(() => {
-        const handleWindowSessionExpired = (event) => {
-            console.log('🔴 [HEADER] Session expired event từ window:', event.detail);
-            handleSessionExpired(event.detail);
+        // =====================================================
+        // 1. AUTH CLEANED UP - từ SessionGuard
+        // =====================================================
+        const handleAuthCleanedUp = (event) => {
+            console.log('🧹 [HEADER] Auth cleaned:', event?.detail);
+
+            setUser(null);
+            setShowDropdown(false);
+            setAuthLoading(false);
+
+            // Ngắt socket
+            try {
+                socketService.disconnect();
+            } catch (error) {
+                console.warn('Socket disconnect error:', error);
+            }
         };
 
+        // =====================================================
+        // 2. USER LOGGED IN
+        // =====================================================
         const handleUserLoggedIn = () => {
-            console.log('🟢 [HEADER] User logged in, fetching user...');
+            console.log('🟢 [HEADER] User logged in');
+
             setAuthLoading(true);
-            const fetchUser = async () => {
-                try {
-                    const res = await api.get('/api/auth/me');
-                    const rawData = res.data;
-                    let account = null;
-                    if (rawData?.user) account = rawData.user;
-                    else if (rawData?.data?.user) account = rawData.data.user;
-                    else if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) account = rawData;
-                    setUser(account);
-                    
-                    if (account) {
-                        socketService.setOnSessionExpired(handleSessionExpired);
-                        socketService.connect(account.user_id);
-                    }
-                } catch (error) {
-                    console.error('Lỗi fetch user sau login:', error);
-                    setUser(null);
-                } finally {
-                    setAuthLoading(false);
-                }
-            };
             fetchUser();
         };
 
-        const handleTokenInvalid = () => {
-            console.log('🔴 [HEADER] Token invalid');
+        // =====================================================
+        // 🔥 3. SESSION EXPIRED - XỬ LÝ REAL-TIME
+        // =====================================================
+        const handleSessionExpired = (event) => {
+            console.warn('🔴 [HEADER] Session expired real-time:', event?.detail);
+
+            // Reset user state ngay lập tức
             setUser(null);
-            socketService.disconnect();
-            isProcessingRef.current = false;
+            setShowDropdown(false);
+            setAuthLoading(false);
+
+            // Ngắt socket
+            try {
+                socketService.disconnect();
+            } catch (error) {
+                console.warn('Socket disconnect error:', error);
+            }
+
+            // Đóng menu mobile
+            setIsMenuOpen(false);
+            setActiveSubMenu(null);
+
+            // Dispatch authCleanedUp để đồng bộ
+            window.dispatchEvent(new CustomEvent('authCleanedUp', {
+                detail: {
+                    reason: event?.detail?.code || 'SESSION_EXPIRED',
+                    message: event?.detail?.message || 'Phiên đăng nhập đã hết hạn',
+                    timestamp: new Date().toISOString()
+                }
+            }));
         };
 
-        const handleUnauthorized = () => {
-            console.log('🔴 [HEADER] Unauthorized');
+        // =====================================================
+        // 4. TOKEN EXPIRED - XỬ LÝ REAL-TIME
+        // =====================================================
+        const handleTokenExpired = (event) => {
+            console.warn('⏰ [HEADER] Token expired real-time:', event?.detail);
+
+            // Reset user state ngay lập tức
             setUser(null);
-            socketService.disconnect();
-            isProcessingRef.current = false;
+            setShowDropdown(false);
+            setAuthLoading(false);
+
+            // Ngắt socket
+            try {
+                socketService.disconnect();
+            } catch (error) {
+                console.warn('Socket disconnect error:', error);
+            }
+
+            // Đóng menu mobile
+            setIsMenuOpen(false);
+            setActiveSubMenu(null);
         };
 
-        window.addEventListener('sessionExpired', handleWindowSessionExpired);
+        // =====================================================
+        // 5. DEVICE LOGGED OUT - XỬ LÝ REAL-TIME
+        // =====================================================
+        const handleDeviceLoggedOut = (event) => {
+            console.warn('📱 [HEADER] Device logged out real-time:', event?.detail);
+
+            // Reset user state ngay lập tức
+            setUser(null);
+            setShowDropdown(false);
+            setAuthLoading(false);
+
+            // Ngắt socket
+            try {
+                socketService.disconnect();
+            } catch (error) {
+                console.warn('Socket disconnect error:', error);
+            }
+
+            // Đóng menu mobile
+            setIsMenuOpen(false);
+            setActiveSubMenu(null);
+        };
+
+        // =====================================================
+        // ĐĂNG KÝ TẤT CẢ EVENT
+        // =====================================================
+        window.addEventListener('authCleanedUp', handleAuthCleanedUp);
         window.addEventListener('userLoggedIn', handleUserLoggedIn);
-        window.addEventListener('tokenInvalid', handleTokenInvalid);
-        window.addEventListener('unauthorized', handleUnauthorized);
-        window.addEventListener('cookieExpired', handleCookieExpired);
+        window.addEventListener('sessionExpired', handleSessionExpired);
+        window.addEventListener('tokenExpired', handleTokenExpired);
+        window.addEventListener('deviceLoggedOut', handleDeviceLoggedOut);
 
         return () => {
-            window.removeEventListener('sessionExpired', handleWindowSessionExpired);
+            window.removeEventListener('authCleanedUp', handleAuthCleanedUp);
             window.removeEventListener('userLoggedIn', handleUserLoggedIn);
-            window.removeEventListener('tokenInvalid', handleTokenInvalid);
-            window.removeEventListener('unauthorized', handleUnauthorized);
-            window.removeEventListener('cookieExpired', handleCookieExpired);
+            window.removeEventListener('sessionExpired', handleSessionExpired);
+            window.removeEventListener('tokenExpired', handleTokenExpired);
+            window.removeEventListener('deviceLoggedOut', handleDeviceLoggedOut);
         };
     }, []);
 
-    // ============================================================
+    // ========================================================
+    // LOGOUT CHỦ ĐỘNG
+    //
+    // Logout khác Session Expired:
+    //
+    // - Gọi API logout
+    // - cleanup auth
+    // - redirect login
+    // ========================================================
+
+    const handleLogout = async () => {
+        if (isLoggingOut) {
+            return;
+        }
+
+        setIsLoggingOut(true);
+
+        console.log('🔴 [HEADER] Logging out...');
+
+        try {
+            await logout();
+
+            setUser(null);
+            setShowDropdown(false);
+
+            navigate('/login', {
+                replace: true,
+                state: {
+                    loggedOut: true
+                }
+            });
+        } catch (error) {
+            console.error('🔴 [HEADER] Logout error:', error);
+
+            // Dù logout API lỗi
+            // vẫn redirect về login.
+            setUser(null);
+
+            navigate('/login', {
+                replace: true
+            });
+        } finally {
+            setIsLoggingOut(false);
+        }
+    };
+
+    // ========================================================
     // FETCH CINEMAS
-    // ============================================================
+    // ========================================================
+
     useEffect(() => {
         const fetchCinemas = async () => {
             try {
                 const response = await api.get('/api/cinemas');
-                const raw = response.data?.data;
+
+                const raw = response?.data?.data;
+
                 let list = [];
-                if (Array.isArray(raw)) list = raw;
-                else if (raw?.data && Array.isArray(raw.data)) list = raw.data;
-                else if (raw?.cinemas && Array.isArray(raw.cinemas)) list = raw.cinemas;
+
+                if (Array.isArray(raw)) {
+                    list = raw;
+                } else if (Array.isArray(raw?.data)) {
+                    list = raw.data;
+                } else if (Array.isArray(raw?.cinemas)) {
+                    list = raw.cinemas;
+                }
+
                 setCinemas(list);
             } catch (error) {
-                console.error('Lỗi lấy dữ liệu rạp:', error);
+                console.error('🔴 [HEADER] Cannot fetch cinemas:', error);
                 setCinemas([]);
             }
         };
+
         fetchCinemas();
     }, []);
 
-    // ============================================================
-    // CLICK OUTSIDE & RESIZE
-    // ============================================================
+    // ========================================================
+    // CLICK OUTSIDE
+    // ========================================================
+
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (navRef.current && navRef.current.contains(event.target)) return;
-            if (dropdownRef.current && dropdownRef.current.contains(event.target)) return;
+            if (navRef.current && navRef.current.contains(event.target)) {
+                return;
+            }
+
+            if (dropdownRef.current && dropdownRef.current.contains(event.target)) {
+                return;
+            }
+
             setActiveSubMenu(null);
             setShowDropdown(false);
         };
+
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, []);
+
+    // ========================================================
+    // RESPONSIVE
+    // ========================================================
 
     useEffect(() => {
         const handleResize = () => {
@@ -301,35 +352,18 @@ const UserHeader = () => {
                 setActiveSubMenu(null);
             }
         };
+
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
 
-    // ============================================================
-    // LOGOUT THỦ CÔNG
-    // ============================================================
-    const handleLogout = async () => {
-        await performLogout();
-    };
+    // ========================================================
+    // HELPERS
+    // ========================================================
 
-    // ============================================================
-    // HANDLE SESSION EXPIRED CONFIRM
-    // ============================================================
-    const handleSessionExpiredConfirm = () => {
-        console.log('🔴 [HEADER] User xác nhận đăng nhập lại');
-        
-        if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-        }
-        
-        isProcessingRef.current = false;
-        performLogout();
-    };
-
-    // ============================================================
-    // UI HELPERS
-    // ============================================================
     const closeMobileMenu = () => {
         setIsMenuOpen(false);
         setActiveSubMenu(null);
@@ -338,172 +372,460 @@ const UserHeader = () => {
     const toggleSubMenu = (menuName, event) => {
         event.preventDefault();
         event.stopPropagation();
-        setActiveSubMenu(activeSubMenu === menuName ? null : menuName);
+
+        setActiveSubMenu((current) =>
+            current === menuName ? null : menuName
+        );
     };
 
     const getAvatarUrl = (avatar) => {
-        if (!avatar) return null;
-        if (avatar.startsWith('http')) return avatar;
+        if (!avatar) {
+            return null;
+        }
+
+        if (avatar.startsWith('http')) {
+            return avatar;
+        }
+
         return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
     };
 
-    const isValidUser = user && user.email_verified === 1;
+    // ========================================================
+    // USER INFO
+    // ========================================================
+
+    const isValidUser = Boolean(
+        user &&
+        Number(user.email_verified) === 1
+    );
 
     const avatarSource = user?.user_avatar || user?.avatar;
-    const avatarUrl = avatarSource ? getAvatarUrl(avatarSource) : null;
+
+    const avatarUrl = getAvatarUrl(avatarSource);
+
     const displayName = user?.username || user?.full_name || 'Tài khoản';
 
-    // ============================================================
-    // HANDLE ĐĂNG NHẬP
-    // ============================================================
+    // ========================================================
+    // LOGIN / REGISTER
+    // ========================================================
+
     const handleLoginClick = () => {
-        console.log('🟢 [HEADER] Bấm đăng nhập, xóa token cũ và chuyển đến /login');
         setShowDropdown(false);
-        
-        delete api.defaults.headers.common['Authorization'];
-        localStorage.removeItem('user_info');
-        localStorage.removeItem('admin_info');
-        
-        document.cookie.split(";").forEach((c) => {
-            document.cookie = c
-                .replace(/^ +/, "")
-                .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-        });
-        
         navigate('/login');
     };
 
     const handleRegisterClick = () => {
-        console.log('🟢 [HEADER] Bấm đăng ký, chuyển đến /register');
         setShowDropdown(false);
         navigate('/register');
     };
 
-    // ============================================================
+    // ========================================================
     // RENDER
-    // ============================================================
+    // ========================================================
+
     return (
-        <>
-            <nav className="user-navbar">
-                <div className="nav-container">
-                    <button 
-                        className={`hamburger ${isMenuOpen ? 'active' : ''}`} 
-                        onClick={() => setIsMenuOpen(prev => !prev)} 
-                        aria-label="Toggle menu"
+        <nav className="user-navbar">
+
+            <div className="nav-container">
+
+                {/* HAMBURGER */}
+
+                <button
+                    className={`hamburger ${
+                        isMenuOpen ? 'active' : ''
+                    }`}
+                    onClick={() =>
+                        setIsMenuOpen((prev) => !prev)
+                    }
+                    aria-label="Toggle menu"
+                >
+                    <span className="bar" />
+                    <span className="bar" />
+                    <span className="bar" />
+                </button>
+
+                {/* LOGO */}
+
+                <div
+                    className="header-logo"
+                    onClick={() => {
+                        navigate('/');
+                        closeMobileMenu();
+                    }}
+                >
+                    <img
+                        src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
+                        alt="Cinema Star Logo"
+                    />
+                </div>
+
+                {/* MOBILE OVERLAY */}
+
+                <div
+                    className={`menu-overlay ${
+                        isMenuOpen ? 'active' : ''
+                    }`}
+                    onClick={closeMobileMenu}
+                />
+
+                {/* NAVIGATION */}
+
+                <ul
+                    ref={navRef}
+                    className={`nav-links ${
+                        isMenuOpen ? 'active' : ''
+                    }`}
+                >
+
+                    <li>
+                        <Link
+                            to="/"
+                            onClick={closeMobileMenu}
+                            className="menu-link"
+                        >
+                            Trang chủ
+                        </Link>
+                    </li>
+
+                    {/* PHIM */}
+
+                    <li
+                        className={`has-dropdown ${
+                            activeSubMenu === 'phim' ? 'mobile-active' : ''
+                        }`}
                     >
-                        <span className="bar"></span><span className="bar"></span><span className="bar"></span>
-                    </button>
+                        <div
+                            className="menu-link mobile-parent"
+                            onClick={(event) =>
+                                toggleSubMenu('phim', event)
+                            }
+                        >
+                            <span>Phim</span>
 
-                    <div className="header-logo" onClick={() => { navigate('/'); closeMobileMenu(); }}>
-                        <img src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png" alt="Cinema Star Logo" />
-                    </div>
-
-                    <div className={`menu-overlay ${isMenuOpen ? 'active' : ''}`} onClick={closeMobileMenu} />
-
-                    <ul ref={navRef} className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
-                        <li><Link to="/" onClick={closeMobileMenu} className="menu-link">Trang chủ</Link></li>
-                        <li className={`has-dropdown ${activeSubMenu === 'phim' ? 'mobile-active' : ''}`}>
-                            <div className="menu-link mobile-parent" onClick={(e) => toggleSubMenu('phim', e)}>
-                                <span>Phim</span><ChevronDown size={18} className="icon-down" />
-                            </div>
-                            <ul className="sub-menu">
-                                <li><Link to="/movies/status/phim-dang-chieu" onClick={closeMobileMenu}>Phim đang chiếu</Link></li>
-                                <li><Link to="/movies/status/phim-sap-chieu" onClick={closeMobileMenu}>Phim sắp chiếu</Link></li>
-                            </ul>
-                        </li>
-                        <li className={`has-dropdown ${activeSubMenu === 'rap' ? 'mobile-active' : ''}`}>
-                            <div className="menu-link mobile-parent">
-                                <Link to="/cinema" onClick={closeMobileMenu}>Rạp</Link>
-                                <ChevronDown size={18} className="icon-down" onClick={(e) => toggleSubMenu('rap', e)} />
-                            </div>
-                            <ul className="sub-menu">
-                                {cinemas.map((cinema) => (
-                                    <li key={cinema.cinema_id}>
-                                        <Link to={`/cinema/detail/${cinema.slug}`} onClick={closeMobileMenu}>{cinema.cinema_name}</Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </li>
-                        <li className={`has-dropdown ${activeSubMenu === 'goc' ? 'mobile-active' : ''}`}>
-                            <div className="menu-link mobile-parent" onClick={(e) => toggleSubMenu('goc', e)}>
-                                <span>Góc Điện Ảnh</span><ChevronDown size={18} className="icon-down" />
-                            </div>
-                            <ul className="sub-menu">
-                                <li><Link to="/actors" onClick={closeMobileMenu}>Diễn Viên</Link></li>
-                                <li><Link to="/news" onClick={closeMobileMenu}>Tin Tức</Link></li>
-                            </ul>
-                        </li>
-                        <li><Link to="/promotion" onClick={closeMobileMenu} className="menu-link">Khuyến mãi</Link></li>
-                        <li><Link to="/blog-cinema" onClick={closeMobileMenu} className="menu-link">Blog Điện Ảnh</Link></li>
-                    </ul>
-
-                    <div className="user-menu" ref={dropdownRef}>
-                        <div className="account-trigger" onClick={() => setShowDropdown(prev => !prev)}>
-                            {isValidUser && avatarUrl ? (
-                                <img src={avatarUrl} alt="avatar" className="header-avatar" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }} />
-                            ) : (
-                                <UserCircle size={22} className="user-icon" />
-                            )}
-                            <span className="username-display">
-                                {authLoading ? 'Đang tải...' : isValidUser ? displayName : 'Tài khoản'}
-                            </span>
-                            <ChevronDown size={14} className={showDropdown ? 'rotate' : ''} />
+                            <ChevronDown
+                                size={18}
+                                className="icon-down"
+                            />
                         </div>
 
-                        {showDropdown && (
-                            <div className="dropdown-content show">
-                                {isValidUser ? (
-                                    <>
-                                        <div className="dropdown-user-info">
-                                            <p>Chào, <strong>{displayName}</strong></p>
-                                            {user.role === 'admin' && <span className="admin-badge">Quản trị viên</span>}
-                                        </div>
-                                        <div className="dropdown-divider" />
-                                        {user.role === 'admin' && (
-                                            <div className="dropdown-item admin-link" onClick={() => { navigate('/admin'); setShowDropdown(false); }}>
-                                                <LayoutDashboard size={18} /><span>Trang Quản Trị</span>
-                                            </div>
-                                        )}
-                                        <div className="dropdown-item" onClick={() => { navigate('/profile'); setShowDropdown(false); }}>
-                                            <IdCard size={18} /><span>Hồ sơ</span>
-                                        </div>
-                                        <div className={`dropdown-item logout-btn`} onClick={handleLogout}>
-                                            <LogOut size={18} /><span>Đăng xuất</span>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="dropdown-user-info">
-                                            <p style={{ color: '#f87171' }}>
-                                                {user && !user.email_verified 
-                                                    ? '⚠️ Vui lòng xác thực email' 
-                                                    : 'Chưa đăng nhập'}
-                                            </p>
-                                        </div>
-                                        <div className="dropdown-divider" />
-                                        <div className="dropdown-item" onClick={handleLoginClick}>
-                                            <LogIn size={18} /><span>Đăng nhập</span>
-                                        </div>
-                                        <div className="dropdown-item" onClick={handleRegisterClick}>
-                                            <UserPlus size={18} /><span>Đăng Ký</span>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </nav>
+                        <ul className="sub-menu">
 
-            <SessionExpiredModal
-                isOpen={showSessionExpiredModal}
-                onConfirm={handleSessionExpiredConfirm}
-                message={sessionExpiredMessage}
-                newDevice={newDevice}
-                autoRedirect={true}
-                redirectDelay={countdown}
-            />
-        </>
+                            <li>
+                                <Link
+                                    to="/movies/status/phim-dang-chieu"
+                                    onClick={closeMobileMenu}
+                                >
+                                    Phim đang chiếu
+                                </Link>
+                            </li>
+
+                            <li>
+                                <Link
+                                    to="/movies/status/phim-sap-chieu"
+                                    onClick={closeMobileMenu}
+                                >
+                                    Phim sắp chiếu
+                                </Link>
+                            </li>
+
+                        </ul>
+                    </li>
+
+                    {/* RẠP */}
+
+                    <li
+                        className={`has-dropdown ${
+                            activeSubMenu === 'rap' ? 'mobile-active' : ''
+                        }`}
+                    >
+                        <div className="menu-link mobile-parent">
+
+                            <Link
+                                to="/cinema"
+                                onClick={closeMobileMenu}
+                            >
+                                Rạp
+                            </Link>
+
+                            <ChevronDown
+                                size={18}
+                                className="icon-down"
+                                onClick={(event) =>
+                                    toggleSubMenu('rap', event)
+                                }
+                            />
+
+                        </div>
+
+                        <ul className="sub-menu">
+
+                            {cinemas.map((cinema) => (
+                                <li
+                                    key={cinema.cinema_id}
+                                >
+                                    <Link
+                                        to={`/cinema/detail/${cinema.slug}`}
+                                        onClick={closeMobileMenu}
+                                    >
+                                        {cinema.cinema_name}
+                                    </Link>
+                                </li>
+                            ))}
+
+                        </ul>
+                    </li>
+
+                    {/* GÓC ĐIỆN ẢNH */}
+
+                    <li
+                        className={`has-dropdown ${
+                            activeSubMenu === 'goc' ? 'mobile-active' : ''
+                        }`}
+                    >
+                        <div
+                            className="menu-link mobile-parent"
+                            onClick={(event) =>
+                                toggleSubMenu('goc', event)
+                            }
+                        >
+                            <span>Góc Điện Ảnh</span>
+
+                            <ChevronDown
+                                size={18}
+                                className="icon-down"
+                            />
+                        </div>
+
+                        <ul className="sub-menu">
+
+                            <li>
+                                <Link
+                                    to="/actors"
+                                    onClick={closeMobileMenu}
+                                >
+                                    Diễn Viên
+                                </Link>
+                            </li>
+
+                            <li>
+                                <Link
+                                    to="/news"
+                                    onClick={closeMobileMenu}
+                                >
+                                    Tin Tức
+                                </Link>
+                            </li>
+
+                        </ul>
+                    </li>
+
+                    <li>
+                        <Link
+                            to="/promotion"
+                            onClick={closeMobileMenu}
+                            className="menu-link"
+                        >
+                            Khuyến mãi
+                        </Link>
+                    </li>
+
+                    <li>
+                        <Link
+                            to="/blog-cinema"
+                            onClick={closeMobileMenu}
+                            className="menu-link"
+                        >
+                            Blog Điện Ảnh
+                        </Link>
+                    </li>
+
+                </ul>
+
+                {/* USER MENU */}
+
+                <div
+                    className="user-menu"
+                    ref={dropdownRef}
+                >
+
+                    <div
+                        className="account-trigger"
+                        onClick={() =>
+                            setShowDropdown((prev) => !prev)
+                        }
+                    >
+
+                        {isValidUser && avatarUrl ? (
+                            <img
+                                src={avatarUrl}
+                                alt="avatar"
+                                className="header-avatar"
+                                style={{
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '50%',
+                                    objectFit: 'cover',
+                                    marginRight: '8px'
+                                }}
+                            />
+                        ) : (
+                            <UserCircle
+                                size={22}
+                                className="user-icon"
+                            />
+                        )}
+
+                        <span className="username-display">
+
+                            {authLoading
+                                ? 'Đang tải...'
+                                : isValidUser
+                                    ? displayName
+                                    : 'Tài khoản'}
+
+                        </span>
+
+                        <ChevronDown
+                            size={14}
+                            className={showDropdown ? 'rotate' : ''}
+                        />
+
+                    </div>
+
+                    {showDropdown && (
+
+                        <div className="dropdown-content show">
+
+                            {isValidUser ? (
+
+                                <>
+
+                                    <div className="dropdown-user-info">
+
+                                        <p>
+                                            Chào,{' '}
+                                            <strong>{displayName}</strong>
+                                        </p>
+
+                                        {user.role === 'admin' && (
+                                            <span className="admin-badge">
+                                                Quản trị viên
+                                            </span>
+                                        )}
+
+                                    </div>
+
+                                    <div className="dropdown-divider" />
+
+                                    {user.role === 'admin' && (
+
+                                        <div
+                                            className="dropdown-item admin-link"
+                                            onClick={() => {
+                                                navigate('/admin');
+                                                setShowDropdown(false);
+                                            }}
+                                        >
+
+                                            <LayoutDashboard size={18} />
+
+                                            <span>Trang Quản Trị</span>
+
+                                        </div>
+
+                                    )}
+
+                                    <div
+                                        className="dropdown-item"
+                                        onClick={() => {
+                                            navigate('/profile');
+                                            setShowDropdown(false);
+                                        }}
+                                    >
+
+                                        <IdCard size={18} />
+
+                                        <span>Hồ sơ</span>
+
+                                    </div>
+
+                                    <div
+                                        className="dropdown-item logout-btn"
+                                        onClick={handleLogout}
+                                    >
+
+                                        <LogOut size={18} />
+
+                                        <span>
+
+                                            {isLoggingOut
+                                                ? 'Đang đăng xuất...'
+                                                : 'Đăng xuất'}
+
+                                        </span>
+
+                                    </div>
+
+                                </>
+
+                            ) : (
+
+                                <>
+
+                                    <div className="dropdown-user-info">
+
+                                        <p
+                                            style={{
+                                                color: '#f87171'
+                                            }}
+                                        >
+
+                                            {user &&
+                                            !Number(user.email_verified)
+                                                ? '⚠️ Vui lòng xác thực email'
+                                                : 'Chưa đăng nhập'}
+
+                                        </p>
+
+                                    </div>
+
+                                    <div className="dropdown-divider" />
+
+                                    <div
+                                        className="dropdown-item"
+                                        onClick={handleLoginClick}
+                                    >
+
+                                        <LogIn size={18} />
+
+                                        <span>Đăng nhập</span>
+
+                                    </div>
+
+                                    <div
+                                        className="dropdown-item"
+                                        onClick={handleRegisterClick}
+                                    >
+
+                                        <UserPlus size={18} />
+
+                                        <span>Đăng ký</span>
+
+                                    </div>
+
+                                </>
+
+                            )}
+
+                        </div>
+
+                    )}
+
+                </div>
+
+            </div>
+
+        </nav>
     );
 };
 
