@@ -12,72 +12,37 @@ import React, {
 import api from '../api/api';
 import socketService from '../api/socket';
 
-// ============================================================
-// CONTEXT
-// ============================================================
-
 const AuthContext = createContext(null);
-
-// ============================================================
-// HOOK
-// ============================================================
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-
     if (!context) {
         throw new Error('useAuth must be used within AuthProvider');
     }
-
     return context;
 };
 
-// ============================================================
-// AUTH PROVIDER
-// ============================================================
-
 export const AuthProvider = ({ children }) => {
-
-    // ========================================================
-    // STATE
-    // ========================================================
 
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-    // ========================================================
-    // REFS
-    // ========================================================
 
     const userRef = useRef(null);
     const isFetchingRef = useRef(false);
     const fetchedRef = useRef(false);
     const mountedRef = useRef(true);
 
-    // ========================================================
-    // SYNC USER REF
-    // ========================================================
-
     useEffect(() => {
         userRef.current = user;
     }, [user]);
 
-    // ========================================================
-    // MOUNT STATUS
-    // ========================================================
-
     useEffect(() => {
         mountedRef.current = true;
-
         return () => {
             mountedRef.current = false;
         };
     }, []);
-
-    // ========================================================
-    // CLEAR AUTH STATE
-    // ========================================================
 
     const clearAuthState = useCallback(() => {
         console.log('🧹 [AUTH] Clearing auth state');
@@ -92,20 +57,14 @@ export const AuthProvider = ({ children }) => {
         api.resetUserCache();
     }, []);
 
-    // ========================================================
-    // FETCH USER
-    // ========================================================
-
     const fetchUser = useCallback(
         async (force = false) => {
 
-            // Đã fetch rồi
             if (fetchedRef.current && !force) {
                 console.log('⏭️ [AUTH] Already fetched, skip');
                 return userRef.current;
             }
 
-            // Đang fetch
             if (isFetchingRef.current) {
                 console.log('⏭️ [AUTH] Already fetching, skip');
                 return userRef.current;
@@ -125,7 +84,6 @@ export const AuthProvider = ({ children }) => {
                 const raw = response?.data;
                 const userData = raw?.user || raw?.data?.user || null;
 
-                // CÓ USER
                 if (userData) {
                     console.log('✅ [AUTH] User loaded:', userData.user_id);
 
@@ -137,7 +95,6 @@ export const AuthProvider = ({ children }) => {
                         setIsAuthenticated(true);
                     }
 
-                    // CONNECT SOCKET
                     if (userData.user_id) {
                         socketService.connect(userData.user_id);
                     }
@@ -145,7 +102,6 @@ export const AuthProvider = ({ children }) => {
                     return userData;
                 }
 
-                // KHÔNG CÓ USER
                 console.log('🔵 [AUTH] No active user');
                 clearAuthState();
                 socketService.disconnect();
@@ -155,7 +111,6 @@ export const AuthProvider = ({ children }) => {
             } catch (error) {
                 console.warn('🔵 [AUTH] No active user session:', error?.response?.status || error?.message);
 
-                // 🔥 NẾU LỖI 401 (UNAUTHORIZED) -> Server đã xóa cookie, phát event để SessionGuard bắt
                 if (error?.response?.status === 401) {
                     window.dispatchEvent(
                         new CustomEvent('sessionExpired', {
@@ -176,7 +131,6 @@ export const AuthProvider = ({ children }) => {
 
             } finally {
                 isFetchingRef.current = false;
-
                 if (mountedRef.current) {
                     setIsLoading(false);
                 }
@@ -185,19 +139,9 @@ export const AuthProvider = ({ children }) => {
         [clearAuthState]
     );
 
-    // ========================================================
-    // INITIAL FETCH
-    // ========================================================
-
     useEffect(() => {
-        fetchUser().catch(() => {
-            // 401 sẽ được interceptor xử lý, SessionGuard xử lý modal
-        });
+        fetchUser().catch(() => {});
     }, [fetchUser]);
-
-    // ========================================================
-    // LOGOUT (Chủ động)
-    // ========================================================
 
     const logout = useCallback(async () => {
         console.log('🚪 [AUTH] Logging out...');
@@ -228,10 +172,6 @@ export const AuthProvider = ({ children }) => {
         }
     }, [clearAuthState]);
 
-    // ========================================================
-    // AUTH CLEANED UP
-    // ========================================================
-
     useEffect(() => {
         const handleAuthCleanedUp = () => {
             console.log('🧹 [AUTH] authCleanedUp received');
@@ -246,10 +186,6 @@ export const AuthProvider = ({ children }) => {
         };
     }, [clearAuthState]);
 
-    // ========================================================
-    // SESSION EXPIRED
-    // ========================================================
-
     useEffect(() => {
         const handleSessionExpired = (event) => {
             console.warn('🔴 [AUTH] Session expired:', event?.detail);
@@ -263,10 +199,6 @@ export const AuthProvider = ({ children }) => {
             window.removeEventListener('sessionExpired', handleSessionExpired);
         };
     }, [clearAuthState]);
-
-    // ========================================================
-    // USER LOGGED IN
-    // ========================================================
 
     useEffect(() => {
         const handleUserLoggedIn = () => {
@@ -292,27 +224,15 @@ export const AuthProvider = ({ children }) => {
         };
     }, [fetchUser]);
 
-    // ========================================================
-    // REFETCH
-    // ========================================================
-
     const refetch = useCallback(() => {
         return fetchUser(true);
     }, [fetchUser]);
-
-    // ========================================================
-    // SET USER WRAPPER
-    // ========================================================
 
     const updateUser = useCallback((newUser) => {
         userRef.current = newUser;
         setUser(newUser);
         setIsAuthenticated(Boolean(newUser));
     }, []);
-
-    // ========================================================
-    // CONTEXT VALUE
-    // ========================================================
 
     const value = {
         user,
@@ -323,10 +243,6 @@ export const AuthProvider = ({ children }) => {
         logout,
         setUser: updateUser,
     };
-
-    // ========================================================
-    // RENDER
-    // ========================================================
 
     return (
         <AuthContext.Provider value={value}>

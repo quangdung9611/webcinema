@@ -15,7 +15,6 @@ const Cookie = require("./utils/Cookie");
 const RefreshTokenRepository = require("./Repositories/RefreshTokenRepository");
 const AuthService = require("./Services/AuthService");
 
-// Load Mailer (nếu có lỗi thì bỏ qua)
 try {
     require("./Config/mailer");
     console.log("✅ Mailer module loaded successfully!");
@@ -23,9 +22,6 @@ try {
     console.error("❌ Failed to load mailer module:", error);
 }
 
-/*=========================================================
-    ROUTERS
-=========================================================*/
 const userAuthRoutes = require("./Routers/UserAuthRouter");
 const adminAuthRoutes = require("./Routers/AdminAuthRouter");
 
@@ -55,9 +51,6 @@ const testimonialRoutes = require("./Routers/TestimonialRouter");
 const bannerRoutes = require("./Routers/BannerRouter");
 const dashboardRouter = require("./Routers/DashboardRouter");
 
-/*=========================================================
-    EXPRESS SETUP
-=========================================================*/
 const app = express();
 const server = http.createServer(app);
 
@@ -67,9 +60,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-/*=========================================================
-    CORS
-=========================================================*/
 const corsOptions = {
     origin: [
         "https://quangdungcinema.id.vn",
@@ -86,23 +76,16 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-/*=========================================================
-    SOCKET.IO SETUP
-=========================================================*/
 const io = new Server(server, {
     cors: corsOptions,
     transports: ["websocket", "polling"],
     allowEIO3: true
 });
 
-// Gán IO vào AuthService và Global
 AuthService.setIO(io);
 global.io = io;
 console.log("✅ Socket.IO instance set to AuthService & global");
 
-/*=========================================================
-    🔥 SOCKET AUTHENTICATION (CHECK ORIGIN + TOKEN)
-=========================================================*/
 const allowedOrigins = [
     "https://quangdungcinema.id.vn",
     "https://www.quangdungcinema.id.vn",
@@ -113,14 +96,12 @@ const allowedOrigins = [
 
 io.use(async (socket, next) => {
     try {
-        // 1. Kiểm tra Origin
         const origin = socket.handshake.headers.origin;
         if (origin && !allowedOrigins.includes(origin)) {
             console.warn(`🔴 [SOCKET] Chặn kết nối từ Origin lạ: ${origin}`);
             return next(new Error("Origin not allowed"));
         }
 
-        // 2. Đọc cookie
         const cookies = Object.fromEntries(
             (socket.handshake.headers.cookie || "").split(";").map(c => c.trim().split("="))
         );
@@ -131,7 +112,6 @@ io.use(async (socket, next) => {
             return next(new Error("Authentication required"));
         }
 
-        // 3. Verify Token
         let payload;
         try {
             payload = Jwt.verifyAccessToken(token);
@@ -166,7 +146,6 @@ io.use(async (socket, next) => {
             return next(new Error("Invalid token"));
         }
 
-        // 4. Check DB
         try {
             const accessTokenHash = Jwt.hashRefreshToken(token);
             const validToken = await RefreshTokenRepository.findValidTokenHash(accessTokenHash);
@@ -187,7 +166,6 @@ io.use(async (socket, next) => {
             console.error("🔴 [SOCKET] DB check error:", dbError.message);
         }
 
-        // 5. Gán thông tin user vào socket
         socket.userId = payload.user_id;
         socket.userRole = payload.role;
         socket.userEmail = payload.email;
@@ -202,30 +180,21 @@ io.use(async (socket, next) => {
     }
 });
 
-/*=========================================================
-    HOLDING SEATS
-=========================================================*/
 let holdingSeats = [];
 
-/*=========================================================
-    🔥 SOCKET CONNECTION EVENTS
-=========================================================*/
 io.on("connection", async (socket) => {
     const userId = socket.userId;
     const socketId = socket.id;
 
     console.log(`⚡ [SOCKET] Connected: ${socketId} - User: ${userId} (${socket.email || 'N/A'})`);
 
-    // Tham gia room
     if (userId) {
         socket.join(`user_${userId}`);
         console.log(`📌 [SOCKET] User ${userId} joined room user_${userId}`);
     }
 
-    // Gửi danh sách ghế đang giữ
     socket.emit("server-gui-danh-sach-dang-giu", holdingSeats);
 
-    // Register socket
     socket.on("register_socket", async (data) => {
         const { userId: registerUserId } = data;
         if (registerUserId && Number(registerUserId) === Number(userId)) {
@@ -241,7 +210,6 @@ io.on("connection", async (socket) => {
         }
     });
 
-    // Chọn ghế
     socket.on("client-chon-ghe", (data) => {
         const existingSeat = holdingSeats.find(seat => 
             Number(seat.seatId) === Number(data.seatId) && Number(seat.showtimeId) === Number(data.showtimeId)
@@ -258,7 +226,6 @@ io.on("connection", async (socket) => {
         console.log(`🔒 [SOCKET] User ${userId} đã giữ ghế: ${data.seatId} - Showtime: ${data.showtimeId}`);
     });
 
-    // Hủy chọn ghế
     socket.on("client-huy-chon-ghe", (data) => {
         const existingSeat = holdingSeats.find(seat => 
             Number(seat.seatId) === Number(data.seatId) && Number(seat.showtimeId) === Number(data.showtimeId)
@@ -279,12 +246,10 @@ io.on("connection", async (socket) => {
         console.log(`🔓 [SOCKET] User ${userId} đã hủy giữ ghế: ${data.seatId} - Showtime: ${data.showtimeId}`);
     });
 
-    // Request holding seats
     socket.on("request-holding-seats", () => {
         socket.emit("server-gui-danh-sach-dang-giu", holdingSeats);
     });
 
-    // Clear all holding seats
     socket.on("clear_all_holding_seats", (data) => {
         const userSeats = holdingSeats.filter(seat => seat.socketId === socketId);
         
@@ -301,12 +266,10 @@ io.on("connection", async (socket) => {
         });
     });
 
-    // ACK session expired
     socket.on("session_expired_ack", (data) => {
         console.log(`📨 [SOCKET] Received session_expired_ack from user ${userId}:`, data);
     });
 
-    // Disconnect
     socket.on("disconnect", () => {
         console.log(`🔴 [SOCKET] Disconnected: ${socketId} - User: ${userId}`);
 
@@ -328,9 +291,6 @@ io.on("connection", async (socket) => {
     });
 });
 
-/*=========================================================
-    API ROUTES
-=========================================================*/
 app.get("/", (req, res) => res.send("🚀 Cinema Backend is flying!"));
 app.get("/api", (req, res) => res.send("🚀 Cinema Backend is flying!"));
 
@@ -351,11 +311,9 @@ app.get("/api/health", async (req, res) => {
     }
 });
 
-// User Auth
 app.use("/api/auth", userAuthRoutes);
 app.use("/admin/api/auth", adminAuthRoutes);
 
-// User API
 app.use("/api/users", userRoutes);
 app.use("/api/genres", genreRoutes);
 app.use("/api/movies", movieRoutes);
@@ -381,12 +339,8 @@ app.use("/api/forgot-password", forgotPasswordRoutes);
 app.use("/api/testimonials", testimonialRoutes);
 app.use("/api/banners", bannerRoutes);
 
-// Admin API
 app.use("/admin/api/dashboard", dashboardRouter);
 
-/*=========================================================
-    ERROR HANDLING
-=========================================================*/
 app.use((req, res) => {
     res.status(404).json({ success: false, code: "NOT_FOUND", message: "API endpoint not found" });
 });
@@ -396,49 +350,6 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, code: "INTERNAL_SERVER_ERROR", message: "Internal server error" });
 });
 
-/*=========================================================
-    🔥 BACKGROUND CHECK TOKEN - TỰ ĐỘNG ĐÁ USER KHI HẾT HẠN
-=========================================================*/
-setInterval(async () => {
-    try {
-        // Lấy danh sách tất cả socket đang kết nối
-        const sockets = await io.fetchSockets();
-        
-        for (const socket of sockets) {
-            // Lấy userId từ socket đã lưu lúc trước
-            const userId = socket.userId;
-            
-            if (!userId) continue;
-
-            // Kiểm tra token của user này trong DB
-            const tokenData = await RefreshTokenRepository.findLatestTokenByUserId(userId);
-            
-            if (!tokenData || new Date(tokenData.expires_at) < new Date()) {
-                console.log(`🔴 [SERVER] Token user ${userId} đã hết hạn - Đang đá ra...`);
-                
-                // Gửi sự kiện xuống client
-                io.to(`user_${userId}`).emit('session_expired', {
-                    code: 'TOKEN_EXPIRED',
-                    type: 'token',
-                    message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-                    timestamp: new Date().toISOString()
-                });
-
-                // Đóng socket
-                socket.disconnect(true);
-                
-                // Xóa Redis
-                await RedisService.deleteUserSocket(userId);
-            }
-        }
-    } catch (error) {
-        console.error('❌ [SERVER] Background check error:', error.message);
-    }
-}, 30 * 1000); // Chạy mỗi 30 giây
-
-/*=========================================================
-    START SERVER
-=========================================================*/
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, "0.0.0.0", async () => {
@@ -463,7 +374,6 @@ server.listen(PORT, "0.0.0.0", async () => {
     console.log("✅ Socket.IO server ready");
     console.log(`📡 WebSocket: ${process.env.BACKEND_URL || 'http://localhost:' + PORT}`);
 
-    // Keep alive ping
     const SELF_URL = process.env.BACKEND_URL || `http://localhost:${PORT}`;
     setInterval(async () => {
         try {
@@ -477,7 +387,4 @@ server.listen(PORT, "0.0.0.0", async () => {
     }, 5 * 60 * 1000);
 });
 
-/*=========================================================
-    EXPORT
-=========================================================*/
 module.exports = { app, server, io };

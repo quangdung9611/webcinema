@@ -4,7 +4,6 @@ const Jwt = require("../utils/Jwt");
 const Cookie = require("../utils/Cookie");
 const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
 
-// Lưu socketService instance
 let socketIOInstance = null;
 
 const setSocketIO = (io) => {
@@ -12,10 +11,6 @@ const setSocketIO = (io) => {
 };
 
 const getSocketIO = () => socketIOInstance;
-
-/*=========================================================
-    AUTHENTICATE USER (CUSTOMER) - HOÀN CHỈNH
-=========================================================*/
 
 const authenticateUser = async (req, res, next) => {
     try {
@@ -29,18 +24,13 @@ const authenticateUser = async (req, res, next) => {
             });
         }
 
-        // ============================================================
-        // 🔥 VERIFY TOKEN - PHÂN BIỆT LỖI
-        // ============================================================
         let payload;
         try {
             payload = Jwt.verifyAccessToken(accessToken);
         } catch (error) {
-            // ========== TOKEN_EXPIRED - Token hết hạn ==========
             if (error.name === 'TokenExpiredError') {
                 console.warn('🔴 [AUTH] Token đã hết hạn');
-                
-                // 🔥 Lấy userId từ token cũ
+
                 try {
                     const decoded = Jwt.decodeAccessToken(accessToken);
                     if (decoded?.user_id && socketIOInstance) {
@@ -53,7 +43,7 @@ const authenticateUser = async (req, res, next) => {
                 } catch (decodeError) {
                     console.warn('⚠️ [AUTH] Cannot decode expired token');
                 }
-                
+
                 Cookie.clearUserCookies(res);
                 return res.status(401).json({
                     success: false,
@@ -61,8 +51,7 @@ const authenticateUser = async (req, res, next) => {
                     message: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
                 });
             }
-            
-            // ========== TOKEN_INVALID - Token không hợp lệ ==========
+
             console.warn('🔴 [AUTH] Token không hợp lệ:', error.message);
             Cookie.clearUserCookies(res);
             return res.status(401).json({
@@ -89,16 +78,12 @@ const authenticateUser = async (req, res, next) => {
             });
         }
 
-        // ============================================================
-        // 🔥 CHECK DB: KIỂM TRA TOKEN CÓ CÒN HỢP LỆ KHÔNG
-        // ============================================================
         const accessTokenHash = Jwt.hashRefreshToken(accessToken);
         const validToken = await RefreshTokenRepository.findValidTokenHash(accessTokenHash);
 
         if (!validToken) {
             console.warn('🔴 [AUTH] Token không tồn tại trong DB hoặc đã bị revoke');
-            
-            // 🔥 Gửi socket notification ngay lập tức
+
             if (payload?.user_id && socketIOInstance) {
                 Cookie.emitSessionExpired(socketIOInstance, payload.user_id, {
                     deviceName: 'Session revoked',
@@ -106,7 +91,7 @@ const authenticateUser = async (req, res, next) => {
                     timestamp: new Date().toISOString()
                 });
             }
-            
+
             Cookie.clearUserCookies(res);
             return res.status(401).json({
                 success: false,
@@ -134,14 +119,10 @@ const authenticateUser = async (req, res, next) => {
     }
 };
 
-/*=========================================================
-    OPTIONAL AUTH - KHÔNG BẮT BUỘC ĐĂNG NHẬP
-=========================================================*/
-
 const optionalAuth = async (req, res, next) => {
     try {
         const accessToken = Cookie.getUserAccessToken(req);
-        
+
         if (accessToken) {
             try {
                 let payload;
@@ -154,11 +135,11 @@ const optionalAuth = async (req, res, next) => {
                     }
                     throw error;
                 }
-                
+
                 if (payload && payload.role === "customer") {
                     const accessTokenHash = Jwt.hashRefreshToken(accessToken);
                     const validToken = await RefreshTokenRepository.findValidTokenHash(accessTokenHash);
-                    
+
                     if (validToken) {
                         req.user = {
                             user_id: payload.user_id,
@@ -178,10 +159,6 @@ const optionalAuth = async (req, res, next) => {
         next();
     }
 };
-
-/*=========================================================
-    EXPORT
-=========================================================*/
 
 module.exports = {
     authenticateUser,

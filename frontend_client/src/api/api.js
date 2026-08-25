@@ -1,16 +1,7 @@
 import axios from 'axios';
 
-// ============================================================
-// CONFIG
-// ============================================================
-
 const API_BASE = 'https://api.quangdungcinema.id.vn';
-
 const CACHE_DURATION = 5000;
-
-// ============================================================
-// AXIOS INSTANCE
-// ============================================================
 
 const api = axios.create({
     baseURL: API_BASE,
@@ -20,25 +11,11 @@ const api = axios.create({
     },
 });
 
-// ============================================================
-// CACHE /api/auth/me
-// ============================================================
-
 let cachedUser = null;
 let cachedTime = 0;
-
-// ============================================================
-// SESSION LOCK (Chống phát event sessionExpired nhiều lần)
-// ============================================================
-
 let isSessionExpiredEmitted = false;
 
-// ============================================================
-// EMIT SESSION EXPIRED
-// ============================================================
-
 const emitSessionExpired = (detail = {}) => {
-    // LOCK
     if (isSessionExpiredEmitted) {
         console.log('⚠️ [API] sessionExpired already emitted');
         return;
@@ -62,7 +39,6 @@ const emitSessionExpired = (detail = {}) => {
 
     console.warn('🔴 [API] EMIT SESSION EXPIRED:', payload);
 
-    // SessionGuard sẽ nhận event này và xử lý UI
     window.dispatchEvent(
         new CustomEvent('sessionExpired', {
             detail: payload,
@@ -70,20 +46,14 @@ const emitSessionExpired = (detail = {}) => {
     );
 };
 
-// ============================================================
-// GET OVERRIDE (Cache /api/auth/me)
-// ============================================================
-
 const originalGet = api.get;
 
 api.get = function (url, config = {}) {
     const normalizedUrl = typeof url === 'string' ? url.split('?')[0] : url;
     const isMeEndpoint = normalizedUrl === '/api/auth/me';
 
-    // Cache
     if (isMeEndpoint && !config.force) {
         const now = Date.now();
-
         if (cachedUser && now - cachedTime < CACHE_DURATION) {
             console.log('💾 [API] Return cached /api/auth/me');
             return Promise.resolve({
@@ -97,7 +67,6 @@ api.get = function (url, config = {}) {
         }
     }
 
-    // Không gửi "force" xuống server
     const requestConfig = { ...config };
     if ('force' in requestConfig) {
         delete requestConfig.force;
@@ -106,16 +75,11 @@ api.get = function (url, config = {}) {
     return originalGet.call(this, url, requestConfig);
 };
 
-// ============================================================
-// RESPONSE INTERCEPTOR
-// ============================================================
-
 api.interceptors.response.use(
     (response) => {
         const requestUrl = response.config?.url || '';
         const normalizedUrl = requestUrl.split('?')[0];
 
-        // Cache /api/auth/me
         if (normalizedUrl === '/api/auth/me') {
             cachedUser = response.data;
             cachedTime = Date.now();
@@ -124,18 +88,12 @@ api.interceptors.response.use(
 
         return response;
     },
-
     (error) => {
         const status = error?.response?.status;
         const requestUrl = error?.config?.url || '';
         const normalizedUrl = requestUrl.split('?')[0];
 
-        // ====================================================
-        // 401 UNAUTHORIZED - Xử lý session
-        // ====================================================
-
         if (status === 401) {
-            // Clear cache ngay
             cachedUser = null;
             cachedTime = 0;
 
@@ -143,8 +101,6 @@ api.interceptors.response.use(
             const errorCode = responseData.code || 'UNAUTHORIZED';
             const errorMessage = responseData.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
             const newDevice = responseData.newDevice || null;
-
-            // Xác định loại session
             const type = errorCode === 'SESSION_EXPIRED' ? 'device' : 'token';
 
             console.warn('🔴 [API] 401 Unauthorized:', {
@@ -155,7 +111,6 @@ api.interceptors.response.use(
                 newDevice,
             });
 
-            // KHÔNG xử lý session cho các endpoint đăng nhập/đăng ký
             const excludedEndpoints = [
                 '/api/auth/login',
                 '/api/auth/register',
@@ -181,13 +136,7 @@ api.interceptors.response.use(
             }
         }
 
-        // ====================================================
-        // 403 FORBIDDEN
-        // ====================================================
-
         if (status === 403) {
-            console.warn('🟠 [API] 403 Forbidden:', normalizedUrl);
-
             window.dispatchEvent(
                 new CustomEvent('forbidden', {
                     detail: {
@@ -199,13 +148,7 @@ api.interceptors.response.use(
             );
         }
 
-        // ====================================================
-        // 429 RATE LIMITED
-        // ====================================================
-
         if (status === 429) {
-            console.warn('🟡 [API] 429 Rate Limited');
-
             window.dispatchEvent(
                 new CustomEvent('rateLimited', {
                     detail: {
@@ -216,13 +159,7 @@ api.interceptors.response.use(
             );
         }
 
-        // ====================================================
-        // SERVER ERROR (500+)
-        // ====================================================
-
         if (status && status >= 500) {
-            console.error('🔴 [API] Server Error:', status);
-
             window.dispatchEvent(
                 new CustomEvent('serverError', {
                     detail: {
@@ -234,13 +171,7 @@ api.interceptors.response.use(
             );
         }
 
-        // ====================================================
-        // NETWORK ERROR
-        // ====================================================
-
         if (error?.code === 'ERR_NETWORK' || error?.message === 'Network Error') {
-            console.error('🔴 [API] Network Error');
-
             window.dispatchEvent(
                 new CustomEvent('networkError', {
                     detail: {
@@ -251,10 +182,6 @@ api.interceptors.response.use(
             );
         }
 
-        // ====================================================
-        // TIMEOUT
-        // ====================================================
-
         if (error?.code === 'ECONNABORTED') {
             console.warn('🟡 [API] Request Timeout');
         }
@@ -263,48 +190,29 @@ api.interceptors.response.use(
     }
 );
 
-// ============================================================
-// RESET USER CACHE
-// ============================================================
-
 api.resetUserCache = function () {
     cachedUser = null;
     cachedTime = 0;
     console.log('🔄 [API] Reset user cache');
 };
 
-// ============================================================
-// RESET SESSION LOCK
-// ============================================================
-
 api.resetSessionExpiredLock = function () {
     isSessionExpiredEmitted = false;
     console.log('🔓 [API] Reset session expired lock');
 };
 
-// ============================================================
-// AUTH EVENTS (Chỉ dựa vào Server/Socket, KHÔNG đọc cookie)
-// ============================================================
-
-// Khi đăng nhập thành công -> Reset cache & mở khóa session
 window.addEventListener('userLoggedIn', () => {
     api.resetUserCache();
     api.resetSessionExpiredLock();
     console.log('🟢 [API] User logged in → reset auth state');
 });
 
-// Khi session hết hạn -> Reset cache
 window.addEventListener('sessionExpired', () => {
     api.resetUserCache();
 });
 
-// Khi auth bị cleanup -> Reset cache
 window.addEventListener('authCleanedUp', () => {
     api.resetUserCache();
 });
-
-// ============================================================
-// EXPORT
-// ============================================================
 
 export default api;

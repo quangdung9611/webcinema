@@ -4,50 +4,6 @@ import api from '../api/api';
 import socketService from '../api/socket';
 
 // ============================================================
-// CLEAR FRONTEND AUTH STATE
-// ============================================================
-
-const clearFrontendAuth = () => {
-    console.log(
-        '🧹 [AUTH CLEANUP] Clearing frontend auth state'
-    );
-
-    // Xóa user_token
-    document.cookie = 'user_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.quangdungcinema.id.vn';
-    document.cookie = 'user_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
-    document.cookie = 'user_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=localhost';
-
-    // Xóa admin_token
-    document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.quangdungcinema.id.vn';
-    document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
-    document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=localhost';
-
-    // Xóa các cookie liên quan khác
-    const cookies = document.cookie.split(';');
-    for (let cookie of cookies) {
-        const trimmed = cookie.trim();
-        if (trimmed.includes('token') || 
-            trimmed.includes('auth') || 
-            trimmed.includes('session')) {
-            const name = trimmed.split('=')[0];
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.quangdungcinema.id.vn`;
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-        }
-    }
-
-    delete api.defaults.headers.common.Authorization;
-
-    try {
-        socketService.disconnect();
-        console.log('🔌 [AUTH CLEANUP] Socket disconnected');
-    } catch (error) {
-        console.warn('⚠️ [AUTH CLEANUP] Socket disconnect failed:', error);
-    }
-
-    console.log('✅ [AUTH CLEANUP] All auth cookies cleared');
-};
-
-// ============================================================
 // DISPATCH AUTH CLEANED EVENT
 // ============================================================
 
@@ -68,7 +24,28 @@ const dispatchAuthCleanedUp = ({ reason, message }) => {
 };
 
 // ============================================================
-// CLEANUP AUTH
+// CLEAR FRONTEND STATE (KHÔNG XÓA COOKIE - VÌ COOKIE LÀ HTTPONLY)
+// ============================================================
+
+const clearFrontendAuth = () => {
+    console.log('🧹 [AUTH CLEANUP] Clearing frontend auth state');
+
+    // Xóa header nếu có
+    delete api.defaults.headers.common.Authorization;
+
+    // Ngắt socket
+    try {
+        socketService.disconnect();
+        console.log('🔌 [AUTH CLEANUP] Socket disconnected');
+    } catch (error) {
+        console.warn('⚠️ [AUTH CLEANUP] Socket disconnect failed:', error);
+    }
+
+    console.log('✅ [AUTH CLEANUP] Frontend auth state cleared');
+};
+
+// ============================================================
+// CLEANUP AUTH - GỌI API LOGOUT + DỌN STATE
 // ============================================================
 
 export const cleanupAuth = async (options = {}) => {
@@ -80,7 +57,7 @@ export const cleanupAuth = async (options = {}) => {
 
     console.log('🔴 [AUTH CLEANUP] Starting cleanup:', { reason, callApi });
 
-    // 1. LOGOUT API - Chỉ gọi khi user chủ động logout
+    // 1. LOGOUT API - Chỉ gọi khi user chủ động logout (Server sẽ xóa cookie)
     if (callApi) {
         try {
             await api.post('/api/auth/logout');
@@ -101,36 +78,6 @@ export const cleanupAuth = async (options = {}) => {
     return {
         success: true,
         reason,
-        message
-    };
-};
-
-// ============================================================
-// 🔥 LOGOUT VÀ XÓA COOKIE - GỌI API + XÓA COOKIE
-// ============================================================
-
-export const logoutAndClearCookies = async (message = 'Bạn đã đăng xuất.') => {
-    console.log('🚪 [AUTH] Logout and clear cookies...');
-
-    try {
-        // Gọi API logout để server xóa cookie
-        await api.post('/api/auth/logout');
-        console.log('✅ [AUTH] Logout API success');
-    } catch (error) {
-        console.warn('⚠️ [AUTH] Logout API failed:', error?.message);
-    }
-
-    // Xóa cookie frontend
-    clearFrontendAuth();
-
-    // Dispatch event
-    dispatchAuthCleanedUp({
-        reason: 'logout',
-        message
-    });
-
-    return {
-        success: true,
         message
     };
 };
@@ -169,7 +116,7 @@ export const logout = async () => {
 };
 
 // ============================================================
-// FORCE LOGOUT
+// FORCE LOGOUT (KHÔNG GỌI API - DÙNG KHI BỊ ĐÁ RA)
 // ============================================================
 
 export const forceLogout = async (
@@ -214,32 +161,6 @@ export const tokenInvalid = async (
 };
 
 // ============================================================
-// CHECK TOKEN STATUS
-// ============================================================
-
-export const checkAuthStatus = () => {
-    const cookies = document.cookie.split(';');
-    let hasUserToken = false;
-    let hasAdminToken = false;
-    
-    for (let cookie of cookies) {
-        const trimmed = cookie.trim();
-        if (trimmed.startsWith('user_token=')) {
-            hasUserToken = true;
-        }
-        if (trimmed.startsWith('admin_token=')) {
-            hasAdminToken = true;
-        }
-    }
-
-    return {
-        hasUserToken,
-        hasAdminToken,
-        isAuthenticated: hasUserToken || hasAdminToken
-    };
-};
-
-// ============================================================
 // DEFAULT EXPORT
 // ============================================================
 
@@ -247,10 +168,8 @@ export default {
     cleanupAuth,
     logout,
     forceLogout,
-    logoutAndClearCookies,
     notifyLogin,
     sessionExpired,
     deviceLoggedOut,
-    tokenInvalid,
-    checkAuthStatus
+    tokenInvalid
 };

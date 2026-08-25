@@ -44,7 +44,7 @@ const UserHeader = () => {
     // STATE
     // ========================================================
 
-    const [user, setUser] = useState(contextUser); // Khởi tạo từ context
+    const [user, setUser] = useState(contextUser);
     const [showDropdown, setShowDropdown] = useState(false);
     const [cinemas, setCinemas] = useState([]);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -122,7 +122,7 @@ const UserHeader = () => {
         // 2. USER LOGGED IN (Context đã tự fetch, Header chỉ cần nhận user mới)
         const handleUserLoggedIn = (event) => {
             console.log('🟢 [HEADER] User logged in - updating immediately');
-            
+
             // Gọi refetch để lấy user mới nhất từ context
             refetch().catch(() => {});
         };

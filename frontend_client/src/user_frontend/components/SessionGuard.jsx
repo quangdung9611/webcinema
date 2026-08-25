@@ -18,49 +18,26 @@ import Modal from './Modal';
 
 import '../styles/SessionGuard.css';
 
-// ============================================================
-// CONFIG
-// ============================================================
-
 const COUNTDOWN_SECONDS = 10;
-
-// ============================================================
-// SESSION GUARD
-// ============================================================
 
 const SessionGuard = ({ children }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
     const {
-        isLoading,
         clearAuthState,
-        user, // 🔥 Lấy user để check
-        isAuthenticated, // 🔥 Lấy trạng thái
     } = useAuth();
-
-    // ========================================================
-    // REFS
-    // ========================================================
 
     const isMountedRef = useRef(false);
     const isProcessingRef = useRef(false);
     const hasRedirectedRef = useRef(false);
     const hasShownModalRef = useRef(false);
 
-    // ========================================================
-    // MODAL STATE
-    // ========================================================
-
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
     const [modalNewDevice, setModalNewDevice] = useState(null);
     const [modalType, setModalType] = useState('token');
     const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
-
-    // ========================================================
-    // KIỂM TRA BOOKING PAGE
-    // ========================================================
 
     const isBookingPage = useCallback(() => {
         const path = location.pathname;
@@ -74,10 +51,6 @@ const SessionGuard = ({ children }) => {
             path.includes('/momo-app')
         );
     }, [location.pathname]);
-
-    // ========================================================
-    // XÓA BOOKING SESSION
-    // ========================================================
 
     const clearBookingSession = useCallback(() => {
         console.log('🧹 [SESSION GUARD] Clearing booking session...');
@@ -132,10 +105,6 @@ const SessionGuard = ({ children }) => {
         console.log('✅ [SESSION GUARD] Booking session cleared');
     }, []);
 
-    // ========================================================
-    // RESET FLAGS
-    // ========================================================
-
     const resetFlags = useCallback(() => {
         isProcessingRef.current = false;
         hasRedirectedRef.current = false;
@@ -144,10 +113,6 @@ const SessionGuard = ({ children }) => {
         setCountdown(COUNTDOWN_SECONDS);
         console.log('🔄 [SESSION GUARD] Flags reset');
     }, []);
-
-    // ========================================================
-    // CONFIRM MODAL
-    // ========================================================
 
     const handleModalConfirm = useCallback(() => {
         if (hasRedirectedRef.current) {
@@ -174,10 +139,6 @@ const SessionGuard = ({ children }) => {
             },
         });
     }, [navigate, modalMessage, modalType, isBookingPage]);
-
-    // ========================================================
-    // MỞ MODAL
-    // ========================================================
 
     const openSessionModal = useCallback(
         (detail = {}) => {
@@ -208,10 +169,6 @@ const SessionGuard = ({ children }) => {
         []
     );
 
-    // ========================================================
-    // 🔥 HANDLE SESSION EXPIRED
-    // ========================================================
-
     const handleSessionExpired = useCallback(
         async (eventOrDetail = {}) => {
             if (!isMountedRef.current) return;
@@ -236,23 +193,16 @@ const SessionGuard = ({ children }) => {
 
             isProcessingRef.current = true;
 
-            // 1. XÓA API CACHE
             api.resetUserCache();
-
-            // 2. XÓA BOOKING SESSION
             clearBookingSession();
 
-            // 3. DISCONNECT SOCKET
             try {
                 socketService.disconnect();
             } catch (error) {
                 console.warn('Socket disconnect error:', error);
             }
 
-            // 4. CLEAR AUTH STATE
             clearAuthState();
-
-            // 5. HIỆN MODAL
             openSessionModal({
                 ...detail,
                 type,
@@ -263,10 +213,6 @@ const SessionGuard = ({ children }) => {
         [clearBookingSession, openSessionModal, clearAuthState]
     );
 
-    // ========================================================
-    // MOUNT
-    // ========================================================
-
     useEffect(() => {
         isMountedRef.current = true;
         console.log('🛡️ [SESSION GUARD] Started');
@@ -275,32 +221,6 @@ const SessionGuard = ({ children }) => {
             isMountedRef.current = false;
         };
     }, []);
-
-    // ========================================================
-    // 🔥 CHỦ ĐỘNG CHECK KHI F5 (Đây là phần quan trọng nhất)
-    // ========================================================
-
-    useEffect(() => {
-        // Khi isLoading đã xong, nếu user = null và đã từng mount
-        // -> Nghĩa là bị đá ra khi F5, tự động hiện modal
-        if (!isLoading && !user && !isAuthenticated) {
-            // Chỉ hiện nếu chưa hiện và chưa redirect
-            if (!hasShownModalRef.current && !hasRedirectedRef.current) {
-                console.log('🔴 [SESSION GUARD] User is null after load (F5) - Opening modal');
-                
-                openSessionModal({
-                    type: 'token',
-                    code: 'UNAUTHORIZED',
-                    message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-                    source: 'auto_check',
-                });
-            }
-        }
-    }, [isLoading, user, isAuthenticated, openSessionModal]);
-
-    // ========================================================
-    // API SESSION EVENT
-    // ========================================================
 
     useEffect(() => {
         const handleSessionEvent = (event) => {
@@ -314,10 +234,6 @@ const SessionGuard = ({ children }) => {
             window.removeEventListener('sessionExpired', handleSessionEvent);
         };
     }, [handleSessionExpired]);
-
-    // ========================================================
-    // SOCKET CALLBACK
-    // ========================================================
 
     useEffect(() => {
         const handleSocketSessionExpired = (detail = {}) => {
@@ -336,10 +252,6 @@ const SessionGuard = ({ children }) => {
         };
     }, [handleSessionExpired]);
 
-    // ========================================================
-    // COUNTDOWN
-    // ========================================================
-
     useEffect(() => {
         if (!showModal) return;
 
@@ -353,19 +265,11 @@ const SessionGuard = ({ children }) => {
         return () => clearInterval(interval);
     }, [showModal]);
 
-    // ========================================================
-    // AUTO REDIRECT WHEN COUNTDOWN = 0
-    // ========================================================
-
     useEffect(() => {
         if (!showModal || countdown !== 0) return;
 
         handleModalConfirm();
     }, [countdown, showModal, handleModalConfirm]);
-
-    // ========================================================
-    // USER LOGGED IN
-    // ========================================================
 
     useEffect(() => {
         const handleUserLoggedIn = () => {
@@ -379,10 +283,6 @@ const SessionGuard = ({ children }) => {
             window.removeEventListener('userLoggedIn', handleUserLoggedIn);
         };
     }, [resetFlags]);
-
-    // ========================================================
-    // RENDER
-    // ========================================================
 
     return (
         <>
