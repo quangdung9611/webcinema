@@ -1,5 +1,3 @@
-// src/context/AuthContext.jsx
-
 import React, {
     createContext,
     useContext,
@@ -111,12 +109,12 @@ export const AuthProvider = ({ children }) => {
             } catch (error) {
                 console.warn('🔵 [AUTH] No active user session:', error?.response?.status || error?.message);
 
+                // 🔥 CHỈ CẦN PHÁT EVENT KHI CÓ 401 (KỂ CẢ TOKEN_EXPIRED HAY SESSION_REPLACED)
                 if (error?.response?.status === 401) {
                     window.dispatchEvent(
                         new CustomEvent('sessionExpired', {
                             detail: {
-                                code: error?.response?.data?.code || 'UNAUTHORIZED',
-                                type: error?.response?.data?.code === 'SESSION_EXPIRED' ? 'device' : 'token',
+                                code: error?.response?.data?.code || 'TOKEN_EXPIRED',
                                 message: error?.response?.data?.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
                                 source: 'auth_context',
                                 timestamp: new Date().toISOString()

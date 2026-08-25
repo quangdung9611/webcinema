@@ -23,14 +23,9 @@ const emitSessionExpired = (detail = {}) => {
 
     isSessionExpiredEmitted = true;
 
-    const isDeviceLogin = detail.type === 'device' || detail.code === 'SESSION_EXPIRED';
-
     const payload = {
-        code: detail.code || (isDeviceLogin ? 'SESSION_EXPIRED' : 'UNAUTHORIZED'),
-        message: detail.message || (isDeviceLogin
-            ? 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
-            : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'),
-        type: isDeviceLogin ? 'device' : 'token',
+        code: detail.code || 'TOKEN_EXPIRED',
+        message: detail.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
         newDevice: detail.newDevice || null,
         source: detail.source || 'api',
         fromSocket: false,
@@ -98,17 +93,13 @@ api.interceptors.response.use(
             cachedTime = 0;
 
             const responseData = error?.response?.data || {};
-            const errorCode = responseData.code || 'UNAUTHORIZED';
+            const errorCode = responseData.code || 'TOKEN_EXPIRED';
             const errorMessage = responseData.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
-            const newDevice = responseData.newDevice || null;
-            const type = errorCode === 'SESSION_EXPIRED' ? 'device' : 'token';
 
             console.warn('🔴 [API] 401 Unauthorized:', {
                 url: normalizedUrl,
                 code: errorCode,
                 message: errorMessage,
-                type,
-                newDevice,
             });
 
             const excludedEndpoints = [
@@ -129,61 +120,9 @@ api.interceptors.response.use(
                 emitSessionExpired({
                     code: errorCode,
                     message: errorMessage,
-                    type,
-                    newDevice,
                     source: 'api',
                 });
             }
-        }
-
-        if (status === 403) {
-            window.dispatchEvent(
-                new CustomEvent('forbidden', {
-                    detail: {
-                        message: error?.response?.data?.message || 'Bạn không có quyền truy cập.',
-                        url: normalizedUrl,
-                        timestamp: new Date().toISOString(),
-                    },
-                })
-            );
-        }
-
-        if (status === 429) {
-            window.dispatchEvent(
-                new CustomEvent('rateLimited', {
-                    detail: {
-                        message: error?.response?.data?.message || 'Quá nhiều yêu cầu. Vui lòng thử lại sau.',
-                        timestamp: new Date().toISOString(),
-                    },
-                })
-            );
-        }
-
-        if (status && status >= 500) {
-            window.dispatchEvent(
-                new CustomEvent('serverError', {
-                    detail: {
-                        status,
-                        message: error?.response?.data?.message || 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.',
-                        timestamp: new Date().toISOString(),
-                    },
-                })
-            );
-        }
-
-        if (error?.code === 'ERR_NETWORK' || error?.message === 'Network Error') {
-            window.dispatchEvent(
-                new CustomEvent('networkError', {
-                    detail: {
-                        message: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.',
-                        timestamp: new Date().toISOString(),
-                    },
-                })
-            );
-        }
-
-        if (error?.code === 'ECONNABORTED') {
-            console.warn('🟡 [API] Request Timeout');
         }
 
         return Promise.reject(error);
@@ -204,7 +143,6 @@ api.resetSessionExpiredLock = function () {
 window.addEventListener('userLoggedIn', () => {
     api.resetUserCache();
     api.resetSessionExpiredLock();
-    console.log('🟢 [API] User logged in → reset auth state');
 });
 
 window.addEventListener('sessionExpired', () => {

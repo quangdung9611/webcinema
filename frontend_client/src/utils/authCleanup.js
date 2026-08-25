@@ -1,11 +1,5 @@
-// src/utils/authCleanup.js
-
 import api from '../api/api';
 import socketService from '../api/socket';
-
-// ============================================================
-// DISPATCH AUTH CLEANED EVENT
-// ============================================================
 
 const dispatchAuthCleanedUp = ({ reason, message }) => {
     if (typeof window === 'undefined') {
@@ -23,17 +17,11 @@ const dispatchAuthCleanedUp = ({ reason, message }) => {
     );
 };
 
-// ============================================================
-// CLEAR FRONTEND STATE (KHÔNG XÓA COOKIE - VÌ COOKIE LÀ HTTPONLY)
-// ============================================================
-
 const clearFrontendAuth = () => {
     console.log('🧹 [AUTH CLEANUP] Clearing frontend auth state');
 
-    // Xóa header nếu có
     delete api.defaults.headers.common.Authorization;
 
-    // Ngắt socket
     try {
         socketService.disconnect();
         console.log('🔌 [AUTH CLEANUP] Socket disconnected');
@@ -44,10 +32,6 @@ const clearFrontendAuth = () => {
     console.log('✅ [AUTH CLEANUP] Frontend auth state cleared');
 };
 
-// ============================================================
-// CLEANUP AUTH - GỌI API LOGOUT + DỌN STATE
-// ============================================================
-
 export const cleanupAuth = async (options = {}) => {
     const {
         callApi = false,
@@ -57,7 +41,6 @@ export const cleanupAuth = async (options = {}) => {
 
     console.log('🔴 [AUTH CLEANUP] Starting cleanup:', { reason, callApi });
 
-    // 1. LOGOUT API - Chỉ gọi khi user chủ động logout (Server sẽ xóa cookie)
     if (callApi) {
         try {
             await api.post('/api/auth/logout');
@@ -67,10 +50,7 @@ export const cleanupAuth = async (options = {}) => {
         }
     }
 
-    // 2. CLEAR FRONTEND STATE
     clearFrontendAuth();
-
-    // 3. NOTIFY APP
     dispatchAuthCleanedUp({ reason, message });
 
     console.log('✅ [AUTH CLEANUP] Cleanup completed');
@@ -81,10 +61,6 @@ export const cleanupAuth = async (options = {}) => {
         message
     };
 };
-
-// ============================================================
-// USER LOGIN SUCCESS
-// ============================================================
 
 export const notifyLogin = (user = null) => {
     console.log('🟢 [AUTH] User login detected');
@@ -103,10 +79,6 @@ export const notifyLogin = (user = null) => {
     );
 };
 
-// ============================================================
-// LOGOUT CHỦ ĐỘNG
-// ============================================================
-
 export const logout = async () => {
     return cleanupAuth({
         callApi: true,
@@ -114,10 +86,6 @@ export const logout = async () => {
         message: 'Bạn đã đăng xuất thành công.'
     });
 };
-
-// ============================================================
-// FORCE LOGOUT (KHÔNG GỌI API - DÙNG KHI BỊ ĐÁ RA)
-// ============================================================
 
 export const forceLogout = async (
     reason = 'expired',
@@ -130,39 +98,23 @@ export const forceLogout = async (
     });
 };
 
-// ============================================================
-// SESSION EXPIRED
-// ============================================================
-
 export const sessionExpired = async (
     message = 'Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại.'
 ) => {
-    return forceLogout('SESSION_EXPIRED', message);
+    return forceLogout('TOKEN_EXPIRED', message);
 };
-
-// ============================================================
-// DEVICE LOGGED OUT
-// ============================================================
 
 export const deviceLoggedOut = async (
     message = 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
 ) => {
-    return forceLogout('DEVICE_LOGGED_OUT', message);
+    return forceLogout('SESSION_REPLACED', message);
 };
-
-// ============================================================
-// TOKEN INVALID
-// ============================================================
 
 export const tokenInvalid = async (
     message = 'Thông tin đăng nhập không còn hợp lệ. Vui lòng đăng nhập lại.'
 ) => {
     return forceLogout('TOKEN_INVALID', message);
 };
-
-// ============================================================
-// DEFAULT EXPORT
-// ============================================================
 
 export default {
     cleanupAuth,

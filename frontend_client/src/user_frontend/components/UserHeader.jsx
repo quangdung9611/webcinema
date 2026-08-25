@@ -28,21 +28,10 @@ import {
 
 import '../styles/Header.css';
 
-// ============================================================
-// USER HEADER
-// ============================================================
-
 const UserHeader = () => {
     const navigate = useNavigate();
 
-    // ========================================================
-    // DÙNG CHUNG AUTH CONTEXT (Tránh gọi API thừa)
-    // ========================================================
     const { user: contextUser, isLoading: authLoading, refetch } = useAuth();
-
-    // ========================================================
-    // STATE
-    // ========================================================
 
     const [user, setUser] = useState(contextUser);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -51,32 +40,20 @@ const UserHeader = () => {
     const [activeSubMenu, setActiveSubMenu] = useState(null);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-    // 🔥 State cho toast notification
     const [toast, setToast] = useState({
         show: false,
         message: '',
         type: 'success'
     });
 
-    // ========================================================
-    // REFS
-    // ========================================================
-
     const dropdownRef = useRef(null);
     const navRef = useRef(null);
     const toastTimeoutRef = useRef(null);
     const redirectTimeoutRef = useRef(null);
 
-    // ========================================================
-    // ĐỒNG BỘ USER TỪ CONTEXT
-    // ========================================================
     useEffect(() => {
         setUser(contextUser);
     }, [contextUser]);
-
-    // ========================================================
-    // 🔥 TOAST HELPER
-    // ========================================================
 
     const showToast = useCallback((message, type = 'success') => {
         if (toastTimeoutRef.current) {
@@ -100,12 +77,7 @@ const UserHeader = () => {
         }, 4000);
     }, []);
 
-    // ========================================================
-    // AUTH EVENTS (Chỉ lắng nghe, không tự ý gọi API)
-    // ========================================================
-
     useEffect(() => {
-        // 1. AUTH CLEANED UP
         const handleAuthCleanedUp = (event) => {
             console.log('🧹 [HEADER] Auth cleaned:', event?.detail);
 
@@ -119,17 +91,13 @@ const UserHeader = () => {
             }
         };
 
-        // 2. USER LOGGED IN (Context đã tự fetch, Header chỉ cần nhận user mới)
         const handleUserLoggedIn = (event) => {
             console.log('🟢 [HEADER] User logged in - updating immediately');
-
-            // Gọi refetch để lấy user mới nhất từ context
             refetch().catch(() => {});
         };
 
-        // 3. SESSION EXPIRED
         const handleSessionExpired = (event) => {
-            console.warn('🔴 [HEADER] Session expired real-time:', event?.detail);
+            console.warn('🔴 [HEADER] Session expired:', event?.detail);
 
             setUser(null);
             setShowDropdown(false);
@@ -149,69 +117,16 @@ const UserHeader = () => {
             );
         };
 
-        // 4. TOKEN EXPIRED
-        const handleTokenExpired = (event) => {
-            console.warn('⏰ [HEADER] Token expired real-time:', event?.detail);
-
-            setUser(null);
-            setShowDropdown(false);
-
-            try {
-                socketService.disconnect();
-            } catch (error) {
-                console.warn('Socket disconnect error:', error);
-            }
-
-            setIsMenuOpen(false);
-            setActiveSubMenu(null);
-
-            showToast(
-                event?.detail?.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-                'warning'
-            );
-        };
-
-        // 5. DEVICE LOGGED OUT
-        const handleDeviceLoggedOut = (event) => {
-            console.warn('📱 [HEADER] Device logged out real-time:', event?.detail);
-
-            setUser(null);
-            setShowDropdown(false);
-
-            try {
-                socketService.disconnect();
-            } catch (error) {
-                console.warn('Socket disconnect error:', error);
-            }
-
-            setIsMenuOpen(false);
-            setActiveSubMenu(null);
-
-            showToast(
-                event?.detail?.message || 'Tài khoản đã được đăng nhập trên thiết bị khác.',
-                'warning'
-            );
-        };
-
-        // ĐĂNG KÝ TẤT CẢ EVENT
         window.addEventListener('authCleanedUp', handleAuthCleanedUp);
         window.addEventListener('userLoggedIn', handleUserLoggedIn);
         window.addEventListener('sessionExpired', handleSessionExpired);
-        window.addEventListener('tokenExpired', handleTokenExpired);
-        window.addEventListener('deviceLoggedOut', handleDeviceLoggedOut);
 
         return () => {
             window.removeEventListener('authCleanedUp', handleAuthCleanedUp);
             window.removeEventListener('userLoggedIn', handleUserLoggedIn);
             window.removeEventListener('sessionExpired', handleSessionExpired);
-            window.removeEventListener('tokenExpired', handleTokenExpired);
-            window.removeEventListener('deviceLoggedOut', handleDeviceLoggedOut);
         };
     }, [refetch, showToast]);
-
-    // ========================================================
-    // LOGOUT CHỦ ĐỘNG
-    // ========================================================
 
     const handleLogout = async () => {
         if (isLoggingOut) {
@@ -230,7 +145,6 @@ const UserHeader = () => {
 
             showToast('Đăng xuất thành công! Hẹn gặp lại bạn 👋', 'success');
 
-            // Clear timeout cũ nếu có
             if (redirectTimeoutRef.current) {
                 clearTimeout(redirectTimeoutRef.current);
                 redirectTimeoutRef.current = null;
@@ -269,10 +183,6 @@ const UserHeader = () => {
         }
     };
 
-    // ========================================================
-    // FETCH CINEMAS (Không liên quan auth)
-    // ========================================================
-
     useEffect(() => {
         const fetchCinemas = async () => {
             try {
@@ -300,10 +210,6 @@ const UserHeader = () => {
         fetchCinemas();
     }, []);
 
-    // ========================================================
-    // CLICK OUTSIDE
-    // ========================================================
-
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (navRef.current && navRef.current.contains(event.target)) {
@@ -325,10 +231,6 @@ const UserHeader = () => {
         };
     }, []);
 
-    // ========================================================
-    // RESPONSIVE
-    // ========================================================
-
     useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth > 768) {
@@ -343,10 +245,6 @@ const UserHeader = () => {
             window.removeEventListener('resize', handleResize);
         };
     }, []);
-
-    // ========================================================
-    // HELPERS
-    // ========================================================
 
     const closeMobileMenu = () => {
         setIsMenuOpen(false);
@@ -374,10 +272,6 @@ const UserHeader = () => {
         return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
     };
 
-    // ========================================================
-    // USER INFO
-    // ========================================================
-
     const isValidUser = Boolean(
         user &&
         Number(user.email_verified) === 1
@@ -389,10 +283,6 @@ const UserHeader = () => {
 
     const displayName = user?.username || user?.full_name || 'Tài khoản';
 
-    // ========================================================
-    // LOGIN / REGISTER
-    // ========================================================
-
     const handleLoginClick = () => {
         setShowDropdown(false);
         navigate('/login');
@@ -403,13 +293,8 @@ const UserHeader = () => {
         navigate('/register');
     };
 
-    // ========================================================
-    // RENDER
-    // ========================================================
-
     return (
         <>
-            {/* 🔥 TOAST NOTIFICATION */}
             {toast.show && (
                 <div className={`toast-notification toast-${toast.type}`}>
                     <div className="toast-content">
@@ -439,8 +324,6 @@ const UserHeader = () => {
 
                 <div className="nav-container">
 
-                    {/* HAMBURGER */}
-
                     <button
                         className={`hamburger ${
                             isMenuOpen ? 'active' : ''
@@ -455,8 +338,6 @@ const UserHeader = () => {
                         <span className="bar" />
                     </button>
 
-                    {/* LOGO */}
-
                     <div
                         className="header-logo"
                         onClick={() => {
@@ -470,16 +351,12 @@ const UserHeader = () => {
                         />
                     </div>
 
-                    {/* MOBILE OVERLAY */}
-
                     <div
                         className={`menu-overlay ${
                             isMenuOpen ? 'active' : ''
                         }`}
                         onClick={closeMobileMenu}
                     />
-
-                    {/* NAVIGATION */}
 
                     <ul
                         ref={navRef}
@@ -497,8 +374,6 @@ const UserHeader = () => {
                                 Trang chủ
                             </Link>
                         </li>
-
-                        {/* PHIM */}
 
                         <li
                             className={`has-dropdown ${
@@ -542,8 +417,6 @@ const UserHeader = () => {
                             </ul>
                         </li>
 
-                        {/* RẠP */}
-
                         <li
                             className={`has-dropdown ${
                                 activeSubMenu === 'rap' ? 'mobile-active' : ''
@@ -585,8 +458,6 @@ const UserHeader = () => {
 
                             </ul>
                         </li>
-
-                        {/* GÓC ĐIỆN ẢNH */}
 
                         <li
                             className={`has-dropdown ${
@@ -651,8 +522,6 @@ const UserHeader = () => {
                         </li>
 
                     </ul>
-
-                    {/* USER MENU */}
 
                     <div
                         className="user-menu"

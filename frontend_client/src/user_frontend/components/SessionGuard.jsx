@@ -35,7 +35,7 @@ const SessionGuard = ({ children }) => {
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
     const [modalNewDevice, setModalNewDevice] = useState(null);
-    const [modalType, setModalType] = useState('token');
+    const [modalCode, setModalCode] = useState('TOKEN_EXPIRED');
     const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
 
     const isBookingPage = useCallback(() => {
@@ -125,29 +125,28 @@ const SessionGuard = ({ children }) => {
             state: {
                 expired: true,
                 message: modalMessage,
-                type: modalType,
+                code: modalCode,
             },
         });
-    }, [navigate, modalMessage, modalType, isBookingPage]);
+    }, [navigate, modalMessage, modalCode, isBookingPage]);
 
     const openSessionModal = useCallback(
         (detail = {}) => {
             if (!isMountedRef.current) return;
 
-            const isDeviceLogin = detail.type === 'device' || detail.code === 'SESSION_EXPIRED';
-            const type = isDeviceLogin ? 'device' : 'token';
-            const message = detail.message || (type === 'device'
+            const code = detail.code || 'TOKEN_EXPIRED';
+            const message = detail.message || (code === 'SESSION_REPLACED'
                 ? 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
                 : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
             const newDevice = detail.newDevice || null;
 
             console.warn('🔐 [SESSION GUARD] Opening modal:', {
-                type,
+                code,
                 message,
                 newDevice,
             });
 
-            setModalType(type);
+            setModalCode(code);
             setModalMessage(message);
             setModalNewDevice(newDevice);
             setCountdown(COUNTDOWN_SECONDS);
@@ -165,17 +164,10 @@ const SessionGuard = ({ children }) => {
             }
 
             const detail = eventOrDetail?.detail || eventOrDetail || {};
-            const isDeviceLogin = detail.type === 'device' || detail.code === 'SESSION_EXPIRED';
-            const type = isDeviceLogin ? 'device' : 'token';
-            const message = detail.message || (type === 'device'
-                ? 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
-                : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-            const source = detail.source || (detail.fromSocket ? 'socket' : 'api');
+            const code = detail.code || 'TOKEN_EXPIRED';
 
-            console.warn(`🔴 [SESSION GUARD] SESSION EXPIRED FROM ${source.toUpperCase()}`, {
+            console.warn(`🔴 [SESSION GUARD] SESSION EXPIRED (${code})`, {
                 ...detail,
-                type,
-                message,
             });
 
             isProcessingRef.current = true;
@@ -192,9 +184,7 @@ const SessionGuard = ({ children }) => {
             clearAuthState();
             openSessionModal({
                 ...detail,
-                type,
-                message,
-                source,
+                code,
             });
         },
         [clearBookingSession, openSessionModal, clearAuthState]
@@ -263,6 +253,7 @@ const SessionGuard = ({ children }) => {
             console.log('🟢 [SESSION GUARD] User logged in → reset');
             isProcessingRef.current = false;
             hasRedirectedRef.current = false;
+            setShowModal(false);
         };
 
         window.addEventListener('userLoggedIn', handleUserLoggedIn);
@@ -280,7 +271,7 @@ const SessionGuard = ({ children }) => {
                 show={showModal}
                 type="warning"
                 title={
-                    modalType === 'device'
+                    modalCode === 'SESSION_REPLACED'
                         ? '🔐 Phát hiện đăng nhập trên thiết bị khác'
                         : '🔐 Phiên đăng nhập đã hết hạn'
                 }
@@ -293,7 +284,7 @@ const SessionGuard = ({ children }) => {
                 cancelText="Đăng nhập lại"
                 className="session-expired-modal-wrapper"
             >
-                {modalType === 'device' && modalNewDevice && (
+                {modalCode === 'SESSION_REPLACED' && modalNewDevice && (
                     <div className="session-expired-device-info">
                         <p>
                             <strong>📱 Thiết bị mới:</strong>{' '}
@@ -313,7 +304,7 @@ const SessionGuard = ({ children }) => {
                     </div>
                 )}
 
-                {modalType === 'device' && (
+                {modalCode === 'SESSION_REPLACED' && (
                     <div className="session-expired-security">
                         🛡️ Nếu đây không phải là bạn, vui lòng đổi mật khẩu ngay lập tức.
                     </div>
