@@ -1,34 +1,29 @@
-// src/components/SessionGuard.jsx
-
 import React, {
     useCallback,
     useEffect,
     useRef,
-    useState
+    useState,
 } from 'react';
 
-import { useNavigate, useLocation } from 'react-router-dom';
+import {
+    useNavigate,
+    useLocation,
+} from 'react-router-dom';
 
 import api from '../../api/api';
 import socketService from '../../api/socket';
 import { forceLogout } from '../../utils/authCleanup';
+import { useAuth } from '../../context/AuthContext';
 
 import Modal from './Modal';
 
 import '../styles/SessionGuard.css';
 
 // ============================================================
-// CONFIG - TỐI ƯU KHÔNG SPAM
+// CONFIG
 // ============================================================
 
-// 🔥 KHÔNG POLLING - KHÔNG GỌI checkSession TỰ ĐỘNG
-const SESSION_CHECK_INTERVAL = null;
-
-// 🔥 CHECK KHI USER TƯƠNG TÁC (debounce 3s)
-const USER_ACTIVITY_DEBOUNCE = 3000;
-
-// 🔥 DEBOUNCE TRÁNH GỌI NHIỀU LẦN
-const SESSION_EXPIRED_DEBOUNCE = 500;
+const COUNTDOWN_SECONDS = 10;
 
 // ============================================================
 // SESSION GUARD
@@ -38,37 +33,69 @@ const SessionGuard = ({ children }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
+    const {
+        isLoading,
+    } = useAuth();
+
     // ========================================================
     // REFS
     // ========================================================
 
     const isMountedRef = useRef(false);
+
+    // Đang xử lý session expired
     const isProcessingRef = useRef(false);
-    const isCheckingSessionRef = useRef(false);
-    const sessionCheckIntervalRef = useRef(null);
-    const sessionCheckTimeoutRef = useRef(null);
-    const userActivityTimeoutRef = useRef(null);
+
+    // Đã redirect chưa
     const hasRedirectedRef = useRef(false);
+
+    // Đã hiện modal chưa
     const hasShownModalRef = useRef(false);
-    const sessionExpiredTimeoutRef = useRef(null);
-    const isFirstCheckRef = useRef(true);
 
     // ========================================================
     // MODAL STATE
     // ========================================================
 
-    const [showModal, setShowModal] = useState(false);
-    const [modalMessage, setModalMessage] = useState('');
-    const [modalNewDevice, setModalNewDevice] = useState(null);
-    const [modalType, setModalType] = useState('token');
-    const [countdown, setCountdown] = useState(10);
+    const [showModal, setShowModal] =
+        useState(false);
+
+    const [modalMessage, setModalMessage] =
+        useState('');
+
+    const [modalNewDevice, setModalNewDevice] =
+        useState(null);
+
+    const [modalType, setModalType] =
+        useState('token');
+
+    const [countdown, setCountdown] =
+        useState(COUNTDOWN_SECONDS);
 
     // ========================================================
-    // XÓA SẠCH SESSION STORAGE BOOKING
+    // KIỂM TRA BOOKING PAGE
+    // ========================================================
+
+    const isBookingPage = useCallback(() => {
+        const path = location.pathname;
+
+        return (
+            path.includes('/booking/') ||
+            path.includes('/foods') ||
+            path.includes('/payment') ||
+            path.includes('/confirm-success') ||
+            path.includes('/bank-app') ||
+            path.includes('/momo-app')
+        );
+    }, [location.pathname]);
+
+    // ========================================================
+    // XÓA BOOKING SESSION
     // ========================================================
 
     const clearBookingSession = useCallback(() => {
-        console.log('🧹 [SESSION GUARD] Clearing booking session storage...');
+        console.log(
+            '🧹 [SESSION GUARD] Clearing booking session...'
+        );
 
         const bookingKeys = [
             'selectedSeats',
@@ -82,59 +109,62 @@ const SessionGuard = ({ children }) => {
             'booking_cinema',
             'booking_date',
             'booking_movie',
-            'booking_showtime'
+            'paymentInitiated',
+            'paymentCompleted',
+            'tempBookingId',
+            'completedBookingId',
+            'lastSuccessTicket',
+            'bankHasSentOtp',
+            'bankHasVisited',
+            'bankOtpTimeLeft',
+            'bankOtpInput',
+            'bankLastOtpSentAt',
         ];
 
-        bookingKeys.forEach(key => {
+        bookingKeys.forEach((key) => {
             sessionStorage.removeItem(key);
             localStorage.removeItem(key);
-            console.log(`🗑️ [SESSION GUARD] Removed key: ${key}`);
         });
 
-        window.dispatchEvent(new CustomEvent('clearBookingSession', {
-            detail: {
-                reason: 'session_expired',
-                timestamp: new Date().toISOString()
-            }
-        }));
+        window.dispatchEvent(
+            new CustomEvent(
+                'clearBookingSession',
+                {
+                    detail: {
+                        reason: 'session_expired',
+                        timestamp:
+                            new Date().toISOString(),
+                    },
+                }
+            )
+        );
 
-        if (socketService.isConnectedStatus()) {
-            const socket = socketService.getSocket();
-            if (socket) {
-                socket.emit('clear_all_holding_seats', {
-                    userId: socketService.userId,
-                    timestamp: new Date().toISOString()
-                });
-                console.log('📤 [SESSION GUARD] Sent clear_all_holding_seats');
-            }
+        // ====================================================
+        // CLEAR HOLDING SEATS
+        // ====================================================
+
+        const currentUserId =
+            socketService.userId;
+
+        if (
+            socketService.isConnectedStatus() &&
+            currentUserId
+        ) {
+            socketService.emit(
+                'clear_all_holding_seats',
+                {
+                    userId:
+                        currentUserId,
+
+                    timestamp:
+                        new Date().toISOString(),
+                }
+            );
         }
 
-        console.log('✅ [SESSION GUARD] Booking session cleared');
-    }, []);
-
-    // ========================================================
-    // KIỂM TRA CÓ ĐANG Ở TRANG BOOKING KHÔNG
-    // ========================================================
-
-    const isBookingPage = useCallback(() => {
-        const path = location.pathname;
-        return path.includes('/booking/') ||
-               path.includes('/foods') ||
-               path.includes('/payment') ||
-               path.includes('/confirm-success') ||
-               path.includes('/bank-app') ||
-               path.includes('/momo-app');
-    }, [location.pathname]);
-
-    // ========================================================
-    // KIỂM TRA FRONTEND CÓ ĐANG LOGIN KHÔNG
-    // ========================================================
-
-    const hasLocalAuthState = useCallback(() => {
-        const userInfo = localStorage.getItem('user_info');
-        const adminInfo = localStorage.getItem('admin_info');
-        const userId = localStorage.getItem('user_id');
-        return Boolean(userInfo || adminInfo || userId);
+        console.log(
+            '✅ [SESSION GUARD] Booking session cleared'
+        );
     }, []);
 
     // ========================================================
@@ -142,420 +172,468 @@ const SessionGuard = ({ children }) => {
     // ========================================================
 
     const resetFlags = useCallback(() => {
-        hasRedirectedRef.current = false;
-        hasShownModalRef.current = false;
         isProcessingRef.current = false;
-        if (sessionExpiredTimeoutRef.current) {
-            clearTimeout(sessionExpiredTimeoutRef.current);
-            sessionExpiredTimeoutRef.current = null;
-        }
+
+        hasRedirectedRef.current = false;
+
+        hasShownModalRef.current = false;
+
+        setShowModal(false);
+
+        setCountdown(
+            COUNTDOWN_SECONDS
+        );
+
+        console.log(
+            '🔄 [SESSION GUARD] Flags reset'
+        );
     }, []);
-
-    // ========================================================
-    // HIỆN MODAL
-    // ========================================================
-
-    const openSessionModal = useCallback(
-        (detail = {}) => {
-            if (!isMountedRef.current) return;
-            if (showModal || hasShownModalRef.current || hasRedirectedRef.current) {
-                console.log('⚠️ [SESSION GUARD] Modal already shown or redirecting, skip');
-                return;
-            }
-
-            const message = detail?.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
-            const type = detail?.type === 'device' || detail?.code === 'SESSION_EXPIRED' ? 'device' : 'token';
-            const newDevice = detail?.newDevice || null;
-
-            console.warn('🔐 [SESSION GUARD] Open session modal:', { message, type, newDevice });
-
-            hasShownModalRef.current = true;
-            setModalMessage(message);
-            setModalType(type);
-            setModalNewDevice(newDevice);
-            setCountdown(10);
-            setShowModal(true);
-        },
-        [showModal]
-    );
-
-    // ========================================================
-    // DỪNG SESSION CHECK
-    // ========================================================
-
-    const stopSessionCheck = useCallback(() => {
-        if (sessionCheckIntervalRef.current) {
-            clearInterval(sessionCheckIntervalRef.current);
-            sessionCheckIntervalRef.current = null;
-        }
-        if (sessionCheckTimeoutRef.current) {
-            clearTimeout(sessionCheckTimeoutRef.current);
-            sessionCheckTimeoutRef.current = null;
-        }
-        if (userActivityTimeoutRef.current) {
-            clearTimeout(userActivityTimeoutRef.current);
-            userActivityTimeoutRef.current = null;
-        }
-        if (sessionExpiredTimeoutRef.current) {
-            clearTimeout(sessionExpiredTimeoutRef.current);
-            sessionExpiredTimeoutRef.current = null;
-        }
-    }, []);
-
-    // ========================================================
-    // XỬ LÝ SESSION EXPIRED
-    // ========================================================
-
-    const handleSessionExpired = useCallback(
-        async (eventOrDetail = {}) => {
-            if (!isMountedRef.current) return;
-            if (isProcessingRef.current || hasRedirectedRef.current || hasShownModalRef.current) {
-                console.log('⚠️ [SESSION GUARD] Already processed or redirecting, skip');
-                return;
-            }
-
-            const detail = eventOrDetail?.detail || eventOrDetail || {};
-            const source = detail?.source || (detail?.fromSocket ? 'socket' : 'polling');
-
-            console.warn(`🔴 [SESSION GUARD] SESSION EXPIRED from ${source}:`, detail);
-
-            if (sessionExpiredTimeoutRef.current) {
-                console.log('⏰ [SESSION GUARD] Already debouncing, skip');
-                return;
-            }
-
-            // XÓA SESSION STORAGE BOOKING
-            clearBookingSession();
-
-            isProcessingRef.current = true;
-            stopSessionCheck();
-
-            openSessionModal({
-                ...detail,
-                source: source
-            });
-
-            try {
-                await forceLogout(
-                    detail?.type === 'device' ? 'device' : 'expired',
-                    detail?.message || 'Phiên đăng nhập đã hết hạn.'
-                );
-
-                console.log('🧹 [SESSION GUARD] Auth cleaned up');
-
-                window.dispatchEvent(
-                    new CustomEvent('authCleanedUp', {
-                        detail: {
-                            reason: detail?.type === 'device' ? 'device' : 'expired',
-                            message: detail?.message || 'Phiên đăng nhập đã hết hạn',
-                            timestamp: new Date().toISOString()
-                        }
-                    })
-                );
-            } catch (error) {
-                console.error('🔴 [SESSION GUARD] Cleanup failed:', error);
-            }
-
-            // NẾU ĐANG Ở TRANG BOOKING -> VỀ TRANG CHỦ
-            if (isBookingPage()) {
-                console.log('🏠 [SESSION GUARD] On booking page, redirect to home');
-                setTimeout(() => {
-                    navigate('/', { replace: true });
-                }, 500);
-            }
-
-            sessionExpiredTimeoutRef.current = setTimeout(() => {
-                sessionExpiredTimeoutRef.current = null;
-                console.log('⏰ [SESSION GUARD] Debounce timeout cleared');
-            }, SESSION_EXPIRED_DEBOUNCE);
-        },
-        [openSessionModal, stopSessionCheck, clearBookingSession, isBookingPage, navigate]
-    );
 
     // ========================================================
     // CONFIRM MODAL
     // ========================================================
 
     const handleModalConfirm = useCallback(() => {
-        if (hasRedirectedRef.current) {
-            console.log('⚠️ [SESSION GUARD] Already redirected, skip');
+        if (
+            hasRedirectedRef.current
+        ) {
             return;
         }
 
-        console.log('🔐 [SESSION GUARD] Redirect login');
         hasRedirectedRef.current = true;
+
+        console.log(
+            '➡️ [SESSION GUARD] Redirecting after session expired'
+        );
+
         setShowModal(false);
 
+        // ====================================================
+        // BOOKING PAGE
+        // ====================================================
+
         if (isBookingPage()) {
-            console.log('🏠 [SESSION GUARD] On booking page, redirect to home');
-            navigate('/', { replace: true });
-        } else {
-            navigate('/login', {
-                replace: true,
-                state: {
-                    expired: true,
-                    message: modalMessage,
-                    type: modalType
+            navigate(
+                '/',
+                {
+                    replace: true,
                 }
-            });
+            );
+
+            return;
         }
 
-        setTimeout(() => resetFlags(), 2000);
-    }, [navigate, modalMessage, modalType, resetFlags, isBookingPage]);
+        // ====================================================
+        // REDIRECT LOGIN
+        // ====================================================
+
+        navigate(
+            '/login',
+            {
+                replace: true,
+
+                state: {
+                    expired: true,
+
+                    message:
+                        modalMessage,
+
+                    type:
+                        modalType,
+                },
+            }
+        );
+    }, [
+        navigate,
+        modalMessage,
+        modalType,
+        isBookingPage,
+    ]);
+
+    // ========================================================
+    // MỞ MODAL
+    // ========================================================
+
+    const openSessionModal = useCallback(
+        (detail = {}) => {
+            if (
+                !isMountedRef.current
+            ) {
+                return;
+            }
+
+            if (
+                hasShownModalRef.current
+            ) {
+                console.log(
+                    '⚠️ [SESSION GUARD] Modal already shown'
+                );
+
+                return;
+            }
+
+            const isDeviceLogin =
+                detail.type === 'device' ||
+                detail.code === 'SESSION_EXPIRED';
+
+            const type =
+                isDeviceLogin
+                    ? 'device'
+                    : 'token';
+
+            const message =
+                detail.message ||
+                (
+                    type === 'device'
+                        ? 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
+                        : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+                );
+
+            const newDevice =
+                detail.newDevice ||
+                null;
+
+            console.warn(
+                '🔐 [SESSION GUARD] Opening modal:',
+                {
+                    type,
+                    message,
+                    newDevice,
+                }
+            );
+
+            // ====================================================
+            // ĐÁNH DẤU TRƯỚC
+            // ====================================================
+
+            hasShownModalRef.current =
+                true;
+
+            // ====================================================
+            // HIỆN MODAL NGAY
+            // ====================================================
+
+            setModalType(type);
+
+            setModalMessage(message);
+
+            setModalNewDevice(newDevice);
+
+            setCountdown(
+                COUNTDOWN_SECONDS
+            );
+
+            setShowModal(true);
+        },
+        []
+    );
+
+    // ========================================================
+    // HANDLE SESSION EXPIRED
+    // ========================================================
+
+    const handleSessionExpired = useCallback(
+        (eventOrDetail = {}) => {
+            if (
+                !isMountedRef.current
+            ) {
+                return;
+            }
+
+            // ====================================================
+            // CHỐNG XỬ LÝ TRÙNG
+            // ====================================================
+
+            if (
+                isProcessingRef.current ||
+                hasShownModalRef.current ||
+                hasRedirectedRef.current
+            ) {
+                console.log(
+                    '⚠️ [SESSION GUARD] Session already handled'
+                );
+
+                return;
+            }
+
+            const detail =
+                eventOrDetail?.detail ||
+                eventOrDetail ||
+                {};
+
+            const isDeviceLogin =
+                detail.type === 'device' ||
+                detail.code === 'SESSION_EXPIRED';
+
+            const type =
+                isDeviceLogin
+                    ? 'device'
+                    : 'token';
+
+            const message =
+                detail.message ||
+                (
+                    type === 'device'
+                        ? 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
+                        : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+                );
+
+            const source =
+                detail.source ||
+                (
+                    detail.fromSocket
+                        ? 'socket'
+                        : 'api'
+                );
+
+            console.warn(
+                `🔴 [SESSION GUARD] SESSION EXPIRED FROM ${source.toUpperCase()}`,
+                {
+                    ...detail,
+                    type,
+                    message,
+                }
+            );
+
+            // ====================================================
+            // KHÓA NGAY
+            // ====================================================
+
+            isProcessingRef.current =
+                true;
+
+            // ====================================================
+            // 1. XÓA API CACHE
+            // ====================================================
+
+            api.resetUserCache();
+
+            // ====================================================
+            // 2. XÓA BOOKING SESSION
+            // ====================================================
+
+            clearBookingSession();
+
+            // ====================================================
+            // 3. HIỆN MODAL NGAY LẬP TỨC
+            // ====================================================
+
+            openSessionModal({
+                ...detail,
+
+                type,
+
+                message,
+
+                source,
+            });
+
+            // ====================================================
+            // 4. CLEANUP AUTH CHẠY BACKGROUND
+            //
+            // KHÔNG await
+            //
+            // Modal đã hiện rồi, cleanup tự chạy sau.
+            // ====================================================
+
+            Promise.resolve(
+                forceLogout(
+                    type === 'device'
+                        ? 'device'
+                        : 'expired',
+
+                    message
+                )
+            )
+                .then(() => {
+                    console.log(
+                        '🧹 [SESSION GUARD] Auth cleanup completed'
+                    );
+                })
+                .catch((error) => {
+                    console.error(
+                        '🔴 [SESSION GUARD] Auth cleanup failed:',
+                        error
+                    );
+                });
+        },
+        [
+            clearBookingSession,
+            openSessionModal,
+        ]
+    );
+
+    // ========================================================
+    // MOUNT
+    // ========================================================
+
+    useEffect(() => {
+        isMountedRef.current =
+            true;
+
+        console.log(
+            '🛡️ [SESSION GUARD] Started'
+        );
+
+        return () => {
+            isMountedRef.current =
+                false;
+        };
+    }, []);
+
+    // ========================================================
+    // API SESSION EVENT
+    // ========================================================
+
+    useEffect(() => {
+        const handleSessionEvent =
+            (event) => {
+                console.log(
+                    '📨 [SESSION GUARD] sessionExpired event:',
+                    event?.detail
+                );
+
+                handleSessionExpired(
+                    event
+                );
+            };
+
+        window.addEventListener(
+            'sessionExpired',
+            handleSessionEvent
+        );
+
+        return () => {
+            window.removeEventListener(
+                'sessionExpired',
+                handleSessionEvent
+            );
+        };
+    }, [
+        handleSessionExpired,
+    ]);
+
+    // ========================================================
+    // SOCKET CALLBACK
+    // ========================================================
+
+    useEffect(() => {
+        const handleSocketSessionExpired =
+            (detail = {}) => {
+                console.log(
+                    '📨 [SESSION GUARD] Socket callback:',
+                    detail
+                );
+
+                handleSessionExpired({
+                    ...detail,
+
+                    source: 'socket',
+
+                    fromSocket: true,
+                });
+            };
+
+        socketService.setOnSessionExpired(
+            handleSocketSessionExpired
+        );
+
+        return () => {
+            socketService.setOnSessionExpired(
+                null
+            );
+        };
+    }, [
+        handleSessionExpired,
+    ]);
 
     // ========================================================
     // COUNTDOWN
     // ========================================================
 
     useEffect(() => {
-        if (!showModal) return;
-
-        if (countdown <= 0) {
-            const timeout = setTimeout(() => handleModalConfirm(), 300);
-            return () => clearTimeout(timeout);
+        if (
+            !showModal
+        ) {
+            return;
         }
 
-        const interval = setInterval(() => {
-            setCountdown((prev) => Math.max(prev - 1, 0));
-        }, 1000);
+        const interval =
+            setInterval(() => {
+                setCountdown(
+                    (previous) => {
+                        if (
+                            previous <= 1
+                        ) {
+                            return 0;
+                        }
 
-        return () => clearInterval(interval);
-    }, [showModal, countdown, handleModalConfirm]);
-
-    // ========================================================
-    // 🔥 SESSION HEALTH CHECK - DÙNG FORCE ĐỂ BỎ QUA CACHE
-    // ========================================================
-
-    const checkSession = useCallback(
-        async (force = false) => {
-            if (!isMountedRef.current) return;
-            if (showModal || isProcessingRef.current || hasRedirectedRef.current || hasShownModalRef.current) return;
-            if (isCheckingSessionRef.current) return;
-            if (!hasLocalAuthState()) return;
-
-            isCheckingSessionRef.current = true;
-
-            try {
-                // 🔥 Truyền force để bỏ qua cache nếu cần
-                const result = await api.checkSession(force);
-
-                if (!result || !result.valid) {
-                    console.warn('🔴 [SESSION GUARD] Session invalid!');
-                    await handleSessionExpired({
-                        code: result?.code || 'SESSION_INVALID',
-                        message: result?.message || 'Phiên đăng nhập không còn hợp lệ.',
-                        type: 'token',
-                        source: 'manual_check'
-                    });
-                    return;
-                }
-            } catch (error) {
-                if (error?.code === 'ERR_NETWORK' || error?.message === 'Network Error') return;
-                if (error?.code === 'ECONNABORTED') return;
-                console.warn('🟡 [SESSION GUARD] Check error:', error?.message);
-            } finally {
-                isCheckingSessionRef.current = false;
-            }
-        },
-        [showModal, hasLocalAuthState, handleSessionExpired]
-    );
-
-    // ========================================================
-    // 🔥 CHECK KHI USER TƯƠNG TÁC (DEBOUNCE 3s)
-    // ========================================================
-
-    const handleUserActivity = useCallback(() => {
-        if (userActivityTimeoutRef.current) {
-            clearTimeout(userActivityTimeoutRef.current);
-        }
-
-        userActivityTimeoutRef.current = setTimeout(() => {
-            if (hasLocalAuthState() && !showModal && !isProcessingRef.current && !hasRedirectedRef.current && !hasShownModalRef.current) {
-                // 🔥 force = true để bỏ cache, check thực tế
-                checkSession(true);
-            }
-        }, USER_ACTIVITY_DEBOUNCE);
-    }, [hasLocalAuthState, showModal, checkSession]);
-
-    // ========================================================
-    // 🔥 PHÁT HIỆN KHI LOCALSTORAGE BỊ XÓA (XÓA TOKEN)
-    // ========================================================
-
-    useEffect(() => {
-        const handleStorageChange = (event) => {
-            const authKeys = ['user_info', 'admin_info', 'user_id'];
-            if (!authKeys.includes(event.key)) return;
-            if (event.oldValue && !event.newValue) {
-                console.warn('🔐 [SESSION GUARD] Auth removed from localStorage! Token may be deleted!');
-                // 🔥 Reset cache và check ngay
-                api.resetSessionCache();
-                checkSession(true);
-            }
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, [checkSession]);
-
-    // ========================================================
-    // 🔥 LẮNG NGHE SOCKET DISCONNECT
-    // ========================================================
-
-    useEffect(() => {
-        const handleSocketDisconnect = (event) => {
-            console.warn('🔴 [SESSION GUARD] Socket disconnected:', event?.detail);
-            if (hasLocalAuthState() && !showModal && !isProcessingRef.current) {
-                // 🔥 force = true để check thực tế
-                setTimeout(() => checkSession(true), 1000);
-            }
-        };
-
-        window.addEventListener('socketDisconnected', handleSocketDisconnect);
-        return () => window.removeEventListener('socketDisconnected', handleSocketDisconnect);
-    }, [checkSession, hasLocalAuthState, showModal]);
-
-    // ========================================================
-    // RESET FLAGS KHI UNMOUNT
-    // ========================================================
-
-    useEffect(() => {
-        return () => resetFlags();
-    }, [resetFlags]);
-
-    // ========================================================
-    // API EVENT + SOCKET EVENT
-    // ========================================================
-
-    useEffect(() => {
-        const handleSessionEvent = (event) => {
-            console.log('📨 [SESSION GUARD] sessionExpired from API:', event?.detail);
-            handleSessionExpired({ detail: { ...event?.detail, source: 'api' } });
-        };
-
-        window.addEventListener('sessionExpired', handleSessionEvent);
-
-        const handleSocketSessionExpired = (detail) => {
-            console.warn('🔴 [SESSION GUARD] Socket session expired REAL-TIME:', detail);
-            handleSessionExpired({ ...detail, fromSocket: true, source: 'socket' });
-        };
-
-        socketService.setOnSessionExpired(handleSocketSessionExpired);
-
-        const handleDeviceLoggedOut = (event) => {
-            console.warn('📱 [SESSION GUARD] Device logged out event:', event?.detail);
-            if (!isProcessingRef.current && !hasRedirectedRef.current && !hasShownModalRef.current) {
-                handleSessionExpired({
-                    detail: {
-                        ...event?.detail,
-                        type: 'device',
-                        code: 'SESSION_EXPIRED',
-                        fromSocket: true,
-                        source: 'socket'
+                        return previous - 1;
                     }
-                });
-            }
-        };
-
-        const handleTokenExpired = (event) => {
-            console.warn('⏰ [SESSION GUARD] Token expired event:', event?.detail);
-            if (!isProcessingRef.current && !hasRedirectedRef.current && !hasShownModalRef.current) {
-                handleSessionExpired({
-                    detail: {
-                        ...event?.detail,
-                        type: 'token',
-                        code: 'TOKEN_EXPIRED',
-                        fromSocket: true,
-                        source: 'socket'
-                    }
-                });
-            }
-        };
-
-        window.addEventListener('deviceLoggedOut', handleDeviceLoggedOut);
-        window.addEventListener('tokenExpired', handleTokenExpired);
+                );
+            }, 1000);
 
         return () => {
-            window.removeEventListener('sessionExpired', handleSessionEvent);
-            window.removeEventListener('deviceLoggedOut', handleDeviceLoggedOut);
-            window.removeEventListener('tokenExpired', handleTokenExpired);
-            socketService.setOnSessionExpired(null);
+            clearInterval(
+                interval
+            );
         };
-    }, [handleSessionExpired]);
+    }, [
+        showModal,
+    ]);
 
     // ========================================================
-    // START SESSION GUARD - CHỈ CHECK 1 LẦN ĐẦU, KHÔNG POLLING
+    // AUTO REDIRECT WHEN COUNTDOWN = 0
     // ========================================================
 
     useEffect(() => {
-        isMountedRef.current = true;
-        console.log('🛡️ [SESSION GUARD] Started - NO POLLING, only 1 initial check');
-
-        // 🔥 CHỈ CHECK 1 LẦN DUY NHẤT KHI COMPONENT MOUNT
-        if (isFirstCheckRef.current) {
-            isFirstCheckRef.current = false;
-            // force = true để check thực tế, không dùng cache
-            setTimeout(() => checkSession(true), 1000);
+        if (
+            !showModal
+        ) {
+            return;
         }
 
-        // 🔥 KHÔNG POLLING - BỎ setInterval
+        if (
+            countdown !== 0
+        ) {
+            return;
+        }
 
-        return () => {
-            console.log('🛡️ [SESSION GUARD] Stopped');
-            isMountedRef.current = false;
-            stopSessionCheck();
-        };
-    }, [checkSession, stopSessionCheck]);
-
-    // ========================================================
-    // CHECK KHI QUAY LẠI TAB
-    // ========================================================
-
-    useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                // 🔥 force = true để check thực tế
-                checkSession(true);
-            }
-        };
-
-        const handleFocus = () => {
-            // 🔥 force = true để check thực tế
-            checkSession(true);
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        window.addEventListener('focus', handleFocus);
-
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            window.removeEventListener('focus', handleFocus);
-        };
-    }, [checkSession]);
+        handleModalConfirm();
+    }, [
+        countdown,
+        showModal,
+        handleModalConfirm,
+    ]);
 
     // ========================================================
-    // CHECK KHI USER TƯƠNG TÁC
+    // USER LOGGED IN
     // ========================================================
 
     useEffect(() => {
-        const activityEvents = [
-            'click', 'mousedown', 'mouseup', 'mousemove',
-            'keydown', 'keyup', 'scroll',
-            'touchstart', 'touchmove', 'touchend', 'wheel'
-        ];
+        const handleUserLoggedIn =
+            () => {
+                console.log(
+                    '🟢 [SESSION GUARD] User logged in → reset'
+                );
 
-        activityEvents.forEach((event) => {
-            document.addEventListener(event, handleUserActivity, { passive: true });
-        });
+                resetFlags();
+            };
+
+        window.addEventListener(
+            'userLoggedIn',
+            handleUserLoggedIn
+        );
 
         return () => {
-            activityEvents.forEach((event) => {
-                document.removeEventListener(event, handleUserActivity);
-            });
-            if (userActivityTimeoutRef.current) {
-                clearTimeout(userActivityTimeoutRef.current);
-            }
+            window.removeEventListener(
+                'userLoggedIn',
+                handleUserLoggedIn
+            );
         };
-    }, [handleUserActivity]);
+    }, [
+        resetFlags,
+    ]);
 
     // ========================================================
     // RENDER
@@ -570,7 +648,7 @@ const SessionGuard = ({ children }) => {
                 type="warning"
                 title={
                     modalType === 'device'
-                        ? '🔐 Phát hiện phiên đăng nhập mới'
+                        ? '🔐 Phát hiện đăng nhập trên thiết bị khác'
                         : '🔐 Phiên đăng nhập đã hết hạn'
                 }
                 message={modalMessage}
@@ -584,23 +662,51 @@ const SessionGuard = ({ children }) => {
                 cancelText="Đăng nhập lại"
                 className="session-expired-modal-wrapper"
             >
-                {modalType === 'device' && modalNewDevice && (
-                    <div className="session-expired-device-info">
-                        <p>
-                            <strong>📱 Thiết bị mới:</strong>{' '}
-                            {typeof modalNewDevice === 'string'
-                                ? modalNewDevice
-                                : JSON.stringify(modalNewDevice)}
-                        </p>
-                    </div>
-                )}
+                {/* ============================================
+                    NEW DEVICE INFO
+                ============================================ */}
+
+                {modalType === 'device' &&
+                    modalNewDevice && (
+                        <div className="session-expired-device-info">
+                            <p>
+                                <strong>
+                                    📱 Thiết bị mới:
+                                </strong>{' '}
+
+                                {typeof modalNewDevice ===
+                                'string'
+                                    ? modalNewDevice
+                                    : (
+                                        modalNewDevice?.deviceName ||
+                                        modalNewDevice?.name ||
+                                        JSON.stringify(
+                                            modalNewDevice
+                                        )
+                                    )}
+                            </p>
+                        </div>
+                    )}
+
+                {/* ============================================
+                    COUNTDOWN
+                ============================================ */}
 
                 {countdown > 0 && (
                     <div className="session-expired-countdown">
                         ⏳ Tự động chuyển đến trang đăng nhập sau{' '}
-                        <strong>{countdown}</strong> giây...
+
+                        <strong>
+                            {countdown}
+                        </strong>{' '}
+
+                        giây...
                     </div>
                 )}
+
+                {/* ============================================
+                    SECURITY WARNING
+                ============================================ */}
 
                 {modalType === 'device' && (
                     <div className="session-expired-security">

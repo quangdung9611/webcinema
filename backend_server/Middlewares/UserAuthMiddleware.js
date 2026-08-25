@@ -1,10 +1,17 @@
-/*=========================================================
-    DEPENDENCIES
-=========================================================*/
+// middleware/authMiddleware.js
 
 const Jwt = require("../utils/Jwt");
 const Cookie = require("../utils/Cookie");
 const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
+
+// Lưu socketService instance
+let socketIOInstance = null;
+
+const setSocketIO = (io) => {
+    socketIOInstance = io;
+};
+
+const getSocketIO = () => socketIOInstance;
 
 /*=========================================================
     AUTHENTICATE USER (CUSTOMER) - HOÀN CHỈNH
@@ -32,6 +39,21 @@ const authenticateUser = async (req, res, next) => {
             // ========== TOKEN_EXPIRED - Token hết hạn ==========
             if (error.name === 'TokenExpiredError') {
                 console.warn('🔴 [AUTH] Token đã hết hạn');
+                
+                // 🔥 Lấy userId từ token cũ
+                try {
+                    const decoded = Jwt.decodeAccessToken(accessToken);
+                    if (decoded?.user_id && socketIOInstance) {
+                        Cookie.emitSessionExpired(socketIOInstance, decoded.user_id, {
+                            deviceName: 'Token expired',
+                            reason: 'Token đã hết hạn',
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                } catch (decodeError) {
+                    console.warn('⚠️ [AUTH] Cannot decode expired token');
+                }
+                
                 Cookie.clearUserCookies(res);
                 return res.status(401).json({
                     success: false,
@@ -75,6 +97,16 @@ const authenticateUser = async (req, res, next) => {
 
         if (!validToken) {
             console.warn('🔴 [AUTH] Token không tồn tại trong DB hoặc đã bị revoke');
+            
+            // 🔥 Gửi socket notification ngay lập tức
+            if (payload?.user_id && socketIOInstance) {
+                Cookie.emitSessionExpired(socketIOInstance, payload.user_id, {
+                    deviceName: 'Session revoked',
+                    reason: 'Token không tồn tại trong DB',
+                    timestamp: new Date().toISOString()
+                });
+            }
+            
             Cookie.clearUserCookies(res);
             return res.status(401).json({
                 success: false,
@@ -153,5 +185,7 @@ const optionalAuth = async (req, res, next) => {
 
 module.exports = {
     authenticateUser,
-    optionalAuth
+    optionalAuth,
+    setSocketIO,
+    getSocketIO
 };

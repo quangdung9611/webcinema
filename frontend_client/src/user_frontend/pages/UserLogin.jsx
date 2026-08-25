@@ -1,21 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+
 import {
     AlertCircle,
     Eye,
     EyeOff,
-    CheckCircle
+    CheckCircle,
 } from 'lucide-react';
 
 import api from '../../api/api';
-import socketService from '../../api/socket';
-import { forceLogout } from '../../utils/authCleanup';
+import { useAuth } from '../../context/AuthContext';
+import { notifyLogin } from '../../utils/authCleanup';
 
 import ForgotPassword from '../components/ForgotPassword';
 import LoadingButton from '../components/LoadingButton';
 import SuccessModal from '../components/SuccessModal';
 
 import '../styles/UserAuth.css';
+
 
 const UserLogin = () => {
 
@@ -26,7 +28,7 @@ const UserLogin = () => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        rememberMe: false
+        rememberMe: false,
     });
 
     const [errors, setErrors] = useState({});
@@ -35,141 +37,122 @@ const UserLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotModal, setShowForgotModal] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
-
     const [showLoginSuccessModal, setShowLoginSuccessModal] = useState(false);
     const [loginSuccessMessage, setLoginSuccessMessage] = useState('');
+    const [loggedInUser, setLoggedInUser] = useState(null);
+
+    // 🔥 Thêm ref để tránh duplicate redirect
+    const isRedirectingRef = useRef(false);
+
+    /* =====================================================
+        HOOKS
+    ===================================================== */
 
     const navigate = useNavigate();
     const location = useLocation();
 
-    // ============================================================
-    // ✅ KIỂM TRA STATE TỪ VERIFY-EMAIL
-    // ============================================================
+    const {
+        user,
+        isLoading,
+        refetch,
+    } = useAuth();
+
+
+    /* =====================================================
+        🔥 KIỂM TRA STATE TỪ SESSION EXPIRED HOẶC LOGOUT
+    ===================================================== */
+
     useEffect(() => {
-        if (location.state?.verified) {
-            setSuccessMessage(location.state.message || 'Email đã được xác thực thành công! Vui lòng đăng nhập.');
-            window.history.replaceState({}, document.title);
-
-            const timer = setTimeout(() => {
-                setSuccessMessage('');
-            }, 5000);
-
-            return () => clearTimeout(timer);
-        }
-    }, [location.state]);
-
-    // ============================================================
-    // 🔥 XỬ LÝ SESSION EXPIRED - KHÔNG HIỂN THỊ LỖI ĐỎ
-    // ============================================================
-    const handleSessionExpired = (detail) => {
-        console.log('🔴 [LOGIN] Session expired:', detail);
-        setErrors({});
-        socketService.disconnect();
-    };
-
-    // ============================================================
-    // 🔥 XỬ LÝ COOKIE EXPIRED - KHÔNG HIỂN THỊ LỖI ĐỎ
-    // ============================================================
-    const handleCookieExpired = (event) => {
-        console.log('🔴 [LOGIN] Cookie expired:', event?.detail);
-        socketService.disconnect();
-        localStorage.removeItem('user_info');
-        localStorage.removeItem('admin_info');
-        delete api.defaults.headers.common['Authorization'];
-    };
-
-    // ============================================================
-    // 🔥 ĐĂNG KÝ CALLBACK CHO SOCKET
-    // ============================================================
-    useEffect(() => {
-        socketService.setOnSessionExpired(handleSessionExpired);
-        console.log('✅ [LOGIN] Đã đăng ký callback cho socket');
-
-        return () => {
-            socketService.setOnSessionExpired(null);
-        };
-    }, []);
-
-    // ============================================================
-    // Kiểm tra nếu bị redirect từ session expired
-    // ============================================================
-    useEffect(() => {
+        // Nếu redirect từ session expired
         if (location.state?.expired) {
+            setServerError(
+                location.state?.message || 
+                'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+            );
+            
+            // Xóa state để không hiển thị lại khi refresh
+            window.history.replaceState({}, document.title);
+        }
+
+        // Nếu redirect từ logout
+        if (location.state?.loggedOut) {
+            setSuccessMessage(
+                location.state?.message || 
+                'Bạn đã đăng xuất thành công!'
+            );
+            
             window.history.replaceState({}, document.title);
         }
     }, [location.state]);
 
-    // ============================================================
-    // CHECK SESSION
-    // ============================================================
+
+    /* =====================================================
+        KIỂM TRA STATE TỪ VERIFY EMAIL
+    ===================================================== */
+
     useEffect(() => {
-        const checkUserSession = async () => {
-            try {
-                const res = await api.get('/api/auth/me');
-                const raw = res.data;
-                const account = raw?.user || raw?.data?.user || raw;
+        if (!location.state?.verified) {
+            return;
+        }
 
-                if (account) {
-                    navigate('/', { replace: true });
-                }
-            } catch (error) {
-                console.log('Chưa đăng nhập, hiển thị form login.');
-            }
-        };
-        checkUserSession();
-    }, [navigate]);
+        setSuccessMessage(
+            location.state.message ||
+            'Email đã được xác thực thành công! Vui lòng đăng nhập.'
+        );
 
-    // ============================================================
-    // LẮNG NGHE SỰ KIỆN WINDOW - FALLBACK
-    // ============================================================
-    useEffect(() => {
-        const handleWindowSessionExpired = (event) => {
-            console.log('🔴 [LOGIN] Nhận sự kiện sessionExpired từ window:', event.detail);
-            socketService.disconnect();
-        };
+        window.history.replaceState({}, document.title);
 
-        const handleTokenInvalid = (event) => {
-            console.log('🔴 [LOGIN] Token invalid:', event.detail);
-        };
-
-        const handleUnauthorized = (event) => {
-            console.log('🔴 [LOGIN] Unauthorized:', event.detail);
-        };
-
-        const handleCookieExpiredEvent = (event) => {
-            console.log('🔴 [LOGIN] Cookie expired:', event.detail);
-            socketService.disconnect();
-            localStorage.removeItem('user_info');
-            localStorage.removeItem('admin_info');
-            delete api.defaults.headers.common['Authorization'];
-        };
-
-        window.addEventListener('sessionExpired', handleWindowSessionExpired);
-        window.addEventListener('tokenInvalid', handleTokenInvalid);
-        window.addEventListener('unauthorized', handleUnauthorized);
-        window.addEventListener('cookieExpired', handleCookieExpiredEvent);
-
-        console.log('✅ [LOGIN] Đã đăng ký lắng nghe sự kiện auth');
+        const timer = setTimeout(() => {
+            setSuccessMessage('');
+        }, 5000);
 
         return () => {
-            window.removeEventListener('sessionExpired', handleWindowSessionExpired);
-            window.removeEventListener('tokenInvalid', handleTokenInvalid);
-            window.removeEventListener('unauthorized', handleUnauthorized);
-            window.removeEventListener('cookieExpired', handleCookieExpiredEvent);
-            console.log('🧹 [LOGIN] Đã hủy lắng nghe sự kiện auth');
+            clearTimeout(timer);
         };
-    }, []);
+    }, [location.state]);
 
-    // ============================================================
-    // VALIDATE
-    // ============================================================
+
+    /* =====================================================
+        🔥 NẾU ĐÃ LOGIN THÌ REDIRECT VỀ TRANG CHỦ
+        (Có kiểm tra để tránh redirect khi đang logout)
+    ===================================================== */
+
+    useEffect(() => {
+        // Nếu đang redirect thì bỏ qua
+        if (isRedirectingRef.current) return;
+
+        // Nếu đã login và không phải đang hiển thị modal thành công
+        if (
+            user &&
+            !isLoading &&
+            !showLoginSuccessModal &&
+            !location.state?.loggedOut
+        ) {
+            isRedirectingRef.current = true;
+            navigate('/', {
+                replace: true,
+            });
+        }
+    }, [
+        user,
+        isLoading,
+        showLoginSuccessModal,
+        location.state,
+        navigate,
+    ]);
+
+
+    /* =====================================================
+        VALIDATE
+    ===================================================== */
+
     const validate = () => {
         const tempErrors = {};
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (!formData.email.trim()) {
             tempErrors.email = 'Vui lòng nhập email';
-        } else if (!emailRegex.test(formData.email)) {
+        } else if (!emailRegex.test(formData.email.trim())) {
             tempErrors.email = 'Email không hợp lệ';
         }
 
@@ -180,36 +163,51 @@ const UserLogin = () => {
         }
 
         setErrors(tempErrors);
+
         return Object.keys(tempErrors).length === 0;
     };
 
-    // ============================================================
-    // HANDLE INPUT
-    // ============================================================
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
 
-        setFormData(prev => ({
+    /* =====================================================
+        HANDLE INPUT
+    ===================================================== */
+
+    const handleChange = (event) => {
+        const {
+            name,
+            value,
+            type,
+            checked,
+        } = event.target;
+
+        setFormData((prev) => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: type === 'checkbox' ? checked : value,
         }));
 
         if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
+            setErrors((prev) => ({
+                ...prev,
+                [name]: '',
+            }));
         }
+
         if (serverError) {
             setServerError('');
         }
+
         if (successMessage) {
             setSuccessMessage('');
         }
     };
 
-    // ============================================================
-    // 🔥 LOGIN - THÊM XỬ LÝ FORCE LOGOUT KHI SESSION EXPIRED
-    // ============================================================
-    const handleLogin = async (e) => {
-        e.preventDefault();
+
+    /* =====================================================
+        LOGIN
+    ===================================================== */
+
+    const handleLogin = async (event) => {
+        event.preventDefault();
 
         if (!validate()) {
             return;
@@ -218,6 +216,7 @@ const UserLogin = () => {
         setLoading(true);
         setServerError('');
         setSuccessMessage('');
+        setErrors({});
 
         try {
             const response = await api.post(
@@ -225,100 +224,188 @@ const UserLogin = () => {
                 {
                     email: formData.email.trim(),
                     password: formData.password,
-                    rememberMe: formData.rememberMe
+                    rememberMe: formData.rememberMe,
                 }
             );
 
-            if (response.data?.user && !response.data.user.email_verified) {
+            const responseUser =
+                response?.data?.user ||
+                response?.data?.data?.user ||
+                null;
+
+            /* =============================================
+                EMAIL CHƯA XÁC THỰC
+            ============================================= */
+
+            if (responseUser && !responseUser.email_verified) {
                 setServerError(
                     'Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn.'
                 );
-                setLoading(false);
                 return;
             }
 
-            const userData = response.data?.user;
-            if (userData) {
-                try {
-                    await new Promise(resolve => setTimeout(resolve, 500));
+            /* =============================================
+                🔥 LOGIN THÀNH CÔNG
+            ============================================= */
 
-                    socketService.setOnSessionExpired(handleSessionExpired);
-                    socketService.connect(userData.user_id);
-                    console.log('✅ [LOGIN] Socket connected for user:', userData.user_id);
-                } catch (socketError) {
-                    console.warn('⚠️ Không thể kết nối WebSocket:', socketError);
-                }
-            }
+            // Reset cache để lấy dữ liệu mới
+            api.resetUserCache();
+            api.resetSessionExpiredLock();
 
-            // HIỂN THỊ MODAL ĐĂNG NHẬP THÀNH CÔNG
-            setLoginSuccessMessage(`Chào mừng ${userData?.full_name || userData?.username || 'bạn'} quay trở lại!`);
+            // 🔥 PHÁT EVENT USER LOGGED IN NGAY
+            // Để UserHeader cập nhật username tức thì
+            notifyLogin(responseUser);
+
+            // 🔥 REFRESH AUTH CONTEXT
+            // AuthContext sẽ:
+            // - gọi /api/auth/me
+            // - set user
+            // - set isAuthenticated
+            // - connect socket
+            await refetch();
+
+            // LƯU USER TẠM ĐỂ HIỂN THỊ MODAL
+            setLoggedInUser(responseUser);
+
+            setLoginSuccessMessage(
+                `Chào mừng ${
+                    responseUser?.full_name ||
+                    responseUser?.username ||
+                    'bạn'
+                } quay trở lại!`
+            );
+
             setShowLoginSuccessModal(true);
 
-        } catch (err) {
-            console.error('Login Error:', err);
+        } catch (error) {
+            console.error('🔴 [LOGIN] Login error:', error);
 
-            const errorCode = err.response?.data?.code;
-            const errorMessage = err.response?.data?.message || 'Tài khoản hoặc mật khẩu không chính xác';
+            const errorData = error?.response?.data || {};
+            const errorCode = errorData?.code;
+            const errorMessage = errorData?.message || 
+                'Tài khoản hoặc mật khẩu không chính xác';
 
-            // 🔥 XỬ LÝ SESSION EXPIRED - FORCE LOGOUT
-            if (errorCode === 'SESSION_EXPIRED' || errorCode === 'TOKEN_EXPIRED') {
-                console.log(`🔴 [LOGIN] Nhận lỗi ${errorCode}, force logout...`);
-                forceLogout(navigate, errorMessage);
+            /* =============================================
+                XỬ LÝ LỖI THEO FIELD
+            ============================================= */
+
+            if (errorData?.field === 'email') {
+                setErrors((prev) => ({
+                    ...prev,
+                    email: errorMessage,
+                }));
                 return;
             }
 
-            if (errorCode === 'UNAUTHORIZED') {
-                // Không hiển thị lỗi đỏ, chỉ log
-                console.log('🔴 [LOGIN] Unauthorized - bỏ qua');
+            if (errorData?.field === 'password') {
+                setErrors((prev) => ({
+                    ...prev,
+                    password: errorMessage,
+                }));
                 return;
             }
 
-            if (err.response?.data?.field === 'email') {
-                setErrors(prev => ({ ...prev, email: errorMessage }));
-            } else if (err.response?.data?.field === 'password') {
-                setErrors(prev => ({ ...prev, password: errorMessage }));
-            } else {
-                setServerError(errorMessage);
+            /* =============================================
+                EMAIL CHƯA XÁC THỰC
+            ============================================= */
+
+            if (errorCode === 'EMAIL_NOT_VERIFIED') {
+                setServerError(
+                    errorMessage ||
+                    'Vui lòng xác thực email trước khi đăng nhập.'
+                );
+                return;
             }
+
+            /* =============================================
+                🔥 SESSION EXPIRED - Token đã hết hạn
+                Không hiển thị lỗi, chỉ redirect về login
+            ============================================= */
+
+            if (errorCode === 'TOKEN_EXPIRED' || 
+                errorCode === 'SESSION_EXPIRED' ||
+                errorCode === 'UNAUTHORIZED') {
+                
+                // Nếu đang ở trang login, chỉ hiển thị thông báo
+                setServerError(
+                    'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+                );
+                
+                // Reset state
+                api.resetUserCache();
+                
+                return;
+            }
+
+            /* =============================================
+                LOGIN ERROR KHÁC
+            ============================================= */
+
+            setServerError(errorMessage);
+
         } finally {
             setLoading(false);
         }
     };
 
-    // ============================================================
-    // 🔥 HANDLE SAU KHI MODAL THÀNH CÔNG ĐÓNG - VỀ TRANG CHỦ
-    // ============================================================
+
+    /* =====================================================
+        LOGIN SUCCESS CONFIRM
+    ===================================================== */
+
     const handleLoginSuccessConfirm = () => {
         setShowLoginSuccessModal(false);
-        window.dispatchEvent(new Event('userLoggedIn'));
-        navigate('/', { replace: true });
+        setLoggedInUser(null);
+
+        // Reset redirect flag
+        isRedirectingRef.current = false;
+
+        navigate('/', {
+            replace: true,
+        });
     };
 
-    // ============================================================
-    // RENDER
-    // ============================================================
+
+    /* =====================================================
+        RENDER
+    ===================================================== */
+
     return (
         <div className="auth-container">
             <div className="auth-card">
                 <h2>ĐĂNG NHẬP</h2>
-                <p className="auth-subtitle">Chào mừng bạn quay trở lại Cinema Star</p>
+
+                <p className="auth-subtitle">
+                    Chào mừng bạn quay trở lại Cinema Star
+                </p>
+
+                {/* ============================================
+                    EMAIL VERIFIED SUCCESS
+                ============================================ */}
 
                 {successMessage && (
-                    <div className="success-message" style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '12px 16px',
-                        backgroundColor: '#22c55e20',
-                        border: '1px solid #22c55e',
-                        borderRadius: '8px',
-                        color: '#22c55e',
-                        marginBottom: '16px'
-                    }}>
+                    <div
+                        className="success-message"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '12px 16px',
+                            backgroundColor: '#22c55e20',
+                            border: '1px solid #22c55e',
+                            borderRadius: '8px',
+                            color: '#22c55e',
+                            marginBottom: '16px',
+                        }}
+                    >
                         <CheckCircle size={20} />
                         <span>{successMessage}</span>
                     </div>
                 )}
+
+                {/* ============================================
+                    SERVER ERROR
+                ============================================ */}
 
                 {serverError && (
                     <div className="error-message">
@@ -327,49 +414,73 @@ const UserLogin = () => {
                     </div>
                 )}
 
+                {/* ============================================
+                    LOGIN FORM
+                ============================================ */}
+
                 <form onSubmit={handleLogin} noValidate>
+                    {/* EMAIL */}
                     <div className="form-group">
                         <label>Email address</label>
+
                         <input
                             id="login-email"
                             type="email"
                             name="email"
                             placeholder="example@gmail.com"
-                            className={`auth-input ${errors.email ? 'input-error' : ''}`}
+                            className={`auth-input ${
+                                errors.email ? 'input-error' : ''
+                            }`}
                             value={formData.email}
                             onChange={handleChange}
                             autoComplete="email"
                             disabled={loading}
                         />
-                        {errors.email && <span className="error-text">{errors.email}</span>}
+
+                        {errors.email && (
+                            <span className="error-text">
+                                {errors.email}
+                            </span>
+                        )}
                     </div>
 
+                    {/* PASSWORD */}
                     <div className="form-group">
                         <label>Password</label>
+
                         <div className="password-wrapper">
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 name="password"
                                 placeholder="••••••••"
-                                className={`auth-input ${errors.password ? 'input-error' : ''}`}
+                                className={`auth-input ${
+                                    errors.password ? 'input-error' : ''
+                                }`}
                                 value={formData.password}
                                 onChange={handleChange}
                                 autoComplete="current-password"
                                 disabled={loading}
                             />
+
                             <button
                                 type="button"
                                 className="toggle-password"
-                                onClick={() => setShowPassword(prev => !prev)}
+                                onClick={() => setShowPassword((prev) => !prev)}
                                 tabIndex="-1"
                                 disabled={loading}
                             >
                                 {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                             </button>
                         </div>
-                        {errors.password && <span className="error-text">{errors.password}</span>}
+
+                        {errors.password && (
+                            <span className="error-text">
+                                {errors.password}
+                            </span>
+                        )}
                     </div>
 
+                    {/* OPTIONS */}
                     <div className="form-options">
                         <label className="remember-me">
                             <input
@@ -392,6 +503,7 @@ const UserLogin = () => {
                         </button>
                     </div>
 
+                    {/* SUBMIT */}
                     <LoadingButton
                         type="submit"
                         loading={loading}
@@ -404,15 +516,31 @@ const UserLogin = () => {
                     </LoadingButton>
                 </form>
 
+                {/* ============================================
+                    REGISTER
+                ============================================ */}
+
                 <div className="auth-footer">
                     <span>Chưa có tài khoản?</span>
-                    <Link to="/register" className="btn-link">Đăng ký ngay</Link>
+                    <Link to="/register" className="btn-link">
+                        Đăng ký ngay
+                    </Link>
                 </div>
             </div>
 
+            {/* ================================================
+                FORGOT PASSWORD
+            ================================================ */}
+
             {showForgotModal && (
-                <ForgotPassword onClose={() => setShowForgotModal(false)} />
+                <ForgotPassword
+                    onClose={() => setShowForgotModal(false)}
+                />
             )}
+
+            {/* ================================================
+                LOGIN SUCCESS MODAL
+            ================================================ */}
 
             <SuccessModal
                 isOpen={showLoginSuccessModal}

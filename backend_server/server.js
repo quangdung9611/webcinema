@@ -36,6 +36,9 @@ const RedisService =
 const Jwt =
     require("./utils/Jwt");
 
+const Cookie =
+    require("./utils/Cookie");
+
 const RefreshTokenRepository =
     require("./Repositories/RefreshTokenRepository");
 
@@ -278,7 +281,7 @@ app.use(
 
 /*=========================================================
 
-    SOCKET.IO
+    🔥 SOCKET.IO SETUP
 
 =========================================================*/
 
@@ -293,7 +296,10 @@ const io =
             transports: [
                 "websocket",
                 "polling"
-            ]
+            ],
+
+            // Cho phép lấy cookie từ handshake
+            allowEIO3: true
 
         }
     );
@@ -301,20 +307,24 @@ const io =
 
 /*=========================================================
 
-    SET IO TO AUTH SERVICE
+    🔥 SET IO TO AUTH SERVICE & COOKIE
 
 =========================================================*/
 
+// Set IO cho AuthService
 AuthService.setIO(io);
 
+// Lưu IO vào global để các middleware dùng
+global.io = io;
+
 console.log(
-    "✅ Socket.IO instance set to AuthService"
+    "✅ Socket.IO instance set to AuthService & global"
 );
 
 
 /*=========================================================
 
-    SOCKET AUTHENTICATION
+    🔥 SOCKET AUTHENTICATION - CÓ HỖ TRỢ TOKEN EXPIRED
 
 =========================================================*/
 
@@ -395,16 +405,84 @@ io.use(
             }
 
 
-            const payload =
-                Jwt.verifyAccessToken(
-                    token
-                );
+            // =================================================
+            // 🔥 VERIFY TOKEN - PHÂN BIỆT LỖI
+            // =================================================
 
+            let payload;
 
-            if (!payload) {
+            try {
+
+                payload =
+                    Jwt.verifyAccessToken(
+                        token
+                    );
+
+            } catch (error) {
+
+                // =============================================
+                // TOKEN EXPIRED - GỬI SOCKET NOTIFICATION
+                // =============================================
+
+                if (error.name === 'TokenExpiredError') {
+
+                    console.warn(
+                        '🔴 [SOCKET] Token expired'
+                    );
+
+                    // Thử decode để lấy userId
+                    try {
+
+                        const decoded =
+                            Jwt.decodeAccessToken(token);
+
+                        if (decoded?.user_id) {
+
+                            // 🔥 EMIT SESSION EXPIRED
+                            io.to(`user_${decoded.user_id}`).emit(
+                                'session_expired',
+                                {
+                                    code: 'TOKEN_EXPIRED',
+                                    type: 'device',
+                                    message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                                    newDevice: {
+                                        deviceName: 'Token expired',
+                                        reason: 'Token đã hết hạn',
+                                        timestamp: new Date().toISOString()
+                                    },
+                                    timestamp: new Date().toISOString()
+                                }
+                            );
+
+                            console.log(
+                                `📤 [SOCKET] session_expired sent to user_${decoded.user_id}`
+                            );
+
+                        }
+
+                    } catch (decodeError) {
+
+                        console.warn(
+                            '⚠️ [SOCKET] Cannot decode expired token'
+                        );
+
+                    }
+
+                    return next(
+                        new Error(
+                            "Token expired"
+                        )
+                    );
+
+                }
+
+                // =============================================
+                // TOKEN INVALID
+                // =============================================
 
                 console.warn(
-                    "🔴 [SOCKET] Invalid token"
+                    "🔴 [SOCKET] Invalid token:",
+                    error.message
                 );
 
                 return next(
@@ -416,15 +494,96 @@ io.use(
             }
 
 
+            if (!payload) {
+
+                console.warn(
+                    "🔴 [SOCKET] Invalid token payload"
+                );
+
+                return next(
+                    new Error(
+                        "Invalid token"
+                    )
+                );
+
+            }
+
+
+            // =================================================
+            // 🔥 CHECK DB - TOKEN CÒN HỢP LỆ KHÔNG
+            // =================================================
+
+            try {
+
+                const accessTokenHash =
+                    Jwt.hashRefreshToken(token);
+
+                const validToken =
+                    await RefreshTokenRepository.findValidTokenHash(
+                        accessTokenHash
+                    );
+
+                if (!validToken) {
+
+                    console.warn(
+                        `🔴 [SOCKET] Token revoked for user ${payload.user_id}`
+                    );
+
+                    // 🔥 EMIT SESSION EXPIRED
+                    io.to(`user_${payload.user_id}`).emit(
+                        'session_expired',
+                        {
+                            code: 'SESSION_EXPIRED',
+                            type: 'device',
+                            message: 'Tài khoản đã đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.',
+                            newDevice: {
+                                deviceName: 'Session revoked',
+                                reason: 'Token không tồn tại trong DB',
+                                timestamp: new Date().toISOString()
+                            },
+                            timestamp: new Date().toISOString()
+                        }
+                    );
+
+                    return next(
+                        new Error(
+                            "Session expired"
+                        )
+                    );
+
+                }
+
+            } catch (dbError) {
+
+                console.error(
+                    "🔴 [SOCKET] DB check error:",
+                    dbError.message
+                );
+
+                // Vẫn cho phép kết nối nếu DB lỗi
+                // nhưng log warning
+
+            }
+
+
             socket.userId =
                 payload.user_id;
 
             socket.userRole =
                 payload.role;
 
+            socket.userEmail =
+                payload.email;
+
+            socket.username =
+                payload.username;
+
+            socket.fullName =
+                payload.full_name;
+
 
             console.log(
-                `✅ [SOCKET] Authenticated: User ${payload.user_id}`
+                `✅ [SOCKET] Authenticated: User ${payload.user_id} (${payload.email})`
             );
 
 
@@ -461,7 +620,7 @@ let holdingSeats = [];
 
 /*=========================================================
 
-    SOCKET CONNECTION
+    🔥 SOCKET CONNECTION - ĐÃ TÍCH HỢP SESSION EXPIRED
 
 =========================================================*/
 
@@ -471,10 +630,21 @@ io.on(
         socket
     ) => {
 
+        const userId = socket.userId;
+        const socketId = socket.id;
+
         console.log(
-            `⚡ Socket connected: ${socket.id} - User: ${socket.userId}`
+            `⚡ [SOCKET] Connected: ${socketId} - User: ${userId} (${socket.email || 'N/A'})`
         );
 
+        // =====================================================
+        // 🔥 THAM GIA ROOM CỦA USER
+        // =====================================================
+
+        if (userId) {
+            socket.join(`user_${userId}`);
+            console.log(`📌 [SOCKET] User ${userId} joined room user_${userId}`);
+        }
 
         // =====================================================
         // GỬI DANH SÁCH GHẾ ĐANG GIỮ
@@ -488,7 +658,8 @@ io.on(
 
         console.log(
             "📤 [SOCKET] Đã gửi danh sách ghế đang giữ cho user mới:",
-            holdingSeats
+            holdingSeats.length,
+            "ghế"
         );
 
 
@@ -502,29 +673,26 @@ io.on(
             async (data) => {
 
                 const {
-                    userId
+                    userId: registerUserId
                 } = data;
 
 
                 if (
-
-                    userId &&
-
-                    Number(userId) ===
-                    Number(socket.userId)
-
+                    registerUserId &&
+                    Number(registerUserId) ===
+                    Number(userId)
                 ) {
 
                     try {
 
                         await RedisService.saveUserSocket(
-                            userId,
-                            socket.id
+                            registerUserId,
+                            socketId
                         );
 
 
                         console.log(
-                            `✅ [SOCKET] Registered socket ${socket.id} for user ${userId}`
+                            `✅ [SOCKET] Registered socket ${socketId} for user ${registerUserId}`
                         );
 
 
@@ -552,7 +720,7 @@ io.on(
                 } else {
 
                     console.warn(
-                        `⚠️ [SOCKET] User ${socket.userId} attempted to register as ${userId}. Blocked.`
+                        `⚠️ [SOCKET] User ${userId} attempted to register as ${registerUserId}. Blocked.`
                     );
 
                 }
@@ -592,9 +760,7 @@ io.on(
                     );
 
 
-                // =================================================
                 // GHẾ ĐÃ CÓ NGƯỜI GIỮ
-                // =================================================
 
                 if (existingSeat) {
 
@@ -614,16 +780,17 @@ io.on(
                 }
 
 
-                // =================================================
                 // THÊM SOCKET ID
-                // =================================================
 
                 const seatData = {
 
                     ...data,
 
                     socketId:
-                        socket.id
+                        socketId,
+
+                    userId:
+                        userId
 
                 };
 
@@ -633,9 +800,7 @@ io.on(
                 );
 
 
-                // =================================================
                 // GỬI CHO TẤT CẢ CLIENT
-                // =================================================
 
                 io.emit(
                     "server-khoa-ghe",
@@ -644,7 +809,7 @@ io.on(
 
 
                 console.log(
-                    `🔒 [SOCKET] User ${socket.userId} đã giữ ghế: ${data.seatId} - Showtime: ${data.showtimeId}`
+                    `🔒 [SOCKET] User ${userId} đã giữ ghế: ${data.seatId} - Showtime: ${data.showtimeId}`
                 );
 
             }
@@ -660,9 +825,7 @@ io.on(
 
             (data) => {
 
-                // =================================================
                 // CHỈ CHO PHÉP CHỦ GHẾ HỦY GHẾ CỦA MÌNH
-                // =================================================
 
                 const existingSeat =
                     holdingSeats.find(
@@ -689,11 +852,11 @@ io.on(
                 if (
                     existingSeat &&
                     existingSeat.socketId !==
-                        socket.id
+                        socketId
                 ) {
 
                     console.warn(
-                        `⚠️ [SOCKET] User ${socket.userId} cố hủy ghế không thuộc về mình`
+                        `⚠️ [SOCKET] User ${userId} cố hủy ghế không thuộc về mình`
                     );
 
 
@@ -724,7 +887,7 @@ io.on(
                                 ) &&
 
                                 seat.socketId ===
-                                socket.id
+                                socketId
 
                             )
 
@@ -746,7 +909,7 @@ io.on(
 
 
                 console.log(
-                    `🔓 [SOCKET] User ${socket.userId} đã hủy giữ ghế: ${data.seatId} - Showtime: ${data.showtimeId}`
+                    `🔓 [SOCKET] User ${userId} đã hủy giữ ghế: ${data.seatId} - Showtime: ${data.showtimeId}`
                 );
 
             }
@@ -769,7 +932,7 @@ io.on(
 
 
                 console.log(
-                    `📤 [SOCKET] Đã gửi danh sách ghế đang giữ cho ${socket.id}`
+                    `📤 [SOCKET] Đã gửi danh sách ghế đang giữ cho ${socketId}`
                 );
 
             }
@@ -777,7 +940,7 @@ io.on(
 
 
         // =====================================================
-        // 🔥 CLEAR ALL HOLDING SEATS - THÊM MỚI
+        // CLEAR ALL HOLDING SEATS
         // =====================================================
 
         socket.on(
@@ -786,7 +949,7 @@ io.on(
             (data) => {
 
                 console.log(
-                    `🧹 [SOCKET] Clearing all holding seats for user ${socket.userId}`
+                    `🧹 [SOCKET] Clearing all holding seats for user ${userId}`
                 );
 
                 console.log(
@@ -797,7 +960,7 @@ io.on(
                 // Tìm tất cả ghế của user này
                 const userSeats =
                     holdingSeats.filter(
-                        seat => seat.socketId === socket.id
+                        seat => seat.socketId === socketId
                     );
 
                 if (userSeats.length > 0) {
@@ -824,17 +987,17 @@ io.on(
                     // Xóa khỏi danh sách
                     holdingSeats =
                         holdingSeats.filter(
-                            seat => seat.socketId !== socket.id
+                            seat => seat.socketId !== socketId
                         );
 
                     console.log(
-                        `✅ [SOCKET] Cleared ${userSeats.length} seats for user ${socket.userId}`
+                        `✅ [SOCKET] Cleared ${userSeats.length} seats for user ${userId}`
                     );
 
                 } else {
 
                     console.log(
-                        `ℹ️ [SOCKET] No holding seats found for user ${socket.userId}`
+                        `ℹ️ [SOCKET] No holding seats found for user ${userId}`
                     );
 
                 }
@@ -845,7 +1008,7 @@ io.on(
                     {
                         success: true,
                         cleared: userSeats.length,
-                        userId: socket.userId,
+                        userId: userId,
                         timestamp: new Date().toISOString()
                     }
                 );
@@ -855,7 +1018,7 @@ io.on(
 
 
         // =====================================================
-        // SESSION EXPIRED ACK
+        // 🔥 SESSION EXPIRED ACK
         // =====================================================
 
         socket.on(
@@ -864,7 +1027,7 @@ io.on(
             (data) => {
 
                 console.log(
-                    `📨 [SOCKET] Received session_expired_ack from user ${socket.userId}:`,
+                    `📨 [SOCKET] Received session_expired_ack from user ${userId}:`,
                     data
                 );
 
@@ -882,7 +1045,7 @@ io.on(
             () => {
 
                 console.log(
-                    `🔴 Socket disconnected: ${socket.id} - User: ${socket.userId}`
+                    `🔴 [SOCKET] Disconnected: ${socketId} - User: ${userId}`
                 );
 
 
@@ -891,7 +1054,7 @@ io.on(
 
                         (seat) =>
                             seat.socketId ===
-                            socket.id
+                            socketId
 
                     );
 
@@ -921,22 +1084,22 @@ io.on(
 
                         (seat) =>
                             seat.socketId !==
-                            socket.id
+                            socketId
 
                     );
 
 
-                if (socket.userId) {
+                if (userId) {
 
                     try {
 
                         RedisService.deleteUserSocket(
-                            socket.userId
+                            userId
                         );
 
 
                         console.log(
-                            `🗑️ [SOCKET] Removed socket for user ${socket.userId}`
+                            `🗑️ [SOCKET] Removed socket for user ${userId}`
                         );
 
                     } catch (error) {
@@ -959,7 +1122,7 @@ io.on(
 
 /*=========================================================
 
-    API ROUTES
+    🔥 API ROUTES
 
 =========================================================*/
 
@@ -1111,7 +1274,53 @@ app.use(
 
 /*=========================================================
 
-    SERVER
+    🔥 ERROR HANDLING MIDDLEWARE
+
+=========================================================*/
+
+// 404 Not Found
+app.use(
+    (req, res) => {
+
+        res.status(404).json({
+
+            success: false,
+
+            code: "NOT_FOUND",
+
+            message: "API endpoint not found"
+
+        });
+
+    }
+);
+
+// Global Error Handler
+app.use(
+    (err, req, res, next) => {
+
+        console.error(
+            "🔴 [SERVER] Global error:",
+            err.stack
+        );
+
+        res.status(500).json({
+
+            success: false,
+
+            code: "INTERNAL_SERVER_ERROR",
+
+            message: "Internal server error"
+
+        });
+
+    }
+);
+
+
+/*=========================================================
+
+    🔥 START SERVER
 
 =========================================================*/
 
@@ -1127,6 +1336,10 @@ server.listen(
 
         console.log(
             `🚀 Server running on port ${PORT}`
+        );
+
+        console.log(
+            `🌐 Environment: ${process.env.NODE_ENV || 'development'}`
         );
 
 
@@ -1192,12 +1405,25 @@ server.listen(
 
 
         // =====================================================
+        // SOCKET.IO STATUS
+        // =====================================================
+
+        console.log(
+            `✅ Socket.IO server ready`
+        );
+
+        console.log(
+            `📡 WebSocket: ${process.env.BACKEND_URL || 'http://localhost:' + PORT}`
+        );
+
+
+        // =====================================================
         // KEEP ALIVE
         // =====================================================
 
         const SELF_URL =
             process.env.BACKEND_URL ||
-            "https://api.quangdungcinema.id.vn";
+            `http://localhost:${PORT}`;
 
 
         setInterval(
@@ -1206,7 +1432,10 @@ server.listen(
                 try {
 
                     await axios.get(
-                        `${SELF_URL}/api/health?t=${Date.now()}`
+                        `${SELF_URL}/api/health?t=${Date.now()}`,
+                        {
+                            timeout: 5000
+                        }
                     );
 
 
@@ -1238,6 +1467,12 @@ server.listen(
     }
 );
 
+
+/*=========================================================
+
+    EXPORT
+
+=========================================================*/
 
 module.exports = {
     app,

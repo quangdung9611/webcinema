@@ -85,8 +85,8 @@
     top: 100%;
     left: 0;
     min-width: 260px;
-    max-height: 150px; /* 👈 Giới hạn chiều cao */
-    overflow-y: auto;  /* 👈 Thêm scrollbar dọc */
+    max-height: 150px;
+    overflow-y: auto;
     background: var(--bg-card);
     border: var(--border-premium);
     border-radius: var(--radius-lg);
@@ -154,18 +154,19 @@
 }
 
 .user-icon { color: var(--text-heading); }
+
 /* ==========================================================
-   SỬA PHẦN USERNAME DISPLAY - GIỚI HẠN ĐỘ RỘNG
+   USERNAME DISPLAY - GIỚI HẠN ĐỘ RỘNG
    ========================================================== */
 
 .username-display {
     color: var(--text-heading);
     font-size: var(--font-size-base);
     font-weight: var(--fw-semibold);
-    max-width: 150px;           /* 👈 Giới hạn chiều rộng tối đa */
-    white-space: nowrap;        /* 👈 Không xuống dòng */
-    overflow: hidden;           /* 👈 Ẩn phần vượt quá */
-    text-overflow: ellipsis;    /* 👈 Hiển thị dấu ... khi quá dài */
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     display: inline-block;
     vertical-align: middle;
 }
@@ -226,6 +227,115 @@
     color: #ff4d6d;
 }
 .logout-btn:hover svg { color: #ff4d6d; }
+
+/* ==========================================================
+   🔥 TOAST NOTIFICATION
+   ========================================================== */
+
+.toast-notification {
+    position: fixed;
+    top: 85px;
+    right: 24px;
+    z-index: 99999;
+    min-width: 320px;
+    max-width: 450px;
+    padding: 18px 22px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    border: var(--border-premium);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(20px);
+}
+
+.toast-notification.toast-success {
+    border-left: 4px solid #22c55e;
+}
+
+.toast-notification.toast-success .toast-icon {
+    color: #22c55e;
+}
+
+.toast-notification.toast-error {
+    border-left: 4px solid #ef4444;
+}
+
+.toast-notification.toast-error .toast-icon {
+    color: #ef4444;
+}
+
+.toast-notification.toast-warning {
+    border-left: 4px solid #f59e0b;
+}
+
+.toast-notification.toast-warning .toast-icon {
+    color: #f59e0b;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.toast-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.toast-message {
+    font-size: var(--font-size-base);
+    font-weight: var(--fw-medium);
+    line-height: 1.5;
+    color: var(--text-heading);
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.toast-close:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-heading);
+}
+
+/* ===== Toast Animation ===== */
+@keyframes slideInRight {
+    from {
+        transform: translateX(calc(100% + 40px));
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(calc(100% + 40px));
+        opacity: 0;
+    }
+}
 
 /* ===== Hamburger ===== */
 .hamburger {
@@ -329,7 +439,7 @@
         opacity: 1;
         visibility: visible;
         max-height: 0;
-        overflow-y: auto; /* 👈 Thêm scrollbar dọc */
+        overflow-y: auto;
         overflow-x: hidden;
         border: none;
         border-radius: 0;
@@ -341,7 +451,7 @@
     }
 
     .has-dropdown.mobile-active .sub-menu {
-        max-height: 150px; /* 👈 Giới hạn chiều cao và có scroll */
+        max-height: 150px;
     }
 
     /* Custom scrollbar cho sub-menu mobile */
@@ -371,6 +481,25 @@
         right: -10px;
         top: calc(100% + var(--space-sm));
     }
+
+    /* ===== Toast mobile ===== */
+    .toast-notification {
+        top: 76px;
+        right: 12px;
+        left: 12px;
+        min-width: unset;
+        max-width: unset;
+        padding: 14px 18px;
+        border-radius: var(--radius-md);
+    }
+
+    .toast-message {
+        font-size: var(--font-size-sm);
+    }
+
+    .toast-icon {
+        font-size: 18px;
+    }
 }
 
 /* ==========================================================
@@ -397,8 +526,12 @@
     .dropdown-item,
     .dropdown-item svg,
     .dropdown-item span,
-    .bar {
+    .bar,
+    .toast-notification {
         transition: none !important;
     }
-    .dropdown-content { animation: none !important; }
+    .dropdown-content,
+    .toast-notification {
+        animation: none !important;
+    }
 }
