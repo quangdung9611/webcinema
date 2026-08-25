@@ -1,5 +1,3 @@
-// src/api/api.js
-
 import axios from 'axios';
 
 // ============================================================
@@ -7,6 +5,7 @@ import axios from 'axios';
 // ============================================================
 
 const API_BASE = 'https://api.quangdungcinema.id.vn';
+
 const CACHE_DURATION = 5000;
 
 // ============================================================
@@ -29,7 +28,7 @@ let cachedUser = null;
 let cachedTime = 0;
 
 // ============================================================
-// SESSION LOCK
+// SESSION LOCK (Chống phát event sessionExpired nhiều lần)
 // ============================================================
 
 let isSessionExpiredEmitted = false;
@@ -39,6 +38,7 @@ let isSessionExpiredEmitted = false;
 // ============================================================
 
 const emitSessionExpired = (detail = {}) => {
+    // LOCK
     if (isSessionExpiredEmitted) {
         console.log('⚠️ [API] sessionExpired already emitted');
         return;
@@ -50,18 +50,19 @@ const emitSessionExpired = (detail = {}) => {
 
     const payload = {
         code: detail.code || (isDeviceLogin ? 'SESSION_EXPIRED' : 'UNAUTHORIZED'),
-        message: detail.message || (isDeviceLogin 
+        message: detail.message || (isDeviceLogin
             ? 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
             : 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'),
         type: isDeviceLogin ? 'device' : 'token',
         newDevice: detail.newDevice || null,
         source: detail.source || 'api',
-        fromSocket: detail.fromSocket || false,
+        fromSocket: false,
         timestamp: detail.timestamp || new Date().toISOString(),
     };
 
     console.warn('🔴 [API] EMIT SESSION EXPIRED:', payload);
 
+    // SessionGuard sẽ nhận event này và xử lý UI
     window.dispatchEvent(
         new CustomEvent('sessionExpired', {
             detail: payload,
@@ -70,7 +71,7 @@ const emitSessionExpired = (detail = {}) => {
 };
 
 // ============================================================
-// GET OVERRIDE
+// GET OVERRIDE (Cache /api/auth/me)
 // ============================================================
 
 const originalGet = api.get;
@@ -79,8 +80,10 @@ api.get = function (url, config = {}) {
     const normalizedUrl = typeof url === 'string' ? url.split('?')[0] : url;
     const isMeEndpoint = normalizedUrl === '/api/auth/me';
 
+    // Cache
     if (isMeEndpoint && !config.force) {
         const now = Date.now();
+
         if (cachedUser && now - cachedTime < CACHE_DURATION) {
             console.log('💾 [API] Return cached /api/auth/me');
             return Promise.resolve({
@@ -94,6 +97,7 @@ api.get = function (url, config = {}) {
         }
     }
 
+    // Không gửi "force" xuống server
     const requestConfig = { ...config };
     if ('force' in requestConfig) {
         delete requestConfig.force;
@@ -103,7 +107,7 @@ api.get = function (url, config = {}) {
 };
 
 // ============================================================
-// 🔥 RESPONSE INTERCEPTOR - PHÁT HIỆN 401 NGAY LẬP TỨC
+// RESPONSE INTERCEPTOR
 // ============================================================
 
 api.interceptors.response.use(
@@ -111,6 +115,7 @@ api.interceptors.response.use(
         const requestUrl = response.config?.url || '';
         const normalizedUrl = requestUrl.split('?')[0];
 
+        // Cache /api/auth/me
         if (normalizedUrl === '/api/auth/me') {
             cachedUser = response.data;
             cachedTime = Date.now();
@@ -126,10 +131,11 @@ api.interceptors.response.use(
         const normalizedUrl = requestUrl.split('?')[0];
 
         // ====================================================
-        // 🔥 401 UNAUTHORIZED - PHÁT HIỆN NGAY LẬP TỨC
+        // 401 UNAUTHORIZED - Xử lý session
         // ====================================================
 
         if (status === 401) {
+            // Clear cache ngay
             cachedUser = null;
             cachedTime = 0;
 
@@ -138,13 +144,8 @@ api.interceptors.response.use(
             const errorMessage = responseData.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
             const newDevice = responseData.newDevice || null;
 
-            // Xác định type
-            let type = 'token';
-            if (errorCode === 'SESSION_EXPIRED' || 
-                errorCode === 'TOKEN_EXPIRED' ||
-                errorCode === 'TOKEN_INVALID') {
-                type = 'device';
-            }
+            // Xác định loại session
+            const type = errorCode === 'SESSION_EXPIRED' ? 'device' : 'token';
 
             console.warn('🔴 [API] 401 Unauthorized:', {
                 url: normalizedUrl,
@@ -154,7 +155,7 @@ api.interceptors.response.use(
                 newDevice,
             });
 
-            // KHÔNG xử lý session cho auth endpoints
+            // KHÔNG xử lý session cho các endpoint đăng nhập/đăng ký
             const excludedEndpoints = [
                 '/api/auth/login',
                 '/api/auth/register',
@@ -165,12 +166,11 @@ api.interceptors.response.use(
                 '/api/auth/verify-email',
             ];
 
-            const shouldHandleSession = !excludedEndpoints.some(
-                (endpoint) => normalizedUrl.includes(endpoint)
+            const shouldHandleSession = !excludedEndpoints.some((endpoint) =>
+                normalizedUrl.includes(endpoint)
             );
 
             if (shouldHandleSession) {
-                // 🔥 PHÁT EVENT NGAY LẬP TỨC
                 emitSessionExpired({
                     code: errorCode,
                     message: errorMessage,
@@ -187,6 +187,7 @@ api.interceptors.response.use(
 
         if (status === 403) {
             console.warn('🟠 [API] 403 Forbidden:', normalizedUrl);
+
             window.dispatchEvent(
                 new CustomEvent('forbidden', {
                     detail: {
@@ -204,6 +205,7 @@ api.interceptors.response.use(
 
         if (status === 429) {
             console.warn('🟡 [API] 429 Rate Limited');
+
             window.dispatchEvent(
                 new CustomEvent('rateLimited', {
                     detail: {
@@ -215,11 +217,12 @@ api.interceptors.response.use(
         }
 
         // ====================================================
-        // SERVER ERROR
+        // SERVER ERROR (500+)
         // ====================================================
 
         if (status && status >= 500) {
             console.error('🔴 [API] Server Error:', status);
+
             window.dispatchEvent(
                 new CustomEvent('serverError', {
                     detail: {
@@ -237,6 +240,7 @@ api.interceptors.response.use(
 
         if (error?.code === 'ERR_NETWORK' || error?.message === 'Network Error') {
             console.error('🔴 [API] Network Error');
+
             window.dispatchEvent(
                 new CustomEvent('networkError', {
                     detail: {
@@ -247,6 +251,10 @@ api.interceptors.response.use(
             );
         }
 
+        // ====================================================
+        // TIMEOUT
+        // ====================================================
+
         if (error?.code === 'ECONNABORTED') {
             console.warn('🟡 [API] Request Timeout');
         }
@@ -256,7 +264,7 @@ api.interceptors.response.use(
 );
 
 // ============================================================
-// RESET FUNCTIONS
+// RESET USER CACHE
 // ============================================================
 
 api.resetUserCache = function () {
@@ -265,10 +273,35 @@ api.resetUserCache = function () {
     console.log('🔄 [API] Reset user cache');
 };
 
+// ============================================================
+// RESET SESSION LOCK
+// ============================================================
+
 api.resetSessionExpiredLock = function () {
     isSessionExpiredEmitted = false;
     console.log('🔓 [API] Reset session expired lock');
 };
+
+// ============================================================
+// AUTH EVENTS (Chỉ dựa vào Server/Socket, KHÔNG đọc cookie)
+// ============================================================
+
+// Khi đăng nhập thành công -> Reset cache & mở khóa session
+window.addEventListener('userLoggedIn', () => {
+    api.resetUserCache();
+    api.resetSessionExpiredLock();
+    console.log('🟢 [API] User logged in → reset auth state');
+});
+
+// Khi session hết hạn -> Reset cache
+window.addEventListener('sessionExpired', () => {
+    api.resetUserCache();
+});
+
+// Khi auth bị cleanup -> Reset cache
+window.addEventListener('authCleanedUp', () => {
+    api.resetUserCache();
+});
 
 // ============================================================
 // EXPORT

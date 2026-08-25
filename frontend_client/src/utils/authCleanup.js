@@ -12,10 +12,6 @@ const clearFrontendAuth = () => {
         '🧹 [AUTH CLEANUP] Clearing frontend auth state'
     );
 
-    // ========================================================
-    // 🔥 CHỈ XÓA COOKIE (vì bạn chỉ lưu cookie)
-    // ========================================================
-
     // Xóa user_token
     document.cookie = 'user_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.quangdungcinema.id.vn';
     document.cookie = 'user_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
@@ -26,7 +22,7 @@ const clearFrontendAuth = () => {
     document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
     document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=localhost';
 
-    // Xóa các cookie liên quan khác (phòng trường hợp)
+    // Xóa các cookie liên quan khác
     const cookies = document.cookie.split(';');
     for (let cookie of cookies) {
         const trimmed = cookie.trim();
@@ -39,42 +35,23 @@ const clearFrontendAuth = () => {
         }
     }
 
-    // ========================================================
-    // AXIOS AUTH HEADER
-    // ========================================================
-
     delete api.defaults.headers.common.Authorization;
-
-    // ========================================================
-    // SOCKET
-    // ========================================================
 
     try {
         socketService.disconnect();
-
-        console.log(
-            '🔌 [AUTH CLEANUP] Socket disconnected'
-        );
+        console.log('🔌 [AUTH CLEANUP] Socket disconnected');
     } catch (error) {
-        console.warn(
-            '⚠️ [AUTH CLEANUP] Socket disconnect failed:',
-            error
-        );
+        console.warn('⚠️ [AUTH CLEANUP] Socket disconnect failed:', error);
     }
 
-    console.log(
-        '✅ [AUTH CLEANUP] All auth cookies cleared'
-    );
+    console.log('✅ [AUTH CLEANUP] All auth cookies cleared');
 };
 
 // ============================================================
 // DISPATCH AUTH CLEANED EVENT
 // ============================================================
 
-const dispatchAuthCleanedUp = ({
-    reason,
-    message
-}) => {
+const dispatchAuthCleanedUp = ({ reason, message }) => {
     if (typeof window === 'undefined') {
         return;
     }
@@ -92,15 +69,6 @@ const dispatchAuthCleanedUp = ({
 
 // ============================================================
 // CLEANUP AUTH
-//
-// callApi = true
-// -> User chủ động logout
-//
-// callApi = false
-// -> Session hết hạn
-// -> Token invalid
-// -> Login thiết bị khác
-// -> Socket force logout
 // ============================================================
 
 export const cleanupAuth = async (options = {}) => {
@@ -110,53 +78,25 @@ export const cleanupAuth = async (options = {}) => {
         message = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
     } = options;
 
-    console.log(
-        '🔴 [AUTH CLEANUP] Starting cleanup:',
-        {
-            reason,
-            callApi
-        }
-    );
+    console.log('🔴 [AUTH CLEANUP] Starting cleanup:', { reason, callApi });
 
-    // ========================================================
-    // 1. LOGOUT API
-    //
-    // Chỉ gọi khi user chủ động logout.
-    // ========================================================
-
+    // 1. LOGOUT API - Chỉ gọi khi user chủ động logout
     if (callApi) {
         try {
             await api.post('/api/auth/logout');
-
-            console.log(
-                '✅ [AUTH CLEANUP] Logout API success'
-            );
+            console.log('✅ [AUTH CLEANUP] Logout API success');
         } catch (error) {
-            console.warn(
-                '⚠️ [AUTH CLEANUP] Logout API failed:',
-                error?.message
-            );
+            console.warn('⚠️ [AUTH CLEANUP] Logout API failed:', error?.message);
         }
     }
 
-    // ========================================================
     // 2. CLEAR FRONTEND STATE
-    // ========================================================
-
     clearFrontendAuth();
 
-    // ========================================================
     // 3. NOTIFY APP
-    // ========================================================
+    dispatchAuthCleanedUp({ reason, message });
 
-    dispatchAuthCleanedUp({
-        reason,
-        message
-    });
-
-    console.log(
-        '✅ [AUTH CLEANUP] Cleanup completed'
-    );
+    console.log('✅ [AUTH CLEANUP] Cleanup completed');
 
     return {
         success: true,
@@ -166,20 +106,41 @@ export const cleanupAuth = async (options = {}) => {
 };
 
 // ============================================================
+// 🔥 LOGOUT VÀ XÓA COOKIE - GỌI API + XÓA COOKIE
+// ============================================================
+
+export const logoutAndClearCookies = async (message = 'Bạn đã đăng xuất.') => {
+    console.log('🚪 [AUTH] Logout and clear cookies...');
+
+    try {
+        // Gọi API logout để server xóa cookie
+        await api.post('/api/auth/logout');
+        console.log('✅ [AUTH] Logout API success');
+    } catch (error) {
+        console.warn('⚠️ [AUTH] Logout API failed:', error?.message);
+    }
+
+    // Xóa cookie frontend
+    clearFrontendAuth();
+
+    // Dispatch event
+    dispatchAuthCleanedUp({
+        reason: 'logout',
+        message
+    });
+
+    return {
+        success: true,
+        message
+    };
+};
+
+// ============================================================
 // USER LOGIN SUCCESS
-//
-// Gọi hàm này NGAY SAU KHI LOGIN THÀNH CÔNG.
-//
-// UserHeader đang listen event "userLoggedIn"
-// -> fetchUser()
-// -> username hiện ngay
-// -> socket connect ngay
 // ============================================================
 
 export const notifyLogin = (user = null) => {
-    console.log(
-        '🟢 [AUTH] User login detected'
-    );
+    console.log('🟢 [AUTH] User login detected');
 
     if (typeof window === 'undefined') {
         return;
@@ -209,15 +170,6 @@ export const logout = async () => {
 
 // ============================================================
 // FORCE LOGOUT
-//
-// Không gọi logout API.
-//
-// Dùng cho:
-// - Session expired
-// - Token expired
-// - Token invalid
-// - Đăng nhập thiết bị khác
-// - Server / Socket yêu cầu logout
 // ============================================================
 
 export const forceLogout = async (
@@ -238,10 +190,7 @@ export const forceLogout = async (
 export const sessionExpired = async (
     message = 'Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại.'
 ) => {
-    return forceLogout(
-        'SESSION_EXPIRED',
-        message
-    );
+    return forceLogout('SESSION_EXPIRED', message);
 };
 
 // ============================================================
@@ -251,10 +200,7 @@ export const sessionExpired = async (
 export const deviceLoggedOut = async (
     message = 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.'
 ) => {
-    return forceLogout(
-        'DEVICE_LOGGED_OUT',
-        message
-    );
+    return forceLogout('DEVICE_LOGGED_OUT', message);
 };
 
 // ============================================================
@@ -264,14 +210,11 @@ export const deviceLoggedOut = async (
 export const tokenInvalid = async (
     message = 'Thông tin đăng nhập không còn hợp lệ. Vui lòng đăng nhập lại.'
 ) => {
-    return forceLogout(
-        'TOKEN_INVALID',
-        message
-    );
+    return forceLogout('TOKEN_INVALID', message);
 };
 
 // ============================================================
-// 🔥 CHECK TOKEN STATUS
+// CHECK TOKEN STATUS
 // ============================================================
 
 export const checkAuthStatus = () => {
@@ -304,6 +247,7 @@ export default {
     cleanupAuth,
     logout,
     forceLogout,
+    logoutAndClearCookies,
     notifyLogin,
     sessionExpired,
     deviceLoggedOut,

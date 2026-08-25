@@ -13,9 +13,8 @@ import {
 import api from '../../api/api';
 import socketService from '../../api/socket';
 
-import {
-    logout
-} from '../../utils/authCleanup';
+import { logout } from '../../utils/authCleanup';
+import { useAuth } from '../../context/AuthContext';
 
 import {
     ChevronDown,
@@ -37,16 +36,27 @@ const UserHeader = () => {
     const navigate = useNavigate();
 
     // ========================================================
+    // DÙNG CHUNG AUTH CONTEXT (Tránh gọi API thừa)
+    // ========================================================
+    const { user: contextUser, isLoading: authLoading, refetch } = useAuth();
+
+    // ========================================================
     // STATE
     // ========================================================
 
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(contextUser); // Khởi tạo từ context
     const [showDropdown, setShowDropdown] = useState(false);
     const [cinemas, setCinemas] = useState([]);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [activeSubMenu, setActiveSubMenu] = useState(null);
-    const [authLoading, setAuthLoading] = useState(true);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    // 🔥 State cho toast notification
+    const [toast, setToast] = useState({
+        show: false,
+        message: '',
+        type: 'success'
+    });
 
     // ========================================================
     // REFS
@@ -54,261 +64,222 @@ const UserHeader = () => {
 
     const dropdownRef = useRef(null);
     const navRef = useRef(null);
-    const isMountedRef = useRef(true);
+    const toastTimeoutRef = useRef(null);
+    const redirectTimeoutRef = useRef(null);
 
     // ========================================================
-    // FETCH USER
+    // ĐỒNG BỘ USER TỪ CONTEXT
+    // ========================================================
+    useEffect(() => {
+        setUser(contextUser);
+    }, [contextUser]);
+
+    // ========================================================
+    // 🔥 TOAST HELPER
     // ========================================================
 
-    const fetchUser = useCallback(async () => {
-        try {
-            const res = await api.get('/api/auth/me');
-            const raw = res?.data;
-            const account = raw?.user ||
-                raw?.data?.user ||
-                (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : null);
-
-            if (isMountedRef.current) {
-                setUser(account);
-            }
-
-            if (account?.user_id) {
-                socketService.connect(account.user_id);
-            }
-
-            console.log('🟢 [HEADER] User loaded:', account?.user_id);
-        } catch (error) {
-            console.log('🔵 [HEADER] No active user session');
-            if (isMountedRef.current) {
-                setUser(null);
-            }
-            try {
-                socketService.disconnect();
-            } catch (socketError) {
-                console.warn('Socket disconnect error:', socketError);
-            }
-        } finally {
-            if (isMountedRef.current) {
-                setAuthLoading(false);
-            }
+    const showToast = useCallback((message, type = 'success') => {
+        if (toastTimeoutRef.current) {
+            clearTimeout(toastTimeoutRef.current);
+            toastTimeoutRef.current = null;
         }
+
+        setToast({
+            show: true,
+            message,
+            type
+        });
+
+        toastTimeoutRef.current = setTimeout(() => {
+            setToast({
+                show: false,
+                message: '',
+                type: 'success'
+            });
+            toastTimeoutRef.current = null;
+        }, 4000);
     }, []);
 
     // ========================================================
-    // INITIAL FETCH USER
+    // AUTH EVENTS (Chỉ lắng nghe, không tự ý gọi API)
     // ========================================================
 
     useEffect(() => {
-        isMountedRef.current = true;
-        fetchUser();
+        // 1. AUTH CLEANED UP
+        const handleAuthCleanedUp = (event) => {
+            console.log('🧹 [HEADER] Auth cleaned:', event?.detail);
 
-        return () => {
-            isMountedRef.current = false;
-        };
-    }, [fetchUser]);
-
-    // ========================================================
-    // 🔥 SOCKET EVENT - PHÁT HIỆN SESSION EXPIRED TỪ SERVER
-    // ========================================================
-
-    useEffect(() => {
-        const handleSocketSessionExpired = (detail) => {
-            console.warn('🔴 [HEADER] Socket session_expired received:', detail);
-
-            if (!isMountedRef.current) return;
-
-            // Reset user state
             setUser(null);
             setShowDropdown(false);
-            setAuthLoading(false);
-            setIsMenuOpen(false);
-            setActiveSubMenu(null);
 
-            // Disconnect socket
+            try {
+                socketService.disconnect();
+            } catch (error) {
+                console.warn('Socket disconnect error:', error);
+            }
+        };
+
+        // 2. USER LOGGED IN (Context đã tự fetch, Header chỉ cần nhận user mới)
+        const handleUserLoggedIn = (event) => {
+            console.log('🟢 [HEADER] User logged in - updating immediately');
+            
+            // Gọi refetch để lấy user mới nhất từ context
+            refetch().catch(() => {});
+        };
+
+        // 3. SESSION EXPIRED
+        const handleSessionExpired = (event) => {
+            console.warn('🔴 [HEADER] Session expired real-time:', event?.detail);
+
+            setUser(null);
+            setShowDropdown(false);
+
             try {
                 socketService.disconnect();
             } catch (error) {
                 console.warn('Socket disconnect error:', error);
             }
 
-            // 🔥 Dispatch event để các component khác biết
-            window.dispatchEvent(new CustomEvent('sessionExpired', {
-                detail: {
-                    code: detail?.code || 'SESSION_EXPIRED',
-                    type: detail?.type || 'device',
-                    message: detail?.message || 'Tài khoản đã được đăng nhập trên thiết bị khác.',
-                    source: 'socket',
-                    fromSocket: true,
-                    timestamp: new Date().toISOString()
-                }
-            }));
-
-            // 🔥 Dispatch authCleanedUp
-            window.dispatchEvent(new CustomEvent('authCleanedUp', {
-                detail: {
-                    reason: 'SESSION_EXPIRED',
-                    message: detail?.message || 'Tài khoản đã được đăng nhập trên thiết bị khác.',
-                    timestamp: new Date().toISOString()
-                }
-            }));
-
-            // 🔥 Redirect về login
-            navigate('/login', { replace: true });
-        };
-
-        // Đăng ký callback với socket
-        socketService.setOnSessionExpired(handleSocketSessionExpired);
-
-        return () => {
-            socketService.setOnSessionExpired(null);
-        };
-    }, [navigate]);
-
-    // ========================================================
-    // 🔥 AUTH EVENTS - LẮNG NGHE TỪ WINDOW
-    // ========================================================
-
-    useEffect(() => {
-        // ====================================================
-        // SESSION EXPIRED - Từ API interceptor hoặc socket
-        // ====================================================
-
-        const handleSessionExpired = () => {
-            console.warn('🔴 [HEADER] Session expired event received');
-
-            if (!isMountedRef.current) return;
-
-            setUser(null);
-            setShowDropdown(false);
-            setAuthLoading(false);
             setIsMenuOpen(false);
             setActiveSubMenu(null);
 
-            try {
-                socketService.disconnect();
-            } catch (e) {
-                // Bỏ qua
-            }
+            showToast(
+                event?.detail?.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                'warning'
+            );
         };
 
-        // ====================================================
-        // AUTH CLEANED UP
-        // ====================================================
-
-        const handleAuthCleanedUp = () => {
-            console.log('🧹 [HEADER] Auth cleaned event received');
-
-            if (!isMountedRef.current) return;
+        // 4. TOKEN EXPIRED
+        const handleTokenExpired = (event) => {
+            console.warn('⏰ [HEADER] Token expired real-time:', event?.detail);
 
             setUser(null);
             setShowDropdown(false);
-            setAuthLoading(false);
 
             try {
                 socketService.disconnect();
-            } catch (e) {
-                // Bỏ qua
+            } catch (error) {
+                console.warn('Socket disconnect error:', error);
             }
+
+            setIsMenuOpen(false);
+            setActiveSubMenu(null);
+
+            showToast(
+                event?.detail?.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                'warning'
+            );
         };
 
-        // ====================================================
-        // 🔥 USER LOGGED IN - CẬP NHẬT NGAY
-        // ====================================================
+        // 5. DEVICE LOGGED OUT
+        const handleDeviceLoggedOut = (event) => {
+            console.warn('📱 [HEADER] Device logged out real-time:', event?.detail);
 
-        const handleUserLoggedIn = async () => {
-            console.log('🟢 [HEADER] User logged in event received');
-
-            if (!isMountedRef.current) return;
-
-            setAuthLoading(true);
+            setUser(null);
+            setShowDropdown(false);
 
             try {
-                const res = await api.get('/api/auth/me', { force: true });
-                const raw = res?.data;
-                const account = raw?.user || 
-                    raw?.data?.user || 
-                    (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : null);
-
-                if (isMountedRef.current) {
-                    setUser(account);
-                }
-
-                if (account?.user_id) {
-                    socketService.connect(account.user_id);
-                }
-
-                console.log('🟢 [HEADER] User updated after login:', account?.user_id);
+                socketService.disconnect();
             } catch (error) {
-                console.log('🔵 [HEADER] Cannot fetch user after login');
-                if (isMountedRef.current) {
-                    setUser(null);
-                }
-            } finally {
-                if (isMountedRef.current) {
-                    setAuthLoading(false);
-                }
+                console.warn('Socket disconnect error:', error);
             }
+
+            setIsMenuOpen(false);
+            setActiveSubMenu(null);
+
+            showToast(
+                event?.detail?.message || 'Tài khoản đã được đăng nhập trên thiết bị khác.',
+                'warning'
+            );
         };
 
-        // ====================================================
-        // ĐĂNG KÝ CÁC EVENT
-        // ====================================================
-
-        window.addEventListener('sessionExpired', handleSessionExpired);
+        // ĐĂNG KÝ TẤT CẢ EVENT
         window.addEventListener('authCleanedUp', handleAuthCleanedUp);
         window.addEventListener('userLoggedIn', handleUserLoggedIn);
+        window.addEventListener('sessionExpired', handleSessionExpired);
+        window.addEventListener('tokenExpired', handleTokenExpired);
+        window.addEventListener('deviceLoggedOut', handleDeviceLoggedOut);
 
         return () => {
-            window.removeEventListener('sessionExpired', handleSessionExpired);
             window.removeEventListener('authCleanedUp', handleAuthCleanedUp);
             window.removeEventListener('userLoggedIn', handleUserLoggedIn);
+            window.removeEventListener('sessionExpired', handleSessionExpired);
+            window.removeEventListener('tokenExpired', handleTokenExpired);
+            window.removeEventListener('deviceLoggedOut', handleDeviceLoggedOut);
         };
-    }, []);
+    }, [refetch, showToast]);
 
     // ========================================================
-    // 🔥 LOGOUT CHỦ ĐỘNG
+    // LOGOUT CHỦ ĐỘNG
     // ========================================================
 
-    const handleLogout = useCallback(async () => {
-        if (isLoggingOut) return;
+    const handleLogout = async () => {
+        if (isLoggingOut) {
+            return;
+        }
+
         setIsLoggingOut(true);
+
+        console.log('🔴 [HEADER] Logging out...');
 
         try {
             await logout();
-            
-            if (isMountedRef.current) {
-                setUser(null);
-                setShowDropdown(false);
+
+            setUser(null);
+            setShowDropdown(false);
+
+            showToast('Đăng xuất thành công! Hẹn gặp lại bạn 👋', 'success');
+
+            // Clear timeout cũ nếu có
+            if (redirectTimeoutRef.current) {
+                clearTimeout(redirectTimeoutRef.current);
+                redirectTimeoutRef.current = null;
             }
 
-            navigate('/login', { 
-                replace: true, 
-                state: { loggedOut: true } 
-            });
+            redirectTimeoutRef.current = setTimeout(() => {
+                navigate('/login', {
+                    replace: true,
+                    state: {
+                        loggedOut: true,
+                        message: 'Đăng xuất thành công!'
+                    }
+                });
+                setIsLoggingOut(false);
+                redirectTimeoutRef.current = null;
+            }, 1500);
+
         } catch (error) {
             console.error('🔴 [HEADER] Logout error:', error);
-            
-            if (isMountedRef.current) {
+
+            showToast('Có lỗi xảy ra khi đăng xuất. Vui lòng thử lại.', 'error');
+
+            if (redirectTimeoutRef.current) {
+                clearTimeout(redirectTimeoutRef.current);
+                redirectTimeoutRef.current = null;
+            }
+
+            redirectTimeoutRef.current = setTimeout(() => {
                 setUser(null);
-            }
-            
-            navigate('/login', { replace: true });
-        } finally {
-            if (isMountedRef.current) {
+                navigate('/login', {
+                    replace: true
+                });
                 setIsLoggingOut(false);
-            }
+                redirectTimeoutRef.current = null;
+            }, 2000);
         }
-    }, [isLoggingOut, navigate]);
+    };
 
     // ========================================================
-    // FETCH CINEMAS
+    // FETCH CINEMAS (Không liên quan auth)
     // ========================================================
 
     useEffect(() => {
         const fetchCinemas = async () => {
             try {
                 const response = await api.get('/api/cinemas');
+
                 const raw = response?.data?.data;
+
                 let list = [];
 
                 if (Array.isArray(raw)) {
@@ -319,26 +290,18 @@ const UserHeader = () => {
                     list = raw.cinemas;
                 }
 
-                if (isMountedRef.current) {
-                    setCinemas(list);
-                }
+                setCinemas(list);
             } catch (error) {
                 console.error('🔴 [HEADER] Cannot fetch cinemas:', error);
-                if (isMountedRef.current) {
-                    setCinemas([]);
-                }
+                setCinemas([]);
             }
         };
 
         fetchCinemas();
-
-        return () => {
-            // Cleanup
-        };
     }, []);
 
     // ========================================================
-    // CLICK OUTSIDE - ĐÓNG MENU
+    // CLICK OUTSIDE
     // ========================================================
 
     useEffect(() => {
@@ -363,7 +326,7 @@ const UserHeader = () => {
     }, []);
 
     // ========================================================
-    // RESPONSIVE - TỰ ĐỘNG ĐÓNG MENU KHI RESIZE
+    // RESPONSIVE
     // ========================================================
 
     useEffect(() => {
@@ -385,366 +348,496 @@ const UserHeader = () => {
     // HELPERS
     // ========================================================
 
-    const closeMobileMenu = useCallback(() => {
+    const closeMobileMenu = () => {
         setIsMenuOpen(false);
         setActiveSubMenu(null);
-    }, []);
+    };
 
-    const toggleSubMenu = useCallback((menuName, event) => {
+    const toggleSubMenu = (menuName, event) => {
         event.preventDefault();
         event.stopPropagation();
-        setActiveSubMenu((current) => current === menuName ? null : menuName);
-    }, []);
 
-    const getAvatarUrl = useCallback((avatar) => {
-        if (!avatar) return null;
-        if (avatar.startsWith('http')) return avatar;
+        setActiveSubMenu((current) =>
+            current === menuName ? null : menuName
+        );
+    };
+
+    const getAvatarUrl = (avatar) => {
+        if (!avatar) {
+            return null;
+        }
+
+        if (avatar.startsWith('http')) {
+            return avatar;
+        }
+
         return `https://api.quangdungcinema.id.vn/uploads/avatars/${avatar}`;
-    }, []);
+    };
 
     // ========================================================
     // USER INFO
     // ========================================================
 
-    const isValidUser = Boolean(user && Number(user.email_verified) === 1);
+    const isValidUser = Boolean(
+        user &&
+        Number(user.email_verified) === 1
+    );
+
     const avatarSource = user?.user_avatar || user?.avatar;
+
     const avatarUrl = getAvatarUrl(avatarSource);
+
     const displayName = user?.username || user?.full_name || 'Tài khoản';
 
-    const handleLoginClick = useCallback(() => {
+    // ========================================================
+    // LOGIN / REGISTER
+    // ========================================================
+
+    const handleLoginClick = () => {
         setShowDropdown(false);
         navigate('/login');
-    }, [navigate]);
+    };
 
-    const handleRegisterClick = useCallback(() => {
+    const handleRegisterClick = () => {
         setShowDropdown(false);
         navigate('/register');
-    }, [navigate]);
+    };
 
     // ========================================================
     // RENDER
     // ========================================================
 
     return (
-        <nav className="user-navbar">
-            <div className="nav-container">
-
-                {/* ============================================
-                    HAMBURGER MENU
-                ============================================ */}
-
-                <button
-                    className={`hamburger ${isMenuOpen ? 'active' : ''}`}
-                    onClick={() => setIsMenuOpen((prev) => !prev)}
-                    aria-label="Toggle menu"
-                >
-                    <span className="bar" />
-                    <span className="bar" />
-                    <span className="bar" />
-                </button>
-
-                {/* ============================================
-                    LOGO
-                ============================================ */}
-
-                <div
-                    className="header-logo"
-                    onClick={() => {
-                        navigate('/');
-                        closeMobileMenu();
-                    }}
-                >
-                    <img
-                        src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
-                        alt="Cinema Star Logo"
-                    />
-                </div>
-
-                {/* ============================================
-                    MOBILE OVERLAY
-                ============================================ */}
-
-                <div
-                    className={`menu-overlay ${isMenuOpen ? 'active' : ''}`}
-                    onClick={closeMobileMenu}
-                />
-
-                {/* ============================================
-                    NAVIGATION LINKS
-                ============================================ */}
-
-                <ul
-                    ref={navRef}
-                    className={`nav-links ${isMenuOpen ? 'active' : ''}`}
-                >
-                    {/* TRANG CHỦ */}
-                    <li>
-                        <Link
-                            to="/"
-                            onClick={closeMobileMenu}
-                            className="menu-link"
-                        >
-                            Trang chủ
-                        </Link>
-                    </li>
-
-                    {/* PHIM */}
-                    <li
-                        className={`has-dropdown ${
-                            activeSubMenu === 'phim' ? 'mobile-active' : ''
-                        }`}
-                    >
-                        <div
-                            className="menu-link mobile-parent"
-                            onClick={(event) => toggleSubMenu('phim', event)}
-                        >
-                            <span>Phim</span>
-                            <ChevronDown size={18} className="icon-down" />
-                        </div>
-
-                        <ul className="sub-menu">
-                            <li>
-                                <Link
-                                    to="/movies/status/phim-dang-chieu"
-                                    onClick={closeMobileMenu}
-                                >
-                                    Phim đang chiếu
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/movies/status/phim-sap-chieu"
-                                    onClick={closeMobileMenu}
-                                >
-                                    Phim sắp chiếu
-                                </Link>
-                            </li>
-                        </ul>
-                    </li>
-
-                    {/* RẠP */}
-                    <li
-                        className={`has-dropdown ${
-                            activeSubMenu === 'rap' ? 'mobile-active' : ''
-                        }`}
-                    >
-                        <div className="menu-link mobile-parent">
-                            <Link to="/cinema" onClick={closeMobileMenu}>
-                                Rạp
-                            </Link>
-                            <ChevronDown
-                                size={18}
-                                className="icon-down"
-                                onClick={(event) => toggleSubMenu('rap', event)}
-                            />
-                        </div>
-
-                        <ul className="sub-menu">
-                            {cinemas.map((cinema) => (
-                                <li key={cinema.cinema_id}>
-                                    <Link
-                                        to={`/cinema/detail/${cinema.slug}`}
-                                        onClick={closeMobileMenu}
-                                    >
-                                        {cinema.cinema_name}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </li>
-
-                    {/* GÓC ĐIỆN ẢNH */}
-                    <li
-                        className={`has-dropdown ${
-                            activeSubMenu === 'goc' ? 'mobile-active' : ''
-                        }`}
-                    >
-                        <div
-                            className="menu-link mobile-parent"
-                            onClick={(event) => toggleSubMenu('goc', event)}
-                        >
-                            <span>Góc Điện Ảnh</span>
-                            <ChevronDown size={18} className="icon-down" />
-                        </div>
-
-                        <ul className="sub-menu">
-                            <li>
-                                <Link to="/actors" onClick={closeMobileMenu}>
-                                    Diễn Viên
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/news" onClick={closeMobileMenu}>
-                                    Tin Tức
-                                </Link>
-                            </li>
-                        </ul>
-                    </li>
-
-                    {/* KHUYẾN MÃI */}
-                    <li>
-                        <Link
-                            to="/promotion"
-                            onClick={closeMobileMenu}
-                            className="menu-link"
-                        >
-                            Khuyến mãi
-                        </Link>
-                    </li>
-
-                    {/* BLOG ĐIỆN ẢNH */}
-                    <li>
-                        <Link
-                            to="/blog-cinema"
-                            onClick={closeMobileMenu}
-                            className="menu-link"
-                        >
-                            Blog Điện Ảnh
-                        </Link>
-                    </li>
-                </ul>
-
-                {/* ============================================
-                    USER MENU - DROPDOWN
-                ============================================ */}
-
-                <div className="user-menu" ref={dropdownRef}>
-                    {/* TRIGGER */}
-                    <div
-                        className="account-trigger"
-                        onClick={() => setShowDropdown((prev) => !prev)}
-                    >
-                        {isValidUser && avatarUrl ? (
-                            <img
-                                src={avatarUrl}
-                                alt="avatar"
-                                className="header-avatar"
-                                style={{
-                                    width: '28px',
-                                    height: '28px',
-                                    borderRadius: '50%',
-                                    objectFit: 'cover',
-                                    marginRight: '8px'
-                                }}
-                            />
-                        ) : (
-                            <UserCircle size={22} className="user-icon" />
-                        )}
-
-                        <span className="username-display">
-                            {authLoading 
-                                ? 'Đang tải...' 
-                                : isValidUser 
-                                    ? displayName 
-                                    : 'Tài khoản'
-                            }
+        <>
+            {/* 🔥 TOAST NOTIFICATION */}
+            {toast.show && (
+                <div className={`toast-notification toast-${toast.type}`}>
+                    <div className="toast-content">
+                        <span className="toast-icon">
+                            {toast.type === 'success' && '✅'}
+                            {toast.type === 'error' && '❌'}
+                            {toast.type === 'warning' && '⚠️'}
                         </span>
+                        <span className="toast-message">{toast.message}</span>
+                    </div>
+                    <button 
+                        className="toast-close"
+                        onClick={() => {
+                            setToast({ show: false, message: '', type: 'success' });
+                            if (toastTimeoutRef.current) {
+                                clearTimeout(toastTimeoutRef.current);
+                                toastTimeoutRef.current = null;
+                            }
+                        }}
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
 
-                        <ChevronDown 
-                            size={14} 
-                            className={showDropdown ? 'rotate' : ''} 
+            <nav className="user-navbar">
+
+                <div className="nav-container">
+
+                    {/* HAMBURGER */}
+
+                    <button
+                        className={`hamburger ${
+                            isMenuOpen ? 'active' : ''
+                        }`}
+                        onClick={() =>
+                            setIsMenuOpen((prev) => !prev)
+                        }
+                        aria-label="Toggle menu"
+                    >
+                        <span className="bar" />
+                        <span className="bar" />
+                        <span className="bar" />
+                    </button>
+
+                    {/* LOGO */}
+
+                    <div
+                        className="header-logo"
+                        onClick={() => {
+                            navigate('/');
+                            closeMobileMenu();
+                        }}
+                    >
+                        <img
+                            src="https://api.quangdungcinema.id.vn/uploads/logo/logocinema.png"
+                            alt="Cinema Star Logo"
                         />
                     </div>
 
-                    {/* DROPDOWN CONTENT */}
-                    {showDropdown && (
-                        <div className="dropdown-content show">
-                            {isValidUser ? (
-                                // ====================================
-                                // ĐÃ ĐĂNG NHẬP
-                                // ====================================
-                                <>
-                                    <div className="dropdown-user-info">
-                                        <p>
-                                            Chào, <strong>{displayName}</strong>
-                                        </p>
+                    {/* MOBILE OVERLAY */}
+
+                    <div
+                        className={`menu-overlay ${
+                            isMenuOpen ? 'active' : ''
+                        }`}
+                        onClick={closeMobileMenu}
+                    />
+
+                    {/* NAVIGATION */}
+
+                    <ul
+                        ref={navRef}
+                        className={`nav-links ${
+                            isMenuOpen ? 'active' : ''
+                        }`}
+                    >
+
+                        <li>
+                            <Link
+                                to="/"
+                                onClick={closeMobileMenu}
+                                className="menu-link"
+                            >
+                                Trang chủ
+                            </Link>
+                        </li>
+
+                        {/* PHIM */}
+
+                        <li
+                            className={`has-dropdown ${
+                                activeSubMenu === 'phim' ? 'mobile-active' : ''
+                            }`}
+                        >
+                            <div
+                                className="menu-link mobile-parent"
+                                onClick={(event) =>
+                                    toggleSubMenu('phim', event)
+                                }
+                            >
+                                <span>Phim</span>
+
+                                <ChevronDown
+                                    size={18}
+                                    className="icon-down"
+                                />
+                            </div>
+
+                            <ul className="sub-menu">
+
+                                <li>
+                                    <Link
+                                        to="/movies/status/phim-dang-chieu"
+                                        onClick={closeMobileMenu}
+                                    >
+                                        Phim đang chiếu
+                                    </Link>
+                                </li>
+
+                                <li>
+                                    <Link
+                                        to="/movies/status/phim-sap-chieu"
+                                        onClick={closeMobileMenu}
+                                    >
+                                        Phim sắp chiếu
+                                    </Link>
+                                </li>
+
+                            </ul>
+                        </li>
+
+                        {/* RẠP */}
+
+                        <li
+                            className={`has-dropdown ${
+                                activeSubMenu === 'rap' ? 'mobile-active' : ''
+                            }`}
+                        >
+                            <div className="menu-link mobile-parent">
+
+                                <Link
+                                    to="/cinema"
+                                    onClick={closeMobileMenu}
+                                >
+                                    Rạp
+                                </Link>
+
+                                <ChevronDown
+                                    size={18}
+                                    className="icon-down"
+                                    onClick={(event) =>
+                                        toggleSubMenu('rap', event)
+                                    }
+                                />
+
+                            </div>
+
+                            <ul className="sub-menu">
+
+                                {cinemas.map((cinema) => (
+                                    <li
+                                        key={cinema.cinema_id}
+                                    >
+                                        <Link
+                                            to={`/cinema/detail/${cinema.slug}`}
+                                            onClick={closeMobileMenu}
+                                        >
+                                            {cinema.cinema_name}
+                                        </Link>
+                                    </li>
+                                ))}
+
+                            </ul>
+                        </li>
+
+                        {/* GÓC ĐIỆN ẢNH */}
+
+                        <li
+                            className={`has-dropdown ${
+                                activeSubMenu === 'goc' ? 'mobile-active' : ''
+                            }`}
+                        >
+                            <div
+                                className="menu-link mobile-parent"
+                                onClick={(event) =>
+                                    toggleSubMenu('goc', event)
+                                }
+                            >
+                                <span>Góc Điện Ảnh</span>
+
+                                <ChevronDown
+                                    size={18}
+                                    className="icon-down"
+                                />
+                            </div>
+
+                            <ul className="sub-menu">
+
+                                <li>
+                                    <Link
+                                        to="/actors"
+                                        onClick={closeMobileMenu}
+                                    >
+                                        Diễn Viên
+                                    </Link>
+                                </li>
+
+                                <li>
+                                    <Link
+                                        to="/news"
+                                        onClick={closeMobileMenu}
+                                    >
+                                        Tin Tức
+                                    </Link>
+                                </li>
+
+                            </ul>
+                        </li>
+
+                        <li>
+                            <Link
+                                to="/promotion"
+                                onClick={closeMobileMenu}
+                                className="menu-link"
+                            >
+                                Khuyến mãi
+                            </Link>
+                        </li>
+
+                        <li>
+                            <Link
+                                to="/blog-cinema"
+                                onClick={closeMobileMenu}
+                                className="menu-link"
+                            >
+                                Blog Điện Ảnh
+                            </Link>
+                        </li>
+
+                    </ul>
+
+                    {/* USER MENU */}
+
+                    <div
+                        className="user-menu"
+                        ref={dropdownRef}
+                    >
+
+                        <div
+                            className="account-trigger"
+                            onClick={() =>
+                                setShowDropdown((prev) => !prev)
+                            }
+                        >
+
+                            {isValidUser && avatarUrl ? (
+                                <img
+                                    src={avatarUrl}
+                                    alt="avatar"
+                                    className="header-avatar"
+                                    style={{
+                                        width: '28px',
+                                        height: '28px',
+                                        borderRadius: '50%',
+                                        objectFit: 'cover',
+                                        marginRight: '8px'
+                                    }}
+                                />
+                            ) : (
+                                <UserCircle
+                                    size={22}
+                                    className="user-icon"
+                                />
+                            )}
+
+                            <span className="username-display">
+
+                                {authLoading
+                                    ? 'Đang tải...'
+                                    : isValidUser
+                                        ? displayName
+                                        : 'Tài khoản'}
+
+                            </span>
+
+                            <ChevronDown
+                                size={14}
+                                className={showDropdown ? 'rotate' : ''}
+                            />
+
+                        </div>
+
+                        {showDropdown && (
+
+                            <div className="dropdown-content show">
+
+                                {isValidUser ? (
+
+                                    <>
+
+                                        <div className="dropdown-user-info">
+
+                                            <p>
+                                                Chào,{' '}
+                                                <strong>{displayName}</strong>
+                                            </p>
+
+                                            {user.role === 'admin' && (
+                                                <span className="admin-badge">
+                                                    Quản trị viên
+                                                </span>
+                                            )}
+
+                                        </div>
+
+                                        <div className="dropdown-divider" />
+
                                         {user.role === 'admin' && (
-                                            <span className="admin-badge">
-                                                Quản trị viên
-                                            </span>
+
+                                            <div
+                                                className="dropdown-item admin-link"
+                                                onClick={() => {
+                                                    navigate('/admin');
+                                                    setShowDropdown(false);
+                                                }}
+                                            >
+
+                                                <LayoutDashboard size={18} />
+
+                                                <span>Trang Quản Trị</span>
+
+                                            </div>
+
                                         )}
-                                    </div>
 
-                                    <div className="dropdown-divider" />
-
-                                    {user.role === 'admin' && (
                                         <div
-                                            className="dropdown-item admin-link"
+                                            className="dropdown-item"
                                             onClick={() => {
-                                                navigate('/admin');
+                                                navigate('/profile');
                                                 setShowDropdown(false);
                                             }}
                                         >
-                                            <LayoutDashboard size={18} />
-                                            <span>Trang Quản Trị</span>
+
+                                            <IdCard size={18} />
+
+                                            <span>Hồ sơ</span>
+
                                         </div>
-                                    )}
 
-                                    <div
-                                        className="dropdown-item"
-                                        onClick={() => {
-                                            navigate('/profile');
-                                            setShowDropdown(false);
-                                        }}
-                                    >
-                                        <IdCard size={18} />
-                                        <span>Hồ sơ</span>
-                                    </div>
+                                        <div
+                                            className={`dropdown-item logout-btn ${isLoggingOut ? 'loading' : ''}`}
+                                            onClick={handleLogout}
+                                        >
 
-                                    <div
-                                        className={`dropdown-item logout-btn ${
-                                            isLoggingOut ? 'loading' : ''
-                                        }`}
-                                        onClick={handleLogout}
-                                    >
-                                        <LogOut size={18} />
-                                        <span>
-                                            {isLoggingOut 
-                                                ? 'Đang đăng xuất...' 
-                                                : 'Đăng xuất'
-                                            }
-                                        </span>
-                                    </div>
-                                </>
-                            ) : (
-                                // ====================================
-                                // CHƯA ĐĂNG NHẬP
-                                // ====================================
-                                <>
-                                    <div className="dropdown-user-info">
-                                        <p style={{ color: '#f87171' }}>
-                                            {user && !Number(user.email_verified)
-                                                ? '⚠️ Vui lòng xác thực email'
-                                                : 'Chưa đăng nhập'
-                                            }
-                                        </p>
-                                    </div>
+                                            <LogOut size={18} />
 
-                                    <div className="dropdown-divider" />
+                                            <span>
 
-                                    <div
-                                        className="dropdown-item"
-                                        onClick={handleLoginClick}
-                                    >
-                                        <LogIn size={18} />
-                                        <span>Đăng nhập</span>
-                                    </div>
+                                                {isLoggingOut
+                                                    ? 'Đang đăng xuất...'
+                                                    : 'Đăng xuất'}
 
-                                    <div
-                                        className="dropdown-item"
-                                        onClick={handleRegisterClick}
-                                    >
-                                        <UserPlus size={18} />
-                                        <span>Đăng ký</span>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    )}
+                                            </span>
+
+                                        </div>
+
+                                    </>
+
+                                ) : (
+
+                                    <>
+
+                                        <div className="dropdown-user-info">
+
+                                            <p
+                                                style={{
+                                                    color: '#f87171'
+                                                }}
+                                            >
+
+                                                {user &&
+                                                !Number(user.email_verified)
+                                                    ? '⚠️ Vui lòng xác thực email'
+                                                    : 'Chưa đăng nhập'}
+
+                                            </p>
+
+                                        </div>
+
+                                        <div className="dropdown-divider" />
+
+                                        <div
+                                            className="dropdown-item"
+                                            onClick={handleLoginClick}
+                                        >
+
+                                            <LogIn size={18} />
+
+                                            <span>Đăng nhập</span>
+
+                                        </div>
+
+                                        <div
+                                            className="dropdown-item"
+                                            onClick={handleRegisterClick}
+                                        >
+
+                                            <UserPlus size={18} />
+
+                                            <span>Đăng ký</span>
+
+                                        </div>
+
+                                    </>
+
+                                )}
+
+                            </div>
+
+                        )}
+
+                    </div>
+
                 </div>
 
-            </div>
-        </nav>
+            </nav>
+        </>
     );
 };
 
