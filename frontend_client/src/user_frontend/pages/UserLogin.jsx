@@ -44,6 +44,9 @@ const UserLogin = () => {
         isLoading,
     } = useAuth();
 
+    // 🔥 KIỂM TRA XEM CÓ ĐANG Ở TRẠNG THÁI EXPIRED KHÔNG
+    const isExpired = Boolean(location.state?.expired);
+
     useEffect(() => {
         if (!location.state?.verified) {
             return;
@@ -69,13 +72,14 @@ const UserLogin = () => {
         if (
             user &&
             !isLoading &&
-            !showLoginSuccessModal
+            !showLoginSuccessModal &&
+            !isExpired // 🔥 CHẶN REDIRECT KHI ĐANG Ở TRẠNG THÁI EXPIRED
         ) {
             navigate('/', {
                 replace: true,
             });
         }
-    }, [user, isLoading, showLoginSuccessModal, navigate]);
+    }, [user, isLoading, showLoginSuccessModal, navigate, isExpired]);
 
     const validate = () => {
         const tempErrors = {};
@@ -171,11 +175,7 @@ const UserLogin = () => {
             setLoggedInUser(responseUser);
 
             setLoginSuccessMessage(
-                `Chào mừng ${
-                    responseUser?.full_name ||
-                    responseUser?.username ||
-                    'bạn'
-                } quay trở lại!`
+                `Chào mừng ${responseUser?.full_name || responseUser?.username || 'bạn'} quay trở lại!`
             );
 
             setShowLoginSuccessModal(true);

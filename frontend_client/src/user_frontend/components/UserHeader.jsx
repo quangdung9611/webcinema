@@ -99,6 +99,7 @@ const UserHeader = () => {
         const handleSessionExpired = (event) => {
             console.warn('🔴 [HEADER] Session expired:', event?.detail);
 
+            // 🔥 CHỈ CẦN SET USER NULL - KHÔNG HIỆN TOAST
             setUser(null);
             setShowDropdown(false);
 
@@ -110,11 +111,6 @@ const UserHeader = () => {
 
             setIsMenuOpen(false);
             setActiveSubMenu(null);
-
-            showToast(
-                event?.detail?.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-                'warning'
-            );
         };
 
         window.addEventListener('authCleanedUp', handleAuthCleanedUp);

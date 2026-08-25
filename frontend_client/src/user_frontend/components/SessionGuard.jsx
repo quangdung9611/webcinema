@@ -29,8 +29,8 @@ const SessionGuard = ({ children }) => {
     } = useAuth();
 
     const isMountedRef = useRef(false);
+    const isProcessingRef = useRef(false); // 🔥 LOCK ĐỂ CHẶN 2 LẦN
     const hasRedirectedRef = useRef(false);
-    const mounted = useRef(false);
 
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
@@ -153,6 +153,13 @@ const SessionGuard = ({ children }) => {
     const handleSessionExpired = useCallback(
         async (eventOrDetail = {}) => {
             if (!isMountedRef.current) return;
+            
+            // 🔥 LOCK: Nếu đã xử lý rồi thì bỏ qua
+            if (isProcessingRef.current) {
+                console.log('⚠️ [SESSION GUARD] Already processed, skip');
+                return;
+            }
+            isProcessingRef.current = true;
 
             const detail = eventOrDetail?.detail || eventOrDetail || {};
             const code = detail.code || 'TOKEN_EXPIRED';
@@ -240,6 +247,7 @@ const SessionGuard = ({ children }) => {
     useEffect(() => {
         const handleUserLoggedIn = () => {
             console.log('🟢 [SESSION GUARD] User logged in → reset');
+            isProcessingRef.current = false;
             setShowModal(false);
         };
 
