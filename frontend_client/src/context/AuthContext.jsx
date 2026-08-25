@@ -109,7 +109,6 @@ export const AuthProvider = ({ children }) => {
             } catch (error) {
                 console.warn('🔵 [AUTH] No active user session:', error?.response?.status || error?.message);
 
-                // 🔥 CHỈ CẦN PHÁT EVENT KHI CÓ 401 (KỂ CẢ TOKEN_EXPIRED HAY SESSION_REPLACED)
                 if (error?.response?.status === 401) {
                     window.dispatchEvent(
                         new CustomEvent('sessionExpired', {
@@ -240,6 +239,7 @@ export const AuthProvider = ({ children }) => {
         refetch,
         logout,
         setUser: updateUser,
+        clearAuthState,
     };
 
     return (

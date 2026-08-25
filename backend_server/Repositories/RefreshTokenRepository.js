@@ -47,6 +47,25 @@ class RefreshTokenRepository {
     }
 
     /*=========================================================
+        🔥 LẤY 1 TOKEN HỢP LỆ NHẤT CỦA USER (DÙNG CHO CRON JOB)
+    =========================================================*/
+    async findValidTokenByUserId(userId) {
+        const [rows] = await db.query(
+            `
+            SELECT *
+            FROM refresh_tokens
+            WHERE user_id = ?
+              AND is_revoked = 0
+              AND expires_at > NOW()
+            ORDER BY created_at DESC
+            LIMIT 1
+            `,
+            [userId]
+        );
+        return rows[0] || null;
+    }
+
+    /*=========================================================
         LẤY TOKEN HỢP LỆ THEO HASH
     =========================================================*/
     async findValidTokenHash(tokenHash) {

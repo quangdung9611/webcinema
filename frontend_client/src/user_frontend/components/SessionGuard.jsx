@@ -29,8 +29,8 @@ const SessionGuard = ({ children }) => {
     } = useAuth();
 
     const isMountedRef = useRef(false);
-    const isProcessingRef = useRef(false);
     const hasRedirectedRef = useRef(false);
+    const mounted = useRef(false);
 
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
@@ -105,14 +105,9 @@ const SessionGuard = ({ children }) => {
     }, []);
 
     const handleModalConfirm = useCallback(() => {
-        if (hasRedirectedRef.current) {
-            return;
-        }
-
-        hasRedirectedRef.current = true;
-
-        console.log('➡️ [SESSION GUARD] Redirecting after session expired');
-
+        // BỎ hasRedirectedRef - LUÔN LUÔN CHUYỂN TRANG
+        console.log('➡️ [SESSION GUARD] Clicking "Đăng nhập lại"!');
+        
         setShowModal(false);
 
         if (isBookingPage()) {
@@ -149,8 +144,8 @@ const SessionGuard = ({ children }) => {
             setModalCode(code);
             setModalMessage(message);
             setModalNewDevice(newDevice);
-            setCountdown(COUNTDOWN_SECONDS);
             setShowModal(true);
+            setCountdown(COUNTDOWN_SECONDS);
         },
         []
     );
@@ -158,10 +153,6 @@ const SessionGuard = ({ children }) => {
     const handleSessionExpired = useCallback(
         async (eventOrDetail = {}) => {
             if (!isMountedRef.current) return;
-            if (isProcessingRef.current || hasRedirectedRef.current) {
-                console.log('⚠️ [SESSION GUARD] Session already handled');
-                return;
-            }
 
             const detail = eventOrDetail?.detail || eventOrDetail || {};
             const code = detail.code || 'TOKEN_EXPIRED';
@@ -170,8 +161,7 @@ const SessionGuard = ({ children }) => {
                 ...detail,
             });
 
-            isProcessingRef.current = true;
-
+            // 🔥 KHÔNG GỌI clearAuthState NỮA - CHỈ CẦN HIỂN MODAL
             api.resetUserCache();
             clearBookingSession();
 
@@ -181,13 +171,12 @@ const SessionGuard = ({ children }) => {
                 console.warn('Socket disconnect error:', error);
             }
 
-            clearAuthState();
             openSessionModal({
                 ...detail,
                 code,
             });
         },
-        [clearBookingSession, openSessionModal, clearAuthState]
+        [clearBookingSession, openSessionModal]
     );
 
     useEffect(() => {
@@ -251,8 +240,6 @@ const SessionGuard = ({ children }) => {
     useEffect(() => {
         const handleUserLoggedIn = () => {
             console.log('🟢 [SESSION GUARD] User logged in → reset');
-            isProcessingRef.current = false;
-            hasRedirectedRef.current = false;
             setShowModal(false);
         };
 

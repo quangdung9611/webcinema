@@ -19,13 +19,7 @@ class SocketService {
     }
 
     emitSessionExpired(detail = {}) {
-        if (this.isSessionExpired) {
-            console.log('⚠️ [SOCKET] Session expired already emitted');
-            return;
-        }
-
-        this.isSessionExpired = true;
-
+        // 🔥 BỎ LOCK (isSessionExpired) - GỌI CALLBACK NGAY LẬP TỨC
         const payload = {
             code: detail.code || 'TOKEN_EXPIRED',
             message: detail.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
@@ -77,11 +71,6 @@ class SocketService {
         this.socket.on('connect', () => {
             if (!this.socket) return;
 
-            if (this.isSessionExpired) {
-                console.warn('⚠️ [SOCKET] Session expired, bỏ qua connect');
-                return;
-            }
-
             console.log('🟢 [SOCKET] Kết nối thành công!');
             this.isConnected = true;
             this.reconnectAttempts = 0;
@@ -91,37 +80,16 @@ class SocketService {
             }
         });
 
-        // 🔥 BẮT SỰ KIỆN TỪ SERVER (2 mã lỗi)
+        // 🔥 BẮT SỰ KIỆN TỪ SERVER (BỎ LOCK, GỌI CALLBACK NGAY)
         this.socket.on('session_expired', (data = {}) => {
             console.warn('🔴 [SOCKET] Session expired received!');
             console.log('📨 [SOCKET] Data:', data);
 
-            if (this.isSessionExpired) {
-                console.log('⚠️ [SOCKET] Already processing');
-                return;
-            }
-
-            this.isSessionExpired = true;
-
-            // Gửi ACK
-            if (this.socket && this.socket.connected) {
-                this.socket.emit('session_expired_ack', {
-                    received: true,
-                    userId: this.userId,
-                    timestamp: new Date().toISOString(),
-                });
-            }
-
-            // GỌI CALLBACK (Bất kể mã lỗi là gì)
             this.emitSessionExpired({
                 ...data,
                 source: 'socket',
                 fromSocket: true,
             });
-
-            setTimeout(() => {
-                this.disconnect({ preserveSessionState: true });
-            }, 300);
         });
 
         // 🔥 BẮT LỖI KHI TOKEN HẾT HẠN (F5/CHUYỂN TAB)
@@ -139,9 +107,6 @@ class SocketService {
                     source: 'socket',
                     fromSocket: true,
                 });
-
-                this.disconnect({ preserveSessionState: true });
-                return;
             }
 
             if (this.reconnectAttempts >= this.maxReconnectAttempts) {
@@ -183,7 +148,6 @@ class SocketService {
         if (!preserveSessionState) {
             this.userId = null;
             this.reconnectAttempts = 0;
-            this.isSessionExpired = false;
         }
 
         console.log('🔴 [SOCKET] Đã ngắt kết nối');
