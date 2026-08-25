@@ -31,7 +31,6 @@ const SessionGuard = ({ children }) => {
     const isMountedRef = useRef(false);
     const isProcessingRef = useRef(false);
     const hasRedirectedRef = useRef(false);
-    const hasShownModalRef = useRef(false);
 
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
@@ -105,15 +104,6 @@ const SessionGuard = ({ children }) => {
         console.log('✅ [SESSION GUARD] Booking session cleared');
     }, []);
 
-    const resetFlags = useCallback(() => {
-        isProcessingRef.current = false;
-        hasRedirectedRef.current = false;
-        hasShownModalRef.current = false;
-        setShowModal(false);
-        setCountdown(COUNTDOWN_SECONDS);
-        console.log('🔄 [SESSION GUARD] Flags reset');
-    }, []);
-
     const handleModalConfirm = useCallback(() => {
         if (hasRedirectedRef.current) {
             return;
@@ -143,7 +133,6 @@ const SessionGuard = ({ children }) => {
     const openSessionModal = useCallback(
         (detail = {}) => {
             if (!isMountedRef.current) return;
-            if (hasShownModalRef.current) return;
 
             const isDeviceLogin = detail.type === 'device' || detail.code === 'SESSION_EXPIRED';
             const type = isDeviceLogin ? 'device' : 'token';
@@ -158,8 +147,6 @@ const SessionGuard = ({ children }) => {
                 newDevice,
             });
 
-            hasShownModalRef.current = true;
-
             setModalType(type);
             setModalMessage(message);
             setModalNewDevice(newDevice);
@@ -172,7 +159,7 @@ const SessionGuard = ({ children }) => {
     const handleSessionExpired = useCallback(
         async (eventOrDetail = {}) => {
             if (!isMountedRef.current) return;
-            if (isProcessingRef.current || hasShownModalRef.current || hasRedirectedRef.current) {
+            if (isProcessingRef.current || hasRedirectedRef.current) {
                 console.log('⚠️ [SESSION GUARD] Session already handled');
                 return;
             }
@@ -274,7 +261,8 @@ const SessionGuard = ({ children }) => {
     useEffect(() => {
         const handleUserLoggedIn = () => {
             console.log('🟢 [SESSION GUARD] User logged in → reset');
-            resetFlags();
+            isProcessingRef.current = false;
+            hasRedirectedRef.current = false;
         };
 
         window.addEventListener('userLoggedIn', handleUserLoggedIn);
@@ -282,7 +270,7 @@ const SessionGuard = ({ children }) => {
         return () => {
             window.removeEventListener('userLoggedIn', handleUserLoggedIn);
         };
-    }, [resetFlags]);
+    }, []);
 
     return (
         <>
