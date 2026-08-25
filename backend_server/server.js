@@ -292,55 +292,18 @@ io.on("connection", async (socket) => {
 app.get("/", (req, res) => res.send("🚀 Cinema Backend is flying!"));
 app.get("/api", (req, res) => res.send("🚀 Cinema Backend is flying!"));
 
-// 🔥 API HEALTH - VỪA GIỮ SERVER TỈNH TÁO, VỪA QUÉT TOKEN
 app.get("/api/health", async (req, res) => {
     try {
-        // 1. Kiểm tra database
         const conn = await db.getConnection();
         conn.release();
-        
-        // 2. Kiểm tra Redis
         const redisHealthy = await RedisService.ping();
-        
-        // ============================================================
-        // 🔥 QUÉT TOKEN CỦA TẤT CẢ SOCKET ĐANG ONLINE
-        // ============================================================
-        let kickedUsers = 0;
-        try {
-            const sockets = await io.fetchSockets();
-            
-            for (const socket of sockets) {
-                if (!socket.userId) continue;
-
-                const validToken = await RefreshTokenRepository.findValidTokenByUserId(socket.userId);
-
-                if (!validToken) {
-                    console.log(`🔴 [CRON] Token user ${socket.userId} hết hạn - Đang đá ra...`);
-                    
-                    io.to(`user_${socket.userId}`).emit('session_expired', {
-                        code: 'TOKEN_EXPIRED',
-                        message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-                        timestamp: new Date().toISOString()
-                    });
-                    
-                    socket.disconnect(true);
-                    kickedUsers++;
-                }
-            }
-        } catch (error) {
-            console.error('❌ [CRON] Token check error:', error.message);
-        }
-
-        // Trả về kết quả cho Cron Job
         res.status(200).json({
             status: "ok",
             timestamp: new Date().toISOString(),
             database: "connected",
             redis: redisHealthy ? "connected" : "disconnected",
-            uptime: process.uptime(),
-            kickedUsers: kickedUsers // Thêm thông tin này để biết đã đá bao nhiêu user
+            uptime: process.uptime()
         });
-        
     } catch (error) {
         res.status(500).json({ status: "error", message: error.message });
     }
