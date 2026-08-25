@@ -34,7 +34,9 @@ const SessionGuard = ({ children }) => {
 
     const {
         isLoading,
-        clearAuthState, // 🔥 Lấy clearAuthState từ Context để dọn state
+        clearAuthState,
+        user, // 🔥 Lấy user để check
+        isAuthenticated, // 🔥 Lấy trạng thái
     } = useAuth();
 
     // ========================================================
@@ -207,7 +209,7 @@ const SessionGuard = ({ children }) => {
     );
 
     // ========================================================
-    // 🔥 HANDLE SESSION EXPIRED - DỌN STATE, KHÔNG CẦN LOGOUT API
+    // 🔥 HANDLE SESSION EXPIRED
     // ========================================================
 
     const handleSessionExpired = useCallback(
@@ -234,33 +236,23 @@ const SessionGuard = ({ children }) => {
 
             isProcessingRef.current = true;
 
-            // ====================================================
             // 1. XÓA API CACHE
-            // ====================================================
             api.resetUserCache();
 
-            // ====================================================
             // 2. XÓA BOOKING SESSION
-            // ====================================================
             clearBookingSession();
 
-            // ====================================================
-            // 3. DISCONNECT SOCKET (Server đã chủ động đá user)
-            // ====================================================
+            // 3. DISCONNECT SOCKET
             try {
                 socketService.disconnect();
             } catch (error) {
                 console.warn('Socket disconnect error:', error);
             }
 
-            // ====================================================
-            // 4. GỌI CLEAR AUTH STATE (XÓA STATE REACT)
-            // ====================================================
+            // 4. CLEAR AUTH STATE
             clearAuthState();
 
-            // ====================================================
             // 5. HIỆN MODAL
-            // ====================================================
             openSessionModal({
                 ...detail,
                 type,
@@ -283,6 +275,28 @@ const SessionGuard = ({ children }) => {
             isMountedRef.current = false;
         };
     }, []);
+
+    // ========================================================
+    // 🔥 CHỦ ĐỘNG CHECK KHI F5 (Đây là phần quan trọng nhất)
+    // ========================================================
+
+    useEffect(() => {
+        // Khi isLoading đã xong, nếu user = null và đã từng mount
+        // -> Nghĩa là bị đá ra khi F5, tự động hiện modal
+        if (!isLoading && !user && !isAuthenticated) {
+            // Chỉ hiện nếu chưa hiện và chưa redirect
+            if (!hasShownModalRef.current && !hasRedirectedRef.current) {
+                console.log('🔴 [SESSION GUARD] User is null after load (F5) - Opening modal');
+                
+                openSessionModal({
+                    type: 'token',
+                    code: 'UNAUTHORIZED',
+                    message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                    source: 'auto_check',
+                });
+            }
+        }
+    }, [isLoading, user, isAuthenticated, openSessionModal]);
 
     // ========================================================
     // API SESSION EVENT

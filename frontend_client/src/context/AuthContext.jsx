@@ -154,6 +154,22 @@ export const AuthProvider = ({ children }) => {
 
             } catch (error) {
                 console.warn('🔵 [AUTH] No active user session:', error?.response?.status || error?.message);
+
+                // 🔥 NẾU LỖI 401 (UNAUTHORIZED) -> Server đã xóa cookie, phát event để SessionGuard bắt
+                if (error?.response?.status === 401) {
+                    window.dispatchEvent(
+                        new CustomEvent('sessionExpired', {
+                            detail: {
+                                code: error?.response?.data?.code || 'UNAUTHORIZED',
+                                type: error?.response?.data?.code === 'SESSION_EXPIRED' ? 'device' : 'token',
+                                message: error?.response?.data?.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                                source: 'auth_context',
+                                timestamp: new Date().toISOString()
+                            }
+                        })
+                    );
+                }
+
                 clearAuthState();
                 socketService.disconnect();
                 throw error;

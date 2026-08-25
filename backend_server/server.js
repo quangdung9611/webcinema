@@ -397,6 +397,46 @@ app.use((err, req, res, next) => {
 });
 
 /*=========================================================
+    🔥 BACKGROUND CHECK TOKEN - TỰ ĐỘNG ĐÁ USER KHI HẾT HẠN
+=========================================================*/
+setInterval(async () => {
+    try {
+        // Lấy danh sách tất cả socket đang kết nối
+        const sockets = await io.fetchSockets();
+        
+        for (const socket of sockets) {
+            // Lấy userId từ socket đã lưu lúc trước
+            const userId = socket.userId;
+            
+            if (!userId) continue;
+
+            // Kiểm tra token của user này trong DB
+            const tokenData = await RefreshTokenRepository.findLatestTokenByUserId(userId);
+            
+            if (!tokenData || new Date(tokenData.expires_at) < new Date()) {
+                console.log(`🔴 [SERVER] Token user ${userId} đã hết hạn - Đang đá ra...`);
+                
+                // Gửi sự kiện xuống client
+                io.to(`user_${userId}`).emit('session_expired', {
+                    code: 'TOKEN_EXPIRED',
+                    type: 'token',
+                    message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                    timestamp: new Date().toISOString()
+                });
+
+                // Đóng socket
+                socket.disconnect(true);
+                
+                // Xóa Redis
+                await RedisService.deleteUserSocket(userId);
+            }
+        }
+    } catch (error) {
+        console.error('❌ [SERVER] Background check error:', error.message);
+    }
+}, 30 * 1000); // Chạy mỗi 30 giây
+
+/*=========================================================
     START SERVER
 =========================================================*/
 const PORT = process.env.PORT || 5000;
