@@ -44,7 +44,7 @@ const UserLogin = () => {
         isLoading,
     } = useAuth();
 
-    // 🔥 KIỂM TRA XEM CÓ ĐANG Ở TRẠNG THÁI EXPIRED KHÔNG
+    // KIỂM TRA XEM CÓ ĐANG Ở TRẠNG THÁI EXPIRED KHÔNG
     const isExpired = Boolean(location.state?.expired);
 
     useEffect(() => {
@@ -73,7 +73,7 @@ const UserLogin = () => {
             user &&
             !isLoading &&
             !showLoginSuccessModal &&
-            !isExpired // 🔥 CHẶN REDIRECT KHI ĐANG Ở TRẠNG THÁI EXPIRED
+            !isExpired
         ) {
             navigate('/', {
                 replace: true,
@@ -186,6 +186,12 @@ const UserLogin = () => {
             const errorData = error?.response?.data || {};
             const errorCode = errorData?.code;
             const errorMessage = errorData?.message || 'Tài khoản hoặc mật khẩu không chính xác';
+
+            // 🔥 XỬ LÝ LỖI 429 (BỊ KHÓA TÀI KHOẢN)
+            if (error?.response?.status === 429) {
+                setServerError(errorMessage);
+                return;
+            }
 
             if (errorData?.field === 'email') {
                 setErrors((prev) => ({

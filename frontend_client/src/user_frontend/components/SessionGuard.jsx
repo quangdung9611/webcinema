@@ -14,7 +14,7 @@ import api from '../../api/api';
 import socketService from '../../api/socket';
 import { useAuth } from '../../context/AuthContext';
 
-import Modal from './Modal';
+import DeviceLoginModal from './DeviceLogicModal'; // 🔥 Thay Modal bằng DeviceLoginModal
 
 import '../styles/SessionGuard.css';
 
@@ -29,7 +29,7 @@ const SessionGuard = ({ children }) => {
     } = useAuth();
 
     const isMountedRef = useRef(false);
-    const isProcessingRef = useRef(false); // 🔥 LOCK ĐỂ CHẶN 2 LẦN
+    const isProcessingRef = useRef(false);
     const hasRedirectedRef = useRef(false);
 
     const [showModal, setShowModal] = useState(false);
@@ -105,24 +105,22 @@ const SessionGuard = ({ children }) => {
     }, []);
 
     const handleModalConfirm = useCallback(() => {
-        // BỎ hasRedirectedRef - LUÔN LUÔN CHUYỂN TRANG
         console.log('➡️ [SESSION GUARD] Clicking "Đăng nhập lại"!');
         
         setShowModal(false);
 
         if (isBookingPage()) {
             navigate('/', { replace: true });
-            return;
+        } else {
+            navigate('/login', {
+                replace: true,
+                state: {
+                    expired: true,
+                    message: modalMessage,
+                    code: modalCode,
+                },
+            });
         }
-
-        navigate('/login', {
-            replace: true,
-            state: {
-                expired: true,
-                message: modalMessage,
-                code: modalCode,
-            },
-        });
     }, [navigate, modalMessage, modalCode, isBookingPage]);
 
     const openSessionModal = useCallback(
@@ -154,7 +152,6 @@ const SessionGuard = ({ children }) => {
         async (eventOrDetail = {}) => {
             if (!isMountedRef.current) return;
             
-            // 🔥 LOCK: Nếu đã xử lý rồi thì bỏ qua
             if (isProcessingRef.current) {
                 console.log('⚠️ [SESSION GUARD] Already processed, skip');
                 return;
@@ -168,7 +165,6 @@ const SessionGuard = ({ children }) => {
                 ...detail,
             });
 
-            // 🔥 KHÔNG GỌI clearAuthState NỮA - CHỈ CẦN HIỂN MODAL
             api.resetUserCache();
             clearBookingSession();
 
@@ -262,7 +258,7 @@ const SessionGuard = ({ children }) => {
         <>
             {children}
 
-            <Modal
+            <DeviceLoginModal
                 show={showModal}
                 type="warning"
                 title={
@@ -272,11 +268,9 @@ const SessionGuard = ({ children }) => {
                 }
                 message={modalMessage}
                 onConfirm={handleModalConfirm}
-                onCancel={handleModalConfirm}
                 confirmText={
                     countdown > 0 ? `Đăng nhập lại (${countdown}s)` : 'Đăng nhập lại'
                 }
-                cancelText="Đăng nhập lại"
                 className="session-expired-modal-wrapper"
             >
                 {modalCode === 'SESSION_REPLACED' && modalNewDevice && (
@@ -304,7 +298,7 @@ const SessionGuard = ({ children }) => {
                         🛡️ Nếu đây không phải là bạn, vui lòng đổi mật khẩu ngay lập tức.
                     </div>
                 )}
-            </Modal>
+            </DeviceLoginModal>
         </>
     );
 };

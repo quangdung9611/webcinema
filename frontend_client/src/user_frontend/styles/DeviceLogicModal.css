@@ -1,0 +1,117 @@
+/* Giống y hệt Modal.css, thêm 1 số class riêng cho DeviceLoginModal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.modal-container {
+    background-color: #1a1a2e;
+    border-radius: 16px;
+    padding: 24px;
+    width: 90%;
+    max-width: 400px;
+    color: #ffffff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.modal-content {
+    position: relative;
+}
+
+.modal-title-group {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.modal-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.modal-title {
+    font-size: 20px;
+    color: #f87171;
+    margin: 0;
+}
+
+.modal-divider {
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.1);
+    margin-bottom: 16px;
+}
+
+.modal-body {
+    font-size: 14px;
+    color: #d1d5db;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.modal-btn-confirm {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+
+.modal-btn-confirm:hover {
+    background-color: #2563eb;
+}
+
+/* Các class bổ sung cho nội dung thiết bị */
+.device-info-box {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.security-warning {
+    background-color: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    padding: 10px;
+    border-radius: 8px;
+    color: #f87171;
+    font-size: 12px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.countdown-text {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-bottom: 12px;
+    text-align: center;
+}

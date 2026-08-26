@@ -322,6 +322,87 @@ class RedisService {
     }
 
     /*=========================================================
+        🔥 LOGIN ATTEMPTS (SỐ LẦN THỬ ĐĂNG NHẬP) - THÊM MỚI
+    =========================================================*/
+
+    /**
+     * Lấy số lần thử đăng nhập của email
+     * @param {string} email - Email của user
+     * @returns {number} Số lần thử
+     */
+    async checkLoginAttempts(email) {
+        const key = `login_attempts:${email}`;
+        const attempts = await this.get(key);
+        return attempts ? Number(attempts) : 0;
+    }
+
+    /**
+     * Tăng số lần thử đăng nhập của email
+     * @param {string} email - Email của user
+     * @returns {number} Số lần thử mới
+     */
+    async incrementLoginAttempts(email) {
+        const key = `login_attempts:${email}`;
+        const attempts = await this.increment(key);
+        
+        // Đặt TTL 5 phút (300 giây) nếu chưa có
+        const ttl = await this.getTTL(key);
+        if (ttl === -1) { // -1 nghĩa là key chưa có TTL
+            await this.expire(key, 300);
+        }
+
+        return attempts;
+    }
+
+    /**
+     * Xóa số lần thử đăng nhập của email (khi đăng nhập thành công)
+     * @param {string} email - Email của user
+     */
+    async resetLoginAttempts(email) {
+        const key = `login_attempts:${email}`;
+        await this.delete(key);
+    }
+
+    /**
+     * Kiểm tra xem email có bị khóa không (từ 5 lần trở lên)
+     * @param {string} email - Email của user
+     * @returns {boolean} True nếu bị khóa
+     */
+    async isAccountLocked(email) {
+        const attempts = await this.checkLoginAttempts(email);
+        return attempts >= 5;
+    }
+
+    /**
+     * Lấy thời gian còn lại trước khi hết khóa (đơn vị giây)
+     * @param {string} email - Email của user
+     * @returns {number} Số giây còn lại
+     */
+    async getLockTimeRemaining(email) {
+        const key = `login_attempts:${email}`;
+        const ttl = await this.getTTL(key);
+        return ttl > 0 ? ttl : 0;
+    }
+
+    /*=========================================================
+        HELPER - LẤY TTL
+    =========================================================*/
+
+    /**
+     * Lấy TTL (thời gian sống còn lại) của 1 key
+     * @param {string} key - Tên key
+     * @returns {number} Số giây còn lại (-1 nếu không có TTL, -2 nếu key không tồn tại)
+     */
+    async getTTL(key) {
+        try {
+            return await redis.ttl(key);
+        } catch (error) {
+            console.error(`❌ Redis TTL error (${key}):`, error);
+            return -2;
+        }
+    }
+
+    /*=========================================================
         HEALTH CHECK
     =========================================================*/
 

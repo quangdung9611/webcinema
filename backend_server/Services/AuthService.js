@@ -106,22 +106,61 @@ exports.register = async (userData) => {
 };
 
 exports.login = async (email, password, rememberMe = false, req, res) => {
+    // 1. Validate
     validateLogin(email, password);
 
+    // 2. 🔥 KIỂM TRA XEM EMAIL NÀY CÓ ĐANG BỊ KHÓA KHÔNG
+    const isLocked = await RedisService.isAccountLocked(email);
+    if (isLocked) {
+        const remaining = await RedisService.getLockTimeRemaining(email);
+        
+        throw { 
+            statusCode: 429, 
+            field: 'email',
+            message: `Tài khoản đã bị khóa tạm thời do nhập sai quá nhiều lần. Vui lòng thử lại sau ${Math.ceil(remaining / 60)} phút.` 
+        };
+    }
+
+    // 3. Kiểm tra user tồn tại
     const user = await UserRepository.findByEmail(email);
     if (!user) {
+        // 🔥 Nếu email không tồn tại, vẫn tăng số lần thử (để tránh lộ email)
+        await RedisService.incrementLoginAttempts(email);
         throw { statusCode: 401, field: "email", message: "Email không tồn tại" };
     }
 
+    // 4. Kiểm tra trạng thái user
     if (user.status === "banned") {
         throw { statusCode: 403, message: "Tài khoản đã bị khóa" };
     }
 
+    // 5. Kiểm tra mật khẩu
     const matched = await Password.compare(password, user.password);
     if (!matched) {
-        throw { statusCode: 401, field: "password", message: "Mật khẩu không đúng" };
+        // 🔥 TĂNG SỐ LẦN THỬ SAI
+        await RedisService.incrementLoginAttempts(email);
+        const attempts = await RedisService.checkLoginAttempts(email);
+        
+        if (attempts >= 5) {
+            throw { 
+                statusCode: 429, 
+                field: 'email',
+                message: 'Bạn đã nhập sai quá 5 lần. Tài khoản đã bị khóa trong 5 phút.'
+            };
+        }
+
+        throw { 
+            statusCode: 401, 
+            field: "password", 
+            message: `Mật khẩu không đúng. Bạn còn ${5 - attempts} lần thử.` 
+        };
     }
 
+    // 6. ✅ Đăng nhập thành công
+    // 🔥 RESET SỐ LẦN THỬ SAI
+    await RedisService.resetLoginAttempts(email);
+
+    // 7. Kiểm tra email đã xác thực chưa
     if (!user.email_verified) {
         throw { 
             statusCode: 403, 
@@ -130,13 +169,14 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
+    // 8. REVOKE TOKEN CŨ (Đăng nhập mới => đá thiết bị cũ)
     await RefreshTokenRepository.revokeByUser(
         user.user_id,
         "Đăng nhập từ thiết bị khác"
     );
     console.log(`🔴 [REVOKE] Đã revoke tất cả token cũ của user: ${user.user_id}`);
 
-    // 🔥 GỬI SESSION_REPLACED TỚI ROOM (Đúng chuẩn!)
+    // 9. GỬI SỰ KIỆN SESSION_REPLACED TỚI ROOM
     if (ioInstance && user.user_id) {
         ioInstance.to(`user_${user.user_id}`).emit('session_expired', {
             code: 'SESSION_REPLACED',
@@ -150,6 +190,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         await RedisService.deleteUserSocket(user.user_id);
     }
 
+    // 10. GENERATE TOKEN MỚI
     const accessToken = generateAndSetTokens(user, res, rememberMe);
     const accessTokenHash = Jwt.hashRefreshToken(accessToken);
 
