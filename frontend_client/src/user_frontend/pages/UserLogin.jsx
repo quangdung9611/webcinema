@@ -15,6 +15,7 @@ import { notifyLogin } from '../../utils/authCleanup';
 import ForgotPassword from '../components/ForgotPassword';
 import LoadingButton from '../components/LoadingButton';
 import SuccessModal from '../components/SuccessModal';
+import LoginLockModal from '../components/LoginLockModal'; // 🔥 IMPORT MODAL MỚI
 
 import '../styles/UserAuth.css';
 
@@ -36,6 +37,11 @@ const UserLogin = () => {
     const [loginSuccessMessage, setLoginSuccessMessage] = useState('');
     const [loggedInUser, setLoggedInUser] = useState(null);
 
+    // 🔥 STATE CHO MODAL BỊ KHÓA
+    const [showLockModal, setShowLockModal] = useState(false);
+    const [lockMessage, setLockMessage] = useState('');
+    const [lockedUntil, setLockedUntil] = useState(null);
+
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -44,7 +50,6 @@ const UserLogin = () => {
         isLoading,
     } = useAuth();
 
-    // KIỂM TRA XEM CÓ ĐANG Ở TRẠNG THÁI EXPIRED KHÔNG
     const isExpired = Boolean(location.state?.expired);
 
     useEffect(() => {
@@ -187,9 +192,12 @@ const UserLogin = () => {
             const errorCode = errorData?.code;
             const errorMessage = errorData?.message || 'Tài khoản hoặc mật khẩu không chính xác';
 
-            // 🔥 XỬ LÝ LỖI 429 (BỊ KHÓA TÀI KHOẢN)
+            // 🔥 XỬ LÝ LỖI 429 (BỊ KHÓA TÀI KHOẢN) - HIỂN THỊ MODAL
             if (error?.response?.status === 429) {
-                setServerError(errorMessage);
+                setLockMessage(errorMessage);
+                const retryAfter = error?.response?.data?.retryAfter || 300; // Mặc định 5 phút
+                setLockedUntil(Date.now() + retryAfter * 1000);
+                setShowLockModal(true);
                 return;
             }
 
@@ -365,6 +373,14 @@ const UserLogin = () => {
                 confirmText="Vào trang chủ"
                 autoClose={true}
                 autoCloseDelay={3000}
+            />
+
+            {/* 🔥 HIỂN THỊ MODAL BỊ KHÓA */}
+            <LoginLockModal
+                show={showLockModal}
+                message={lockMessage}
+                lockedUntil={lockedUntil}
+                onClose={() => setShowLockModal(false)}
             />
         </div>
     );

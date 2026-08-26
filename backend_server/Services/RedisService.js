@@ -78,60 +78,42 @@ class RedisService {
     =========================================================*/
 
     async saveOTP(email, purpose, otp, ttlSeconds = 300) {
-
         const key = `otp:${email}:${purpose}`;
-
         console.log(`🔐 Save OTP -> ${key}`);
-
         return await this.set(key, otp, ttlSeconds);
     }
 
     async getOTP(email, purpose) {
-
         const key = `otp:${email}:${purpose}`;
-
         return await this.get(key);
     }
 
     async deleteOTP(email, purpose) {
-
         const key = `otp:${email}:${purpose}`;
-
         await this.delete(key);
         await this.deleteAttempts(email, purpose);
     }
 
     async deleteAttempts(email, purpose) {
-
         const key = `otp:${email}:${purpose}:attempts`;
-
         await this.delete(key);
     }
 
     async getOTPAttempts(email, purpose) {
-
         const key = `otp:${email}:${purpose}:attempts`;
-
         const attempts = await this.get(key);
-
         return attempts ? Number(attempts) : 0;
     }
 
     async incrementOTPAttempts(email, purpose, ttlSeconds = 300) {
-
         const key = `otp:${email}:${purpose}:attempts`;
-
         const attempts = await this.increment(key);
-
         await this.expire(key, ttlSeconds);
-
         return attempts;
     }
 
     async isOTPLocked(email, purpose, maxAttempts = 5) {
-
         const attempts = await this.getOTPAttempts(email, purpose);
-
         return attempts >= maxAttempts;
     }
 
@@ -140,11 +122,8 @@ class RedisService {
     =========================================================*/
 
     async checkRateLimit(email, purpose, limit = 3, windowSeconds = 60) {
-
         const key = `otp:${email}:${purpose}:ratelimit`;
-
         const current = await this.get(key);
-
         const count = current ? Number(current) : 0;
 
         if (count >= limit) {
@@ -156,7 +135,6 @@ class RedisService {
         }
 
         const newCount = await this.increment(key);
-
         await this.expire(key, windowSeconds);
 
         return {
@@ -166,22 +144,14 @@ class RedisService {
     }
 
     /*=========================================================
-        🟢 SOCKET MANAGEMENT - THÊM MỚI
+        SOCKET MANAGEMENT
     =========================================================*/
 
-    /**
-     * Lưu socketId của user
-     * @param {number|string} userId - ID của user
-     * @param {string} socketId - Socket ID
-     * @param {number} ttlSeconds - Thời gian sống (mặc định 24h)
-     */
     async saveUserSocket(userId, socketId, ttlSeconds = 86400) {
         try {
             const key = `user:socket:${userId}`;
             await redis.set(key, socketId, { ex: ttlSeconds });
-
             console.log(`✅ [SOCKET] Saved socket ${socketId} for user ${userId}`);
-
             return true;
         } catch (error) {
             console.error(`❌ [SOCKET] Failed to save socket for user ${userId}:`, error);
@@ -189,22 +159,15 @@ class RedisService {
         }
     }
 
-    /**
-     * Lấy socketId của user
-     * @param {number|string} userId - ID của user
-     * @returns {string|null} Socket ID hoặc null nếu không tìm thấy
-     */
     async getUserSocket(userId) {
         try {
             const key = `user:socket:${userId}`;
             const socketId = await redis.get(key);
-
             if (socketId) {
                 console.log(`📥 [SOCKET] Got socket ${socketId} for user ${userId}`);
             } else {
                 console.log(`ℹ️ [SOCKET] No socket found for user ${userId}`);
             }
-
             return socketId;
         } catch (error) {
             console.error(`❌ [SOCKET] Failed to get socket for user ${userId}:`, error);
@@ -212,17 +175,11 @@ class RedisService {
         }
     }
 
-    /**
-     * Xóa socketId của user
-     * @param {number|string} userId - ID của user
-     */
     async deleteUserSocket(userId) {
         try {
             const key = `user:socket:${userId}`;
             await redis.del(key);
-
             console.log(`🗑️ [SOCKET] Deleted socket for user ${userId}`);
-
             return true;
         } catch (error) {
             console.error(`❌ [SOCKET] Failed to delete socket for user ${userId}:`, error);
@@ -230,18 +187,11 @@ class RedisService {
         }
     }
 
-    /**
-     * Kiểm tra user có đang online không
-     * @param {number|string} userId - ID của user
-     * @returns {boolean} True nếu user đang online
-     */
     async isUserOnline(userId) {
         try {
             const socketId = await this.getUserSocket(userId);
             const isOnline = socketId !== null;
-
             console.log(`🔍 [SOCKET] User ${userId} is ${isOnline ? 'online' : 'offline'}`);
-
             return isOnline;
         } catch (error) {
             console.error(`❌ [SOCKET] Failed to check online status for user ${userId}:`, error);
@@ -249,16 +199,10 @@ class RedisService {
         }
     }
 
-    /**
-     * Cập nhật TTL cho socket của user (gia hạn session)
-     * @param {number|string} userId - ID của user
-     * @param {number} ttlSeconds - Thời gian sống mới (mặc định 24h)
-     */
     async refreshUserSocket(userId, ttlSeconds = 86400) {
         try {
             const key = `user:socket:${userId}`;
             const socketId = await redis.get(key);
-
             if (socketId) {
                 await redis.expire(key, ttlSeconds);
                 console.log(`🔄 [SOCKET] Refreshed TTL for user ${userId} (${ttlSeconds}s)`);
@@ -273,23 +217,16 @@ class RedisService {
         }
     }
 
-    /**
-     * Lấy tất cả socketId đang hoạt động (cho admin)
-     * @returns {Array} Danh sách các socket đang hoạt động
-     */
     async getAllActiveSockets() {
         try {
             const keys = await redis.keys('user:socket:*');
             const result = [];
-
             for (const key of keys) {
                 const userId = key.replace('user:socket:', '');
                 const socketId = await redis.get(key);
                 result.push({ userId, socketId });
             }
-
             console.log(`📊 [SOCKET] Found ${result.length} active sockets`);
-
             return result;
         } catch (error) {
             console.error(`❌ [SOCKET] Failed to get all active sockets:`, error);
@@ -297,23 +234,14 @@ class RedisService {
         }
     }
 
-    /**
-     * Xóa tất cả socket của user (khi user logout all devices)
-     * @param {number|string} userId - ID của user
-     */
     async deleteAllUserSockets(userId) {
         try {
-            // Xóa socket chính
             await this.deleteUserSocket(userId);
-
-            // Xóa các socket khác (nếu có nhiều socket cho cùng user)
             const keys = await redis.keys(`user:socket:${userId}:*`);
             for (const key of keys) {
                 await redis.del(key);
             }
-
             console.log(`🗑️ [SOCKET] Deleted all sockets for user ${userId}`);
-
             return true;
         } catch (error) {
             console.error(`❌ [SOCKET] Failed to delete all sockets for user ${userId}:`, error);
@@ -322,62 +250,35 @@ class RedisService {
     }
 
     /*=========================================================
-        🔥 LOGIN ATTEMPTS (SỐ LẦN THỬ ĐĂNG NHẬP) - THÊM MỚI
+        🔥 LOGIN ATTEMPTS (SỐ LẦN THỬ ĐĂNG NHẬP)
     =========================================================*/
 
-    /**
-     * Lấy số lần thử đăng nhập của email
-     * @param {string} email - Email của user
-     * @returns {number} Số lần thử
-     */
     async checkLoginAttempts(email) {
         const key = `login_attempts:${email}`;
         const attempts = await this.get(key);
         return attempts ? Number(attempts) : 0;
     }
 
-    /**
-     * Tăng số lần thử đăng nhập của email
-     * @param {string} email - Email của user
-     * @returns {number} Số lần thử mới
-     */
     async incrementLoginAttempts(email) {
         const key = `login_attempts:${email}`;
         const attempts = await this.increment(key);
-        
-        // Đặt TTL 5 phút (300 giây) nếu chưa có
         const ttl = await this.getTTL(key);
-        if (ttl === -1) { // -1 nghĩa là key chưa có TTL
-            await this.expire(key, 300);
+        if (ttl === -1) {
+            await this.expire(key, 60); // Tầng 1: 1 phút (test nhanh)
         }
-
         return attempts;
     }
 
-    /**
-     * Xóa số lần thử đăng nhập của email (khi đăng nhập thành công)
-     * @param {string} email - Email của user
-     */
     async resetLoginAttempts(email) {
         const key = `login_attempts:${email}`;
         await this.delete(key);
     }
 
-    /**
-     * Kiểm tra xem email có bị khóa không (từ 5 lần trở lên)
-     * @param {string} email - Email của user
-     * @returns {boolean} True nếu bị khóa
-     */
     async isAccountLocked(email) {
         const attempts = await this.checkLoginAttempts(email);
         return attempts >= 5;
     }
 
-    /**
-     * Lấy thời gian còn lại trước khi hết khóa (đơn vị giây)
-     * @param {string} email - Email của user
-     * @returns {number} Số giây còn lại
-     */
     async getLockTimeRemaining(email) {
         const key = `login_attempts:${email}`;
         const ttl = await this.getTTL(key);
@@ -385,14 +286,31 @@ class RedisService {
     }
 
     /*=========================================================
+        🔥 LOCKOUT LEVEL - KHÓA TĂNG DẦN
+    =========================================================*/
+
+    async getLockoutLevel(email) {
+        const key = `lockout_level:${email}`;
+        const level = await this.get(key);
+        return level ? Number(level) : 0;
+    }
+
+    async incrementLockoutLevel(email) {
+        const key = `lockout_level:${email}`;
+        const level = await this.increment(key);
+        await this.expire(key, 86400); // 24 giờ
+        return level;
+    }
+
+    async resetLockoutLevel(email) {
+        const key = `lockout_level:${email}`;
+        await this.delete(key);
+    }
+
+    /*=========================================================
         HELPER - LẤY TTL
     =========================================================*/
 
-    /**
-     * Lấy TTL (thời gian sống còn lại) của 1 key
-     * @param {string} key - Tên key
-     * @returns {number} Số giây còn lại (-1 nếu không có TTL, -2 nếu key không tồn tại)
-     */
     async getTTL(key) {
         try {
             return await redis.ttl(key);
@@ -409,9 +327,7 @@ class RedisService {
     async ping() {
         try {
             const result = await redis.ping();
-
             console.log("🏓 Redis Ping:", result);
-
             return result;
         } catch (error) {
             console.error("❌ Redis Ping Error:", error);

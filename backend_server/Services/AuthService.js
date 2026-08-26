@@ -109,58 +109,81 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     // 1. Validate
     validateLogin(email, password);
 
-    // 2. 🔥 KIỂM TRA XEM EMAIL NÀY CÓ ĐANG BỊ KHÓA KHÔNG
-    const isLocked = await RedisService.isAccountLocked(email);
-    if (isLocked) {
-        const remaining = await RedisService.getLockTimeRemaining(email);
-        
+    // 2. Kiểm tra mức khóa hiện tại (lockout_level)
+    const lockoutLevel = await RedisService.getLockoutLevel(email);
+    
+    if (lockoutLevel >= 4) {
         throw { 
             statusCode: 429, 
-            field: 'email',
-            message: `Tài khoản đã bị khóa tạm thời do nhập sai quá nhiều lần. Vui lòng thử lại sau ${Math.ceil(remaining / 60)} phút.` 
+            message: 'Tài khoản đã bị khóa 1 giờ. Vui lòng liên hệ hỗ trợ hoặc đổi mật khẩu.' 
         };
     }
 
-    // 3. Kiểm tra user tồn tại
+    if (lockoutLevel >= 1) {
+        const lockDuration = lockoutLevel === 1 ? 60 : lockoutLevel === 2 ? 300 : lockoutLevel === 3 ? 900 : 3600;
+        const isLocked = await RedisService.isAccountLocked(email);
+        
+        if (isLocked) {
+            const remaining = await RedisService.getLockTimeRemaining(email);
+            throw { 
+                statusCode: 429, 
+                message: `Tài khoản đã bị khóa ${lockoutLevel === 1 ? "1 phút" : lockoutLevel === 2 ? "5 phút" : lockoutLevel === 3 ? "15 phút" : "1 giờ"}. Vui lòng thử lại sau ${Math.ceil(remaining / 60)} phút.`,
+                retryAfter: remaining
+            };
+        }
+    }
+
+    // 3. Kiểm tra user tồn tại (chống lộ email)
     const user = await UserRepository.findByEmail(email);
     if (!user) {
-        // 🔥 Nếu email không tồn tại, vẫn tăng số lần thử (để tránh lộ email)
-        await RedisService.incrementLoginAttempts(email);
-        throw { statusCode: 401, field: "email", message: "Email không tồn tại" };
-    }
-
-    // 4. Kiểm tra trạng thái user
-    if (user.status === "banned") {
-        throw { statusCode: 403, message: "Tài khoản đã bị khóa" };
-    }
-
-    // 5. Kiểm tra mật khẩu
-    const matched = await Password.compare(password, user.password);
-    if (!matched) {
-        // 🔥 TĂNG SỐ LẦN THỬ SAI
         await RedisService.incrementLoginAttempts(email);
         const attempts = await RedisService.checkLoginAttempts(email);
         
         if (attempts >= 5) {
+            const newLevel = await RedisService.incrementLockoutLevel(email);
+            const lockDuration = newLevel === 1 ? 60 : newLevel === 2 ? 300 : newLevel === 3 ? 900 : 3600;
+            
             throw { 
                 statusCode: 429, 
-                field: 'email',
-                message: 'Bạn đã nhập sai quá 5 lần. Tài khoản đã bị khóa trong 5 phút.'
+                message: `Bạn đã nhập sai quá 5 lần. Tài khoản đã bị khóa ${newLevel === 1 ? "1 phút" : newLevel === 2 ? "5 phút" : newLevel === 3 ? "15 phút" : "1 giờ"}.`,
+                retryAfter: lockDuration
             };
         }
 
         throw { 
             statusCode: 401, 
-            field: "password", 
-            message: `Mật khẩu không đúng. Bạn còn ${5 - attempts} lần thử.` 
+            message: `Email hoặc mật khẩu không đúng. Bạn còn ${5 - attempts} lần thử.` 
         };
     }
 
-    // 6. ✅ Đăng nhập thành công
-    // 🔥 RESET SỐ LẦN THỬ SAI
-    await RedisService.resetLoginAttempts(email);
+    // 4. Kiểm tra mật khẩu
+    const matched = await Password.compare(password, user.password);
+    if (!matched) {
+        await RedisService.incrementLoginAttempts(email);
+        const attempts = await RedisService.checkLoginAttempts(email);
+        
+        if (attempts >= 5) {
+            const newLevel = await RedisService.incrementLockoutLevel(email);
+            const lockDuration = newLevel === 1 ? 60 : newLevel === 2 ? 300 : newLevel === 3 ? 900 : 3600;
+            
+            throw { 
+                statusCode: 429, 
+                message: `Bạn đã nhập sai quá 5 lần. Tài khoản đã bị khóa ${newLevel === 1 ? "1 phút" : newLevel === 2 ? "5 phút" : newLevel === 3 ? "15 phút" : "1 giờ"}.`,
+                retryAfter: lockDuration
+            };
+        }
 
-    // 7. Kiểm tra email đã xác thực chưa
+        throw { 
+            statusCode: 401, 
+            message: `Email hoặc mật khẩu không đúng. Bạn còn ${5 - attempts} lần thử.` 
+        };
+    }
+
+    // 5. Đăng nhập thành công
+    await RedisService.resetLoginAttempts(email);
+    await RedisService.resetLockoutLevel(email);
+
+    // 6. Kiểm tra email đã xác thực chưa
     if (!user.email_verified) {
         throw { 
             statusCode: 403, 
@@ -169,14 +192,14 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
-    // 8. REVOKE TOKEN CŨ (Đăng nhập mới => đá thiết bị cũ)
+    // 7. REVOKE TOKEN CŨ (Đăng nhập mới => đá thiết bị cũ)
     await RefreshTokenRepository.revokeByUser(
         user.user_id,
         "Đăng nhập từ thiết bị khác"
     );
     console.log(`🔴 [REVOKE] Đã revoke tất cả token cũ của user: ${user.user_id}`);
 
-    // 9. GỬI SỰ KIỆN SESSION_REPLACED TỚI ROOM
+    // 8. GỬI SỰ KIỆN SESSION_REPLACED TỚI ROOM
     if (ioInstance && user.user_id) {
         ioInstance.to(`user_${user.user_id}`).emit('session_expired', {
             code: 'SESSION_REPLACED',
@@ -190,7 +213,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         await RedisService.deleteUserSocket(user.user_id);
     }
 
-    // 10. GENERATE TOKEN MỚI
+    // 9. GENERATE TOKEN MỚI
     const accessToken = generateAndSetTokens(user, res, rememberMe);
     const accessTokenHash = Jwt.hashRefreshToken(accessToken);
 
