@@ -12,6 +12,9 @@ const TicketEmailTemplate = require("../Templates/TicketEmailTemplate");
 const ResetPasswordOtpTemplate = require("../Templates/ResetPasswordOtpTemplate");
 const VerifyEmailTemplate = require("../Templates/VerifyEmailTemplate");
 
+// 🔥 THÊM TEMPLATE MỚI CHO LINK RESET PASSWORD
+const ResetPasswordLinkTemplate = require("../Templates/ResetPasswordLinkTemplate");
+
 // =========================================================
 // MAIL SERVICE
 // =========================================================
@@ -155,7 +158,7 @@ const MailServiceTicket = {
     },
 
     // =====================================================
-    // SEND RESET PASSWORD OTP
+    // SEND RESET PASSWORD OTP (Giữ nguyên cho dự phòng)
     // =====================================================
 
     sendResetPasswordOTP: async (email, otp, fullName = "") => {
@@ -196,6 +199,47 @@ const MailServiceTicket = {
 
     sendPasswordResetOTP: async (email, otp, fullName = "") => {
         return await MailServiceTicket.sendResetPasswordOTP(email, otp, fullName);
+    },
+
+    // =====================================================
+    // 🔥 SEND RESET PASSWORD LINK (MỚI - GỬI LINK TOKEN)
+    // =====================================================
+
+    sendPasswordResetLink: async (email, resetUrl, fullName = "") => {
+
+        console.log(`📨 RESET PASSWORD LINK -> ${email}`);
+
+        if (!email) {
+            throw new Error("Email người nhận không hợp lệ");
+        }
+
+        if (!resetUrl) {
+            throw new Error("URL đặt lại mật khẩu không hợp lệ");
+        }
+
+        try {
+
+            const info = await transporter.sendMail({
+
+                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                to: email,
+                subject: "🔑 Đặt lại mật khẩu - Dũng Cinema",
+                html: ResetPasswordLinkTemplate(fullName, resetUrl) // Dùng template link mới
+
+            });
+
+            console.log("✅ RESET PASSWORD LINK SENT");
+            console.log(`🔗 Reset URL: ${resetUrl}`);
+            return info;
+
+        } catch (error) {
+
+            console.error("❌ RESET PASSWORD LINK ERROR");
+            console.error(error);
+            throw error;
+
+        }
+
     },
 
     // =====================================================
