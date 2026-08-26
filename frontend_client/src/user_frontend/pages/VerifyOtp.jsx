@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/api';
-import { ShieldCheck, AlertCircle, CheckCircle } from 'lucide-react';
+import { ShieldCheck, AlertCircle, CheckCircle, ArrowLeft, Mail } from 'lucide-react';
 import '../styles/ForgotPassword.css';
 
 const VerifyOTP = () => {
@@ -11,6 +11,7 @@ const VerifyOTP = () => {
 
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
+    const [resendLoading, setResendLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('');
 
@@ -52,6 +53,31 @@ const VerifyOTP = () => {
         }
     };
 
+    const handleResendOTP = async () => {
+        if (!email) {
+            setMessage('Email không hợp lệ. Vui lòng quay lại nhập lại.');
+            setMessageType('error');
+            return;
+        }
+
+        try {
+            setResendLoading(true);
+            setMessage('');
+            
+            // ✅ Gửi lại OTP
+            const res = await api.post('/api/auth/forgot-password', { email });
+
+            setMessage(res.data.message || 'OTP đã được gửi lại tới email của bạn');
+            setMessageType('success');
+
+        } catch (err) {
+            setMessage(err.response?.data?.message || 'Không thể gửi lại OTP');
+            setMessageType('error');
+        } finally {
+            setResendLoading(false);
+        }
+    };
+
     return (
         <div className="forgot-password-container">
             <div className="forgot-password-card">
@@ -79,6 +105,23 @@ const VerifyOTP = () => {
                     />
                     <button className="forgot-btn" onClick={handleVerifyOTP} disabled={loading}>
                         {loading ? 'Đang xác thực...' : 'Xác nhận OTP'}
+                    </button>
+                </div>
+
+                <div className="forgot-actions">
+                    <button 
+                        className="forgot-btn-secondary" 
+                        onClick={handleResendOTP} 
+                        disabled={resendLoading}
+                    >
+                        {resendLoading ? 'Đang gửi...' : 'Gửi lại OTP'}
+                    </button>
+
+                    <button 
+                        className="forgot-link-btn" 
+                        onClick={() => navigate('/forgot-password')}
+                    >
+                        <ArrowLeft size={16} /> Quay lại nhập email
                     </button>
                 </div>
             </div>

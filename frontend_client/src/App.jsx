@@ -86,8 +86,8 @@ const ForgotPassword = lazy(() =>
     import("./user_frontend/pages/ForgotPassword")
 );
 
-const VerifyOtp = lazy(() =>
-    import("./user_frontend/pages/VerifyOtp")
+const VerifyOTP = lazy(() =>
+    import("./user_frontend/pages/VerifyOTP")
 );
 
 const ResetPassword = lazy(() =>
@@ -726,6 +726,33 @@ const AdminRoutes = () => {
 const UserRoutes = () => {
     return (
         <Routes>
+            {/* 🔥 CÁC TRANG AUTH (KHÔNG CẦN ĐĂNG NHẬP) - HIỂN THỊ TOÀN MÀN HÌNH */}
+            <Route
+                path="/login"
+                element={<UserLogin />}
+            />
+            <Route
+                path="/register"
+                element={<UserRegister />}
+            />
+            <Route
+                path="/verify-email"
+                element={<VerifyEmail />}
+            />
+            <Route
+                path="/forgot-password"
+                element={<ForgotPassword />}
+            />
+            <Route
+                path="/verify-otp"
+                element={<VerifyOTP />}
+            />
+            <Route
+                path="/reset-password"
+                element={<ResetPassword />}
+            />
+
+            {/* 🔥 CÁC TRANG CÓ LAYOUT (HEADER + FOOTER) */}
             <Route
                 path="/"
                 element={<UserLayout />}
@@ -844,38 +871,6 @@ const UserRoutes = () => {
                 <Route
                     path="membership"
                     element={<MemberShip />}
-                />
-
-                {/* AUTH */}
-                <Route
-                    path="login"
-                    element={<UserLogin />}
-                />
-
-                <Route
-                    path="register"
-                    element={<UserRegister />}
-                />
-
-                <Route
-                    path="verify-email"
-                    element={<VerifyEmail />}
-                />
-
-                {/* 🔥 THÊM 3 TRANG QUÊN MẬT KHẨU */}
-                <Route
-                    path="forgot-password"
-                    element={<ForgotPassword />}
-                />
-
-                <Route
-                    path="verify-otp"
-                    element={<VerifyOTP />}
-                />
-
-                <Route
-                    path="reset-password"
-                    element={<ResetPassword />}
                 />
 
                 {/* PROTECTED */}
