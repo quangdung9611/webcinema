@@ -23,6 +23,24 @@ exports.register = async (req, res) => {
 };
 
 /*=========================================================
+    🔥 CHECK LOCK STATUS (KIỂM TRA TRẠNG THÁI KHÓA KHI F5)
+=========================================================*/
+
+exports.checkLockStatus = async (req, res) => {
+    try {
+        const { email } = req.query;
+        const result = await AuthService.checkLockStatus(email);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Check Lock Status Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
     LOGIN (CHUNG - DÙNG CHO CẢ CUSTOMER VÀ ADMIN)
 =========================================================*/
 
@@ -37,10 +55,13 @@ exports.login = async (req, res) => {
         });
     } catch (error) {
         console.error("Login Error:", error);
+        // Trả về đầy đủ data lỗi (bao gồm lockout data) cho Frontend
         return res.status(error.statusCode || 500).json({
             success: false,
+            code: error.code || null,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
@@ -70,15 +91,16 @@ exports.adminLogin = async (req, res) => {
         console.error("Admin Login Error:", error);
         return res.status(error.statusCode || 500).json({
             success: false,
+            code: error.code || null,
             field: error.field || null,
-            message: error.message || "Lỗi máy chủ"
+            message: error.message || "Lỗi máy chủ",
+            data: error.data || null
         });
     }
 };
 
 /*=========================================================
     🔥 GET ME - DÙNG ĐỂ CHECK SESSION LUÔN
-    Vì nó đã check token và trả về user info
 =========================================================*/
 
 exports.getMe = async (req, res) => {
@@ -114,8 +136,7 @@ exports.refreshToken = async (req, res) => {
 };
 
 /*=========================================================
-    🔥 LOGOUT - CŨNG LÀ CHECK SESSION
-    Khi logout, token bị revoke → session hết hạn
+    🔥 LOGOUT
 =========================================================*/
 
 exports.logout = async (req, res) => {

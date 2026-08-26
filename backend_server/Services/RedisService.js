@@ -149,9 +149,8 @@ class RedisService {
         return true;
     }
 
-    // ============ LOGIN ATTEMPTS & LOCKOUT (CHỈNH VỀ 2 CẤP TEST) ============
+    // ============ LOGIN ATTEMPTS & LOCKOUT ============
 
-    // Hàm tính thời gian lock (Cấp 1: 1 phút, Cấp 2 trở lên: 3 phút)
     getLockDuration(level) {
         if (level >= 2) return { duration: 180, text: '3 phút' };
         return { duration: 60, text: '1 phút' };
@@ -181,7 +180,7 @@ class RedisService {
     async incrementLockoutLevel(email) {
         const key = `lockout_level:${email}`;
         const newLevel = await this.increment(key);
-        // 🔥 SỬA: Cho Level sống 24h để không bị mất cấp độ khi hết thời gian khóa
+        // 🔥 Level sống 24h để không bị mất cấp độ
         await this.expire(key, 86400); 
         return newLevel;
     }
@@ -190,7 +189,6 @@ class RedisService {
         await this.delete(`lockout_level:${email}`);
     }
 
-    // Hàm chủ chốt: Trả về THỜI ĐIỂM HẾT HẠN (Timestamp) để Frontend dùng
     async getLockoutInfo(email) {
         try {
             const level = await this.getLockoutLevel(email);
@@ -199,10 +197,7 @@ class RedisService {
             
             const { duration, text } = this.getLockDuration(level);
             
-            // Chỉ lock khi level >= 1 và attempts >= 5 và còn thời gian
             const isLocked = level >= 1 && attempts >= 5 && ttl > 0;
-            
-            // Tính mốc thời gian hết hạn tuyệt đối
             const lockedUntil = isLocked ? Date.now() + ttl * 1000 : 0;
 
             return {

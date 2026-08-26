@@ -18,9 +18,6 @@ const setIO = (io) => {
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_REGEX = /^[0-9]{10}$/;
-const USERNAME_REGEX = /^[a-zA-Z0-9_.]{4,20}$/;
-
 const FRONTEND_URL = 'https://quangdungcinema.id.vn';
 
 const validateLogin = (email, password) => {
@@ -47,10 +44,38 @@ const generateAndSetTokens = (user, res, rememberMe = false) => {
     return accessToken;
 };
 
+// 🔥 HÀM MỚI: Kiểm tra trạng thái lock hiện tại (Gọi khi F5)
+exports.checkLockStatus = async (email) => {
+    if (!email) throw { statusCode: 400, message: "Thiếu email" };
+    
+    const lockInfo = await RedisService.getLockoutInfo(email);
+    
+    if (lockInfo && lockInfo.isLocked) {
+        return {
+            success: true,
+            isLocked: true,
+            data: {
+                level: lockInfo.level,
+                remainingSeconds: lockInfo.remainingSeconds,
+                lockDuration: lockInfo.lockDuration,
+                lockDurationText: lockInfo.lockDurationText,
+                maxAttempts: lockInfo.maxAttempts,
+                lockedUntil: lockInfo.lockedUntil,
+                message: `Tài khoản đã bị khóa ${lockInfo.lockDurationText}. Vui lòng thử lại sau.`
+            }
+        };
+    }
+    
+    return {
+        success: true,
+        isLocked: false,
+        data: null
+    };
+};
+
 exports.login = async (email, password, rememberMe = false, req, res) => {
     validateLogin(email, password);
 
-    // 1. Kiểm tra xem đang bị lock không
     const lockInfo = await RedisService.getLockoutInfo(email);
     if (lockInfo && lockInfo.isLocked) {
         throw {
@@ -91,11 +116,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
                 }
             };
         }
-
-        throw { 
-            statusCode: 401, 
-            message: `Email hoặc mật khẩu không đúng. Bạn còn ${5 - attempts} lần thử.` 
-        };
+        throw { statusCode: 401, message: `Email hoặc mật khẩu không đúng. Bạn còn ${5 - attempts} lần thử.` };
     }
 
     const matched = await Password.compare(password, user.password);
@@ -121,23 +142,15 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
                 }
             };
         }
-
-        throw { 
-            statusCode: 401, 
-            message: `Email hoặc mật khẩu không đúng. Bạn còn ${5 - attempts} lần thử.` 
-        };
+        throw { statusCode: 401, message: `Email hoặc mật khẩu không đúng. Bạn còn ${5 - attempts} lần thử.` };
     }
 
-    // 🔥 CHỈ RESET SỐ LẦN THỬ, GIỮ NGUYÊN LEVEL ĐỂ LẦN SAU TĂNG CẤP
+    // 🔥 CHỈ RESET SỐ LẦN THỬ, GIỮ LEVEL ĐỂ LẦN SAU TĂNG CẤP
     await RedisService.resetLoginAttempts(email);
-    // await RedisService.resetLockoutLevel(email); // ĐÃ XÓA DÒNG NÀY
+    // await RedisService.resetLockoutLevel(email); // KHÔNG RESET LEVEL NỮA!
 
     if (!user.email_verified) {
-        throw { 
-            statusCode: 403, 
-            field: "email",
-            message: "Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn." 
-        };
+        throw { statusCode: 403, field: "email", message: "Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn." };
     }
 
     await RefreshTokenRepository.revokeByUser(user.user_id, "Đăng nhập từ thiết bị khác");
@@ -184,7 +197,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     };
 };
 
-// ... (Các hàm getMe, logout... giữ nguyên)
+// ... (Các hàm còn lại giữ nguyên như cũ: getMe, logout, changePassword...)
 exports.getMe = async (userId) => {
     if (!userId) throw { statusCode: 401, message: "Chưa đăng nhập" };
     const user = await UserRepository.findProfile(userId);

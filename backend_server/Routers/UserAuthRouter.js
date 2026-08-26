@@ -16,7 +16,8 @@ router.post("/reset-password", AuthController.resetPassword);
 router.post("/send-verification", AuthController.sendVerificationEmail);
 router.get("/verify-email", AuthController.verifyEmail);
 
-// 🔥 ĐÃ XÓA /check-session - Dùng /me để check session
+// 🔥 THÊM ROUTE CHECK LOCK (KHÔNG CẦN XÁC THỰC VÌ NGƯỜI DÙNG CHƯA ĐĂNG NHẬP)
+router.get("/check-lock", AuthController.checkLockStatus);
 
 // ============================================================
 // PRIVATE ROUTES (Cần xác thực)
