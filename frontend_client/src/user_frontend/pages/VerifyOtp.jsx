@@ -17,6 +17,7 @@ const VerifyOTP = () => {
     const [resendLoading, setResendLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('');
+    const [showSuccessModal, setShowSuccessModal] = useState(false); // 👈 State hiển thị modal
 
     // Kiểm tra nếu thiếu email hoặc mật khẩu
     if (!email || !newPassword) {
@@ -57,15 +58,8 @@ const VerifyOTP = () => {
             setMessage(res.data.message || 'Đặt lại mật khẩu thành công!');
             setMessageType('success');
 
-            // ✅ Chuyển sang trang đăng nhập sau 2 giây
-            setTimeout(() => {
-                navigate('/login', { 
-                    state: { 
-                        resetSuccess: true,
-                        message: 'Mật khẩu đã được đặt lại thành công! Vui lòng đăng nhập.'
-                    }
-                });
-            }, 2000);
+            // ✅ HIỆN MODAL THÀNH CÔNG NGAY TẠI CHỖ
+            setShowSuccessModal(true);
 
         } catch (err) {
             setMessage(err.response?.data?.message || 'OTP không hợp lệ');
@@ -144,6 +138,26 @@ const VerifyOTP = () => {
                     </button>
                 </div>
             </div>
+
+            {/* 🎉 MODAL THÀNH CÔNG */}
+            {showSuccessModal && (
+                <div className="modal-overlay" onClick={() => navigate('/login')}>
+                    <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-content">
+                            <div className="modal-icon" style={{ textAlign: 'center', fontSize: '60px' }}>✅</div>
+                            <h2 style={{ textAlign: 'center', color: '#4ade80' }}>Đặt lại mật khẩu thành công!</h2>
+                            <p style={{ textAlign: 'center' }}>
+                                Mật khẩu của bạn đã được đặt lại thành công. Vui lòng đăng nhập lại.
+                            </p>
+                            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+                                <button className="btn-login" onClick={() => navigate('/login')}>
+                                    Đăng nhập ngay
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

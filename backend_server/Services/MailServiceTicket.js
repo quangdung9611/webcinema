@@ -243,6 +243,52 @@ const MailServiceTicket = {
     },
 
     // =====================================================
+    // 🔥 SEND PASSWORD CHANGE ALERT (MỚI THÊM)
+    // =====================================================
+
+    sendPasswordChangeAlert: async (email, fullName = "") => {
+
+        console.log(`📨 PASSWORD CHANGE ALERT -> ${email}`);
+
+        if (!email) {
+            throw new Error("Email người nhận không hợp lệ");
+        }
+
+        try {
+
+            const info = await transporter.sendMail({
+
+                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                to: email,
+                subject: "⚠️ Cảnh báo: Mật khẩu của bạn vừa được thay đổi",
+                html: `
+                    <div style="max-width:600px; margin:auto; padding:40px; background:#ffffff; border-radius:12px; font-family:Arial,sans-serif;">
+                        <h2 style="color:#d32f2f;">🎬 Dũng Cinema</h2>
+                        <h3 style="color:#333;">Cảnh báo: Mật khẩu của bạn vừa được thay đổi</h3>
+                        <p>Xin chào <b>${fullName || "bạn"}</b>,</p>
+                        <p>Mật khẩu tài khoản <b>${email}</b> vừa được thay đổi thành công.</p>
+                        <p>Nếu bạn không thực hiện hành động này, vui lòng liên hệ hỗ trợ ngay lập tức để bảo vệ tài khoản.</p>
+                        <hr>
+                        <p style="color:#888; font-size:13px;">© Dũng Cinema</p>
+                    </div>
+                `
+
+            });
+
+            console.log("✅ PASSWORD CHANGE ALERT SENT");
+            return info;
+
+        } catch (error) {
+
+            console.error("❌ PASSWORD CHANGE ALERT ERROR");
+            console.error(error);
+            throw error;
+
+        }
+
+    },
+
+    // =====================================================
     // SEND EMAIL VERIFICATION - 🔴 ĐÃ SỬA
     // =====================================================
 
