@@ -975,21 +975,20 @@ const AppContent = () => {
                 />
             )}
 
-            <SessionGuard>
-                <ScrollToTop />
+            {/* 🔥 BỎ SessionGuard RA KHỎI ĐÂY - ĐỂ CÁC TRANG AUTH TỰ DO */}
+            <ScrollToTop />
 
-                <LazyErrorBoundary>
-                    <Suspense
-                        fallback={<SuspenseLoading />}
-                    >
-                        {isAdminDomain ? (
-                            <AdminRoutes />
-                        ) : (
-                            <UserRoutes />
-                        )}
-                    </Suspense>
-                </LazyErrorBoundary>
-            </SessionGuard>
+            <LazyErrorBoundary>
+                <Suspense
+                    fallback={<SuspenseLoading />}
+                >
+                    {isAdminDomain ? (
+                        <AdminRoutes />
+                    ) : (
+                        <UserRoutes />
+                    )}
+                </Suspense>
+            </LazyErrorBoundary>
         </>
     );
 };

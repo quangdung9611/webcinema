@@ -1022,115 +1022,31 @@ exports.verifyResetToken = async (
     };
 };
 
-
 // ============================================================
 // ĐẶT LẠI MẬT KHẨU (NHẬP MẬT KHẨU MỚI - GỬI OTP XÁC NHẬN)
 // ============================================================
 
-exports.submitNewPassword = async (
-    token,
-    newPassword
-) => {
-
-    if (!token) {
-
-        throw {
-            statusCode: 400,
-            message:
-                "Token không được để trống"
-        };
-    }
-
-
-    if (!newPassword?.trim()) {
-
-        throw {
-            statusCode: 400,
-            field: "newPassword",
-            message:
-                "Mật khẩu mới không được để trống"
-        };
-    }
-
-
-    if (
-        !Password.isStrong(newPassword)
-    ) {
-
-        throw {
-            statusCode: 400,
-            field: "newPassword",
-            message:
-                "Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt"
-        };
-    }
-
+exports.submitNewPassword = async (token, newPassword) => {
+    if (!token) throw { statusCode: 400, message: "Token không được để trống" };
+    if (!newPassword?.trim()) throw { statusCode: 400, field: "newPassword", message: "Mật khẩu mới không được để trống" };
+    if (!Password.isStrong(newPassword)) throw { statusCode: 400, field: "newPassword", message: "Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt" };
 
     let payload;
-
-
     try {
-
-        payload =
-            Jwt.verifyResetToken(
-                token
-            );
-
-
-        if (!payload) {
-
-            throw new Error(
-                'Invalid token'
-            );
-        }
-
+        payload = Jwt.verifyResetToken(token);
+        if (!payload) throw new Error('Invalid token');
     } catch (error) {
-
-        throw {
-            statusCode: 401,
-            message:
-                "Token không hợp lệ hoặc đã hết hạn"
-        };
+        throw { statusCode: 401, message: "Token không hợp lệ hoặc đã hết hạn" };
     }
 
+    const user = await UserRepository.findByEmail(payload.email);
+    if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
 
-    // 2. Tìm user
-    const user =
-        await UserRepository.findByEmail(
-            payload.email
-        );
-
-
-    if (!user) {
-
-        throw {
-            statusCode: 404,
-            message:
-                "Không tìm thấy người dùng"
-        };
-    }
-
-
-    // 🔥 TẠO OTP XÁC NHẬN (LỚP BẢO MẬT THỨ 2)
-    const otpCode =
-        Otp.generate6();
-
-
-    await RedisService.saveOTP(
-        user.email,
-        "RESET_PASSWORD_CONFIRM",
-        otpCode,
-        300
-    );
-
+    // 🔥 GỌI OtpService.createOTP ĐỂ LƯU OTP ĐÚNG KEY (RESET_PASSWORD)
+    const otpResult = await OtpService.createOTP(user.email, "RESET_PASSWORD");
 
     // 🔥 GỬI OTP QUA EMAIL
-    await MailService.sendResetPasswordOTP(
-        user.email,
-        otpCode,
-        user.full_name
-    );
-
+    await MailService.sendResetPasswordOTP(user.email, otpResult.otp, user.full_name);
 
     return {
         success: true,
@@ -1139,159 +1055,50 @@ exports.submitNewPassword = async (
     };
 };
 
-
 // ============================================================
 // XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU
 // ============================================================
 
-exports.verifyOtpAndReset = async (
-    email,
-    otp,
-    newPassword
-) => {
+exports.verifyOtpAndReset = async (email, otp, newPassword) => {
+    // 🔥 GỌI OtpService.verifyOTP ĐỂ KIỂM TRA OTP CHÍNH XÁC
+    const otpResult = await OtpService.verifyOTP(email, otp, "RESET_PASSWORD");
 
-    // Kiểm tra OTP
-    const savedOTP =
-        await RedisService.getOTP(
-            email,
-            "RESET_PASSWORD_CONFIRM"
-        );
-
-
-    if (!savedOTP) {
-
+    if (!otpResult.success) {
         throw {
-            statusCode: 404,
-            message:
-                "OTP không tồn tại hoặc đã hết hạn. Vui lòng yêu cầu gửi lại."
-        };
-    }
-
-
-    if (savedOTP !== otp) {
-
-        const attempts =
-            await RedisService.incrementOTPAttempts(
-                email,
-                "RESET_PASSWORD_CONFIRM",
-                300
-            );
-
-
-        if (attempts >= 5) {
-
-            throw {
-                statusCode: 429,
-                message:
-                    "Bạn đã nhập sai OTP quá 5 lần. Vui lòng thử lại sau 5 phút."
-            };
-        }
-
-
-        throw {
-            statusCode: 400,
+            statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400,
             field: "otp",
-            message:
-                `OTP không chính xác. Còn ${5 - attempts} lần thử`
+            message: otpResult.message
         };
     }
-
-
-    // Xóa OTP sau khi xác thực thành công
-    await RedisService.deleteOTP(
-        email,
-        "RESET_PASSWORD_CONFIRM"
-    );
-
 
     // Tìm user
-    const user =
-        await UserRepository.findByEmail(
-            email
-        );
-
-
-    if (!user) {
-
-        throw {
-            statusCode: 404,
-            message:
-                "Không tìm thấy người dùng"
-        };
-    }
-
+    const user = await UserRepository.findByEmail(email);
+    if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
 
     // Kiểm tra trùng mật khẩu cũ
-    const samePassword =
-        await Password.compare(
-            newPassword,
-            user.password
-        );
-
-
-    if (samePassword) {
-
-        throw {
-            statusCode: 400,
-            field: "newPassword",
-            message:
-                "Mật khẩu mới không được trùng mật khẩu cũ"
-        };
-    }
-
+    const samePassword = await Password.compare(newPassword, user.password);
+    if (samePassword) throw { statusCode: 400, field: "newPassword", message: "Mật khẩu mới không được trùng mật khẩu cũ" };
 
     // Đổi mật khẩu
-    const hashedPassword =
-        await Password.hash(
-            newPassword
-        );
-
-
-    await UserRepository.updatePassword(
-        user.user_id,
-        hashedPassword
-    );
-
+    const hashedPassword = await Password.hash(newPassword);
+    await UserRepository.updatePassword(user.user_id, hashedPassword);
 
     // Revoke toàn bộ token cũ
-    await RefreshTokenRepository.revokeByUser(
-        user.user_id,
-        "Đặt lại mật khẩu"
-    );
-
-
+    await RefreshTokenRepository.revokeByUser(user.user_id, "Đặt lại mật khẩu");
     try {
-
-        await RedisService.deleteUserSocket(
-            user.user_id
-        );
-
+        await RedisService.deleteUserSocket(user.user_id);
     } catch (error) {
-
-        console.error(
-            '❌ [RESET_PASSWORD] Lỗi khi xóa socket:',
-            error.message
-        );
+        console.error('❌ [RESET_PASSWORD] Lỗi khi xóa socket:', error.message);
     }
 
-
     // Gửi email cảnh báo
-    await MailService.sendPasswordChangeAlert(
-        user.email,
-        user.full_name
-    );
-
+    await MailService.sendPasswordChangeAlert(user.email, user.full_name);
 
     return {
-
         success: true,
-
-        message:
-            "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại."
+        message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại."
     };
 };
-
-
 // ============================================================
 // SEND VERIFICATION EMAIL
 // ============================================================

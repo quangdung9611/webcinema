@@ -8,7 +8,7 @@ const PURPOSE = {
     CHANGE_EMAIL: 'CHANGE_EMAIL',
     VERIFY_EMAIL: 'VERIFY_EMAIL',
     PAYMENT: 'PAYMENT',
-    RESET_PASSWORD: 'RESET_PASSWORD',
+    RESET_PASSWORD: 'RESET_PASSWORD', // ✅ ĐÃ ĐÚNG
     BOOKING: 'BOOKING',
     VERIFY_PHONE: 'VERIFY_PHONE'
 };
@@ -28,6 +28,8 @@ class OtpService {
         const otpCode = Otp.generate6(); 
         console.log(`📤 Generated OTP: ${otpCode}`);
 
+        // 🔥 XÓA OTP CŨ TRƯỚC KHI LƯU MỚI ĐỂ TRÁNH BỊ TRÙNG
+        await RedisService.deleteOTP(email, purpose);
         await RedisService.saveOTP(email, purpose, otpCode, 300);
         const otpId = await OtpRepository.create({
             email,
@@ -50,15 +52,15 @@ class OtpService {
             return { success: false, code: "OTP_LOCKED", message: "OTP đã bị khóa do nhập sai quá nhiều lần" };
         }
 
-        const savedOTP = await RedisService.getOTP(email, purpose);
+        // 🔥 CHUYỂN VỀ STRING ĐỂ SO SÁNH CHÍNH XÁC
+        const savedOTP = String(await RedisService.getOTP(email, purpose) || '').trim();
+        const userOTP = String(otp || '').trim();
+
         if (!savedOTP) {
             return { success: false, code: "OTP_NOT_FOUND", message: "OTP không tồn tại hoặc đã hết hạn" };
         }
 
-        const storedOTP = String(savedOTP).trim();
-        const userOTP = String(otp).trim();
-
-        if (storedOTP !== userOTP) {
+        if (savedOTP !== userOTP) {
             const attempts = await RedisService.incrementOTPAttempts(email, purpose, 300);
             const latestLog = await OtpRepository.findLatest(email, purpose);
             if (latestLog?.otp_id) await OtpRepository.markFailed(latestLog.otp_id);
