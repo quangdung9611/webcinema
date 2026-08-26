@@ -11,9 +11,6 @@ class RedisService {
             await redis.set(key, value, {
                 ex: ttlSeconds
             });
-
-            console.log(`✅ Redis SET: ${key}`);
-
             return true;
         } catch (error) {
             console.error(`❌ Redis SET error (${key}):`, error);
@@ -24,9 +21,6 @@ class RedisService {
     async get(key) {
         try {
             const value = await redis.get(key);
-
-            console.log(`📥 Redis GET: ${key}`);
-
             return value;
         } catch (error) {
             console.error(`❌ Redis GET error (${key}):`, error);
@@ -37,9 +31,6 @@ class RedisService {
     async delete(key) {
         try {
             await redis.del(key);
-
-            console.log(`🗑️ Redis DEL: ${key}`);
-
             return true;
         } catch (error) {
             console.error(`❌ Redis DEL error (${key}):`, error);
@@ -50,9 +41,6 @@ class RedisService {
     async increment(key) {
         try {
             const result = await redis.incr(key);
-
-            console.log(`📈 Redis INCR: ${key} => ${result}`);
-
             return result;
         } catch (error) {
             console.error(`❌ Redis INCR error (${key}):`, error);
@@ -63,9 +51,6 @@ class RedisService {
     async expire(key, ttlSeconds) {
         try {
             await redis.expire(key, ttlSeconds);
-
-            console.log(`⏰ Redis EXPIRE: ${key} (${ttlSeconds}s)`);
-
             return true;
         } catch (error) {
             console.error(`❌ Redis EXPIRE error (${key}):`, error);
@@ -79,7 +64,6 @@ class RedisService {
 
     async saveOTP(email, purpose, otp, ttlSeconds = 300) {
         const key = `otp:${email}:${purpose}`;
-        console.log(`🔐 Save OTP -> ${key}`);
         return await this.set(key, otp, ttlSeconds);
     }
 
@@ -151,7 +135,6 @@ class RedisService {
         try {
             const key = `user:socket:${userId}`;
             await redis.set(key, socketId, { ex: ttlSeconds });
-            console.log(`✅ [SOCKET] Saved socket ${socketId} for user ${userId}`);
             return true;
         } catch (error) {
             console.error(`❌ [SOCKET] Failed to save socket for user ${userId}:`, error);
@@ -163,11 +146,6 @@ class RedisService {
         try {
             const key = `user:socket:${userId}`;
             const socketId = await redis.get(key);
-            if (socketId) {
-                console.log(`📥 [SOCKET] Got socket ${socketId} for user ${userId}`);
-            } else {
-                console.log(`ℹ️ [SOCKET] No socket found for user ${userId}`);
-            }
             return socketId;
         } catch (error) {
             console.error(`❌ [SOCKET] Failed to get socket for user ${userId}:`, error);
@@ -179,7 +157,6 @@ class RedisService {
         try {
             const key = `user:socket:${userId}`;
             await redis.del(key);
-            console.log(`🗑️ [SOCKET] Deleted socket for user ${userId}`);
             return true;
         } catch (error) {
             console.error(`❌ [SOCKET] Failed to delete socket for user ${userId}:`, error);
@@ -190,11 +167,8 @@ class RedisService {
     async isUserOnline(userId) {
         try {
             const socketId = await this.getUserSocket(userId);
-            const isOnline = socketId !== null;
-            console.log(`🔍 [SOCKET] User ${userId} is ${isOnline ? 'online' : 'offline'}`);
-            return isOnline;
+            return socketId !== null;
         } catch (error) {
-            console.error(`❌ [SOCKET] Failed to check online status for user ${userId}:`, error);
             return false;
         }
     }
@@ -205,10 +179,8 @@ class RedisService {
             const socketId = await redis.get(key);
             if (socketId) {
                 await redis.expire(key, ttlSeconds);
-                console.log(`🔄 [SOCKET] Refreshed TTL for user ${userId} (${ttlSeconds}s)`);
                 return true;
             } else {
-                console.log(`ℹ️ [SOCKET] No socket to refresh for user ${userId}`);
                 return false;
             }
         } catch (error) {
@@ -226,7 +198,6 @@ class RedisService {
                 const socketId = await redis.get(key);
                 result.push({ userId, socketId });
             }
-            console.log(`📊 [SOCKET] Found ${result.length} active sockets`);
             return result;
         } catch (error) {
             console.error(`❌ [SOCKET] Failed to get all active sockets:`, error);
@@ -241,7 +212,6 @@ class RedisService {
             for (const key of keys) {
                 await redis.del(key);
             }
-            console.log(`🗑️ [SOCKET] Deleted all sockets for user ${userId}`);
             return true;
         } catch (error) {
             console.error(`❌ [SOCKET] Failed to delete all sockets for user ${userId}:`, error);
@@ -262,10 +232,13 @@ class RedisService {
     async incrementLoginAttempts(email) {
         const key = `login_attempts:${email}`;
         const attempts = await this.increment(key);
+
+        // 🔥 ĐỔI TTL XUỐNG 60 GIÂY (1 PHÚT) ĐỂ TEST
         const ttl = await this.getTTL(key);
         if (ttl === -1) {
-            await this.expire(key, 60); // Tầng 1: 1 phút (test nhanh)
+            await this.expire(key, 60);
         }
+
         return attempts;
     }
 
@@ -298,7 +271,7 @@ class RedisService {
     async incrementLockoutLevel(email) {
         const key = `lockout_level:${email}`;
         const level = await this.increment(key);
-        await this.expire(key, 86400); // 24 giờ
+        await this.expire(key, 86400);
         return level;
     }
 
@@ -327,7 +300,6 @@ class RedisService {
     async ping() {
         try {
             const result = await redis.ping();
-            console.log("🏓 Redis Ping:", result);
             return result;
         } catch (error) {
             console.error("❌ Redis Ping Error:", error);

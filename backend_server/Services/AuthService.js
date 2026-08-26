@@ -104,7 +104,6 @@ exports.register = async (userData) => {
         emailSent: true
     };
 };
-
 exports.login = async (email, password, rememberMe = false, req, res) => {
     // 1. Validate
     validateLogin(email, password);
@@ -115,7 +114,8 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     if (lockoutLevel >= 4) {
         throw { 
             statusCode: 429, 
-            message: 'Tài khoản đã bị khóa 1 giờ. Vui lòng liên hệ hỗ trợ hoặc đổi mật khẩu.' 
+            message: 'Tài khoản đã bị khóa 1 giờ. Vui lòng liên hệ hỗ trợ hoặc đổi mật khẩu.',
+            retryAfter: 3600
         };
     }
 
@@ -241,7 +241,6 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         }
     };
 };
-
 exports.getMe = async (userId) => {
     if (!userId) {
         throw { statusCode: 401, message: "Chưa đăng nhập" };
