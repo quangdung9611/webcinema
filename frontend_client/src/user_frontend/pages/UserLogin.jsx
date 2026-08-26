@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+
+import {
+    useNavigate,
+    Link,
+    useLocation
+} from 'react-router-dom';
 
 import {
     AlertCircle,
@@ -9,18 +14,31 @@ import {
 } from 'lucide-react';
 
 import api from '../../api/api';
-import { useAuth } from '../../context/AuthContext';
-import { notifyLogin } from '../../utils/authCleanup';
+
+import {
+    useAuth
+} from '../../context/AuthContext';
+
+import {
+    notifyLogin
+} from '../../utils/authCleanup';
 
 import ForgotPassword from '../components/ForgotPassword';
+
 import LoadingButton from '../components/LoadingButton';
+
 import SuccessModal from '../components/SuccessModal';
+
 import LoginLockModal from '../components/LoginLockModal';
 
 import '../styles/UserAuth.css';
 
+
 const UserLogin = () => {
 
+    // ============================================================
+    // FORM DATA
+    // ============================================================
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -28,314 +46,1338 @@ const UserLogin = () => {
     });
 
     const [errors, setErrors] = useState({});
+
     const [loading, setLoading] = useState(false);
+
     const [serverError, setServerError] = useState('');
+
     const [showPassword, setShowPassword] = useState(false);
+
     const [showForgotModal, setShowForgotModal] = useState(false);
+
     const [successMessage, setSuccessMessage] = useState('');
-    const [showLoginSuccessModal, setShowLoginSuccessModal] = useState(false);
-    const [loginSuccessMessage, setLoginSuccessMessage] = useState('');
-    const [loggedInUser, setLoggedInUser] = useState(null);
 
-    const [showLockModal, setShowLockModal] = useState(false);
-    const [lockInfo, setLockInfo] = useState(null);
+    const [showLoginSuccessModal, setShowLoginSuccessModal] =
+        useState(false);
 
-    const [lockTimeLeft, setLockTimeLeft] = useState(0);
+    const [loginSuccessMessage, setLoginSuccessMessage] =
+        useState('');
 
+    const [loggedInUser, setLoggedInUser] =
+        useState(null);
+
+    // ============================================================
+    // ACCOUNT LOCK
+    // ============================================================
+    const [showLockModal, setShowLockModal] =
+        useState(false);
+
+    const [lockInfo, setLockInfo] =
+        useState(null);
+
+    const [lockTimeLeft, setLockTimeLeft] =
+        useState(0);
+
+
+    // ============================================================
+    // NAVIGATION
+    // ============================================================
     const navigate = useNavigate();
+
     const location = useLocation();
 
+
+    // ============================================================
+    // AUTH CONTEXT
+    // ============================================================
     const {
         user,
         isLoading,
     } = useAuth();
 
-    const isExpired = Boolean(location.state?.expired);
 
+    const isExpired = Boolean(
+        location.state?.expired
+    );
+
+
+    // ============================================================
+    // KHI LOAD LOGIN PAGE
+    // KIỂM TRA ACCOUNT CÓ ĐANG BỊ KHÓA KHÔNG
+    // ============================================================
     useEffect(() => {
-        const storedEmail = localStorage.getItem('lockedEmail');
-        const storedLockInfo = localStorage.getItem('lockInfo');
-        
-        if (storedEmail) {
-            api.get(`/api/auth/check-lock?email=${encodeURIComponent(storedEmail)}`)
-                .then((res) => {
-                    const serverData = res.data?.data || null;
-                    if (serverData?.isLocked) {
-                        const updatedLockInfo = {
-                            email: storedEmail,
-                            message: serverData.message,
-                            level: serverData.level,
-                            remainingSeconds: serverData.remainingSeconds,
-                            lockDuration: serverData.lockDuration,
-                            lockDurationText: serverData.lockDurationText,
-                            maxAttempts: serverData.maxAttempts || 5,
-                            lockedUntil: serverData.lockedUntil
-                        };
-                        setLockInfo(updatedLockInfo);
-                        setShowLockModal(true);
-                        localStorage.setItem('lockInfo', JSON.stringify(updatedLockInfo));
-                        setLockTimeLeft(Math.max(0, Math.floor((updatedLockInfo.lockedUntil - Date.now()) / 1000)));
-                    } else {
-                        localStorage.removeItem('lockedEmail');
-                        localStorage.removeItem('lockInfo');
-                    }
-                })
-                .catch((error) => {
-                    console.error('Không thể kiểm tra lock từ server:', error);
-                    if (storedLockInfo) {
-                        try {
-                            const parsed = JSON.parse(storedLockInfo);
-                            if (parsed.lockedUntil > Date.now()) {
-                                setLockInfo(parsed);
-                                setShowLockModal(true);
-                                setLockTimeLeft(Math.max(0, Math.floor((parsed.lockedUntil - Date.now()) / 1000)));
-                            }
-                        } catch (e) { /* ignore */ }
-                    }
-                });
-        }
-    }, []);
 
-    useEffect(() => {
-        if (!lockInfo || lockInfo.lockedUntil <= Date.now()) return;
+        const storedEmail =
+            localStorage.getItem('lockedEmail');
 
-        const tick = () => {
-            const left = Math.max(0, Math.floor((lockInfo.lockedUntil - Date.now()) / 1000));
-            setLockTimeLeft(left);
-            
-            if (left <= 0) {
-                localStorage.removeItem('lockedEmail');
-                localStorage.removeItem('lockInfo');
-                setLockInfo(null);
-                setShowLockModal(false);
-                setLockTimeLeft(0);
-                setSuccessMessage('✅ Tài khoản đã được mở khóa. Vui lòng thử đăng nhập lại.');
-                setTimeout(() => setSuccessMessage(''), 5000);
-            }
-        };
+        const storedLockInfo =
+            localStorage.getItem('lockInfo');
 
-        tick();
-        const interval = setInterval(tick, 1000);
 
-        return () => clearInterval(interval);
-    }, [lockInfo]);
-
-    useEffect(() => {
-        if (!location.state?.verified) return;
-        setSuccessMessage(location.state.message || 'Email đã được xác thực thành công! Vui lòng đăng nhập.');
-        window.history.replaceState({}, document.title);
-        const timer = setTimeout(() => setSuccessMessage(''), 5000);
-        return () => clearTimeout(timer);
-    }, [location.state]);
-
-    useEffect(() => {
-        if (user && !isLoading && !showLoginSuccessModal && !isExpired) {
-            navigate('/', { replace: true });
-        }
-    }, [user, isLoading, showLoginSuccessModal, navigate, isExpired]);
-
-    const validate = () => {
-        const tempErrors = {};
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!formData.email.trim()) tempErrors.email = 'Vui lòng nhập email';
-        else if (!emailRegex.test(formData.email.trim())) tempErrors.email = 'Email không hợp lệ';
-        if (!formData.password.trim()) tempErrors.password = 'Vui lòng nhập mật khẩu';
-        else if (formData.password.length < 6) tempErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
-        setErrors(tempErrors);
-        return Object.keys(tempErrors).length === 0;
-    };
-
-    const handleChange = (event) => {
-        const { name, value, type, checked } = event.target;
-        setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-        if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
-        if (serverError) setServerError('');
-        if (successMessage) setSuccessMessage('');
-
-        if (name === 'email') {
-            const storedEmail = localStorage.getItem('lockedEmail');
-            if (storedEmail && storedEmail !== value) {
-                localStorage.removeItem('lockedEmail');
-                localStorage.removeItem('lockInfo');
-                setLockInfo(null);
-                setShowLockModal(false);
-                setLockTimeLeft(0);
-            }
-        }
-    };
-
-    const handleLogin = async (event) => {
-        event.preventDefault();
-        if (lockInfo && lockInfo.lockedUntil > Date.now()) {
-            setShowLockModal(true);
+        if (!storedEmail) {
             return;
         }
-        if (!validate()) return;
 
-        setLoading(true);
-        setServerError('');
-        setSuccessMessage('');
-        setErrors({});
 
-        try {
-            const response = await api.post('/api/auth/login', {
-                email: formData.email.trim(),
-                password: formData.password,
-                rememberMe: formData.rememberMe,
+        api.get(
+            `/api/auth/check-lock?email=${encodeURIComponent(
+                storedEmail
+            )}`
+        )
+
+            .then((res) => {
+
+                const serverData =
+                    res.data?.data || null;
+
+
+                if (serverData?.isLocked) {
+
+                    const updatedLockInfo = {
+
+                        email:
+                            storedEmail,
+
+                        message:
+                            serverData.message,
+
+                        level:
+                            serverData.level,
+
+                        remainingSeconds:
+                            serverData.remainingSeconds,
+
+                        lockDuration:
+                            serverData.lockDuration,
+
+                        lockDurationText:
+                            serverData.lockDurationText,
+
+                        maxAttempts:
+                            serverData.maxAttempts || 5,
+
+                        lockedUntil:
+                            serverData.lockedUntil
+                    };
+
+
+                    setLockInfo(
+                        updatedLockInfo
+                    );
+
+
+                    setShowLockModal(
+                        true
+                    );
+
+
+                    localStorage.setItem(
+                        'lockInfo',
+                        JSON.stringify(
+                            updatedLockInfo
+                        )
+                    );
+
+
+                    // ====================================================
+                    // DÙNG CEIL
+                    // ====================================================
+                    setLockTimeLeft(
+                        Math.max(
+                            0,
+                            Math.ceil(
+                                (
+                                    updatedLockInfo.lockedUntil
+                                    - Date.now()
+                                ) / 1000
+                            )
+                        )
+                    );
+
+                } else {
+
+                    localStorage.removeItem(
+                        'lockedEmail'
+                    );
+
+                    localStorage.removeItem(
+                        'lockInfo'
+                    );
+
+                }
+
+            })
+
+            .catch((error) => {
+
+                console.error(
+                    'Không thể kiểm tra lock từ server:',
+                    error
+                );
+
+
+                // ========================================================
+                // FALLBACK LOCAL STORAGE
+                // ========================================================
+                if (storedLockInfo) {
+
+                    try {
+
+                        const parsed =
+                            JSON.parse(
+                                storedLockInfo
+                            );
+
+
+                        if (
+                            parsed.lockedUntil >
+                            Date.now()
+                        ) {
+
+                            setLockInfo(
+                                parsed
+                            );
+
+                            setShowLockModal(
+                                true
+                            );
+
+
+                            // ====================================================
+                            // DÙNG CEIL
+                            // ====================================================
+                            setLockTimeLeft(
+                                Math.max(
+                                    0,
+                                    Math.ceil(
+                                        (
+                                            parsed.lockedUntil
+                                            - Date.now()
+                                        ) / 1000
+                                    )
+                                )
+                            );
+
+                        }
+
+                    } catch (e) {
+                        /* ignore */
+                    }
+
+                }
+
             });
 
-            const responseUser = response?.data?.user || response?.data?.data?.user || null;
-            if (responseUser && !responseUser.email_verified) {
-                setServerError('Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn.');
-                return;
+    }, []);
+
+
+    // ============================================================
+    // COUNTDOWN LOCK BUTTON
+    // ============================================================
+    useEffect(() => {
+
+        if (
+            !lockInfo ||
+            lockInfo.lockedUntil <= Date.now()
+        ) {
+            return;
+        }
+
+
+        const tick = () => {
+
+            // ========================================================
+            // DÙNG CEIL THAY FLOOR
+            // ========================================================
+            const left =
+                Math.max(
+                    0,
+                    Math.ceil(
+                        (
+                            lockInfo.lockedUntil
+                            - Date.now()
+                        ) / 1000
+                    )
+                );
+
+
+            setLockTimeLeft(
+                left
+            );
+
+
+            if (left <= 0) {
+
+                localStorage.removeItem(
+                    'lockedEmail'
+                );
+
+                localStorage.removeItem(
+                    'lockInfo'
+                );
+
+
+                setLockInfo(
+                    null
+                );
+
+                setShowLockModal(
+                    false
+                );
+
+                setLockTimeLeft(
+                    0
+                );
+
+
+                setSuccessMessage(
+                    '✅ Tài khoản đã được mở khóa. Vui lòng thử đăng nhập lại.'
+                );
+
+
+                setTimeout(() => {
+
+                    setSuccessMessage(
+                        ''
+                    );
+
+                }, 5000);
+
             }
+
+        };
+
+
+        tick();
+
+
+        const interval =
+            setInterval(
+                tick,
+                1000
+            );
+
+
+        return () => {
+            clearInterval(
+                interval
+            );
+        };
+
+    }, [lockInfo]);
+
+
+    // ============================================================
+    // EMAIL VERIFIED MESSAGE
+    // ============================================================
+    useEffect(() => {
+
+        if (
+            !location.state?.verified
+        ) {
+            return;
+        }
+
+
+        setSuccessMessage(
+            location.state.message ||
+            'Email đã được xác thực thành công! Vui lòng đăng nhập.'
+        );
+
+
+        window.history.replaceState(
+            {},
+            document.title
+        );
+
+
+        const timer =
+            setTimeout(() => {
+
+                setSuccessMessage(
+                    ''
+                );
+
+            }, 5000);
+
+
+        return () => {
+            clearTimeout(
+                timer
+            );
+        };
+
+    }, [location.state]);
+
+
+    // ============================================================
+    // REDIRECT IF ALREADY LOGGED IN
+    // ============================================================
+    useEffect(() => {
+
+        if (
+            user &&
+            !isLoading &&
+            !showLoginSuccessModal &&
+            !isExpired
+        ) {
+
+            navigate(
+                '/',
+                {
+                    replace: true
+                }
+            );
+
+        }
+
+    }, [
+        user,
+        isLoading,
+        showLoginSuccessModal,
+        navigate,
+        isExpired
+    ]);
+
+
+    // ============================================================
+    // VALIDATE FORM
+    // ============================================================
+    const validate = () => {
+
+        const tempErrors = {};
+
+        const emailRegex =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+        if (!formData.email.trim()) {
+
+            tempErrors.email =
+                'Vui lòng nhập email';
+
+        } else if (
+            !emailRegex.test(
+                formData.email.trim()
+            )
+        ) {
+
+            tempErrors.email =
+                'Email không hợp lệ';
+
+        }
+
+
+        if (!formData.password.trim()) {
+
+            tempErrors.password =
+                'Vui lòng nhập mật khẩu';
+
+        } else if (
+            formData.password.length < 6
+        ) {
+
+            tempErrors.password =
+                'Mật khẩu phải có ít nhất 6 ký tự';
+
+        }
+
+
+        setErrors(
+            tempErrors
+        );
+
+
+        return (
+            Object.keys(
+                tempErrors
+            ).length === 0
+        );
+    };
+
+
+    // ============================================================
+    // HANDLE INPUT CHANGE
+    // ============================================================
+    const handleChange = (
+        event
+    ) => {
+
+        const {
+            name,
+            value,
+            type,
+            checked
+        } = event.target;
+
+
+        setFormData(
+            (prev) => ({
+                ...prev,
+
+                [name]:
+                    type === 'checkbox'
+                        ? checked
+                        : value
+            })
+        );
+
+
+        if (errors[name]) {
+
+            setErrors(
+                (prev) => ({
+                    ...prev,
+                    [name]: ''
+                })
+            );
+
+        }
+
+
+        if (serverError) {
+
+            setServerError(
+                ''
+            );
+
+        }
+
+
+        if (successMessage) {
+
+            setSuccessMessage(
+                ''
+            );
+
+        }
+
+
+        // ========================================================
+        // ĐỔI EMAIL -> RESET LOCK UI CỦA EMAIL CŨ
+        // ========================================================
+        if (name === 'email') {
+
+            const storedEmail =
+                localStorage.getItem(
+                    'lockedEmail'
+                );
+
+
+            if (
+                storedEmail &&
+                storedEmail !== value
+            ) {
+
+                localStorage.removeItem(
+                    'lockedEmail'
+                );
+
+                localStorage.removeItem(
+                    'lockInfo'
+                );
+
+
+                setLockInfo(
+                    null
+                );
+
+                setShowLockModal(
+                    false
+                );
+
+                setLockTimeLeft(
+                    0
+                );
+
+            }
+
+        }
+
+    };
+
+
+    // ============================================================
+    // HANDLE LOGIN
+    // ============================================================
+    const handleLogin = async (
+        event
+    ) => {
+
+        event.preventDefault();
+
+
+        // ========================================================
+        // NẾU ĐANG BỊ KHÓA
+        // ========================================================
+        if (
+            lockInfo &&
+            lockInfo.lockedUntil >
+            Date.now()
+        ) {
+
+            setShowLockModal(
+                true
+            );
+
+            return;
+
+        }
+
+
+        if (!validate()) {
+            return;
+        }
+
+
+        setLoading(
+            true
+        );
+
+        setServerError(
+            ''
+        );
+
+        setSuccessMessage(
+            ''
+        );
+
+        setErrors(
+            {}
+        );
+
+
+        try {
+
+            const response =
+                await api.post(
+                    '/api/auth/login',
+                    {
+
+                        email:
+                            formData.email.trim(),
+
+                        password:
+                            formData.password,
+
+                        rememberMe:
+                            formData.rememberMe,
+
+                    }
+                );
+
+
+            const responseUser =
+                response?.data?.user ||
+                response?.data?.data?.user ||
+                null;
+
+
+            // ====================================================
+            // EMAIL CHƯA VERIFY
+            // ====================================================
+            if (
+                responseUser &&
+                !responseUser.email_verified
+            ) {
+
+                setServerError(
+                    'Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn.'
+                );
+
+                return;
+
+            }
+
 
             api.resetUserCache();
-            notifyLogin(responseUser);
-            setLoggedInUser(responseUser);
-            setLoginSuccessMessage(`Chào mừng ${responseUser?.full_name || responseUser?.username || 'bạn'} quay trở lại!`);
-            setShowLoginSuccessModal(true);
+
+
+            notifyLogin(
+                responseUser
+            );
+
+
+            setLoggedInUser(
+                responseUser
+            );
+
+
+            setLoginSuccessMessage(
+                `Chào mừng ${
+                    responseUser?.full_name ||
+                    responseUser?.username ||
+                    'bạn'
+                } quay trở lại!`
+            );
+
+
+            setShowLoginSuccessModal(
+                true
+            );
 
         } catch (error) {
-            console.error('🔴 [LOGIN] Login error:', error);
-            const errorData = error?.response?.data || {};
-            const errorCode = errorData?.code;
-            const errorMessage = errorData?.message || 'Tài khoản hoặc mật khẩu không chính xác';
 
-            if (error?.response?.status === 429 || errorCode === 'ACCOUNT_LOCKED') {
-                const lockData = errorData?.data || {};
-                
-                // 🔥 QUAN TRỌNG: CHỈ DÙNG lockData.lockedUntil (Đã được Backend tính chuẩn)
-                // KHÔNG TỰ Ý CỘNG THÊM THỜI GIAN NỮA!
-                const lockUntilTimestamp = lockData.lockedUntil;
-                
-                const level = Number(lockData.level) || 1;
-                const durationSeconds = Number(lockData.remainingSeconds) || 60;
-                const durationText = lockData.lockDurationText || '1 phút';
+            console.error(
+                '🔴 [LOGIN] Login error:',
+                error
+            );
+
+
+            const errorData =
+                error?.response?.data ||
+                {};
+
+
+            const errorCode =
+                errorData?.code;
+
+
+            const errorMessage =
+                errorData?.message ||
+                'Tài khoản hoặc mật khẩu không chính xác';
+
+
+            // ====================================================
+            // ACCOUNT LOCKED
+            // ====================================================
+            if (
+                error?.response?.status === 429 ||
+                errorCode === 'ACCOUNT_LOCKED'
+            ) {
+
+                const lockData =
+                    errorData?.data ||
+                    {};
+
+
+                // ====================================================
+                // QUAN TRỌNG:
+                // CHỈ DÙNG lockedUntil TỪ BACKEND
+                // ====================================================
+                const lockUntilTimestamp =
+                    lockData.lockedUntil;
+
+
+                const level =
+                    Number(
+                        lockData.level
+                    ) || 1;
+
+
+                const durationSeconds =
+                    Number(
+                        lockData.remainingSeconds
+                    ) || 60;
+
+
+                const durationText =
+                    lockData.lockDurationText ||
+                    '1 phút';
+
 
                 const lockInfoData = {
-                    email: formData.email.trim(),
-                    message: errorMessage,
-                    level: level,
-                    remainingSeconds: durationSeconds,
-                    lockDuration: durationSeconds,
-                    lockDurationText: durationText,
-                    maxAttempts: lockData.maxAttempts || 5,
-                    lockedUntil: lockUntilTimestamp
+
+                    email:
+                        formData.email.trim(),
+
+                    message:
+                        errorMessage,
+
+                    level:
+                        level,
+
+                    remainingSeconds:
+                        durationSeconds,
+
+                    lockDuration:
+                        durationSeconds,
+
+                    lockDurationText:
+                        durationText,
+
+                    maxAttempts:
+                        lockData.maxAttempts || 5,
+
+                    lockedUntil:
+                        lockUntilTimestamp
                 };
-                
-                setLockInfo(lockInfoData);
-                setShowLockModal(true);
-                setLockTimeLeft(Math.max(0, Math.floor((lockUntilTimestamp - Date.now()) / 1000)));
-                localStorage.setItem('lockedEmail', formData.email.trim());
-                localStorage.setItem('lockInfo', JSON.stringify(lockInfoData));
+
+
+                setLockInfo(
+                    lockInfoData
+                );
+
+
+                setShowLockModal(
+                    true
+                );
+
+
+                // ====================================================
+                // DÙNG CEIL
+                // ====================================================
+                setLockTimeLeft(
+                    Math.max(
+                        0,
+                        Math.ceil(
+                            (
+                                lockUntilTimestamp
+                                - Date.now()
+                            ) / 1000
+                        )
+                    )
+                );
+
+
+                localStorage.setItem(
+                    'lockedEmail',
+                    formData.email.trim()
+                );
+
+
+                localStorage.setItem(
+                    'lockInfo',
+                    JSON.stringify(
+                        lockInfoData
+                    )
+                );
+
+
                 return;
+
             }
 
-            if (errorData?.field === 'email') { setErrors((prev) => ({ ...prev, email: errorMessage })); return; }
-            if (errorData?.field === 'password') { setErrors((prev) => ({ ...prev, password: errorMessage })); return; }
-            if (errorCode === 'EMAIL_NOT_VERIFIED') { setServerError(errorMessage || 'Vui lòng xác thực email trước khi đăng nhập.'); return; }
 
-            setServerError(errorMessage);
+            // ====================================================
+            // EMAIL ERROR
+            // ====================================================
+            if (
+                errorData?.field === 'email'
+            ) {
+
+                setErrors(
+                    (prev) => ({
+                        ...prev,
+                        email:
+                            errorMessage
+                    })
+                );
+
+                return;
+
+            }
+
+
+            // ====================================================
+            // PASSWORD ERROR
+            // ====================================================
+            if (
+                errorData?.field === 'password'
+            ) {
+
+                setErrors(
+                    (prev) => ({
+                        ...prev,
+                        password:
+                            errorMessage
+                    })
+                );
+
+                return;
+
+            }
+
+
+            // ====================================================
+            // EMAIL NOT VERIFIED
+            // ====================================================
+            if (
+                errorCode ===
+                'EMAIL_NOT_VERIFIED'
+            ) {
+
+                setServerError(
+                    errorMessage ||
+                    'Vui lòng xác thực email trước khi đăng nhập.'
+                );
+
+                return;
+
+            }
+
+
+            setServerError(
+                errorMessage
+            );
 
         } finally {
-            setLoading(false);
+
+            setLoading(
+                false
+            );
+
         }
+
     };
 
-    const handleLoginSuccessConfirm = () => {
-        setShowLoginSuccessModal(false);
-        setLoggedInUser(null);
-        navigate('/', { replace: true });
-    };
 
-    const handleCloseLockModal = () => {
-        setShowLockModal(false);
-    };
+    // ============================================================
+    // LOGIN SUCCESS
+    // ============================================================
+    const handleLoginSuccessConfirm =
+        () => {
 
-    const formatLockTime = (totalSeconds) => {
-        const m = Math.floor(totalSeconds / 60);
-        const s = totalSeconds % 60;
-        return `${m}:${s.toString().padStart(2, '0')}`;
-    };
+            setShowLoginSuccessModal(
+                false
+            );
 
-    const isLockedActive = lockInfo && lockInfo.lockedUntil > Date.now();
+            setLoggedInUser(
+                null
+            );
 
+            navigate(
+                '/',
+                {
+                    replace: true
+                }
+            );
+
+        };
+
+
+    // ============================================================
+    // CLOSE LOCK MODAL
+    // ============================================================
+    const handleCloseLockModal =
+        () => {
+
+            setShowLockModal(
+                false
+            );
+
+        };
+
+
+    // ============================================================
+    // FORMAT LOCK TIME
+    // ============================================================
+    const formatLockTime =
+        (totalSeconds) => {
+
+            const m =
+                Math.floor(
+                    totalSeconds / 60
+                );
+
+            const s =
+                totalSeconds % 60;
+
+
+            return `${m}:${s
+                .toString()
+                .padStart(2, '0')}`;
+
+        };
+
+
+    // ============================================================
+    // CHECK ACTIVE LOCK
+    // ============================================================
+    const isLockedActive =
+        lockInfo &&
+        lockInfo.lockedUntil >
+        Date.now();
+
+
+    // ============================================================
+    // RENDER
+    // ============================================================
     return (
+
         <div className="auth-container">
+
             <div className="auth-card">
-                <h2>ĐĂNG NHẬP</h2>
-                <p className="auth-subtitle">Chào mừng bạn quay trở lại Cinema Star</p>
 
+                <h2>
+                    ĐĂNG NHẬP
+                </h2>
+
+
+                <p className="auth-subtitle">
+                    Chào mừng bạn quay trở lại Cinema Star
+                </p>
+
+
+                {/* SUCCESS MESSAGE */}
                 {successMessage && (
-                    <div className="success-message" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', backgroundColor: '#22c55e20', border: '1px solid #22c55e', borderRadius: '8px', color: '#22c55e', marginBottom: '16px' }}>
-                        <CheckCircle size={20} />
-                        <span>{successMessage}</span>
+
+                    <div
+                        className="success-message"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '12px 16px',
+                            backgroundColor: '#22c55e20',
+                            border: '1px solid #22c55e',
+                            borderRadius: '8px',
+                            color: '#22c55e',
+                            marginBottom: '16px'
+                        }}
+                    >
+
+                        <CheckCircle
+                            size={20}
+                        />
+
+                        <span>
+                            {successMessage}
+                        </span>
+
                     </div>
+
                 )}
 
+
+                {/* SERVER ERROR */}
                 {serverError && (
+
                     <div className="error-message">
-                        <AlertCircle size={18} />
-                        <span>{serverError}</span>
+
+                        <AlertCircle
+                            size={18}
+                        />
+
+                        <span>
+                            {serverError}
+                        </span>
+
                     </div>
+
                 )}
 
-                <form onSubmit={handleLogin} noValidate>
-                    <div className="form-group">
-                        <label>Email address</label>
-                        <input id="login-email" type="email" name="email" placeholder="example@gmail.com" className={`auth-input ${errors.email ? 'input-error' : ''}`} value={formData.email} onChange={handleChange} autoComplete="email" disabled={loading || isLockedActive} />
-                        {errors.email && <span className="error-text">{errors.email}</span>}
-                    </div>
 
-                    <div className="form-group">
-                        <label>Password</label>
-                        <div className="password-wrapper">
-                            <input type={showPassword ? 'text' : 'password'} name="password" placeholder="••••••••" className={`auth-input ${errors.password ? 'input-error' : ''}`} value={formData.password} onChange={handleChange} autoComplete="current-password" disabled={loading || isLockedActive} />
-                            <button type="button" className="toggle-password" onClick={() => setShowPassword((prev) => !prev)} tabIndex="-1" disabled={loading || isLockedActive}>
-                                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                            </button>
-                        </div>
-                        {errors.password && <span className="error-text">{errors.password}</span>}
-                    </div>
+                {/* LOGIN FORM */}
+                <form
+                    onSubmit={handleLogin}
+                    noValidate
+                >
 
-                    <div className="form-options">
-                        <label className="remember-me">
-                            <input type="checkbox" name="rememberMe" checked={formData.rememberMe} onChange={handleChange} disabled={loading || isLockedActive} />
-                            Remember me
+                    {/* EMAIL */}
+                    <div className="form-group">
+
+                        <label>
+                            Email address
                         </label>
-                        <button type="button" className="forgot-link" onClick={() => setShowForgotModal(true)} disabled={loading || isLockedActive}>
-                            Forgot password?
-                        </button>
+
+
+                        <input
+                            id="login-email"
+                            type="email"
+                            name="email"
+                            placeholder="example@gmail.com"
+                            className={`auth-input ${
+                                errors.email
+                                    ? 'input-error'
+                                    : ''
+                            }`}
+                            value={
+                                formData.email
+                            }
+                            onChange={
+                                handleChange
+                            }
+                            autoComplete="email"
+                            disabled={
+                                loading ||
+                                isLockedActive
+                            }
+                        />
+
+
+                        {errors.email && (
+
+                            <span className="error-text">
+                                {errors.email}
+                            </span>
+
+                        )}
+
                     </div>
 
-                    <LoadingButton type="submit" loading={loading} loadingText="Đang đăng nhập..." disabled={loading || isLockedActive} className="btn-user" spinnerColor="#000000">
-                        {isLockedActive ? (
-                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                ĐANG BỊ KHÓA 
-                                <span style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
-                                    {formatLockTime(lockTimeLeft)}
-                                </span>
+
+                    {/* PASSWORD */}
+                    <div className="form-group">
+
+                        <label>
+                            Password
+                        </label>
+
+
+                        <div className="password-wrapper">
+
+                            <input
+                                type={
+                                    showPassword
+                                        ? 'text'
+                                        : 'password'
+                                }
+                                name="password"
+                                placeholder="••••••••"
+                                className={`auth-input ${
+                                    errors.password
+                                        ? 'input-error'
+                                        : ''
+                                }`}
+                                value={
+                                    formData.password
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                autoComplete="current-password"
+                                disabled={
+                                    loading ||
+                                    isLockedActive
+                                }
+                            />
+
+
+                            <button
+                                type="button"
+                                className="toggle-password"
+                                onClick={() =>
+                                    setShowPassword(
+                                        (prev) => !prev
+                                    )
+                                }
+                                tabIndex="-1"
+                                disabled={
+                                    loading ||
+                                    isLockedActive
+                                }
+                            >
+
+                                {showPassword
+                                    ? <Eye size={18} />
+                                    : <EyeOff size={18} />
+                                }
+
+                            </button>
+
+                        </div>
+
+
+                        {errors.password && (
+
+                            <span className="error-text">
+                                {errors.password}
                             </span>
-                        ) : (
-                            'SIGN IN'
+
                         )}
+
+                    </div>
+
+
+                    {/* REMEMBER + FORGOT */}
+                    <div className="form-options">
+
+                        <label className="remember-me">
+
+                            <input
+                                type="checkbox"
+                                name="rememberMe"
+                                checked={
+                                    formData.rememberMe
+                                }
+                                onChange={
+                                    handleChange
+                                }
+                                disabled={
+                                    loading ||
+                                    isLockedActive
+                                }
+                            />
+
+                            Remember me
+
+                        </label>
+
+
+                        <button
+                            type="button"
+                            className="forgot-link"
+                            onClick={() =>
+                                setShowForgotModal(
+                                    true
+                                )
+                            }
+                            disabled={
+                                loading ||
+                                isLockedActive
+                            }
+                        >
+
+                            Forgot password?
+
+                        </button>
+
+                    </div>
+
+
+                    {/* LOGIN BUTTON */}
+                    <LoadingButton
+                        type="submit"
+                        loading={loading}
+                        loadingText="Đang đăng nhập..."
+                        disabled={
+                            loading ||
+                            isLockedActive
+                        }
+                        className="btn-user"
+                        spinnerColor="#000000"
+                    >
+
+                        {isLockedActive ? (
+
+                            <span
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px'
+                                }}
+                            >
+
+                                ĐANG BỊ KHÓA
+
+                                <span
+                                    style={{
+                                        background:
+                                            'rgba(255,255,255,0.2)',
+
+                                        padding:
+                                            '2px 8px',
+
+                                        borderRadius:
+                                            '4px',
+
+                                        fontWeight:
+                                            'bold'
+                                    }}
+                                >
+
+                                    {formatLockTime(
+                                        lockTimeLeft
+                                    )}
+
+                                </span>
+
+                            </span>
+
+                        ) : (
+
+                            'SIGN IN'
+
+                        )}
+
                     </LoadingButton>
+
                 </form>
 
+
+                {/* REGISTER */}
                 <div className="auth-footer">
-                    <span>Chưa có tài khoản?</span>
-                    <Link to="/register" className="btn-link">Đăng ký ngay</Link>
+
+                    <span>
+                        Chưa có tài khoản?
+                    </span>
+
+
+                    <Link
+                        to="/register"
+                        className="btn-link"
+                    >
+
+                        Đăng ký ngay
+
+                    </Link>
+
                 </div>
+
             </div>
 
-            {showForgotModal && <ForgotPassword onClose={() => setShowForgotModal(false)} />}
 
-            <SuccessModal isOpen={showLoginSuccessModal} onConfirm={handleLoginSuccessConfirm} onClose={handleLoginSuccessConfirm} title="🎉 Đăng nhập thành công!" message={loginSuccessMessage} confirmText="Vào trang chủ" autoClose={true} autoCloseDelay={3000} />
+            {/* FORGOT PASSWORD */}
+            {showForgotModal && (
 
-            <LoginLockModal show={showLockModal} message={lockInfo?.message || 'Tài khoản đã bị khóa'} lockedUntil={lockInfo?.lockedUntil || Date.now() + 60000} lockLevel={lockInfo?.level || 1} lockDurationText={lockInfo?.lockDurationText || '1 phút'} email={lockInfo?.email || formData.email} onClose={handleCloseLockModal} />
+                <ForgotPassword
+                    onClose={() =>
+                        setShowForgotModal(
+                            false
+                        )
+                    }
+                />
+
+            )}
+
+
+            {/* LOGIN SUCCESS */}
+            <SuccessModal
+                isOpen={
+                    showLoginSuccessModal
+                }
+                onConfirm={
+                    handleLoginSuccessConfirm
+                }
+                onClose={
+                    handleLoginSuccessConfirm
+                }
+                title="🎉 Đăng nhập thành công!"
+                message={
+                    loginSuccessMessage
+                }
+                confirmText="Vào trang chủ"
+                autoClose={true}
+                autoCloseDelay={3000}
+            />
+
+
+            {/* LOCK MODAL */}
+            <LoginLockModal
+                show={
+                    showLockModal
+                }
+                message={
+                    lockInfo?.message ||
+                    'Tài khoản đã bị khóa'
+                }
+                lockedUntil={
+                    lockInfo?.lockedUntil ||
+                    Date.now() + 60000
+                }
+                lockLevel={
+                    lockInfo?.level ||
+                    1
+                }
+                lockDurationText={
+                    lockInfo?.lockDurationText ||
+                    '1 phút'
+                }
+                email={
+                    lockInfo?.email ||
+                    formData.email
+                }
+                onClose={
+                    handleCloseLockModal
+                }
+            />
+
         </div>
+
     );
+
 };
 
 export default UserLogin;
