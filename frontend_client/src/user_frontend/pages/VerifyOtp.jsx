@@ -1,19 +1,40 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/api';
-import { ShieldCheck, AlertCircle, CheckCircle, ArrowLeft, Mail } from 'lucide-react';
+import { ShieldCheck, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import '../styles/ForgotPassword.css';
 
 const VerifyOTP = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    
+    // Nhận email và mật khẩu mới từ trang ResetPassword
     const email = location.state?.email || '';
+    const newPassword = location.state?.newPassword || '';
 
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('');
+
+    // Kiểm tra nếu thiếu email hoặc mật khẩu
+    if (!email || !newPassword) {
+        return (
+            <div className="forgot-password-container">
+                <div className="forgot-password-card">
+                    <div className="forgot-icon">
+                        <AlertCircle size={42} />
+                    </div>
+                    <h2>LỖI DỮ LIỆU</h2>
+                    <p className="forgot-subtitle">Vui lòng thực hiện lại quy trình đặt lại mật khẩu.</p>
+                    <button className="forgot-btn" onClick={() => navigate('/forgot-password')}>
+                        Quay lại
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     const handleVerifyOTP = async () => {
         if (!otp.trim()) {
@@ -25,25 +46,26 @@ const VerifyOTP = () => {
         try {
             setLoading(true);
             setMessage('');
-            
-            // ✅ Endpoint đúng: POST /api/auth/verify-reset-otp
-            const res = await api.post('/api/auth/verify-reset-otp', {
+
+            // ✅ Gọi API verify-otp-and-reset để hoàn tất đổi mật khẩu
+            const res = await api.post('/api/auth/verify-otp-and-reset', {
                 email,
-                otp
+                otp,
+                newPassword
             });
 
-            setMessage('Xác thực OTP thành công');
+            setMessage(res.data.message || 'Đặt lại mật khẩu thành công!');
             setMessageType('success');
 
-            // ✅ Lấy resetToken và chuyển sang trang ResetPassword
+            // ✅ Chuyển sang trang đăng nhập sau 2 giây
             setTimeout(() => {
-                navigate('/reset-password', { 
+                navigate('/login', { 
                     state: { 
-                        resetToken: res.data.resetToken,
-                        email
+                        resetSuccess: true,
+                        message: 'Mật khẩu đã được đặt lại thành công! Vui lòng đăng nhập.'
                     }
                 });
-            }, 1500);
+            }, 2000);
 
         } catch (err) {
             setMessage(err.response?.data?.message || 'OTP không hợp lệ');
@@ -54,20 +76,17 @@ const VerifyOTP = () => {
     };
 
     const handleResendOTP = async () => {
-        if (!email) {
-            setMessage('Email không hợp lệ. Vui lòng quay lại nhập lại.');
-            setMessageType('error');
-            return;
-        }
-
         try {
             setResendLoading(true);
             setMessage('');
-            
-            // ✅ Gửi lại OTP
-            const res = await api.post('/api/auth/forgot-password', { email });
 
-            setMessage(res.data.message || 'OTP đã được gửi lại tới email của bạn');
+            // ✅ Gửi lại OTP xác nhận (dùng lại mật khẩu mới đã nhập)
+            const res = await api.post('/api/auth/submit-new-password', {
+                token: location.state?.token, // Nếu có token gửi lại
+                newPassword
+            });
+
+            setMessage(res.data.message || 'OTP đã được gửi lại');
             setMessageType('success');
 
         } catch (err) {

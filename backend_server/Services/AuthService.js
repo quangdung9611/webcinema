@@ -12,6 +12,8 @@ const MailService = require("./MailServiceTicket");
 
 const RedisService = require("./RedisService");
 
+const Otp = require("../utils/Otp");
+
 
 // ============================================================
 // SOCKET INSTANCE
@@ -952,7 +954,7 @@ exports.forgotPassword = async (
 
 
 // ============================================================
-// VERIFY RESET TOKEN
+// VERIFY RESET TOKEN (Xác thực link)
 // ============================================================
 
 exports.verifyResetToken = async (
@@ -1022,10 +1024,10 @@ exports.verifyResetToken = async (
 
 
 // ============================================================
-// RESET PASSWORD
+// ĐẶT LẠI MẬT KHẨU (NHẬP MẬT KHẨU MỚI - GỬI OTP XÁC NHẬN)
 // ============================================================
 
-exports.resetPassword = async (
+exports.submitNewPassword = async (
     token,
     newPassword
 ) => {
@@ -1064,7 +1066,6 @@ exports.resetPassword = async (
     }
 
 
-    // 1. Xác thực token
     let payload;
 
 
@@ -1110,7 +1111,117 @@ exports.resetPassword = async (
     }
 
 
-    // 3. Kiểm tra mật khẩu mới trùng mật khẩu cũ không
+    // 🔥 TẠO OTP XÁC NHẬN (LỚP BẢO MẬT THỨ 2)
+    const otpCode =
+        Otp.generate6();
+
+
+    await RedisService.saveOTP(
+        user.email,
+        "RESET_PASSWORD_CONFIRM",
+        otpCode,
+        300
+    );
+
+
+    // 🔥 GỬI OTP QUA EMAIL
+    await MailService.sendResetPasswordOTP(
+        user.email,
+        otpCode,
+        user.full_name
+    );
+
+
+    return {
+        success: true,
+        message: "Mã OTP xác nhận đã được gửi tới email của bạn.",
+        email: user.email
+    };
+};
+
+
+// ============================================================
+// XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU
+// ============================================================
+
+exports.verifyOtpAndReset = async (
+    email,
+    otp,
+    newPassword
+) => {
+
+    // Kiểm tra OTP
+    const savedOTP =
+        await RedisService.getOTP(
+            email,
+            "RESET_PASSWORD_CONFIRM"
+        );
+
+
+    if (!savedOTP) {
+
+        throw {
+            statusCode: 404,
+            message:
+                "OTP không tồn tại hoặc đã hết hạn. Vui lòng yêu cầu gửi lại."
+        };
+    }
+
+
+    if (savedOTP !== otp) {
+
+        const attempts =
+            await RedisService.incrementOTPAttempts(
+                email,
+                "RESET_PASSWORD_CONFIRM",
+                300
+            );
+
+
+        if (attempts >= 5) {
+
+            throw {
+                statusCode: 429,
+                message:
+                    "Bạn đã nhập sai OTP quá 5 lần. Vui lòng thử lại sau 5 phút."
+            };
+        }
+
+
+        throw {
+            statusCode: 400,
+            field: "otp",
+            message:
+                `OTP không chính xác. Còn ${5 - attempts} lần thử`
+        };
+    }
+
+
+    // Xóa OTP sau khi xác thực thành công
+    await RedisService.deleteOTP(
+        email,
+        "RESET_PASSWORD_CONFIRM"
+    );
+
+
+    // Tìm user
+    const user =
+        await UserRepository.findByEmail(
+            email
+        );
+
+
+    if (!user) {
+
+        throw {
+            statusCode: 404,
+            message:
+                "Không tìm thấy người dùng"
+        };
+    }
+
+
+    // Kiểm tra trùng mật khẩu cũ
     const samePassword =
         await Password.compare(
             newPassword,
@@ -1129,7 +1240,7 @@ exports.resetPassword = async (
     }
 
 
-    // 4. Đổi mật khẩu
+    // Đổi mật khẩu
     const hashedPassword =
         await Password.hash(
             newPassword
@@ -1142,7 +1253,7 @@ exports.resetPassword = async (
     );
 
 
-    // 🔥 5. Vô hiệu hóa tất cả token đăng nhập cũ
+    // Revoke toàn bộ token cũ
     await RefreshTokenRepository.revokeByUser(
         user.user_id,
         "Đặt lại mật khẩu"
@@ -1164,7 +1275,7 @@ exports.resetPassword = async (
     }
 
 
-    // 🔥 6. Gửi email cảnh báo mật khẩu vừa đổi
+    // Gửi email cảnh báo
     await MailService.sendPasswordChangeAlert(
         user.email,
         user.full_name
@@ -1176,8 +1287,7 @@ exports.resetPassword = async (
         success: true,
 
         message:
-            "Đặt lại mật khẩu thành công. " +
-            "Vui lòng đăng nhập lại."
+            "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại."
     };
 };
 

@@ -207,6 +207,44 @@ exports.forgotPassword = async (req, res) => {
 };
 
 /*=========================================================
+    🔥 SUBMIT NEW PASSWORD (Nhập mật khẩu mới -> Gửi OTP)
+=========================================================*/
+
+exports.submitNewPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+        const result = await AuthService.submitNewPassword(token, newPassword);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Submit New Password Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    🔥 VERIFY OTP AND RESET (Nhập OTP -> Đổi mật khẩu)
+=========================================================*/
+
+exports.verifyOtpAndReset = async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        const result = await AuthService.verifyOtpAndReset(email, otp, newPassword);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Verify OTP And Reset Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
     VERIFY RESET OTP
 =========================================================*/
 

@@ -1,220 +1,140 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api/api';
-import '../styles/VerifyEmail.css'; // Dùng chung CSS
+import { LockKeyhole, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
+import '../styles/ForgotPassword.css';
 
 const ResetPassword = () => {
     const navigate = useNavigate();
-    const location = useLocation();
-    
-    // Nhận resetToken từ state khi chuyển từ trang nhập OTP
-    const resetToken = location.state?.resetToken;
-    
-    // Trạng thái
+    const [searchParams] = useSearchParams();
+    const token = searchParams.get('token'); // Token từ Link trên email
+
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [formError, setFormError] = useState('');
-    const [status, setStatus] = useState('form'); // 'form' | 'success' | 'error'
     const [message, setMessage] = useState('');
-    const [countdown, setCountdown] = useState(10);
+    const [messageType, setMessageType] = useState('');
+    const [status, setStatus] = useState('form'); // 'form' | 'success' | 'error'
 
-    // Nếu không có resetToken, hiển thị lỗi
-    if (!resetToken) {
-        setStatus('error');
-        setMessage('Không có token đặt lại mật khẩu. Vui lòng thực hiện lại quy trình.');
-    }
+    useEffect(() => {
+        if (!token) {
+            setStatus('error');
+            setMessage('Link không hợp lệ. Vui lòng yêu cầu gửi lại.');
+        }
+    }, [token]);
 
-    // ==========================================================
-    // Xử lý đặt lại mật khẩu mới
-    // ==========================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setFormError('');
+        setMessage('');
 
-        // Kiểm tra mật khẩu nhập lại
-        if (newPassword !== confirmPassword) {
-            setFormError('Mật khẩu nhập lại không khớp.');
+        if (!newPassword.trim()) {
+            setMessage('Vui lòng nhập mật khẩu mới');
+            setMessageType('error');
             return;
         }
 
         if (newPassword.length < 8) {
-            setFormError('Mật khẩu phải có ít nhất 8 ký tự.');
+            setMessage('Mật khẩu phải có ít nhất 8 ký tự');
+            setMessageType('error');
             return;
         }
 
-        setLoading(true);
+        if (newPassword !== confirmPassword) {
+            setMessage('Mật khẩu xác nhận không khớp');
+            setMessageType('error');
+            return;
+        }
 
         try {
-            console.log('🔵 [RESET] Đang đặt lại mật khẩu với token:', resetToken);
-            
-            // ✅ Gọi API đúng endpoint của luồng OTP
-            const response = await api.post('/api/auth/reset-password', {
-                resetToken,
+            setLoading(true);
+            setMessage('');
+
+            // ✅ Bước 1: Gọi API submit-new-password (Nhập mật khẩu mới -> Backend gửi OTP)
+            const res = await api.post('/api/auth/submit-new-password', {
+                token,
                 newPassword
             });
-            
-            console.log('✅ [RESET] Đặt lại mật khẩu thành công:', response.data);
-            
-            if (response.data.success) {
-                setStatus('success');
-                setMessage(response.data.message || 'Đặt lại mật khẩu thành công!');
-                
-                // Tự động chuyển sang trang đăng nhập sau 10 giây
-                const timer = setInterval(() => {
-                    setCountdown(prev => {
-                        if (prev <= 1) {
-                            clearInterval(timer);
-                            navigate('/login', { 
-                                state: { 
-                                    resetSuccess: true,
-                                    message: 'Mật khẩu đã được đặt lại thành công! Vui lòng đăng nhập.'
-                                }
-                            });
-                            return 0;
-                        }
-                        return prev - 1;
-                    });
-                }, 1000);
 
-                return () => clearInterval(timer);
-            } else {
-                throw new Error(response.data.message || 'Đặt lại mật khẩu thất bại');
-            }
+            setMessage(res.data.message || 'Mã OTP xác nhận đã được gửi tới email của bạn');
+            setMessageType('success');
 
-        } catch (error) {
-            console.error('❌ [RESET] Lỗi đặt lại mật khẩu:', error);
-            setFormError(error.response?.data?.message || error.message || 'Đặt lại mật khẩu thất bại.');
+            // ✅ Chuyển sang trang VerifyOTP để nhập OTP
+            setTimeout(() => {
+                navigate('/verify-otp', { 
+                    state: { 
+                        email: res.data.email,
+                        newPassword
+                    }
+                });
+            }, 1500);
+
+        } catch (err) {
+            setMessage(err.response?.data?.message || 'Không thể đặt lại mật khẩu');
+            setMessageType('error');
         } finally {
             setLoading(false);
         }
     };
 
-    // ==========================================================
-    // HIỂN THỊ TRẠNG THÁI
-    // ==========================================================
-
-    // 1. Hiển thị form nhập mật khẩu mới
-    if (status === 'form') {
+    // Hiển thị lỗi nếu không có token
+    if (status === 'error') {
         return (
-            <div className="verify-page-container">
-                <div className="verify-page-card" style={{ maxWidth: '450px' }}>
-                    <div className="icon-info">🔑</div>
-                    <h2 style={{ color: '#fff' }}>Đặt lại mật khẩu</h2>
-                    <p className="verify-message">Vui lòng nhập mật khẩu mới cho tài khoản của bạn</p>
-
-                    {formError && (
-                        <div style={{ 
-                            color: '#f87171', 
-                            background: 'rgba(248,113,113,0.1)', 
-                            padding: '10px', 
-                            borderRadius: '8px', 
-                            marginBottom: '16px',
-                            fontSize: '14px'
-                        }}>
-                            ❌ {formError}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-                        <div className="form-group" style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', color: '#ccc' }}>Mật khẩu mới</label>
-                            <input
-                                type="password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                placeholder="Tối thiểu 8 ký tự"
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #444',
-                                    background: '#1a1a2e',
-                                    color: '#fff'
-                                }}
-                            />
-                        </div>
-
-                        <div className="form-group" style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', color: '#ccc' }}>Nhập lại mật khẩu mới</label>
-                            <input
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                placeholder="Nhập lại mật khẩu"
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #444',
-                                    background: '#1a1a2e',
-                                    color: '#fff'
-                                }}
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="btn-login"
-                            disabled={loading}
-                            style={{ width: '100%' }}
-                        >
-                            {loading ? 'Đang đặt lại...' : 'Đặt lại mật khẩu'}
-                        </button>
-                    </form>
-                </div>
-            </div>
-        );
-    }
-
-    // 2. Đặt lại mật khẩu thành công
-    if (status === 'success') {
-        return (
-            <div className="verify-page-container">
-                <div className="verify-page-card">
-                    <div className="icon-success">✅</div>
-                    <h2 style={{ color: '#4ade80' }}>Đặt lại mật khẩu thành công!</h2>
-                    <p className="verify-message">{message}</p>
-                    <p className="sub-text">
-                        Chuyển đến trang đăng nhập sau <strong>{countdown}</strong> giây...
-                    </p>
-                    <button
-                        className="btn-login"
-                        onClick={() => navigate('/login', { 
-                            state: { 
-                                resetSuccess: true,
-                                message: 'Mật khẩu đã được đặt lại thành công! Vui lòng đăng nhập.'
-                            }
-                        })}
-                    >
-                        Đăng nhập ngay
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    // 3. Lỗi (Không có token)
-    return (
-        <div className="verify-page-container">
-            <div className="verify-page-card">
-                <div className="icon-error">❌</div>
-                <h2 style={{ color: '#f87171' }}>Đặt lại mật khẩu thất bại</h2>
-                <p className="verify-error">{message}</p>
-                <div className="error-actions">
-                    <button
-                        className="btn-retry"
-                        onClick={() => navigate('/forgot-password')}
-                    >
+            <div className="forgot-password-container">
+                <div className="forgot-password-card">
+                    <div className="forgot-icon">
+                        <AlertCircle size={42} />
+                    </div>
+                    <h2>LINK KHÔNG HỢP LỆ</h2>
+                    <p className="forgot-subtitle">{message}</p>
+                    <button className="forgot-btn" onClick={() => navigate('/forgot-password')}>
                         Gửi lại liên kết
                     </button>
-                    <button
-                        className="btn-back"
-                        onClick={() => navigate('/login')}
-                    >
-                        Quay lại đăng nhập
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="forgot-password-container">
+            <div className="forgot-password-card">
+                <div className="forgot-icon">
+                    <LockKeyhole size={42} />
+                </div>
+                <h2>ĐẶT LẠI MẬT KHẨU</h2>
+                <p className="forgot-subtitle">Nhập mật khẩu mới cho tài khoản của bạn</p>
+
+                {message && (
+                    <div className={`forgot-message ${messageType}`}>
+                        {messageType === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                        <span>{message}</span>
+                    </div>
+                )}
+
+                <div className="forgot-form">
+                    <label>Mật khẩu mới</label>
+                    <input
+                        type="password"
+                        placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                    />
+
+                    <label>Xác nhận mật khẩu</label>
+                    <input
+                        type="password"
+                        placeholder="Nhập lại mật khẩu"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+
+                    <button className="forgot-btn" onClick={handleSubmit} disabled={loading}>
+                        {loading ? 'Đang gửi OTP...' : 'Xác nhận'}
+                    </button>
+                </div>
+
+                <div className="forgot-actions">
+                    <button className="forgot-link-btn" onClick={() => navigate('/forgot-password')}>
+                        <ArrowLeft size={16} /> Quay lại
                     </button>
                 </div>
             </div>

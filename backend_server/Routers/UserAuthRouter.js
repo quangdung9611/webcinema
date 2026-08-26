@@ -11,6 +11,8 @@ router.post("/register", AuthController.register);
 router.post("/login", AuthController.login);
 router.post("/refresh", AuthController.refreshToken);
 router.post("/forgot-password", AuthController.forgotPassword);
+router.post("/submit-new-password", AuthController.submitNewPassword); // 🔥 MỚI
+router.post("/verify-otp-and-reset", AuthController.verifyOtpAndReset); // 🔥 MỚI
 router.post("/verify-reset-otp", AuthController.verifyResetOTP);
 router.post("/reset-password", AuthController.resetPassword);
 router.post("/send-verification", AuthController.sendVerificationEmail);

@@ -11,7 +11,7 @@ const ForgotPassword = () => {
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('');
 
-    const handleSendOTP = async () => {
+    const handleSendLink = async () => {
         if (!email.trim()) {
             setMessage('Vui lòng nhập email');
             setMessageType('error');
@@ -25,16 +25,12 @@ const ForgotPassword = () => {
             // ✅ Endpoint đúng: POST /api/auth/forgot-password
             const res = await api.post('/api/auth/forgot-password', { email });
 
-            setMessage(res.data.message || 'OTP đã được gửi tới email của bạn');
+            setMessage(res.data.message || 'Liên kết đặt lại mật khẩu đã được gửi tới email của bạn');
             setMessageType('success');
 
-            // ✅ Chuyển sang trang VerifyOTP
-            setTimeout(() => {
-                navigate('/verify-otp', { state: { email } });
-            }, 1500);
-
+            // ✅ KHÔNG chuyển trang, chỉ hiện thông báo để người dùng kiểm tra email
         } catch (err) {
-            setMessage(err.response?.data?.message || 'Không gửi được OTP');
+            setMessage(err.response?.data?.message || 'Không gửi được liên kết');
             setMessageType('error');
         } finally {
             setLoading(false);
@@ -48,7 +44,7 @@ const ForgotPassword = () => {
                     <Mail size={42} />
                 </div>
                 <h2>QUÊN MẬT KHẨU</h2>
-                <p className="forgot-subtitle">Nhập email đăng ký để nhận OTP</p>
+                <p className="forgot-subtitle">Nhập email đăng ký để nhận liên kết đặt lại mật khẩu</p>
 
                 {message && (
                     <div className={`forgot-message ${messageType}`}>
@@ -65,8 +61,8 @@ const ForgotPassword = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
-                    <button className="forgot-btn" onClick={handleSendOTP} disabled={loading}>
-                        {loading ? 'Đang gửi...' : 'Gửi OTP'}
+                    <button className="forgot-btn" onClick={handleSendLink} disabled={loading}>
+                        {loading ? 'Đang gửi...' : 'Gửi liên kết'}
                     </button>
                 </div>
 
