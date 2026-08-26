@@ -52,13 +52,11 @@ const UserLogin = () => {
 
     const isExpired = Boolean(location.state?.expired);
 
-    // 🔥 KIỂM TRA LOCK KHI MOUNT (GỌI API ĐỂ LẤY LEVEL MỚI NHẤT)
     useEffect(() => {
         const storedEmail = localStorage.getItem('lockedEmail');
         const storedLockInfo = localStorage.getItem('lockInfo');
         
         if (storedEmail) {
-            // Gọi API check-lock lên backend để lấy dữ liệu mới nhất
             api.get(`/api/auth/check-lock?email=${encodeURIComponent(storedEmail)}`)
                 .then((res) => {
                     const serverData = res.data?.data || null;
@@ -78,14 +76,12 @@ const UserLogin = () => {
                         localStorage.setItem('lockInfo', JSON.stringify(updatedLockInfo));
                         setLockTimeLeft(Math.max(0, Math.floor((updatedLockInfo.lockedUntil - Date.now()) / 1000)));
                     } else {
-                        // Server nói không còn lock -> Xóa localStorage
                         localStorage.removeItem('lockedEmail');
                         localStorage.removeItem('lockInfo');
                     }
                 })
                 .catch((error) => {
                     console.error('Không thể kiểm tra lock từ server:', error);
-                    // Fallback: Dùng dữ liệu cũ nếu API lỗi
                     if (storedLockInfo) {
                         try {
                             const parsed = JSON.parse(storedLockInfo);
@@ -98,9 +94,8 @@ const UserLogin = () => {
                     }
                 });
         }
-    }, []); // Chạy 1 lần khi mount
+    }, []);
 
-    // 🔥 ĐỒNG HỒ ĐẾM NGƯỢC ĐỘC LẬP KHI MODAL ĐÓNG
     useEffect(() => {
         if (!lockInfo || lockInfo.lockedUntil <= Date.now()) return;
 
@@ -209,7 +204,11 @@ const UserLogin = () => {
 
             if (error?.response?.status === 429 || errorCode === 'ACCOUNT_LOCKED') {
                 const lockData = errorData?.data || {};
-                const lockUntilTimestamp = lockData.lockedUntil || (Date.now() + (Number(lockData.remainingSeconds) || 60) * 1000);
+                
+                // 🔥 QUAN TRỌNG: CHỈ DÙNG lockData.lockedUntil (Đã được Backend tính chuẩn)
+                // KHÔNG TỰ Ý CỘNG THÊM THỜI GIAN NỮA!
+                const lockUntilTimestamp = lockData.lockedUntil;
+                
                 const level = Number(lockData.level) || 1;
                 const durationSeconds = Number(lockData.remainingSeconds) || 60;
                 const durationText = lockData.lockDurationText || '1 phút';
@@ -227,7 +226,7 @@ const UserLogin = () => {
                 
                 setLockInfo(lockInfoData);
                 setShowLockModal(true);
-                setLockTimeLeft(durationSeconds);
+                setLockTimeLeft(Math.max(0, Math.floor((lockUntilTimestamp - Date.now()) / 1000)));
                 localStorage.setItem('lockedEmail', formData.email.trim());
                 localStorage.setItem('lockInfo', JSON.stringify(lockInfoData));
                 return;

@@ -180,8 +180,7 @@ class RedisService {
     async incrementLockoutLevel(email) {
         const key = `lockout_level:${email}`;
         const newLevel = await this.increment(key);
-        // 🔥 Level sống 24h để không bị mất cấp độ
-        await this.expire(key, 86400); 
+        await this.expire(key, 86400); // Level sống 24h
         return newLevel;
     }
 
@@ -189,6 +188,7 @@ class RedisService {
         await this.delete(`lockout_level:${email}`);
     }
 
+    // 🔥 HÀM CHỦ CHỐT: Tính toán CHÍNH XÁC thời điểm hết hạn
     async getLockoutInfo(email) {
         try {
             const level = await this.getLockoutLevel(email);
@@ -197,18 +197,23 @@ class RedisService {
             
             const { duration, text } = this.getLockDuration(level);
             
+            // Chỉ lock khi level >= 1 và attempts >= 5 và còn thời gian
             const isLocked = level >= 1 && attempts >= 5 && ttl > 0;
+            
+            // 🔥 TÍNH MỐC THỜI GIAN TUYỆT ĐỐI DỰA TRÊN TTL THỰC TẾ
+            // KHÔNG CỘNG THÊM, KHÔNG ĐOÁN MÒ!
             const lockedUntil = isLocked ? Date.now() + ttl * 1000 : 0;
+            const remainingSeconds = isLocked ? ttl : 0;
 
             return {
                 isLocked: isLocked,
                 level: level,
                 attempts: attempts,
-                remainingSeconds: isLocked ? ttl : 0,
+                remainingSeconds: remainingSeconds,
                 lockDuration: duration,
                 lockDurationText: text,
                 maxAttempts: 5,
-                lockedUntil: lockedUntil
+                lockedUntil: lockedUntil // Mốc thời gian chính xác
             };
         } catch (error) {
             console.error(`❌ [LOCKOUT] Failed to get lockout info:`, error);
