@@ -12,7 +12,8 @@ const MailService = require("./MailServiceTicket");
 
 const RedisService = require("./RedisService");
 
-const Otp = require("../utils/Otp");
+// 🔥 THÊM IMPORT OtpService VÀO ĐÂY
+const OtpService = require("./OtpService");
 
 
 // ============================================================
@@ -1099,6 +1100,8 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại."
     };
 };
+
+
 // ============================================================
 // SEND VERIFICATION EMAIL
 // ============================================================
