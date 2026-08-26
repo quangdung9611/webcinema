@@ -37,9 +37,11 @@ const UserLogin = () => {
     const [loginSuccessMessage, setLoginSuccessMessage] = useState('');
     const [loggedInUser, setLoggedInUser] = useState(null);
 
-    // 🔥 STATE CHO MODAL BỊ KHÓA - LƯU THÔNG TIN CHI TIẾT
     const [showLockModal, setShowLockModal] = useState(false);
     const [lockInfo, setLockInfo] = useState(null);
+
+    // 🔥 THÊM STATE ĐỂ ĐẾM NGƯỢC TRÊN NÚT ĐĂNG NHẬP KHI MODAL ĐÓNG
+    const [lockTimeLeft, setLockTimeLeft] = useState(0);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -51,21 +53,20 @@ const UserLogin = () => {
 
     const isExpired = Boolean(location.state?.expired);
 
-    // 🔥 KIỂM TRA LOCK KHI COMPONENT MOUNT
+    // Kiểm tra sessionStorage khi mount
     useEffect(() => {
-        // Kiểm tra sessionStorage cho email hiện tại
         const storedEmail = sessionStorage.getItem('lockedEmail');
         const storedLockInfo = sessionStorage.getItem('lockInfo');
         
         if (storedEmail && storedLockInfo) {
             try {
                 const parsed = JSON.parse(storedLockInfo);
-                // Kiểm tra xem lock còn hiệu lực không và đúng email
                 if (parsed.lockedUntil > Date.now() && parsed.email === formData.email) {
                     setLockInfo(parsed);
                     setShowLockModal(true);
+                    // Khởi tạo timer trên nút đăng nhập
+                    setLockTimeLeft(Math.max(0, Math.floor((parsed.lockedUntil - Date.now()) / 1000)));
                 } else {
-                    // Hết lock hoặc sai email, xóa sessionStorage
                     sessionStorage.removeItem('lockedEmail');
                     sessionStorage.removeItem('lockInfo');
                 }
@@ -77,25 +78,29 @@ const UserLogin = () => {
         }
     }, [formData.email]);
 
-    // 🔥 KHI LOCK HẾT HẠN, TỰ ĐỘNG ĐÓNG MODAL
+    // 🔥 ĐỒNG HỒ ĐẾM NGƯỢC ĐỘC LẬP KHI MODAL ĐÓNG
     useEffect(() => {
-        if (!lockInfo) return;
-        
-        if (lockInfo.lockedUntil <= Date.now()) {
-            // Xóa sessionStorage
-            sessionStorage.removeItem('lockedEmail');
-            sessionStorage.removeItem('lockInfo');
-            setLockInfo(null);
-            setShowLockModal(false);
-            // Thông báo cho user biết đã hết lock
-            setSuccessMessage('✅ Tài khoản đã được mở khóa. Vui lòng thử đăng nhập lại.');
+        if (!lockInfo || lockInfo.lockedUntil <= Date.now()) return;
+
+        const tick = () => {
+            const left = Math.max(0, Math.floor((lockInfo.lockedUntil - Date.now()) / 1000));
+            setLockTimeLeft(left);
             
-            // Tự động xóa thông báo sau 5s
-            const timer = setTimeout(() => {
-                setSuccessMessage('');
-            }, 5000);
-            return () => clearTimeout(timer);
-        }
+            if (left <= 0) {
+                sessionStorage.removeItem('lockedEmail');
+                sessionStorage.removeItem('lockInfo');
+                setLockInfo(null);
+                setShowLockModal(false);
+                setLockTimeLeft(0);
+                setSuccessMessage('✅ Tài khoản đã được mở khóa. Vui lòng thử đăng nhập lại.');
+                setTimeout(() => setSuccessMessage(''), 5000);
+            }
+        };
+
+        tick(); // Chạy ngay lập tức
+        const interval = setInterval(tick, 1000);
+
+        return () => clearInterval(interval);
     }, [lockInfo]);
 
     useEffect(() => {
@@ -181,7 +186,6 @@ const UserLogin = () => {
             setSuccessMessage('');
         }
 
-        // Khi user thay đổi email, xóa lock info cũ
         if (name === 'email') {
             const storedEmail = sessionStorage.getItem('lockedEmail');
             if (storedEmail && storedEmail !== value) {
@@ -189,6 +193,7 @@ const UserLogin = () => {
                 sessionStorage.removeItem('lockInfo');
                 setLockInfo(null);
                 setShowLockModal(false);
+                setLockTimeLeft(0); // Reset timer khi đổi email
             }
         }
     };
@@ -196,10 +201,8 @@ const UserLogin = () => {
     const handleLogin = async (event) => {
         event.preventDefault();
 
-        // 🔥 KIỂM TRA NẾU ĐANG BỊ LOCK TRƯỚC KHI GỬI REQUEST
         if (lockInfo && lockInfo.lockedUntil > Date.now()) {
             setShowLockModal(true);
-            setServerError(`Tài khoản đang bị khóa. Vui lòng đợi ${Math.ceil((lockInfo.lockedUntil - Date.now()) / 1000)} giây.`);
             return;
         }
 
@@ -256,26 +259,30 @@ const UserLogin = () => {
             const errorCode = errorData?.code;
             const errorMessage = errorData?.message || 'Tài khoản hoặc mật khẩu không chính xác';
 
-            // 🔥 XỬ LÝ LỖI 429 - ACCOUNT_LOCKED
-            if (error?.response?.status === 429 && errorCode === 'ACCOUNT_LOCKED') {
+            if (error?.response?.status === 429 || errorCode === 'ACCOUNT_LOCKED') {
+                
                 const lockData = errorData?.data || {};
                 
-                // Lưu thông tin lock vào state và sessionStorage
+                const lockUntilTimestamp = lockData.lockedUntil || (Date.now() + (Number(lockData.remainingSeconds) || 60) * 1000);
+                const level = Number(lockData.level) || 1;
+                const durationSeconds = Number(lockData.remainingSeconds) || 60;
+                const durationText = lockData.lockDurationText || '1 phút';
+
                 const lockInfoData = {
                     email: formData.email.trim(),
                     message: errorMessage,
-                    level: lockData.level || 1,
-                    remainingSeconds: lockData.remainingSeconds || 60,
-                    lockDuration: lockData.lockDuration || 60,
-                    lockDurationText: lockData.lockDurationText || '1 phút',
+                    level: level,
+                    remainingSeconds: durationSeconds,
+                    lockDuration: durationSeconds,
+                    lockDurationText: durationText,
                     maxAttempts: lockData.maxAttempts || 5,
-                    lockedUntil: Date.now() + (lockData.remainingSeconds || 60) * 1000
+                    lockedUntil: lockUntilTimestamp
                 };
                 
                 setLockInfo(lockInfoData);
                 setShowLockModal(true);
+                setLockTimeLeft(durationSeconds);
                 
-                // Lưu vào sessionStorage để khi reload vẫn giữ
                 sessionStorage.setItem('lockedEmail', formData.email.trim());
                 sessionStorage.setItem('lockInfo', JSON.stringify(lockInfoData));
                 
@@ -322,20 +329,19 @@ const UserLogin = () => {
         });
     };
 
-    // 🔥 XỬ LÝ ĐÓNG MODAL LOCK - GIỮ NGUYÊN THÔNG TIN TRONG SESSION
+    // 🔥 CHỈ ĐÓNG MODAL, KHÔNG XÓA LOCK ĐỂ TIMER VẪN CHẠY
     const handleCloseLockModal = () => {
-        // Nếu lock vẫn còn hiệu lực, giữ nguyên trong sessionStorage
-        if (lockInfo && lockInfo.lockedUntil > Date.now()) {
-            // Không xóa sessionStorage, chỉ đóng modal
-            setShowLockModal(false);
-        } else {
-            // Nếu hết hạn, xóa sessionStorage
-            sessionStorage.removeItem('lockedEmail');
-            sessionStorage.removeItem('lockInfo');
-            setLockInfo(null);
-            setShowLockModal(false);
-        }
+        setShowLockModal(false);
     };
+
+    // Format thời gian MM:SS
+    const formatLockTime = (totalSeconds) => {
+        const m = Math.floor(totalSeconds / 60);
+        const s = totalSeconds % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    };
+
+    const isLockedActive = lockInfo && lockInfo.lockedUntil > Date.now();
 
     return (
         <div className="auth-container">
@@ -382,7 +388,7 @@ const UserLogin = () => {
                             value={formData.email}
                             onChange={handleChange}
                             autoComplete="email"
-                            disabled={loading || (lockInfo && lockInfo.lockedUntil > Date.now())}
+                            disabled={loading || isLockedActive}
                         />
                         {errors.email && (
                             <span className="error-text">{errors.email}</span>
@@ -400,14 +406,14 @@ const UserLogin = () => {
                                 value={formData.password}
                                 onChange={handleChange}
                                 autoComplete="current-password"
-                                disabled={loading || (lockInfo && lockInfo.lockedUntil > Date.now())}
+                                disabled={loading || isLockedActive}
                             />
                             <button
                                 type="button"
                                 className="toggle-password"
                                 onClick={() => setShowPassword((prev) => !prev)}
                                 tabIndex="-1"
-                                disabled={loading}
+                                disabled={loading || isLockedActive}
                             >
                                 {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                             </button>
@@ -424,7 +430,7 @@ const UserLogin = () => {
                                 name="rememberMe"
                                 checked={formData.rememberMe}
                                 onChange={handleChange}
-                                disabled={loading}
+                                disabled={loading || isLockedActive}
                             />
                             Remember me
                         </label>
@@ -432,7 +438,7 @@ const UserLogin = () => {
                             type="button"
                             className="forgot-link"
                             onClick={() => setShowForgotModal(true)}
-                            disabled={loading}
+                            disabled={loading || isLockedActive}
                         >
                             Forgot password?
                         </button>
@@ -442,11 +448,25 @@ const UserLogin = () => {
                         type="submit"
                         loading={loading}
                         loadingText="Đang đăng nhập..."
-                        disabled={loading || (lockInfo && lockInfo.lockedUntil > Date.now())}
+                        disabled={loading || isLockedActive}
                         className="btn-user"
                         spinnerColor="#000000"
                     >
-                        {lockInfo && lockInfo.lockedUntil > Date.now() ? 'ĐANG BỊ KHÓA' : 'SIGN IN'}
+                        {isLockedActive ? (
+                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                ĐANG BỊ KHÓA 
+                                <span style={{ 
+                                    background: 'rgba(255,255,255,0.2)', 
+                                    padding: '2px 8px', 
+                                    borderRadius: '4px', 
+                                    fontWeight: 'bold' 
+                                }}>
+                                    {formatLockTime(lockTimeLeft)}
+                                </span>
+                            </span>
+                        ) : (
+                            'SIGN IN'
+                        )}
                     </LoadingButton>
                 </form>
 
@@ -471,7 +491,7 @@ const UserLogin = () => {
                 autoCloseDelay={3000}
             />
 
-            {/* 🔥 MODAL LOCK VỚI THÔNG TIN CHI TIẾT */}
+            {/* MODAL LOCK */}
             <LoginLockModal
                 show={showLockModal}
                 message={lockInfo?.message || 'Tài khoản đã bị khóa'}
