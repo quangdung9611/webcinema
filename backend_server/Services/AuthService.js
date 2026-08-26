@@ -47,93 +47,28 @@ const generateAndSetTokens = (user, res, rememberMe = false) => {
     return accessToken;
 };
 
-exports.register = async (userData) => {
-    validateRegister(userData);
-
-    const { username, full_name, phone, address, email, password } = userData;
-
-    const existed = await UserRepository.exists(username, email, phone);
-    if (existed) {
-        if (existed.username === username) {
-            throw { statusCode: 400, field: "username", message: "Tên đăng nhập đã tồn tại" };
-        }
-        if (existed.email === email) {
-            throw { statusCode: 400, field: "email", message: "Email đã tồn tại" };
-        }
-        if (existed.phone === phone) {
-            throw { statusCode: 400, field: "phone", message: "Số điện thoại đã tồn tại" };
-        }
-    }
-
-    const hashedPassword = await Password.hash(password);
-
-    const userId = await UserRepository.create({
-        username,
-        full_name,
-        phone,
-        address: address || "",
-        email,
-        password: hashedPassword,
-        role: "customer",
-        email_verified: 0
-    });
-
-    await OtpRepository.create({
-        email,
-        purpose: "register",
-        ip_address: null,
-        user_agent: null
-    });
-
-    try {
-        const verifyToken = Jwt.generateEmailVerifyToken({
-            user_id: userId,
-            email: email
-        });
-        const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
-        await MailService.sendEmailVerification(email, verifyUrl, full_name);
-        console.log(`✅ [REGISTER] Đã gửi email xác thực tới: ${email}`);
-    } catch (error) {
-        console.error("❌ [REGISTER] Không thể gửi email xác thực:", error.message);
-    }
-
-    return {
-        success: true,
-        message: "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.",
-        userId,
-        emailSent: true
-    };
-};
 exports.login = async (email, password, rememberMe = false, req, res) => {
-    // 1. Validate
     validateLogin(email, password);
 
-    // 2. Kiểm tra mức khóa hiện tại (lockout_level)
-    const lockoutLevel = await RedisService.getLockoutLevel(email);
+    // 🔥 LẤY THÔNG TIN LOCKOUT CHI TIẾT
+    const lockInfo = await RedisService.getLockoutInfo(email);
     
-    if (lockoutLevel >= 4) {
-        throw { 
-            statusCode: 429, 
-            message: 'Tài khoản đã bị khóa 1 giờ. Vui lòng liên hệ hỗ trợ hoặc đổi mật khẩu.',
-            retryAfter: 3600
+    // 🔥 KIỂM TRA NẾU ĐANG BỊ LOCK
+    if (lockInfo && lockInfo.isLocked) {
+        throw {
+            statusCode: 429,
+            code: 'ACCOUNT_LOCKED',
+            message: `Tài khoản đã bị khóa ${lockInfo.lockDurationText}. Vui lòng thử lại sau.`,
+            data: {
+                level: lockInfo.level,
+                remainingSeconds: lockInfo.remainingSeconds,
+                lockDuration: lockInfo.lockDuration,
+                lockDurationText: lockInfo.lockDurationText,
+                maxAttempts: lockInfo.maxAttempts
+            }
         };
     }
 
-    if (lockoutLevel >= 1) {
-        const lockDuration = lockoutLevel === 1 ? 60 : lockoutLevel === 2 ? 300 : lockoutLevel === 3 ? 900 : 3600;
-        const isLocked = await RedisService.isAccountLocked(email);
-        
-        if (isLocked) {
-            const remaining = await RedisService.getLockTimeRemaining(email);
-            throw { 
-                statusCode: 429, 
-                message: `Tài khoản đã bị khóa ${lockoutLevel === 1 ? "1 phút" : lockoutLevel === 2 ? "5 phút" : lockoutLevel === 3 ? "15 phút" : "1 giờ"}. Vui lòng thử lại sau ${Math.ceil(remaining / 60)} phút.`,
-                retryAfter: remaining
-            };
-        }
-    }
-
-    // 3. Kiểm tra user tồn tại (chống lộ email)
     const user = await UserRepository.findByEmail(email);
     if (!user) {
         await RedisService.incrementLoginAttempts(email);
@@ -142,11 +77,19 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         if (attempts >= 5) {
             const newLevel = await RedisService.incrementLockoutLevel(email);
             const lockDuration = newLevel === 1 ? 60 : newLevel === 2 ? 300 : newLevel === 3 ? 900 : 3600;
+            const lockDurationText = newLevel === 1 ? '1 phút' : newLevel === 2 ? '5 phút' : newLevel === 3 ? '15 phút' : '1 giờ';
             
-            throw { 
-                statusCode: 429, 
-                message: `Bạn đã nhập sai quá 5 lần. Tài khoản đã bị khóa ${newLevel === 1 ? "1 phút" : newLevel === 2 ? "5 phút" : newLevel === 3 ? "15 phút" : "1 giờ"}.`,
-                retryAfter: lockDuration
+            throw {
+                statusCode: 429,
+                code: 'ACCOUNT_LOCKED',
+                message: `Bạn đã nhập sai quá 5 lần. Tài khoản đã bị khóa ${lockDurationText}.`,
+                data: {
+                    level: newLevel,
+                    remainingSeconds: lockDuration,
+                    lockDuration: lockDuration,
+                    lockDurationText: lockDurationText,
+                    maxAttempts: 5
+                }
             };
         }
 
@@ -156,7 +99,6 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
-    // 4. Kiểm tra mật khẩu
     const matched = await Password.compare(password, user.password);
     if (!matched) {
         await RedisService.incrementLoginAttempts(email);
@@ -165,11 +107,19 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         if (attempts >= 5) {
             const newLevel = await RedisService.incrementLockoutLevel(email);
             const lockDuration = newLevel === 1 ? 60 : newLevel === 2 ? 300 : newLevel === 3 ? 900 : 3600;
+            const lockDurationText = newLevel === 1 ? '1 phút' : newLevel === 2 ? '5 phút' : newLevel === 3 ? '15 phút' : '1 giờ';
             
-            throw { 
-                statusCode: 429, 
-                message: `Bạn đã nhập sai quá 5 lần. Tài khoản đã bị khóa ${newLevel === 1 ? "1 phút" : newLevel === 2 ? "5 phút" : newLevel === 3 ? "15 phút" : "1 giờ"}.`,
-                retryAfter: lockDuration
+            throw {
+                statusCode: 429,
+                code: 'ACCOUNT_LOCKED',
+                message: `Bạn đã nhập sai quá 5 lần. Tài khoản đã bị khóa ${lockDurationText}.`,
+                data: {
+                    level: newLevel,
+                    remainingSeconds: lockDuration,
+                    lockDuration: lockDuration,
+                    lockDurationText: lockDurationText,
+                    maxAttempts: 5
+                }
             };
         }
 
@@ -179,11 +129,9 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
-    // 5. Đăng nhập thành công
     await RedisService.resetLoginAttempts(email);
     await RedisService.resetLockoutLevel(email);
 
-    // 6. Kiểm tra email đã xác thực chưa
     if (!user.email_verified) {
         throw { 
             statusCode: 403, 
@@ -192,14 +140,9 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
-    // 7. REVOKE TOKEN CŨ (Đăng nhập mới => đá thiết bị cũ)
-    await RefreshTokenRepository.revokeByUser(
-        user.user_id,
-        "Đăng nhập từ thiết bị khác"
-    );
+    await RefreshTokenRepository.revokeByUser(user.user_id, "Đăng nhập từ thiết bị khác");
     console.log(`🔴 [REVOKE] Đã revoke tất cả token cũ của user: ${user.user_id}`);
 
-    // 8. GỬI SỰ KIỆN SESSION_REPLACED TỚI ROOM
     if (ioInstance && user.user_id) {
         ioInstance.to(`user_${user.user_id}`).emit('session_expired', {
             code: 'SESSION_REPLACED',
@@ -213,7 +156,6 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         await RedisService.deleteUserSocket(user.user_id);
     }
 
-    // 9. GENERATE TOKEN MỚI
     const accessToken = generateAndSetTokens(user, res, rememberMe);
     const accessTokenHash = Jwt.hashRefreshToken(accessToken);
 
@@ -241,6 +183,7 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         }
     };
 };
+
 exports.getMe = async (userId) => {
     if (!userId) {
         throw { statusCode: 401, message: "Chưa đăng nhập" };

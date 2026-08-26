@@ -1,3 +1,5 @@
+/* LoginLockModal.css */
+
 .login-lock-modal-overlay {
     position: fixed;
     top: 0;
@@ -5,86 +7,636 @@
     right: 0;
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 10000;
+    animation: fadeInOverlay 0.3s ease;
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .login-lock-modal {
     background-color: #1a1a2e;
     border-radius: 16px;
-    padding: 24px;
+    padding: 32px;
     width: 90%;
-    max-width: 400px;
+    max-width: 420px;
     color: #ffffff;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    animation: slideUpModal 0.4s ease;
 }
 
+@keyframes slideUpModal {
+    from {
+        transform: translateY(30px) scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* ========== HEADER ========== */
 .login-lock-modal-header {
     text-align: center;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 
 .login-lock-modal-icon {
-    font-size: 48px;
+    font-size: 52px;
+    display: block;
+    margin-bottom: 4px;
+    animation: pulseIcon 2s infinite;
+}
+
+@keyframes pulseIcon {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
 }
 
 .login-lock-modal-header h2 {
-    font-size: 20px;
+    font-size: 22px;
+    font-weight: 700;
     color: #f87171;
     margin-top: 8px;
+    margin-bottom: 0;
+    letter-spacing: 0.5px;
 }
 
-.login-lock-modal-body p {
+/* ========== BODY ========== */
+.login-lock-modal-body {
+    margin-bottom: 24px;
+}
+
+/* Level Badge */
+.lock-level-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 16px;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Email Info */
+.lock-email-info {
     font-size: 14px;
-    color: #d1d5db;
-    line-height: 1.6;
-    margin-bottom: 12px;
+    color: #9ca3af;
+    margin: 8px 0 12px 0;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 12px;
+    border-radius: 8px;
+    word-break: break-all;
 }
 
+.lock-email-info strong {
+    color: #e5e7eb;
+}
+
+/* Message */
+.lock-message {
+    font-size: 15px;
+    color: #d1d5db;
+    line-height: 1.7;
+    margin: 12px 0 16px 0;
+    text-align: center;
+}
+
+/* ========== TIMER ========== */
 .login-lock-timer {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    background-color: rgba(248, 113, 113, 0.1);
-    border: 1px solid rgba(248, 113, 113, 0.3);
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 12px;
+    gap: 12px;
+    background-color: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+    padding: 14px 16px;
+    border-radius: 10px;
+    margin: 16px 0 12px 0;
 }
 
 .timer-icon {
-    font-size: 20px;
+    font-size: 24px;
 }
 
 .timer-text {
-    font-size: 14px;
-    color: #f87171;
+    font-size: 16px;
+    color: #fca5a5;
 }
 
+.timer-text strong {
+    font-size: 22px;
+    color: #f87171;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ========== PROGRESS BAR ========== */
+.lock-progress-bar {
+    width: 100%;
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    margin: 8px 0 12px 0;
+    overflow: hidden;
+}
+
+.lock-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s linear;
+    background: linear-gradient(90deg, #f87171, #ef4444);
+}
+
+/* Time remaining text */
+.lock-time-remaining {
+    text-align: center;
+    font-size: 13px;
+    color: #9ca3af;
+    margin: 8px 0 12px 0;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ========== HINT ========== */
 .login-lock-hint {
-    font-size: 12px;
+    font-size: 13px;
     color: #9ca3af;
     text-align: center;
+    margin-top: 16px;
+    margin-bottom: 0;
+    padding: 12px 16px;
+    background: rgba(251, 191, 36, 0.08);
+    border-radius: 8px;
+    border: 1px solid rgba(251, 191, 36, 0.15);
+    line-height: 1.5;
 }
 
+/* ========== FOOTER ========== */
 .login-lock-modal-footer {
-    text-align: center;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .login-lock-btn {
-    background-color: #6b7280;
-    color: white;
-    border: none;
-    padding: 10px 24px;
+    background-color: rgba(107, 114, 128, 0.3);
+    color: #e5e7eb;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 28px;
     border-radius: 8px;
     font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.25s ease;
+    min-width: 120px;
 }
 
 .login-lock-btn:hover {
-    background-color: #4b5563;
+    background-color: rgba(107, 114, 128, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.login-lock-btn:active {
+    transform: translateY(0);
+}
+
+.login-lock-btn-primary {
+    background: linear-gradient(135deg, #f87171, #ef4444);
+    color: white;
+    border: none;
+}
+
+.login-lock-btn-primary:hover {
+    background: linear-gradient(135deg, #fca5a5, #dc2626);
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+}
+
+.login-lock-btn-secondary {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.login-lock-btn-secondary:hover {
+    background: rgba(59, 130, 246, 0.3);
+}
+
+/* ========================================== */
+/* ========== RESPONSIVE ========== */
+/* ========================================== */
+
+/* ===== BREAKPOINT 1200px ===== */
+@media (max-width: 1200px) {
+    .login-lock-modal {
+        max-width: 440px;
+        padding: 30px;
+    }
+
+    .login-lock-modal-header h2 {
+        font-size: 21px;
+    }
+
+    .login-lock-modal-icon {
+        font-size: 48px;
+    }
+
+    .timer-text {
+        font-size: 15px;
+    }
+
+    .timer-text strong {
+        font-size: 20px;
+    }
+
+    .lock-message {
+        font-size: 14px;
+    }
+}
+
+/* ===== BREAKPOINT 992px ===== */
+@media (max-width: 992px) {
+    .login-lock-modal {
+        max-width: 420px;
+        padding: 28px;
+    }
+
+    .login-lock-modal-header h2 {
+        font-size: 20px;
+    }
+
+    .login-lock-modal-icon {
+        font-size: 44px;
+    }
+
+    .login-lock-timer {
+        padding: 12px 14px;
+    }
+
+    .timer-text {
+        font-size: 14px;
+    }
+
+    .timer-text strong {
+        font-size: 19px;
+    }
+
+    .lock-level-badge {
+        font-size: 12px;
+        padding: 5px 14px;
+    }
+
+    .lock-message {
+        font-size: 14px;
+    }
+
+    .login-lock-btn {
+        padding: 9px 24px;
+        font-size: 13px;
+        min-width: 100px;
+    }
+
+    .login-lock-hint {
+        font-size: 12px;
+        padding: 10px 14px;
+    }
+
+    .lock-time-remaining {
+        font-size: 12px;
+    }
+}
+
+/* ===== BREAKPOINT 768px ===== */
+@media (max-width: 768px) {
+    .login-lock-modal {
+        max-width: 400px;
+        padding: 24px;
+        border-radius: 14px;
+    }
+
+    .login-lock-modal-header {
+        margin-bottom: 16px;
+    }
+
+    .login-lock-modal-header h2 {
+        font-size: 19px;
+    }
+
+    .login-lock-modal-icon {
+        font-size: 40px;
+    }
+
+    .login-lock-timer {
+        padding: 10px 12px;
+        gap: 10px;
+        margin: 12px 0 10px 0;
+    }
+
+    .timer-icon {
+        font-size: 20px;
+    }
+
+    .timer-text {
+        font-size: 13px;
+    }
+
+    .timer-text strong {
+        font-size: 18px;
+    }
+
+    .lock-level-badge {
+        font-size: 12px;
+        padding: 5px 12px;
+        margin-bottom: 12px;
+    }
+
+    .lock-message {
+        font-size: 13px;
+        margin: 8px 0 12px 0;
+    }
+
+    .lock-email-info {
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+
+    .lock-progress-bar {
+        height: 5px;
+        margin: 6px 0 10px 0;
+    }
+
+    .lock-time-remaining {
+        font-size: 12px;
+        margin: 6px 0 10px 0;
+    }
+
+    .login-lock-hint {
+        font-size: 12px;
+        padding: 10px 12px;
+        margin-top: 12px;
+    }
+
+    .login-lock-modal-footer {
+        gap: 10px;
+    }
+
+    .login-lock-btn {
+        padding: 9px 20px;
+        font-size: 13px;
+        min-width: 90px;
+        flex: 1;
+    }
+
+    .login-lock-modal-body {
+        margin-bottom: 18px;
+    }
+}
+
+/* ===== BREAKPOINT 480px ===== */
+@media (max-width: 480px) {
+    .login-lock-modal-overlay {
+        align-items: flex-end;
+        padding: 16px;
+    }
+
+    .login-lock-modal {
+        max-width: 100%;
+        width: 100%;
+        padding: 20px 16px 24px 16px;
+        border-radius: 16px 16px 0 0;
+        margin-bottom: 0;
+        animation: slideUpMobile 0.4s ease;
+    }
+
+    @keyframes slideUpMobile {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .login-lock-modal-header h2 {
+        font-size: 18px;
+    }
+
+    .login-lock-modal-icon {
+        font-size: 38px;
+    }
+
+    .login-lock-timer {
+        padding: 10px 12px;
+        gap: 8px;
+        border-radius: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .timer-icon {
+        font-size: 18px;
+    }
+
+    .timer-text {
+        font-size: 12px;
+    }
+
+    .timer-text strong {
+        font-size: 16px;
+    }
+
+    .lock-level-badge {
+        font-size: 11px;
+        padding: 4px 10px;
+        border-radius: 16px;
+        margin-bottom: 10px;
+    }
+
+    .lock-message {
+        font-size: 13px;
+        margin: 6px 0 10px 0;
+        line-height: 1.5;
+    }
+
+    .lock-email-info {
+        font-size: 12px;
+        padding: 5px 8px;
+        margin: 4px 0 8px 0;
+    }
+
+    .lock-progress-bar {
+        height: 4px;
+        margin: 6px 0 8px 0;
+    }
+
+    .lock-time-remaining {
+        font-size: 11px;
+        margin: 4px 0 8px 0;
+    }
+
+    .login-lock-hint {
+        font-size: 11px;
+        padding: 8px 10px;
+        margin-top: 10px;
+        border-radius: 6px;
+    }
+
+    .login-lock-modal-footer {
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    .login-lock-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+        min-width: auto;
+        width: 100%;
+        flex: none;
+    }
+
+    .login-lock-modal-body {
+        margin-bottom: 16px;
+    }
+
+    /* Khi modal ở dưới cùng, điều chỉnh overlay */
+    .login-lock-modal-overlay {
+        align-items: flex-end;
+        background-color: rgba(0, 0, 0, 0.6);
+    }
+}
+
+/* ===== EXTRA SMALL (dưới 380px) ===== */
+@media (max-width: 380px) {
+    .login-lock-modal {
+        padding: 16px 12px 20px 12px;
+    }
+
+    .login-lock-modal-header h2 {
+        font-size: 16px;
+    }
+
+    .login-lock-modal-icon {
+        font-size: 32px;
+    }
+
+    .login-lock-timer {
+        padding: 8px 10px;
+    }
+
+    .timer-text {
+        font-size: 11px;
+    }
+
+    .timer-text strong {
+        font-size: 14px;
+    }
+
+    .lock-message {
+        font-size: 12px;
+    }
+
+    .lock-level-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    .login-lock-btn {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+
+    .login-lock-hint {
+        font-size: 10px;
+        padding: 6px 8px;
+    }
+}
+
+/* ===== Hỗ trợ cho màn hình có notch / tai thỏ ===== */
+@supports (padding: max(0px)) {
+    .login-lock-modal {
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+}
+
+/* ===== Hỗ trợ dark mode ===== */
+@media (prefers-color-scheme: light) {
+    .login-lock-modal {
+        background-color: #1e1e3a;
+    }
+}
+
+/* ===== High contrast ===== */
+@media (prefers-contrast: high) {
+    .login-lock-modal {
+        border: 2px solid #ffffff;
+    }
+
+    .login-lock-timer {
+        border: 2px solid #f87171;
+    }
+
+    .login-lock-btn {
+        border: 2px solid #ffffff;
+    }
+
+    .login-lock-btn-primary {
+        border: 2px solid #ffffff;
+    }
+}
+
+/* ===== Reduced motion ===== */
+@media (prefers-reduced-motion: reduce) {
+    .login-lock-modal,
+    .login-lock-modal-overlay {
+        animation: none;
+    }
+
+    .login-lock-modal-icon {
+        animation: none;
+    }
+
+    .lock-progress-fill {
+        transition: none;
+    }
+
+    .login-lock-btn {
+        transition: none;
+    }
+
+    .login-lock-btn:hover {
+        transform: none;
+    }
+}
+
+/* ===== Print styles ===== */
+@media print {
+    .login-lock-modal-overlay {
+        display: none;
+    }
 }

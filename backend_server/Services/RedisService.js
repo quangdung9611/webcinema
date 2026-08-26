@@ -233,7 +233,6 @@ class RedisService {
         const key = `login_attempts:${email}`;
         const attempts = await this.increment(key);
 
-        // 🔥 ĐỔI TTL XUỐNG 60 GIÂY (1 PHÚT) ĐỂ TEST
         const ttl = await this.getTTL(key);
         if (ttl === -1) {
             await this.expire(key, 60);
@@ -271,13 +270,59 @@ class RedisService {
     async incrementLockoutLevel(email) {
         const key = `lockout_level:${email}`;
         const level = await this.increment(key);
-        await this.expire(key, 86400);
+        await this.expire(key, 86400); // 24 giờ
         return level;
     }
 
     async resetLockoutLevel(email) {
         const key = `lockout_level:${email}`;
         await this.delete(key);
+    }
+
+    /*=========================================================
+        🔥 LOCKOUT INFO - LẤY THÔNG TIN KHÓA CHI TIẾT
+    =========================================================*/
+
+    async getLockoutInfo(email) {
+        try {
+            const level = await this.getLockoutLevel(email);
+            const attempts = await this.checkLoginAttempts(email);
+            const ttl = await this.getLockTimeRemaining(email);
+            
+            // Tính thời gian lock dựa trên level
+            let lockDuration = 0;
+            let lockDurationText = '';
+            
+            if (level >= 4) {
+                lockDuration = 3600;
+                lockDurationText = '1 giờ';
+            } else if (level === 3) {
+                lockDuration = 900;
+                lockDurationText = '15 phút';
+            } else if (level === 2) {
+                lockDuration = 300;
+                lockDurationText = '5 phút';
+            } else if (level === 1) {
+                lockDuration = 60;
+                lockDurationText = '1 phút';
+            }
+            
+            // Nếu level > 0 nhưng attempts < 5, tức là đã hết lock nhưng chưa reset level
+            const isLocked = level >= 1 && attempts >= 5;
+            
+            return {
+                isLocked: isLocked,
+                level: level,
+                attempts: attempts,
+                remainingSeconds: isLocked ? ttl : 0,
+                lockDuration: lockDuration,
+                lockDurationText: lockDurationText,
+                maxAttempts: 5
+            };
+        } catch (error) {
+            console.error(`❌ [LOCKOUT] Failed to get lockout info:`, error);
+            return null;
+        }
     }
 
     /*=========================================================
