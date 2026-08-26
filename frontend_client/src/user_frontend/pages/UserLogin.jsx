@@ -53,30 +53,34 @@ const UserLogin = () => {
 
     const isExpired = Boolean(location.state?.expired);
 
-    // Kiểm tra sessionStorage khi mount
+    // 🔥 KIỂM TRA localStorage KHI MOUNT (Đã đổi từ sessionStorage sang localStorage)
     useEffect(() => {
-        const storedEmail = sessionStorage.getItem('lockedEmail');
-        const storedLockInfo = sessionStorage.getItem('lockInfo');
+        const storedEmail = localStorage.getItem('lockedEmail');
+        const storedLockInfo = localStorage.getItem('lockInfo');
         
         if (storedEmail && storedLockInfo) {
             try {
                 const parsed = JSON.parse(storedLockInfo);
-                if (parsed.lockedUntil > Date.now() && parsed.email === formData.email) {
+                
+                // 💡 QUAN TRỌNG: Bỏ điều kiện so sánh email (Vì lúc F5 formData.email đang rỗng)
+                // Chỉ cần kiểm tra xem lock còn hiệu lực không (lockedUntil > Date.now())
+                if (parsed.lockedUntil > Date.now()) {
                     setLockInfo(parsed);
                     setShowLockModal(true);
-                    // Khởi tạo timer trên nút đăng nhập
+                    // Khởi tạo timer trên nút đăng nhập ngay lập tức
                     setLockTimeLeft(Math.max(0, Math.floor((parsed.lockedUntil - Date.now()) / 1000)));
                 } else {
-                    sessionStorage.removeItem('lockedEmail');
-                    sessionStorage.removeItem('lockInfo');
+                    // Hết hạn thì xóa localStorage
+                    localStorage.removeItem('lockedEmail');
+                    localStorage.removeItem('lockInfo');
                 }
             } catch (error) {
                 console.error('Error parsing lock info:', error);
-                sessionStorage.removeItem('lockedEmail');
-                sessionStorage.removeItem('lockInfo');
+                localStorage.removeItem('lockedEmail');
+                localStorage.removeItem('lockInfo');
             }
         }
-    }, [formData.email]);
+    }, []); // 💡 Chạy 1 lần duy nhất khi mount. KHÔNG phụ thuộc vào formData.email nữa.
 
     // 🔥 ĐỒNG HỒ ĐẾM NGƯỢC ĐỘC LẬP KHI MODAL ĐÓNG
     useEffect(() => {
@@ -87,8 +91,8 @@ const UserLogin = () => {
             setLockTimeLeft(left);
             
             if (left <= 0) {
-                sessionStorage.removeItem('lockedEmail');
-                sessionStorage.removeItem('lockInfo');
+                localStorage.removeItem('lockedEmail');
+                localStorage.removeItem('lockInfo');
                 setLockInfo(null);
                 setShowLockModal(false);
                 setLockTimeLeft(0);
@@ -187,10 +191,10 @@ const UserLogin = () => {
         }
 
         if (name === 'email') {
-            const storedEmail = sessionStorage.getItem('lockedEmail');
+            const storedEmail = localStorage.getItem('lockedEmail');
             if (storedEmail && storedEmail !== value) {
-                sessionStorage.removeItem('lockedEmail');
-                sessionStorage.removeItem('lockInfo');
+                localStorage.removeItem('lockedEmail');
+                localStorage.removeItem('lockInfo');
                 setLockInfo(null);
                 setShowLockModal(false);
                 setLockTimeLeft(0); // Reset timer khi đổi email
@@ -283,8 +287,9 @@ const UserLogin = () => {
                 setShowLockModal(true);
                 setLockTimeLeft(durationSeconds);
                 
-                sessionStorage.setItem('lockedEmail', formData.email.trim());
-                sessionStorage.setItem('lockInfo', JSON.stringify(lockInfoData));
+                // 🔥 ĐỔI SANG localStorage
+                localStorage.setItem('lockedEmail', formData.email.trim());
+                localStorage.setItem('lockInfo', JSON.stringify(lockInfoData));
                 
                 return;
             }

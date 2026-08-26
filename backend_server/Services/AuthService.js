@@ -128,8 +128,9 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         };
     }
 
+    // 🔥 CHỈ RESET SỐ LẦN THỬ, GIỮ NGUYÊN LEVEL ĐỂ LẦN SAU TĂNG CẤP
     await RedisService.resetLoginAttempts(email);
-    await RedisService.resetLockoutLevel(email);
+    // await RedisService.resetLockoutLevel(email); // ĐÃ XÓA DÒNG NÀY
 
     if (!user.email_verified) {
         throw { 

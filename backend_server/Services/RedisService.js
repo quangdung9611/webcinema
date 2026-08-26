@@ -181,8 +181,8 @@ class RedisService {
     async incrementLockoutLevel(email) {
         const key = `lockout_level:${email}`;
         const newLevel = await this.increment(key);
-        const { duration } = this.getLockDuration(newLevel);
-        await this.expire(key, duration);
+        // 🔥 SỬA: Cho Level sống 24h để không bị mất cấp độ khi hết thời gian khóa
+        await this.expire(key, 86400); 
         return newLevel;
     }
 

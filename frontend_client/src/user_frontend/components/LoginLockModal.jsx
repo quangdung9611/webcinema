@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import '../styles/LoginLockModal.css';
+import Modal from './Modal'; // Import Modal tổng
+import '../styles/LoginLockModal.css'; // Vẫn giữ để style riêng phần timer
 
 const LoginLockModal = ({ 
     show, 
@@ -79,91 +80,81 @@ const LoginLockModal = ({
         return 'Khóa cơ bản - 1 phút';
     };
 
-    if (isExpired) {
-        return (
-            <div className="login-lock-modal-overlay">
-                <div className="login-lock-modal">
-                    <div className="login-lock-modal-header">
+    // Nội dung bên trong Modal tổng (đồng bộ với Modal.jsx)
+    const renderLockContent = () => {
+        if (isExpired) {
+            return (
+                <div className="login-lock-modal-body">
+                    <div style={{ textAlign: 'center', marginBottom: '16px' }}>
                         <span className="login-lock-modal-icon">✅</span>
-                        <h2>Đã mở khóa tài khoản</h2>
                     </div>
-                    <div className="login-lock-modal-body">
-                        <p>Tài khoản của bạn đã được mở khóa. Vui lòng thử đăng nhập lại.</p>
-                    </div>
-                    <div className="login-lock-modal-footer">
-                        <button className="login-lock-btn login-lock-btn-primary" onClick={onClose}>
-                            Đăng nhập ngay
-                        </button>
-                    </div>
+                    <p style={{ textAlign: 'center', lineHeight: 1.6 }}>
+                        Tài khoản của bạn đã được mở khóa. Vui lòng thử đăng nhập lại.
+                    </p>
                 </div>
+            );
+        }
+
+        return (
+            <div className="login-lock-modal-body">
+                {/* Badge hiển thị level: Chỉ hiển thị Cấp 1 hoặc Cấp 2 */}
+                <div className="lock-level-badge" style={{ backgroundColor: getLevelColor() }}>
+                    {getLevelEmoji()} Cấp độ {Math.min(lockLevel, 2)}/2 - {getLevelText()}
+                </div>
+                
+                {email && (
+                    <p className="lock-email-info">
+                        📧 <strong>{email}</strong>
+                    </p>
+                )}
+                
+                <p className="lock-message">{message}</p>
+
+                <div className="login-lock-timer">
+                    <span className="timer-icon">⏳</span>
+                    <span className="timer-text">
+                        Vui lòng thử lại sau <strong>{minutes}:{seconds.toString().padStart(2, '0')}</strong>
+                    </span>
+                </div>
+
+                <div className="lock-progress-bar">
+                    <div 
+                        className="lock-progress-fill" 
+                        style={{ 
+                            width: `${remainingPercent}%`,
+                            backgroundColor: getLevelColor()
+                        }}
+                    />
+                </div>
+
+                <p className="lock-time-remaining">
+                    ⏱️ Còn lại {minutes} phút {seconds} giây
+                </p>
+
+                <p className="login-lock-hint">
+                    💡 Mẹo: Bạn có thể dùng "Quên mật khẩu?" để đặt lại mật khẩu ngay bây giờ.
+                </p>
             </div>
         );
-    }
+    };
 
     return (
-        <div className="login-lock-modal-overlay">
-            <div className="login-lock-modal">
-                <div className="login-lock-modal-header">
-                    <span className="login-lock-modal-icon">{getLevelEmoji()}</span>
-                    <h2>Tài khoản đã bị khóa</h2>
-                </div>
-
-                <div className="login-lock-modal-body">
-                    {/* Badge hiển thị level: Chỉ hiển thị Cấp 1 hoặc Cấp 2 */}
-                    <div className="lock-level-badge" style={{ backgroundColor: getLevelColor() }}>
-                        {getLevelEmoji()} Cấp độ {Math.min(lockLevel, 2)}/2 - {getLevelText()}
-                    </div>
-                    
-                    {email && (
-                        <p className="lock-email-info">
-                            📧 <strong>{email}</strong>
-                        </p>
-                    )}
-                    
-                    <p className="lock-message">{message}</p>
-
-                    <div className="login-lock-timer">
-                        <span className="timer-icon">⏳</span>
-                        <span className="timer-text">
-                            Vui lòng thử lại sau <strong>{minutes}:{seconds.toString().padStart(2, '0')}</strong>
-                        </span>
-                    </div>
-
-                    <div className="lock-progress-bar">
-                        <div 
-                            className="lock-progress-fill" 
-                            style={{ 
-                                width: `${remainingPercent}%`,
-                                backgroundColor: getLevelColor()
-                            }}
-                        />
-                    </div>
-
-                    <p className="lock-time-remaining">
-                        ⏱️ Còn lại {minutes} phút {seconds} giây
-                    </p>
-
-                    <p className="login-lock-hint">
-                        💡 Mẹo: Bạn có thể dùng "Quên mật khẩu?" để đặt lại mật khẩu ngay bây giờ.
-                    </p>
-                </div>
-
-                <div className="login-lock-modal-footer">
-                    <button className="login-lock-btn" onClick={onClose}>
-                        Đóng
-                    </button>
-                    <button 
-                        className="login-lock-btn login-lock-btn-primary" 
-                        onClick={() => {
-                            document.querySelector('.forgot-link')?.click();
-                            onClose();
-                        }}
-                    >
-                        Quên mật khẩu?
-                    </button>
-                </div>
-            </div>
-        </div>
+        <Modal
+            show={show}
+            onClose={onClose}
+            type={isExpired ? "success" : "warning"}
+            title={isExpired ? "Đã mở khóa tài khoản" : "Tài khoản đã bị khóa"}
+            confirmText={isExpired ? "Đăng nhập ngay" : "Quên mật khẩu?"}
+            onConfirm={() => {
+                document.querySelector('.forgot-link')?.click();
+                onClose();
+            }}
+            cancelText="Đóng"
+            onCancel={onClose}
+            className="login-lock-modal"
+        >
+            {renderLockContent()}
+        </Modal>
     );
 };
 
