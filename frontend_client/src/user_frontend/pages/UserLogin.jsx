@@ -23,8 +23,6 @@ import {
     notifyLogin
 } from '../../utils/authCleanup';
 
-import ForgotPassword from '../components/ForgotPassword';
-
 import LoadingButton from '../components/LoadingButton';
 
 import SuccessModal from '../components/SuccessModal';
@@ -36,9 +34,10 @@ import '../styles/UserAuth.css';
 
 const UserLogin = () => {
 
-    // ============================================================
-    // FORM DATA
-    // ============================================================
+    // =========================================================
+    // FORM
+    // =========================================================
+
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -53,58 +52,60 @@ const UserLogin = () => {
 
     const [showPassword, setShowPassword] = useState(false);
 
-    const [showForgotModal, setShowForgotModal] = useState(false);
-
-    const [successMessage, setSuccessMessage] = useState('');
-
-    const [showLoginSuccessModal, setShowLoginSuccessModal] =
-        useState(false);
-
-    const [loginSuccessMessage, setLoginSuccessMessage] =
+    const [successMessage, setSuccessMessage] =
         useState('');
 
-    const [loggedInUser, setLoggedInUser] =
-        useState(null);
-
-    // ============================================================
-    // ACCOUNT LOCK
-    // ============================================================
-    const [showLockModal, setShowLockModal] =
+    const [showLoginSuccessModal,
+        setShowLoginSuccessModal] =
         useState(false);
 
-    const [lockInfo, setLockInfo] =
+    const [loginSuccessMessage,
+        setLoginSuccessMessage] =
+        useState('');
+
+    const [loggedInUser,
+        setLoggedInUser] =
         useState(null);
 
-    const [lockTimeLeft, setLockTimeLeft] =
+
+    // =========================================================
+    // LOGIN LOCK
+    // =========================================================
+
+    const [showLockModal,
+        setShowLockModal] =
+        useState(false);
+
+    const [lockInfo,
+        setLockInfo] =
+        useState(null);
+
+    const [lockTimeLeft,
+        setLockTimeLeft] =
         useState(0);
 
 
-    // ============================================================
-    // NAVIGATION
-    // ============================================================
+    // =========================================================
+    // ROUTER
+    // =========================================================
+
     const navigate = useNavigate();
 
     const location = useLocation();
 
-
-    // ============================================================
-    // AUTH CONTEXT
-    // ============================================================
     const {
         user,
         isLoading,
     } = useAuth();
 
-
-    const isExpired = Boolean(
-        location.state?.expired
-    );
+    const isExpired =
+        Boolean(location.state?.expired);
 
 
-    // ============================================================
-    // KHI LOAD LOGIN PAGE
-    // KIỂM TRA ACCOUNT CÓ ĐANG BỊ KHÓA KHÔNG
-    // ============================================================
+    // =========================================================
+    // LOAD LOCK STATUS KHI REFRESH TRANG
+    // =========================================================
+
     useEffect(() => {
 
         const storedEmail =
@@ -114,9 +115,7 @@ const UserLogin = () => {
             localStorage.getItem('lockInfo');
 
 
-        if (!storedEmail) {
-            return;
-        }
+        if (!storedEmail) return;
 
 
         api.get(
@@ -124,7 +123,6 @@ const UserLogin = () => {
                 storedEmail
             )}`
         )
-
             .then((res) => {
 
                 const serverData =
@@ -132,6 +130,26 @@ const UserLogin = () => {
 
 
                 if (serverData?.isLocked) {
+
+                    // =================================================
+                    // QUAN TRỌNG
+                    // DÙNG remainingSeconds TỪ BACKEND
+                    // KHÔNG DÙNG lockedUntil TRỰC TIẾP
+                    // =================================================
+
+                    const remainingSeconds =
+                        Math.max(
+                            0,
+                            Number(
+                                serverData.remainingSeconds
+                            ) || 0
+                        );
+
+
+                    const lockUntilTimestamp =
+                        Date.now()
+                        + remainingSeconds * 1000;
+
 
                     const updatedLockInfo = {
 
@@ -142,56 +160,43 @@ const UserLogin = () => {
                             serverData.message,
 
                         level:
-                            serverData.level,
+                            Number(serverData.level) || 1,
 
                         remainingSeconds:
-                            serverData.remainingSeconds,
+                            remainingSeconds,
 
                         lockDuration:
-                            serverData.lockDuration,
+                            Number(
+                                serverData.lockDuration
+                            )
+                            || remainingSeconds,
 
                         lockDurationText:
-                            serverData.lockDurationText,
+                            serverData.lockDurationText
+                            || '1 phút',
 
                         maxAttempts:
-                            serverData.maxAttempts || 5,
+                            serverData.maxAttempts
+                            || 5,
 
                         lockedUntil:
-                            serverData.lockedUntil
+                            lockUntilTimestamp
                     };
 
 
-                    setLockInfo(
-                        updatedLockInfo
-                    );
+                    setLockInfo(updatedLockInfo);
 
-
-                    setShowLockModal(
-                        true
-                    );
+                    setShowLockModal(true);
 
 
                     localStorage.setItem(
                         'lockInfo',
-                        JSON.stringify(
-                            updatedLockInfo
-                        )
+                        JSON.stringify(updatedLockInfo)
                     );
 
 
-                    // ====================================================
-                    // DÙNG CEIL
-                    // ====================================================
                     setLockTimeLeft(
-                        Math.max(
-                            0,
-                            Math.ceil(
-                                (
-                                    updatedLockInfo.lockedUntil
-                                    - Date.now()
-                                ) / 1000
-                            )
-                        )
+                        remainingSeconds
                     );
 
                 } else {
@@ -216,53 +221,52 @@ const UserLogin = () => {
                 );
 
 
-                // ========================================================
+                // =============================================
                 // FALLBACK LOCAL STORAGE
-                // ========================================================
-                if (storedLockInfo) {
+                // =============================================
 
-                    try {
-
-                        const parsed =
-                            JSON.parse(
-                                storedLockInfo
-                            );
+                if (!storedLockInfo) return;
 
 
-                        if (
-                            parsed.lockedUntil >
-                            Date.now()
-                        ) {
+                try {
 
-                            setLockInfo(
-                                parsed
-                            );
-
-                            setShowLockModal(
-                                true
-                            );
+                    const parsed =
+                        JSON.parse(storedLockInfo);
 
 
-                            // ====================================================
-                            // DÙNG CEIL
-                            // ====================================================
-                            setLockTimeLeft(
-                                Math.max(
-                                    0,
-                                    Math.ceil(
-                                        (
-                                            parsed.lockedUntil
-                                            - Date.now()
-                                        ) / 1000
-                                    )
+                    if (
+                        parsed.lockedUntil
+                        > Date.now()
+                    ) {
+
+                        const secondsLeft =
+                            Math.max(
+                                0,
+                                Math.ceil(
+                                    (
+                                        parsed.lockedUntil
+                                        - Date.now()
+                                    ) / 1000
                                 )
                             );
 
-                        }
 
-                    } catch (e) {
-                        /* ignore */
+                        setLockInfo(parsed);
+
+                        setShowLockModal(true);
+
+                        setLockTimeLeft(
+                            secondsLeft
+                        );
+
                     }
+
+                } catch (e) {
+
+                    console.error(
+                        'Không thể đọc lockInfo:',
+                        e
+                    );
 
                 }
 
@@ -271,24 +275,21 @@ const UserLogin = () => {
     }, []);
 
 
-    // ============================================================
-    // COUNTDOWN LOCK BUTTON
-    // ============================================================
+    // =========================================================
+    // COUNTDOWN LOGIN LOCK
+    // =========================================================
+
     useEffect(() => {
 
-        if (
-            !lockInfo ||
-            lockInfo.lockedUntil <= Date.now()
-        ) {
-            return;
-        }
+        if (!lockInfo?.lockedUntil) return;
 
 
         const tick = () => {
 
-            // ========================================================
-            // DÙNG CEIL THAY FLOOR
-            // ========================================================
+            // =================================================
+            // DÙNG CEIL
+            // =================================================
+
             const left =
                 Math.max(
                     0,
@@ -301,9 +302,7 @@ const UserLogin = () => {
                 );
 
 
-            setLockTimeLeft(
-                left
-            );
+            setLockTimeLeft(left);
 
 
             if (left <= 0) {
@@ -317,17 +316,11 @@ const UserLogin = () => {
                 );
 
 
-                setLockInfo(
-                    null
-                );
+                setLockInfo(null);
 
-                setShowLockModal(
-                    false
-                );
+                setShowLockModal(false);
 
-                setLockTimeLeft(
-                    0
-                );
+                setLockTimeLeft(0);
 
 
                 setSuccessMessage(
@@ -337,9 +330,7 @@ const UserLogin = () => {
 
                 setTimeout(() => {
 
-                    setSuccessMessage(
-                        ''
-                    );
+                    setSuccessMessage('');
 
                 }, 5000);
 
@@ -352,36 +343,30 @@ const UserLogin = () => {
 
 
         const interval =
-            setInterval(
-                tick,
-                1000
-            );
+            setInterval(tick, 1000);
 
 
         return () => {
-            clearInterval(
-                interval
-            );
+
+            clearInterval(interval);
+
         };
 
     }, [lockInfo]);
 
 
-    // ============================================================
+    // =========================================================
     // EMAIL VERIFIED MESSAGE
-    // ============================================================
+    // =========================================================
+
     useEffect(() => {
 
-        if (
-            !location.state?.verified
-        ) {
-            return;
-        }
+        if (!location.state?.verified) return;
 
 
         setSuccessMessage(
-            location.state.message ||
-            'Email đã được xác thực thành công! Vui lòng đăng nhập.'
+            location.state.message
+            || 'Email đã được xác thực thành công! Vui lòng đăng nhập.'
         );
 
 
@@ -394,32 +379,31 @@ const UserLogin = () => {
         const timer =
             setTimeout(() => {
 
-                setSuccessMessage(
-                    ''
-                );
+                setSuccessMessage('');
 
             }, 5000);
 
 
         return () => {
-            clearTimeout(
-                timer
-            );
+
+            clearTimeout(timer);
+
         };
 
     }, [location.state]);
 
 
-    // ============================================================
-    // REDIRECT IF ALREADY LOGGED IN
-    // ============================================================
+    // =========================================================
+    // REDIRECT IF ALREADY LOGIN
+    // =========================================================
+
     useEffect(() => {
 
         if (
-            user &&
-            !isLoading &&
-            !showLoginSuccessModal &&
-            !isExpired
+            user
+            && !isLoading
+            && !showLoginSuccessModal
+            && !isExpired
         ) {
 
             navigate(
@@ -440,9 +424,10 @@ const UserLogin = () => {
     ]);
 
 
-    // ============================================================
-    // VALIDATE FORM
-    // ============================================================
+    // =========================================================
+    // VALIDATE
+    // =========================================================
+
     const validate = () => {
 
         const tempErrors = {};
@@ -456,7 +441,9 @@ const UserLogin = () => {
             tempErrors.email =
                 'Vui lòng nhập email';
 
-        } else if (
+        }
+
+        else if (
             !emailRegex.test(
                 formData.email.trim()
             )
@@ -473,7 +460,9 @@ const UserLogin = () => {
             tempErrors.password =
                 'Vui lòng nhập mật khẩu';
 
-        } else if (
+        }
+
+        else if (
             formData.password.length < 6
         ) {
 
@@ -483,25 +472,21 @@ const UserLogin = () => {
         }
 
 
-        setErrors(
-            tempErrors
-        );
+        setErrors(tempErrors);
 
 
         return (
-            Object.keys(
-                tempErrors
-            ).length === 0
+            Object.keys(tempErrors).length === 0
         );
+
     };
 
 
-    // ============================================================
-    // HANDLE INPUT CHANGE
-    // ============================================================
-    const handleChange = (
-        event
-    ) => {
+    // =========================================================
+    // HANDLE CHANGE
+    // =========================================================
+
+    const handleChange = (event) => {
 
         const {
             name,
@@ -511,51 +496,43 @@ const UserLogin = () => {
         } = event.target;
 
 
-        setFormData(
-            (prev) => ({
-                ...prev,
-
-                [name]:
-                    type === 'checkbox'
-                        ? checked
-                        : value
-            })
-        );
+        setFormData((prev) => ({
+            ...prev,
+            [name]:
+                type === 'checkbox'
+                    ? checked
+                    : value
+        }));
 
 
         if (errors[name]) {
 
-            setErrors(
-                (prev) => ({
-                    ...prev,
-                    [name]: ''
-                })
-            );
+            setErrors((prev) => ({
+                ...prev,
+                [name]: ''
+            }));
 
         }
 
 
         if (serverError) {
 
-            setServerError(
-                ''
-            );
+            setServerError('');
 
         }
 
 
         if (successMessage) {
 
-            setSuccessMessage(
-                ''
-            );
+            setSuccessMessage('');
 
         }
 
 
-        // ========================================================
-        // ĐỔI EMAIL -> RESET LOCK UI CỦA EMAIL CŨ
-        // ========================================================
+        // =====================================================
+        // NẾU ĐỔI EMAIL THÌ XÓA LOCK CỦA EMAIL CŨ
+        // =====================================================
+
         if (name === 'email') {
 
             const storedEmail =
@@ -565,8 +542,8 @@ const UserLogin = () => {
 
 
             if (
-                storedEmail &&
-                storedEmail !== value
+                storedEmail
+                && storedEmail !== value
             ) {
 
                 localStorage.removeItem(
@@ -578,17 +555,11 @@ const UserLogin = () => {
                 );
 
 
-                setLockInfo(
-                    null
-                );
+                setLockInfo(null);
 
-                setShowLockModal(
-                    false
-                );
+                setShowLockModal(false);
 
-                setLockTimeLeft(
-                    0
-                );
+                setLockTimeLeft(0);
 
             }
 
@@ -597,54 +568,42 @@ const UserLogin = () => {
     };
 
 
-    // ============================================================
+    // =========================================================
     // HANDLE LOGIN
-    // ============================================================
-    const handleLogin = async (
-        event
-    ) => {
+    // =========================================================
+
+    const handleLogin = async (event) => {
 
         event.preventDefault();
 
 
-        // ========================================================
+        // =====================================================
         // NẾU ĐANG BỊ KHÓA
-        // ========================================================
+        // =====================================================
+
         if (
-            lockInfo &&
-            lockInfo.lockedUntil >
-            Date.now()
+            lockInfo
+            && lockInfo.lockedUntil
+            > Date.now()
         ) {
 
-            setShowLockModal(
-                true
-            );
+            setShowLockModal(true);
 
             return;
 
         }
 
 
-        if (!validate()) {
-            return;
-        }
+        if (!validate()) return;
 
 
-        setLoading(
-            true
-        );
+        setLoading(true);
 
-        setServerError(
-            ''
-        );
+        setServerError('');
 
-        setSuccessMessage(
-            ''
-        );
+        setSuccessMessage('');
 
-        setErrors(
-            {}
-        );
+        setErrors({});
 
 
         try {
@@ -668,17 +627,18 @@ const UserLogin = () => {
 
 
             const responseUser =
-                response?.data?.user ||
-                response?.data?.data?.user ||
-                null;
+                response?.data?.user
+                || response?.data?.data?.user
+                || null;
 
 
-            // ====================================================
-            // EMAIL CHƯA VERIFY
-            // ====================================================
+            // =================================================
+            // EMAIL NOT VERIFIED
+            // =================================================
+
             if (
-                responseUser &&
-                !responseUser.email_verified
+                responseUser
+                && !responseUser.email_verified
             ) {
 
                 setServerError(
@@ -689,6 +649,10 @@ const UserLogin = () => {
 
             }
 
+
+            // =================================================
+            // LOGIN SUCCESS
+            // =================================================
 
             api.resetUserCache();
 
@@ -705,9 +669,9 @@ const UserLogin = () => {
 
             setLoginSuccessMessage(
                 `Chào mừng ${
-                    responseUser?.full_name ||
-                    responseUser?.username ||
-                    'bạn'
+                    responseUser?.full_name
+                    || responseUser?.username
+                    || 'bạn'
                 } quay trở lại!`
             );
 
@@ -716,7 +680,9 @@ const UserLogin = () => {
                 true
             );
 
-        } catch (error) {
+        }
+
+        catch (error) {
 
             console.error(
                 '🔴 [LOGIN] Login error:',
@@ -725,8 +691,7 @@ const UserLogin = () => {
 
 
             const errorData =
-                error?.response?.data ||
-                {};
+                error?.response?.data || {};
 
 
             const errorCode =
@@ -734,46 +699,56 @@ const UserLogin = () => {
 
 
             const errorMessage =
-                errorData?.message ||
-                'Tài khoản hoặc mật khẩu không chính xác';
+                errorData?.message
+                || 'Tài khoản hoặc mật khẩu không chính xác';
 
 
-            // ====================================================
+            // =================================================
             // ACCOUNT LOCKED
-            // ====================================================
+            // =================================================
+
             if (
-                error?.response?.status === 429 ||
-                errorCode === 'ACCOUNT_LOCKED'
+                error?.response?.status === 429
+                || errorCode === 'ACCOUNT_LOCKED'
             ) {
 
                 const lockData =
-                    errorData?.data ||
-                    {};
-
-
-                // ====================================================
-                // QUAN TRỌNG:
-                // CHỈ DÙNG lockedUntil TỪ BACKEND
-                // ====================================================
-                const lockUntilTimestamp =
-                    lockData.lockedUntil;
+                    errorData?.data || {};
 
 
                 const level =
-                    Number(
-                        lockData.level
-                    ) || 1;
+                    Number(lockData.level)
+                    || 1;
 
 
-                const durationSeconds =
-                    Number(
-                        lockData.remainingSeconds
-                    ) || 60;
+                // =============================================
+                // QUAN TRỌNG NHẤT
+                //
+                // remainingSeconds là TTL thật backend trả về.
+                // Tạo lockedUntil mới ở frontend.
+                // =============================================
+
+                const remainingSeconds =
+                    Math.max(
+                        0,
+                        Number(
+                            lockData.remainingSeconds
+                        ) || 60
+                    );
+
+
+                const lockUntilTimestamp =
+                    Date.now()
+                    + remainingSeconds * 1000;
 
 
                 const durationText =
-                    lockData.lockDurationText ||
-                    '1 phút';
+                    lockData.lockDurationText
+                    || (
+                        level >= 2
+                            ? '3 phút'
+                            : '1 phút'
+                    );
 
 
                 const lockInfoData = {
@@ -788,19 +763,26 @@ const UserLogin = () => {
                         level,
 
                     remainingSeconds:
-                        durationSeconds,
+                        remainingSeconds,
 
                     lockDuration:
-                        durationSeconds,
+                        remainingSeconds,
 
                     lockDurationText:
                         durationText,
 
                     maxAttempts:
-                        lockData.maxAttempts || 5,
+                        lockData.maxAttempts
+                        || 5,
+
+                    // =========================================
+                    // MỐC THỜI GIAN ĐƯỢC FRONTEND TẠO
+                    // TỪ TTL BACKEND
+                    // =========================================
 
                     lockedUntil:
                         lockUntilTimestamp
+
                 };
 
 
@@ -814,19 +796,8 @@ const UserLogin = () => {
                 );
 
 
-                // ====================================================
-                // DÙNG CEIL
-                // ====================================================
                 setLockTimeLeft(
-                    Math.max(
-                        0,
-                        Math.ceil(
-                            (
-                                lockUntilTimestamp
-                                - Date.now()
-                            ) / 1000
-                        )
-                    )
+                    remainingSeconds
                 );
 
 
@@ -849,57 +820,55 @@ const UserLogin = () => {
             }
 
 
-            // ====================================================
+            // =================================================
             // EMAIL ERROR
-            // ====================================================
+            // =================================================
+
             if (
                 errorData?.field === 'email'
             ) {
 
-                setErrors(
-                    (prev) => ({
-                        ...prev,
-                        email:
-                            errorMessage
-                    })
-                );
+                setErrors((prev) => ({
+                    ...prev,
+                    email:
+                        errorMessage
+                }));
 
                 return;
 
             }
 
 
-            // ====================================================
+            // =================================================
             // PASSWORD ERROR
-            // ====================================================
+            // =================================================
+
             if (
                 errorData?.field === 'password'
             ) {
 
-                setErrors(
-                    (prev) => ({
-                        ...prev,
-                        password:
-                            errorMessage
-                    })
-                );
+                setErrors((prev) => ({
+                    ...prev,
+                    password:
+                        errorMessage
+                }));
 
                 return;
 
             }
 
 
-            // ====================================================
+            // =================================================
             // EMAIL NOT VERIFIED
-            // ====================================================
+            // =================================================
+
             if (
-                errorCode ===
-                'EMAIL_NOT_VERIFIED'
+                errorCode === 'EMAIL_NOT_VERIFIED'
             ) {
 
                 setServerError(
-                    errorMessage ||
-                    'Vui lòng xác thực email trước khi đăng nhập.'
+                    errorMessage
+                    || 'Vui lòng xác thực email trước khi đăng nhập.'
                 );
 
                 return;
@@ -911,88 +880,86 @@ const UserLogin = () => {
                 errorMessage
             );
 
-        } finally {
+        }
 
-            setLoading(
-                false
-            );
+        finally {
+
+            setLoading(false);
 
         }
 
     };
 
 
-    // ============================================================
+    // =========================================================
     // LOGIN SUCCESS
-    // ============================================================
-    const handleLoginSuccessConfirm =
-        () => {
+    // =========================================================
 
-            setShowLoginSuccessModal(
-                false
-            );
+    const handleLoginSuccessConfirm = () => {
 
-            setLoggedInUser(
-                null
-            );
+        setShowLoginSuccessModal(
+            false
+        );
 
-            navigate(
-                '/',
-                {
-                    replace: true
-                }
-            );
+        setLoggedInUser(
+            null
+        );
 
-        };
+        navigate(
+            '/',
+            {
+                replace: true
+            }
+        );
+
+    };
 
 
-    // ============================================================
+    // =========================================================
     // CLOSE LOCK MODAL
-    // ============================================================
-    const handleCloseLockModal =
-        () => {
+    // =========================================================
 
-            setShowLockModal(
-                false
+    const handleCloseLockModal = () => {
+
+        setShowLockModal(
+            false
+        );
+
+    };
+
+
+    // =========================================================
+    // FORMAT TIME
+    // =========================================================
+
+    const formatLockTime = (
+        totalSeconds
+    ) => {
+
+        const m =
+            Math.floor(
+                totalSeconds / 60
             );
 
-        };
+        const s =
+            totalSeconds % 60;
 
 
-    // ============================================================
-    // FORMAT LOCK TIME
-    // ============================================================
-    const formatLockTime =
-        (totalSeconds) => {
-
-            const m =
-                Math.floor(
-                    totalSeconds / 60
-                );
-
-            const s =
-                totalSeconds % 60;
-
-
-            return `${m}:${s
+        return `${m}:${
+            s
                 .toString()
-                .padStart(2, '0')}`;
+                .padStart(2, '0')
+        }`;
 
-        };
+    };
 
 
-    // ============================================================
-    // CHECK ACTIVE LOCK
-    // ============================================================
     const isLockedActive =
-        lockInfo &&
-        lockInfo.lockedUntil >
-        Date.now();
+        lockInfo
+        && lockInfo.lockedUntil
+        > Date.now();
 
 
-    // ============================================================
-    // RENDER
-    // ============================================================
     return (
 
         <div className="auth-container">
@@ -1003,13 +970,13 @@ const UserLogin = () => {
                     ĐĂNG NHẬP
                 </h2>
 
-
                 <p className="auth-subtitle">
                     Chào mừng bạn quay trở lại Cinema Star
                 </p>
 
 
                 {/* SUCCESS MESSAGE */}
+
                 {successMessage && (
 
                     <div
@@ -1027,9 +994,7 @@ const UserLogin = () => {
                         }}
                     >
 
-                        <CheckCircle
-                            size={20}
-                        />
+                        <CheckCircle size={20} />
 
                         <span>
                             {successMessage}
@@ -1041,13 +1006,12 @@ const UserLogin = () => {
 
 
                 {/* SERVER ERROR */}
+
                 {serverError && (
 
                     <div className="error-message">
 
-                        <AlertCircle
-                            size={18}
-                        />
+                        <AlertCircle size={18} />
 
                         <span>
                             {serverError}
@@ -1058,19 +1022,18 @@ const UserLogin = () => {
                 )}
 
 
-                {/* LOGIN FORM */}
                 <form
                     onSubmit={handleLogin}
                     noValidate
                 >
 
                     {/* EMAIL */}
+
                     <div className="form-group">
 
                         <label>
                             Email address
                         </label>
-
 
                         <input
                             id="login-email"
@@ -1082,19 +1045,14 @@ const UserLogin = () => {
                                     ? 'input-error'
                                     : ''
                             }`}
-                            value={
-                                formData.email
-                            }
-                            onChange={
-                                handleChange
-                            }
+                            value={formData.email}
+                            onChange={handleChange}
                             autoComplete="email"
                             disabled={
-                                loading ||
-                                isLockedActive
+                                loading
+                                || isLockedActive
                             }
                         />
-
 
                         {errors.email && (
 
@@ -1108,6 +1066,7 @@ const UserLogin = () => {
 
 
                     {/* PASSWORD */}
+
                     <div className="form-group">
 
                         <label>
@@ -1130,16 +1089,12 @@ const UserLogin = () => {
                                         ? 'input-error'
                                         : ''
                                 }`}
-                                value={
-                                    formData.password
-                                }
-                                onChange={
-                                    handleChange
-                                }
+                                value={formData.password}
+                                onChange={handleChange}
                                 autoComplete="current-password"
                                 disabled={
-                                    loading ||
-                                    isLockedActive
+                                    loading
+                                    || isLockedActive
                                 }
                             />
 
@@ -1154,8 +1109,8 @@ const UserLogin = () => {
                                 }
                                 tabIndex="-1"
                                 disabled={
-                                    loading ||
-                                    isLockedActive
+                                    loading
+                                    || isLockedActive
                                 }
                             >
 
@@ -1181,6 +1136,7 @@ const UserLogin = () => {
 
 
                     {/* REMEMBER + FORGOT */}
+
                     <div className="form-options">
 
                         <label className="remember-me">
@@ -1191,12 +1147,10 @@ const UserLogin = () => {
                                 checked={
                                     formData.rememberMe
                                 }
-                                onChange={
-                                    handleChange
-                                }
+                                onChange={handleChange}
                                 disabled={
-                                    loading ||
-                                    isLockedActive
+                                    loading
+                                    || isLockedActive
                                 }
                             />
 
@@ -1205,17 +1159,16 @@ const UserLogin = () => {
                         </label>
 
 
+                        {/* 🔥 SỬA NÚT FORGOT PASSWORD */}
                         <button
                             type="button"
                             className="forgot-link"
                             onClick={() =>
-                                setShowForgotModal(
-                                    true
-                                )
+                                navigate('/forgot-password')
                             }
                             disabled={
-                                loading ||
-                                isLockedActive
+                                loading
+                                || isLockedActive
                             }
                         >
 
@@ -1227,13 +1180,14 @@ const UserLogin = () => {
 
 
                     {/* LOGIN BUTTON */}
+
                     <LoadingButton
                         type="submit"
                         loading={loading}
                         loadingText="Đang đăng nhập..."
                         disabled={
-                            loading ||
-                            isLockedActive
+                            loading
+                            || isLockedActive
                         }
                         className="btn-user"
                         spinnerColor="#000000"
@@ -1256,13 +1210,10 @@ const UserLogin = () => {
                                     style={{
                                         background:
                                             'rgba(255,255,255,0.2)',
-
                                         padding:
                                             '2px 8px',
-
                                         borderRadius:
                                             '4px',
-
                                         fontWeight:
                                             'bold'
                                     }}
@@ -1287,13 +1238,11 @@ const UserLogin = () => {
                 </form>
 
 
-                {/* REGISTER */}
                 <div className="auth-footer">
 
                     <span>
                         Chưa có tài khoản?
                     </span>
-
 
                     <Link
                         to="/register"
@@ -1309,21 +1258,8 @@ const UserLogin = () => {
             </div>
 
 
-            {/* FORGOT PASSWORD */}
-            {showForgotModal && (
-
-                <ForgotPassword
-                    onClose={() =>
-                        setShowForgotModal(
-                            false
-                        )
-                    }
-                />
-
-            )}
-
-
             {/* LOGIN SUCCESS */}
+
             <SuccessModal
                 isOpen={
                     showLoginSuccessModal
@@ -1344,30 +1280,29 @@ const UserLogin = () => {
             />
 
 
-            {/* LOCK MODAL */}
+            {/* LOGIN LOCK */}
+
             <LoginLockModal
-                show={
-                    showLockModal
-                }
+                show={showLockModal}
                 message={
-                    lockInfo?.message ||
-                    'Tài khoản đã bị khóa'
+                    lockInfo?.message
+                    || 'Tài khoản đã bị khóa'
                 }
                 lockedUntil={
-                    lockInfo?.lockedUntil ||
-                    Date.now() + 60000
+                    lockInfo?.lockedUntil
+                    || Date.now() + 60000
                 }
                 lockLevel={
-                    lockInfo?.level ||
-                    1
+                    lockInfo?.level
+                    || 1
                 }
                 lockDurationText={
-                    lockInfo?.lockDurationText ||
-                    '1 phút'
+                    lockInfo?.lockDurationText
+                    || '1 phút'
                 }
                 email={
-                    lockInfo?.email ||
-                    formData.email
+                    lockInfo?.email
+                    || formData.email
                 }
                 onClose={
                     handleCloseLockModal

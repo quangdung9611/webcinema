@@ -4,13 +4,9 @@ const Cookie = require("../utils/Cookie");
 
 const Password = require("../utils/Password");
 
-const Otp = require("../utils/Otp");
-
 const UserRepository = require("../Repositories/UserRepository");
 
 const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
-
-const OtpRepository = require("../Repositories/OtpRepository");
 
 const MailService = require("./MailServiceTicket");
 
@@ -298,11 +294,8 @@ exports.login = async (
                 );
 
 
-            const lock =
-                await RedisService.createLoginLock(
-                    email,
-                    newLevel
-                );
+            const { duration, text } =
+                RedisService.getLockDuration(newLevel);
 
 
             throw {
@@ -313,26 +306,26 @@ exports.login = async (
 
                 message:
                     `Bạn đã nhập sai quá 5 lần. ` +
-                    `Tài khoản đã bị khóa ${lock.text}.`,
+                    `Tài khoản đã bị khóa ${text}.`,
 
                 data: {
 
                     level:
-                        lock.level,
+                        newLevel,
 
                     remainingSeconds:
-                        lock.duration,
+                        duration,
 
                     lockDuration:
-                        lock.duration,
+                        duration,
 
                     lockDurationText:
-                        lock.text,
+                        text,
 
                     maxAttempts: 5,
 
                     lockedUntil:
-                        lock.lockedUntil
+                        Date.now() + duration * 1000
                 }
             };
         }
@@ -380,11 +373,8 @@ exports.login = async (
                 );
 
 
-            const lock =
-                await RedisService.createLoginLock(
-                    email,
-                    newLevel
-                );
+            const { duration, text } =
+                RedisService.getLockDuration(newLevel);
 
 
             throw {
@@ -395,26 +385,26 @@ exports.login = async (
 
                 message:
                     `Bạn đã nhập sai quá 5 lần. ` +
-                    `Tài khoản đã bị khóa ${lock.text}.`,
+                    `Tài khoản đã bị khóa ${text}.`,
 
                 data: {
 
                     level:
-                        lock.level,
+                        newLevel,
 
                     remainingSeconds:
-                        lock.duration,
+                        duration,
 
                     lockDuration:
-                        lock.duration,
+                        duration,
 
                     lockDurationText:
-                        lock.text,
+                        text,
 
                     maxAttempts: 5,
 
                     lockedUntil:
-                        lock.lockedUntil
+                        Date.now() + duration * 1000
                 }
             };
         }
@@ -435,16 +425,6 @@ exports.login = async (
     // ĐĂNG NHẬP ĐÚNG
     // ========================================================
 
-    /*
-     * Reset attempts.
-     *
-     * KHÔNG reset lockout_level.
-     *
-     * Nếu user bị khóa lần tiếp theo trong 24h:
-     *
-     * level 1 → level 2
-     * 1 phút → 3 phút
-     */
     await RedisService.resetLoginAttempts(email);
 
 
@@ -872,7 +852,7 @@ exports.changePassword = async (
 
 
 // ============================================================
-// FORGOT PASSWORD
+// FORGOT PASSWORD (GỬI LINK)
 // ============================================================
 
 exports.forgotPassword = async (
@@ -908,13 +888,13 @@ exports.forgotPassword = async (
         );
 
 
+    // 🔥 KHÔNG TIẾT LỘ EMAIL CÓ TỒN TẠI HAY KHÔNG
     if (!user) {
 
-        throw {
-            statusCode: 404,
-            field: "email",
+        return {
+            success: true,
             message:
-                "Email không tồn tại"
+                "Nếu email này tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu."
         };
     }
 
@@ -938,58 +918,25 @@ exports.forgotPassword = async (
     }
 
 
-    const isLocked =
-        await RedisService.isOTPLocked(
-            email,
-            "password-reset",
-            5
-        );
+    // 🔥 TẠO TOKEN (KHÔNG DÙNG OTP)
+    const resetToken =
+        Jwt.generateResetToken({
+
+            user_id:
+                user.user_id,
+
+            email:
+                user.email
+        }, '15m');
 
 
-    if (isLocked) {
-
-        throw {
-            statusCode: 429,
-            message:
-                "Tài khoản đã bị khóa do nhập sai OTP quá nhiều. " +
-                "Vui lòng thử lại sau 5 phút"
-        };
-    }
+    const resetUrl =
+        `${FRONTEND_URL}/reset-password?token=${resetToken}`;
 
 
-    const otpCode =
-        Otp.generate6();
-
-
-    await RedisService.saveOTP(
+    await MailService.sendPasswordResetLink(
         email,
-        "password-reset",
-        otpCode,
-        300
-    );
-
-
-    await OtpRepository.create({
-
-        email,
-
-        purpose:
-            "password-reset",
-
-        ip_address:
-            req?.ip ||
-            req?.connection?.remoteAddress ||
-            null,
-
-        user_agent:
-            req?.headers?.["user-agent"] ||
-            null
-    });
-
-
-    await MailService.sendPasswordResetOTP(
-        email,
-        otpCode,
+        resetUrl,
         user.full_name
     );
 
@@ -999,142 +946,60 @@ exports.forgotPassword = async (
         success: true,
 
         message:
-            "Mã OTP đã được gửi đến email của bạn",
-
-        ...(
-            process.env.NODE_ENV ===
-            "development" && {
-                otp: otpCode
-            }
-        )
+            "Nếu email này tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu."
     };
 };
 
 
 // ============================================================
-// VERIFY RESET OTP
+// VERIFY RESET TOKEN
 // ============================================================
 
-exports.verifyResetOTP = async (
-    email,
-    otp
+exports.verifyResetToken = async (
+    token
 ) => {
 
-    if (!email?.trim()) {
+    if (!token) {
 
         throw {
             statusCode: 400,
-            field: "email",
             message:
-                "Email không được để trống"
+                "Token không được để trống"
         };
     }
 
 
-    if (!EMAIL_REGEX.test(email)) {
-
-        throw {
-            statusCode: 400,
-            field: "email",
-            message:
-                "Email không hợp lệ"
-        };
-    }
+    let payload;
 
 
-    if (
-        !Otp.isValidFormat(
-            otp,
-            6
-        )
-    ) {
+    try {
 
-        throw {
-            statusCode: 400,
-            field: "otp",
-            message:
-                "OTP phải là 6 chữ số"
-        };
-    }
-
-
-    const isLocked =
-        await RedisService.isOTPLocked(
-            email,
-            "password-reset",
-            5
-        );
-
-
-    if (isLocked) {
-
-        throw {
-            statusCode: 429,
-            message:
-                "Tài khoản đã bị khóa do nhập sai OTP quá nhiều. " +
-                "Vui lòng thử lại sau 5 phút"
-        };
-    }
-
-
-    const savedOTP =
-        await RedisService.getOTP(
-            email,
-            "password-reset"
-        );
-
-
-    if (!savedOTP) {
-
-        throw {
-            statusCode: 404,
-            message:
-                "OTP không tồn tại hoặc đã hết hạn. " +
-                "Vui lòng yêu cầu lại"
-        };
-    }
-
-
-    if (savedOTP !== otp) {
-
-        const attempts =
-            await RedisService.incrementOTPAttempts(
-                email,
-                "password-reset",
-                300
+        payload =
+            Jwt.verifyResetToken(
+                token
             );
 
 
-        if (attempts >= 5) {
+        if (!payload) {
 
-            throw {
-                statusCode: 429,
-                message:
-                    "Bạn đã nhập sai OTP quá 5 lần. " +
-                    "Vui lòng thử lại sau 5 phút"
-            };
+            throw new Error(
+                'Invalid token'
+            );
         }
 
+    } catch (error) {
 
         throw {
-            statusCode: 400,
-            field: "otp",
+            statusCode: 401,
             message:
-                `OTP không chính xác. ` +
-                `Còn ${5 - attempts} lần thử`
+                "Link không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu gửi lại."
         };
     }
-
-
-    await RedisService.deleteOTP(
-        email,
-        "password-reset"
-    );
 
 
     const user =
         await UserRepository.findByEmail(
-            email
+            payload.email
         );
 
 
@@ -1148,24 +1013,10 @@ exports.verifyResetOTP = async (
     }
 
 
-    const resetToken =
-        Jwt.generateResetToken({
-
-            user_id:
-                user.user_id,
-
-            email
-        });
-
-
     return {
-
         success: true,
-
-        message:
-            "Xác thực OTP thành công",
-
-        resetToken
+        userId: user.user_id,
+        email: user.email
     };
 };
 
@@ -1175,11 +1026,11 @@ exports.verifyResetOTP = async (
 // ============================================================
 
 exports.resetPassword = async (
-    resetToken,
+    token,
     newPassword
 ) => {
 
-    if (!resetToken) {
+    if (!token) {
 
         throw {
             statusCode: 400,
@@ -1213,6 +1064,7 @@ exports.resetPassword = async (
     }
 
 
+    // 1. Xác thực token
     let payload;
 
 
@@ -1220,7 +1072,7 @@ exports.resetPassword = async (
 
         payload =
             Jwt.verifyResetToken(
-                resetToken
+                token
             );
 
 
@@ -1241,9 +1093,10 @@ exports.resetPassword = async (
     }
 
 
+    // 2. Tìm user
     const user =
-        await UserRepository.findById(
-            payload.user_id
+        await UserRepository.findByEmail(
+            payload.email
         );
 
 
@@ -1257,6 +1110,7 @@ exports.resetPassword = async (
     }
 
 
+    // 3. Kiểm tra mật khẩu mới trùng mật khẩu cũ không
     const samePassword =
         await Password.compare(
             newPassword,
@@ -1275,6 +1129,7 @@ exports.resetPassword = async (
     }
 
 
+    // 4. Đổi mật khẩu
     const hashedPassword =
         await Password.hash(
             newPassword
@@ -1287,6 +1142,7 @@ exports.resetPassword = async (
     );
 
 
+    // 🔥 5. Vô hiệu hóa tất cả token đăng nhập cũ
     await RefreshTokenRepository.revokeByUser(
         user.user_id,
         "Đặt lại mật khẩu"
@@ -1306,6 +1162,13 @@ exports.resetPassword = async (
             error.message
         );
     }
+
+
+    // 🔥 6. Gửi email cảnh báo mật khẩu vừa đổi
+    await MailService.sendPasswordChangeAlert(
+        user.email,
+        user.full_name
+    );
 
 
     return {

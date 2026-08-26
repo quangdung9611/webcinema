@@ -24,7 +24,8 @@ class OtpService {
             throw { statusCode: 429, message: rateLimit.message };
         }
 
-        const otpCode = Otp.generate6();
+        // 🔥 ĐẢM BẢO OTP LÀ CHUỖI SẠCH 6 SỐ (KHÔNG PHẢI OBJECT)
+        const otpCode = Otp.generate6(); 
         console.log(`📤 Generated OTP: ${otpCode}`);
 
         await RedisService.saveOTP(email, purpose, otpCode, 300);
@@ -88,7 +89,6 @@ class OtpService {
         return { success: true, message: "OTP đã được xóa" };
     }
 
-    // resendOTP đã bị loại bỏ - nếu gọi sẽ lỗi
     async resendOTP() {
         throw new Error("Không hỗ trợ gửi lại OTP. Vui lòng bắt đầu lại giao dịch.");
     }

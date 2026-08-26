@@ -3,7 +3,7 @@ const crypto = require("crypto");
 class Otp {
 
     /*=========================================================
-        GENERATE OTP
+        GENERATE OTP (Chuẩn 6 số)
     =========================================================*/
 
     static generate(length = 6) {

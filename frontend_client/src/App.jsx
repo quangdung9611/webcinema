@@ -81,6 +81,19 @@ const VerifyEmail = lazy(() =>
     import("./user_frontend/pages/VerifyEmail")
 );
 
+// 🔥 THÊM 3 TRANG CHO LUỒNG QUÊN MẬT KHẨU 5 BƯỚC
+const ForgotPassword = lazy(() =>
+    import("./user_frontend/pages/ForgotPassword")
+);
+
+const VerifyOtp = lazy(() =>
+    import("./user_frontend/pages/VerifyOtp")
+);
+
+const ResetPassword = lazy(() =>
+    import("./user_frontend/pages/ResetPassword")
+);
+
 const MovieDetail = lazy(() =>
     import("./user_frontend/pages/MovieDetail")
 );
@@ -847,6 +860,22 @@ const UserRoutes = () => {
                 <Route
                     path="verify-email"
                     element={<VerifyEmail />}
+                />
+
+                {/* 🔥 THÊM 3 TRANG QUÊN MẬT KHẨU */}
+                <Route
+                    path="forgot-password"
+                    element={<ForgotPassword />}
+                />
+
+                <Route
+                    path="verify-otp"
+                    element={<VerifyOTP />}
+                />
+
+                <Route
+                    path="reset-password"
+                    element={<ResetPassword />}
                 />
 
                 {/* PROTECTED */}

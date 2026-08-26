@@ -20,26 +20,24 @@ const LoginLockModal = ({
     useEffect(() => {
         if (!show || !lockedUntil) return;
 
+        let closeTimeout;
+
         const calculateTimeLeft = () => {
             const now = Date.now();
 
-            // ============================================================
-            // DÙNG CEIL ĐỂ KHÔNG BỊ MẤT 1 GIÂY NGAY KHI MODAL VỪA HIỆN
-            // ============================================================
-            const totalDuration = lockedUntil - now;
-
+            // ========================================================
+            // DÙNG CEIL ĐỂ KHÔNG BỊ MẤT GIÂY NGAY KHI MODAL MỞ
+            // ========================================================
             const secondsLeft = Math.max(
                 0,
-                Math.ceil(totalDuration / 1000)
+                Math.ceil((lockedUntil - now) / 1000)
             );
 
             setTimeLeft(secondsLeft);
 
-            // ============================================================
-            // XÁC ĐỊNH TỔNG THỜI GIAN KHÓA
-            // Level 1 = 60 giây
-            // Level 2 = 180 giây
-            // ============================================================
+            // ========================================================
+            // THỜI GIAN TỔNG CỘNG THEO LEVEL
+            // ========================================================
             let totalSeconds = 60;
 
             if (lockLevel >= 2) {
@@ -49,25 +47,24 @@ const LoginLockModal = ({
             const percent = (secondsLeft / totalSeconds) * 100;
 
             setRemainingPercent(
-                Math.max(
-                    0,
-                    Math.min(100, percent)
-                )
+                Math.max(0, Math.min(100, percent))
             );
 
-            // ============================================================
-            // KIỂM TRA HẾT THỜI GIAN KHÓA
-            // ============================================================
             if (secondsLeft <= 0) {
-                isExpiredRef.current = true;
-                setIsExpired(true);
+                if (!isExpiredRef.current) {
+                    isExpiredRef.current = true;
+                    setIsExpired(true);
+
+                    closeTimeout = setTimeout(() => {
+                        onClose?.();
+                    }, 2000);
+                }
             } else {
                 isExpiredRef.current = false;
                 setIsExpired(false);
             }
         };
 
-        // Chạy ngay khi modal mở
         calculateTimeLeft();
 
         const interval = setInterval(() => {
@@ -75,34 +72,23 @@ const LoginLockModal = ({
 
             if (isExpiredRef.current) {
                 clearInterval(interval);
-
-                setTimeout(() => {
-                    onClose();
-                }, 2000);
             }
         }, 1000);
 
         return () => {
             clearInterval(interval);
+
+            if (closeTimeout) {
+                clearTimeout(closeTimeout);
+            }
         };
-    }, [
-        show,
-        lockedUntil,
-        lockLevel,
-        onClose
-    ]);
+    }, [show, lockedUntil, lockLevel, onClose]);
 
     if (!show) return null;
 
-    // ============================================================
-    // FORMAT THỜI GIAN
-    // ============================================================
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
 
-    // ============================================================
-    // UI THEO LEVEL KHÓA
-    // ============================================================
     const getLevelEmoji = () => {
         if (lockLevel >= 2) return '⚠️';
 
@@ -123,9 +109,6 @@ const LoginLockModal = ({
         return 'Khóa cơ bản - 1 phút';
     };
 
-    // ============================================================
-    // NỘI DUNG MODAL
-    // ============================================================
     const renderLockContent = () => {
         if (isExpired) {
             return (
@@ -157,7 +140,6 @@ const LoginLockModal = ({
         return (
             <div className="login-lock-modal-body">
 
-                {/* LEVEL BADGE */}
                 <div
                     className="lock-level-badge"
                     style={{
@@ -171,19 +153,16 @@ const LoginLockModal = ({
                     {getLevelText()}
                 </div>
 
-                {/* EMAIL */}
                 {email && (
                     <p className="lock-email-info">
                         📧 <strong>{email}</strong>
                     </p>
                 )}
 
-                {/* MESSAGE */}
                 <p className="lock-message">
                     {message}
                 </p>
 
-                {/* TIMER */}
                 <div className="login-lock-timer">
                     <span className="timer-icon">
                         ⏳
@@ -201,7 +180,6 @@ const LoginLockModal = ({
                     </span>
                 </div>
 
-                {/* PROGRESS BAR */}
                 <div className="lock-progress-bar">
                     <div
                         className="lock-progress-fill"
@@ -212,12 +190,11 @@ const LoginLockModal = ({
                     />
                 </div>
 
-                {/* REMAINING TIME */}
                 <p className="lock-time-remaining">
-                    ⏱️ Còn lại {minutes} phút {seconds} giây
+                    ⏱️ Còn lại{' '}
+                    {minutes} phút {seconds} giây
                 </p>
 
-                {/* HINT */}
                 <p className="login-lock-hint">
                     💡 Mẹo: Bạn có thể dùng
                     {' '}
@@ -246,11 +223,13 @@ const LoginLockModal = ({
                     : 'Quên mật khẩu?'
             }
             onConfirm={() => {
-                document
-                    .querySelector('.forgot-link')
-                    ?.click();
+                if (!isExpired) {
+                    document
+                        .querySelector('.forgot-link')
+                        ?.click();
+                }
 
-                onClose();
+                onClose?.();
             }}
             cancelText="Đóng"
             onCancel={onClose}

@@ -1,88 +1,107 @@
-const ResetPasswordOtpTemplate = (otp) => {
+// =========================================================
+// RESET PASSWORD LINK TEMPLATE
+// =========================================================
+
+module.exports = (fullName, resetUrl) => {
 
     return `
-    
-    <div
-        style="
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            padding: 40px;
-        "
-    >
-
-        <div
-            style="
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Đặt lại mật khẩu</title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
                 max-width: 600px;
-                margin: auto;
-                background: #ffffff;
-                border-radius: 12px;
-                overflow: hidden;
-                box-shadow: 0 4px 12px rgba(0,0,0,.1);
-            "
-        >
-
-            <div
-                style="
-                    background:#e50914;
-                    color:white;
-                    padding:20px;
-                    text-align:center;
-                "
-            >
-                <h1>
-                    🎬 Dũng Cinema
-                </h1>
+                margin: 30px auto;
+                background-color: #ffffff;
+                border-radius: 10px;
+                padding: 40px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+            .header {
+                text-align: center;
+                border-bottom: 2px solid #e50914;
+                padding-bottom: 20px;
+            }
+            .header h1 {
+                color: #e50914;
+                font-size: 28px;
+                margin: 0;
+            }
+            .content {
+                padding: 30px 0;
+                color: #333333;
+            }
+            .content h2 {
+                color: #333333;
+                font-size: 22px;
+            }
+            .btn {
+                display: inline-block;
+                background-color: #e50914;
+                color: #ffffff !important;
+                padding: 14px 40px;
+                border-radius: 5px;
+                text-decoration: none;
+                font-weight: bold;
+                font-size: 16px;
+                margin: 20px 0;
+            }
+            .btn:hover {
+                background-color: #b20710;
+            }
+            .footer {
+                text-align: center;
+                font-size: 12px;
+                color: #999999;
+                border-top: 1px solid #eeeeee;
+                padding-top: 20px;
+            }
+            .footer a {
+                color: #e50914;
+                text-decoration: none;
+            }
+            .note {
+                color: #666666;
+                font-size: 14px;
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🎬 Dũng Cinema</h1>
+                <p style="color: #666666;">Đặt lại mật khẩu</p>
             </div>
-
-            <div
-                style="
-                    padding:30px;
-                "
-            >
-
-                <h2>
-                    Khôi phục mật khẩu
-                </h2>
-
-                <p>
-                    Bạn vừa yêu cầu đặt lại mật khẩu tài khoản.
-                </p>
-
-                <p>
-                    Mã OTP của bạn:
-                </p>
-
-                <div
-                    style="
-                        text-align:center;
-                        font-size:36px;
-                        font-weight:bold;
-                        color:#e50914;
-                        letter-spacing:8px;
-                        margin:30px 0;
-                    "
-                >
-                    ${otp}
+            <div class="content">
+                <h2>Xin chào ${fullName || 'bạn'}!</h2>
+                <p>Bạn vừa yêu cầu đặt lại mật khẩu tại <strong>Dũng Cinema</strong>.</p>
+                <p>Vui lòng nhấn vào nút bên dưới để đặt lại mật khẩu của bạn:</p>
+                <div style="text-align: center;">
+                    <a href="${resetUrl}" class="btn">Đặt lại mật khẩu</a>
                 </div>
-
-                <p>
-                    OTP sẽ hết hạn sau
-                    <strong>5 phút</strong>.
-                </p>
-
-                <p>
-                    Nếu bạn không thực hiện yêu cầu này,
-                    vui lòng bỏ qua email.
-                </p>
-
+                <p class="note">Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>
+                <p class="note">Liên kết này sẽ hết hạn sau 15 phút.</p>
             </div>
-
+            <div class="footer">
+                <p>&copy; 2024 Dũng Cinema. All rights reserved.</p>
+                <p>
+                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}">Trang chủ</a> |
+                    <a href="mailto:support@quangdungcinema.id.vn">Hỗ trợ</a>
+                </p>
+            </div>
         </div>
-
-    </div>
-
+    </body>
+    </html>
     `;
-};
 
-module.exports =
-    ResetPasswordOtpTemplate;
+};
