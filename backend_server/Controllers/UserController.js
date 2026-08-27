@@ -246,6 +246,38 @@ exports.verifyPin = async (req, res) => {
     }
 };
 
+/*=========================================================
+    🆕 UPDATE / ĐỔI PIN
+=========================================================*/
+exports.updatePin = async (req, res) => {
+    try {
+        const { oldPin, newPin } = req.body;
+
+        if (!oldPin || !newPin) {
+            return res.status(400).json({
+                success: false,
+                field: !oldPin ? "oldPin" : "newPin",
+                message: "Vui lòng nhập đầy đủ PIN cũ và PIN mới"
+            });
+        }
+
+        await UserService.updatePin(req.user.user_id, oldPin, newPin);
+
+        return res.status(200).json({
+            success: true,
+            message: "Đổi mã PIN thành công!"
+        });
+    } catch (err) {
+        console.error("Update PIN Error:", err);
+        return res.status(err.statusCode || 400).json({
+            success: false,
+            field: err.field || null,
+            code: err.code || null,
+            message: err.message || "Lỗi máy chủ"
+        });
+    }
+};
+
 exports.getPinStatus = async (req, res) => {
     try {
         const status = await UserService.getPinStatus(req.user.user_id);
