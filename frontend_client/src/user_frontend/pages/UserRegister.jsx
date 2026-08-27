@@ -15,21 +15,17 @@ const UserRegister = () => {
         password: '',
         confirmPassword: '',
         phone: '',
-        address: '',
-        pin: '',           // 🆕 Mã PIN
-        confirmPin: ''     // 🆕 Xác nhận PIN
+        address: ''
     });
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [showPin, setShowPin] = useState(false);           // 🆕 Show PIN
-    const [showConfirmPin, setShowConfirmPin] = useState(false); // 🆕 Show confirm PIN
 
     const [modalConfig, setModalConfig] = useState({
         show: false,
-        type: 'success',
+        type: 'error',
         title: '',
         message: ''
     });
@@ -40,7 +36,7 @@ const UserRegister = () => {
     // VALIDATE FIELD
     // ==========================================
 
-    const validateField = (name, value, password = formData.password, confirmPassword = formData.confirmPassword, pin = formData.pin, confirmPin = formData.confirmPin) => {
+    const validateField = (name, value, password = formData.password, confirmPassword = formData.confirmPassword) => {
         let error = '';
 
         switch (name) {
@@ -96,24 +92,6 @@ const UserRegister = () => {
                 }
                 break;
 
-            // 🆕 VALIDATE PIN
-            case 'pin':
-                if (!value.trim()) {
-                    error = 'Vui lòng nhập mã PIN';
-                } else if (!/^\d{6}$/.test(value)) {
-                    error = 'Mã PIN phải là 6 chữ số';
-                }
-                break;
-
-            // 🆕 VALIDATE CONFIRM PIN
-            case 'confirmPin':
-                if (!value.trim()) {
-                    error = 'Vui lòng xác nhận mã PIN';
-                } else if (value !== pin) {
-                    error = 'Mã PIN xác nhận không khớp';
-                }
-                break;
-
             default:
                 break;
         }
@@ -122,7 +100,7 @@ const UserRegister = () => {
     };
 
     // ==========================================
-    // HANDLE INPUT - REAL-TIME
+    // HANDLE INPUT
     // ==========================================
 
     const handleChange = (e) => {
@@ -130,24 +108,15 @@ const UserRegister = () => {
 
         const newPassword = name === 'password' ? value : formData.password;
         const newConfirmPassword = name === 'confirmPassword' ? value : formData.confirmPassword;
-        const newPin = name === 'pin' ? value : formData.pin;
-        const newConfirmPin = name === 'confirmPin' ? value : formData.confirmPin;
 
         setFormData(prev => ({ ...prev, [name]: value }));
 
-        const error = validateField(name, value, newPassword, newConfirmPassword, newPin, newConfirmPin);
+        const error = validateField(name, value, newPassword, newConfirmPassword);
         setErrors(prev => ({ ...prev, [name]: error }));
 
-        // Kiểm tra lại confirmPassword khi password thay đổi
         if (name === 'password' || name === 'confirmPassword') {
             const confirmError = validateField('confirmPassword', newConfirmPassword, newPassword, newConfirmPassword);
             setErrors(prev => ({ ...prev, confirmPassword: confirmError }));
-        }
-
-        // 🆕 Kiểm tra lại confirmPin khi pin thay đổi
-        if (name === 'pin' || name === 'confirmPin') {
-            const confirmPinError = validateField('confirmPin', newConfirmPin, newPassword, newConfirmPassword, newPin, newConfirmPin);
-            setErrors(prev => ({ ...prev, confirmPin: confirmPinError }));
         }
     };
 
@@ -157,7 +126,7 @@ const UserRegister = () => {
 
     const validate = () => {
         const tempErrors = {};
-        const fields = ['username', 'full_name', 'email', 'phone', 'password', 'confirmPassword', 'pin', 'confirmPin'];
+        const fields = ['username', 'full_name', 'email', 'phone', 'password', 'confirmPassword'];
         
         fields.forEach(field => {
             const error = validateField(field, formData[field]);
@@ -171,7 +140,7 @@ const UserRegister = () => {
     };
 
     // ==========================================
-    // REGISTER
+    // BƯỚC 1: ĐĂNG KÝ THÔNG TIN CƠ BẢN
     // ==========================================
 
     const handleRegister = async (e) => {
@@ -181,22 +150,27 @@ const UserRegister = () => {
         setLoading(true);
 
         try {
-            const response = await api.post('/api/auth/register', {
+            const response = await api.post('/api/auth/register-step1', {
                 username: formData.username,
                 full_name: formData.full_name,
                 email: formData.email,
                 password: formData.password,
                 phone: formData.phone,
-                address: formData.address || '',
-                pin: formData.pin  // 🆕 Gửi PIN lên backend
+                address: formData.address || ''
             });
 
-            setModalConfig({
-                show: true,
-                type: 'success',
-                title: '🎉 Đăng ký thành công!',
-                message: `Chúng tôi đã gửi email xác thực đến ${formData.email}. Vui lòng kiểm tra hộp thư của bạn để xác thực tài khoản.`
-            });
+            if (response.data.success) {
+                const { user_id, email, full_name } = response.data.data;
+                
+                // Chuyển sang bước 2: Thiết lập PIN
+                navigate('/register-pin', {
+                    state: {
+                        userId: user_id,
+                        email: email,
+                        full_name: full_name || formData.full_name
+                    }
+                });
+            }
 
         } catch (err) {
             console.error('Register Error:', err);
@@ -225,9 +199,6 @@ const UserRegister = () => {
 
     const handleModalClose = () => {
         setModalConfig({ ...modalConfig, show: false });
-        if (modalConfig.type === 'success') {
-            navigate('/login');
-        }
     };
 
     // ==========================================
@@ -237,9 +208,16 @@ const UserRegister = () => {
     return (
         <div className="auth-container">
             <div className="auth-card">
+                {/* STEP INDICATOR */}
+                <div className="step-indicator">
+                    <span className="step-active">1</span>
+                    <span className="step-line"></span>
+                    <span className="step-inactive">2</span>
+                </div>
+
                 <h2>ĐĂNG KÝ</h2>
                 <p className="auth-subtitle">
-                    Tạo tài khoản để trải nghiệm Cinema Star
+                    Bước 1: Nhập thông tin cơ bản
                 </p>
 
                 <div className="auth-form-wrapper">
@@ -360,63 +338,6 @@ const UserRegister = () => {
                             {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
                         </div>
 
-                        {/* 🆕 PIN - MÃ PIN THANH TOÁN */}
-                        <div className="form-group">
-                            <label>Mã PIN thanh toán</label>
-                            <div className="password-wrapper">
-                                <input
-                                    type={showPin ? 'text' : 'password'}
-                                    name="pin"
-                                    className={`auth-input ${errors.pin ? 'input-error' : ''}`}
-                                    value={formData.pin}
-                                    onChange={handleChange}
-                                    placeholder="Nhập 6 chữ số"
-                                    maxLength="6"
-                                    autoComplete="off"
-                                    disabled={loading}
-                                />
-                                <button
-                                    type="button"
-                                    className="toggle-password"
-                                    onClick={() => setShowPin(!showPin)}
-                                    tabIndex="-1"
-                                >
-                                    {showPin ? <Eye size={18} /> : <EyeOff size={18} />}
-                                </button>
-                            </div>
-                            {errors.pin && <span className="error-text">{errors.pin}</span>}
-                            <small style={{ color: '#999', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                                🔐 Mã PIN dùng để xác thực giao dịch thanh toán (6 chữ số)
-                            </small>
-                        </div>
-
-                        {/* 🆕 CONFIRM PIN */}
-                        <div className="form-group">
-                            <label>Xác nhận mã PIN</label>
-                            <div className="password-wrapper">
-                                <input
-                                    type={showConfirmPin ? 'text' : 'password'}
-                                    name="confirmPin"
-                                    className={`auth-input ${errors.confirmPin ? 'input-error' : ''}`}
-                                    value={formData.confirmPin}
-                                    onChange={handleChange}
-                                    placeholder="Nhập lại 6 chữ số"
-                                    maxLength="6"
-                                    autoComplete="off"
-                                    disabled={loading}
-                                />
-                                <button
-                                    type="button"
-                                    className="toggle-password"
-                                    onClick={() => setShowConfirmPin(!showConfirmPin)}
-                                    tabIndex="-1"
-                                >
-                                    {showConfirmPin ? <Eye size={18} /> : <EyeOff size={18} />}
-                                </button>
-                            </div>
-                            {errors.confirmPin && <span className="error-text">{errors.confirmPin}</span>}
-                        </div>
-
                         {/* ADDRESS */}
                         <div className="form-group">
                             <label>Địa chỉ (không bắt buộc)</label>
@@ -439,7 +360,7 @@ const UserRegister = () => {
                             className="btn-user"
                             spinnerColor="#ffffff"
                         >
-                            ĐĂNG KÝ NGAY
+                            TIẾP TỤC
                         </LoadingButton>
                     </form>
                 </div>

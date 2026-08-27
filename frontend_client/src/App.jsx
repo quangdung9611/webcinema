@@ -76,6 +76,11 @@ const UserRegister = lazy(() =>
     import("./user_frontend/pages/UserRegister")
 );
 
+// 🆕 THÊM TRANG ĐĂNG KÝ BƯỚC 2 - THIẾT LẬP PIN
+const UserRegisterPin = lazy(() =>
+    import("./user_frontend/pages/UserRegisterPin")
+);
+
 const VerifyEmail = lazy(() =>
     import("./user_frontend/pages/VerifyEmail")
 );
@@ -733,6 +738,11 @@ const UserRoutes = () => {
             <Route
                 path="/register"
                 element={<UserRegister />}
+            />
+            {/* 🆕 TRANG ĐĂNG KÝ BƯỚC 2 - THIẾT LẬP PIN */}
+            <Route
+                path="/register-pin"
+                element={<UserRegisterPin />}
             />
             <Route
                 path="/verify-email"

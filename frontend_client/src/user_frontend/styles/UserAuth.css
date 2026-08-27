@@ -429,7 +429,7 @@
 }
 
 /* =========================================================
-   12. Session Expired Modal - THÊM MỚI
+   12. Session Expired Modal
 ========================================================= */
 .session-expired-overlay {
     position: fixed;
@@ -544,7 +544,202 @@
 }
 
 /* =========================================================
-   13. Animations
+   13. 🆕 STEP INDICATOR - BƯỚC ĐĂNG KÝ 2 BƯỚC
+========================================================= */
+.step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.step-active,
+.step-done,
+.step-inactive {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.step-active {
+    background: #dc2626;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.step-done {
+    background: #22c55e;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+}
+
+.step-inactive {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.step-line {
+    width: 40px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+}
+
+.step-indicator .step-done ~ .step-line {
+    background: #22c55e;
+}
+
+/* =========================================================
+   14. 🆕 USER INFO BOX - HIỂN THỊ THÔNG TIN USER
+========================================================= */
+.user-info-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    border-left: 4px solid #dc2626;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.user-info-box svg {
+    flex-shrink: 0;
+    color: var(--silver-primary);
+}
+
+.user-info-box strong {
+    color: var(--text-heading);
+}
+
+/* =========================================================
+   15. 🆕 INPUT HINT - GHI CHÚ NHỎ DƯỚI INPUT
+========================================================= */
+.input-hint {
+    display: block;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* =========================================================
+   16. 🆕 BACK BUTTON - QUAY LẠI BƯỚC 1
+========================================================= */
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+    transition: color 0.2s ease;
+}
+
+.back-btn:hover {
+    color: var(--silver-primary);
+}
+
+/* =========================================================
+   17. 🆕 BUTTON GROUP - NHÓM NÚT
+========================================================= */
+.button-group {
+    margin-top: 8px;
+}
+
+/* =========================================================
+   18. 🆕 LOGIN LOCK MODAL
+========================================================= */
+.lock-modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 99999;
+    padding: var(--space-lg);
+    animation: modalFade 0.3s ease;
+}
+
+.lock-modal {
+    max-width: 440px;
+    width: 100%;
+    background: var(--bg-card);
+    border: var(--border-premium);
+    border-radius: var(--radius-xl);
+    padding: var(--space-2xl);
+    box-shadow: var(--card-shadow-hover);
+    animation: modalScale 0.3s ease;
+    text-align: center;
+}
+
+.lock-modal .lock-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(220, 38, 38, 0.15);
+    color: #dc2626;
+    margin: 0 auto var(--space-md);
+}
+
+.lock-modal .lock-icon svg {
+    width: 32px;
+    height: 32px;
+}
+
+.lock-modal h3 {
+    color: var(--text-heading);
+    font-size: var(--font-size-h3);
+    font-weight: var(--fw-extrabold);
+    margin-bottom: var(--space-xs);
+}
+
+.lock-modal .lock-message {
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    margin-bottom: var(--space-md);
+}
+
+.lock-modal .lock-timer {
+    display: inline-block;
+    padding: 8px 20px;
+    border-radius: var(--radius-round);
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    font-size: var(--font-size-h3);
+    font-weight: var(--fw-bold);
+    margin-bottom: var(--space-lg);
+    font-variant-numeric: tabular-nums;
+}
+
+.lock-modal .lock-footer {
+    padding-top: var(--space-md);
+    border-top: var(--border-subtle);
+    color: var(--text-muted);
+    font-size: var(--font-size-h6);
+}
+
+/* =========================================================
+   19. Animations
 ========================================================= */
 @keyframes modalFade {
     from { opacity: 0; }
@@ -563,7 +758,7 @@
 }
 
 /* =========================================================
-   14. Responsive
+   20. Responsive
 ========================================================= */
 @media (max-width: 768px) {
     .auth-container {
@@ -604,12 +799,10 @@
         padding: var(--space-xl) var(--space-lg);
     }
     
-    /* Responsive scrollbar nhỏ hơn */
     .auth-form-wrapper {
         max-height: 300px;
     }
 
-    /* Session expired modal responsive */
     .session-expired-modal {
         padding: var(--space-xl);
     }
@@ -632,6 +825,31 @@
         padding: 10px 32px;
         font-size: var(--font-size-h6);
     }
+
+    .lock-modal {
+        padding: var(--space-xl);
+    }
+
+    .lock-modal .lock-timer {
+        font-size: var(--font-size-h4);
+    }
+
+    .step-line {
+        width: 20px;
+    }
+
+    .step-active,
+    .step-done,
+    .step-inactive {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+
+    .user-info-box {
+        font-size: 13px;
+        flex-wrap: wrap;
+    }
 }
 
 @media (max-width: 480px) {
@@ -653,12 +871,10 @@
         padding: var(--space-sm) var(--space-md);
     }
     
-    /* Responsive scrollbar nhỏ hơn */
     .auth-form-wrapper {
         max-height: 250px;
     }
 
-    /* Session expired modal responsive nhỏ */
     .session-expired-overlay {
         padding: var(--space-sm);
     }
@@ -695,20 +911,40 @@
         font-size: var(--font-size-h6);
         width: 100%;
     }
+
+    .lock-modal {
+        padding: var(--space-lg);
+    }
+
+    .lock-modal .lock-timer {
+        font-size: var(--font-size-h4);
+        padding: 6px 16px;
+    }
+
+    .lock-modal h3 {
+        font-size: var(--font-size-h4);
+    }
+
+    .lock-modal .lock-message {
+        font-size: var(--font-size-h6);
+    }
 }
 
 /* =========================================================
-   15. Accessibility - Reduced Motion
+   21. Accessibility - Reduced Motion
 ========================================================= */
 @media (prefers-reduced-motion: reduce) {
     .session-expired-overlay,
     .session-expired-modal,
     .forgot-modal-overlay,
-    .forgot-modal {
+    .forgot-modal,
+    .lock-modal-overlay,
+    .lock-modal {
         animation: none !important;
     }
     
-    .session-expired-modal .modal-btn-confirm {
+    .session-expired-modal .modal-btn-confirm,
+    .lock-modal .lock-timer {
         transition: none !important;
     }
     

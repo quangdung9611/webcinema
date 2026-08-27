@@ -1,28 +1,56 @@
 const Password = require("../utils/Password");
 const UserRepository = require("../Repositories/UserRepository");
+
 const {
     uploadToCloudinary,
     deleteFromCloudinary
 } = require("../Middlewares/UploadCloudinary");
 
+
 class UserService {
 
     /*=========================================================
-        GET ALL USERS
+        GET ALL USERS - KHÔNG PHÂN TRANG
+
+        RETURN:
+        rows[]
     =========================================================*/
     async getAllUsersAll(search = "") {
+
         return await UserRepository.findAllAll(search);
     }
 
-    async getAllUsers(page = 1, limit = 20, search = "") {
-        return await UserRepository.findAll(page, limit, search);
+
+    /*=========================================================
+        GET ALL USERS - CÓ PHÂN TRANG
+
+        RETURN:
+        {
+            data: [],
+            pagination: {}
+        }
+    =========================================================*/
+    async getAllUsers(
+        page = 1,
+        limit = 20,
+        search = ""
+    ) {
+
+        return await UserRepository.findAll(
+            page,
+            limit,
+            search
+        );
     }
+
 
     /*=========================================================
         GET USER BY ID
     =========================================================*/
     async getUserById(userId) {
-        const user = await UserRepository.findById(userId);
+
+        const user =
+            await UserRepository.findById(userId);
 
         if (!user) {
             throw {
@@ -33,12 +61,15 @@ class UserService {
 
         return user;
     }
+
 
     /*=========================================================
-        GET PROFILE
+        GET USER PROFILE
     =========================================================*/
     async getProfile(userId) {
-        const user = await UserRepository.findProfile(userId);
+
+        const user =
+            await UserRepository.findProfile(userId);
 
         if (!user) {
             throw {
@@ -49,11 +80,13 @@ class UserService {
 
         return user;
     }
+
 
     /*=========================================================
         CREATE USER
     =========================================================*/
     async createUser(data, file) {
+
         const {
             username,
             email,
@@ -64,9 +97,17 @@ class UserService {
             role
         } = data;
 
-        const existed = await UserRepository.exists(username, email, phone);
+
+        const existed =
+            await UserRepository.exists(
+                username,
+                email,
+                phone
+            );
+
 
         if (existed) {
+
             if (existed.username === username) {
                 throw {
                     statusCode: 400,
@@ -92,16 +133,28 @@ class UserService {
             }
         }
 
-        const hashedPassword = await Password.hash(password);
+
+        const hashedPassword =
+            await Password.hash(password);
+
 
         let avatarUrl = null;
 
+
         if (file) {
-            const result = await uploadToCloudinary(file, "cinema_shop/avatars");
+
+            const result =
+                await uploadToCloudinary(
+                    file,
+                    "cinema_shop/avatars"
+                );
+
             avatarUrl = result.url;
         }
 
+
         return await UserRepository.create({
+
             username,
             full_name,
             phone,
@@ -109,18 +162,30 @@ class UserService {
             email,
             password: hashedPassword,
             user_avatar: avatarUrl,
+
             role: role || "customer",
+
             status: "active",
+
             email_verified: 0,
+
             points: 0
         });
     }
 
+
     /*=========================================================
         UPDATE USER - ADMIN
     =========================================================*/
-    async updateUser(userId, data, file) {
-        const user = await UserRepository.findById(userId);
+    async updateUser(
+        userId,
+        data,
+        file
+    ) {
+
+        const user =
+            await UserRepository.findById(userId);
+
 
         if (!user) {
             throw {
@@ -129,8 +194,18 @@ class UserService {
             };
         }
 
-        if (data.email && data.email !== user.email) {
-            if (await UserRepository.existsByEmail(data.email)) {
+
+        if (
+            data.email &&
+            data.email !== user.email
+        ) {
+
+            const exists =
+                await UserRepository.existsByEmail(
+                    data.email
+                );
+
+            if (exists) {
                 throw {
                     statusCode: 400,
                     field: "email",
@@ -139,8 +214,18 @@ class UserService {
             }
         }
 
-        if (data.phone && data.phone !== user.phone) {
-            if (await UserRepository.existsByPhone(data.phone)) {
+
+        if (
+            data.phone &&
+            data.phone !== user.phone
+        ) {
+
+            const exists =
+                await UserRepository.existsByPhone(
+                    data.phone
+                );
+
+            if (exists) {
                 throw {
                     statusCode: 400,
                     field: "phone",
@@ -149,8 +234,18 @@ class UserService {
             }
         }
 
-        if (data.username && data.username !== user.username) {
-            if (await UserRepository.existsByUsername(data.username)) {
+
+        if (
+            data.username &&
+            data.username !== user.username
+        ) {
+
+            const exists =
+                await UserRepository.existsByUsername(
+                    data.username
+                );
+
+            if (exists) {
                 throw {
                     statusCode: 400,
                     field: "username",
@@ -159,38 +254,66 @@ class UserService {
             }
         }
 
-        let avatarUrl = user.user_avatar;
+
+        let avatarUrl =
+            user.user_avatar;
+
 
         if (file) {
-            if (user.user_avatar) {
-                const publicId = user.user_avatar
-                    .split("/")
-                    .slice(7)
-                    .join("/")
-                    .split(".")[0];
 
-                await deleteFromCloudinary(publicId);
+            if (user.user_avatar) {
+
+                const urlParts =
+                    user.user_avatar.split("/");
+
+                const publicId =
+                    urlParts
+                        .slice(7)
+                        .join("/")
+                        .split(".")[0];
+
+                await deleteFromCloudinary(
+                    publicId
+                );
             }
 
-            const result = await uploadToCloudinary(file, "cinema_shop/avatars");
+
+            const result =
+                await uploadToCloudinary(
+                    file,
+                    "cinema_shop/avatars"
+                );
+
             avatarUrl = result.url;
         }
+
 
         delete data.password;
         delete data.newPassword;
         delete data.oldPassword;
 
-        return await UserRepository.updateProfile(userId, {
-            ...data,
-            user_avatar: avatarUrl
-        });
+
+        return await UserRepository.updateProfile(
+            userId,
+            {
+                ...data,
+                user_avatar: avatarUrl
+            }
+        );
     }
 
+
     /*=========================================================
-        UPDATE STATUS
+        UPDATE USER STATUS
     =========================================================*/
-    async updateUserStatus(userId, status) {
-        const user = await UserRepository.findById(userId);
+    async updateUserStatus(
+        userId,
+        status
+    ) {
+
+        const user =
+            await UserRepository.findById(userId);
+
 
         if (!user) {
             throw {
@@ -199,14 +322,25 @@ class UserService {
             };
         }
 
-        return await UserRepository.updateStatus(userId, status);
+
+        return await UserRepository.updateStatus(
+            userId,
+            status
+        );
     }
 
+
     /*=========================================================
-        UPDATE ROLE
+        UPDATE USER ROLE
     =========================================================*/
-    async updateUserRole(userId, role) {
-        const user = await UserRepository.findById(userId);
+    async updateUserRole(
+        userId,
+        role
+    ) {
+
+        const user =
+            await UserRepository.findById(userId);
+
 
         if (!user) {
             throw {
@@ -215,22 +349,35 @@ class UserService {
             };
         }
 
-        if (!["admin", "customer"].includes(role)) {
+
+        if (
+            !["admin", "customer"].includes(role)
+        ) {
+
             throw {
                 statusCode: 400,
                 field: "role",
-                message: "Role phải là 'admin' hoặc 'customer'"
+                message:
+                    "Role phải là 'admin' hoặc 'customer'"
             };
         }
 
-        return await UserRepository.updateRole(userId, role);
+
+        return await UserRepository.updateRole(
+            userId,
+            role
+        );
     }
+
 
     /*=========================================================
         DELETE USER
     =========================================================*/
     async deleteUser(userId) {
-        const user = await UserRepository.findById(userId);
+
+        const user =
+            await UserRepository.findById(userId);
+
 
         if (!user) {
             throw {
@@ -239,24 +386,41 @@ class UserService {
             };
         }
 
-        if (user.user_avatar) {
-            const publicId = user.user_avatar
-                .split("/")
-                .slice(7)
-                .join("/")
-                .split(".")[0];
 
-            await deleteFromCloudinary(publicId);
+        if (user.user_avatar) {
+
+            const urlParts =
+                user.user_avatar.split("/");
+
+            const publicId =
+                urlParts
+                    .slice(7)
+                    .join("/")
+                    .split(".")[0];
+
+            await deleteFromCloudinary(
+                publicId
+            );
         }
 
-        return await UserRepository.delete(userId);
+
+        return await UserRepository.delete(
+            userId
+        );
     }
+
 
     /*=========================================================
         UPDATE PROFILE - USER
     =========================================================*/
-    async updateProfile(userId, data) {
-        const user = await UserRepository.findById(userId);
+    async updateProfile(
+        userId,
+        data
+    ) {
+
+        const user =
+            await UserRepository.findById(userId);
+
 
         if (!user) {
             throw {
@@ -265,8 +429,18 @@ class UserService {
             };
         }
 
-        if (data.email && data.email !== user.email) {
-            if (await UserRepository.existsByEmail(data.email)) {
+
+        if (
+            data.email &&
+            data.email !== user.email
+        ) {
+
+            const exists =
+                await UserRepository.existsByEmail(
+                    data.email
+                );
+
+            if (exists) {
                 throw {
                     statusCode: 400,
                     field: "email",
@@ -275,8 +449,18 @@ class UserService {
             }
         }
 
-        if (data.phone && data.phone !== user.phone) {
-            if (await UserRepository.existsByPhone(data.phone)) {
+
+        if (
+            data.phone &&
+            data.phone !== user.phone
+        ) {
+
+            const exists =
+                await UserRepository.existsByPhone(
+                    data.phone
+                );
+
+            if (exists) {
                 throw {
                     statusCode: 400,
                     field: "phone",
@@ -285,8 +469,18 @@ class UserService {
             }
         }
 
-        if (data.username && data.username !== user.username) {
-            if (await UserRepository.existsByUsername(data.username)) {
+
+        if (
+            data.username &&
+            data.username !== user.username
+        ) {
+
+            const exists =
+                await UserRepository.existsByUsername(
+                    data.username
+                );
+
+            if (exists) {
                 throw {
                     statusCode: 400,
                     field: "username",
@@ -295,49 +489,89 @@ class UserService {
             }
         }
 
+
         if (data.newPassword) {
+
             if (!data.oldPassword) {
+
                 throw {
                     statusCode: 400,
                     field: "oldPassword",
-                    message: "Vui lòng nhập mật khẩu cũ"
+                    message:
+                        "Vui lòng nhập mật khẩu cũ"
                 };
             }
 
-            if (!await Password.compare(data.oldPassword, user.password)) {
+
+            const isMatch =
+                await Password.compare(
+                    data.oldPassword,
+                    user.password
+                );
+
+
+            if (!isMatch) {
+
                 throw {
                     statusCode: 400,
                     field: "oldPassword",
-                    message: "Mật khẩu cũ không đúng"
+                    message:
+                        "Mật khẩu cũ không đúng"
                 };
             }
 
-            if (!Password.isStrong(data.newPassword)) {
+
+            if (
+                !Password.isStrong(
+                    data.newPassword
+                )
+            ) {
+
                 throw {
                     statusCode: 400,
                     field: "newPassword",
-                    message: "Mật khẩu mới phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt"
+                    message:
+                        "Mật khẩu mới phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt"
                 };
             }
 
+
+            const hashed =
+                await Password.hash(
+                    data.newPassword
+                );
+
+
             await UserRepository.updatePassword(
                 userId,
-                await Password.hash(data.newPassword)
+                hashed
             );
         }
+
 
         delete data.oldPassword;
         delete data.newPassword;
         delete data.password;
 
-        return await UserRepository.updateProfile(userId, data);
+
+        return await UserRepository.updateProfile(
+            userId,
+            data
+        );
     }
 
+
     /*=========================================================
-        UPDATE AVATAR
+        UPDATE AVATAR - USER
     =========================================================*/
-    async updateAvatar(userId, file) {
-        const user = await UserRepository.findById(userId);
+    async updateAvatar(
+        userId,
+        file
+    ) {
+
+        const user =
+            await UserRepository.findById(userId);
+
 
         if (!user) {
             throw {
@@ -346,44 +580,84 @@ class UserService {
             };
         }
 
-        if (user.user_avatar) {
-            const publicId = user.user_avatar
-                .split("/")
-                .slice(7)
-                .join("/")
-                .split(".")[0];
 
-            await deleteFromCloudinary(publicId);
+        if (user.user_avatar) {
+
+            const urlParts =
+                user.user_avatar.split("/");
+
+            const publicId =
+                urlParts
+                    .slice(7)
+                    .join("/")
+                    .split(".")[0];
+
+            await deleteFromCloudinary(
+                publicId
+            );
         }
 
-        const result = await uploadToCloudinary(file, "cinema_shop/avatars");
 
-        const affected = await UserRepository.updateAvatar(userId, result.url);
+        const result =
+            await uploadToCloudinary(
+                file,
+                "cinema_shop/avatars"
+            );
 
-        if (affected === 0) {
+
+        const avatarUrl =
+            result.url;
+
+
+        const affectedRows =
+            await UserRepository.updateAvatar(
+                userId,
+                avatarUrl
+            );
+
+
+        if (affectedRows === 0) {
+
             throw {
                 statusCode: 500,
-                message: "Không thể cập nhật ảnh đại diện"
+                message:
+                    "Không thể cập nhật ảnh đại diện"
             };
         }
 
-        return result.url;
+
+        return avatarUrl;
     }
 
+
     /*=========================================================
-        GET BOOKINGS
+        GET USER BOOKINGS (CÓ HỖ TRỢ LỌC THEO NGÀY)
     =========================================================*/
     async getUserBookings(userId, from = null, to = null) {
-        return await UserRepository.getBookingsByUser(userId, from, to);
+
+        const bookings =
+            await UserRepository.getBookingsByUser(
+                userId,
+                from,
+                to
+            );
+
+        return bookings;
     }
 
+
     /*=========================================================
-        CLEAR HISTORY
+        CLEAR BOOKING HISTORY
     =========================================================*/
     async clearHistory(userId) {
-        const affected = await UserRepository.clearBookingsByUser(userId);
+
+        const affected =
+            await UserRepository.clearBookingsByUser(
+                userId
+            );
 
         if (affected === 0) {
+
             throw {
                 statusCode: 404,
                 message: "Không tìm thấy booking để xóa"
@@ -393,140 +667,32 @@ class UserService {
         return true;
     }
 
+
     /*=========================================================
-        RESET POINTS
+        RESET USER POINTS
     =========================================================*/
     async resetPoints(userId) {
-        const user = await UserRepository.findById(userId);
+
+        const user =
+            await UserRepository.findById(
+                userId
+            );
+
 
         if (!user) {
+
             throw {
                 statusCode: 404,
                 message: "Không tìm thấy người dùng"
             };
         }
 
-        return await UserRepository.resetPoints(userId);
-    }
 
-    /*=========================================================
-        🔐 PIN MANAGEMENT
-    =========================================================*/
-
-    // Thiết lập PIN lần đầu
-    async setupPin(userId, pin) {
-        const user = await UserRepository.findById(userId);
-
-        if (!user) {
-            throw {
-                statusCode: 404,
-                message: "Không tìm thấy người dùng"
-            };
-        }
-
-        if (!/^\d{6}$/.test(pin)) {
-            throw {
-                statusCode: 400,
-                field: "pin",
-                message: "Mã PIN phải là 6 chữ số"
-            };
-        }
-
-        const hashedPin = await Password.hash(pin);
-        await UserRepository.updatePinHash(userId, hashedPin);
-
-        return true;
-    }
-
-    // Xác thực PIN (dùng trong thanh toán)
-    async verifyPin(userId, pin) {
-        const user = await UserRepository.findById(userId);
-
-        if (!user) {
-            throw {
-                statusCode: 404,
-                message: "Không tìm thấy người dùng"
-            };
-        }
-
-        if (!user.pin_hash) {
-            throw {
-                statusCode: 400,
-                code: "PIN_NOT_SETUP",
-                message: "Bạn chưa thiết lập mã PIN"
-            };
-        }
-
-        const isValid = await Password.compare(pin, user.pin_hash);
-
-        if (!isValid) {
-            throw {
-                statusCode: 400,
-                message: "Mã PIN không đúng"
-            };
-        }
-
-        return true;
-    }
-
-    // Cập nhật / Đổi PIN
-    async updatePin(userId, oldPin, newPin) {
-        const user = await UserRepository.findById(userId);
-
-        if (!user) {
-            throw {
-                statusCode: 404,
-                message: "Không tìm thấy người dùng"
-            };
-        }
-
-        if (!user.pin_hash) {
-            throw {
-                statusCode: 400,
-                code: "PIN_NOT_SETUP",
-                message: "Bạn chưa thiết lập mã PIN"
-            };
-        }
-
-        const isValid = await Password.compare(oldPin, user.pin_hash);
-
-        if (!isValid) {
-            throw {
-                statusCode: 400,
-                field: "oldPin",
-                message: "Mã PIN cũ không đúng"
-            };
-        }
-
-        if (!/^\d{6}$/.test(newPin)) {
-            throw {
-                statusCode: 400,
-                field: "newPin",
-                message: "Mã PIN mới phải là 6 chữ số"
-            };
-        }
-
-        const hashedPin = await Password.hash(newPin);
-        await UserRepository.updatePinHash(userId, hashedPin);
-
-        return true;
-    }
-
-    // Kiểm tra trạng thái PIN
-    async getPinStatus(userId) {
-        const user = await UserRepository.findById(userId);
-
-        if (!user) {
-            throw {
-                statusCode: 404,
-                message: "Không tìm thấy người dùng"
-            };
-        }
-
-        return {
-            has_pin: !!user.pin_hash
-        };
+        return await UserRepository.resetPoints(
+            userId
+        );
     }
 }
+
 
 module.exports = new UserService();
