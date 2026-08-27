@@ -14,18 +14,6 @@ const Payment = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Lấy thông tin user từ localStorage
-    const getUserFromStorage = () => {
-        try {
-            const userStr = localStorage.getItem('user');
-            return userStr ? JSON.parse(userStr) : null;
-        } catch {
-            return null;
-        }
-    };
-
-    const [user, setUser] = useState(getUserFromStorage());
-
     const {
         movie,
         selectedCinema,
@@ -42,6 +30,8 @@ const Payment = () => {
     // =========================
     // STATES
     // =========================
+    const [user, setUser] = useState(null);
+    const [isLoadingUser, setIsLoadingUser] = useState(true);
     const [couponCode, setCouponCode] = useState('');
     const [discountAmount, setDiscountAmount] = useState(0);
     const [appliedCouponId, setAppliedCouponId] = useState(null);
@@ -52,10 +42,10 @@ const Payment = () => {
     const [tempBookingId, setTempBookingId] = useState(null);
 
     const [userInfo, setUserInfo] = useState({
-        user_id: user?.user_id || '',
-        full_name: user?.full_name || '',
-        email: user?.email || '',
-        phone: user?.phone || ''
+        user_id: '',
+        full_name: '',
+        email: '',
+        phone: ''
     });
 
     const [modal, setModal] = useState({
@@ -77,9 +67,7 @@ const Payment = () => {
             type,
             title,
             message,
-            onConfirm:
-                onConfirm ||
-                (() => setModal(prev => ({ ...prev, show: false })))
+            onConfirm: onConfirm || (() => setModal(prev => ({ ...prev, show: false })))
         });
     };
 
@@ -88,6 +76,50 @@ const Payment = () => {
     // =========================
     const subTotal = Number(totalTicketPrice || 0) + Number(totalFoodPrice || 0);
     const grandTotal = subTotal - Number(discountAmount || 0);
+
+    // =========================
+    // CHECK SESSION FROM COOKIE
+    // =========================
+    const checkSession = async () => {
+        setIsLoadingUser(true);
+        try {
+            const response = await api.get('/api/auth/me');
+            
+            // 🆕 LẤY USER TỪ response.data.user
+            const userData = response.data?.user;
+            
+            console.log('📦 User data:', userData);
+            
+            if (userData && userData.user_id) {
+                setUser(userData);
+                setUserInfo({
+                    user_id: userData.user_id,
+                    full_name: userData.full_name || '',
+                    email: userData.email || '',
+                    phone: userData.phone || ''
+                });
+                return true;
+            } else {
+                console.error('❌ No user_id found in:', response.data);
+                throw new Error('Invalid session');
+            }
+        } catch (error) {
+            console.error('❌ Session check failed:', error);
+            
+            // Nếu lỗi 401 → Cookie hết hạn
+            if (error.response?.status === 401) {
+                showNotice(
+                    'error',
+                    'YÊU CẦU ĐĂNG NHẬP',
+                    'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                    () => navigate('/login', { state: { from: location.pathname } })
+                );
+            }
+            return false;
+        } finally {
+            setIsLoadingUser(false);
+        }
+    };
 
     // =========================
     // INIT
@@ -112,32 +144,51 @@ const Payment = () => {
         sessionStorage.removeItem('paymentInitiated');
         sessionStorage.removeItem('tempBookingId');
 
-        const storedUser = getUserFromStorage();
-        if (!storedUser || !storedUser.user_id) {
+        // Kiểm tra session từ COOKIE
+        const verifySession = async () => {
+            const isValid = await checkSession();
+            
+            if (!isValid) {
+                // Cookie không hợp lệ hoặc hết hạn
+                showNotice(
+                    'error',
+                    'YÊU CẦU ĐĂNG NHẬP',
+                    'Vui lòng đăng nhập để tiếp tục đặt vé.',
+                    () => navigate('/login', { state: { from: location.pathname } })
+                );
+                return;
+            }
+
+            // Session hợp lệ, kiểm tra timer giữ ghế
+            if (sessionStorage.getItem('holdExpiresAt')) {
+                setIsTimerActive(true);
+            }
+        };
+
+        verifySession();
+
+        // Lắng nghe sự kiện sessionExpired từ api interceptor
+        const handleSessionExpired = (event) => {
+            console.log('🔴 Session expired event received:', event.detail);
             showNotice(
                 'error',
-                'YÊU CẦU ĐĂNG NHẬP',
-                'Vui lòng đăng nhập để tiếp tục đặt vé.',
-                () => navigate('/login', { state: { from: location.pathname } })
+                'PHIÊN ĐĂNG NHẬP HẾT HẠN',
+                event.detail?.message || 'Vui lòng đăng nhập lại để tiếp tục.',
+                () => {
+                    navigate('/login', { state: { from: location.pathname } });
+                }
             );
-            return;
-        }
+        };
 
-        setUser(storedUser);
-        setUserInfo({
-            user_id: storedUser.user_id || '',
-            full_name: storedUser.full_name || '',
-            email: storedUser.email || '',
-            phone: storedUser.phone || ''
-        });
+        window.addEventListener('sessionExpired', handleSessionExpired);
 
-        if (sessionStorage.getItem('holdExpiresAt')) {
-            setIsTimerActive(true);
-        }
+        return () => {
+            window.removeEventListener('sessionExpired', handleSessionExpired);
+        };
     }, [movie, selectedSeats, navigate, location.pathname]);
 
     // =========================
-    // TIMER EXPIRE (giữ ghế - không dùng nữa vì giờ lưu session)
+    // TIMER EXPIRE (giữ ghế)
     // =========================
     const handleTimeExpire = async () => {
         if (tempBookingId) {
@@ -169,6 +220,11 @@ const Payment = () => {
             return;
         }
 
+        if (!userInfo.user_id) {
+            showNotice('error', 'LỖI', 'Vui lòng đăng nhập lại.');
+            return;
+        }
+
         setIsApplyingCoupon(true);
         try {
             const res = await api.post('/api/coupons/check', {
@@ -194,11 +250,10 @@ const Payment = () => {
     };
 
     // =========================
-    // PAYMENT – GỌI API /payment/process, nhận tempBookingId
+    // PAYMENT – GỌI API /payment/process
     // =========================
     const handleProceed = async () => {
-        const latestUser = getUserFromStorage();
-        if (!latestUser || !latestUser.user_id) {
+        if (!userInfo.user_id) {
             showNotice(
                 'error',
                 'YÊU CẦU ĐĂNG NHẬP',
@@ -211,7 +266,7 @@ const Payment = () => {
         const email = userInfo.email.trim();
         const fullName = userInfo.full_name.trim();
         const phone = userInfo.phone.trim();
-        const userId = latestUser.user_id;
+        const userId = userInfo.user_id;
 
         if (!fullName || !email || !phone) {
             showNotice('error', 'THIẾU THÔNG TIN', 'Vui lòng nhập đầy đủ thông tin nhận vé.');
@@ -260,7 +315,6 @@ const Payment = () => {
                 movieTitle: movie?.title || '',
                 cinemaName: selectedCinema?.cinema_name || '',
                 startTime: selectedShowtime?.start_time || ''
-                // Không cần status: 'pending'
             };
 
             const response = await api.post('/api/payment/process', postData);
@@ -307,6 +361,12 @@ const Payment = () => {
             }
         } catch (err) {
             console.error('Lỗi thanh toán:', err);
+            
+            if (err.response?.status === 401) {
+                sessionStorage.removeItem('paymentInitiated');
+                return;
+            }
+            
             const errorMessage = err.response?.data?.message || err.message || 'Không thể xử lý thanh toán.';
             sessionStorage.removeItem('paymentInitiated');
             showNotice('error', 'LỖI', errorMessage);
@@ -348,94 +408,104 @@ const Payment = () => {
                 />
 
                 <section className="main-booking-area">
-                    {/* COUPON */}
-                    <div className="payment-card">
-                        <h3>MÃ GIẢM GIÁ</h3>
-                        <div className="coupon-group">
-                            <input
-                                type="text"
-                                placeholder="Nhập mã giảm giá..."
-                                value={couponCode}
-                                onChange={e => setCouponCode(e.target.value)}
-                                disabled={isApplyingCoupon}
-                            />
-                            <LoadingButton
-                                type="button"
-                                loading={isApplyingCoupon}
-                                loadingText="Đang áp dụng..."
-                                onClick={handleApplyCoupon}
-                                disabled={isApplyingCoupon}
-                                className="coupon-btn"
-                                spinnerColor="#ffffff"
-                            >
-                                ÁP DỤNG
-                            </LoadingButton>
+                    {isLoadingUser && (
+                        <div className="payment-card">
+                            <h3>⏳ ĐANG KIỂM TRA ĐĂNG NHẬP...</h3>
+                            <div className="loading-spinner" style={{ textAlign: 'center', padding: '20px' }}>
+                                Vui lòng chờ...
+                            </div>
                         </div>
-                    </div>
+                    )}
 
-                    {/* USER INFO */}
-                    <div className="payment-card">
-                        <h3>THÔNG TIN NHẬN VÉ</h3>
-                        <div className="form-grid">
-                            <input
-                                type="text"
-                                placeholder="Họ và tên"
-                                value={userInfo.full_name}
-                                onChange={e => setUserInfo({ ...userInfo, full_name: e.target.value })}
-                            />
-                            <input
-                                type="text"
-                                placeholder="Số điện thoại"
-                                value={userInfo.phone}
-                                onChange={e => setUserInfo({ ...userInfo, phone: e.target.value })}
-                            />
-                        </div>
-                        <input
-                            type="email"
-                            placeholder="Email nhận vé"
-                            value={userInfo.email}
-                            onChange={e => setUserInfo({ ...userInfo, email: e.target.value })}
-                        />
-                    </div>
+                    {!isLoadingUser && userInfo.user_id && (
+                        <>
+                            <div className="payment-card">
+                                <h3>MÃ GIẢM GIÁ</h3>
+                                <div className="coupon-group">
+                                    <input
+                                        type="text"
+                                        placeholder="Nhập mã giảm giá..."
+                                        value={couponCode}
+                                        onChange={e => setCouponCode(e.target.value)}
+                                        disabled={isApplyingCoupon}
+                                    />
+                                    <LoadingButton
+                                        type="button"
+                                        loading={isApplyingCoupon}
+                                        loadingText="Đang áp dụng..."
+                                        onClick={handleApplyCoupon}
+                                        disabled={isApplyingCoupon}
+                                        className="coupon-btn"
+                                        spinnerColor="#ffffff"
+                                    >
+                                        ÁP DỤNG
+                                    </LoadingButton>
+                                </div>
+                            </div>
 
-                    {/* PAYMENT */}
-                    <div className="payment-card">
-                        <h3>HÌNH THỨC THANH TOÁN</h3>
-                        <div className="payment-methods">
-                            <label className={`payment-method ${paymentMethod === 'bank' ? 'active' : ''}`}>
+                            <div className="payment-card">
+                                <h3>THÔNG TIN NHẬN VÉ</h3>
+                                <div className="form-grid">
+                                    <input
+                                        type="text"
+                                        placeholder="Họ và tên"
+                                        value={userInfo.full_name}
+                                        onChange={e => setUserInfo({ ...userInfo, full_name: e.target.value })}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Số điện thoại"
+                                        value={userInfo.phone}
+                                        onChange={e => setUserInfo({ ...userInfo, phone: e.target.value })}
+                                    />
+                                </div>
                                 <input
-                                    type="radio"
-                                    checked={paymentMethod === 'bank'}
-                                    onChange={() => setPaymentMethod('bank')}
+                                    type="email"
+                                    placeholder="Email nhận vé"
+                                    value={userInfo.email}
+                                    onChange={e => setUserInfo({ ...userInfo, email: e.target.value })}
                                 />
-                                <span>VietQR</span>
-                            </label>
-                            <label className={`payment-method ${paymentMethod === 'momo' ? 'active' : ''}`}>
-                                <input
-                                    type="radio"
-                                    checked={paymentMethod === 'momo'}
-                                    onChange={() => setPaymentMethod('momo')}
-                                />
-                                <span>MoMo</span>
-                            </label>
-                        </div>
+                            </div>
 
-                        <LoadingButton
-                            type="button"
-                            loading={isProcessing}
-                            loadingText="Đang xử lý..."
-                            onClick={handleProceed}
-                            disabled={isProcessing}
-                            className="btn-next"
-                            spinnerColor="#ffffff"
-                        >
-                            XÁC NHẬN THANH TOÁN
-                        </LoadingButton>
+                            <div className="payment-card">
+                                <h3>HÌNH THỨC THANH TOÁN</h3>
+                                <div className="payment-methods">
+                                    <label className={`payment-method ${paymentMethod === 'bank' ? 'active' : ''}`}>
+                                        <input
+                                            type="radio"
+                                            checked={paymentMethod === 'bank'}
+                                            onChange={() => setPaymentMethod('bank')}
+                                        />
+                                        <span>VietQR</span>
+                                    </label>
+                                    <label className={`payment-method ${paymentMethod === 'momo' ? 'active' : ''}`}>
+                                        <input
+                                            type="radio"
+                                            checked={paymentMethod === 'momo'}
+                                            onChange={() => setPaymentMethod('momo')}
+                                        />
+                                        <span>MoMo</span>
+                                    </label>
+                                </div>
 
-                        <button className="btn-back" onClick={() => navigate(-1)}>
-                            QUAY LẠI
-                        </button>
-                    </div>
+                                <LoadingButton
+                                    type="button"
+                                    loading={isProcessing}
+                                    loadingText="Đang xử lý..."
+                                    onClick={handleProceed}
+                                    disabled={isProcessing}
+                                    className="btn-next"
+                                    spinnerColor="#ffffff"
+                                >
+                                    XÁC NHẬN THANH TOÁN
+                                </LoadingButton>
+
+                                <button className="btn-back" onClick={() => navigate(-1)}>
+                                    QUAY LẠI
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </section>
             </div>
         </div>

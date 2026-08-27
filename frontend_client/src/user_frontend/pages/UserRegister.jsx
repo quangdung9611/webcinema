@@ -5,7 +5,6 @@ import { Eye, EyeOff } from 'lucide-react';
 
 import Modal from '../components/Modal';
 import LoadingButton from '../components/LoadingButton';
-// ✅ KHÔNG cần import VerifyEmail và ResendVerification nữa
 import '../styles/UserAuth.css';
 
 const UserRegister = () => {
@@ -16,13 +15,17 @@ const UserRegister = () => {
         password: '',
         confirmPassword: '',
         phone: '',
-        address: ''
+        address: '',
+        pin: '',           // 🆕 Mã PIN
+        confirmPin: ''     // 🆕 Xác nhận PIN
     });
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [showPin, setShowPin] = useState(false);           // 🆕 Show PIN
+    const [showConfirmPin, setShowConfirmPin] = useState(false); // 🆕 Show confirm PIN
 
     const [modalConfig, setModalConfig] = useState({
         show: false,
@@ -37,7 +40,7 @@ const UserRegister = () => {
     // VALIDATE FIELD
     // ==========================================
 
-    const validateField = (name, value, password = formData.password, confirmPassword = formData.confirmPassword) => {
+    const validateField = (name, value, password = formData.password, confirmPassword = formData.confirmPassword, pin = formData.pin, confirmPin = formData.confirmPin) => {
         let error = '';
 
         switch (name) {
@@ -93,6 +96,24 @@ const UserRegister = () => {
                 }
                 break;
 
+            // 🆕 VALIDATE PIN
+            case 'pin':
+                if (!value.trim()) {
+                    error = 'Vui lòng nhập mã PIN';
+                } else if (!/^\d{6}$/.test(value)) {
+                    error = 'Mã PIN phải là 6 chữ số';
+                }
+                break;
+
+            // 🆕 VALIDATE CONFIRM PIN
+            case 'confirmPin':
+                if (!value.trim()) {
+                    error = 'Vui lòng xác nhận mã PIN';
+                } else if (value !== pin) {
+                    error = 'Mã PIN xác nhận không khớp';
+                }
+                break;
+
             default:
                 break;
         }
@@ -109,15 +130,24 @@ const UserRegister = () => {
 
         const newPassword = name === 'password' ? value : formData.password;
         const newConfirmPassword = name === 'confirmPassword' ? value : formData.confirmPassword;
+        const newPin = name === 'pin' ? value : formData.pin;
+        const newConfirmPin = name === 'confirmPin' ? value : formData.confirmPin;
 
         setFormData(prev => ({ ...prev, [name]: value }));
 
-        const error = validateField(name, value, newPassword, newConfirmPassword);
+        const error = validateField(name, value, newPassword, newConfirmPassword, newPin, newConfirmPin);
         setErrors(prev => ({ ...prev, [name]: error }));
 
+        // Kiểm tra lại confirmPassword khi password thay đổi
         if (name === 'password' || name === 'confirmPassword') {
             const confirmError = validateField('confirmPassword', newConfirmPassword, newPassword, newConfirmPassword);
             setErrors(prev => ({ ...prev, confirmPassword: confirmError }));
+        }
+
+        // 🆕 Kiểm tra lại confirmPin khi pin thay đổi
+        if (name === 'pin' || name === 'confirmPin') {
+            const confirmPinError = validateField('confirmPin', newConfirmPin, newPassword, newConfirmPassword, newPin, newConfirmPin);
+            setErrors(prev => ({ ...prev, confirmPin: confirmPinError }));
         }
     };
 
@@ -127,7 +157,7 @@ const UserRegister = () => {
 
     const validate = () => {
         const tempErrors = {};
-        const fields = ['username', 'full_name', 'email', 'phone', 'password', 'confirmPassword'];
+        const fields = ['username', 'full_name', 'email', 'phone', 'password', 'confirmPassword', 'pin', 'confirmPin'];
         
         fields.forEach(field => {
             const error = validateField(field, formData[field]);
@@ -157,10 +187,10 @@ const UserRegister = () => {
                 email: formData.email,
                 password: formData.password,
                 phone: formData.phone,
-                address: formData.address || ''
+                address: formData.address || '',
+                pin: formData.pin  // 🆕 Gửi PIN lên backend
             });
 
-            // ✅ Hiển thị MODAL thông báo đăng ký thành công
             setModalConfig({
                 show: true,
                 type: 'success',
@@ -330,6 +360,63 @@ const UserRegister = () => {
                             {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
                         </div>
 
+                        {/* 🆕 PIN - MÃ PIN THANH TOÁN */}
+                        <div className="form-group">
+                            <label>Mã PIN thanh toán</label>
+                            <div className="password-wrapper">
+                                <input
+                                    type={showPin ? 'text' : 'password'}
+                                    name="pin"
+                                    className={`auth-input ${errors.pin ? 'input-error' : ''}`}
+                                    value={formData.pin}
+                                    onChange={handleChange}
+                                    placeholder="Nhập 6 chữ số"
+                                    maxLength="6"
+                                    autoComplete="off"
+                                    disabled={loading}
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-password"
+                                    onClick={() => setShowPin(!showPin)}
+                                    tabIndex="-1"
+                                >
+                                    {showPin ? <Eye size={18} /> : <EyeOff size={18} />}
+                                </button>
+                            </div>
+                            {errors.pin && <span className="error-text">{errors.pin}</span>}
+                            <small style={{ color: '#999', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                                🔐 Mã PIN dùng để xác thực giao dịch thanh toán (6 chữ số)
+                            </small>
+                        </div>
+
+                        {/* 🆕 CONFIRM PIN */}
+                        <div className="form-group">
+                            <label>Xác nhận mã PIN</label>
+                            <div className="password-wrapper">
+                                <input
+                                    type={showConfirmPin ? 'text' : 'password'}
+                                    name="confirmPin"
+                                    className={`auth-input ${errors.confirmPin ? 'input-error' : ''}`}
+                                    value={formData.confirmPin}
+                                    onChange={handleChange}
+                                    placeholder="Nhập lại 6 chữ số"
+                                    maxLength="6"
+                                    autoComplete="off"
+                                    disabled={loading}
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-password"
+                                    onClick={() => setShowConfirmPin(!showConfirmPin)}
+                                    tabIndex="-1"
+                                >
+                                    {showConfirmPin ? <Eye size={18} /> : <EyeOff size={18} />}
+                                </button>
+                            </div>
+                            {errors.confirmPin && <span className="error-text">{errors.confirmPin}</span>}
+                        </div>
+
                         {/* ADDRESS */}
                         <div className="form-group">
                             <label>Địa chỉ (không bắt buộc)</label>
@@ -363,7 +450,6 @@ const UserRegister = () => {
                 </div>
             </div>
 
-            {/* ✅ MODAL THÔNG BÁO ĐĂNG KÝ THÀNH CÔNG */}
             <Modal
                 show={modalConfig.show}
                 type={modalConfig.type}

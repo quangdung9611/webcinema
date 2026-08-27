@@ -6,7 +6,6 @@ import React, {
 } from "react";
 
 import {
-    BrowserRouter,
     Routes,
     Route,
     Navigate,
@@ -975,7 +974,6 @@ const AppContent = () => {
                 />
             )}
 
-            {/* 🔥 BỎ SessionGuard RA KHỎI ĐÂY - ĐỂ CÁC TRANG AUTH TỰ DO */}
             <ScrollToTop />
 
             <LazyErrorBoundary>
@@ -999,13 +997,11 @@ const AppContent = () => {
 
 function App() {
     return (
-        <BrowserRouter>
-            <RouteLoadingProvider>
-                <AuthProvider>
-                    <AppContent />
-                </AuthProvider>
-            </RouteLoadingProvider>
-        </BrowserRouter>
+        <RouteLoadingProvider>
+            <AuthProvider>
+                <AppContent />
+            </AuthProvider>
+        </RouteLoadingProvider>
     );
 }
 
