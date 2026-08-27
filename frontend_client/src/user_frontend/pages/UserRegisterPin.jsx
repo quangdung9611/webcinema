@@ -1,26 +1,26 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/api';
-import { Eye, EyeOff, Shield, ArrowLeft } from 'lucide-react';
+import { Shield, ArrowLeft } from 'lucide-react';
 
 import Modal from '../components/Modal';
 import LoadingButton from '../components/LoadingButton';
 import '../styles/UserAuth.css';
 
 const UserRegisterPin = () => {
-    const location = useLocation();
     const navigate = useNavigate();
 
     // Lấy dữ liệu đã lưu từ Bước 1
     const tempData = JSON.parse(sessionStorage.getItem('register_temp') || '{}');
     const { userId, email, full_name, password } = tempData;
 
-    const [pin, setPin] = useState('');
-    const [confirmPin, setConfirmPin] = useState('');
-    const [errors, setErrors] = useState({});
+    // State cho 6 ô nhập
+    const [pinValues, setPinValues] = useState(['', '', '', '', '', '']);
+    const [activeIndex, setActiveIndex] = useState(0); // Ô đang được chọn
+    const inputRefs = useRef([]); // Để tự động focus vào ô tiếp theo
+
     const [loading, setLoading] = useState(false);
-    const [showPin, setShowPin] = useState(false);
-    const [showConfirmPin, setShowConfirmPin] = useState(false);
+    const [errors, setErrors] = useState({});
 
     const [modalConfig, setModalConfig] = useState({
         show: false,
@@ -30,32 +30,57 @@ const UserRegisterPin = () => {
     });
 
     // Kiểm tra nếu không có userId hoặc password → quay lại bước 1
-    if (!userId || !password) {
-        navigate('/register');
-        return null;
-    }
+    useEffect(() => {
+        if (!userId || !password) {
+            navigate('/register');
+        } else {
+            // Focus vào ô đầu tiên khi load trang
+            inputRefs.current[0]?.focus();
+        }
+    }, [userId, password, navigate]);
+
+    // ==========================================
+    // HANDLE INPUT (Xử lý nhập số vào từng ô)
+    // ==========================================
+
+    const handleChange = (index, value) => {
+        // Chỉ cho phép nhập số
+        const cleanValue = value.replace(/\D/g, '');
+
+        // Lấy ký tự cuối cùng (nếu user dán 1 lúc nhiều số)
+        const char = cleanValue.slice(-1);
+
+        const newPinValues = [...pinValues];
+        newPinValues[index] = char;
+        setPinValues(newPinValues);
+        setErrors({});
+
+        // Tự động nhảy sang ô tiếp theo nếu có nhập số
+        if (char && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleKeyDown = (index, e) => {
+        // Nếu nhấn Backspace và ô hiện tại trống, nhảy về ô trước
+        if (e.key === 'Backspace' && !pinValues[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
 
     // ==========================================
     // VALIDATE
     // ==========================================
 
     const validate = () => {
-        const tempErrors = {};
+        const pin = pinValues.join('');
 
-        if (!pin) {
-            tempErrors.pin = 'Vui lòng nhập mã PIN';
-        } else if (!/^\d{6}$/.test(pin)) {
-            tempErrors.pin = 'Mã PIN phải là 6 chữ số';
+        if (pin.length !== 6) {
+            setErrors({ pin: 'Vui lòng nhập đủ 6 chữ số' });
+            return false;
         }
 
-        if (!confirmPin) {
-            tempErrors.confirmPin = 'Vui lòng xác nhận mã PIN';
-        } else if (pin !== confirmPin) {
-            tempErrors.confirmPin = 'Mã PIN xác nhận không khớp';
-        }
-
-        setErrors(tempErrors);
-        return Object.keys(tempErrors).length === 0;
+        return true;
     };
 
     // ==========================================
@@ -66,10 +91,11 @@ const UserRegisterPin = () => {
         e.preventDefault();
         if (!validate()) return;
 
+        const pin = pinValues.join('');
         setLoading(true);
 
         try {
-            // 🔥 BƯỚC A: ĐĂNG NHẬP TRƯỚC ĐỂ LẤY COOKIE (Vì Bước 1 chưa đăng nhập)
+            // BƯỚC A: ĐĂNG NHẬP TRƯỚC ĐỂ LẤY COOKIE
             const loginResponse = await api.post('/api/auth/login', {
                 email: email,
                 password: password
@@ -79,13 +105,12 @@ const UserRegisterPin = () => {
                 throw new Error(loginResponse.data.message || 'Không thể đăng nhập để hoàn tất đăng ký');
             }
 
-            // 🔥 BƯỚC B: GỌI API TẠO PIN (Lúc này Cookie đã có sẵn)
+            // BƯỚC B: GỌI API TẠO PIN
             const response = await api.post('/api/users/setup-pin', {
                 pin: pin
             });
 
             if (response.data.success) {
-                // Xóa dữ liệu tạm sau khi đăng ký thành công
                 sessionStorage.removeItem('register_temp');
 
                 setModalConfig({
@@ -117,7 +142,7 @@ const UserRegisterPin = () => {
     const handleModalClose = () => {
         setModalConfig({ ...modalConfig, show: false });
         if (modalConfig.type === 'success') {
-            navigate('/'); // Đã đăng nhập, điều hướng về trang chủ hoặc nơi bạn muốn
+            navigate('/'); // Đã đăng nhập, về trang chủ
         }
     };
 
@@ -151,64 +176,31 @@ const UserRegisterPin = () => {
 
                 <div className="auth-form-wrapper">
                     <form onSubmit={handleSetupPin} noValidate>
-                        {/* PIN */}
-                        <div className="form-group">
-                            <label>Mã PIN thanh toán</label>
-                            <div className="password-wrapper">
+                        <div className="pin-input-container">
+                            {pinValues.map((val, index) => (
                                 <input
-                                    type={showPin ? 'text' : 'password'}
-                                    name="pin"
-                                    className={`auth-input ${errors.pin ? 'input-error' : ''}`}
-                                    value={pin}
-                                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                                    placeholder="Nhập 6 chữ số"
-                                    maxLength="6"
-                                    autoComplete="off"
+                                    key={index}
+                                    ref={(el) => (inputRefs.current[index] = el)}
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    value={val}
+                                    onChange={(e) => handleChange(index, e.target.value)}
+                                    onKeyDown={(e) => handleKeyDown(index, e)}
+                                    className={`pin-box ${errors.pin ? 'input-error' : ''}`}
                                     disabled={loading}
+                                    autoComplete="one-time-code"
                                 />
-                                <button
-                                    type="button"
-                                    className="toggle-password"
-                                    onClick={() => setShowPin(!showPin)}
-                                    tabIndex="-1"
-                                >
-                                    {showPin ? <Eye size={18} /> : <EyeOff size={18} />}
-                                </button>
-                            </div>
-                            {errors.pin && <span className="error-text">{errors.pin}</span>}
-                            <small className="input-hint">
-                                🔐 Mã PIN dùng để xác thực giao dịch thanh toán (6 chữ số)
-                            </small>
+                            ))}
                         </div>
 
-                        {/* CONFIRM PIN */}
-                        <div className="form-group">
-                            <label>Xác nhận mã PIN</label>
-                            <div className="password-wrapper">
-                                <input
-                                    type={showConfirmPin ? 'text' : 'password'}
-                                    name="confirmPin"
-                                    className={`auth-input ${errors.confirmPin ? 'input-error' : ''}`}
-                                    value={confirmPin}
-                                    onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
-                                    placeholder="Nhập lại 6 chữ số"
-                                    maxLength="6"
-                                    autoComplete="off"
-                                    disabled={loading}
-                                />
-                                <button
-                                    type="button"
-                                    className="toggle-password"
-                                    onClick={() => setShowConfirmPin(!showConfirmPin)}
-                                    tabIndex="-1"
-                                >
-                                    {showConfirmPin ? <Eye size={18} /> : <EyeOff size={18} />}
-                                </button>
-                            </div>
-                            {errors.confirmPin && <span className="error-text">{errors.confirmPin}</span>}
+                        {errors.pin && <span className="error-text pin-error">{errors.pin}</span>}
+                        
+                        <div className="input-hint center-text" style={{ marginTop: '10px' }}>
+                            🔐 Mã PIN dùng để xác thực giao dịch thanh toán (6 chữ số)
                         </div>
 
-                        <div className="button-group">
+                        <div className="button-group" style={{ marginTop: '20px' }}>
                             <LoadingButton
                                 type="submit"
                                 loading={loading}

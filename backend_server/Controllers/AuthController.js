@@ -5,7 +5,8 @@ const AuthService = require("../Services/AuthService");
 =========================================================*/
 exports.registerStep1 = async (req, res) => {
     try {
-        const result = await AuthService.registerStep1(req.body);
+        // Gọi service với req, res để có thể set Cookie đăng nhập ngay sau khi tạo user
+        const result = await AuthService.registerStep1(req.body, req, res);
         return res.status(201).json(result);
     } catch (error) {
         console.error("Register Step 1 Error:", error);
@@ -18,7 +19,7 @@ exports.registerStep1 = async (req, res) => {
 };
 
 /*=========================================================
-    REGISTER (ĐĂNG KÝ TRỰC TIẾP - NẾU DÙNG)
+    REGISTER
 =========================================================*/
 exports.register = async (req, res) => {
     try {
@@ -35,11 +36,12 @@ exports.register = async (req, res) => {
 };
 
 /*=========================================================
-    CHECK LOCK STATUS
+    🔥 CHECK LOCK STATUS (KIỂM TRA TRẠNG THÁI KHÓA KHI F5)
 =========================================================*/
 exports.checkLockStatus = async (req, res) => {
     try {
-        const result = await AuthService.checkLockStatus(req.query.email);
+        const { email } = req.query;
+        const result = await AuthService.checkLockStatus(email);
         return res.status(200).json(result);
     } catch (error) {
         console.error("Check Lock Status Error:", error);
@@ -51,13 +53,12 @@ exports.checkLockStatus = async (req, res) => {
 };
 
 /*=========================================================
-    LOGIN
+    LOGIN (CHUNG - DÙNG CHO CẢ CUSTOMER VÀ ADMIN)
 =========================================================*/
 exports.login = async (req, res) => {
     try {
         const { email, password, rememberMe } = req.body;
         const result = await AuthService.login(email, password, rememberMe, req, res);
-
         return res.status(200).json({
             success: true,
             message: "Đăng nhập thành công",
@@ -76,7 +77,27 @@ exports.login = async (req, res) => {
 };
 
 /*=========================================================
-    GET ME
+    LOGIN ADMIN (RIÊNG)
+=========================================================*/
+exports.adminLogin = async (req, res) => {
+    try {
+        const { email, password, rememberMe } = req.body;
+        const result = await AuthService.login(email, password, rememberMe, req, res);
+        if (result.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: "Tài khoản không có quyền quản trị." });
+        }
+        return res.status(200).json({ success: true, message: "Đăng nhập admin thành công", user: result.user });
+    } catch (error) {
+        console.error("Admin Login Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false, code: error.code || null, field: error.field || null,
+            message: error.message || "Lỗi máy chủ", data: error.data || null
+        });
+    }
+};
+
+/*=========================================================
+    🔥 GET ME
 =========================================================*/
 exports.getMe = async (req, res) => {
     try {
@@ -84,10 +105,19 @@ exports.getMe = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("GetMe Error:", error);
-        return res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Lỗi máy chủ"
-        });
+        return res.status(error.statusCode || 500).json({ success: false, message: error.message || "Lỗi máy chủ" });
+    }
+};
+
+/*=========================================================
+    REFRESH TOKEN
+=========================================================*/
+exports.refreshToken = async (req, res) => {
+    try {
+        return res.status(501).json({ success: false, message: "Chức năng refresh token đang phát triển" });
+    } catch (error) {
+        console.error("Refresh Error:", error);
+        return res.status(error.statusCode || 500).json({ success: false, message: error.message || "Lỗi máy chủ" });
     }
 };
 
@@ -100,10 +130,7 @@ exports.logout = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Logout Error:", error);
-        return res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Lỗi máy chủ"
-        });
+        return res.status(error.statusCode || 500).json({ success: false, message: error.message || "Lỗi máy chủ" });
     }
 };
 
@@ -116,10 +143,7 @@ exports.logoutAllDevices = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Logout All Devices Error:", error);
-        return res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Lỗi máy chủ"
-        });
+        return res.status(error.statusCode || 500).json({ success: false, message: error.message || "Lỗi máy chủ" });
     }
 };
 
@@ -133,8 +157,7 @@ exports.changePassword = async (req, res) => {
     } catch (error) {
         console.error("Change Password Error:", error);
         return res.status(error.statusCode || 500).json({
-            success: false,
-            field: error.field || null,
+            success: false, field: error.field || null,
             message: error.message || "Lỗi máy chủ"
         });
     }
@@ -145,13 +168,13 @@ exports.changePassword = async (req, res) => {
 =========================================================*/
 exports.forgotPassword = async (req, res) => {
     try {
-        const result = await AuthService.forgotPassword(req.body.email, req);
+        const { email } = req.body;
+        const result = await AuthService.forgotPassword(email, req);
         return res.status(200).json(result);
     } catch (error) {
         console.error("Forgot Password Error:", error);
         return res.status(error.statusCode || 500).json({
-            success: false,
-            field: error.field || null,
+            success: false, field: error.field || null,
             message: error.message || "Lỗi máy chủ"
         });
     }
@@ -168,8 +191,7 @@ exports.submitNewPassword = async (req, res) => {
     } catch (error) {
         console.error("Submit New Password Error:", error);
         return res.status(error.statusCode || 500).json({
-            success: false,
-            field: error.field || null,
+            success: false, field: error.field || null,
             message: error.message || "Lỗi máy chủ"
         });
     }
@@ -186,8 +208,7 @@ exports.verifyOtpAndReset = async (req, res) => {
     } catch (error) {
         console.error("Verify OTP And Reset Error:", error);
         return res.status(error.statusCode || 500).json({
-            success: false,
-            field: error.field || null,
+            success: false, field: error.field || null,
             message: error.message || "Lỗi máy chủ"
         });
     }
@@ -204,8 +225,7 @@ exports.verifyResetOTP = async (req, res) => {
     } catch (error) {
         console.error("Verify Reset OTP Error:", error);
         return res.status(error.statusCode || 500).json({
-            success: false,
-            field: error.field || null,
+            success: false, field: error.field || null,
             message: error.message || "Lỗi máy chủ"
         });
     }
@@ -222,8 +242,7 @@ exports.resetPassword = async (req, res) => {
     } catch (error) {
         console.error("Reset Password Error:", error);
         return res.status(error.statusCode || 500).json({
-            success: false,
-            field: error.field || null,
+            success: false, field: error.field || null,
             message: error.message || "Lỗi máy chủ"
         });
     }
@@ -234,13 +253,13 @@ exports.resetPassword = async (req, res) => {
 =========================================================*/
 exports.sendVerificationEmail = async (req, res) => {
     try {
-        const result = await AuthService.sendVerificationEmail(req.body.email);
+        const { email } = req.body;
+        const result = await AuthService.sendVerificationEmail(email);
         return res.status(200).json(result);
     } catch (error) {
         console.error("Send Verification Email Error:", error);
         return res.status(error.statusCode || 500).json({
-            success: false,
-            field: error.field || null,
+            success: false, field: error.field || null,
             message: error.message || "Lỗi máy chủ"
         });
     }
@@ -251,18 +270,15 @@ exports.sendVerificationEmail = async (req, res) => {
 =========================================================*/
 exports.verifyEmail = async (req, res) => {
     try {
-        const result = await AuthService.verifyEmail(req.query.token);
-        return res.status(200).json({
-            success: true,
-            message: "Xác thực email thành công!",
-            data: result
-        });
+        const { token } = req.query;
+        if (!token) {
+            return res.status(400).json({ success: false, message: "Token xác thực không hợp lệ" });
+        }
+        const result = await AuthService.verifyEmail(token);
+        return res.status(200).json({ success: true, message: "Xác thực email thành công!", data: result });
     } catch (error) {
         console.error("Verify Email Error:", error);
-        return res.status(400).json({
-            success: false,
-            message: error.message || "Token không hợp lệ hoặc đã hết hạn"
-        });
+        return res.status(400).json({ success: false, message: error.message || "Token không hợp lệ hoặc đã hết hạn" });
     }
 };
 
@@ -275,10 +291,7 @@ exports.getDevices = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Get Devices Error:", error);
-        return res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Lỗi máy chủ"
-        });
+        return res.status(error.statusCode || 500).json({ success: false, message: error.message || "Lỗi máy chủ" });
     }
 };
 
@@ -287,13 +300,11 @@ exports.getDevices = async (req, res) => {
 =========================================================*/
 exports.revokeDevice = async (req, res) => {
     try {
-        const result = await AuthService.revokeDeviceById(req.user.user_id, req.params.deviceId);
+        const { deviceId } = req.params;
+        const result = await AuthService.revokeDeviceById(req.user.user_id, deviceId);
         return res.status(200).json(result);
     } catch (error) {
         console.error("Revoke Device Error:", error);
-        return res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Lỗi máy chủ"
-        });
+        return res.status(error.statusCode || 500).json({ success: false, message: error.message || "Lỗi máy chủ" });
     }
 };
