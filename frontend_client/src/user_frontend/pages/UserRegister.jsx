@@ -160,14 +160,18 @@ const UserRegister = () => {
             });
 
             if (response.data.success) {
-                const { user_id, email, full_name } = response.data.data;
+                // Nhận temp_token từ server
+                const { temp_token, email, full_name } = response.data.data;
                 
-                // 🔥 LƯU THÔNG TIN TẠM (GỒM CẢ MẬT KHẨU) ĐỂ SANG BƯỚC 2 ĐĂNG NHẬP
+                // Lưu toàn bộ thông tin (bao gồm temp_token) để dùng ở Bước 2
                 sessionStorage.setItem('register_temp', JSON.stringify({
-                    userId: user_id,
-                    email: email,
+                    temp_token: temp_token,
+                    username: formData.username,
                     full_name: full_name || formData.full_name,
-                    password: formData.password
+                    email: email,
+                    phone: formData.phone,
+                    password: formData.password,
+                    address: formData.address || ''
                 }));
 
                 // Chuyển sang bước 2: Thiết lập PIN

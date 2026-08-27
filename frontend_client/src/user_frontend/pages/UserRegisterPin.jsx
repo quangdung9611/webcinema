@@ -10,14 +10,13 @@ import '../styles/UserAuth.css';
 const UserRegisterPin = () => {
     const navigate = useNavigate();
 
-    // Lấy dữ liệu đã lưu từ Bước 1
+    // Lấy dữ liệu đã lưu từ Bước 1 (Bao gồm temp_token)
     const tempData = JSON.parse(sessionStorage.getItem('register_temp') || '{}');
-    const { userId, email, full_name, password } = tempData;
+    const { temp_token, username, full_name, email, phone, password, address } = tempData;
 
     // State cho 6 ô nhập
     const [pinValues, setPinValues] = useState(['', '', '', '', '', '']);
-    const [activeIndex, setActiveIndex] = useState(0); // Ô đang được chọn
-    const inputRefs = useRef([]); // Để tự động focus vào ô tiếp theo
+    const inputRefs = useRef([]);
 
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
@@ -29,15 +28,14 @@ const UserRegisterPin = () => {
         message: ''
     });
 
-    // Kiểm tra nếu không có userId hoặc password → quay lại bước 1
+    // Kiểm tra nếu không có temp_token hoặc thông tin cơ bản → quay lại bước 1
     useEffect(() => {
-        if (!userId || !password) {
+        if (!temp_token || !username || !email) {
             navigate('/register');
         } else {
-            // Focus vào ô đầu tiên khi load trang
             inputRefs.current[0]?.focus();
         }
-    }, [userId, password, navigate]);
+    }, [temp_token, username, email, navigate]);
 
     // ==========================================
     // HANDLE INPUT (Xử lý nhập số vào từng ô)
@@ -84,7 +82,7 @@ const UserRegisterPin = () => {
     };
 
     // ==========================================
-    // BƯỚC 2: THIẾT LẬP PIN
+    // BƯỚC 2: HOÀN TẤT ĐĂNG KÝ
     // ==========================================
 
     const handleSetupPin = async (e) => {
@@ -95,19 +93,16 @@ const UserRegisterPin = () => {
         setLoading(true);
 
         try {
-            // BƯỚC A: ĐĂNG NHẬP TRƯỚC ĐỂ LẤY COOKIE
-            const loginResponse = await api.post('/api/auth/login', {
-                email: email,
-                password: password
-            });
-
-            if (!loginResponse.data.success) {
-                throw new Error(loginResponse.data.message || 'Không thể đăng nhập để hoàn tất đăng ký');
-            }
-
-            // BƯỚC B: GỌI API TẠO PIN
-            const response = await api.post('/api/users/setup-pin', {
-                pin: pin
+            // GỌI API COMPLETE REGISTRATION (Tạo user + lưu PIN + gửi email)
+            const response = await api.post('/api/auth/complete-registration', {
+                temp_token,
+                pin,
+                username,
+                full_name,
+                email,
+                phone,
+                password,
+                address: address || ''
             });
 
             if (response.data.success) {
@@ -117,13 +112,13 @@ const UserRegisterPin = () => {
                     show: true,
                     type: 'success',
                     title: '🎉 Đăng ký thành công!',
-                    message: `Chào mừng ${full_name || 'bạn'} đến với Cinema Star!\n\nTài khoản và mã PIN đã được tạo thành công. Bạn đã được đăng nhập tự động.`
+                    message: `Chào mừng ${full_name || 'bạn'}! Vui lòng kiểm tra email ${email} để xác thực tài khoản.`
                 });
             }
 
         } catch (err) {
             console.error('Setup PIN Error:', err);
-            const serverMsg = err.response?.data?.message || err.message || 'Không thể thiết lập mã PIN. Vui lòng thử lại!';
+            const serverMsg = err.response?.data?.message || err.message || 'Không thể hoàn tất đăng ký. Vui lòng thử lại!';
             setModalConfig({
                 show: true,
                 type: 'error',
@@ -142,7 +137,8 @@ const UserRegisterPin = () => {
     const handleModalClose = () => {
         setModalConfig({ ...modalConfig, show: false });
         if (modalConfig.type === 'success') {
-            navigate('/'); // Đã đăng nhập, về trang chủ
+            // Chuyển sang trang thông báo xác thực email
+            navigate('/verify-email-sent');
         }
     };
 

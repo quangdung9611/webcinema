@@ -369,10 +369,10 @@ exports.revokeDeviceById = async (userId, tokenId) => {
 };
 
 /* ============================================================
-   🆕🆕🆕 CÁC HÀM MỚI THÊM VÀO (KHÔNG XÓA CODE CŨ)
+   🆕🆕🆕 CÁC HÀM MỚI THÊM VÀO CUỐI FILE (KHÔNG XÓA CODE CŨ)
 ============================================================ */
 
-// 🆕 1. ĐĂNG NHẬP SAU KHI TẠO USER (Dùng cho Bước 2 nhập PIN)
+// 🆕 1. ĐĂNG NHẬP SAU KHI TẠO USER (Dùng để tự đăng nhập ở Bước 2)
 exports.loginAfterRegistration = async (user, req, res) => {
     const accessToken = generateAndSetTokens(user, res, false);
     const accessTokenHash = Jwt.hashRefreshToken(accessToken);
@@ -401,8 +401,8 @@ exports.loginAfterRegistration = async (user, req, res) => {
     };
 };
 
-// 🆕 2. ĐĂNG KÝ BƯỚC 1 (Có nhận req, res để tự động đăng nhập)
-exports.registerStep1 = async (data, req, res) => {
+// 🆕 2. ĐĂNG KÝ BƯỚC 1 (CHỈ VALIDATE, KHÔNG LƯU CSDL)
+exports.registerStep1 = async (data) => {
     const { username, full_name, email, phone, password, address } = data;
 
     // Validate
@@ -422,8 +422,38 @@ exports.registerStep1 = async (data, req, res) => {
         if (existed.phone === phone) throw { statusCode: 400, field: "phone", message: "Số điện thoại đã tồn tại" };
     }
 
-    // Tạo user
+    // Tạo token tạm
+    const tempToken = Jwt.generateResetToken({ purpose: "register" }, '15m');
+
+    return {
+        success: true,
+        data: {
+            temp_token: tempToken,
+            email: email,
+            full_name: full_name
+        }
+    };
+};
+
+// 🆕 3. HOÀN TẤT ĐĂNG KÝ (LƯU CSDL + GỬI EMAIL)
+exports.completeRegistration = async (data, req, res) => {
+    const { temp_token, pin, username, full_name, email, phone, password, address } = data;
+
+    // Verify token
+    try {
+        Jwt.verifyResetToken(temp_token);
+    } catch (error) {
+        throw { statusCode: 400, message: "Phiên đăng ký đã hết hạn. Vui lòng quay lại bước 1." };
+    }
+
+    if (!pin || !/^\d{6}$/.test(pin)) {
+        throw { statusCode: 400, field: "pin", message: "Mã PIN phải là 6 chữ số" };
+    }
+
     const hashedPassword = await Password.hash(password);
+    const hashedPin = await Password.hash(pin);
+
+    // Lưu user vào CSDL
     const userId = await UserRepository.create({
         username, full_name, phone,
         address: address || "",
@@ -432,24 +462,36 @@ exports.registerStep1 = async (data, req, res) => {
         role: "customer",
         status: "active",
         email_verified: 0,
-        points: 0
+        points: 0,
+        pin_hash: hashedPin // Đã thêm pin_hash
     });
 
-    // 🆕 TỰ ĐỘNG ĐĂNG NHẬP NGAY (Để lấy cookie cho Bước 2)
-    const user = await UserRepository.findById(userId);
-    if (user) {
-        await exports.loginAfterRegistration(user, req, res);
-    }
+    // Gửi email xác thực
+    const verifyToken = Jwt.generateEmailVerifyToken({ user_id: userId, email: email });
+    const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
+    await MailService.sendEmailVerification(email, verifyUrl, full_name);
 
-    // Trả về user_id để sang bước 2
     return {
         success: true,
+        message: "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.",
         data: {
-            user_id: userId,
             email: email,
             full_name: full_name
         }
     };
+};
+
+// 🆕 4. GỬI LẠI EMAIL XÁC THỰC
+exports.resendVerificationAfterLogin = async (userId) => {
+    const user = await UserRepository.findById(userId);
+    if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    if (user.email_verified) throw { statusCode: 400, message: "Email đã được xác thực" };
+
+    const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: user.email });
+    const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
+    await MailService.sendEmailVerification(user.email, verifyUrl, user.full_name);
+
+    return { success: true, message: "Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư." };
 };
 
 // ============================================================

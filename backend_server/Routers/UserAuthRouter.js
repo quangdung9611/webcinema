@@ -7,7 +7,9 @@ const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
 // PUBLIC ROUTES (Không cần xác thực)
 // ============================================================
 
+// 🆕 THÊM 2 DÒNG NÀY VÀO ĐẦU PUBLIC ROUTES
 router.post("/register-step1", AuthController.registerStep1);
+router.post("/complete-registration", AuthController.completeRegistration);
 router.post("/register", AuthController.register);
 router.post("/login", AuthController.login);
 router.post("/refresh", AuthController.refreshToken);

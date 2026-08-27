@@ -241,8 +241,8 @@ class UserRepository {
         return rows.length > 0;
     }
 
-    /*=========================================================
-        CREATE USER
+      /*=========================================================
+        CREATE USER (Chỉ thêm pin_hash vào câu INSERT)
     =========================================================*/
     async create(user) {
         const [result] = await db.query(
@@ -251,9 +251,9 @@ class UserRepository {
             (
                 username, full_name, phone, address, email, password,
                 user_avatar, role, status, email_verified,
-                email_verified_at, points
+                email_verified_at, points, pin_hash
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
             [
                 user.username,
@@ -267,13 +267,13 @@ class UserRepository {
                 user.status || "active",
                 user.email_verified || 0,
                 user.email_verified_at || null,
-                user.points || 0
+                user.points || 0,
+                user.pin_hash || null
             ]
         );
 
         return result.insertId;
     }
-
     /*=========================================================
         UPDATE PROFILE
     =========================================================*/

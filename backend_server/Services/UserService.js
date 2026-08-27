@@ -408,6 +408,18 @@ class UserService {
 
         return user; // Trả về user để AuthService login
     }
+     /*=========================================================
+        🆕 COMPLETE REGISTRATION (HOÀN TẤT ĐĂNG KÝ BƯỚC 2)
+    =========================================================*/
+    async completeRegistration(userId) {
+        const user = await UserRepository.findById(userId);
+
+        if (!user) {
+            throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+        }
+
+        return user;
+    }
 }
 
 module.exports = new UserService();

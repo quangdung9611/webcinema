@@ -1,13 +1,12 @@
 const AuthService = require("../Services/AuthService");
 
 /*=========================================================
-    🆕 REGISTER STEP 1 (ĐĂNG KÝ BƯỚC 1)
+    🆕 ĐĂNG KÝ BƯỚC 1 (CHỈ VALIDATE, KHÔNG LƯU CSDL)
 =========================================================*/
 exports.registerStep1 = async (req, res) => {
     try {
-        // Gọi service với req, res để có thể set Cookie đăng nhập ngay sau khi tạo user
-        const result = await AuthService.registerStep1(req.body, req, res);
-        return res.status(201).json(result);
+        const result = await AuthService.registerStep1(req.body);
+        return res.status(200).json(result);
     } catch (error) {
         console.error("Register Step 1 Error:", error);
         return res.status(error.statusCode || 500).json({
@@ -18,6 +17,39 @@ exports.registerStep1 = async (req, res) => {
     }
 };
 
+/*=========================================================
+    🆕 HOÀN TẤT ĐĂNG KÝ (LƯU CSDL + GỬI EMAIL)
+=========================================================*/
+exports.completeRegistration = async (req, res) => {
+    try {
+        const result = await AuthService.completeRegistration(req.body, req, res);
+        return res.status(201).json(result);
+    } catch (error) {
+        console.error("Complete Registration Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    🆕 GỬI LẠI EMAIL XÁC THỰC
+=========================================================*/
+exports.resendVerification = async (req, res) => {
+    try {
+        const result = await AuthService.resendVerificationAfterLogin(req.user.user_id);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Resend Verification Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
 /*=========================================================
     REGISTER
 =========================================================*/
