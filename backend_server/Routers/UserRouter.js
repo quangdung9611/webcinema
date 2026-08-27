@@ -7,6 +7,14 @@ const { authenticateAdmin } = require("../Middlewares/AdminAuthMiddleware");
 const upload = require("../Middlewares/MulterMiddleware");
 
 /*=========================================================
+    🔐 USER - PIN MANAGEMENT
+=========================================================*/
+router.post("/setup-pin", authenticateUser, UserController.setupPin);
+router.post("/verify-pin", authenticateUser, UserController.verifyPin);
+router.put("/pin", authenticateUser, UserController.updatePin);
+router.get("/pin-status", authenticateUser, UserController.getPinStatus);
+
+/*=========================================================
     USER - PROFILE & BOOKING
 =========================================================*/
 router.get("/profile", authenticateUser, UserController.getUserProfile);
@@ -19,12 +27,8 @@ router.post("/reset-points", authenticateUser, UserController.resetMyPoints);
 /*=========================================================
     ADMIN - QUẢN LÝ USERS
 =========================================================*/
-// Lấy toàn bộ user (không phân trang)
 router.get("/", authenticateAdmin, UserController.getAllUsers);
-
-// Lấy user có phân trang (thêm route này)
 router.get("/paginated", authenticateAdmin, UserController.getUsersWithPagination);
-
 router.get("/:user_id", authenticateAdmin, UserController.getUserById);
 router.post("/", authenticateAdmin, upload.single("user_avatar"), UserController.createUser);
 router.put("/:user_id", authenticateAdmin, upload.single("user_avatar"), UserController.updateUser);

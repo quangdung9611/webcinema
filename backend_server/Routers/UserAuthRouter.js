@@ -7,13 +7,13 @@ const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
 // PUBLIC ROUTES (Không cần xác thực)
 // ============================================================
 
-router.post("/register-step1", AuthController.registerStep1); // 🔥 THÊM ROUTE NÀY
+router.post("/register-step1", AuthController.registerStep1);
 router.post("/register", AuthController.register);
 router.post("/login", AuthController.login);
 router.post("/refresh", AuthController.refreshToken);
 router.post("/forgot-password", AuthController.forgotPassword);
-router.post("/submit-new-password", AuthController.submitNewPassword); 
-router.post("/verify-otp-and-reset", AuthController.verifyOtpAndReset); 
+router.post("/submit-new-password", AuthController.submitNewPassword);
+router.post("/verify-otp-and-reset", AuthController.verifyOtpAndReset);
 router.post("/verify-reset-otp", AuthController.verifyResetOTP);
 router.post("/reset-password", AuthController.resetPassword);
 router.post("/send-verification", AuthController.sendVerificationEmail);

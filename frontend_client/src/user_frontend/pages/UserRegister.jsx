@@ -162,14 +162,16 @@ const UserRegister = () => {
             if (response.data.success) {
                 const { user_id, email, full_name } = response.data.data;
                 
+                // 🔥 LƯU THÔNG TIN TẠM (GỒM CẢ MẬT KHẨU) ĐỂ SANG BƯỚC 2 ĐĂNG NHẬP
+                sessionStorage.setItem('register_temp', JSON.stringify({
+                    userId: user_id,
+                    email: email,
+                    full_name: full_name || formData.full_name,
+                    password: formData.password
+                }));
+
                 // Chuyển sang bước 2: Thiết lập PIN
-                navigate('/register-pin', {
-                    state: {
-                        userId: user_id,
-                        email: email,
-                        full_name: full_name || formData.full_name
-                    }
-                });
+                navigate('/register-pin');
             }
 
         } catch (err) {

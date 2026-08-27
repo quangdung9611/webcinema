@@ -3,15 +3,9 @@ const db = require("../Config/db");
 class UserRepository {
 
     /*=========================================================
-        FIND ALL USERS - CÓ PHÂN TRANG (có search)
-        RETURN:
-        {
-            data: [],
-            pagination: {}
-        }
+        FIND ALL USERS - CÓ PHÂN TRANG
     =========================================================*/
     async findAll(page = 1, limit = 20, search = "") {
-
         page = Number.parseInt(page, 10);
         limit = Number.parseInt(limit, 10);
 
@@ -19,15 +13,12 @@ class UserRepository {
         if (limit < 1) limit = 20;
         if (limit > 100) limit = 100;
 
-        search = typeof search === "string"
-            ? search.trim()
-            : "";
+        search = typeof search === "string" ? search.trim() : "";
 
         let whereClause = "";
         const queryParams = [];
 
         if (search) {
-
             whereClause = `
                 WHERE
                     username LIKE ?
@@ -37,13 +28,7 @@ class UserRepository {
             `;
 
             const keyword = `%${search}%`;
-
-            queryParams.push(
-                keyword,
-                keyword,
-                keyword,
-                keyword
-            );
+            queryParams.push(keyword, keyword, keyword, keyword);
         }
 
         const offset = (page - 1) * limit;
@@ -51,90 +36,48 @@ class UserRepository {
         const [rows] = await db.query(
             `
             SELECT
-                user_id,
-                username,
-                full_name,
-                email,
-                user_avatar,
-                phone,
-                role,
-                status,
-                email_verified,
-                email_verified_at,
-                address,
-                points,
-                last_login_at,
-                last_login_ip,
-                created_at,
-                updated_at
+                user_id, username, full_name, email, user_avatar, phone,
+                role, status, email_verified, email_verified_at, address,
+                points, last_login_at, last_login_ip, created_at, updated_at
             FROM users
             ${whereClause}
             ORDER BY user_id DESC
             LIMIT ? OFFSET ?
             `,
-            [
-                ...queryParams,
-                limit,
-                offset
-            ]
+            [...queryParams, limit, offset]
         );
 
         const [countRows] = await db.query(
-            `
-            SELECT COUNT(*) AS total
-            FROM users
-            ${whereClause}
-            `,
+            `SELECT COUNT(*) AS total FROM users ${whereClause}`,
             queryParams
         );
 
-        const total = Number(
-            countRows[0]?.total || 0
-        );
-
-        const totalPages =
-            Math.ceil(total / limit) || 1;
+        const total = Number(countRows[0]?.total || 0);
+        const totalPages = Math.ceil(total / limit) || 1;
 
         return {
             data: rows,
-
             pagination: {
                 page,
                 limit,
                 total,
-                totalPages:
-                    totalPages > 0
-                        ? totalPages
-                        : 1,
-                hasPreviousPage:
-                    page > 1,
-                hasNextPage:
-                    page < totalPages
+                totalPages: totalPages > 0 ? totalPages : 1,
+                hasPreviousPage: page > 1,
+                hasNextPage: page < totalPages
             }
         };
     }
 
-
     /*=========================================================
-        FIND ALL USERS - KHÔNG PHÂN TRANG (có search)
-
-        RETURN:
-        rows[]
-
-        KHÔNG pagination
-        KHÔNG object data
+        FIND ALL USERS - KHÔNG PHÂN TRANG
     =========================================================*/
     async findAllAll(search = "") {
-
-        search = typeof search === "string"
-            ? search.trim()
-            : "";
+        search = typeof search === "string" ? search.trim() : "";
 
         let whereClause = "";
         const queryParams = [];
 
         if (search) {
-
             whereClause = `
                 WHERE
                     username LIKE ?
@@ -144,34 +87,15 @@ class UserRepository {
             `;
 
             const keyword = `%${search}%`;
-
-            queryParams.push(
-                keyword,
-                keyword,
-                keyword,
-                keyword
-            );
+            queryParams.push(keyword, keyword, keyword, keyword);
         }
 
         const [rows] = await db.query(
             `
             SELECT
-                user_id,
-                username,
-                full_name,
-                email,
-                user_avatar,
-                phone,
-                role,
-                status,
-                email_verified,
-                email_verified_at,
-                address,
-                points,
-                last_login_at,
-                last_login_ip,
-                created_at,
-                updated_at
+                user_id, username, full_name, email, user_avatar, phone,
+                role, status, email_verified, email_verified_at, address,
+                points, last_login_at, last_login_ip, created_at, updated_at
             FROM users
             ${whereClause}
             ORDER BY user_id DESC
@@ -182,32 +106,17 @@ class UserRepository {
         return rows;
     }
 
-
     /*=========================================================
         FIND USER BY ID
     =========================================================*/
     async findById(userId) {
-
         const [rows] = await db.query(
             `
             SELECT
-                user_id,
-                username,
-                full_name,
-                email,
-                user_avatar,
-                phone,
-                address,
-                password,
-                role,
-                status,
-                email_verified,
-                email_verified_at,
-                points,
-                last_login_at,
-                last_login_ip,
-                created_at,
-                updated_at
+                user_id, username, full_name, email, user_avatar, phone, address,
+                password, role, status, email_verified, email_verified_at,
+                points, last_login_at, last_login_ip, created_at, updated_at,
+                pin_hash
             FROM users
             WHERE user_id = ?
             LIMIT 1
@@ -217,32 +126,18 @@ class UserRepository {
 
         return rows[0] || null;
     }
-
 
     /*=========================================================
         FIND USER PROFILE
     =========================================================*/
     async findProfile(userId) {
-
         const [rows] = await db.query(
             `
             SELECT
-                user_id,
-                username,
-                full_name,
-                email,
-                user_avatar,
-                phone,
-                address,
-                role,
-                status,
-                email_verified,
-                email_verified_at,
-                points,
-                last_login_at,
-                last_login_ip,
-                created_at,
-                updated_at
+                user_id, username, full_name, email, user_avatar, phone, address,
+                role, status, email_verified, email_verified_at,
+                points, last_login_at, last_login_ip, created_at, updated_at,
+                pin_hash
             FROM users
             WHERE user_id = ?
             LIMIT 1
@@ -253,30 +148,16 @@ class UserRepository {
         return rows[0] || null;
     }
 
-
     /*=========================================================
         FIND USER BY EMAIL
     =========================================================*/
     async findByEmail(email) {
-
         const [rows] = await db.query(
             `
             SELECT
-                user_id,
-                username,
-                full_name,
-                email,
-                user_avatar,
-                password,
-                phone,
-                address,
-                role,
-                status,
-                email_verified,
-                email_verified_at,
-                points,
-                last_login_at,
-                last_login_ip
+                user_id, username, full_name, email, user_avatar, password,
+                phone, address, role, status, email_verified,
+                email_verified_at, points, last_login_at, last_login_ip
             FROM users
             WHERE email = ?
             LIMIT 1
@@ -287,30 +168,16 @@ class UserRepository {
         return rows[0] || null;
     }
 
-
     /*=========================================================
         FIND USER BY USERNAME
     =========================================================*/
     async findByUsername(username) {
-
         const [rows] = await db.query(
             `
             SELECT
-                user_id,
-                username,
-                full_name,
-                email,
-                user_avatar,
-                password,
-                phone,
-                address,
-                role,
-                status,
-                email_verified,
-                email_verified_at,
-                points,
-                last_login_at,
-                last_login_ip
+                user_id, username, full_name, email, user_avatar, password,
+                phone, address, role, status, email_verified,
+                email_verified_at, points, last_login_at, last_login_ip
             FROM users
             WHERE username = ?
             LIMIT 1
@@ -321,67 +188,27 @@ class UserRepository {
         return rows[0] || null;
     }
 
-
-    /*=========================================================
-        FIND BASIC USER
-    =========================================================*/
-    async findBasicById(userId) {
-
-        const [rows] = await db.query(
-            `
-            SELECT
-                user_id,
-                password,
-                role,
-                status,
-                email_verified,
-                email_verified_at
-            FROM users
-            WHERE user_id = ?
-            LIMIT 1
-            `,
-            [userId]
-        );
-
-        return rows[0] || null;
-    }
-
-
     /*=========================================================
         CHECK USER EXISTS
     =========================================================*/
     async exists(username, email, phone) {
-
         const [rows] = await db.query(
             `
-            SELECT
-                user_id,
-                username,
-                email,
-                phone
+            SELECT user_id, username, email, phone
             FROM users
-            WHERE
-                username = ?
-                OR email = ?
-                OR phone = ?
+            WHERE username = ? OR email = ? OR phone = ?
             LIMIT 1
             `,
-            [
-                username,
-                email,
-                phone
-            ]
+            [username, email, phone]
         );
 
         return rows[0] || null;
     }
-
 
     /*=========================================================
         CHECK EMAIL EXISTS
     =========================================================*/
     async existsByEmail(email) {
-
         const [rows] = await db.query(
             `SELECT 1 FROM users WHERE email = ? LIMIT 1`,
             [email]
@@ -390,12 +217,10 @@ class UserRepository {
         return rows.length > 0;
     }
 
-
     /*=========================================================
         CHECK USERNAME EXISTS
     =========================================================*/
     async existsByUsername(username) {
-
         const [rows] = await db.query(
             `SELECT 1 FROM users WHERE username = ? LIMIT 1`,
             [username]
@@ -404,12 +229,10 @@ class UserRepository {
         return rows.length > 0;
     }
 
-
     /*=========================================================
         CHECK PHONE EXISTS
     =========================================================*/
     async existsByPhone(phone) {
-
         const [rows] = await db.query(
             `SELECT 1 FROM users WHERE phone = ? LIMIT 1`,
             [phone]
@@ -418,28 +241,17 @@ class UserRepository {
         return rows.length > 0;
     }
 
-
     /*=========================================================
         CREATE USER
     =========================================================*/
     async create(user) {
-
         const [result] = await db.query(
             `
             INSERT INTO users
             (
-                username,
-                full_name,
-                phone,
-                address,
-                email,
-                password,
-                user_avatar,
-                role,
-                status,
-                email_verified,
-                email_verified_at,
-                points
+                username, full_name, phone, address, email, password,
+                user_avatar, role, status, email_verified,
+                email_verified_at, points
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
@@ -462,22 +274,16 @@ class UserRepository {
         return result.insertId;
     }
 
-
     /*=========================================================
         UPDATE PROFILE
     =========================================================*/
     async updateProfile(userId, data) {
-
         const [result] = await db.query(
             `
             UPDATE users
             SET
-                username = ?,
-                full_name = ?,
-                phone = ?,
-                address = ?,
-                email = ?,
-                user_avatar = COALESCE(?, user_avatar),
+                username = ?, full_name = ?, phone = ?, address = ?,
+                email = ?, user_avatar = COALESCE(?, user_avatar),
                 updated_at = NOW()
             WHERE user_id = ?
             `,
@@ -495,186 +301,130 @@ class UserRepository {
         return result.affectedRows;
     }
 
-
     /*=========================================================
         UPDATE AVATAR
     =========================================================*/
     async updateAvatar(userId, avatarUrl) {
-
         const [result] = await db.query(
             `
             UPDATE users
-            SET
-                user_avatar = ?,
-                updated_at = NOW()
+            SET user_avatar = ?, updated_at = NOW()
             WHERE user_id = ?
             `,
-            [
-                avatarUrl,
-                userId
-            ]
+            [avatarUrl, userId]
         );
 
         return result.affectedRows;
     }
-
 
     /*=========================================================
         UPDATE PASSWORD
     =========================================================*/
     async updatePassword(userId, hashedPassword) {
-
         const [result] = await db.query(
             `
             UPDATE users
-            SET
-                password = ?,
-                updated_at = NOW()
+            SET password = ?, updated_at = NOW()
             WHERE user_id = ?
             `,
-            [
-                hashedPassword,
-                userId
-            ]
+            [hashedPassword, userId]
         );
 
         return result.affectedRows;
     }
-
 
     /*=========================================================
         UPDATE ROLE
     =========================================================*/
     async updateRole(userId, role) {
-
         const [result] = await db.query(
             `
             UPDATE users
-            SET
-                role = ?,
-                updated_at = NOW()
+            SET role = ?, updated_at = NOW()
             WHERE user_id = ?
             `,
-            [
-                role,
-                userId
-            ]
+            [role, userId]
         );
 
         return result.affectedRows;
     }
-
 
     /*=========================================================
         UPDATE STATUS
     =========================================================*/
     async updateStatus(userId, status) {
-
         const [result] = await db.query(
             `
             UPDATE users
-            SET
-                status = ?,
-                updated_at = NOW()
+            SET status = ?, updated_at = NOW()
             WHERE user_id = ?
             `,
-            [
-                status,
-                userId
-            ]
+            [status, userId]
         );
 
         return result.affectedRows;
     }
 
-/*=========================================================
-    UPDATE EMAIL VERIFIED - ĐÃ CẬP NHẬT THÊM email_verified_at
-=========================================================*/
-async updateEmailVerified(userId, verified = true) {
-    console.log(`🟢 [REPO] Updating email_verified for user ${userId} to ${verified}`);
-    
-    const [result] = await db.query(
-        `
-        UPDATE users
-        SET
-            email_verified = ?,
-            email_verified_at = ?,
-            updated_at = NOW()
-        WHERE user_id = ?
-        `,
-        [
-            verified ? 1 : 0,
-            verified ? new Date() : null,
-            userId
-        ]
-    );
-    
-    console.log(`✅ [REPO] Updated ${result.affectedRows} rows`);
-    return result.affectedRows;
-}
+    /*=========================================================
+        UPDATE EMAIL VERIFIED
+    =========================================================*/
+    async updateEmailVerified(userId, verified = true) {
+        console.log(`🟢 [REPO] Updating email_verified for user ${userId} to ${verified}`);
+
+        const [result] = await db.query(
+            `
+            UPDATE users
+            SET email_verified = ?, email_verified_at = ?, updated_at = NOW()
+            WHERE user_id = ?
+            `,
+            [verified ? 1 : 0, verified ? new Date() : null, userId]
+        );
+
+        console.log(`✅ [REPO] Updated ${result.affectedRows} rows`);
+        return result.affectedRows;
+    }
+
     /*=========================================================
         UPDATE EMAIL
     =========================================================*/
     async updateEmail(userId, email) {
-
         const [result] = await db.query(
             `
             UPDATE users
-            SET
-                email = ?,
-                email_verified = 0,
-                email_verified_at = NULL,
-                updated_at = NOW()
+            SET email = ?, email_verified = 0,
+                email_verified_at = NULL, updated_at = NOW()
             WHERE user_id = ?
             `,
-            [
-                email,
-                userId
-            ]
+            [email, userId]
         );
 
         return result.affectedRows;
     }
-
 
     /*=========================================================
         UPDATE LAST LOGIN
     =========================================================*/
-    async updateLastLogin(
-        userId,
-        ipAddress = null
-    ) {
-
+    async updateLastLogin(userId, ipAddress = null) {
         const [result] = await db.query(
             `
             UPDATE users
-            SET
-                last_login_at = NOW(),
-                last_login_ip = ?,
-                updated_at = NOW()
+            SET last_login_at = NOW(), last_login_ip = ?, updated_at = NOW()
             WHERE user_id = ?
             `,
-            [
-                ipAddress,
-                userId
-            ]
+            [ipAddress, userId]
         );
 
         return result.affectedRows;
     }
-
 
     /*=========================================================
         RESET USER POINTS
     =========================================================*/
     async resetPoints(userId) {
-
         const [result] = await db.query(
             `
             UPDATE users
-            SET
-                points = 0,
-                updated_at = NOW()
+            SET points = 0, updated_at = NOW()
             WHERE user_id = ?
             `,
             [userId]
@@ -682,30 +432,23 @@ async updateEmailVerified(userId, verified = true) {
 
         return result.affectedRows;
     }
-
 
     /*=========================================================
         DELETE USER
     =========================================================*/
     async delete(userId) {
-
         const [result] = await db.query(
-            `
-            DELETE FROM users
-            WHERE user_id = ?
-            `,
+            `DELETE FROM users WHERE user_id = ?`,
             [userId]
         );
 
         return result.affectedRows;
     }
 
-
     /*=========================================================
-        GET BOOKINGS BY USER ID (CÓ HỖ TRỢ LỌC THEO NGÀY)
+        GET BOOKINGS BY USER
     =========================================================*/
     async getBookingsByUser(userId, from = null, to = null) {
-
         let dateCondition = "";
         const params = [userId];
 
@@ -713,6 +456,7 @@ async updateEmailVerified(userId, verified = true) {
             dateCondition += " AND DATE(b.booking_date) >= ?";
             params.push(from);
         }
+
         if (to) {
             dateCondition += " AND DATE(b.booking_date) <= ?";
             params.push(to);
@@ -753,25 +497,46 @@ async updateEmailVerified(userId, verified = true) {
             `,
             params
         );
+
         return rows;
     }
 
-
     /*=========================================================
-        CLEAR BOOKINGS BY USER (xóa lịch sử và reset điểm)
+        CLEAR BOOKINGS BY USER
     =========================================================*/
     async clearBookingsByUser(userId) {
-        // Xóa tất cả booking của user (cascade sẽ xóa booking_details, tickets)
         const [result] = await db.query(
             `DELETE FROM bookings WHERE user_id = ?`,
             [userId]
         );
-        // Reset điểm về 0
+
         await db.query(
             `UPDATE users SET points = 0 WHERE user_id = ?`,
             [userId]
         );
+
         return result.affectedRows;
+    }
+
+    /*=========================================================
+        🔐 PIN MANAGEMENT
+    =========================================================*/
+    async updatePinHash(userId, pinHash) {
+        const [result] = await db.query(
+            `UPDATE users SET pin_hash = ? WHERE user_id = ?`,
+            [pinHash, userId]
+        );
+
+        return result.affectedRows;
+    }
+
+    async getPinHash(userId) {
+        const [rows] = await db.query(
+            `SELECT pin_hash FROM users WHERE user_id = ? LIMIT 1`,
+            [userId]
+        );
+
+        return rows[0]?.pin_hash || null;
     }
 }
 

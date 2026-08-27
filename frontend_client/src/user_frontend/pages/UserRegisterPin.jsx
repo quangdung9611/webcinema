@@ -11,7 +11,9 @@ const UserRegisterPin = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const { userId, email, full_name } = location.state || {};
+    // Lấy dữ liệu đã lưu từ Bước 1
+    const tempData = JSON.parse(sessionStorage.getItem('register_temp') || '{}');
+    const { userId, email, full_name, password } = tempData;
 
     const [pin, setPin] = useState('');
     const [confirmPin, setConfirmPin] = useState('');
@@ -27,8 +29,8 @@ const UserRegisterPin = () => {
         message: ''
     });
 
-    // Kiểm tra nếu không có userId → quay lại bước 1
-    if (!userId) {
+    // Kiểm tra nếu không có userId hoặc password → quay lại bước 1
+    if (!userId || !password) {
         navigate('/register');
         return null;
     }
@@ -67,22 +69,36 @@ const UserRegisterPin = () => {
         setLoading(true);
 
         try {
+            // 🔥 BƯỚC A: ĐĂNG NHẬP TRƯỚC ĐỂ LẤY COOKIE (Vì Bước 1 chưa đăng nhập)
+            const loginResponse = await api.post('/api/auth/login', {
+                email: email,
+                password: password
+            });
+
+            if (!loginResponse.data.success) {
+                throw new Error(loginResponse.data.message || 'Không thể đăng nhập để hoàn tất đăng ký');
+            }
+
+            // 🔥 BƯỚC B: GỌI API TẠO PIN (Lúc này Cookie đã có sẵn)
             const response = await api.post('/api/users/setup-pin', {
                 pin: pin
             });
 
             if (response.data.success) {
+                // Xóa dữ liệu tạm sau khi đăng ký thành công
+                sessionStorage.removeItem('register_temp');
+
                 setModalConfig({
                     show: true,
                     type: 'success',
                     title: '🎉 Đăng ký thành công!',
-                    message: `Chào mừng ${full_name || 'bạn'} đến với Cinema Star!\n\nTài khoản đã được tạo và mã PIN đã được thiết lập thành công.\nVui lòng kiểm tra email ${email} để xác thực tài khoản.`
+                    message: `Chào mừng ${full_name || 'bạn'} đến với Cinema Star!\n\nTài khoản và mã PIN đã được tạo thành công. Bạn đã được đăng nhập tự động.`
                 });
             }
 
         } catch (err) {
             console.error('Setup PIN Error:', err);
-            const serverMsg = err.response?.data?.message || 'Không thể thiết lập mã PIN. Vui lòng thử lại!';
+            const serverMsg = err.response?.data?.message || err.message || 'Không thể thiết lập mã PIN. Vui lòng thử lại!';
             setModalConfig({
                 show: true,
                 type: 'error',
@@ -101,7 +117,7 @@ const UserRegisterPin = () => {
     const handleModalClose = () => {
         setModalConfig({ ...modalConfig, show: false });
         if (modalConfig.type === 'success') {
-            navigate('/login');
+            navigate('/'); // Đã đăng nhập, điều hướng về trang chủ hoặc nơi bạn muốn
         }
     };
 
