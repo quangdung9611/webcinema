@@ -3,7 +3,7 @@ const TicketService = require("./TicketService");
 const PointsService = require("./PointsService");
 const OtpService = require("./OtpService");
 const { PURPOSE } = require("./OtpService");
-const MailServiceTicket = require("./MailServiceTicket");
+const MailService = require("./MailService");
 
 
 class BankAppService {
@@ -173,7 +173,7 @@ class BankAppService {
                 GỬI EMAIL
             =====================================================*/
 
-            await MailServiceTicket.sendTicketEmail(
+            await MailService.sendTicketEmail(
                 order.email,
                 ticketData
             );

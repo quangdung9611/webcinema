@@ -4,10 +4,14 @@ const AuthController = require("../Controllers/AuthController");
 const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
 
 // ============================================================
-// PUBLIC ROUTES (Không cần xác thực)
+// PUBLIC ROUTES
 // ============================================================
 
-// 🆕 THÊM 2 DÒNG NÀY VÀO ĐẦU PUBLIC ROUTES
+// 🆕 Thêm 2 route này vào đầu PUBLIC
+router.post("/forgot-pin", AuthController.forgotPin);
+router.post("/verify-otp-and-change-pin", AuthController.verifyOtpAndChangePin);
+
+// ... (Giữ nguyên các dòng cũ)
 router.post("/register-step1", AuthController.registerStep1);
 router.post("/complete-registration", AuthController.completeRegistration);
 router.post("/register", AuthController.register);
@@ -23,13 +27,14 @@ router.get("/verify-email", AuthController.verifyEmail);
 router.get("/check-lock", AuthController.checkLockStatus);
 
 // ============================================================
-// PRIVATE ROUTES (Cần xác thực)
+// PRIVATE ROUTES
 // ============================================================
 
 router.get("/me", authenticateUser, AuthController.getMe);
 router.patch("/change-password", authenticateUser, AuthController.changePassword);
 router.post("/logout", authenticateUser, AuthController.logout);
 router.post("/logout-all", authenticateUser, AuthController.logoutAllDevices);
+router.post("/resend-verification", authenticateUser, AuthController.resendVerification);
 
 // ============================================================
 // DEVICE MANAGEMENT

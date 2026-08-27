@@ -177,25 +177,27 @@
   background: #7a7a9a;
 }
 
-/* ----- FOOTER NÚT ----- */
+/* ----- FOOTER NÚT (ĐÃ SỬA THEO YÊU CẦU) ----- */
 .modal-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between; /* Căn đều 2 bên */
   gap: 12px;
   margin-top: 28px;
   border-top: 1px solid #3a3a4f;
   padding-top: 20px;
-  flex-wrap: wrap;
+  flex-wrap: wrap; /* Cho phép xuống hàng khi màn hình nhỏ */
 }
 
+/* Style chung cho 2 nút */
 .modal-footer button {
-  padding: 10px 28px;
+  padding: 12px 20px;
   border-radius: 50px;
   font-weight: 600;
   font-size: 15px;
   border: none;
   cursor: pointer;
   transition: background 0.2s, transform 0.15s;
+  flex: 1; /* Để 2 nút co giãn bằng nhau trên desktop */
   min-width: 100px;
   display: inline-flex;
   justify-content: center;
@@ -263,12 +265,15 @@
   .modal-body {
     font-size: 15px;
   }
+
+  /* Đổi footer: 2 nút xếp chồng lên nhau, full chiều rộng */
   .modal-footer {
-    flex-direction: column-reverse;
+    flex-direction: column; /* Xếp dọc */
     gap: 10px;
   }
   .modal-footer button {
     width: 100%;
+    flex: none; /* Bỏ co giãn bằng nhau */
     min-width: unset;
     padding: 12px;
     font-size: 15px;
@@ -307,11 +312,18 @@
     font-size: 14px;
     max-height: 40vh;
   }
+
+  /* Đảm bảo 2 nút vẫn xếp chồng, full chiều rộng trên mobile */
   .modal-footer {
+    flex-direction: column;
+    gap: 10px;
     margin-top: 20px;
     padding-top: 16px;
   }
   .modal-footer button {
+    width: 100%;
+    flex: none;
+    min-width: unset;
     padding: 10px;
     font-size: 14px;
   }

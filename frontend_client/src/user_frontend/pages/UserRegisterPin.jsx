@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api/api';
 import { Shield, ArrowLeft } from 'lucide-react';
 
-import Modal from '../components/Modal';
+// 🆕 Import EmailVerificationSentModal
+import EmailVerificationSentModal from '../components/EmailVerificationSentModal';
 import LoadingButton from '../components/LoadingButton';
 import '../styles/UserAuth.css';
 
@@ -21,12 +22,8 @@ const UserRegisterPin = () => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
-    const [modalConfig, setModalConfig] = useState({
-        show: false,
-        type: 'success',
-        title: '',
-        message: ''
-    });
+    // 🆕 State cho modal thông báo
+    const [showEmailModal, setShowEmailModal] = useState(false);
 
     // Kiểm tra nếu không có temp_token hoặc thông tin cơ bản → quay lại bước 1
     useEffect(() => {
@@ -108,38 +105,27 @@ const UserRegisterPin = () => {
             if (response.data.success) {
                 sessionStorage.removeItem('register_temp');
 
-                setModalConfig({
-                    show: true,
-                    type: 'success',
-                    title: '🎉 Đăng ký thành công!',
-                    message: `Chào mừng ${full_name || 'bạn'}! Vui lòng kiểm tra email ${email} để xác thực tài khoản.`
-                });
+                // 🆕 Hiển thị modal thông báo (KHÔNG navigate)
+                setShowEmailModal(true);
             }
 
         } catch (err) {
             console.error('Setup PIN Error:', err);
             const serverMsg = err.response?.data?.message || err.message || 'Không thể hoàn tất đăng ký. Vui lòng thử lại!';
-            setModalConfig({
-                show: true,
-                type: 'error',
-                title: 'Thất bại',
-                message: serverMsg
-            });
+
+            // Dùng window.alert tạm thời cho lỗi
+            window.alert(serverMsg);
         } finally {
             setLoading(false);
         }
     };
 
     // ==========================================
-    // HANDLE MODAL CLOSE
+    // HANDLE MODAL CLOSE (KHÔNG CHUYỂN TRANG)
     // ==========================================
-
-    const handleModalClose = () => {
-        setModalConfig({ ...modalConfig, show: false });
-        if (modalConfig.type === 'success') {
-            // Chuyển sang trang thông báo xác thực email
-            navigate('/verify-email-sent');
-        }
+    const handleEmailModalClose = () => {
+        setShowEmailModal(false);
+        // KHÔNG navigate('/login') tại đây
     };
 
     // ==========================================
@@ -223,12 +209,14 @@ const UserRegisterPin = () => {
                 </div>
             </div>
 
-            <Modal
-                show={modalConfig.show}
-                type={modalConfig.type}
-                title={modalConfig.title}
-                message={modalConfig.message}
-                onClose={handleModalClose}
+            {/* 🆕 Hiện thông báo - KHÔNG tự chuyển trang */}
+            <EmailVerificationSentModal
+                show={showEmailModal}
+                onConfirm={handleEmailModalClose}
+                onClose={handleEmailModalClose}
+                email={email}
+                full_name={full_name}
+                confirmText="Đã hiểu"
             />
         </div>
     );

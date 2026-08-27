@@ -3,7 +3,7 @@ const Cookie = require("../utils/Cookie");
 const Password = require("../utils/Password");
 const UserRepository = require("../Repositories/UserRepository");
 const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
-const MailService = require("./MailServiceTicket");
+const MailService = require("./MailService"); // ✅ Đã đổi
 const RedisService = require("./RedisService");
 const OtpService = require("./OtpService");
 
@@ -369,7 +369,7 @@ exports.revokeDeviceById = async (userId, tokenId) => {
 };
 
 /* ============================================================
-   🆕🆕🆕 CÁC HÀM MỚI THÊM VÀO CUỐI FILE (KHÔNG XÓA CODE CŨ)
+   🆕 CÁC HÀM MỚI THÊM VÀO CUỐI FILE (KHÔNG XÓA CODE CŨ)
 ============================================================ */
 
 // 🆕 1. ĐĂNG NHẬP SAU KHI TẠO USER (Dùng để tự đăng nhập ở Bước 2)
@@ -405,7 +405,6 @@ exports.loginAfterRegistration = async (user, req, res) => {
 exports.registerStep1 = async (data) => {
     const { username, full_name, email, phone, password, address } = data;
 
-    // Validate
     if (!username?.trim()) throw { statusCode: 400, field: "username", message: "Tên đăng nhập không được để trống" };
     if (!full_name?.trim()) throw { statusCode: 400, field: "full_name", message: "Họ tên không được để trống" };
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -414,7 +413,6 @@ exports.registerStep1 = async (data) => {
     if (!password?.trim()) throw { statusCode: 400, field: "password", message: "Mật khẩu không được để trống" };
     if (!Password.isStrong(password)) throw { statusCode: 400, field: "password", message: "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt" };
 
-    // Kiểm tra trùng lặp
     const existed = await UserRepository.exists(username, email, phone);
     if (existed) {
         if (existed.username === username) throw { statusCode: 400, field: "username", message: "Tên đăng nhập đã tồn tại" };
@@ -422,7 +420,6 @@ exports.registerStep1 = async (data) => {
         if (existed.phone === phone) throw { statusCode: 400, field: "phone", message: "Số điện thoại đã tồn tại" };
     }
 
-    // Tạo token tạm
     const tempToken = Jwt.generateResetToken({ purpose: "register" }, '15m');
 
     return {
@@ -439,7 +436,6 @@ exports.registerStep1 = async (data) => {
 exports.completeRegistration = async (data, req, res) => {
     const { temp_token, pin, username, full_name, email, phone, password, address } = data;
 
-    // Verify token
     try {
         Jwt.verifyResetToken(temp_token);
     } catch (error) {
@@ -453,7 +449,6 @@ exports.completeRegistration = async (data, req, res) => {
     const hashedPassword = await Password.hash(password);
     const hashedPin = await Password.hash(pin);
 
-    // Lưu user vào CSDL
     const userId = await UserRepository.create({
         username, full_name, phone,
         address: address || "",
@@ -463,10 +458,9 @@ exports.completeRegistration = async (data, req, res) => {
         status: "active",
         email_verified: 0,
         points: 0,
-        pin_hash: hashedPin // Đã thêm pin_hash
+        pin_hash: hashedPin
     });
 
-    // Gửi email xác thực
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: userId, email: email });
     const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
     await MailService.sendEmailVerification(email, verifyUrl, full_name);
@@ -492,6 +486,45 @@ exports.resendVerificationAfterLogin = async (userId) => {
     await MailService.sendEmailVerification(user.email, verifyUrl, user.full_name);
 
     return { success: true, message: "Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư." };
+};
+
+// 🆕 5. QUÊN MÃ PIN - GỬI OTP VỀ EMAIL
+exports.forgotPin = async (email) => {
+    if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
+
+    const user = await UserRepository.findByEmail(email);
+    if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+
+    const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.FORGOT_PIN);
+    await MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name);
+
+    return {
+        success: true,
+        message: "Mã OTP đã được gửi tới email. Vui lòng kiểm tra hộp thư."
+    };
+};
+
+// 🆕 6. XÁC THỰC OTP VÀ ĐỔI MÃ PIN MỚI
+exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
+    const otpResult = await OtpService.verifyOTP(email, otp, OtpService.PURPOSE.FORGOT_PIN);
+    if (!otpResult.success) {
+        throw { statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400, field: "otp", message: otpResult.message };
+    }
+
+    if (!/^\d{6}$/.test(newPin)) {
+        throw { statusCode: 400, field: "newPin", message: "Mã PIN mới phải là 6 chữ số" };
+    }
+
+    const user = await UserRepository.findByEmail(email);
+    if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+
+    const hashedPin = await Password.hash(newPin);
+    await UserRepository.updatePinHash(user.user_id, hashedPin);
+
+    return {
+        success: true,
+        message: "Đổi mã PIN thành công!"
+    };
 };
 
 // ============================================================

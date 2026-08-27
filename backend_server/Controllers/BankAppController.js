@@ -1,7 +1,7 @@
 const BankAppService = require("../Services/BankAppService");
 const OtpService = require("../Services/OtpService");
 const { PURPOSE } = require("../Services/OtpService");
-const MailServiceTicket = require("../Services/MailServiceTicket");
+const MailService = require("../Services/MailService");
 const PaymentService = require("../Services/PaymentService");
 const db = require("../Config/db");
 
@@ -31,7 +31,7 @@ exports.sendOTP = async (req, res) => {
             });
         }
 
-        MailServiceTicket.sendOTP(email, result.otp, tempBookingId).catch(console.error);
+        MailService.sendOTP(email, result.otp, tempBookingId).catch(console.error);
 
         return res.status(200).json({
             success: true,

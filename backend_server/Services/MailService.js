@@ -11,15 +11,14 @@ const OtpEmailTemplate = require("../Templates/OtpEmailTemplate");
 const TicketEmailTemplate = require("../Templates/TicketEmailTemplate");
 const ResetPasswordOtpTemplate = require("../Templates/ResetPasswordOtpTemplate");
 const VerifyEmailTemplate = require("../Templates/VerifyEmailTemplate");
-
-// 🔥 THÊM TEMPLATE MỚI CHO LINK RESET PASSWORD
 const ResetPasswordLinkTemplate = require("../Templates/ResetPasswordLinkTemplate");
+const ForgotPinTemplate = require("../Templates/ForgotPinTemplate");
 
 // =========================================================
 // MAIL SERVICE
 // =========================================================
 
-const MailServiceTicket = {
+const MailService = {
 
     // =====================================================
     // SEND PAYMENT OTP
@@ -67,10 +66,6 @@ const MailServiceTicket = {
 
         try {
 
-            //------------------------------------------------
-            // POSTER (giữ nguyên)
-            //------------------------------------------------
-
             const { moviePoster } = ticketData;
 
             const posterFile = moviePoster ? path.basename(moviePoster) : null;
@@ -78,10 +73,6 @@ const MailServiceTicket = {
                 ? path.join(__dirname, "..", "uploads", "posters", posterFile)
                 : null;
             const posterExists = posterPath && fs.existsSync(posterPath);
-
-            //------------------------------------------------
-            // QR CODE – tạo buffer và gán cid
-            //------------------------------------------------
 
             const qrValue = `TICKET-${ticketData.bookingId}-${ticketData.ticketPIN}`;
 
@@ -91,16 +82,10 @@ const MailServiceTicket = {
                 errorCorrectionLevel: "H"
             });
 
-            // Định danh để template tham chiếu
             const qrCid = "qr_img";
-
-            //------------------------------------------------
-            // ATTACHMENTS
-            //------------------------------------------------
 
             const attachments = [];
 
-            // Poster phim
             if (posterExists) {
                 attachments.push({
                     filename: posterFile,
@@ -109,7 +94,6 @@ const MailServiceTicket = {
                 });
             }
 
-            // QR code (inline attachment)
             attachments.push({
                 filename: "qrcode.png",
                 content: qrBuffer,
@@ -117,12 +101,7 @@ const MailServiceTicket = {
                 contentType: "image/png"
             });
 
-            // Gửi cid cho template để sử dụng trong src="cid:..."
             ticketData.qrCid = qrCid;
-
-            //------------------------------------------------
-            // SEND MAIL
-            //------------------------------------------------
 
             const mailOptions = {
 
@@ -158,7 +137,7 @@ const MailServiceTicket = {
     },
 
     // =====================================================
-    // SEND RESET PASSWORD OTP (Giữ nguyên cho dự phòng)
+    // SEND RESET PASSWORD OTP
     // =====================================================
 
     sendResetPasswordOTP: async (email, otp, fullName = "") => {
@@ -198,11 +177,11 @@ const MailServiceTicket = {
     // =====================================================
 
     sendPasswordResetOTP: async (email, otp, fullName = "") => {
-        return await MailServiceTicket.sendResetPasswordOTP(email, otp, fullName);
+        return await MailService.sendResetPasswordOTP(email, otp, fullName);
     },
 
     // =====================================================
-    // 🔥 SEND RESET PASSWORD LINK (MỚI - GỬI LINK TOKEN)
+    // SEND RESET PASSWORD LINK
     // =====================================================
 
     sendPasswordResetLink: async (email, resetUrl, fullName = "") => {
@@ -224,7 +203,7 @@ const MailServiceTicket = {
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: email,
                 subject: "🔑 Đặt lại mật khẩu - Dũng Cinema",
-                html: ResetPasswordLinkTemplate(fullName, resetUrl) // Dùng template link mới
+                html: ResetPasswordLinkTemplate(fullName, resetUrl)
 
             });
 
@@ -243,7 +222,7 @@ const MailServiceTicket = {
     },
 
     // =====================================================
-    // 🔥 SEND PASSWORD CHANGE ALERT (MỚI THÊM)
+    // SEND PASSWORD CHANGE ALERT
     // =====================================================
 
     sendPasswordChangeAlert: async (email, fullName = "") => {
@@ -289,11 +268,10 @@ const MailServiceTicket = {
     },
 
     // =====================================================
-    // SEND EMAIL VERIFICATION - 🔴 ĐÃ SỬA
+    // SEND EMAIL VERIFICATION
     // =====================================================
 
     sendEmailVerification: async (email, verifyUrl, fullName = "") => {
-        //                         ^^^^^^^^^^ Nhận URL trực tiếp, không phải token
 
         console.log(`📨 VERIFY EMAIL -> ${email}`);
 
@@ -306,12 +284,13 @@ const MailServiceTicket = {
         }
 
         try {
+
             const info = await transporter.sendMail({
 
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: email,
                 subject: "Xác thực Email - Dũng Cinema",
-                html: VerifyEmailTemplate(fullName, verifyUrl) // ✅ Dùng URL trực tiếp
+                html: VerifyEmailTemplate(fullName, verifyUrl)
 
             });
 
@@ -372,6 +351,44 @@ const MailServiceTicket = {
 
         }
 
+    },
+
+    // =====================================================
+    // SEND FORGOT PIN OTP (GỬI OTP ĐẶT LẠI MÃ PIN)
+    // =====================================================
+
+    sendForgotPinOTP: async (email, otp, fullName = "") => {
+
+        console.log(`📨 SEND FORGOT PIN OTP -> ${email}`);
+
+        if (!email) {
+            throw new Error("Email người nhận không hợp lệ");
+        }
+
+        try {
+
+            const info = await transporter.sendMail({
+
+                from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
+                to: email,
+                subject: `[${otp}] Mã xác thực đặt lại mã PIN`,
+                html: ForgotPinTemplate(otp, fullName)
+
+            });
+
+            console.log("✅ FORGOT PIN OTP SENT");
+            console.log(info.messageId);
+
+            return info;
+
+        } catch (error) {
+
+            console.error("❌ FORGOT PIN OTP ERROR");
+            console.error(error);
+            throw error;
+
+        }
+
     }
 
 };
@@ -380,4 +397,4 @@ const MailServiceTicket = {
 // EXPORT
 // =========================================================
 
-module.exports = MailServiceTicket;
+module.exports = MailService;

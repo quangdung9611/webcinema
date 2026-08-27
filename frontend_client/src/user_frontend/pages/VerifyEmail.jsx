@@ -31,7 +31,7 @@ const VerifyEmail = () => {
                 if (response.data.success) {
                     setStatus('success');
                     setMessage(response.data.message || 'Xác thực email thành công!');
-                    setUserData(response.data.data?.user || null);
+                    setUserData(response.data.data || null); // ✅ Đã sửa lại dòng này
                     
                     // ✅ Lưu thông báo đã xác thực
                     localStorage.setItem('email_verified', 'true');

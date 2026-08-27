@@ -1,0 +1,191 @@
+/* =========================================================
+   FORGOT PIN MODAL
+========================================================= */
+
+.forgot-pin-body {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.forgot-pin-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.forgot-pin-icon.success {
+    background: rgba(34, 197, 94, 0.15);
+}
+
+.forgot-pin-text {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 15px;
+    margin-bottom: 20px;
+}
+
+.forgot-pin-subtext {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+/* 6 ô nhập OTP/PIN */
+.forgot-pin-boxes {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.forgot-pin-box {
+    width: 46px;
+    height: 54px;
+    border-radius: 8px;
+    border: 1px solid var(--border-premium);
+    background: rgba(255, 255, 255, 0.05);
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: var(--text-body);
+    outline: none;
+    transition: all 0.2s ease;
+    max-width: 46px;
+}
+
+.forgot-pin-box:focus {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    transform: scale(1.05);
+}
+
+.forgot-pin-box.error {
+    border-color: rgba(248, 113, 113, 0.6);
+    background: rgba(248, 113, 113, 0.1);
+}
+
+/* Timer */
+.forgot-pin-timer {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+/* Nút gửi lại OTP */
+.forgot-pin-resend {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 15px;
+}
+
+.forgot-pin-resend:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Lỗi */
+.forgot-pin-error {
+    color: #f87171;
+    font-size: 13px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+/* Hành động */
+.forgot-pin-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* Nút quay lại */
+.forgot-pin-back {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #e5e7eb;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+
+.forgot-pin-back:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Nút xác nhận */
+.forgot-pin-confirm {
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.forgot-pin-confirm:hover {
+    background: #1d4ed8;
+}
+
+/* Nút tiếp tục (bước 1 và bước success) */
+.forgot-pin-next-btn {
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 30px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 10px;
+}
+
+.forgot-pin-next-btn:hover {
+    background: #1d4ed8;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .forgot-pin-boxes {
+        gap: 5px;
+    }
+
+    .forgot-pin-box {
+        width: 40px;
+        height: 48px;
+        font-size: 18px;
+        max-width: 40px;
+    }
+
+    .forgot-pin-actions {
+        flex-direction: column;
+    }
+
+    .forgot-pin-actions button {
+        width: 100%;
+    }
+}

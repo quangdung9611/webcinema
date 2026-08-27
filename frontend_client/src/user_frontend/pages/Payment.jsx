@@ -7,6 +7,9 @@ import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
 import LoadingButton from '../components/LoadingButton';
 
+// Import PaymentPinModal
+import PaymentPinModal from '../components/PaymentPinModal';
+
 // STYLES
 import '../styles/Payment.css';
 
@@ -56,6 +59,12 @@ const Payment = () => {
         onConfirm: null
     });
 
+    // 🆕 STATE CHO MODAL NHẬP MÃ PIN
+    const [showPinModal, setShowPinModal] = useState(false);
+    const [pin, setPin] = useState('');
+    const [pinError, setPinError] = useState('');
+    const [isVerifyingPin, setIsVerifyingPin] = useState(false);
+
     const showtimeId = selectedShowtime?.showtime_id || selectedShowtime?.id;
 
     // =========================
@@ -84,11 +93,7 @@ const Payment = () => {
         setIsLoadingUser(true);
         try {
             const response = await api.get('/api/auth/me');
-            
-            // 🆕 LẤY USER TỪ response.data.user
             const userData = response.data?.user;
-            
-            console.log('📦 User data:', userData);
             
             if (userData && userData.user_id) {
                 setUser(userData);
@@ -100,13 +105,9 @@ const Payment = () => {
                 });
                 return true;
             } else {
-                console.error('❌ No user_id found in:', response.data);
                 throw new Error('Invalid session');
             }
         } catch (error) {
-            console.error('❌ Session check failed:', error);
-            
-            // Nếu lỗi 401 → Cookie hết hạn
             if (error.response?.status === 401) {
                 showNotice(
                     'error',
@@ -132,7 +133,6 @@ const Payment = () => {
             return;
         }
 
-        // Xóa toàn bộ session cũ
         sessionStorage.removeItem('lastSuccessTicket');
         sessionStorage.removeItem('bankHasSentOtp');
         sessionStorage.removeItem('bankHasVisited');
@@ -144,22 +144,10 @@ const Payment = () => {
         sessionStorage.removeItem('paymentInitiated');
         sessionStorage.removeItem('tempBookingId');
 
-        // Kiểm tra session từ COOKIE
         const verifySession = async () => {
             const isValid = await checkSession();
-            
-            if (!isValid) {
-                // Cookie không hợp lệ hoặc hết hạn
-                showNotice(
-                    'error',
-                    'YÊU CẦU ĐĂNG NHẬP',
-                    'Vui lòng đăng nhập để tiếp tục đặt vé.',
-                    () => navigate('/login', { state: { from: location.pathname } })
-                );
-                return;
-            }
+            if (!isValid) return;
 
-            // Session hợp lệ, kiểm tra timer giữ ghế
             if (sessionStorage.getItem('holdExpiresAt')) {
                 setIsTimerActive(true);
             }
@@ -167,24 +155,18 @@ const Payment = () => {
 
         verifySession();
 
-        // Lắng nghe sự kiện sessionExpired từ api interceptor
         const handleSessionExpired = (event) => {
             console.log('🔴 Session expired event received:', event.detail);
             showNotice(
                 'error',
                 'PHIÊN ĐĂNG NHẬP HẾT HẠN',
                 event.detail?.message || 'Vui lòng đăng nhập lại để tiếp tục.',
-                () => {
-                    navigate('/login', { state: { from: location.pathname } });
-                }
+                () => navigate('/login', { state: { from: location.pathname } })
             );
         };
 
         window.addEventListener('sessionExpired', handleSessionExpired);
-
-        return () => {
-            window.removeEventListener('sessionExpired', handleSessionExpired);
-        };
+        return () => window.removeEventListener('sessionExpired', handleSessionExpired);
     }, [movie, selectedSeats, navigate, location.pathname]);
 
     // =========================
@@ -250,16 +232,60 @@ const Payment = () => {
     };
 
     // =========================
+    // KIỂM TRA MÃ PIN TRƯỚC KHI THANH TOÁN
+    // =========================
+    const onConfirmPaymentClick = () => {
+        if (!userInfo.user_id) {
+            showNotice('error', 'YÊU CẦU ĐĂNG NHẬP', 'Vui lòng đăng nhập để tiếp tục.', () => navigate('/login', { state: { from: location.pathname } }));
+            return;
+        }
+
+        if (!userInfo.full_name || !userInfo.email || !userInfo.phone) {
+            showNotice('error', 'THIẾU THÔNG TIN', 'Vui lòng nhập đầy đủ thông tin nhận vé.');
+            return;
+        }
+
+        setShowPinModal(true);
+        setPin('');
+        setPinError('');
+    };
+
+    // =========================
+    // XÁC THỰC MÃ PIN VÀ TIẾP TỤC
+    // =========================
+    const handleVerifyPinAndProceed = async (e) => {
+        if (!/^\d{6}$/.test(pin)) {
+            setPinError('Vui lòng nhập mã PIN gồm 6 chữ số');
+            return;
+        }
+
+        setIsVerifyingPin(true);
+        setPinError('');
+
+        try {
+            // 1. Gọi API xác thực PIN
+            const pinResponse = await api.post('/api/users/verify-pin', { pin });
+
+            if (pinResponse.data.success) {
+                // 2. Nếu PIN đúng -> Đóng modal PIN -> Gọi xử lý thanh toán
+                setShowPinModal(false);
+                setPin('');
+                await handleProceed();
+            }
+        } catch (err) {
+            console.error('Verify PIN Error:', err);
+            setPinError(err.response?.data?.message || 'Mã PIN không đúng');
+        } finally {
+            setIsVerifyingPin(false);
+        }
+    };
+
+    // =========================
     // PAYMENT – GỌI API /payment/process
     // =========================
     const handleProceed = async () => {
         if (!userInfo.user_id) {
-            showNotice(
-                'error',
-                'YÊU CẦU ĐĂNG NHẬP',
-                'Vui lòng đăng nhập để tiếp tục.',
-                () => navigate('/login', { state: { from: location.pathname } })
-            );
+            showNotice('error', 'YÊU CẦU ĐĂNG NHẬP', 'Vui lòng đăng nhập để tiếp tục.', () => navigate('/login', { state: { from: location.pathname } }));
             return;
         }
 
@@ -273,7 +299,6 @@ const Payment = () => {
             return;
         }
 
-        // Xóa session cũ liên quan đến OTP
         sessionStorage.removeItem('bankHasSentOtp');
         sessionStorage.removeItem('bankHasVisited');
         sessionStorage.removeItem('bankOtpTimeLeft');
@@ -389,6 +414,19 @@ const Payment = () => {
                 onCancel={() => setModal({ ...modal, show: false })}
             />
 
+            {/* 🆕 MODAL NHẬP MÃ PIN - Đã tự chứa ForgotPinModal bên trong */}
+            <PaymentPinModal
+                isOpen={showPinModal}
+                onClose={() => setShowPinModal(false)}
+                onConfirm={handleVerifyPinAndProceed}
+                pin={pin}
+                setPin={setPin}
+                error={pinError}
+                isLoading={isVerifyingPin}
+                email={userInfo.email} // Truyền email
+                api={api} // Truyền api
+            />
+
             <div className="booking-container">
                 <BookingSidebar
                     movie={movie}
@@ -492,7 +530,7 @@ const Payment = () => {
                                     type="button"
                                     loading={isProcessing}
                                     loadingText="Đang xử lý..."
-                                    onClick={handleProceed}
+                                    onClick={onConfirmPaymentClick}
                                     disabled={isProcessing}
                                     className="btn-next"
                                     spinnerColor="#ffffff"

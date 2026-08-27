@@ -12,7 +12,7 @@ const otpService =
     require('../Services/OtpService');
 
 const mailService =
-    require('../Services/MailServiceTicket');
+    require('../Services/MailService');
 
 // =========================================================
 // FORGOT PASSWORD

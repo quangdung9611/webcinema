@@ -1,0 +1,96 @@
+/* =========================================================
+   PAYMENT PIN MODAL - 6 Ô NHẬP MÃ PIN
+========================================================= */
+
+.pin-modal-body {
+    text-align: center;
+    padding: 10px 0;
+}
+
+/* Icon ổ khóa */
+.pin-modal-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(245, 158, 11, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+}
+
+/* Mô tả */
+.pin-modal-description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+/* Container chứa 6 ô */
+.pin-boxes-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+/* Từng ô nhập */
+.pin-box {
+    width: 48px;
+    height: 56px;
+    border-radius: 10px;
+    border: 1px solid var(--border-premium);
+    background: rgba(255, 255, 255, 0.05);
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--text-body);
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+/* Hiệu ứng hover và focus */
+.pin-box:hover {
+    border-color: var(--border-premium-hover);
+}
+
+.pin-box:focus {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    transform: scale(1.05);
+}
+
+/* Ô bị lỗi */
+.pin-box-error {
+    border-color: rgba(248, 113, 113, 0.6);
+    background: rgba(248, 113, 113, 0.1);
+}
+
+.pin-box-error:focus {
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2);
+}
+
+/* Thông báo lỗi */
+.pin-modal-error {
+    color: #f87171;
+    text-align: center;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 480px) {
+    .pin-boxes-container {
+        gap: 6px;
+    }
+
+    .pin-box {
+        width: 42px;
+        height: 50px;
+        font-size: 20px;
+    }
+}

@@ -340,3 +340,39 @@ exports.revokeDevice = async (req, res) => {
         return res.status(error.statusCode || 500).json({ success: false, message: error.message || "Lỗi máy chủ" });
     }
 };
+
+/*=========================================================
+    🆕 QUÊN MÃ PIN - GỬI OTP VỀ EMAIL
+=========================================================*/
+exports.forgotPin = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const result = await AuthService.forgotPin(email);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Forgot PIN Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};
+
+/*=========================================================
+    🆕 XÁC THỰC OTP VÀ ĐỔI MÃ PIN MỚI
+=========================================================*/
+exports.verifyOtpAndChangePin = async (req, res) => {
+    try {
+        const { email, otp, newPin } = req.body;
+        const result = await AuthService.verifyOtpAndChangePin(email, otp, newPin);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Verify OTP And Change PIN Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};

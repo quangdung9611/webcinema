@@ -1,7 +1,7 @@
 const BookingService = require("./BookingService");
 const TicketService = require("./TicketService");
 const PointsService = require("./PointsService");
-const MailServiceTicket = require("./MailServiceTicket");
+const MailService = require("./MailService");
 const axios = require("axios");
 const crypto = require("crypto");
 
@@ -78,7 +78,7 @@ class MomoService {
       ? foods.map(f => `${f.item_name} (x${f.quantity})`).join(", ")
       : "Không có";
 
-    await MailServiceTicket.sendTicketEmail(order.email, {
+    await MailService.sendTicketEmail(order.email, {
       bookingId: order.booking_id,
       customerName: order.full_name,
       movieTitle: order.movie_name,
