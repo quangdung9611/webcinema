@@ -81,7 +81,6 @@ exports.checkLockStatus = async (email) => {
 exports.login = async (email, password, rememberMe = false, req, res) => {
     validateLogin(email, password);
     
-    // 🔥 RATE LIMIT CHO LOGIN: Tối đa 5 lần trong 60 giây
     const loginRateLimit = await RedisService.checkRateLimit(email, "login", 5, 60);
     if (!loginRateLimit.allowed) {
         throw {
@@ -266,7 +265,6 @@ exports.changePassword = async (userId, passwordData) => {
     const user = await UserRepository.findById(userId);
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
 
-    // 🔥 RATE LIMIT: Tối đa 3 lần trong 60 giây
     const rateLimit = await RedisService.checkRateLimit(user.email, "change-password", 3, 60);
     if (!rateLimit.allowed) {
         throw { 
@@ -312,7 +310,6 @@ exports.forgotPassword = async (email, req) => {
         };
     }
 
-    // 🔥 RATE LIMIT: Tối đa 3 lần trong 60 giây
     const rateLimit = await RedisService.checkRateLimit(email, "password-reset", 3, 60);
     if (!rateLimit.allowed) {
         throw { 
@@ -372,7 +369,6 @@ exports.submitNewPassword = async (token, newPassword) => {
     const user = await UserRepository.findByEmail(payload.email);
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
 
-    // 🔥 RATE LIMIT: Tối đa 3 lần trong 60 giây
     const rateLimit = await RedisService.checkRateLimit(user.email, "submit-password", 3, 60);
     if (!rateLimit.allowed) {
         throw { 
@@ -395,7 +391,6 @@ exports.submitNewPassword = async (token, newPassword) => {
 // XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU - CÓ RATE LIMIT (5 lần/60s)
 // ============================================================
 exports.verifyOtpAndReset = async (email, otp, newPassword) => {
-    // 🔥 RATE LIMIT: Tối đa 5 lần thử OTP trong 60 giây
     const rateLimit = await RedisService.checkRateLimit(email, "verify-otp", 5, 60);
     if (!rateLimit.allowed) {
         throw { 
@@ -445,7 +440,6 @@ exports.sendVerificationEmail = async (email) => {
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     if (user.email_verified) throw { statusCode: 400, message: "Email đã được xác thực" };
 
-    // 🔥 RATE LIMIT: Tối đa 3 lần trong 300 giây (5 phút)
     const rateLimit = await RedisService.checkRateLimit(email, "send-verify", 3, 300);
     if (!rateLimit.allowed) {
         throw { 
@@ -584,7 +578,6 @@ exports.loginAfterRegistration = async (user, req, res) => {
 exports.registerStep1 = async (data) => {
     const { username, full_name, email, phone, password, address } = data;
 
-    // Validation
     if (!username?.trim()) {
         throw { statusCode: 400, field: "username", message: "Tên đăng nhập không được để trống" };
     }
@@ -607,7 +600,6 @@ exports.registerStep1 = async (data) => {
         throw { statusCode: 400, field: "password", message: "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt" };
     }
 
-    // Kiểm tra tồn tại
     const existed = await UserRepository.exists(username, email, phone);
     if (existed) {
         if (existed.username === username) {
@@ -621,7 +613,6 @@ exports.registerStep1 = async (data) => {
         }
     }
 
-    // 🔥 RATE LIMIT: Tối đa 3 lần trong 300 giây (5 phút)
     const rateLimit = await RedisService.checkRateLimit(email, "register", 3, 300);
     if (!rateLimit.allowed) {
         throw { 
@@ -650,7 +641,6 @@ exports.registerStep1 = async (data) => {
 exports.completeRegistration = async (data, req, res) => {
     const { temp_token, pin, username, full_name, email, phone, password, address } = data;
 
-    // 🔥 RATE LIMIT: Tối đa 3 lần trong 300 giây (5 phút)
     const rateLimit = await RedisService.checkRateLimit(email, "register", 3, 300);
     if (!rateLimit.allowed) {
         throw { 
@@ -722,7 +712,6 @@ exports.resendVerificationAfterLogin = async (userId) => {
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     if (user.email_verified) throw { statusCode: 400, message: "Email đã được xác thực" };
 
-    // 🔥 RATE LIMIT: Tối đa 3 lần trong 120 giây
     const rateLimit = await RedisService.checkRateLimit(user.email, "resend-verify", 3, 120);
     if (!rateLimit.allowed) {
         throw { 
@@ -752,7 +741,6 @@ exports.forgotPin = async (email) => {
         throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     }
 
-    // 🔥 RATE LIMIT: Tối đa 3 lần trong 120 giây
     const rateLimit = await RedisService.checkRateLimit(email, "forgot-pin", 3, 120);
     if (!rateLimit.allowed) {
         throw { 
@@ -770,13 +758,8 @@ exports.forgotPin = async (email) => {
     };
 };
 
-// AuthService.js - verifyOtpAndChangePin
+// 🆕 6. XÁC THỰC OTP VÀ ĐỔI MÃ PIN MỚI - ✅ SỬA: Cho phép newPin rỗng
 exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
-    // 🔥 SỬA: Cho phép newPin là chuỗi rỗng (chỉ verify OTP)
-    if (newPin && !/^\d{6}$/.test(newPin)) {
-        throw { statusCode: 400, field: "newPin", message: "Mã PIN mới phải là 6 chữ số" };
-    }
-
     // 🔥 RATE LIMIT: Tối đa 5 lần thử OTP trong 60 giây
     const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-pin", 5, 60);
     if (!rateLimit.allowed) {
@@ -793,6 +776,11 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
             field: "otp",
             message: otpResult.message
         };
+    }
+
+    // ✅ SỬA: Cho phép newPin là chuỗi rỗng (chỉ verify OTP)
+    if (newPin && !/^\d{6}$/.test(newPin)) {
+        throw { statusCode: 400, field: "newPin", message: "Mã PIN mới phải là 6 chữ số" };
     }
 
     // ✅ Nếu không có newPin hoặc newPin rỗng → chỉ verify OTP
@@ -814,3 +802,8 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
         message: "Đổi mã PIN thành công!"
     };
 };
+
+// ============================================================
+// EXPORT SOCKET
+// ============================================================
+exports.setIO = setIO;
