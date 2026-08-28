@@ -802,29 +802,7 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
         message: "Đổi mã PIN thành công!"
     };
 };
-// AuthService.js - Thêm hàm verify OTP riêng (không xóa OTP)
-exports.verifyOtpOnly = async (email, otp) => {
-    // 🔥 RATE LIMIT: Tối đa 5 lần thử OTP trong 60 giây
-    const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-pin", 5, 60);
-    if (!rateLimit.allowed) {
-        throw { 
-            statusCode: 429, 
-            message: `Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.` 
-        };
-    }
 
-    const otpResult = await OtpService.verifyOTP(email, otp, OtpService.PURPOSE.FORGOT_PIN);
-    if (!otpResult.success) {
-        throw {
-            statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400,
-            field: "otp",
-            message: otpResult.message
-        };
-    }
-
-    // ✅ KHÔNG XÓA OTP, chỉ xác thực
-    return { success: true, message: "Xác thực OTP thành công" };
-};
 // ============================================================
 // EXPORT SOCKET
 // ============================================================
