@@ -467,3 +467,18 @@ exports.verifyOtpAndChangePin = async (req, res) => {
         });
     }
 };
+// AuthController.js
+exports.verifyOtpOnly = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        const result = await AuthService.verifyOtpOnly(email, otp);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error("Verify OTP Only Error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            field: error.field || null,
+            message: error.message || "Lỗi máy chủ"
+        });
+    }
+};

@@ -188,88 +188,92 @@ const ForgotPin = () => {
         }
     };
 
-    // ✅ GIỮ NGUYÊN LOGIC: Xác thực OTP
-    const handleVerifyOtp = async () => {
-        if (!/^\d{6}$/.test(otp)) {
-            setError('Vui lòng nhập đủ 6 số OTP');
-            return;
+   // ForgotPin.jsx - Sửa handleVerifyOtp
+const handleVerifyOtp = async () => {
+    if (!/^\d{6}$/.test(otp)) {
+        setError('Vui lòng nhập đủ 6 số OTP');
+        return;
+    }
+
+    if (isRateLimited) {
+        setError(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
+        return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+        // ✅ Gọi API chỉ verify OTP (không xóa OTP)
+        const response = await api.post('/api/auth/verify-otp-only', {
+            email,
+            otp
+        });
+
+        if (response.data.success) {
+            // ✅ LƯU OTP VÀO STATE ĐỂ DÙNG LẠI
+            sessionStorage.setItem('verifiedOtp', otp);
+            setStep('newPin');
+            setError('');
         }
-
-        if (isRateLimited) {
-            setError(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-        try {
-            // ✅ Gọi API verify OTP (chỉ verify, chưa đổi PIN)
-            const response = await api.post('/api/auth/verify-otp-and-change-pin', {
-                email,
-                otp,
-                newPin: '' // Gửi chuỗi rỗng để chỉ verify OTP
-            });
-
-            if (response.data.success) {
-                setStep('newPin');
-                setError('');
-            }
-        } catch (err) {
-            const status = err.response?.status;
-            const errorData = err.response?.data || {};
-            const errorMessage = errorData.message || 'OTP không đúng';
-            
-            if (status === 429) {
-                const remainingSeconds = errorData.data?.remainingSeconds || 60;
-                const maxAttempts = errorData.data?.maxAttempts || 5;
-                setError(`⚠️ Bạn chỉ được thử tối đa ${maxAttempts} lần. Vui lòng thử lại sau ${remainingSeconds} giây.`);
-                setIsRateLimited(true);
-                setRateLimitTimeLeft(remainingSeconds);
-            } else {
-                setError(errorMessage);
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // ✅ GIỮ NGUYÊN LOGIC: Đổi PIN
-    const handleChangePin = async () => {
-        if (!/^\d{6}$/.test(pin)) {
-            setError('Vui lòng nhập đủ 6 số PIN mới');
-            return;
-        }
-
-        if (pin !== confirmPin) {
-            setError('Mã PIN xác nhận không khớp');
-            return;
-        }
-
-        if (isRateLimited) {
-            setError(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-        try {
-            const response = await api.post('/api/auth/verify-otp-and-change-pin', {
-                email,
-                otp,
-                newPin: pin
-            });
-
-            if (response.data.success) {
-                setStep('success');
-            }
-        } catch (err) {
-            const errorMessage = err.response?.data?.message || 'Không thể đổi mã PIN';
+    } catch (err) {
+        const status = err.response?.status;
+        const errorData = err.response?.data || {};
+        const errorMessage = errorData.message || 'OTP không đúng';
+        
+        if (status === 429) {
+            const remainingSeconds = errorData.data?.remainingSeconds || 60;
+            const maxAttempts = errorData.data?.maxAttempts || 5;
+            setError(`⚠️ Bạn chỉ được thử tối đa ${maxAttempts} lần. Vui lòng thử lại sau ${remainingSeconds} giây.`);
+            setIsRateLimited(true);
+            setRateLimitTimeLeft(remainingSeconds);
+        } else {
             setError(errorMessage);
-        } finally {
-            setLoading(false);
         }
-    };
+    } finally {
+        setLoading(false);
+    }
+};
 
+// ForgotPin.jsx - Sửa handleChangePin
+const handleChangePin = async () => {
+    if (!/^\d{6}$/.test(pin)) {
+        setError('Vui lòng nhập đủ 6 số PIN mới');
+        return;
+    }
+
+    if (pin !== confirmPin) {
+        setError('Mã PIN xác nhận không khớp');
+        return;
+    }
+
+    if (isRateLimited) {
+        setError(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
+        return;
+    }
+
+    // ✅ Lấy OTP đã verify từ sessionStorage
+    const verifiedOtp = sessionStorage.getItem('verifiedOtp') || otp;
+
+    setLoading(true);
+    setError('');
+    try {
+        const response = await api.post('/api/auth/verify-otp-and-change-pin', {
+            email,
+            otp: verifiedOtp, // ✅ Dùng OTP đã verify
+            newPin: pin
+        });
+
+        if (response.data.success) {
+            sessionStorage.removeItem('verifiedOtp'); // Xóa OTP đã dùng
+            setStep('success');
+        }
+    } catch (err) {
+        const errorMessage = err.response?.data?.message || 'Không thể đổi mã PIN';
+        setError(errorMessage);
+    } finally {
+        setLoading(false);
+    }
+};
     // ✅ Khi modal thành công đóng, quay lại Payment
     const handleSuccessModalClose = () => {
         setStep('sent');

@@ -10,7 +10,8 @@ const { authenticateUser } = require("../Middlewares/UserAuthMiddleware");
 // 🆕 Thêm 2 route này vào đầu PUBLIC
 router.post("/forgot-pin", AuthController.forgotPin);
 router.post("/verify-otp-and-change-pin", AuthController.verifyOtpAndChangePin);
-
+// routes/auth.js - Thêm vào PUBLIC ROUTES
+router.post("/verify-otp-only", AuthController.verifyOtpOnly);
 // ... (Giữ nguyên các dòng cũ)
 router.post("/register-step1", AuthController.registerStep1);
 router.post("/complete-registration", AuthController.completeRegistration);
