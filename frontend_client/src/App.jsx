@@ -117,10 +117,30 @@ const ScrollToTop = () => {
 const NotFoundPage = () => {
     const navigate = useNavigate();
     return (
-        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "20px" }}>
+        <div style={{ 
+            minHeight: "100vh", 
+            display: "flex", 
+            flexDirection: "column", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            textAlign: "center", 
+            padding: "20px" 
+        }}>
             <h1 style={{ fontSize: "100px", margin: 0 }}>404</h1>
             <h2>Opps! Trang bạn tìm kiếm không tồn tại</h2>
-            <button onClick={() => navigate("/")} style={{ padding: "10px 20px", cursor: "pointer", marginTop: "20px" }}>
+            <button 
+                onClick={() => navigate("/")} 
+                style={{ 
+                    padding: "10px 20px", 
+                    cursor: "pointer", 
+                    marginTop: "20px",
+                    background: "#dc2626",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "16px"
+                }}
+            >
                 QUAY LẠI TRANG CHỦ
             </button>
         </div>
@@ -148,6 +168,7 @@ const AdminRouteGuard = ({ children }) => {
                     navigate("/login", { replace: true });
                 }
             } catch (error) {
+                console.warn("🔴 [ADMIN GUARD] Unauthorized:", error);
                 navigate("/login", { replace: true });
             } finally {
                 setIsLoading(false);
@@ -156,7 +177,9 @@ const AdminRouteGuard = ({ children }) => {
         checkAdmin();
     }, [navigate]);
 
-    if (isLoading) return <LoadingSpinner size={72} color="#dc2626" message="Đang tải quyền truy cập..." />;
+    if (isLoading) {
+        return <LoadingSpinner size={72} color="#dc2626" message="Đang tải quyền truy cập..." />;
+    }
     return isAuth ? children : null;
 };
 
@@ -171,7 +194,9 @@ const UserRouteGuard = ({ children }) => {
         }
     }, [user, isLoading, navigate]);
 
-    if (isLoading) return <LoadingSpinner size={72} color="#dc2626" message="Đang tải quyền truy cập..." />;
+    if (isLoading) {
+        return <LoadingSpinner size={72} color="#dc2626" message="Đang tải quyền truy cập..." />;
+    }
     return user ? children : null;
 };
 
@@ -249,7 +274,7 @@ const ADMIN_ROUTES = [
 // ROUTE COMPONENTS
 // ============================================================
 
-const AdminRoutes = () => (
+const AdminRoutesComponent = () => (
     <Routes>
         <Route path="/login" element={<AdminLogin />} />
         <Route element={<AdminRouteGuard><AdminLayout><Outlet /></AdminLayout></AdminRouteGuard>}>
@@ -262,7 +287,7 @@ const AdminRoutes = () => (
     </Routes>
 );
 
-const UserRoutes = () => (
+const UserRoutesComponent = () => (
     <Routes>
         {/* Auth Routes - Fullscreen */}
         {AUTH_ROUTES.map(({ path, element }) => (
@@ -292,13 +317,25 @@ const AppContent = () => {
 
     return (
         <>
-            {routeLoading && <LoadingSpinner size={72} color="#dc2626" message="Đang chuyển trang..." blur={true} zIndex={10000} />}
+            {routeLoading && (
+                <LoadingSpinner 
+                    size={72} 
+                    color="#dc2626" 
+                    message="Đang chuyển trang..." 
+                    blur={true} 
+                    zIndex={10000} 
+                />
+            )}
             <ScrollToTop />
-            <LazyErrorBoundary>
-                <Suspense fallback={<SuspenseLoading />}>
-                    {isAdminDomain ? <AdminRoutes /> : <UserRoutes />}
-                </Suspense>
-            </LazyErrorBoundary>
+            
+            {/* ✅ BỌC TOÀN BỘ APP BẰNG SESSION GUARD */}
+            <SessionGuard>
+                <LazyErrorBoundary>
+                    <Suspense fallback={<SuspenseLoading />}>
+                        {isAdminDomain ? <AdminRoutesComponent /> : <UserRoutesComponent />}
+                    </Suspense>
+                </LazyErrorBoundary>
+            </SessionGuard>
         </>
     );
 };

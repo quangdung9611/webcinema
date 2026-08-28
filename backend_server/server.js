@@ -93,88 +93,72 @@ const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:5173"
 ];
+// server.js - Socket.IO middleware mới
 
 io.use(async (socket, next) => {
     try {
-        const origin = socket.handshake.headers.origin;
-        if (origin && !allowedOrigins.includes(origin)) {
-            console.warn(`🔴 [SOCKET] Chặn kết nối từ Origin lạ: ${origin}`);
-            return next(new Error("Origin not allowed"));
-        }
-
         const cookies = Object.fromEntries(
             (socket.handshake.headers.cookie || "").split(";").map(c => c.trim().split("="))
         );
         const token = cookies["user_token"] || cookies["admin_token"];
 
+        // Không có token → guest connection
         if (!token) {
-            console.warn("🔴 [SOCKET] No token found in cookies");
-            return next(new Error("Authentication required"));
+            console.log("👤 [SOCKET] Guest connection (no token)");
+            socket.userId = null;
+            socket.userRole = null;
+            socket.userEmail = null;
+            socket.username = null;
+            socket.fullName = null;
+            return next();
         }
 
+        // Có token → thử xác thực
         let payload;
         try {
             payload = Jwt.verifyAccessToken(token);
         } catch (error) {
-            if (error.name === "TokenExpiredError") {
-                console.warn("🔴 [SOCKET] Token expired");
-
-                try {
-                    const decoded = Jwt.decodeAccessToken(token);
-                    if (decoded?.user_id) {
-                        io.to(`user_${decoded.user_id}`).emit("session_expired", {
-                            code: "TOKEN_EXPIRED",
-                            message: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-                            newDevice: { deviceName: "Token expired", reason: "Token đã hết hạn", timestamp: new Date().toISOString() },
-                            timestamp: new Date().toISOString()
-                        });
-                    }
-                } catch (decodeError) {
-                    console.warn("⚠️ [SOCKET] Cannot decode expired token");
-                }
-
-                return next(new Error("Token expired"));
-            }
-
-            console.warn("🔴 [SOCKET] Invalid token:", error.message);
-            return next(new Error("Invalid token"));
+            // Token không hợp lệ → vẫn cho kết nối như guest
+            console.warn("⚠️ [SOCKET] Invalid token, connecting as guest");
+            socket.userId = null;
+            socket.userRole = null;
+            socket.userEmail = null;
+            socket.username = null;
+            socket.fullName = null;
+            return next();
         }
 
         if (!payload) {
-            console.warn("🔴 [SOCKET] Invalid token payload");
-            return next(new Error("Invalid token"));
+            socket.userId = null;
+            return next();
         }
 
+        // Kiểm tra token trong DB
         try {
             const accessTokenHash = Jwt.hashRefreshToken(token);
             const validToken = await RefreshTokenRepository.findValidTokenHash(accessTokenHash);
-
-            if (!validToken) {
-                console.warn(`🔴 [SOCKET] Token revoked for user ${payload.user_id}`);
-                io.to(`user_${payload.user_id}`).emit("session_expired", {
-                    code: "SESSION_REPLACED",
-                    message: "Tài khoản đã được đăng nhập trên thiết bị khác. Vui lòng đăng nhập lại.",
-                    newDevice: { deviceName: "Session revoked", reason: "Token không tồn tại trong DB", timestamp: new Date().toISOString() },
-                    timestamp: new Date().toISOString()
-                });
-
-                return next(new Error("Session expired"));
+            
+            if (validToken) {
+                socket.userId = payload.user_id;
+                socket.userRole = payload.role;
+                socket.userEmail = payload.email;
+                socket.username = payload.username;
+                socket.fullName = payload.full_name;
+                console.log(`✅ [SOCKET] Authenticated: User ${payload.user_id} (${payload.email})`);
+            } else {
+                console.warn("⚠️ [SOCKET] Token revoked, connecting as guest");
+                socket.userId = null;
             }
         } catch (dbError) {
             console.error("🔴 [SOCKET] DB check error:", dbError.message);
+            socket.userId = null;
         }
 
-        socket.userId = payload.user_id;
-        socket.userRole = payload.role;
-        socket.userEmail = payload.email;
-        socket.username = payload.username;
-        socket.fullName = payload.full_name;
-
-        console.log(`✅ [SOCKET] Authenticated: User ${payload.user_id} (${payload.email})`);
         next();
     } catch (error) {
         console.error("🔴 [SOCKET] Auth error:", error.message);
-        next(new Error("Authentication failed"));
+        socket.userId = null;
+        next();
     }
 });
 

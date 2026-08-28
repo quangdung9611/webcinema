@@ -19,6 +19,7 @@ class SocketService {
     }
 
     emitSessionExpired(detail = {}) {
+        // 🔥 BỎ LOCK (isSessionExpired) - GỌI CALLBACK NGAY LẬP TỨC
         const payload = {
             code: detail.code || 'TOKEN_EXPIRED',
             message: detail.message || 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
@@ -41,13 +42,11 @@ class SocketService {
             return null;
         }
 
-        // Nếu đã kết nối với cùng userId thì giữ nguyên
         if (this.socket && this.socket.connected && String(this.userId) === String(userId)) {
             console.log('🟢 [SOCKET] Đã kết nối sẵn:', userId);
             return this.socket;
         }
 
-        // Ngắt kết nối cũ nếu có
         if (this.socket) {
             console.log('🟡 [SOCKET] Có socket cũ → disconnect');
             this.disconnect({ preserveSessionState: false });
@@ -78,13 +77,10 @@ class SocketService {
 
             if (this.userId) {
                 this.socket.emit('register_socket', { userId: this.userId });
-                // 🆕 Tự động emit sự kiện để đăng ký
-                this.socket.emit('register-email-watcher', { email: this.userId });
-                console.log(`📡 [SOCKET] Đã đăng ký theo dõi email: ${this.userId}`);
             }
         });
 
-        // Bắt sự kiện từ server
+        // 🔥 BẮT SỰ KIỆN TỪ SERVER (BỎ LOCK, GỌI CALLBACK NGAY)
         this.socket.on('session_expired', (data = {}) => {
             console.warn('🔴 [SOCKET] Session expired received!');
             console.log('📨 [SOCKET] Data:', data);
@@ -96,7 +92,7 @@ class SocketService {
             });
         });
 
-        // Bắt lỗi kết nối
+        // 🔥 BẮT LỖI KHI TOKEN HẾT HẠN (F5/CHUYỂN TAB)
         this.socket.on('connect_error', (error) => {
             console.error('🔴 [SOCKET] Lỗi kết nối:', error?.message);
 
@@ -119,36 +115,7 @@ class SocketService {
             }
         });
 
-        // 🆕 Lắng nghe sự kiện email_verified từ server
-        this.socket.on('email_verified', (data) => {
-            console.log('📨 [SOCKET] Nhận email_verified từ server:', data);
-            // Sự kiện này sẽ được xử lý ở component
-        });
-
         return this.socket;
-    }
-
-    // 🆕 Phương thức để đăng ký nghe email
-    registerEmailWatcher(email) {
-        const socket = this.getSocket();
-        if (socket && socket.connected) {
-            socket.emit('register-email-watcher', { email });
-            console.log(`📡 [SOCKET] Đăng ký theo dõi email: ${email}`);
-            return true;
-        }
-        console.warn(`⚠️ [SOCKET] Không thể đăng ký theo dõi email: ${email}`);
-        return false;
-    }
-
-    // 🆕 Phương thức để hủy đăng ký nghe email
-    unregisterEmailWatcher(email) {
-        const socket = this.getSocket();
-        if (socket && socket.connected) {
-            socket.emit('unregister-email-watcher', { email });
-            console.log(`📡 [SOCKET] Hủy theo dõi email: ${email}`);
-            return true;
-        }
-        return false;
     }
 
     disconnect(options = {}) {
@@ -205,7 +172,6 @@ class SocketService {
         }
 
         this.socket.emit(event, data);
-        console.log(`📨 [SOCKET] Emit "${event}":`, data);
         return true;
     }
 }

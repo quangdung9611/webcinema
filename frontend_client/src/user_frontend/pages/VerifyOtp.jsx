@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/api';
 import { ShieldCheck, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import LoadingButton from '../components/LoadingButton';
+import ResetPasswordSuccessModal from '../components/ResetPasswordSuccessModal'; // 🆕 Import modal riêng
 import '../styles/UserAuth.css';
 
 const VerifyOTP = () => {
@@ -12,12 +13,21 @@ const VerifyOTP = () => {
     const email = location.state?.email || '';
     const newPassword = location.state?.newPassword || '';
 
-    const [otp, setOtp] = useState('');
+    const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
+    const inputRefs = useRef([]);
+
     const [loading, setLoading] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('');
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    // Auto focus vào ô đầu tiên khi mount
+    useEffect(() => {
+        if (email && newPassword) {
+            inputRefs.current[0]?.focus();
+        }
+    }, [email, newPassword]);
 
     if (!email || !newPassword) {
         return (
@@ -41,7 +51,49 @@ const VerifyOTP = () => {
         );
     }
 
+    const handleOtpChange = (index, value) => {
+        const cleanValue = value.replace(/\D/g, '').slice(-1);
+        const newOtpValues = [...otpValues];
+        newOtpValues[index] = cleanValue;
+        setOtpValues(newOtpValues);
+        
+        if (message && messageType === 'error') {
+            setMessage('');
+        }
+        
+        if (cleanValue && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleKeyDown = (index, e) => {
+        if (e.key === 'Backspace' && !otpValues[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+    };
+
+    const handlePaste = (e) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text/plain').replace(/\D/g, '').slice(0, 6);
+        const pastedArray = pastedData.split('');
+        
+        const newOtpValues = [...otpValues];
+        for (let i = 0; i < 6; i++) {
+            newOtpValues[i] = i < pastedArray.length ? pastedArray[i] : '';
+        }
+        setOtpValues(newOtpValues);
+        
+        const lastFilledIndex = Math.min(pastedArray.length, 5);
+        if (lastFilledIndex < 5) {
+            inputRefs.current[lastFilledIndex]?.focus();
+        } else {
+            inputRefs.current[5]?.focus();
+        }
+    };
+
     const handleVerifyOTP = async () => {
+        const otp = otpValues.join('');
+        
         if (!otp.trim()) {
             setMessage('Vui lòng nhập OTP');
             setMessageType('error');
@@ -72,7 +124,6 @@ const VerifyOTP = () => {
             const status = err.response?.status;
             const errorMessage = err.response?.data?.message || 'OTP không hợp lệ';
             
-            // 🔥 Hiển thị thông báo rate limit
             if (status === 429) {
                 setMessage(`⚠️ ${errorMessage}`);
             } else {
@@ -97,11 +148,13 @@ const VerifyOTP = () => {
             setMessage(res.data.message || 'OTP đã được gửi lại');
             setMessageType('success');
 
+            setOtpValues(['', '', '', '', '', '']);
+            inputRefs.current[0]?.focus();
+
         } catch (err) {
             const status = err.response?.status;
             const errorMessage = err.response?.data?.message || 'Không thể gửi lại OTP';
             
-            // 🔥 Hiển thị thông báo rate limit
             if (status === 429) {
                 setMessage(`⚠️ ${errorMessage}`);
             } else {
@@ -119,6 +172,17 @@ const VerifyOTP = () => {
         }
     };
 
+    // ✅ Xử lý đóng modal và chuyển về login
+    const handleModalConfirm = () => {
+        setShowSuccessModal(false);
+        navigate('/login');
+    };
+
+    const handleModalClose = () => {
+        setShowSuccessModal(false);
+        navigate('/login');
+    };
+
     return (
         <div className="auth-container">
             <div className="auth-card">
@@ -128,7 +192,7 @@ const VerifyOTP = () => {
 
                 <h2>XÁC THỰC OTP</h2>
                 <p className="auth-subtitle">
-                    Nhập mã OTP gửi đến <strong style={{ color: 'var(--silver-primary)' }}>{email}</strong>
+                    Nhập mã OTP gửi đến <strong className="text-highlight">{email}</strong>
                 </p>
 
                 {message && (
@@ -146,24 +210,25 @@ const VerifyOTP = () => {
                     <form onSubmit={(e) => e.preventDefault()} noValidate>
                         <div className="form-group">
                             <label>Nhập mã OTP (6 số)</label>
-                            <input
-                                type="text"
-                                className="auth-input"
-                                maxLength={6}
-                                placeholder="000000"
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                                onKeyPress={handleKeyPress}
-                                disabled={loading || resendLoading}
-                                autoComplete="one-time-code"
-                                style={{ 
-                                    textAlign: 'center', 
-                                    letterSpacing: '8px',
-                                    fontSize: 'var(--font-size-xl)',
-                                    fontWeight: 'var(--fw-bold)'
-                                }}
-                            />
-                            <div className="input-hint center-text" style={{ marginTop: '8px' }}>
+                            <div className="pin-input-container">
+                                {otpValues.map((val, index) => (
+                                    <input
+                                        key={index}
+                                        ref={(el) => (inputRefs.current[index] = el)}
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={1}
+                                        value={val}
+                                        onChange={(e) => handleOtpChange(index, e.target.value)}
+                                        onKeyDown={(e) => handleKeyDown(index, e)}
+                                        onPaste={handlePaste}
+                                        className={`pin-box ${messageType === 'error' && message.includes('OTP') ? 'input-error' : ''}`}
+                                        disabled={loading || resendLoading}
+                                        autoComplete="one-time-code"
+                                    />
+                                ))}
+                            </div>
+                            <div className="input-hint center-text">
                                 📧 Mã OTP đã được gửi đến email của bạn
                             </div>
                         </div>
@@ -186,14 +251,7 @@ const VerifyOTP = () => {
                                 loading={resendLoading}
                                 loadingText="Đang gửi..."
                                 disabled={loading || resendLoading}
-                                className="btn-user"
-                                spinnerColor="#000000"
-                                style={{ 
-                                    background: 'transparent',
-                                    border: '1px solid rgba(255,255,255,0.08)',
-                                    color: 'var(--text-secondary)',
-                                    boxShadow: 'none'
-                                }}
+                                className="btn-user btn-outline-secondary"
                                 onClick={handleResendOTP}
                             >
                                 GỬI LẠI OTP
@@ -214,21 +272,12 @@ const VerifyOTP = () => {
                 </div>
             </div>
 
-            {showSuccessModal && (
-                <div className="modal-overlay" onClick={() => navigate('/login')}>
-                    <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-icon" style={{ fontSize: '48px' }}>✅</div>
-                        <h3 style={{ color: '#4ade80' }}>Đặt lại mật khẩu thành công!</h3>
-                        <p>Mật khẩu của bạn đã được đặt lại thành công. Vui lòng đăng nhập lại.</p>
-                        <button 
-                            className="modal-btn" 
-                            onClick={() => navigate('/login')}
-                        >
-                            Đăng nhập ngay
-                        </button>
-                    </div>
-                </div>
-            )}
+            {/* 🆕 DÙNG RESET PASSWORD SUCCESS MODAL RIÊNG */}
+            <ResetPasswordSuccessModal
+                show={showSuccessModal}
+                onClose={handleModalClose}
+                onConfirm={handleModalConfirm}
+            />
         </div>
     );
 };
