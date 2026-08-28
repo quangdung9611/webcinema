@@ -18,6 +18,7 @@ const ResetPassword = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [status, setStatus] = useState('form');
+    const [fieldErrors, setFieldErrors] = useState({}); // 🔥 Lỗi theo field
 
     useEffect(() => {
         if (!token) {
@@ -26,31 +27,55 @@ const ResetPassword = () => {
         }
     }, [token]);
 
+    // 🔥 Xóa lỗi field khi người dùng nhập
+    const handleFieldChange = (field, value) => {
+        if (field === 'newPassword') {
+            setNewPassword(value);
+            if (fieldErrors.newPassword) {
+                setFieldErrors(prev => ({ ...prev, newPassword: '' }));
+            }
+        } else if (field === 'confirmPassword') {
+            setConfirmPassword(value);
+            if (fieldErrors.confirmPassword) {
+                setFieldErrors(prev => ({ ...prev, confirmPassword: '' }));
+            }
+        }
+        if (message) setMessage('');
+        if (messageType) setMessageType('');
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage('');
+        setFieldErrors({});
+
+        // Validate
+        let hasError = false;
+        const errors = {};
 
         if (!newPassword.trim()) {
-            setMessage('Vui lòng nhập mật khẩu mới');
-            setMessageType('error');
-            return;
+            errors.newPassword = 'Vui lòng nhập mật khẩu mới';
+            hasError = true;
+        } else if (newPassword.length < 8) {
+            errors.newPassword = 'Mật khẩu phải có ít nhất 8 ký tự';
+            hasError = true;
         }
 
-        if (newPassword.length < 8) {
-            setMessage('Mật khẩu phải có ít nhất 8 ký tự');
-            setMessageType('error');
-            return;
+        if (!confirmPassword.trim()) {
+            errors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
+            hasError = true;
+        } else if (newPassword !== confirmPassword) {
+            errors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+            hasError = true;
         }
 
-        if (newPassword !== confirmPassword) {
-            setMessage('Mật khẩu xác nhận không khớp');
-            setMessageType('error');
+        if (hasError) {
+            setFieldErrors(errors);
             return;
         }
 
         try {
             setLoading(true);
-            setMessage('');
 
             const res = await api.post('/api/auth/submit-new-password', {
                 token,
@@ -64,14 +89,30 @@ const ResetPassword = () => {
                 navigate('/verify-otp', { 
                     state: { 
                         email: res.data.email,
-                        newPassword
+                        newPassword,
+                        token
                     }
                 });
             }, 1500);
 
         } catch (err) {
-            setMessage(err.response?.data?.message || 'Không thể đặt lại mật khẩu');
-            setMessageType('error');
+            const status = err.response?.status;
+            const field = err.response?.data?.field;
+            const errorMessage = err.response?.data?.message || 'Không thể đặt lại mật khẩu';
+            
+            // 🔥 Nếu có lỗi field cụ thể
+            if (field === 'newPassword') {
+                setFieldErrors({ newPassword: errorMessage });
+            } else if (field === 'confirmPassword') {
+                setFieldErrors({ confirmPassword: errorMessage });
+            } else if (status === 429) {
+                // Rate limit - hiển thị ở message chung
+                setMessage(`⚠️ ${errorMessage}`);
+                setMessageType('error');
+            } else {
+                setMessage(errorMessage);
+                setMessageType('error');
+            }
         } finally {
             setLoading(false);
         }
@@ -111,6 +152,7 @@ const ResetPassword = () => {
                 <h2>ĐẶT LẠI MẬT KHẨU</h2>
                 <p className="auth-subtitle">Nhập mật khẩu mới cho tài khoản của bạn</p>
 
+                {/* Message chung (success hoặc error không thuộc field) */}
                 {message && (
                     <div className={`forgot-message ${messageType}`}>
                         {messageType === 'success' ? (
@@ -130,10 +172,10 @@ const ResetPassword = () => {
                             <div className="password-wrapper">
                                 <input
                                     type={showPassword ? 'text' : 'password'}
-                                    className={`auth-input ${messageType === 'error' ? 'input-error' : ''}`}
+                                    className={`auth-input ${fieldErrors.newPassword ? 'input-error' : ''}`}
                                     placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)"
                                     value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    onChange={(e) => handleFieldChange('newPassword', e.target.value)}
                                     disabled={loading}
                                     autoComplete="new-password"
                                 />
@@ -147,6 +189,9 @@ const ResetPassword = () => {
                                     {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                                 </button>
                             </div>
+                            {fieldErrors.newPassword && (
+                                <span className="error-text">{fieldErrors.newPassword}</span>
+                            )}
                         </div>
 
                         {/* XÁC NHẬN MẬT KHẨU */}
@@ -155,10 +200,10 @@ const ResetPassword = () => {
                             <div className="password-wrapper">
                                 <input
                                     type={showConfirmPassword ? 'text' : 'password'}
-                                    className={`auth-input ${messageType === 'error' ? 'input-error' : ''}`}
+                                    className={`auth-input ${fieldErrors.confirmPassword ? 'input-error' : ''}`}
                                     placeholder="Nhập lại mật khẩu"
                                     value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
                                     disabled={loading}
                                     autoComplete="new-password"
                                 />
@@ -172,6 +217,9 @@ const ResetPassword = () => {
                                     {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                                 </button>
                             </div>
+                            {fieldErrors.confirmPassword && (
+                                <span className="error-text">{fieldErrors.confirmPassword}</span>
+                            )}
                         </div>
 
                         <div className="button-group">

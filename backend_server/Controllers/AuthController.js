@@ -9,6 +9,13 @@ exports.registerStep1 = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Register Step 1 Error:", error);
+        // 🔥 Xử lý lỗi rate limit
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+            });
+        }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
@@ -26,6 +33,12 @@ exports.completeRegistration = async (req, res) => {
         return res.status(201).json(result);
     } catch (error) {
         console.error("Complete Registration Error:", error);
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+            });
+        }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
@@ -43,6 +56,12 @@ exports.resendVerification = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Resend Verification Error:", error);
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+            });
+        }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
@@ -60,6 +79,12 @@ exports.register = async (req, res) => {
         return res.status(201).json(result);
     } catch (error) {
         console.error("Register Error:", error);
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+            });
+        }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
@@ -225,6 +250,12 @@ exports.forgotPassword = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Forgot Password Error:", error);
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+            });
+        }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
@@ -243,6 +274,12 @@ exports.submitNewPassword = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Submit New Password Error:", error);
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+            });
+        }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
@@ -315,6 +352,12 @@ exports.sendVerificationEmail = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Send Verification Email Error:", error);
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+            });
+        }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
@@ -393,6 +436,12 @@ exports.forgotPin = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Forgot PIN Error:", error);
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+            });
+        }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,

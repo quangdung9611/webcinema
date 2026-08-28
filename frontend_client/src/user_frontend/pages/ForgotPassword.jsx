@@ -28,7 +28,15 @@ const ForgotPassword = () => {
             setMessage(res.data.message || 'Liên kết đặt lại mật khẩu đã được gửi tới email của bạn');
             setMessageType('success');
         } catch (err) {
-            setMessage(err.response?.data?.message || 'Không gửi được liên kết. Vui lòng thử lại!');
+            const status = err.response?.status;
+            const errorMessage = err.response?.data?.message || 'Không gửi được liên kết. Vui lòng thử lại!';
+            
+            // 🔥 Hiển thị thông báo rate limit
+            if (status === 429) {
+                setMessage(`⚠️ ${errorMessage}`);
+            } else {
+                setMessage(errorMessage);
+            }
             setMessageType('error');
         } finally {
             setLoading(false);
@@ -44,7 +52,6 @@ const ForgotPassword = () => {
     return (
         <div className="auth-container">
             <div className="auth-card">
-                {/* Icon */}
                 <div className="forgot-icon-wrapper">
                     <Mail size={42} className="forgot-icon" />
                 </div>

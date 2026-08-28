@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/api';
-import { Shield, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { Shield, ArrowLeft, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 import LoadingButton from '../components/LoadingButton';
 import Modal from '../components/Modal';
@@ -16,9 +16,13 @@ const UserRegisterPin = () => {
     const { temp_token, username, full_name, email, phone, password, address } = tempData;
 
     const [pinValues, setPinValues] = useState(['', '', '', '', '', '']);
-    const [confirmPinValues, setConfirmPinValues] = useState(['', '', '', '', '', '']); // 🆕 Nhập lại PIN
+    const [confirmPinValues, setConfirmPinValues] = useState(['', '', '', '', '', '']);
     const inputRefs = useRef([]);
-    const confirmInputRefs = useRef([]); // 🆕 Ref cho confirm PIN
+    const confirmInputRefs = useRef([]);
+
+    // 🆕 State cho hiển thị PIN
+    const [showPin, setShowPin] = useState(false);
+    const [showConfirmPin, setShowConfirmPin] = useState(false);
 
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
@@ -207,6 +211,7 @@ const UserRegisterPin = () => {
             const newValues = [...confirmPinValues];
             newValues[index] = cleanValue;
             setConfirmPinValues(newValues);
+            
             // Xóa lỗi confirm khi nhập
             if (errors.confirmPin) {
                 setErrors(prev => ({ ...prev, confirmPin: '' }));
@@ -218,54 +223,36 @@ const UserRegisterPin = () => {
             const newValues = [...pinValues];
             newValues[index] = cleanValue;
             setPinValues(newValues);
-            setErrors({});
+            
+            // Xóa lỗi pin khi nhập
+            if (errors.pin) {
+                setErrors(prev => ({ ...prev, pin: '' }));
+            }
             setErrorMessage('');
             if (cleanValue && index < 5) {
                 inputRefs.current[index + 1]?.focus();
             }
-            // Nếu đã nhập confirm, kiểm tra lại
-            const confirmPin = confirmPinValues.join('');
-            if (confirmPin.length === 6) {
-                validatePinMatch(cleanValue ? newValues.join('') : pinValues.join(''), confirmPin);
-            }
         }
-    };
 
-    // =========================================================
-    // 🆕 VALIDATE PIN MATCH
-    // =========================================================
-    const validatePinMatch = (pin, confirmPin) => {
-        if (pin.length === 6 && confirmPin.length === 6) {
-            if (pin !== confirmPin) {
+        // 🆕 REAL-TIME CHECK: Kiểm tra khớp PIN ngay khi nhập
+        const currentPin = isConfirm ? pinValues.join('') : (cleanValue ? newValues.join('') : pinValues.join(''));
+        const currentConfirm = isConfirm ? newValues.join('') : confirmPinValues.join('');
+        
+        if (currentPin.length === 6 && currentConfirm.length === 6) {
+            if (currentPin !== currentConfirm) {
                 setErrors(prev => ({ ...prev, confirmPin: 'Mã PIN xác nhận không khớp' }));
-                return false;
             } else {
                 setErrors(prev => ({ ...prev, confirmPin: '' }));
-                return true;
             }
         }
-        return true;
     };
 
     // =========================================================
-    // 🆕 HANDLE CONFIRM PIN KEYDOWN (tự động focus về ô nhập lại)
+    // 🆕 HANDLE CONFIRM PIN KEYDOWN
     // =========================================================
     const handleConfirmKeyDown = (index, e) => {
         if (e.key === 'Backspace' && !confirmPinValues[index] && index > 0) {
             confirmInputRefs.current[index - 1]?.focus();
-        }
-        // Khi nhập xong 6 số, tự động focus vào ô đầu của confirm PIN
-        if (index === 5 && e.key !== 'Backspace') {
-            const fullPin = pinValues.join('');
-            if (fullPin.length === 6) {
-                // Nếu confirm đã đủ 6 số, kiểm tra luôn
-                setTimeout(() => {
-                    const confirmPin = confirmPinValues.join('');
-                    if (confirmPin.length === 6) {
-                        validatePinMatch(fullPin, confirmPin);
-                    }
-                }, 100);
-            }
         }
     };
 
@@ -280,7 +267,6 @@ const UserRegisterPin = () => {
         if (index === 5 && e.key !== 'Backspace') {
             setTimeout(() => {
                 if (!confirmInputRefs.current[0]) return;
-                // Chỉ focus nếu confirm PIN chưa được nhập
                 if (confirmPinValues.every(v => v === '')) {
                     confirmInputRefs.current[0]?.focus();
                 }
@@ -295,22 +281,24 @@ const UserRegisterPin = () => {
         const pin = pinValues.join('');
         const confirmPin = confirmPinValues.join('');
         let isValid = true;
+        const newErrors = {};
 
         if (pin.length !== 6) {
-            setErrors(prev => ({ ...prev, pin: 'Vui lòng nhập đủ 6 chữ số' }));
+            newErrors.pin = 'Vui lòng nhập đủ 6 chữ số';
             isValid = false;
         }
 
         if (confirmPin.length !== 6) {
-            setErrors(prev => ({ ...prev, confirmPin: 'Vui lòng nhập lại đủ 6 chữ số' }));
+            newErrors.confirmPin = 'Vui lòng nhập lại đủ 6 chữ số';
             isValid = false;
         }
 
         if (pin.length === 6 && confirmPin.length === 6 && pin !== confirmPin) {
-            setErrors(prev => ({ ...prev, confirmPin: 'Mã PIN xác nhận không khớp' }));
+            newErrors.confirmPin = 'Mã PIN xác nhận không khớp';
             isValid = false;
         }
 
+        setErrors(newErrors);
         return isValid;
     };
 
@@ -362,12 +350,20 @@ const UserRegisterPin = () => {
         } catch (err) {
             console.error('❌ Setup PIN Error:', err);
             
-            if (err.response?.status === 401) {
+            const status = err.response?.status;
+            
+            if (status === 401) {
                 setErrorMessage('Phiên đăng ký đã hết hạn. Vui lòng đăng ký lại!');
                 return;
             }
 
-            if (err.response?.status === 400) {
+            // 🆕 Xử lý rate limit 429
+            if (status === 429) {
+                setErrorMessage(`⚠️ ${err.response?.data?.message || 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'}`);
+                return;
+            }
+
+            if (status === 400) {
                 const field = err.response?.data?.field;
                 const message = err.response?.data?.message;
                 if (field === 'pin') {
@@ -467,48 +463,115 @@ const UserRegisterPin = () => {
 
                 <div className="auth-form-wrapper">
                     <form onSubmit={handleSetupPin} noValidate>
-                        {/* 🆕 MÃ PIN */}
+                        {/* 🆕 MÃ PIN - CÓ EYE/EYEOFF */}
                         <div className="form-group">
                             <label>Mã PIN</label>
-                            <div className="pin-input-container">
-                                {pinValues.map((val, index) => (
-                                    <input
-                                        key={index}
-                                        ref={(el) => (inputRefs.current[index] = el)}
-                                        type="text"
-                                        inputMode="numeric"
-                                        maxLength={1}
-                                        value={val}
-                                        onChange={(e) => handlePinChange(index, e.target.value, false)}
-                                        onKeyDown={(e) => handleKeyDown(index, e)}
-                                        className={`pin-box ${errors.pin ? 'input-error' : ''}`}
-                                        disabled={loading}
-                                        autoComplete="one-time-code"
-                                    />
-                                ))}
+                            <div className="password-wrapper">
+                                <input
+                                    type={showPin ? 'text' : 'password'}
+                                    className={`auth-input ${errors.pin ? 'input-error' : ''}`}
+                                    placeholder="Nhập 6 chữ số"
+                                    value={pinValues.join('')}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                        const newValues = value.split('');
+                                        // Cập nhật từng ô
+                                        for (let i = 0; i < 6; i++) {
+                                            if (i < newValues.length) {
+                                                pinValues[i] = newValues[i];
+                                            } else {
+                                                pinValues[i] = '';
+                                            }
+                                        }
+                                        setPinValues([...pinValues]);
+                                        
+                                        // Xóa lỗi
+                                        if (errors.pin) {
+                                            setErrors(prev => ({ ...prev, pin: '' }));
+                                        }
+                                        setErrorMessage('');
+                                        
+                                        // Focus vào confirm nếu đủ 6 số
+                                        if (newValues.length === 6) {
+                                            setTimeout(() => {
+                                                if (confirmInputRefs.current[0]) {
+                                                    confirmInputRefs.current[0]?.focus();
+                                                }
+                                            }, 50);
+                                        }
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Backspace' && !pinValues.join('')) {
+                                            // Xử lý backspace
+                                        }
+                                    }}
+                                    disabled={loading}
+                                    autoComplete="one-time-code"
+                                    style={{ letterSpacing: '8px', fontSize: 'var(--font-size-xl)', fontWeight: 'var(--fw-bold)' }}
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-password"
+                                    onClick={() => setShowPin(!showPin)}
+                                    tabIndex="-1"
+                                    disabled={loading}
+                                >
+                                    {showPin ? <Eye size={18} /> : <EyeOff size={18} />}
+                                </button>
                             </div>
                             {errors.pin && <span className="error-text pin-error">{errors.pin}</span>}
                         </div>
 
-                        {/* 🆕 NHẬP LẠI MÃ PIN */}
+                        {/* 🆕 NHẬP LẠI MÃ PIN - CÓ EYE/EYEOFF */}
                         <div className="form-group" style={{ marginTop: '8px' }}>
                             <label>Nhập lại mã PIN</label>
-                            <div className="pin-input-container">
-                                {confirmPinValues.map((val, index) => (
-                                    <input
-                                        key={`confirm-${index}`}
-                                        ref={(el) => (confirmInputRefs.current[index] = el)}
-                                        type="text"
-                                        inputMode="numeric"
-                                        maxLength={1}
-                                        value={val}
-                                        onChange={(e) => handlePinChange(index, e.target.value, true)}
-                                        onKeyDown={(e) => handleConfirmKeyDown(index, e)}
-                                        className={`pin-box ${errors.confirmPin ? 'input-error' : ''}`}
-                                        disabled={loading}
-                                        autoComplete="one-time-code"
-                                    />
-                                ))}
+                            <div className="password-wrapper">
+                                <input
+                                    type={showConfirmPin ? 'text' : 'password'}
+                                    className={`auth-input ${errors.confirmPin ? 'input-error' : ''}`}
+                                    placeholder="Nhập lại 6 chữ số"
+                                    value={confirmPinValues.join('')}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                        const newValues = value.split('');
+                                        for (let i = 0; i < 6; i++) {
+                                            if (i < newValues.length) {
+                                                confirmPinValues[i] = newValues[i];
+                                            } else {
+                                                confirmPinValues[i] = '';
+                                            }
+                                        }
+                                        setConfirmPinValues([...confirmPinValues]);
+                                        
+                                        // Xóa lỗi confirm
+                                        if (errors.confirmPin) {
+                                            setErrors(prev => ({ ...prev, confirmPin: '' }));
+                                        }
+                                        
+                                        // 🆕 REAL-TIME CHECK: Kiểm tra khớp ngay lập tức
+                                        const pin = pinValues.join('');
+                                        const confirm = confirmPinValues.join('');
+                                        if (pin.length === 6 && confirm.length === 6) {
+                                            if (pin !== confirm) {
+                                                setErrors(prev => ({ ...prev, confirmPin: 'Mã PIN xác nhận không khớp' }));
+                                            } else {
+                                                setErrors(prev => ({ ...prev, confirmPin: '' }));
+                                            }
+                                        }
+                                    }}
+                                    disabled={loading}
+                                    autoComplete="one-time-code"
+                                    style={{ letterSpacing: '8px', fontSize: 'var(--font-size-xl)', fontWeight: 'var(--fw-bold)' }}
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-password"
+                                    onClick={() => setShowConfirmPin(!showConfirmPin)}
+                                    tabIndex="-1"
+                                    disabled={loading}
+                                >
+                                    {showConfirmPin ? <Eye size={18} /> : <EyeOff size={18} />}
+                                </button>
                             </div>
                             {errors.confirmPin && <span className="error-text pin-error">{errors.confirmPin}</span>}
                         </div>
@@ -552,7 +615,7 @@ const UserRegisterPin = () => {
                 email={email}
                 full_name={full_name}
                 confirmText="Đã hiểu"
-                autoClose={false} // ✅ PHẢI LÀ false (giữ modal cứng)
+                autoClose={false}
             />
 
             {/* MODAL 2: "Xác thực thành công" */}

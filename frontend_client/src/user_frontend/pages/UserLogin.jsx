@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AlertCircle, Eye, EyeOff, CheckCircle, MailCheck } from 'lucide-react';
 import api from '../../api/api';
@@ -7,11 +7,16 @@ import { notifyLogin } from '../../utils/authCleanup';
 import LoadingButton from '../components/LoadingButton';
 import SuccessModal from '../components/SuccessModal';
 import LoginLockModal from '../components/LoginLockModal';
-import Modal from '../components/Modal'; // 🆕 Import Modal
-import socketService from '../../api/socket'; // 🆕 Import socket
+import Modal from '../components/Modal';
+import socketService from '../../api/socket';
 import '../styles/UserAuth.css';
 
 const UserLogin = () => {
+    // =========================================================
+    // REF
+    // =========================================================
+    const formRef = useRef(null); // ✅ Thêm ref cho form
+
     // =========================================================
     // FORM
     // =========================================================
@@ -55,17 +60,32 @@ const UserLogin = () => {
     const isExpired = Boolean(location.state?.expired);
 
     // =========================================================
+    // ✅ CLEAR FORM KHI COMPONENT MOUNT
+    // =========================================================
+    useEffect(() => {
+        // Reset form element
+        if (formRef.current) {
+            formRef.current.reset();
+        }
+        // Reset state
+        setFormData({
+            email: '',
+            password: '',
+            rememberMe: false,
+        });
+        console.log('🔄 [LOGIN] Form đã được reset');
+    }, []);
+
+    // =========================================================
     // 🆕 KIỂM TRA STATE TỪ REGISTERPIN (Modal kiểm tra email)
     // =========================================================
     useEffect(() => {
-        // Nếu từ RegisterPin gửi sang
         if (location.state?.showVerifyEmailModal) {
             setVerifyEmailData({
                 email: location.state.email || '',
                 full_name: location.state.full_name || ''
             });
             setShowVerifyEmailModal(true);
-            // Xóa state để không hiện lại khi refresh
             window.history.replaceState({}, document.title);
         }
     }, [location.state]);
@@ -155,9 +175,7 @@ const UserLogin = () => {
     // 🆕 EMAIL VERIFIED MESSAGE (Từ RegisterPin / VerifyEmail)
     // =========================================================
     useEffect(() => {
-        // Trường hợp 1: Từ RegisterPin (verified = true)
         if (location.state?.verified) {
-            // Nếu modal kiểm tra email đang mở → đóng nó lại
             if (showVerifyEmailModal) {
                 setShowVerifyEmailModal(false);
             }
@@ -168,7 +186,6 @@ const UserLogin = () => {
             return () => clearTimeout(timer);
         }
 
-        // Trường hợp 2: Từ sessionStorage (fallback)
         const verifiedSession = sessionStorage.getItem('email_verified_success');
         if (verifiedSession === 'true') {
             if (showVerifyEmailModal) {
@@ -410,7 +427,12 @@ const UserLogin = () => {
                     </div>
                 )}
 
-                <form onSubmit={handleLogin} noValidate>
+                {/* ✅ THÊM autoComplete="off" VÀ input ẩn */}
+                <form ref={formRef} onSubmit={handleLogin} noValidate autoComplete="off">
+                    {/* 🔥 Input ẩn để đánh lừa autofill */}
+                    <input type="text" style={{ display: 'none' }} />
+                    <input type="password" style={{ display: 'none' }} />
+
                     <div className="form-group">
                         <label>Email address</label>
                         <input
@@ -421,7 +443,7 @@ const UserLogin = () => {
                             className={`auth-input ${errors.email ? 'input-error' : ''}`}
                             value={formData.email}
                             onChange={handleChange}
-                            autoComplete="email"
+                            autoComplete="off"  // ✅ Thêm autoComplete="off"
                             disabled={loading || isLockedActive}
                         />
                         {errors.email && <span className="error-text">{errors.email}</span>}
@@ -437,7 +459,7 @@ const UserLogin = () => {
                                 className={`auth-input ${errors.password ? 'input-error' : ''}`}
                                 value={formData.password}
                                 onChange={handleChange}
-                                autoComplete="current-password"
+                                autoComplete="new-password"  // ✅ Đổi thành new-password
                                 disabled={loading || isLockedActive}
                             />
                             <button

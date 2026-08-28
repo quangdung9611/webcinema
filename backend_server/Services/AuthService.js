@@ -76,10 +76,24 @@ exports.checkLockStatus = async (email) => {
 };
 
 // ============================================================
-// LOGIN
+// LOGIN - CÓ RATE LIMIT (5 lần/60s) + LOCKOUT
 // ============================================================
 exports.login = async (email, password, rememberMe = false, req, res) => {
     validateLogin(email, password);
+    
+    // 🔥 RATE LIMIT CHO LOGIN: Tối đa 5 lần trong 60 giây
+    const loginRateLimit = await RedisService.checkRateLimit(email, "login", 5, 60);
+    if (!loginRateLimit.allowed) {
+        throw {
+            statusCode: 429,
+            code: 'LOGIN_LIMIT',
+            message: `Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau ${loginRateLimit.remainingSeconds || 60} giây.`,
+            data: {
+                remainingSeconds: loginRateLimit.remainingSeconds || 60
+            }
+        };
+    }
+
     const lockInfo = await RedisService.getLockoutInfo(email);
     if (lockInfo && lockInfo.isLocked) {
         throw {
@@ -235,7 +249,7 @@ exports.logout = async (req, res) => {
 };
 
 // ============================================================
-// CHANGE PASSWORD
+// CHANGE PASSWORD - CÓ RATE LIMIT (3 lần/60s)
 // ============================================================
 exports.changePassword = async (userId, passwordData) => {
     const { currentPassword, newPassword } = passwordData;
@@ -251,6 +265,15 @@ exports.changePassword = async (userId, passwordData) => {
 
     const user = await UserRepository.findById(userId);
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+
+    // 🔥 RATE LIMIT: Tối đa 3 lần trong 60 giây
+    const rateLimit = await RedisService.checkRateLimit(user.email, "change-password", 3, 60);
+    if (!rateLimit.allowed) {
+        throw { 
+            statusCode: 429, 
+            message: `Bạn đã thử đổi mật khẩu quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.` 
+        };
+    }
 
     const matched = await Password.compare(currentPassword, user.password);
     if (!matched) {
@@ -275,7 +298,7 @@ exports.changePassword = async (userId, passwordData) => {
 };
 
 // ============================================================
-// FORGOT PASSWORD - ✅ SỬA: Bỏ hardcode '15m'
+// FORGOT PASSWORD - CÓ RATE LIMIT (3 lần/60s)
 // ============================================================
 exports.forgotPassword = async (email, req) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -289,10 +312,15 @@ exports.forgotPassword = async (email, req) => {
         };
     }
 
+    // 🔥 RATE LIMIT: Tối đa 3 lần trong 60 giây
     const rateLimit = await RedisService.checkRateLimit(email, "password-reset", 3, 60);
-    if (!rateLimit.allowed) throw { statusCode: 429, message: rateLimit.message };
+    if (!rateLimit.allowed) {
+        throw { 
+            statusCode: 429, 
+            message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.` 
+        };
+    }
 
-    // ✅ SỬA: Không truyền expiresIn, dùng mặc định từ Jwt
     const resetToken = Jwt.generateResetToken({ user_id: user.user_id, email: user.email });
     const resetUrl = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
     await MailService.sendPasswordResetLink(email, resetUrl, user.full_name);
@@ -322,7 +350,7 @@ exports.verifyResetToken = async (token) => {
 };
 
 // ============================================================
-// ĐẶT LẠI MẬT KHẨU (NHẬP MẬT KHẨU MỚI - GỬI OTP XÁC NHẬN)
+// SUBMIT NEW PASSWORD (GỬI OTP) - CÓ RATE LIMIT (3 lần/60s)
 // ============================================================
 exports.submitNewPassword = async (token, newPassword) => {
     if (!token) throw { statusCode: 400, message: "Token không được để trống" };
@@ -344,6 +372,15 @@ exports.submitNewPassword = async (token, newPassword) => {
     const user = await UserRepository.findByEmail(payload.email);
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
 
+    // 🔥 RATE LIMIT: Tối đa 3 lần trong 60 giây
+    const rateLimit = await RedisService.checkRateLimit(user.email, "submit-password", 3, 60);
+    if (!rateLimit.allowed) {
+        throw { 
+            statusCode: 429, 
+            message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.` 
+        };
+    }
+
     const otpResult = await OtpService.createOTP(user.email, "RESET_PASSWORD");
     await MailService.sendResetPasswordOTP(user.email, otpResult.otp, user.full_name);
 
@@ -355,9 +392,18 @@ exports.submitNewPassword = async (token, newPassword) => {
 };
 
 // ============================================================
-// XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU
+// XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU - CÓ RATE LIMIT (5 lần/60s)
 // ============================================================
 exports.verifyOtpAndReset = async (email, otp, newPassword) => {
+    // 🔥 RATE LIMIT: Tối đa 5 lần thử OTP trong 60 giây
+    const rateLimit = await RedisService.checkRateLimit(email, "verify-otp", 5, 60);
+    if (!rateLimit.allowed) {
+        throw { 
+            statusCode: 429, 
+            message: `Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.` 
+        };
+    }
+
     const otpResult = await OtpService.verifyOTP(email, otp, "RESET_PASSWORD");
     if (!otpResult.success) {
         throw {
@@ -389,7 +435,7 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
 };
 
 // ============================================================
-// SEND VERIFICATION EMAIL - ✅ SỬA: Dùng mặc định từ Jwt
+// SEND VERIFICATION EMAIL - CÓ RATE LIMIT (3 lần/300s)
 // ============================================================
 exports.sendVerificationEmail = async (email) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -399,7 +445,15 @@ exports.sendVerificationEmail = async (email) => {
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     if (user.email_verified) throw { statusCode: 400, message: "Email đã được xác thực" };
 
-    // ✅ SỬA: Không truyền expiresIn, dùng mặc định từ Jwt
+    // 🔥 RATE LIMIT: Tối đa 3 lần trong 300 giây (5 phút)
+    const rateLimit = await RedisService.checkRateLimit(email, "send-verify", 3, 300);
+    if (!rateLimit.allowed) {
+        throw { 
+            statusCode: 429, 
+            message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.` 
+        };
+    }
+
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: user.email });
     const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
     await MailService.sendEmailVerification(email, verifyUrl, user.full_name);
@@ -526,10 +580,11 @@ exports.loginAfterRegistration = async (user, req, res) => {
     };
 };
 
-// 🆕 2. ĐĂNG KÝ BƯỚC 1 - ✅ SỬA: Không hardcode, dùng mặc định từ Jwt
+// 🆕 2. ĐĂNG KÝ BƯỚC 1 - CÓ RATE LIMIT (3 lần/300s)
 exports.registerStep1 = async (data) => {
     const { username, full_name, email, phone, password, address } = data;
 
+    // Validation
     if (!username?.trim()) {
         throw { statusCode: 400, field: "username", message: "Tên đăng nhập không được để trống" };
     }
@@ -552,6 +607,7 @@ exports.registerStep1 = async (data) => {
         throw { statusCode: 400, field: "password", message: "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt" };
     }
 
+    // Kiểm tra tồn tại
     const existed = await UserRepository.exists(username, email, phone);
     if (existed) {
         if (existed.username === username) {
@@ -565,7 +621,15 @@ exports.registerStep1 = async (data) => {
         }
     }
 
-    // ✅ SỬA: Không truyền expiresIn, dùng mặc định từ Jwt
+    // 🔥 RATE LIMIT: Tối đa 3 lần trong 300 giây (5 phút)
+    const rateLimit = await RedisService.checkRateLimit(email, "register", 3, 300);
+    if (!rateLimit.allowed) {
+        throw { 
+            statusCode: 429, 
+            message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.` 
+        };
+    }
+
     const tempToken = Jwt.generateResetToken({ 
         purpose: "register",
         email: email,
@@ -582,9 +646,18 @@ exports.registerStep1 = async (data) => {
     };
 };
 
-// 🆕 3. HOÀN TẤT ĐĂNG KÝ
+// 🆕 3. HOÀN TẤT ĐĂNG KÝ - CÓ RATE LIMIT (3 lần/300s)
 exports.completeRegistration = async (data, req, res) => {
     const { temp_token, pin, username, full_name, email, phone, password, address } = data;
+
+    // 🔥 RATE LIMIT: Tối đa 3 lần trong 300 giây (5 phút)
+    const rateLimit = await RedisService.checkRateLimit(email, "register", 3, 300);
+    if (!rateLimit.allowed) {
+        throw { 
+            statusCode: 429, 
+            message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 300} giây.` 
+        };
+    }
 
     let payload;
     try {
@@ -629,7 +702,6 @@ exports.completeRegistration = async (data, req, res) => {
         pin_hash: hashedPin
     });
 
-    // ✅ SỬA: Không truyền expiresIn, dùng mặc định từ Jwt
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: userId, email: email });
     const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
     await MailService.sendEmailVerification(email, verifyUrl, full_name);
@@ -644,13 +716,21 @@ exports.completeRegistration = async (data, req, res) => {
     };
 };
 
-// 🆕 4. GỬI LẠI EMAIL XÁC THỰC - ✅ SỬA: Dùng mặc định từ Jwt
+// 🆕 4. GỬI LẠI EMAIL XÁC THỰC - CÓ RATE LIMIT (3 lần/120s)
 exports.resendVerificationAfterLogin = async (userId) => {
     const user = await UserRepository.findById(userId);
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     if (user.email_verified) throw { statusCode: 400, message: "Email đã được xác thực" };
 
-    // ✅ SỬA: Không truyền expiresIn, dùng mặc định từ Jwt
+    // 🔥 RATE LIMIT: Tối đa 3 lần trong 120 giây
+    const rateLimit = await RedisService.checkRateLimit(user.email, "resend-verify", 3, 120);
+    if (!rateLimit.allowed) {
+        throw { 
+            statusCode: 429, 
+            message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 120} giây.` 
+        };
+    }
+
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: user.email });
     const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
     await MailService.sendEmailVerification(user.email, verifyUrl, user.full_name);
@@ -661,7 +741,7 @@ exports.resendVerificationAfterLogin = async (userId) => {
     };
 };
 
-// 🆕 5. QUÊN MÃ PIN - GỬI OTP VỀ EMAIL
+// 🆕 5. QUÊN MÃ PIN - CÓ RATE LIMIT (3 lần/120s)
 exports.forgotPin = async (email) => {
     if (!email?.trim()) {
         throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -670,6 +750,15 @@ exports.forgotPin = async (email) => {
     const user = await UserRepository.findByEmail(email);
     if (!user) {
         throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    }
+
+    // 🔥 RATE LIMIT: Tối đa 3 lần trong 120 giây
+    const rateLimit = await RedisService.checkRateLimit(email, "forgot-pin", 3, 120);
+    if (!rateLimit.allowed) {
+        throw { 
+            statusCode: 429, 
+            message: `Bạn chỉ được gửi tối đa 3 lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 120} giây.` 
+        };
     }
 
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.FORGOT_PIN);
@@ -681,8 +770,17 @@ exports.forgotPin = async (email) => {
     };
 };
 
-// 🆕 6. XÁC THỰC OTP VÀ ĐỔI MÃ PIN MỚI
+// 🆕 6. XÁC THỰC OTP VÀ ĐỔI MÃ PIN MỚI - CÓ RATE LIMIT (5 lần/60s)
 exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
+    // 🔥 RATE LIMIT: Tối đa 5 lần thử OTP trong 60 giây
+    const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-pin", 5, 60);
+    if (!rateLimit.allowed) {
+        throw { 
+            statusCode: 429, 
+            message: `Bạn đã thử OTP quá nhiều lần. Vui lòng thử lại sau ${rateLimit.remainingSeconds || 60} giây.` 
+        };
+    }
+
     const otpResult = await OtpService.verifyOTP(email, otp, OtpService.PURPOSE.FORGOT_PIN);
     if (!otpResult.success) {
         throw {
