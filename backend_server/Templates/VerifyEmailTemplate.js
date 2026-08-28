@@ -90,10 +90,10 @@ module.exports = (fullName, verifyUrl) => {
                     <a href="${verifyUrl}" class="btn">Xác thực email</a>
                 </div>
                 <p class="note">Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>
-                <p class="note">Liên kết này sẽ hết hạn sau 10 phút.</p>
+                <p class="note">🔒 Liên kết này sẽ hết hạn sau <strong>30 phút</strong>.</p>
             </div>
             <div class="footer">
-                <p>&copy; 2024 Dũng Cinema. All rights reserved.</p>
+                <p>&copy; 2026 Dũng Cinema. All rights reserved.</p>
                 <p>
                     <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}">Trang chủ</a> |
                     <a href="mailto:support@quangdungcinema.id.vn">Hỗ trợ</a>

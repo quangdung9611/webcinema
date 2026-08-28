@@ -2,6 +2,9 @@ const RedisService = require("./RedisService");
 const Otp = require("../utils/Otp");
 const OtpRepository = require("../Repositories/OtpRepository");
 
+// ✅ Đọc thời gian hết hạn OTP từ .env
+const OTP_EXPIRE_SECONDS = parseInt(process.env.OTP_EXPIRE_SECONDS) || 300;
+
 const PURPOSE = {
     REGISTER: 'REGISTER',
     FORGOT_PASSWORD: 'FORGOT_PASSWORD',
@@ -11,7 +14,7 @@ const PURPOSE = {
     RESET_PASSWORD: 'RESET_PASSWORD', 
     BOOKING: 'BOOKING',
     VERIFY_PHONE: 'VERIFY_PHONE',
-    FORGOT_PIN: 'FORGOT_PIN' //
+    FORGOT_PIN: 'FORGOT_PIN'
 };
 
 class OtpService {
@@ -25,13 +28,13 @@ class OtpService {
             throw { statusCode: 429, message: rateLimit.message };
         }
 
-        // 🔥 ĐẢM BẢO OTP LÀ CHUỖI SẠCH 6 SỐ (KHÔNG PHẢI OBJECT)
         const otpCode = Otp.generate6(); 
         console.log(`📤 Generated OTP: ${otpCode}`);
 
-        // 🔥 XÓA OTP CŨ TRƯỚC KHI LƯU MỚI ĐỂ TRÁNH BỊ TRÙNG
+        // ✅ SỬA: Dùng biến từ .env thay vì hardcode 300
         await RedisService.deleteOTP(email, purpose);
-        await RedisService.saveOTP(email, purpose, otpCode, 300);
+        await RedisService.saveOTP(email, purpose, otpCode, OTP_EXPIRE_SECONDS);
+        
         const otpId = await OtpRepository.create({
             email,
             purpose,
@@ -53,7 +56,6 @@ class OtpService {
             return { success: false, code: "OTP_LOCKED", message: "OTP đã bị khóa do nhập sai quá nhiều lần" };
         }
 
-        // 🔥 CHUYỂN VỀ STRING ĐỂ SO SÁNH CHÍNH XÁC
         const savedOTP = String(await RedisService.getOTP(email, purpose) || '').trim();
         const userOTP = String(otp || '').trim();
 

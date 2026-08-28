@@ -6,7 +6,6 @@ import { Shield, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import LoadingButton from '../components/LoadingButton';
 import Modal from '../components/Modal';
 import EmailVerificationSentModal from '../components/EmailVerificationSentModal';
-import VerifySuccessModal from '../components/VerifySuccessModal';
 import socketService from '../../api/socket';
 import '../styles/UserAuth.css';
 
@@ -17,11 +16,13 @@ const UserRegisterPin = () => {
     const { temp_token, username, full_name, email, phone, password, address } = tempData;
 
     const [pinValues, setPinValues] = useState(['', '', '', '', '', '']);
+    const [confirmPinValues, setConfirmPinValues] = useState(['', '', '', '', '', '']); // 🆕 Nhập lại PIN
     const inputRefs = useRef([]);
+    const confirmInputRefs = useRef([]); // 🆕 Ref cho confirm PIN
 
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
-    const [errorMessage, setErrorMessage] = useState(''); // 🆕 Lỗi hiển thị trên form
+    const [errorMessage, setErrorMessage] = useState('');
 
     // Modal states
     const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -32,17 +33,23 @@ const UserRegisterPin = () => {
     const isListeningRef = useRef(false);
     const socketListenerRef = useRef(null);
 
+    // Polling interval ref
+    const pollingIntervalRef = useRef(null);
+
+    // =========================================================
+    // CHECK TOKEN ON MOUNT
+    // =========================================================
     useEffect(() => {
-        // 🆕 Kiểm tra token trước khi vào trang
         if (!temp_token || !username || !email) {
             setErrorMessage('Phiên đăng ký đã hết hạn. Vui lòng đăng ký lại!');
-            // Không tự động navigate, để người dùng bấm nút
         } else {
             inputRefs.current[0]?.focus();
         }
-    }, [temp_token, username, email, navigate]);
+    }, [temp_token, username, email]);
 
-    // Cleanup socket listener khi unmount
+    // =========================================================
+    // CLEANUP
+    // =========================================================
     useEffect(() => {
         return () => {
             if (isListeningRef.current) {
@@ -51,43 +58,80 @@ const UserRegisterPin = () => {
                     socket.off('email_verified', socketListenerRef.current);
                     socketListenerRef.current = null;
                     isListeningRef.current = false;
-                    console.log('🔴 [SOCKET] Đã hủy listener email_verified');
                 }
+            }
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+                pollingIntervalRef.current = null;
             }
         };
     }, []);
 
-    // Hàm lắng nghe sự kiện email-verified từ Socket
-    const listenForEmailVerification = () => {
-        const socket = socketService.getSocket();
-        
-        if (!socket || !socket.connected) {
-            console.warn('⚠️ [SOCKET] Chưa kết nối, thử kết nối...');
-            socketService.connect(email);
-            setTimeout(() => {
-                const newSocket = socketService.getSocket();
-                if (newSocket && newSocket.connected) {
-                    listenForEmailVerification();
+    // =========================================================
+    // POLLING SESSIONSTORAGE (FALLBACK)
+    // =========================================================
+    const startPollingSessionStorage = () => {
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+        }
+
+        pollingIntervalRef.current = setInterval(() => {
+            const verified = sessionStorage.getItem('email_verified_success');
+            if (verified === 'true') {
+                try {
+                    const data = JSON.parse(sessionStorage.getItem('email_verified_data') || '{}');
+                    
+                    if (data.email === email) {
+                        console.log('✅ [POLLING] Phát hiện email đã verified từ sessionStorage!');
+                        
+                        if (pollingIntervalRef.current) {
+                            clearInterval(pollingIntervalRef.current);
+                            pollingIntervalRef.current = null;
+                        }
+                        
+                        setShowVerifyModal(false);
+                        setShowSuccessModal(true);
+                        setCountdown(3);
+                        startCountdown();
+                        
+                        sessionStorage.removeItem('email_verified_success');
+                        sessionStorage.removeItem('email_verified_data');
+                    }
+                } catch (error) {
+                    console.error('❌ [POLLING] Lỗi parse data:', error);
                 }
-            }, 1000);
-            return;
+            }
+        }, 2000);
+    };
+
+    // =========================================================
+    // SOCKET LISTENER
+    // =========================================================
+    const setupSocketListener = () => {
+        const socket = socketService.getSocket();
+        if (!socket) {
+            console.warn('⚠️ [SOCKET] Socket chưa sẵn sàng');
+            return false;
+        }
+
+        if (socketListenerRef.current) {
+            socket.off('email_verified', socketListenerRef.current);
         }
 
         const handleEmailVerified = (data) => {
             console.log('✅ [SOCKET] Nhận được sự kiện email_verified:', data);
 
             if (data.success && data.email === email) {
-                // Đóng modal kiểm tra email
+                if (pollingIntervalRef.current) {
+                    clearInterval(pollingIntervalRef.current);
+                    pollingIntervalRef.current = null;
+                }
+
                 setShowVerifyModal(false);
-                
-                // Hiện modal thành công + countdown
                 setShowSuccessModal(true);
                 setCountdown(3);
-                
-                // Bắt đầu countdown
                 startCountdown();
                 
-                // Hủy lắng nghe sau khi đã nhận được sự kiện
                 if (socketListenerRef.current) {
                     socket.off('email_verified', socketListenerRef.current);
                     socketListenerRef.current = null;
@@ -99,13 +143,42 @@ const UserRegisterPin = () => {
         socketListenerRef.current = handleEmailVerified;
         socket.on('email_verified', handleEmailVerified);
         isListeningRef.current = true;
-
-        // Đăng ký theo dõi email với server
-        socket.emit('register-email-watcher', { email });
-        console.log(`📡 [SOCKET] Đang lắng nghe sự kiện xác thực cho email: ${email}`);
+        
+        if (socketService.registerEmailWatcher) {
+            socketService.registerEmailWatcher(email);
+        }
+        
+        console.log(`📡 [SOCKET] Đã setup listener cho email: ${email}`);
+        return true;
     };
 
-    // Countdown để chuyển về Login
+    // =========================================================
+    // LẮNG NGHE SỰ KIỆN (SOCKET + POLLING FALLBACK)
+    // =========================================================
+    const listenForEmailVerification = () => {
+        startPollingSessionStorage();
+        
+        const socket = socketService.getSocket();
+        
+        if (!socket || !socket.connected) {
+            console.warn('⚠️ [SOCKET] Chưa kết nối, thử kết nối...');
+            socketService.connect(email);
+            setTimeout(() => {
+                const newSocket = socketService.getSocket();
+                if (newSocket && newSocket.connected) {
+                    setupSocketListener();
+                } else {
+                    console.warn('⚠️ [SOCKET] Vẫn chưa kết nối, chỉ dùng polling fallback');
+                }
+            }, 1500);
+        } else {
+            setupSocketListener();
+        }
+    };
+
+    // =========================================================
+    // COUNTDOWN - TỰ ĐỘNG CHUYỂN VỀ LOGIN
+    // =========================================================
     const startCountdown = () => {
         const timer = setInterval(() => {
             setCountdown(prev => {
@@ -124,47 +197,143 @@ const UserRegisterPin = () => {
         }, 1000);
     };
 
-    const handleChange = (index, value) => {
+    // =========================================================
+    // 🆕 HANDLE PIN INPUT
+    // =========================================================
+    const handlePinChange = (index, value, isConfirm = false) => {
         const cleanValue = value.replace(/\D/g, '').slice(-1);
-        const newPinValues = [...pinValues];
-        newPinValues[index] = cleanValue;
-        setPinValues(newPinValues);
-        setErrors({});
-        setErrorMessage(''); // Xóa lỗi khi nhập
-        if (cleanValue && index < 5) inputRefs.current[index + 1]?.focus();
-    };
-
-    const handleKeyDown = (index, e) => {
-        if (e.key === 'Backspace' && !pinValues[index] && index > 0) {
-            inputRefs.current[index - 1]?.focus();
+        
+        if (isConfirm) {
+            const newValues = [...confirmPinValues];
+            newValues[index] = cleanValue;
+            setConfirmPinValues(newValues);
+            // Xóa lỗi confirm khi nhập
+            if (errors.confirmPin) {
+                setErrors(prev => ({ ...prev, confirmPin: '' }));
+            }
+            if (cleanValue && index < 5) {
+                confirmInputRefs.current[index + 1]?.focus();
+            }
+        } else {
+            const newValues = [...pinValues];
+            newValues[index] = cleanValue;
+            setPinValues(newValues);
+            setErrors({});
+            setErrorMessage('');
+            if (cleanValue && index < 5) {
+                inputRefs.current[index + 1]?.focus();
+            }
+            // Nếu đã nhập confirm, kiểm tra lại
+            const confirmPin = confirmPinValues.join('');
+            if (confirmPin.length === 6) {
+                validatePinMatch(cleanValue ? newValues.join('') : pinValues.join(''), confirmPin);
+            }
         }
     };
 
-    const validate = () => {
-        const pin = pinValues.join('');
-        if (pin.length !== 6) {
-            setErrors({ pin: 'Vui lòng nhập đủ 6 chữ số' });
-            return false;
+    // =========================================================
+    // 🆕 VALIDATE PIN MATCH
+    // =========================================================
+    const validatePinMatch = (pin, confirmPin) => {
+        if (pin.length === 6 && confirmPin.length === 6) {
+            if (pin !== confirmPin) {
+                setErrors(prev => ({ ...prev, confirmPin: 'Mã PIN xác nhận không khớp' }));
+                return false;
+            } else {
+                setErrors(prev => ({ ...prev, confirmPin: '' }));
+                return true;
+            }
         }
         return true;
     };
 
-    // 🆕 Hàm xử lý quay lại Register
+    // =========================================================
+    // 🆕 HANDLE CONFIRM PIN KEYDOWN (tự động focus về ô nhập lại)
+    // =========================================================
+    const handleConfirmKeyDown = (index, e) => {
+        if (e.key === 'Backspace' && !confirmPinValues[index] && index > 0) {
+            confirmInputRefs.current[index - 1]?.focus();
+        }
+        // Khi nhập xong 6 số, tự động focus vào ô đầu của confirm PIN
+        if (index === 5 && e.key !== 'Backspace') {
+            const fullPin = pinValues.join('');
+            if (fullPin.length === 6) {
+                // Nếu confirm đã đủ 6 số, kiểm tra luôn
+                setTimeout(() => {
+                    const confirmPin = confirmPinValues.join('');
+                    if (confirmPin.length === 6) {
+                        validatePinMatch(fullPin, confirmPin);
+                    }
+                }, 100);
+            }
+        }
+    };
+
+    // =========================================================
+    // HANDLE KEY DOWN (PIN chính)
+    // =========================================================
+    const handleKeyDown = (index, e) => {
+        if (e.key === 'Backspace' && !pinValues[index] && index > 0) {
+            inputRefs.current[index - 1]?.focus();
+        }
+        // Khi nhập xong 6 số, tự động focus vào ô đầu của confirm PIN
+        if (index === 5 && e.key !== 'Backspace') {
+            setTimeout(() => {
+                if (!confirmInputRefs.current[0]) return;
+                // Chỉ focus nếu confirm PIN chưa được nhập
+                if (confirmPinValues.every(v => v === '')) {
+                    confirmInputRefs.current[0]?.focus();
+                }
+            }, 50);
+        }
+    };
+
+    // =========================================================
+    // VALIDATE ALL
+    // =========================================================
+    const validateAll = () => {
+        const pin = pinValues.join('');
+        const confirmPin = confirmPinValues.join('');
+        let isValid = true;
+
+        if (pin.length !== 6) {
+            setErrors(prev => ({ ...prev, pin: 'Vui lòng nhập đủ 6 chữ số' }));
+            isValid = false;
+        }
+
+        if (confirmPin.length !== 6) {
+            setErrors(prev => ({ ...prev, confirmPin: 'Vui lòng nhập lại đủ 6 chữ số' }));
+            isValid = false;
+        }
+
+        if (pin.length === 6 && confirmPin.length === 6 && pin !== confirmPin) {
+            setErrors(prev => ({ ...prev, confirmPin: 'Mã PIN xác nhận không khớp' }));
+            isValid = false;
+        }
+
+        return isValid;
+    };
+
+    // =========================================================
+    // HANDLE GO BACK
+    // =========================================================
     const handleGoBackToRegister = () => {
         sessionStorage.removeItem('register_temp');
         navigate('/register');
     };
 
+    // =========================================================
+    // HANDLE SETUP PIN
+    // =========================================================
     const handleSetupPin = async (e) => {
         e.preventDefault();
         
-        // 🆕 Kiểm tra token trước khi gọi API
         if (!temp_token) {
             setErrorMessage('Phiên đăng ký đã hết hạn. Vui lòng đăng ký lại!');
             return;
         }
 
-        if (!validate()) return;
+        if (!validateAll()) return;
 
         const pin = pinValues.join('');
         setLoading(true);
@@ -183,42 +352,32 @@ const UserRegisterPin = () => {
             });
 
             if (response.data.success) {
-                // Xóa session storage
                 sessionStorage.removeItem('register_temp');
-                
-                // Hiển thị modal "Vui lòng kiểm tra email"
                 setShowVerifyModal(true);
-                
-                // Bắt đầu lắng nghe socket
                 listenForEmailVerification();
             } else {
-                // 🆕 Xử lý khi API trả về success = false
                 setErrorMessage(response.data.message || 'Có lỗi xảy ra, vui lòng thử lại!');
             }
 
         } catch (err) {
             console.error('❌ Setup PIN Error:', err);
             
-            // 🆕 Xử lý lỗi 401 - Token hết hạn
             if (err.response?.status === 401) {
                 setErrorMessage('Phiên đăng ký đã hết hạn. Vui lòng đăng ký lại!');
-                // Không tự động chuyển trang, để người dùng bấm nút
                 return;
             }
 
-            // 🆕 Xử lý lỗi 400 - Validation
             if (err.response?.status === 400) {
                 const field = err.response?.data?.field;
                 const message = err.response?.data?.message;
                 if (field === 'pin') {
-                    setErrors({ pin: message });
+                    setErrors(prev => ({ ...prev, pin: message }));
                 } else {
                     setErrorMessage(message || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại!');
                 }
                 return;
             }
 
-            // 🆕 Lỗi khác
             const serverMsg = err.response?.data?.message || err.message || 'Không thể hoàn tất đăng ký. Vui lòng thử lại!';
             setErrorMessage(serverMsg);
         } finally {
@@ -226,11 +385,12 @@ const UserRegisterPin = () => {
         }
     };
 
-    // Đóng modal kiểm tra email (khách bấm "Đã hiểu")
+    // =========================================================
+    // HANDLE MODAL CLOSE
+    // =========================================================
     const handleVerifyModalClose = () => {
         setShowVerifyModal(false);
         
-        // Dừng lắng nghe nếu khách đóng modal
         if (isListeningRef.current && socketListenerRef.current) {
             const socket = socketService.getSocket();
             if (socket) {
@@ -240,19 +400,16 @@ const UserRegisterPin = () => {
                 console.log('🔴 [SOCKET] Đã hủy listener do người dùng đóng modal');
             }
         }
+        
+        if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+        }
     };
 
-    // Đóng modal thành công (nếu khách bấm sớm)
-    const handleSuccessModalClose = () => {
-        setShowSuccessModal(false);
-        navigate('/login', {
-            state: {
-                verified: true,
-                message: 'Xác thực email thành công! Vui lòng đăng nhập.'
-            }
-        });
-    };
-
+    // =========================================================
+    // RENDER
+    // =========================================================
     return (
         <div className="auth-container">
             <div className="auth-card">
@@ -273,7 +430,6 @@ const UserRegisterPin = () => {
                     </span>
                 </div>
 
-                {/* 🆕 Hiển thị lỗi trên form */}
                 {errorMessage && (
                     <div className="error-message" style={{
                         display: 'flex',
@@ -311,26 +467,52 @@ const UserRegisterPin = () => {
 
                 <div className="auth-form-wrapper">
                     <form onSubmit={handleSetupPin} noValidate>
-                        <div className="pin-input-container">
-                            {pinValues.map((val, index) => (
-                                <input
-                                    key={index}
-                                    ref={(el) => (inputRefs.current[index] = el)}
-                                    type="text"
-                                    inputMode="numeric"
-                                    maxLength={1}
-                                    value={val}
-                                    onChange={(e) => handleChange(index, e.target.value)}
-                                    onKeyDown={(e) => handleKeyDown(index, e)}
-                                    className={`pin-box ${errors.pin ? 'input-error' : ''}`}
-                                    disabled={loading}
-                                    autoComplete="one-time-code"
-                                />
-                            ))}
+                        {/* 🆕 MÃ PIN */}
+                        <div className="form-group">
+                            <label>Mã PIN</label>
+                            <div className="pin-input-container">
+                                {pinValues.map((val, index) => (
+                                    <input
+                                        key={index}
+                                        ref={(el) => (inputRefs.current[index] = el)}
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={1}
+                                        value={val}
+                                        onChange={(e) => handlePinChange(index, e.target.value, false)}
+                                        onKeyDown={(e) => handleKeyDown(index, e)}
+                                        className={`pin-box ${errors.pin ? 'input-error' : ''}`}
+                                        disabled={loading}
+                                        autoComplete="one-time-code"
+                                    />
+                                ))}
+                            </div>
+                            {errors.pin && <span className="error-text pin-error">{errors.pin}</span>}
                         </div>
 
-                        {errors.pin && <span className="error-text pin-error">{errors.pin}</span>}
-                        
+                        {/* 🆕 NHẬP LẠI MÃ PIN */}
+                        <div className="form-group" style={{ marginTop: '8px' }}>
+                            <label>Nhập lại mã PIN</label>
+                            <div className="pin-input-container">
+                                {confirmPinValues.map((val, index) => (
+                                    <input
+                                        key={`confirm-${index}`}
+                                        ref={(el) => (confirmInputRefs.current[index] = el)}
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={1}
+                                        value={val}
+                                        onChange={(e) => handlePinChange(index, e.target.value, true)}
+                                        onKeyDown={(e) => handleConfirmKeyDown(index, e)}
+                                        className={`pin-box ${errors.confirmPin ? 'input-error' : ''}`}
+                                        disabled={loading}
+                                        autoComplete="one-time-code"
+                                    />
+                                ))}
+                            </div>
+                            {errors.confirmPin && <span className="error-text pin-error">{errors.confirmPin}</span>}
+                        </div>
+
                         <div className="input-hint center-text" style={{ marginTop: '10px' }}>
                             🔐 Mã PIN dùng để xác thực giao dịch thanh toán (6 chữ số)
                         </div>
@@ -370,16 +552,53 @@ const UserRegisterPin = () => {
                 email={email}
                 full_name={full_name}
                 confirmText="Đã hiểu"
-                autoClose={false}
+                autoClose={false} // ✅ PHẢI LÀ false (giữ modal cứng)
             />
 
             {/* MODAL 2: "Xác thực thành công" */}
-            <VerifySuccessModal
+            <Modal
                 show={showSuccessModal}
-                full_name={full_name}
-                countdown={countdown}
-                onClose={handleSuccessModalClose}
-            />
+                type="success"
+                title="🎉 Xác thực thành công!"
+                confirmText={`Đăng nhập (${countdown}s)`}
+                onConfirm={() => {
+                    navigate('/login', {
+                        state: {
+                            verified: true,
+                            message: 'Xác thực email thành công! Vui lòng đăng nhập.'
+                        }
+                    });
+                }}
+                onCancel={() => {
+                    navigate('/login', {
+                        state: {
+                            verified: true,
+                            message: 'Xác thực email thành công! Vui lòng đăng nhập.'
+                        }
+                    });
+                }}
+            >
+                <div style={{ textAlign: "center", padding: "10px 0" }}>
+                    <div style={{
+                        width: "70px", height: "70px", borderRadius: "50%",
+                        background: "rgba(34, 197, 94, 0.15)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        margin: "0 auto 15px"
+                    }}>
+                        <CheckCircle size={40} color="#4ade80" />
+                    </div>
+
+                    <p style={{ color: "var(--text-heading)", fontSize: "18px", fontWeight: "bold", marginBottom: "8px" }}>
+                        Chúc mừng {full_name || "bạn"}!
+                    </p>
+                    <p style={{ color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                        Tài khoản của bạn đã được xác thực thành công! 🎊
+                    </p>
+                    <p style={{ color: "var(--text-muted)", fontSize: "14px", marginTop: "10px" }}>
+                        ⏳ Tự động chuyển đến trang đăng nhập sau <strong style={{ color: "#4ade80" }}>{countdown}</strong> giây...
+                    </p>
+                </div>
+            </Modal>
         </div>
     );
 };

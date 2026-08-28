@@ -32,7 +32,7 @@ const ForgotPinTemplate = (otp, fullName = "") => {
                 <p style="color:#777;font-size:14px;">
                     Nhập mã OTP này để xác thực và đặt mã PIN mới cho tài khoản của bạn.
                     <br/>
-                    Mã OTP có hiệu lực trong <b>5 phút</b>.
+                    ⏰ Mã OTP có hiệu lực trong <b>5 phút</b>.
                 </p>
 
                 <p style="color:#999;font-size:13px;">

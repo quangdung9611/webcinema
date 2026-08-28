@@ -23,11 +23,13 @@ const ACCESS_EXPIRES =
 const REFRESH_EXPIRES =
     process.env.JWT_REFRESH_EXPIRES || "7d";
 
+// ✅ SỬA: Tăng lên 30 phút
 const RESET_EXPIRES =
-    process.env.JWT_RESET_EXPIRES || "5m";
+    process.env.JWT_RESET_EXPIRES || "30m";
 
+// ✅ SỬA: Tăng lên 30 phút
 const VERIFY_EXPIRES =
-    process.env.JWT_VERIFY_EXPIRES || "10m";
+    process.env.JWT_VERIFY_EXPIRES || "30m";
 
 /*=========================================================
     JWT
@@ -144,7 +146,7 @@ class Jwt {
         RESET PASSWORD TOKEN
     =====================================================*/
 
-    generateResetToken(payload) {
+    generateResetToken(payload, expiresIn = null) {
 
         return jwt.sign(
 
@@ -160,7 +162,7 @@ class Jwt {
 
             {
 
-                expiresIn: RESET_EXPIRES
+                expiresIn: expiresIn || RESET_EXPIRES
 
             }
 
@@ -194,7 +196,7 @@ class Jwt {
         EMAIL VERIFY TOKEN
     =====================================================*/
 
-    generateEmailVerifyToken(payload) {
+    generateEmailVerifyToken(payload, expiresIn = null) {
 
         return jwt.sign(
 
@@ -210,7 +212,7 @@ class Jwt {
 
             {
 
-                expiresIn: VERIFY_EXPIRES
+                expiresIn: expiresIn || VERIFY_EXPIRES
 
             }
 

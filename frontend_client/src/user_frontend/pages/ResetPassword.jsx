@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api/api';
-import { LockKeyhole, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
-import '../styles/ForgotPassword.css';
+import { LockKeyhole, AlertCircle, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import LoadingButton from '../components/LoadingButton';
+import '../styles/UserAuth.css';
 
 const ResetPassword = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const token = searchParams.get('token'); // Token từ Link trên email
+    const token = searchParams.get('token');
 
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('');
-    const [status, setStatus] = useState('form'); // 'form' | 'success' | 'error'
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [status, setStatus] = useState('form');
 
     useEffect(() => {
         if (!token) {
@@ -49,7 +52,6 @@ const ResetPassword = () => {
             setLoading(true);
             setMessage('');
 
-            // ✅ Bước 1: Gọi API submit-new-password (Nhập mật khẩu mới -> Backend gửi OTP)
             const res = await api.post('/api/auth/submit-new-password', {
                 token,
                 newPassword
@@ -58,7 +60,6 @@ const ResetPassword = () => {
             setMessage(res.data.message || 'Mã OTP xác nhận đã được gửi tới email của bạn');
             setMessageType('success');
 
-            // ✅ Chuyển sang trang VerifyOTP để nhập OTP
             setTimeout(() => {
                 navigate('/verify-otp', { 
                     state: { 
@@ -79,62 +80,123 @@ const ResetPassword = () => {
     // Hiển thị lỗi nếu không có token
     if (status === 'error') {
         return (
-            <div className="forgot-password-container">
-                <div className="forgot-password-card">
-                    <div className="forgot-icon">
-                        <AlertCircle size={42} />
+            <div className="auth-container">
+                <div className="auth-card">
+                    <div className="forgot-icon-wrapper">
+                        <AlertCircle size={42} className="forgot-icon" style={{ color: '#f87171' }} />
                     </div>
                     <h2>LINK KHÔNG HỢP LỆ</h2>
-                    <p className="forgot-subtitle">{message}</p>
-                    <button className="forgot-btn" onClick={() => navigate('/forgot-password')}>
-                        Gửi lại liên kết
-                    </button>
+                    <p className="auth-subtitle">{message}</p>
+                    <div className="button-group">
+                        <button 
+                            className="btn-user" 
+                            onClick={() => navigate('/forgot-password')}
+                        >
+                            Gửi lại liên kết
+                        </button>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="forgot-password-container">
-            <div className="forgot-password-card">
-                <div className="forgot-icon">
-                    <LockKeyhole size={42} />
+        <div className="auth-container">
+            <div className="auth-card">
+                {/* Icon */}
+                <div className="forgot-icon-wrapper">
+                    <LockKeyhole size={42} className="forgot-icon" />
                 </div>
+
                 <h2>ĐẶT LẠI MẬT KHẨU</h2>
-                <p className="forgot-subtitle">Nhập mật khẩu mới cho tài khoản của bạn</p>
+                <p className="auth-subtitle">Nhập mật khẩu mới cho tài khoản của bạn</p>
 
                 {message && (
                     <div className={`forgot-message ${messageType}`}>
-                        {messageType === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                        {messageType === 'success' ? (
+                            <CheckCircle size={18} />
+                        ) : (
+                            <AlertCircle size={18} />
+                        )}
                         <span>{message}</span>
                     </div>
                 )}
 
-                <div className="forgot-form">
-                    <label>Mật khẩu mới</label>
-                    <input
-                        type="password"
-                        placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                    />
+                <div className="auth-form-wrapper">
+                    <form onSubmit={handleSubmit} noValidate>
+                        {/* MẬT KHẨU MỚI */}
+                        <div className="form-group">
+                            <label>Mật khẩu mới</label>
+                            <div className="password-wrapper">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    className={`auth-input ${messageType === 'error' ? 'input-error' : ''}`}
+                                    placeholder="Nhập mật khẩu mới (tối thiểu 8 ký tự)"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    disabled={loading}
+                                    autoComplete="new-password"
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-password"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    tabIndex="-1"
+                                    disabled={loading}
+                                >
+                                    {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                </button>
+                            </div>
+                        </div>
 
-                    <label>Xác nhận mật khẩu</label>
-                    <input
-                        type="password"
-                        placeholder="Nhập lại mật khẩu"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
+                        {/* XÁC NHẬN MẬT KHẨU */}
+                        <div className="form-group">
+                            <label>Xác nhận mật khẩu</label>
+                            <div className="password-wrapper">
+                                <input
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    className={`auth-input ${messageType === 'error' ? 'input-error' : ''}`}
+                                    placeholder="Nhập lại mật khẩu"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    disabled={loading}
+                                    autoComplete="new-password"
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-password"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    tabIndex="-1"
+                                    disabled={loading}
+                                >
+                                    {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                </button>
+                            </div>
+                        </div>
 
-                    <button className="forgot-btn" onClick={handleSubmit} disabled={loading}>
-                        {loading ? 'Đang gửi OTP...' : 'Xác nhận'}
-                    </button>
+                        <div className="button-group">
+                            <LoadingButton
+                                type="submit"
+                                loading={loading}
+                                loadingText="Đang gửi OTP..."
+                                disabled={loading}
+                                className="btn-user"
+                                spinnerColor="#000000"
+                            >
+                                XÁC NHẬN
+                            </LoadingButton>
+                        </div>
+                    </form>
                 </div>
 
-                <div className="forgot-actions">
-                    <button className="forgot-link-btn" onClick={() => navigate('/forgot-password')}>
-                        <ArrowLeft size={16} /> Quay lại
+                <div className="auth-footer">
+                    <button
+                        type="button"
+                        className="btn-link back-btn"
+                        onClick={() => navigate('/forgot-password')}
+                    >
+                        <ArrowLeft size={16} />
+                        Quay lại
                     </button>
                 </div>
             </div>

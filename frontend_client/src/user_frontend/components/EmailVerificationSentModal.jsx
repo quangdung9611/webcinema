@@ -9,10 +9,10 @@ const EmailVerificationSentModal = ({
     email = "",
     full_name = "",
     confirmText = "Đã hiểu",
-    autoClose = false, // 🆕 Mặc định KHÔNG tự đóng
+    autoClose = false, // ✅ Mặc định KHÔNG tự đóng
     autoCloseDelay = 3000,
 }) => {
-    // 🆕 Chỉ tự động đóng khi autoClose = true
+    // ✅ Chỉ tự động đóng khi autoClose = true
     useEffect(() => {
         if (show && autoClose) {
             const timer = setTimeout(() => {
@@ -94,6 +94,9 @@ const EmailVerificationSentModal = ({
                 </div>
                 <p style={{ color: "var(--text-muted)", fontSize: "12px", marginTop: "12px" }}>
                     💡 Bạn có thể đóng modal này và vẫn nhận được thông báo khi xác thực thành công
+                </p>
+                <p style={{ color: "var(--text-muted)", fontSize: "11px", marginTop: "6px", fontStyle: "italic" }}>
+                    ⏳ Modal sẽ không tự động đóng, vui lòng bấm "Đã hiểu" để tiếp tục
                 </p>
             </div>
         </Modal>

@@ -275,7 +275,7 @@ exports.changePassword = async (userId, passwordData) => {
 };
 
 // ============================================================
-// FORGOT PASSWORD
+// FORGOT PASSWORD - ✅ SỬA: Bỏ hardcode '15m'
 // ============================================================
 exports.forgotPassword = async (email, req) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -292,7 +292,8 @@ exports.forgotPassword = async (email, req) => {
     const rateLimit = await RedisService.checkRateLimit(email, "password-reset", 3, 60);
     if (!rateLimit.allowed) throw { statusCode: 429, message: rateLimit.message };
 
-    const resetToken = Jwt.generateResetToken({ user_id: user.user_id, email: user.email }, '15m');
+    // ✅ SỬA: Không truyền expiresIn, dùng mặc định từ Jwt
+    const resetToken = Jwt.generateResetToken({ user_id: user.user_id, email: user.email });
     const resetUrl = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
     await MailService.sendPasswordResetLink(email, resetUrl, user.full_name);
 
@@ -388,7 +389,7 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
 };
 
 // ============================================================
-// SEND VERIFICATION EMAIL
+// SEND VERIFICATION EMAIL - ✅ SỬA: Dùng mặc định từ Jwt
 // ============================================================
 exports.sendVerificationEmail = async (email) => {
     if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
@@ -398,6 +399,7 @@ exports.sendVerificationEmail = async (email) => {
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     if (user.email_verified) throw { statusCode: 400, message: "Email đã được xác thực" };
 
+    // ✅ SỬA: Không truyền expiresIn, dùng mặc định từ Jwt
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: user.email });
     const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
     await MailService.sendEmailVerification(email, verifyUrl, user.full_name);
@@ -492,7 +494,7 @@ exports.revokeDeviceById = async (userId, tokenId) => {
 };
 
 /* ============================================================
-   🆕 CÁC HÀM MỚI (ĐÃ SỬA LỖI)
+   🆕 CÁC HÀM MỚI
 ============================================================ */
 
 // 🆕 1. ĐĂNG NHẬP SAU KHI TẠO USER
@@ -524,7 +526,7 @@ exports.loginAfterRegistration = async (user, req, res) => {
     };
 };
 
-// 🆕 2. ĐĂNG KÝ BƯỚC 1 - ✅ ĐÃ SỬA: Tăng thời gian token lên 30 phút
+// 🆕 2. ĐĂNG KÝ BƯỚC 1 - ✅ SỬA: Không hardcode, dùng mặc định từ Jwt
 exports.registerStep1 = async (data) => {
     const { username, full_name, email, phone, password, address } = data;
 
@@ -563,15 +565,12 @@ exports.registerStep1 = async (data) => {
         }
     }
 
-    // ✅ SỬA: Tăng thời gian token lên 30 phút
-    const tempToken = Jwt.generateResetToken(
-        { 
-            purpose: "register",
-            email: email,
-            username: username 
-        }, 
-        '30m'
-    );
+    // ✅ SỬA: Không truyền expiresIn, dùng mặc định từ Jwt
+    const tempToken = Jwt.generateResetToken({ 
+        purpose: "register",
+        email: email,
+        username: username 
+    });
 
     return {
         success: true,
@@ -583,11 +582,10 @@ exports.registerStep1 = async (data) => {
     };
 };
 
-// 🆕 3. HOÀN TẤT ĐĂNG KÝ - ✅ ĐÃ SỬA: Lấy payload từ token, throw 401
+// 🆕 3. HOÀN TẤT ĐĂNG KÝ
 exports.completeRegistration = async (data, req, res) => {
     const { temp_token, pin, username, full_name, email, phone, password, address } = data;
 
-    // ✅ SỬA: Verify token và LƯU PAYLOAD
     let payload;
     try {
         payload = Jwt.verifyResetToken(temp_token);
@@ -598,12 +596,11 @@ exports.completeRegistration = async (data, req, res) => {
     } catch (error) {
         console.error('❌ [REGISTER] Token verification failed:', error.message);
         throw {
-            statusCode: 401, // ← Đổi thành 401
+            statusCode: 401,
             message: "Phiên đăng ký đã hết hạn. Vui lòng quay lại bước 1."
         };
     }
 
-    // Kiểm tra token có đúng mục đích không
     if (payload.purpose !== 'register') {
         throw {
             statusCode: 400,
@@ -632,6 +629,7 @@ exports.completeRegistration = async (data, req, res) => {
         pin_hash: hashedPin
     });
 
+    // ✅ SỬA: Không truyền expiresIn, dùng mặc định từ Jwt
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: userId, email: email });
     const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
     await MailService.sendEmailVerification(email, verifyUrl, full_name);
@@ -646,12 +644,13 @@ exports.completeRegistration = async (data, req, res) => {
     };
 };
 
-// 🆕 4. GỬI LẠI EMAIL XÁC THỰC
+// 🆕 4. GỬI LẠI EMAIL XÁC THỰC - ✅ SỬA: Dùng mặc định từ Jwt
 exports.resendVerificationAfterLogin = async (userId) => {
     const user = await UserRepository.findById(userId);
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
     if (user.email_verified) throw { statusCode: 400, message: "Email đã được xác thực" };
 
+    // ✅ SỬA: Không truyền expiresIn, dùng mặc định từ Jwt
     const verifyToken = Jwt.generateEmailVerifyToken({ user_id: user.user_id, email: user.email });
     const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
     await MailService.sendEmailVerification(user.email, verifyUrl, user.full_name);

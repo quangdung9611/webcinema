@@ -33,25 +33,61 @@ const VerifyEmail = () => {
                     
                     localStorage.setItem('email_verified', 'true');
 
-                    // 🆕 Gửi sự kiện qua socket
-                    const socket = socketService.getSocket();
-                    if (socket && socket.connected) {
-                        socket.emit('email_verified', {
-                            email: response.data.data?.email,
-                            full_name: response.data.data?.full_name,
-                            success: true
-                        });
-                        console.log('📨 [SOCKET] Đã emit sự kiện email_verified');
-                    } else {
-                        console.warn('⚠️ [SOCKET] Chưa kết nối, lưu vào sessionStorage');
-                        sessionStorage.setItem('email_verified_success', 'true');
+                    const email = response.data.data?.email;
+                    const fullName = response.data.data?.full_name;
+
+                    console.log('📨 [VERIFY] Email verified:', email);
+
+                    // =========================================================
+                    // ✅ LƯU SESSIONSTORAGE ĐỂ REGISTERPIN BIẾT (NẾU VẪN CÒN MỞ)
+                    // =========================================================
+                    sessionStorage.setItem('email_verified_success', 'true');
+                    sessionStorage.setItem('email_verified_data', JSON.stringify({
+                        email: email,
+                        full_name: fullName,
+                        timestamp: Date.now()
+                    }));
+                    console.log('📨 [STORAGE] Đã lưu vào sessionStorage');
+
+                    // =========================================================
+                    // 🆕 CỐ GẮNG GỬI QUA SOCKET (NẾU CÓ THỂ)
+                    // =========================================================
+                    try {
+                        let socket = socketService.getSocket();
+                        if (!socket || !socket.connected) {
+                            console.log('🔄 [VERIFY] Đang kết nối socket...');
+                            socketService.connect(email);
+                            await new Promise(resolve => setTimeout(resolve, 1500));
+                            socket = socketService.getSocket();
+                        }
+
+                        if (socket && socket.connected) {
+                            socketService.registerEmailWatcher(email);
+                            socket.emit('email_verified', {
+                                email: email,
+                                full_name: fullName,
+                                success: true
+                            });
+                            console.log('📨 [SOCKET] Đã emit email_verified cho:', email);
+                        }
+                    } catch (socketError) {
+                        console.warn('⚠️ [SOCKET] Lỗi emit:', socketError.message);
                     }
 
-                    // ✅ Bắt đầu countdown để đóng tab
+                    // =========================================================
+                    // ✅ COUNTDOWN VÀ CHUYỂN VỀ LOGIN
+                    // =========================================================
                     const timer = setInterval(() => {
                         setCountdown(prev => {
                             if (prev <= 1) {
                                 clearInterval(timer);
+                                // 🆕 CHUYỂN VỀ LOGIN VỚI STATE VERIFIED
+                                navigate('/login', {
+                                    state: {
+                                        verified: true,
+                                        message: '✅ Xác thực email thành công! Vui lòng đăng nhập.'
+                                    }
+                                });
                                 return 0;
                             }
                             return prev - 1;
@@ -73,7 +109,20 @@ const VerifyEmail = () => {
         verifyEmail();
     }, [searchParams, navigate]);
 
-    // ✅ Render trạng thái đang xác thực
+    // =========================================================
+    // KẾT NỐI SOCKET KHI TAB MỞ
+    // =========================================================
+    useEffect(() => {
+        const socket = socketService.getSocket();
+        if (!socket || !socket.connected) {
+            console.log('🔄 [VERIFY] Kết nối socket từ tab VerifyEmail');
+            socketService.connect('verify-tab');
+        }
+    }, []);
+
+    // =========================================================
+    // RENDER - VERIFYING
+    // =========================================================
     if (status === 'verifying') {
         return (
             <div className="verify-page-container">
@@ -93,7 +142,9 @@ const VerifyEmail = () => {
         );
     }
 
-    // ✅ Render trạng thái thành công - Giao diện đẹp
+    // =========================================================
+    // RENDER - SUCCESS
+    // =========================================================
     if (status === 'success') {
         return (
             <div className="verify-page-container">
@@ -171,26 +222,35 @@ const VerifyEmail = () => {
                                 </svg>
                                 <span className="countdown-number">{countdown}</span>
                             </div>
-                            <p className="countdown-text">Tự động đóng sau</p>
+                            <p className="countdown-text">Chuyển đến trang đăng nhập sau</p>
                         </div>
 
                         <button
                             className="verify-btn verify-btn-primary"
-                            onClick={() => window.close()}
+                            onClick={() => {
+                                navigate('/login', {
+                                    state: {
+                                        verified: true,
+                                        message: '✅ Xác thực email thành công! Vui lòng đăng nhập.'
+                                    }
+                                });
+                            }}
                         >
-                            Đóng tab ngay
+                            Đăng nhập ngay
                         </button>
                     </div>
 
                     <p className="verify-hint">
-                        💡 Sau khi đóng tab, trang đăng ký sẽ tự động cập nhật
+                        💡 Bạn sẽ được chuyển đến trang đăng nhập sau {countdown}s
                     </p>
                 </div>
             </div>
         );
     }
 
-    // ✅ Render trạng thái lỗi
+    // =========================================================
+    // RENDER - ERROR
+    // =========================================================
     return (
         <div className="verify-page-container">
             <div className="verify-page-card verify-card-error">

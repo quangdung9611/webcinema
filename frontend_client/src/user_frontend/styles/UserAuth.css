@@ -1,102 +1,10 @@
 /* =========================================================
    USER AUTH – PREMIUM ULTIMATE EDITION
-   DARK THEME + SILVER CHROME + GLASSMORPHISM 3.0
+   ĐỒNG BỘ VỚI INDEX.CSS
    ========================================================= */
 
 /* =========================================================
-   1. ROOT VARIABLES – HỆ THỐNG MÀU SẮC CAO CẤP
-   ========================================================= */
-:root {
-    /* === Silver Chrome Palette === */
-    --silver-50:  #f8f9fa;
-    --silver-100: #f1f3f5;
-    --silver-200: #e9ecef;
-    --silver-300: #dee2e6;
-    --silver-400: #ced4da;
-    --silver-500: #adb5bd;
-    --silver-600: #868e96;
-    --silver-700: #495057;
-    --silver-800: #343a40;
-    --silver-900: #212529;
-
-    /* === Main Theme Colors === */
-    --bg-primary:      #0b0d0f;
-    --bg-card:          rgba(20, 22, 26, 0.75);
-    --bg-card-hover:    rgba(30, 33, 38, 0.85);
-    --text-heading:     #f0f2f4;
-    --text-body:        #e4e7ea;
-    --text-secondary:   #b0b8c2;
-    --text-muted:       #7a8290;
-    --text-inverse:     #0b0d0f;
-
-    /* === Glassmorphism === */
-    --glass-bg:         rgba(15, 17, 21, 0.65);
-    --glass-blur:       blur(24px) saturate(1.4);
-    --glass-border:     rgba(255, 255, 255, 0.06);
-    --glass-border-hover: rgba(255, 255, 255, 0.12);
-
-    /* === Premium Silver Gradient === */
-    --silver-gradient:  linear-gradient(135deg, #e8eaed 0%, #c8ccd2 40%, #a8aeb8 70%, #8e95a0 100%);
-    --silver-glow:      0 0 40px rgba(200, 204, 210, 0.08), 0 0 80px rgba(200, 204, 210, 0.04);
-    --silver-glow-strong: 0 0 60px rgba(200, 204, 210, 0.15), 0 0 120px rgba(200, 204, 210, 0.06);
-
-    /* === Button Gradients === */
-    --btn-gradient:     linear-gradient(135deg, #d4d8de 0%, #b8bcc4 40%, #9ca2ac 70%, #7e848e 100%);
-    --btn-gradient-hover: linear-gradient(135deg, #e2e6ec 0%, #c8ccd4 40%, #aeb4be 70%, #949aa4 100%);
-    --btn-shadow:       0 4px 24px rgba(150, 155, 165, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    --btn-shadow-hover: 0 8px 40px rgba(150, 155, 165, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-
-    /* === Borders === */
-    --border-premium:      1px solid var(--glass-border);
-    --border-premium-hover: 1px solid var(--glass-border-hover);
-    --border-subtle:       1px solid rgba(255, 255, 255, 0.04);
-
-    /* === Radius === */
-    --radius-xs:  4px;
-    --radius-sm:  8px;
-    --radius-md:  12px;
-    --radius-lg:  16px;
-    --radius-xl:  24px;
-    --radius-full: 9999px;
-
-    /* === Shadows === */
-    --shadow-card:      0 24px 80px rgba(0, 0, 0, 0.6), var(--silver-glow);
-    --shadow-card-hover: 0 32px 100px rgba(0, 0, 0, 0.7), var(--silver-glow-strong);
-    --shadow-input:     0 0 0 1px rgba(255, 255, 255, 0.02), 0 4px 16px rgba(0, 0, 0, 0.2);
-
-    /* === Spacing === */
-    --space-xs:  4px;
-    --space-sm:  8px;
-    --space-md:  14px;
-    --space-lg:  20px;
-    --space-xl:  28px;
-    --space-2xl: 40px;
-    --space-3xl: 56px;
-
-    /* === Typography === */
-    --font-family:        'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-heading:       'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-size-xs:       11px;
-    --font-size-sm:       13px;
-    --font-size-base:     15px;
-    --font-size-md:       17px;
-    --font-size-lg:       20px;
-    --font-size-xl:       26px;
-    --font-size-2xl:      34px;
-    --fw-regular:         400;
-    --fw-medium:          500;
-    --fw-semibold:        600;
-    --fw-bold:            700;
-    --fw-extrabold:       800;
-
-    /* === Transitions === */
-    --transition-fast:    0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-normal:  0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-slow:    0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* =========================================================
-   2. CONTAINER CHÍNH & BACKGROUND
+   1. CONTAINER CHÍNH & BACKGROUND
    ========================================================= */
 .auth-container {
     min-height: 100vh;
@@ -124,7 +32,7 @@
 }
 
 /* =========================================================
-   3. CARD GLASSMORPHISM 3.0
+   2. CARD GLASSMORPHISM
    ========================================================= */
 .auth-card {
     position: relative;
@@ -136,8 +44,8 @@
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--border-premium);
-    box-shadow: var(--shadow-card);
+    border: var(--glass-border);
+    box-shadow: var(--glass-shadow);
     transition: all var(--transition-normal);
     overflow: hidden;
 }
@@ -170,7 +78,7 @@
 
 .auth-card:hover {
     border-color: var(--glass-border-hover);
-    box-shadow: var(--shadow-card-hover);
+    box-shadow: var(--card-shadow-hover);
     transform: translateY(-4px);
 }
 
@@ -193,7 +101,7 @@
 }
 
 /* =========================================================
-   4. FORM WRAPPER – SCROLL CUSTOM
+   3. FORM WRAPPER – SCROLL CUSTOM
    ========================================================= */
 .auth-form-wrapper {
     max-height: 400px;
@@ -208,12 +116,12 @@
 
 .auth-form-wrapper::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.02);
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-round);
 }
 
 .auth-form-wrapper::-webkit-scrollbar-thumb {
     background: rgba(200, 204, 210, 0.2);
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-round);
     transition: background var(--transition-fast);
 }
 
@@ -227,7 +135,7 @@
 }
 
 /* =========================================================
-   5. STEP INDICATOR
+   4. STEP INDICATOR
    ========================================================= */
 .step-indicator {
     display: flex;
@@ -250,7 +158,7 @@
 }
 
 .step-active {
-    background: var(--silver-gradient);
+    background: var(--premium-gradient);
     color: var(--text-inverse);
     box-shadow: 0 4px 20px rgba(200, 204, 210, 0.3);
     transform: scale(1.05);
@@ -273,7 +181,7 @@
     width: 40px;
     height: 1.5px;
     background: linear-gradient(90deg, rgba(200, 204, 210, 0.2), rgba(200, 204, 210, 0.05));
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-round);
 }
 
 .step-line.completed {
@@ -281,7 +189,7 @@
 }
 
 /* =========================================================
-   6. TIÊU ĐỀ & PHỤ ĐỀ
+   5. TIÊU ĐỀ & PHỤ ĐỀ
    ========================================================= */
 .auth-card h2 {
     text-align: center;
@@ -304,7 +212,7 @@
 }
 
 /* =========================================================
-   7. USER INFO BOX (BƯỚC 2)
+   6. USER INFO BOX (BƯỚC 2)
    ========================================================= */
 .user-info-box {
     display: flex;
@@ -330,7 +238,7 @@
 }
 
 /* =========================================================
-   8. FORM GROUP & LABELS
+   7. FORM GROUP & LABELS
    ========================================================= */
 .form-group {
     display: flex;
@@ -348,7 +256,7 @@
 }
 
 /* =========================================================
-   9. INPUTS – PREMIUM
+   8. INPUTS – PREMIUM
    ========================================================= */
 .auth-input {
     width: 100%;
@@ -396,7 +304,7 @@
 }
 
 /* =========================================================
-   10. PASSWORD WRAPPER
+   9. PASSWORD WRAPPER
    ========================================================= */
 .password-wrapper {
     position: relative;
@@ -430,6 +338,58 @@
 }
 
 /* =========================================================
+   10. FORM OPTIONS (Remember me & Forgot password)
+   ========================================================= */
+.form-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: var(--space-md) 0 var(--space-lg);
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--text-secondary);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+}
+
+.remember-me input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--silver-primary);
+    cursor: pointer;
+    border-radius: var(--radius-xs);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.remember-me input[type="checkbox"]:hover {
+    border-color: rgba(232, 232, 232, 0.3);
+}
+
+.forgot-link {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: transparent;
+}
+
+.forgot-link:hover {
+    color: var(--silver-primary);
+    text-decoration-color: var(--silver-primary);
+}
+
+/* =========================================================
    11. ERROR TEXT
    ========================================================= */
 .error-text {
@@ -448,7 +408,103 @@
 }
 
 /* =========================================================
-   12. PIN INPUT – 6 Ô CHUYÊN DỤNG
+   12. ERROR & SUCCESS MESSAGE
+   ========================================================= */
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(255, 59, 92, 0.15);
+    border: 1px solid rgba(255, 59, 92, 0.2);
+    color: #ff6b8a;
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-medium);
+    margin-bottom: var(--space-lg);
+    backdrop-filter: blur(4px);
+}
+
+.error-message svg {
+    flex-shrink: 0;
+    color: #ff6b8a;
+}
+
+.success-message {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    color: #4ade80;
+    font-size: var(--font-size-h6);
+    font-weight: var(--fw-medium);
+    margin-bottom: var(--space-lg);
+    backdrop-filter: blur(4px);
+}
+
+.success-message svg {
+    flex-shrink: 0;
+    color: #4ade80;
+}
+
+/* =========================================================
+   13. FORGOT PASSWORD & RESET PASSWORD - ICON & MESSAGE
+   ========================================================= */
+.forgot-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-lg);
+    padding: var(--space-md);
+}
+
+.forgot-icon {
+    color: var(--accent-ice);
+    opacity: 0.9;
+    stroke-width: 1.5;
+    filter: drop-shadow(0 0 20px rgba(166, 193, 217, 0.15));
+}
+
+.forgot-message {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--fw-medium);
+    margin-bottom: var(--space-lg);
+    backdrop-filter: blur(4px);
+    animation: modalFade 0.3s ease;
+}
+
+.forgot-message.success {
+    background: rgba(34, 197, 94, 0.10);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+}
+
+.forgot-message.success svg {
+    color: #4ade80;
+    flex-shrink: 0;
+}
+
+.forgot-message.error {
+    background: rgba(255, 59, 92, 0.10);
+    border: 1px solid rgba(255, 59, 92, 0.2);
+    color: #ff6b8a;
+}
+
+.forgot-message.error svg {
+    color: #ff6b8a;
+    flex-shrink: 0;
+}
+
+/* =========================================================
+   14. PIN INPUT – 6 Ô CHUYÊN DỤNG
    ========================================================= */
 .pin-input-container {
     display: flex;
@@ -512,7 +568,7 @@
 }
 
 /* =========================================================
-   13. INPUT HINT
+   15. INPUT HINT
    ========================================================= */
 .input-hint {
     color: var(--text-muted);
@@ -526,14 +582,14 @@
 }
 
 /* =========================================================
-   14. BUTTON – PREMIUM SILVER CHROME
+   16. BUTTON – PREMIUM SILVER CHROME
    ========================================================= */
 .btn-user {
     width: 100%;
     padding: var(--space-md) var(--space-lg);
     border: none;
     border-radius: var(--radius-md);
-    background: var(--btn-gradient);
+    background: var(--premium-gradient);
     color: var(--text-inverse);
     font-size: var(--font-size-base);
     font-weight: var(--fw-bold);
@@ -542,7 +598,7 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-sm);
-    box-shadow: var(--btn-shadow);
+    box-shadow: var(--btn-silver-shadow);
     transition: all var(--transition-normal);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -563,25 +619,25 @@
 }
 
 .btn-user:hover:not(:disabled) {
-    background: var(--btn-gradient-hover);
+    background: var(--premium-gradient-hover);
     transform: translateY(-2px) scale(1.01);
-    box-shadow: var(--btn-shadow-hover);
+    box-shadow: var(--btn-silver-hover);
 }
 
 .btn-user:active:not(:disabled) {
     transform: translateY(0) scale(0.98);
-    box-shadow: var(--btn-shadow);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 .btn-user:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none !important;
-    box-shadow: var(--btn-shadow);
+    box-shadow: var(--btn-silver-shadow);
 }
 
 /* =========================================================
-   15. BUTTON GROUP
+   17. BUTTON GROUP
    ========================================================= */
 .button-group {
     display: flex;
@@ -591,7 +647,7 @@
 }
 
 /* =========================================================
-   16. FOOTER
+   18. FOOTER
    ========================================================= */
 .auth-footer {
     text-align: center;
@@ -642,11 +698,8 @@
 }
 
 /* =========================================================
-   17. MODAL – EMAIL VERIFICATION SENT
+   19. MODAL OVERLAY & BOX
    ========================================================= */
-/* Sử dụng component Modal và EmailVerificationSentModal có sẵn,
-   phần style này bổ sung thêm cho modal thông báo thành công */
-
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -670,8 +723,8 @@
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--border-premium);
-    box-shadow: var(--shadow-card);
+    border: var(--glass-border);
+    box-shadow: var(--glass-shadow);
     animation: modalScale var(--transition-normal);
     text-align: center;
 }
@@ -717,21 +770,21 @@
     padding: var(--space-md) var(--space-2xl);
     border: none;
     border-radius: var(--radius-full);
-    background: var(--btn-gradient);
+    background: var(--premium-gradient);
     color: var(--text-inverse);
     font-size: var(--font-size-sm);
     font-weight: var(--fw-bold);
     cursor: pointer;
     transition: all var(--transition-normal);
-    box-shadow: var(--btn-shadow);
+    box-shadow: var(--btn-silver-shadow);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .modal-box .modal-btn:hover {
-    background: var(--btn-gradient-hover);
+    background: var(--premium-gradient-hover);
     transform: translateY(-2px);
-    box-shadow: var(--btn-shadow-hover);
+    box-shadow: var(--btn-silver-hover);
 }
 
 .modal-box .modal-btn:active {
@@ -760,7 +813,7 @@
 }
 
 /* =========================================================
-   18. SESSION EXPIRED MODAL
+   20. SESSION EXPIRED MODAL
    ========================================================= */
 .session-expired-overlay {
     position: fixed;
@@ -782,10 +835,10 @@
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--border-premium);
+    border: var(--glass-border);
     border-radius: var(--radius-xl);
     padding: var(--space-2xl);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--glass-shadow);
     animation: modalScale 0.3s ease;
     text-align: center;
 }
@@ -820,92 +873,25 @@
     padding: var(--space-md) var(--space-2xl);
     font-size: var(--font-size-sm);
     font-weight: var(--fw-bold);
-    background: var(--btn-gradient);
+    background: var(--premium-gradient);
     color: var(--text-inverse);
     border: none;
     border-radius: var(--radius-full);
     cursor: pointer;
     transition: all var(--transition-normal);
-    box-shadow: var(--btn-shadow);
+    box-shadow: var(--btn-silver-shadow);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .session-expired-modal .modal-btn-confirm:hover {
-    background: var(--btn-gradient-hover);
+    background: var(--premium-gradient-hover);
     transform: translateY(-2px);
-    box-shadow: var(--btn-shadow-hover);
+    box-shadow: var(--btn-silver-hover);
 }
 
 /* =========================================================
-   19. FORGOT PASSWORD MODAL
-   ========================================================= */
-.forgot-modal-overlay {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-lg);
-    z-index: 9999;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(8px) saturate(1.2);
-    -webkit-backdrop-filter: blur(8px) saturate(1.2);
-    animation: modalFade var(--transition-normal);
-}
-
-.forgot-modal {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-    padding: var(--space-2xl) var(--space-xl);
-    border-radius: var(--radius-xl);
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: var(--border-premium);
-    box-shadow: var(--shadow-card);
-    animation: modalScale var(--transition-normal);
-    text-align: center;
-}
-
-.forgot-modal h3 {
-    color: var(--text-heading);
-    font-size: var(--font-size-lg);
-    font-weight: var(--fw-extrabold);
-    margin-bottom: var(--space-xs);
-}
-
-.forgot-modal p {
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-    line-height: 1.7;
-    margin-bottom: var(--space-lg);
-}
-
-.forgot-modal .forgot-close-btn {
-    position: absolute;
-    top: var(--space-md);
-    right: var(--space-md);
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    padding: var(--space-xs);
-    border-radius: var(--radius-xs);
-    transition: all var(--transition-fast);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.forgot-modal .forgot-close-btn:hover {
-    color: var(--silver-300);
-    background: rgba(255, 255, 255, 0.05);
-}
-
-/* =========================================================
-   20. ANIMATIONS
+   21. ANIMATIONS
    ========================================================= */
 @keyframes modalFade {
     from { opacity: 0; }
@@ -933,8 +919,23 @@
     50% { opacity: 1; }
 }
 
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+.dot-pulse {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
 /* =========================================================
-   21. RESPONSIVE – MOBILE FIRST
+   22. RESPONSIVE – MOBILE FIRST
    ========================================================= */
 @media (max-width: 768px) {
     .auth-container {
@@ -975,6 +976,28 @@
     
     .modal-box {
         padding: var(--space-xl) var(--space-lg);
+    }
+
+    .forgot-icon-wrapper {
+        margin-bottom: var(--space-md);
+        padding: var(--space-sm);
+    }
+
+    .forgot-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .forgot-message {
+        font-size: var(--font-size-xs);
+        padding: var(--space-sm) var(--space-md);
+        gap: var(--space-xs);
+    }
+
+    .form-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
     }
 }
 
@@ -1060,14 +1083,32 @@
         font-size: var(--font-size-xs);
         width: 100%;
     }
-    
-    .forgot-modal {
-        padding: var(--space-lg) var(--space-md);
+
+    .forgot-icon-wrapper {
+        margin-bottom: var(--space-sm);
+        padding: var(--space-xs);
+    }
+
+    .forgot-icon {
+        width: 30px;
+        height: 30px;
+    }
+
+    .forgot-message {
+        font-size: var(--font-size-xs);
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-sm);
+        gap: var(--space-xs);
+    }
+
+    .forgot-message svg {
+        width: 16px;
+        height: 16px;
     }
 }
 
 /* =========================================================
-   22. REDUCED MOTION
+   23. REDUCED MOTION
    ========================================================= */
 @media (prefers-reduced-motion: reduce) {
     *,
@@ -1089,12 +1130,18 @@
     .pin-box:focus {
         transform: none !important;
     }
-}
 
-/* =========================================================
-   23. DARK MODE COMPATIBILITY – ALREADY DARK
-   ========================================================= */
-/* Theme đã là Dark Mode, không cần thêm */
+    .forgot-message {
+        animation: none !important;
+    }
+
+    .modal-overlay,
+    .modal-box,
+    .session-expired-overlay,
+    .session-expired-modal {
+        animation: none !important;
+    }
+}
 
 /* =========================================================
    24. UTILITY – HỖ TRỢ
