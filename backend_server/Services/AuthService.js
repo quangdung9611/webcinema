@@ -3,7 +3,7 @@ const Cookie = require("../utils/Cookie");
 const Password = require("../utils/Password");
 const UserRepository = require("../Repositories/UserRepository");
 const RefreshTokenRepository = require("../Repositories/RefreshTokenRepository");
-const MailService = require("./MailService"); // ✅ Đã đổi
+const MailService = require("./MailService");
 const RedisService = require("./RedisService");
 const OtpService = require("./OtpService");
 
@@ -83,9 +83,17 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     const lockInfo = await RedisService.getLockoutInfo(email);
     if (lockInfo && lockInfo.isLocked) {
         throw {
-            statusCode: 429, code: 'ACCOUNT_LOCKED',
+            statusCode: 429,
+            code: 'ACCOUNT_LOCKED',
             message: `Tài khoản đã bị khóa ${lockInfo.lockDurationText}. Vui lòng thử lại sau.`,
-            data: { level: lockInfo.level, remainingSeconds: lockInfo.remainingSeconds, lockDuration: lockInfo.lockDuration, lockDurationText: lockInfo.lockDurationText, maxAttempts: lockInfo.maxAttempts, lockedUntil: lockInfo.lockedUntil }
+            data: {
+                level: lockInfo.level,
+                remainingSeconds: lockInfo.remainingSeconds,
+                lockDuration: lockInfo.lockDuration,
+                lockDurationText: lockInfo.lockDurationText,
+                maxAttempts: lockInfo.maxAttempts,
+                lockedUntil: lockInfo.lockedUntil
+            }
         };
     }
 
@@ -95,9 +103,24 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         if (attempts >= 5) {
             const newLevel = await RedisService.incrementLockoutLevel(email);
             const { duration, text } = RedisService.getLockDuration(newLevel);
-            throw { statusCode: 429, code: 'ACCOUNT_LOCKED', message: `Bạn đã nhập sai quá 5 lần. Tài khoản đã bị khóa ${text}.`, data: { level: newLevel, remainingSeconds: duration, lockDuration: duration, lockDurationText: text, maxAttempts: 5, lockedUntil: Date.now() + duration * 1000 } };
+            throw {
+                statusCode: 429,
+                code: 'ACCOUNT_LOCKED',
+                message: `Bạn đã nhập sai quá 5 lần. Tài khoản đã bị khóa ${text}.`,
+                data: {
+                    level: newLevel,
+                    remainingSeconds: duration,
+                    lockDuration: duration,
+                    lockDurationText: text,
+                    maxAttempts: 5,
+                    lockedUntil: Date.now() + duration * 1000
+                }
+            };
         }
-        throw { statusCode: 401, message: `Email hoặc mật khẩu không đúng. Bạn còn ${5 - attempts} lần thử.` };
+        throw {
+            statusCode: 401,
+            message: `Email hoặc mật khẩu không đúng. Bạn còn ${5 - attempts} lần thử.`
+        };
     }
 
     const matched = await Password.compare(password, user.password);
@@ -106,14 +129,33 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         if (attempts >= 5) {
             const newLevel = await RedisService.incrementLockoutLevel(email);
             const { duration, text } = RedisService.getLockDuration(newLevel);
-            throw { statusCode: 429, code: 'ACCOUNT_LOCKED', message: `Bạn đã nhập sai quá 5 lần. Tài khoản đã bị khóa ${text}.`, data: { level: newLevel, remainingSeconds: duration, lockDuration: duration, lockDurationText: text, maxAttempts: 5, lockedUntil: Date.now() + duration * 1000 } };
+            throw {
+                statusCode: 429,
+                code: 'ACCOUNT_LOCKED',
+                message: `Bạn đã nhập sai quá 5 lần. Tài khoản đã bị khóa ${text}.`,
+                data: {
+                    level: newLevel,
+                    remainingSeconds: duration,
+                    lockDuration: duration,
+                    lockDurationText: text,
+                    maxAttempts: 5,
+                    lockedUntil: Date.now() + duration * 1000
+                }
+            };
         }
-        throw { statusCode: 401, message: `Email hoặc mật khẩu không đúng. Bạn còn ${5 - attempts} lần thử.` };
+        throw {
+            statusCode: 401,
+            message: `Email hoặc mật khẩu không đúng. Bạn còn ${5 - attempts} lần thử.`
+        };
     }
 
     await RedisService.resetLoginAttempts(email);
     if (!user.email_verified) {
-        throw { statusCode: 403, field: "email", message: "Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn." };
+        throw {
+            statusCode: 403,
+            field: "email",
+            message: "Vui lòng xác thực email trước khi đăng nhập. Kiểm tra hộp thư của bạn."
+        };
     }
 
     await RefreshTokenRepository.revokeByUser(user.user_id, "Đăng nhập từ thiết bị khác");
@@ -123,7 +165,10 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
         ioInstance.to(`user_${user.user_id}`).emit('session_expired', {
             code: 'SESSION_REPLACED',
             message: 'Tài khoản của bạn đã được đăng nhập trên thiết bị khác.',
-            newDevice: { ip: req.ip || req.connection?.remoteAddress || 'Unknown', userAgent: req.headers?.['user-agent']?.substring(0, 100) || 'Unknown' },
+            newDevice: {
+                ip: req.ip || req.connection?.remoteAddress || 'Unknown',
+                userAgent: req.headers?.['user-agent']?.substring(0, 100) || 'Unknown'
+            },
             timestamp: new Date().toISOString()
         });
         await RedisService.deleteUserSocket(user.user_id);
@@ -132,7 +177,8 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     const accessToken = generateAndSetTokens(user, res, rememberMe);
     const accessTokenHash = Jwt.hashRefreshToken(accessToken);
     await RefreshTokenRepository.create({
-        user_id: user.user_id, token_hash: accessTokenHash,
+        user_id: user.user_id,
+        token_hash: accessTokenHash,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
         ip_address: req.ip || req.connection?.remoteAddress || null,
         user_agent: req.headers?.["user-agent"] || null,
@@ -140,8 +186,18 @@ exports.login = async (email, password, rememberMe = false, req, res) => {
     });
 
     return {
-        success: true, message: "Đăng nhập thành công",
-        user: { user_id: user.user_id, username: user.username, full_name: user.full_name, email: user.email, phone: user.phone, role: user.role, points: user.points, email_verified: user.email_verified }
+        success: true,
+        message: "Đăng nhập thành công",
+        user: {
+            user_id: user.user_id,
+            username: user.username,
+            full_name: user.full_name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            points: user.points,
+            email_verified: user.email_verified
+        }
     };
 };
 
@@ -172,7 +228,9 @@ exports.logout = async (req, res) => {
     }
     try {
         if (req.user?.user_id) await RedisService.deleteUserSocket(req.user.user_id);
-    } catch (error) { console.error('❌ [LOGOUT] Lỗi khi xóa socket:', error.message); }
+    } catch (error) {
+        console.error('❌ [LOGOUT] Lỗi khi xóa socket:', error.message);
+    }
     return { success: true, message: "Đăng xuất thành công" };
 };
 
@@ -181,23 +239,37 @@ exports.logout = async (req, res) => {
 // ============================================================
 exports.changePassword = async (userId, passwordData) => {
     const { currentPassword, newPassword } = passwordData;
-    if (!currentPassword?.trim()) throw { statusCode: 400, field: "currentPassword", message: "Vui lòng nhập mật khẩu hiện tại" };
-    if (!newPassword?.trim()) throw { statusCode: 400, field: "newPassword", message: "Vui lòng nhập mật khẩu mới" };
-    if (!Password.isStrong(newPassword)) throw { statusCode: 400, field: "newPassword", message: "Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt" };
+    if (!currentPassword?.trim()) {
+        throw { statusCode: 400, field: "currentPassword", message: "Vui lòng nhập mật khẩu hiện tại" };
+    }
+    if (!newPassword?.trim()) {
+        throw { statusCode: 400, field: "newPassword", message: "Vui lòng nhập mật khẩu mới" };
+    }
+    if (!Password.isStrong(newPassword)) {
+        throw { statusCode: 400, field: "newPassword", message: "Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt" };
+    }
 
     const user = await UserRepository.findById(userId);
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
 
     const matched = await Password.compare(currentPassword, user.password);
-    if (!matched) throw { statusCode: 400, field: "currentPassword", message: "Mật khẩu hiện tại không đúng" };
+    if (!matched) {
+        throw { statusCode: 400, field: "currentPassword", message: "Mật khẩu hiện tại không đúng" };
+    }
 
     const samePassword = await Password.compare(newPassword, user.password);
-    if (samePassword) throw { statusCode: 400, field: "newPassword", message: "Mật khẩu mới không được trùng mật khẩu cũ" };
+    if (samePassword) {
+        throw { statusCode: 400, field: "newPassword", message: "Mật khẩu mới không được trùng mật khẩu cũ" };
+    }
 
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(userId, hashedPassword);
     await RefreshTokenRepository.revokeByUser(userId, "Đổi mật khẩu");
-    try { await RedisService.deleteUserSocket(userId); } catch (error) { console.error('❌ [CHANGE_PASSWORD] Lỗi khi xóa socket:', error.message); }
+    try {
+        await RedisService.deleteUserSocket(userId);
+    } catch (error) {
+        console.error('❌ [CHANGE_PASSWORD] Lỗi khi xóa socket:', error.message);
+    }
 
     return { success: true, message: "Đổi mật khẩu thành công. Vui lòng đăng nhập lại." };
 };
@@ -210,7 +282,12 @@ exports.forgotPassword = async (email, req) => {
     if (!EMAIL_REGEX.test(email)) throw { statusCode: 400, field: "email", message: "Email không hợp lệ" };
 
     const user = await UserRepository.findByEmail(email);
-    if (!user) return { success: true, message: "Nếu email này tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu." };
+    if (!user) {
+        return {
+            success: true,
+            message: "Nếu email này tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu."
+        };
+    }
 
     const rateLimit = await RedisService.checkRateLimit(email, "password-reset", 3, 60);
     if (!rateLimit.allowed) throw { statusCode: 429, message: rateLimit.message };
@@ -219,7 +296,10 @@ exports.forgotPassword = async (email, req) => {
     const resetUrl = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
     await MailService.sendPasswordResetLink(email, resetUrl, user.full_name);
 
-    return { success: true, message: "Nếu email này tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu." };
+    return {
+        success: true,
+        message: "Nếu email này tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu."
+    };
 };
 
 // ============================================================
@@ -245,8 +325,12 @@ exports.verifyResetToken = async (token) => {
 // ============================================================
 exports.submitNewPassword = async (token, newPassword) => {
     if (!token) throw { statusCode: 400, message: "Token không được để trống" };
-    if (!newPassword?.trim()) throw { statusCode: 400, field: "newPassword", message: "Mật khẩu mới không được để trống" };
-    if (!Password.isStrong(newPassword)) throw { statusCode: 400, field: "newPassword", message: "Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt" };
+    if (!newPassword?.trim()) {
+        throw { statusCode: 400, field: "newPassword", message: "Mật khẩu mới không được để trống" };
+    }
+    if (!Password.isStrong(newPassword)) {
+        throw { statusCode: 400, field: "newPassword", message: "Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt" };
+    }
 
     let payload;
     try {
@@ -262,7 +346,11 @@ exports.submitNewPassword = async (token, newPassword) => {
     const otpResult = await OtpService.createOTP(user.email, "RESET_PASSWORD");
     await MailService.sendResetPasswordOTP(user.email, otpResult.otp, user.full_name);
 
-    return { success: true, message: "Mã OTP xác nhận đã được gửi tới email của bạn.", email: user.email };
+    return {
+        success: true,
+        message: "Mã OTP xác nhận đã được gửi tới email của bạn.",
+        email: user.email
+    };
 };
 
 // ============================================================
@@ -271,19 +359,29 @@ exports.submitNewPassword = async (token, newPassword) => {
 exports.verifyOtpAndReset = async (email, otp, newPassword) => {
     const otpResult = await OtpService.verifyOTP(email, otp, "RESET_PASSWORD");
     if (!otpResult.success) {
-        throw { statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400, field: "otp", message: otpResult.message };
+        throw {
+            statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400,
+            field: "otp",
+            message: otpResult.message
+        };
     }
 
     const user = await UserRepository.findByEmail(email);
     if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
 
     const samePassword = await Password.compare(newPassword, user.password);
-    if (samePassword) throw { statusCode: 400, field: "newPassword", message: "Mật khẩu mới không được trùng mật khẩu cũ" };
+    if (samePassword) {
+        throw { statusCode: 400, field: "newPassword", message: "Mật khẩu mới không được trùng mật khẩu cũ" };
+    }
 
     const hashedPassword = await Password.hash(newPassword);
     await UserRepository.updatePassword(user.user_id, hashedPassword);
     await RefreshTokenRepository.revokeByUser(user.user_id, "Đặt lại mật khẩu");
-    try { await RedisService.deleteUserSocket(user.user_id); } catch (error) { console.error('❌ [RESET_PASSWORD] Lỗi khi xóa socket:', error.message); }
+    try {
+        await RedisService.deleteUserSocket(user.user_id);
+    } catch (error) {
+        console.error('❌ [RESET_PASSWORD] Lỗi khi xóa socket:', error.message);
+    }
 
     await MailService.sendPasswordChangeAlert(user.email, user.full_name);
     return { success: true, message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại." };
@@ -326,8 +424,14 @@ exports.verifyEmail = async (verifyToken) => {
 
     await UserRepository.updateEmailVerified(user.user_id, true);
     return {
-        success: true, message: "Xác thực email thành công!",
-        user: { user_id: user.user_id, email: user.email, full_name: user.full_name, email_verified: 1 }
+        success: true,
+        message: "Xác thực email thành công!",
+        user: {
+            user_id: user.user_id,
+            email: user.email,
+            full_name: user.full_name,
+            email_verified: 1
+        }
     };
 };
 
@@ -336,7 +440,11 @@ exports.verifyEmail = async (verifyToken) => {
 // ============================================================
 exports.logoutAllDevices = async (userId, res) => {
     await RefreshTokenRepository.revokeByUser(userId, "Đăng xuất tất cả thiết bị");
-    try { await RedisService.deleteUserSocket(userId); } catch (error) { console.error('❌ [LOGOUT_ALL] Lỗi khi xóa socket:', error.message); }
+    try {
+        await RedisService.deleteUserSocket(userId);
+    } catch (error) {
+        console.error('❌ [LOGOUT_ALL] Lỗi khi xóa socket:', error.message);
+    }
     Cookie.clearAllCookies(res);
     return { success: true, message: "Đã đăng xuất tất cả thiết bị" };
 };
@@ -350,7 +458,13 @@ exports.getActiveDevices = async (userId) => {
     return {
         success: true,
         devices: tokens.map(token => ({
-            device_id: token.token_id, device_name: token.device_name || "Unknown Device", ip_address: token.ip_address || "Unknown", last_used_at: token.last_used_at || token.created_at, created_at: token.created_at, expires_at: token.expires_at, is_current: false
+            device_id: token.token_id,
+            device_name: token.device_name || "Unknown Device",
+            ip_address: token.ip_address || "Unknown",
+            last_used_at: token.last_used_at || token.created_at,
+            created_at: token.created_at,
+            expires_at: token.expires_at,
+            is_current: false
         }))
     };
 };
@@ -362,17 +476,26 @@ exports.revokeDeviceById = async (userId, tokenId) => {
     if (!userId) throw { statusCode: 401, message: "Chưa đăng nhập" };
     const tokens = await RefreshTokenRepository.getActiveByUser(userId);
     const targetToken = tokens.find(t => t.token_id === parseInt(tokenId));
-    if (!targetToken) throw { statusCode: 404, message: "Không tìm thấy thiết bị hoặc thiết bị đã bị đăng xuất" };
+    if (!targetToken) {
+        throw { statusCode: 404, message: "Không tìm thấy thiết bị hoặc thiết bị đã bị đăng xuất" };
+    }
 
     await RefreshTokenRepository.revoke(targetToken.token_hash, "Người dùng chủ động đăng xuất");
-    return { success: true, message: "Đã đăng xuất thiết bị thành công", device: { device_name: targetToken.device_name, ip_address: targetToken.ip_address } };
+    return {
+        success: true,
+        message: "Đã đăng xuất thiết bị thành công",
+        device: {
+            device_name: targetToken.device_name,
+            ip_address: targetToken.ip_address
+        }
+    };
 };
 
 /* ============================================================
-   🆕 CÁC HÀM MỚI THÊM VÀO CUỐI FILE (KHÔNG XÓA CODE CŨ)
+   🆕 CÁC HÀM MỚI (ĐÃ SỬA LỖI)
 ============================================================ */
 
-// 🆕 1. ĐĂNG NHẬP SAU KHI TẠO USER (Dùng để tự đăng nhập ở Bước 2)
+// 🆕 1. ĐĂNG NHẬP SAU KHI TẠO USER
 exports.loginAfterRegistration = async (user, req, res) => {
     const accessToken = generateAndSetTokens(user, res, false);
     const accessTokenHash = Jwt.hashRefreshToken(accessToken);
@@ -401,26 +524,54 @@ exports.loginAfterRegistration = async (user, req, res) => {
     };
 };
 
-// 🆕 2. ĐĂNG KÝ BƯỚC 1 (CHỈ VALIDATE, KHÔNG LƯU CSDL)
+// 🆕 2. ĐĂNG KÝ BƯỚC 1 - ✅ ĐÃ SỬA: Tăng thời gian token lên 30 phút
 exports.registerStep1 = async (data) => {
     const { username, full_name, email, phone, password, address } = data;
 
-    if (!username?.trim()) throw { statusCode: 400, field: "username", message: "Tên đăng nhập không được để trống" };
-    if (!full_name?.trim()) throw { statusCode: 400, field: "full_name", message: "Họ tên không được để trống" };
-    if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
-    if (!EMAIL_REGEX.test(email)) throw { statusCode: 400, field: "email", message: "Email không hợp lệ" };
-    if (!phone?.trim()) throw { statusCode: 400, field: "phone", message: "Số điện thoại không được để trống" };
-    if (!password?.trim()) throw { statusCode: 400, field: "password", message: "Mật khẩu không được để trống" };
-    if (!Password.isStrong(password)) throw { statusCode: 400, field: "password", message: "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt" };
+    if (!username?.trim()) {
+        throw { statusCode: 400, field: "username", message: "Tên đăng nhập không được để trống" };
+    }
+    if (!full_name?.trim()) {
+        throw { statusCode: 400, field: "full_name", message: "Họ tên không được để trống" };
+    }
+    if (!email?.trim()) {
+        throw { statusCode: 400, field: "email", message: "Email không được để trống" };
+    }
+    if (!EMAIL_REGEX.test(email)) {
+        throw { statusCode: 400, field: "email", message: "Email không hợp lệ" };
+    }
+    if (!phone?.trim()) {
+        throw { statusCode: 400, field: "phone", message: "Số điện thoại không được để trống" };
+    }
+    if (!password?.trim()) {
+        throw { statusCode: 400, field: "password", message: "Mật khẩu không được để trống" };
+    }
+    if (!Password.isStrong(password)) {
+        throw { statusCode: 400, field: "password", message: "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt" };
+    }
 
     const existed = await UserRepository.exists(username, email, phone);
     if (existed) {
-        if (existed.username === username) throw { statusCode: 400, field: "username", message: "Tên đăng nhập đã tồn tại" };
-        if (existed.email === email) throw { statusCode: 400, field: "email", message: "Email đã tồn tại" };
-        if (existed.phone === phone) throw { statusCode: 400, field: "phone", message: "Số điện thoại đã tồn tại" };
+        if (existed.username === username) {
+            throw { statusCode: 400, field: "username", message: "Tên đăng nhập đã tồn tại" };
+        }
+        if (existed.email === email) {
+            throw { statusCode: 400, field: "email", message: "Email đã tồn tại" };
+        }
+        if (existed.phone === phone) {
+            throw { statusCode: 400, field: "phone", message: "Số điện thoại đã tồn tại" };
+        }
     }
 
-    const tempToken = Jwt.generateResetToken({ purpose: "register" }, '15m');
+    // ✅ SỬA: Tăng thời gian token lên 30 phút
+    const tempToken = Jwt.generateResetToken(
+        { 
+            purpose: "register",
+            email: email,
+            username: username 
+        }, 
+        '30m'
+    );
 
     return {
         success: true,
@@ -432,14 +583,32 @@ exports.registerStep1 = async (data) => {
     };
 };
 
-// 🆕 3. HOÀN TẤT ĐĂNG KÝ (LƯU CSDL + GỬI EMAIL)
+// 🆕 3. HOÀN TẤT ĐĂNG KÝ - ✅ ĐÃ SỬA: Lấy payload từ token, throw 401
 exports.completeRegistration = async (data, req, res) => {
     const { temp_token, pin, username, full_name, email, phone, password, address } = data;
 
+    // ✅ SỬA: Verify token và LƯU PAYLOAD
+    let payload;
     try {
-        Jwt.verifyResetToken(temp_token);
+        payload = Jwt.verifyResetToken(temp_token);
+        if (!payload) {
+            throw new Error('Invalid token');
+        }
+        console.log('✅ [REGISTER] Token payload:', payload);
     } catch (error) {
-        throw { statusCode: 400, message: "Phiên đăng ký đã hết hạn. Vui lòng quay lại bước 1." };
+        console.error('❌ [REGISTER] Token verification failed:', error.message);
+        throw {
+            statusCode: 401, // ← Đổi thành 401
+            message: "Phiên đăng ký đã hết hạn. Vui lòng quay lại bước 1."
+        };
+    }
+
+    // Kiểm tra token có đúng mục đích không
+    if (payload.purpose !== 'register') {
+        throw {
+            statusCode: 400,
+            message: "Token không hợp lệ. Vui lòng đăng ký lại."
+        };
     }
 
     if (!pin || !/^\d{6}$/.test(pin)) {
@@ -450,7 +619,9 @@ exports.completeRegistration = async (data, req, res) => {
     const hashedPin = await Password.hash(pin);
 
     const userId = await UserRepository.create({
-        username, full_name, phone,
+        username,
+        full_name,
+        phone,
         address: address || "",
         email,
         password: hashedPassword,
@@ -485,15 +656,22 @@ exports.resendVerificationAfterLogin = async (userId) => {
     const verifyUrl = `${FRONTEND_URL}/verify-email?token=${verifyToken}`;
     await MailService.sendEmailVerification(user.email, verifyUrl, user.full_name);
 
-    return { success: true, message: "Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư." };
+    return {
+        success: true,
+        message: "Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư."
+    };
 };
 
 // 🆕 5. QUÊN MÃ PIN - GỬI OTP VỀ EMAIL
 exports.forgotPin = async (email) => {
-    if (!email?.trim()) throw { statusCode: 400, field: "email", message: "Email không được để trống" };
+    if (!email?.trim()) {
+        throw { statusCode: 400, field: "email", message: "Email không được để trống" };
+    }
 
     const user = await UserRepository.findByEmail(email);
-    if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    if (!user) {
+        throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    }
 
     const otpResult = await OtpService.createOTP(email, OtpService.PURPOSE.FORGOT_PIN);
     await MailService.sendForgotPinOTP(email, otpResult.otp, user.full_name);
@@ -508,7 +686,11 @@ exports.forgotPin = async (email) => {
 exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     const otpResult = await OtpService.verifyOTP(email, otp, OtpService.PURPOSE.FORGOT_PIN);
     if (!otpResult.success) {
-        throw { statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400, field: "otp", message: otpResult.message };
+        throw {
+            statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400,
+            field: "otp",
+            message: otpResult.message
+        };
     }
 
     if (!/^\d{6}$/.test(newPin)) {
@@ -516,7 +698,9 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
     }
 
     const user = await UserRepository.findByEmail(email);
-    if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    if (!user) {
+        throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    }
 
     const hashedPin = await Password.hash(newPin);
     await UserRepository.updatePinHash(user.user_id, hashedPin);

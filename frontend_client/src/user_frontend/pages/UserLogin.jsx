@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, CheckCircle, MailCheck } from 'lucide-react';
 import api from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import { notifyLogin } from '../../utils/authCleanup';
 import LoadingButton from '../components/LoadingButton';
 import SuccessModal from '../components/SuccessModal';
 import LoginLockModal from '../components/LoginLockModal';
+import Modal from '../components/Modal'; // 🆕 Import Modal
+import socketService from '../../api/socket'; // 🆕 Import socket
 import '../styles/UserAuth.css';
 
 const UserLogin = () => {
@@ -28,6 +30,15 @@ const UserLogin = () => {
     const [loggedInUser, setLoggedInUser] = useState(null);
 
     // =========================================================
+    // 🆕 MODAL THÔNG BÁO KIỂM TRA EMAIL (từ RegisterPin)
+    // =========================================================
+    const [showVerifyEmailModal, setShowVerifyEmailModal] = useState(false);
+    const [verifyEmailData, setVerifyEmailData] = useState({ 
+        email: '', 
+        full_name: '' 
+    });
+
+    // =========================================================
     // LOGIN LOCK
     // =========================================================
     const [showLockModal, setShowLockModal] = useState(false);
@@ -42,6 +53,22 @@ const UserLogin = () => {
     const { user, isLoading } = useAuth();
 
     const isExpired = Boolean(location.state?.expired);
+
+    // =========================================================
+    // 🆕 KIỂM TRA STATE TỪ REGISTERPIN (Modal kiểm tra email)
+    // =========================================================
+    useEffect(() => {
+        // Nếu từ RegisterPin gửi sang
+        if (location.state?.showVerifyEmailModal) {
+            setVerifyEmailData({
+                email: location.state.email || '',
+                full_name: location.state.full_name || ''
+            });
+            setShowVerifyEmailModal(true);
+            // Xóa state để không hiện lại khi refresh
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     // =========================================================
     // LOAD LOCK STATUS KHI REFRESH TRANG
@@ -125,22 +152,39 @@ const UserLogin = () => {
     }, [lockInfo]);
 
     // =========================================================
-    // EMAIL VERIFIED MESSAGE
+    // 🆕 EMAIL VERIFIED MESSAGE (Từ RegisterPin / VerifyEmail)
     // =========================================================
     useEffect(() => {
-        if (!location.state?.verified) return;
-        setSuccessMessage(location.state.message || 'Email đã được xác thực thành công! Vui lòng đăng nhập.');
-        window.history.replaceState({}, document.title);
-        const timer = setTimeout(() => setSuccessMessage(''), 5000);
-        return () => clearTimeout(timer);
-    }, [location.state]);
+        // Trường hợp 1: Từ RegisterPin (verified = true)
+        if (location.state?.verified) {
+            // Nếu modal kiểm tra email đang mở → đóng nó lại
+            if (showVerifyEmailModal) {
+                setShowVerifyEmailModal(false);
+            }
+            
+            setSuccessMessage(location.state.message || '✅ Xác thực email thành công! Vui lòng đăng nhập.');
+            window.history.replaceState({}, document.title);
+            const timer = setTimeout(() => setSuccessMessage(''), 5000);
+            return () => clearTimeout(timer);
+        }
+
+        // Trường hợp 2: Từ sessionStorage (fallback)
+        const verifiedSession = sessionStorage.getItem('email_verified_success');
+        if (verifiedSession === 'true') {
+            if (showVerifyEmailModal) {
+                setShowVerifyEmailModal(false);
+            }
+            setSuccessMessage('✅ Xác thực email thành công! Vui lòng đăng nhập.');
+            sessionStorage.removeItem('email_verified_success');
+            const timer = setTimeout(() => setSuccessMessage(''), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [location.state, showVerifyEmailModal]);
 
     // =========================================================
-    // REDIRECT IF ALREADY LOGIN (ĐÃ SỬA)
+    // REDIRECT IF ALREADY LOGIN
     // =========================================================
     useEffect(() => {
-        // Chỉ chuyển hướng khi user đã tồn tại VÀ đã xác thực email
-        // Nếu user chưa xác thực email (email_verified = 0), user sẽ đứng yên ở đây
         if (user && !isLoading && !showLoginSuccessModal && !isExpired && user.email_verified === 1) {
             navigate('/', { replace: true });
         }
@@ -306,6 +350,13 @@ const UserLogin = () => {
     };
 
     // =========================================================
+    // 🆕 CLOSE VERIFY EMAIL MODAL
+    // =========================================================
+    const handleVerifyEmailModalClose = () => {
+        setShowVerifyEmailModal(false);
+    };
+
+    // =========================================================
     // FORMAT TIME
     // =========================================================
     const formatLockTime = (totalSeconds) => {
@@ -326,14 +377,34 @@ const UserLogin = () => {
                 <p className="auth-subtitle">Chào mừng bạn quay trở lại Cinema Star</p>
 
                 {successMessage && (
-                    <div className="success-message" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', backgroundColor: '#22c55e20', border: '1px solid #22c55e', borderRadius: '8px', color: '#22c55e', marginBottom: '16px' }}>
+                    <div className="success-message" style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '10px', 
+                        padding: '12px 16px', 
+                        backgroundColor: 'rgba(34, 197, 94, 0.12)', 
+                        border: '1px solid rgba(34, 197, 94, 0.3)', 
+                        borderRadius: '8px', 
+                        color: '#4ade80', 
+                        marginBottom: '16px' 
+                    }}>
                         <CheckCircle size={20} />
                         <span>{successMessage}</span>
                     </div>
                 )}
 
                 {serverError && (
-                    <div className="error-message">
+                    <div className="error-message" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '12px 16px',
+                        backgroundColor: 'rgba(255, 59, 92, 0.12)',
+                        border: '1px solid rgba(255, 59, 92, 0.3)',
+                        borderRadius: '8px',
+                        color: '#ff6b8a',
+                        marginBottom: '16px'
+                    }}>
                         <AlertCircle size={18} />
                         <span>{serverError}</span>
                     </div>
@@ -415,7 +486,12 @@ const UserLogin = () => {
                         {isLockedActive ? (
                             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                                 ĐANG BỊ KHÓA
-                                <span style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                                <span style={{ 
+                                    background: 'rgba(255,255,255,0.2)', 
+                                    padding: '2px 8px', 
+                                    borderRadius: '4px', 
+                                    fontWeight: 'bold' 
+                                }}>
                                     {formatLockTime(lockTimeLeft)}
                                 </span>
                             </span>
@@ -431,6 +507,47 @@ const UserLogin = () => {
                 </div>
             </div>
 
+            {/* 🆕 MODAL: Thông báo kiểm tra email (từ RegisterPin) */}
+            <Modal
+                show={showVerifyEmailModal}
+                type="success"
+                title="📧 Xác thực email"
+                confirmText="Đã hiểu"
+                onConfirm={handleVerifyEmailModalClose}
+                onCancel={handleVerifyEmailModalClose}
+            >
+                <div style={{ textAlign: "center", padding: "10px 0" }}>
+                    <div style={{
+                        width: "70px", height: "70px", borderRadius: "50%",
+                        background: "rgba(34, 197, 94, 0.1)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        margin: "0 auto 15px"
+                    }}>
+                        <MailCheck size={40} color="#4ade80" />
+                    </div>
+
+                    <p style={{ color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: "10px" }}>
+                        Chào mừng <strong style={{ color: "var(--text-heading)" }}>{verifyEmailData.full_name || "bạn"}</strong> đến với Cinema Star!
+                    </p>
+                    <p style={{ color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                        Vui lòng kiểm tra hộp thư <strong style={{ color: "var(--silver-primary)" }}>{verifyEmailData.email}</strong> và bấm vào
+                        link xác thực để hoàn tất đăng ký.
+                    </p>
+                    <div style={{ 
+                        marginTop: "15px", 
+                        padding: "10px", 
+                        background: "rgba(255, 255, 255, 0.03)", 
+                        borderRadius: "8px",
+                        border: "1px solid rgba(255, 255, 255, 0.05)"
+                    }}>
+                        <p style={{ color: "var(--text-muted)", fontSize: "13px", margin: 0 }}>
+                            💡 Sau khi xác thực, quay lại đây để đăng nhập
+                        </p>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* 🆕 MODAL: Đăng nhập thành công */}
             <SuccessModal
                 isOpen={showLoginSuccessModal}
                 onConfirm={handleLoginSuccessConfirm}
@@ -442,6 +559,7 @@ const UserLogin = () => {
                 autoCloseDelay={3000}
             />
 
+            {/* 🆕 MODAL: Tài khoản bị khóa */}
             <LoginLockModal
                 show={showLockModal}
                 message={lockInfo?.message || 'Tài khoản đã bị khóa'}
