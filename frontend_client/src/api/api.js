@@ -81,6 +81,12 @@ api.interceptors.response.use(
             console.log('💾 [API] Cached /api/auth/me response');
         }
 
+        // ✅ Reset session expired lock khi login thành công
+        if (normalizedUrl === '/api/auth/login') {
+            api.resetSessionExpiredLock();
+            console.log('🔓 [API] Reset session expired lock on login');
+        }
+
         return response;
     },
     (error) => {
@@ -102,14 +108,33 @@ api.interceptors.response.use(
                 message: errorMessage,
             });
 
+            // ✅ SỬA: Thêm tất cả endpoints public vào đây
             const excludedEndpoints = [
+                // Auth
                 '/api/auth/login',
                 '/api/auth/register',
-                '/api/auth/forgot',
-                '/api/auth/reset',
-                '/api/auth/send-otp',
+                '/api/auth/register-step1',
+                '/api/auth/complete-registration',
+                '/api/auth/forgot-password',
+                '/api/auth/reset-password',
+                '/api/auth/submit-new-password',
+                '/api/auth/verify-otp-and-reset',
                 '/api/auth/verify-otp',
                 '/api/auth/verify-email',
+                '/api/auth/check-lock',
+                '/api/auth/forgot-pin',
+                '/api/auth/verify-otp-and-change-pin',
+                '/api/auth/send-verification',
+                '/api/auth/resend-verification',
+                
+                // User
+                '/api/users/verify-pin',
+                
+                // Payment
+                '/api/payment/process',
+                '/api/coupons/check',
+                '/api/bank/verify-otp',
+                '/api/momo/verify-otp',
             ];
 
             const shouldHandleSession = !excludedEndpoints.some((endpoint) =>

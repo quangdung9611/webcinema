@@ -770,8 +770,13 @@ exports.forgotPin = async (email) => {
     };
 };
 
-// 🆕 6. XÁC THỰC OTP VÀ ĐỔI MÃ PIN MỚI - CÓ RATE LIMIT (5 lần/60s)
+// AuthService.js - verifyOtpAndChangePin
 exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
+    // 🔥 SỬA: Cho phép newPin là chuỗi rỗng (chỉ verify OTP)
+    if (newPin && !/^\d{6}$/.test(newPin)) {
+        throw { statusCode: 400, field: "newPin", message: "Mã PIN mới phải là 6 chữ số" };
+    }
+
     // 🔥 RATE LIMIT: Tối đa 5 lần thử OTP trong 60 giây
     const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-pin", 5, 60);
     if (!rateLimit.allowed) {
@@ -790,10 +795,12 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
         };
     }
 
-    if (!/^\d{6}$/.test(newPin)) {
-        throw { statusCode: 400, field: "newPin", message: "Mã PIN mới phải là 6 chữ số" };
+    // ✅ Nếu không có newPin hoặc newPin rỗng → chỉ verify OTP
+    if (!newPin || newPin.length === 0) {
+        return { success: true, message: "Xác thực OTP thành công" };
     }
 
+    // ✅ Nếu có newPin → đổi PIN
     const user = await UserRepository.findByEmail(email);
     if (!user) {
         throw { statusCode: 404, message: "Không tìm thấy người dùng" };
@@ -807,8 +814,3 @@ exports.verifyOtpAndChangePin = async (email, otp, newPin) => {
         message: "Đổi mã PIN thành công!"
     };
 };
-
-// ============================================================
-// EXPORT SOCKET
-// ============================================================
-exports.setIO = setIO;

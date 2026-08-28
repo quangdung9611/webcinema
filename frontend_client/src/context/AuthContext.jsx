@@ -7,6 +7,7 @@ import React, {
     useCallback,
 } from 'react';
 
+import { useLocation } from 'react-router-dom';
 import api from '../api/api';
 import socketService from '../api/socket';
 
@@ -22,6 +23,8 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
 
+    const location = useLocation();
+
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -30,6 +33,27 @@ export const AuthProvider = ({ children }) => {
     const isFetchingRef = useRef(false);
     const fetchedRef = useRef(false);
     const mountedRef = useRef(true);
+    const isAuthCheckDoneRef = useRef(false); // 🆕 Chỉ check 1 lần
+
+    // ✅ SỬA: Kiểm tra trang public chính xác hơn
+    const isPublicRoute = useCallback(() => {
+        const pathname = location.pathname;
+        
+        // Danh sách path public
+        const publicPaths = [
+            '/login',
+            '/register',
+            '/register-pin',
+            '/verify-email',
+            '/forgot-password',
+            '/verify-otp',
+            '/reset-password',
+            '/forgot-pin',
+        ];
+        
+        // Kiểm tra chính xác path
+        return publicPaths.some(path => pathname === path || pathname.startsWith(path + '/'));
+    }, [location.pathname]);
 
     useEffect(() => {
         userRef.current = user;
@@ -57,6 +81,12 @@ export const AuthProvider = ({ children }) => {
 
     const fetchUser = useCallback(
         async (force = false) => {
+            // ✅ Nếu là trang public → KHÔNG fetch user
+            if (isPublicRoute()) {
+                console.log('⏭️ [AUTH] Public route, skip fetching user');
+                setIsLoading(false);
+                return null;
+            }
 
             if (fetchedRef.current && !force) {
                 console.log('⏭️ [AUTH] Already fetched, skip');
@@ -87,13 +117,15 @@ export const AuthProvider = ({ children }) => {
 
                     userRef.current = userData;
                     fetchedRef.current = true;
+                    isAuthCheckDoneRef.current = true;
 
                     if (mountedRef.current) {
                         setUser(userData);
                         setIsAuthenticated(true);
                     }
 
-                    if (userData.user_id) {
+                    // ✅ CHỈ kết nối socket nếu KHÔNG phải trang public
+                    if (userData.user_id && !isPublicRoute()) {
                         socketService.connect(userData.user_id);
                     }
 
@@ -109,7 +141,8 @@ export const AuthProvider = ({ children }) => {
             } catch (error) {
                 console.warn('🔵 [AUTH] No active user session:', error?.response?.status || error?.message);
 
-                if (error?.response?.status === 401) {
+                // ✅ Chỉ dispatch sessionExpired nếu không phải public route
+                if (error?.response?.status === 401 && !isPublicRoute()) {
                     window.dispatchEvent(
                         new CustomEvent('sessionExpired', {
                             detail: {
@@ -133,12 +166,17 @@ export const AuthProvider = ({ children }) => {
                 }
             }
         },
-        [clearAuthState]
+        [clearAuthState, isPublicRoute]
     );
 
+    // ✅ Chỉ fetch user khi không ở trang public và chưa check
     useEffect(() => {
-        fetchUser().catch(() => {});
-    }, [fetchUser]);
+        if (!isPublicRoute()) {
+            fetchUser().catch(() => {});
+        } else {
+            setIsLoading(false);
+        }
+    }, [fetchUser, isPublicRoute]);
 
     const logout = useCallback(async () => {
         console.log('🚪 [AUTH] Logging out...');

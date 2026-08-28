@@ -10,15 +10,19 @@ const ForgotPinModal = ({
 }) => {
     const navigate = useNavigate();
 
-    // Tự động quay về trang payment sau 3 giây
     useEffect(() => {
         if (isOpen) {
             const timer = setTimeout(() => {
-                navigate('/payment');
+                if (onClose) onClose();
+                navigate('/payment', { 
+                    state: { 
+                        fromForgotPin: true 
+                    } 
+                });
             }, 3000);
             return () => clearTimeout(timer);
         }
-    }, [isOpen, navigate]);
+    }, [isOpen, navigate, onClose]);
 
     if (!isOpen) return null;
 
@@ -30,14 +34,23 @@ const ForgotPinModal = ({
             title="ĐỔI MÃ PIN THÀNH CÔNG"
             className="forgot-pin-modal"
         >
-            <div className="forgot-pin-body">
-                <div className="forgot-pin-icon success">
-                    <ShieldCheck size={48} color="#22c55e" />
+            <div className="forgot-pin-body" style={{ textAlign: 'center', padding: '10px 0' }}>
+                <div style={{
+                    width: '70px',
+                    height: '70px',
+                    borderRadius: '50%',
+                    background: 'rgba(34, 197, 94, 0.12)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 15px'
+                }}>
+                    <ShieldCheck size={40} color="#4ade80" />
                 </div>
-                <p className="forgot-pin-text">
-                    Bạn đã đặt lại mã PIN thành công!
+                <p style={{ color: 'var(--text-heading)', fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
+                    Đổi mã PIN thành công!
                 </p>
-                <p className="forgot-pin-subtext">
+                <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '20px' }}>
                     Bạn có thể sử dụng mã PIN mới để thanh toán.
                     <br />
                     Đang chuyển về trang thanh toán...

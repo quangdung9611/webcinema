@@ -6,8 +6,6 @@ import api from '../../api/api';
 import Modal from '../components/Modal';
 import BookingSidebar from '../components/BookingSidebar';
 import LoadingButton from '../components/LoadingButton';
-
-// Import PaymentPinModal
 import PaymentPinModal from '../components/PaymentPinModal';
 
 // STYLES
@@ -59,7 +57,6 @@ const Payment = () => {
         onConfirm: null
     });
 
-    // 🆕 STATE CHO MODAL NHẬP MÃ PIN
     const [showPinModal, setShowPinModal] = useState(false);
     const [pin, setPin] = useState('');
     const [pinError, setPinError] = useState('');
@@ -121,6 +118,18 @@ const Payment = () => {
             setIsLoadingUser(false);
         }
     };
+
+    // =========================
+    // QUAY LẠI TỪ FORGOT PIN - MỞ LẠI MODAL PIN
+    // =========================
+    useEffect(() => {
+        if (location.state?.fromForgotPin) {
+            setShowPinModal(true);
+            setPin('');
+            setPinError('');
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     // =========================
     // INIT
@@ -263,11 +272,9 @@ const Payment = () => {
         setPinError('');
 
         try {
-            // 1. Gọi API xác thực PIN
             const pinResponse = await api.post('/api/users/verify-pin', { pin });
 
             if (pinResponse.data.success) {
-                // 2. Nếu PIN đúng -> Đóng modal PIN -> Gọi xử lý thanh toán
                 setShowPinModal(false);
                 setPin('');
                 await handleProceed();
@@ -414,7 +421,6 @@ const Payment = () => {
                 onCancel={() => setModal({ ...modal, show: false })}
             />
 
-            {/* 🆕 MODAL NHẬP MÃ PIN - Đã tự chứa ForgotPinModal bên trong */}
             <PaymentPinModal
                 isOpen={showPinModal}
                 onClose={() => setShowPinModal(false)}
@@ -423,8 +429,7 @@ const Payment = () => {
                 setPin={setPin}
                 error={pinError}
                 isLoading={isVerifyingPin}
-                email={userInfo.email} // Truyền email
-                api={api} // Truyền api
+                email={userInfo.email}
             />
 
             <div className="booking-container">

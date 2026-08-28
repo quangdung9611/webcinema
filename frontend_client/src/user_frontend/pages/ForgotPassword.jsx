@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/api';
 import { Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
@@ -12,9 +12,37 @@ const ForgotPassword = () => {
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('');
 
+    // 🔥 Rate limit states
+    const [isRateLimited, setIsRateLimited] = useState(false);
+    const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
+
+    // 🔥 Countdown timer
+    useEffect(() => {
+        if (!isRateLimited || rateLimitTimeLeft <= 0) return;
+
+        const timer = setInterval(() => {
+            setRateLimitTimeLeft(prev => {
+                if (prev <= 1) {
+                    setIsRateLimited(false);
+                    setMessage('');
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isRateLimited, rateLimitTimeLeft]);
+
     const handleSendLink = async () => {
         if (!email.trim()) {
             setMessage('Vui lòng nhập email');
+            setMessageType('error');
+            return;
+        }
+
+        if (isRateLimited) {
+            setMessage(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
             setMessageType('error');
             return;
         }
@@ -29,15 +57,30 @@ const ForgotPassword = () => {
             setMessageType('success');
         } catch (err) {
             const status = err.response?.status;
-            const errorMessage = err.response?.data?.message || 'Không gửi được liên kết. Vui lòng thử lại!';
+            const errorData = err.response?.data || {};
+            const errorMessage = errorData.message || 'Không gửi được liên kết. Vui lòng thử lại!';
             
-            // 🔥 Hiển thị thông báo rate limit
             if (status === 429) {
-                setMessage(`⚠️ ${errorMessage}`);
+                const remaining = errorData.data?.remaining;
+                const remainingSeconds = errorData.data?.remainingSeconds || 60;
+                const maxAttempts = errorData.data?.maxAttempts || 3;
+                
+                let displayMessage = `⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần.`;
+                if (remaining !== undefined && remaining >= 0) {
+                    displayMessage += ` Còn ${remaining} lần thử.`;
+                }
+                displayMessage += ` Vui lòng thử lại sau ${remainingSeconds} giây.`;
+                
+                setMessage(displayMessage);
+                setMessageType('error');
+                
+                // 🔥 Bắt đầu timer
+                setIsRateLimited(true);
+                setRateLimitTimeLeft(remainingSeconds);
             } else {
                 setMessage(errorMessage);
+                setMessageType('error');
             }
-            setMessageType('error');
         } finally {
             setLoading(false);
         }
@@ -83,7 +126,7 @@ const ForgotPassword = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 onKeyPress={handleKeyPress}
-                                disabled={loading}
+                                disabled={loading || isRateLimited}
                                 autoComplete="email"
                             />
                         </div>
@@ -93,12 +136,26 @@ const ForgotPassword = () => {
                                 type="button"
                                 loading={loading}
                                 loadingText="Đang gửi..."
-                                disabled={loading}
+                                disabled={loading || isRateLimited}
                                 className="btn-user"
                                 spinnerColor="#000000"
                                 onClick={handleSendLink}
                             >
-                                GỬI LIÊN KẾT
+                                {isRateLimited ? (
+                                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        ĐANG CHỜ
+                                        <span style={{ 
+                                            background: 'rgba(255,255,255,0.2)', 
+                                            padding: '2px 8px', 
+                                            borderRadius: '4px', 
+                                            fontWeight: 'bold' 
+                                        }}>
+                                            {rateLimitTimeLeft}s
+                                        </span>
+                                    </span>
+                                ) : (
+                                    'GỬI LIÊN KẾT'
+                                )}
                             </LoadingButton>
                         </div>
                     </form>

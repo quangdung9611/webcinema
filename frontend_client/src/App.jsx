@@ -216,7 +216,7 @@ const AUTH_ROUTES = [
     { path: "/forgot-pin", element: <ForgotPin /> },
 ];
 
-// ✅ User Main Routes (có Layout)
+// ✅ User Main Routes (có Layout - Cần SessionGuard)
 const MAIN_ROUTES = [
     { path: "/", element: <UserHome /> },
     { path: "movies/status/:statusSlug", element: <MovieStatusPage /> },
@@ -238,7 +238,7 @@ const MAIN_ROUTES = [
     { path: "booking-guide", element: <BookingGuide /> },
     { path: "contact", element: <ContactSupport /> },
     { path: "membership", element: <MemberShip /> },
-    // Protected
+    // Protected - Cần đăng nhập
     { path: "profile", element: <UserRouteGuard><Profile /></UserRouteGuard> },
     { path: "booking/:slug", element: <UserRouteGuard><Booking /></UserRouteGuard> },
     { path: "payment", element: <UserRouteGuard><Payment /></UserRouteGuard> },
@@ -289,13 +289,17 @@ const AdminRoutesComponent = () => (
 
 const UserRoutesComponent = () => (
     <Routes>
-        {/* Auth Routes - Fullscreen */}
+        {/* ✅ Auth Routes - Fullscreen (KHÔNG BỌC SESSION GUARD) */}
         {AUTH_ROUTES.map(({ path, element }) => (
             <Route key={path} path={path} element={element} />
         ))}
 
-        {/* Main Routes - With Layout */}
-        <Route path="/" element={<UserLayout />}>
+        {/* ✅ Main Routes - With Layout (CÓ BỌC SESSION GUARD) */}
+        <Route path="/" element={
+            <SessionGuard>
+                <UserLayout />
+            </SessionGuard>
+        }>
             {MAIN_ROUTES.map(({ path, element }) => (
                 <Route key={path} path={path} element={element} />
             ))}
@@ -328,14 +332,12 @@ const AppContent = () => {
             )}
             <ScrollToTop />
             
-            {/* ✅ BỌC TOÀN BỘ APP BẰNG SESSION GUARD */}
-            <SessionGuard>
-                <LazyErrorBoundary>
-                    <Suspense fallback={<SuspenseLoading />}>
-                        {isAdminDomain ? <AdminRoutesComponent /> : <UserRoutesComponent />}
-                    </Suspense>
-                </LazyErrorBoundary>
-            </SessionGuard>
+            {/* ✅ SessionGuard KHÔNG bọc toàn bộ App, chỉ bọc bên trong UserRoutes */}
+            <LazyErrorBoundary>
+                <Suspense fallback={<SuspenseLoading />}>
+                    {isAdminDomain ? <AdminRoutesComponent /> : <UserRoutesComponent />}
+                </Suspense>
+            </LazyErrorBoundary>
         </>
     );
 };
