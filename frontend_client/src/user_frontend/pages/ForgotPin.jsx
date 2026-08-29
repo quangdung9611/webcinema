@@ -29,12 +29,12 @@ const ForgotPin = () => {
 
     const email = user?.email || '';
     const otpRefs = useRef([]);
-    const timerRef = useRef(null);
     const intervalRef = useRef(null);
 
     const [isRateLimited, setIsRateLimited] = useState(false);
     const [rateLimitTimeLeft, setRateLimitTimeLeft] = useState(0);
 
+    // Rate limit timer
     useEffect(() => {
         if (!isRateLimited || rateLimitTimeLeft <= 0) return;
         const timer = setInterval(() => {
@@ -50,6 +50,7 @@ const ForgotPin = () => {
         return () => clearInterval(timer);
     }, [isRateLimited, rateLimitTimeLeft]);
 
+    // Lock timer
     useEffect(() => {
         if (!showLockTimer || !lockUntil) return;
 
@@ -72,21 +73,7 @@ const ForgotPin = () => {
         return () => clearInterval(interval);
     }, [showLockTimer, lockUntil]);
 
-    useEffect(() => {
-        if (step === 'otp' && countdown > 0) {
-            timerRef.current = setTimeout(() => {
-                setCountdown(prev => {
-                    if (prev <= 1) {
-                        setIsOtpExpired(true);
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        }
-        return () => clearTimeout(timerRef.current);
-    }, [step, countdown]);
-
+    // ✅ Đồng bộ TTL từ Redis MỖI 1 GIÂY - KHÔNG TỰ ĐẾM
     useEffect(() => {
         if (step !== 'otp') return;
 
@@ -114,7 +101,8 @@ const ForgotPin = () => {
         };
 
         syncTTL();
-        intervalRef.current = setInterval(syncTTL, 10000);
+        intervalRef.current = setInterval(syncTTL, 1000);
+
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
@@ -160,11 +148,18 @@ const ForgotPin = () => {
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
+    const formatTime = (seconds) => {
+        if (seconds <= 0) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
     const isLocked = showLockTimer && lockUntil && lockUntil > Date.now();
 
     const handleSendOtp = async () => {
         if (isRateLimited) {
-            setError(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
+            setError(`⚠️ Vui lòng đợi ${formatLockTime(rateLimitTimeLeft)} trước khi thử lại.`);
             return;
         }
 
@@ -191,7 +186,7 @@ const ForgotPin = () => {
             const errorMessage = errorData.message || 'Không thể gửi OTP';
             
             if (status === 429) {
-                const remainingSeconds = errorData.data?.remainingSeconds || 60;
+                const remainingSeconds = errorData.data?.remainingSeconds || 300;
                 const maxAttempts = errorData.data?.maxAttempts || 3;
                 
                 const lockUntilTimestamp = Date.now() + remainingSeconds * 1000;
@@ -199,7 +194,7 @@ const ForgotPin = () => {
                 setLockTimeLeft(remainingSeconds);
                 setLockUntil(lockUntilTimestamp);
                 
-                setError(`⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần trong 5 phút. Vui lòng thử lại sau ${remainingSeconds} giây.`);
+                setError(`⚠️ Bạn chỉ được gửi tối đa ${maxAttempts} lần trong 5 phút. Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`);
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
             } else {
@@ -212,7 +207,7 @@ const ForgotPin = () => {
 
     const handleResendOtp = async () => {
         if (isRateLimited) {
-            setError(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
+            setError(`⚠️ Vui lòng đợi ${formatLockTime(rateLimitTimeLeft)} trước khi thử lại.`);
             return;
         }
 
@@ -222,7 +217,7 @@ const ForgotPin = () => {
         }
 
         if (countdown > 0 && !isOtpExpired) {
-            setError(`⚠️ Vui lòng đợi ${Math.ceil(countdown)} giây trước khi gửi lại.`);
+            setError(`⚠️ Vui lòng đợi ${formatTime(countdown)} trước khi gửi lại.`);
             return;
         }
 
@@ -246,13 +241,13 @@ const ForgotPin = () => {
             const errorMessage = errorData.message || 'Không thể gửi lại OTP';
             
             if (status === 429) {
-                const remainingSeconds = errorData.data?.remainingSeconds || 60;
+                const remainingSeconds = errorData.data?.remainingSeconds || 300;
                 const lockUntilTimestamp = Date.now() + remainingSeconds * 1000;
                 setShowLockTimer(true);
                 setLockTimeLeft(remainingSeconds);
                 setLockUntil(lockUntilTimestamp);
                 
-                setError(`⚠️ Vui lòng thử lại sau ${remainingSeconds} giây.`);
+                setError(`⚠️ Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`);
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
             } else {
@@ -275,7 +270,7 @@ const ForgotPin = () => {
         }
 
         if (isRateLimited) {
-            setError(`⚠️ Vui lòng đợi ${rateLimitTimeLeft} giây trước khi thử lại.`);
+            setError(`⚠️ Vui lòng đợi ${formatLockTime(rateLimitTimeLeft)} trước khi thử lại.`);
             return;
         }
 
@@ -313,8 +308,8 @@ const ForgotPin = () => {
             const remainingAttempts = 5 - newAttempts;
             
             if (status === 429) {
-                const remainingSeconds = errorData.data?.remainingSeconds || 60;
-                errorMessage = `⚠️ Vui lòng thử lại sau ${remainingSeconds} giây.`;
+                const remainingSeconds = errorData.data?.remainingSeconds || 300;
+                errorMessage = `⚠️ Vui lòng thử lại sau ${formatLockTime(remainingSeconds)}.`;
                 setIsRateLimited(true);
                 setRateLimitTimeLeft(remainingSeconds);
             } else if (errorMessage.includes('hết hạn')) {
@@ -341,13 +336,6 @@ const ForgotPin = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const formatTime = (seconds) => {
-        if (seconds <= 0) return '0:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
     return (
@@ -396,7 +384,7 @@ const ForgotPin = () => {
                                         </span>
                                     </span>
                                 ) : isRateLimited ? (
-                                    `Đang chờ (${rateLimitTimeLeft}s)`
+                                    `Đang chờ (${formatLockTime(rateLimitTimeLeft)})`
                                 ) : (
                                     'GỬI OTP'
                                 )}
@@ -486,7 +474,7 @@ const ForgotPin = () => {
                                     </span>
                                 </span>
                             ) : isRateLimited ? (
-                                `Đang chờ (${rateLimitTimeLeft}s)`
+                                `Đang chờ (${formatLockTime(rateLimitTimeLeft)})`
                             ) : (
                                 'Gửi lại OTP'
                             )}
@@ -518,7 +506,7 @@ const ForgotPin = () => {
                                         </span>
                                     </span>
                                 ) : isRateLimited ? (
-                                    `Đang chờ (${rateLimitTimeLeft}s)`
+                                    `Đang chờ (${formatLockTime(rateLimitTimeLeft)})`
                                 ) : (
                                     'XÁC NHẬN'
                                 )}

@@ -807,15 +807,22 @@ exports.resendVerificationAfterLogin = async (userId) => {
 };
 
 // ============================================================
-// 🆕 KIỂM TRA TTL OTP (DÙNG CHO TẤT CẢ PURPOSE)
+// 🆕 KIỂM TRA TTL OTP (DÙNG CHO TẤT CẢ PURPOSE + RATE LIMIT)
 // ============================================================
 exports.checkOtpTTL = async (email, purpose) => {
     if (!email) throw { statusCode: 400, message: "Thiếu email" };
     if (!purpose) throw { statusCode: 400, message: "Thiếu purpose" };
 
+    // ✅ Kiểm tra OTP key trước
     const otpKey = `otp:${email}:${purpose}`;
-    const ttl = await RedisService.getTTL(otpKey);
-    const otp = await RedisService.getOTP(email, purpose);
+    let ttl = await RedisService.getTTL(otpKey);
+    let otp = await RedisService.getOTP(email, purpose);
+
+    // ✅ Nếu không có OTP, kiểm tra rate limit key
+    if (ttl <= 0) {
+        const rateLimitKey = `otp:${email}:${purpose}:ratelimit`;
+        ttl = await RedisService.getTTL(rateLimitKey);
+    }
 
     return {
         success: true,
@@ -826,7 +833,6 @@ exports.checkOtpTTL = async (email, purpose) => {
         }
     };
 };
-
 // ============================================================
 // 🆕 GỬI LẠI OTP (DÙNG CHO TẤT CẢ PURPOSE)
 // ============================================================
