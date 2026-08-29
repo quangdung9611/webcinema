@@ -1,155 +1,415 @@
-// src/user_frontend/components/LockModal.jsx
-import React, { useState, useEffect, useRef } from 'react';
-import Modal from './Modal';
-import '../styles/LockModal.css';
+import React, {
+    useEffect,
+    useState
+} from 'react';
+
+import {
+    LockKeyhole,
+    Clock,
+    X,
+    RefreshCw
+} from 'lucide-react';
+
+import '../styles/Modal.css';
 
 const LockModal = ({
     show,
-    message = 'Bạn đã nhập sai OTP quá nhiều lần. Vui lòng gửi lại OTP mới.',
-    lockedUntil,
-    email = '',
     onClose = () => {},
     onResend = () => {},
+    message,
+    email,
+    lockedUntil
 }) => {
-    const [timeLeft, setTimeLeft] = useState(0);
-    const [remainingPercent, setRemainingPercent] = useState(100);
-    const [isExpired, setIsExpired] = useState(false);
-    const isExpiredRef = useRef(false);
+    const [timeLeft, setTimeLeft] =
+        useState(0);
+
+    // ============================================================
+    // FORMAT TIME
+    // ============================================================
+
+    const formatTime = (seconds) => {
+        const safeSeconds = Math.max(
+            0,
+            Math.floor(
+                Number(seconds) || 0
+            )
+        );
+
+        const minutes = Math.floor(
+            safeSeconds / 60
+        );
+
+        const secondsLeft =
+            safeSeconds % 60;
+
+        return `${minutes}:${secondsLeft
+            .toString()
+            .padStart(2, '0')}`;
+    };
+
+    // ============================================================
+    // LOCK TIMER
+    //
+    // LUÔN tính:
+    //
+    // lockedUntil - Date.now()
+    //
+    // Không dùng:
+    //
+    // prev - 1
+    //
+    // ============================================================
 
     useEffect(() => {
-        if (!show || !lockedUntil) return;
-
-        let closeTimeout;
-
-        const calculateTimeLeft = () => {
-            const now = Date.now();
-            const secondsLeft = Math.max(0, Math.ceil((lockedUntil - now) / 1000));
-
-            setTimeLeft(secondsLeft);
-
-            // ✅ Tổng thời gian khóa cố định là 5 phút (300 giây)
-            const totalSeconds = 300;
-            const percent = (secondsLeft / totalSeconds) * 100;
-            setRemainingPercent(Math.max(0, Math.min(100, percent)));
-
-            if (secondsLeft <= 0) {
-                if (!isExpiredRef.current) {
-                    isExpiredRef.current = true;
-                    setIsExpired(true);
-
-                    closeTimeout = setTimeout(() => {
-                        onClose?.();
-                    }, 2000);
-                }
-            } else {
-                isExpiredRef.current = false;
-                setIsExpired(false);
-            }
-        };
-
-        calculateTimeLeft();
-
-        const interval = setInterval(() => {
-            calculateTimeLeft();
-            if (isExpiredRef.current) {
-                clearInterval(interval);
-            }
-        }, 1000);
-
-        return () => {
-            clearInterval(interval);
-            if (closeTimeout) clearTimeout(closeTimeout);
-        };
-    }, [show, lockedUntil, onClose]);
-
-    if (!show) return null;
-
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
-
-    const renderLockContent = () => {
-        if (isExpired) {
-            return (
-                <div className="otp-lock-modal-body">
-                    <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                        <span className="lock-icon" style={{ fontSize: '48px' }}>✅</span>
-                    </div>
-                    <p style={{ textAlign: 'center', lineHeight: 1.6, color: '#4ade80' }}>
-                        OTP đã được mở khóa. Vui lòng thử lại.
-                    </p>
-                </div>
-            );
+        if (
+            !show ||
+            !lockedUntil
+        ) {
+            setTimeLeft(0);
+            return;
         }
 
-        return (
-            <div className="otp-lock-modal-body">
+        const timestamp =
+            Number(lockedUntil);
+
+        if (
+            !Number.isFinite(
+                timestamp
+            )
+        ) {
+            setTimeLeft(0);
+            return;
+        }
+
+        const tick = () => {
+            const left = Math.max(
+                0,
+                Math.ceil(
+                    (timestamp -
+                        Date.now()) /
+                        1000
+                )
+            );
+
+            setTimeLeft(left);
+        };
+
+        tick();
+
+        const interval =
+            setInterval(
+                tick,
+                250
+            );
+
+        return () => {
+            clearInterval(
+                interval
+            );
+        };
+    }, [
+        show,
+        lockedUntil
+    ]);
+
+    // ============================================================
+    // AUTO HIDE KHI HẾT LOCK
+    //
+    // Không gọi onResend tự động.
+    // Chỉ báo cho parent biết modal có thể đóng.
+    // ============================================================
+
+    useEffect(() => {
+        if (
+            !show ||
+            !lockedUntil
+        ) {
+            return;
+        }
+
+        const timestamp =
+            Number(lockedUntil);
+
+        const checkExpired =
+            () => {
+                if (
+                    timestamp -
+                        Date.now() <=
+                    0
+                ) {
+                    setTimeLeft(0);
+                }
+            };
+
+        checkExpired();
+
+        const interval =
+            setInterval(
+                checkExpired,
+                250
+            );
+
+        return () => {
+            clearInterval(
+                interval
+            );
+        };
+    }, [
+        show,
+        lockedUntil
+    ]);
+
+    if (!show) {
+        return null;
+    }
+
+    return (
+        <div
+            className="modal-overlay"
+            onMouseDown={(e) => {
+                if (
+                    e.target ===
+                    e.currentTarget
+                ) {
+                    onClose();
+                }
+            }}
+        >
+            <div
+                className="modal-content"
+                style={{
+                    maxWidth:
+                        '450px',
+                    width:
+                        'calc(100% - 32px)',
+                    textAlign:
+                        'center'
+                }}
+            >
+                {/* CLOSE */}
+
+                <button
+                    type="button"
+                    onClick={
+                        onClose
+                    }
+                    style={{
+                        position:
+                            'absolute',
+                        top:
+                            '12px',
+                        right:
+                            '12px',
+                        border:
+                            'none',
+                        background:
+                            'transparent',
+                        cursor:
+                            'pointer',
+                        color:
+                            '#94a3b8',
+                        padding:
+                            '5px'
+                    }}
+                    aria-label="Đóng"
+                >
+                    <X size={20} />
+                </button>
+
+                {/* ICON */}
+
+                <div
+                    style={{
+                        width:
+                            '72px',
+                        height:
+                            '72px',
+                        margin:
+                            '0 auto 18px',
+                        borderRadius:
+                            '50%',
+                        display:
+                            'flex',
+                        alignItems:
+                            'center',
+                        justifyContent:
+                            'center',
+                        background:
+                            'rgba(255, 59, 92, 0.12)',
+                        border:
+                            '1px solid rgba(255, 59, 92, 0.3)'
+                    }}
+                >
+                    <LockKeyhole
+                        size={36}
+                        color="#ff6b8a"
+                    />
+                </div>
+
+                {/* TITLE */}
+
+                <h3
+                    style={{
+                        marginBottom:
+                            '12px'
+                    }}
+                >
+                    OTP ĐÃ BỊ KHÓA
+                </h3>
+
+                {/* MESSAGE */}
+
+                <p
+                    style={{
+                        color:
+                            '#94a3b8',
+                        lineHeight:
+                            '1.6',
+                        marginBottom:
+                            '16px'
+                    }}
+                >
+                    {message ||
+                        'Bạn đã nhập sai OTP quá nhiều lần.'}
+                </p>
+
+                {/* EMAIL */}
+
                 {email && (
-                    <p className="lock-email">
-                        📧 <strong>{email}</strong>
+                    <p
+                        style={{
+                            fontSize:
+                                '14px',
+                            color:
+                                '#cbd5e1',
+                            marginBottom:
+                                '18px',
+                            wordBreak:
+                                'break-word'
+                        }}
+                    >
+                        Email:{' '}
+                        <strong>
+                            {email}
+                        </strong>
                     </p>
                 )}
 
-                <div className="lock-icon-wrapper">
-                    <span className="lock-icon">🔒</span>
-                </div>
+                {/* TIMER */}
 
-                <p className="lock-message">{message}</p>
+                <div
+                    style={{
+                        display:
+                            'flex',
+                        alignItems:
+                            'center',
+                        justifyContent:
+                            'center',
+                        gap:
+                            '10px',
+                        padding:
+                            '14px',
+                        marginBottom:
+                            '18px',
+                        borderRadius:
+                            '10px',
+                        background:
+                            'rgba(255, 59, 92, 0.1)',
+                        border:
+                            '1px solid rgba(255, 59, 92, 0.25)'
+                    }}
+                >
+                    <Clock
+                        size={20}
+                        color="#ff6b8a"
+                    />
 
-                <div className="lock-timer">
-                    <span className="timer-icon">⏳</span>
-                    <span className="timer-text">
-                        Vui lòng thử lại sau{' '}
-                        <strong>
-                            {minutes}:{seconds.toString().padStart(2, '0')}
+                    <span
+                        style={{
+                            color:
+                                '#ff6b8a'
+                        }}
+                    >
+                        Còn lại:{' '}
+                        <strong
+                            style={{
+                                fontSize:
+                                    '22px',
+                                marginLeft:
+                                    '4px'
+                            }}
+                        >
+                            {formatTime(
+                                timeLeft
+                            )}
                         </strong>
                     </span>
                 </div>
 
-                <div className="lock-progress-bar">
-                    <div
-                        className="lock-progress-fill"
-                        style={{ width: `${remainingPercent}%` }}
-                    />
-                </div>
+                {/* INFO */}
 
-                <p className="lock-time-remaining">
-                    ⏱️ Còn lại {minutes} phút {seconds} giây
+                <p
+                    style={{
+                        fontSize:
+                            '13px',
+                        color:
+                            '#64748b',
+                        marginBottom:
+                            '20px'
+                    }}
+                >
+                    Sau khi hết thời gian
+                    khóa, bạn có thể gửi
+                    một mã OTP mới.
                 </p>
 
-                <p className="lock-sub-message">
-                    Vui lòng bấm <strong>"Gửi lại OTP"</strong> để nhận mã mới sau khi hết thời gian khóa.
-                </p>
+                {/* BUTTONS */}
 
-                <div className="lock-hint">
-                    <p>
-                        💡 Bạn chỉ được gửi lại OTP tối đa <strong>3 lần</strong> trong <strong>5 phút</strong>.
-                    </p>
+                <div
+                    style={{
+                        display:
+                            'flex',
+                        gap:
+                            '10px',
+                        justifyContent:
+                            'center'
+                    }}
+                >
+                    <button
+                        type="button"
+                        className="btn-user back-btn"
+                        onClick={
+                            onClose
+                        }
+                    >
+                        <X size={16} />
+                        Đóng
+                    </button>
+
+                    <button
+                        type="button"
+                        className="btn-user btn-outline-secondary"
+                        onClick={
+                            onResend
+                        }
+                        disabled={
+                            timeLeft > 0
+                        }
+                    >
+                        <RefreshCw
+                            size={16}
+                        />
+
+                        {timeLeft >
+                        0
+                            ? `Chờ ${formatTime(
+                                  timeLeft
+                              )}`
+                            : 'Gửi OTP mới'}
+                    </button>
                 </div>
             </div>
-        );
-    };
-
-    return (
-        <Modal
-            show={show}
-            onClose={onClose}
-            type={isExpired ? 'success' : 'warning'}
-            title={isExpired ? 'Đã mở khóa OTP' : '🔒 OTP đã bị khóa'}
-            confirmText={isExpired ? 'Thử lại' : 'Gửi lại OTP'}
-            cancelText="Đóng"
-            onConfirm={() => {
-                if (isExpired) {
-                    onResend?.();
-                } else {
-                    onResend?.();
-                }
-                onClose?.();
-            }}
-            onCancel={onClose}
-            className="otp-lock-modal"
-        >
-            {renderLockContent()}
-        </Modal>
+        </div>
     );
 };
 
