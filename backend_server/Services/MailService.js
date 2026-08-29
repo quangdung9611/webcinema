@@ -9,7 +9,7 @@ const { transporter } = require("../Config/mailer");
 
 const OtpEmailTemplate = require("../Templates/OtpEmailTemplate");
 const TicketEmailTemplate = require("../Templates/TicketEmailTemplate");
-const ForgotPasswordTemplate = require("../Templates/ForgotPasswordTemplate");
+const ForgotPasswordTemplate = require("../Templates/ForgotPasswordTemplate"); // ✅ ĐÃ ĐÚNG
 const VerifyEmailTemplate = require("../Templates/VerifyEmailTemplate");
 const ForgotPinTemplate = require("../Templates/ForgotPinTemplate");
 
@@ -154,7 +154,7 @@ const MailService = {
                 from: `"Dũng Cinema 🍿" <no-reply@quangdungcinema.id.vn>`,
                 to: email,
                 subject: `[${otp}] Mã OTP đặt lại mật khẩu`,
-                html: ForgotPasswordTemplate(otp, fullName)
+                html: ForgotPasswordTemplate(otp, fullName) // ✅ DÙNG TEMPLATE MỚI
 
             });
 
