@@ -502,33 +502,33 @@ exports.verifyOtpAndChangePin = async (req, res) => {
 /*=========================================================
     🆕 KIỂM TRA TTL OTP
 =========================================================*/
-exports.checkOtpTTL = async (req, res) => {
-    try {
-        const { email, purpose } = req.query;
-        if (!email) {
-            return res.status(400).json({
-                success: false,
-                message: "Thiếu email"
-            });
-        }
-        if (!purpose) {
-            return res.status(400).json({
-                success: false,
-                message: "Thiếu purpose"
-            });
-        }
+// exports.checkOtpTTL = async (req, res) => {
+//     try {
+//         const { email, purpose } = req.query;
+//         if (!email) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Thiếu email"
+//             });
+//         }
+//         if (!purpose) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Thiếu purpose"
+//             });
+//         }
 
-        const result = await AuthService.checkOtpTTL(email, purpose);
-        return res.status(200).json(result);
-    } catch (error) {
-        console.error("Check OTP TTL Error:", error);
-        return res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.message || "Lỗi máy chủ",
-            data: error.data || null
-        });
-    }
-};
+//         const result = await AuthService.checkOtpTTL(email, purpose);
+//         return res.status(200).json(result);
+//     } catch (error) {
+//         console.error("Check OTP TTL Error:", error);
+//         return res.status(error.statusCode || 500).json({
+//             success: false,
+//             message: error.message || "Lỗi máy chủ",
+//             data: error.data || null
+//         });
+//     }
+// };
 
 /*=========================================================
     🆕 GỬI LẠI OTP

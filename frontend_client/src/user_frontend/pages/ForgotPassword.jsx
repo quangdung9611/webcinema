@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -38,6 +39,9 @@ const ForgotPassword = () => {
     const [isOtpExpired, setIsOtpExpired] = useState(false);
     const [otpAttempts, setOtpAttempts] = useState(0);
 
+    // Timestamp OTP hết hạn
+    const [otpExpiresAt, setOtpExpiresAt] = useState(null);
+
     // ============================================================
     // OTP LOCK STATE
     // ============================================================
@@ -62,7 +66,7 @@ const ForgotPassword = () => {
     // ============================================================
 
     const otpRefs = useRef([]);
-    const otpTtlIntervalRef = useRef(null);
+    const otpTimerRef = useRef(null);
     const lockIntervalRef = useRef(null);
     const rateLimitIntervalRef = useRef(null);
 
@@ -118,16 +122,118 @@ const ForgotPassword = () => {
     };
 
     // ============================================================
+    // APPLY OTP TIMER
+    //
+    // Backend trả:
+    //
+    // {
+    //     expiresIn: 300
+    // }
+    //
+    // Frontend tạo timestamp tuyệt đối.
+    // Không cần check-otp-ttl nữa.
+    // ============================================================
+
+    const startOtpTimer = (expiresIn) => {
+        const seconds = Math.max(
+            0,
+            Number(expiresIn) || 0
+        );
+
+        if (seconds <= 0) {
+            setCountdown(0);
+            setIsOtpExpired(true);
+            setOtpExpiresAt(null);
+            return;
+        }
+
+        const expiresAt =
+            Date.now() + seconds * 1000;
+
+        setOtpExpiresAt(expiresAt);
+        setCountdown(seconds);
+        setIsOtpExpired(false);
+    };
+
+    // ============================================================
+    // OTP TIMER
+    //
+    // Không dùng:
+    //
+    // setCountdown(prev => prev - 1)
+    //
+    // Mà luôn tính:
+    //
+    // otpExpiresAt - Date.now()
+    //
+    // nên timer không bị lệch.
+    // ============================================================
+
+    useEffect(() => {
+        if (
+            step !== 'otp' ||
+            !otpExpiresAt ||
+            isLocked ||
+            showLockModal
+        ) {
+            return;
+        }
+
+        const tick = () => {
+            const left = Math.max(
+                0,
+                Math.ceil(
+                    (otpExpiresAt - Date.now()) / 1000
+                )
+            );
+
+            setCountdown(left);
+
+            if (left <= 0) {
+                setCountdown(0);
+                setIsOtpExpired(true);
+                setOtpExpiresAt(null);
+
+                setOtp('');
+
+                setError(
+                    '⚠️ OTP đã hết hạn. Vui lòng gửi lại mã mới.'
+                );
+            }
+        };
+
+        tick();
+
+        otpTimerRef.current =
+            setInterval(tick, 250);
+
+        return () => {
+            if (otpTimerRef.current) {
+                clearInterval(
+                    otpTimerRef.current
+                );
+
+                otpTimerRef.current = null;
+            }
+        };
+    }, [
+        step,
+        otpExpiresAt,
+        isLocked,
+        showLockModal
+    ]);
+
+    // ============================================================
     // APPLY OTP LOCK
     //
-    // BACKEND:
+    // Backend:
     //
     // {
     //     remainingSeconds: 300,
     //     lockedUntil: 1234567890000
     // }
     //
-    // lockedUntil là timestamp tuyệt đối.
+    // lockedUntil = timestamp tuyệt đối.
     // ============================================================
 
     const applyOtpLock = (data = {}) => {
@@ -140,9 +246,9 @@ const ForgotPassword = () => {
             Number(data.lockedUntil) || 0;
 
         /*
-         * Ưu tiên tuyệt đối timestamp backend.
+         * Ưu tiên timestamp backend.
          *
-         * Fallback chỉ dùng nếu backend chưa trả
+         * Chỉ fallback nếu backend chưa trả
          * lockedUntil.
          */
         if (
@@ -157,7 +263,11 @@ const ForgotPassword = () => {
         // OTP cũ không còn hợp lệ
         setOtp('');
         setCountdown(0);
+        setOtpExpiresAt(null);
         setIsOtpExpired(true);
+
+        // Không hiển thị số lần sai nữa
+        // vì đã chuyển sang trạng thái lock
         setOtpAttempts(0);
 
         // Lock state
@@ -186,9 +296,6 @@ const ForgotPassword = () => {
 
     // ============================================================
     // RATE LIMIT TIMER
-    //
-    // Dùng timestamp tuyệt đối.
-    // Không dùng prev - 1.
     // ============================================================
 
     useEffect(() => {
@@ -203,9 +310,7 @@ const ForgotPassword = () => {
             const left = Math.max(
                 0,
                 Math.ceil(
-                    (rateLimitUntil -
-                        Date.now()) /
-                        1000
+                    (rateLimitUntil - Date.now()) / 1000
                 )
             );
 
@@ -216,10 +321,6 @@ const ForgotPassword = () => {
                 setRateLimitTimeLeft(0);
                 setRateLimitUntil(null);
 
-                /*
-                 * Chỉ xóa lỗi rate-limit.
-                 * Không đụng vào OTP lock.
-                 */
                 setError('');
             }
         };
@@ -230,15 +331,12 @@ const ForgotPassword = () => {
             setInterval(tick, 250);
 
         return () => {
-            if (
-                rateLimitIntervalRef.current
-            ) {
+            if (rateLimitIntervalRef.current) {
                 clearInterval(
                     rateLimitIntervalRef.current
                 );
 
-                rateLimitIntervalRef.current =
-                    null;
+                rateLimitIntervalRef.current = null;
             }
         };
     }, [
@@ -248,15 +346,6 @@ const ForgotPassword = () => {
 
     // ============================================================
     // OTP LOCK TIMER
-    //
-    // Đây là timer quan trọng nhất.
-    //
-    // Không countdown bằng prev - 1.
-    // Luôn tính:
-    //
-    // lockedUntil - Date.now()
-    //
-    // nên không bị lệch theo render.
     // ============================================================
 
     useEffect(() => {
@@ -271,9 +360,7 @@ const ForgotPassword = () => {
             const left = Math.max(
                 0,
                 Math.ceil(
-                    (lockUntil -
-                        Date.now()) /
-                        1000
+                    (lockUntil - Date.now()) / 1000
                 )
             );
 
@@ -290,10 +377,11 @@ const ForgotPassword = () => {
                 setOtpAttempts(0);
 
                 /*
-                 * Sau khi lock hết:
-                 * OTP cũ đã bị xóa.
+                 * OTP cũ đã bị vô hiệu.
+                 * Muốn tiếp tục phải gửi OTP mới.
                  */
                 setCountdown(0);
+                setOtpExpiresAt(null);
                 setIsOtpExpired(true);
 
                 /*
@@ -319,113 +407,17 @@ const ForgotPassword = () => {
             setInterval(tick, 250);
 
         return () => {
-            if (
-                lockIntervalRef.current
-            ) {
+            if (lockIntervalRef.current) {
                 clearInterval(
                     lockIntervalRef.current
                 );
 
-                lockIntervalRef.current =
-                    null;
+                lockIntervalRef.current = null;
             }
         };
     }, [
         showLockTimer,
         lockUntil
-    ]);
-
-    // ============================================================
-    // ĐỒNG BỘ OTP TTL
-    //
-    // Không chạy khi OTP đang bị lock.
-    // ============================================================
-
-    useEffect(() => {
-        if (
-            step !== 'otp' ||
-            !email ||
-            isLocked ||
-            showLockModal
-        ) {
-            return;
-        }
-
-        let cancelled = false;
-
-        const syncTTL = async () => {
-            try {
-                const response =
-                    await api.get(
-                        '/api/auth/check-otp-ttl',
-                        {
-                            params: {
-                                email,
-                                purpose:
-                                    OTP_PURPOSE
-                            }
-                        }
-                    );
-
-                if (
-                    cancelled ||
-                    !response.data
-                        ?.success
-                ) {
-                    return;
-                }
-
-                const ttl = Math.max(
-                    0,
-                    Number(
-                        response.data
-                            ?.data
-                            ?.expiresIn
-                    ) || 0
-                );
-
-                if (ttl > 0) {
-                    setCountdown(ttl);
-                    setIsOtpExpired(false);
-                } else {
-                    setCountdown(0);
-                    setIsOtpExpired(true);
-                }
-            } catch (err) {
-                console.error(
-                    'Failed to sync OTP TTL:',
-                    err
-                );
-            }
-        };
-
-        syncTTL();
-
-        otpTtlIntervalRef.current =
-            setInterval(
-                syncTTL,
-                1000
-            );
-
-        return () => {
-            cancelled = true;
-
-            if (
-                otpTtlIntervalRef.current
-            ) {
-                clearInterval(
-                    otpTtlIntervalRef.current
-                );
-
-                otpTtlIntervalRef.current =
-                    null;
-            }
-        };
-    }, [
-        step,
-        email,
-        isLocked,
-        showLockModal
     ]);
 
     // ============================================================
@@ -460,7 +452,19 @@ const ForgotPassword = () => {
             ]?.focus();
         }
 
-        if (error) {
+        /*
+         * Chỉ xóa lỗi nhập OTP.
+         *
+         * Không xóa trạng thái số lần sai
+         * vì số lần sai được hiển thị riêng.
+         */
+        if (
+            error &&
+            (
+                error.includes('OTP không đúng') ||
+                error.includes('nhập đủ 6 số')
+            )
+        ) {
             setError('');
         }
     };
@@ -547,20 +551,16 @@ const ForgotPassword = () => {
                     normalizedEmail
                 );
 
-                setCountdown(
+                // Khởi động timer OTP
+                startOtpTimer(
                     expiresIn
-                );
-
-                setIsOtpExpired(
-                    expiresIn <= 0
                 );
 
                 setStep('otp');
                 setError('');
 
                 /*
-                 * Nếu trước đó từng có lock cũ
-                 * đã hết thì clear state.
+                 * Clear lock cũ nếu đã hết.
                  */
                 setShowLockTimer(false);
                 setLockTimeLeft(0);
@@ -688,12 +688,9 @@ const ForgotPassword = () => {
                                 OTP_EXPIRE_SECONDS
                         );
 
-                    setCountdown(
+                    // Reset timer bằng timestamp mới
+                    startOtpTimer(
                         expiresIn
-                    );
-
-                    setIsOtpExpired(
-                        expiresIn <= 0
                     );
 
                     setError('');
@@ -871,9 +868,8 @@ const ForgotPassword = () => {
                 ) {
                     setOtp('');
                     setCountdown(0);
-                    setIsOtpExpired(
-                        true
-                    );
+                    setOtpExpiresAt(null);
+                    setIsOtpExpired(true);
 
                     errorMessage =
                         '⚠️ OTP đã hết hạn. Vui lòng gửi lại mã mới.';
@@ -882,8 +878,12 @@ const ForgotPassword = () => {
                 // ==================================================
                 // OTP INVALID
                 //
-                // Backend trả remainingAttempts.
-                // Không tự cộng otpAttempts nữa.
+                // Backend trả:
+                //
+                // attempts
+                // remainingAttempts
+                //
+                // Frontend chỉ hiển thị dữ liệu backend.
                 // ==================================================
 
                 else if (
@@ -896,23 +896,34 @@ const ForgotPassword = () => {
                                 ?.attempts
                         ) || 0;
 
-                    const remainingAttempts =
+                    const backendRemaining =
                         Number(
                             errorData.data
                                 ?.remainingAttempts
-                        ) ||
-                        Math.max(
-                            0,
-                            OTP_MAX_ATTEMPTS -
-                                attempts
                         );
 
+                    const remainingAttempts =
+                        Number.isFinite(
+                            backendRemaining
+                        )
+                            ? backendRemaining
+                            : Math.max(
+                                0,
+                                OTP_MAX_ATTEMPTS -
+                                    attempts
+                            );
+
+                    /*
+                     * QUAN TRỌNG:
+                     * Lưu attempts để render
+                     * "Bạn đã nhập sai X/5 lần".
+                     */
                     setOtpAttempts(
                         attempts
                     );
 
                     errorMessage =
-                        `❌ OTP không đúng. Bạn còn ${remainingAttempts} lần thử.`;
+                        `❌ OTP không đúng. Bạn đã nhập sai ${attempts}/${OTP_MAX_ATTEMPTS} lần. Còn ${remainingAttempts} lần thử.`;
                 }
 
                 // ==================================================
@@ -1116,7 +1127,9 @@ const ForgotPassword = () => {
                             </strong>
                         </p>
 
-                        {/* SỐ LẦN THỬ */}
+                        {/* ==================================================
+                            SỐ LẦN THỬ
+                        ================================================== */}
 
                         {otpAttempts > 0 &&
                             !isLocked &&
@@ -1127,30 +1140,35 @@ const ForgotPassword = () => {
                                             'center',
                                         marginBottom:
                                             '10px',
+                                        padding:
+                                            '8px 12px',
                                         fontSize:
                                             '14px',
                                         color:
-                                            otpAttempts >=
-                                            3
+                                            otpAttempts >= 3
                                                 ? '#ff6b8a'
                                                 : '#fbbf24'
                                     }}
                                 >
                                     ⚠️ Bạn đã nhập sai{' '}
-                                    {
-                                        otpAttempts
-                                    }
-                                    /5 lần. Còn{' '}
-                                    {Math.max(
-                                        0,
-                                        OTP_MAX_ATTEMPTS -
-                                            otpAttempts
-                                    )}{' '}
+                                    <strong>
+                                        {otpAttempts}/{OTP_MAX_ATTEMPTS}
+                                    </strong>{' '}
+                                    lần. Còn{' '}
+                                    <strong>
+                                        {Math.max(
+                                            0,
+                                            OTP_MAX_ATTEMPTS -
+                                                otpAttempts
+                                        )}
+                                    </strong>{' '}
                                     lần thử.
                                 </div>
                             )}
 
-                        {/* LOCK MESSAGE */}
+                        {/* ==================================================
+                            LOCK MESSAGE
+                        ================================================== */}
 
                         {showLockModal && (
                             <div
@@ -1183,7 +1201,9 @@ const ForgotPassword = () => {
                             </div>
                         )}
 
-                        {/* OTP INPUT */}
+                        {/* ==================================================
+                            OTP INPUT
+                        ================================================== */}
 
                         <div className="pin-input-container">
                             {Array.from({
@@ -1250,7 +1270,9 @@ const ForgotPassword = () => {
                             )}
                         </div>
 
-                        {/* OTP TIMER */}
+                        {/* ==================================================
+                            OTP TIMER
+                        ================================================== */}
 
                         {!isLocked &&
                             !showLockModal && (
@@ -1293,7 +1315,9 @@ const ForgotPassword = () => {
                                 </div>
                             )}
 
-                        {/* LOCK TIMER */}
+                        {/* ==================================================
+                            LOCK TIMER
+                        ================================================== */}
 
                         {isLocked && (
                             <div className="input-hint center-text">
@@ -1315,7 +1339,9 @@ const ForgotPassword = () => {
                             </div>
                         )}
 
-                        {/* RESEND */}
+                        {/* ==================================================
+                            RESEND
+                        ================================================== */}
 
                         <button
                             className="btn-user btn-outline-secondary"
@@ -1381,7 +1407,9 @@ const ForgotPassword = () => {
                             )}
                         </button>
 
-                        {/* BUTTON GROUP */}
+                        {/* ==================================================
+                            BUTTON GROUP
+                        ================================================== */}
 
                         <div
                             className="button-group"
@@ -1397,7 +1425,17 @@ const ForgotPassword = () => {
                                         'sent'
                                     );
                                     setOtp('');
+                                    setOtpAttempts(0);
                                     setError('');
+                                    setCountdown(
+                                        OTP_EXPIRE_SECONDS
+                                    );
+                                    setOtpExpiresAt(
+                                        null
+                                    );
+                                    setIsOtpExpired(
+                                        false
+                                    );
                                 }}
                             >
                                 <ArrowLeft size={16} />
@@ -1512,3 +1550,4 @@ const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
+
