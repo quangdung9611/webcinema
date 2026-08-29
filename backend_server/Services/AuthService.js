@@ -398,12 +398,12 @@ exports.submitNewPassword = async (token, newPassword) => {
         }
     };
 };
-
 // ============================================================
-// XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU - CÓ RATE LIMIT (5 lần/60s)
+// 🆕 XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU (GIỐNG VERIFY OTP CHANGE PIN)
 // ============================================================
 exports.verifyOtpAndReset = async (email, otp, newPassword) => {
-    const rateLimit = await RedisService.checkRateLimit(email, "verify-otp", 5, 60);
+    // 🔥 RATE LIMIT: 5 lần/60s
+    const rateLimit = await RedisService.checkRateLimit(email, "verify-otp-reset", 5, 60);
     if (!rateLimit.allowed) {
         throw { 
             statusCode: 429, 
@@ -415,7 +415,14 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         };
     }
 
-    const otpResult = await OtpService.verifyOTP(email, otp, OtpService.PURPOSE.RESET_PASSWORD);
+    // ✅ Gọi verify với deleteAfterVerify = false (KHÔNG xóa OTP)
+    const otpResult = await OtpService.verifyOTP(
+        email, 
+        otp, 
+        OtpService.PURPOSE.RESET_PASSWORD, 
+        false  // ← KHÔNG XÓA OTP
+    );
+    
     if (!otpResult.success) {
         throw {
             statusCode: otpResult.code === "OTP_LOCKED" ? 429 : 400,
@@ -424,8 +431,21 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         };
     }
 
+    // Nếu không có newPassword hoặc newPassword rỗng → chỉ verify OTP (KHÔNG xóa)
+    if (!newPassword || newPassword.length === 0) {
+        return { success: true, message: "Xác thực OTP thành công" };
+    }
+
+    // Validate newPassword
+    if (!Password.isStrong(newPassword)) {
+        throw { statusCode: 400, field: "newPassword", message: "Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt" };
+    }
+
+    // Đổi mật khẩu
     const user = await UserRepository.findByEmail(email);
-    if (!user) throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    if (!user) {
+        throw { statusCode: 404, message: "Không tìm thấy người dùng" };
+    }
 
     const samePassword = await Password.compare(newPassword, user.password);
     if (samePassword) {
@@ -441,10 +461,14 @@ exports.verifyOtpAndReset = async (email, otp, newPassword) => {
         console.error('❌ [RESET_PASSWORD] Lỗi khi xóa socket:', error.message);
     }
 
-    await MailService.sendPasswordChangeAlert(user.email, user.full_name);
-    return { success: true, message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại." };
-};
+    // ✅ XÓA OTP sau khi đổi mật khẩu thành công
+    await RedisService.deleteOTP(email, OtpService.PURPOSE.RESET_PASSWORD);
 
+    return {
+        success: true,
+        message: "Đặt lại mật khẩu thành công!"
+    };
+};
 // ============================================================
 // SEND VERIFICATION EMAIL - CÓ RATE LIMIT (3 lần/300s)
 // ============================================================

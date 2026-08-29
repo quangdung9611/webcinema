@@ -304,7 +304,7 @@ exports.submitNewPassword = async (req, res) => {
 };
 
 /*=========================================================
-    VERIFY OTP AND RESET
+    🆕 XÁC THỰC OTP VÀ ĐỔI MẬT KHẨU (GIỐNG VERIFY OTP CHANGE PIN)
 =========================================================*/
 exports.verifyOtpAndReset = async (req, res) => {
     try {
@@ -313,6 +313,13 @@ exports.verifyOtpAndReset = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.error("Verify OTP And Reset Error:", error);
+        if (error.statusCode === 429) {
+            return res.status(429).json({
+                success: false,
+                message: error.message || 'Bạn đã thử quá nhiều lần. Vui lòng thử lại sau.',
+                data: error.data || null
+            });
+        }
         return res.status(error.statusCode || 500).json({
             success: false,
             field: error.field || null,
@@ -321,7 +328,6 @@ exports.verifyOtpAndReset = async (req, res) => {
         });
     }
 };
-
 /*=========================================================
     VERIFY RESET OTP
 =========================================================*/
